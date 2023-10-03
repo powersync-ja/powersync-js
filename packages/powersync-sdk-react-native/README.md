@@ -1,29 +1,30 @@
-# Alpha
-This package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
-
 # PowerSync SDK for React Native
 
 [PowerSync](https://powersync.co) is a cloud service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
 
+## Alpha Release
+This React Native SDK package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
+
 # Installation
-Install package
+
+## Install Package
 
 ```bash
-yarn add @journeyapps/powersync-sdk-react-native
+npx expo install @journeyapps/powersync-sdk-react-native
 ```
 
-## Peer dependencies
+## Peer Dependencies: SQLite
 
 This SDK currently requires `@journeyapps/react-native-quick-sqlite` as a peer dependency.
 
-Install it in your app with
+Install it in your app with:
 
 ```bash 
-yarn exec expo install @journeyapps/react-native-quick-sqlite
+npx expo install @journeyapps/react-native-quick-sqlite
 ```
 
 
-## Polyfills
+## Polyfills: Fetch
 
 This SDK requires HTTP streaming in order to function. The following `fetch` polyfills are required for the React Native implementation of `fetch`: 
 
@@ -36,7 +37,7 @@ This SDK requires HTTP streaming in order to function. The following `fetch` pol
  These are listed as peer dependencies and need to be added to the React Native project
 
  ```bash 
- yarn exec expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
+ npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
  ```
 
  Enable the polyfills in React Native app with
@@ -46,19 +47,12 @@ This SDK requires HTTP streaming in order to function. The following `fetch` pol
 import 'react-native-polyfill-globals/auto';
  ```
 
-## Native Projects
+## Polyfills & Babel Plugins: Watched Queries
 
-This package uses native libraries. Create native Android and iOS projects (if not created already) with
-
-```bash
-yarn exec expo run:android
-```
-
-## Watched Queries
  Watched queries require support for Async Iterators. Expo apps currently require polyfill and Babel plugins in order to use this functionality.
 
  ```bash
- yarn add @azure/core-asynciterator-polyfill
+ npx expo install @azure/core-asynciterator-polyfill
  ```
 
  Make sure to import the polyfill early in your application
@@ -69,7 +63,7 @@ yarn exec expo run:android
  ```
 
  ```bash
- yarn add -D @babel/plugin-transform-async-generator-functions
+ npx expo install -D @babel/plugin-transform-async-generator-functions
  ```
 
  Add the Babel plugin to your `babel.config.js` file
@@ -86,6 +80,14 @@ yarn exec expo run:android
 };
  ```
 
+## Native Projects
+
+This package uses native libraries. Create native Android and iOS projects (if not created already) with
+
+```bash
+yarn exec expo run:android
+```
+
 # SDK Features
 
  * Direct access to the SQLite database - use SQL on the client and server.
@@ -95,11 +97,12 @@ yarn exec expo run:android
  * Subscribe to queries for live updates.
 
  Upcoming features:
- * Supports one write and many reads concurrently.
+ * Support one write and many reads concurrently.
 
-# Getting started
+# Getting Started
 
-Declare the Schema
+## Declare the Schema
+
 ```JavaScript
 // lib/Schema.js
 import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@journeyapps/powersync-sdk-react-native';
@@ -129,7 +132,8 @@ export const AppSchema = new Schema([
 ]);
 ```
 
-Create an Upload Connector
+## Create an Upload Connector
+
 ```JavaScript
 // lib/Connector.js
 import { UpdateType} from '@journeyapps/powersync-sdk-react-native';
@@ -218,11 +222,9 @@ export class Connector {
 
 ```
 
+## Create a PowerSync Connection
 
-Create a PowerSync connection
-
- - Use a DB adapter to connect to a SQLite DB
-
+ Use a DB adapter to connect to a SQLite DB:
 
 ```JavaScript
 // lib/setup-powersync.js
@@ -246,14 +248,14 @@ export const setupPowerSync = async () => {
   await PowerSync.init();
   await PowerSync.connect(connector);
 };
-
 ```
 
-## Using PowerSync
+# Using PowerSync
 
 Once the PowerSync instance is configured you can start using the SQLite DB functions
 
-### Querying items
+### Querying Items
+
 ```JSX
 // ListWidget.jsx
 export const ListWidget = () => {
@@ -289,7 +291,7 @@ export const ListWidget = () => {
 ```
 
 
-### Watching queries
+### Watching Queries
 
 A watch API allows for queries to be executed whenever a change to a dependant table is made.
 
