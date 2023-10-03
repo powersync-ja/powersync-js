@@ -1,0 +1,6 @@
+[submodule "apps/supabase-todolist"]
+	path = apps/supabase-todolist
+	url = git@github.com:journeyapps/powersync-supabase-react-native-todolist-demo.git
+[submodule "packages/journeyapps-react-native-quick-sqlite"]
+	path = packages/journeyapps-react-native-quick-sqlite
+	url = git@github.com:journeyapps/react-native-quick-sqlite.git

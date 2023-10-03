@@ -1,0 +1,47 @@
+{
+  "name": "@journeyapps/powersync-sdk-react-native",
+  "version": "0.0.1-alpha.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "A React Native SDK for JourneyApps PowerSync",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc -b -w"
+  },
+  "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
+  },
+  "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-sdk-react-native/#readme",
+  "peerDependencies": {
+    "@journeyapps/react-native-quick-sqlite": "^0.0.0",
+    "base-64": "^1.0.0",
+    "react": "*",
+    "react-native-fetch-api": "^3.0.0",
+    "react-native-get-random-values": "^1.9.0",
+    "react-native-polyfill-globals": "^3.1.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "text-encoding": "^0.7.0",
+    "web-streams-polyfill": "^3.2.1"
+  },
+  "dependencies": {
+    "@journeyapps/powersync-react": "^0.0.1-alpha.0",
+    "@journeyapps/powersync-sdk-common": "^0.0.1-alpha.0",
+    "async-lock": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/async-lock": "^1.4.0",
+    "react": "18.2.0",
+    "typescript": "^4.1.3"
+  }
+}

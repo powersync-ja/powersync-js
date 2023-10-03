@@ -1,0 +1,36 @@
+{
+  "name": "@journeyapps/powersync-react",
+  "version": "0.0.1-alpha.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "React components for JourneyApps PowerSync",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc -b -w"
+  },
+  "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
+  },
+  "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-react/#readme",
+  "dependencies": {
+    "@journeyapps/powersync-sdk-common": "^0.0.1-alpha.0"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "react": "18.2.0",
+    "typescript": "^4.1.3"
+  }
+}
