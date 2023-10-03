@@ -1,0 +1,28 @@
+{
+  "private": true,
+  "name": "monorepo",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "clean:packages": "lerna run clean",
+    "build:packages": "lerna run build",
+    "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/@rneui/**",
+      "**/react-native",
+      "**/react-native/**",
+      "**/expo",
+      "**/expo/**"
+    ]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "lerna": "7.3.0"
+  }
+}

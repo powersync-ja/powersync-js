@@ -1,0 +1,64 @@
+name: Packages Deploy
+
+on:
+  push:
+
+env:
+  SECRETS: ${{ toJSON(secrets) }}
+
+jobs:
+  build:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'yarn'
+
+      - name: Setup Yarn
+        run: |
+          npm install -g yarn
+          echo "Yarn version: $(yarn -v)"
+          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build:packages
+
+  publish:
+    name: Publish Production Packages
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Setup Yarn
+        run: |
+          npm install -g yarn
+          echo "Yarn version: $(yarn -v)"
+          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build:packages
+
+      - name: Publish
+        run: lerna exec "npm publish --tag=latest --no-git-checks"

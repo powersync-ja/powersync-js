@@ -1,0 +1,41 @@
+name: Packages Deploy
+
+on: workflow_dispatch
+
+env:
+  SECRETS: ${{ toJSON(secrets) }}
+
+jobs:
+  publish:
+    name: Publish Dev Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Setup Yarn
+        run: |
+          npm install -g yarn
+          echo "Yarn version: $(yarn -v)"
+          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build:packages
+
+      - name: Development Version
+        run: |
+          export SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`
+          export VERSION="0.0.0-dev.$SHORT_SHA"
+          lerna version $VERSION --no-private --exact --force-publish --no-push --no-git-tag-version --yes
+
+      - name: Publish
+        run: lerna exec "npm publish --tag=next --no-git-checks"
