@@ -40,7 +40,7 @@ yarn build:packages
 ## Testing Supabase example app
 
 ``` bash
-cd apps/example
+cd apps/supabase-todolist
 ```
 
 Test on either Android or iOS

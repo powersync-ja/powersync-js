@@ -254,20 +254,44 @@ export const setupPowerSync = async () => {
 
 Once the PowerSync instance is configured you can start using the SQLite DB functions
 
+### Fetching an Item
+
+```JSX
+// TodoItemWidget.jsx
+import {Text} from 'react-native';
+
+export const TodoItemWidget = ({id}) => {
+    const [todoItem, setTodoItem] = React.useState([]);
+    const [error, setError] = React.useState([]);
+
+    React.useEffect(() => {
+        // .get returns the first item of the result. Throws an exception if no result is found.
+        PowerSync.get('SELECT * from todos WHERE id = ?', [id])
+          .then(setTodoItem)
+          .catch(ex => setError(ex.message))
+    }, []);
+
+    return <Text>{error || todoItem.description}</Text>
+}
+```
+
 ### Querying Items
 
 ```JSX
-// ListWidget.jsx
-export const ListWidget = () => {
+// ListsWidget.jsx
+import {FlatList, Text} from 'react-native';
+
+export const ListsWidget = () => {
     const [lists, setLists] = React.useState([]);
 
     React.useEffect(() => {
         PowerSync.getAll('SELECT * from lists').then(setLists)
     }, []);
 
-    return <ul>
-        {lists.map(list => <li key={list.id}>{list.name}</li>)}
-    </ul>
+    return (<FlatList
+        data={lists.map(list => ({key: list.id, ...list}))}
+        renderItem={({item}) => <Text>{item.name}</Text>}
+    />)
 }
 ```
 
@@ -275,29 +299,32 @@ export const ListWidget = () => {
 The PowerSync instance can be used with [React Query](https://tanstack.com/query/v3/docs/react/quick-start). The example below omits the necessary provider setup (see Quickstart).
 
 ```JSX
-// ListWidget.jsx
+// ListsWidget.jsx
 import {useQuery} from 'react-query';
+import {FlatList, Text} from 'react-native';
 
-export const ListWidget = () => {
+export const ListsWidget = () => {
     const {data: lists} = useQuery({
         queryKey: 'lists',
         queryFn: async () => PowerSync.getAll('SELECT * from lists'),
     });
 
-    return <ul>
-        {lists.map(list => <li key={list.id}>{list.name}</li>)}
-    </ul>
+    return (<FlatList
+        data={lists.map(list => ({key: list.id, ...list}))}
+        renderItem={({item}) => <Text>{item.name}</Text>}
+    />)
 }
 ```
-
 
 ### Watching Queries
 
 A watch API allows for queries to be executed whenever a change to a dependant table is made.
 
 ```JSX
-// ListWidget.jsx
- export const ListWidget = () => {
+// ListsWidget.jsx
+import {FlatList, Text} from 'react-native';
+
+ export const ListsWidget = () => {
   const [lists, setLists] = React.useState([]);
 
   React.useEffect(() => {
@@ -313,11 +340,128 @@ A watch API allows for queries to be executed whenever a change to a dependant t
       }
   }, []);
 
-  return <ul>
-      {lists.map(list => <li key={list.id}>{list.name}</li>)}
-  </ul>
+  return (<FlatList
+        data={lists.map(list => ({key: list.id, ...list}))}
+        renderItem={({item}) => <Text>{item.name}</Text>}
+    />)
 }
 ```
+
+### Mutations
+
+The `execute` method can be used for executing single SQLite statements. 
+
+```JSX
+// ListsWidget.jsx
+import {Alert, Button, FlatList, Text, View} from 'react-native';
+
+export const ListsWidget = () => {
+  // Populate lists with one of methods listed above
+  const [lists, setLists] = React.useState([]);
+
+  return (
+    <View>
+      <FlatList
+        data={lists.map(list => ({key: list.id, ...list}))}
+        renderItem={({item}) => (<View>
+          <Text>{item.name}</Text>
+           <Button
+              title="Delete"
+              onPress={async () => {
+                  try {
+                    await PowerSync.execute(`DELETE FROM lists WHERE id = ?`, [item.id])
+                    // Watched queries should automatically reload after mutation
+                  } catch (ex) {
+                    Alert('Error', ex.message)
+                  }
+                }}
+            />
+        </View>)}
+      />
+      <Button
+        title="Create List"
+        color="#841584"
+        onPress={async () => {
+            try {
+              await PowerSync.execute('INSERT INTO lists (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?) RETURNING *', [
+                'A list name',
+                "[The user's uuid]"
+              ])
+              // Watched queries should automatically reload after mutation
+            } catch (ex) {
+              Alert.alert('Error', ex.message)
+            }
+          }}
+      />
+    </View>
+    )
+}
+```
+
+### Transactions
+
+Read and write transactions present a context where multiple changes can be made then finally committed to the DB or rolled back. This ensures that either all the changes get persisted, or no change is made to the DB (in the case of a rollback or exception).
+
+`PowerSync.writeTransaction(callback)` automatically commits changes after the transaction callback is completed if `tx.rollback()` has not explicitly been called. If an exception is thrown in the callback then changes are automatically rolled back. 
+
+`PowerSync.readTransaction(callback)` automatically rolls back any attempted changes made in the transaction callback.
+
+
+```JSX
+// ListsWidget.jsx
+import {Alert, Button, FlatList, Text, View} from 'react-native';
+
+export const ListsWidget = () => {
+  // Populate lists with one of methods listed above
+  const [lists, setLists] = React.useState([]);
+
+  return (
+    <View>
+      <FlatList
+        data={lists.map(list => ({key: list.id, ...list}))}
+        renderItem={({item}) => (<View>
+          <Text>{item.name}</Text>
+           <Button
+              title="Delete"
+              onPress={async () => {
+                  try {
+                    await PowerSync.writeTransaction(async (tx) => {
+                        // Delete the main list
+                        await tx.executeAsync(`DELETE FROM lists WHERE id = ?`, [item.id]);
+                        // Delete any children of the list
+                        await tx.executeAsync(`DELETE FROM todos WHERE list_id = ?`, [item.id]);
+
+                        // Transactions are automatically committed at the end of execution
+                        // Transactions are automatically rolled back if an exception ocurred
+                      })
+                    // Watched queries should automatically reload after mutation
+                  } catch (ex) {
+                    Alert.alert('Error', ex.message)
+                  }
+                }}
+            />
+        </View>)}
+      />
+      <Button
+        title="Create List"
+        color="#841584"
+        onPress={async () => {
+            try {
+              await PowerSync.execute('INSERT INTO lists (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?) RETURNING *', [
+                'A list name',
+                "[The user's uuid]"
+              ])
+              // Watched queries should automatically reload after mutation
+            } catch (ex) {
+              Alert.alert('Error', ex.message)
+            }
+          }}
+      />
+    </View>
+    )
+}
+```
+
 
 ### Using Hooks
 
