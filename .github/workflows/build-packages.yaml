@@ -3,9 +3,6 @@ name: Packages Deploy
 on:
   push:
 
-env:
-  SECRETS: ${{ toJSON(secrets) }}
-
 jobs:
   build:
     name: Build Packages
@@ -25,7 +22,7 @@ jobs:
         run: |
           npm install -g yarn
           echo "Yarn version: $(yarn -v)"
-          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
@@ -52,7 +49,7 @@ jobs:
         run: |
           npm install -g yarn
           echo "Yarn version: $(yarn -v)"
-          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
@@ -61,4 +58,4 @@ jobs:
         run: yarn build:packages
 
       - name: Publish
-        run: lerna exec "npm publish --tag=latest --no-git-checks"
+        run: lerna exec "npm publish --tag=latest --no-git-checks" --parallel
