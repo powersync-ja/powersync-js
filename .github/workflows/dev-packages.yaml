@@ -2,9 +2,6 @@ name: Packages Deploy
 
 on: workflow_dispatch
 
-env:
-  SECRETS: ${{ toJSON(secrets) }}
-
 jobs:
   publish:
     name: Publish Dev Packages
@@ -23,7 +20,7 @@ jobs:
         run: |
           npm install -g yarn
           echo "Yarn version: $(yarn -v)"
-          echo "//registry.npmjs.org/:_authToken=${{SECRETS.NPM_TOKEN}}" >> ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
