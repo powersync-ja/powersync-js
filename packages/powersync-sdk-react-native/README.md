@@ -85,7 +85,7 @@ import 'react-native-polyfill-globals/auto';
 This package uses native libraries. Create native Android and iOS projects (if not created already) with
 
 ```bash
-yarn exec expo run:android
+npx expo run:android
 ```
 
 # SDK Features
