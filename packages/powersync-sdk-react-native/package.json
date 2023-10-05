@@ -43,5 +43,8 @@
     "@types/async-lock": "^1.4.0",
     "react": "18.2.0",
     "typescript": "^4.1.3"
-  }
+  },
+  "keywords": [
+    "data sync", "offline-first", "sqlite", "real-time data stream", "live data"
+  ]
 }
