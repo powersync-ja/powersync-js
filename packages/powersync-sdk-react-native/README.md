@@ -495,7 +495,7 @@ export const TodoListDisplay = () => {
 # Known Issues
 
 ## Android
-The PowerSync connection relies heavily on HTTP streams. React Native does not support streams out of the box, so we use the [polyfills](#polyfills) mentioned. There is currently an open [issue](https://github.com/facebook/flipper/issues/2495) where the Flipper network plugin does not allow Stream events to fire. This plugin needs to be [disabled](https://stackoverflow.com/questions/69235694/react-native-cant-connect-to-sse-in-android/69235695#69235695) in order for HTTP streams to work.
+The PowerSync connection relies heavily on HTTP streams. React Native does not support streams out of the box, so we use the [polyfills](#polyfills-fetch) mentioned. There is currently an open [issue](https://github.com/facebook/flipper/issues/2495) where the Flipper network plugin does not allow Stream events to fire. This plugin needs to be [disabled](https://stackoverflow.com/questions/69235694/react-native-cant-connect-to-sse-in-android/69235695#69235695) in order for HTTP streams to work.
 
 Uncomment the following from
 `android/app/src/debug/java/com/<projectname>/ReactNativeFlipper.java`
