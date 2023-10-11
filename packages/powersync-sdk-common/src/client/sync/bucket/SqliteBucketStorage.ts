@@ -6,7 +6,6 @@ import { OpTypeEnum } from './OpType';
 import { CrudBatch } from './CrudBatch';
 import { CrudEntry } from './CrudEntry';
 import { SyncDataBatch } from './SyncDataBatch';
-import { mutexRunExclusive } from '../../../utils/mutex';
 import Logger, { ILogger } from 'js-logger';
 
 const COMPACT_OPERATION_INTERVAL = 1_000;
@@ -35,7 +34,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
 
   async init() {
     this._hasCompletedSync = false;
-    const existingTableRows = await this.db.executeAsync(
+    const existingTableRows = await this.db.execute(
       `SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'`
     );
     for (let row of existingTableRows.rows?._array ?? []) {
@@ -52,7 +51,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   startSession(): void {}
 
   async getBucketStates(): Promise<BucketState[]> {
-    const result = await this.db.executeAsync(
+    const result = await this.db.execute(
       'SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0'
     );
     return result.rows?._array ?? [];
@@ -62,7 +61,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     await this.writeTransaction(async (tx) => {
       let count = 0;
       for (let b of batch.buckets) {
-        const result = await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
+        const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
           JSON.stringify({ buckets: [b.toJSON()] })
         ]);
@@ -93,14 +92,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     this.logger.debug('Deleting bucket', bucket);
     // This
     await this.writeTransaction(async (tx) => {
-      await tx.executeAsync(
+      await tx.execute(
         `UPDATE ps_oplog SET op=${OpTypeEnum.REMOVE}, data=NULL WHERE op=${OpTypeEnum.PUT} AND superseded=0 AND bucket=?`,
         [bucket]
       );
       // Rename bucket
-      await tx.executeAsync('UPDATE ps_oplog SET bucket=? WHERE bucket=?', [newName, bucket]);
-      await tx.executeAsync('DELETE FROM ps_buckets WHERE name = ?', [bucket]);
-      await tx.executeAsync(
+      await tx.execute('UPDATE ps_oplog SET bucket=? WHERE bucket=?', [newName, bucket]);
+      await tx.execute('DELETE FROM ps_buckets WHERE name = ?', [bucket]);
+      await tx.execute(
         'INSERT INTO ps_buckets(name, pending_delete, last_op) SELECT ?, 1, IFNULL(MAX(op_id), 0) FROM ps_oplog WHERE bucket = ?',
         [newName, newName]
       );
@@ -113,9 +112,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     if (this._hasCompletedSync) {
       return true;
     }
-    const r = await this.db.executeAsync(
-      `SELECT name, last_applied_op FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1`
-    );
+    const r = await this.db.execute(`SELECT name, last_applied_op FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1`);
     const completed = !!r.rows?.length;
     if (completed) {
       this._hasCompletedSync = true;
@@ -135,13 +132,13 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
 
     const bucketNames = checkpoint.buckets.map((b) => b.bucket);
     await this.writeTransaction(async (tx) => {
-      await tx.executeAsync(
-        `UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`,
-        [checkpoint.last_op_id, JSON.stringify(bucketNames)]
-      );
+      await tx.execute(`UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`, [
+        checkpoint.last_op_id,
+        JSON.stringify(bucketNames)
+      ]);
 
       if (checkpoint.write_checkpoint) {
-        await tx.executeAsync("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
+        await tx.execute("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
       }
     });
 
@@ -170,7 +167,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
        * It's best to execute this on the same thread
        * https://github.com/journeyapps/powersync-sqlite-core/blob/40554dc0e71864fe74a0cb00f1e8ca4e328ff411/crates/sqlite/sqlite/sqlite3.h#L2578
        */
-      const { insertId: result } = await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
+      const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
         'sync_local',
         ''
       ]);
@@ -179,9 +176,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   }
 
   async validateChecksums(checkpoint: Checkpoint): Promise<SyncLocalDatabaseResult> {
-    const rs = await this.db.executeAsync('SELECT powersync_validate_checkpoint(?) as result', [
-      JSON.stringify(checkpoint)
-    ]);
+    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [JSON.stringify(checkpoint)]);
 
     const resultItem = rs.rows?.item(0);
     this.logger.debug('validateChecksums result item', resultItem);
@@ -224,10 +219,10 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   private async deletePendingBuckets() {
     if (this.pendingBucketDeletes !== false) {
       await this.writeTransaction(async (tx) => {
-        await tx.executeAsync(
+        await tx.execute(
           'DELETE FROM ps_oplog WHERE bucket IN (SELECT name FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op)'
         );
-        await tx.executeAsync(
+        await tx.execute(
           'DELETE FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op'
         );
       });
@@ -242,20 +237,20 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     }
 
     await this.writeTransaction(async (tx) => {
-      await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
+      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
     });
     this.compactCounter = 0;
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
-    const rs1 = await this.db.executeAsync("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
+    const rs1 = await this.db.execute("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
       SqliteBucketStorage.MAX_OP_ID
     ]);
     if (!rs1.rows?.length) {
       // Nothing to update
       return false;
     }
-    const rs = await this.db.executeAsync("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+    const rs = await this.db.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
     if (!rs.rows?.length) {
       // Nothing to update
       return false;
@@ -267,14 +262,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     this.logger.debug(`[updateLocalTarget] Updating target to checkpoint ${opId}`);
 
     return this.writeTransaction(async (tx) => {
-      const anyData = await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1');
+      const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
       if (!!anyData.rows?.length) {
         // if isNotEmpty
         this.logger.debug('updateLocalTarget', 'ps crud is not empty');
         return false;
       }
 
-      const rs = await tx.executeAsync("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+      const rs = await tx.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
       if (!rs.rows?.length) {
         // assert isNotEmpty
         throw new Error('SQlite Sequence should not be empty');
@@ -288,14 +283,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
         return false;
       }
 
-      const response = await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
+      const response = await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
       this.logger.debug(['[updateLocalTarget] Response from updating target_op ', JSON.stringify(response)]);
       return true;
     });
   }
 
   async hasCrud(): Promise<boolean> {
-    const anyData = this.db.execute('SELECT 1 FROM ps_crud LIMIT 1');
+    const anyData = await this.db.execute('SELECT 1 FROM ps_crud LIMIT 1');
     return !!anyData.rows?.length;
   }
 
@@ -308,7 +303,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
       return null;
     }
 
-    const crudResult = await this.db.executeAsync('SELECT * FROM ps_crud ORDER BY id ASC LIMIT ?', [limit]);
+    const crudResult = await this.db.execute('SELECT * FROM ps_crud ORDER BY id ASC LIMIT ?', [limit]);
 
     let all: CrudEntry[] = [];
     for (let row of crudResult.rows?._array ?? []) {
@@ -325,42 +320,22 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
       haveMore: true,
       complete: async (writeCheckpoint?: string) => {
         return this.writeTransaction(async (tx) => {
-          await tx.executeAsync('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
+          await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
           if (writeCheckpoint) {
-            const crudResult = await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1');
+            const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
             if (crudResult.rows?.length) {
-              await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
             }
           } else {
-            await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
+            await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
           }
         });
       }
     };
   }
 
-  /// Note: The asynchronous nature of this is due to this needing a global
-  /// lock. The actual database operations are still synchronous, and it
-  /// is assumed that multiple functions on this instance won't be called
-  /// concurrently.
   async writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, options?: { timeoutMs: number }): Promise<T> {
-    return mutexRunExclusive(
-      this.mutex,
-      () => {
-        return new Promise<T>(async (resolve, reject) => {
-          try {
-            await this.db.transaction(async (tx) => {
-              const r = await callback(tx);
-              await tx.commitAsync();
-              resolve(r);
-            });
-          } catch (ex) {
-            reject(ex);
-          }
-        });
-      },
-      options
-    );
+    return this.db.writeTransaction(callback, options);
   }
 
   /**

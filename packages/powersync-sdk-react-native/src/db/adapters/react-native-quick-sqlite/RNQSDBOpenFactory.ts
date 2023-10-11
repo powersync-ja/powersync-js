@@ -1,4 +1,4 @@
-import { open } from '@journeyapps/react-native-quick-sqlite';
+import { openConcurrent } from '@journeyapps/react-native-quick-sqlite';
 
 import {
   AbstractPowerSyncDatabase,
@@ -19,7 +19,7 @@ export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseO
      * in the options (if provided)
      * https://github.com/margelo/react-native-quick-sqlite/blob/main/README.md#loading-existing-dbs
      */
-    return new RNQSDBAdapter(open({ name: this.options.dbFilename, location: this.options.dbLocation }));
+    return new RNQSDBAdapter(openConcurrent(this.options.dbFilename, this.options.dbLocation));
   }
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
