@@ -45,15 +45,17 @@ yarn build:packages
 Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-dev.{short-sha}`. 
 
 ### Production Packages
-Packages should be versioned with Lerna after PR approval.
+Pull requests should contain Changesets for changed packages.
 
-Submodule production packages should be versioned, tagged and published from their own repository. Any dependencies should be updated here (if applicable) before versioning local packages.
-
-```bash
-lerna version  --no-private
+Add changesets with
+```Bash
+yarn changeset add
 ```
 
-The versioned and tagged changes should then be merged to `main` where production packages will be deployed via the `build-packages` workflow.
+Submodule production packages should be versioned, tagged and published from their own repository. Any dependencies should be updated here (if applicable) before merging pull requests.
+
+
+Merging a PR with Changesets will automatically create a PR with version bumps. That PR will be merged when releasing. 
 
 ## Testing Supabase example app
 

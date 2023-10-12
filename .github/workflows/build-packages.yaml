@@ -1,8 +1,5 @@
 # Ensures packages build correctly
-# Deploys Production/latest NPM packages to NPM registry if on `main` branch
-# Submodule packages are not published to production in this repo,
-# Submodule packages should be tagged and published from their own repo.
-name: Packages Deploy
+name: Build Packages
 
 on:
   push:
@@ -34,33 +31,3 @@ jobs:
 
       - name: Build
         run: yarn build:packages
-
-  publish:
-    name: Publish Production Packages
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup NodeJS
-        uses: actions/setup-node@v2
-        with:
-          node-version: 18
-
-      - name: Setup Yarn
-        run: |
-          npm install -g yarn
-          echo "Yarn version: $(yarn -v)"
-          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
-
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Build
-        run: yarn build:packages
-
-      - name: Publish
-        run: lerna exec "npm publish --tag=latest --no-git-checks" --parallel
