@@ -42,10 +42,12 @@ yarn build:packages
 
 
 ### Development Packages
-Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-dev.{short-sha}`. Submodule packages are checked out, versioned and published by default, but this can be disabled if using submodule packages which are published from it's own repository.
+Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-dev.{short-sha}`. 
 
 ### Production Packages
 Packages should be versioned with Lerna after PR approval.
+
+Submodule production packages should be versioned, tagged and published from their own repository. Any dependencies should be updated here (if applicable) before versioning local packages.
 
 ```bash
 lerna version  --no-private
