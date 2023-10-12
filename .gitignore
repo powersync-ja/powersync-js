@@ -5,3 +5,4 @@ tsconfig.tsbuildinfo
 yarn-error.log
 .vscode
 .DS_STORE
+.idea
