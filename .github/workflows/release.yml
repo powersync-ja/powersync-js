@@ -24,7 +24,7 @@ jobs:
           node-version: 18
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
