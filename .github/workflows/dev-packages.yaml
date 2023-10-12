@@ -1,15 +1,26 @@
+# Action to publish packages under the `next` tag for testing
+# Packages are versioned as `0.0.0-dev.{short-sha}`
+# Submodule packages are versioned by default, but can be disabled
+# if using a package from the external submodule repo.
 name: Packages Deploy
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      include_submodules:
+        type: boolean
+        description: Dev version submodule packages?
+        default: true
 
 jobs:
   publish:
     name: Publish Dev Packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: ${{ github.event.inputs.include_submodules }}
+          persist-credentials: false
 
       - name: Setup NodeJS
         uses: actions/setup-node@v2
