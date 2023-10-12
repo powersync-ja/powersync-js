@@ -2,7 +2,7 @@
 
 Monorepo for all things React Native and PowerSync.
 
-## Monorepo structure
+## Monorepo Structure
 
 - `apps/supabase-todolist`
     * An Expo React native app using Supabase.
@@ -18,7 +18,7 @@ Monorepo for all things React Native and PowerSync.
 
 # Development
 
-## Git submodules
+## Git Submodules
 After cloning this repo be sure to init the Git submodules
 
 ```bash
@@ -36,6 +36,22 @@ Build packages
 ```bash
 yarn build:packages
 ```
+
+
+## Versioning
+
+
+### Development Packages
+Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-dev.{short-sha}`. Submodule packages are checked out, versioned and published by default, but this can be disabled if using submodule packages which are published from it's own repository.
+
+### Production Packages
+Packages should be versioned with Lerna after PR approval.
+
+```bash
+lerna version  --no-private
+```
+
+The versioned and tagged changes should then be merged to `main` where production packages will be deployed via the `build-packages` workflow.
 
 ## Testing Supabase example app
 
