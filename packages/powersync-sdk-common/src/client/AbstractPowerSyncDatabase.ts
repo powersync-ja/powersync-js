@@ -37,7 +37,7 @@ export interface WatchOnChangeEvent {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {}
 
-const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_local__)/;
+const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
