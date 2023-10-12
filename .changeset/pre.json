@@ -8,5 +8,7 @@
     "@journeyapps/powersync-sdk-common": "0.0.1-alpha.0",
     "@journeyapps/powersync-sdk-react-native": "0.0.1-alpha.1"
   },
-  "changesets": []
+  "changesets": [
+    "serious-bobcats-tie"
+  ]
 }
