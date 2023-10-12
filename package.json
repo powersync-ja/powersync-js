@@ -6,7 +6,8 @@
   "scripts": {
     "clean:packages": "lerna run clean",
     "build:packages": "lerna run build",
-    "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch"
+    "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch",
+    "release": "yarn build:packages && yarn changeset publish"
   },
   "workspaces": {
     "packages": [
@@ -23,6 +24,7 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@changesets/cli": "^2.26.2",
     "lerna": "7.3.0"
   }
 }

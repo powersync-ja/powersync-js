@@ -35,14 +35,16 @@ export interface WatchOnChangeEvent {
   changedTables: string[];
 }
 
+export interface PowerSyncDBListener extends StreamingSyncImplementationListener {}
+
+const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
+
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelay: 5000,
   logger: Logger.get('PowerSyncDatabase')
 };
-
-export interface PowerSyncDBListener extends StreamingSyncImplementationListener {}
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
@@ -437,10 +439,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
           const { table } = update;
-          if (!table.startsWith('ps_data__')) {
+          if (!table.match(POWERSYNC_TABLE_MATCH)) {
             return;
           }
-          const tableName = table.replace(/^ps_data__/, '');
+          const tableName = table.replace(POWERSYNC_TABLE_MATCH, '');
           throttledTableUpdates.push(tableName);
 
           flushTableUpdates();

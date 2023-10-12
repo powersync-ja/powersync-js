@@ -1,3 +1,5 @@
+# Action to publish packages under the `next` tag for testing
+# Packages are versioned as `0.0.0-dev.{short-sha}`
 name: Packages Deploy
 
 on: workflow_dispatch
@@ -7,9 +9,10 @@ jobs:
     name: Publish Dev Packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Setup NodeJS
         uses: actions/setup-node@v2

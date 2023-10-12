@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-sdk-react-native/#readme",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^0.0.0",
+    "@journeyapps/react-native-quick-sqlite": "^0.0.1-alpha.0",
     "base-64": "^1.0.0",
     "react": "*",
     "react-native-fetch-api": "^3.0.0",
@@ -45,6 +45,10 @@
     "typescript": "^4.1.3"
   },
   "keywords": [
-    "data sync", "offline-first", "sqlite", "real-time data stream", "live data"
+    "data sync",
+    "offline-first",
+    "sqlite",
+    "real-time data stream",
+    "live data"
   ]
 }
