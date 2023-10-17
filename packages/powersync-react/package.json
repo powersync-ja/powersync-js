@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-react/#readme",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "^0.0.1-alpha.0"
+    "@journeyapps/powersync-sdk-common": "^0.0.1-alpha.1"
   },
   "peerDependencies": {
     "react": "*"

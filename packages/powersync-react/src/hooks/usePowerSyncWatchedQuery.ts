@@ -1,6 +1,6 @@
-import { SQLWatchOptions } from '@journeyapps/powersync-sdk-common';
-import React from 'react';
-import { usePowerSync } from './PowerSyncContext';
+import { SQLWatchOptions } from "@journeyapps/powersync-sdk-common";
+import React from "react";
+import { usePowerSync } from "./PowerSyncContext";
 
 /**
  * A hook to access the results of a watched query.
@@ -8,13 +8,18 @@ import { usePowerSync } from './PowerSyncContext';
 export const usePowerSyncWatchedQuery = <T = any>(
   sqlStatement: string,
   parameters: any[] = [],
-  options: Omit<SQLWatchOptions, 'signal'> = {}
+  options: Omit<SQLWatchOptions, "signal"> = {}
 ): T[] => {
   const powerSync = usePowerSync();
   if (!powerSync) {
     return [];
   }
 
+  const memoizedParams = React.useMemo(() => parameters, [...parameters]);
+  const memoizedOptions = React.useMemo(
+    () => options,
+    [JSON.stringify(options)]
+  );
   const [data, setData] = React.useState<T[]>([]);
   const abortController = React.useRef(new AbortController());
 
@@ -25,7 +30,7 @@ export const usePowerSyncWatchedQuery = <T = any>(
     (async () => {
       for await (const result of powerSync.watch(sqlStatement, parameters, {
         ...options,
-        signal: abortController.current.signal
+        signal: abortController.current.signal,
       })) {
         setData(result.rows?._array ?? []);
       }
@@ -34,7 +39,7 @@ export const usePowerSyncWatchedQuery = <T = any>(
     return () => {
       abortController.current?.abort();
     };
-  }, [powerSync, sqlStatement, parameters]);
+  }, [powerSync, sqlStatement, memoizedParams, memoizedOptions]);
 
   return data;
 };
