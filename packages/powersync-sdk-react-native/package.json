@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
   },
-  "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-sdk-react-native/#readme",
+  "homepage": "https://docs.powersync.co/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^0.0.1-alpha.0",
     "base-64": "^1.0.0",
