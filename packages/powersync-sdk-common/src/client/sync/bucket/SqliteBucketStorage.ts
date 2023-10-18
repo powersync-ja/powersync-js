@@ -61,7 +61,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     await this.writeTransaction(async (tx) => {
       let count = 0;
       for (let b of batch.buckets) {
-        const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
+        const result = await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
           JSON.stringify({ buckets: [b.toJSON()] })
         ]);
@@ -92,14 +92,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     this.logger.debug('Deleting bucket', bucket);
     // This
     await this.writeTransaction(async (tx) => {
-      await tx.execute(
+      await tx.executeAsync(
         `UPDATE ps_oplog SET op=${OpTypeEnum.REMOVE}, data=NULL WHERE op=${OpTypeEnum.PUT} AND superseded=0 AND bucket=?`,
         [bucket]
       );
       // Rename bucket
-      await tx.execute('UPDATE ps_oplog SET bucket=? WHERE bucket=?', [newName, bucket]);
-      await tx.execute('DELETE FROM ps_buckets WHERE name = ?', [bucket]);
-      await tx.execute(
+      await tx.executeAsync('UPDATE ps_oplog SET bucket=? WHERE bucket=?', [newName, bucket]);
+      await tx.executeAsync('DELETE FROM ps_buckets WHERE name = ?', [bucket]);
+      await tx.executeAsync(
         'INSERT INTO ps_buckets(name, pending_delete, last_op) SELECT ?, 1, IFNULL(MAX(op_id), 0) FROM ps_oplog WHERE bucket = ?',
         [newName, newName]
       );
@@ -132,13 +132,13 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
 
     const bucketNames = checkpoint.buckets.map((b) => b.bucket);
     await this.writeTransaction(async (tx) => {
-      await tx.execute(`UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`, [
-        checkpoint.last_op_id,
-        JSON.stringify(bucketNames)
-      ]);
+      await tx.executeAsync(
+        `UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`,
+        [checkpoint.last_op_id, JSON.stringify(bucketNames)]
+      );
 
       if (checkpoint.write_checkpoint) {
-        await tx.execute("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
+        await tx.executeAsync("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
       }
     });
 
@@ -167,7 +167,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
        * It's best to execute this on the same thread
        * https://github.com/journeyapps/powersync-sqlite-core/blob/40554dc0e71864fe74a0cb00f1e8ca4e328ff411/crates/sqlite/sqlite/sqlite3.h#L2578
        */
-      const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
+      const { insertId: result } = await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
         'sync_local',
         ''
       ]);
@@ -219,10 +219,10 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   private async deletePendingBuckets() {
     if (this.pendingBucketDeletes !== false) {
       await this.writeTransaction(async (tx) => {
-        await tx.execute(
+        await tx.executeAsync(
           'DELETE FROM ps_oplog WHERE bucket IN (SELECT name FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op)'
         );
-        await tx.execute(
+        await tx.executeAsync(
           'DELETE FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op'
         );
       });
@@ -237,7 +237,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     }
 
     await this.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
+      await tx.executeAsync('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
     });
     this.compactCounter = 0;
   }
@@ -262,14 +262,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     this.logger.debug(`[updateLocalTarget] Updating target to checkpoint ${opId}`);
 
     return this.writeTransaction(async (tx) => {
-      const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
+      const anyData = await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1');
       if (!!anyData.rows?.length) {
         // if isNotEmpty
         this.logger.debug('updateLocalTarget', 'ps crud is not empty');
         return false;
       }
 
-      const rs = await tx.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+      const rs = await tx.executeAsync("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
       if (!rs.rows?.length) {
         // assert isNotEmpty
         throw new Error('SQlite Sequence should not be empty');
@@ -283,7 +283,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
         return false;
       }
 
-      const response = await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
+      const response = await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
       this.logger.debug(['[updateLocalTarget] Response from updating target_op ', JSON.stringify(response)]);
       return true;
     });
@@ -320,14 +320,14 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
       haveMore: true,
       complete: async (writeCheckpoint?: string) => {
         return this.writeTransaction(async (tx) => {
-          await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
+          await tx.executeAsync('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
           if (writeCheckpoint) {
-            const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
+            const crudResult = await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1');
             if (crudResult.rows?.length) {
-              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+              await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
             }
           } else {
-            await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
+            await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
           }
         });
       }

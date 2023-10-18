@@ -140,11 +140,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute('DELETE FROM ps_oplog WHERE 1');
-      await tx.execute('DELETE FROM ps_crud WHERE 1');
-      await tx.execute('DELETE FROM ps_buckets WHERE 1');
+      await tx.executeAsync('DELETE FROM ps_oplog WHERE 1');
+      await tx.executeAsync('DELETE FROM ps_crud WHERE 1');
+      await tx.executeAsync('DELETE FROM ps_buckets WHERE 1');
 
-      const existingTableRows = await tx.execute(
+      const existingTableRows = await tx.executeAsync(
         "SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'"
       );
 
@@ -152,7 +152,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         return;
       }
       for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${row.name} WHERE 1`);
+        await tx.executeAsync(`DELETE FROM ${row.name} WHERE 1`);
       }
     });
   }
@@ -178,12 +178,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats> {
     return this.readTransaction(async (tx) => {
       if (includeSize) {
-        const result = await tx.execute('SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ps_crud');
+        const result = await tx.executeAsync(
+          'SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ps_crud'
+        );
 
         const row = result.rows.item(0);
         return new UploadQueueStats(row?.count ?? 0, row?.size ?? 0);
       } else {
-        const result = await tx.execute('SELECT count(*) as count FROM ps_crud');
+        const result = await tx.executeAsync('SELECT count(*) as count FROM ps_crud');
         const row = result.rows.item(0);
         return new UploadQueueStats(row?.count ?? 0);
       }
@@ -226,11 +228,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const last = all[all.length - 1];
     return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) => {
       await this.writeTransaction(async (tx) => {
-        await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
-        if (writeCheckpoint != null && (await tx.execute('SELECT 1 FROM ps_crud LIMIT 1')) == null) {
-          await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+        await tx.executeAsync('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
+        if (writeCheckpoint != null && (await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1')) == null) {
+          await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
         } else {
-          await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
+          await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
             this.bucketStorageAdapter.getMaxOpId()
           ]);
         }
@@ -253,7 +255,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
     return await this.readTransaction(async (tx) => {
-      const first = await tx.execute('SELECT id, tx_id, data FROM ps_crud ORDER BY id ASC LIMIT 1');
+      const first = await tx.executeAsync('SELECT id, tx_id, data FROM ps_crud ORDER BY id ASC LIMIT 1');
 
       if (!first.rows.length) {
         return null;
@@ -264,7 +266,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       if (!txId) {
         all = [CrudEntry.fromRow(first.rows.item(0))];
       } else {
-        const result = await tx.execute('SELECT id, tx_id, data FROM ps_crud WHERE tx_id = ? ORDER BY id ASC', [txId]);
+        const result = await tx.executeAsync('SELECT id, tx_id, data FROM ps_crud WHERE tx_id = ? ORDER BY id ASC', [
+          txId
+        ]);
         all = result.rows._array.map((row) => CrudEntry.fromRow(row));
       }
 
@@ -274,14 +278,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         all,
         async (writeCheckpoint?: string) => {
           await this.writeTransaction(async (tx) => {
-            await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
+            await tx.executeAsync('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
             if (writeCheckpoint) {
-              const check = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
+              const check = await tx.executeAsync('SELECT 1 FROM ps_crud LIMIT 1');
               if (!check.rows?.length) {
-                await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+                await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
               }
             } else {
-              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
+              await tx.executeAsync("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
                 this.bucketStorageAdapter.getMaxOpId()
               ]);
             }
