@@ -358,7 +358,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.database.readTransaction(
       async (tx) => {
         const res = await callback({ ...tx });
-        await tx.rollback();
+        await tx.rollbackAsync();
         return res;
       },
       { timeoutMs: lockTimeout }
@@ -370,7 +370,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.database.writeTransaction(
       async (tx) => {
         const res = await callback(tx);
-        await tx.commit();
+        await tx.commitAsync();
         _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
         return res;
       },
