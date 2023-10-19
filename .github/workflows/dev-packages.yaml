@@ -11,7 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
           persist-credentials: false
 
       - name: Setup NodeJS
@@ -31,11 +30,7 @@ jobs:
       - name: Build
         run: yarn build:packages
 
-      - name: Development Version
-        run: |
-          export SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`
-          export VERSION="0.0.0-dev.$SHORT_SHA"
-          lerna version $VERSION --no-private --exact --force-publish --no-push --no-git-tag-version --yes
-
       - name: Publish
-        run: lerna exec "npm publish --tag=next --no-git-checks"
+        run: |
+          yarn changeset version --no-git-tag --snapshot dev
+          yarn changeset publish --tag dev
