@@ -23,9 +23,6 @@
       "path": "../powersync-sdk-common"
     },
     {
-      "path": "../journeyapps-react-native-quick-sqlite"
-    },
-    {
       "path": "../powersync-react"
     }
   ]

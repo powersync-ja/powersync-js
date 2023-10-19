@@ -510,3 +510,5 @@ Uncomment the following from
       //     });
       // client.addPlugin(networkFlipperPlugin);
 ```
+## iOS
+Testing offline mode on an iOS simulator by disabling the host machine's entire internet connection will cause the device to remain offline even after the internet connection has been restored. This issue seems to affect all network requests in an application.

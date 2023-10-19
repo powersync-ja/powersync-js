@@ -14,9 +14,6 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
-        with:
-          # Needed for build with frozen lockfile
-          submodules: true
 
       - name: Setup Node.js 18
         uses: actions/setup-node@v3
