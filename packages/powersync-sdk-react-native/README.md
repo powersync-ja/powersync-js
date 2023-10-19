@@ -1,6 +1,6 @@
 # PowerSync SDK for React Native
 
-[PowerSync](https://powersync.co) is a cloud service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
+[PowerSync](https://powersync.co) is a service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
 
 ## Alpha Release
 This React Native SDK package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
@@ -85,7 +85,7 @@ import 'react-native-polyfill-globals/auto';
 This package uses native libraries. Create native Android and iOS projects (if not created already) with
 
 ```bash
-yarn exec expo run:android
+npx expo run:android
 ```
 
 # SDK Features
@@ -495,7 +495,7 @@ export const TodoListDisplay = () => {
 # Known Issues
 
 ## Android
-The PowerSync connection relies heavily on HTTP streams. React Native does not support streams out of the box, so we use the [polyfills](#polyfills) mentioned. There is currently an open [issue](https://github.com/facebook/flipper/issues/2495) where the Flipper network plugin does not allow Stream events to fire. This plugin needs to be [disabled](https://stackoverflow.com/questions/69235694/react-native-cant-connect-to-sse-in-android/69235695#69235695) in order for HTTP streams to work.
+The PowerSync connection relies heavily on HTTP streams. React Native does not support streams out of the box, so we use the [polyfills](#polyfills-fetch) mentioned. There is currently an open [issue](https://github.com/facebook/flipper/issues/2495) where the Flipper network plugin does not allow Stream events to fire. This plugin needs to be [disabled](https://stackoverflow.com/questions/69235694/react-native-cant-connect-to-sse-in-android/69235695#69235695) in order for HTTP streams to work.
 
 Uncomment the following from
 `android/app/src/debug/java/com/<projectname>/ReactNativeFlipper.java`
@@ -510,3 +510,5 @@ Uncomment the following from
       //     });
       // client.addPlugin(networkFlipperPlugin);
 ```
+## iOS
+Testing offline mode on an iOS simulator by disabling the host machine's entire internet connection will cause the device to remain offline even after the internet connection has been restored. This issue seems to affect all network requests in an application.

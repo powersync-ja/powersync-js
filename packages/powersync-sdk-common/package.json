@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-sdk-common",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
   },
-  "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-sdk-common/#readme",
+  "homepage": "https://docs.powersync.co/resources/api-reference",
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf lib tsconfig.tsbuildinfo"
