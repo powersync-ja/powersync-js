@@ -1,6 +1,6 @@
 # PowerSync SDK for React Native
 
-[PowerSync](https://powersync.co) is a cloud service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
+[PowerSync](https://powersync.co) is a service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
 
 ## Alpha Release
 This React Native SDK package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
