@@ -2143,7 +2143,7 @@
     "@journeyapps/powersync-sdk-common" "^0.0.1-alpha.0"
     async-lock "^1.4.0"
 
-"@journeyapps/react-native-quick-sqlite@0.0.1-alpha.0":
+"@journeyapps/react-native-quick-sqlite@0.0.1-alpha.0", "@journeyapps/react-native-quick-sqlite@^0.0.1-alpha.0":
   version "0.0.1-alpha.0"
   resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.1-alpha.0.tgz#3831e39f9ed061a69bb1455ecdb033a168deae69"
   integrity sha512-iCTmP5jeC0NSklsy5yZtTPsqlbS92m/ATeeGY2awjR0odHUTxYKk0gDtlsAfwpi3Xe/M1ihVwKQXOJxzLwdc7w==
