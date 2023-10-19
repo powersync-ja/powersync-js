@@ -64,7 +64,7 @@ The process of releasing development packages for `@journeyapps/react-native-qui
 npm install -g mtsl
 ```
 ```bash
-mtsl add -s "[ource path to your react-native-quick-sqlite repo folder]" -d "[this workspaces root node_modules folder]"/@journeyapps/react-native-quick-sqlite
+mtsl add -s "[source path to your react-native-quick-sqlite repo folder]" -d "[this workspaces root node_modules folder]"/@journeyapps/react-native-quick-sqlite
 ```
 
 ```bash
