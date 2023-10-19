@@ -17,7 +17,7 @@
   "bugs": {
     "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
   },
-  "homepage": "https://github.com/journeyapps/powersync-react-native-sdk/packages/powersync-sdk-common/#readme",
+  "homepage": "https://docs.powersync.co/resources/api-reference",
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf lib tsconfig.tsbuildinfo"

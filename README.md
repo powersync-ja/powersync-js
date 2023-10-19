@@ -4,16 +4,16 @@ Monorepo for all things React Native and PowerSync.
 
 ## Monorepo Structure
 
-- `apps/supabase-todolist`
+- [apps/supabase-todolist](./apps/supabase-todolist/README.md)
     * An Expo React native app using Supabase.
 
-- `packages/powersync-sdk-common`
+- [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
     * A Typescript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
-- `packages/powersync-sdk-react-native`
+- [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
     * An extension of `packages/powersync-sdk-common` which provides React Native specific implementations of abstracted features.
 
-- `packages/journeyapps-react-native-quick-sqlite`
+- [packages/journeyapps-react-native-quick-sqlite](./packages/journeyapps-react-native-quick-sqlite/README.md)
     * A Git submodule for a fork of `react-native-quick-sqlite` this module now automatically loads the shared PowerSync Rust SQLite extension.
 
 # Development
