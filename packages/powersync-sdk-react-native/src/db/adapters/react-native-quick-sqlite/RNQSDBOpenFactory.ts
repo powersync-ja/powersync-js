@@ -1,4 +1,4 @@
-import { open } from '@journeyapps/react-native-quick-sqlite';
+import { open, QuickSQLite, QuickSQLiteConnection } from '@journeyapps/react-native-quick-sqlite';
 
 import {
   AbstractPowerSyncDatabase,
@@ -19,7 +19,22 @@ export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseO
      * in the options (if provided)
      * https://github.com/margelo/react-native-quick-sqlite/blob/main/README.md#loading-existing-dbs
      */
-    return new RNQSDBAdapter(open(this.options.dbFilename, { location: this.options.dbLocation }));
+    const { dbFilename } = this.options;
+    const openOptions = { location: this.options.dbLocation };
+    let DB: QuickSQLiteConnection;
+    try {
+      // Hot reloads can sometimes clear global JS state, but not close DB on native side
+      DB = open(dbFilename, openOptions);
+    } catch (ex) {
+      if (ex.message.includes('already open')) {
+        QuickSQLite.close(dbFilename);
+        DB = open(dbFilename, openOptions);
+      } else {
+        throw ex;
+      }
+    }
+
+    return new RNQSDBAdapter(DB);
   }
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
