@@ -46,6 +46,13 @@ export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   logger: Logger.get('PowerSyncDatabase')
 };
 
+/**
+ * Requesting nested or recursive locks can block the application in some circumstances.
+ * This default lock timeout will act as a failsafe to throw an error if a lock cannot
+ * be obtained.
+ */
+export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
+
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
    * Transactions should be queued in the DBAdapter, but we also want to prevent
@@ -353,7 +360,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
-  async readTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T> {
+  async readTransaction<T>(
+    callback: (tx: Transaction) => Promise<T>,
+    lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
+  ): Promise<T> {
     await this.initialized;
     return this.database.readTransaction(
       async (tx) => {
@@ -365,7 +375,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
-  async writeTransaction<T>(callback: (tx: Transaction) => Promise<T>, lockTimeout?: number): Promise<T> {
+  async writeTransaction<T>(
+    callback: (tx: Transaction) => Promise<T>,
+    lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
+  ): Promise<T> {
     await this.initialized;
     return this.database.writeTransaction(
       async (tx) => {
