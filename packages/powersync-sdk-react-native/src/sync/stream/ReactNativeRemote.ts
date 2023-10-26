@@ -70,6 +70,8 @@ export class ReactNativeRemote extends AbstractRemote {
       error.status = res.status;
       throw error;
     }
+
+    console.log(res.body);
     return res.body;
   }
 }

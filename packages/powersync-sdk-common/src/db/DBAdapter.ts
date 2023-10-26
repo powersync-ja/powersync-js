@@ -38,15 +38,12 @@ export interface DBGetUtils {
 }
 
 export interface LockContext extends DBGetUtils {
-  execute: (query: string, params?: any[] | undefined) => QueryResult;
-  executeAsync: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
+  execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
 }
 
 export interface Transaction extends LockContext {
-  commit: () => QueryResult;
-  commitAsync: () => Promise<QueryResult>;
-  rollback: () => QueryResult;
-  rollbackAsync: () => Promise<QueryResult>;
+  commit: () => Promise<QueryResult>;
+  rollback: () => Promise<QueryResult>;
 }
 
 /**
