@@ -387,7 +387,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
-  async *watch(sql: string, parameters: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
+  async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
     yield await this.execute(sql, parameters);
 

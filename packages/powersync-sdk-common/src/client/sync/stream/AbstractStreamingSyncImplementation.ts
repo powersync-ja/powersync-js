@@ -269,9 +269,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   async *streamingSyncRequest(req: StreamingSyncRequest, signal: AbortSignal): AsyncGenerator<StreamingSyncLine> {
-    console.log('sending request');
     const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
-    console.log('[streamingSyncRequest]', body);
     const stream = ndjsonStream(body);
     const reader = stream.getReader();
 
@@ -279,7 +277,6 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
       while (true) {
         // Read from the stream
         const { done, value } = await reader.read();
-        console.log('value', value);
         // Exit if we're done
         if (done) return;
         // Else yield the chunk
