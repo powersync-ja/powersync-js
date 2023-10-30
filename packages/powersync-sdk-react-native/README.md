@@ -63,7 +63,7 @@ import 'react-native-polyfill-globals/auto';
  ```
 
  ```bash
- npm install --save-dev @babel/plugin-transform-async-generator-functions
+ yarn add -D @babel/plugin-transform-async-generator-functions
  ```
 
  Add the Babel plugin to your `babel.config.js` file
