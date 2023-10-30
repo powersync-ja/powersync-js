@@ -393,7 +393,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     const resolvedTables = options?.tables ?? [];
     if (!options?.tables) {
-      // TODO get tables from sql if not specified
       const explained = await this.getAll(`EXPLAIN ${sql}`, parameters);
       const rootPages = _.chain(explained)
         .filter((row) => row['opcode'] == 'OpenRead' && row['p3'] == 0 && _.isNumber(row['p2']))
@@ -403,7 +402,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         `SELECT tbl_name FROM sqlite_master WHERE rootpage IN (SELECT json_each.value FROM json_each(?))`,
         [JSON.stringify(rootPages)]
       );
-      tables.forEach((t) => resolvedTables.push(t.tbl_name.replace(/^ps_data__/, '')));
+      tables.forEach((t) => resolvedTables.push(t.tbl_name.replace(POWERSYNC_TABLE_MATCH, '')));
     }
     for await (const event of this.onChange({
       ...(options ?? {}),
