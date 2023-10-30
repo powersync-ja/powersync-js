@@ -2134,10 +2134,10 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@journeyapps/react-native-quick-sqlite@0.0.0-dev-20231030064733":
-  version "0.0.0-dev-20231030064733"
-  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.0-dev-20231030064733.tgz#33008ee214a52726d4e4429af7e196bbea2e4293"
-  integrity sha512-IR7fWhMY/SRAdBINie67OncupRSluIAH2LyR3YEOMJGbXvVbPtDGieT1fXIiUZ2VFbhbIhXOTusgZ4RADmbFiQ==
+"@journeyapps/react-native-quick-sqlite@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.2.tgz#a6bb13de4446a11163d4dca441928f187f7ef859"
+  integrity sha512-5kYfBCHKr8qNdgxTFces6huXeigeTpkfcVMSjuZgPW+4ljHsH7brdocvBKmx8iHz2Q7pZ7cIyV0RZ0oz/htnLA==
   dependencies:
     lodash "^4.17.21"
 
