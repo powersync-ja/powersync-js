@@ -2134,19 +2134,12 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@journeyapps/powersync-sdk-react-native@0.0.1-alpha.0":
-  version "0.0.1-alpha.0"
-  resolved "https://registry.npmjs.org/@journeyapps/powersync-sdk-react-native/-/powersync-sdk-react-native-0.0.1-alpha.0.tgz#f5cef94d61c9e910f1a197f8da147f996acdd78f"
-  integrity sha512-FcQW+ei899RO2vFXV4qF+tHCxAEdYmGFZCQEePtzXQ66KrMhpH5Pz31+97JAkFCw0TDsrq0l++4SDwvYV7JrQg==
+"@journeyapps/react-native-quick-sqlite@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.2.tgz#a6bb13de4446a11163d4dca441928f187f7ef859"
+  integrity sha512-5kYfBCHKr8qNdgxTFces6huXeigeTpkfcVMSjuZgPW+4ljHsH7brdocvBKmx8iHz2Q7pZ7cIyV0RZ0oz/htnLA==
   dependencies:
-    "@journeyapps/powersync-react" "^0.0.1-alpha.0"
-    "@journeyapps/powersync-sdk-common" "^0.0.1-alpha.0"
-    async-lock "^1.4.0"
-
-"@journeyapps/react-native-quick-sqlite@0.0.1", "@journeyapps/react-native-quick-sqlite@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.1.tgz#a5b731bfc658d6c8257ef3edebf243941a69a764"
-  integrity sha512-vUXWngjpTFX6xCsy6Y8jd9zcI1eajIw/rWfdkpJOdnazR0SzAmrMc0ViRB6K84fWq9CmAV3DZw+GCVEHubqhSw==
+    lodash "^4.17.21"
 
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"

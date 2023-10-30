@@ -24,7 +24,7 @@
   },
   "homepage": "https://docs.powersync.co/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^0.0.1",
+    "@journeyapps/react-native-quick-sqlite": "0.0.2",
     "base-64": "^1.0.0",
     "react": "*",
     "react-native-fetch-api": "^3.0.0",
@@ -35,12 +35,12 @@
     "web-streams-polyfill": "^3.2.1"
   },
   "dependencies": {
-    "@journeyapps/powersync-react": "^0.0.1",
-    "@journeyapps/powersync-sdk-common": "^0.0.1",
+    "@journeyapps/powersync-react": "0.0.1",
+    "@journeyapps/powersync-sdk-common": "0.0.1",
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^0.0.1",
+    "@journeyapps/react-native-quick-sqlite": "0.0.2",
     "@types/async-lock": "^1.4.0",
     "react": "18.2.0",
     "typescript": "^4.1.3"

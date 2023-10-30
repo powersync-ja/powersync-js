@@ -31,13 +31,19 @@ export type QueryResult = {
   };
 };
 
-export interface Transaction {
-  commit: () => QueryResult;
-  commitAsync: () => Promise<QueryResult>;
-  execute: (query: string, params?: any[]) => QueryResult;
-  executeAsync: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
-  rollback: () => QueryResult;
-  rollbackAsync: () => Promise<QueryResult>;
+export interface DBGetUtils {
+  getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
+  get<T>(sql: string, parameters?: any[]): Promise<T>;
+}
+
+export interface LockContext extends DBGetUtils {
+  execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
+}
+
+export interface Transaction extends LockContext {
+  commit: () => Promise<QueryResult>;
+  rollback: () => Promise<QueryResult>;
 }
 
 /**
@@ -58,9 +64,15 @@ export interface DBAdapterListener extends BaseListener {
   tablesUpdated: (updateNotification: UpdateNotification) => void;
 }
 
-export interface DBAdapter extends BaseObserverInterface<DBAdapterListener> {
+export interface DBLockOptions {
+  timeoutMs?: number;
+}
+
+export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
   close: () => void;
-  transaction: (fn: (tx: Transaction) => Promise<void> | void) => Promise<void>;
-  execute: (query: string, params?: any[]) => QueryResult;
-  executeAsync: (query: string, params?: any[]) => Promise<QueryResult>;
+  readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  execute: (query: string, params?: any[]) => Promise<QueryResult>;
 }

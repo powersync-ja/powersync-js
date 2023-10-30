@@ -63,7 +63,7 @@ import 'react-native-polyfill-globals/auto';
  ```
 
  ```bash
- npx expo install -D @babel/plugin-transform-async-generator-functions
+ yarn add -D @babel/plugin-transform-async-generator-functions
  ```
 
  Add the Babel plugin to your `babel.config.js` file
@@ -427,9 +427,9 @@ export const ListsWidget = () => {
                   try {
                     await PowerSync.writeTransaction(async (tx) => {
                         // Delete the main list
-                        await tx.executeAsync(`DELETE FROM lists WHERE id = ?`, [item.id]);
+                        await tx.execute(`DELETE FROM lists WHERE id = ?`, [item.id]);
                         // Delete any children of the list
-                        await tx.executeAsync(`DELETE FROM todos WHERE list_id = ?`, [item.id]);
+                        await tx.execute(`DELETE FROM todos WHERE list_id = ?`, [item.id]);
 
                         // Transactions are automatically committed at the end of execution
                         // Transactions are automatically rolled back if an exception ocurred
