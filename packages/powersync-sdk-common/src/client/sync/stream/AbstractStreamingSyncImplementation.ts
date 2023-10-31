@@ -54,10 +54,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 
   private isUploadingCrud: boolean;
 
+  protected _isConnected: boolean;
+
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
     this.isUploadingCrud = false;
+    this._isConnected = false;
   }
 
   get lastSyncedAt() {
@@ -66,6 +69,10 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 
   protected get logger() {
     return this.options.logger!;
+  }
+
+  get isConnected() {
+    return this._isConnected;
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -163,6 +170,9 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           },
           signal
         )) {
+          // A connection is active and messages are being received
+          this.updateSyncStatus(true);
+
           if (isStreamingSyncCheckpoint(line)) {
             targetCheckpoint = line.checkpoint;
             const bucketsToDelete = new Set<string>(bucketSet);
@@ -289,7 +299,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   private updateSyncStatus(connected: boolean, lastSyncedAt?: Date) {
+    const takeSnapShot = () => [this._isConnected, this._lastSyncedAt?.valueOf()];
+
+    const previousValues = takeSnapShot();
     this._lastSyncedAt = lastSyncedAt ?? this.lastSyncedAt;
-    this.iterateListeners((cb) => cb.statusChanged?.(new SyncStatus(connected, this.lastSyncedAt)));
+    this._isConnected = connected;
+    if (!_.isEqual(previousValues, takeSnapShot())) {
+      this.iterateListeners((cb) => cb.statusChanged?.(new SyncStatus(this.isConnected, this.lastSyncedAt)));
+    }
   }
 }
