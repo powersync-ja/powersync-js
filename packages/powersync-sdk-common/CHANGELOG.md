@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 0.1.0
+
+### Minor Changes
+
+- 210de9d: Bump version for Beta release
+
 ## 0.0.2
 
 ### Patch Changes
