@@ -27,6 +27,7 @@
     "@journeyapps/react-native-quick-sqlite": "0.0.2",
     "base-64": "^1.0.0",
     "react": "*",
+    "react-native": "*",
     "react-native-fetch-api": "^3.0.0",
     "react-native-get-random-values": "^1.9.0",
     "react-native-polyfill-globals": "^3.1.0",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@journeyapps/react-native-quick-sqlite": "0.0.2",
     "@types/async-lock": "^1.4.0",
+    "react-native": "0.72.4",
     "react": "18.2.0",
     "typescript": "^4.1.3"
   },

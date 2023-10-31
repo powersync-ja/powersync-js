@@ -123,6 +123,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         await this.streamingSyncIteration(signal);
         // Continue immediately
       } catch (ex) {
+        this.logger.error(ex);
         this.updateSyncStatus(false);
         // On error, wait a little before retrying
         await new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));

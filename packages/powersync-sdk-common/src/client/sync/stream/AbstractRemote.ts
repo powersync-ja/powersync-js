@@ -1,23 +1,26 @@
+import Logger, { ILogger } from 'js-logger';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 
-export type RemoteOptions = {
+export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials>;
 };
 
 //Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
 
+export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
+
 export abstract class AbstractRemote {
   protected credentials?: PowerSyncCredentials;
 
-  constructor(protected options: RemoteOptions) {}
+  constructor(protected connector: RemoteConnector, protected logger: ILogger = DEFAULT_REMOTE_LOGGER) {}
 
   async getCredentials(): Promise<PowerSyncCredentials> {
     const { expiresAt } = this.credentials ?? {};
     if (expiresAt && expiresAt > new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS)) {
       return this.credentials!;
     }
-    this.credentials = await this.options.fetchCredentials();
+    this.credentials = await this.connector.fetchCredentials();
     return this.credentials;
   }
 

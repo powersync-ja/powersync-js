@@ -491,6 +491,15 @@ export const TodoListDisplay = () => {
 }
 ```
 
+### Logging
+The default logger uses js-logger. Debug logs can be displayed with:
+
+```JavaScript
+import Logger from 'js-logger';
+Logger.useDefaults();
+Logger.setLevel(Logger.DEBUG);
+```
+
 
 # Known Issues
 
