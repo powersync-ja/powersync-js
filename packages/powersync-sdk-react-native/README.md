@@ -158,6 +158,8 @@ export const CustomerListDisplay = () => {
 
 ```
 
+Refer to our [full documentation](https://docs.powersync.co/client-sdk-references/react-native-and-expo) to learn more.
+
 # Known Issues
 
 ## Android
