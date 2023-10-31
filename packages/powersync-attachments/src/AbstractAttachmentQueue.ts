@@ -8,7 +8,6 @@ import {
   StorageAdapter,
   AttachmentRecord,
   AttachmentState,
-  createAttachmentTable,
 } from "./definitions";
 
 export interface AttachmentQueueOptions {
@@ -46,9 +45,6 @@ export abstract class AbstractAttachmentQueue<
     this.uploading = false;
     this.downloading = false;
     this.initialSync = this.options.performInitialSync;
-
-    // Add Attachment table to schema tables
-    this.powersync.schema.tables.push(createAttachmentTable());
   }
 
   /**

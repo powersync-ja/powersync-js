@@ -1,4 +1,9 @@
-import { Column, ColumnType, Table } from "@journeyapps/powersync-sdk-common";
+import {
+  Column,
+  ColumnType,
+  Table,
+  TableOptions,
+} from "@journeyapps/powersync-sdk-common";
 
 export const ATTACHMENT_TABLE = "attachments";
 
@@ -20,16 +25,25 @@ export enum AttachmentState {
   ARCHIVED = 4, // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export function createAttachmentTable(name: string = ATTACHMENT_TABLE) {
-  return Table.createLocalOnly({
-    name: name,
-    columns: [
-      new Column({ name: "filename", type: ColumnType.TEXT }),
-      new Column({ name: "local_uri", type: ColumnType.TEXT }),
-      new Column({ name: "timestamp", type: ColumnType.INTEGER }),
-      new Column({ name: "size", type: ColumnType.INTEGER }),
-      new Column({ name: "media_type", type: ColumnType.TEXT }),
-      new Column({ name: "state", type: ColumnType.INTEGER }), // Corresponds to AttachmentState
-    ],
-  });
+export interface AttachmentTableOptions extends Omit<TableOptions, "name"> {
+  name?: string;
+  additionalColumns?: Column[];
+}
+
+export class AttachmentTable extends Table {
+  constructor(options: AttachmentTableOptions) {
+    super({
+      ...options,
+      name: options.name ?? ATTACHMENT_TABLE,
+      columns: [
+        new Column({ name: "filename", type: ColumnType.TEXT }),
+        new Column({ name: "local_uri", type: ColumnType.TEXT }),
+        new Column({ name: "timestamp", type: ColumnType.INTEGER }),
+        new Column({ name: "size", type: ColumnType.INTEGER }),
+        new Column({ name: "media_type", type: ColumnType.TEXT }),
+        new Column({ name: "state", type: ColumnType.INTEGER }), // Corresponds to AttachmentState
+        ...(options.additionalColumns ?? []),
+      ],
+    });
+  }
 }
