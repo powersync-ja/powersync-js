@@ -1,5 +1,5 @@
-# Alpha
-This package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
+# Beta
+This package is currently in a beta release.
 
 
 # PowerSync SDK common JS

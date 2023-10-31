@@ -1,6 +1,6 @@
 # React components for PowerSync
 
-This package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
+This package is currently in a beta release.
 
 ## Context
 Configure a PowerSync DB connection and add it to a context provider.

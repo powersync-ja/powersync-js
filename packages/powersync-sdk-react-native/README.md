@@ -1,9 +1,9 @@
 # PowerSync SDK for React Native
 
-[PowerSync](https://powersync.co) is a service and set of SDKs that keeps PostgreSQL databases in sync with on-device SQLite databases.
+[PowerSync](https://powersync.co) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases. See a summary of features [here](https://docs.powersync.co/resources/api-reference#react-native-and-expo).
 
-## Alpha Release
-This React Native SDK package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
+## Beta Release
+This React Native SDK package is currently in a beta release.
 
 # Installation
 
@@ -22,7 +22,6 @@ Install it in your app with:
 ```bash 
 npx expo install @journeyapps/react-native-quick-sqlite
 ```
-
 
 ## Polyfills: Fetch
 
@@ -87,17 +86,6 @@ This package uses native libraries. Create native Android and iOS projects (if n
 ```bash
 npx expo run:android
 ```
-
-# SDK Features
-
- * Direct access to the SQLite database - use SQL on the client and server.
- * Operations are asynchronous by default - does not block the UI.
- * No need for client-side database migrations - these are handled automatically.
- * Real-time streaming of changes.
- * Subscribe to queries for live updates.
-
- Upcoming features:
- * Support one write and many reads concurrently.
 
 # Getting Started
 
