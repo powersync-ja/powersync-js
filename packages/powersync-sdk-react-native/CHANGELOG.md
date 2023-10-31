@@ -1,5 +1,17 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 0.1.0
+
+### Minor Changes
+
+- 210de9d: Bump version for Beta release
+
+### Patch Changes
+
+- Updated dependencies [210de9d]
+  - @journeyapps/powersync-sdk-common@0.1.0
+  - @journeyapps/powersync-react@0.1.0
+
 ## 0.0.2
 
 ### Patch Changes
