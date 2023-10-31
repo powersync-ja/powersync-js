@@ -2134,6 +2134,40 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
+"@journeyapps/powersync-react@^0.0.1-alpha.0":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@journeyapps/powersync-react/-/powersync-react-0.0.1.tgz#3130fdbced28ad6a43ef472f98138a32465789c0"
+  integrity sha512-gZRDOGRmFzsEBrgbjXxe3uteCXT8QeEpTAOtlgu/OK+oYB7X967QtjcUzYh/JONZFpavr44hOazgBY37DJuxIw==
+  dependencies:
+    "@journeyapps/powersync-sdk-common" "^0.0.1"
+
+"@journeyapps/powersync-sdk-common@^0.0.1", "@journeyapps/powersync-sdk-common@^0.0.1-alpha.0":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@journeyapps/powersync-sdk-common/-/powersync-sdk-common-0.0.1.tgz#8ff1a440a91ef7bbc488a1b3752cc344f4a6ee35"
+  integrity sha512-bK7Y4On1Rf0QT0/R78P3SpqT9/Lf7uzUHKzyi7KbFBel6uaPtnoSNoWcdbrFrDURyQF5oeDGZeEAHCmM+AF+5w==
+  dependencies:
+    async-mutex "^0.4.0"
+    can-ndjson-stream "^1.0.2"
+    event-iterator "^2.0.0"
+    js-logger "^1.6.1"
+    lodash "^4.17.21"
+    object-hash "^3.0.0"
+    uuid "^3.0.0"
+
+"@journeyapps/powersync-sdk-react-native@0.0.1-alpha.0":
+  version "0.0.1-alpha.0"
+  resolved "https://registry.yarnpkg.com/@journeyapps/powersync-sdk-react-native/-/powersync-sdk-react-native-0.0.1-alpha.0.tgz#f5cef94d61c9e910f1a197f8da147f996acdd78f"
+  integrity sha512-FcQW+ei899RO2vFXV4qF+tHCxAEdYmGFZCQEePtzXQ66KrMhpH5Pz31+97JAkFCw0TDsrq0l++4SDwvYV7JrQg==
+  dependencies:
+    "@journeyapps/powersync-react" "^0.0.1-alpha.0"
+    "@journeyapps/powersync-sdk-common" "^0.0.1-alpha.0"
+    async-lock "^1.4.0"
+
+"@journeyapps/react-native-quick-sqlite@0.0.1-alpha.0":
+  version "0.0.1-alpha.0"
+  resolved "https://registry.yarnpkg.com/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.1-alpha.0.tgz#3831e39f9ed061a69bb1455ecdb033a168deae69"
+  integrity sha512-iCTmP5jeC0NSklsy5yZtTPsqlbS92m/ATeeGY2awjR0odHUTxYKk0gDtlsAfwpi3Xe/M1ihVwKQXOJxzLwdc7w==
+
 "@journeyapps/react-native-quick-sqlite@0.0.2":
   version "0.0.2"
   resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.2.tgz#a6bb13de4446a11163d4dca441928f187f7ef859"
