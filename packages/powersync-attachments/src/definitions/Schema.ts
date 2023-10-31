@@ -25,13 +25,14 @@ export enum AttachmentState {
   ARCHIVED = 4, // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export interface AttachmentTableOptions extends Omit<TableOptions, "name"> {
+export interface AttachmentTableOptions
+  extends Omit<TableOptions, "name" | "columns"> {
   name?: string;
   additionalColumns?: Column[];
 }
 
 export class AttachmentTable extends Table {
-  constructor(options: AttachmentTableOptions) {
+  constructor(options?: AttachmentTableOptions) {
     super({
       ...options,
       name: options.name ?? ATTACHMENT_TABLE,

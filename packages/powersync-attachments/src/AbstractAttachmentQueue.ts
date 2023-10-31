@@ -13,9 +13,18 @@ import {
 export interface AttachmentQueueOptions {
   powersync: AbstractPowerSyncDatabase;
   storage: StorageAdapter;
+  /**
+   * How often to check for new attachments to sync, in milliseconds. Set to 0 or undefined to disable.
+   */
   syncInterval?: number;
+  /**
+   * How many attachments to keep in the cache
+   */
   cacheLimit?: number;
   attachmentDirectoryName?: string;
+  /**
+   * Whether to mark the initial watched attachment IDs to be synced
+   */
   performInitialSync?: boolean;
 }
 
