@@ -299,10 +299,12 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   private updateSyncStatus(connected: boolean, lastSyncedAt?: Date) {
-    const previousValues = [this._isConnected, this._lastSyncedAt?.valueOf()];
+    const takeSnapShot = () => [this._isConnected, this._lastSyncedAt?.valueOf()];
+
+    const previousValues = takeSnapShot();
     this._lastSyncedAt = lastSyncedAt ?? this.lastSyncedAt;
     this._isConnected = connected;
-    if (!_.isEqual(previousValues, [this.isConnected, this._lastSyncedAt?.valueOf()])) {
+    if (!_.isEqual(previousValues, takeSnapShot())) {
       this.iterateListeners((cb) => cb.statusChanged?.(new SyncStatus(this.isConnected, this.lastSyncedAt)));
     }
   }
