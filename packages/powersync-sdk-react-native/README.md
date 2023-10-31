@@ -104,7 +104,7 @@ import {
 } from '@journeyapps/powersync-sdk-react-native';
 
 export const AppSchema = new Schema([
-  new Table({ name: 'customers', columns: [new Column({ name: 'description', type: ColumnType.TEXT })] })
+  new Table({ name: 'customers', columns: [new Column({ name: 'name', type: ColumnType.TEXT })] })
 ]);
 
 let PowerSync;
@@ -119,7 +119,7 @@ export const openDatabase = async () => {
   await PowerSync.init();
 
   // Run local statements.
-  await PowerSync.execute('INSERT INTO customers(id, name, email) VALUES(uuid(), ?, ?)', ['Fred', 'fred@example.org']);
+  await PowerSync.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', ['Fred']);
 };
 
 class Connector {
@@ -143,6 +143,7 @@ export const connectPowerSync = async () => {
   await PowerSync.connect(connector);
 };
 
+// Use queries in React Components
 export const CustomerListDisplay = () => {
   const customers = usePowerSyncWatchedQuery('SELECT * from customers');
 
