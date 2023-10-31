@@ -2,13 +2,8 @@ import {
   AbstractPowerSyncDatabase,
   Transaction,
 } from "@journeyapps/powersync-sdk-common";
-import {
-  EncodingType,
-  ATTACHMENT_TABLE,
-  StorageAdapter,
-  AttachmentRecord,
-  AttachmentState,
-} from "./definitions";
+import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from "./Schema";
+import { EncodingType, StorageAdapter } from "./StorageAdapter";
 
 export interface AttachmentQueueOptions {
   powersync: AbstractPowerSyncDatabase;

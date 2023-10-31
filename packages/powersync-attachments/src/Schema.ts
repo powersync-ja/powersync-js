@@ -35,7 +35,7 @@ export class AttachmentTable extends Table {
   constructor(options?: AttachmentTableOptions) {
     super({
       ...options,
-      name: options.name ?? ATTACHMENT_TABLE,
+      name: options?.name ?? ATTACHMENT_TABLE,
       columns: [
         new Column({ name: "filename", type: ColumnType.TEXT }),
         new Column({ name: "local_uri", type: ColumnType.TEXT }),
@@ -43,7 +43,7 @@ export class AttachmentTable extends Table {
         new Column({ name: "size", type: ColumnType.INTEGER }),
         new Column({ name: "media_type", type: ColumnType.TEXT }),
         new Column({ name: "state", type: ColumnType.INTEGER }), // Corresponds to AttachmentState
-        ...(options.additionalColumns ?? []),
+        ...(options?.additionalColumns ?? []),
       ],
     });
   }
