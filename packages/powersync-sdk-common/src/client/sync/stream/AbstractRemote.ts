@@ -39,7 +39,6 @@ export abstract class AbstractRemote {
     const credentials = await this.getCredentials();
     return {
       'content-type': 'application/json',
-      'User-Id': credentials.userID ?? '',
       Authorization: `Token ${credentials.token}}`
     };
   }
