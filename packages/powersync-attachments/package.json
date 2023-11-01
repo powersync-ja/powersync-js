@@ -19,7 +19,7 @@
   "devDependencies": {
   },
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "0.0.2"
+    "@journeyapps/powersync-sdk-common": "0.1.0"
   },
   "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
   "author": "JOURNEYAPPS",
