@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-sdk-common",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

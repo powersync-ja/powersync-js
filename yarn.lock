@@ -2141,6 +2141,19 @@
   dependencies:
     "@journeyapps/powersync-sdk-common" "^0.0.1"
 
+"@journeyapps/powersync-sdk-common@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@journeyapps/powersync-sdk-common/-/powersync-sdk-common-0.0.2.tgz#2a7073f21491e85b4bb434c46b9833f5401579bd"
+  integrity sha512-J90yVpv1L+zmVy8PnMCo1KMur9Zq1IwNngyuhais2rmOIMzZzMzTE6sdcUlioq/cphI0wOagUEXcyE8+iLbptA==
+  dependencies:
+    async-mutex "^0.4.0"
+    can-ndjson-stream "^1.0.2"
+    event-iterator "^2.0.0"
+    js-logger "^1.6.1"
+    lodash "^4.17.21"
+    object-hash "^3.0.0"
+    uuid "^3.0.0"
+
 "@journeyapps/powersync-sdk-common@^0.0.1", "@journeyapps/powersync-sdk-common@^0.0.1-alpha.0":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@journeyapps/powersync-sdk-common/-/powersync-sdk-common-0.0.1.tgz#8ff1a440a91ef7bbc488a1b3752cc344f4a6ee35"
@@ -2168,10 +2181,10 @@
   resolved "https://registry.yarnpkg.com/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.1-alpha.0.tgz#3831e39f9ed061a69bb1455ecdb033a168deae69"
   integrity sha512-iCTmP5jeC0NSklsy5yZtTPsqlbS92m/ATeeGY2awjR0odHUTxYKk0gDtlsAfwpi3Xe/M1ihVwKQXOJxzLwdc7w==
 
-"@journeyapps/react-native-quick-sqlite@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.2.tgz#a6bb13de4446a11163d4dca441928f187f7ef859"
-  integrity sha512-5kYfBCHKr8qNdgxTFces6huXeigeTpkfcVMSjuZgPW+4ljHsH7brdocvBKmx8iHz2Q7pZ7cIyV0RZ0oz/htnLA==
+"@journeyapps/react-native-quick-sqlite@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.1.0.tgz#51f38f04c477cd8f457465aec48d097d7df85011"
+  integrity sha512-uF1R2RGFXhuY1vvjABAR47kuUSATJmf4RWLmTBHtBa8pLkPh/DKqbvCGhO9lsCC8JDzUfY0+xhsCmnQ4t5trow==
   dependencies:
     lodash "^4.17.21"
 
