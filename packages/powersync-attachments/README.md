@@ -4,7 +4,6 @@ A [PowerSync](https://powersync.co) library to manage attachments in TypeScript 
 
 Note: This package is currently in a beta release.
 
-# Usage
 
 ## Installation
 
@@ -18,13 +17,13 @@ yarn add @journeyapps/powersync-attachments
 pnpm install @journeyapps/powersync-attachments
 ```
 
-## API
-
-### Implement an `AttachmentQueue`
+## Usage
 
 The `AttachmentQueue` class is used to manage and sync attachments in your app.
 
-In this example we are capturing photos as part of an inspection workflow. Here is the schema for the `checklist` table:
+In this example we are capturing photos as part of an inspection workflow. 
+
+Here is the schema for the `checklist` table:
 
 ```typescript
 const AppSchema = new Schema([
@@ -47,10 +46,19 @@ const AppSchema = new Schema([
 ]);
 ```
 
-1. Implement a new class `AttachmentQueue` that extends `AbstractAttachmentQueue` from `@journeyapps/powersync-attachments`.
-2. Implement the `attachmentIds` AsyncIterator method to return an array of `string` values of IDs that relate to attachments in your app. 
- 
-We use `PowerSync`'s watch query to return the all IDs of photos that have been captured as part of an inspection, and map them to an array of `string` values.
+### Steps to implement `AttachmentQueue`
+
+1. Create a new class `AttachmentQueue` that extends `AbstractAttachmentQueue` from `@journeyapps/powersync-attachments`.
+```typescript
+import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
+
+export class AttachmentQueue extends AbstractAttachmentQueue {
+  
+}
+```
+
+2. Implement `attachmentIds`, an `AsyncIterator` method to return an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app. 
+In this example, we query all photos that have been captured as part of an inspection and map them to an array of `string` values.
 
 ```typescript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
@@ -67,7 +75,9 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 }
 ```
 
-3. Implement `newAttachmentRecord` to return an object that represents the attachment record in your app. In this example we always work with JPEG images, but you can use any media type that is supported by your app and storage solution.
+3. Implement `newAttachmentRecord` to return an object that represents the attachment record in your app. 
+In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. 
+Note in this example we are setting the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
 
 ```typescript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
@@ -118,9 +128,10 @@ The default columns in the `AttachmentTable` are:
 | `timestamp`  | `INTEGER` | The timestamp of last update to the attachment record             |
 | `size`       | `INTEGER` | The size of the attachment in bytes                               |
 
-5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`. For the specifications about what must be implemented in `StorageAdapter`, please refer to its interface definition.
+5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`.
+See the `StorageAdapter` interface definition [here](./src/StorageAdapter.ts).
 
-6. Instantiate you `AttachmentQueue` and call `init()` to start syncing attachments. (Example below uses Supabase Storage)
+6. Finally, create a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage
 
 ```typescript
 this.storage = this.supabaseConnector.storage;
