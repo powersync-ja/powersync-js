@@ -16,7 +16,10 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
-  "repository": "https://github.com/powersync-ja/powersync-react-native-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "bugs": {
