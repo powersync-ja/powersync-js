@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 0.1.1
+
+### Patch Changes
+
+- 2032643: Fix `Table.createLocalOnly` to not also be `insertOnly`
+
 ## 0.1.0
 
 ### Minor Changes

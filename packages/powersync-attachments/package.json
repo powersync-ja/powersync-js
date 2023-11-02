@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-attachments",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -16,10 +16,9 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "0.1.0"
+    "@journeyapps/powersync-sdk-common": "0.1.1"
   },
   "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
   "author": "JOURNEYAPPS",

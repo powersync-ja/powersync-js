@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-sdk-react-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@journeyapps/powersync-react": "0.1.0",
-    "@journeyapps/powersync-sdk-common": "0.1.0",
+    "@journeyapps/powersync-sdk-common": "0.1.1",
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
