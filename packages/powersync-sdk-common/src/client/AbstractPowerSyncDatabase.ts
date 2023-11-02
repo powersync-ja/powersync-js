@@ -71,6 +71,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected initialized: Promise<void>;
 
+  /**
+   * Initializes PowerSync
+   */
+  public init: () => Promise<void>;
+
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
     this.currentStatus = null;
@@ -78,6 +83,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.sdkVersion = '';
+    // This ensures the `initialized` promise is pending even before `init` is called
+    this.initialized = new Promise((resolve, reject) => {
+      this.init = async () => {
+        try {
+          resolve(await this.initFn());
+        } catch (ex) {
+          reject(ex);
+        }
+      };
+    });
   }
 
   get schema() {
@@ -99,15 +114,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
 
   abstract _init(): Promise<void>;
-  async init() {
-    this.initialized = (async () => {
-      await this._init();
-      await this.bucketStorageAdapter.init();
-      await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
-      const version = await this.options.database.execute('SELECT powersync_rs_version()');
-      this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
-    })();
-    await this.initialized;
+
+  /**
+   * This performs the total initialization process.
+   */
+  private async initFn() {
+    await this._init();
+    await this.bucketStorageAdapter.init();
+    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    const version = await this.options.database.execute('SELECT powersync_rs_version()');
+    this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
   }
 
   /**
