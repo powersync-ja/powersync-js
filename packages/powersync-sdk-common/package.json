@@ -13,7 +13,10 @@
   "files": [
     "lib"
   ],
-  "repository": "https://github.com/powersync-ja/powersync-react-native-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+  },
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
   },
