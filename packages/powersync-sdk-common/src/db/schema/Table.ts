@@ -19,7 +19,7 @@ export class Table {
   protected options: TableOptions;
 
   static createLocalOnly(options: TableOptions) {
-    return new Table({ ...options, localOnly: true, insertOnly: true });
+    return new Table({ ...options, localOnly: true, insertOnly: false });
   }
 
   static createInsertOnly(options: TableOptions) {
