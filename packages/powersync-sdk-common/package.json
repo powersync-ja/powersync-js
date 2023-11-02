@@ -13,9 +13,9 @@
   "files": [
     "lib"
   ],
-  "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
+  "repository": "https://github.com/powersync-ja/powersync-react-native-sdk",
   "bugs": {
-    "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "scripts": {

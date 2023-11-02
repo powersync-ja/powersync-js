@@ -30,3 +30,6 @@ jobs:
 
       - name: Build
         run: yarn build:packages
+
+      - name: Test
+        run: tsc --version
