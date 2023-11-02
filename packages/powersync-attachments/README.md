@@ -12,20 +12,22 @@ Note: This package is currently in a beta release.
 yarn add @journeyapps/powersync-attachments
 ```
 
-**pnpm**
+**npm**
 ```bash
-pnpm install @journeyapps/powersync-attachments
+npm install @journeyapps/powersync-attachments
 ```
 
 ## Usage
 
 The `AttachmentQueue` class is used to manage and sync attachments in your app.
 
-In this example we are capturing photos as part of an inspection workflow. 
+### Example
 
-Here is the schema for the `checklist` table:
+In this example, the user captures photos when checklist item are be completed as part of an Inspection workflow. 
 
-```typescript
+The schema for the `checklist` table:
+
+```javascript
 const AppSchema = new Schema([
   new Table({
     name: 'checklists',
@@ -46,10 +48,10 @@ const AppSchema = new Schema([
 ]);
 ```
 
-### Steps to implement `AttachmentQueue`
+### Steps to implement
 
 1. Create a new class `AttachmentQueue` that extends `AbstractAttachmentQueue` from `@journeyapps/powersync-attachments`.
-```typescript
+```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
 export class AttachmentQueue extends AbstractAttachmentQueue {
@@ -58,13 +60,14 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 ```
 
 2. Implement `attachmentIds`, an `AsyncIterator` method to return an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app. 
-In this example, we query all photos that have been captured as part of an inspection and map them to an array of `string` values.
 
-```typescript
+    In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
+
+```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
 export class AttachmentQueue extends AbstractAttachmentQueue {
-  async *attachmentIds(): AsyncIterable<string[]> {
+  async *attachmentIds() {
     for await (const result of this.powersync.watch(
       `SELECT photo_id as id FROM checklists WHERE photo_id IS NOT NULL`,
       []
@@ -76,16 +79,15 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 ```
 
 3. Implement `newAttachmentRecord` to return an object that represents the attachment record in your app. 
-In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. 
-Note in this example we are setting the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
+    
+    In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. Note: we are set the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
 
-```typescript
+```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
 export class AttachmentQueue extends AbstractAttachmentQueue {
   // ...
-  
-   async newAttachmentRecord(record?: Partial<AttachmentRecord>): Promise<AttachmentRecord> {
+   async newAttachmentRecord(record) {
       const photoId = record?.id ?? uuid();
       const filename = record?.filename ?? `${photoId}.jpg`;
       return {
@@ -101,7 +103,7 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 
 4. Add an `AttachmentTable` to your app's PowerSync Schema:
 
-```typescript
+```javascript
 import { AttachmentTable } from '@journeyapps/powersync-attachments';
 
 const AppSchema = new Schema([
@@ -110,14 +112,14 @@ const AppSchema = new Schema([
 ]);
 ```
 
-The `AttachmentTable` can optionally be configured with the following options, in addition to `Table` options: 
+In addition to `Table` options, the `AttachmentTable` can optionally be configured with the following options: 
 
-| Option              | Description                                                                          | Default                       |
-|---------------------|--------------------------------------------------------------------------------------|-------------------------------|
-| `name`              | The name of the table                                                                | `attachments`                 |
-| `additionalColumns` | An array of addition `Column` objects that added to the default columns in the table | See below for default columns |
+| Option              | Description                                                                     | Default                       |
+|---------------------|---------------------------------------------------------------------------------|-------------------------------|
+| `name`              | The name of the table                                                           | `attachments`                 |
+| `additionalColumns` | An array of addition `Column` objects added to the default columns in the table | See below for default columns |
 
-The default columns in the `AttachmentTable` are:
+The default columns in `AttachmentTable`:
 
 | Column Name  | Type      | Description                                                       |
 |--------------|-----------|-------------------------------------------------------------------|
@@ -131,9 +133,10 @@ The default columns in the `AttachmentTable` are:
 5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`.
 See the `StorageAdapter` interface definition [here](./src/StorageAdapter.ts).
 
-6. Finally, create a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage
 
-```typescript
+6. Instantiate a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage.
+
+```javascript
 this.storage = this.supabaseConnector.storage;
 this.powersync = factory.getInstance();
 
@@ -142,14 +145,37 @@ this.attachmentQueue = new AttachmentQueue({
    storage: this.storage
 });
 
+// Initialize and connect PowerSync ...
+// Then initialize the attachment queue
 await this.attachmentQueue.init();
+```
+
+7. Finally, to create an attachment and add it to the queue, call `saveToQueue()`. 
+    
+    In our example we added a `savePhoto()` method to our `AttachmentQueue` class, that does this:
+
+```javascript
+
+export class AttachmentQueue extends AbstractAttachmentQueue {
+  // ...
+  async savePhoto(base64Data) {
+    const photoAttachment = await this.newAttachmentRecord();
+    photoAttachment.local_uri = this.getLocalUri(photoAttachment.filename);
+    await this.storage.writeFile(photoAttachment.local_uri, base64Data, { encoding: 'base64' });
+
+    return this.saveToQueue(photoAttachment);
+  }
+
+}
 ```
 
 # Implementation details
 
-## Attachment States
+## Attachment State
 
-The `AttachmentQueue` class manages attachments in your app by tracking their state. The state of an attachment can be one of the following:
+The `AttachmentQueue` class manages attachments in your app by tracking their state. 
+
+The state of an attachment can be one of the following:
 
 | State             | Description                                                                   |
 |-------------------|-------------------------------------------------------------------------------|
@@ -162,7 +188,7 @@ The `AttachmentQueue` class manages attachments in your app by tracking their st
 ## Initial sync
 
 Upon initializing the `AttachmentQueue`, an initial sync of attachments will take place if the `performInitialSync` is set to true. 
-Any attachment record with `id` in first set of IDs retrieved from the watch query will be marked as `QUEUED_SYNC`, and these records will be rechecked to see if they need to be uploaded or downloaded.
+Any `AttachmentRecord` with `id` in first set of IDs retrieved from the watch query will be marked as `QUEUED_SYNC`, and these records will be rechecked to see if they need to be uploaded or downloaded.
 
 ## Syncing attachments
 
@@ -179,24 +205,25 @@ By default, this is every 30 seconds, but can be configured by setting `syncInte
 
 ### Downloading
 
-- An `AttachmentRecord` is created or updated with QUEUED_DOWNLOAD state.
+- An `AttachmentRecord` is created or updated with `QUEUED_DOWNLOAD` state.
 - The watch query adds the `id` into a queue of IDs to download and triggers the download process
 - This checks whether the photo is already on the device and if so, skips downloading.
 - If the photo is not on the device, it is downloaded from cloud storage.
 - Writes file to the user's local storage.
-- If this is successful, update the AttachmentRecord state to `SYNCED`.
+- If this is successful, update the `AttachmentRecord`  state to `SYNCED`.
 - If any of these fail, the download is retried in the next sync trigger.
-
-### Expire Cache
-
-When PowerSync removes a records (as a result of coming back online or conflict resolution):
-- Any associated `AttachmentRecord` is orphaned.
-- On the next sync trigger, the `AttachmentQueue` sets all records that are orphaned to `ARCHIVED` state.
-- By default, the `AttachmentQueue` only keeps the last `100` attachment records and then expires the rest. (This can be configured by setting `cacheLimit` in the `AttachmentQueue` constructor options).
 
 ### Deleting attachments
 
-When a list or to-do item is deleted by a user action or cache expiration:
+When an attachment is deleted by a user action or cache expiration:
 - Related `AttachmentRecord` is removed from attachments table.
 - Local file (if exists) is deleted.
 - File on cloud storage is deleted.
+
+### Expire Cache
+
+When PowerSync removes a record, as a result of coming back online or conflict resolution for instance:
+- Any associated `AttachmentRecord` is orphaned.
+- On the next sync trigger, the `AttachmentQueue` sets all records that are orphaned to `ARCHIVED` state.
+- By default, the `AttachmentQueue` only keeps the last `100` attachment records and then expires the rest. 
+- This can be configured by setting `cacheLimit` in the `AttachmentQueue` constructor options.
