@@ -178,5 +178,13 @@ Uncomment the following from
       //     });
       // client.addPlugin(networkFlipperPlugin);
 ```
+
+Disable the dev client network inspector
+`android/gradle.properties`
+```
+# Enable network inspector
+EX_DEV_CLIENT_NETWORK_INSPECTOR=false
+```
+
 ## iOS
 Testing offline mode on an iOS simulator by disabling the host machine's entire internet connection will cause the device to remain offline even after the internet connection has been restored. This issue seems to affect all network requests in an application.
