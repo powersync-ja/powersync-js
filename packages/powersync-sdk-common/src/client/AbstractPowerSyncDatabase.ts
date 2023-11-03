@@ -35,7 +35,9 @@ export interface WatchOnChangeEvent {
   changedTables: string[];
 }
 
-export interface PowerSyncDBListener extends StreamingSyncImplementationListener {}
+export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
+  initialized: () => void;
+}
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
@@ -71,11 +73,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected initialized: Promise<void>;
 
-  /**
-   * Initializes PowerSync
-   */
-  public init: () => Promise<void>;
-
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
     this.currentStatus = null;
@@ -83,15 +80,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.sdkVersion = '';
-    // This ensures the `initialized` promise is pending even before `init` is called
-    this.initialized = new Promise((resolve, reject) => {
-      this.init = async () => {
-        try {
-          resolve(await this.initFn());
-        } catch (ex) {
-          reject(ex);
+    /**
+     * This will resolve once the DB has been initialized
+     * This allows methods such as `execute` to await initialization before
+     * executing statements
+     */
+    this.initialized = new Promise((resolve) => {
+      const l = this.registerListener({
+        initialized: () => {
+          resolve();
+          l?.();
         }
-      };
+      });
     });
   }
 
@@ -118,12 +118,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * This performs the total initialization process.
    */
-  private async initFn() {
+  async init() {
     await this._init();
     await this.bucketStorageAdapter.init();
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    this.iterateListeners((cb) => cb.initialized?.());
   }
 
   /**
