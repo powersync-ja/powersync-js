@@ -25,7 +25,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       this.iterateListeners((cb) => cb.tablesUpdated?.(update));
     });
 
-    const topLevelUtils = this.generateDBHelpers({ execute: this.baseDB.execute });
+    const topLevelUtils = this.generateDBHelpers({ execute: this.readOnlyExecute });
     this.getAll = topLevelUtils.getAll;
     this.getOptional = topLevelUtils.getOptional;
     this.get = topLevelUtils.get;
@@ -53,6 +53,16 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
 
   execute(query: string, params?: any[]) {
     return this.baseDB.execute(query, params);
+  }
+
+  /**
+   * This provides a top-level read only execute method which is executed inside a read lock.
+   * This is necessary since the high level `execute` method uses a write-lock under
+   * the hood. Helper methods such as `get`, `getAll` and `getOptional` are read only,
+   * and should use this method.
+   */
+  private readOnlyExecute(sql: string, params?: any[]) {
+    return this.readLock(ctx => ctx.execute(sql, params));
   }
 
   /**
