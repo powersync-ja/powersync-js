@@ -27,9 +27,6 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Test
-        run: tsc --version
-
       - name: Build
         run: yarn build:packages
 
