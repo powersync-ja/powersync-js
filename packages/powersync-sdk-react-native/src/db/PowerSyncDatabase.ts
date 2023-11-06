@@ -24,7 +24,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {
-        await this.initialized;
+        await this.waitForReady();
         await connector.uploadData(this);
       },
       retryDelayMs: this.options.retryDelay
