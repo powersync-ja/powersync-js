@@ -1,5 +1,15 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 0.1.2
+
+### Patch Changes
+
+- 2c0a54f: Fixed: `get`, `getAll` and `getOptional` should execute inside a readLock for concurrency
+- Updated dependencies [280ab96]
+- Updated dependencies [961f544]
+  - @journeyapps/powersync-sdk-common@0.1.2
+  - @journeyapps/powersync-react@0.1.1
+
 ## 0.1.1
 
 ### Patch Changes
