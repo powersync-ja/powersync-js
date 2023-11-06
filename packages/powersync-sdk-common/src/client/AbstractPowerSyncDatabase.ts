@@ -406,7 +406,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
-    yield await this.execute(sql, parameters);
+    yield await this.executeReadOnly(sql, parameters);
 
     const resolvedTables = options?.tables ?? [];
     if (!options?.tables) {
@@ -425,7 +425,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       ...(options ?? {}),
       tables: resolvedTables
     })) {
-      yield await this.execute(sql, parameters);
+      yield await this.executeReadOnly(sql, parameters);
     }
   }
 
@@ -475,5 +475,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       return () => dispose();
     });
+  }
+
+  private async executeReadOnly(sql: string, params: any[]) {
+    await this.initialized;
+    return this.database.readLock((tx) => tx.execute(sql, params));
   }
 }

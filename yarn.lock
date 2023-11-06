@@ -2066,10 +2066,17 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@journeyapps/react-native-quick-sqlite@0.0.0-dev-20231103124824":
-  version "0.0.0-dev-20231103124824"
-  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.0.0-dev-20231103124824.tgz#c6e3eaa8a568471735a68e0459fb5e6b3541a7cc"
-  integrity sha512-wBXC0ti3byegZUnCiA4B9Y7GAfLLdyCwoxmPcHQm0cdg3puicZSQNFcZQ+8uVuQUUDhTZpFjXqPaO/AgHwdzNQ==
+"@journeyapps/react-native-quick-sqlite@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.1.0.tgz#51f38f04c477cd8f457465aec48d097d7df85011"
+  integrity sha512-uF1R2RGFXhuY1vvjABAR47kuUSATJmf4RWLmTBHtBa8pLkPh/DKqbvCGhO9lsCC8JDzUfY0+xhsCmnQ4t5trow==
+  dependencies:
+    lodash "^4.17.21"
+
+"@journeyapps/react-native-quick-sqlite@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.1.1.tgz#94145dba13b177f6aa42552754e56ecc3b2e7f17"
+  integrity sha512-UNoN6aoYOGYtZ+44S/gwP6OVgwEqY4OdVKDugZpYkPeyXi6DVdjWnZ61XlmxY/j2uDMLzvoqpSHjlmrSukpl2Q==
   dependencies:
     lodash "^4.17.21"
     uuid "3.4.0"
