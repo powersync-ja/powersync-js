@@ -1,5 +1,12 @@
 # @journeyapps/powersync-sdk-common
 
+## 0.1.2
+
+### Patch Changes
+
+- 280ab96: - Removed `user-id` header from backend connector and remote headers.
+  - Added `waitForReady` method on PowerSyncDatabase client which resolves once initialization is complete.
+
 ## 0.1.1
 
 ### Patch Changes

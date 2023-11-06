@@ -1,5 +1,13 @@
 # @journeyapps/powersync-react
 
+## 0.1.1
+
+### Patch Changes
+
+- 961f544: Fixed: Added correct typings for React hooks. Previously hooks would return `any`.
+- Updated dependencies [280ab96]
+  - @journeyapps/powersync-sdk-common@0.1.2
+
 ## 0.1.0
 
 ### Minor Changes
