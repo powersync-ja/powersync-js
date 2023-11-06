@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 0.1.3
+
+### Patch Changes
+
+- ba982eb: Fixed regression where `waitForReady` would not trigger or resolve if not invoked before `init`
+
 ## 0.1.2
 
 ### Patch Changes
