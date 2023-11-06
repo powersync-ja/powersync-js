@@ -25,7 +25,11 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       this.iterateListeners((cb) => cb.tablesUpdated?.(update));
     });
 
-    const topLevelUtils = this.generateDBHelpers({ execute: this.baseDB.execute });
+    const topLevelUtils = this.generateDBHelpers({
+      // Arrow function binds `this` for use in readOnlyExecute
+      execute: (sql: string, params?: any[]) => this.readOnlyExecute(sql, params)
+    });
+    // Only assigning get helpers
     this.getAll = topLevelUtils.getAll;
     this.getOptional = topLevelUtils.getOptional;
     this.get = topLevelUtils.get;
@@ -56,6 +60,16 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   }
 
   /**
+   * This provides a top-level read only execute method which is executed inside a read-lock.
+   * This is necessary since the high level `execute` method uses a write-lock under
+   * the hood. Helper methods such as `get`, `getAll` and `getOptional` are read only,
+   * and should use this method.
+   */
+  private readOnlyExecute(sql: string, params?: any[]) {
+    return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
+  }
+
+  /**
    * Adds DB get utils to lock contexts and transaction contexts
    * @param tx
    * @returns
@@ -68,7 +82,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       /**
        *  Execute a read-only query and return results
        */
-      async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
+      getAll: async <T>(sql: string, parameters?: any[]): Promise<T[]> => {
         const res = await tx.execute(sql, parameters);
         return res.rows?._array ?? [];
       },
@@ -76,7 +90,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       /**
        * Execute a read-only query and return the first result, or null if the ResultSet is empty.
        */
-      async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+      getOptional: async <T>(sql: string, parameters?: any[]): Promise<T | null> => {
         const res = await tx.execute(sql, parameters);
         return res.rows?.item(0) ?? null;
       },
@@ -84,7 +98,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       /**
        * Execute a read-only query and return the first result, error if the ResultSet is empty.
        */
-      async get<T>(sql: string, parameters?: any[]): Promise<T> {
+      get: async <T>(sql: string, parameters?: any[]): Promise<T> => {
         const res = await tx.execute(sql, parameters);
         const first = res.rows?.item(0);
         if (!first) {

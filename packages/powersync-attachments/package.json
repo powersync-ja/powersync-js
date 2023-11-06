@@ -20,11 +20,14 @@
   "dependencies": {
     "@journeyapps/powersync-sdk-common": "0.1.1"
   },
-  "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "bugs": {
-    "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
   }
 }

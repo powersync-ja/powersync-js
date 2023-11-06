@@ -16,21 +16,25 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
-  "repository": "https://github.com/journeyapps/powersync-react-native-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/journeyapps/powersync-react-native-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "^0.1.0"
+    "@journeyapps/powersync-sdk-common": "0.1.1"
   },
   "peerDependencies": {
     "react": "*"
   },
   "devDependencies": {
+    "@types/react": "^18.2.34",
     "react": "18.2.0",
-    "typescript": "^4.1.3"
+    "typescript": "^5.1.3"
   }
 }

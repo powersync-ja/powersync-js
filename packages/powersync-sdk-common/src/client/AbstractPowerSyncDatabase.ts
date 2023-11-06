@@ -35,7 +35,9 @@ export interface WatchOnChangeEvent {
   changedTables: string[];
 }
 
-export interface PowerSyncDBListener extends StreamingSyncImplementationListener {}
+export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
+  initialized: () => void;
+}
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
@@ -61,6 +63,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected static transactionMutex: Mutex = new Mutex();
 
   closed: boolean;
+  ready: boolean;
 
   currentStatus?: SyncStatus;
   syncStreamImplementation?: AbstractStreamingSyncImplementation;
@@ -69,14 +72,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private abortController: AbortController | null;
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
-  protected initialized: Promise<void>;
+  protected _isReadyPromise: Promise<void> | null;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    this.currentStatus = null;
-    this.closed = true;
-    this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this._isReadyPromise = null;
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
+    this.closed = true;
+    this.currentStatus = null;
+    this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this.ready = false;
     this.sdkVersion = '';
   }
 
@@ -98,16 +103,40 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
 
+  /**
+   * @returns A promise which will resolve once initialization is completed.
+   */
+  async waitForReady(): Promise<void> {
+    if (this.ready) {
+      return;
+    }
+
+    return (
+      this._isReadyPromise ||
+      (this._isReadyPromise = new Promise((resolve) => {
+        const l = this.registerListener({
+          initialized: () => {
+            this.ready = true;
+            resolve();
+            l?.();
+          }
+        });
+      }))
+    );
+  }
+
   abstract _init(): Promise<void>;
+
+  /**
+   * This performs the total initialization process.
+   */
   async init() {
-    this.initialized = (async () => {
-      await this._init();
-      await this.bucketStorageAdapter.init();
-      await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
-      const version = await this.options.database.execute('SELECT powersync_rs_version()');
-      this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
-    })();
-    await this.initialized;
+    await this._init();
+    await this.bucketStorageAdapter.init();
+    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    const version = await this.options.database.execute('SELECT powersync_rs_version()');
+    this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    this.iterateListeners((cb) => cb.initialized?.());
   }
 
   /**
@@ -117,7 +146,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // close connection if one is open
     await this.disconnect();
 
-    await this.initialized;
+    await this.waitForReady();
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
@@ -175,7 +204,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * must be constructed.
    */
   async close() {
-    await this.initialized;
+    await this.waitForReady();
 
     await this.disconnect();
     this.database.close();
@@ -305,7 +334,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a statement and optionally return results
    */
   async execute(sql: string, parameters?: any[]) {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.execute(sql, parameters);
   }
 
@@ -313,7 +342,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *  Execute a read-only query and return results
    */
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.getAll(sql, parameters);
   }
 
@@ -321,7 +350,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a read-only query and return the first result, or null if the ResultSet is empty.
    */
   async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.getOptional(sql, parameters);
   }
 
@@ -329,7 +358,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a read-only query and return the first result, error if the ResultSet is empty.
    */
   async get<T>(sql: string, parameters?: any[]): Promise<T> {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.get(sql, parameters);
   }
 
@@ -339,7 +368,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * In most cases, [readTransaction] should be used instead.
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
-    await this.initialized;
+    await this.waitForReady();
     return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, () => callback(this.database));
   }
 
@@ -348,7 +377,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * In most cases, [writeTransaction] should be used instead.
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
-    await this.initialized;
+    await this.waitForReady();
     return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, async () => {
       const res = await callback(this.database);
       _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
@@ -360,7 +389,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
   ): Promise<T> {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.readTransaction(
       async (tx) => {
         const res = await callback({ ...tx });
@@ -375,7 +404,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
   ): Promise<T> {
-    await this.initialized;
+    await this.waitForReady();
     return this.database.writeTransaction(
       async (tx) => {
         const res = await callback(tx);
@@ -389,7 +418,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
-    yield await this.execute(sql, parameters);
+    yield await this.executeReadOnly(sql, parameters);
 
     const resolvedTables = options?.tables ?? [];
     if (!options?.tables) {
@@ -408,7 +437,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       ...(options ?? {}),
       tables: resolvedTables
     })) {
-      yield await this.execute(sql, parameters);
+      yield await this.executeReadOnly(sql, parameters);
     }
   }
 
@@ -458,5 +487,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       return () => dispose();
     });
+  }
+
+  private async executeReadOnly(sql: string, params: any[]) {
+    await this.waitForReady();
+    return this.database.readLock((tx) => tx.execute(sql, params));
   }
 }

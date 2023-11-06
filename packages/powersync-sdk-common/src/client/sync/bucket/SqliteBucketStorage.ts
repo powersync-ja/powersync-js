@@ -163,10 +163,6 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
    */
   private async updateObjectsFromBuckets(checkpoint: Checkpoint) {
     return this.writeTransaction(async (tx) => {
-      /**
-       * It's best to execute this on the same thread
-       * https://github.com/journeyapps/powersync-sqlite-core/blob/40554dc0e71864fe74a0cb00f1e8ca4e328ff411/crates/sqlite/sqlite/sqlite3.h#L2578
-       */
       const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
         'sync_local',
         ''
