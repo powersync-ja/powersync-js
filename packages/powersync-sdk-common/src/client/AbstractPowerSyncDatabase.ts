@@ -76,11 +76,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    this.currentStatus = null;
-    this.closed = true;
-    this.ready = false;
-    this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this._isReadyPromise = null;
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
+    this.closed = true;
+    this.currentStatus = null;
+    this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this.ready = false;
     this.sdkVersion = '';
   }
 
