@@ -72,17 +72,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private abortController: AbortController | null;
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
-  protected _isReadyPromise: Promise<void> | null;
+  protected _isReadyPromise: Promise<void>;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    this._isReadyPromise = null;
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = true;
     this.currentStatus = null;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this.ready = false;
     this.sdkVersion = '';
+    // Start async init
+    this._isReadyPromise = this.initialize();
   }
 
   get schema() {
@@ -111,32 +112,35 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return;
     }
 
-    return (
-      this._isReadyPromise ||
-      (this._isReadyPromise = new Promise((resolve) => {
-        const l = this.registerListener({
-          initialized: () => {
-            this.ready = true;
-            resolve();
-            l?.();
-          }
-        });
-      }))
-    );
+    await this._isReadyPromise;
   }
 
-  abstract _init(): Promise<void>;
+  /**
+   * Allows for extended implementations to execute custom initialization
+   * logic as part of the total init process
+   */
+  abstract _initialize(): Promise<void>;
 
   /**
-   * This performs the total initialization process.
+   * Entry point for executing initialization logic.
+   * This is to be automatically executed in the constructor.
    */
-  async init() {
-    await this._init();
+  protected async initialize() {
+    await this._initialize();
     await this.bucketStorageAdapter.init();
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  /**
+   * Wait for initialization to complete.
+   * While initializing is automatic, this helps to catch and report initialization errors.
+   */
+  async init() {
+    return this.waitForReady();
   }
 
   /**
