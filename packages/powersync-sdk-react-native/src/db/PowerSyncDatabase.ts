@@ -9,7 +9,7 @@ import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  async _init(): Promise<void> {}
+  async _initialize(): Promise<void> {}
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
