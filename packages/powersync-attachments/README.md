@@ -23,7 +23,7 @@ The `AttachmentQueue` class is used to manage and sync attachments in your app.
 
 ### Example
 
-In this example, the user captures photos when checklist item are be completed as part of an Inspection workflow. 
+In this example, the user captures photos when checklist items are completed as part of an inspection workflow. 
 
 The schema for the `checklist` table:
 
@@ -194,7 +194,8 @@ Any `AttachmentRecord` with `id` in first set of IDs retrieved from the watch qu
 
 The `AttachmentQueue` sets up two watch queries on the `attachments` table, one for records in `QUEUED_UPLOAD` state and one for `QUEUED_DOWNLOAD` state. 
 
-In addition to watching for changes, the `AttachmentQueue` also trigger a sync every few seconds. This will retry any failed uploads/downloads, in particular after the app was offline
+In addition to watching for changes, the `AttachmentQueue` also triggers a sync every few seconds. This will retry any failed uploads/downloads, in particular after the app was offline.
+
 By default, this is every 30 seconds, but can be configured by setting `syncInterval` in the `AttachmentQueue` constructor options, or disabled by setting the interval to `0`.
 
 ### Uploading
