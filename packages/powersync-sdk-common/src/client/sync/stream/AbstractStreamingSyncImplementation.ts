@@ -166,7 +166,8 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         for await (let line of this.streamingSyncRequest(
           {
             buckets: req,
-            include_checksum: true
+            include_checksum: true,
+            raw_data: true
           },
           signal
         )) {
