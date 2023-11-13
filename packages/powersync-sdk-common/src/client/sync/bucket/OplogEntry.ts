@@ -7,7 +7,7 @@ export interface OplogEntryJSON {
   object_type: string;
   object_id: string;
   checksum: number;
-  data: string | object;
+  data: string;
   subkey: string | object;
 }
 
@@ -20,7 +20,7 @@ export class OplogEntry {
       typeof row.subkey == 'string' ? row.subkey : JSON.stringify(row.subkey),
       row.object_type,
       row.object_id,
-      typeof row.data == 'string' ? JSON.parse(row.data) : row.data
+      row.data
     );
   }
 
@@ -31,7 +31,7 @@ export class OplogEntry {
     public subkey: string,
     public object_type?: string,
     public object_id?: string,
-    public data?: Record<string, any>
+    public data?: string
   ) {}
 
   toJSON(): OplogEntryJSON {
@@ -41,7 +41,7 @@ export class OplogEntry {
       object_type: this.object_type,
       object_id: this.object_id,
       checksum: this.checksum,
-      data: JSON.stringify(this.data),
+      data: this.data,
       subkey: JSON.stringify(this.subkey)
     };
   }

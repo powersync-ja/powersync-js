@@ -70,6 +70,11 @@ export interface StreamingSyncRequest {
    * Whether or not to compute a checksum for each checkpoint
    */
   include_checksum: boolean;
+
+  /**
+   * Changes the response to stringified data in each OplogEntry
+   */
+  raw_data: boolean;
 }
 
 export interface StreamingSyncCheckpoint {
