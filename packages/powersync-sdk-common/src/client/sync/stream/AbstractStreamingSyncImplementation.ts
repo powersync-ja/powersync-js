@@ -99,6 +99,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         }
       } catch (ex) {
         this.updateSyncStatus(false);
+        await this.delayRetry();
         this.isUploadingCrud = false;
         break;
       }
@@ -133,7 +134,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         this.logger.error(ex);
         this.updateSyncStatus(false);
         // On error, wait a little before retrying
-        await new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));
+        await this.delayRetry();
       }
     }
   }
@@ -308,5 +309,9 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     if (!_.isEqual(previousValues, takeSnapShot())) {
       this.iterateListeners((cb) => cb.statusChanged?.(new SyncStatus(this.isConnected, this.lastSyncedAt)));
     }
+  }
+
+  private async delayRetry() {
+    return new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));
   }
 }
