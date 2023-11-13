@@ -1,5 +1,12 @@
 # @journeyapps/powersync-sdk-common
 
+## 0.1.4
+
+### Patch Changes
+
+- 80441ca: Added `raw-data:true` to PowerSync instance streaming requests. This aides with server and client side OplogEntry processing.
+- 1b612d7: Fixed streaming sync implementation not delaying CRUD upload retries.
+
 ## 0.1.3
 
 ### Patch Changes
