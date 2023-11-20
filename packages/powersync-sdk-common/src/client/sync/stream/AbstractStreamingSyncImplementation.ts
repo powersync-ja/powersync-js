@@ -89,21 +89,26 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   protected async _uploadAllCrud(): Promise<void> {
-    this.isUploadingCrud = true;
-    while (true) {
-      try {
-        const done = await this.uploadCrudBatch();
-        if (done) {
-          this.isUploadingCrud = false;
-          break;
+    return this.obtainLock({
+      type: LockType.CRUD,
+      callback: async () => {
+        this.isUploadingCrud = true;
+        while (true) {
+          try {
+            const done = await this.uploadCrudBatch();
+            if (done) {
+              this.isUploadingCrud = false;
+              break;
+            }
+          } catch (ex) {
+            this.updateSyncStatus(false);
+            await this.delayRetry();
+            this.isUploadingCrud = false;
+            break;
+          }
         }
-      } catch (ex) {
-        this.updateSyncStatus(false);
-        await this.delayRetry();
-        this.isUploadingCrud = false;
-        break;
       }
-    }
+    });
   }
 
   protected async uploadCrudBatch(): Promise<boolean> {
