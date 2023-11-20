@@ -64,7 +64,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   get lastSyncedAt() {
-    return new Date(this._lastSyncedAt);
+    return this._lastSyncedAt && new Date(this._lastSyncedAt);
   }
 
   protected get logger() {
