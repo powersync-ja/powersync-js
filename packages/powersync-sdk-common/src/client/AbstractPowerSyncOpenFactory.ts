@@ -1,4 +1,4 @@
-import { DBAdapter } from 'src/db/DBAdapter';
+import { DBAdapter } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
 

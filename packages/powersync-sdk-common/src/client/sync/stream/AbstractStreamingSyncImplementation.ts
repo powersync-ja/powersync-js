@@ -49,7 +49,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 };
 
 export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> {
-  protected _lastSyncedAt: Date;
+  protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
 
   private isUploadingCrud: boolean;
@@ -61,6 +61,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
     this.isUploadingCrud = false;
     this._isConnected = false;
+    this._lastSyncedAt = null;
   }
 
   get lastSyncedAt() {
@@ -305,7 +306,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     }
   }
 
-  private updateSyncStatus(connected: boolean, lastSyncedAt?: Date) {
+  protected updateSyncStatus(connected: boolean, lastSyncedAt?: Date) {
     const takeSnapShot = () => [this._isConnected, this._lastSyncedAt?.valueOf()];
 
     const previousValues = takeSnapShot();
