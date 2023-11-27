@@ -34,7 +34,7 @@ export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseO
       }
     }
 
-    return new RNQSDBAdapter(DB);
+    return new RNQSDBAdapter(DB, this.options.dbFilename);
   }
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
