@@ -6,6 +6,7 @@
   "scripts": {
     "clean:packages": "lerna run clean",
     "build:packages": "lerna run build",
+    "docs": "typedoc",
     "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch",
     "release": "yarn build:packages && yarn changeset publish"
   },
@@ -25,6 +26,7 @@
   "dependencies": {},
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
-    "lerna": "7.3.0"
+    "lerna": "7.3.0",
+    "typedoc": "^0.25.3"
   }
 }

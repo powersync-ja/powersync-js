@@ -23,6 +23,7 @@
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "scripts": {
     "build": "tsc -b",
+    "docs": "typedoc --out docs",
     "clean": "rm -rf lib tsconfig.tsbuildinfo"
   },
   "devDependencies": {
