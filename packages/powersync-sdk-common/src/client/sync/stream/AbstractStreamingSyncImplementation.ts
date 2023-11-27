@@ -352,6 +352,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
+      this.syncStatus = updatedStatus;
       this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
     }
   }
