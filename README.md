@@ -22,7 +22,7 @@ After cloning this repo be sure to init the Git submodules
 git submodule init && git submodule update
 ```
 
-This monorepo uses Yarn as it works well with React native.
+This monorepo uses Yarn as it works well with React Native.
 
 Install workspace dependencies
 ```bash
@@ -53,7 +53,7 @@ Merging a PR with Changesets will automatically create a PR with version bumps. 
 
 ## React Native Quick SQLite Development
 
-Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not with with standard `yarn link` commands. Metro does not work well with symlinks https://github.com/facebook/metro/issues/286.
+Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not work with standard `yarn link` commands. Metro does not work well with symlinks https://github.com/facebook/metro/issues/286.
 
 The process of releasing development packages for `@journeyapps/react-native-quick-sqlite` for each change can be tedious and slow. A faster (and hackier) method is to use [mtsl](https://www.npmjs.com/package/mtsl) which will watch and copy the package into this workspace's `node_modules`.
 
