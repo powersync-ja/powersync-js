@@ -351,7 +351,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     const updatedStatus = new SyncStatus({
       connected: options.connected ?? this.syncStatus.connected,
       lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
-      dataFlow: _.merge(this.syncStatus.dataFlowStatus, options.dataFlow ?? {})
+      dataFlow: _.merge(_.clone(this.syncStatus.dataFlowStatus), options.dataFlow ?? {})
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
