@@ -30,7 +30,9 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-      - name: Create Docs
+      - name: Build Docs
+        run: yarn build:docs
+      - name: Combine Docs
         run: yarn docs
       - uses: actions/upload-pages-artifact@v2
         with:
