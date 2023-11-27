@@ -339,7 +339,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
-    return this.database.execute(sql, parameters);
+    const result = await this.database.execute(sql, parameters);
+    _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
+    return result;
   }
 
   /**

@@ -87,7 +87,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   triggerCrudUpload() {
-    if (this.syncStatus.dataFlowStatus.uploading) {
+    if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
       return;
     }
     this._uploadAllCrud();
@@ -233,7 +233,10 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
               this.logger.debug('validated checkpoint', appliedCheckpoint);
               this.updateSyncStatus({
                 connected: true,
-                lastSyncedAt: new Date()
+                lastSyncedAt: new Date(),
+                dataFlow: {
+                  downloading: false
+                }
               });
             }
 
