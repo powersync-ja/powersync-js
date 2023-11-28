@@ -58,7 +58,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
-    this.options = _.merge({ ...DEFAULT_STREAMING_SYNC_OPTIONS }, options);
+    this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
     this.syncStatus = new SyncStatus({
       connected: false,
       lastSyncedAt: null,
