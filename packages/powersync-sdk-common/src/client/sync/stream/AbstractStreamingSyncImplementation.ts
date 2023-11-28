@@ -58,7 +58,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
-    this.options = _.merge(_.clone(DEFAULT_STREAMING_SYNC_OPTIONS), options);
+    this.options = _.merge({ ...DEFAULT_STREAMING_SYNC_OPTIONS }, options);
     this.syncStatus = new SyncStatus({
       connected: false,
       lastSyncedAt: null,
@@ -152,6 +152,15 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   async streamingSync(signal?: AbortSignal): Promise<void> {
+    signal?.addEventListener('abort', () => {
+      this.updateSyncStatus({
+        connected: false,
+        dataFlow: {
+          downloading: false
+        }
+      });
+    });
+
     while (true) {
       try {
         if (signal?.aborted) {
