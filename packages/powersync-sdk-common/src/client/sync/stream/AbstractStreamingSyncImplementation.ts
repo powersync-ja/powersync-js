@@ -213,9 +213,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           signal
         )) {
           // A connection is active and messages are being received
-          this.updateSyncStatus({
-            connected: true
-          });
+          if (!this.syncStatus.connected) {
+            // There is a connection now
+            _.defer(() => this.triggerCrudUpload());
+            this.updateSyncStatus({
+              connected: true
+            });
+          }
 
           if (isStreamingSyncCheckpoint(line)) {
             targetCheckpoint = line.checkpoint;
