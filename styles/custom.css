@@ -1,0 +1,37 @@
+.tsd-kind-icon {
+    display: none;
+}
+
+.tsd-nested-navigation {
+    margin-left: 2rem;
+}
+
+.tsd-accordion-summary {
+    font-weight: bold;
+}
+
+.tsd-accordion-summary h3,
+.tsd-nested-navigation .tsd-accordion-summary,
+.tsd-small-nested-navigation .tsd-accordion-summary {
+    display: flex;
+    align-items: center;
+}
+
+.tsd-accordion-details .tsd-accordion-summary span {
+    font-weight: normal;
+    text-transform: uppercase;
+}
+
+.tsd-nested-navigation .tsd-kind-icon~span,
+.tsd-accordion-details span {
+    color: var(--color-link);
+}
+
+.tsd-nested-navigation a,
+.tsd-accordion-details a {
+    color: var(--color-link);
+}
+
+.tsd-page-navigation ul {
+    padding-left: 1rem;
+}

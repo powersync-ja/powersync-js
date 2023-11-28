@@ -4,7 +4,13 @@
     ],
     "name": "PowerSync React Native SDK Docs",
     "entryPointStrategy": "packages",
-    "includeVersion": false
+    "includeVersion": false,
+    "hideGenerator": true,
+    "navigation": {
+        "includeCategories": false,
+        "includeGroups": true
+    },
+    "customCss": "./styles/custom.css"
     // Potentially useful for debugging
     // "logLevel": "Verbose"
 }
