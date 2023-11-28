@@ -48,6 +48,8 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   logger: Logger.get('PowerSyncStream')
 };
 
+const CRUD_UPLOAD_DEBOUNCE_MS = 1000;
+
 export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> {
   protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
@@ -86,12 +88,16 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     return this.options.adapter.hasCompletedSync();
   }
 
-  triggerCrudUpload() {
-    if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
-      return;
-    }
-    this._uploadAllCrud();
-  }
+  triggerCrudUpload = _.debounce(
+    () => {
+      if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
+        return;
+      }
+      this._uploadAllCrud();
+    },
+    CRUD_UPLOAD_DEBOUNCE_MS,
+    { trailing: true }
+  );
 
   protected async _uploadAllCrud(): Promise<void> {
     return this.obtainLock({
