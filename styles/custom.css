@@ -27,6 +27,10 @@
     color: var(--color-link);
 }
 
+.tsd-filter-visibility .tsd-filter-input span {
+    color: var(--color-text);
+}
+
 .tsd-nested-navigation a,
 .tsd-accordion-details a {
     color: var(--color-link);
