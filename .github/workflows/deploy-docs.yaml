@@ -34,6 +34,11 @@ jobs:
         run: yarn build:packages
       - name: Create Docs
         run: yarn build:docs
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "./docs/build" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs/build
