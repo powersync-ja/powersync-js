@@ -6,7 +6,3 @@ yarn-error.log
 .vscode
 .DS_STORE
 .idea
-docs/docs/attachments-sdk/
-docs/docs/common-sdk/
-docs/docs/react-native-sdk/
-docs/docs/react-sdk/
