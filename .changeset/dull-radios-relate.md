@@ -1,5 +1,5 @@
 ---
-'@journeyapps/powersync-sdk-common': patch
+'@journeyapps/powersync-sdk-common': major
 ---
 
 - The SyncStatus now includes the state of if the connector is uploading or downloading data.
