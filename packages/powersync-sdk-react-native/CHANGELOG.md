@@ -1,5 +1,18 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.0.0
+
+### Major Changes
+
+- c665b3f: Release out of beta to production ready
+
+### Patch Changes
+
+- Updated dependencies [c665b3f]
+- Updated dependencies [c665b3f]
+  - @journeyapps/powersync-sdk-common@1.0.0
+  - @journeyapps/powersync-react@1.0.0
+
 ## 0.1.4
 
 ### Patch Changes
