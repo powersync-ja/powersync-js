@@ -2,8 +2,6 @@
 
 A [PowerSync](https://powersync.co) library to manage attachments in TypeScript and React Native apps.
 
-Note: This package is currently in a beta release.
-
 
 ## Installation
 
