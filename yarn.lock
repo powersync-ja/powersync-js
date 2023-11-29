@@ -2074,6 +2074,14 @@
     lodash "^4.17.21"
     uuid "3.4.0"
 
+"@journeyapps/react-native-quick-sqlite@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-1.0.0.tgz#bb836a82a64705a2be6de27560b1e8816bba19d0"
+  integrity sha512-rQPE5OoMfXCyBBnCNMhkd4pES8zt0CbxiWb6GfZ04ik/cKji14GWBkvw9YZdyutc3zb3CNiexHYP1xZzlQYTQg==
+  dependencies:
+    lodash "^4.17.21"
+    uuid "3.4.0"
+
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"
   resolved "https://registry.npmjs.org/@jridgewell/gen-mapping/-/gen-mapping-0.3.3.tgz#7e02e6eb5df901aaedb08514203b096614024098"
