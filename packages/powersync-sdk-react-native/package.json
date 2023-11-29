@@ -13,7 +13,6 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "docs": "typedoc --out docs",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
