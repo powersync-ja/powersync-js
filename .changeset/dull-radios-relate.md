@@ -2,6 +2,7 @@
 '@journeyapps/powersync-sdk-common': major
 ---
 
+- Bump version out of Beta
 - The SyncStatus now includes the state of if the connector is uploading or downloading data.
 - Crud uploads are now debounced.
 - Crud uploads now are also triggered on `execute` method calls.
