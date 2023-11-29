@@ -2066,46 +2066,18 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@journeyapps/powersync-attachments@0.0.3":
-  version "0.0.3"
-  resolved "https://registry.npmjs.org/@journeyapps/powersync-attachments/-/powersync-attachments-0.0.3.tgz#9c33da5140edafeb5b054ced6a7365869e14633e"
-  integrity sha512-Aq0O7nFRfvxTddxzY4hJ7mWKl2oz/Ube8URZ+EbPo5rjLm3sTV+UKOZ54eS3bBqYjqAgeVUwCSphkWzs00BClQ==
-  dependencies:
-    "@journeyapps/powersync-sdk-common" "0.1.2"
-
-"@journeyapps/powersync-react@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.npmjs.org/@journeyapps/powersync-react/-/powersync-react-0.1.1.tgz#60d12b425a3d16d0f556f89998fb706bc0ba51bf"
-  integrity sha512-bAJDSsyXjE8dbLqGVaKp7UOD09T3piKS1/uYl1j0i/nZjLb1PV5IfBDrO7nzMUj9v38TpT3gW8FitcnnMMCkxw==
-  dependencies:
-    "@journeyapps/powersync-sdk-common" "0.1.2"
-
-"@journeyapps/powersync-sdk-common@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.npmjs.org/@journeyapps/powersync-sdk-common/-/powersync-sdk-common-0.1.2.tgz#309bdb049d2939f05a06d20ab526de39a8539895"
-  integrity sha512-lQExqszNY7bK8HYlNDDsO2mtK2yb3mRAQPVOSMsgo1ssQmxMP9RGdII+HvPkEIprcEkmNogS8AhY6QN/U7wq8w==
-  dependencies:
-    async-mutex "^0.4.0"
-    can-ndjson-stream "^1.0.2"
-    event-iterator "^2.0.0"
-    js-logger "^1.6.1"
-    lodash "^4.17.21"
-    object-hash "^3.0.0"
-    uuid "^3.0.0"
-
-"@journeyapps/powersync-sdk-react-native@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.npmjs.org/@journeyapps/powersync-sdk-react-native/-/powersync-sdk-react-native-0.1.2.tgz#8f44e37e9bf5397228c0ca8c09770c6919795ea8"
-  integrity sha512-SA3qdRQOizcYyOzeGPaH838Kr+jSmEU+GcOo8Ze9u6gsY6zazwQyyCUJGqOgyMqnOTXGoX7HGNXXacVenLbLkA==
-  dependencies:
-    "@journeyapps/powersync-react" "0.1.1"
-    "@journeyapps/powersync-sdk-common" "0.1.2"
-    async-lock "^1.4.0"
-
 "@journeyapps/react-native-quick-sqlite@0.1.1":
   version "0.1.1"
   resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-0.1.1.tgz#94145dba13b177f6aa42552754e56ecc3b2e7f17"
   integrity sha512-UNoN6aoYOGYtZ+44S/gwP6OVgwEqY4OdVKDugZpYkPeyXi6DVdjWnZ61XlmxY/j2uDMLzvoqpSHjlmrSukpl2Q==
+  dependencies:
+    lodash "^4.17.21"
+    uuid "3.4.0"
+
+"@journeyapps/react-native-quick-sqlite@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@journeyapps/react-native-quick-sqlite/-/react-native-quick-sqlite-1.0.0.tgz#bb836a82a64705a2be6de27560b1e8816bba19d0"
+  integrity sha512-rQPE5OoMfXCyBBnCNMhkd4pES8zt0CbxiWb6GfZ04ik/cKji14GWBkvw9YZdyutc3zb3CNiexHYP1xZzlQYTQg==
   dependencies:
     lodash "^4.17.21"
     uuid "3.4.0"

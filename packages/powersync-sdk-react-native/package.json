@@ -27,7 +27,7 @@
   },
   "homepage": "https://docs.powersync.co/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "0.1.1",
+    "@journeyapps/react-native-quick-sqlite": "^1.0.0",
     "base-64": "^1.0.0",
     "react": "*",
     "react-native": "*",
@@ -44,7 +44,7 @@
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "0.1.1",
+    "@journeyapps/react-native-quick-sqlite": "^1.0.0",
     "@types/async-lock": "^1.4.0",
     "react-native": "0.72.4",
     "react": "18.2.0",

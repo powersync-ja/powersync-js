@@ -14,7 +14,7 @@ import {
 import { AbstractRemote } from './AbstractRemote';
 import ndjsonStream from 'can-ndjson-stream';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
-import { SyncStatus } from '../../../db/crud/SyncStatus';
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
 import { SyncDataBucket } from '../bucket/SyncDataBucket';
 import { BaseObserver, BaseListener } from '../../../utils/BaseObserver';
 
@@ -48,23 +48,30 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   logger: Logger.get('PowerSyncStream')
 };
 
+const CRUD_UPLOAD_DEBOUNCE_MS = 1000;
+
 export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> {
-  protected _lastSyncedAt: Date;
+  protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
 
-  private isUploadingCrud: boolean;
-
-  protected _isConnected: boolean;
+  syncStatus: SyncStatus;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
-    this.isUploadingCrud = false;
-    this._isConnected = false;
+    this.syncStatus = new SyncStatus({
+      connected: false,
+      lastSyncedAt: null,
+      dataFlow: {
+        uploading: false,
+        downloading: false
+      }
+    });
   }
 
   get lastSyncedAt() {
-    return new Date(this._lastSyncedAt);
+    const lastSynced = this.syncStatus.lastSyncedAt;
+    return lastSynced && new Date(lastSynced);
   }
 
   protected get logger() {
@@ -72,7 +79,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   get isConnected() {
-    return this._isConnected;
+    return this.syncStatus.connected;
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -81,29 +88,51 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     return this.options.adapter.hasCompletedSync();
   }
 
-  triggerCrudUpload() {
-    if (this.isUploadingCrud) {
-      return;
-    }
-    this._uploadAllCrud();
-  }
+  triggerCrudUpload = _.debounce(
+    () => {
+      if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
+        return;
+      }
+      this._uploadAllCrud();
+    },
+    CRUD_UPLOAD_DEBOUNCE_MS,
+    { trailing: true }
+  );
 
   protected async _uploadAllCrud(): Promise<void> {
-    this.isUploadingCrud = true;
-    while (true) {
-      try {
-        const done = await this.uploadCrudBatch();
-        if (done) {
-          this.isUploadingCrud = false;
-          break;
+    return this.obtainLock({
+      type: LockType.CRUD,
+      callback: async () => {
+        this.updateSyncStatus({
+          dataFlow: {
+            uploading: true
+          }
+        });
+        while (true) {
+          try {
+            const done = await this.uploadCrudBatch();
+            if (done) {
+              break;
+            }
+          } catch (ex) {
+            this.updateSyncStatus({
+              connected: false,
+              dataFlow: {
+                uploading: false
+              }
+            });
+            await this.delayRetry();
+            break;
+          } finally {
+            this.updateSyncStatus({
+              dataFlow: {
+                uploading: false
+              }
+            });
+          }
         }
-      } catch (ex) {
-        this.updateSyncStatus(false);
-        await this.delayRetry();
-        this.isUploadingCrud = false;
-        break;
       }
-    }
+    });
   }
 
   protected async uploadCrudBatch(): Promise<boolean> {
@@ -123,6 +152,15 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   }
 
   async streamingSync(signal?: AbortSignal): Promise<void> {
+    signal?.addEventListener('abort', () => {
+      this.updateSyncStatus({
+        connected: false,
+        dataFlow: {
+          downloading: false
+        }
+      });
+    });
+
     while (true) {
       try {
         if (signal?.aborted) {
@@ -132,7 +170,9 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         // Continue immediately
       } catch (ex) {
         this.logger.error(ex);
-        this.updateSyncStatus(false);
+        this.updateSyncStatus({
+          connected: false
+        });
         // On error, wait a little before retrying
         await this.delayRetry();
       }
@@ -173,7 +213,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           signal
         )) {
           // A connection is active and messages are being received
-          this.updateSyncStatus(true);
+          if (!this.syncStatus.connected) {
+            // There is a connection now
+            _.defer(() => this.triggerCrudUpload());
+            this.updateSyncStatus({
+              connected: true
+            });
+          }
 
           if (isStreamingSyncCheckpoint(line)) {
             targetCheckpoint = line.checkpoint;
@@ -204,7 +250,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             } else {
               appliedCheckpoint = _.clone(targetCheckpoint);
               this.logger.debug('validated checkpoint', appliedCheckpoint);
-              this.updateSyncStatus(true, new Date());
+              this.updateSyncStatus({
+                connected: true,
+                lastSyncedAt: new Date(),
+                dataFlow: {
+                  downloading: false
+                }
+              });
             }
 
             validatedCheckpoint = _.clone(targetCheckpoint);
@@ -242,6 +294,11 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncData(line)) {
             const { data } = line;
+            this.updateSyncStatus({
+              dataFlow: {
+                downloading: true
+              }
+            });
             await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] });
           } else if (isStreamingKeepalive(line)) {
             const remaining_seconds = line.token_expires_in;
@@ -255,7 +312,10 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             this.logger.debug('Sync complete');
 
             if (_.isEqual(targetCheckpoint, appliedCheckpoint)) {
-              this.updateSyncStatus(true, new Date());
+              this.updateSyncStatus({
+                connected: true,
+                lastSyncedAt: new Date()
+              });
             } else if (_.isEqual(validatedCheckpoint, targetCheckpoint)) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint);
               if (!result.checkpointValid) {
@@ -268,7 +328,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
                 // Continue waiting.
               } else {
                 appliedCheckpoint = _.clone(targetCheckpoint);
-                this.updateSyncStatus(true, new Date());
+                this.updateSyncStatus({
+                  connected: true,
+                  lastSyncedAt: new Date(),
+                  dataFlow: {
+                    downloading: false
+                  }
+                });
               }
             }
           }
@@ -300,14 +366,16 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     }
   }
 
-  private updateSyncStatus(connected: boolean, lastSyncedAt?: Date) {
-    const takeSnapShot = () => [this._isConnected, this._lastSyncedAt?.valueOf()];
+  protected updateSyncStatus(options: SyncStatusOptions) {
+    const updatedStatus = new SyncStatus({
+      connected: options.connected ?? this.syncStatus.connected,
+      lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
+      dataFlow: _.merge(_.clone(this.syncStatus.dataFlowStatus), options.dataFlow ?? {})
+    });
 
-    const previousValues = takeSnapShot();
-    this._lastSyncedAt = lastSyncedAt ?? this.lastSyncedAt;
-    this._isConnected = connected;
-    if (!_.isEqual(previousValues, takeSnapShot())) {
-      this.iterateListeners((cb) => cb.statusChanged?.(new SyncStatus(this.isConnected, this.lastSyncedAt)));
+    if (!this.syncStatus.isEqual(updatedStatus)) {
+      this.syncStatus = updatedStatus;
+      this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
     }
   }
 
