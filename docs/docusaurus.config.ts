@@ -13,12 +13,13 @@ const config: Config = {
   url: 'https://powersync.com',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
-
+  baseUrl: '/powersync-react-native-sdk/',
+  trailingSlash: false,
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'powersync', // Usually your GitHub org/user name.
-  projectName: 'react-native-sdk-docs', // Usually your repo name.
+  organizationName: 'powersync-ja',
+  projectName: 'powersync-react-native-sdk',
+
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
