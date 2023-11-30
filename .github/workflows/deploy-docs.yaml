@@ -34,7 +34,7 @@ jobs:
       - name: Build Packages
         run: yarn build:packages
       - name: Create Docs
-        run: cd docs && yarn build:docs
+        run: cd docs && yarn build
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs/build
