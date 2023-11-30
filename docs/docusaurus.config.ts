@@ -2,6 +2,8 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const PROJECT_NAME = 'powersync-react-native-sdk'
+
 const config: Config = {
   title: 'React Native SDK Docs',
   favicon: 'img/powersync-favicon.png',
@@ -13,13 +15,12 @@ const config: Config = {
   url: 'https://powersync-ja.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/powersync-react-native-sdk/',
+  baseUrl: `/${PROJECT_NAME}/`,
   trailingSlash: false,
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'powersync-ja',
-  projectName: 'powersync-react-native-sdk',
-
+  projectName: PROJECT_NAME,
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
@@ -41,8 +42,8 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/powersync-ja/powersync-react-native-sdk',
+          // editUrl:
+          //   'https://github.com/powersync-ja/powersync-react-native-sdk',
         },
         blog: false,
         theme: {
@@ -98,8 +99,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'https://assets-global.website-files.com/651d89402147985dc475ff48/65577a5d2602b4209f37f936_powersync-website-meta-img.png',
     navbar: {
       title: 'PowerSync React Native SDK',
       logo: {
@@ -114,7 +114,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/powersync-ja',
           label: 'GitHub',
           position: 'right',
         },
@@ -127,44 +127,43 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://twitter.com/powersync_',
-            },
-            {
-              label: 'LinkedIn',
-              href: 'https://www.linkedin.com/showcase/journeyapps-powersync/',
-            },
-            {
-              label: 'YouTube',
-              href: 'https://www.youtube.com/@powersync_',
-            },
+              html: `
+              <div style="display: flex; align-items: center;">
+                <a href="https://discord.gg/powersync" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/discord.svg" loading="lazy" alt="" height="24">
+                </a>
+                <a href="https://twitter.com/powersync_" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/x.svg" loading="lazy" alt="" height="20">
+                </a>
+                <a href="https://www.youtube.com/@powersync_" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/youtube.svg" loading="lazy" width="32" height="28" alt="">
+                </a>
+                <a href="https://www.linkedin.com/showcase/journeyapps-powersync/" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/linkedin.svg" loading="lazy" alt="" height="24">
+                </a>
+              </div>
+              `
+            }
           ],
         },
         {
           title: 'More',
           items: [
             {
-              label: 'Website',
-              href: 'https://www.powersync.com/',
-            },
-            {
-              label: 'GitHub',
-              href: 'https://github.com/powersync-ja/',
-            },
+              html: `
+              <div style="display: flex; align-items: center;">
+                <a href="https://github.com/powersync-ja" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/github.svg" loading="lazy" alt="" height="24">
+                </a>
+                <a href="https://www.powersync.com/" target="_blank" style="margin-right:8px">
+                  <img src="/${PROJECT_NAME}/img/web.svg" loading="lazy" alt="" height="30">
+                </a>
+              </div>
+            `}
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.
-
-
-
-
-
-      `,
+      copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`,
     },
     prism: {
       theme: prismThemes.github,
