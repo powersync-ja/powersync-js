@@ -7,14 +7,12 @@
     "clean:packages": "lerna run clean",
     "build:packages": "lerna run build",
     "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch",
-    "build:docs": "yarn workspace docs build",
     "release": "yarn build:packages && yarn changeset publish"
   },
   "workspaces": {
     "packages": [
       "apps/*",
-      "packages/*",
-      "docs"
+      "packages/*"
     ],
     "nohoist": [
       "**/@rneui/**",
