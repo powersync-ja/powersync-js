@@ -164,13 +164,13 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`,
     },
-    algolia: {
-      appId: '8U0Z3F95NH',
-      // Public API key: it is safe to commit it
-      apiKey: '45caa5b7ec2fd9e5f3dbfe8b3c661c04',
-      indexName: 'powersync-react-native-sdk-react-native-sdk',
-      contextualSearch: true,
-    },
+    // algolia: {
+    //   appId: '8U0Z3F95NH',
+    //   // Public API key: it is safe to commit it
+    //   apiKey: '45caa5b7ec2fd9e5f3dbfe8b3c661c04',
+    //   indexName: 'powersync-react-native-sdk-react-native-sdk',
+    //   contextualSearch: false,
+    // },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
