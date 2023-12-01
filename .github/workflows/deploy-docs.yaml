@@ -33,8 +33,8 @@ jobs:
         run: yarn install --frozen-lockfile && cd docs && yarn install --frozen-lockfile
       - name: Build Packages
         run: yarn build:packages
-      - name: Create Docs
-        run: cd docs && yarn build
+      - name: Build Docs
+        run: yarn build:docs
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs/build
