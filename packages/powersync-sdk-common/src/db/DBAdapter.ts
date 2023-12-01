@@ -70,9 +70,10 @@ export interface DBLockOptions {
 
 export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
   close: () => void;
+  execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  name: string;
   readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-  execute: (query: string, params?: any[]) => Promise<QueryResult>;
 }
