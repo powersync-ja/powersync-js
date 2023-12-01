@@ -97,7 +97,6 @@ const config: Config = {
       },
     ],
   ],
-
   themeConfig: {
     image: 'https://assets-global.website-files.com/651d89402147985dc475ff48/65577a5d2602b4209f37f936_powersync-website-meta-img.png',
     navbar: {
@@ -164,6 +163,13 @@ const config: Config = {
         },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`,
+    },
+    algolia: {
+      appId: '8U0Z3F95NH',
+      // Public API key: it is safe to commit it
+      apiKey: '45caa5b7ec2fd9e5f3dbfe8b3c661c04',
+      indexName: 'powersync-react-native-sdk-react-native-sdk',
+      contextualSearch: true,
     },
     prism: {
       theme: prismThemes.github,
