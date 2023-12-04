@@ -7,8 +7,8 @@ declare global {
             META_LOGO_URL: string;
             ALGOLIA_APP_ID: string;
             ALGOLIA_API_KEY: string;
-            GITHUB_URL: string;
-            GITHUB_ORG: string;
+            GH_URL: string;
+            GH_ORG: string;
         }
     }
 }
