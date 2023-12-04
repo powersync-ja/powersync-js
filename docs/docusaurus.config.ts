@@ -1,8 +1,21 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import { packageMap } from './utils/packageMap';
+import 'dotenv/config'
 
-const PROJECT_NAME = 'powersync-react-native-sdk'
+const PROJECT_NAME = process.env.GITHUB_PROJECT_NAME
+
+const plugins = Object.entries(packageMap).map(([id, config]) => [
+  'docusaurus-plugin-typedoc',
+  {
+    id,
+    excludeExternals: true,
+    entryPoints: config.entryPoints,
+    tsconfig: config.tsconfig,
+    out: config.dirName,
+  },
+])
 
 const config: Config = {
   title: 'React Native SDK Docs',
@@ -12,14 +25,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://powersync-ja.github.io/',
+  url: process.env.GITHUB_URL,
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: `/${PROJECT_NAME}/`,
   trailingSlash: false,
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'powersync-ja',
+  organizationName: process.env.GITHUB_ORG,
   projectName: PROJECT_NAME,
 
   onBrokenLinks: 'warn',
@@ -53,52 +66,9 @@ const config: Config = {
     ],
   ],
 
-  plugins: [
-    [
-      'docusaurus-plugin-typedoc',
-
-      // Plugin / TypeDoc options
-      {
-        id: 'react-native-sdk',
-        entryPoints: ["../packages/powersync-sdk-react-native/src/index.ts"],
-        excludeExternals: true,
-        out: 'react-native-sdk',
-        tsconfig: "../packages/powersync-sdk-react-native/tsconfig.json",
-      },
-    ],
-    [
-      'docusaurus-plugin-typedoc',
-      {
-        id: 'react-sdk',
-        excludeExternals: true,
-        entryPoints: ['../packages/powersync-react/src/index.ts'],
-        tsconfig: '../packages/powersync-react/tsconfig.json',
-        out: 'react-sdk',
-      },
-    ],
-    [
-      'docusaurus-plugin-typedoc',
-      {
-        id: 'common-sdk',
-        excludeExternals: true,
-        entryPoints: ['../packages/powersync-sdk-common/src/index.ts'],
-        tsconfig: '../packages/powersync-sdk-common/tsconfig.json',
-        out: 'common-sdk',
-      },
-    ],
-    [
-      'docusaurus-plugin-typedoc',
-      {
-        id: 'attachments-sdk',
-        excludeExternals: true,
-        entryPoints: ['../packages/powersync-attachments/src/index.ts'],
-        tsconfig: '../packages/powersync-attachments/tsconfig.json',
-        out: 'attachments-sdk',
-      },
-    ],
-  ],
+  plugins,
   themeConfig: {
-    image: 'https://assets-global.website-files.com/651d89402147985dc475ff48/65577a5d2602b4209f37f936_powersync-website-meta-img.png',
+    image: process.env.META_LOGO_URL,
     navbar: {
       title: 'PowerSync React Native SDK',
       logo: {
@@ -168,9 +138,8 @@ const config: Config = {
     // as to why the search is not working as expected.
     // Discord: https://discord.com/channels/477328979074744322/477749835307548672/1180109255257366579
     // algolia: {
-    //   appId: '8U0Z3F95NH',
-    //   // Public API key: it is safe to commit it
-    //   apiKey: '45caa5b7ec2fd9e5f3dbfe8b3c661c04',
+    //   appId: process.env.ALGOLIA_APP_ID,
+    //   apiKey: process.env.ALGOLIA_PUBLIC_API_KEY,
     //   indexName: 'powersync-react-native-sdk-react-native-sdk',
     //   contextualSearch: false,
     // },

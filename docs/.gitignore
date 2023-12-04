@@ -23,3 +23,5 @@ docs/attachments-sdk/
 docs/common-sdk/
 docs/react-native-sdk/
 docs/react-sdk/
+
+.env
