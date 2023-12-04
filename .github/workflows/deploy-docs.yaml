@@ -15,8 +15,16 @@ concurrency:
 
 jobs:
   build:
-    environment: github-pages
     runs-on: ubuntu-latest
+    environment: github-pages
+    env:
+      META_LOGO_URL: ${{vars.META_LOGO_URL}}
+      ALGOLIA_APP_ID: ${{vars.ALGOLIA_APP_ID}}
+      ALGOLIA_API_KEY: ${{vars.ALGOLIA_API_KEY}}
+      ALGOLIA_INDEX_NAME: ${{vars.ALGOLIA_INDEX_NAME}}
+      GH_URL: ${{vars.GH_URL}}
+      GH_ORG: ${{vars.GH_ORG}}
+      GH_PROJECT_NAME: ${{vars.GH_PROJECT_NAME}}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
