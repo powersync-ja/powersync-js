@@ -8,7 +8,7 @@
     "build:packages": "lerna run build",
     "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch",
     "release": "yarn build:packages && yarn changeset publish",
-    "build:docs": "cd docs && yarn build && yarn start",
+    "build:docs": "cd docs && yarn && yarn build && yarn start",
     "start:docs": "cd docs && yarn build && yarn start"
   },
   "workspaces": {

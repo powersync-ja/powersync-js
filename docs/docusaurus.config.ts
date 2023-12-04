@@ -164,6 +164,9 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`,
     },
+    // This is commented out because we are waiting for feedback from Algolia
+    // as to why the search is not working as expected.
+    // Discord: https://discord.com/channels/477328979074744322/477749835307548672/1180109255257366579
     // algolia: {
     //   appId: '8U0Z3F95NH',
     //   // Public API key: it is safe to commit it
