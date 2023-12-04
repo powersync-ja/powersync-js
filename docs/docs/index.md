@@ -16,7 +16,7 @@ Monorepo for all things React Native and PowerSync.
   - An Expo React native app using Supabase.
 
 - [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
-  - A Typescript implementation of a PowerSync database connector and streaming sync bucket implementation.
+  - A TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
 - [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
   - An extension of `packages/powersync-sdk-common` which provides React Native specific implementations of abstracted features.
