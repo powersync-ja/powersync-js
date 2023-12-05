@@ -1,0 +1,59 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: ["docs", "main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    env:
+      META_LOGO_URL: ${{vars.META_LOGO_URL}}
+      ALGOLIA_APP_ID: ${{vars.ALGOLIA_APP_ID}}
+      ALGOLIA_API_KEY: ${{vars.ALGOLIA_API_KEY}}
+      ALGOLIA_INDEX_NAME: ${{vars.ALGOLIA_INDEX_NAME}}
+      GH_URL: ${{vars.GH_URL}}
+      GH_ORG: ${{vars.GH_ORG}}
+      GH_PROJECT_NAME: ${{vars.GH_PROJECT_NAME}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+      - name: Setup Yarn
+        run: |
+          npm install -g yarn
+          echo "Yarn version: $(yarn -v)"
+          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile && cd docs && yarn install --frozen-lockfile
+      - name: Build Packages
+        run: yarn build:packages
+      - name: Build Docs
+        run: yarn build:docs
+      - uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./docs/build
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

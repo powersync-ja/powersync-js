@@ -1,17 +1,25 @@
+---
+id: "index"
+title: "PowerSync React Native SDK Docs"
+sidebar_label: "Readme"
+sidebar_position: 0
+custom_edit_url: null
+---
+
 # PowerSync React Native SDK
 
 Monorepo for all things React Native and PowerSync.
 
 ## Monorepo Structure
 
-- [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
+- [apps/supabase-todolist](https://github.com/powersync-ja/powersync-supabase-react-native-todolist-demo/tree/e6a1d045ab8244041651757402adc562a6699a4f)
+  - An Expo React native app using Supabase.
+
+- [packages/powersync-sdk-common](./common-sdk/index.md)
   - A TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
-- [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
+- [packages/powersync-sdk-react-native](./react-native-sdk/index.md)
   - An extension of `packages/powersync-sdk-common` which provides React Native specific implementations of abstracted features.
-
-- [apps/supabase-todolist](https://github.com/powersync-ja/powersync-supabase-react-native-todolist-demo)
-  - An Expo React Native demo app using Supabase.
 
 # Development
 
@@ -23,7 +31,7 @@ After cloning this repo be sure to init the Git submodules
 git submodule init && git submodule update
 ```
 
-This monorepo uses Yarn as it works well with React Native.
+This monorepo uses Yarn as it works well with React native.
 
 Install workspace dependencies
 
@@ -57,7 +65,7 @@ Merging a PR with Changesets will automatically create a PR with version bumps. 
 
 ## React Native Quick SQLite Development
 
-Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not work with standard `yarn link` commands. Metro does not work well with symlinks <https://github.com/facebook/metro/issues/286>.
+Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not with with standard `yarn link` commands. Metro does not work well with symlinks <https://github.com/facebook/metro/issues/286>.
 
 The process of releasing development packages for `@journeyapps/react-native-quick-sqlite` for each change can be tedious and slow. A faster (and hackier) method is to use [mtsl](https://www.npmjs.com/package/mtsl) which will watch and copy the package into this workspace's `node_modules`.
 
