@@ -160,9 +160,9 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
     const photoAttachment = await this.newAttachmentRecord();
     photoAttachment.local_uri = this.getLocalFilePathSuffix(photoAttachment.filename);
     
-    const localFilePathURI = this.getLocalUri(photoAttachment.local_uri);
+    const localFilePathUri = this.getLocalUri(photoAttachment.local_uri);
     
-    await this.storage.writeFile(localFilePathURI, base64Data, { encoding: 'base64' });
+    await this.storage.writeFile(localFilePathUri, base64Data, { encoding: 'base64' });
 
     return this.saveToQueue(photoAttachment);
   }

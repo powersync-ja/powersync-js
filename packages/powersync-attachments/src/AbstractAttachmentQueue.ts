@@ -207,11 +207,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       await this.powersync.writeTransaction(deleteRecord);
     }
 
-    const localFilePathURI = this.getLocalUri(record.local_uri || this.getLocalFilePathSuffix(record.filename));
+    const localFilePathUri = this.getLocalUri(record.local_uri || this.getLocalFilePathSuffix(record.filename));
 
     try {
       // Delete file on storage
-      await this.storage.deleteFile(localFilePathURI, {
+      await this.storage.deleteFile(localFilePathUri, {
         filename: record.filename
       });
     } catch (e) {
@@ -238,9 +238,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       throw new Error(`No local_uri for record ${JSON.stringify(record, null, 2)}`);
     }
 
-    const localFilePathURI = this.getLocalUri(record.local_uri);
+    const localFilePathUri = this.getLocalUri(record.local_uri);
     try {
-      if (!(await this.storage.fileExists(localFilePathURI))) {
+      if (!(await this.storage.fileExists(localFilePathUri))) {
         console.warn(`File for ${record.id} does not exist, skipping upload`);
         await this.update({
           ...record,
@@ -249,7 +249,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         return true;
       }
 
-      const fileBuffer = await this.storage.readFile(localFilePathURI, {
+      const fileBuffer = await this.storage.readFile(localFilePathUri, {
         encoding: EncodingType.Base64,
         mediaType: record.media_type
       });
@@ -276,8 +276,8 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     if (!record.local_uri) {
       record.local_uri = this.getLocalFilePathSuffix(record.filename);
     }
-    const localFilePathURI = this.getLocalUri(record.local_uri);
-    if (await this.storage.fileExists(localFilePathURI)) {
+    const localFilePathUri = this.getLocalUri(record.local_uri);
+    if (await this.storage.fileExists(localFilePathUri)) {
       console.debug(`Local file already downloaded, marking "${record.id}" as synced`);
       await this.update({ ...record, state: AttachmentState.SYNCED });
       return true;
@@ -298,9 +298,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       });
 
       // Ensure directory exists
-      await this.storage.makeDir(localFilePathURI.replace(record.filename, ''));
+      await this.storage.makeDir(localFilePathUri.replace(record.filename, ''));
       // Write the file
-      await this.storage.writeFile(localFilePathURI, base64Data, {
+      await this.storage.writeFile(localFilePathUri, base64Data, {
         encoding: EncodingType.Base64
       });
 
