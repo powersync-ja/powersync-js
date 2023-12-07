@@ -76,10 +76,6 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     return ATTACHMENT_TABLE;
   }
 
-  get storageDirectory() {
-    return `${this.storage.getUserStorageDirectory()}${this.options.attachmentDirectoryName}`;
-  }
-
   async init() {
     // Ensure the directory where attachments are downloaded, exists
     await this.storage.makeDir(this.storageDirectory);
@@ -134,7 +130,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
           });
           console.debug(`Attachment (${id}) not found in database, creating new record`);
           await this.saveToQueue(newRecord);
-        } else if (record.local_uri == null || !(await this.storage.fileExists(record.local_uri))) {
+        } else if (record.local_uri == null || !(await this.storage.fileExists(this.getLocalUri(record.local_uri)))) {
           // 2. Attachment in database but no local file, mark as queued download
           console.debug(`Attachment (${id}) found in database but no local file, marking as queued download`);
           await this.update({
@@ -211,11 +207,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       await this.powersync.writeTransaction(deleteRecord);
     }
 
-    const uri = record.local_uri || this.getLocalUri(record.filename);
+    const localFilePathUri = this.getLocalUri(record.local_uri || this.getLocalFilePathSuffix(record.filename));
 
     try {
       // Delete file on storage
-      await this.storage.deleteFile(uri, {
+      await this.storage.deleteFile(localFilePathUri, {
         filename: record.filename
       });
     } catch (e) {
@@ -241,8 +237,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     if (!record.local_uri) {
       throw new Error(`No local_uri for record ${JSON.stringify(record, null, 2)}`);
     }
+
+    const localFilePathUri = this.getLocalUri(record.local_uri);
     try {
-      if (!(await this.storage.fileExists(record.local_uri))) {
+      if (!(await this.storage.fileExists(localFilePathUri))) {
         console.warn(`File for ${record.id} does not exist, skipping upload`);
         await this.update({
           ...record,
@@ -251,7 +249,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         return true;
       }
 
-      const fileBuffer = await this.storage.readFile(record.local_uri, {
+      const fileBuffer = await this.storage.readFile(localFilePathUri, {
         encoding: EncodingType.Base64,
         mediaType: record.media_type
       });
@@ -276,9 +274,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
 
   async downloadRecord(record: AttachmentRecord) {
     if (!record.local_uri) {
-      record.local_uri = this.getLocalUri(record.filename);
+      record.local_uri = this.getLocalFilePathSuffix(record.filename);
     }
-    if (await this.storage.fileExists(record.local_uri)) {
+    const localFilePathUri = this.getLocalUri(record.local_uri);
+    if (await this.storage.fileExists(localFilePathUri)) {
       console.debug(`Local file already downloaded, marking "${record.id}" as synced`);
       await this.update({ ...record, state: AttachmentState.SYNCED });
       return true;
@@ -299,9 +298,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       });
 
       // Ensure directory exists
-      await this.storage.makeDir(record.local_uri.replace(record.filename, ''));
+      await this.storage.makeDir(localFilePathUri.replace(record.filename, ''));
       // Write the file
-      await this.storage.writeFile(record.local_uri, base64Data, {
+      await this.storage.writeFile(localFilePathUri, base64Data, {
         encoding: EncodingType.Base64
       });
 
@@ -436,8 +435,28 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     }
   }
 
-  getLocalUri(filename: string): string {
-    return `${this.storageDirectory}/${filename}`;
+  /**
+   * Returns the local file path for the given filename, used to store in the database.
+   * Example: filename: "attachment-1.jpg" returns "attachments/attachment-1.jpg"
+   */
+  getLocalFilePathSuffix(filename: string): string {
+    return `${this.options.attachmentDirectoryName}/${filename}`;
+  }
+
+  /**
+   * Return users storage directory with the attachmentPath use to load the file.
+   * Example: filePath: "attachments/attachment-1.jpg" returns "/var/mobile/Containers/Data/Application/.../Library/attachments/attachment-1.jpg"
+   */
+  getLocalUri(filePath: string): string {
+    return `${this.storage.getUserStorageDirectory()}/${filePath}`;
+  }
+
+  /**
+   * Returns the directory where attachments are stored on the device, used to make dir
+   * Example: "/var/mobile/Containers/Data/Application/.../Library/attachments/"
+   */
+  get storageDirectory() {
+    return `${this.storage.getUserStorageDirectory()}${this.options.attachmentDirectoryName}`;
   }
 
   async expireCache() {
