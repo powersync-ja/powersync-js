@@ -1,5 +1,11 @@
 # @journeyapps/powersync-attachments
 
+## 1.0.1
+
+### Patch Changes
+
+- 764ed7e: Change `AbstractAttachmentQueue` implementation to not save the full URI in the `attachments` table, instead create it when needed.
+
 ## 1.0.0
 
 ### Major Changes
