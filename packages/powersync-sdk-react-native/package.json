@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "A React Native SDK for JourneyApps PowerSync",
+  "description": "PowerSync - sync Postgres with SQLite in your React Native app for offline-first and real-time data",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
