@@ -150,7 +150,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
-    this.watchCrudUploads();
   }
 
   /**
@@ -159,11 +158,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async watchCrudUploads() {
     for await (const event of this.onChange({
       tables: [PSInternalTable.CRUD],
-      rawTableNames: true
+      rawTableNames: true,
+      signal: this.abortController?.signal
     })) {
-      if (this.connected) {
-        this.syncStreamImplementation?.triggerCrudUpload();
-      }
+      this.syncStreamImplementation?.triggerCrudUpload();
     }
   }
 
@@ -195,6 +193,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // Begin network stream
     this.syncStreamImplementation.triggerCrudUpload();
     this.syncStreamImplementation.streamingSync(this.abortController.signal);
+    this.watchCrudUploads();
   }
 
   async disconnect() {
@@ -381,8 +380,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
-    const result = await this.database.execute(sql, parameters);
-    return result;
+    return this.database.execute(sql, parameters);
   }
 
   /**
