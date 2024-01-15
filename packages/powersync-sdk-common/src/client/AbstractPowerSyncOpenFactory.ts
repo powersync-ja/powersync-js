@@ -2,7 +2,7 @@ import { DBAdapter } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
 
-export interface PowerSyncOpenFactoryOptions {
+export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions> {
   schema: Schema;
   /**
    * Filename for the database.
@@ -26,7 +26,8 @@ export abstract class AbstractPowerSyncDatabaseOpenFactory {
   generateOptions(): PowerSyncDatabaseOptions {
     return {
       database: this.openDB(),
-      schema: this.schema
+      schema: this.schema,
+      ...this.options
     };
   }
 
