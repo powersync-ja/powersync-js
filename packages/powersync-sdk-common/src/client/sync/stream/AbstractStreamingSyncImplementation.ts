@@ -37,24 +37,27 @@ export interface AbstractStreamingSyncImplementationOptions {
   uploadCrud: () => Promise<void>;
   logger?: ILogger;
   retryDelayMs?: number;
+  crudUploadThrottleMs?: number;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
   statusChanged?: (status: SyncStatus) => void;
 }
 
+export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
+
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
-  logger: Logger.get('PowerSyncStream')
+  logger: Logger.get('PowerSyncStream'),
+  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
-
-const CRUD_UPLOAD_DEBOUNCE_MS = 1000;
 
 export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> {
   protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
 
   syncStatus: SyncStatus;
+  triggerCrudUpload: () => void;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
@@ -67,6 +70,17 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         downloading: false
       }
     });
+
+    this.triggerCrudUpload = _.throttle(
+      () => {
+        if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
+          return;
+        }
+        this._uploadAllCrud();
+      },
+      this.options.crudUploadThrottleMs,
+      { trailing: true }
+    );
   }
 
   get lastSyncedAt() {
@@ -87,17 +101,6 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
   async hasCompletedSync() {
     return this.options.adapter.hasCompletedSync();
   }
-
-  triggerCrudUpload = _.debounce(
-    () => {
-      if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
-        return;
-      }
-      this._uploadAllCrud();
-    },
-    CRUD_UPLOAD_DEBOUNCE_MS,
-    { trailing: true }
-  );
 
   protected async _uploadAllCrud(): Promise<void> {
     return this.obtainLock({

@@ -8,11 +8,12 @@ import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
 import {
   AbstractStreamingSyncImplementation,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation';
 import { CrudBatch } from './sync/bucket/CrudBatch';
 import { CrudTransaction } from './sync/bucket/CrudTransaction';
-import { BucketStorageAdapter } from './sync/bucket/BucketStorageAdapter';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
 import { CrudEntry } from './sync/bucket/CrudEntry';
 import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
@@ -22,6 +23,7 @@ export interface PowerSyncDatabaseOptions {
   schema: Schema;
   database: DBAdapter;
   retryDelay?: number;
+  crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
 
@@ -29,6 +31,11 @@ export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
   throttleMs?: number;
+  /**
+   * Allows for watching any SQL table
+   * by not removing PowerSync table name prefixes
+   */
+  rawTableNames?: boolean;
 }
 
 export interface WatchOnChangeEvent {
@@ -45,7 +52,8 @@ export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelay: 5000,
-  logger: Logger.get('PowerSyncDatabase')
+  logger: Logger.get('PowerSyncDatabase'),
+  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
 /**
@@ -133,6 +141,21 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+    this.watchCrudUploads();
+  }
+
+  /**
+   * Queues a CRUD upload when internal CRUD tables have been updated
+   */
+  protected async watchCrudUploads() {
+    for await (const event of this.onChange({
+      tables: [PSInternalTable.CRUD],
+      rawTableNames: true
+    })) {
+      if (this.connected) {
+        this.syncStreamImplementation?.triggerCrudUpload();
+      }
+    }
   }
 
   /**
@@ -182,9 +205,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute('DELETE FROM ps_oplog WHERE 1');
-      await tx.execute('DELETE FROM ps_crud WHERE 1');
-      await tx.execute('DELETE FROM ps_buckets WHERE 1');
+      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG} WHERE 1`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE 1`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS} WHERE 1`);
 
       const existingTableRows = await tx.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'"
@@ -220,12 +243,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async getUploadQueueStats(includeSize?: boolean): Promise<UploadQueueStats> {
     return this.readTransaction(async (tx) => {
       if (includeSize) {
-        const result = await tx.execute('SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ps_crud');
+        const result = await tx.execute(
+          `SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ${PSInternalTable.CRUD}`
+        );
 
         const row = result.rows.item(0);
         return new UploadQueueStats(row?.count ?? 0, row?.size ?? 0);
       } else {
-        const result = await tx.execute('SELECT count(*) as count FROM ps_crud');
+        const result = await tx.execute(`SELECT count(*) as count FROM ${PSInternalTable.CRUD}`);
         const row = result.rows.item(0);
         return new UploadQueueStats(row?.count ?? 0);
       }
@@ -250,9 +275,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * and a single transaction may be split over multiple batches.
    */
   async getCrudBatch(limit: number): Promise<CrudBatch | null> {
-    const result = await this.database.execute('SELECT id, tx_id, data FROM ps_crud ORDER BY id ASC LIMIT ?', [
-      limit + 1
-    ]);
+    const result = await this.database.execute(
+      `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
+      [limit + 1]
+    );
 
     const all: CrudEntry[] = result.rows?._array?.map((row) => CrudEntry.fromRow(row)) ?? [];
 
@@ -268,11 +294,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const last = all[all.length - 1];
     return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) => {
       await this.writeTransaction(async (tx) => {
-        await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
-        if (writeCheckpoint != null && (await tx.execute('SELECT 1 FROM ps_crud LIMIT 1')) == null) {
-          await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+        await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [last.clientId]);
+        if (writeCheckpoint != null && (await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`)) == null) {
+          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+            writeCheckpoint
+          ]);
         } else {
-          await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
+          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
             this.bucketStorageAdapter.getMaxOpId()
           ]);
         }
@@ -295,7 +323,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
     return await this.readTransaction(async (tx) => {
-      const first = await tx.execute('SELECT id, tx_id, data FROM ps_crud ORDER BY id ASC LIMIT 1');
+      const first = await tx.execute(`SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`);
 
       if (!first.rows.length) {
         return null;
@@ -306,7 +334,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       if (!txId) {
         all = [CrudEntry.fromRow(first.rows.item(0))];
       } else {
-        const result = await tx.execute('SELECT id, tx_id, data FROM ps_crud WHERE tx_id = ? ORDER BY id ASC', [txId]);
+        const result = await tx.execute(
+          `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} WHERE tx_id = ? ORDER BY id ASC`,
+          [txId]
+        );
         all = result.rows._array.map((row) => CrudEntry.fromRow(row));
       }
 
@@ -316,14 +347,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         all,
         async (writeCheckpoint?: string) => {
           await this.writeTransaction(async (tx) => {
-            await tx.execute('DELETE FROM ps_crud WHERE id <= ?', [last.clientId]);
+            await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [last.clientId]);
             if (writeCheckpoint) {
-              const check = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
+              const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
               if (!check.rows?.length) {
-                await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+                await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+                  writeCheckpoint
+                ]);
               }
             } else {
-              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [
+              await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
                 this.bucketStorageAdapter.getMaxOpId()
               ]);
             }
@@ -340,7 +373,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
     const result = await this.database.execute(sql, parameters);
-    _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
     return result;
   }
 
@@ -386,7 +418,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.waitForReady();
     return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, async () => {
       const res = await callback(this.database);
-      _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
       return res;
     });
   }
@@ -415,7 +446,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       async (tx) => {
         const res = await callback(tx);
         await tx.commit();
-        _.defer(() => this.syncStreamImplementation?.triggerCrudUpload());
         return res;
       },
       { timeoutMs: lockTimeout }
@@ -475,10 +505,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
           const { table } = update;
-          if (!table.match(POWERSYNC_TABLE_MATCH)) {
+          const { rawTableNames } = options;
+
+          if (!rawTableNames && !table.match(POWERSYNC_TABLE_MATCH)) {
             return;
           }
-          const tableName = table.replace(POWERSYNC_TABLE_MATCH, '');
+
+          const tableName = rawTableNames ? table : table.replace(POWERSYNC_TABLE_MATCH, '');
           throttledTableUpdates.push(tableName);
 
           flushTableUpdates();

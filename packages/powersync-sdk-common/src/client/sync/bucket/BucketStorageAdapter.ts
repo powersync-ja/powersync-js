@@ -37,6 +37,13 @@ export interface BucketChecksum {
   count: number;
 }
 
+export enum PSInternalTable {
+  DATA = 'ps_data',
+  CRUD = 'ps_crud',
+  BUCKETS = 'ps_buckets',
+  OPLOG = 'ps_oplog'
+}
+
 export interface BucketStorageAdapter {
   init(): Promise<void>;
   saveSyncData(batch: SyncDataBatch): Promise<void>;
