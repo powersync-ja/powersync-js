@@ -22,7 +22,16 @@ import { EventIterator } from 'event-iterator';
 export interface PowerSyncDatabaseOptions {
   schema: Schema;
   database: DBAdapter;
+  /**
+   * Delay for retrying sync streaming operations
+   * from the PowerSync backend after an error occurs.
+   */
   retryDelay?: number;
+  /**
+   * Backend Connector CRUD operations are throttled
+   * to occur at most every `crudUploadThrottleMs`
+   * milliseconds.
+   */
   crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
