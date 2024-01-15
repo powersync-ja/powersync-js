@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.0.1
+
+### Patch Changes
+
+- 9bc088d: Improved connector CRUD uploads to be triggered whenever an internal CRUD operation change is triggered. Improved CRUD upload debouncing to rather use a throttled approach - executing multiple continous write/CRUD operations will now trigger a connector upload at most (every) 1 second (by default).
+
 ## 1.0.0
 
 ### Major Changes
