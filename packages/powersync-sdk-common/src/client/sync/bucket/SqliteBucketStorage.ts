@@ -67,8 +67,8 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
         ]);
         this.logger.debug('saveSyncData', JSON.stringify(result));
         count += b.data.length;
-        this.compactCounter += count;
       }
+      this.compactCounter += count;
     });
   }
 
@@ -295,7 +295,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
    * When the objects are successfully sent to the server, call .complete()
    */
   async getCrudBatch(limit: number = 100): Promise<CrudBatch | null> {
-    if (!this.hasCrud()) {
+    if (!await this.hasCrud()) {
       return null;
     }
 
