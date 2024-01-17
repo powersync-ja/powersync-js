@@ -300,25 +300,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     const last = all[all.length - 1];
-    return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) => {
-      await this.writeTransaction(async (tx) => {
-        await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [last.clientId]);
-        if (writeCheckpoint != null && (await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`)) == null) {
-          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
-            writeCheckpoint
-          ]);
-        } else {
-          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
-            this.bucketStorageAdapter.getMaxOpId()
-          ]);
-        }
-      });
-    });
+    return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint));
   }
 
   /**
    * Get the next recorded transaction to upload.
-   *
+   * lastTransactionId
    * Returns null if there is no data to upload.
    *
    * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
@@ -338,7 +325,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
       const txId: number | undefined = first['tx_id'];
 
-      let all: CrudEntry[] = [];
+      let all: CrudEntry[];
       if (!txId) {
         all = [CrudEntry.fromRow(first.rows.item(0))];
       } else {
@@ -350,28 +337,29 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
 
       const last = all[all.length - 1];
-
       return new CrudTransaction(
         all,
-        async (writeCheckpoint?: string) => {
-          await this.writeTransaction(async (tx) => {
-            await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [last.clientId]);
-            if (writeCheckpoint) {
-              const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
-              if (!check.rows?.length) {
-                await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
-                  writeCheckpoint
-                ]);
-              }
-            } else {
-              await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
-                this.bucketStorageAdapter.getMaxOpId()
-              ]);
-            }
-          });
-        },
+        async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint),
         txId
       );
+    });
+  }
+
+  private async handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string) {
+    return this.writeTransaction(async (tx) => {
+      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [lastClientId]);
+      if (writeCheckpoint) {
+        const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
+        if (!check.rows?.length) {
+          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+            writeCheckpoint
+          ]);
+        }
+      } else {
+        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+          this.bucketStorageAdapter.getMaxOpId()
+        ]);
+      }
     });
   }
 
