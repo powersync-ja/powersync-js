@@ -300,7 +300,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     const last = all[all.length - 1];
-    return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint));
+    return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) =>
+      this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
+    );
   }
 
   /**
@@ -466,7 +468,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
     for await (const event of this.onChange({
       ...(options ?? {}),
-      tables: resolvedTables
+      tables: _.uniq(resolvedTables)
     })) {
       yield await this.executeReadOnly(sql, parameters);
     }
@@ -487,7 +489,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = _.throttle(async () => {
+      const flushTableUpdates = _.throttle(() => {
         const intersection = _.intersection(watchedTables, throttledTableUpdates);
         if (intersection.length) {
           eventOptions.push({
