@@ -1,13 +1,7 @@
 import _ from 'lodash';
 import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import {
-  BatchedUpdateNotification,
-  DBAdapter,
-  QueryResult,
-  Transaction,
-  isBatchedUpdateNotification
-} from '../db/DBAdapter';
+import { DBAdapter, QueryResult, Transaction, isBatchedUpdateNotification } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
