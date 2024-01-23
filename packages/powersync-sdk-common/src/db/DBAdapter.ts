@@ -6,6 +6,11 @@
 import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver';
 
 /**
+ * TODO most of these types could be exported to a common `types` package
+ * which is used by the DB adapter libraries as well.
+ */
+
+/**
  * Object returned by SQL Query executions {
  *  insertId: Represent the auto-generated row id if applicable
  *  rowsAffected: Number of affected rows if result of a update query
@@ -54,14 +59,28 @@ export enum RowUpdateType {
   SQLITE_DELETE = 9,
   SQLITE_UPDATE = 23
 }
-export interface UpdateNotification {
+export interface TableUpdateOperation {
   opType: RowUpdateType;
-  table: string;
   rowId: number;
+}
+export interface UpdateNotification extends TableUpdateOperation {
+  table: string;
+}
+
+export interface BatchedUpdateNotification {
+  rawUpdates: UpdateNotification[];
+  tables: string[];
+  groupedUpdates: Record<string, TableUpdateOperation[]>;
 }
 
 export interface DBAdapterListener extends BaseListener {
-  tablesUpdated: (updateNotification: UpdateNotification) => void;
+  /**
+   * Listener for table updates.
+   * Allows for single table updates in order to maintain API compatibility
+   * without the need for a major version bump
+   * The DB adapter can also batch update notifications if supported.
+   */
+  tablesUpdated: (updateNotification: BatchedUpdateNotification | UpdateNotification) => void;
 }
 
 export interface DBLockOptions {
@@ -76,4 +95,10 @@ export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBG
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+}
+
+export function isBatchedUpdateNotification(
+  update: BatchedUpdateNotification | UpdateNotification
+): update is BatchedUpdateNotification {
+  return 'tables' in update;
 }
