@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import { DBAdapter, QueryResult, Transaction } from '../db/DBAdapter';
+import { DBAdapter, QueryResult, Transaction, isBatchedUpdateNotification } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
@@ -511,15 +511,21 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
-          const { table } = update;
           const { rawTableNames } = options;
 
-          if (!rawTableNames && !table.match(POWERSYNC_TABLE_MATCH)) {
+          const tables = isBatchedUpdateNotification(update) ? update.tables : [update.table];
+
+          const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
+          if (!filteredTables.length) {
             return;
           }
 
-          const tableName = rawTableNames ? table : table.replace(POWERSYNC_TABLE_MATCH, '');
-          throttledTableUpdates.push(tableName);
+          // Remove any PowerSync table prefixes if necessary
+          const mappedTableNames = rawTableNames
+            ? filteredTables
+            : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
+
+          throttledTableUpdates.push(...mappedTableNames);
 
           flushTableUpdates();
         }
