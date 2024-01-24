@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.1.0
+
+### Minor Changes
+
+- 6983121: Added the ability to receive batched table updates from DB adapters.
+
 ## 1.0.1
 
 ### Patch Changes

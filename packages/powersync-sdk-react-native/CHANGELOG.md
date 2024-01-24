@@ -1,5 +1,18 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.1.0
+
+### Minor Changes
+
+- 6983121: Added the ability to receive batched table updates from DB adapters.
+
+### Patch Changes
+
+- 6983121: Fixed watched queries from updating before writes have been commited on the write connection.
+- Updated dependencies [6983121]
+  - @journeyapps/powersync-sdk-common@1.1.0
+  - @journeyapps/powersync-react@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
