@@ -499,15 +499,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = _.throttle(async () => {
-        const intersection = _.intersection(watchedTables, throttledTableUpdates);
-        if (intersection.length) {
-          eventOptions.push({
-            changedTables: intersection
-          });
-        }
-        throttledTableUpdates = [];
-      }, throttleMs);
+      const flushTableUpdates = _.throttle(
+        async () => {
+          const intersection = _.intersection(watchedTables, throttledTableUpdates);
+          if (intersection.length) {
+            eventOptions.push({
+              changedTables: intersection
+            });
+          }
+          throttledTableUpdates = [];
+        },
+        throttleMs,
+        { leading: false, trailing: true }
+      );
 
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
