@@ -90,15 +90,16 @@ export class Table {
 
     const columnNames = new Set<string>();
     columnNames.add('id');
-    for (const column in this.columns) {
-      if (column == 'id') {
+    for (const column of this.columns) {
+      const { name: columnName } = column;
+      if (column.name == 'id') {
         throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
-      } else if (columnNames.has(column)) {
-        throw new Error(`Duplicate column ${column}`);
-      } else if (InvalidSQLCharacters.test(column)) {
+      } else if (columnNames.has(columnName)) {
+        throw new Error(`Duplicate column ${columnName}`);
+      } else if (InvalidSQLCharacters.test(columnName)) {
         throw new Error(`Invalid characters in column name: $name.${column}`);
       }
-      columnNames.add(column);
+      columnNames.add(columnName);
     }
 
     const indexNames = new Set<string>();
@@ -112,7 +113,7 @@ export class Table {
 
       for (const column of index.columns) {
         if (!columnNames.has(column.name)) {
-          throw new Error(`Column $name.${column.name} not found for index ${index.name}`);
+          throw new Error(`Column ${column.name} not found for index ${index.name}`);
         }
       }
 

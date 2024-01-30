@@ -158,6 +158,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.bucketStorageAdapter.init();
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this.updateSchema(this.options.schema);
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
