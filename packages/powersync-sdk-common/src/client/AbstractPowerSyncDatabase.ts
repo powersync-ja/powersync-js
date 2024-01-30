@@ -19,7 +19,7 @@ import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
 import { EventIterator } from 'event-iterator';
 import { AssertionError } from 'assert';
-import { quoteIdentifier } from 'src/utils/strings';
+import { quoteIdentifier } from '../utils/strings';
 
 export interface DisconnectAndClearOptions {
   clearLocal?: boolean;
