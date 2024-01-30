@@ -168,7 +168,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot update schema while connected');
     }
 
-    schema.validate();
+    /**
+     * TODO
+     * Validations only show a warning for now.
+     * The next major release should throw an exception.
+     */
+    try {
+      schema.validate();
+    } catch (ex) {
+      this.options.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+    }
     this._schema = schema;
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
   }
