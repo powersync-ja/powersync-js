@@ -133,7 +133,7 @@ export class Table {
   toJSON() {
     return {
       name: this.name,
-      viewName: this.viewName,
+      view_name: this.viewName,
       local_only: this.localOnly,
       insert_only: this.insertOnly,
       columns: this.columns.map((c) => c.toJSON()),
