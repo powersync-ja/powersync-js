@@ -18,7 +18,6 @@ import { CrudEntry } from './sync/bucket/CrudEntry';
 import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
 import { EventIterator } from 'event-iterator';
-import { AssertionError } from 'assert';
 import { quoteIdentifier } from '../utils/strings';
 
 export interface DisconnectAndClearOptions {
@@ -165,7 +164,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   async updateSchema(schema: Schema) {
     if (this.abortController) {
-      throw new AssertionError({ message: 'Cannot update schema while connected' });
+      throw new Error('Cannot update schema while connected');
     }
 
     schema.validate();

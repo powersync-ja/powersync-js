@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import { Column } from '../Column';
 import type { Index } from './Index';
-import { AssertionError } from 'assert';
 
 export interface TableOptions {
   /**
@@ -83,25 +82,21 @@ export class Table {
 
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
-      throw new AssertionError({ message: `Invalid characters in table name: ${this.name}` });
+      throw new Error(`Invalid characters in table name: ${this.name}`);
     } else if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
-      throw new AssertionError({
-        message: `
-          Invalid characters in view name: ${this.viewNameOverride}`
-      });
+      throw new Error(`
+          Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
     const columnNames = new Set<string>();
     columnNames.add('id');
     for (const column in this.columns) {
       if (column == 'id') {
-        throw new AssertionError({
-          message: `${this.name}: id column is automatically added, custom id columns are not supported`
-        });
+        throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
       } else if (columnNames.has(column)) {
-        throw new AssertionError({ message: `Duplicate column ${column}` });
+        throw new Error(`Duplicate column ${column}`);
       } else if (InvalidSQLCharacters.test(column)) {
-        throw new AssertionError({ message: `Invalid characters in column name: $name.${column}` });
+        throw new Error(`Invalid characters in column name: $name.${column}`);
       }
       columnNames.add(column);
     }
@@ -110,19 +105,14 @@ export class Table {
 
     for (const index of this.indexes) {
       if (indexNames.has(index.name)) {
-        throw new AssertionError({ message: `Duplicate index $name.${index}` });
+        throw new Error(`Duplicate index $name.${index}`);
       } else if (InvalidSQLCharacters.test(index.name)) {
-        throw new AssertionError({
-          message: `
-            Invalid characters in index name: $name.${index}`
-        });
+        throw new Error(`Invalid characters in index name: $name.${index}`);
       }
 
       for (const column of index.columns) {
         if (!columnNames.has(column.name)) {
-          throw new AssertionError({
-            message: `Column $name.${column.name} not found for index ${index.name}`
-          });
+          throw new Error(`Column $name.${column.name} not found for index ${index.name}`);
         }
       }
 
