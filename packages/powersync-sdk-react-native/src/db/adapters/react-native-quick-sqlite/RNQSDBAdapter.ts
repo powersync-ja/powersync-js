@@ -21,7 +21,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   constructor(protected baseDB: QuickSQLiteConnection, public name: string) {
     super();
     // link table update commands
-    baseDB.registerUpdateHook((update) => {
+    baseDB.registerTablesChangedHook((update) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(update));
     });
 
