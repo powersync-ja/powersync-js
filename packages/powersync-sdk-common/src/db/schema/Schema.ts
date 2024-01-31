@@ -10,7 +10,6 @@ export class Schema {
   }
 
   toJSON() {
-    this.validate();
     return {
       tables: this.tables.map((t) => t.toJSON())
     };
