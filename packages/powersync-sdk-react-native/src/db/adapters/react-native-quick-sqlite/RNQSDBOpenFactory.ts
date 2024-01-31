@@ -4,12 +4,19 @@ import {
   AbstractPowerSyncDatabase,
   AbstractPowerSyncDatabaseOpenFactory,
   DBAdapter,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  PowerSyncOpenFactoryOptions
 } from '@journeyapps/powersync-sdk-common';
 import { PowerSyncDatabase } from '../../../db/PowerSyncDatabase';
 import { RNQSDBAdapter } from './RNQSDBAdapter';
 
 export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseOpenFactory {
+  protected instanceGenerated: boolean;
+
+  constructor(options: PowerSyncOpenFactoryOptions) {
+    super(options);
+    this.instanceGenerated = false;
+  }
   protected openDB(): DBAdapter {
     /**
      * React Native Quick SQLite opens files relative to the `Documents`dir on iOS and the `Files`
@@ -38,6 +45,10 @@ export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseO
   }
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
+    if (this.instanceGenerated) {
+      this.options.logger?.warn('Generating multiple PowerSync instances can sometimes cause unexpected results.');
+    }
+    this.instanceGenerated = true;
     return new PowerSyncDatabase(options);
   }
 }

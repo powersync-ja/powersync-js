@@ -33,11 +33,16 @@ export interface LockOptions<T> {
 
 export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
-  remote: AbstractRemote;
   uploadCrud: () => Promise<void>;
-  logger?: ILogger;
-  retryDelayMs?: number;
   crudUploadThrottleMs?: number;
+  /**
+   * An identifier for which PowerSync DB this sync implementation is
+   * linked to. Most commonly DB name, but not restricted to DB name.
+   */
+  identifier?: string;
+  logger?: ILogger;
+  remote: AbstractRemote;
+  retryDelayMs?: number;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
