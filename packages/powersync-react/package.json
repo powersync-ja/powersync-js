@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-react",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -27,7 +27,7 @@
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "1.1.0"
+    "@journeyapps/powersync-sdk-common": "1.2.0"
   },
   "peerDependencies": {
     "react": "*"
