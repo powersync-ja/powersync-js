@@ -18,6 +18,11 @@ import { CrudEntry } from './sync/bucket/CrudEntry';
 import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
 import { EventIterator } from 'event-iterator';
+import { quoteIdentifier } from '../utils/strings';
+
+export interface DisconnectAndClearOptions {
+  clearLocal?: boolean;
+}
 
 export interface PowerSyncDatabaseOptions {
   schema: Schema;
@@ -57,6 +62,10 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
+const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
+  clearLocal: true
+};
+
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
@@ -90,6 +99,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
+  protected _schema: Schema;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
@@ -97,6 +107,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.closed = true;
     this.currentStatus = null;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this._schema = options.schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
@@ -104,7 +115,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   get schema() {
-    return this.options.schema;
+    return this._schema;
   }
 
   protected get database() {
@@ -145,11 +156,30 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this.updateSchema(this.options.schema);
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  async updateSchema(schema: Schema) {
+    if (this.abortController) {
+      throw new Error('Cannot update schema while connected');
+    }
+
+    /**
+     * TODO
+     * Validations only show a warning for now.
+     * The next major release should throw an exception.
+     */
+    try {
+      schema.validate();
+    } catch (ex) {
+      this.options.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+    }
+    this._schema = schema;
+    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
   }
 
   /**
@@ -208,24 +238,31 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *  The database can still be queried after this is called, but the tables
    *  would be empty.
    */
-  async disconnectAndClear() {
+  async disconnectAndClear(options = DEFAULT_DISCONNECT_CLEAR_OPTIONS) {
     await this.disconnect();
+
+    const { clearLocal } = options;
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG} WHERE 1`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE 1`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS} WHERE 1`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
+
+      const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
 
       const existingTableRows = await tx.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'"
+        `
+      SELECT name FROM sqlite_master WHERE type='table' AND name GLOB ?
+      `,
+        [tableGlob]
       );
 
       if (!existingTableRows.rows.length) {
         return;
       }
       for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${row.name} WHERE 1`);
+        await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
       }
     });
   }
@@ -499,15 +536,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = _.throttle(async () => {
-        const intersection = _.intersection(watchedTables, throttledTableUpdates);
-        if (intersection.length) {
-          eventOptions.push({
-            changedTables: intersection
-          });
-        }
-        throttledTableUpdates = [];
-      }, throttleMs);
+      const flushTableUpdates = _.throttle(
+        async () => {
+          const intersection = _.intersection(watchedTables, throttledTableUpdates);
+          if (intersection.length) {
+            eventOptions.push({
+              changedTables: intersection
+            });
+          }
+          throttledTableUpdates = [];
+        },
+        throttleMs,
+        { leading: false, trailing: true }
+      );
 
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
