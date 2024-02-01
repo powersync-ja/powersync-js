@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-attachments",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -18,7 +18,7 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "1.1.0"
+    "@journeyapps/powersync-sdk-common": "1.2.0"
   },
   "repository": {
     "type": "git",
