@@ -21,7 +21,7 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4
 
-  demos/todo-list:
+  demos/supabase-todo-list-react-native:
     dependencies:
       '@azure/core-asynciterator-polyfill':
         specifier: ^1.0.2
@@ -43,7 +43,7 @@ importers:
         version: link:../../packages/powersync-sdk-react-native
       '@journeyapps/react-native-quick-sqlite':
         specifier: ^1.1.0
-        version: 1.1.0(react-native@0.73.2)(react@18.2.0)
+        version: 1.1.1(react-native@0.73.2)(react@18.2.0)
       '@react-native-community/masked-view':
         specifier: ^0.1.11
         version: 0.1.11(react-native@0.73.2)(react@18.2.0)
@@ -3167,7 +3167,7 @@ packages:
     resolution: {integrity: sha512-bOhuFnlRaS7CU33+rFFIWdcET/Vkyn1vsN8BYFwCDEF5P1fVVvYN7bFOsQLTMD3nvi35C1AGmtqUr/Wfv8Xaow==}
     engines: {node: '>=12'}
     dependencies:
-      '@expo/spawn-async': 1.5.0
+      '@expo/spawn-async': 1.7.2
       exec-async: 2.2.0
     dev: false
 
@@ -3175,7 +3175,7 @@ packages:
     resolution: {integrity: sha512-LKdo/6y4W7llZ6ghsg1kdx2CeH/qR/c6QI/JI8oPUvppsZoeIYjSkdflce978fAMfR8IXoi0wt0jA2w0kWpwbg==}
     dependencies:
       '@expo/json-file': 8.3.0
-      '@expo/spawn-async': 1.5.0
+      '@expo/spawn-async': 1.7.2
       ansi-regex: 5.0.1
       chalk: 4.1.2
       find-up: 5.0.0
@@ -3363,18 +3363,6 @@ packages:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  /@journeyapps/react-native-quick-sqlite@1.1.0(react-native@0.73.2)(react@18.2.0):
-    resolution: {integrity: sha512-Pg6VA6ABC7N5FrNB5eqTgNsKdzzmDSp5aBtnQh1BlcZu7ISPZdCcKo+ZJtKyzTAWpc17LIttvJwxez6zBxUdOw==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      lodash: 4.17.21
-      react: 18.2.0
-      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
-      uuid: 3.4.0
-    dev: false
-
   /@journeyapps/react-native-quick-sqlite@1.1.1(react-native@0.72.4)(react@18.2.0):
     resolution: {integrity: sha512-5I8zUZoFRgtnagjQygqnSyWG0L39ycFvum+ytsMmFW8LY1GpEZ+a3I6fWggwM82/Cc9YOheCVRIz47g0uBBZug==}
     peerDependencies:
@@ -3386,6 +3374,18 @@ packages:
       react-native: 0.72.4(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
       uuid: 3.4.0
     dev: true
+
+  /@journeyapps/react-native-quick-sqlite@1.1.1(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-5I8zUZoFRgtnagjQygqnSyWG0L39ycFvum+ytsMmFW8LY1GpEZ+a3I6fWggwM82/Cc9YOheCVRIz47g0uBBZug==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      lodash: 4.17.21
+      react: 18.2.0
+      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
+      uuid: 3.4.0
+    dev: false
 
   /@jridgewell/gen-mapping@0.3.3:
     resolution: {integrity: sha512-HLhSWOLRi875zjjMG/r+Nv0oCW8umGb0BgEhyX3dDX3egwZtB8PqLnjz3yedt8R5StBrzcg4aBpnh8UA9D1BoQ==}
