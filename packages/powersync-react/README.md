@@ -1,11 +1,12 @@
 # React components for PowerSync
 
 ## Context
+
 Configure a PowerSync DB connection and add it to a context provider.
 
 ```JSX
 // App.jsx
-import { PowerSyncDatabase } from '@journeyapps/powersync-react-native'; 
+import { PowerSyncDatabase } from '@journeyapps/powersync-react-native';
 import { PowerSyncContext } from "@journeyapps/powersync-react";
 export const App = () => {
     const powerSync = React.useMemo(() => {
@@ -19,6 +20,7 @@ export const App = () => {
 ```
 
 ### Accessing PowerSync
+
 The provided PowerSync client is available with the `usePowerSync` hook.
 
 ```JSX
@@ -40,9 +42,10 @@ export const TodoListDisplay = () => {
     }
 ```
 
-
 ### Watched Queries
+
 Watched queries will automatically update when a dependant table is updated.
+
 ```JSX
 // TodoListDisplay.jsx
 import { usePowerSyncWatchedQuery } from "@journeyapps/powersync-react";

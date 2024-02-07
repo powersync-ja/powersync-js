@@ -13,7 +13,10 @@ export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 export abstract class AbstractRemote {
   protected credentials?: PowerSyncCredentials;
 
-  constructor(protected connector: RemoteConnector, protected logger: ILogger = DEFAULT_REMOTE_LOGGER) {}
+  constructor(
+    protected connector: RemoteConnector,
+    protected logger: ILogger = DEFAULT_REMOTE_LOGGER
+  ) {}
 
   async getCredentials(): Promise<PowerSyncCredentials> {
     const { expiresAt } = this.credentials ?? {};

@@ -39,8 +39,8 @@
     "web-streams-polyfill": "^3.2.1"
   },
   "dependencies": {
-    "@journeyapps/powersync-react": "1.0.3",
-    "@journeyapps/powersync-sdk-common": "1.2.0",
+    "@journeyapps/powersync-react": "workspace:*",
+    "@journeyapps/powersync-sdk-common": "workspace:*",
     "async-lock": "^1.4.0"
   },
   "devDependencies": {

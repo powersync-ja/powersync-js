@@ -23,18 +23,18 @@ After cloning this repo be sure to init the Git submodules
 git submodule init && git submodule update
 ```
 
-This monorepo uses Yarn as it works well with React Native.
+This monorepo uses pnpm.
 
 Install workspace dependencies
 
 ```bash
-yarn install
+pnpm install
 ```
 
 Build packages
 
 ```bash
-yarn build:packages
+pnpm build:packages
 ```
 
 ## Versioning
@@ -50,7 +50,7 @@ Pull requests should contain Changesets for changed packages.
 Add changesets with
 
 ```Bash
-yarn changeset add
+pnpm changeset add
 ```
 
 Merging a PR with Changesets will automatically create a PR with version bumps. That PR will be merged when releasing.
@@ -82,5 +82,5 @@ cd apps/supabase-todolist
 Test on either Android or iOS
 
 ```bash
-yarn ios
+pnpm ios
 ```

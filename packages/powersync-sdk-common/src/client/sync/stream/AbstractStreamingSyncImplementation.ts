@@ -212,7 +212,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
 
         let bucketSet = new Set<string>(initialBuckets.keys());
 
-        for await (let line of this.streamingSyncRequest(
+        for await (const line of this.streamingSyncRequest(
           {
             buckets: req,
             include_checksum: true,
@@ -233,7 +233,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             targetCheckpoint = line.checkpoint;
             const bucketsToDelete = new Set<string>(bucketSet);
             const newBuckets = new Set<string>();
-            for (let checksum of line.checkpoint.buckets) {
+            for (const checksum of line.checkpoint.buckets) {
               newBuckets.add(checksum.bucket);
               bucketsToDelete.delete(checksum.bucket);
             }
@@ -275,13 +275,13 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             }
             const diff = line.checkpoint_diff;
             const newBuckets = new Map<string, BucketChecksum>();
-            for (let checksum of targetCheckpoint.buckets) {
+            for (const checksum of targetCheckpoint.buckets) {
               newBuckets.set(checksum.bucket, checksum);
             }
-            for (let checksum of diff.updated_buckets) {
+            for (const checksum of diff.updated_buckets) {
               newBuckets.set(checksum.bucket, checksum);
             }
-            for (let bucket of diff.removed_buckets) {
+            for (const bucket of diff.removed_buckets) {
               newBuckets.delete(bucket);
             }
 

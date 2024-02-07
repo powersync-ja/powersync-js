@@ -16,24 +16,25 @@ This SDK currently requires `@journeyapps/react-native-quick-sqlite` as a peer d
 
 Install it in your app with:
 
-```bash 
+```bash
 npx expo install @journeyapps/react-native-quick-sqlite
 ```
 
 ## Install Polyfills
+
 ### Fetch
 
-This SDK requires HTTP streaming in order to function. The following `fetch` polyfills are required for the React Native implementation of `fetch`: 
+This SDK requires HTTP streaming in order to function. The following `fetch` polyfills are required for the React Native implementation of `fetch`:
 
- - react-native-fetch-api
- - react-native-polyfill-globals
- - react-native-url-polyfill
- - text-encoding
- - web-streams-polyfill
+- react-native-fetch-api
+- react-native-polyfill-globals
+- react-native-url-polyfill
+- text-encoding
+- web-streams-polyfill
 
  These are listed as peer dependencies and need to be added to the React Native project
 
- ```bash 
+ ```bash
  npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
  ```
 
@@ -62,7 +63,7 @@ import 'react-native-polyfill-globals/auto';
 Install the async generator Babel plugin
 
  ```bash
- yarn add -D @babel/plugin-transform-async-generator-functions
+ pnpm add -D @babel/plugin-transform-async-generator-functions
  ```
 
 Add the Babel plugin to your `babel.config.js` file
@@ -90,6 +91,5 @@ npx expo run:ios
 ```
 
 # Learn More
+
 Refer to our [full documentation](https://docs.powersync.com/client-sdk-references/react-native-and-expo) to learn more.
-
-

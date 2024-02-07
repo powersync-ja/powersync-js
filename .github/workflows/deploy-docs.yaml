@@ -27,23 +27,29 @@ jobs:
       GH_PROJECT_NAME: ${{vars.GH_PROJECT_NAME}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: yarn
-      - name: Setup Yarn
+          node-version: 20
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: 8
+          run_install: false
+      - name: Get pnpm store directory
+        shell: bash
         run: |
-          npm install -g yarn
-          echo "Yarn version: $(yarn -v)"
-          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile && cd docs && yarn install --frozen-lockfile
-      - name: Build Packages
-        run: yarn build:packages
-      - name: Build Docs
-        run: yarn build:docs
+            echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs/build
