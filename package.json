@@ -9,6 +9,8 @@
     "clean": "pnpm run -r clean",
     "ci:version": "changeset version && pnpm install --no-frozen-lockfile",
     "ci:publish": "changeset publish && git push --follow-tags",
+    "docs:start": "pnpm --filter docs start",
+    "docs:build": "pnpm --filter docs build",
     "build": "pnpm run -r build",
     "build:packages": "pnpm run --filter './packages/**' -r build",
     "format": "prettier --write ."
