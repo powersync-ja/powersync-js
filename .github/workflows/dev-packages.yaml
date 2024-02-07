@@ -34,3 +34,9 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       - name: Install dependencies
         run: pnpm install
+      - name: Build
+        run: pnpm build:packages
+      - name: Publish
+        run: |
+          pnpm changeset version --no-git-tag --snapshot dev
+          pnpm changeset publish --tag dev

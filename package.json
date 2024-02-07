@@ -1,7 +1,8 @@
 {
   "name": "powersync-js",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "monorepo for powersync javascript sdks",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -16,12 +17,12 @@
     "format": "prettier --write ."
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "type": "module",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=20.9.0"
   },
-  "type": "module",
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
     "husky": "^9.0.7",
