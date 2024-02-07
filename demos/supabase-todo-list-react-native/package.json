@@ -54,7 +54,7 @@
     "react-navigation-stack": "^2.10.4",
     "text-encoding": "^0.7.0",
     "uuid": "3.4.0",
-    "web-streams-polyfill": "^3.2.1"
+    "web-streams-polyfill": "^3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
