@@ -80,8 +80,6 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
 
   /**
    * Mark a bucket for deletion.
-   *
-   * @param bucket
    */
   private async deleteBucket(bucket: string) {
     // Delete a bucket, but allow it to be re-created.

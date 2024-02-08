@@ -20,6 +20,9 @@ export abstract class AbstractPowerSyncDatabaseOpenFactory {
     options.logger = options.logger ?? Logger.get(`PowerSync ${this.options.dbFilename}`);
   }
 
+  /**
+   * Schema used for the local database.
+   */
   get schema() {
     return this.options.schema;
   }

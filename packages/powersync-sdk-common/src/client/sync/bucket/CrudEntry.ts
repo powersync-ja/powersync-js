@@ -38,12 +38,33 @@ export type CrudEntryOutputJSON = {
   data: Record<string, any>;
 };
 
+/**
+ * A single client-side change.
+ */
 export class CrudEntry {
+  /**
+   * Auto-incrementing client-side id.
+   */
   clientId: number;
+  /**
+   * ID of the changed row.
+   */
   id: string;
+  /**
+   * Type of change.
+   */
   op: UpdateType;
+  /**
+   * Data associated with the change.
+   */
   opData?: Record<string, any>;
+  /**
+   * Table that contained the change.
+   */
   table: string;
+  /**
+   * Auto-incrementing transaction id. This is the same for all operations within the same transaction.
+   */
   transactionId?: number;
 
   static fromRow(dbRow: CrudEntryJSON) {
@@ -67,6 +88,9 @@ export class CrudEntry {
     this.transactionId = transactionId;
   }
 
+  /**
+   * TODO: Converts the change to JSON format, as required by the dev crud API.
+   */
   toJSON(): CrudEntryOutputJSON {
     return {
       op_id: this.clientId,
@@ -78,6 +102,9 @@ export class CrudEntry {
     };
   }
 
+  /**
+   * The hash code for this object.
+   */
   hashCode() {
     return hash([this.transactionId, this.clientId, this.op, this.table, this.id, this.opData]);
   }

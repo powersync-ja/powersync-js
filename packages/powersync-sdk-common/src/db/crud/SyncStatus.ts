@@ -14,14 +14,23 @@ export type SyncStatusOptions = {
 export class SyncStatus {
   constructor(protected options: SyncStatusOptions) {}
 
+  /**
+   * true if currently connected.
+   */
   get connected() {
     return this.options.connected ?? false;
   }
 
+  /**
+   * TODO
+   */
   get lastSyncedAt() {
     return this.options.lastSyncedAt;
   }
 
+  /**
+   * TODO
+   */
   get dataFlowStatus() {
     return (
       this.options.dataFlow ?? {

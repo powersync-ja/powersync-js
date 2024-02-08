@@ -114,14 +114,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._isReadyPromise = this.initialize();
   }
 
+  /**
+   * Schema used for the local database.
+   */
   get schema() {
     return this._schema;
   }
 
+  /**
+   * The underlying database.
+   * 
+   * For the most part, behavior is the same whether querying on the underlying database, or on [AbstractPowerSyncDatabase]. The main difference is in update notifications: the underlying database reports updates to the underlying tables, while AbstractPowerSyncDatabase reports updates to the higher-level views.
+   */
   protected get database() {
     return this.options.database;
   }
 
+  /**
+   * Whether a connection to the PowerSync service is currently open.
+   */
   get connected() {
     return this.currentStatus?.connected || false;
   }
@@ -163,6 +174,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
+  /**
+   * Replace the schema with a new version. This is for advanced use cases - typically the schema should just be specified once in the constructor.
+   * 
+   * Cannot be used while connected - this should only be called before [AbstractPowerSyncDatabase.connect].
+   */
   async updateSchema(schema: Schema) {
     if (this.abortController) {
       throw new Error('Cannot update schema while connected');
@@ -226,6 +242,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.watchCrudUploads();
   }
 
+  /**
+   * Close the sync connection.
+   * 
+   * Use [connect] to connect again.
+   */
   async disconnect() {
     this.abortController?.abort();
     this.syncStatusListenerDisposer?.();
@@ -237,6 +258,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *  Use this when logging out.
    *  The database can still be queried after this is called, but the tables
    *  would be empty.
+   * 
+   * To preserve data in local-only tables, set clearLocal to false.
    */
   async disconnectAndClear(options = DEFAULT_DISCONNECT_CLEAR_OPTIONS) {
     await this.disconnect();
@@ -307,7 +330,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the [PowerSyncBackendConnector.uploadData] callback.
    *
    * Once the data have been successfully uploaded, call [CrudBatch.complete] before
    * requesting the next batch.
@@ -446,7 +469,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a read lock, without starting a transaction.
-   *
    * In most cases, [readTransaction] should be used instead.
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
@@ -466,6 +488,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * Open a read-only transaction.
+   * TODO: Up to maxReaders read transactions can run concurrently. After that, read transactions are queued.
+   * Read transactions can run concurrently to a write transaction.
+   * Changes from any write transaction are not visible to read transactions started before it.
+   */
   async readTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -481,6 +509,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Open a read-write transaction.
+   * This takes a global lock - only one write transaction can execute against the database at a time.
+   * TODO: Statements within the transaction must be done on the provided SqliteWriteContext - attempting statements on the SqliteConnection instance will error.
+   */
   async writeTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -496,6 +529,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Execute a read query every time the source tables are modified.
+   * TODO: Use throttle to specify the minimum interval between queries.
+   * TODO: Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   */
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
     yield await this.executeReadOnly(sql, parameters);
@@ -582,6 +620,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * TODO
+   */
   private async executeReadOnly(sql: string, params: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));
