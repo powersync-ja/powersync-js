@@ -247,7 +247,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Close the sync connection.
    * 
-   * Use [connect] to connect again.
+   * Use {@link connect} to connect again.
    */
   async disconnect() {
     this.abortController?.abort();
@@ -295,7 +295,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /*
    * Close the database, releasing resources.
    *
-   * Also [disconnect]s any active connection.
+   * Also disconnects any active connection.
    *
    * Once close is called, this connection cannot be used again - a new one
    * must be constructed.
@@ -332,12 +332,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData] callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudBatch.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
    * requesting the next batch.
    *
-   * Use [limit] to specify the maximum number of updates to return in a single
+   * Use {@link limit} to specify the maximum number of updates to return in a single
    * batch.
    *
    * This method does include transaction ids in the result, but does not group
@@ -383,12 +383,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudTransaction.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
    *
-   * Unlike [getCrudBatch], this only returns data from a single transaction at a time.
+   * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
@@ -471,7 +471,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a read lock, without starting a transaction.
-   * In most cases, [readTransaction] should be used instead.
+   * In most cases, {@link readTransaction} should be used instead.
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -480,7 +480,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a global lock, without starting a transaction.
-   * In most cases, [writeTransaction] should be used instead.
+   * In most cases, {@link writeTransaction} should be used instead.
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -564,7 +564,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over [watch] when multiple queries need to be performed
+   * This is preferred over {@link watch} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note, do not declare this as `async *onChange` as it will not work in React Native
