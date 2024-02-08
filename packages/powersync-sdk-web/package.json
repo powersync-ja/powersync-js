@@ -1,0 +1,51 @@
+{
+  "name": "@journeyapps/powersync-sdk-web",
+  "version": "0.2.0",
+  "description": "A Web SDK for JourneyApps PowerSync",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": "https://github.com/powersync-ja/powersync-web-sdk",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-web-sdk/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "homepage": "https://docs.powersync.co",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "watch": "tsc --build -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "data sync",
+    "offline-first",
+    "sqlite",
+    "real-time data stream",
+    "live data"
+  ],
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@journeyapps/wa-sqlite": "~0.1.1",
+    "@types/lodash": "^4.14.200",
+    "@types/uuid": "^9.0.6",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "@journeyapps/wa-sqlite": "~0.1.1"
+  },
+  "dependencies": {
+    "@journeyapps/powersync-sdk-common": "workspace:*",
+    "async-mutex": "^0.4.0",
+    "comlink": "^4.4.1",
+    "js-logger": "^1.6.1",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1"
+  }
+}

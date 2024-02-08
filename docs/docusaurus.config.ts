@@ -69,7 +69,7 @@ const config: Config = {
   themeConfig: {
     image: process.env.META_LOGO_URL,
     navbar: {
-      title: 'PowerSync React Native SDK',
+      title: 'PowerSync JS SDKs',
       logo: {
         alt: 'PowerSync Logo',
         src: 'img/powersync-logo.png'
