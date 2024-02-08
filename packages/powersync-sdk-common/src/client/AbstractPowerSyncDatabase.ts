@@ -126,7 +126,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * The underlying database.
    * 
-   * For the most part, behavior is the same whether querying on the underlying database, or on [AbstractPowerSyncDatabase]. The main difference is in update notifications: the underlying database reports updates to the underlying tables, while AbstractPowerSyncDatabase reports updates to the higher-level views.
+   * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}. The main difference is in update notifications: the underlying database reports updates to the underlying tables, while AbstractPowerSyncDatabase reports updates to the higher-level views.
    */
   protected get database() {
     return this.options.database;
@@ -179,7 +179,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Replace the schema with a new version. This is for advanced use cases - typically the schema should just be specified once in the constructor.
    * 
-   * Cannot be used while connected - this should only be called before [AbstractPowerSyncDatabase.connect].
+   * Cannot be used while connected - this should only be called before {@link AbstractPowerSyncDatabase.connect}.
    */
   async updateSchema(schema: Schema) {
     if (this.abortController) {
