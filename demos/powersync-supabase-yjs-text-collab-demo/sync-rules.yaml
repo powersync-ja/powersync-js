@@ -1,0 +1,7 @@
+# Sync-rule docs: https://docs.powersync.co/usage/sync-rules
+bucket_definitions:
+  global:
+    data:
+      - SELECT * FROM documents
+      - SELECT id, document_id, base64(update_data) as update_b64 FROM document_updates
+      

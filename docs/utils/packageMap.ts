@@ -2,7 +2,8 @@ enum Packages {
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
   CommonSdk = 'common-sdk',
-  AttachmentsSdk = 'attachments-sdk'
+  AttachmentsSdk = 'attachments-sdk',
+  WebSdk = 'web-sdk'
 }
 
 interface Package {
@@ -45,5 +46,12 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/powersync-attachments/src/index.ts'],
     tsconfig: '../packages/powersync-attachments/tsconfig.json',
     id: Packages.AttachmentsSdk
+  },
+  [Packages.WebSdk]: {
+    name: 'Web SDK',
+    dirName: Packages.WebSdk,
+    entryPoints: ['../packages/powersync-sdk-web/src/index.ts'],
+    tsconfig: '../packages/powersync-sdk-web/tsconfig.json',
+    id: Packages.WebSdk
   }
 };
