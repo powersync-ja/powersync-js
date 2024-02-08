@@ -126,7 +126,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * The underlying database.
    * 
-   * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}. The main difference is in update notifications: the underlying database reports updates to the underlying tables, while AbstractPowerSyncDatabase reports updates to the higher-level views.
+   * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
    */
   protected get database() {
     return this.options.database;

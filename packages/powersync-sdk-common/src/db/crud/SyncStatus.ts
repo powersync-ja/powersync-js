@@ -22,7 +22,8 @@ export class SyncStatus {
   }
 
   /**
-   * TODO
+   *  Time that a last sync has fully completed, if any.
+   *  Currently this is reset to null after a restart.
    */
   get lastSyncedAt() {
     return this.options.lastSyncedAt;

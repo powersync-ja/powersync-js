@@ -15,7 +15,7 @@ export class CrudTransaction extends CrudBatch {
      */
     public complete: (checkpoint?: string) => Promise<void>,
     /**
-     * Unique transaction id.
+     * If null, this contains a list of changes recorded without an explicit transaction associated.
      */
     public transactionId?: number
   ) {
