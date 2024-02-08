@@ -89,7 +89,7 @@ export class CrudEntry {
   }
 
   /**
-   * TODO: Converts the change to JSON format, as required by the dev crud API.
+   * Converts the change to JSON format.
    */
   toJSON(): CrudEntryOutputJSON {
     return {
