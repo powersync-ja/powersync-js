@@ -61,7 +61,7 @@ export class ReactNativeRemote extends AbstractRemote {
 
     const credentials = await this.getCredentials();
 
-    let timeout =
+    const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {
             this.logger.warn(
@@ -83,7 +83,7 @@ export class ReactNativeRemote extends AbstractRemote {
        * this non-standard flag
        * https://github.com/react-native-community/fetch#enable-text-streaming
        */
-      // @ts-ignore
+      // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
       reactNative: { textStreaming: true }
     }).catch((ex) => {
       console.error(`Caught ex when POST streaming to ${path}`, ex);

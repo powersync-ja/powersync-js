@@ -1,6 +1,6 @@
 import { BucketChecksum, Checkpoint } from '../bucket/BucketStorageAdapter';
 import { CrudEntry, OpId } from '../bucket/CrudEntry';
-import { SyncDataBucket, SyncDataBucketJSON } from '../bucket/SyncDataBucket';
+import { SyncDataBucketJSON } from '../bucket/SyncDataBucket';
 
 /**
  * For sync2.json

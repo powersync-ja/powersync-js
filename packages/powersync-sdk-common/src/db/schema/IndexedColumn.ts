@@ -1,4 +1,4 @@
-import { Column, ColumnType } from '../Column';
+import { ColumnType } from '../Column';
 import { Table } from './Table';
 
 export interface IndexColumnOptions {

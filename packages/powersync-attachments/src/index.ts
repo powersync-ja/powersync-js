@@ -1,4 +1,4 @@
-export * from "./Schema";
-export * from "./StorageAdapter";
+export * from './Schema';
+export * from './StorageAdapter';
 
-export * from "./AbstractAttachmentQueue";
+export * from './AbstractAttachmentQueue';

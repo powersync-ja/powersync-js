@@ -27,7 +27,7 @@
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "1.2.0"
+    "@journeyapps/powersync-sdk-common": "workspace:*"
   },
   "peerDependencies": {
     "react": "*"

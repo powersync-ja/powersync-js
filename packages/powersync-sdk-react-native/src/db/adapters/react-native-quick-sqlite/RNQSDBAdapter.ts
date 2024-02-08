@@ -18,7 +18,10 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   getOptional: <T>(sql: string, parameters?: any[]) => Promise<T | null>;
   get: <T>(sql: string, parameters?: any[]) => Promise<T>;
 
-  constructor(protected baseDB: QuickSQLiteConnection, public name: string) {
+  constructor(
+    protected baseDB: QuickSQLiteConnection,
+    public name: string
+  ) {
     super();
     // link table update commands
     baseDB.registerTablesChangedHook((update) => {

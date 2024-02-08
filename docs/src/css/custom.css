@@ -19,7 +19,7 @@
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #C44EFF;
+  --ifm-color-primary: #c44eff;
   --ifm-color-primary-dark: #b92dff;
   --ifm-color-primary-darker: #b31cff;
   --ifm-color-primary-darkest: #9b00e9;

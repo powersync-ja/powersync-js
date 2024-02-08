@@ -24,7 +24,7 @@ export class BaseObserver<T extends BaseListener = BaseListener> implements Base
   }
 
   iterateListeners(cb: (listener: Partial<T>) => any) {
-    for (let i in this.listeners) {
+    for (const i in this.listeners) {
       cb(this.listeners[i]);
     }
   }

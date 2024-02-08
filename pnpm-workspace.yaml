@@ -1,0 +1,4 @@
+packages:
+  - 'demos/*'
+  - 'packages/*'
+  - 'docs/'

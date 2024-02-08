@@ -1,32 +1,32 @@
 {
-  "private": true,
-  "name": "powersync-react-native",
+  "name": "powersync-js",
   "version": "1.0.0",
-  "license": "Apache-2.0",
+  "private": true,
+  "description": "monorepo for powersync javascript sdks",
+  "main": "index.js",
   "scripts": {
-    "clean:packages": "lerna run clean",
-    "build:packages": "lerna run build",
-    "watch:packages": "yarn workspace  @journeyapps/powersync-sdk-react-native watch",
-    "release": "yarn build:packages && yarn changeset publish",
-    "build:docs": "cd docs && yarn && yarn build",
-    "start:docs": "cd docs && yarn && yarn build && yarn start"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "clean": "pnpm run -r clean",
+    "ci:version": "changeset version && pnpm install --no-frozen-lockfile",
+    "ci:publish": "changeset publish && git push --follow-tags",
+    "docs:start": "pnpm --filter docs start",
+    "docs:build": "pnpm --filter docs build",
+    "build": "pnpm run -r build",
+    "build:packages": "pnpm run --filter './packages/**' -r build",
+    "format": "prettier --write ."
   },
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ],
-    "nohoist": [
-      "**/@rneui/**",
-      "**/react-native",
-      "**/react-native/**",
-      "**/expo",
-      "**/expo/**"
-    ]
+  "keywords": [],
+  "type": "module",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.9.0"
   },
-  "dependencies": {},
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
-    "lerna": "7.3.0"
+    "husky": "^9.0.7",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4"
   }
 }
