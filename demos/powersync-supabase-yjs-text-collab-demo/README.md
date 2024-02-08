@@ -40,7 +40,7 @@ deno run generate-keys.ts
 ```
 
 4. Then use `supabase secrets set` as shown in the terminal output to update the generated keys on Supabase (`POWERSYNC_PUBLIC_KEY` and `POWERSYNC_PRIVATE_KEY`). You will need the project ref of the Supabase project you created previously.
-5. Switch back to the [powersync-supabase-yjs-text-collab-demo](https://github.com/powersync-ja/powersync-supabase-yjs-text-collab-demo) repo directory and deploy the `powersync-jwks` and `powersync-auth-anonymous` edge functions to Supabase: (Note that the Supabase CLI requires [Docker Desktop](https://docs.docker.com/desktop/) to be installed for this step)
+5. Switch back to the `powersync-supabase-yjs-text-collab-demo` repo directory and deploy the `powersync-jwks` and `powersync-auth-anonymous` edge functions to Supabase: (Note that the Supabase CLI requires [Docker Desktop](https://docs.docker.com/desktop/) to be installed for this step)
 
 
 ```bash
