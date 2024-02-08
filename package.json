@@ -14,7 +14,8 @@
     "docs:build": "pnpm --filter docs build",
     "build": "pnpm run -r build",
     "build:packages": "pnpm run --filter './packages/**' -r build",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "release": "pnpm build:packages && pnpm changeset publish"
   },
   "keywords": [],
   "type": "module",

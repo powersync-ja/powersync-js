@@ -50,6 +50,10 @@ jobs:
             ${{ runner.os }}-pnpm-store-
       - name: Install dependencies
         run: pnpm install
+      - name: Build Packages
+        run: pnpm build:packages
+      - name: Build Docs
+        run: pnpm docs:build
       - uses: actions/upload-pages-artifact@v2
         with:
           path: ./docs/build
