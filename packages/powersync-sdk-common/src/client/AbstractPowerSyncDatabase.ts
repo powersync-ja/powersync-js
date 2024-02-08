@@ -493,7 +493,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Open a read-only transaction.
-   * TODO: Up to maxReaders read transactions can run concurrently. After that, read transactions are queued.
    * Read transactions can run concurrently to a write transaction.
    * Changes from any write transaction are not visible to read transactions started before it.
    */
