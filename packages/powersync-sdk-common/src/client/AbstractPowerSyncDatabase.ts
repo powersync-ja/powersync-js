@@ -515,7 +515,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Open a read-write transaction.
    * This takes a global lock - only one write transaction can execute against the database at a time.
-   * TODO: Statements within the transaction must be done on the provided SqliteWriteContext - attempting statements on the SqliteConnection instance will error.
+   * Statements within the transaction must be done on the provided {@link Transaction} interface.
    */
   async writeTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
