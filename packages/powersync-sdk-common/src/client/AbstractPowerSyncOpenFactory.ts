@@ -4,6 +4,7 @@ import { Schema } from '../db/schema/Schema';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
 
 export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions> {
+  /** Schema used for the local database. */
   schema: Schema;
   /**
    * Filename for the database.

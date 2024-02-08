@@ -21,10 +21,12 @@ import { EventIterator } from 'event-iterator';
 import { quoteIdentifier } from '../utils/strings';
 
 export interface DisconnectAndClearOptions {
+  /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
 export interface PowerSyncDatabaseOptions {
+  /** Schema used for the local database. */
   schema: Schema;
   database: DBAdapter;
   /**
@@ -436,7 +438,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a statement and optionally return results
+   * Execute a statement and optionally return results.
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
@@ -444,7 +446,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   *  Execute a read-only query and return results
+   *  Execute a read-only query and return results.
    */
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     await this.waitForReady();
