@@ -30,12 +30,19 @@ export class SyncStatus {
   }
 
   /**
-   * TODO
+   *  Upload/download status
    */
   get dataFlowStatus() {
     return (
       this.options.dataFlow ?? {
+        /**
+         * true if actively downloading changes.
+         * This is only true when {@link connected} is also true.
+         */
         downloading: false,
+        /**
+         * true if uploading changes.
+         */
         uploading: false
       }
     );

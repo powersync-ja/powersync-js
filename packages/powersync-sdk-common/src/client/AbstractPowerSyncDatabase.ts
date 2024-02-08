@@ -46,6 +46,7 @@ export interface PowerSyncDatabaseOptions {
 export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
+  /** The minimum interval between queries. */
   throttleMs?: number;
   /**
    * Allows for watching any SQL table
@@ -533,8 +534,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Execute a read query every time the source tables are modified.
-   * TODO: Use throttle to specify the minimum interval between queries.
-   * TODO: Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    */
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
@@ -622,9 +623,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
-  /**
-   * TODO
-   */
   private async executeReadOnly(sql: string, params: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));

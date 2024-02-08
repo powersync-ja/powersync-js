@@ -1,9 +1,6 @@
 import { CrudBatch } from './CrudBatch';
 import { CrudEntry } from './CrudEntry';
 
-/**
- * TODO
- */
 export class CrudTransaction extends CrudBatch {
   constructor(
     /**
