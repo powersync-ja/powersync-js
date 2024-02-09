@@ -1,4 +1,4 @@
-# PowerSync + Supabase NextJS Demo: Todo List
+# PowerSync + Supabase Next.js Demo: Todo List
 
 ## Note: Beta Release
 
@@ -63,7 +63,7 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-Also check out [the PowerSync Web SDK GitHub repository](https://github.com/powersync-ja/powersync-web-sdk) - your feedback and contributions are welcome!
+Also check out [the PowerSync Web SDK on GitHub](https://github.com/powersync-ja/powersync-js/tree/main/packages/powersync-sdk-web) - your feedback and contributions are welcome!
 
 To learn more about PowerSync, see the [PowerSync docs](https://docs.powersync.com).
 
