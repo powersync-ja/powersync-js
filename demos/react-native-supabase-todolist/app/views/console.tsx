@@ -34,8 +34,8 @@ const App: React.FC = () => {
       {output ? (
         <Table borderStyle={{ borderWidth: 2 }}>
           <Row style={{ backgroundColor: '#999' }} data={cellKeys} />
-          {rows.map((row) => (
-            <Row data={cellKeys.map((key) => row[key])} />
+          {rows.map((row, index) => (
+            <Row key={index.toString()} data={cellKeys.map((key) => row[key])} />
           ))}
         </Table>
       ) : null}

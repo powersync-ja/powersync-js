@@ -1,4 +1,4 @@
-# PowerSync + Supabase NextJS Demo: Todo List 
+# PowerSync + Supabase NextJS Demo: Todo List
 
 ## Note: Beta Release
 
@@ -14,11 +14,10 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-
 In your terminal, switch into the demo's directory:
 
 ```bash
-cd demos/powersync-nextjs-demo
+cd demos/nextjs-supabase-todolist
 ```
 
 Set up the Environment variables: Copy the `.env.local.template` file:
@@ -38,6 +37,7 @@ pnpm watch
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Progressive Web App (PWA)
+
 This demo is PWA compatible. PWA is not available in development (watch) mode.
 
 Build the production codebase
