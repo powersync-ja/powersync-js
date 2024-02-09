@@ -15,10 +15,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
   "bugs": {
-    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "scripts": {
