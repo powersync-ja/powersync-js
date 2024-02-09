@@ -7,9 +7,9 @@
   "files": [
     "dist"
   ],
-  "repository": "https://github.com/powersync-ja/powersync-web-sdk",
+  "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
-    "url": "https://github.com/powersync-ja/powersync-web-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

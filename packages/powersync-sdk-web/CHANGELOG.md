@@ -4,7 +4,7 @@
 
 ### Minor Changes
 
-- d20386c: Updated common SDK. Changes <https://github.com/powersync-ja/powersync-react-native-sdk/pull/46>
+- d20386c: Updated common SDK. Changes <https://github.com/powersync-ja/powersync-js/pull/46>
 
 ## 0.1.3
 
