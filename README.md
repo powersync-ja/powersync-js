@@ -30,7 +30,7 @@ PowerSync is a service and set of SDKs that keeps Postgres databases in sync wit
 Demo applications are located in the [`demos/`](./demos/) directory.
 
  - [demos/nextjs-supabase-todolist](./demos/nextjs-supabase-todolist/): A Next.js to-do list example app using the PowerSync Web SDK and a Supabase backend.
- - [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs]((https://github.com/yjs/yjs)) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
+ - [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
  - [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist) A React Native to-do list example app using a Supabase backend.
  - [demos/example-webpack](./demos/example-webpack/README.md) contains a minimal example demonstrating bundling with Webpack.
  - [demos/example-vite](./demos/example-vite/README.md) contains a minimal example demonstrating bundling with Vite.
