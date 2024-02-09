@@ -16,7 +16,7 @@ export interface PowerSyncBackendConnector {
 
   /** Upload local changes to the app backend.
    *
-   * Use [PowerSyncDatabase.getCrudBatch] to get a batch of changes to upload. See [DevConnector] for an example implementation.
+   * Use {@link AbstractPowerSyncDatabase.getCrudBatch} to get a batch of changes to upload. 
    *
    * Any thrown errors will result in a retry after the configured wait period (default: 5 seconds).
    */

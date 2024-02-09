@@ -21,10 +21,12 @@ import { EventIterator } from 'event-iterator';
 import { quoteIdentifier } from '../utils/strings';
 
 export interface DisconnectAndClearOptions {
+  /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
 export interface PowerSyncDatabaseOptions {
+  /** Schema used for the local database. */
   schema: Schema;
   database: DBAdapter;
   /**
@@ -44,6 +46,7 @@ export interface PowerSyncDatabaseOptions {
 export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
+  /** The minimum interval between queries. */
   throttleMs?: number;
   /**
    * Allows for watching any SQL table
@@ -114,14 +117,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._isReadyPromise = this.initialize();
   }
 
+  /**
+   * Schema used for the local database.
+   */
   get schema() {
     return this._schema;
   }
 
+  /**
+   * The underlying database.
+   * 
+   * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
+   */
   protected get database() {
     return this.options.database;
   }
 
+  /**
+   * Whether a connection to the PowerSync service is currently open.
+   */
   get connected() {
     return this.currentStatus?.connected || false;
   }
@@ -163,6 +177,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
+  /**
+   * Replace the schema with a new version. This is for advanced use cases - typically the schema should just be specified once in the constructor.
+   * 
+   * Cannot be used while connected - this should only be called before {@link AbstractPowerSyncDatabase.connect}.
+   */
   async updateSchema(schema: Schema) {
     if (this.abortController) {
       throw new Error('Cannot update schema while connected');
@@ -226,6 +245,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.watchCrudUploads();
   }
 
+  /**
+   * Close the sync connection.
+   * 
+   * Use {@link connect} to connect again.
+   */
   async disconnect() {
     this.abortController?.abort();
     this.syncStatusListenerDisposer?.();
@@ -237,6 +261,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *  Use this when logging out.
    *  The database can still be queried after this is called, but the tables
    *  would be empty.
+   * 
+   * To preserve data in local-only tables, set clearLocal to false.
    */
   async disconnectAndClear(options = DEFAULT_DISCONNECT_CLEAR_OPTIONS) {
     await this.disconnect();
@@ -270,7 +296,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /*
    * Close the database, releasing resources.
    *
-   * Also [disconnect]s any active connection.
+   * Also disconnects any active connection.
    *
    * Once close is called, this connection cannot be used again - a new one
    * must be constructed.
@@ -307,12 +333,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudBatch.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
    * requesting the next batch.
    *
-   * Use [limit] to specify the maximum number of updates to return in a single
+   * Use {@link limit} to specify the maximum number of updates to return in a single
    * batch.
    *
    * This method does include transaction ids in the result, but does not group
@@ -358,12 +384,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudTransaction.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
    *
-   * Unlike [getCrudBatch], this only returns data from a single transaction at a time.
+   * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
@@ -413,7 +439,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a statement and optionally return results
+   * Execute a statement and optionally return results.
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
@@ -421,7 +447,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   *  Execute a read-only query and return results
+   *  Execute a read-only query and return results.
    */
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     await this.waitForReady();
@@ -446,8 +472,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a read lock, without starting a transaction.
-   *
-   * In most cases, [readTransaction] should be used instead.
+   * In most cases, {@link readTransaction} should be used instead.
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -456,7 +481,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a global lock, without starting a transaction.
-   * In most cases, [writeTransaction] should be used instead.
+   * In most cases, {@link writeTransaction} should be used instead.
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -466,6 +491,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * Open a read-only transaction.
+   * Read transactions can run concurrently to a write transaction.
+   * Changes from any write transaction are not visible to read transactions started before it.
+   */
   async readTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -481,6 +511,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Open a read-write transaction.
+   * This takes a global lock - only one write transaction can execute against the database at a time.
+   * Statements within the transaction must be done on the provided {@link Transaction} interface.
+   */
   async writeTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -496,6 +531,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Execute a read query every time the source tables are modified.
+   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   */
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
     yield await this.executeReadOnly(sql, parameters);
@@ -524,7 +564,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over [watch] when multiple queries need to be performed
+   * This is preferred over {@link watch} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note, do not declare this as `async *onChange` as it will not work in React Native

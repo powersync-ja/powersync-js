@@ -1,6 +1,12 @@
 export class UploadQueueStats {
   constructor(
+    /**
+     * Number of records in the upload queue.
+     */
     public count: number,
+    /**
+     * Size of the upload queue in bytes.
+     */
     public size: number = null
   ) {}
 
