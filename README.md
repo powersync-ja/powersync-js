@@ -12,16 +12,16 @@ PowerSync is a service and set of SDKs that keeps Postgres databases in sync wit
 
 - [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
   - React Native SDK implementation (extension of `packages/powersync-sdk-common`)
- 
+
 - [packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)
   - JS Web SDK implementation (extension of `packages/powersync-sdk-common`)
- 
+
 - [packages/powersync-react](./packages/powersync-react/README.md)
   - React integration for PowerSync.
 
 - [packages/powersync-attachments](./packages/powersync-attachments/README.md)
   - Attachments helper package for React Native.
- 
+
 - [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
@@ -29,11 +29,12 @@ PowerSync is a service and set of SDKs that keeps Postgres databases in sync wit
 
 Demo applications are located in the [`demos/`](./demos/) directory.
 
- - [demos/nextjs-supabase-todolist](./demos/nextjs-supabase-todolist/): A Next.js to-do list example app using the PowerSync Web SDK and a Supabase backend.
- - [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
- - [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist) A React Native to-do list example app using a Supabase backend.
- - [demos/example-webpack](./demos/example-webpack/README.md) contains a minimal example demonstrating bundling with Webpack.
- - [demos/example-vite](./demos/example-vite/README.md) contains a minimal example demonstrating bundling with Vite.
+- [demos/nextjs-supabase-todolist](./demos/nextjs-supabase-todolist/): A Next.js to-do list example app using the PowerSync Web SDK and a Supabase backend.
+- [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
+- [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist): A React Native to-do list example app using a Supabase backend.
+- [demos/angular-supabase-todolist](./demos/angular-supabase-todolist/README.md) An Angular to-do list example app using the PowerSync Web SDK and a Supabase backend.
+- [demos/example-webpack](./demos/example-webpack/README.md): A minimal example demonstrating bundling with Webpack.
+- [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
 
 # Development
 
