@@ -1,0 +1,26 @@
+<div class="main">
+  <h1>{{ list.name }}</h1>
+  <label for="addItemInput">What tasks do you want to add to the list?</label>
+
+  <input
+    #newItem
+    placeholder="add an item"
+    (keyup.enter)="addTodo(newItem.value); newItem.value = ''"
+    class="lg-text-input"
+    id="addItemInput"
+  />
+
+  <button class="btn btn-primary" (click)="addTodo(newItem.value)">Add</button>
+
+  <h2>
+    {{ todos?.length || 0 }}
+    <span *ngIf="todos?.length === 1; else elseBlock">item</span>
+    <ng-template #elseBlock>todos</ng-template>
+  </h2>
+
+  <ul>
+    <li *ngFor="let todo of todos">
+      <app-item (remove)="remove(todo)" [todo]="todo"></app-item>
+    </li>
+  </ul>
+</div>

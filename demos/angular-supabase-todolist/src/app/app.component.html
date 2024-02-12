@@ -1,0 +1,8 @@
+<div class="main">
+  <nav *ngIf="isLoggedIn">
+    <img [src]="_isOnline ? '../assets/icons/wifi-on.svg' : '../assets/icons/wifi-off.svg'" alt="Connection state" />
+    <button (click)="signOut()" class="btn btn-primary">Sign Out</button>
+  </nav>
+  <div class="spacing"></div>
+  <router-outlet></router-outlet>
+</div>

@@ -1,0 +1,29 @@
+<div class="main">
+  <h1>My Todo Lists</h1>
+
+  <input
+    #newItem
+    placeholder="Add a todo list"
+    (keyup.enter)="addList(newItem.value); newItem.value = ''"
+    class="lg-text-input"
+    id="addItemInput"
+  />
+
+  <button class="btn btn-primary" (click)="addList(newItem.value); newItem.value = ''">Add</button>
+
+  <h2>
+    {{ lists?.length || 0 }}
+    <span *ngIf="lists?.length === 1; else elseBlock">list</span>
+    <ng-template #elseBlock>lists</ng-template>
+  </h2>
+
+  <ul>
+    <li *ngFor="let list of lists">
+      <p>{{ list.name }}</p>
+      <div class="btn-wrapper">
+        <button (click)="goToTodoList(list)" class="btn btn-save edit">Edit</button>
+        <button (click)="remove(list)" class="btn btn-warn">Remove</button>
+      </div>
+    </li>
+  </ul>
+</div>

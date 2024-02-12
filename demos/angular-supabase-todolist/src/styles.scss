@@ -1,0 +1,76 @@
+/* You can add global styles to this file, and also import other style files */
+body {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+input {
+  border-radius: 8px;
+}
+
+.btn-wrapper {
+  /* flexbox */
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+}
+
+.btn {
+  color: #000;
+  background-color: #fff;
+  border: 2px solid #cecece;
+  padding: 0.35rem 1rem 0.25rem 1rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #ecf2fd;
+}
+
+.btn:active {
+  background-color: #d1e0fe;
+}
+
+.btn-save {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.btn-save:hover {
+  background-color: #444242;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #000;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.3rem;
+  border: black solid 2px;
+  margin: 1rem 0;
+}
+
+.btn-primary:hover {
+  background-color: #444242;
+}
+
+.btn-primary:active {
+  background-color: #212020;
+}
+
+.btn-warn {
+  background-color: #b90000;
+  color: #fff;
+  border-color: #9a0000;
+}
+
+.btn-warn:hover {
+  background-color: #9a0000;
+}
+
+.btn-warn:active {
+  background-color: #e30000;
+  border-color: #000;
+}

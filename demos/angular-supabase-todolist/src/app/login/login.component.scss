@@ -1,0 +1,55 @@
+.main {
+  max-width: 500px;
+  width: 85%;
+  margin: 2rem auto;
+  padding: 1rem;
+  text-align: center;
+  box-shadow:
+    0 2px 4px 0 rgba(0, 0, 0, 0.2),
+    0 2.5rem 5rem 0 rgba(0, 0, 0, 0.1);
+
+  h2 {
+    margin-bottom: 48px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 16px;
+
+    label {
+      text-align: left;
+      font-size: 14px;
+      margin-bottom: 4px;
+      margin-right: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #000;
+      display: block;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+  }
+
+  button {
+    margin-bottom: 28px;
+  }
+
+  a {
+    color: #000;
+    text-decoration: none;
+    font-size: 14px;
+    margin-top: 16px;
+    text-decoration: underline;
+  }
+}
+
+@media screen and (min-width: 600px) {
+  .main {
+    width: 70%;
+  }
+}
