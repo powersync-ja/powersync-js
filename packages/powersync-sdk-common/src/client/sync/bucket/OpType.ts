@@ -7,6 +7,9 @@ export enum OpTypeEnum {
 
 export type OpTypeJSON = string;
 
+/**
+ * Used internally for sync buckets.
+ */
 export class OpType {
   static fromJSON(jsonValue: OpTypeJSON) {
     return new OpType(OpTypeEnum[jsonValue]);
