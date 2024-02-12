@@ -571,13 +571,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
       const flushTableUpdates = _.throttle(
         () => {
-        const intersection = _.intersection(watchedTables, throttledTableUpdates);
-        if (intersection.length) {
-          eventOptions.push({
-            changedTables: intersection
-          });
-        }
-        throttledTableUpdates = [];
+          const intersection = _.intersection(watchedTables, throttledTableUpdates);
+          if (intersection.length) {
+            eventOptions.push({
+              changedTables: intersection
+            });
+          }
+          throttledTableUpdates = [];
         },
         throttleMs,
         { leading: false, trailing: true }
