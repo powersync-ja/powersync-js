@@ -1,5 +1,11 @@
 # example-vite
 
+## 0.0.5
+
+### Patch Changes
+
+- @journeyapps/powersync-sdk-web@0.2.1
+
 ## 0.0.4
 
 ### Patch Changes
