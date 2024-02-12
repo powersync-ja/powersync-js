@@ -11,15 +11,19 @@ PowerSync is a service and set of SDKs that keeps Postgres databases in sync wit
 ## Monorepo Structure: Packages
 
 - [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
+
   - React Native SDK implementation (extension of `packages/powersync-sdk-common`)
 
 - [packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)
+
   - JS Web SDK implementation (extension of `packages/powersync-sdk-common`)
 
 - [packages/powersync-react](./packages/powersync-react/README.md)
+
   - React integration for PowerSync.
 
 - [packages/powersync-attachments](./packages/powersync-attachments/README.md)
+
   - Attachments helper package for React Native.
 
 - [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)

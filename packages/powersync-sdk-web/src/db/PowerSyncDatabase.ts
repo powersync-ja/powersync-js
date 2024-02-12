@@ -4,7 +4,7 @@ import {
   PowerSyncBackendConnector,
   SqliteBucketStorage,
   BucketStorageAdapter,
-  PowerSyncDatabaseOptions,
+  PowerSyncDatabaseOptions
 } from '@journeyapps/powersync-sdk-common';
 
 import { WebRemote } from './sync/WebRemote';
@@ -35,7 +35,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     super(options);
   }
 
-  async _initialize(): Promise<void> { }
+  async _initialize(): Promise<void> {}
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);

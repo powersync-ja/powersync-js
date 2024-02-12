@@ -49,7 +49,8 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               );
             }}
           />
-        }>
+        }
+      >
         {loading ? (
           <ActivityIndicator />
         ) : (

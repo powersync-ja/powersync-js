@@ -18,7 +18,5 @@
     "skipLibCheck": true,
     "target": "esnext"
   },
-  "references": [
-    { "path": "../powersync-sdk-common"}
-  ]
+  "references": [{ "path": "../powersync-sdk-common" }]
 }

@@ -32,53 +32,53 @@ This SDK requires HTTP streaming in order to function. The following `fetch` pol
 - text-encoding
 - web-streams-polyfill
 
- These are listed as peer dependencies and need to be added to the React Native project
+These are listed as peer dependencies and need to be added to the React Native project
 
- ```bash
- npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
- ```
+```bash
+npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
+```
 
- Enable the polyfills in React Native app with
+Enable the polyfills in React Native app with
 
- ```JavaScript
+```JavaScript
 // App.js
 import 'react-native-polyfill-globals/auto';
- ```
+```
 
 ### Babel Plugins: Watched Queries
 
- Watched queries require support for Async Iterators. Expo apps currently require polyfill and Babel plugins in order to use this functionality.
+Watched queries require support for Async Iterators. Expo apps currently require polyfill and Babel plugins in order to use this functionality.
 
- ```bash
- npx expo install @azure/core-asynciterator-polyfill
- ```
+```bash
+npx expo install @azure/core-asynciterator-polyfill
+```
 
- Make sure to import the polyfill early in your application
+Make sure to import the polyfill early in your application
 
- ```JavaScript
+```JavaScript
 // App.js
- import '@azure/core-asynciterator-polyfill';
- ```
+import '@azure/core-asynciterator-polyfill';
+```
 
 Install the async generator Babel plugin
 
- ```bash
- pnpm add -D @babel/plugin-transform-async-generator-functions
- ```
+```bash
+pnpm add -D @babel/plugin-transform-async-generator-functions
+```
 
 Add the Babel plugin to your `babel.config.js` file
 
- ```JavaScript
- module.exports = function (api) {
-  return {
-    presets: [...],
-    plugins: [
-      // ... Other plugins
-      '@babel/plugin-transform-async-generator-functions'
-    ]
-  };
+```JavaScript
+module.exports = function (api) {
+ return {
+   presets: [...],
+   plugins: [
+     // ... Other plugins
+     '@babel/plugin-transform-async-generator-functions'
+   ]
+ };
 };
- ```
+```
 
 # Native Projects
 

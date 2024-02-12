@@ -60,14 +60,12 @@ const AppSchema = new Schema([
 ```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
-export class AttachmentQueue extends AbstractAttachmentQueue {
-
-}
+export class AttachmentQueue extends AbstractAttachmentQueue {}
 ```
 
 2. Implement `attachmentIds`, an `AsyncIterator` method to return an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
 
-    In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
+   In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
 
 ```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
@@ -86,24 +84,24 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 
 3. Implement `newAttachmentRecord` to return an object that represents the attachment record in your app.
 
-    In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. Note: we are set the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
+   In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. Note: we are set the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
 
 ```javascript
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
 export class AttachmentQueue extends AbstractAttachmentQueue {
   // ...
-   async newAttachmentRecord(record) {
-      const photoId = record?.id ?? uuid();
-      const filename = record?.filename ?? `${photoId}.jpg`;
-      return {
-         id: photoId,
-         filename,
-         media_type: 'image/jpeg',
-         state: AttachmentState.QUEUED_UPLOAD,
-         ...record
-      };
-   }
+  async newAttachmentRecord(record) {
+    const photoId = record?.id ?? uuid();
+    const filename = record?.filename ?? `${photoId}.jpg`;
+    return {
+      id: photoId,
+      filename,
+      media_type: 'image/jpeg',
+      state: AttachmentState.QUEUED_UPLOAD,
+      ...record
+    };
+  }
 }
 ```
 
@@ -113,22 +111,22 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 import { AttachmentTable } from '@journeyapps/powersync-attachments';
 
 const AppSchema = new Schema([
-   // ... other tables
-   new AttachmentTable()
+  // ... other tables
+  new AttachmentTable()
 ]);
 ```
 
 In addition to `Table` options, the `AttachmentTable` can optionally be configured with the following options:
 
 | Option              | Description                                                                     | Default                       |
-|---------------------|---------------------------------------------------------------------------------|-------------------------------|
+| ------------------- | ------------------------------------------------------------------------------- | ----------------------------- |
 | `name`              | The name of the table                                                           | `attachments`                 |
 | `additionalColumns` | An array of addition `Column` objects added to the default columns in the table | See below for default columns |
 
 The default columns in `AttachmentTable`:
 
 | Column Name  | Type      | Description                                                       |
-|--------------|-----------|-------------------------------------------------------------------|
+| ------------ | --------- | ----------------------------------------------------------------- |
 | `id`         | `TEXT`    | The ID of the attachment record                                   |
 | `filename`   | `TEXT`    | The filename of the attachment                                    |
 | `media_type` | `TEXT`    | The media type of the attachment                                  |
@@ -137,7 +135,7 @@ The default columns in `AttachmentTable`:
 | `size`       | `INTEGER` | The size of the attachment in bytes                               |
 
 5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`.
-See the `StorageAdapter` interface definition [here](./src/StorageAdapter.ts).
+   See the `StorageAdapter` interface definition [here](./src/StorageAdapter.ts).
 
 6. Instantiate a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage.
 
@@ -146,8 +144,8 @@ this.storage = this.supabaseConnector.storage;
 this.powersync = factory.getInstance();
 
 this.attachmentQueue = new AttachmentQueue({
-   powersync: this.powersync,
-   storage: this.storage
+  powersync: this.powersync,
+  storage: this.storage
 });
 
 // Initialize and connect PowerSync ...
@@ -157,10 +155,9 @@ await this.attachmentQueue.init();
 
 7. Finally, to create an attachment and add it to the queue, call `saveToQueue()`.
 
-    In our example we added a `savePhoto()` method to our `AttachmentQueue` class, that does this:
+   In our example we added a `savePhoto()` method to our `AttachmentQueue` class, that does this:
 
 ```javascript
-
 export class AttachmentQueue extends AbstractAttachmentQueue {
   // ...
   async savePhoto(base64Data) {
@@ -173,7 +170,6 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 
     return this.saveToQueue(photoAttachment);
   }
-
 }
 ```
 
@@ -186,7 +182,7 @@ The `AttachmentQueue` class manages attachments in your app by tracking their st
 The state of an attachment can be one of the following:
 
 | State             | Description                                                                   |
-|-------------------|-------------------------------------------------------------------------------|
+| ----------------- | ----------------------------------------------------------------------------- |
 | `QUEUED_SYNC`     | Check if the attachment needs to be uploaded or downloaded                    |
 | `QUEUED_UPLOAD`   | The attachment has been queued for upload to the cloud storage                |
 | `QUEUED_DOWNLOAD` | The attachment has been queued for download from the cloud storage            |
@@ -219,7 +215,7 @@ By default, this is every 30 seconds, but can be configured by setting `syncInte
 - This checks whether the photo is already on the device and if so, skips downloading.
 - If the photo is not on the device, it is downloaded from cloud storage.
 - Writes file to the user's local storage.
-- If this is successful, update the `AttachmentRecord`  state to `SYNCED`.
+- If this is successful, update the `AttachmentRecord` state to `SYNCED`.
 - If any of these fail, the download is retried in the next sync trigger.
 
 ### Deleting attachments

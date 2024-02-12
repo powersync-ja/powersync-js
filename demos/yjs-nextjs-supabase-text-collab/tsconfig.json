@@ -24,7 +24,5 @@
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "supabase/functions/**/*.ts"],
-  "references": [
-    {"path": "../../packages/powersync-sdk-web"}
-  ]
+  "references": [{ "path": "../../packages/powersync-sdk-web" }]
 }
