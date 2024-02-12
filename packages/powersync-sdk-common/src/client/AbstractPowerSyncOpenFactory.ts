@@ -1,8 +1,10 @@
+import Logger from 'js-logger';
 import { DBAdapter } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
 
 export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions> {
+  /** Schema used for the local database. */
   schema: Schema;
   /**
    * Filename for the database.
@@ -15,8 +17,13 @@ export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOp
 }
 
 export abstract class AbstractPowerSyncDatabaseOpenFactory {
-  constructor(protected options: PowerSyncOpenFactoryOptions) {}
+  constructor(protected options: PowerSyncOpenFactoryOptions) {
+    options.logger = options.logger ?? Logger.get(`PowerSync ${this.options.dbFilename}`);
+  }
 
+  /**
+   * Schema used for the local database.
+   */
   get schema() {
     return this.options.schema;
   }

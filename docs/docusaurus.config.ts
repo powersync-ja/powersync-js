@@ -2,9 +2,9 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import { packageMap } from './utils/packageMap';
-import 'dotenv/config'
+import 'dotenv/config';
 
-const PROJECT_NAME = process.env.GH_PROJECT_NAME
+const PROJECT_NAME = process.env.GH_PROJECT_NAME;
 
 const plugins = Object.entries(packageMap).map(([id, config]) => [
   'docusaurus-plugin-typedoc',
@@ -13,9 +13,9 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     excludeExternals: true,
     entryPoints: config.entryPoints,
     tsconfig: config.tsconfig,
-    out: config.dirName,
-  },
-])
+    out: config.dirName
+  }
+]);
 
 const config: Config = {
   title: 'React Native SDK Docs',
@@ -43,7 +43,7 @@ const config: Config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en']
   },
 
   presets: [
@@ -52,7 +52,7 @@ const config: Config = {
       {
         docs: {
           routeBasePath: '/',
-          sidebarPath: './sidebars.ts',
+          sidebarPath: './sidebars.ts'
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           // editUrl:
@@ -60,34 +60,33 @@ const config: Config = {
         },
         blog: false,
         theme: {
-          customCss: './src/css/custom.css',
-        },
-      } satisfies Preset.Options,
-    ],
+          customCss: './src/css/custom.css'
+        }
+      } satisfies Preset.Options
+    ]
   ],
-
   plugins,
   themeConfig: {
     image: process.env.META_LOGO_URL,
     navbar: {
-      title: 'PowerSync React Native SDK',
+      title: 'PowerSync JS SDKs',
       logo: {
         alt: 'PowerSync Logo',
-        src: 'img/powersync-logo.png',
+        src: 'img/powersync-logo.png'
       },
       items: [
         {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
           position: 'left',
-          label: 'Docs',
+          label: 'Docs'
         },
         {
           href: 'https://github.com/powersync-ja',
           label: 'GitHub',
-          position: 'right',
-        },
-      ],
+          position: 'right'
+        }
+      ]
     },
     footer: {
       style: 'light',
@@ -113,7 +112,7 @@ const config: Config = {
               </div>
               `
             }
-          ],
+          ]
         },
         {
           title: 'More',
@@ -128,11 +127,12 @@ const config: Config = {
                   <img src="/${PROJECT_NAME}/img/web.svg" loading="lazy" alt="" height="30">
                 </a>
               </div>
-            `}
-          ],
-        },
+            `
+            }
+          ]
+        }
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`
     },
     // This is commented out because we are waiting for feedback from Algolia
     // as to why the search is not working as expected.
@@ -141,13 +141,13 @@ const config: Config = {
     //   appId: process.env.ALGOLIA_APP_ID,
     //   apiKey: process.env.ALGOLIA_PUBLIC_API_KEY,
     //   indexName: 'powersync-react-native-sdk-react-native-sdk',
-    //   contextualSearch: false,
+    //   contextualSearch: false
     // },
     prism: {
       theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
-    },
-  } satisfies Preset.ThemeConfig,
+      darkTheme: prismThemes.dracula
+    }
+  } satisfies Preset.ThemeConfig
 };
 
 export default config;

@@ -37,7 +37,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     const existingTableRows = await this.db.execute(
       `SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'`
     );
-    for (let row of existingTableRows.rows?._array ?? []) {
+    for (const row of existingTableRows.rows?._array ?? []) {
       this.tableNames.add(row.name);
     }
   }
@@ -60,7 +60,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   async saveSyncData(batch: SyncDataBatch) {
     await this.writeTransaction(async (tx) => {
       let count = 0;
-      for (let b of batch.buckets) {
+      for (const b of batch.buckets) {
         const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
           JSON.stringify({ buckets: [b.toJSON()] })
@@ -73,15 +73,13 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   }
 
   async removeBuckets(buckets: string[]): Promise<void> {
-    for (let bucket of buckets) {
+    for (const bucket of buckets) {
       await this.deleteBucket(bucket);
     }
   }
 
   /**
    * Mark a bucket for deletion.
-   *
-   * @param bucket
    */
   private async deleteBucket(bucket: string) {
     // Delete a bucket, but allow it to be re-created.
@@ -124,7 +122,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     const r = await this.validateChecksums(checkpoint);
     if (!r.checkpointValid) {
       this.logger.error('Checksums failed for', r.failures);
-      for (let b of r.failures ?? []) {
+      for (const b of r.failures ?? []) {
         await this.deleteBucket(b);
       }
       return { ready: false, checkpointValid: false, failures: r.failures };
@@ -253,13 +251,13 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     }
     const seqBefore: number = rs.rows?.item(0)['seq'];
 
-    var opId = await cb();
+    const opId = await cb();
 
     this.logger.debug(`[updateLocalTarget] Updating target to checkpoint ${opId}`);
 
     return this.writeTransaction(async (tx) => {
       const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
-      if (!!anyData.rows?.length) {
+      if (anyData.rows?.length) {
         // if isNotEmpty
         this.logger.debug('updateLocalTarget', 'ps crud is not empty');
         return false;
@@ -301,8 +299,8 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
 
     const crudResult = await this.db.execute('SELECT * FROM ps_crud ORDER BY id ASC LIMIT ?', [limit]);
 
-    let all: CrudEntry[] = [];
-    for (let row of crudResult.rows?._array ?? []) {
+    const all: CrudEntry[] = [];
+    for (const row of crudResult.rows?._array ?? []) {
       all.push(CrudEntry.fromRow(row));
     }
 

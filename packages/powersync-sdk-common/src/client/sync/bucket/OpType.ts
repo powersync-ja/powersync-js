@@ -15,6 +15,6 @@ export class OpType {
   constructor(public value: OpTypeEnum) {}
 
   toJSON() {
-    return Object.entries(OpTypeEnum).find(([key, value]) => value === this.value)![0];
+    return Object.entries(OpTypeEnum).find(([, value]) => value === this.value)![0];
   }
 }

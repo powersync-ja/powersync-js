@@ -1,5 +1,21 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.2.1
+
+### Patch Changes
+
+- a0e739e: Fixed missing `transactionId` value in crud transaction response.
+
+## 1.2.0
+
+### Minor Changes
+
+- dd13da4: Added `viewName` option to Schema Table definitions. This allows for overriding a table's view name.
+
+### Patch Changes
+
+- dd13da4: Improved table change updates to be throttled on the trailing edge. This prevents unnecessary query on both the leading and rising edge.
+
 ## 1.1.0
 
 ### Minor Changes

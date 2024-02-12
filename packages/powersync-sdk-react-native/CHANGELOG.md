@@ -1,5 +1,30 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.2.1
+
+### Patch Changes
+
+- a0e739e: Fixed issue where SDK would fail to reconnect after disconnecting.
+- Updated dependencies [a0e739e]
+  - @journeyapps/powersync-sdk-common@1.2.1
+  - @journeyapps/powersync-react@1.0.4
+
+## 1.2.0
+
+### Minor Changes
+
+- dd13da4: Bumped powersync-sqlite-core to v0.1.6. dependant projects should:
+  - Upgrade to `@journeyapps/react-native-quick-sqlite@1.1.1`
+  - run `pod repo update && pod update` in the `ios` folder for updates to reflect.
+
+### Patch Changes
+
+- dd13da4: Added global locks for syncing connections. Added warning when creating multiple Powersync instances.
+- Updated dependencies [dd13da4]
+- Updated dependencies [dd13da4]
+  - @journeyapps/powersync-sdk-common@1.2.0
+  - @journeyapps/powersync-react@1.0.3
+
 ## 1.1.0
 
 ### Minor Changes

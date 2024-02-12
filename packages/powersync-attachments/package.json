@@ -1,9 +1,19 @@
 {
   "name": "@journeyapps/powersync-attachments",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "homepage": "https://docs.powersync.co/resources/api-reference",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
   "main": "./lib/index.js",
@@ -18,16 +28,6 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "1.1.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
-  },
-  "author": "JOURNEYAPPS",
-  "license": "Apache-2.0",
-  "homepage": "https://docs.powersync.co/resources/api-reference",
-  "bugs": {
-    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
+    "@journeyapps/powersync-sdk-common": "workspace:*"
   }
 }

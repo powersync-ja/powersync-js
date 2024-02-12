@@ -14,12 +14,19 @@ import {
 import { CrudBatch } from './sync/bucket/CrudBatch';
 import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudEntry } from './sync/bucket/CrudEntry';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
 import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
 import { EventIterator } from 'event-iterator';
+import { quoteIdentifier } from '../utils/strings';
+
+export interface DisconnectAndClearOptions {
+  /** When set to false, data in local-only tables is preserved. */
+  clearLocal?: boolean;
+}
 
 export interface PowerSyncDatabaseOptions {
+  /** Schema used for the local database. */
   schema: Schema;
   database: DBAdapter;
   /**
@@ -39,6 +46,7 @@ export interface PowerSyncDatabaseOptions {
 export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
+  /** The minimum interval between queries. */
   throttleMs?: number;
   /**
    * Allows for watching any SQL table
@@ -56,6 +64,10 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
 }
 
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
+
+const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
+  clearLocal: true
+};
 
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
@@ -90,6 +102,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
+  protected _schema: Schema;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
@@ -97,20 +110,32 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.closed = true;
     this.currentStatus = null;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
+    this._schema = options.schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
     this._isReadyPromise = this.initialize();
   }
 
+  /**
+   * Schema used for the local database.
+   */
   get schema() {
-    return this.options.schema;
+    return this._schema;
   }
 
+  /**
+   * The underlying database.
+   *
+   * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
+   */
   protected get database() {
     return this.options.database;
   }
 
+  /**
+   * Whether a connection to the PowerSync service is currently open.
+   */
   get connected() {
     return this.currentStatus?.connected || false;
   }
@@ -145,11 +170,35 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this.updateSchema(this.options.schema);
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  /**
+   * Replace the schema with a new version. This is for advanced use cases - typically the schema should just be specified once in the constructor.
+   *
+   * Cannot be used while connected - this should only be called before {@link AbstractPowerSyncDatabase.connect}.
+   */
+  async updateSchema(schema: Schema) {
+    if (this.abortController) {
+      throw new Error('Cannot update schema while connected');
+    }
+
+    /**
+     * TODO
+     * Validations only show a warning for now.
+     * The next major release should throw an exception.
+     */
+    try {
+      schema.validate();
+    } catch (ex) {
+      this.options.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+    }
+    this._schema = schema;
+    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
   }
 
   /**
@@ -196,6 +245,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.watchCrudUploads();
   }
 
+  /**
+   * Close the sync connection.
+   *
+   * Use {@link connect} to connect again.
+   */
   async disconnect() {
     this.abortController?.abort();
     this.syncStatusListenerDisposer?.();
@@ -207,25 +261,34 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *  Use this when logging out.
    *  The database can still be queried after this is called, but the tables
    *  would be empty.
+   *
+   * To preserve data in local-only tables, set clearLocal to false.
    */
-  async disconnectAndClear() {
+  async disconnectAndClear(options = DEFAULT_DISCONNECT_CLEAR_OPTIONS) {
     await this.disconnect();
+
+    const { clearLocal } = options;
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG} WHERE 1`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE 1`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS} WHERE 1`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
+
+      const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
 
       const existingTableRows = await tx.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'"
+        `
+      SELECT name FROM sqlite_master WHERE type='table' AND name GLOB ?
+      `,
+        [tableGlob]
       );
 
       if (!existingTableRows.rows.length) {
         return;
       }
       for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${row.name} WHERE 1`);
+        await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
       }
     });
   }
@@ -233,7 +296,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /*
    * Close the database, releasing resources.
    *
-   * Also [disconnect]s any active connection.
+   * Also disconnects any active connection.
    *
    * Once close is called, this connection cannot be used again - a new one
    * must be constructed.
@@ -270,12 +333,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudBatch.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
    * requesting the next batch.
    *
-   * Use [limit] to specify the maximum number of updates to return in a single
+   * Use {@link limit} to specify the maximum number of updates to return in a single
    * batch.
    *
    * This method does include transaction ids in the result, but does not group
@@ -310,32 +373,34 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * lastTransactionId
    * Returns null if there is no data to upload.
    *
-   * Use this from the [PowerSyncBackendConnector.uploadData]` callback.
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
    *
-   * Once the data have been successfully uploaded, call [CrudTransaction.complete] before
+   * Once the data have been successfully uploaded, call {@link CrudTransaction.complete} before
    * requesting the next transaction.
    *
-   * Unlike [getCrudBatch], this only returns data from a single transaction at a time.
+   * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
     return await this.readTransaction(async (tx) => {
-      const first = await tx.execute(`SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`);
+      const first = await tx.getOptional<CrudEntryJSON>(
+        `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`
+      );
 
-      if (!first.rows.length) {
+      if (!first) {
         return null;
       }
-      const txId: number | undefined = first['tx_id'];
+      const txId = first.tx_id;
 
       let all: CrudEntry[];
       if (!txId) {
-        all = [CrudEntry.fromRow(first.rows.item(0))];
+        all = [CrudEntry.fromRow(first)];
       } else {
-        const result = await tx.execute(
+        const result = await tx.getAll<CrudEntryJSON>(
           `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} WHERE tx_id = ? ORDER BY id ASC`,
           [txId]
         );
-        all = result.rows._array.map((row) => CrudEntry.fromRow(row));
+        all = result.map((row) => CrudEntry.fromRow(row));
       }
 
       const last = all[all.length - 1];
@@ -366,7 +431,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a statement and optionally return results
+   * Execute a statement and optionally return results.
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
@@ -374,7 +439,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   *  Execute a read-only query and return results
+   *  Execute a read-only query and return results.
    */
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     await this.waitForReady();
@@ -399,8 +464,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a read lock, without starting a transaction.
-   *
-   * In most cases, [readTransaction] should be used instead.
+   * In most cases, {@link readTransaction} should be used instead.
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -409,7 +473,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Takes a global lock, without starting a transaction.
-   * In most cases, [writeTransaction] should be used instead.
+   * In most cases, {@link writeTransaction} should be used instead.
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
@@ -419,6 +483,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * Open a read-only transaction.
+   * Read transactions can run concurrently to a write transaction.
+   * Changes from any write transaction are not visible to read transactions started before it.
+   */
   async readTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -434,6 +503,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Open a read-write transaction.
+   * This takes a global lock - only one write transaction can execute against the database at a time.
+   * Statements within the transaction must be done on the provided {@link Transaction} interface.
+   */
   async writeTransaction<T>(
     callback: (tx: Transaction) => Promise<T>,
     lockTimeout: number = DEFAULT_LOCK_TIMEOUT_MS
@@ -449,6 +523,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * Execute a read query every time the source tables are modified.
+   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   */
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     //Fetch initial data
     yield await this.executeReadOnly(sql, parameters);
@@ -477,7 +556,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over [watch] when multiple queries need to be performed
+   * This is preferred over {@link watch} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note, do not declare this as `async *onChange` as it will not work in React Native
@@ -489,15 +568,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = _.throttle(() => {
+      const flushTableUpdates = _.throttle(
+        () => {
         const intersection = _.intersection(watchedTables, throttledTableUpdates);
         if (intersection.length) {
           eventOptions.push({
             changedTables: intersection
           });
         }
-        throttledTableUpdates = [];
-      }, throttleMs);
+        throttledTableUpdates = [];},
+        throttleMs,
+        { leading: false, trailing: true }
+      );
 
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {

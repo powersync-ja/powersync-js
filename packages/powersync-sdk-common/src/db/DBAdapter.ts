@@ -11,18 +11,14 @@ import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver';
  */
 
 /**
- * Object returned by SQL Query executions {
- *  insertId: Represent the auto-generated row id if applicable
- *  rowsAffected: Number of affected rows if result of a update query
- *  message: if status === 1, here you will find error description
- *  rows: if status is undefined or 0 this object will contain the query results
- * }
- *
- * @interface QueryResult
+ * Object returned by SQL Query executions.
  */
 export type QueryResult = {
+  /** Represents the auto-generated row id if applicable. */
   insertId?: number;
+  /** Number of affected rows if result of a update query. */
   rowsAffected: number;
+  /** if status is undefined or 0 this object will contain the query results */
   rows?: {
     /** Raw array with all dataset */
     _array: any[];
@@ -37,12 +33,16 @@ export type QueryResult = {
 };
 
 export interface DBGetUtils {
+  /** Execute a read-only query and return results. */
   getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
+  /** Execute a read-only query and return the first result, or null if the ResultSet is empty. */
   getOptional<T>(sql: string, parameters?: any[]): Promise<T | null>;
+  /** Execute a read-only query and return the first result, error if the ResultSet is empty. */
   get<T>(sql: string, parameters?: any[]): Promise<T>;
 }
 
 export interface LockContext extends DBGetUtils {
+  /** Execute a statement and optionally return results. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
 }
 
@@ -63,6 +63,10 @@ export interface TableUpdateOperation {
   opType: RowUpdateType;
   rowId: number;
 }
+
+/**
+ * Notification of an update to one or more tables, for the purpose of realtime change notifications.
+ */
 export interface UpdateNotification extends TableUpdateOperation {
   table: string;
 }

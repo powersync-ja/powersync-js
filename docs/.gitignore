@@ -16,12 +16,11 @@
 .env.production.local
 
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 docs/attachments-sdk/
 docs/common-sdk/
 docs/react-native-sdk/
 docs/react-sdk/
+docs/web-sdk/
 
 .env

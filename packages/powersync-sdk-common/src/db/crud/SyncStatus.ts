@@ -14,18 +14,35 @@ export type SyncStatusOptions = {
 export class SyncStatus {
   constructor(protected options: SyncStatusOptions) {}
 
+  /**
+   * true if currently connected.
+   */
   get connected() {
     return this.options.connected ?? false;
   }
 
+  /**
+   *  Time that a last sync has fully completed, if any.
+   *  Currently this is reset to null after a restart.
+   */
   get lastSyncedAt() {
     return this.options.lastSyncedAt;
   }
 
+  /**
+   *  Upload/download status
+   */
   get dataFlowStatus() {
     return (
       this.options.dataFlow ?? {
+        /**
+         * true if actively downloading changes.
+         * This is only true when {@link connected} is also true.
+         */
         downloading: false,
+        /**
+         * true if uploading changes.
+         */
         uploading: false
       }
     );

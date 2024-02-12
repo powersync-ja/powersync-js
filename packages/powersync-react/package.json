@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-react",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -18,16 +18,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/powersync-ja/powersync-react-native-sdk.git"
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/powersync-ja/powersync-react-native-sdk/issues"
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.co/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "1.1.0"
+    "@journeyapps/powersync-sdk-common": "workspace:*"
   },
   "peerDependencies": {
     "react": "*"

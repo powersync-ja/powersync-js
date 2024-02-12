@@ -1,3 +1,0 @@
-[submodule "apps/supabase-todolist"]
-	path = apps/supabase-todolist
-	url = git@github.com:powersync-ja/powersync-supabase-react-native-todolist-demo.git

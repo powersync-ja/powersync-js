@@ -1,5 +1,14 @@
 export class UploadQueueStats {
-  constructor(public count: number, public size: number = null) {}
+  constructor(
+    /**
+     * Number of records in the upload queue.
+     */
+    public count: number,
+    /**
+     * Size of the upload queue in bytes.
+     */
+    public size: number = null
+  ) {}
 
   toString() {
     if (this.size == null) {
