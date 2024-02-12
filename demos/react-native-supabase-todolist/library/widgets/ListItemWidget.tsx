@@ -35,7 +35,8 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               );
             }}
           />
-        }>
+        }
+      >
         <Icon name="format-list-checks" type="material-community" color="grey" />
         <ListItem.Content style={{ minHeight: 80 }}>
           <ListItem.Title>{title}</ListItem.Title>

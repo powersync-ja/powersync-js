@@ -1,7 +1,7 @@
 import type { Table } from './Table';
 
 export class Schema {
-  constructor(public tables: Table[]) { }
+  constructor(public tables: Table[]) {}
 
   validate() {
     for (const table of this.tables) {

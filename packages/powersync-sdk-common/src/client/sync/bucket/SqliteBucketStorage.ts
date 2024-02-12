@@ -293,7 +293,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
    * When the objects are successfully sent to the server, call .complete()
    */
   async getCrudBatch(limit: number = 100): Promise<CrudBatch | null> {
-    if (!await this.hasCrud()) {
+    if (!(await this.hasCrud())) {
       return null;
     }
 

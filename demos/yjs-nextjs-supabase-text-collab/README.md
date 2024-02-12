@@ -85,9 +85,9 @@ cp .env.local.template .env.local
 ```
 
 2. Edit `.env.local` and populate the relevant values:
-    - Set `SUPABASE_URL` to your Supabase project URL. You can find this by going to the main page for the project on the Supabase dashboard and then look for "Project URL" in the "Project API" panel.
-    - Set `SUPABASE_ANON_KEY` to your Supabase API key. This can be found right below the Project URL on the Supabase dashboard.
-    - Set `POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 5)
+   - Set `SUPABASE_URL` to your Supabase project URL. You can find this by going to the main page for the project on the Supabase dashboard and then look for "Project URL" in the "Project API" panel.
+   - Set `SUPABASE_ANON_KEY` to your Supabase API key. This can be found right below the Project URL on the Supabase dashboard.
+   - Set `POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 5)
 
 ### 8. Run the demo app
 
@@ -130,7 +130,7 @@ To-do
 - [ ] Add user sessions. For ease of demoing, still allow anonymously signing in (perhaps using [this Supabase workaround](https://github.com/supabase/gotrue/issues/68)), but keep track of session data so that each user has a unique `user_id` which we can associate with edits to the document.
 - [ ] Improve sync rules: Use a many-to-many relationship between users and documents, so that all documents and their updates are not synced to all users. Dependent on user sessions.
 - [ ] Add suggested RLS rules for Supabase. Dependent on user sessions.
-- [ ] Add live cursor support; allow user to set their name,  prepopulate with auto-generated name if none set. Dependent on user sessions.
+- [ ] Add live cursor support; allow user to set their name, prepopulate with auto-generated name if none set. Dependent on user sessions.
 - [ ] Show PowerSync connection status; allow user to toggle offline/online for testing purposes
 - [ ] Add button to the UI allowing the user to merge the Yjs edits i.e. `document_update` rows. Invoke `merge-document-updates` edge function in Supabase.
 - [ ] Prepopulate sample text into newly created documents.
