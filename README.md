@@ -42,14 +42,6 @@ Demo applications are located in the [`demos/`](./demos/) directory.
 
 # Development
 
-## Git Submodules
-
-After cloning this repo be sure to init the Git submodules
-
-```bash
-git submodule init && git submodule update
-```
-
 This monorepo uses pnpm.
 
 Install workspace dependencies
