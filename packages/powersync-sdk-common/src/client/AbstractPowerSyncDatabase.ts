@@ -14,7 +14,7 @@ import {
 import { CrudBatch } from './sync/bucket/CrudBatch';
 import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudEntry } from './sync/bucket/CrudEntry';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
 import { mutexRunExclusive } from '../utils/mutex';
 import { BaseObserver } from '../utils/BaseObserver';
 import { EventIterator } from 'event-iterator';
@@ -394,22 +394,24 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async getNextCrudTransaction(): Promise<CrudTransaction> {
     return await this.readTransaction(async (tx) => {
-      const first = await tx.execute(`SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`);
+      const first = await tx.getOptional<CrudEntryJSON>(
+        `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`
+      );
 
-      if (!first.rows.length) {
+      if (!first) {
         return null;
       }
-      const txId: number | undefined = first['tx_id'];
+      const txId = first.tx_id;
 
       let all: CrudEntry[] = [];
       if (!txId) {
-        all = [CrudEntry.fromRow(first.rows.item(0))];
+        all = [CrudEntry.fromRow(first)];
       } else {
-        const result = await tx.execute(
+        const result = await tx.getAll<CrudEntryJSON>(
           `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} WHERE tx_id = ? ORDER BY id ASC`,
           [txId]
         );
-        all = result.rows._array.map((row) => CrudEntry.fromRow(row));
+        all = result.map((row) => CrudEntry.fromRow(row));
       }
 
       const last = all[all.length - 1];

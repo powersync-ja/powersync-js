@@ -100,6 +100,40 @@ export class ReactNativeRemote extends AbstractRemote {
       throw error;
     }
 
-    return res.body;
+    /**
+     * The can-ndjson-stream does not handle aborted streams well on web.
+     * This will intercept the readable stream and close the stream if
+     * aborted.
+     * TODO this function is duplicated in the Web SDK.
+     * The common SDK is a bit oblivious to `ReadableStream` classes.
+     * This should be improved when moving to Websockets
+     */
+    const reader = res.body.getReader();
+    const outputStream = new ReadableStream({
+      start(controller) {
+        return processStream();
+
+        async function processStream(): Promise<void> {
+          if (signal?.aborted) {
+            controller.close();
+          }
+          try {
+            const { done, value } = await reader.read();
+            // When no more data needs to be consumed, close the stream
+            if (done) {
+              controller.close();
+              return;
+            }
+            // Enqueue the next data chunk into our target stream
+            controller.enqueue(value);
+            return processStream();
+          } catch (ex) {
+            controller.close();
+          }
+        }
+      }
+    });
+
+    return new Response(outputStream).body;
   }
 }
