@@ -1,0 +1,28 @@
+<div class="main">
+  <h1>PowerSync</h1>
+  <h2>Sign in</h2>
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form-widget">
+    <div class="field">
+      <label for="email">Email:</label>
+      <input id="email" formControlName="email" class="inputField" type="email" required placeholder="Your email" />
+    </div>
+    <div class="field">
+      <label for="password">Password:</label>
+      <input
+        id="password"
+        formControlName="password"
+        class="inputField"
+        type="password"
+        required
+        placeholder="Your password"
+      />
+    </div>
+    <div>
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        {{ isLoading ? 'Loading' : 'Sign In' }}
+      </button>
+    </div>
+  </form>
+  <a routerLink="/sign-up" style="cursor: pointer" routerLinkActive="active">Sign up</a>
+  <router-outlet></router-outlet>
+</div>

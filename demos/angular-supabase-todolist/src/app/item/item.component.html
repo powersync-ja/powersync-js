@@ -1,0 +1,12 @@
+<div class="item">
+  <div class="checkbox-wrapper">
+    <input
+      [id]="todo.description"
+      type="checkbox"
+      (change)="editTodo(todo.description, !todo.completed)"
+      [checked]="todo.completed"
+    />
+    <label [for]="todo.description">{{ todo.description }}</label>
+  </div>
+  <button class="btn btn-warn" (click)="remove.emit()">Delete</button>
+</div>

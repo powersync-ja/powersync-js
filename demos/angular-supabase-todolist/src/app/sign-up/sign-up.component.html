@@ -1,0 +1,15 @@
+<div class="main">
+  <h1>PowerSync</h1>
+  <h2>Sign up</h2>
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <div class="field">
+      <label for="email">Email:</label>
+      <input type="email" id="email" formControlName="email" required placeholder="Your email" />
+    </div>
+    <div class="field">
+      <label for="password">Password:</label>
+      <input type="password" id="password" formControlName="password" required placeholder="Your password" />
+    </div>
+    <button type="submit" [disabled]="signupForm.invalid" class="btn btn-primary">Sign up</button>
+  </form>
+</div>
