@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.2.1
+
+### Patch Changes
+
+- a0e739e: Fixed missing `transactionId` value in crud transaction response.
+
 ## 1.2.0
 
 ### Minor Changes

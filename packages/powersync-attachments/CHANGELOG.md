@@ -1,5 +1,12 @@
 # @journeyapps/powersync-attachments
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [a0e739e]
+  - @journeyapps/powersync-sdk-common@1.2.1
+
 ## 1.0.4
 
 ### Patch Changes

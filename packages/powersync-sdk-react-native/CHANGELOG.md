@@ -1,5 +1,14 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.2.1
+
+### Patch Changes
+
+- a0e739e: Fixed issue where SDK would fail to reconnect after disconnecting.
+- Updated dependencies [a0e739e]
+  - @journeyapps/powersync-sdk-common@1.2.1
+  - @journeyapps/powersync-react@1.0.4
+
 ## 1.2.0
 
 ### Minor Changes
