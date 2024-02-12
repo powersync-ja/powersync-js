@@ -370,7 +370,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Get the next recorded transaction to upload.
-   * lastTransactionId
+   *
    * Returns null if there is no data to upload.
    *
    * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
@@ -404,6 +404,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
 
       const last = all[all.length - 1];
+
       return new CrudTransaction(
         all,
         async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint),
@@ -576,7 +577,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
             changedTables: intersection
           });
         }
-        throttledTableUpdates = [];},
+        throttledTableUpdates = [];
+        },
         throttleMs,
         { leading: false, trailing: true }
       );
