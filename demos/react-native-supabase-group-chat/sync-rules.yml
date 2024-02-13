@@ -1,0 +1,36 @@
+bucket_definitions:
+  user:
+    parameters: select token_parameters.user_id as user_id
+    data:
+      - select * from profiles where id = bucket.user_id
+      - select * from memberships where profile_id = bucket.user_id
+      - select * from contacts where owner_id = bucket.user_id
+      - select * from messages where sender_id = bucket.user_id
+      - select *, '...' as content from messages where recipient_id = bucket.user_id AND messages.sent_at IS NULL
+      - select * from messages where recipient_id = bucket.user_id AND messages.sent_at IS NOT NULL
+      - select * from groups where owner_id = bucket.user_id
+  contacts:
+    parameters: select profile_id from contacts where owner_id = token_parameters.user_id
+    data:
+      - select * from profiles where id = bucket.profile_id
+  groups:
+    parameters:
+      - select id as group_id from groups where owner_id = token_parameters.user_id
+      - select group_id from memberships where profile_id = token_parameters.user_id
+    data:
+      - select * from groups where id = bucket.group_id
+      - select * from messages where group_id = bucket.group_id AND messages.sent_at IS NOT NULL
+      - select * from memberships where group_id = bucket.group_id
+  group_draft_messages:
+    parameters:
+      - select id as group_id, owner_id as user_id from groups where owner_id = token_parameters.user_id
+      - select group_id, profile_id as user_id from memberships where profile_id = token_parameters.user_id
+    data:
+      - select * from messages where group_id = bucket.group_id AND sender_id = bucket.user_id AND messages.sent_at IS NULL
+  chats:
+    parameters:
+      - select recipient_id as partner_id from messages where sender_id = token_parameters.user_id
+      - select sender_id as partner_id from messages where recipient_id = token_parameters.user_id
+    data:
+      - select id, id as profile_id from profiles as chats where id = bucket.partner_id
+      - select * from profiles where id = bucket.partner_id
