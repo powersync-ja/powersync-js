@@ -36,6 +36,10 @@ npm install @journeyapps/wa-sqlite
 
 Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web) contains everything you need to know to get started implementing PowerSync in your project.
 
+# Changelog
+
+A changelog for this SDK is available [here](https://releases.powersync.com/announcements/powersync-js-web-client-sdk).
+
 # Examples
 
 For example projects built with PowerSync on Web, see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects#js-web) gallery.
