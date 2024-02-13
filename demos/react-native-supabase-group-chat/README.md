@@ -16,8 +16,8 @@ Here are some steps to keep in mind when building/deploying your own version of 
 
 Here are some helpful links:
 
-- [PowerSync Website](https://www.powersync.co/)
-- [PowerSync Docs](https://docs.powersync.co/)
+- [PowerSync Website](https://www.powersync.com/)
+- [PowerSync Docs](https://docs.powersync.com/)
 - [PowerSync React Native Client SDK](https://github.com/journeyapps/powersync-js/tree/main/packages/powersync-sdk-react-native)
 - [Supabase Docs](https://supabase.com/docs)
 - [Expo Docs](https://docs.expo.dev/)
