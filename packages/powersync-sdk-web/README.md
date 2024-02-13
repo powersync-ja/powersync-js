@@ -1,6 +1,14 @@
+<p align="center">
+  <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/19345049/602bafa0-41ce-4cee-a432-56848c278722"/></a>
+</p>
+
 # PowerSync SDK for Web
 
-[PowerSync](https://powersync.co) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
+[PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases. 
+
+This package ([packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/powersync-sdk-common`.
+
+See a summary of features [here](https://docs.powersync.com/client-sdk-references/js-web).
 
 ## Beta Release
 
@@ -24,114 +32,18 @@ Install it in your app with:
 npm install @journeyapps/wa-sqlite
 ```
 
-## Logging
-
-This package uses [js-logger](https://www.npmjs.com/package/js-logger) for logging.
-
-Enable JS Logger with your logging interface of choice or use the default `console`
-
-```JavaScript
-import Logger from 'js-logger';
-
-// Log messages will be written to the window's console.
-Logger.useDefaults();
-```
-
-Enable verbose output in the developer tools for detailed logs.
-
-The WASQLite DB Adapter opens SQLite connections inside a shared webworker. This worker can be inspected in Chrome by accessing
-
-```
-chrome://inspect/#workers
-```
-
 # Getting Started
 
-See our [Docs](https://docs.powersync.co/usage/installation/client-side-setup) for detailed instructions.
+Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web) contains everything you need to know to get started implementing PowerSync in your project.
 
-```JavaScript
-import {
-  Column,
-  ColumnType,
-  WASQLitePowerSyncDatabaseOpenFactory,
-  Schema,
-  Table
-} from '@journeyapps/powersync-sdk-web';
+# Examples
 
-export const AppSchema = new Schema([
-  new Table({ name: 'customers', columns: [new Column({ name: 'name', type: ColumnType.TEXT })] })
-]);
+For example projects built with PowerSync on Web, see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects#js-web) gallery.
 
-let PowerSync;
+# Found a bug or need help?
 
-export const openDatabase = async () => {
-  PowerSync = new WASQLitePowerSyncDatabaseOpenFactory({
-    schema: AppSchema,
-    dbFilename: 'test.sqlite',
-    flags: {
-        // This is disabled once CSR+SSR functionality is verified to be working correctly
-        disableSSRWarning: true,
-  }}).getInstance();
+* Join our [Discord server](https://discord.gg/powersync) where you can browse topics from our community, ask questions, share feedback, or just say hello :) 
+* Please open a [GitHub issue](https://github.com/powersync-ja/powersync-js/issues) when you come across a bug.
+* Have feedback or an idea? [Submit an idea](https://roadmap.powersync.com/tabs/5-roadmap/submit-idea) via our public roadmap or [schedule a chat](https://calendly.com/powersync-product/powersync-chat) with someone from our product team.
 
-  await PowerSync.init();
 
-  // Run local statements.
-  await PowerSync.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', ['Fred']);
-};
-
-class Connector {
-  async fetchCredentials() {
-    // TODO logic to fetch a session
-    return {
-      endpoint: '[The PowerSync instance URL]',
-      token: 'An authentication token',
-      expiresAt: 'When the token expires',
-    };
-  }
-
-  async uploadData(database) {
-    // Upload local changes to backend, see docs for example
-  }
-}
-
-export const connectPowerSync = async () => {
-  const connector = new Connector(); // Which was declared above
-  await PowerSync.connect(connector);
-};
-
-```
-
-React hooks are available in the [@journeyapps/powersync-react](https://www.npmjs.com/package/@journeyapps/powersync-react) package
-
-## Multiple Tab Support
-
-Using PowerSync between multiple tabs is supported on some web browsers. Multiple tab support relies on shared web workers for DB and sync streaming operations. When enabled shared web workers named `shared-sync-[dbFileName]` and `shared-DB-worker-[dbFileName]` will be created.
-
-The shared database worker will ensure writes to the DB will instantly be available between tabs.
-
-The shared sync worker will co-ordinate for one active tab to connect to the PowerSync instance and share the latest sync state between tabs.
-
-Currently using the SDK in multiple tabs without enabling the `enableMultiTabs` flag will spawn a standard web worker per tab for DB operations. These workers are safe to operate on the DB concurrently, however changes from one tab may not update watches on other tabs. Only one tab can sync from the PowerSync instance at a time. The sync status will not be shared between tabs, only the oldest tab will connect and display the latest sync status.
-
-Multiple tab support is not currently available on Android or Safari.
-
-Support is enabled by default if available. This can be disabled as below:
-
-```Javascript
-PowerSync = new WASQLitePowerSyncDatabaseOpenFactory({
-    schema: AppSchema,
-    dbFilename: 'test.sqlite',
-    flags: {
-        // This is disabled once CSR+SSR functionality is verified to be working correctly
-        disableSSRWarning: true,
-        /**
-         * Multiple tab support is enabled by default if available. This can be disabled by
-         * setting this flag to false.
-         */
-        enableMultiTabs: false
-  }}).getInstance();
-```
-
-## Demo Apps
-
-See the [list of demo apps](https://github.com/powersync-ja/powersync-web-sdk/?tab=readme-ov-file#demos) in the repo README.
