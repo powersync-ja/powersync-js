@@ -6,7 +6,7 @@
 
 [PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases. 
 
-This package ([packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/powersync-sdk-common`.
+This package (`packages/powersync-sdk-web`) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/powersync-sdk-common`.
 
 See a summary of features [here](https://docs.powersync.com/client-sdk-references/js-web).
 
@@ -40,9 +40,13 @@ Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web
 
 A changelog for this SDK is available [here](https://releases.powersync.com/announcements/powersync-js-web-client-sdk).
 
+# API Reference
+
+The full API reference for this SDK can be found [here](https://powersync-ja.github.io/powersync-js/web-sdk).
+
 # Examples
 
-For example projects built with PowerSync on Web, see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects#js-web) gallery.
+For example projects built with PowerSync on Web, see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects#js-web) gallery. Most of these projects can also be found in the [`demos/`](../demos/) directory.
 
 # Found a bug or need help?
 

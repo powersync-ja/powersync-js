@@ -29,7 +29,7 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
 ## Demo Apps / Example Projects
 
-Demo applications are located in the [`demos/`](./demos/) directory. Also see our [Demo Apps / Example Projects gallery](https://docs.powersync.com/resources/demo-apps-example-projects), which lists all projects by the backend and client-side framework they use.
+Demo applications are located in the [`demos/`](./demos/) directory. Also see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects) gallery which lists all projects by the backend and client-side framework they use.
 
  - [demos/nextjs-supabase-todolist](./demos/nextjs-supabase-todolist/): A Next.js to-do list example app using the PowerSync Web SDK and a Supabase backend.
  - [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
