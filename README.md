@@ -2,7 +2,9 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/19345049/602bafa0-41ce-4cee-a432-56848c278722"/></a>
 </p>
 
-PowerSync is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
+_Bad connectivity is everywhere, and we're tired of it. PowerSync is on a mission to help developers write offline-first real-time reactive apps._
+
+[PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
 
 # PowerSync JavaScript SDKs
 
@@ -31,7 +33,7 @@ PowerSync is a service and set of SDKs that keeps Postgres databases in sync wit
 
 ## Demo Apps / Example Projects
 
-Demo applications are located in the [`demos/`](./demos/) directory.
+Demo applications are located in the [`demos/`](./demos/) directory. Also see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects) gallery which lists all projects by the backend and client-side framework they use.
 
 - [demos/nextjs-supabase-todolist](./demos/nextjs-supabase-todolist/): A Next.js to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/yjs-nextjs-supabase-text-collab](./demos/yjs-nextjs-supabase-text-collab/README.md): A Next.js real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.

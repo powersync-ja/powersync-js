@@ -91,9 +91,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   protected static transactionMutex: Mutex = new Mutex();
 
+  /**
+   * Returns true if the connection is closed.
+   */
   closed: boolean;
   ready: boolean;
 
+  /**
+   * Current connection status.
+   */
   currentStatus?: SyncStatus;
   syncStreamImplementation?: AbstractStreamingSyncImplementation;
   sdkVersion: string;
@@ -202,7 +208,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Queues a CRUD upload when internal CRUD tables have been updated
+   * Queues a CRUD upload when internal CRUD tables have been updated.
    */
   protected async watchCrudUploads() {
     for await (const event of this.onChange({
@@ -223,7 +229,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Connects to stream of events from PowerSync instance
+   * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector) {
     // close connection if one is open
@@ -293,7 +299,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
-  /*
+  /** 
    * Close the database, releasing resources.
    *
    * Also disconnects any active connection.
@@ -432,7 +438,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a statement and optionally return results.
+   * Execute a write (INSERT/UPDATE/DELETE) query
+   * and optionally return results.
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
@@ -615,6 +622,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * @ignore 
+   */
   private async executeReadOnly(sql: string, params: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));

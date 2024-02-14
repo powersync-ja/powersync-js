@@ -2,7 +2,8 @@ import { PowerSyncCredentials } from './PowerSyncCredentials';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase';
 
 export interface PowerSyncBackendConnector {
-  /** Get credentials for PowerSync.
+  /** Allows the PowerSync client to retrieve an authentication token from your backend 
+   * which is used to authenticate against the PowerSync service.
    *
    * This should always fetch a fresh set of credentials - don't use cached
    * values.

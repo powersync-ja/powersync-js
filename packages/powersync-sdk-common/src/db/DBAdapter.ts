@@ -42,12 +42,14 @@ export interface DBGetUtils {
 }
 
 export interface LockContext extends DBGetUtils {
-  /** Execute a statement and optionally return results. */
+  /** Execute a single write statement. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
 }
 
 export interface Transaction extends LockContext {
+  /** Commit multiple changes to the local DB using the Transaction context. */
   commit: () => Promise<QueryResult>;
+  /** Roll back multiple attempted changes using the Transaction context. */
   rollback: () => Promise<QueryResult>;
 }
 

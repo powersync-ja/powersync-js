@@ -1,6 +1,14 @@
+<p align="center">
+  <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/19345049/602bafa0-41ce-4cee-a432-56848c278722"/></a>
+</p>
+
 # PowerSync SDK for React Native
 
-[PowerSync](https://powersync.co) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases. See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
+[PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases. 
+
+This package (`packages/powersync-sdk-react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/powersync-sdk-common`.
+
+See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
 
 # Installation
 
@@ -82,7 +90,7 @@ module.exports = function (api) {
 
 # Native Projects
 
-This package uses native libraries. Create native Android and iOS projects (if not created already) with
+This package uses native libraries. Create native Android and iOS projects (if not created already) by running:
 
 ```bash
 npx expo run:android
@@ -90,6 +98,24 @@ npx expo run:android
 npx expo run:ios
 ```
 
-# Learn More
+# Getting Started
 
-Refer to our [full documentation](https://docs.powersync.com/client-sdk-references/react-native-and-expo) to learn more.
+Our [SDK reference](https://docs.powersync.com/client-sdk-references/react-native-and-expo) contains everything you need to know to get started implementing PowerSync in your project.
+
+# Changelog
+
+A changelog for this SDK is available [here](https://releases.powersync.com/announcements/react-native-client-sdk).
+
+# API Reference
+
+The full API reference for this SDK can be found [here](https://powersync-ja.github.io/powersync-js/react-native-sdk).
+
+# Examples
+
+For example projects built with PowerSync and React Native, see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects#react-native-and-expo) gallery. Most of these projects can also be found in the [`demos/`](../demos/) directory.
+
+# Found a bug or need help?
+
+* Join our [Discord server](https://discord.gg/powersync) where you can browse topics from our community, ask questions, share feedback, or just say hello :) 
+* Please open a [GitHub issue](https://github.com/powersync-ja/powersync-js/issues) when you come across a bug.
+* Have feedback or an idea? [Submit an idea](https://roadmap.powersync.com/tabs/5-roadmap/submit-idea) via our public roadmap or [schedule a chat](https://calendly.com/powersync-product/powersync-chat) with someone from our product team.
