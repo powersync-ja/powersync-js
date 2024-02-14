@@ -16,7 +16,7 @@ export class BaseObserver<T extends BaseListener = BaseListener> implements Base
   }
 
   /**
-   * Register a listener for updates on the PowerSync client.
+   * Register a listener for updates to the PowerSync client.
    */
   registerListener(listener: Partial<T>): () => void {
     const id = v4();
