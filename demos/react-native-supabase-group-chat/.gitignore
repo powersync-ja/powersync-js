@@ -21,3 +21,4 @@ web-build/
 *.tar.gz
 .tamagui
 ios/
+!lib
