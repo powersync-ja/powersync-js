@@ -1,4 +1,4 @@
-import hash from 'object-hash';
+import _ from 'lodash';
 
 /**
  * 64-bit unsigned integer stored as a string in base-10.
@@ -108,10 +108,24 @@ export class CrudEntry {
     };
   }
 
+  equals(entry: CrudEntry) {
+    return _.isEqual(this.toComparisonArray(), entry.toComparisonArray());
+  }
+
   /**
    * The hash code for this object.
+   * @deprecated This should not be necessary in the JS SDK.
+   * Use the  @see CrudEntry#equals method instead.
+   * TODO remove in the next major release.
    */
   hashCode() {
-    return hash([this.transactionId, this.clientId, this.op, this.table, this.id, this.opData]);
+    return JSON.stringify(this.toComparisonArray());
+  }
+
+  /**
+   * Generates an array for use in deep comparison operations
+   */
+  toComparisonArray() {
+    return [this.transactionId, this.clientId, this.op, this.table, this.id, this.opData];
   }
 }
