@@ -1,44 +1,157 @@
+import * as Comlink from 'comlink';
+import Logger from 'js-logger';
 import _ from 'lodash';
-import { BaseListener, BaseObserver, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
+import {
+  AbstractStreamingSyncImplementation,
+  AbstractStreamingSyncImplementationOptions,
+  BaseObserver,
+  PowerSyncCredentials,
+  SqliteBucketStorage,
+  StreamingSyncImplementationListener,
+  SyncStatus,
+  SyncStatusOptions
+} from '@journeyapps/powersync-sdk-common';
+import { WebStreamingSyncImplementation } from '../../db/sync/WebStreamingSyncImplementation';
+import { Mutex } from 'async-mutex';
+import { WebRemote } from '../../db/sync/WebRemote';
 
-export enum SharedSyncMessageType {
-  UPDATE = 'sync-status-update'
-}
+import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
 
-export type SharedSyncStatus = SyncStatusOptions & {
-  tabId?: string;
+export type SharedSyncInitOptions = {
+  dbName: string;
+  streamOptions: Omit<AbstractStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
 };
 
-export type SharedSyncMessage = {
-  type: SharedSyncMessageType;
-  payload: SharedSyncStatus;
-};
-
-export interface SharedSyncImplementationListener extends BaseListener {
-  statusChanged: (status: SharedSyncStatus) => void;
+export interface SharedSyncImplementationListener extends StreamingSyncImplementationListener {
+  initialized: () => void;
 }
 
+/**
+ * The client side port should provide these methods.
+ */
+export abstract class AbstractSharedSyncClientProvider {
+  abstract fetchCredentials(): Promise<PowerSyncCredentials>;
+  abstract uploadCrud(): Promise<void>;
+  abstract statusChanged(status: SyncStatusOptions): void;
+}
+
+export type WrappedSyncPort = {
+  port: MessagePort;
+  clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
+};
+
+Logger.useDefaults();
+
+/**
+ * Shared sync implementation which runs inside a shared webworker
+ */
 export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementationListener> {
-  protected status: SharedSyncStatus;
+  protected ports: WrappedSyncPort[];
+  protected syncStreamClient?: AbstractStreamingSyncImplementation;
+
+  protected abortController?: AbortController;
+  protected isInitialized: Promise<void>;
 
   constructor() {
     super();
-    this.status = {
-      connected: false
-    };
+    this.ports = [];
+
+    this.isInitialized = new Promise((resolve) => {
+      const callback = this.registerListener({
+        initialized: () => {
+          resolve();
+          callback?.();
+        }
+      });
+    });
   }
 
   /**
-   * Provides a method to get the current state
-   * This is needed for a new tab to initialize it's local state
-   * before relying on the next broadcast update.
+   * Adds a new client tab's message port to the list of connected ports
    */
-  getState(): SharedSyncStatus {
-    return this.status;
+  addPort(port: MessagePort) {
+    const portProvider = {
+      port,
+      clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
+    };
+    this.ports.push(portProvider);
+
+    // Give the newly connected client the latest status
+    const status = this.syncStreamClient?.syncStatus;
+    if (status) {
+      portProvider.clientProvider.statusChanged(status);
+    }
   }
 
-  updateState(status: SharedSyncStatus) {
-    this.status = _.merge(this.status, status);
-    this.iterateListeners((cb) => cb.statusChanged?.(status));
+  removePort(port: MessagePort) {
+    const index = this.ports.findIndex((p) => p.port == port);
+    if (index < 0) {
+      console.warn(`Could not remove port ${port} since it is not present in active ports.`);
+      return;
+    }
+
+    this.ports.splice(index, 1);
+  }
+
+  /**
+   * Configures the DBAdapter connection and a streaming sync client.
+   */
+  async init(dbWorkerPort: MessagePort, params: SharedSyncInitOptions) {
+    if (this.syncStreamClient) {
+      // Cannot modify already existing sync implementation
+      return;
+    }
+
+    this.syncStreamClient = new WebStreamingSyncImplementation({
+      adapter: new SqliteBucketStorage(
+        new WASQLiteDBAdapter({
+          dbFilename: params.dbName,
+          workerPort: dbWorkerPort,
+          flags: { enableMultiTabs: true }
+        }),
+        new Mutex()
+      ),
+      remote: new WebRemote({
+        fetchCredentials: async () => {
+          const lastPort = this.ports[this.ports.length - 1];
+          return lastPort.clientProvider.fetchCredentials();
+        }
+      }),
+      uploadCrud: async () => {
+        const lastPort = this.ports[this.ports.length - 1];
+        return lastPort.clientProvider.uploadCrud();
+      },
+      ...params.streamOptions,
+      // Logger cannot be transferred just yet
+      logger: Logger.get(`Shared Sync ${params.dbName}`)
+    });
+
+    this.syncStreamClient.registerListener({
+      statusChanged: (status) => this.ports.forEach((p) => p.clientProvider.statusChanged(status.toJSON()))
+    });
+
+    this.iterateListeners((l) => l.initialized?.());
+  }
+
+  /**
+   * Connects to the PowerSync backend instance.
+   * Multiple tabs can safely call this in their initialization.
+   * The connection will simply be reconnected whenever a new tab
+   * connects.
+   */
+  async connect() {
+    await this.isReady();
+    this.disconnect();
+    this.abortController = new AbortController();
+    this.syncStreamClient?.streamingSync(this.abortController.signal);
+  }
+
+  async disconnect() {
+    this.abortController?.abort();
+    this.iterateListeners((l) => l.statusChanged?.(new SyncStatus({ connected: false })));
+  }
+
+  async isReady() {
+    return this.isInitialized;
   }
 }

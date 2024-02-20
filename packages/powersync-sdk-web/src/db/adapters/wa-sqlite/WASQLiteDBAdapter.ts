@@ -13,6 +13,7 @@ import _ from 'lodash';
 import * as Comlink from 'comlink';
 import Logger, { ILogger } from 'js-logger';
 import type { DBWorkerInterface, OpenDB } from '../../../worker/db/open-db';
+import { getWorkerDatabaseOpener } from '../../../worker/db/open-worker-database';
 
 export type WASQLiteFlags = {
   enableMultiTabs?: boolean;
@@ -20,6 +21,11 @@ export type WASQLiteFlags = {
 
 export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptions, 'schema'> {
   flags?: WASQLiteFlags;
+  /**
+   * Use an existing port to an initialized worker.
+   * A worker will be initialized if none is provided
+   */
+  workerPort?: MessagePort;
 }
 
 /**
@@ -55,29 +61,12 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
-    /**
-     *  Webpack V5 can bundle the worker automatically if the full Worker constructor syntax is used
-     *  https://webpack.js.org/guides/web-workers/
-     *  This enables multi tab support by default, but falls back if SharedWorker is not available
-     *  (in the case of Android)
-     */
-    const openDB = enableMultiTabs
-      ? Comlink.wrap<OpenDB>(
-          new SharedWorker(new URL('../../../worker/db/SharedWASQLiteDB.worker.js', import.meta.url), {
-            /* @vite-ignore */
-            name: `shared-DB-worker-${this.name}`,
-            type: 'module'
-          }).port
-        )
-      : Comlink.wrap<OpenDB>(
-          new Worker(new URL('../../../worker/db/WASQLiteDB.worker.js', import.meta.url), {
-            /* @vite-ignore */
-            name: `DB-worker-${this.name}`,
-            type: 'module'
-          })
-        );
 
-    this.workerMethods = await openDB(this.options.dbFilename);
+    const dbOpener = this.options.workerPort
+      ? Comlink.wrap<OpenDB>(this.options.workerPort)
+      : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs);
+
+    this.workerMethods = await dbOpener(this.options.dbFilename);
 
     this.workerMethods.registerOnTableChange(
       Comlink.proxy((opType: number, tableName: string, rowId: number) => {
