@@ -1,5 +1,15 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.2.2
+
+### Patch Changes
+
+- 69592d0: Fixed issue on NextJS 14.1.0 where shared sync web worker would fail to initialize.
+- Updated dependencies [1229e52]
+- Updated dependencies [69592d0]
+- Updated dependencies [69592d0]
+  - @journeyapps/powersync-sdk-common@1.2.2
+
 ## 0.2.1
 
 ### Patch Changes

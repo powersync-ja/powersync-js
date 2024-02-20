@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-attachments",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
