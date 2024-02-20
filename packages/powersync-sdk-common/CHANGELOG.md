@@ -1,5 +1,14 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.2.2
+
+### Patch Changes
+
+- 1229e52: Fixed minor bugs in BucketStorage adapter.
+- 69592d0: Improve `AbstractPowerSyncDatabase.getCrudBatch` should use a `getAll` instead of using `database.execute`.
+- 69592d0: Removed `object-hash` package as a dependency as this caused issues with NextJs 14.1.0.
+  Added `equals` method on `CrudEntry` class to better align comparison operations with Javascript.
+
 ## 1.2.1
 
 ### Patch Changes
