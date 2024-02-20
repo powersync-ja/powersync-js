@@ -299,7 +299,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
-  /** 
+  /**
    * Close the database, releasing resources.
    *
    * Also disconnects any active connection.
@@ -352,12 +352,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * and a single transaction may be split over multiple batches.
    */
   async getCrudBatch(limit: number): Promise<CrudBatch | null> {
-    const result = await this.database.execute(
+    const result = await this.getAll<CrudEntryJSON>(
       `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
       [limit + 1]
     );
 
-    const all: CrudEntry[] = result.rows?._array?.map((row) => CrudEntry.fromRow(row)) ?? [];
+    const all: CrudEntry[] = result.map((row) => CrudEntry.fromRow(row)) ?? [];
 
     let haveMore = false;
     if (all.length > limit) {
@@ -623,7 +623,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * @ignore 
+   * @ignore
    */
   private async executeReadOnly(sql: string, params: any[]) {
     await this.waitForReady();
