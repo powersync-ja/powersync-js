@@ -5,6 +5,6 @@
 export const AppConfig = {
   supabaseUrl: 'https://foo.supabase.co',
   supabaseAnonKey: 'foo',
-  supabaseBucket: '', // Optional. Only required when syncing attachments with Supabase Storage. See packages/powersync-attachments.
+  supabaseBucket: '', // Optional. Only required when syncing attachments and using Supabase Storage. See packages/powersync-attachments.
   powersyncUrl: 'https://foo.powersync.journeyapps.com'
 };
