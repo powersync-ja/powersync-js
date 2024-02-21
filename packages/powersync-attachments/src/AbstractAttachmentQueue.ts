@@ -21,6 +21,14 @@ export interface AttachmentQueueOptions {
    * Whether to mark the initial watched attachment IDs to be synced
    */
   performInitialSync?: boolean;
+  /**
+   * How to handle download errors, return { retry: false } to ignore the download
+   */
+  onDownloadError?: (attachment: AttachmentRecord, exception: any) => Promise<{ retry?: boolean }>;
+  /**
+   * How to handle upload errors, return { retry: false } to ignore the upload
+   */
+  onUploadError?: (attachment: AttachmentRecord, exception: any) => Promise<{ retry?: boolean }>;
 }
 
 export const DEFAULT_ATTACHMENT_QUEUE_OPTIONS: Partial<AttachmentQueueOptions> = {
@@ -106,11 +114,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         this.initialSync = false;
         // Mark AttachmentIds for sync
         await this.powersync.execute(
-          `UPDATE 
-                ${this.table} 
-              SET state = ${AttachmentState.QUEUED_SYNC} 
-              WHERE 
-                state < ${AttachmentState.SYNCED} 
+          `UPDATE
+                ${this.table}
+              SET state = ${AttachmentState.QUEUED_SYNC}
+              WHERE
+                state < ${AttachmentState.SYNCED}
               AND
                id IN (${_ids})`
         );
@@ -142,9 +150,12 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
 
       // 3. Attachment in database and not in AttachmentIds, mark as archived
       await this.powersync.execute(
-        `UPDATE ${this.table} SET state = ${AttachmentState.ARCHIVED} WHERE state < ${
-          AttachmentState.ARCHIVED
-        } AND id NOT IN (${ids.map((id) => `'${id}'`).join(',')})`
+        `UPDATE ${this.table}
+          SET state = ${AttachmentState.ARCHIVED}
+          WHERE
+            state < ${AttachmentState.ARCHIVED}
+          AND
+            id NOT IN (${ids.map((id) => `'${id}'`).join(',')})`
       );
     }
   }
@@ -179,7 +190,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     const timestamp = new Date().getTime();
     await this.powersync.execute(
       `UPDATE ${this.table}
-             SET 
+             SET
                 timestamp = ?,
                 filename = ?,
                 local_uri = ?,
@@ -267,6 +278,13 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         await this.update({ ...record, state: AttachmentState.SYNCED });
         return false;
       }
+      if (this.options.onUploadError) {
+        const { retry } = await this.options.onUploadError(record, e);
+        if (!retry) {
+          await this.update({ ...record, state: AttachmentState.ARCHIVED });
+          return true;
+        }
+      }
       console.error(`UploadAttachment error for record ${JSON.stringify(record, null, 2)}`);
       return false;
     }
@@ -312,6 +330,13 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       console.debug(`Downloaded attachment "${record.id}"`);
       return true;
     } catch (e) {
+      if (this.options.onDownloadError) {
+        const { retry } = await this.options.onDownloadError(record, e);
+        if (!retry) {
+          await this.update({ ...record, state: AttachmentState.ARCHIVED });
+          return true;
+        }
+      }
       console.error(`Download attachment error for record ${JSON.stringify(record, null, 2)}`, e);
     }
     return false;
@@ -320,11 +345,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   async *idsToUpload(): AsyncIterable<string[]> {
     for await (const result of this.powersync.watch(
       `SELECT id
-              FROM ${this.table} 
+              FROM ${this.table}
               WHERE
                 local_uri IS NOT NULL
               AND
-                (state = ${AttachmentState.QUEUED_UPLOAD} 
+                (state = ${AttachmentState.QUEUED_UPLOAD}
               OR
                 state = ${AttachmentState.QUEUED_SYNC})`,
       []
@@ -374,9 +399,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   async getIdsToDownload(): Promise<string[]> {
     const res = await this.powersync.getAll<{ id: string }>(
       `SELECT id
-              FROM ${this.table} 
+              FROM ${this.table}
               WHERE
-                state = ${AttachmentState.QUEUED_DOWNLOAD} 
+                state = ${AttachmentState.QUEUED_DOWNLOAD}
               OR
                 state = ${AttachmentState.QUEUED_SYNC}
               ORDER BY timestamp ASC`
@@ -387,10 +412,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   async *idsToDownload(): AsyncIterable<string[]> {
     for await (const result of this.powersync.watch(
       `SELECT id
-              FROM ${this.table} 
-              WHERE 
-                state = ${AttachmentState.QUEUED_DOWNLOAD} 
-              OR 
+              FROM ${this.table}
+              WHERE
+                state = ${AttachmentState.QUEUED_DOWNLOAD}
+              OR
                 state = ${AttachmentState.QUEUED_SYNC}`,
       []
     )) {
@@ -460,10 +485,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   async expireCache() {
-    const res = await this.powersync.getAll<AttachmentRecord>(`SELECT * FROM ${this.table} 
-          WHERE 
+    const res = await this.powersync.getAll<AttachmentRecord>(`SELECT * FROM ${this.table}
+          WHERE
            state = ${AttachmentState.SYNCED} OR state = ${AttachmentState.ARCHIVED}
-         ORDER BY 
+         ORDER BY
            timestamp DESC
          LIMIT 100 OFFSET ${this.options.cacheLimit}`);
 
