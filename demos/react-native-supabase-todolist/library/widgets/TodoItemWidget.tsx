@@ -6,6 +6,7 @@ import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
 import { AttachmentRecord } from '@journeyapps/powersync-attachments';
 import { AppConfig } from '../supabase/AppConfig';
+import { useSystem } from '../powersync/system';
 
 export interface TodoItemWidgetProps {
   record: TodoRecord;
@@ -19,6 +20,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
   const { record, photoAttachment, onDelete, onToggleCompletion, onSavePhoto } = props;
   const [loading, setLoading] = React.useState(false);
   const [isCameraVisible, setCameraVisible] = React.useState(false);
+  const system = useSystem();
 
   const handleCancel = React.useCallback(() => {
     setCameraVisible(false);
@@ -49,8 +51,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               );
             }}
           />
-        }
-      >
+        }>
         {loading ? (
           <ActivityIndicator />
         ) : (
@@ -74,7 +75,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
           ) : photoAttachment?.local_uri != null ? (
             <Image
-              source={{ uri: photoAttachment.local_uri }}
+              source={{ uri: system.attachmentQueue.getLocalUri(photoAttachment.local_uri) }}
               containerStyle={styles.item}
               PlaceholderContent={<ActivityIndicator />}
             />
