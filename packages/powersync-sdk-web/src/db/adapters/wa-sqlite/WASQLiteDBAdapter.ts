@@ -63,14 +63,14 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
      */
     const openDB = enableMultiTabs
       ? Comlink.wrap<OpenDB>(
-          new SharedWorker(new URL('../../../worker/db/SharedWASQLiteDB.worker.ts', import.meta.url), {
+          new SharedWorker(new URL('../../../worker/db/SharedWASQLiteDB.worker.js', import.meta.url), {
             /* @vite-ignore */
             name: `shared-DB-worker-${this.name}`,
             type: 'module'
           }).port
         )
       : Comlink.wrap<OpenDB>(
-          new Worker(new URL('../../../worker/db/WASQLiteDB.worker.ts', import.meta.url), {
+          new Worker(new URL('../../../worker/db/WASQLiteDB.worker.js', import.meta.url), {
             /* @vite-ignore */
             name: `DB-worker-${this.name}`,
             type: 'module'

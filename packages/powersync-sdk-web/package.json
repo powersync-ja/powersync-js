@@ -20,7 +20,7 @@
     "build": "tsc --build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "vitest"
+    "test": "pnpm build && vitest"
   },
   "keywords": [
     "data sync",
