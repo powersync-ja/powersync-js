@@ -1,5 +1,5 @@
-# Ensures packages build correctly
-name: Build Packages
+# Ensures packages test correctly
+name: Test Packages
 
 on:
   push:
