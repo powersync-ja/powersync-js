@@ -8,7 +8,7 @@ This package is currently in a beta release.
 
 Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@journeyapps/powersync-sdk-web) together with Supabase.
 
-A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.co/integration-guides/supabase).
+A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 

@@ -9,7 +9,6 @@ import {
   QueryResult,
   Transaction
 } from '@journeyapps/powersync-sdk-common';
-import _ from 'lodash';
 import * as Comlink from 'comlink';
 import Logger, { ILogger } from 'js-logger';
 import type { DBWorkerInterface, OpenDB } from '../../../worker/db/open-db';
