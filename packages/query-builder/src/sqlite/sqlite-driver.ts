@@ -13,7 +13,7 @@ export class PowerSyncDriver implements Driver {
     this.#db = config.db;
   }
 
-  async init(): Promise<void> { }
+  async init(): Promise<void> {}
 
   async acquireConnection(): Promise<DatabaseConnection> {
     if (!this.#db) {
