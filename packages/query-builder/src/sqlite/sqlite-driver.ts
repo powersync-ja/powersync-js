@@ -7,19 +7,15 @@ export interface PowerSyncDialectConfig {
 }
 
 export class PowerSyncDriver implements Driver {
-  #db?: AbstractPowerSyncDatabase;
+  readonly #db: AbstractPowerSyncDatabase;
 
   constructor(config: PowerSyncDialectConfig) {
     this.#db = config.db;
   }
 
-  async init(): Promise<void> {}
+  async init(): Promise<void> { }
 
   async acquireConnection(): Promise<DatabaseConnection> {
-    if (!this.#db) {
-      throw new Error('PowerSync database has not been initialized');
-    }
-
     // Always create a new connection instance
     return new PowerSyncConnection(this.#db);
   }
@@ -41,6 +37,6 @@ export class PowerSyncDriver implements Driver {
   }
 
   async destroy(): Promise<void> {
-    this.#db?.disconnectAndClear();
+    this.#db.disconnectAndClear();
   }
 }
