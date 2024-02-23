@@ -444,7 +444,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
-    return this.writeTransaction((tx) => tx.execute(sql, parameters));
+    return this.database.execute(sql, parameters);
   }
 
   /**
