@@ -778,13 +778,13 @@ importers:
       '@journeyapps/powersync-sdk-common':
         specifier: workspace:*
         version: link:../powersync-sdk-common
-      '@journeyapps/powersync-sdk-web':
-        specifier: workspace:*
-        version: link:../powersync-sdk-web
       kysely:
         specifier: ^0.27.2
         version: 0.27.2
     devDependencies:
+      '@journeyapps/powersync-sdk-web':
+        specifier: workspace:*
+        version: link:../powersync-sdk-web
       '@journeyapps/wa-sqlite':
         specifier: ^0.1.1
         version: 0.1.1
