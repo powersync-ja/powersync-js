@@ -2,10 +2,10 @@
   "name": "@journeyapps/powersync-sdk-web",
   "version": "0.2.2",
   "description": "A Web SDK for JourneyApps PowerSync",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "files": [
-    "dist"
+    "lib"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -15,7 +15,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "homepage": "https://docs.powersync.co",
+  "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc --build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",

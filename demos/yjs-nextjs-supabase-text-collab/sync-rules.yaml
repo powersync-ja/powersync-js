@@ -1,4 +1,4 @@
-# Sync-rule docs: https://docs.powersync.co/usage/sync-rules
+# Sync-rule docs: https://docs.powersync.com/usage/sync-rules
 bucket_definitions:
   global:
     data:
