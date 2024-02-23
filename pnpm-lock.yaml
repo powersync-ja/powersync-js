@@ -773,6 +773,52 @@ importers:
         specifier: ~5.3.3
         version: 5.3.3
 
+  packages/kysely-driver:
+    dependencies:
+      '@journeyapps/powersync-sdk-common':
+        specifier: workspace:*
+        version: link:../powersync-sdk-common
+      '@journeyapps/powersync-sdk-web':
+        specifier: workspace:*
+        version: link:../powersync-sdk-web
+      kysely:
+        specifier: ^0.27.2
+        version: 0.27.2
+    devDependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: ^0.1.1
+        version: 0.1.1
+      '@types/node':
+        specifier: ^20.11.17
+        version: 20.11.17
+      '@vitest/browser':
+        specifier: ^1.3.1
+        version: 1.3.1(vitest@1.3.1)(webdriverio@8.32.3)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.3.3)(webpack@5.90.1)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.11.17)(typescript@5.3.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+      vite:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@20.11.17)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.1
+        version: 1.4.1(vite@5.1.1)
+      vite-plugin-wasm:
+        specifier: ^3.3.0
+        version: 3.3.0(vite@5.1.1)
+      vitest:
+        specifier: ^1.3.0
+        version: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
+      webdriverio:
+        specifier: ^8.32.3
+        version: 8.32.3(typescript@5.3.3)
+
   packages/powersync-attachments:
     dependencies:
       '@journeyapps/powersync-sdk-common':
@@ -925,52 +971,6 @@ importers:
         version: 3.3.0(vite@5.1.1)
       vitest:
         specifier: ^1.3.1
-        version: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
-      webdriverio:
-        specifier: ^8.32.3
-        version: 8.32.3(typescript@5.3.3)
-
-  packages/query-builder:
-    dependencies:
-      '@journeyapps/powersync-sdk-common':
-        specifier: workspace:*
-        version: link:../powersync-sdk-common
-      '@journeyapps/powersync-sdk-web':
-        specifier: workspace:*
-        version: link:../powersync-sdk-web
-      kysely:
-        specifier: ^0.27.2
-        version: 0.27.2
-    devDependencies:
-      '@journeyapps/wa-sqlite':
-        specifier: ^0.1.1
-        version: 0.1.1
-      '@types/node':
-        specifier: ^20.11.17
-        version: 20.11.17
-      '@vitest/browser':
-        specifier: ^1.3.1
-        version: 1.3.1(vitest@1.3.1)(webdriverio@8.32.3)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.1(typescript@5.3.3)(webpack@5.90.1)
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.11.17)(typescript@5.3.3)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.3.3
-      vite:
-        specifier: ^5.1.1
-        version: 5.1.1(@types/node@20.11.17)
-      vite-plugin-top-level-await:
-        specifier: ^1.4.1
-        version: 1.4.1(vite@5.1.1)
-      vite-plugin-wasm:
-        specifier: ^3.3.0
-        version: 3.3.0(vite@5.1.1)
-      vitest:
-        specifier: ^1.3.0
         version: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
       webdriverio:
         specifier: ^8.32.3
@@ -24116,8 +24116,8 @@ packages:
     dependencies:
       agent-base: 7.1.0
       debug: 4.3.4(supports-color@8.1.1)
-      http-proxy-agent: 7.0.1
-      https-proxy-agent: 7.0.3
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
       pac-proxy-agent: 7.0.1
       proxy-from-env: 1.1.0

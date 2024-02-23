@@ -1,7 +1,7 @@
 {
-  "name": "@powersync/query-builder",
+  "name": "@powersync/kysely-driver",
   "version": "0.0.1",
-  "description": "Query builder for PowerSync",
+  "description": "Kysely driver for PowerSync",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "JOURNEYAPPS",
