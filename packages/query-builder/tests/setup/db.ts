@@ -9,24 +9,22 @@ import {
   WASQLitePowerSyncDatabaseOpenFactory
 } from '@journeyapps/powersync-sdk-web';
 
+const TestSchema = new Schema([
+  new Table({
+    name: 'users',
+    columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
+  })
+]);
+
 export const getPowerSyncDb = () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
     dbFilename: 'test.db',
-    schema: new Schema([
-      new Table({
-        name: 'users',
-        columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
-      })
-    ])
+    schema: TestSchema
   });
 
   return factory.getInstance();
 };
 
-// Database interface is passed to Kysely's constructor, and from now on, Kysely
-// knows your database structure.
-// Dialect is passed to Kysely's constructor, and from now on, Kysely knows how
-// to communicate with your database.
 export const getKyselyDb = () =>
   new Kysely<Database>({
     dialect: new PowerSyncDialect({

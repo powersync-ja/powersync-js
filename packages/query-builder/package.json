@@ -2,6 +2,13 @@
   "name": "@powersync/query-builder",
   "version": "0.0.1",
   "description": "Query builder for PowerSync",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "files": [
+    "lib"
+  ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
@@ -19,7 +26,7 @@
   },
   "dependencies": {
     "@journeyapps/powersync-sdk-common": "workspace:*",
-    "@journeyapps/powersync-sdk-web": "0.2.2",
+    "@journeyapps/powersync-sdk-web": "workspace:*",
     "kysely": "^0.27.2"
   },
   "devDependencies": {

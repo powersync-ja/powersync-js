@@ -1,13 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { getKyselyDb } from './setup/db';
+import * as SUT from '../../src/sqlite/db';
 import { Kysely } from 'kysely';
-import { Database } from './setup/types';
+import { Database } from '../setup/types';
+import { getPowerSyncDb } from '../setup/db';
+import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
 
 describe('CRUD operations', () => {
+  let powerSyncDb: AbstractPowerSyncDatabase;
   let db: Kysely<Database>;
 
   beforeEach(() => {
-    db = getKyselyDb();
+    powerSyncDb = getPowerSyncDb();
+    db = SUT.createPowerSyncDb<Database>(powerSyncDb);
   });
 
   afterEach(async () => {
