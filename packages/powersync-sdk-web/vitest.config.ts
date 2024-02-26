@@ -26,6 +26,7 @@ const config: UserConfigExport = {
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
+    isolate: false,
     globals: true,
     setupFiles: [],
     include: ['tests/**/*.test.ts'],
