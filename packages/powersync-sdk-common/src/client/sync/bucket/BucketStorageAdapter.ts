@@ -21,7 +21,7 @@ export interface ChecksumCache {
 export interface SyncLocalDatabaseResult {
   ready: boolean;
   checkpointValid: boolean;
-  failures?: string[];
+  checkpointFailures?: string[];
 }
 
 export interface BucketChecksum {

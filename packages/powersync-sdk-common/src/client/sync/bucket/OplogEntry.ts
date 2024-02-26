@@ -2,12 +2,12 @@ import { OpId } from './CrudEntry';
 import { OpType, OpTypeJSON } from './OpType';
 
 export interface OplogEntryJSON {
-  op_id: string;
-  op: OpTypeJSON;
-  object_type: string;
-  object_id: string;
   checksum: number;
   data?: string;
+  object_id?: string;
+  object_type?: string;
+  op_id: string;
+  op: OpTypeJSON;
   subkey?: string | object;
 }
 
