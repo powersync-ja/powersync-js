@@ -32,11 +32,11 @@ export class SyncDataBucket {
     /**
      * The `after` specified in the request.
      */
-    public after: OpId,
+    public after?: OpId,
     /**
      * Use this for the next request.
      */
-    public next_after: OpId
+    public next_after?: OpId
   ) {}
 
   toJSON(): SyncDataBucketJSON {

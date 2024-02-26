@@ -34,7 +34,7 @@ export interface BucketChecksum {
   /**
    * Count of operations - informational only.
    */
-  count: number;
+  count?: number;
 }
 
 export enum PSInternalTable {

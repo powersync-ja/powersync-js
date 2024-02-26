@@ -10,6 +10,7 @@ export * from './client/sync/bucket/CrudTransaction';
 export * from './client/sync/bucket/SyncDataBatch';
 export * from './client/sync/bucket/SyncDataBucket';
 export * from './client/sync/bucket/OpType';
+export * from './client/sync/bucket/OplogEntry';
 export * from './client/sync/stream/AbstractRemote';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation';
 export * from './client/sync/stream/streaming-sync-types';

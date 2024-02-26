@@ -7,8 +7,8 @@ export interface OplogEntryJSON {
   object_type: string;
   object_id: string;
   checksum: number;
-  data: string;
-  subkey: string | object;
+  data?: string;
+  subkey?: string | object;
 }
 
 export class OplogEntry {
