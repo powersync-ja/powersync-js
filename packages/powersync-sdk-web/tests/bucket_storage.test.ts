@@ -507,4 +507,303 @@ describe.only('Bucket Storage', () => {
     await powersync.disconnectAndClear();
     await powersync.close();
   });
+
+  it('should compact', async () => {
+    // Test compacting behaviour.
+    // This test relies heavily on internals, and will have to be updated when the compact implementation is updated.
+
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, removeAsset1_4], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '4',
+      write_checkpoint: '4',
+      buckets: [{ bucket: 'bucket1', checksum: 7 }]
+    });
+
+    await bucketStorage.forceCompact();
+
+    await syncLocalChecked({
+      last_op_id: '4',
+      write_checkpoint: '4',
+      buckets: [{ bucket: 'bucket1', checksum: 7 }]
+    });
+
+    const stats = await db.getAll(
+      'SELECT row_type as type, row_id as id, count(*) as count FROM ps_oplog GROUP BY row_type, row_id ORDER BY row_type, row_id'
+    );
+    expect(stats).deep.equals([{ type: 'assets', id: 'O2', count: 1 }]);
+  });
+
+  it('should not sync local db with pending crud - server removed', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local save
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O3']);
+    expect(await db.getAll("SELECT id FROM assets WHERE id = 'O3'")).deep.equals([{ id: 'O3' }]);
+
+    // At this point, we have data in the crud table, and are not able to sync the local db.
+    const result = await bucketStorage.syncLocalDatabase({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    expect(result).deep.equals({ ready: false, checkpointValid: true });
+
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    // At this point, the data has been uploaded, but not synced back yet.
+    const result3 = await bucketStorage.syncLocalDatabase({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+    expect(result3).deep.equals({ ready: false, checkpointValid: true });
+
+    // The data must still be present locally.
+    expect(await db.getAll("SELECT id FROM assets WHERE id = 'O3'")).deep.equals([{ id: 'O3' }]);
+
+    await bucketStorage.saveSyncData(new SyncDataBatch([new SyncDataBucket('bucket1', [], false)]));
+
+    // Now we have synced the data back (or lack of data in this case),
+    // so we can do a local sync.
+    await syncLocalChecked({
+      last_op_id: '5',
+      write_checkpoint: '5',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Since the object was not in the sync response, it is deleted.
+    expect(await db.getAll("SELECT id FROM assets WHERE id = 'O3'")).empty;
+  });
+
+  it('should not sync local db with pending crud when more crud is added (1)', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local save
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O3']);
+
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    const result3 = await bucketStorage.syncLocalDatabase({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+    expect(result3).deep.equals({ ready: false, checkpointValid: true });
+
+    await bucketStorage.saveSyncData(new SyncDataBatch([new SyncDataBucket('bucket1', [], false)]));
+
+    // Add more data before syncLocalDatabase.
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O4']);
+
+    const result4 = await bucketStorage.syncLocalDatabase({
+      last_op_id: '5',
+      write_checkpoint: '5',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+    expect(result4).deep.equals({ ready: false, checkpointValid: true });
+  });
+
+  it('should not sync local db with pending crud when more crud is added (2)', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local save
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O3']);
+    const batch = await bucketStorage.getCrudBatch();
+    // Add more data before the complete() call
+
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O4']);
+    await batch!.complete();
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    await bucketStorage.saveSyncData(new SyncDataBatch([new SyncDataBucket('bucket1', [], false)]));
+
+    const result4 = await bucketStorage.syncLocalDatabase({
+      last_op_id: '5',
+      write_checkpoint: '5',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+    expect(result4).deep.equals({ ready: false, checkpointValid: true });
+  });
+
+  it('should not sync local db with pending crud - update on server', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local save
+    await db.execute('INSERT INTO assets(id) VALUES(?)', ['O3']);
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([
+        new SyncDataBucket(
+          'bucket1',
+          [
+            OplogEntry.fromRow({
+              op_id: '5',
+              op: new OpType(OpTypeEnum.PUT).toJSON(),
+              object_type: 'assets',
+              object_id: 'O3',
+              checksum: 5,
+              data: '{"description": "server updated"}'
+            })
+          ],
+          false
+        )
+      ])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '5',
+      write_checkpoint: '5',
+      buckets: [{ bucket: 'bucket1', checksum: 11 }]
+    });
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O3'")).deep.equals([
+      { description: 'server updated' }
+    ]);
+  });
+
+  it('should revert a failing insert', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local insert, later rejected by server
+    await db.execute('INSERT INTO assets(id, description) VALUES(?, ?)', ['O3', 'inserted']);
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O3'")).deep.equals([
+      { description: 'inserted' }
+    ]);
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '4',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O3'")).empty;
+  });
+
+  it('should revert a failing delete', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local delete, later rejected by server
+    await db.execute('DELETE FROM assets WHERE id = ?', ['O2']);
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O2'")).empty;
+    // Simulate a permissions error when uploading - data should be preserved.
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '4',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O2'")).deep.equals([{ description: 'bar' }]);
+  });
+
+  it('should revert a failing update', async () => {
+    await bucketStorage.saveSyncData(
+      new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
+    );
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '3',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    // Local update, later rejected by server
+    await db.execute('UPDATE assets SET description = ? WHERE id = ?', ['updated', 'O2']);
+
+    expect(await db.getAll(`SELECT description FROM assets WHERE id = 'O2'`)).deep.equals([{ description: 'updated' }]);
+    // Simulate a permissions error when uploading - data should be preserved.
+    const batch = await bucketStorage.getCrudBatch();
+    await batch!.complete();
+
+    await bucketStorage.updateLocalTarget(async () => {
+      return '4';
+    });
+
+    await syncLocalChecked({
+      last_op_id: '3',
+      write_checkpoint: '4',
+      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+    });
+
+    expect(await db.getAll("SELECT description FROM assets WHERE id = 'O2'")).deep.equals([{ description: 'bar' }]);
+  });
 });
