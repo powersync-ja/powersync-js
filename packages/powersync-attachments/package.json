@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-attachments",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -11,7 +11,7 @@
   },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
-  "homepage": "https://docs.powersync.co/resources/api-reference",
+  "homepage": "https://docs.powersync.com/resources/api-reference",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },

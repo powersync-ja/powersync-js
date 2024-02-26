@@ -25,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
-  "homepage": "https://docs.powersync.co/resources/api-reference",
+  "homepage": "https://docs.powersync.com/resources/api-reference",
   "dependencies": {
     "@journeyapps/powersync-sdk-common": "workspace:*"
   },

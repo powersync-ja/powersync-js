@@ -5,8 +5,8 @@
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "files": [
-    "dist",
-    "!dist/tests"
+    "lib",
+    "!lib/tests"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -16,7 +16,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "homepage": "https://docs.powersync.co",
+  "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc --build",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",

@@ -11,7 +11,7 @@
     "lib": ["DOM", "ES2020", "WebWorker"] /* Specify library files to be included in the compilation. */,
     "module": "es2020" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 'es2020', or 'ESNext'. */,
     "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
-    "outDir": "./dist" /* Redirect output structure to the directory. */,
+    "outDir": "./lib" /* Redirect output structure to the directory. */,
     "skipLibCheck": true /* Skip type checking of declaration files. */,
     "sourceMap": true /* Generates corresponding '.map' file. */,
     "strict": true /* Enable all strict type-checking options. */,
