@@ -1,4 +1,4 @@
-import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@journeyapps/powersync-sdk-web';
+import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '../src';
 
 export const testSchema = new Schema([
   new Table({

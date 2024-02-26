@@ -8,7 +8,7 @@ import {
   Schema,
   Table
 } from '@journeyapps/powersync-sdk-common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
 
 type SchemaVersionResult = {
   schema_version: number;

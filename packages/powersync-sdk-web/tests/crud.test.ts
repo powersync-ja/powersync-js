@@ -4,13 +4,11 @@ import {
   Column,
   ColumnType,
   CrudEntry,
-  Index,
-  IndexedColumn,
   Schema,
   Table,
   UpdateType
 } from '@journeyapps/powersync-sdk-common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
 import { v4 as uuid } from 'uuid';
 import { testSchema } from './test_schema';
 
@@ -50,7 +48,7 @@ describe('CRUD Tests', () => {
       }
     ]);
 
-    var tx = (await powersync.getNextCrudTransaction())!;
+    const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
     const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
@@ -90,7 +88,7 @@ describe('CRUD Tests', () => {
       }
     ]);
 
-    var tx = (await powersync.getNextCrudTransaction())!;
+    const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(2);
 
     const expectedCrudEntry = new CrudEntry(2, UpdateType.PATCH, 'assets', testId, 2, { description: 'test2' });
@@ -108,7 +106,7 @@ describe('CRUD Tests', () => {
       { data: `{"op":"DELETE","type":"assets","id":"${testId}"}` }
     ]);
 
-    var tx = (await powersync.getNextCrudTransaction())!;
+    const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(2);
     const expectedCrudEntry = new CrudEntry(2, UpdateType.DELETE, 'assets', testId, 2);
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
@@ -162,7 +160,7 @@ describe('CRUD Tests', () => {
 
     expect(await powersync.getAll('SELECT * FROM logs')).empty;
 
-    var tx = (await powersync.getNextCrudTransaction())!;
+    const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
     const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'logs', testId, 1, {
       level: 'INFO',
@@ -184,7 +182,7 @@ describe('CRUD Tests', () => {
       }
     ]);
 
-    var tx = (await powersync.getNextCrudTransaction())!;
+    const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
 
     expect(tx.crud[0].equals(new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { quantity: bigNumber }))).equals(
@@ -233,7 +231,7 @@ describe('CRUD Tests', () => {
       await tx.execute('UPDATE assets SET description = ? WHERE id = ?', ['updated', testId]);
     });
 
-    var tx1 = (await powersync.getNextCrudTransaction())!;
+    const tx1 = (await powersync.getNextCrudTransaction())!;
     expect(tx1.transactionId).equals(1);
     const expectedCrudEntries = [
       new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test1' }),
@@ -243,7 +241,7 @@ describe('CRUD Tests', () => {
     expect(tx1.crud.map((entry, index) => entry.equals(expectedCrudEntries[index]))).deep.equals([true, true]);
     await tx1.complete();
 
-    var tx2 = (await powersync.getNextCrudTransaction())!;
+    const tx2 = (await powersync.getNextCrudTransaction())!;
     expect(tx2.transactionId).equals(2);
     const expectedCrudEntry2 = new CrudEntry(3, UpdateType.PATCH, 'assets', testId, 2, { description: 'updated' });
     expect(tx2.crud[0].equals(expectedCrudEntry2)).true;
