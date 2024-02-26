@@ -12,7 +12,7 @@ const config: UserConfigExport = {
        * first. This is required due to the format of Webworker URIs
        * they link to `.js` files.
        */
-      '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './dist/src')
+      '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './lib/src')
     }
   },
   worker: {
