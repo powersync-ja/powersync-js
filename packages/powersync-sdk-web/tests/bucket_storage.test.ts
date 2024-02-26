@@ -57,7 +57,7 @@ const removeAsset1_5 = OplogEntry.fromRow({
   checksum: 5
 });
 
-describe.only('Bucket Storage', () => {
+describe('Bucket Storage', () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
     dbFilename: 'test-bucket-storage.db',
     flags: {
