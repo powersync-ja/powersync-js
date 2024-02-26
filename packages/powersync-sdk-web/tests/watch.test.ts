@@ -16,7 +16,7 @@ import _ from 'lodash';
  */
 const throttleDuration = 1000;
 
-describe.only('Watch Tests', () => {
+describe('Watch Tests', () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
     dbFilename: 'test-watch.db',
     schema: testSchema,
