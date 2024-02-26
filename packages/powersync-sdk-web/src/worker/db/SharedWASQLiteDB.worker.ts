@@ -1,6 +1,5 @@
 import '@journeyapps/wa-sqlite';
 
-import _ from 'lodash';
 import * as Comlink from 'comlink';
 import { DBWorkerInterface, _openDB } from './open-db';
 
@@ -27,7 +26,7 @@ _self.onconnect = function (event: MessageEvent<string>) {
   Comlink.expose(openDB, port);
 };
 
-addEventListener('beforeunload', (event) => {
+addEventListener('beforeunload', () => {
   Array.from(DBMap.values()).forEach(async (dbPromise) => {
     const db = await dbPromise;
     db.close?.();
