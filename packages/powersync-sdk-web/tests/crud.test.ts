@@ -26,7 +26,7 @@ describe('CRUD Tests', () => {
        * Use a new DB for each run to keep CRUD counters
        * consistent
        */
-      dbFilename: 'test.db' + uuid(),
+      dbFilename: `test-crud-${uuid()}.db`,
       schema: testSchema,
       flags: {
         enableMultiTabs: false
