@@ -1,5 +1,5 @@
 import { type AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
-import { DatabaseConnection, Driver } from 'kysely';
+import { Driver } from 'kysely';
 import { PowerSyncConnection } from './sqlite-connection';
 
 export interface PowerSyncDialectConfig {
@@ -15,25 +15,24 @@ export class PowerSyncDriver implements Driver {
 
   async init(): Promise<void> { }
 
-  async acquireConnection(): Promise<DatabaseConnection> {
-    // Always create a new connection instance
+  async acquireConnection(): Promise<PowerSyncConnection> {
     return new PowerSyncConnection(this.#db);
   }
 
-  async beginTransaction(connection: DatabaseConnection): Promise<void> {
-    await (connection as PowerSyncConnection).beginTransaction();
+  async beginTransaction(connection: PowerSyncConnection): Promise<void> {
+    await connection.beginTransaction();
   }
 
-  async commitTransaction(connection: DatabaseConnection): Promise<void> {
-    await (connection as PowerSyncConnection).commitTransaction();
+  async commitTransaction(connection: PowerSyncConnection): Promise<void> {
+    await connection.commitTransaction();
   }
 
-  async rollbackTransaction(connection: DatabaseConnection): Promise<void> {
-    await (connection as PowerSyncConnection).rollbackTransaction();
+  async rollbackTransaction(connection: PowerSyncConnection): Promise<void> {
+    await connection.rollbackTransaction();
   }
 
-  async releaseConnection(connection: DatabaseConnection): Promise<void> {
-    await (connection as PowerSyncConnection).releaseConnection();
+  async releaseConnection(connection: PowerSyncConnection): Promise<void> {
+    await connection.releaseConnection();
   }
 
   async destroy(): Promise<void> {
