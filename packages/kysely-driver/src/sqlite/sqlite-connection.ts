@@ -12,11 +12,13 @@ import { CompiledQuery, DatabaseConnection, QueryResult } from 'kysely';
  */
 export class PowerSyncConnection implements DatabaseConnection {
   readonly #db: AbstractPowerSyncDatabase;
-  #release?: () => void;
-  #tx?: Transaction;
+  #completeTransaction: (() => void) | null;
+  #tx: Transaction | null;
 
   constructor(db: AbstractPowerSyncDatabase) {
     this.#db = db;
+    this.#tx = null;
+    this.#completeTransaction = null;
   }
 
   async executeQuery<O>(compiledQuery: CompiledQuery): Promise<QueryResult<O>> {
@@ -50,28 +52,39 @@ export class PowerSyncConnection implements DatabaseConnection {
   }
 
   async beginTransaction(): Promise<void> {
-    let doResolve: any;
-    let doReject: any;
-    let doRelease: any;
+    // TODO: Check if there is already an active transaction?
 
-    const lockPromise = new Promise<PowerSyncConnection>((resolve, reject) => {
-      doResolve = resolve;
-      doReject = reject;
+    /**
+     * Returns a promise which resolves once a transaction has been started.
+     * Rejects if any errors occur in obtaining the lock.
+     */
+    return new Promise<void>((resolve, reject) => {
+      /**
+       * Starts a transaction, resolves the `beginTransaction` promise
+       * once it's started. The transaction waits until the `this.#release`
+       * callback is executed.
+       */
+      this.#db
+        .writeTransaction(async (tx) => {
+          // Set the current active transaction
+          this.#tx = tx;
+
+          /**
+           * Wait for this transaction to be completed
+           * Rejecting would cause any uncommitted changes to be
+           * rolled back.
+           */
+          const transactionCompleted = new Promise<void>((resolve) => {
+            this.#completeTransaction = resolve;
+          });
+
+          // Allow this transaction to be used externally
+          resolve();
+
+          await transactionCompleted;
+        })
+        .catch(reject);
     });
-
-    this.#db
-      .writeTransaction(async (tx) => {
-        this.#tx = tx;
-        const releasePromise = new Promise<void>((reject) => {
-          doRelease = reject;
-        });
-        doResolve();
-        await releasePromise;
-      })
-      .catch(doReject);
-
-    await lockPromise;
-    this.#release = doRelease;
   }
 
   async commitTransaction(): Promise<void> {
@@ -79,14 +92,8 @@ export class PowerSyncConnection implements DatabaseConnection {
       throw new Error('Transaction is not defined');
     }
 
-    if (!this.#release) {
-      throw new Error('Release is not defined');
-    }
-
     await this.#tx.commit();
-    this.#tx = undefined;
-    this.#release();
-    this.#release = undefined;
+    this.releaseTransaction();
   }
 
   async rollbackTransaction(): Promise<void> {
@@ -94,18 +101,21 @@ export class PowerSyncConnection implements DatabaseConnection {
       throw new Error('Transaction is not defined');
     }
 
-    if (!this.#release) {
-      throw new Error('Release is not defined');
-    }
-
     await this.#tx.rollback();
-    this.#tx = undefined;
-    this.#release();
-    this.#release = undefined;
+    this.releaseTransaction();
   }
 
   async releaseConnection(): Promise<void> {
-    // is this write?
-    this.#db.disconnect();
+    this.#db.close();
+  }
+
+  private releaseTransaction() {
+    if (!this.#completeTransaction) {
+      throw new Error(`Not able to release transaction`);
+    }
+
+    this.#completeTransaction();
+    this.#completeTransaction = null;
+    this.#tx = null;
   }
 }

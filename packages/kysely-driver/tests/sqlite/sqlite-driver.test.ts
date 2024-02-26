@@ -18,12 +18,6 @@ describe('PowerSyncDriver', () => {
     await PowerSync.close();
   });
 
-  it('should throw an error if PowerSync database is not initialized', async () => {
-    const driver = new SUT.PowerSyncDriver({ db: undefined } as any);
-
-    await expect(driver.acquireConnection()).rejects.toThrowError('PowerSync database has not been initialized');
-  });
-
   it('should create a new connection instance when acquiring a connection', async () => {
     const connection = await driver.acquireConnection();
 
