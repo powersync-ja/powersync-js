@@ -11,6 +11,9 @@ type User = {
 describe('Basic', () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
     dbFilename: 'test.db',
+    flags: {
+      enableMultiTabs: false
+    },
     schema: new Schema([
       new Table({
         name: 'users',
