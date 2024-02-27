@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.useRealTimers();
 import { v4 as uuid } from 'uuid';
 import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 import { testSchema } from './test_schema';
 
 /**
