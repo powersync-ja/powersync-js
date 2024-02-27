@@ -97,6 +97,14 @@ export default function TodoListsPage() {
         <Dialog
           open={showPrompt}
           onClose={() => setShowPrompt(false)}
+          PaperProps={{
+            component: 'form',
+            onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
+              event.preventDefault();
+              await createNewList(nameInputRef.current!.value);
+              setShowPrompt(false);
+            },
+          }}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
@@ -107,12 +115,7 @@ export default function TodoListsPage() {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowPrompt(false)}>Cancel</Button>
-            <Button
-              onClick={async () => {
-                await createNewList(nameInputRef.current!.value);
-                setShowPrompt(false);
-              }}
-            >
+            <Button type="submit">
               Create
             </Button>
           </DialogActions>

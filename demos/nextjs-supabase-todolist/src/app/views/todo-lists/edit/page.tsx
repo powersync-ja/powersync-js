@@ -122,6 +122,14 @@ const TodoEditSection = () => {
           onClose={() => setShowPrompt(false)}
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
+          PaperProps={{
+            component: 'form',
+            onSubmit: async (event: React.FormEvent<HTMLFormElement>) => {
+              event.preventDefault();
+              await createNewTodo(nameInputRef.current!.value);
+              setShowPrompt(false);
+            },
+          }}
         >
           <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
           <DialogContent>
@@ -130,12 +138,7 @@ const TodoEditSection = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowPrompt(false)}>Cancel</Button>
-            <Button
-              onClick={async () => {
-                await createNewTodo(nameInputRef.current!.value);
-                setShowPrompt(false);
-              }}
-            >
+            <Button type="submit">
               Create
             </Button>
           </DialogActions>
