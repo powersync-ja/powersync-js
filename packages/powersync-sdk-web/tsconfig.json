@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
+    "paths": {
+      "@journeyapps/powersync-sdk-web": ["src/index.ts"]
+    },
+    "baseUrl": "./",
     "declaration": true /* Generates corresponding '.d.ts' file. */,
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
@@ -13,5 +17,5 @@
     "strict": true /* Enable all strict type-checking options. */,
     "target": "es6" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/**/*"]
 }

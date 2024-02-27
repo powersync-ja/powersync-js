@@ -121,11 +121,11 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
   async syncLocalDatabase(checkpoint: Checkpoint): Promise<SyncLocalDatabaseResult> {
     const r = await this.validateChecksums(checkpoint);
     if (!r.checkpointValid) {
-      this.logger.error('Checksums failed for', r.failures);
-      for (const b of r.failures ?? []) {
+      this.logger.error('Checksums failed for', r.checkpointFailures);
+      for (const b of r.checkpointFailures ?? []) {
         await this.deleteBucket(b);
       }
-      return { ready: false, checkpointValid: false, failures: r.failures };
+      return { ready: false, checkpointValid: false, checkpointFailures: r.checkpointFailures };
     }
 
     const bucketNames = checkpoint.buckets.map((b) => b.bucket);
@@ -178,7 +178,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
       return {
         checkpointValid: false,
         ready: false,
-        failures: []
+        checkpointFailures: []
       };
     }
 
@@ -190,7 +190,7 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
       return {
         checkpointValid: false,
         ready: false,
-        failures: result['failed_buckets']
+        checkpointFailures: result['failed_buckets']
       };
     }
   }
