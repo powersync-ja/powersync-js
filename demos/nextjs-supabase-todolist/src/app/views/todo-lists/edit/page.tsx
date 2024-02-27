@@ -39,7 +39,7 @@ const TodoEditSection = () => {
     listID
   ]);
 
-  const todos = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM todos WHERE list_id=?`, [listID]);
+  const todos = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [listID]);
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
