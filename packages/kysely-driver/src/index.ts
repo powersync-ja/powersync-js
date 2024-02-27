@@ -4,9 +4,20 @@ import {
   type Insertable,
   type Selectable,
   type Updateable,
+  type JSONColumnType,
   type KyselyConfig,
-  Kysely,
+  type Kysely,
   sql
 } from 'kysely';
 
-export { ColumnType, Insertable, Selectable, Updateable, KyselyConfig, sql, Kysely, wrapPowerSyncWithKysely };
+export {
+  ColumnType,
+  Insertable,
+  Selectable,
+  Updateable,
+  JSONColumnType,
+  KyselyConfig,
+  sql,
+  Kysely,
+  wrapPowerSyncWithKysely
+};
