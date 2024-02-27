@@ -1,4 +1,12 @@
 import { wrapPowerSyncWithKysely } from './sqlite/db';
-import { Kysely, ColumnType, Insertable, Selectable, Updateable, sql } from 'kysely';
+import {
+  type ColumnType,
+  type Insertable,
+  type Selectable,
+  type Updateable,
+  type KyselyConfig,
+  Kysely,
+  sql
+} from 'kysely';
 
-export { wrapPowerSyncWithKysely, Kysely, ColumnType, Insertable, Selectable, Updateable, sql };
+export { ColumnType, Insertable, Selectable, Updateable, KyselyConfig, sql, Kysely, wrapPowerSyncWithKysely };
