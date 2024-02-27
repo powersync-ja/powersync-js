@@ -33,16 +33,16 @@ const generateAssetsTable = (weightColumnName: string = 'weight', includeIndexes
     ],
     indexes: includeIndexes
       ? [
-        new Index({
-          name: 'makemodel',
-          columns: [
-            new IndexedColumn({
-              name: 'make'
-            }),
-            new IndexedColumn({ name: 'model', ascending: indexAscending })
-          ]
-        })
-      ]
+          new Index({
+            name: 'makemodel',
+            columns: [
+              new IndexedColumn({
+                name: 'make'
+              }),
+              new IndexedColumn({ name: 'model', ascending: indexAscending })
+            ]
+          })
+        ]
       : []
   });
 
