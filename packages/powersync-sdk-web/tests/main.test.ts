@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@journeyapps/powersync-sdk-common';
 import { v4 as uuid } from 'uuid';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 // TODO import tests from a common package
 
 type User = {

@@ -5,7 +5,8 @@
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "!lib/tests"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {

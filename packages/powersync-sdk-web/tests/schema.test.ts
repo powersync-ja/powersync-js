@@ -8,7 +8,7 @@ import {
   Schema,
   Table
 } from '@journeyapps/powersync-sdk-common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 
 type SchemaVersionResult = {
   schema_version: number;
@@ -33,16 +33,16 @@ const generateAssetsTable = (weightColumnName: string = 'weight', includeIndexes
     ],
     indexes: includeIndexes
       ? [
-          new Index({
-            name: 'makemodel',
-            columns: [
-              new IndexedColumn({
-                name: 'make'
-              }),
-              new IndexedColumn({ name: 'model', ascending: indexAscending })
-            ]
-          })
-        ]
+        new Index({
+          name: 'makemodel',
+          columns: [
+            new IndexedColumn({
+              name: 'make'
+            }),
+            new IndexedColumn({ name: 'model', ascending: indexAscending })
+          ]
+        })
+      ]
       : []
   });
 

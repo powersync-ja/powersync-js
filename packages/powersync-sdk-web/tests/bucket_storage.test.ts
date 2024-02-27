@@ -81,7 +81,7 @@ describe('Bucket Storage', () => {
   });
 
   async function syncLocalChecked(checkpoint: Checkpoint) {
-    var result = await bucketStorage.syncLocalDatabase(checkpoint);
+    const result = await bucketStorage.syncLocalDatabase(checkpoint);
     expect(result).deep.equals({ ready: true, checkpointValid: true });
   }
 
@@ -207,7 +207,7 @@ describe('Bucket Storage', () => {
   it('should use subkeys', async () => {
     // subkeys cause this to be treated as a separate entity in the oplog,
     // but same entity in the local db.
-    var put4 = OplogEntry.fromRow({
+    const put4 = OplogEntry.fromRow({
       op_id: '4',
       op: new OpType(OpTypeEnum.PUT).toJSON(),
       subkey: 'b',
@@ -217,7 +217,7 @@ describe('Bucket Storage', () => {
       checksum: 4
     });
 
-    var remove5 = OplogEntry.fromRow({
+    const remove5 = OplogEntry.fromRow({
       op_id: '5',
       op: new OpType(OpTypeEnum.REMOVE).toJSON(),
       subkey: 'b',
@@ -348,7 +348,7 @@ describe('Bucket Storage', () => {
     );
 
     // At this point, we have target: 3, but don't have that op yet, so we cannot sync.
-    var result = await bucketStorage.syncLocalDatabase({
+    const result = await bucketStorage.syncLocalDatabase({
       last_op_id: '2',
       buckets: [{ bucket: 'bucket1', checksum: 1 }]
     });

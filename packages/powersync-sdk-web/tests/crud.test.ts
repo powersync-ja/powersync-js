@@ -8,7 +8,7 @@ import {
   Table,
   UpdateType
 } from '@journeyapps/powersync-sdk-common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '../lib/src';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 import { v4 as uuid } from 'uuid';
 import { testSchema } from './test_schema';
 
