@@ -135,7 +135,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
    */
-  protected get database() {
+  get database() {
     return this.options.database;
   }
 
