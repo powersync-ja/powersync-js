@@ -108,7 +108,7 @@ Now you are able to use Kysely queries:
 
 ```js
   await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(3, ?)', ['Lucy']);
-  await powerSyncDb.execute("UPDATE users SET name = ? WHERE name = 'Lucy'", ['Lucy Smith']);
+  await powerSyncDb.execute("UPDATE users SET name = ? WHERE name = ?", ['Lucy Smith', 'Lucy']);
   const result = await powerSyncDb.getAll('SELECT * from users')
 
   // { id: '3', name: 'Lucy Smith' }
@@ -133,7 +133,7 @@ Now you are able to use Kysely queries:
 ```js
   await powerSyncDb.writeTransaction((transaction) => {
     await transaction.execute('INSERT INTO users (id, name) VALUES(4, ?)', ['James']);
-    await transaction.execute("UPDATE users SET name = ? WHERE name = 'James'", ['James Smith']);
+    await transaction.execute("UPDATE users SET name = ? WHERE name = ?", ['James Smith', 'James']);
   })
   const result = await powerSyncDb.getAll('SELECT * from users')
 
