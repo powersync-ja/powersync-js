@@ -99,7 +99,7 @@ importers:
     devDependencies:
       vite:
         specifier: ^5.0.12
-        version: 5.1.1
+        version: 5.1.1(@types/node@20.11.17)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
         version: 1.4.1(vite@5.1.1)
@@ -773,6 +773,52 @@ importers:
         specifier: ~5.3.3
         version: 5.3.3
 
+  packages/kysely-driver:
+    dependencies:
+      '@journeyapps/powersync-sdk-common':
+        specifier: workspace:*
+        version: link:../powersync-sdk-common
+      kysely:
+        specifier: ^0.27.2
+        version: 0.27.2
+    devDependencies:
+      '@journeyapps/powersync-sdk-web':
+        specifier: workspace:*
+        version: link:../powersync-sdk-web
+      '@journeyapps/wa-sqlite':
+        specifier: ^0.1.1
+        version: 0.1.1
+      '@types/node':
+        specifier: ^20.11.17
+        version: 20.11.17
+      '@vitest/browser':
+        specifier: ^1.3.1
+        version: 1.3.1(vitest@1.3.1)(webdriverio@8.32.3)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.3.3)(webpack@5.90.1)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.11.17)(typescript@5.3.3)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.3.3
+      vite:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@20.11.17)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.1
+        version: 1.4.1(vite@5.1.1)
+      vite-plugin-wasm:
+        specifier: ^3.3.0
+        version: 3.3.0(vite@5.1.1)
+      vitest:
+        specifier: ^1.3.0
+        version: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
+      webdriverio:
+        specifier: ^8.32.3
+        version: 8.32.3(typescript@5.3.3)
+
   packages/powersync-attachments:
     dependencies:
       '@journeyapps/powersync-sdk-common':
@@ -916,7 +962,7 @@ importers:
         version: 5.3.3
       vite:
         specifier: ^5.1.1
-        version: 5.1.1
+        version: 5.1.1(@types/node@20.11.17)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
         version: 1.4.1(vite@5.1.1)
@@ -925,7 +971,7 @@ importers:
         version: 3.3.0(vite@5.1.1)
       vitest:
         specifier: ^1.3.1
-        version: 1.3.1(@vitest/browser@1.3.1)
+        version: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
       webdriverio:
         specifier: ^8.32.3
         version: 8.32.3(typescript@5.3.3)
@@ -7186,7 +7232,7 @@ packages:
       '@segment/loosely-validate-event': 2.0.0
       fetch-retry: 4.1.1
       md5: 2.3.0
-      node-fetch: 2.7.0
+      node-fetch: 2.6.7
       remove-trailing-slash: 0.1.1
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -12611,7 +12657,7 @@ packages:
       '@vitest/utils': 1.3.1
       magic-string: 0.30.5
       sirv: 2.0.4
-      vitest: 1.3.1(@vitest/browser@1.3.1)
+      vitest: 1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1)
       webdriverio: 8.32.3(typescript@5.3.3)
     dev: true
 
@@ -19901,6 +19947,11 @@ packages:
     engines: {node: '>=14.16'}
     dev: true
 
+  /kysely@0.27.2:
+    resolution: {integrity: sha512-DmRvEfiR/NLpgsTbSxma2ldekhsdcd65+MNiKXyd/qj7w7X5e3cLkXxcj+MypsRDjPhHQ/CD5u3Eq1sBYzX0bw==}
+    engines: {node: '>=14.0.0'}
+    dev: false
+
   /language-subtag-registry@0.3.22:
     resolution: {integrity: sha512-tN0MCzyWnoz/4nHS6uxdlFWoUZT7ABptwKPQ52Ea7URk6vll88bWBVhodtnlfEuCcKWNGoc+uGbw1cwa9IKh/w==}
     dev: true
@@ -22400,7 +22451,6 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
-    dev: true
 
   /node-fetch@2.7.0:
     resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
@@ -22964,8 +23014,8 @@ packages:
       agent-base: 7.1.0
       debug: 4.3.4(supports-color@8.1.1)
       get-uri: 6.0.3
-      http-proxy-agent: 7.0.1
-      https-proxy-agent: 7.0.3
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.4
       pac-resolver: 7.0.1
       socks-proxy-agent: 8.0.2
     transitivePeerDependencies:
@@ -24066,8 +24116,8 @@ packages:
     dependencies:
       agent-base: 7.1.0
       debug: 4.3.4(supports-color@8.1.1)
-      http-proxy-agent: 7.0.1
-      https-proxy-agent: 7.0.3
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
       pac-proxy-agent: 7.0.1
       proxy-from-env: 1.1.0
@@ -24082,8 +24132,8 @@ packages:
     dependencies:
       agent-base: 7.1.0
       debug: 4.3.4(supports-color@8.1.1)
-      http-proxy-agent: 7.0.1
-      https-proxy-agent: 7.0.3
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.4
       lru-cache: 7.18.3
       pac-proxy-agent: 7.0.1
       proxy-from-env: 1.1.0
@@ -27346,6 +27396,22 @@ packages:
   /ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
+  /ts-loader@9.5.1(typescript@5.3.3)(webpack@5.90.1):
+    resolution: {integrity: sha512-rNH3sK9kGZcH9dYzC7CewQm4NtxJTjSEVRJ2DyBZR7f8/wcta+iV44UPCXc5+nzDzivKtlzV6c9P4e+oFhDLYg==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      typescript: '*'
+      webpack: ^5.0.0
+    dependencies:
+      chalk: 4.1.2
+      enhanced-resolve: 5.15.0
+      micromatch: 4.0.5
+      semver: 7.6.0
+      source-map: 0.7.4
+      typescript: 5.3.3
+      webpack: 5.90.1(webpack-cli@5.1.4)
+    dev: true
+
   /ts-node@10.9.2(@types/node@20.11.17)(typescript@5.2.2):
     resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
     hasBin: true
@@ -27404,6 +27470,37 @@ packages:
       diff: 4.0.2
       make-error: 1.3.6
       typescript: 5.3.2
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    dev: true
+
+  /ts-node@10.9.2(@types/node@20.11.17)(typescript@5.3.3):
+    resolution: {integrity: sha512-f0FFpIdcHgn8zcPSbf1dRevwt047YMnaiJM3u2w2RewrB+fob/zePZcrOyQoLMMO7aBIddLcQIEK5dYjkLnGrQ==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 20.11.17
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.3.3
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     dev: true
@@ -28064,7 +28161,7 @@ packages:
       unist-util-stringify-position: 4.0.0
       vfile-message: 4.0.2
 
-  /vite-node@1.3.1:
+  /vite-node@1.3.1(@types/node@20.11.17):
     resolution: {integrity: sha512-azbRrqRxlWTJEVbzInZCTchx0X69M/XPTCz4H+TLvlTcR/xH/3hkRqhOakT41fMJCMzXTu4UvegkZiEoJAWvng==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -28073,7 +28170,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       pathe: 1.1.2
       picocolors: 1.0.0
-      vite: 5.1.1
+      vite: 5.1.1(@types/node@20.11.17)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -28093,7 +28190,7 @@ packages:
       '@rollup/plugin-virtual': 3.0.2
       '@swc/core': 1.4.2
       uuid: 9.0.1
-      vite: 5.1.1
+      vite: 5.1.1(@types/node@20.11.17)
     transitivePeerDependencies:
       - '@swc/helpers'
       - rollup
@@ -28104,7 +28201,7 @@ packages:
     peerDependencies:
       vite: ^2 || ^3 || ^4 || ^5
     dependencies:
-      vite: 5.1.1
+      vite: 5.1.1(@types/node@20.11.17)
     dev: true
 
   /vite@5.0.12(@types/node@20.11.17)(less@4.2.0)(sass@1.69.7)(terser@5.26.0):
@@ -28146,7 +28243,7 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vite@5.1.1:
+  /vite@5.1.1(@types/node@20.11.17):
     resolution: {integrity: sha512-wclpAgY3F1tR7t9LL5CcHC41YPkQIpKUGeIuT8MdNwNZr6OqOTLs7JX5vIHAtzqLWXts0T+GDrh9pN2arneKqg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -28174,6 +28271,7 @@ packages:
       terser:
         optional: true
     dependencies:
+      '@types/node': 20.11.17
       esbuild: 0.19.12
       postcss: 8.4.35
       rollup: 4.10.0
@@ -28181,7 +28279,7 @@ packages:
       fsevents: 2.3.3
     dev: true
 
-  /vitest@1.3.1(@vitest/browser@1.3.1):
+  /vitest@1.3.1(@types/node@20.11.17)(@vitest/browser@1.3.1):
     resolution: {integrity: sha512-/1QJqXs8YbCrfv/GPQ05wAZf2eakUPLPa18vkJAKE7RXOKfVHqMZZ1WlTjiwl6Gcn65M5vpNUB6EFLnEdRdEXQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -28206,6 +28304,7 @@ packages:
       jsdom:
         optional: true
     dependencies:
+      '@types/node': 20.11.17
       '@vitest/browser': 1.3.1(vitest@1.3.1)(webdriverio@8.32.3)
       '@vitest/expect': 1.3.1
       '@vitest/runner': 1.3.1
@@ -28224,8 +28323,8 @@ packages:
       strip-literal: 2.0.0
       tinybench: 2.6.0
       tinypool: 0.8.2
-      vite: 5.1.1
-      vite-node: 1.3.1
+      vite: 5.1.1(@types/node@20.11.17)
+      vite-node: 1.3.1(@types/node@20.11.17)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less

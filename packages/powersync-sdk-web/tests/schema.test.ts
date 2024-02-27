@@ -84,7 +84,12 @@ const schema = new Schema(generateSchemaTables());
 
 describe('Schema Tests', () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test-schema.db',
+    /**
+     * Deleting the IndexDB seems to freeze the test.
+     * Use a new DB for each run to keep CRUD counters
+     * consistent
+     */
+    dbFilename: 'test.db',
     schema,
     flags: {
       enableMultiTabs: false

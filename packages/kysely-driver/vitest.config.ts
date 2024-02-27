@@ -1,20 +1,8 @@
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
-import path from 'path';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
-  // This is only needed for local tests to resolve the package name correctly
-  resolve: {
-    alias: {
-      /**
-       * Note that this requires the Typescript to be compiled with `tsc`
-       * first. This is required due to the format of Webworker URIs
-       * they link to `.js` files.
-       */
-      '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './lib/src')
-    }
-  },
   worker: {
     format: 'es',
     plugins: () => [wasm(), topLevelAwait()]
@@ -31,8 +19,8 @@ const config: UserConfigExport = {
     include: ['tests/**/*.test.ts'],
     browser: {
       enabled: true,
-      provider: 'webdriverio',
       headless: true,
+      provider: 'webdriverio',
       name: 'chrome' // browser name is required
     }
   }
