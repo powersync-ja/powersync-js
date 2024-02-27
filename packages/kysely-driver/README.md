@@ -6,11 +6,11 @@
 
 [PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
 
-This package (`packages/kysely-driver`) is the PowerSync maintained driver for using the [Kysley](https://kysely.dev/) query builder with PowerSync.
+This package (`packages/kysely-driver`) is the PowerSync maintained driver for using the [Kysely](https://kysely.dev/) query builder with PowerSync.
 
 ## Getting started
 
-Setup the PowerSync Database and wrap it with Kysley.
+Setup the PowerSync Database and wrap it with Kysely.
 
 ```js
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
@@ -28,7 +28,9 @@ export const powerSyncDb = factory.getInstance();
 export const db = wrapPowerSyncWithKysely<Database>(powerSyncDb)
 ```
 
-Now you are able to use Kysley queries:
+For more information on Kysely typing [here](https://kysely.dev/docs/getting-started#types).
+
+Now you are able to use Kysely queries:
 
 ### Select
 

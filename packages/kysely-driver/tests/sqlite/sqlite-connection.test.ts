@@ -31,9 +31,10 @@ describe('PowerSyncConnection', () => {
       };
 
       const result = await powerSyncConnection.executeQuery(compiledQuery);
-      const rows = result.rows;
+      const rows = result.rows as any;
 
       expect(rows.length).toEqual(1);
+      expect(rows[0].name).toEqual('John');
       expect(getAllSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -48,8 +49,7 @@ describe('PowerSyncConnection', () => {
         query: { kind: 'InsertQueryNode' } as any
       };
 
-      const result = await powerSyncConnection.executeQuery(compiledQuery);
-      console.log(result);
+      await powerSyncConnection.executeQuery(compiledQuery);
       const usersAfterInsert = await powerSyncDb.getAll('SELECT * FROM users');
 
       expect(usersAfterInsert.length).toEqual(1);
