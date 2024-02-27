@@ -7,13 +7,7 @@ import { getPowerSyncDb } from '../setup/db';
 describe('PowerSyncConnection', () => {
   let powerSyncConnection: SUT.PowerSyncConnection;
   let powerSyncDb: AbstractPowerSyncDatabase;
-  // NOTE: There is an issue where the execute query result is working but not returning the correct
-  //     return {
-  //  insertId: result.insertId ? BigInt(result.insertId!) : undefined,
-  //  numAffectedRows: BigInt(result.rowsAffected),
-  //  rows: result.rows?._array ?? []
-  // };
-  // this is returned { insertId: +0, rowsAffected: +0, rows: { _array: [], length: +0, item: [Function item] } }
+
   describe('executeQuery', () => {
     beforeEach(() => {
       powerSyncDb = getPowerSyncDb();
@@ -54,7 +48,8 @@ describe('PowerSyncConnection', () => {
         query: { kind: 'InsertQueryNode' } as any
       };
 
-      await powerSyncConnection.executeQuery(compiledQuery);
+      const result = await powerSyncConnection.executeQuery(compiledQuery);
+      console.log(result);
       const usersAfterInsert = await powerSyncDb.getAll('SELECT * FROM users');
 
       expect(usersAfterInsert.length).toEqual(1);

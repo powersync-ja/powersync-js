@@ -11,7 +11,7 @@ describe('CRUD operations', () => {
 
   beforeEach(() => {
     powerSyncDb = getPowerSyncDb();
-    db = SUT.createPowerSyncDb<Database>(powerSyncDb);
+    db = SUT.wrapPowerSyncWithKysely<Database>(powerSyncDb);
   });
 
   afterEach(async () => {
@@ -39,5 +39,15 @@ describe('CRUD operations', () => {
     const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
 
     expect(result.name).toEqual('Lucy Smith');
+  });
+
+  it('should insert a user and update that user within a transaction', async () => {
+    await db.transaction().execute(async (transaction) => {
+      await transaction.insertInto('users').values({ id: '4', name: 'James' }).execute();
+      await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
+    });
+    const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
+
+    expect(result.name).toEqual('James Smith');
   });
 });

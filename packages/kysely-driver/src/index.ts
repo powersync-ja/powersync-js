@@ -1,3 +1,12 @@
-import { createPowerSyncDb } from './sqlite/db';
+import { wrapPowerSyncWithKysely } from './sqlite/db';
+import { Kysely, ColumnType, Insertable, Selectable, Updateable, sql } from 'kysely';
 
-export { createPowerSyncDb };
+export {
+  wrapPowerSyncWithKysely as wrapPowerSyncWithKysley,
+  Kysely,
+  ColumnType,
+  Insertable,
+  Selectable,
+  Updateable,
+  sql
+};

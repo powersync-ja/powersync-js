@@ -1,6 +1,3 @@
-import { Kysely } from 'kysely';
-import { PowerSyncDialect } from '../../src/sqlite/sqlite-dialect';
-import { Database } from './types';
 import {
   Column,
   ColumnType,
@@ -8,6 +5,8 @@ import {
   Table,
   WASQLitePowerSyncDatabaseOpenFactory
 } from '@journeyapps/powersync-sdk-web';
+import { wrapPowerSyncWithKysely } from '../../src/sqlite/db';
+import { Database } from './types';
 
 const TestSchema = new Schema([
   new Table({
@@ -25,9 +24,4 @@ export const getPowerSyncDb = () => {
   return factory.getInstance();
 };
 
-export const getKyselyDb = () =>
-  new Kysely<Database>({
-    dialect: new PowerSyncDialect({
-      db: getPowerSyncDb()
-    })
-  });
+export const getKyselyDb = wrapPowerSyncWithKysely<Database>(getPowerSyncDb());

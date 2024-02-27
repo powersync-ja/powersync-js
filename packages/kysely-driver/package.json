@@ -2,8 +2,8 @@
   "name": "@powersync/kysely-driver",
   "version": "0.0.1",
   "description": "Kysely driver for PowerSync",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
