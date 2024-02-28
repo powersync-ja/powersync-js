@@ -1,8 +1,11 @@
 'use client';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
+import { TodoListsWidget, loadTodoLists } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { preloadQuery, usePowerSync, useWatchedQuery } from '@journeyapps/powersync-react';
+import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -13,6 +16,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
   List,
   TextField,
   Typography,
@@ -20,8 +24,17 @@ import {
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
 import React, { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { LoaderFunctionArgs, useLoaderData, useParams } from 'react-router-dom';
+
+export const todoPageLoader = (db: AbstractPowerSyncDatabase) => async ({ params }: LoaderFunctionArgs) => {
+  return {
+    todos: await preloadQuery(db.query<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [params.id])),
+    list_names: await preloadQuery(db.query<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [params.id])),
+    lists: await loadTodoLists(db)
+  };
+}
+
+type QueryLoaderType = Awaited<ReturnType<ReturnType<typeof todoPageLoader>>>;
 
 /**
  * useSearchParams causes the entire element to fall back to client side rendering
@@ -32,15 +45,10 @@ const TodoEditSection = () => {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
   const { id: listID } = useParams();
+  const queryResults = useLoaderData() as QueryLoaderType;
 
-  const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [
-    listID
-  ]);
-
-  const todos = usePowerSyncWatchedQuery<TodoRecord>(
-    `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
-    [listID]
-  );
+  const [listRecord] = useWatchedQuery(queryResults.list_names);
+  const todos = useWatchedQuery(queryResults.todos);
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -105,17 +113,24 @@ const TodoEditSection = () => {
           <AddIcon />
         </S.FloatingActionButton>
         <Box>
-          <List dense={false}>
-            {todos.map((r) => (
-              <TodoItemWidget
-                key={r.id}
-                description={r.description}
-                onDelete={() => deleteTodo(r.id)}
-                isComplete={r.completed}
-                toggleCompletion={() => toggleCompletion(r, !r.completed)}
-              />
-            ))}
-          </List>
+          <Grid container>
+            <Grid item xs={4}>
+              <TodoListsWidget selectedId={listID} lists={queryResults.lists} />
+            </Grid>
+            <Grid item xs={8}>
+              <List dense={false}>
+                {todos.map((r) => (
+                  <TodoItemWidget
+                    key={r.id}
+                    description={r.description}
+                    onDelete={() => deleteTodo(r.id)}
+                    isComplete={r.completed}
+                    toggleCompletion={() => toggleCompletion(r, !r.completed)}
+                  />
+                ))}
+              </List>
+            </Grid>
+          </Grid>
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog

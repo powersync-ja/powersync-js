@@ -1,32 +1,39 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
 import { LISTS_TABLE, ListRecord, TODOS_TABLE } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from "@journeyapps/powersync-react";
+import { QueryWithResult, preloadQuery, usePowerSync, usePowerSyncWatchedQuery, useWatchedQuery } from "@journeyapps/powersync-react";
 import { List } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 import { ListItemWidget } from "./ListItemWidget";
+import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
 
 export type TodoListsWidgetProps = {
   selectedId?: string;
+  lists: QueryWithResult<ListRecord & { total_tasks: number; completed_tasks: number }>
 }
 
 const description = (total: number, completed: number = 0) => {
   return `${total - completed} pending, ${completed} completed`;
 };
 
+export const loadTodoLists = async (db: AbstractPowerSyncDatabase) => {
+  return await preloadQuery(db.query<ListRecord & { total_tasks: number; completed_tasks: number }>(`
+    SELECT 
+      ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
+    FROM 
+      ${LISTS_TABLE}
+    LEFT JOIN ${TODOS_TABLE} 
+      ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
+    GROUP BY 
+      ${LISTS_TABLE}.id;
+    `)
+  );
+}
+
 export function TodoListsWidget(props: TodoListsWidgetProps) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const listRecords = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
-      SELECT 
-        ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
-      FROM 
-        ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} 
-        ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
-      GROUP BY 
-        ${LISTS_TABLE}.id;
-      `);
+  const listRecords = useWatchedQuery(props.lists);
 
   const deleteList = async (id: string) => {
     await powerSync.writeTransaction(async (tx) => {

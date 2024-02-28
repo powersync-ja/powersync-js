@@ -28,3 +28,5 @@ export * from './db/Column';
 
 export * from './utils/BaseObserver';
 export * from './utils/strings';
+
+export * from './db/Query';

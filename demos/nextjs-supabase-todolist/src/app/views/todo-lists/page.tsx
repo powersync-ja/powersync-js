@@ -15,12 +15,25 @@ import Fab from '@mui/material/Fab';
 import React from 'react';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
+import { TodoListsWidget, loadTodoLists } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE } from '@/library/powersync/AppSchema';
+import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
+import { LoaderFunctionArgs, useLoaderData } from 'react-router-dom';
+
+
+export const todoListsLoader = (db: AbstractPowerSyncDatabase) => async ({ params }: LoaderFunctionArgs) => {
+  return {
+    lists: await loadTodoLists(db)
+  };
+}
+
+type QueryLoaderType = Awaited<ReturnType<ReturnType<typeof todoListsLoader>>>;
+
 
 export default function TodoListsPage() {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
+  const queries = useLoaderData() as QueryLoaderType;
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -50,7 +63,7 @@ export default function TodoListsPage() {
           <AddIcon />
         </S.FloatingActionButton>
         <Box>
-          <TodoListsWidget />
+          <TodoListsWidget lists={queries.lists} />
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
