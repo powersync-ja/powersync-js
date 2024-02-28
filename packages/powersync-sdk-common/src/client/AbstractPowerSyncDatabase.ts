@@ -135,7 +135,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
    */
-  protected get database() {
+  get database() {
     return this.options.database;
   }
 
@@ -272,6 +272,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async disconnectAndClear(options = DEFAULT_DISCONNECT_CLEAR_OPTIONS) {
     await this.disconnect();
+    await this.waitForReady();
 
     const { clearLocal } = options;
 
@@ -352,28 +353,26 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * and a single transaction may be split over multiple batches.
    */
   async getCrudBatch(limit: number): Promise<CrudBatch | null> {
-    return this.readLock(async (db) => {
-      const result = await db.getAll<CrudEntryJSON>(
-        `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
-        [limit + 1]
-      );
+    const result = await this.getAll<CrudEntryJSON>(
+      `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
+      [limit + 1]
+    );
 
-      const all: CrudEntry[] = result.map((row) => CrudEntry.fromRow(row)) ?? [];
+    const all: CrudEntry[] = result.map((row) => CrudEntry.fromRow(row)) ?? [];
 
-      let haveMore = false;
-      if (all.length > limit) {
-        all.pop();
-        haveMore = true;
-      }
-      if (all.length == 0) {
-        return null;
-      }
+    let haveMore = false;
+    if (all.length > limit) {
+      all.pop();
+      haveMore = true;
+    }
+    if (all.length == 0) {
+      return null;
+    }
 
-      const last = all[all.length - 1];
-      return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) =>
-        this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
-      );
-    });
+    const last = all[all.length - 1];
+    return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) =>
+      this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
+    );
   }
 
   /**

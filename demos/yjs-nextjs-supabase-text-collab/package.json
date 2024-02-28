@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-yjs-text-collab-demo",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
     "build": "next build",
@@ -46,8 +46,8 @@
     "shiki": "^0.10.0",
     "simplify-js": "^1.2.4",
     "uuid": "9.0.1",
-    "y-prosemirror": "1.0.20", 
-    "y-protocols": "1.0.6", 
+    "y-prosemirror": "1.0.20",
+    "y-protocols": "1.0.6",
     "yjs": "^13.6.11"
   },
   "devDependencies": {

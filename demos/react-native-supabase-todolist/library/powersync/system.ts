@@ -8,6 +8,7 @@ import { AppSchema } from './AppSchema';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
+import { type AttachmentRecord } from '@journeyapps/powersync-attachments';
 
 export class System {
   kvStorage: KVStorage;
@@ -30,7 +31,16 @@ export class System {
 
     this.attachmentQueue = new PhotoAttachmentQueue({
       powersync: this.powersync,
-      storage: this.storage
+      storage: this.storage,
+      // Use this to handle download errors where you can use the attachment
+      // and/or the exception to decide if you want to retry the download
+      onDownloadError: async (attachment: AttachmentRecord, exception: any) => {
+        if (exception.toString() === 'StorageApiError: Object not found') {
+          return { retry: false };
+        }
+
+        return { retry: true };
+      }
     });
   }
 

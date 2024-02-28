@@ -1,5 +1,20 @@
 # @journeyapps/powersync-attachments
 
+## 1.1.0
+
+### Minor Changes
+
+- be450ff: Add ability to allow users to handle errors through onDownloadError and onUploadError when setting up the queue
+
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [1229e52]
+- Updated dependencies [69592d0]
+- Updated dependencies [69592d0]
+  - @journeyapps/powersync-sdk-common@1.2.2
+
 ## 1.0.5
 
 ### Patch Changes

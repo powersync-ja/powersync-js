@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListItem, IconButton, ListItemAvatar, ListItemText, Box, styled, Paper } from '@mui/material';
+import { ListItem, IconButton, ListItemAvatar, ListItemText, Box, styled, Paper, ListItemButton } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
@@ -16,6 +16,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
   return (
     <S.MainPaper elevation={1}>
       <ListItem
+        disablePadding
         secondaryAction={
           <Box>
             <IconButton
@@ -30,18 +31,18 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
           </Box>
         }
       >
-        <ListItemAvatar>
-          <IconButton
-            edge="end"
-            aria-label="toggle"
-            onClick={() => {
-              props.toggleCompletion();
-            }}
-          >
-            {props.isComplete ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
-          </IconButton>
-        </ListItemAvatar>
-        <ListItemText primary={props.description} />
+        <ListItemButton
+          onClick={() => {
+            props.toggleCompletion();
+          }}
+        >
+          <ListItemAvatar>
+            <IconButton edge="end" aria-label="toggle">
+              {props.isComplete ? <CheckBoxIcon /> : <CheckBoxOutlineBlankIcon />}
+            </IconButton>
+          </ListItemAvatar>
+          <ListItemText primary={props.description} />
+        </ListItemButton>
       </ListItem>
     </S.MainPaper>
   );
