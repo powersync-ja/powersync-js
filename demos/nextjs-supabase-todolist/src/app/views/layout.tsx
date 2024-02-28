@@ -1,5 +1,12 @@
 'use client';
-import React from 'react';
+import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import MenuIcon from '@mui/icons-material/Menu';
+import NorthIcon from '@mui/icons-material/North';
+import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
+import SouthIcon from '@mui/icons-material/South';
+import TerminalIcon from '@mui/icons-material/Terminal';
+import WifiIcon from '@mui/icons-material/Wifi';
 import {
   AppBar,
   Box,
@@ -15,44 +22,37 @@ import {
   Typography,
   styled
 } from '@mui/material';
-import Image from 'next/image';
-import MenuIcon from '@mui/icons-material/Menu';
-import WifiIcon from '@mui/icons-material/Wifi';
-import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
-import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import TerminalIcon from '@mui/icons-material/Terminal';
-import NorthIcon from '@mui/icons-material/North';
-import SouthIcon from '@mui/icons-material/South';
+import React from 'react';
 
-import { usePowerSync } from '@journeyapps/powersync-react';
-import { useRouter } from 'next/navigation';
+import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { NavigationPanelContext } from '@/components/navigation/NavigationPanelContext';
+import { usePowerSync } from '@journeyapps/powersync-react';
+import { useNavigate } from 'react-router-dom';
+import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
-  const router = useRouter();
   const supabase = useSupabase();
+  const navigate = useNavigate();
 
   const [syncStatus, setSyncStatus] = React.useState(powerSync.currentStatus);
   const [openDrawer, setOpenDrawer] = React.useState(false);
-  const [title, setTitle] = React.useState('');
+  const { title } = useNavigationPanel();
 
   const NAVIGATION_ITEMS = React.useMemo(
     () => [
       {
-        path: '/views/sql-console',
+        path: SQL_CONSOLE_ROUTE,
         title: 'SQL Console',
         icon: () => <TerminalIcon />
       },
       {
-        path: '/views/todo-lists',
+        path: TODO_LISTS_ROUTE,
         title: 'TODO Lists',
         icon: () => <ChecklistRtlIcon />
       },
       {
-        path: '/auth/login',
+        path: LOGIN_ROUTE,
         title: 'Sign Out',
         beforeNavigate: async () => {
           await powerSync.disconnectAndClear();
@@ -99,7 +99,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         </Toolbar>
       </S.TopBar>
       <Drawer anchor={'left'} open={openDrawer} onClose={() => setOpenDrawer(false)}>
-        <S.PowerSyncLogo alt="PowerSync Logo" priority width={250} height={100} src="/powersync-logo.svg" />
+        <S.PowerSyncLogo alt="PowerSync Logo" width={250} height={100} src="/powersync-logo.svg" />
         <Divider />
         <List>
           {NAVIGATION_ITEMS.map((item) => (
@@ -107,7 +107,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               <ListItemButton
                 onClick={async () => {
                   await item.beforeNavigate?.();
-                  router.push(item.path);
+                  navigate(item.path);
                   setOpenDrawer(false);
                 }}
               >
@@ -119,7 +119,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         </List>
       </Drawer>
       <S.MainBox>
-        <NavigationPanelContext.Provider value={{ setTitle }}>{children}</NavigationPanelContext.Provider>
+        {children}
       </S.MainBox>
     </S.MainBox>
   );
@@ -134,7 +134,9 @@ namespace S {
     margin-bottom: 20px;
   `;
 
-  export const PowerSyncLogo = styled(Image)`
+  export const PowerSyncLogo = styled('img')`
+    max-width: 250px;
+    max-height: 250px;
     object-fit: contain;
     padding: 20px;
   `;

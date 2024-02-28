@@ -1,9 +1,9 @@
 'use client';
-import _ from 'lodash';
-import React, { Suspense } from 'react';
 import { useSupabase } from '@/components/providers/SystemProvider';
+import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
   Button,
@@ -19,10 +19,9 @@ import {
   styled
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
+import React, { Suspense } from 'react';
+import { useParams } from 'react-router-dom';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
-import { useSearchParams } from 'next/navigation';
 
 /**
  * useSearchParams causes the entire element to fall back to client side rendering
@@ -32,14 +31,16 @@ import { useSearchParams } from 'next/navigation';
 const TodoEditSection = () => {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
-  const params = useSearchParams();
-  const listID = (params.get('id') as string) || '';
+  const { id: listID } = useParams();
 
   const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [
     listID
   ]);
 
-  const todos = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [listID]);
+  const todos = usePowerSyncWatchedQuery<TodoRecord>(
+    `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
+    [listID]
+  );
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -128,25 +129,26 @@ const TodoEditSection = () => {
               event.preventDefault();
               await createNewTodo(nameInputRef.current!.value);
               setShowPrompt(false);
-            },
+            }
           }}
         >
           <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description">Enter a description for a new todo item</DialogContentText>
+            <DialogContentText id="alert-dialog-description">
+              Enter a description for a new todo item
+            </DialogContentText>
             <TextField sx={{ marginTop: '10px' }} fullWidth inputRef={nameInputRef} autoFocus label="Name" />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowPrompt(false)}>Cancel</Button>
-            <Button type="submit">
-              Create
-            </Button>
+            <Button type="submit">Create</Button>
           </DialogActions>
         </Dialog>
       </Box>
     </NavigationPage>
   );
 };
+
 
 export default function TodoEditPage() {
   return (

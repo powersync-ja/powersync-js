@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
-import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/components/providers/SystemProvider';
-import { DEFAULT_ENTRY_ROUTE } from '@/components/Routes';
+import { useSupabase } from '../components/providers/SystemProvider';
+import { useNavigate } from 'react-router-dom';
+import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from './router';
 
 export type LoginFormParams = {
   email: string;
@@ -11,17 +11,16 @@ export type LoginFormParams = {
 };
 
 /**
- * This page shows a loading spinner until the _layout.tsx
- * file detects a session and redirects either to the app or
- * auth flow.
+ * This page shows a loading spinner we detect a session
+ * and redirect either to the app or auth flow.
  */
 export default function EntryPage() {
-  const router = useRouter();
   const connector = useSupabase();
+  let navigate = useNavigate();
 
   const navigateToMainView = () => {
     if (connector?.currentSession) {
-      router.push(DEFAULT_ENTRY_ROUTE);
+      navigate(DEFAULT_ENTRY_ROUTE);
     }
   };
 
@@ -38,7 +37,9 @@ export default function EntryPage() {
            * Redirect if on the entry view
            */
           if (connector.currentSession) {
-            router.push(DEFAULT_ENTRY_ROUTE);
+            navigate(DEFAULT_ENTRY_ROUTE);
+          } else {
+            navigate(LOGIN_ROUTE)
           }
         }
       });

@@ -2,7 +2,6 @@
 import React from 'react';
 import { Box, Button, ButtonGroup, FormGroup, Paper, TextField, Typography, styled } from '@mui/material';
 import { Formik, FormikErrors } from 'formik';
-import Image from 'next/image';
 
 export type LoginDetailsFormValues = {
   email: string;
@@ -27,7 +26,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
       <S.LoginContainer elevation={1}>
         <S.LoginHeader variant="h4">{props.title}</S.LoginHeader>
         <S.LogoBox>
-          <S.Logo alt="PowerSync Logo" priority width={400} height={100} src="/powersync-logo.svg" />
+          <S.Logo alt="PowerSync Logo" width={400} height={100} src="/powersync-logo.svg" />
           <S.Logo alt="Supabase Logo" width={300} height={80} src="/supabase-logo.png" />
         </S.LogoBox>
         <Formik<LoginDetailsFormValues>
@@ -147,10 +146,11 @@ namespace S {
     margin: 40px;
   `;
 
-  export const Logo = styled(Image)`
-    // Next/Image requires this
+  export const Logo = styled('img')`
     width: auto;
     height: auto;
+    max-width: ${(props) => props.width}px;
+    max-height: ${(props) => props.height}px;
     margin-bottom: 10px;
   `;
 

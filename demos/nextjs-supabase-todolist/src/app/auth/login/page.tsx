@@ -1,13 +1,13 @@
 'use client';
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { DEFAULT_ENTRY_ROUTE } from '@/components/Routes';
+import { useNavigate } from 'react-router-dom';
+import { DEFAULT_ENTRY_ROUTE } from '@/app/router';
 
-export default function Login() {
-  const router = useRouter();
+export default function LoginPage() {
   const supabase = useSupabase();
+  const navigate = useNavigate();
 
   return (
     <LoginDetailsWidget
@@ -18,9 +18,13 @@ export default function Login() {
           throw new Error('Supabase has not been initialized yet');
         }
         await supabase.login(values.email, values.password);
-        router.push(DEFAULT_ENTRY_ROUTE);
+        navigate(DEFAULT_ENTRY_ROUTE);
       }}
-      secondaryActions={[{ title: 'Register', onClick: () => router.push('/auth/register') }]}
+      secondaryActions={[{
+        title: 'Register', onClick: () => {
+          navigate('/auth/register');
+        }
+      }]}
     />
   );
 }

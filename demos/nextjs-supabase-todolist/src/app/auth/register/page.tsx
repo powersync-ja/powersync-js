@@ -1,13 +1,13 @@
 'use client';
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
-import { DEFAULT_ENTRY_ROUTE } from '@/components/Routes';
+import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from '@/app/router';
+import { useNavigate } from 'react-router-dom';
 
-export default function Register() {
+export default function RegisterPage() {
   const supabase = useSupabase();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <LoginDetailsWidget
@@ -27,15 +27,15 @@ export default function Register() {
 
         if (session) {
           supabase.updateSession(session);
-          router.push(DEFAULT_ENTRY_ROUTE);
+          navigate(DEFAULT_ENTRY_ROUTE);
           return;
         }
 
         // TODO better dialog
         alert('Registration successful, please login');
-        router.back();
+        navigate(LOGIN_ROUTE);
       }}
-      secondaryActions={[{ title: 'Back', onClick: () => router.back() }]}
+      secondaryActions={[{ title: 'Back', onClick: () => navigate(LOGIN_ROUTE) }]}
     />
   );
 }

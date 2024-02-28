@@ -42,7 +42,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
   constructor() {
     super();
     this._client = null;
-    this._config = null;
+    this._config = {
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+      powersyncUrl: import.meta.env.VITE_POWERSYNC_URL,
+      supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+    };
     this.currentSession = null;
     this.ready = false;
   }
@@ -66,9 +70,6 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
       return;
     }
 
-    const credentialsResponse = await fetch('/api/supabase');
-    // TODO Handle errors here if necessary
-    this._config = await credentialsResponse.json();
     this._client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, {
       auth: {
         persistSession: true

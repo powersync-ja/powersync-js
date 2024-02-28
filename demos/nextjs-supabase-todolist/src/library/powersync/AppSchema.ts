@@ -1,7 +1,5 @@
 import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@journeyapps/powersync-sdk-web';
 
-// TODO look into template app composition
-
 export interface ListRecord {
   id: string;
   name: string;
