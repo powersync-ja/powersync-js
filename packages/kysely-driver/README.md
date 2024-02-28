@@ -8,6 +8,10 @@
 
 This package (`packages/kysely-driver`) brings the benefits of an ORM through our maintained [Kysely](https://kysely.dev/) driver to PowerSync.
 
+## Alpha Release
+
+The `kysely-driver` package is currently in an alpha release. 
+
 ## Getting started
 
 Setup the PowerSync Database and wrap it with Kysely.
