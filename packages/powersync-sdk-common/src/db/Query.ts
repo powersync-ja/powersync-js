@@ -33,4 +33,17 @@ export class Query<T> {
       yield r.rows._array;
     }
   }
+
+  async preload(): Promise<QueryWithResult<T>> {
+    const r = await this.getAll();
+    return {
+      initialResults: r,
+      query: this
+    };
+  }
+}
+
+export interface QueryWithResult<T> {
+  initialResults: T[];
+  query: Query<T>;
 }

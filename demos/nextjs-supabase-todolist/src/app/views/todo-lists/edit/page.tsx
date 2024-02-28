@@ -4,7 +4,7 @@ import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { TodoListsWidget, loadTodoLists } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
-import { preloadQuery, usePowerSync, useWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
 import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
 import AddIcon from '@mui/icons-material/Add';
 import {
@@ -28,8 +28,8 @@ import { LoaderFunctionArgs, useLoaderData, useParams } from 'react-router-dom';
 
 export const todoPageLoader = (db: AbstractPowerSyncDatabase) => async ({ params }: LoaderFunctionArgs) => {
   return {
-    todos: await preloadQuery(db.query<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [params.id])),
-    list_names: await preloadQuery(db.query<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [params.id])),
+    todos: await db.query<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [params.id]).preload(),
+    list_names: await db.query<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [params.id]).preload(),
     lists: await loadTodoLists(db)
   };
 }
@@ -47,8 +47,8 @@ const TodoEditSection = () => {
   const { id: listID } = useParams();
   const queryResults = useLoaderData() as QueryLoaderType;
 
-  const [listRecord] = useWatchedQuery(queryResults.list_names);
-  const todos = useWatchedQuery(queryResults.todos);
+  const [listRecord] = usePowerSyncWatchedQuery(queryResults.list_names);
+  const todos = usePowerSyncWatchedQuery(queryResults.todos);
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
