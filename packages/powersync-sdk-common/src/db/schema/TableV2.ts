@@ -47,14 +47,12 @@ export interface TableV2Options {
   Generate a new table from the columns and indexes
 */
 export class TableV2<Columns extends ColumnsType = ColumnsType> {
-  indexes: Index[];
-  options: TableV2Options;
+  public indexes: Index[];
 
   constructor(
     public columns: Columns,
-    options?: TableV2Options
+    public options: TableV2Options = {}
   ) {
-    this.options = options ?? {};
     if (options?.indexes) {
       this.indexes = Object.entries(options.indexes).map(([name, columns]) => {
         if (name.startsWith('-')) {
@@ -62,12 +60,12 @@ export class TableV2<Columns extends ColumnsType = ColumnsType> {
             name: name.substring(1),
             columns: columns.map((c) => new IndexedColumn({ name: c, ascending: false }))
           });
-        } else {
-          return new Index({
-            name: name,
-            columns: columns.map((c) => new IndexedColumn({ name: c, ascending: true }))
-          });
         }
+
+        return new Index({
+          name: name,
+          columns: columns.map((c) => new IndexedColumn({ name: c, ascending: true }))
+        });
       });
     }
   }
