@@ -68,9 +68,9 @@ export class Table {
   get internalName() {
     if (this.options.localOnly) {
       return `ps_data_local__${this.name}`;
-    } else {
-      return `ps_data__${this.name}`;
     }
+
+    return `ps_data__${this.name}`;
   }
 
   get validName() {
@@ -83,9 +83,10 @@ export class Table {
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
       throw new Error(`Invalid characters in table name: ${this.name}`);
-    } else if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
-      throw new Error(`
-          Invalid characters in view name: ${this.viewNameOverride}`);
+    }
+
+    if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
+      throw new Error(`Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
     const columnNames = new Set<string>();
@@ -94,9 +95,11 @@ export class Table {
       const { name: columnName } = column;
       if (column.name == 'id') {
         throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
-      } else if (columnNames.has(columnName)) {
+      }
+      if (columnNames.has(columnName)) {
         throw new Error(`Duplicate column ${columnName}`);
-      } else if (InvalidSQLCharacters.test(columnName)) {
+      }
+      if (InvalidSQLCharacters.test(columnName)) {
         throw new Error(`Invalid characters in column name: $name.${column}`);
       }
       columnNames.add(columnName);
@@ -107,7 +110,8 @@ export class Table {
     for (const index of this.indexes) {
       if (indexNames.has(index.name)) {
         throw new Error(`Duplicate index $name.${index}`);
-      } else if (InvalidSQLCharacters.test(index.name)) {
+      }
+      if (InvalidSQLCharacters.test(index.name)) {
         throw new Error(`Invalid characters in index name: $name.${index}`);
       }
 
