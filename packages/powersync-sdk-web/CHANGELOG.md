@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.2.3
+
+### Patch Changes
+
+- e472f17: Change to use lib instead of dist build folder
+
 ## 0.2.2
 
 ### Patch Changes
