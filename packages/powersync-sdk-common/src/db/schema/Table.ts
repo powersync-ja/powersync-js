@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { indexOf } from 'lodash';
 import { Column } from '../Column';
 import type { Index } from './Index';
 import { TableV2 } from './TableV2';
@@ -37,7 +37,11 @@ export class Table {
   static createTable(name: string, table: TableV2) {
     return new Table({
       name,
-      columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type }))
+      columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type })),
+      indexes: table.indexes,
+      localOnly: table.options.localOnly,
+      insertOnly: table.options.insertOnly,
+      viewName: table.options.viewName
     });
   }
 
