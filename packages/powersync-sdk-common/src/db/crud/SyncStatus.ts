@@ -53,7 +53,7 @@ export class SyncStatus {
   }
 
   getMessage() {
-    const { dataFlow } = this.options;
+    const dataFlow = this.dataFlowStatus;
     return `SyncStatus<connected: ${this.connected} lastSyncedAt: ${this.lastSyncedAt}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
   }
 }

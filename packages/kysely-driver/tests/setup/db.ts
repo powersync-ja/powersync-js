@@ -1,19 +1,12 @@
-import {
-  Column,
-  ColumnType,
-  Schema,
-  Table,
-  WASQLitePowerSyncDatabaseOpenFactory
-} from '@journeyapps/powersync-sdk-web';
+import { Schema, TableV2, WASQLitePowerSyncDatabaseOpenFactory, column } from '@journeyapps/powersync-sdk-web';
 import { wrapPowerSyncWithKysely } from '../../src/sqlite/db';
 import { Database } from './types';
 
-const TestSchema = new Schema([
-  new Table({
-    name: 'users',
-    columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
-  })
-]);
+const users = new TableV2({
+  name: column.text
+});
+
+export const TestSchema = new Schema({ users });
 
 export const getPowerSyncDb = () => {
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({

@@ -1,20 +1,28 @@
-import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@journeyapps/powersync-sdk-web';
+import { column, Schema, TableV2 } from '@journeyapps/powersync-sdk-web';
 
-export const AppSchema = new Schema([
-  new Table({
-    name: 'documents',
-    columns: [
-      new Column({ name: 'title', type: ColumnType.TEXT }),
-      new Column({ name: 'created_at', type: ColumnType.TEXT })
-    ]
-  }),
-  new Table({
-    name: 'document_updates',
-    columns: [
-      new Column({ name: 'created_at', type: ColumnType.TEXT }),
-      new Column({ name: 'document_id', type: ColumnType.TEXT }),
-      new Column({ name: 'update_b64', type: ColumnType.TEXT })
-    ],
-    indexes: [new Index({ name: 'by_document', columns: [new IndexedColumn({ name: 'document_id' })] })]
-  })
-]);
+const documents = new TableV2(
+  {
+    title: column.text,
+    created_at: column.text
+  },
+  { indexes: { list: ['list_id'] } }
+);
+
+const document_updates = new TableV2(
+  {
+    document_id: column.text,
+    created_at: column.text,
+    update_b64: column.text
+  },
+  { indexes: { by_document: ['document_id'] } }
+);
+
+export const AppSchema = new Schema({
+  documents,
+  document_updates
+});
+
+export type Database = (typeof AppSchema)['types'];
+export type Documents = Database['documents'];
+
+export type DocumentUpdates = Database['document_updates'];

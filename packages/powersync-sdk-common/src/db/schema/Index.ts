@@ -27,7 +27,7 @@ export class Index {
   }
 
   get columns() {
-    return this.options.columns;
+    return this.options.columns ?? [];
   }
 
   toJSON(table: Table) {

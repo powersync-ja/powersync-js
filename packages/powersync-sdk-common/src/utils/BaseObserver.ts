@@ -5,7 +5,7 @@ export interface BaseObserverInterface<T extends BaseListener> {
 }
 
 export type BaseListener = {
-  [key: string]: (...event: any) => any;
+  [key: string]: ((...event: any) => any) | undefined;
 };
 
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
