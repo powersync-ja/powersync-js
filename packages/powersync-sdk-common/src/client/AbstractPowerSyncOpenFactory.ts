@@ -33,7 +33,6 @@ export abstract class AbstractPowerSyncDatabaseOpenFactory {
   generateOptions(): PowerSyncDatabaseOptions {
     return {
       database: this.openDB(),
-      schema: this.schema,
       ...this.options
     };
   }

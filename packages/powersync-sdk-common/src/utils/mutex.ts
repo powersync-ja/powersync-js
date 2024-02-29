@@ -16,10 +16,12 @@ export async function mutexRunExclusive<T>(
           timedOut = true;
           reject(new Error('Timeout waiting for lock'));
         }, timeout)
-      : null;
+      : undefined;
 
     mutex.runExclusive(async () => {
-      clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       if (timedOut) return;
 
       try {

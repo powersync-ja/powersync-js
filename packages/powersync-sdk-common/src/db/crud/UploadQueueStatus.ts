@@ -7,7 +7,7 @@ export class UploadQueueStats {
     /**
      * Size of the upload queue in bytes.
      */
-    public size: number = null
+    public size: number | null = null
   ) {}
 
   toString() {

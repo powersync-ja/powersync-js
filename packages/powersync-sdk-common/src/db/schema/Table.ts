@@ -54,7 +54,7 @@ export class Table {
   }
 
   get viewName() {
-    return this.viewNameOverride || this.name;
+    return this.viewNameOverride ?? this.name;
   }
 
   get columns() {
@@ -62,15 +62,15 @@ export class Table {
   }
 
   get indexes() {
-    return this.options.indexes;
+    return this.options.indexes ?? [];
   }
 
   get localOnly() {
-    return this.options.localOnly;
+    return this.options.localOnly ?? false;
   }
 
   get insertOnly() {
-    return this.options.insertOnly;
+    return this.options.insertOnly ?? false;
   }
 
   get internalName() {
