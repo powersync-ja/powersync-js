@@ -4,22 +4,18 @@ import { IndexedColumn } from './IndexedColumn';
 
 export type BaseColumnType<T extends number | string | null> = {
   type: ColumnType;
-  readonly _template: T;
 };
 
 const text: BaseColumnType<string | null> = {
-  type: ColumnType.TEXT,
-  _template: ''
+  type: ColumnType.TEXT
 };
 
 const integer: BaseColumnType<number | null> = {
-  type: ColumnType.INTEGER,
-  _template: 0
+  type: ColumnType.INTEGER
 };
 
 const real: BaseColumnType<number | null> = {
-  type: ColumnType.REAL,
-  _template: 0
+  type: ColumnType.REAL
 };
 
 export const column = {
@@ -30,37 +26,49 @@ export const column = {
 
 export type ColumnsType = Record<string, BaseColumnType<any>>;
 
+export type ExtractColumnValueType<T extends BaseColumnType<any>> = T extends BaseColumnType<infer R> ? R : unknown;
+
 export type RowType<T extends TableV2<any>> = {
-  id: string;
+  [K in keyof T['columns']]: ExtractColumnValueType<T['columns'][K]>;
 } & {
-  [K in keyof T['columns']]: T['columns'][K]['_template'];
+  id: string;
 };
 
 export type IndexShorthand = Record<string, string[]>;
+
+export interface TableV2Options {
+  indexes?: IndexShorthand;
+  localOnly?: boolean;
+  insertOnly?: boolean;
+  viewName?: string;
+}
 
 /*
   Generate a new table from the columns and indexes
 */
 export class TableV2<Columns extends ColumnsType = ColumnsType> {
+  indexes: Index[];
+  options: TableV2Options;
+
   constructor(
     public columns: Columns,
-    public indexes: Index[] = []
-  ) {}
-
-  /**
-   * Add indexes to the table by creating a new table with the indexes added
-   */
-  addIndexes(indexes: IndexShorthand) {
-    return new TableV2(
-      this.columns,
-      this.indexes.concat(
-        Object.entries(indexes).map(([name, columns]) => {
+    options?: TableV2Options
+  ) {
+    this.options = options ?? {};
+    if (options?.indexes) {
+      this.indexes = Object.entries(options.indexes).map(([name, columns]) => {
+        if (name.startsWith('-')) {
+          return new Index({
+            name: name.substring(1),
+            columns: columns.map((c) => new IndexedColumn({ name: c, ascending: false }))
+          });
+        } else {
           return new Index({
             name: name,
-            columns: columns.map((c) => new IndexedColumn({ name: c }))
+            columns: columns.map((c) => new IndexedColumn({ name: c, ascending: true }))
           });
-        })
-      )
-    );
+        }
+      });
+    }
   }
 }
