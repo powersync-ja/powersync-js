@@ -1,13 +1,21 @@
-import _ from 'lodash';
 import * as Comlink from 'comlink';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
-import { AbstractSharedSyncClientProvider, SharedSyncImplementation } from '../../worker/sync/SharedSyncImplementation';
+import {
+  AbstractSharedSyncClientProvider,
+  ManualSharedSyncPayload,
+  SharedSyncClientEvent,
+  SharedSyncImplementation
+} from '../../worker/sync/SharedSyncImplementation';
 import { PowerSyncCredentials, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
 import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
 
+/**
+ * The shared worker will trigger methods on this side of the message port
+ * via this client provider.
+ */
 class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
@@ -39,6 +47,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
   protected syncManager: Comlink.Remote<SharedSyncImplementation>;
   protected clientProvider: SharedSyncClientProvider;
+  protected messagePort: MessagePort;
 
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
@@ -55,8 +64,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
         type: 'module'
       }
     );
-    const { port } = syncWorker;
-    this.syncManager = Comlink.wrap<SharedSyncImplementation>(port);
+    this.messagePort = syncWorker.port;
+    this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
+    this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
     /**
      * Opens MessagePort to the existing shared DB worker.
@@ -79,7 +89,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * Pass along any sync status updates to this listener
      */
     this.clientProvider = new SharedSyncClientProvider(options, (status) => {
-      console.log(status);
       this.iterateListeners((l) => this.updateSyncStatus(status));
     });
 
@@ -88,17 +97,36 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * to fetch credentials or upload data.
      * This performs bi-directional method calling.
      */
-    Comlink.expose(this.clientProvider, port);
+    Comlink.expose(this.clientProvider, this.messagePort);
   }
 
   /**
    * Starts the sync process, this effectively acts as a call to
    * `connect` if not yet connected.
    */
-  async streamingSync(signal?: AbortSignal | undefined): Promise<void> {
-    this.syncManager.connect();
-    if (signal) {
-      signal.onabort = () => this.syncManager.disconnect();
-    }
+  async connect(): Promise<void> {
+    return this.syncManager.connect();
+  }
+
+  async disconnect(): Promise<void> {
+    return this.syncManager.disconnect();
+  }
+
+  getWriteCheckpoint(): Promise<string> {
+    return this.syncManager.getWriteCheckpoint();
+  }
+
+  hasCompletedSync(): Promise<boolean> {
+    return this.syncManager.hasCompletedSync();
+  }
+
+  async dispose(): Promise<void> {
+    // Signal the shared worker that this client is closing its connection to the worker
+    const closeMessagePayload: ManualSharedSyncPayload = {
+      event: SharedSyncClientEvent.CLOSE_CLIENT,
+      data: {}
+    };
+
+    this.messagePort.postMessage(closeMessagePayload);
   }
 }

@@ -108,3 +108,7 @@ export function isBatchedUpdateNotification(
 ): update is BatchedUpdateNotification {
   return 'tables' in update;
 }
+
+export function extractTableUpdates(update: BatchedUpdateNotification | UpdateNotification) {
+  return isBatchedUpdateNotification(update) ? update.tables : [update.table];
+}

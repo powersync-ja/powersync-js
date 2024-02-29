@@ -1,5 +1,9 @@
 import { v4 } from 'uuid';
 
+export interface Disposable {
+  dispose: () => Promise<void>;
+}
+
 export interface BaseObserverInterface<T extends BaseListener> {
   registerListener(listener: Partial<T>): () => void;
 }

@@ -33,9 +33,26 @@ export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
+
+    // Make sure to close the database when the window closes
+    this.closeWithoutDisconnect = this.closeWithoutDisconnect.bind(this);
+    self.addEventListener('unload', () => this.closeWithoutDisconnect);
   }
 
   async _initialize(): Promise<void> {}
+
+  close(disconnect = true): Promise<void> {
+    self.removeEventListener('unload', this.closeWithoutDisconnect);
+    return super.close(disconnect);
+  }
+
+  /**
+   * Closes the database connections, but doesn't disconnect
+   * the shared sync manager.
+   */
+  protected closeWithoutDisconnect() {
+    return this.close(false);
+  }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);

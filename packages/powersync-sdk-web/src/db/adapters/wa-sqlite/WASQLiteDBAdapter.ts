@@ -93,10 +93,13 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     };
   };
 
+  /**
+   * Attempts to close the connection.
+   * Shared workers might not actually close the connection if other
+   * tabs are still using it.
+   */
   close() {
-    if (!this.flags.enableMultiTabs) {
-      this.workerMethods?.close?.();
-    }
+    this.workerMethods?.close?.();
   }
 
   async getAll<T>(sql: string, parameters?: any[] | undefined): Promise<T[]> {
@@ -116,31 +119,12 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.initialized;
-    return new Promise((resolve, reject) => {
-      this.acquireLock(async () => {
-        try {
-          const res = await fn(this.generateDBHelpers({ execute: this._execute }));
-          resolve(res);
-        } catch (ex) {
-          reject(ex);
-        }
-      });
-    });
+    return this.acquireLock(async () => fn(this.generateDBHelpers({ execute: this._execute })));
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.initialized;
-    return new Promise((resolve, reject) => {
-      // This implementation currently only uses a single connection. Locking is ensured by navigator locks
-      this.acquireLock(async () => {
-        try {
-          const res = await fn(this.generateDBHelpers({ execute: this._execute }));
-          resolve(res);
-        } catch (ex) {
-          reject(ex);
-        }
-      });
-    });
+    return this.acquireLock(async () => fn(this.generateDBHelpers({ execute: this._execute })));
   }
 
   protected acquireLock(callback: () => Promise<any>): Promise<any> {

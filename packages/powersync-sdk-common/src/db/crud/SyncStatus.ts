@@ -26,7 +26,7 @@ export class SyncStatus {
    *  Currently this is reset to null after a restart.
    */
   get lastSyncedAt() {
-    return this.options.lastSyncedAt;
+    return this.options.lastSyncedAt ?? null;
   }
 
   /**
