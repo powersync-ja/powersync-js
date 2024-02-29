@@ -1,7 +1,6 @@
-import { Column, ColumnType } from '../Column';
+import { ColumnType } from '../Column';
 import { Index } from './Index';
 import { IndexedColumn } from './IndexedColumn';
-import { Table as OldTable } from './Table';
 
 export type BaseColumnType<T extends number | string | null> = {
   type: ColumnType;
@@ -31,7 +30,7 @@ export const column = {
 
 export type ColumnsType = Record<string, BaseColumnType<any>>;
 
-export type RowType<T extends Table<any>> = {
+export type RowType<T extends TableV2<any>> = {
   id: string;
 } & {
   [K in keyof T['columns']]: T['columns'][K]['_template'];
@@ -42,24 +41,17 @@ export type IndexShorthand = Record<string, string[]>;
 /*
   Generate a new table from the columns and indexes
 */
-export class Table<Columns extends ColumnsType> {
-  columns: Columns;
-  indexes: Index[];
+export class TableV2<Columns extends ColumnsType = ColumnsType> {
+  constructor(
+    public columns: Columns,
+    public indexes: Index[] = []
+  ) {}
 
-  constructor(columns: Columns, indexes: Index[] = []) {
-    this.columns = columns;
-    this.indexes = indexes;
-  }
-
-  table(name: string) {
-    return new OldTable({
-      name,
-      columns: Object.entries(this.columns).map(([name, col]) => new Column({ name: name, type: col.type }))
-    });
-  }
-
-  indexed(indexes: IndexShorthand) {
-    return new Table(
+  /**
+   * Add indexes to the table by creating a new table with the indexes added
+   */
+  addIndexes(indexes: IndexShorthand) {
+    return new TableV2(
       this.columns,
       this.indexes.concat(
         Object.entries(indexes).map(([name, columns]) => {

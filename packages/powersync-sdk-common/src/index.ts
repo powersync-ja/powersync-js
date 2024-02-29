@@ -25,7 +25,7 @@ export * from './db/crud/SyncStatus';
 export * from './db/crud/UploadQueueStatus';
 export * from './db/DBAdapter';
 export * from './db/Column';
-export { Table as TableV2 } from './db/schema/TableV2';
+export * from './db/schema/TableV2';
 
 export * from './utils/BaseObserver';
 export * from './utils/strings';

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { Column } from '../Column';
 import type { Index } from './Index';
+import { TableV2 } from './TableV2';
 
 export interface TableOptions {
   /**
@@ -20,7 +21,7 @@ export const DEFAULT_TABLE_OPTIONS: Partial<TableOptions> = {
   localOnly: false
 };
 
-export const InvalidSQLCharacters = /[\"\'%,\.#\s\[\]]/;
+export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 export class Table {
   protected options: TableOptions;
@@ -31,6 +32,13 @@ export class Table {
 
   static createInsertOnly(options: TableOptions) {
     return new Table({ ...options, localOnly: false, insertOnly: true });
+  }
+
+  static createTable(name: string, table: TableV2) {
+    return new Table({
+      name,
+      columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type }))
+    });
   }
 
   constructor(options: TableOptions) {
