@@ -46,7 +46,7 @@ export interface AbstractStreamingSyncImplementationOptions {
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
-  statusChanged?: (status: SyncStatus) => void;
+  statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
@@ -62,7 +62,7 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   getWriteCheckpoint: () => Promise<string>;
   hasCompletedSync: () => Promise<boolean>;
   isConnected: boolean;
-  lastSyncedAt: Date | null;
+  lastSyncedAt?: Date;
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
 }
@@ -92,7 +92,7 @@ export abstract class AbstractStreamingSyncImplementation
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
     this.syncStatus = new SyncStatus({
       connected: false,
-      lastSyncedAt: null,
+      lastSyncedAt: undefined,
       dataFlow: {
         uploading: false,
         downloading: false
@@ -127,7 +127,7 @@ export abstract class AbstractStreamingSyncImplementation
 
   async dispose() {
     this.crudUpdateListener?.();
-    this.crudUpdateListener = null;
+    this.crudUpdateListener = undefined;
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -218,7 +218,7 @@ export abstract class AbstractStreamingSyncImplementation
 
     signal.addEventListener('abort', () => {
       this.crudUpdateListener?.();
-      this.crudUpdateListener = null;
+      this.crudUpdateListener = undefined;
       this.updateSyncStatus({
         connected: false,
         dataFlow: {
@@ -303,7 +303,7 @@ export abstract class AbstractStreamingSyncImplementation
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncCheckpointComplete(line)) {
             this.logger.debug('Checkpoint complete', targetCheckpoint);
-            const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint);
+            const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
             if (!result.checkpointValid) {
               // This means checksums failed. Start again with a new checkpoint.
               // TODO: better back-off
@@ -383,7 +383,7 @@ export abstract class AbstractStreamingSyncImplementation
                 lastSyncedAt: new Date()
               });
             } else if (_.isEqual(validatedCheckpoint, targetCheckpoint)) {
-              const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint);
+              const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
               if (!result.checkpointValid) {
                 // This means checksums failed. Start again with a new checkpoint.
                 // TODO: better back-off
@@ -415,7 +415,7 @@ export abstract class AbstractStreamingSyncImplementation
 
   protected async *streamingSyncRequest(
     req: StreamingSyncRequest,
-    signal: AbortSignal
+    signal?: AbortSignal
   ): AsyncGenerator<StreamingSyncLine> {
     const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
     const stream = ndjsonStream(body);

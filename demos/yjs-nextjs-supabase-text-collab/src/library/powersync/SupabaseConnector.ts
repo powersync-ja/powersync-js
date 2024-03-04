@@ -9,7 +9,6 @@ import {
 import {
   SupabaseClient,
   createClient,
-  PostgrestError,
   FunctionsHttpError,
   FunctionsRelayError,
   FunctionsFetchError

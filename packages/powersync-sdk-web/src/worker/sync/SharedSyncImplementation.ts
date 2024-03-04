@@ -89,8 +89,8 @@ export class SharedSyncImplementation
     this.syncStatus = new SyncStatus({});
   }
 
-  get lastSyncedAt(): Date | null {
-    return this.syncStreamClient?.lastSyncedAt ?? null;
+  get lastSyncedAt(): Date | undefined {
+    return this.syncStreamClient?.lastSyncedAt;
   }
 
   get isConnected(): boolean {

@@ -10,7 +10,7 @@ import { testSchema } from './utils/test-schema';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { Mutex } from 'async-mutex';
 
-describe.only('Multiple Instances', () => {
+describe('Multiple Instances', () => {
   const dbFilename = 'test-multiple-instances.db';
   const factory = new WASQLitePowerSyncDatabaseOpenFactory({
     dbFilename,
@@ -44,7 +44,7 @@ describe.only('Multiple Instances', () => {
     await db2.close();
   });
 
-  it.only('should maintain DB connections if instances call close', async () => {
+  it('should maintain DB connections if instances call close', async () => {
     /**
      * The shared webworker should use the same DB connection for both instances.
      * The shared connection should only be closed if all PowerSync clients
@@ -124,7 +124,7 @@ describe.only('Multiple Instances', () => {
     await stream2.dispose();
   });
 
-  it.only('should trigger uploads from last connected clients', async () => {
+  it('should trigger uploads from last connected clients', async () => {
     // Generate the first streaming sync implementation
     const connector1 = new TestConnector();
     const spy1 = vi.spyOn(connector1, 'uploadData');
