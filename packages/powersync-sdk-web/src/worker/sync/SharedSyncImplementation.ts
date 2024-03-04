@@ -1,12 +1,11 @@
 import * as Comlink from 'comlink';
-import Logger from 'js-logger';
+import { ILogger } from 'js-logger';
 import {
   AbstractStreamingSyncImplementation,
   StreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
   BaseObserver,
   LockOptions,
-  PowerSyncCredentials,
   SqliteBucketStorage,
   StreamingSyncImplementationListener,
   SyncStatus,
@@ -17,6 +16,8 @@ import { Mutex } from 'async-mutex';
 import { WebRemote } from '../../db/sync/WebRemote';
 
 import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
+import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
+import { BroadcastLogger } from './BroadcastLogger';
 
 /**
  * Manual message events for shared sync clients
@@ -43,15 +44,6 @@ export interface SharedSyncImplementationListener extends StreamingSyncImplement
   initialized: () => void;
 }
 
-/**
- * The client side port should provide these methods.
- */
-export abstract class AbstractSharedSyncClientProvider {
-  abstract fetchCredentials(): Promise<PowerSyncCredentials>;
-  abstract uploadCrud(): Promise<void>;
-  abstract statusChanged(status: SyncStatusOptions): void;
-}
-
 export type WrappedSyncPort = {
   port: MessagePort;
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
@@ -72,6 +64,7 @@ export class SharedSyncImplementation
   protected statusListener?: () => void;
 
   syncStatus: SyncStatus;
+  broadCastLogger: ILogger;
 
   constructor() {
     super();
@@ -87,6 +80,7 @@ export class SharedSyncImplementation
     });
 
     this.syncStatus = new SyncStatus({});
+    this.broadCastLogger = new BroadcastLogger(this.ports);
   }
 
   get lastSyncedAt(): Date | undefined {
@@ -115,7 +109,8 @@ export class SharedSyncImplementation
         new WASQLiteDBAdapter({
           dbFilename: params.dbName,
           workerPort: dbWorkerPort,
-          flags: { enableMultiTabs: true }
+          flags: { enableMultiTabs: true },
+          logger: this.broadCastLogger
         }),
         new Mutex()
       ),
@@ -131,7 +126,7 @@ export class SharedSyncImplementation
       },
       ...params.streamOptions,
       // Logger cannot be transferred just yet
-      logger: Logger.get(`Shared Sync ${params.dbName}`)
+      logger: this.broadCastLogger
     });
 
     this.syncStreamClient.registerListener({

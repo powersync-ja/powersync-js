@@ -4,11 +4,11 @@ import {
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
 import {
-  AbstractSharedSyncClientProvider,
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
+import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import { PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
 import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
 
@@ -42,6 +42,35 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   uploadCrud(): Promise<void> {
     return this.options.uploadCrud();
   }
+
+  get logger() {
+    return this.options.logger;
+  }
+
+  trace(...x: any[]): void {
+    this.logger?.trace(...x);
+  }
+  debug(...x: any[]): void {
+    this.logger?.debug(...x);
+  }
+  info(...x: any[]): void {
+    this.logger?.info(...x);
+  }
+  log(...x: any[]): void {
+    this.logger?.log(...x);
+  }
+  warn(...x: any[]): void {
+    this.logger?.warn(...x);
+  }
+  error(...x: any[]): void {
+    this.logger?.error(...x);
+  }
+  time(label: string): void {
+    this.logger?.time(label);
+  }
+  timeEnd(label: string): void {
+    this.logger?.timeEnd(label);
+  }
 }
 
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
@@ -74,10 +103,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * DB worker, but a port to the DB worker can be transferred to the
      * sync worker.
      */
-    const { crudUploadThrottleMs, identifier, retryDelayMs } = options;
-    const dbOpenerPort = openWorkerDatabasePort(options.identifier!, true) as MessagePort;
+    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
+    const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true) as MessagePort;
     this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
-      dbName: options.identifier!,
+      dbName: this.options.identifier!,
       streamOptions: {
         crudUploadThrottleMs,
         identifier,
@@ -88,7 +117,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     /**
      * Pass along any sync status updates to this listener
      */
-    this.clientProvider = new SharedSyncClientProvider(options, (status) => {
+    this.clientProvider = new SharedSyncClientProvider(this.options, (status) => {
       this.iterateListeners((l) => this.updateSyncStatus(status));
     });
 
