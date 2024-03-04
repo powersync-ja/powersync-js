@@ -24,33 +24,33 @@ export class BroadcastLogger implements ILogger {
   }
 
   trace(...x: any[]): void {
-    console.trace(x);
-    this.clients.forEach((p) => p.clientProvider.trace(x));
+    console.trace(...x);
+    this.clients.forEach((p) => p.clientProvider.trace(...x));
   }
 
   debug(...x: any[]): void {
-    console.debug(x);
-    this.clients.forEach((p) => p.clientProvider.debug(x));
+    console.debug(...x);
+    this.clients.forEach((p) => p.clientProvider.debug(...x));
   }
 
   info(...x: any[]): void {
-    console.info(x);
-    this.clients.forEach((p) => p.clientProvider.info(x));
+    console.info(...x);
+    this.clients.forEach((p) => p.clientProvider.info(...x));
   }
 
   log(...x: any[]): void {
-    console.log(x);
-    this.clients.forEach((p) => p.clientProvider.log(x));
+    console.log(...x);
+    this.clients.forEach((p) => p.clientProvider.log(...x));
   }
 
   warn(...x: any[]): void {
-    console.warn(x);
-    this.clients.forEach((p) => p.clientProvider.warn(x));
+    console.warn(...x);
+    this.clients.forEach((p) => p.clientProvider.warn(...x));
   }
 
   error(...x: any[]): void {
-    console.error(x);
-    this.clients.forEach((p) => p.clientProvider.error(x));
+    console.error(...x);
+    this.clients.forEach((p) => p.clientProvider.error(...x));
   }
 
   time(label: string): void {
