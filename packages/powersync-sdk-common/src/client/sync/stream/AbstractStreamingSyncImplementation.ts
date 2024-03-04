@@ -248,7 +248,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected async streamingSyncIteration(signal: AbortSignal, progress?: () => void): Promise<{ retry?: boolean }> {
     return await this.obtainLock({
       type: LockType.SYNC,
-      signal: signal,
+      signal,
       callback: async () => {
         this.logger.debug('Streaming sync iteration started');
         this.options.adapter.startSession();
