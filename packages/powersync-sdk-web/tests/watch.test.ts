@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-vi.useRealTimers();
 import { v4 as uuid } from 'uuid';
 import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
-import { testSchema } from './test_schema';
+import { testSchema } from './utils/test-schema';
+vi.useRealTimers();
 
 /**
  * There seems to be an issue with Vitest browser mode's setTimeout and

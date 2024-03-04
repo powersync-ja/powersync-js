@@ -11,48 +11,48 @@ import { DBWorkerInterface, _openDB } from './open-db';
  */
 type SharedDBWorkerConnection = {
   clientIds: Set<string>;
-  db: Promise<DBWorkerInterface>;
+  db: DBWorkerInterface;
 };
 
 const _self: SharedWorkerGlobalScope = self as any;
 
 const DBMap = new Map<string, SharedDBWorkerConnection>();
+const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 const openDB = async (dbFileName: string): Promise<DBWorkerInterface> => {
-  const clientId = uuid();
+  // Prevent multiple simultaneous opens from causing race conditions
+  return navigator.locks.request(OPEN_DB_LOCK, async () => {
+    const clientId = uuid();
 
-  if (!DBMap.has(dbFileName)) {
-    const clientIds = new Set<string>();
-    const openPromise = _openDB(dbFileName).then((dbWorkerInterface) => {
-      // Wrap the close method to only close if there are no active subscribers
-      return {
-        ...dbWorkerInterface,
-        close: Comlink.proxy(() => {
-          clientIds.delete(clientId);
-          if (clientIds.size == 0) {
-            console.debug(`Closing connection to ${dbFileName}.`);
-            return dbWorkerInterface.close?.();
-          }
-          console.debug(`Connection to ${dbFileName} not closed yet due to active clients.`);
-        })
-      };
-    });
+    if (!DBMap.has(dbFileName)) {
+      const clientIds = new Set<string>();
+      const connection = await _openDB(dbFileName);
+      DBMap.set(dbFileName, {
+        clientIds,
+        db: connection
+      });
+    }
 
-    DBMap.set(dbFileName, {
-      clientIds,
-      db: openPromise
-    });
-    openPromise.catch((error) => {
-      // Allow for retries if an error ocurred
-      console.error(error);
-      DBMap.delete(dbFileName);
-    });
-  }
+    const dbEntry = DBMap.get(dbFileName)!;
+    dbEntry.clientIds.add(clientId);
+    const { db } = dbEntry;
 
-  const dbEntry = DBMap.get(dbFileName)!;
-  dbEntry.clientIds.add(clientId);
+    const wrappedConnection = {
+      ...db,
+      close: Comlink.proxy(() => {
+        const { clientIds } = dbEntry;
+        clientIds.delete(clientId);
+        if (clientIds.size == 0) {
+          console.debug(`Closing connection to ${dbFileName}.`);
+          DBMap.delete(dbFileName);
+          return db.close?.();
+        }
+        console.debug(`Connection to ${dbFileName} not closed yet due to active clients.`);
+      })
+    };
 
-  return Comlink.proxy(await DBMap.get(dbFileName)!.db);
+    return Comlink.proxy(wrappedConnection);
+  });
 };
 
 _self.onconnect = function (event: MessageEvent<string>) {

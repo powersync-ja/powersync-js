@@ -197,7 +197,7 @@ export abstract class AbstractStreamingSyncImplementation
     if (!this.abortController) {
       throw new Error('Disconnect not possible');
     }
-    this.abortController.abort();
+    this.abortController.abort('Disconnected');
   }
 
   /**

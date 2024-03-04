@@ -36,13 +36,13 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
     // Make sure to close the database when the window closes
     this.closeWithoutDisconnect = this.closeWithoutDisconnect.bind(this);
-    self.addEventListener('unload', () => this.closeWithoutDisconnect);
+    window.addEventListener('unload', this.closeWithoutDisconnect);
   }
 
   async _initialize(): Promise<void> {}
 
   close(disconnect = true): Promise<void> {
-    self.removeEventListener('unload', this.closeWithoutDisconnect);
+    window.removeEventListener('unload', this.closeWithoutDisconnect);
     return super.close(disconnect);
   }
 

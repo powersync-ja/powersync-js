@@ -113,7 +113,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
-    this.closed = true;
+    this.closed = false;
     this.currentStatus = null;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this._schema = options.schema;
@@ -305,6 +305,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation?.dispose();
     this.database.close();
+    this.closed = true;
   }
 
   /**

@@ -9,7 +9,7 @@ import {
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
-import { PowerSyncCredentials, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
+import { PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
 import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
 
 /**
@@ -128,5 +128,12 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     };
 
     this.messagePort.postMessage(closeMessagePayload);
+  }
+
+  /**
+   * Used in tests to force a connection states
+   */
+  private async _testUpdateStatus(status: SyncStatus) {
+    return (this.syncManager as any).syncStreamClient.updateSyncStatus(status.toJSON());
   }
 }

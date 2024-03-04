@@ -136,8 +136,7 @@ export class SharedSyncImplementation
 
     this.syncStreamClient.registerListener({
       statusChanged: (status) => {
-        this.syncStatus = status;
-        this.ports.forEach((p) => p.clientProvider.statusChanged(status.toJSON()));
+        this.updateAllStatuses(status.toJSON());
       }
     });
 
@@ -164,7 +163,7 @@ export class SharedSyncImplementation
   }
 
   async disconnect() {
-    this.abortController?.abort();
+    this.abortController?.abort('Disconnected');
     this.iterateListeners((l) => l.statusChanged?.(new SyncStatus({ connected: false })));
   }
 
@@ -216,5 +215,14 @@ export class SharedSyncImplementation
   async getWriteCheckpoint(): Promise<string> {
     await this.isReady();
     return this.syncStreamClient!.getWriteCheckpoint();
+  }
+
+  /**
+   * A method to update the all shared statuses for each
+   * client.
+   */
+  private updateAllStatuses(status: SyncStatusOptions) {
+    this.syncStatus = new SyncStatus(status);
+    this.ports.forEach((p) => p.clientProvider.statusChanged(status));
   }
 }
