@@ -15,7 +15,7 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 In your terminal, switch into the demo's directory:
 
 ```bash
-cd demos/nextjs-supabase-todolist
+cd demos/react-supabase-todolist
 ```
 
 Set up the Environment variables: Copy the `.env.local.template` file:
