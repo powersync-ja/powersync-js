@@ -90,7 +90,9 @@ export class ReactNativeRemote extends AbstractRemote {
       throw ex;
     });
 
-    clearTimeout(timeout);
+    if (timeout != null) {
+      clearTimeout(timeout);
+    }
 
     if (!res.ok) {
       const text = await res.text();
@@ -108,7 +110,7 @@ export class ReactNativeRemote extends AbstractRemote {
      * The common SDK is a bit oblivious to `ReadableStream` classes.
      * This should be improved when moving to Websockets
      */
-    const reader = res.body.getReader();
+    const reader = res.body!.getReader();
     const outputStream = new ReadableStream({
       start(controller) {
         return processStream();

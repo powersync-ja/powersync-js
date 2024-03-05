@@ -1,6 +1,7 @@
-import _ from 'lodash';
+import _, { indexOf } from 'lodash';
 import { Column } from '../Column';
 import type { Index } from './Index';
+import { TableV2 } from './TableV2';
 
 export interface TableOptions {
   /**
@@ -20,7 +21,7 @@ export const DEFAULT_TABLE_OPTIONS: Partial<TableOptions> = {
   localOnly: false
 };
 
-export const InvalidSQLCharacters = /[\"\'%,\.#\s\[\]]/;
+export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 export class Table {
   protected options: TableOptions;
@@ -31,6 +32,17 @@ export class Table {
 
   static createInsertOnly(options: TableOptions) {
     return new Table({ ...options, localOnly: false, insertOnly: true });
+  }
+
+  static createTable(name: string, table: TableV2) {
+    return new Table({
+      name,
+      columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type })),
+      indexes: table.indexes,
+      localOnly: table.options.localOnly,
+      insertOnly: table.options.insertOnly,
+      viewName: table.options.viewName
+    });
   }
 
   constructor(options: TableOptions) {
@@ -46,7 +58,7 @@ export class Table {
   }
 
   get viewName() {
-    return this.viewNameOverride || this.name;
+    return this.viewNameOverride ?? this.name;
   }
 
   get columns() {
@@ -54,23 +66,23 @@ export class Table {
   }
 
   get indexes() {
-    return this.options.indexes;
+    return this.options.indexes ?? [];
   }
 
   get localOnly() {
-    return this.options.localOnly;
+    return this.options.localOnly ?? false;
   }
 
   get insertOnly() {
-    return this.options.insertOnly;
+    return this.options.insertOnly ?? false;
   }
 
   get internalName() {
     if (this.options.localOnly) {
       return `ps_data_local__${this.name}`;
-    } else {
-      return `ps_data__${this.name}`;
     }
+
+    return `ps_data__${this.name}`;
   }
 
   get validName() {
@@ -83,9 +95,10 @@ export class Table {
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
       throw new Error(`Invalid characters in table name: ${this.name}`);
-    } else if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
-      throw new Error(`
-          Invalid characters in view name: ${this.viewNameOverride}`);
+    }
+
+    if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
+      throw new Error(`Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
     const columnNames = new Set<string>();
@@ -94,9 +107,11 @@ export class Table {
       const { name: columnName } = column;
       if (column.name == 'id') {
         throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
-      } else if (columnNames.has(columnName)) {
+      }
+      if (columnNames.has(columnName)) {
         throw new Error(`Duplicate column ${columnName}`);
-      } else if (InvalidSQLCharacters.test(columnName)) {
+      }
+      if (InvalidSQLCharacters.test(columnName)) {
         throw new Error(`Invalid characters in column name: $name.${column}`);
       }
       columnNames.add(columnName);
@@ -107,7 +122,8 @@ export class Table {
     for (const index of this.indexes) {
       if (indexNames.has(index.name)) {
         throw new Error(`Duplicate index $name.${index}`);
-      } else if (InvalidSQLCharacters.test(index.name)) {
+      }
+      if (InvalidSQLCharacters.test(index.name)) {
         throw new Error(`Invalid characters in index name: $name.${index}`);
       }
 

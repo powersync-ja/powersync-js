@@ -16,7 +16,7 @@ export class SyncDataBucket {
     return new SyncDataBucket(
       row.bucket,
       row.data.map((entry) => OplogEntry.fromRow(entry)),
-      row.has_more,
+      row.has_more ?? false,
       row.after,
       row.next_after
     );

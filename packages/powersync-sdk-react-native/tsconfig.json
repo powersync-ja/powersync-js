@@ -16,7 +16,8 @@
     "noStrictGenericChecks": false,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "target": "esnext"
+    "target": "esnext",
+    "strictNullChecks": true
   },
   "references": [
     {

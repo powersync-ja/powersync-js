@@ -46,7 +46,7 @@ export interface AbstractStreamingSyncImplementationOptions {
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
-  statusChanged?: (status: SyncStatus) => void;
+  statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
@@ -69,7 +69,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
     this.syncStatus = new SyncStatus({
       connected: false,
-      lastSyncedAt: null,
+      lastSyncedAt: undefined,
       dataFlow: {
         uploading: false,
         downloading: false
@@ -245,7 +245,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncCheckpointComplete(line)) {
             this.logger.debug('Checkpoint complete', targetCheckpoint);
-            const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint);
+            const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
             if (!result.checkpointValid) {
               // This means checksums failed. Start again with a new checkpoint.
               // TODO: better back-off
@@ -325,7 +325,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
                 lastSyncedAt: new Date()
               });
             } else if (_.isEqual(validatedCheckpoint, targetCheckpoint)) {
-              const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint);
+              const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
               if (!result.checkpointValid) {
                 // This means checksums failed. Start again with a new checkpoint.
                 // TODO: better back-off
@@ -355,7 +355,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     });
   }
 
-  async *streamingSyncRequest(req: StreamingSyncRequest, signal: AbortSignal): AsyncGenerator<StreamingSyncLine> {
+  async *streamingSyncRequest(req: StreamingSyncRequest, signal?: AbortSignal): AsyncGenerator<StreamingSyncLine> {
     const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
     const stream = ndjsonStream(body);
     const reader = stream.getReader();

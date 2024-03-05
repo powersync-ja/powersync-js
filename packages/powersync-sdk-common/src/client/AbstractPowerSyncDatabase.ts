@@ -114,7 +114,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     super();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = true;
-    this.currentStatus = null;
+    this.currentStatus = undefined;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this._schema = options.schema;
     this.ready = false;
@@ -201,7 +201,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       schema.validate();
     } catch (ex) {
-      this.options.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+      this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
@@ -291,7 +291,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         [tableGlob]
       );
 
-      if (!existingTableRows.rows.length) {
+      if (!existingTableRows.rows?.length) {
         return;
       }
       for (const row of existingTableRows.rows._array) {
@@ -325,11 +325,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           `SELECT SUM(cast(data as blob) + 20) as size, count(*) as count FROM ${PSInternalTable.CRUD}`
         );
 
-        const row = result.rows.item(0);
+        const row = result.rows!.item(0);
         return new UploadQueueStats(row?.count ?? 0, row?.size ?? 0);
       } else {
         const result = await tx.execute(`SELECT count(*) as count FROM ${PSInternalTable.CRUD}`);
-        const row = result.rows.item(0);
+        const row = result.rows!.item(0);
         return new UploadQueueStats(row?.count ?? 0);
       }
     });
@@ -388,7 +388,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
    */
-  async getNextCrudTransaction(): Promise<CrudTransaction> {
+  async getNextCrudTransaction(): Promise<CrudTransaction | null> {
     return await this.readTransaction(async (tx) => {
       const first = await tx.getOptional<CrudEntryJSON>(
         `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`
@@ -543,7 +543,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     const resolvedTables = options?.tables ?? [];
     if (!options?.tables) {
-      const explained = await this.getAll(`EXPLAIN ${sql}`, parameters);
+      const explained = await this.getAll<{ opcode: string; p3: number; p2: number }>(`EXPLAIN ${sql}`, parameters);
       const rootPages = _.chain(explained)
         .filter((row) => row['opcode'] == 'OpenRead' && row['p3'] == 0 && _.isNumber(row['p2']))
         .map((row) => row['p2'])
@@ -571,10 +571,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Note, do not declare this as `async *onChange` as it will not work in React Native
    */
   onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
-    const watchedTables = options.tables ?? [];
+    const resolvedOptions = options ?? {};
+    const watchedTables = resolvedOptions.tables ?? [];
 
     let throttledTableUpdates: string[] = [];
-    const throttleMs = options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
+    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
       const flushTableUpdates = _.throttle(
@@ -593,7 +594,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       const dispose = this.database.registerListener({
         tablesUpdated: async (update) => {
-          const { rawTableNames } = options;
+          const { rawTableNames } = resolvedOptions;
 
           const tables = isBatchedUpdateNotification(update) ? update.tables : [update.table];
 
@@ -613,7 +614,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         }
       });
 
-      options.signal?.addEventListener('abort', () => {
+      resolvedOptions.signal?.addEventListener('abort', () => {
         dispose();
         eventOptions.stop();
         // Maybe fail?
@@ -626,7 +627,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * @ignore
    */
-  private async executeReadOnly(sql: string, params: any[]) {
+  private async executeReadOnly(sql: string, params?: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));
   }

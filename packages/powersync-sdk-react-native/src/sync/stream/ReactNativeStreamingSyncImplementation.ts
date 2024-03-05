@@ -26,7 +26,7 @@ export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyn
   initLocks() {
     const { identifier } = this.options;
     if (identifier && LOCKS.has(identifier)) {
-      this.locks = LOCKS.get(identifier);
+      this.locks = LOCKS.get(identifier)!;
       return;
     }
 
@@ -46,7 +46,7 @@ export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyn
     }
     return lock.acquire(lockOptions.type, async () => {
       if (lockOptions.signal?.aborted) {
-        return null;
+        throw new Error('Aborted');
       }
 
       return lockOptions.callback();

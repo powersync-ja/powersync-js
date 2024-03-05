@@ -33,7 +33,7 @@ export type CrudEntryDataJSON = {
 };
 
 /**
- * The output JSOn seems to be a third type of JSON, not the same as the input JSON.
+ * The output JSON seems to be a third type of JSON, not the same as the input JSON.
  */
 export type CrudEntryOutputJSON = {
   op_id: number;
@@ -41,7 +41,7 @@ export type CrudEntryOutputJSON = {
   type: string;
   id: string;
   tx_id?: number;
-  data: Record<string, any>;
+  data?: Record<string, any>;
 };
 
 /**
