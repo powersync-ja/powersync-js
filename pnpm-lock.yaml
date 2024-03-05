@@ -271,8 +271,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/powersync-sdk-react-native
       '@journeyapps/react-native-quick-sqlite':
-        specifier: 1.1.1
-        version: 1.1.1(react-native@0.73.4)(react@18.2.0)
+        specifier: 1.1.2
+        version: 1.1.2(react-native@0.73.4)(react@18.2.0)
       '@react-native-async-storage/async-storage':
         specifier: 1.21.0
         version: 1.21.0(react-native@0.73.4)
@@ -428,8 +428,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/powersync-sdk-react-native
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.0
-        version: 1.1.1(react-native@0.73.2)(react@18.2.0)
+        specifier: ^1.1.2
+        version: 1.1.2(react-native@0.73.2)(react@18.2.0)
       '@react-native-community/masked-view':
         specifier: ^0.1.11
         version: 0.1.11(react-native@0.73.2)(react@18.2.0)
@@ -1003,8 +1003,8 @@ importers:
         version: 3.3.2
     devDependencies:
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.1
-        version: 1.1.1(react-native@0.72.4)(react@18.2.0)
+        specifier: ^1.1.2
+        version: 1.1.2(react-native@0.72.4)(react@18.2.0)
       '@types/async-lock':
         specifier: ^1.4.0
         version: 1.4.2
@@ -6889,7 +6889,7 @@ packages:
       tslib: 2.6.2
       update-notifier: 6.0.2
       url-loader: 4.1.1(file-loader@6.2.0)(webpack@5.90.1)
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
       webpack-bundle-analyzer: 4.10.1
       webpack-dev-server: 4.15.1(webpack@5.90.1)
       webpack-merge: 5.10.0
@@ -6963,7 +6963,7 @@ packages:
       unist-util-visit: 5.0.0
       url-loader: 4.1.1(file-loader@6.2.0)(webpack@5.90.1)
       vfile: 6.0.1
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - '@docusaurus/types'
       - '@swc/core'
@@ -7020,7 +7020,7 @@ packages:
       tslib: 2.6.2
       unist-util-visit: 5.0.0
       utility-types: 3.11.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - '@parcel/css'
       - '@rspack/core'
@@ -7062,7 +7062,7 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
       tslib: 2.6.2
       utility-types: 3.11.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - '@parcel/css'
       - '@rspack/core'
@@ -7097,7 +7097,7 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       tslib: 2.6.2
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - '@parcel/css'
       - '@rspack/core'
@@ -7507,7 +7507,7 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
       react-helmet-async: 1.3.0(react-dom@18.2.0)(react@18.2.0)
       utility-types: 3.11.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
       webpack-merge: 5.10.0
     transitivePeerDependencies:
       - '@swc/core'
@@ -7571,7 +7571,7 @@ packages:
       shelljs: 0.8.5
       tslib: 2.6.2
       url-loader: 4.1.1(file-loader@6.2.0)(webpack@5.90.1)
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
@@ -8942,8 +8942,8 @@ packages:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  /@journeyapps/react-native-quick-sqlite@1.1.1(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-5I8zUZoFRgtnagjQygqnSyWG0L39ycFvum+ytsMmFW8LY1GpEZ+a3I6fWggwM82/Cc9YOheCVRIz47g0uBBZug==}
+  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -8954,8 +8954,8 @@ packages:
       uuid: 3.4.0
     dev: true
 
-  /@journeyapps/react-native-quick-sqlite@1.1.1(react-native@0.73.2)(react@18.2.0):
-    resolution: {integrity: sha512-5I8zUZoFRgtnagjQygqnSyWG0L39ycFvum+ytsMmFW8LY1GpEZ+a3I6fWggwM82/Cc9YOheCVRIz47g0uBBZug==}
+  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -8966,8 +8966,8 @@ packages:
       uuid: 3.4.0
     dev: false
 
-  /@journeyapps/react-native-quick-sqlite@1.1.1(react-native@0.73.4)(react@18.2.0):
-    resolution: {integrity: sha512-5I8zUZoFRgtnagjQygqnSyWG0L39ycFvum+ytsMmFW8LY1GpEZ+a3I6fWggwM82/Cc9YOheCVRIz47g0uBBZug==}
+  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.73.4)(react@18.2.0):
+    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -15398,7 +15398,7 @@ packages:
       '@babel/core': 7.23.9
       find-cache-dir: 4.0.0
       schema-utils: 4.2.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /babel-loader@9.1.3(@babel/core@7.24.0)(webpack@5.90.3):
     resolution: {integrity: sha512-xG3ST4DglodGf8qSwv0MdeWLhrDsw/32QMdTO5T1ZIp9gQur0HkCyFs7Awskr10JKXFXwpAhiCuYX5oGXnRGbw==}
@@ -16766,7 +16766,7 @@ packages:
       normalize-path: 3.0.0
       schema-utils: 4.2.0
       serialize-javascript: 6.0.2
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /core-js-compat@3.35.1:
     resolution: {integrity: sha512-sftHa5qUJY3rs9Zht1WEnmkvXputCyDBczPnr7QDgL8n3qrF3CMXY4VPSYtOLLiOUJcah2WNXREd48iOl6mQIw==}
@@ -16982,7 +16982,7 @@ packages:
       postcss-modules-values: 4.0.0(postcss@8.4.35)
       postcss-value-parser: 4.2.0
       semver: 7.6.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /css-loader@6.10.0(webpack@5.90.3):
     resolution: {integrity: sha512-LTSA/jWbwdMlk+rhmElbDR2vbtQoTBPr7fkJE+mxrHj+7ru0hUmHafDRzWIjIHTwpitWVaqY2/UWGRca3yUgRw==}
@@ -17056,7 +17056,7 @@ packages:
       schema-utils: 4.2.0
       serialize-javascript: 6.0.2
       source-map: 0.6.1
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /css-select@4.3.0:
     resolution: {integrity: sha512-wPpOYtnsVontu2mODhA19JrqWxNsfdatRKd64kmpRbQgh1KtItko5sTnEpPdpSaJszTOhEMlF/RPz28qj4HqhQ==}
@@ -19662,7 +19662,7 @@ packages:
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /file-loader@6.2.0(webpack@5.90.3):
     resolution: {integrity: sha512-qo3glqyTa61Ytg4u73GultjHGjdRyig3tG6lPtyX/jOEJvHif9uB0/OCI2Kif6ctF3caQTW2G5gym21oAsI4pw==}
@@ -19873,7 +19873,7 @@ packages:
       semver: 7.6.0
       tapable: 1.1.3
       typescript: 5.3.3
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /form-data-encoder@2.1.4:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
@@ -24190,7 +24190,7 @@ packages:
     dependencies:
       schema-utils: 4.2.0
       tapable: 2.2.1
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /minimalistic-assert@1.0.1:
     resolution: {integrity: sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A==}
@@ -25610,7 +25610,7 @@ packages:
       jiti: 1.21.0
       postcss: 8.4.35
       semver: 7.6.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - typescript
 
@@ -26442,7 +26442,7 @@ packages:
       strip-ansi: 6.0.1
       text-table: 0.2.0
       typescript: 5.3.3
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -26548,7 +26548,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.24.0
       react-loadable: /@docusaurus/react-loadable@5.5.2(react@18.2.0)
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /react-native-elements@3.4.3(react-native-safe-area-context@4.8.2)(react-native-vector-icons@10.0.3)(react-native@0.73.2)(react@18.2.0):
     resolution: {integrity: sha512-VtZc25EecPZyUBER85zFK9ZbY6kkUdcm1ZwJ9hdoGSCr1R/GFgxor4jngOcSYeMvQ+qimd5No44OVJW3rSJECA==}
@@ -30181,7 +30181,7 @@ packages:
       loader-utils: 2.0.4
       mime-types: 2.1.35
       schema-utils: 3.3.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /url-loader@4.1.1(file-loader@6.2.0)(webpack@5.90.3):
     resolution: {integrity: sha512-3BTV812+AVHHOJQO8O5MkWgZ5aosP7GnROJwvzLS9hWDj00lZ6Z0wNak423Lp9PBZN05N+Jk/N5Si8jRAlGyWA==}
@@ -30892,7 +30892,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.2.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /webpack-dev-middleware@6.1.1(webpack@5.89.0):
     resolution: {integrity: sha512-y51HrHaFeeWir0YO4f0g+9GwZawuigzcAdRNon6jErXy/SqV/+O6eaVAzDqE6t3e3NpGeR5CS+cCDaTC+V3yEQ==}
@@ -31003,7 +31003,7 @@ packages:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
       webpack-dev-middleware: 5.3.3(webpack@5.90.1)
       ws: 8.16.0
     transitivePeerDependencies:
@@ -31118,45 +31118,6 @@ packages:
       - uglify-js
     dev: true
 
-  /webpack@5.90.1:
-    resolution: {integrity: sha512-SstPdlAC5IvgFnhiRok8hqJo/+ArAbNv7rhU4fnWGHNVfN59HSQFaxZDSAL3IFG2YmqxuRs+IU33milSxbPlog==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    peerDependencies:
-      webpack-cli: '*'
-    peerDependenciesMeta:
-      webpack-cli:
-        optional: true
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.5
-      '@webassemblyjs/ast': 1.11.6
-      '@webassemblyjs/wasm-edit': 1.11.6
-      '@webassemblyjs/wasm-parser': 1.11.6
-      acorn: 8.11.3
-      acorn-import-assertions: 1.9.0(acorn@8.11.3)
-      browserslist: 4.23.0
-      chrome-trace-event: 1.0.3
-      enhanced-resolve: 5.15.0
-      es-module-lexer: 1.4.1
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.10(webpack@5.90.1)
-      watchpack: 2.4.0
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-
   /webpack@5.90.1(webpack-cli@5.1.4):
     resolution: {integrity: sha512-SstPdlAC5IvgFnhiRok8hqJo/+ArAbNv7rhU4fnWGHNVfN59HSQFaxZDSAL3IFG2YmqxuRs+IU33milSxbPlog==}
     engines: {node: '>=10.13.0'}
@@ -31246,7 +31207,7 @@ packages:
       consola: 2.15.3
       pretty-time: 1.1.0
       std-env: 3.7.0
-      webpack: 5.90.1
+      webpack: 5.90.1(webpack-cli@5.1.4)
 
   /websocket-driver@0.7.4:
     resolution: {integrity: sha512-b17KeDIQVjvb0ssuSDF2cYXSg2iztliJ4B9WdsuB6J952qCPKmnVq4DyW5motImXHDC1cBT/1UezrJVsKw5zjg==}
