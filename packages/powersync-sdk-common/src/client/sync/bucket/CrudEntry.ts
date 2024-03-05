@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import isEqual from 'lodash/isEqual';
 
 /**
  * 64-bit unsigned integer stored as a string in base-10.
@@ -109,7 +109,7 @@ export class CrudEntry {
   }
 
   equals(entry: CrudEntry) {
-    return _.isEqual(this.toComparisonArray(), entry.toComparisonArray());
+    return isEqual(this.toComparisonArray(), entry.toComparisonArray());
   }
 
   /**

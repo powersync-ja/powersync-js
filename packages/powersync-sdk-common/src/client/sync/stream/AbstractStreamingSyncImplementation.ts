@@ -1,4 +1,6 @@
-import _ from 'lodash';
+import throttle from 'lodash/throttle';
+import defer from 'lodash/defer';
+
 import Logger, { ILogger } from 'js-logger';
 
 import {
@@ -76,7 +78,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
       }
     });
 
-    this.triggerCrudUpload = _.throttle(
+    this.triggerCrudUpload = throttle(
       () => {
         if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
           return;
@@ -206,6 +208,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           after: after
         }));
 
+        // These are compared by reference
         let targetCheckpoint: Checkpoint | null = null;
         let validatedCheckpoint: Checkpoint | null = null;
         let appliedCheckpoint: Checkpoint | null = null;
@@ -223,7 +226,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
             // There is a connection now
-            _.defer(() => this.triggerCrudUpload());
+            defer(() => this.triggerCrudUpload());
             this.updateSyncStatus({
               connected: true
             });
@@ -256,7 +259,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
               // Continue waiting.
               // landing here the whole time
             } else {
-              appliedCheckpoint = _.clone(targetCheckpoint);
+              appliedCheckpoint = targetCheckpoint;
               this.logger.debug('validated checkpoint', appliedCheckpoint);
               this.updateSyncStatus({
                 connected: true,
@@ -267,7 +270,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
               });
             }
 
-            validatedCheckpoint = _.clone(targetCheckpoint);
+            validatedCheckpoint = targetCheckpoint;
           } else if (isStreamingSyncCheckpointDiff(line)) {
             // TODO: It may be faster to just keep track of the diff, instead of the entire checkpoint
             if (targetCheckpoint == null) {
@@ -319,12 +322,12 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           } else {
             this.logger.debug('Sync complete');
 
-            if (_.isEqual(targetCheckpoint, appliedCheckpoint)) {
+            if (targetCheckpoint === appliedCheckpoint) {
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date()
               });
-            } else if (_.isEqual(validatedCheckpoint, targetCheckpoint)) {
+            } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
               if (!result.checkpointValid) {
                 // This means checksums failed. Start again with a new checkpoint.
@@ -335,7 +338,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
                 // Checksums valid, but need more data for a consistent checkpoint.
                 // Continue waiting.
               } else {
-                appliedCheckpoint = _.clone(targetCheckpoint);
+                appliedCheckpoint = targetCheckpoint;
                 this.updateSyncStatus({
                   connected: true,
                   lastSyncedAt: new Date(),
@@ -378,7 +381,10 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     const updatedStatus = new SyncStatus({
       connected: options.connected ?? this.syncStatus.connected,
       lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
-      dataFlow: _.merge(_.clone(this.syncStatus.dataFlowStatus), options.dataFlow ?? {})
+      dataFlow: {
+        ...this.syncStatus.dataFlowStatus,
+        ...options.dataFlow
+      }
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {

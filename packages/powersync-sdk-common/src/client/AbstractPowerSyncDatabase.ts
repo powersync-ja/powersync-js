@@ -1,24 +1,25 @@
-import _ from 'lodash';
 import { Mutex } from 'async-mutex';
+import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
+import intersection from 'lodash/intersection';
+import throttle from 'lodash/throttle';
 import { DBAdapter, QueryResult, Transaction, isBatchedUpdateNotification } from '../db/DBAdapter';
-import { Schema } from '../db/schema/Schema';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
+import { Schema } from '../db/schema/Schema';
+import { BaseObserver } from '../utils/BaseObserver';
+import { mutexRunExclusive } from '../utils/mutex';
+import { quoteIdentifier } from '../utils/strings';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
+import { CrudBatch } from './sync/bucket/CrudBatch';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
+import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation';
-import { CrudBatch } from './sync/bucket/CrudBatch';
-import { CrudTransaction } from './sync/bucket/CrudTransaction';
-import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
-import { mutexRunExclusive } from '../utils/mutex';
-import { BaseObserver } from '../utils/BaseObserver';
-import { EventIterator } from 'event-iterator';
-import { quoteIdentifier } from '../utils/strings';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -538,25 +539,26 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    */
   async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
-    //Fetch initial data
+    // Fetch initial data
     yield await this.executeReadOnly(sql, parameters);
 
-    const resolvedTables = options?.tables ?? [];
+    const resolvedTables = options?.tables ? [...options.tables] : [];
     if (!options?.tables) {
       const explained = await this.getAll<{ opcode: string; p3: number; p2: number }>(`EXPLAIN ${sql}`, parameters);
-      const rootPages = _.chain(explained)
-        .filter((row) => row['opcode'] == 'OpenRead' && row['p3'] == 0 && _.isNumber(row['p2']))
-        .map((row) => row['p2'])
-        .value();
+      const rootPages = explained
+        .filter((row) => row.opcode == 'OpenRead' && row.p3 == 0 && typeof row.p2 == 'number')
+        .map((row) => row.p2);
       const tables = await this.getAll<{ tbl_name: string }>(
-        `SELECT tbl_name FROM sqlite_master WHERE rootpage IN (SELECT json_each.value FROM json_each(?))`,
+        `SELECT DISTINCT tbl_name FROM sqlite_master WHERE rootpage IN (SELECT json_each.value FROM json_each(?))`,
         [JSON.stringify(rootPages)]
       );
-      tables.forEach((t) => resolvedTables.push(t.tbl_name.replace(POWERSYNC_TABLE_MATCH, '')));
+      for (let table of tables) {
+        resolvedTables.push(table.tbl_name.replace(POWERSYNC_TABLE_MATCH, ''));
+      }
     }
     for await (const event of this.onChange({
       ...(options ?? {}),
-      tables: _.uniq(resolvedTables)
+      tables: resolvedTables
     })) {
       yield await this.executeReadOnly(sql, parameters);
     }
@@ -578,12 +580,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = _.throttle(
+      const flushTableUpdates = throttle(
         () => {
-          const intersection = _.intersection(watchedTables, throttledTableUpdates);
-          if (intersection.length) {
+          const changedTables = intersection(watchedTables, throttledTableUpdates);
+          if (changedTables.length > 0) {
             eventOptions.push({
-              changedTables: intersection
+              changedTables
             });
           }
           throttledTableUpdates = [];

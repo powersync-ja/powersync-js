@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { BaseListener, BaseObserver, SyncStatusOptions } from '@journeyapps/powersync-sdk-common';
 
 export enum SharedSyncMessageType {
@@ -38,7 +37,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   }
 
   updateState(status: SharedSyncStatus) {
-    this.status = _.merge(this.status, status);
+    this.status = {
+      ...this.status,
+      ...status
+    };
     this.iterateListeners((cb) => cb.statusChanged?.(status));
   }
 }

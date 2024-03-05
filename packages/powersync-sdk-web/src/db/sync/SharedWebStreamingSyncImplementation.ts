@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import * as Comlink from 'comlink';
 import {
