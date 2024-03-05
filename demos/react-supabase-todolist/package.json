@@ -1,5 +1,5 @@
 {
-  "name": "@journeyapps/powersync-nextjs-demo",
+  "name": "@journeyapps/powersync-react-supabase-todolist",
   "version": "0.1.11",
   "private": true,
   "scripts": {
