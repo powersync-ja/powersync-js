@@ -1,5 +1,3 @@
-import isEqual from 'lodash/isEqual';
-
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
   uploading: boolean;
@@ -49,7 +47,7 @@ export class SyncStatus {
   }
 
   isEqual(status: SyncStatus) {
-    return isEqual(this.options, status.options);
+    return JSON.stringify(this.options) == JSON.stringify(status.options);
   }
 
   getMessage() {

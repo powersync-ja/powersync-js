@@ -1,5 +1,4 @@
 import throttle from 'lodash/throttle';
-import defer from 'lodash/defer';
 
 import Logger, { ILogger } from 'js-logger';
 
@@ -226,7 +225,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
             // There is a connection now
-            defer(() => this.triggerCrudUpload());
+            Promise.resolve().then(() => this.triggerCrudUpload());
             this.updateSyncStatus({
               connected: true
             });

@@ -1,7 +1,6 @@
 import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
-import intersection from 'lodash/intersection';
 import throttle from 'lodash/throttle';
 import { DBAdapter, QueryResult, Transaction, isBatchedUpdateNotification } from '../db/DBAdapter';
 import { SyncStatus } from '../db/crud/SyncStatus';
@@ -574,21 +573,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
     const resolvedOptions = options ?? {};
-    const watchedTables = resolvedOptions.tables ?? [];
+    const watchedTables = new Set(resolvedOptions.tables ?? []);
 
-    let throttledTableUpdates: string[] = [];
+    let changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
       const flushTableUpdates = throttle(
         () => {
-          const changedTables = intersection(watchedTables, throttledTableUpdates);
-          if (changedTables.length > 0) {
+          if (changedTables.size > 0) {
             eventOptions.push({
-              changedTables
+              changedTables: [...changedTables]
             });
           }
-          throttledTableUpdates = [];
+          changedTables.clear();
         },
         throttleMs,
         { leading: false, trailing: true }
@@ -610,7 +608,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
             ? filteredTables
             : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
 
-          throttledTableUpdates.push(...mappedTableNames);
+          for (let table of mappedTableNames) {
+            changedTables.add(table);
+          }
 
           flushTableUpdates();
         }
