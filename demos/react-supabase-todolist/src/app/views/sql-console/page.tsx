@@ -1,5 +1,4 @@
 'use client';
-import _ from 'lodash';
 import React from 'react';
 import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
@@ -24,9 +23,9 @@ export default function SQLConsolePage() {
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
-            field,
-            flex: 1
-          }))
+          field,
+          flex: 1
+        }))
         : [],
       rows: querySQLResult
     };
