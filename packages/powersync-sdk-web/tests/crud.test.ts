@@ -163,8 +163,8 @@ describe('CRUD Tests', () => {
     const tx = (await powersync.getNextCrudTransaction())!;
     expect(tx.transactionId).equals(1);
     const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'logs', testId, 1, {
-      level: 'INFO',
-      content: 'test log'
+      content: 'test log',
+      level: 'INFO'
     });
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
   });
