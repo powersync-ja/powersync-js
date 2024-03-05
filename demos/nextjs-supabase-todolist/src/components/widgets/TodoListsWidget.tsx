@@ -42,7 +42,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
       {listRecords.map((r) => (
         <ListItemWidget
           key={r.id}
-          title={r.name}
+          title={r.name ?? ''}
           description={description(r.total_tasks, r.completed_tasks)}
           selected={r.id == props.selectedId}
           onDelete={() => deleteList(r.id)}

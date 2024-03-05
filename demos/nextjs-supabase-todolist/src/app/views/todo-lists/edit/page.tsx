@@ -55,8 +55,8 @@ const TodoEditSection = () => {
       updatedRecord.completed_at = new Date().toISOString();
       updatedRecord.completed_by = userID;
     } else {
-      updatedRecord.completed_at = undefined;
-      updatedRecord.completed_by = undefined;
+      updatedRecord.completed_at = null;
+      updatedRecord.completed_by = null;
     }
     await powerSync.execute(
       `UPDATE ${TODOS_TABLE}
@@ -111,7 +111,7 @@ const TodoEditSection = () => {
                 key={r.id}
                 description={r.description}
                 onDelete={() => deleteTodo(r.id)}
-                isComplete={r.completed}
+                isComplete={r.completed == 1}
                 toggleCompletion={() => toggleCompletion(r, !r.completed)}
               />
             ))}

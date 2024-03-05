@@ -6,7 +6,7 @@ import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
 export type TodoItemWidgetProps = {
-  description: string;
+  description: string | null;
   isComplete: boolean;
   onDelete: () => void;
   toggleCompletion: () => void;
