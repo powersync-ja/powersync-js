@@ -1,4 +1,4 @@
-# PowerSync Next.JS exxample
+# PowerSync Next.js example
 
 This example is built using [Next.js](https://nextjs.org/) and the [PowerSync JS web SDK](https://docs.powersync.com/client-sdk-references/js-web).
 

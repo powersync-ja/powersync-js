@@ -45,6 +45,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 - [demos/angular-supabase-todolist](./demos/angular-supabase-todolist/README.md) An Angular to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/example-webpack](./demos/example-webpack/README.md): A minimal example demonstrating bundling with Webpack.
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
+- [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.
 
 # Development
 

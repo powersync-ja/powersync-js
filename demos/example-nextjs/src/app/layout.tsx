@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <title>PowerSync Next.JS Example</title>
+        <title>PowerSync Next.js Example</title>
       </head>
       <body>
         <CssBaseline />
