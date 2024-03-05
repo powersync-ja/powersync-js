@@ -70,7 +70,7 @@ export default function TodoListsPage() {
           <DialogTitle id="alert-dialog-title">{'Create Todo List'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a name for a new todo list</DialogContentText>
-            <TextField sx={{ marginTop: '10px' }} fullWidth inputRef={nameInputRef} label="Name" autoFocus />
+            <TextField sx={{ marginTop: '10px' }} fullWidth inputRef={nameInputRef} label="List Name" autoFocus />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowPrompt(false)}>Cancel</Button>

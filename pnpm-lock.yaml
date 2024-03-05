@@ -131,15 +131,6 @@ importers:
 
   demos/nextjs-supabase-todolist:
     dependencies:
-      '@emotion/react':
-        specifier: ^11.11.3
-        version: 11.11.3(@types/react@18.2.55)(react@18.2.0)
-      '@emotion/styled':
-        specifier: ^11.11.0
-        version: 11.11.0(@emotion/react@11.11.3)(@types/react@18.2.55)(react@18.2.0)
-      '@fontsource/roboto':
-        specifier: ^5.0.8
-        version: 5.0.8
       '@journeyapps/powersync-react':
         specifier: workspace:*
         version: link:../../packages/powersync-react
@@ -149,9 +140,6 @@ importers:
       '@journeyapps/wa-sqlite':
         specifier: ~0.1.1
         version: 0.1.1
-      '@mui/icons-material':
-        specifier: ^5.15.8
-        version: 5.15.10(@mui/material@5.15.10)(@types/react@18.2.55)(react@18.2.0)
       '@mui/material':
         specifier: ^5.15.7
         version: 5.15.10(@emotion/react@11.11.3)(@emotion/styled@11.11.0)(@types/react@18.2.55)(react-dom@18.2.0)(react@18.2.0)
@@ -161,18 +149,12 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.39.3
         version: 2.39.3
-      formik:
-        specifier: ^2.4.5
-        version: 2.4.5(react@18.2.0)
       js-logger:
         specifier: ^1.6.1
         version: 1.6.1
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      next:
-        specifier: 14.1.0
-        version: 14.1.0(@babel/core@7.23.9)(react-dom@18.2.0)(react@18.2.0)(sass@1.70.0)
       react:
         specifier: ^18
         version: 18.2.0

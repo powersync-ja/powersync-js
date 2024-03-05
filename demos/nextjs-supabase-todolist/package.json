@@ -9,20 +9,14 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.3",
-    "@emotion/styled": "^11.11.0",
-    "@fontsource/roboto": "^5.0.8",
     "@journeyapps/powersync-react": "workspace:*",
     "@journeyapps/powersync-sdk-web": "workspace:*",
     "@journeyapps/wa-sqlite": "~0.1.1",
-    "@mui/icons-material": "^5.15.8",
     "@mui/material": "^5.15.7",
     "@mui/x-data-grid": "^6.19.3",
     "@supabase/supabase-js": "^2.39.3",
-    "formik": "^2.4.5",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
-    "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
     "react-router-dom": "^6.22.1"
