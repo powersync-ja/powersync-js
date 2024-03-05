@@ -17,9 +17,9 @@ export default function SQLConsolePage() {
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
-            field,
-            flex: 1
-          }))
+          field,
+          flex: 1
+        }))
         : [],
       rows: querySQLResult
     };
@@ -85,7 +85,6 @@ export default function SQLConsolePage() {
 namespace S {
   export const MainContainer = styled(Box)`
     padding: 20px;
-    background-color: #000;
   `;
 
   export const QueryResultContainer = styled(Box)`

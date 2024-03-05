@@ -1,12 +1,9 @@
 import { column, Schema, TableV2 } from '@journeyapps/powersync-sdk-web';
 
-const documents = new TableV2(
-  {
-    title: column.text,
-    created_at: column.text
-  },
-  { indexes: { list: ['list_id'] } }
-);
+const documents = new TableV2({
+  title: column.text,
+  created_at: column.text
+});
 
 const document_updates = new TableV2(
   {

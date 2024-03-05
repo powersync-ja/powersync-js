@@ -6,7 +6,7 @@ import {
   UpdateType
 } from '@journeyapps/powersync-sdk-web';
 
-import { SupabaseClient, createClient, Session, PostgrestError } from '@supabase/supabase-js';
+import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
 
 export type SupabaseConfig = {
   supabaseUrl: string;
@@ -32,8 +32,8 @@ export type SupabaseConnectorListener = {
 };
 
 export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
-  private _client: SupabaseClient | null;
-  private _config: SupabaseConfig | null;
+  readonly client: SupabaseClient;
+  readonly config: SupabaseConfig;
 
   ready: boolean;
 
@@ -41,28 +41,19 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
   constructor() {
     super();
-    this._client = null;
-    this._config = {
+    this.config = {
       supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
       powersyncUrl: import.meta.env.VITE_POWERSYNC_URL,
       supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
     };
+
+    this.client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, {
+      auth: {
+        persistSession: true
+      }
+    });
     this.currentSession = null;
     this.ready = false;
-  }
-
-  get client(): SupabaseClient {
-    if (!this._client) {
-      throw new Error('Supabase client has not been initialized yet');
-    }
-    return this._client;
-  }
-
-  get config(): SupabaseConfig {
-    if (!this._config) {
-      throw new Error('Supabase client has not been initialized yet');
-    }
-    return this._config;
   }
 
   async init() {
@@ -70,11 +61,6 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
       return;
     }
 
-    this._client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey, {
-      auth: {
-        persistSession: true
-      }
-    });
     const sessionResponse = await this.client.auth.getSession();
     this.updateSession(sessionResponse.data.session);
 

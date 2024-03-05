@@ -37,41 +37,17 @@ export type SupabaseConnectorListener = {
 };
 
 export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
-  private _client: SupabaseClient | null;
-  private _config: SupabaseConfig | null;
-
-  ready: boolean;
+  readonly client: SupabaseClient;
+  readonly config: SupabaseConfig;
 
   constructor() {
     super();
-    this._client = null;
-    this._config = null;
-    this.ready = false;
-  }
-
-  get client(): SupabaseClient {
-    if (!this._client) {
-      throw new Error('Supabase client has not been initialized yet');
-    }
-    return this._client;
-  }
-
-  get config(): SupabaseConfig {
-    if (!this._config) {
-      throw new Error('Supabase client has not been initialized yet');
-    }
-    return this._config;
-  }
-
-  async init() {
-    if (this.ready) {
-      return;
-    }
-    const credentialsResponse = await fetch('/api/supabase');
-    this._config = await credentialsResponse.json();
-    this._client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey);
-    this.ready = true;
-    this.iterateListeners((cb) => cb.initialized?.());
+    this.config = {
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+      powersyncUrl: import.meta.env.VITE_POWERSYNC_URL,
+      supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY
+    };
+    this.client = createClient(this.config.supabaseUrl, this.config.supabaseAnonKey);
   }
 
   async fetchCredentials() {

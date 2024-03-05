@@ -14,24 +14,25 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import * as Y from 'yjs';
 import './tiptap-styles.scss';
+import { useParams } from 'react-router';
 
-export default function EditorPage({ params }: { params: { document_id: string } }) {
+export default function EditorPage() {
   const powerSync = usePowerSync();
-  const documentId = params.document_id;
+  const { id: documentId } = useParams();
 
   // cache the last edited document ID in local storage
   if (window.localStorage.getItem('lastDocumentId') != documentId) {
-    window.localStorage.setItem('lastDocumentId', documentId);
+    window.localStorage.setItem('lastDocumentId', documentId!);
   }
 
   const [totalDocUpdates, setTotalDocUpdates] = useState(0);
 
   const ydoc = useMemo(() => {
     return new Y.Doc();
-  }, [params.document_id]);
+  }, [documentId]);
 
   useEffect(() => {
-    const provider = new PowerSyncYjsProvider(ydoc, powerSync, documentId);
+    const provider = new PowerSyncYjsProvider(ydoc, powerSync, documentId!);
     return () => {
       provider.destroy();
     };

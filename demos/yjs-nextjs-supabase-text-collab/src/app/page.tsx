@@ -2,11 +2,11 @@
 
 import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
-import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/components/providers/SystemProvider';
+import { useNavigate } from 'react-router';
 
 export default function EntryPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const connector = useSupabase();
 
   React.useEffect(() => {
@@ -19,7 +19,7 @@ export default function EntryPage() {
       // see if there is a cached value of last document edited
       let lastDocumentId: string | null = window.localStorage.getItem('lastDocumentId');
       if (lastDocumentId) {
-        router.push('/editor/' + lastDocumentId);
+        navigate('/editor/' + lastDocumentId);
         return;
       }
       // otherwise, create a new document
@@ -34,18 +34,8 @@ export default function EntryPage() {
       // redirect user to the document
       lastDocumentId = data.id;
       window.localStorage.setItem('lastDocumentId', lastDocumentId || '');
-      router.push('/editor/' + lastDocumentId);
+      navigate('/editor/' + lastDocumentId);
     };
-
-    if (!connector.ready) {
-      console.log('PowerSync<>Supabase connector not yet ready; registering listener');
-      const listener = connector.registerListener({
-        initialized: () => {
-          redirectToDocument();
-        }
-      });
-      return () => listener?.();
-    }
 
     redirectToDocument();
   }, []);
