@@ -153,7 +153,8 @@ export class SharedSyncImplementation
             activePort: lastPort
           };
 
-          abortController.signal.onabort = reject;
+          // Resolving will make it retry
+          abortController.signal.onabort = () => resolve();
           try {
             resolve(await lastPort.clientProvider.uploadCrud());
           } catch (ex) {
@@ -230,6 +231,7 @@ export class SharedSyncImplementation
     }
 
     this.ports.splice(index, 1);
+
     /**
      * The port might currently be in use. Any active functions might
      * not resolve. Abort them here.

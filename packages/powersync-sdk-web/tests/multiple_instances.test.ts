@@ -208,6 +208,7 @@ describe('Multiple Instances', () => {
     stream1.triggerCrudUpload();
     // It should now upload from the first client
     await upload1TriggeredPromise;
+
     expect(spy1).toHaveBeenCalledOnce();
 
     await stream1.dispose();
