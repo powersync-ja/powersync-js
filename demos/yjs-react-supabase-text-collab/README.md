@@ -4,7 +4,7 @@ This is a simple CRDT text collaboration demo powered by [Yjs](https://github.co
 
 <https://github.com/powersync-ja/powersync-web-sdk/assets/93317/fc0c2b2f-feb7-441b-895a-94893db46563>
 
-This demo is built using [Next.js](https://nextjs.org/) and the [PowerSync JS web SDK](https://docs.powersync.com/client-sdk-references/js-web).
+This demo is built using the [PowerSync JS web SDK](https://docs.powersync.com/client-sdk-references/js-web).
 
 ## Setup Instructions
 
@@ -76,7 +76,7 @@ Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a
 
 ### 7. Set up local environment variables
 
-To set up the environment variables for the demo Next.js app:
+To set up the environment variables for the demo app:
 
 1. Copy the `.env.local.template` file to `.env.local`:
 
@@ -85,9 +85,9 @@ cp .env.local.template .env.local
 ```
 
 2. Edit `.env.local` and populate the relevant values:
-   - Set `SUPABASE_URL` to your Supabase project URL. You can find this by going to the main page for the project on the Supabase dashboard and then look for "Project URL" in the "Project API" panel.
-   - Set `SUPABASE_ANON_KEY` to your Supabase API key. This can be found right below the Project URL on the Supabase dashboard.
-   - Set `POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 5)
+   - Set `VITE_SUPABASE_URL` to your Supabase project URL. You can find this by going to the main page for the project on the Supabase dashboard and then look for "Project URL" in the "Project API" panel.
+   - Set `VITE_SUPABASE_ANON_KEY` to your Supabase API key. This can be found right below the Project URL on the Supabase dashboard.
+   - Set `VITE_POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 5)
 
 ### 8. Run the demo app
 
