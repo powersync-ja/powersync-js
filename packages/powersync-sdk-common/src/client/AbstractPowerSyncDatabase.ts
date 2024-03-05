@@ -64,10 +64,23 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
   initialized: () => void;
 }
 
+export interface PowerSyncCloseOptions {
+  /**
+   * Disconnect the sync stream client if connected.
+   * This is usually true, but can be false for Web when using
+   * multiple tabs and a shared sync provider.
+   */
+  disconnect?: boolean;
+}
+
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
   clearLocal: true
+};
+
+export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
+  disconnect: true
 };
 
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
@@ -223,6 +236,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.disconnect();
 
     await this.waitForReady();
+
+    if (this.closed) {
+      throw new Error('Cannot connect using a closed client');
+    }
+
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
@@ -292,13 +310,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Once close is called, this connection cannot be used again - a new one
    * must be constructed.
-   *
-   * @param disconnect Disconnect the sync stream client. This is usually true,
-   * but can be false for Web when using multiple tabs and a shared sync provider.
    */
-  async close(disconnect = true) {
+  async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
 
+    const { disconnect } = options;
     if (disconnect) {
       await this.disconnect();
     }

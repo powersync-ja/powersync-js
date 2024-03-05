@@ -49,6 +49,11 @@ export type WrappedSyncPort = {
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
 };
 
+export type RemoteOperationAbortController = {
+  controller: AbortController;
+  activePort: WrappedSyncPort;
+};
+
 /**
  * Shared sync implementation which runs inside a shared webworker
  */
@@ -62,6 +67,9 @@ export class SharedSyncImplementation
   protected abortController?: AbortController;
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
+
+  protected fetchCredentialsController?: RemoteOperationAbortController;
+  protected uploadDataController?: RemoteOperationAbortController;
 
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
@@ -117,12 +125,43 @@ export class SharedSyncImplementation
       remote: new WebRemote({
         fetchCredentials: async () => {
           const lastPort = this.ports[this.ports.length - 1];
-          return lastPort.clientProvider.fetchCredentials();
+          return new Promise(async (resolve, reject) => {
+            const abortController = new AbortController();
+            this.fetchCredentialsController = {
+              controller: abortController,
+              activePort: lastPort
+            };
+
+            abortController.signal.onabort = reject;
+            try {
+              resolve(await lastPort.clientProvider.fetchCredentials());
+            } catch (ex) {
+              reject(ex);
+            } finally {
+              this.fetchCredentialsController = undefined;
+            }
+          });
         }
       }),
       uploadCrud: async () => {
         const lastPort = this.ports[this.ports.length - 1];
-        return lastPort.clientProvider.uploadCrud();
+
+        return new Promise(async (resolve, reject) => {
+          const abortController = new AbortController();
+          this.uploadDataController = {
+            controller: abortController,
+            activePort: lastPort
+          };
+
+          abortController.signal.onabort = reject;
+          try {
+            resolve(await lastPort.clientProvider.uploadCrud());
+          } catch (ex) {
+            reject(ex);
+          } finally {
+            this.uploadDataController = undefined;
+          }
+        });
       },
       ...params.streamOptions,
       // Logger cannot be transferred just yet
@@ -191,6 +230,15 @@ export class SharedSyncImplementation
     }
 
     this.ports.splice(index, 1);
+    /**
+     * The port might currently be in use. Any active functions might
+     * not resolve. Abort them here.
+     */
+    [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
+      if (abortController?.activePort.port == port) {
+        abortController!.controller.abort();
+      }
+    });
   }
 
   triggerCrudUpload() {

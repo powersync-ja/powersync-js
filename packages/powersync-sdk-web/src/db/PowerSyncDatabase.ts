@@ -4,7 +4,9 @@ import {
   PowerSyncBackendConnector,
   SqliteBucketStorage,
   BucketStorageAdapter,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  PowerSyncCloseOptions,
+  DEFAULT_POWERSYNC_CLOSE_OPTIONS
 } from '@journeyapps/powersync-sdk-common';
 
 import { WebRemote } from './sync/WebRemote';
@@ -24,6 +26,12 @@ export interface WebPowerSyncFlags {
    * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
    */
   ssrMode?: boolean;
+  /**
+   * Externally unload open PowerSync database instances when the window closes.
+   * Setting this to `true` requires calling `close` on all open PowerSyncDatabase
+   * instances before the window unloads
+   */
+  externallyUnload?: boolean;
 }
 
 export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
@@ -31,27 +39,37 @@ export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
 }
 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  // static OPEN_INSTANCES = new Set<PowerSyncDatabase>();
+  protected unloadListener?: () => Promise<void>;
+
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
-    // Make sure to close the database when the window closes
-    this.closeWithoutDisconnect = this.closeWithoutDisconnect.bind(this);
-    window.addEventListener('unload', this.closeWithoutDisconnect);
+    // PowerSyncDatabase.OPEN_INSTANCES.add(this);
+    const { flags } = this.options;
+
+    if (flags?.enableMultiTabs && !flags.externallyUnload) {
+      this.unloadListener = () => this.close({ disconnect: false });
+      window.addEventListener('unload', this.unloadListener);
+    }
   }
 
   async _initialize(): Promise<void> {}
 
-  close(disconnect = true): Promise<void> {
-    window.removeEventListener('unload', this.closeWithoutDisconnect);
-    return super.close(disconnect);
-  }
-
   /**
-   * Closes the database connections, but doesn't disconnect
-   * the shared sync manager.
+   * Closes the database connection.
+   * By default the sync stream client is only disconnected if
+   * multiple tabs are not enabled.
    */
-  protected closeWithoutDisconnect() {
-    return this.close(false);
+  close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS): Promise<void> {
+    if (this.unloadListener) {
+      window.removeEventListener('unload', this.unloadListener);
+    }
+
+    return super.close({
+      // Don't disconnect by default if multiple tabs are enabled
+      disconnect: options.disconnect ?? !this.options.flags?.enableMultiTabs
+    });
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
