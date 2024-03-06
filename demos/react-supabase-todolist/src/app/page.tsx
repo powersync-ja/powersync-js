@@ -16,7 +16,7 @@ export type LoginFormParams = {
  */
 export default function EntryPage() {
   const connector = useSupabase();
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   const navigateToMainView = () => {
     if (connector?.currentSession) {
