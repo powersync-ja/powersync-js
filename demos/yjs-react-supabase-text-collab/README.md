@@ -94,10 +94,10 @@ cp .env.local.template .env.local
 In the repo directory, run the following to start the development server:
 
 ```bash
-pnpm watch
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to try out the demo.
+Open [http://localhost:5173](http://localhost:5173) with your browser to try out the demo.
 
 To try out the collaborative editing, copy and paste the URL of the page and open it in another browser (or another browser window).
 

@@ -10,7 +10,8 @@ export default defineConfig({
     outDir: '../dist',
     rollupOptions: {
       input: 'src/index.html'
-    }
+    },
+    emptyOutDir: true
   },
   envDir: '..', // Use this dir for env vars, not 'src'.
   optimizeDeps: {

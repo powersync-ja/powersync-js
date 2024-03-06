@@ -63,6 +63,9 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     } else if (error instanceof FunctionsFetchError) {
       console.log('Supabase edge function: Fetch error:', error.message);
     }
+    if (error) {
+      throw error;
+    }
 
     return {
       client: this.client,

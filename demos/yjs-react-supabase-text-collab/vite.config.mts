@@ -13,7 +13,8 @@ export default defineConfig({
     outDir: '../dist',
     rollupOptions: {
       input: 'src/index.html'
-    }
+    },
+    emptyOutDir: true
   },
   esbuild: {},
   resolve: {
@@ -34,6 +35,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico'],
+      workbox: {
+        globPatterns: [
+          '**/*.{js,css,html,svg}',
+          // Be selective with the fonts we're pre-caching, otherwise we end up with quite a lot
+          '**/lato-{normal,heavy}-*.woff2'
+        ]
+      },
       manifest: {
         theme_color: '#c44eff',
         background_color: '#c44eff',

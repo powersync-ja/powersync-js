@@ -13,9 +13,9 @@ export default defineConfig({
     outDir: '../dist',
     rollupOptions: {
       input: 'src/index.html'
-    }
+    },
+    emptyOutDir: true
   },
-  esbuild: {},
   resolve: {
     alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }]
   },
