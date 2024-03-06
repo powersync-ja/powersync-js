@@ -60,6 +60,7 @@
     "style-loader": "^3.3.4",
     "supabase": "1.142.2",
     "vite": "^5.1.5",
+    "vite-plugin-pwa": "^0.19.2",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
   }

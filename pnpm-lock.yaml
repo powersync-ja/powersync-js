@@ -805,9 +805,12 @@ importers:
       vite:
         specifier: ^5.1.5
         version: 5.1.5(@types/node@20.11.24)
+      vite-plugin-pwa:
+        specifier: ^0.19.2
+        version: 0.19.2(vite@5.1.5)(workbox-build@7.0.0)(workbox-window@7.0.0)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.1.5)
+        version: 1.4.1(rollup@2.79.1)(vite@5.1.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.1.5)
@@ -30598,6 +30601,28 @@ packages:
       - supports-color
     dev: true
 
+  /vite-plugin-pwa@0.19.2(vite@5.1.5)(workbox-build@7.0.0)(workbox-window@7.0.0):
+    resolution: {integrity: sha512-LSQJFPxCAQYbRuSyc9EbRLRqLpaBA9onIZuQFomfUYjWSgHuQLonahetDlPSC9zsxmkSEhQH8dXZN8yL978h3w==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@vite-pwa/assets-generator': ^0.2.4
+      vite: ^3.1.0 || ^4.0.0 || ^5.0.0
+      workbox-build: ^7.0.0
+      workbox-window: ^7.0.0
+    peerDependenciesMeta:
+      '@vite-pwa/assets-generator':
+        optional: true
+    dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
+      fast-glob: 3.3.2
+      pretty-bytes: 6.1.1
+      vite: 5.1.5(@types/node@20.11.24)
+      workbox-build: 7.0.0
+      workbox-window: 7.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /vite-plugin-top-level-await@1.4.1(rollup@2.79.1)(vite@5.1.4):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
@@ -30612,6 +30637,20 @@ packages:
       - rollup
     dev: true
 
+  /vite-plugin-top-level-await@1.4.1(rollup@2.79.1)(vite@5.1.5):
+    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
+    peerDependencies:
+      vite: '>=2.8'
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
+      '@swc/core': 1.4.2
+      uuid: 9.0.1
+      vite: 5.1.5(@types/node@20.11.24)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+    dev: true
+
   /vite-plugin-top-level-await@1.4.1(vite@5.1.1):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
@@ -30621,20 +30660,6 @@ packages:
       '@swc/core': 1.4.2
       uuid: 9.0.1
       vite: 5.1.1(@types/node@20.11.17)
-    transitivePeerDependencies:
-      - '@swc/helpers'
-      - rollup
-    dev: true
-
-  /vite-plugin-top-level-await@1.4.1(vite@5.1.5):
-    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
-    peerDependencies:
-      vite: '>=2.8'
-    dependencies:
-      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
-      '@swc/core': 1.4.2
-      uuid: 9.0.1
-      vite: 5.1.5(@types/node@20.11.24)
     transitivePeerDependencies:
       - '@swc/helpers'
       - rollup
