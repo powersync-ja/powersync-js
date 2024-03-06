@@ -29,25 +29,25 @@ And then edit `.env.local` to insert your credentials for Supabase.
 Run the development server:
 
 ```bash
-pnpm watch
+pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
 ## Progressive Web App (PWA)
 
-This demo is PWA compatible. PWA is not available in development (watch) mode.
+This demo is PWA compatible, and works fully offline. PWA is not available in development (watch) mode. The manifest and service worker is built using [vite-plugin-pwa](https://vite-pwa-org.netlify.app/).
 
-Build the production codebase
+Build the production codebase:
 
 ```bash
 pnpm build
 ```
 
-Run the production server
+Run the production server:
 
 ```bash
-pnpm start
+pnpm preview
 ```
 
 Open a browser on the served URL and install the PWA.
