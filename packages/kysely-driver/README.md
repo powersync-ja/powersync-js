@@ -14,7 +14,7 @@ The `kysely-driver` package is currently in a beta release.
 
 ## Getting started
 
-Setup the PowerSync Database and wrap it with Kysely.
+Set up the PowerSync Database and wrap it with Kysely.
 
 Table column object type definitions are not yet available in JavaScript.
 
@@ -33,8 +33,8 @@ export const powerSyncDb = factory.getInstance();
 export const db = wrapPowerSyncWithKysely(powerSyncDb);
 ```
 
-When defining the app schema with new `TableV2` declarations the TypeScript types for tables can be automatically generated.
-See [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/nextjs-supabase-todolist/src/library/powersync/AppSchema.ts) for defining the app schema with `TableV2`.
+When defining the app schema with new `TableV2` declarations, the TypeScript types for tables can be automatically generated.
+See an [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/nextjs-supabase-todolist/src/library/powersync/AppSchema.ts) of defining the app schema with `TableV2`.
 
 ```TypeScript
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
@@ -63,7 +63,7 @@ export const powerSyncDb = factory.getInstance();
 export const db = wrapPowerSyncWithKysely<Database>(powerSyncDb)
 ```
 
-For more information on Kysely typing [here](https://kysely.dev/docs/getting-started#types).
+For more information on Kysely typing, see [here](https://kysely.dev/docs/getting-started#types).
 
 Now you are able to use Kysely queries:
 
