@@ -235,6 +235,9 @@ export class SharedSyncImplementation
       return;
     }
 
+    const trackedPort = this.ports[index];
+    // Release proxy
+    trackedPort.clientProvider[Comlink.releaseProxy]();
     this.ports.splice(index, 1);
 
     /**
