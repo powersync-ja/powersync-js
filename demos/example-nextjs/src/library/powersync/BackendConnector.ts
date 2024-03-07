@@ -1,27 +1,26 @@
 import { AbstractPowerSyncDatabase, BaseObserver, PowerSyncBackendConnector } from '@journeyapps/powersync-sdk-web';
 
-export type BackendConfig = {
-  powersyncUrl: string;
-};
-
-export type BackendConnectorListener = {
-  initialized: () => void;
-};
-
-export class BackendConnector extends BaseObserver<BackendConnectorListener> implements PowerSyncBackendConnector {
-  private _config: BackendConfig;
+export class BackendConnector implements PowerSyncBackendConnector {
+  private powersyncUrl: string | undefined;
+  private powersyncToken: string | undefined;
 
   constructor() {
-    super();
-    this._config = {
-      powersyncUrl: process.env.NEXT_PUBLIC_POWERSYNC_URL!
-    };
+    this.powersyncUrl = process.env.NEXT_PUBLIC_POWERSYNC_URL;
+    // This token is for development only.
+    // For production applications, integrate with an auth provider or custom auth.
+    this.powersyncToken = process.env.NEXT_PUBLIC_POWERSYNC_TOKEN;
   }
 
   async fetchCredentials() {
+    // TODO: Use an authentication service or custom implementation here.
+
+    if (this.powersyncToken == null || this.powersyncUrl == null) {
+      return null;
+    }
+
     return {
-      endpoint: this._config.powersyncUrl,
-      token: '' // TODO: Implement
+      endpoint: this.powersyncUrl,
+      token: this.powersyncToken
     };
   }
 
@@ -38,13 +37,11 @@ export class BackendConnector extends BaseObserver<BackendConnectorListener> imp
       await transaction.complete();
     } catch (error: any) {
       if (shouldDiscardDataOnError(error)) {
-        /**
-         * Instead of blocking the queue with these errors, discard the (rest of the) transaction.
-         *
-         * Note that these errors typically indicate a bug in the application.
-         * If protecting against data loss is important, save the failing records
-         * elsewhere instead of discarding, and/or notify the user.
-         */
+        // Instead of blocking the queue with these errors, discard the (rest of the) transaction.
+        //
+        // Note that these errors typically indicate a bug in the application.
+        // If protecting against data loss is important, save the failing records
+        // elsewhere instead of discarding, and/or notify the user.
         console.error(`Data upload error - discarding`, error);
         await transaction.complete();
       } else {
