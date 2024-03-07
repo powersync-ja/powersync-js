@@ -5,12 +5,12 @@ export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 export class ReactNativeRemote extends AbstractRemote {
   async post(path: string, data: any, headers: Record<string, string> = {}): Promise<any> {
-    const credentials = await this.getCredentials();
-    const res = await fetch(credentials.endpoint + path, {
+    const request = await this.buildRequest(path);
+    const res = await fetch(request.url, {
       method: 'POST',
       headers: {
         ...headers,
-        ...(await this.getHeaders())
+        ...request.headers
       },
       body: JSON.stringify(data)
     });
@@ -23,13 +23,13 @@ export class ReactNativeRemote extends AbstractRemote {
   }
 
   async get(path: string, headers?: Record<string, string>): Promise<any> {
-    const credentials = await this.getCredentials();
+    const request = await this.buildRequest(path);
 
-    const res = await fetch(credentials.endpoint + path, {
+    const res = await fetch(request.url, {
       method: 'GET',
       headers: {
         ...headers,
-        ...(await this.getHeaders())
+        ...request.headers
       }
     });
 
@@ -59,7 +59,7 @@ export class ReactNativeRemote extends AbstractRemote {
       throw new Error(errorMessage);
     }
 
-    const credentials = await this.getCredentials();
+    const request = await this.buildRequest(path);
 
     const timeout =
       Platform.OS == 'android'
@@ -72,9 +72,9 @@ export class ReactNativeRemote extends AbstractRemote {
           }, STREAMING_POST_TIMEOUT_MS)
         : null;
 
-    const res = await fetch(credentials.endpoint + path, {
+    const res = await fetch(request.url, {
       method: 'POST',
-      headers: { ...headers, ...(await this.getHeaders()) },
+      headers: { ...headers, ...request.headers },
       body: JSON.stringify(data),
       signal,
       cache: 'no-store',
