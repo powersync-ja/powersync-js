@@ -65,6 +65,8 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   lastSyncedAt?: Date;
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
+  waitForReady(): Promise<void>;
+  waitForStatus(status: SyncStatusOptions): Promise<void>;
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
@@ -110,6 +112,35 @@ export abstract class AbstractStreamingSyncImplementation
       this.options.crudUploadThrottleMs,
       { trailing: true }
     );
+  }
+
+  async waitForReady() {}
+
+  waitForStatus(status: SyncStatusOptions): Promise<void> {
+    return new Promise((resolve) => {
+      const l = this.registerListener({
+        statusChanged: (updatedStatus) => {
+          /**
+           * Match only the partial status options provided in the
+           * matching status
+           */
+          const matchPartialObject = (compA: object, compB: object) => {
+            return Object.entries(compA).every(([key, value]) => {
+              const comparisonBValue = compB[key];
+              if (typeof value == 'object' && typeof comparisonBValue == 'object') {
+                return matchPartialObject(value, comparisonBValue);
+              }
+              return value == comparisonBValue;
+            });
+          };
+
+          if (matchPartialObject(status, updatedStatus.toJSON())) {
+            resolve();
+            l?.();
+          }
+        }
+      });
+    });
   }
 
   get lastSyncedAt() {
@@ -190,7 +221,8 @@ export abstract class AbstractStreamingSyncImplementation
 
   connect() {
     this.abortController = new AbortController();
-    return this.streamingSync(this.abortController.signal);
+    this.streamingSync(this.abortController.signal);
+    return this.waitForStatus({ connected: true });
   }
 
   async disconnect(): Promise<void> {

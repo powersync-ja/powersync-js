@@ -232,10 +232,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector) {
+    await this.waitForReady();
+
     // close connection if one is open
     await this.disconnect();
-
-    await this.waitForReady();
 
     if (this.closed) {
       throw new Error('Cannot connect using a closed client');
@@ -249,6 +249,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     });
 
+    await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
     this.syncStreamImplementation.connect();
   }

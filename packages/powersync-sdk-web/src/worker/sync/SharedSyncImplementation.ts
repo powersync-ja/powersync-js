@@ -91,6 +91,11 @@ export class SharedSyncImplementation
     this.broadCastLogger = new BroadcastLogger(this.ports);
   }
 
+  async waitForStatus(status: SyncStatusOptions): Promise<void> {
+    await this.waitForReady();
+    return this.syncStreamClient!.waitForStatus(status);
+  }
+
   get lastSyncedAt(): Date | undefined {
     return this.syncStreamClient?.lastSyncedAt;
   }
@@ -99,7 +104,7 @@ export class SharedSyncImplementation
     return this.syncStreamClient?.isConnected ?? false;
   }
 
-  async isReady() {
+  async waitForReady() {
     return this.isInitialized;
   }
 
@@ -179,7 +184,7 @@ export class SharedSyncImplementation
   }
 
   async dispose() {
-    await this.isReady();
+    await this.waitForReady();
     this.statusListener?.();
     return this.syncStreamClient?.dispose();
   }
@@ -191,7 +196,7 @@ export class SharedSyncImplementation
    * connects.
    */
   async connect() {
-    await this.isReady();
+    await this.waitForReady();
     this.disconnect();
     this.abortController = new AbortController();
     this.syncStreamClient?.streamingSync(this.abortController.signal);
@@ -244,21 +249,21 @@ export class SharedSyncImplementation
   }
 
   triggerCrudUpload() {
-    this.isReady().then(() => this.syncStreamClient?.triggerCrudUpload());
+    this.waitForReady().then(() => this.syncStreamClient?.triggerCrudUpload());
   }
 
   async obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
-    await this.isReady();
+    await this.waitForReady();
     return this.syncStreamClient!.obtainLock(lockOptions);
   }
 
   async hasCompletedSync(): Promise<boolean> {
-    await this.isReady();
+    await this.waitForReady();
     return this.syncStreamClient!.hasCompletedSync();
   }
 
   async getWriteCheckpoint(): Promise<string> {
-    await this.isReady();
+    await this.waitForReady();
     return this.syncStreamClient!.getWriteCheckpoint();
   }
 

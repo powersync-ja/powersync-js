@@ -78,6 +78,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected clientProvider: SharedSyncClientProvider;
   protected messagePort: MessagePort;
 
+  protected isInitialized: Promise<void>;
+
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
 
@@ -105,7 +107,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true) as MessagePort;
-    this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
+    this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
       dbName: this.options.identifier!,
       streamOptions: {
         crudUploadThrottleMs,
@@ -134,29 +136,39 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * `connect` if not yet connected.
    */
   async connect(): Promise<void> {
+    await this.waitForReady();
     return this.syncManager.connect();
   }
 
   async disconnect(): Promise<void> {
+    await this.waitForReady();
     return this.syncManager.disconnect();
   }
 
-  getWriteCheckpoint(): Promise<string> {
+  async getWriteCheckpoint(): Promise<string> {
+    await this.waitForReady();
     return this.syncManager.getWriteCheckpoint();
   }
 
-  hasCompletedSync(): Promise<boolean> {
+  async hasCompletedSync(): Promise<boolean> {
     return this.syncManager.hasCompletedSync();
   }
 
   async dispose(): Promise<void> {
+    await this.waitForReady();
     // Signal the shared worker that this client is closing its connection to the worker
     const closeMessagePayload: ManualSharedSyncPayload = {
       event: SharedSyncClientEvent.CLOSE_CLIENT,
       data: {}
     };
 
+    (localStorage as any).setItem('posting close' + Math.random(), `$}`);
+
     this.messagePort.postMessage(closeMessagePayload);
+  }
+
+  async waitForReady() {
+    return this.isInitialized;
   }
 
   /**

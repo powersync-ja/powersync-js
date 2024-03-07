@@ -39,13 +39,11 @@ export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
 }
 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  // static OPEN_INSTANCES = new Set<PowerSyncDatabase>();
   protected unloadListener?: () => Promise<void>;
 
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
-    // PowerSyncDatabase.OPEN_INSTANCES.add(this);
     const { flags } = this.options;
 
     if (flags?.enableMultiTabs && !flags.externallyUnload) {
@@ -70,6 +68,15 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options.disconnect ?? !this.options.flags?.enableMultiTabs
     });
+  }
+
+  connect(connector: PowerSyncBackendConnector): Promise<void> {
+    /**
+     * Using React strict mode might cause calls to connect to fire multiple times
+     * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
+     * connection attempts.
+     */
+    return navigator.locks.request(`connection-lock-${this.options.database.name}`, () => super.connect(connector));
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
