@@ -39,7 +39,11 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   updateState(status: SharedSyncStatus) {
     this.status = {
       ...this.status,
-      ...status
+      ...status,
+      dataFlow: {
+        ...this.status.dataFlow,
+        ...status.dataFlow
+      }
     };
     this.iterateListeners((cb) => cb.statusChanged?.(status));
   }
