@@ -20,23 +20,22 @@ export const DEFAULT_ENTRY_ROUTE = '/views/todo-lists';
 
 export const router = createBrowserRouter([
   {
+    path: "/",
+    element: <EntryPage />,
+  },
+  {
+    path: LOGIN_ROUTE,
+    element: <LoginPage />,
+  },
+  {
+    path: REGISTER_ROUTE,
+    element: <RegisterPage />,
+  },
+  {
     element: <ViewsLayout>
       <Outlet />
     </ViewsLayout>,
     children: [
-
-      {
-        path: "/",
-        element: <EntryPage />,
-      },
-      {
-        path: LOGIN_ROUTE,
-        element: <LoginPage />,
-      },
-      {
-        path: REGISTER_ROUTE,
-        element: <RegisterPage />,
-      },
       {
         path: TODO_LISTS_ROUTE,
         element: <TodoListsPage />
