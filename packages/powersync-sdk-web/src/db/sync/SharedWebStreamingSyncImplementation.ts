@@ -24,8 +24,11 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     super();
   }
 
-  async fetchCredentials(): Promise<PowerSyncCredentials> {
+  async fetchCredentials(): Promise<PowerSyncCredentials | null> {
     const credentials = await this.options.remote.getCredentials();
+    if (credentials == null) {
+      return null;
+    }
     /**
      * The credentials need to be serializable.
      * Users might extend [PowerSyncCredentials] to contain

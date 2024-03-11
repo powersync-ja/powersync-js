@@ -34,7 +34,7 @@ export const db = wrapPowerSyncWithKysely(powerSyncDb);
 ```
 
 When defining the app schema with new `TableV2` declarations, the TypeScript types for tables can be automatically generated.
-See an [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/nextjs-supabase-todolist/src/library/powersync/AppSchema.ts) of defining the app schema with `TableV2`.
+See an [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/react-supabase-todolist/src/library/powersync/AppSchema.ts) of defining the app schema with `TableV2`.
 
 ```TypeScript
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';

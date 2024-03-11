@@ -2,7 +2,7 @@ import { PowerSyncCredentials } from './PowerSyncCredentials';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase';
 
 export interface PowerSyncBackendConnector {
-  /** Allows the PowerSync client to retrieve an authentication token from your backend 
+  /** Allows the PowerSync client to retrieve an authentication token from your backend
    * which is used to authenticate against the PowerSync service.
    *
    * This should always fetch a fresh set of credentials - don't use cached
@@ -13,7 +13,7 @@ export interface PowerSyncBackendConnector {
    *
    * This token is kept for the duration of a sync connection.
    */
-  fetchCredentials: () => Promise<PowerSyncCredentials>;
+  fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 
   /** Upload local changes to the app backend.
    *

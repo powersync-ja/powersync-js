@@ -2,12 +2,13 @@ import { AbstractRemote } from '@journeyapps/powersync-sdk-common';
 
 export class WebRemote extends AbstractRemote {
   async post(path: string, data: any, headers: Record<string, string> = {}): Promise<any> {
-    const credentials = await this.getCredentials();
-    const res = await fetch(credentials.endpoint + path, {
+    const request = await this.buildRequest(path);
+
+    const res = await fetch(request.url, {
       method: 'POST',
       headers: {
         ...headers,
-        ...(await this.getHeaders())
+        ...request.headers
       },
       body: JSON.stringify(data)
     });
@@ -20,13 +21,13 @@ export class WebRemote extends AbstractRemote {
   }
 
   async get(path: string, headers?: Record<string, string>): Promise<any> {
-    const credentials = await this.getCredentials();
+    const request = await this.buildRequest(path);
 
-    const res = await fetch(credentials.endpoint + path, {
+    const res = await fetch(request.url, {
       method: 'GET',
       headers: {
         ...headers,
-        ...(await this.getHeaders())
+        ...request.headers
       }
     });
 
@@ -43,11 +44,11 @@ export class WebRemote extends AbstractRemote {
     headers: Record<string, string> = {},
     signal?: AbortSignal
   ): Promise<any> {
-    const credentials = await this.getCredentials();
+    const request = await this.buildRequest(path);
 
-    const res = await fetch(credentials.endpoint + path, {
+    const res = await fetch(request.url, {
       method: 'POST',
-      headers: { ...headers, ...(await this.getHeaders()) },
+      headers: { ...headers, ...request.headers },
       body: JSON.stringify(data),
       signal,
       cache: 'no-store'
