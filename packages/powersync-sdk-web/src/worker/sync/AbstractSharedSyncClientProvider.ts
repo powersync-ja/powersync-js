@@ -4,7 +4,7 @@ import { PowerSyncCredentials, SyncStatusOptions } from '@journeyapps/powersync-
  * The client side port should provide these methods.
  */
 export abstract class AbstractSharedSyncClientProvider {
-  abstract fetchCredentials(): Promise<PowerSyncCredentials>;
+  abstract fetchCredentials(): Promise<PowerSyncCredentials | null>;
   abstract uploadCrud(): Promise<void>;
   abstract statusChanged(status: SyncStatusOptions): void;
 
