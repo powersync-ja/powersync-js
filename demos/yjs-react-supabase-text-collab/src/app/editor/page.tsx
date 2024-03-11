@@ -1,5 +1,3 @@
-'use client';
-
 import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
 import { Box, Container, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';

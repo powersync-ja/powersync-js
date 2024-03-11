@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';

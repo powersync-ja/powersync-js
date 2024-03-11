@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 import { Box, Button, ButtonGroup, FormGroup, Paper, TextField, Typography, styled } from '@mui/material';
 import { Formik, FormikErrors } from 'formik';

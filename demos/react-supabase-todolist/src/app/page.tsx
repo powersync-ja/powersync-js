@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
 import { useSupabase } from '../components/providers/SystemProvider';

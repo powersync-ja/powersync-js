@@ -1,5 +1,3 @@
-'use client';
-
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { PowerSyncContext } from '@journeyapps/powersync-react';

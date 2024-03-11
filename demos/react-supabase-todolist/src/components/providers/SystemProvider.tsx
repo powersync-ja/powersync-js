@@ -1,4 +1,3 @@
-'use client';
 import { NavigationPanelContextProvider } from '@/components/navigation/NavigationPanelContext';
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';

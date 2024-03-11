@@ -1,4 +1,3 @@
-'use client';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MenuIcon from '@mui/icons-material/Menu';

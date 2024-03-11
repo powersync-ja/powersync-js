@@ -1,4 +1,3 @@
-'use client';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';

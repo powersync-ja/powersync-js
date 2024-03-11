@@ -1,4 +1,3 @@
-'use client';
 import React from 'react';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
