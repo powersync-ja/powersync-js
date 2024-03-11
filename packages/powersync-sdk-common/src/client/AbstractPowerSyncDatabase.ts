@@ -9,7 +9,8 @@ import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnecto
 import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  StreamingSyncImplementationListener
+  StreamingSyncImplementationListener,
+  StreamingSyncImplementation
 } from './sync/stream/AbstractStreamingSyncImplementation';
 import { CrudBatch } from './sync/bucket/CrudBatch';
 import { CrudTransaction } from './sync/bucket/CrudTransaction';
@@ -63,10 +64,23 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
   initialized: () => void;
 }
 
+export interface PowerSyncCloseOptions {
+  /**
+   * Disconnect the sync stream client if connected.
+   * This is usually true, but can be false for Web when using
+   * multiple tabs and a shared sync provider.
+   */
+  disconnect?: boolean;
+}
+
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
   clearLocal: true
+};
+
+export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
+  disconnect: true
 };
 
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
@@ -101,10 +115,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Current connection status.
    */
   currentStatus?: SyncStatus;
-  syncStreamImplementation?: AbstractStreamingSyncImplementation;
+  syncStreamImplementation?: StreamingSyncImplementation;
   sdkVersion: string;
 
-  private abortController: AbortController | null;
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
@@ -113,7 +126,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
-    this.closed = true;
+    this.closed = false;
     this.currentStatus = undefined;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this._schema = options.schema;
@@ -189,7 +202,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Cannot be used while connected - this should only be called before {@link AbstractPowerSyncDatabase.connect}.
    */
   async updateSchema(schema: Schema) {
-    if (this.abortController) {
+    if (this.syncStreamImplementation) {
       throw new Error('Cannot update schema while connected');
     }
 
@@ -208,19 +221,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Queues a CRUD upload when internal CRUD tables have been updated.
-   */
-  protected async watchCrudUploads() {
-    for await (const event of this.onChange({
-      tables: [PSInternalTable.CRUD],
-      rawTableNames: true,
-      signal: this.abortController?.signal
-    })) {
-      this.syncStreamImplementation?.triggerCrudUpload();
-    }
-  }
-
-  /**
    * Wait for initialization to complete.
    * While initializing is automatic, this helps to catch and report initialization errors.
    */
@@ -232,10 +232,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector) {
+    await this.waitForReady();
+
     // close connection if one is open
     await this.disconnect();
 
-    await this.waitForReady();
+    if (this.closed) {
+      throw new Error('Cannot connect using a closed client');
+    }
+
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
@@ -244,11 +249,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     });
 
-    this.abortController = new AbortController();
-    // Begin network stream
+    await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    this.syncStreamImplementation.streamingSync(this.abortController.signal);
-    this.watchCrudUploads();
+    this.syncStreamImplementation.connect();
   }
 
   /**
@@ -257,9 +260,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
-    this.abortController?.abort();
+    await this.syncStreamImplementation?.disconnect();
     this.syncStatusListenerDisposer?.();
-    this.abortController = null;
+    await this.syncStreamImplementation?.dispose();
+    this.syncStreamImplementation = undefined;
   }
 
   /**
@@ -308,11 +312,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Once close is called, this connection cannot be used again - a new one
    * must be constructed.
    */
-  async close() {
+  async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
 
-    await this.disconnect();
+    const { disconnect } = options;
+    if (disconnect) {
+      await this.disconnect();
+    }
+
+    await this.syncStreamImplementation?.dispose();
     this.database.close();
+    this.closed = true;
   }
 
   /**

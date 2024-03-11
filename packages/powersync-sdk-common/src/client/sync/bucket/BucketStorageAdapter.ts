@@ -1,6 +1,7 @@
 import { OpId } from './CrudEntry';
 import { CrudBatch } from './CrudBatch';
 import { SyncDataBatch } from './SyncDataBatch';
+import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver';
 
 export interface Checkpoint {
   last_op_id: OpId;
@@ -44,7 +45,11 @@ export enum PSInternalTable {
   OPLOG = 'ps_oplog'
 }
 
-export interface BucketStorageAdapter {
+export interface BucketStorageListener extends BaseListener {
+  crudUpdate: () => void;
+}
+
+export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener>, Disposable {
   init(): Promise<void>;
   saveSyncData(batch: SyncDataBatch): Promise<void>;
   removeBuckets(buckets: string[]): Promise<void>;

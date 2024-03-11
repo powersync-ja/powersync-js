@@ -1,21 +1,30 @@
 import { v4 as uuid } from 'uuid';
 import { Mutex } from 'async-mutex';
-import { DBAdapter, Transaction } from '../../../db/DBAdapter';
-import { BucketState, BucketStorageAdapter, Checkpoint, SyncLocalDatabaseResult } from './BucketStorageAdapter';
+import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter';
+import {
+  BucketState,
+  BucketStorageAdapter,
+  BucketStorageListener,
+  Checkpoint,
+  PSInternalTable,
+  SyncLocalDatabaseResult
+} from './BucketStorageAdapter';
 import { OpTypeEnum } from './OpType';
 import { CrudBatch } from './CrudBatch';
 import { CrudEntry } from './CrudEntry';
 import { SyncDataBatch } from './SyncDataBatch';
 import Logger, { ILogger } from 'js-logger';
+import { BaseObserver } from '../../../utils/BaseObserver';
 
 const COMPACT_OPERATION_INTERVAL = 1_000;
 
-export class SqliteBucketStorage implements BucketStorageAdapter {
+export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
   static MAX_OP_ID = '9223372036854775807';
 
   public tableNames: Set<string>;
   private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
+  private updateListener: () => void;
 
   /**
    * Count up, and do a compact on startup.
@@ -27,9 +36,18 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     private mutex: Mutex,
     private logger: ILogger = Logger.get('SqliteBucketStorage')
   ) {
+    super();
     this._hasCompletedSync = false;
     this.pendingBucketDeletes = true;
     this.tableNames = new Set();
+    this.updateListener = db.registerListener({
+      tablesUpdated: (update) => {
+        const tables = extractTableUpdates(update);
+        if (tables.includes(PSInternalTable.CRUD)) {
+          this.iterateListeners((l) => l.crudUpdate?.());
+        }
+      }
+    });
   }
 
   async init() {
@@ -40,6 +58,10 @@ export class SqliteBucketStorage implements BucketStorageAdapter {
     for (const row of existingTableRows.rows?._array ?? []) {
       this.tableNames.add(row.name);
     }
+  }
+
+  async dispose() {
+    this.updateListener?.();
   }
 
   getMaxOpId() {
