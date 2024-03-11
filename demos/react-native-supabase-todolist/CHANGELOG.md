@@ -1,5 +1,16 @@
 # powersync-example
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [1aed928]
+- Updated dependencies [aede9e7]
+  - @journeyapps/powersync-sdk-react-native@1.3.0
+  - @journeyapps/powersync-sdk-common@1.3.0
+  - @journeyapps/powersync-attachments@1.1.1
+  - @journeyapps/powersync-react@1.0.6
+
 ## 1.0.4
 
 ### Patch Changes
