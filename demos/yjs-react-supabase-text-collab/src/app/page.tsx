@@ -1,7 +1,7 @@
 import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 
 export default function EntryPage() {
   const navigate = useNavigate();
