@@ -1,3 +1,4 @@
+import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { TodoListsWidget, loadTodoLists } from '@/components/widgets/TodoListsWidget';
