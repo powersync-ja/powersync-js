@@ -12,7 +12,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import * as Y from 'yjs';
 import './tiptap-styles.scss';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom';
 
 export default function EditorPage() {
   const powerSync = usePowerSync();
