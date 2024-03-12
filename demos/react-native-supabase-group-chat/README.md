@@ -6,11 +6,17 @@ This is a demo app built to showcase how to use PowerSync to built an offline-fi
 
 Here are some steps to keep in mind when building/deploying your own version of this app:
 
-1. Deploy a Supabase backend based on the configuration and migrations contained in the [supabase](./supabase) folder. The API URL and public API Key from your Supabase project need to be replaced in the [.env](./.env) file.
+1. Copy the `.env.template` to a usable environment file
 
-2. Create a PowerSync instance using the [PowerSync dashboard](https://powersync.journeyapps.com/) and connect the instance to your Supabase backend. Copy the Sync Rules from the [sync-rules.yml](./sync-rules.yml) of this repository into the sync-rules.yaml within the PowerSync dashboard. Copy the PowerSync instance URL from the dashboard and replace it in the [.env](./.env) file.
+```bash
+cp .env.template .env
+```
 
-3. Create an Expo project and replace the EAS project id in the [.env](./.env) file.
+2. Deploy a Supabase backend based on the configuration and migrations contained in the [supabase](./supabase) folder. The API URL and public API Key from your Supabase project need to be replaced in the [.env](./.env) file.
+
+3. Create a PowerSync instance using the [PowerSync dashboard](https://powersync.journeyapps.com/) and connect the instance to your Supabase backend. Copy the Sync Rules from the [sync-rules.yml](./sync-rules.yml) of this repository into the sync-rules.yaml within the PowerSync dashboard. Copy the PowerSync instance URL from the dashboard and replace it in the [.env](./.env) file.
+
+4. Create an Expo project and replace the EAS project id in the [.env](./.env) file.
 
 > Please note: If you leave the values within the [.env](./.env) file as they are (none of them are sensitive secret's btw), you can try the app with the demo backend without spinning up your own Supabase backend and PowerSync instance (as long at the demo backend is around, at least).
 

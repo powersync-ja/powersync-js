@@ -37,10 +37,10 @@ bucket_definitions:
 
 ## Configure The App
 
-Copy the `AppConfig.template.ts` to a usable file
+Copy the `.env.template` to a usable environment file
 
 ```bash
-cp library/supabase/AppConfig.template.ts library/supabase/AppConfig.ts
+cp .env.template .env
 ```
 
 Insert the necessary credentials.
@@ -64,3 +64,14 @@ Run on Android
 ```sh
 pnpm android
 ```
+
+## EAS CLI Setup
+To use the EAS CLI, you can configure the EAS project id in the [.env](./.env) file.
+
+## Here are some helpful links:
+
+- [PowerSync Website](https://www.powersync.com/)
+- [PowerSync Docs](https://docs.powersync.com/)
+- [PowerSync React Native Client SDK](https://github.com/journeyapps/powersync-js/tree/main/packages/powersync-sdk-react-native)
+- [Supabase Docs](https://supabase.com/docs)
+- [Expo Docs](https://docs.expo.dev/)
