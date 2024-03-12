@@ -1,5 +1,14 @@
 # @journeyapps/powersync-yjs-text-collab-demo
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [1aed928]
+- Updated dependencies [aede9e7]
+  - @journeyapps/powersync-sdk-web@0.3.0
+  - @journeyapps/powersync-react@1.0.6
+
 ## 0.0.5
 
 ### Patch Changes
