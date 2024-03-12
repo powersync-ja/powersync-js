@@ -40,8 +40,8 @@ export default defineConfig({
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        name: 'PowerSync NextJS Demo',
-        short_name: 'PowerSync NextJS',
+        name: 'PowerSync React Demo',
+        short_name: 'PowerSync React',
         icons: [
           {
             src: '/icons/icon-192x192.png',

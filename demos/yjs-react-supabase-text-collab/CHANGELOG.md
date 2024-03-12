@@ -1,4 +1,4 @@
-# @journeyapps/powersync-yjs-text-collab-demo
+# yjs-react-supabase-text-collab
 
 ## 0.0.6
 

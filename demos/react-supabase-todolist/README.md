@@ -12,7 +12,14 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 
 ## Getting Started
 
-In your terminal, switch into the demo's directory:
+In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
+pnpm build:packages
+```
+
+Then switch into the demo's directory:
 
 ```bash
 cd demos/react-supabase-todolist
