@@ -36,14 +36,7 @@ bucket_definitions:
 ```
 
 ## Configure The App
-
-Copy the `AppConfig.template.ts` to a usable file
-
-```bash
-cp library/supabase/AppConfig.template.ts library/supabase/AppConfig.ts
-```
-
-Insert the necessary credentials.
+Replace the necessary credentials in the [.env](./.env) file.
 
 ## Run the App
 
@@ -64,3 +57,16 @@ Run on Android
 ```sh
 pnpm android
 ```
+
+## EAS Setup
+To use EAS for builds you need to ensure that your [eas.json](./eas.json) file is configured.
+This may lead to some duplication of variables between `.env` files and `eas.json` build profiles but makes it easier to see what variables will be applied across all environments. Read more on this [here](https://docs.expo.dev/build-reference/variables/#can-eas-build-use-env-files).
+
+
+## Here are some helpful links:
+
+- [PowerSync Website](https://www.powersync.com/)
+- [PowerSync Docs](https://docs.powersync.com/)
+- [PowerSync React Native Client SDK](https://github.com/journeyapps/powersync-js/tree/main/packages/powersync-sdk-react-native)
+- [Supabase Docs](https://supabase.com/docs)
+- [Expo Docs](https://docs.expo.dev/)

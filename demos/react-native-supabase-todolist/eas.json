@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "version": ">= 3.13.3",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "preview"
+    },
+    "preview": {
+      "channel": "preview",
+      "distribution": "internal"
+    },
+    "production": {
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://foo.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "foo",
+        "EXPO_PUBLIC_POWERSYNC_URL": "https://foo.powersync.journeyapps.com",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "foo"
+      }
+    }
+  }
+}
