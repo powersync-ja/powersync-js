@@ -1,5 +1,15 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.3.0
+
+### Minor Changes
+
+- 1aed928: Fix PowerSyncBackendConnector.fetchCredentials type to allow returning null
+
+### Patch Changes
+
+- aede9e7: Internally moved crud upload watching to `SqliteBucketStorageAdapter`. Added `dispose` methods for sync stream clients and better closing of clients.
+
 ## 1.2.2
 
 ### Patch Changes

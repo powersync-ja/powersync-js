@@ -1,5 +1,18 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.3.0
+
+### Minor Changes
+
+- 1aed928: Fix PowerSyncBackendConnector.fetchCredentials type to allow returning null
+
+### Patch Changes
+
+- Updated dependencies [1aed928]
+- Updated dependencies [aede9e7]
+  - @journeyapps/powersync-sdk-common@1.3.0
+  - @journeyapps/powersync-react@1.0.6
+
 ## 1.2.2
 
 ### Patch Changes

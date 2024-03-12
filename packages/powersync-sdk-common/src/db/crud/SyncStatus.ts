@@ -54,4 +54,12 @@ export class SyncStatus {
     const dataFlow = this.dataFlowStatus;
     return `SyncStatus<connected: ${this.connected} lastSyncedAt: ${this.lastSyncedAt}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
   }
+
+  toJSON(): SyncStatusOptions {
+    return {
+      connected: this.connected,
+      dataFlow: this.dataFlowStatus,
+      lastSyncedAt: this.lastSyncedAt
+    };
+  }
 }

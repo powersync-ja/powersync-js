@@ -17,7 +17,7 @@ import ndjsonStream from 'can-ndjson-stream';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
 import { SyncDataBucket } from '../bucket/SyncDataBucket';
-import { BaseObserver, BaseListener } from '../../../utils/BaseObserver';
+import { BaseObserver, BaseListener, Disposable } from '../../../utils/BaseObserver';
 
 export enum LockType {
   CRUD = 'crud',
@@ -50,6 +50,26 @@ export interface StreamingSyncImplementationListener extends BaseListener {
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
+export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
+  /**
+   * Connects to the sync service
+   */
+  connect(): Promise<void>;
+  /**
+   * Disconnects from the sync services.
+   * @throws if not connected or if abort is not controlled internally
+   */
+  disconnect(): Promise<void>;
+  getWriteCheckpoint: () => Promise<string>;
+  hasCompletedSync: () => Promise<boolean>;
+  isConnected: boolean;
+  lastSyncedAt?: Date;
+  syncStatus: SyncStatus;
+  triggerCrudUpload: () => void;
+  waitForReady(): Promise<void>;
+  waitForStatus(status: SyncStatusOptions): Promise<void>;
+}
+
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
@@ -58,9 +78,14 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export abstract class AbstractStreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener> {
+export abstract class AbstractStreamingSyncImplementation
+  extends BaseObserver<StreamingSyncImplementationListener>
+  implements StreamingSyncImplementation
+{
   protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
+  protected abortController: AbortController | null;
+  protected crudUpdateListener?: () => void;
 
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
@@ -76,6 +101,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
         downloading: false
       }
     });
+    this.abortController = null;
 
     this.triggerCrudUpload = throttle(
       () => {
@@ -89,23 +115,62 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     );
   }
 
+  async waitForReady() {}
+
+  waitForStatus(status: SyncStatusOptions): Promise<void> {
+    return new Promise((resolve) => {
+      const l = this.registerListener({
+        statusChanged: (updatedStatus) => {
+          /**
+           * Match only the partial status options provided in the
+           * matching status
+           */
+          const matchPartialObject = (compA: object, compB: object) => {
+            return Object.entries(compA).every(([key, value]) => {
+              const comparisonBValue = compB[key];
+              if (typeof value == 'object' && typeof comparisonBValue == 'object') {
+                return matchPartialObject(value, comparisonBValue);
+              }
+              return value == comparisonBValue;
+            });
+          };
+
+          if (matchPartialObject(status, updatedStatus.toJSON())) {
+            resolve();
+            l?.();
+          }
+        }
+      });
+    });
+  }
+
   get lastSyncedAt() {
     const lastSynced = this.syncStatus.lastSyncedAt;
     return lastSynced && new Date(lastSynced);
-  }
-
-  protected get logger() {
-    return this.options.logger!;
   }
 
   get isConnected() {
     return this.syncStatus.connected;
   }
 
+  protected get logger() {
+    return this.options.logger!;
+  }
+
+  async dispose() {
+    this.crudUpdateListener?.();
+    this.crudUpdateListener = undefined;
+  }
+
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
 
   async hasCompletedSync() {
     return this.options.adapter.hasCompletedSync();
+  }
+
+  async getWriteCheckpoint(): Promise<string> {
+    const response = await this.options.remote.get('/write-checkpoint2.json');
+    return response['data']['write_checkpoint'] as string;
   }
 
   protected async _uploadAllCrud(): Promise<void> {
@@ -155,13 +220,38 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     }
   }
 
-  async getWriteCheckpoint(): Promise<string> {
-    const response = await this.options.remote.get('/write-checkpoint2.json');
-    return response['data']['write_checkpoint'] as string;
+  connect() {
+    this.abortController = new AbortController();
+    this.streamingSync(this.abortController.signal);
+    return this.waitForStatus({ connected: true });
   }
 
+  async disconnect(): Promise<void> {
+    if (!this.abortController) {
+      throw new Error('Disconnect not possible');
+    }
+    this.abortController.abort('Disconnected');
+  }
+
+  /**
+   * @deprecated use [connect instead]
+   */
   async streamingSync(signal?: AbortSignal): Promise<void> {
-    signal?.addEventListener('abort', () => {
+    if (!signal) {
+      this.abortController = new AbortController();
+      signal = this.abortController.signal;
+    }
+
+    /**
+     * Listen for CRUD updates and trigger upstream uploads
+     */
+    this.crudUpdateListener = this.options.adapter.registerListener({
+      crudUpdate: () => this.triggerCrudUpload()
+    });
+
+    signal.addEventListener('abort', () => {
+      this.crudUpdateListener?.();
+      this.crudUpdateListener = undefined;
       this.updateSyncStatus({
         connected: false,
         dataFlow: {
@@ -188,7 +278,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     }
   }
 
-  async streamingSyncIteration(signal?: AbortSignal, progress?: () => void): Promise<{ retry?: boolean }> {
+  protected async streamingSyncIteration(signal: AbortSignal, progress?: () => void): Promise<{ retry?: boolean }> {
     return await this.obtainLock({
       type: LockType.SYNC,
       signal,
@@ -357,7 +447,10 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     });
   }
 
-  async *streamingSyncRequest(req: StreamingSyncRequest, signal?: AbortSignal): AsyncGenerator<StreamingSyncLine> {
+  protected async *streamingSyncRequest(
+    req: StreamingSyncRequest,
+    signal?: AbortSignal
+  ): AsyncGenerator<StreamingSyncLine> {
     const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
     const stream = ndjsonStream(body);
     const reader = stream.getReader();

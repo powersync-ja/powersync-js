@@ -10,7 +10,7 @@ import {
 } from '@journeyapps/powersync-sdk-common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 import { v4 as uuid } from 'uuid';
-import { testSchema } from './test_schema';
+import { testSchema } from './utils/test-schema';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
