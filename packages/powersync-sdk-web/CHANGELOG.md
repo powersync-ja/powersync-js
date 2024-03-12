@@ -1,5 +1,24 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.3.0
+
+### Minor Changes
+
+- 1aed928: Fix PowerSyncBackendConnector.fetchCredentials type to allow returning null
+- aede9e7: Improved multiple tab syncing by unloading stream and sync bucket adapter functionality to shared webworker.
+
+### Patch Changes
+
+- Updated dependencies [1aed928]
+- Updated dependencies [aede9e7]
+  - @journeyapps/powersync-sdk-common@1.3.0
+
+## 0.2.3
+
+### Patch Changes
+
+- e472f17: Change to use lib instead of dist build folder
+
 ## 0.2.2
 
 ### Patch Changes

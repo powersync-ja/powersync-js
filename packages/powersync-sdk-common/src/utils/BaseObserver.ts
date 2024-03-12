@@ -1,11 +1,15 @@
 import { v4 } from 'uuid';
 
+export interface Disposable {
+  dispose: () => Promise<void>;
+}
+
 export interface BaseObserverInterface<T extends BaseListener> {
   registerListener(listener: Partial<T>): () => void;
 }
 
 export type BaseListener = {
-  [key: string]: (...event: any) => any;
+  [key: string]: ((...event: any) => any) | undefined;
 };
 
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {

@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 /**
  * 64-bit unsigned integer stored as a string in base-10.
  *
@@ -33,7 +31,7 @@ export type CrudEntryDataJSON = {
 };
 
 /**
- * The output JSOn seems to be a third type of JSON, not the same as the input JSON.
+ * The output JSON seems to be a third type of JSON, not the same as the input JSON.
  */
 export type CrudEntryOutputJSON = {
   op_id: number;
@@ -41,7 +39,7 @@ export type CrudEntryOutputJSON = {
   type: string;
   id: string;
   tx_id?: number;
-  data: Record<string, any>;
+  data?: Record<string, any>;
 };
 
 /**
@@ -109,7 +107,7 @@ export class CrudEntry {
   }
 
   equals(entry: CrudEntry) {
-    return _.isEqual(this.toComparisonArray(), entry.toComparisonArray());
+    return JSON.stringify(this.toComparisonArray()) == JSON.stringify(entry.toComparisonArray());
   }
 
   /**

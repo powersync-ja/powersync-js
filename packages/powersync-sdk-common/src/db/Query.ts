@@ -30,7 +30,7 @@ export class Query<T> {
 
   async *watch(options?: SQLWatchOptions): AsyncIterable<T[]> {
     for await (let r of this.db.watch(this.sql, this.parameters, options)) {
-      yield r.rows._array;
+      yield r.rows!._array;
     }
   }
 

@@ -1,6 +1,5 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
 import '@journeyapps/wa-sqlite';
-import _ from 'lodash';
 import * as Comlink from 'comlink';
 import { v4 as uuid } from 'uuid';
 import { QueryResult } from '@journeyapps/powersync-sdk-common';
@@ -93,21 +92,16 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
         }
       }
 
-      const rows = _.chain(results)
-        .filter(({ rows }) => !!rows.length)
-        .flatMap(({ columns, rows }) =>
-          _.map(rows, (row) =>
-            _.reduce(
-              columns,
-              (out: Record<string, any>, key: string, index) => {
-                out[key] = row[index];
-                return out;
-              },
-              {}
-            )
-          )
-        )
-        .value();
+      let rows: Record<string, any>[] = [];
+      for (let resultset of results) {
+        for (let row of resultset.rows) {
+          let outRow: Record<string, any> = {};
+          resultset.columns.forEach((key, index) => {
+            outRow[key] = row[index];
+          });
+          rows.push(outRow);
+        }
+      }
 
       const result = {
         insertId: sqlite3.last_insert_id(db),

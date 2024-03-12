@@ -8,15 +8,49 @@
 
 This package (`packages/kysely-driver`) brings the benefits of an ORM through our maintained [Kysely](https://kysely.dev/) driver to PowerSync.
 
+## Beta Release
+
+The `kysely-driver` package is currently in a beta release.
+
 ## Getting started
 
-Setup the PowerSync Database and wrap it with Kysely.
+Set up the PowerSync Database and wrap it with Kysely.
+
+Table column object type definitions are not yet available in JavaScript.
 
 ```js
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { appSchema } from './schema';
+
+const factory = new WASQLitePowerSyncDatabaseOpenFactory({
+  schema: appSchema,
+  dbFilename: 'test.sqlite'
+});
+
+export const powerSyncDb = factory.getInstance();
+
+export const db = wrapPowerSyncWithKysely(powerSyncDb);
+```
+
+When defining the app schema with new `TableV2` declarations, the TypeScript types for tables can be automatically generated.
+See an [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/react-supabase-todolist/src/library/powersync/AppSchema.ts) of defining the app schema with `TableV2`.
+
+```TypeScript
+import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
 import { WASQLitePowerSyncDatabaseOpenFactory } from "@journeyapps/powersync-sdk-web";
+
+// Define schema as in: https://docs.powersync.com/usage/installation/client-side-setup/define-your-schema
 import { appSchema } from "./schema";
-import { Database } from "./types";
+
+// If using Schema with TableV2
+export type Database = (typeof appSchema)['types'];
+
+// If using Schema with v1 tables
+export type Database = {
+  todos: TodoRecord; // Interface defined externally for Todo item object
+  lists: ListsRecord; // Interface defined externally for list item object
+};
 
 const factory = new WASQLitePowerSyncDatabaseOpenFactory({
   schema: appSchema,
@@ -25,110 +59,111 @@ const factory = new WASQLitePowerSyncDatabaseOpenFactory({
 
 export const powerSyncDb = factory.getInstance();
 
+// `db` now automatically contains types for defined tables
 export const db = wrapPowerSyncWithKysely<Database>(powerSyncDb)
 ```
 
-For more information on Kysely typing [here](https://kysely.dev/docs/getting-started#types).
+For more information on Kysely typing, see [here](https://kysely.dev/docs/getting-started#types).
 
 Now you are able to use Kysely queries:
 
 ### Select
 
-* In Kysely
+- In Kysely
 
 ```js
-  const result = await db.selectFrom('users').selectAll().execute();
+const result = await db.selectFrom('users').selectAll().execute();
 
-  // {id: '1', name: 'user1', id: '2', name: 'user2'}
+// {id: '1', name: 'user1', id: '2', name: 'user2'}
 ```
 
-* In PowerSync
+- In PowerSync
 
 ```js
-  const result = await powerSyncDb.getAll('SELECT * from users')
+const result = await powerSyncDb.getAll('SELECT * from users');
 
-  // {id: '1', name: 'user1', id: '2', name: 'user2'}
+// {id: '1', name: 'user1', id: '2', name: 'user2'}
 ```
 
 ### Insert
 
-* In Kysely
+- In Kysely
 
 ```js
-  await db.insertInto('users').values({ id: '1', name: 'John' }).execute();
-  const result = await db.selectFrom('users').selectAll().execute();
+await db.insertInto('users').values({ id: '1', name: 'John' }).execute();
+const result = await db.selectFrom('users').selectAll().execute();
 
-  // {id: '1', name: 'John'}
+// {id: '1', name: 'John'}
 ```
 
-* In PowerSync
+- In PowerSync
 
 ```js
-  await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(1, ?)', ['John']);
-  const result = await powerSyncDb.getAll('SELECT * from users')
+await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(1, ?)', ['John']);
+const result = await powerSyncDb.getAll('SELECT * from users');
 
-  // {id: '1', name: 'John'}
+// {id: '1', name: 'John'}
 ```
 
 ### Delete
 
-* In Kysely
+- In Kysely
 
 ```js
-  await db.insertInto('users').values({ id: '2', name: 'Ben' }).execute();
-  await db.deleteFrom('users').where('name', '=', 'Ben').execute();
-  const result = await db.selectFrom('users').selectAll().execute();
+await db.insertInto('users').values({ id: '2', name: 'Ben' }).execute();
+await db.deleteFrom('users').where('name', '=', 'Ben').execute();
+const result = await db.selectFrom('users').selectAll().execute();
 
-  // { }
+// { }
 ```
 
-* In PowerSync
+- In PowerSync
 
 ```js
-  await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(2, ?)', ['Ben']);
-  await powerSyncDb.execute(`DELETE FROM users WHERE name = ?`, ['Ben']);
-  const result = await powerSyncDb.getAll('SELECT * from users')
+await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(2, ?)', ['Ben']);
+await powerSyncDb.execute(`DELETE FROM users WHERE name = ?`, ['Ben']);
+const result = await powerSyncDb.getAll('SELECT * from users');
 
-  // { }
+// { }
 ```
 
 ### Update
 
-* In Kysely
+- In Kysely
 
 ```js
-  await db.insertInto('users').values({ id: '3', name: 'Lucy' }).execute();
-  await db.updateTable('users').where('name', '=', 'Lucy').set('name', 'Lucy Smith').execute();
-  const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
+await db.insertInto('users').values({ id: '3', name: 'Lucy' }).execute();
+await db.updateTable('users').where('name', '=', 'Lucy').set('name', 'Lucy Smith').execute();
+const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
 
-  // { id: '3', name: 'Lucy Smith' }
+// { id: '3', name: 'Lucy Smith' }
 ```
 
-* In PowerSync
+- In PowerSync
 
 ```js
-  await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(3, ?)', ['Lucy']);
-  await powerSyncDb.execute("UPDATE users SET name = ? WHERE name = ?", ['Lucy Smith', 'Lucy']);
-  const result = await powerSyncDb.getAll('SELECT * from users')
+await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(3, ?)', ['Lucy']);
+await powerSyncDb.execute('UPDATE users SET name = ? WHERE name = ?', ['Lucy Smith', 'Lucy']);
+const result = await powerSyncDb.getAll('SELECT * from users');
 
-  // { id: '3', name: 'Lucy Smith' }
+// { id: '3', name: 'Lucy Smith' }
 ```
 
 ### Transaction
 
-* In Kysely
+- In Kysely
 
 ```js
-  await db.transaction().execute(async (transaction) => {
-    await transaction.insertInto('users').values({ id: '4', name: 'James' }).execute();
-    await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
-  });
-  const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
+await db.transaction().execute(async (transaction) => {
+  await transaction.insertInto('users').values({ id: '4', name: 'James' }).execute();
+  await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
+});
+const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
 
-    // { id: '4', name: 'James Smith' }
+// { id: '4', name: 'James Smith' }
 ```
 
-* In PowerSync
+- In PowerSync
 
 ```js
   await powerSyncDb.writeTransaction((transaction) => {

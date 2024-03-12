@@ -1,13 +1,9 @@
-import { ColumnType, Insertable, Selectable, Updateable } from 'kysely';
+import { Insertable, Selectable, Updateable } from 'kysely';
+import { TestSchema } from './db';
 
-export interface Database {
-  users: UsersTable;
-}
+export type Database = (typeof TestSchema)['types'];
 
-export interface UsersTable {
-  id: ColumnType<string, string, never>;
-  name: string;
-}
+export type UsersTable = Database['users'];
 
 export type Users = Selectable<UsersTable>;
 export type NewUsers = Insertable<UsersTable>;
