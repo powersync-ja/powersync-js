@@ -1,4 +1,3 @@
-import _, { indexOf } from 'lodash';
 import { Column } from '../Column';
 import type { Index } from './Index';
 import { TableV2 } from './TableV2';
@@ -86,10 +85,13 @@ export class Table {
   }
 
   get validName() {
-    return _.chain([this.name, this.viewNameOverride])
-      .compact()
-      .every((name) => !InvalidSQLCharacters.test(name))
-      .value();
+    if (InvalidSQLCharacters.test(this.name)) {
+      return false;
+    }
+    if (this.viewNameOverride != null && InvalidSQLCharacters.test(this.viewNameOverride)) {
+      return false;
+    }
+    return true;
   }
 
   validate() {

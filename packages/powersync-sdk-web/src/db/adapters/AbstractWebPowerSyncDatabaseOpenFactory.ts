@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import {
   AbstractPowerSyncDatabase,
   AbstractPowerSyncDatabaseOpenFactory,
@@ -73,10 +72,14 @@ export abstract class AbstractWebPowerSyncDatabaseOpenFactory extends AbstractPo
   }
 
   protected resolveDBFlags(): WebPowerSyncFlags {
-    return _.merge(_.clone(DEFAULT_POWERSYNC_FLAGS), {
-      ssrMode: this.isServerSide(),
-      enableMultiTabs: this.options.flags?.enableMultiTabs
-    });
+    let flags = {
+      ...DEFAULT_POWERSYNC_FLAGS,
+      ssrMode: this.isServerSide()
+    };
+    if (typeof this.options.flags?.enableMultiTabs != 'undefined') {
+      flags.enableMultiTabs = this.options.flags.enableMultiTabs;
+    }
+    return flags;
   }
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
