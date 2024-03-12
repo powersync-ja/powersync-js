@@ -1,4 +1,4 @@
-# @journeyapps/powersync-example-nextjs
+# example-nextjs
 
 ## 0.0.2
 

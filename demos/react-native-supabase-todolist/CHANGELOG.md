@@ -1,4 +1,4 @@
-# powersync-example
+# react-native-supabase-todolist
 
 ## 1.0.5
 

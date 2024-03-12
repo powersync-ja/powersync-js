@@ -1,4 +1,4 @@
-# powerchat
+# react-native-supabase-group-chat
 
 ## 1.0.2
 

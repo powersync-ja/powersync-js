@@ -1,4 +1,4 @@
-# @journeyapps/powersync-nextjs-demo
+# react-supabase-todolist
 
 ## 0.1.12
 
