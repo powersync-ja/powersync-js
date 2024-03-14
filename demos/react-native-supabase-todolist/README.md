@@ -38,6 +38,8 @@ bucket_definitions:
 ## Configure The App
 Replace the necessary credentials in the [.env](./.env) file.
 
+Take note that you will need an Expo account if you want to use EAS for your builds, the Expo project ID should then also be configured in the environment file.
+
 ## Run the App
 
 Install the dependencies, including the React Native SDK:
@@ -57,10 +59,6 @@ Run on Android
 ```sh
 pnpm android
 ```
-
-## EAS Setup
-To use EAS for builds you need to ensure that your [eas.json](./eas.json) file is configured.
-This may lead to some duplication of variables between `.env` files and `eas.json` build profiles but makes it easier to see what variables will be applied across all environments. Read more on this [here](https://docs.expo.dev/build-reference/variables/#can-eas-build-use-env-files).
 
 
 ## Here are some helpful links:
