@@ -37,8 +37,15 @@ bucket_definitions:
 
 ## Configure The App
 Replace the necessary credentials in the [.env](./.env) file.
+Generally, the `.env` file is used for storing common environment variables shared across all instances of the application, while `.env.local` is for overriding or providing environment-specific configurations, particularly for local development.
+As `.env.local` is normally not checked into source control (this project has a git-ignore rule), you can copy `.env`, name it `.env.local`, and then configure as needed.
 
+### EAS Build configuration
 Take note that you will need an Expo account if you want to use EAS for your builds, the Expo project ID should then also be configured in the environment file.
+
+For secret/sensitive environment variables which shouldn't be checked into source control, you can configure them as EAS secrets. They can be added via either the Expo website or the EAS CLI, both are explained [here](https://docs.expo.dev/build-reference/variables/#using-secrets-in-environment-variables).
+
+General information on defining environment variables with Expo can be found here [here](https://docs.expo.dev/build-reference/variables/#can-eas-build-use-env-files).
 
 ## Run the App
 

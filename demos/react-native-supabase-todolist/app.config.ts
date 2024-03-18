@@ -3,9 +3,9 @@ import { type ExpoConfig } from "expo/config";
 import { config as dotenvConfig} from 'dotenv'
 import { resolve } from 'path'
 
-// EAS doesn't load values from `.env` by default when considering the `app.config.ts` file
+// EAS doesn't load values from `.env` by default when consider the `app.config`
 dotenvConfig({
-  path: resolve(__dirname, '.env') || resolve(__dirname, '.env.local')
+  path: resolve(__dirname, '.env')
 })
 
 const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
