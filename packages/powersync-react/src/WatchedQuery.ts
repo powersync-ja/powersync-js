@@ -87,7 +87,6 @@ export class WatchedQuery {
           this.setData(data);
         }
       } catch (e) {
-        console.log('got error', e);
         this.setError(e);
       } finally {
         if (this.controller === controller) {
@@ -114,8 +113,6 @@ export class WatchedQuery {
     this.currentError = error;
     this.resolveReady?.();
 
-    console.log('notify error', error, this.listeners.size);
-
     for (let listener of this.listeners) {
       listener();
     }
@@ -133,8 +130,6 @@ export class WatchedQuery {
       this.readyPromise = new Promise((resolve, reject) => {
         this.resolveReady = resolve;
       });
-
-      console.log('disposed', this.query);
     }
   }
 }
