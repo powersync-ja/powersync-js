@@ -1,26 +1,27 @@
+import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
+import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
   List,
   TextField,
   Typography,
   styled
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
-import React, { Suspense } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
 
 /**
  * useSearchParams causes the entire element to fall back to client side rendering
@@ -35,7 +36,6 @@ const TodoEditSection = () => {
   const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [
     listID
   ]);
-
   const todos = usePowerSyncWatchedQuery<TodoRecord>(
     `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
     [listID]
@@ -104,17 +104,24 @@ const TodoEditSection = () => {
           <AddIcon />
         </S.FloatingActionButton>
         <Box>
-          <List dense={false}>
-            {todos.map((r) => (
-              <TodoItemWidget
-                key={r.id}
-                description={r.description}
-                onDelete={() => deleteTodo(r.id)}
-                isComplete={r.completed == 1}
-                toggleCompletion={() => toggleCompletion(r, !r.completed)}
-              />
-            ))}
-          </List>
+          <Grid container spacing={2}>
+            <Grid item xs={4}>
+              <TodoListsWidget selectedId={listID} />
+            </Grid>
+            <Grid item xs={8}>
+              <List dense={false}>
+                {todos.map((r) => (
+                  <TodoItemWidget
+                    key={r.id}
+                    description={r.description}
+                    onDelete={() => deleteTodo(r.id)}
+                    isComplete={r.completed == 1}
+                    toggleCompletion={() => toggleCompletion(r, !r.completed)}
+                  />
+                ))}
+              </List>
+            </Grid>
+          </Grid>
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
@@ -152,9 +159,7 @@ const TodoEditSection = () => {
 export default function TodoEditPage() {
   return (
     <Box>
-      <Suspense fallback={<CircularProgress />}>
-        <TodoEditSection />
-      </Suspense>
+      <TodoEditSection />
     </Box>
   );
 }

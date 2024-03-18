@@ -18,15 +18,15 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
   const navigate = useNavigate();
 
   const listRecords = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
-      SELECT 
+      SELECT
         ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
-      FROM 
+      FROM
         ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} 
+      LEFT JOIN ${TODOS_TABLE}
         ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
-      GROUP BY 
+      GROUP BY
         ${LISTS_TABLE}.id;
-      `);
+  `);
 
   const deleteList = async (id: string) => {
     await powerSync.writeTransaction(async (tx) => {

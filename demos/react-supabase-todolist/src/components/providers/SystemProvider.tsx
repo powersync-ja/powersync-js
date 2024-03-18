@@ -42,7 +42,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   }, [powerSync, connector]);
 
   return (
-    <Suspense fallback={<CircularProgress />}>
+    <Suspense fallback={<Fallback />}>
       <PowerSyncContext.Provider value={powerSync}>
         <SupabaseContext.Provider value={connector}>
           <NavigationPanelContextProvider>
@@ -53,5 +53,9 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     </Suspense>
   );
 };
+
+function Fallback() {
+  return <CircularProgress />;
+}
 
 export default SystemProvider;

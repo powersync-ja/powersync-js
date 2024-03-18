@@ -21,7 +21,7 @@ import {
   Typography,
   styled
 } from '@mui/material';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { useSupabase } from '@/components/providers/SystemProvider';
@@ -118,7 +118,9 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         </List>
       </Drawer>
       <S.MainBox>
-        {children}
+        <Suspense>
+          {children}
+        </Suspense>
       </S.MainBox>
     </S.MainBox>
   );
