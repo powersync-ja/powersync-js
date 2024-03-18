@@ -49,11 +49,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
           selected={r.id == props.selectedId}
           onDelete={() => deleteList(r.id)}
           onPress={() => {
-            // startTransition avoids showing the loader for an instant
-            // when navigating.
-            startTransition(() => {
-              navigate(TODO_LISTS_ROUTE + '/' + r.id);
-            });
+            navigate(TODO_LISTS_ROUTE + '/' + r.id);
           }}
         />
       ))}

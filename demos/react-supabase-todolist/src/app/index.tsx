@@ -8,9 +8,11 @@ const root = createRoot(document.getElementById('app')!);
 root.render(<App />);
 
 export function App() {
-  return <ThemeProviderContainer>
-    <SystemProvider>
-      <RouterProvider router={router} />
-    </SystemProvider>
-  </ThemeProviderContainer>;
+  return (
+    <ThemeProviderContainer>
+      <SystemProvider>
+        <RouterProvider router={router} future={{ v7_startTransition: true }} />
+      </SystemProvider>
+    </ThemeProviderContainer>
+  );
 }
