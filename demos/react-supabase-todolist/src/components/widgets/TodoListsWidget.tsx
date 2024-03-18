@@ -1,13 +1,14 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
 import { LISTS_TABLE, ListRecord, TODOS_TABLE } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from "@journeyapps/powersync-react";
-import { List } from "@mui/material";
+import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { List } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { ListItemWidget } from "./ListItemWidget";
+import { ListItemWidget } from './ListItemWidget';
+import React from 'react';
 
 export type TodoListsWidgetProps = {
   selectedId?: string;
-}
+};
 
 const description = (total: number, completed: number = 0) => {
   return `${total - completed} pending, ${completed} completed`;
@@ -16,6 +17,7 @@ const description = (total: number, completed: number = 0) => {
 export function TodoListsWidget(props: TodoListsWidgetProps) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
+  const [isPending, startTransition] = React.useTransition();
 
   const listRecords = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
       SELECT
@@ -47,7 +49,11 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
           selected={r.id == props.selectedId}
           onDelete={() => deleteList(r.id)}
           onPress={() => {
-            navigate(TODO_LISTS_ROUTE + '/' + r.id)
+            // startTransition avoids showing the loader for an instant
+            // when navigating.
+            startTransition(() => {
+              navigate(TODO_LISTS_ROUTE + '/' + r.id);
+            });
           }}
         />
       ))}
