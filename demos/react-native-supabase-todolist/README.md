@@ -41,7 +41,7 @@ Generally, the `.env` file is used for storing common environment variables shar
 As `.env.local` is normally not checked into source control (this project has a git-ignore rule), you can copy `.env`, name it `.env.local`, and then configure as needed.
 
 ### EAS Build configuration
-Take note that you will need an Expo account if you want to use EAS for your builds, the Expo project ID should then also be configured in the environment file.
+Take note that you will need an [Expo](https://expo.dev/) account if you want to use EAS for your builds. The Expo project ID should then also be configured in the environment file.
 
 For secret/sensitive environment variables which shouldn't be checked into source control, you can configure them as EAS secrets. They can be added via either the Expo website or the EAS CLI, both are explained [here](https://docs.expo.dev/build-reference/variables/#using-secrets-in-environment-variables).
 
@@ -72,6 +72,6 @@ pnpm android
 
 - [PowerSync Website](https://www.powersync.com/)
 - [PowerSync Docs](https://docs.powersync.com/)
-- [PowerSync React Native Client SDK](https://github.com/journeyapps/powersync-js/tree/main/packages/powersync-sdk-react-native)
+- [PowerSync React Native Client SDK Reference](https://docs.powersync.com/client-sdk-references/react-native-and-expo)
 - [Supabase Docs](https://supabase.com/docs)
 - [Expo Docs](https://docs.expo.dev/)
