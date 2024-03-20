@@ -1,8 +1,5 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# Credentials
-library/supabase/AppConfig.ts
-
 # dependencies
 node_modules/
 
@@ -31,7 +28,6 @@ npm-debug.*
 
 # local env files
 .env*.local
-.env
 
 # typescript
 *.tsbuildinfo
