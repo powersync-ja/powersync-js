@@ -125,7 +125,8 @@ export class SharedSyncImplementation
           flags: { enableMultiTabs: true },
           logger: this.broadCastLogger
         }),
-        new Mutex()
+        new Mutex(),
+        this.broadCastLogger
       ),
       remote: new WebRemote({
         fetchCredentials: async () => {
