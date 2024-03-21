@@ -1,5 +1,16 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.3.1
+
+### Patch Changes
+
+- 37e266d: Added some serialization checks for broadcasted logs from shared web worker. Unserializable items will return a warning.
+- 77b3078: Reduce JS bundle size
+- 37e266d: Fixed issue where SyncBucketStorage logs would not be broadcasted from the shared sync worker to individual tabs.
+- Updated dependencies [37e266d]
+- Updated dependencies [77b3078]
+  - @journeyapps/powersync-sdk-common@1.3.1
+
 ## 0.3.0
 
 ### Minor Changes

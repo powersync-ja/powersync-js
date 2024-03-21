@@ -1,5 +1,12 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.3.1
+
+### Patch Changes
+
+- 37e266d: Fixed issue where sync stream exceptions would not close previous streaming connections.
+- 77b3078: Reduce JS bundle size
+
 ## 1.3.0
 
 ### Minor Changes
