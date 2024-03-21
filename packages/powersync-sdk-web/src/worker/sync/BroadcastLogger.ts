@@ -79,7 +79,7 @@ export class BroadcastLogger implements ILogger {
 
   /**
    * Guards against any logging errors.
-   * We don't want a logging exception to cause thurther issues upstream
+   * We don't want a logging exception to cause further issues upstream
    */
   private sanitizeArgs(x: any[], handler: (...params: any[]) => void) {
     const sanitizedParams = x.map((param) => {
