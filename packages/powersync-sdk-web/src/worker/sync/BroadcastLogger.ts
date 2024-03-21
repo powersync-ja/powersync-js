@@ -40,17 +40,17 @@ export class BroadcastLogger implements ILogger {
 
   log(...x: any[]): void {
     console.log(...x);
-    this.clients.forEach((p) => p.clientProvider.log(...x));
+    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.log(...params)));
   }
 
   warn(...x: any[]): void {
     console.warn(...x);
-    this.clients.forEach((p) => p.clientProvider.warn(...x));
+    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.warn(...params)));
   }
 
   error(...x: any[]): void {
     console.error(...x);
-    this.clients.forEach((p) => p.clientProvider.error(...x));
+    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.error(...params)));
   }
 
   time(label: string): void {
@@ -75,5 +75,23 @@ export class BroadcastLogger implements ILogger {
   enabledFor(level: ILogLevel): boolean {
     // Levels are not adjustable on this level.
     return true;
+  }
+
+  /**
+   * Guards against any logging errors.
+   * We don't want a logging exception to cause further issues upstream
+   */
+  private sanitizeArgs(x: any[], handler: (...params: any[]) => void) {
+    const sanitizedParams = x.map((param) => {
+      try {
+        // Try and clone here first. If it fails it won't be passable over a MessagePort
+        return structuredClone(x);
+      } catch (ex) {
+        console.error(ex);
+        return 'Could not serialize log params. Check shared worker logs for more details.';
+      }
+    });
+
+    return handler(...sanitizedParams);
   }
 }

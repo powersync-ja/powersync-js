@@ -165,8 +165,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       data: {}
     };
 
-    (localStorage as any).setItem('posting close' + Math.random(), `$}`);
-
     this.messagePort.postMessage(closeMessagePayload);
 
     // Release the proxy
