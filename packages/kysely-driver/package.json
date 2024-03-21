@@ -1,6 +1,6 @@
 {
   "name": "@powersync/kysely-driver",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Kysely driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
