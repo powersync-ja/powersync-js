@@ -5,8 +5,11 @@ import {
   AbstractRemote,
   RemoteConnector,
   AbstractStreamingSyncImplementation,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  SyncStreamOptions,
+  StreamingSyncLine
 } from '@journeyapps/powersync-sdk-common';
+import { DataStream } from '@journeyapps/powersync-sdk-common/src/utils/DataStream';
 import {
   PowerSyncDatabase,
   WebPowerSyncDatabaseOptions,
@@ -55,6 +58,10 @@ export class MockRemote extends AbstractRemote {
         this.onStreamRequested();
       }
     });
+  }
+
+  socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    throw new Error('Method not implemented.');
   }
 }
 

@@ -6,7 +6,10 @@ const customers = new TableV2({
 });
 
 export const AppSchema = new Schema({
-  customers
+  customers,
+  lists: new TableV2({
+    name: column.text
+  })
 });
 
 export type Database = (typeof AppSchema)['types'];

@@ -8,6 +8,7 @@ import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
+// es-lint-expect-error
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
@@ -15,9 +16,10 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'powersync2.db',
   schema: AppSchema,
   flags: {
-    disableSSRWarning: true
+    disableSSRWarning: true,
+    enableMultiTabs: false
   }
-}).getInstance()
+}).getInstance();
 const connector = new BackendConnector();
 
 powerSync.connect(connector);
@@ -25,9 +27,7 @@ powerSync.connect(connector);
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <Suspense fallback={<CircularProgress />}>
-      <PowerSyncContext.Provider value={powerSync}>
-        {children}
-      </PowerSyncContext.Provider>
+      <PowerSyncContext.Provider value={powerSync}>{children}</PowerSyncContext.Provider>
     </Suspense>
   );
 };

@@ -85,7 +85,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
-
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.

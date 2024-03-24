@@ -8,12 +8,9 @@ import {
   isStreamingSyncCheckpoint,
   isStreamingSyncCheckpointComplete,
   isStreamingSyncCheckpointDiff,
-  isStreamingSyncData,
-  StreamingSyncLine,
-  StreamingSyncRequest
+  isStreamingSyncData
 } from './streaming-sync-types';
 import { AbstractRemote } from './AbstractRemote';
-import ndjsonStream from 'can-ndjson-stream';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
 import { SyncDataBucket } from '../bucket/SyncDataBucket';
@@ -93,6 +90,7 @@ export abstract class AbstractStreamingSyncImplementation
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+
     this.syncStatus = new SyncStatus({
       connected: false,
       lastSyncedAt: undefined,
@@ -304,14 +302,22 @@ export abstract class AbstractStreamingSyncImplementation
 
         let bucketSet = new Set<string>(initialBuckets.keys());
 
-        for await (const line of this.streamingSyncRequest(
-          {
+        console.log('requesting stream');
+        const stream = await this.options.remote.postStream({
+          path: '/sync/stream',
+          abortSignal: signal,
+          data: {
             buckets: req,
             include_checksum: true,
             raw_data: true
-          },
-          signal
-        )) {
+          }
+        });
+
+        console.log('doing stream things');
+
+        while (!stream.closed) {
+          console.log('trying to read line');
+          const line = await stream.read();
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
             // There is a connection now
@@ -445,28 +451,6 @@ export abstract class AbstractStreamingSyncImplementation
         return { retry: true };
       }
     });
-  }
-
-  protected async *streamingSyncRequest(
-    req: StreamingSyncRequest,
-    signal?: AbortSignal
-  ): AsyncGenerator<StreamingSyncLine> {
-    const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
-    const stream = ndjsonStream(body);
-    const reader = stream.getReader();
-
-    try {
-      while (true) {
-        // Read from the stream
-        const { done, value } = await reader.read();
-        // Exit if we're done
-        if (done) return;
-        // Else yield the chunk
-        yield value;
-      }
-    } finally {
-      reader.releaseLock();
-    }
   }
 
   protected updateSyncStatus(options: SyncStatusOptions) {

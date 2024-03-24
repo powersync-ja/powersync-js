@@ -29,3 +29,4 @@ export * from './db/schema/TableV2';
 
 export * from './utils/BaseObserver';
 export * from './utils/strings';
+export * from './utils/DataStream';
