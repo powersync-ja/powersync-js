@@ -4,6 +4,9 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
+import { RSocketConnector } from 'rsocket-core';
+import { WebsocketClientTransport } from 'rsocket-websocket-client';
+import { serialize, deserialize } from 'bson';
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
@@ -107,10 +110,9 @@ export abstract class AbstractRemote {
       headers: { ...headers, ...request.headers },
       body: JSON.stringify(data),
       signal,
-      //@ts-ignore
       cache: 'no-store'
     }).catch((ex) => {
-      console.error(`Caught ex when POST streaming to ${path}`, ex);
+      this.logger.error(`Caught ex when POST streaming to ${path}`, ex);
       throw ex;
     });
 
@@ -128,7 +130,59 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream websocket endpoint
    */
-  abstract socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>>;
+  async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    const connector = new RSocketConnector({
+      transport: new WebsocketClientTransport({
+        url: `ws://localhost:3000`
+      })
+    });
+
+    // TODO better URL
+    const request = await this.buildRequest('/sync/stream');
+    const rsocket = await connector.connect();
+    const stream = new DataStream();
+    const res = rsocket.requestStream(
+      {
+        data: Buffer.from(serialize(options.data)),
+        metadata: Buffer.from(
+          serialize({
+            token:
+              'Token eyJhbGciOiJSUzI1NiIsImtpZCI6InBvd2Vyc3luYy0wZTNkNTM1NGYyIn0.eyJzdWIiOiJhbm9ueW1vdXMiLCJpYXQiOjE3MTEzNTA1NDAsImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCIsImV4cCI6MTcxMTQzNjk0MH0.rLu02FtNOj27KohYmpzBohB1JSuDnMVES-FcSyc8Xth61TG1ngsb8RbFfzufusjFCwubQREZyGHGbcsIypkMXGRokrbsH5dUb0BeG3ROU016eKVaya2zMnjh2d0Nh1WBucoFnlJzwQxZyLCEQds85kfMsoih7FOASG2dY9gq73Dfc4rUf02YELl52pRkziXFSd4ZMLwTKpc9g554vwqUTQQZiW0JnVXiIAlEKDEqhF-JkEU5GEGgwzL0c-E_XIzFy615DhThAd2X1vAILDnKVjVdUgD0QYGKHZFwQ9Zq7I37IPhaxfnOpMGZoIuxsdBNIzS7pfkmOLc3JmJ-94oRPA' //request.headers.Authorization
+          })
+        )
+      },
+      1,
+      {
+        onError: (e) => {
+          this.logger.error(e);
+          stream.close();
+        },
+        onNext: (payload) => {
+          const { data } = payload;
+          if (!data) {
+            return;
+          }
+          const deserializedData = deserialize(data);
+          stream.enqueueData(deserializedData);
+        },
+        onComplete: () => {
+          stream.close();
+        },
+        onExtension: () => {}
+      }
+    );
+
+    const l = stream.registerListener({
+      lowWater: async () => {
+        res.request(1);
+      },
+      closed: () => {
+        l?.();
+      }
+    });
+
+    return stream;
+  }
 
   /**
    * Connects to the sync/stream http endpoint
@@ -149,7 +203,7 @@ export abstract class AbstractRemote {
 
     if (!res.ok || !res.body) {
       const text = await res.text();
-      console.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
+      this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
       const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
       error.status = res.status;
       throw error;
@@ -157,7 +211,9 @@ export abstract class AbstractRemote {
 
     // TODO handle closing errors better
     const jsonS = ndjsonStream(res.body!);
-    const stream = new DataStream();
+    const stream = new DataStream({
+      logger: this.logger
+    });
 
     const r = jsonS.getReader();
 

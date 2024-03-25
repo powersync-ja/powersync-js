@@ -75,6 +75,11 @@ export interface StreamingSyncRequest {
    * Changes the response to stringified data in each OplogEntry
    */
   raw_data: boolean;
+
+  /**
+   * Encode data in BSON
+   */
+  binary_data?: boolean;
 }
 
 export interface StreamingSyncCheckpoint {

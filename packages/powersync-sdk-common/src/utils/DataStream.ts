@@ -1,3 +1,4 @@
+import Logger, { ILogger } from 'js-logger';
 import { BaseListener, BaseObserver } from './BaseObserver';
 
 export type DataStreamOptions = {
@@ -9,6 +10,7 @@ export type DataStreamOptions = {
     highWaterMark?: number;
     lowWaterMark?: number;
   };
+  logger?: ILogger;
 };
 
 export type DataStreamCallback<Data extends any = any> = (data: Data) => Promise<void>;
@@ -38,11 +40,15 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
 
   protected processingPromise: Promise<void> | null;
 
+  protected logger: ILogger;
+
   constructor(protected options?: DataStreamOptions) {
     super();
     this.processingPromise = null;
     this.isClosed = false;
     this.dataQueue = [];
+
+    this.logger = options?.logger ?? Logger.get('DataStream');
 
     if (options?.closeOnError) {
       const l = this.registerListener({
@@ -79,7 +85,6 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
    * Enqueues data for the consumers to read
    */
   enqueueData(data: Data) {
-    console.debug('enquing data: ', data);
     if (this.isClosed) {
       throw new Error('Cannot enqueue data into closed stream.');
     }
@@ -133,7 +138,6 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
 
   protected async processQueue() {
     if (this.processingPromise) {
-      console.debug('quque is busy . exitting');
       return;
     }
 
@@ -174,15 +178,12 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
   protected async _processQueue() {
     if (!this.dataQueue.length || this.isClosed || !this.hasDataReader()) {
       Promise.resolve().then(() => (this.processingPromise = null));
-      console.log('leaving from process', this.dataQueue.length, this.isClosed, this.hasDataReader());
       return;
     }
 
     const data = this.dataQueue.shift()!;
 
-    console.log('processing data');
     await this.iterateAsyncErrored(async (l) => l.data?.(data));
-    console.log('done processing data');
 
     if (this.dataQueue.length <= this.lowWatermark) {
       await this.iterateAsyncErrored(async (l) => l.lowWater?.());
@@ -201,7 +202,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
       try {
         await cb(i);
       } catch (ex) {
-        console.error(ex);
+        this.logger.error(ex);
         this.iterateListeners((l) => l.error?.(ex));
       }
     }

@@ -39,22 +39,18 @@
     "react-native": "0.73.2",
     "react-native-elements": "^3.4.3",
     "react-native-encrypted-storage": "^4.0.3",
-    "react-native-fetch-api": "^3.0.0",
     "react-native-gesture-handler": "~2.14.1",
     "react-native-get-random-values": "~1.10.0",
-    "react-native-polyfill-globals": "^3.1.0",
     "react-native-prompt-android": "^1.1.0",
     "react-native-reanimated": "~3.6.2",
     "react-native-reanimated-table": "^0.0.2",
     "react-native-safe-area-context": "4.8.2",
     "react-native-safe-area-view": "^1.1.1",
     "react-native-screens": "~3.29.0",
-    "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.0.0",
     "react-navigation-stack": "^2.10.4",
     "text-encoding": "^0.7.0",
-    "uuid": "3.4.0",
-    "web-streams-polyfill": "^3.3.2"
+    "uuid": "3.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.9",

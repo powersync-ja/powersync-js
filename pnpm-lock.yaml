@@ -502,18 +502,12 @@ importers:
       react-native-encrypted-storage:
         specifier: ^4.0.3
         version: 4.0.3(react-native@0.73.2)(react@18.2.0)
-      react-native-fetch-api:
-        specifier: ^3.0.0
-        version: 3.0.0
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.2)(react@18.2.0)
       react-native-get-random-values:
         specifier: ~1.10.0
         version: 1.10.0(react-native@0.73.2)
-      react-native-polyfill-globals:
-        specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
       react-native-prompt-android:
         specifier: ^1.1.0
         version: 1.1.0
@@ -532,9 +526,6 @@ importers:
       react-native-screens:
         specifier: ~3.29.0
         version: 3.29.0(react-native@0.73.2)(react@18.2.0)
-      react-native-url-polyfill:
-        specifier: ^2.0.0
-        version: 2.0.0(react-native@0.73.2)
       react-native-vector-icons:
         specifier: ^10.0.0
         version: 10.0.3
@@ -547,9 +538,6 @@ importers:
       uuid:
         specifier: 3.4.0
         version: 3.4.0
-      web-streams-polyfill:
-        specifier: ^3.3.2
-        version: 3.3.2
     devDependencies:
       '@babel/core':
         specifier: ^7.23.9
@@ -949,6 +937,9 @@ importers:
       async-mutex:
         specifier: ^0.4.0
         version: 0.4.1
+      bson:
+        specifier: ^6.5.0
+        version: 6.5.0
       can-ndjson-stream:
         specifier: ^1.0.2
         version: 1.0.2
@@ -967,6 +958,12 @@ importers:
       readable-stream:
         specifier: ^4.5.2
         version: 4.5.2
+      rsocket-core:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      rsocket-websocket-client:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
       uuid:
         specifier: ^3.0.0
         version: 3.4.0
@@ -989,6 +986,9 @@ importers:
 
   packages/powersync-sdk-react-native:
     dependencies:
+      '@craftzdog/react-native-buffer':
+        specifier: ^6.0.5
+        version: 6.0.5(react-native@0.72.4)(react@18.2.0)
       '@journeyapps/powersync-react':
         specifier: workspace:*
         version: link:../powersync-react
@@ -1001,6 +1001,9 @@ importers:
       base-64:
         specifier: ^1.0.0
         version: 1.0.0
+      react-native-buffer:
+        specifier: ^6.0.3
+        version: 6.0.3(react-native-fast-base64@0.1.2)(react-native@0.72.4)(react@18.2.0)
       react-native-fetch-api:
         specifier: ^3.0.0
         version: 3.0.0
@@ -1010,6 +1013,9 @@ importers:
       react-native-polyfill-globals:
         specifier: ^3.1.0
         version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
+      react-native-quick-base64:
+        specifier: ^2.0.8
+        version: 2.0.8(react-native@0.72.4)(react@18.2.0)
       react-native-url-polyfill:
         specifier: ^2.0.0
         version: 2.0.0(react-native@0.72.4)
@@ -6841,6 +6847,16 @@ packages:
     engines: {node: '>=0.1.90'}
     requiresBuild: true
     optional: true
+
+  /@craftzdog/react-native-buffer@6.0.5(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-Av+YqfwA9e7jhgI9GFE/gTpwl/H+dRRLmZyJPOpKTy107j9Oj7oXlm3/YiMNz+C/CEGqcKAOqnXDLs4OL6AAFw==}
+    dependencies:
+      ieee754: 1.2.1
+      react-native-quick-base64: 2.0.8(react-native@0.72.4)(react@18.2.0)
+    transitivePeerDependencies:
+      - react
+      - react-native
+    dev: false
 
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -16295,6 +16311,11 @@ packages:
     resolution: {integrity: sha512-gQxTNE/GAfIIrmHLUE3oJyp5FO6HRBfhjnw4/wMmA63ZGDJnWBmgY/lyQBpnDUkGmAhbSe39tx2d/iTOAfglwQ==}
     dependencies:
       node-int64: 0.4.0
+
+  /bson@6.5.0:
+    resolution: {integrity: sha512-DXf1BTAS8vKyR90BO4x5v3rKVarmkdkzwOrnYDFdjAY694ILNDkmA3uRh1xXJEl+C1DAh8XCvAQ+Gh3kzubtpg==}
+    engines: {node: '>=16.20.1'}
+    dev: false
 
   /buffer-alloc-unsafe@1.1.0:
     resolution: {integrity: sha512-TEM2iMIEQdJ2yjPJoSIsldnleVaAk1oW3DBVUykyOLsEsFmEc9kn+SFFPz+gl54KQNxlDnAwCXosOS9Okx2xAg==}
@@ -27033,6 +27054,19 @@ packages:
       react-loadable: /@docusaurus/react-loadable@5.5.2(react@18.2.0)
       webpack: 5.90.1(webpack-cli@5.1.4)
 
+  /react-native-buffer@6.0.3(react-native-fast-base64@0.1.2)(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-zZ0+TytQukFkdq7l9VQ8eypY83qQLMYNNVA+1skHQWcjXWRxsJvR6TAW4/HwD1FTLIySQt7cyvbNYSO30RuNvA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+      react-native-fast-base64: '*'
+    dependencies:
+      ieee754: 1.2.1
+      react: 18.2.0
+      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
+      react-native-fast-base64: 0.1.2(react-native@0.72.4)(react@18.2.0)
+    dev: false
+
   /react-native-elements@3.4.3(react-native-safe-area-context@4.8.2)(react-native-vector-icons@10.0.3)(react-native@0.73.2)(react@18.2.0):
     resolution: {integrity: sha512-VtZc25EecPZyUBER85zFK9ZbY6kkUdcm1ZwJ9hdoGSCr1R/GFgxor4jngOcSYeMvQ+qimd5No44OVJW3rSJECA==}
     requiresBuild: true
@@ -27063,6 +27097,17 @@ packages:
     dependencies:
       react: 18.2.0
       react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
+    dev: false
+
+  /react-native-fast-base64@0.1.2(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-LBwGGdAQirfU++1r4DX1ufkWKUhY6wwVEbVhyH247YXeubW0jxl7+yl8xlOchz6W/J1KFzXrGTcMiHlv+OpIig==}
+    engines: {node: '>= 16.0.0'}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      react: 18.2.0
+      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
   /react-native-fetch-api@3.0.0:
@@ -27158,8 +27203,8 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.10.0(react-native@0.73.2)
-      react-native-url-polyfill: 2.0.0(react-native@0.73.2)
+      react-native-get-random-values: 1.10.0(react-native@0.72.4)
+      react-native-url-polyfill: 2.0.0(react-native@0.72.4)
       text-encoding: 0.7.0
       web-streams-polyfill: 3.3.2
     dev: false
@@ -27184,6 +27229,17 @@ packages:
 
   /react-native-prompt-android@1.1.0:
     resolution: {integrity: sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==}
+    dev: false
+
+  /react-native-quick-base64@2.0.8(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-2kMlnLSy0qz4NA0KXMGugd3qNB5EAizxZ6ghEVNGIxAOlc9CGvC8miv35wgpFbSKeiaBRfcPfkdTM/5Erb/6SQ==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      base64-js: 1.5.1
+      react: 18.2.0
+      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
   /react-native-ratings@8.0.4(react-native@0.73.2)(react@18.2.0):
@@ -27355,15 +27411,6 @@ packages:
       react-native: '*'
     dependencies:
       react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
-      whatwg-url-without-unicode: 8.0.0-3
-    dev: false
-
-  /react-native-url-polyfill@2.0.0(react-native@0.73.2):
-    resolution: {integrity: sha512-My330Do7/DvKnEvwQc0WdcBnFPploYKp9CYlefDXzIdEaA+PAhDYllkvGeEroEzvc4Kzzj2O4yVdz8v6fjRvhA==}
-    peerDependencies:
-      react-native: '*'
-    dependencies:
-      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
       whatwg-url-without-unicode: 8.0.0-3
     dev: false
 
@@ -28429,6 +28476,16 @@ packages:
 
   /rope-sequence@1.3.4:
     resolution: {integrity: sha512-UT5EDe2cu2E/6O4igUr5PSFs23nvvukicWHx6GnOPlHAiiYbzNuCRQCuiUdHJQcqKalLKlrYJnjY0ySGsXNQXQ==}
+    dev: false
+
+  /rsocket-core@1.0.0-alpha.3:
+    resolution: {integrity: sha512-BzIe2w8dFJlUS5N9fGUNRkxL19kd64bxbXsT11wj7isLfKkPZeNXisB2p/LWvSjFzWStnpOiScZ0g3/8ROE0pw==}
+    dev: false
+
+  /rsocket-websocket-client@1.0.0-alpha.3:
+    resolution: {integrity: sha512-CwTwTNMGa8BKvrWde/kM3q8IHuzO8RCIfzuj25BsVe9y8eehDQHt4fXk0g1i/wpsxTm+RY6DxE6Vr5snozKVOg==}
+    dependencies:
+      rsocket-core: 1.0.0-alpha.3
     dev: false
 
   /rtl-detect@1.1.2:

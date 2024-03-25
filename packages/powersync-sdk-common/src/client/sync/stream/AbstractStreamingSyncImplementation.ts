@@ -29,6 +29,11 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
+export enum SyncStreamConnectionMethod {
+  HTTP = 'http',
+  WEB_SOCKET = 'web-socket'
+}
+
 export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   uploadCrud: () => Promise<void>;
@@ -41,6 +46,7 @@ export interface AbstractStreamingSyncImplementationOptions {
   logger?: ILogger;
   remote: AbstractRemote;
   retryDelayMs?: number;
+  connectionMethod?: SyncStreamConnectionMethod;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
@@ -72,7 +78,8 @@ export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
   logger: Logger.get('PowerSyncStream'),
-  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
+  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  connectionMethod: SyncStreamConnectionMethod.HTTP
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -270,7 +277,8 @@ export abstract class AbstractStreamingSyncImplementation
         this.updateSyncStatus({
           connected: false
         });
-        // On error, wait a little before retrying
+      } finally {
+        // Wait a little before retrying
         await this.delayRetry();
       }
     }
@@ -302,21 +310,26 @@ export abstract class AbstractStreamingSyncImplementation
 
         let bucketSet = new Set<string>(initialBuckets.keys());
 
-        console.log('requesting stream');
-        const stream = await this.options.remote.postStream({
+        this.logger.debug('Requesting stream from server');
+        const connectionMethod =
+          this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
+            ? this.options.remote.postStream
+            : this.options.remote.socketStream;
+            
+        const stream = await connectionMethod.call(this.options.remote, {
           path: '/sync/stream',
           abortSignal: signal,
           data: {
             buckets: req,
             include_checksum: true,
-            raw_data: true
+            raw_data: true,
+            binary_data: true
           }
         });
 
-        console.log('doing stream things');
+        this.logger.debug('Stream established. Processing events');
 
         while (!stream.closed) {
-          console.log('trying to read line');
           const line = await stream.read();
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {

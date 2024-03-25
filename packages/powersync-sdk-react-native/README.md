@@ -30,9 +30,22 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 ## Install Polyfills
 
-### Fetch
+This SDK can connect to a PowerSync instance via HTTP streams or Web sockets. Different polyfill configurations are required for each method.
 
-This SDK requires HTTP streaming in order to function. The following `fetch` polyfills are required for the React Native implementation of `fetch`:
+### Common polyfills
+
+The following polyfills are required for general use of the SDK:
+
+- base-64
+- react-native-get-random-values
+
+```bash
+npx expo install react-native-polyfill-globals base-64 react-native-get-random-values
+```
+
+### HTTP Streams
+
+The following `fetch` polyfills are required for the React Native implementation of `fetch`:
 
 - react-native-fetch-api
 - react-native-polyfill-globals
@@ -43,8 +56,25 @@ This SDK requires HTTP streaming in order to function. The following `fetch` pol
 These are listed as peer dependencies and need to be added to the React Native project
 
 ```bash
-npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
+npx expo install react-native-fetch-api react-native-url-polyfill text-encoding web-streams-polyfill
 ```
+
+### Web sockets
+
+Our web socket implementation support binary payloads which are encoded as BSON documents. The BSON library requires `TextEncoder` support.
+
+The following polyfills are required web socket communication:
+
+- react-native-polyfill-globals
+- text-encoding
+
+These are listed as peer dependencies and need to be added to the React Native project
+
+```bash
+npx expo install text-encoding
+```
+
+### Enable polyfills
 
 Enable the polyfills in React Native app with
 
