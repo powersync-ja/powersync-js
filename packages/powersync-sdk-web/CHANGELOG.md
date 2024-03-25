@@ -1,5 +1,13 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.3.2
+
+### Patch Changes
+
+- 8fc2164: Minor code cleanup for shared sync worker.
+- Updated dependencies [8fc2164]
+  - @journeyapps/powersync-sdk-common@1.3.2
+
 ## 0.3.1
 
 ### Patch Changes
