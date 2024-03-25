@@ -139,6 +139,8 @@ describe('Watch Tests', () => {
 
     // There should be one initial result plus one throttled result
     expect(receivedAssetsUpdatesCount).equals(2);
+
+    // Only the initial result should have yielded.
     expect(receivedCustomersUpdatesCount).equals(1);
   });
 });

@@ -204,7 +204,7 @@ export class SharedSyncImplementation
 
   async disconnect() {
     this.abortController?.abort('Disconnected');
-    this.iterateListeners((l) => l.statusChanged?.(new SyncStatus({ connected: false })));
+    this.updateAllStatuses({ connected: false });
   }
 
   /**
