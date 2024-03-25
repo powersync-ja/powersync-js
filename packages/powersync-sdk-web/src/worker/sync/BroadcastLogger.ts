@@ -40,17 +40,17 @@ export class BroadcastLogger implements ILogger {
 
   log(...x: any[]): void {
     console.log(...x);
-    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.log(...params)));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.log(...params)));
   }
 
   warn(...x: any[]): void {
     console.warn(...x);
-    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.warn(...params)));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.warn(...params)));
   }
 
   error(...x: any[]): void {
     console.error(...x);
-    this.sanitizeArgs(x, (params) => this.clients.forEach((p) => p.clientProvider.error(...params)));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.error(...params)));
   }
 
   time(label: string): void {
@@ -85,7 +85,7 @@ export class BroadcastLogger implements ILogger {
     const sanitizedParams = x.map((param) => {
       try {
         // Try and clone here first. If it fails it won't be passable over a MessagePort
-        return structuredClone(x);
+        return structuredClone(param);
       } catch (ex) {
         console.error(ex);
         return 'Could not serialize log params. Check shared worker logs for more details.';
