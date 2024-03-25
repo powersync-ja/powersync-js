@@ -25,17 +25,17 @@ export class BroadcastLogger implements ILogger {
 
   trace(...x: any[]): void {
     console.trace(...x);
-    this.clients.forEach((p) => p.clientProvider.trace(...x));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.trace(...params)));
   }
 
   debug(...x: any[]): void {
     console.debug(...x);
-    this.clients.forEach((p) => p.clientProvider.debug(...x));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.debug(...params)));
   }
 
   info(...x: any[]): void {
     console.info(...x);
-    this.clients.forEach((p) => p.clientProvider.info(...x));
+    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.info(...params)));
   }
 
   log(...x: any[]): void {
