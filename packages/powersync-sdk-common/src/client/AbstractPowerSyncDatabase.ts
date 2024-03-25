@@ -595,7 +595,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
             const intersection = Array.from(changedTables.values()).filter((change) => watchedTables.has(change));
             if (intersection.length) {
               eventOptions.push({
-                changedTables: [...changedTables]
+                changedTables: intersection
               });
             }
           }
