@@ -101,4 +101,46 @@ describe('Watch Tests', () => {
     // There should be one initial result plus one throttled result
     expect(receivedUpdatesCount).equals(2);
   });
+
+  it('should only watch tables inside query', async () => {
+    const assetsAbortController = new AbortController();
+
+    const watchAssets = powersync.watch('SELECT count() AS count FROM assets', [], {
+      signal: assetsAbortController.signal
+    });
+
+    const customersAbortController = new AbortController();
+
+    const watchCustomers = powersync.watch('SELECT count() AS count FROM customers', [], {
+      signal: customersAbortController.signal
+    });
+
+    let receivedAssetsUpdatesCount = 0;
+    // Listen to assets updates
+    (async () => {
+      for await (const update of watchAssets) {
+        receivedAssetsUpdatesCount++;
+      }
+    })();
+
+    let receivedCustomersUpdatesCount = 0;
+    (async () => {
+      for await (const update of watchCustomers) {
+        receivedCustomersUpdatesCount++;
+      }
+    })();
+
+    // Create the inserts as fast as possible
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    assetsAbortController.abort();
+    customersAbortController.abort();
+
+    // There should be one initial result plus one throttled result
+    expect(receivedAssetsUpdatesCount).equals(2);
+
+    // Only the initial result should have yielded.
+    expect(receivedCustomersUpdatesCount).equals(1);
+  });
 });

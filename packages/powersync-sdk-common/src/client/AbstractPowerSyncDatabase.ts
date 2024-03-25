@@ -592,9 +592,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const flushTableUpdates = throttle(
         () => {
           if (changedTables.size > 0) {
-            eventOptions.push({
-              changedTables: [...changedTables]
-            });
+            const intersection = Array.from(changedTables.values()).filter((change) => watchedTables.has(change));
+            if (intersection.length) {
+              eventOptions.push({
+                changedTables: intersection
+              });
+            }
           }
           changedTables.clear();
         },

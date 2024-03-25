@@ -42,8 +42,12 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     };
   }
 
-  uploadCrud(): Promise<void> {
-    return this.options.uploadCrud();
+  async uploadCrud(): Promise<void> {
+    /**
+     * Don't return anything here, just incase something which is not
+     * serializable is returned from the `uploadCrud` function.
+     */
+    await this.options.uploadCrud();
   }
 
   get logger() {
