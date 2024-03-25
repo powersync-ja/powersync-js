@@ -133,7 +133,7 @@ export abstract class AbstractRemote {
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
-        url: `ws://localhost:3000`
+        url: `ws://localhost:8080`
       })
     });
 

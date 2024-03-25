@@ -79,7 +79,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
   logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  connectionMethod: SyncStreamConnectionMethod.HTTP
+  connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -315,7 +315,7 @@ export abstract class AbstractStreamingSyncImplementation
           this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
             ? this.options.remote.postStream
             : this.options.remote.socketStream;
-            
+
         const stream = await connectionMethod.call(this.options.remote, {
           path: '/sync/stream',
           abortSignal: signal,

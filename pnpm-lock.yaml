@@ -1001,9 +1001,6 @@ importers:
       base-64:
         specifier: ^1.0.0
         version: 1.0.0
-      react-native-buffer:
-        specifier: ^6.0.3
-        version: 6.0.3(react-native-fast-base64@0.1.2)(react-native@0.72.4)(react@18.2.0)
       react-native-fetch-api:
         specifier: ^3.0.0
         version: 3.0.0
@@ -8561,7 +8558,7 @@ packages:
       '@expo/env': 0.2.1
       '@expo/json-file': 8.3.0
       '@expo/spawn-async': 1.7.2
-      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.5)(@babel/preset-env@7.24.0)
+      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.9)(@babel/preset-env@7.23.9)
       babel-preset-fbjs: 3.4.0(@babel/core@7.23.9)
       chalk: 4.1.2
       debug: 4.3.4(supports-color@8.1.1)
@@ -19553,7 +19550,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/config': 8.5.4
-      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -19620,7 +19617,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-font@11.10.2(expo@50.0.6):
@@ -19628,7 +19625,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
       fontfaceobserver: 2.3.0
     dev: false
 
@@ -19641,7 +19638,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-linking@6.2.2(expo@50.0.6):
@@ -19790,7 +19787,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/prebuild-config': 6.7.4(expo-modules-autolinking@1.10.3)
-      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - encoding
       - expo-modules-autolinking
@@ -27054,19 +27051,6 @@ packages:
       react-loadable: /@docusaurus/react-loadable@5.5.2(react@18.2.0)
       webpack: 5.90.1(webpack-cli@5.1.4)
 
-  /react-native-buffer@6.0.3(react-native-fast-base64@0.1.2)(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-zZ0+TytQukFkdq7l9VQ8eypY83qQLMYNNVA+1skHQWcjXWRxsJvR6TAW4/HwD1FTLIySQt7cyvbNYSO30RuNvA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-      react-native-fast-base64: '*'
-    dependencies:
-      ieee754: 1.2.1
-      react: 18.2.0
-      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
-      react-native-fast-base64: 0.1.2(react-native@0.72.4)(react@18.2.0)
-    dev: false
-
   /react-native-elements@3.4.3(react-native-safe-area-context@4.8.2)(react-native-vector-icons@10.0.3)(react-native@0.73.2)(react@18.2.0):
     resolution: {integrity: sha512-VtZc25EecPZyUBER85zFK9ZbY6kkUdcm1ZwJ9hdoGSCr1R/GFgxor4jngOcSYeMvQ+qimd5No44OVJW3rSJECA==}
     requiresBuild: true
@@ -27097,17 +27081,6 @@ packages:
     dependencies:
       react: 18.2.0
       react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
-    dev: false
-
-  /react-native-fast-base64@0.1.2(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-LBwGGdAQirfU++1r4DX1ufkWKUhY6wwVEbVhyH247YXeubW0jxl7+yl8xlOchz6W/J1KFzXrGTcMiHlv+OpIig==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
   /react-native-fetch-api@3.0.0:
