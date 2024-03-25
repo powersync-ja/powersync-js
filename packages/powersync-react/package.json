@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-react",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

@@ -1,6 +1,6 @@
 {
   "name": "powerchat",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "expo-router/entry",
   "scripts": {
     "clear": "find ./ -type d -and \\( -name node_modules -or -name build -or -name dist \\) -exec rm -rf '{}' +",

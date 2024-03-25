@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.3.2
+
+### Patch Changes
+
+- 8fc2164: Fixed regression where watched queries would update for table changes in external (not in query) tables.
+
 ## 1.3.1
 
 ### Patch Changes

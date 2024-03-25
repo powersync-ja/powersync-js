@@ -1,5 +1,13 @@
 # @journeyapps/powersync-sdk-react-native
 
+## 1.3.2
+
+### Patch Changes
+
+- Updated dependencies [8fc2164]
+  - @journeyapps/powersync-sdk-common@1.3.2
+  - @journeyapps/powersync-react@1.0.8
+
 ## 1.3.1
 
 ### Patch Changes
