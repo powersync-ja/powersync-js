@@ -183,6 +183,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Used in tests to force a connection states
    */
   private async _testUpdateStatus(status: SyncStatus) {
-    return (this.syncManager as any).syncStreamClient.updateSyncStatus(status.toJSON());
+    return (this.syncManager as any)['_testUpdateAllStatuses'](status.toJSON());
   }
 }
