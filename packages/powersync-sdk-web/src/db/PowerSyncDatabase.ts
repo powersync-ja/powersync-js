@@ -115,10 +115,19 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     };
 
     const { flags } = this.options;
+
     switch (true) {
       case flags?.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
       case flags?.enableMultiTabs:
+        if (!flags?.broadcastLogs) {
+          const warning = `
+Multiple tabs are enabled, but broadcasting of logs is disabled. 
+Logs for shared sync worker will only be available in the shared worker context
+          `;
+          const logger = this.options.logger;
+          logger ? logger.warn(warning) : console.warn(warning);
+        }
         return new SharedWebStreamingSyncImplementation(syncOptions);
       default:
         return new WebStreamingSyncImplementation(syncOptions);

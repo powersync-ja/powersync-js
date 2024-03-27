@@ -25,42 +25,48 @@ export class BroadcastLogger implements ILogger {
 
   trace(...x: any[]): void {
     console.trace(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.trace(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.trace(...sanitized));
   }
 
   debug(...x: any[]): void {
     console.debug(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.debug(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.debug(...sanitized));
   }
 
   info(...x: any[]): void {
     console.info(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.info(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.info(...sanitized));
   }
 
   log(...x: any[]): void {
     console.log(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.log(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.log(...sanitized));
   }
 
   warn(...x: any[]): void {
     console.warn(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.warn(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.warn(...sanitized));
   }
 
   error(...x: any[]): void {
     console.error(...x);
-    this.sanitizeArgs(x, (...params) => this.clients.forEach((p) => p.clientProvider.error(...params)));
+    const sanitized = this.sanitizeArgs(x);
+    this.iterateClients((client) => client.clientProvider.error(...sanitized));
   }
 
   time(label: string): void {
     console.time(label);
-    this.clients.forEach((p) => p.clientProvider.time(label));
+    this.iterateClients((client) => client.clientProvider.time(label));
   }
 
   timeEnd(label: string): void {
     console.timeEnd(label);
-    this.clients.forEach((p) => p.clientProvider.timeEnd(label));
+    this.iterateClients((client) => client.clientProvider.timeEnd(label));
   }
 
   setLevel(level: ILogLevel): void {
@@ -78,10 +84,24 @@ export class BroadcastLogger implements ILogger {
   }
 
   /**
+   * Iterates all clients, catches individual client exceptions
+   * and proceeds to execute for all clients.
+   */
+  protected async iterateClients(callback: (client: WrappedSyncPort) => Promise<void>) {
+    for (let client of this.clients) {
+      try {
+        await callback(client);
+      } catch (ex) {
+        console.error('Caught exception when iterating client', ex);
+      }
+    }
+  }
+
+  /**
    * Guards against any logging errors.
    * We don't want a logging exception to cause further issues upstream
    */
-  private sanitizeArgs(x: any[], handler: (...params: any[]) => void) {
+  protected sanitizeArgs(x: any[]): any[] {
     const sanitizedParams = x.map((param) => {
       try {
         // Try and clone here first. If it fails it won't be passable over a MessagePort
@@ -92,6 +112,6 @@ export class BroadcastLogger implements ILogger {
       }
     });
 
-    return handler(...sanitizedParams);
+    return sanitizedParams;
   }
 }

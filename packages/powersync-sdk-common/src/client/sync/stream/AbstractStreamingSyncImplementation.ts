@@ -261,7 +261,7 @@ export abstract class AbstractStreamingSyncImplementation
     let nestedAbortController = new AbortController();
 
     signal.addEventListener('abort', () => {
-      nestedAbortController.abort();
+      nestedAbortController.abort('Retrying sync stream operation');
       this.crudUpdateListener?.();
       this.crudUpdateListener = undefined;
       this.updateSyncStatus({
@@ -287,11 +287,12 @@ export abstract class AbstractStreamingSyncImplementation
         this.updateSyncStatus({
           connected: false
         });
+
         // On error, wait a little before retrying
         await this.delayRetry();
       } finally {
         // Abort any open network requests. Create a new nested controller for retry.
-        nestedAbortController.abort();
+        nestedAbortController.abort('Closing network requests for retry');
         nestedAbortController = new AbortController();
       }
     }

@@ -250,7 +250,7 @@ export class SharedSyncImplementation
      */
     [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
       if (abortController?.activePort.port == port) {
-        abortController!.controller.abort();
+        abortController!.controller.abort('Closing pending requests after port is removed');
       }
     });
   }
