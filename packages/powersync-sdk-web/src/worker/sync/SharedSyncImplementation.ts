@@ -1,9 +1,8 @@
 import * as Comlink from 'comlink';
-import { ILogger } from 'js-logger';
+import Logger, { ILogger } from 'js-logger';
 import {
   AbstractStreamingSyncImplementation,
   StreamingSyncImplementation,
-  AbstractStreamingSyncImplementationOptions,
   BaseObserver,
   LockOptions,
   SqliteBucketStorage,
@@ -11,7 +10,10 @@ import {
   SyncStatus,
   SyncStatusOptions
 } from '@journeyapps/powersync-sdk-common';
-import { WebStreamingSyncImplementation } from '../../db/sync/WebStreamingSyncImplementation';
+import {
+  WebStreamingSyncImplementation,
+  WebStreamingSyncImplementationOptions
+} from '../../db/sync/WebStreamingSyncImplementation';
 import { Mutex } from 'async-mutex';
 import { WebRemote } from '../../db/sync/WebRemote';
 
@@ -37,7 +39,7 @@ export type ManualSharedSyncPayload = {
 
 export type SharedSyncInitOptions = {
   dbName: string;
-  streamOptions: Omit<AbstractStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
+  streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
 };
 
 export interface SharedSyncImplementationListener extends StreamingSyncImplementationListener {
@@ -117,16 +119,17 @@ export class SharedSyncImplementation
       return;
     }
 
+    const logger = params.streamOptions?.flags?.broadcastLogs ? this.broadCastLogger : Logger.get('shared-sync');
     this.syncStreamClient = new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(
         new WASQLiteDBAdapter({
           dbFilename: params.dbName,
           workerPort: dbWorkerPort,
           flags: { enableMultiTabs: true },
-          logger: this.broadCastLogger
+          logger
         }),
         new Mutex(),
-        this.broadCastLogger
+        logger
       ),
       remote: new WebRemote({
         fetchCredentials: async () => {
@@ -172,7 +175,7 @@ export class SharedSyncImplementation
       },
       ...params.streamOptions,
       // Logger cannot be transferred just yet
-      logger: this.broadCastLogger
+      logger
     });
 
     this.syncStreamClient.registerListener({

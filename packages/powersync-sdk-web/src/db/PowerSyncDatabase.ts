@@ -16,6 +16,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
+import { Mutex } from 'async-mutex';
 
 export interface WebPowerSyncFlags {
   /**
@@ -32,6 +33,11 @@ export interface WebPowerSyncFlags {
    * instances before the window unloads
    */
   externallyUnload?: boolean;
+  /**
+   * Broadcast logs from shared workers, such as the shared sync worker,
+   * to individual tabs. This defaults to true.
+   */
+  broadcastLogs?: boolean;
 }
 
 export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
@@ -39,6 +45,8 @@ export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
 }
 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  static SHARED_MUTEX = new Mutex();
+
   protected unloadListener?: () => Promise<void>;
 
   constructor(protected options: WebPowerSyncDatabaseOptions) {
@@ -76,11 +84,18 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
      * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
      * connection attempts.
      */
-    return navigator.locks.request(`connection-lock-${this.options.database.name}`, () => super.connect(connector));
+    return this.runExclusive(() => super.connect(connector));
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+  }
+
+  protected runExclusive<T>(cb: () => Promise<T>) {
+    if (this.options.flags?.ssrMode) {
+      return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
+    }
+    return navigator.locks.request(`lock-${this.options.database.name}`, cb);
   }
 
   protected generateSyncStreamImplementation(
