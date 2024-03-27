@@ -571,14 +571,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   * 
+   * Note that the `onChange` callback of the handler is required.
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions,
   ): void {
-    const onResult = handler?.onResult ?? (() => { });
-    const onError = handler?.onError ?? ((error) => console.error(error));
+    const { onResult, onError = this.options.logger?.error } = handler ?? {};
+    if (!onResult) {
+      throw new Error('onResult is required');
+    }
 
     (async () => {
-
       try {
         // Fetch initial data
         onResult(await this.executeReadOnly(sql, parameters));
@@ -590,7 +593,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           tables: resolvedTables
         });
       } catch (error) {
-        onError(error);
+        onError?.(error);
       }
     })();
   }
@@ -657,10 +660,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   * 
   * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
   * together when data is changed.
+  * 
+  * Note that the `onChange` callback of the handler is required.
+  * 
+  * Returns dispose function to stop watching.
   */
-  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): void {
-    const onChange = handler?.onChange ?? (() => { });
-    const onError = handler?.onError ?? ((error) => console.error(error));
+  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
+    const { onChange, onError = this.options.logger?.error } = handler ?? {};
+    if (!onChange) {
+      throw new Error('onChange is required');
+    }
 
     const resolvedOptions = options ?? {};
     const watchedTables = new Set(resolvedOptions.tables ?? []);
@@ -676,30 +685,23 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       { leading: false, trailing: true }
     );
 
-    try {
-      const dispose = this.database.registerListener({
-        tablesUpdated: async (update) => {
-          try {
-            const { rawTableNames } = resolvedOptions;
-            this.processTableUpdates(update, rawTableNames, changedTables);
-            flushTableUpdates();
-          } catch (error) {
-            onError(error);
-          }
-        }
-      });
-
-      resolvedOptions.signal?.addEventListener('abort', () => {
+    const dispose = this.database.registerListener({
+      tablesUpdated: async (update) => {
         try {
-          dispose();
-          // Maybe fail?
+          const { rawTableNames } = resolvedOptions;
+          this.processTableUpdates(update, rawTableNames, changedTables);
+          flushTableUpdates();
         } catch (error) {
-          onError(error as Error);
+          onError?.(error);
         }
-      });
-    } catch (error) {
-      onError(error as Error);
-    }
+      }
+    });
+
+    resolvedOptions.signal?.addEventListener('abort', () => {
+      dispose();
+    });
+
+    return () => dispose();
   }
 
   /**
@@ -712,32 +714,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
     const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
-
-    const changedTables = new Set<string>();
-    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = throttle(
-        () => this.handleTableChanges(changedTables, watchedTables, (intersection) => {
-          eventOptions.push({
-            changedTables: intersection
-          });
-        }),
-        throttleMs,
-        { leading: false, trailing: true }
-      );
-
-      const dispose = this.database.registerListener({
-        tablesUpdated: async (update) => {
-          const { rawTableNames } = resolvedOptions;
-          this.processTableUpdates(update, rawTableNames, changedTables);
-          flushTableUpdates();
-        }
-      });
+      const dispose = this.onChangeWithCallback({
+        onChange: (event): void => { eventOptions.push(event) },
+        onError: (error) => { eventOptions.fail(error) }
+      }, options);
 
       resolvedOptions.signal?.addEventListener('abort', () => {
-        dispose();
         eventOptions.stop();
         // Maybe fail?
       });
