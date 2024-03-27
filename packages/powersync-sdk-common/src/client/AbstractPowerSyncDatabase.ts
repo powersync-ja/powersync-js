@@ -552,7 +552,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     );
   }
 
+  /**
+   * This version of `watch` uses {@link AsyncGenerator}, for documentation see {@link watchWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link watchWithCallback}.
+   */
   watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
+  /**
+   * See {@link watchWithCallback}.
+   */
   watch(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
 
   watch(sql: string, parameters?: any[], handlerOrOptions?: WatchHandler | SQLWatchOptions, maybeOptions?: SQLWatchOptions): void | AsyncIterable<QueryResult> {
@@ -572,7 +579,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    * 
-   * Note that the `onChange` callback of the handler is required.
+   * Note that the `onChange` callback member of the handler is required.
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions,
   ): void {
@@ -640,19 +647,26 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return resolvedTables;
   }
 
+  /**
+  * This version of `onChange` uses {@link AsyncGenerator}, for documentation see {@link onChangeWithAsyncGenerator}.
+  * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
+  */
   onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
-  onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): void;
+  /**
+  * See {@link onChangeWithCallback}.
+  */
+  onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void;
 
-  onChange(handlerOrOptions?: WatchOnChangeHandler | SQLWatchOptions, maybeOptions?: SQLWatchOptions): void | AsyncIterable<WatchOnChangeEvent> {
+  onChange(handlerOrOptions?: (WatchOnChangeHandler | SQLWatchOptions), maybeOptions?: SQLWatchOptions): (() => void) | AsyncIterable<WatchOnChangeEvent> {
     if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onChange' in handlerOrOptions) {
       const handler = handlerOrOptions as WatchOnChangeHandler;
       const options = maybeOptions;
 
-      this.onChangeWithCallback(handler, options);
-    } else {
-      const options = handlerOrOptions as SQLWatchOptions | undefined;
-      return this.onChangeWithAsyncGenerator(options);
+      return this.onChangeWithCallback(handler, options);
     }
+
+    const options = handlerOrOptions as SQLWatchOptions | undefined;
+    return this.onChangeWithAsyncGenerator(options);
   }
 
   /**
@@ -661,7 +675,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
   * together when data is changed.
   * 
-  * Note that the `onChange` callback of the handler is required.
+  * Note that the `onChange` callback member of the handler is required.
   * 
   * Returns dispose function to stop watching.
   */
