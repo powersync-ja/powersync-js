@@ -66,7 +66,7 @@ export interface WatchHandler {
 }
 
 export interface WatchOnChangeHandler {
-  onChange: () => void,
+  onChange: (event: WatchOnChangeEvent) => void,
   onError?: (error: Error) => void
 }
 
@@ -560,11 +560,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const handler = handlerOrOptions as WatchHandler;
       const options = maybeOptions;
 
-      this.watchWithCallback(sql, parameters, handler.onResult, handler.onError, options);
-    } else {
-      const options = handlerOrOptions as SQLWatchOptions | undefined;
-      return this.watchWithAsyncGenerator(sql, parameters, options);
+      return this.watchWithCallback(sql, parameters, handler, options);
     }
+
+    const options = handlerOrOptions as SQLWatchOptions | undefined;
+    return this.watchWithAsyncGenerator(sql, parameters, options);
   }
 
   /**
@@ -572,18 +572,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    */
-  watchWithCallback(sql: string, parameters?: any[], onResult = (_results: QueryResult) => { },
-    onError: (error: Error) => void = (error) => console.error(error), options?: SQLWatchOptions,
+  watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions,
   ): void {
+    const onResult = handler?.onResult ?? (() => { });
+    const onError = handler?.onError ?? ((error) => console.error(error));
+
     (async () => {
+
       try {
         // Fetch initial data
         onResult(await this.executeReadOnly(sql, parameters));
 
         const resolvedTables = await this.resolveTables(sql, parameters, options);
-        const onChange = async () => onResult(await this.executeReadOnly(sql, parameters));
 
-        this.onChangeWithCallback(onChange, onError, {
+        this.onChangeWithCallback({ onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError }, {
           ...(options ?? {}),
           tables: resolvedTables
         });
@@ -643,10 +645,60 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const handler = handlerOrOptions as WatchOnChangeHandler;
       const options = maybeOptions;
 
-      this.onChangeWithCallback(handler.onChange, handler.onError, options);
+      this.onChangeWithCallback(handler, options);
     } else {
       const options = handlerOrOptions as SQLWatchOptions | undefined;
       return this.onChangeWithAsyncGenerator(options);
+    }
+  }
+
+  /**
+  * Invoke the provided callback on any changes to any of the specified tables.
+  * 
+  * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
+  * together when data is changed.
+  */
+  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): void {
+    const onChange = handler?.onChange ?? (() => { });
+    const onError = handler?.onError ?? ((error) => console.error(error));
+
+    const resolvedOptions = options ?? {};
+    const watchedTables = new Set(resolvedOptions.tables ?? []);
+
+    const changedTables = new Set<string>();
+    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
+
+    const flushTableUpdates = throttle(
+      () => this.handleTableChanges(changedTables, watchedTables, (intersection) => {
+        onChange({ changedTables: intersection });
+      }),
+      throttleMs,
+      { leading: false, trailing: true }
+    );
+
+    try {
+      const dispose = this.database.registerListener({
+        tablesUpdated: async (update) => {
+          try {
+            const { rawTableNames } = resolvedOptions;
+            this.processTableUpdates(update, rawTableNames, changedTables);
+            flushTableUpdates();
+          } catch (error) {
+            onError(error);
+          }
+        }
+      });
+
+      resolvedOptions.signal?.addEventListener('abort', () => {
+        try {
+          dispose();
+          // Maybe fail?
+        } catch (error) {
+          onError(error as Error);
+        }
+      });
+    } catch (error) {
+      onError(error as Error);
     }
   }
 
@@ -692,53 +744,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       return () => dispose();
     });
-  }
-
-  /**
-   * Invoke the provided callback on any changes to any of the specified tables.
-   * 
-   * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
-   * together when data is changed.
-   */
-  onChangeWithCallback(onChange: () => void, onError: (error: Error) => void = (error) => console.error(error), options?: SQLWatchOptions): void {
-    const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
-
-    const changedTables = new Set<string>();
-    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
-
-    const flushTableUpdates = throttle(
-      () => this.handleTableChanges(changedTables, watchedTables, () => {
-        onChange();
-      }),
-      throttleMs,
-      { leading: false, trailing: true }
-    );
-
-    try {
-      const dispose = this.database.registerListener({
-        tablesUpdated: async (update) => {
-          try {
-            const { rawTableNames } = resolvedOptions;
-            this.processTableUpdates(update, rawTableNames, changedTables);
-            flushTableUpdates();
-          } catch (error) {
-            onError(error);
-          }
-        }
-      });
-
-      resolvedOptions.signal?.addEventListener('abort', () => {
-        try {
-          dispose();
-          // Maybe fail?
-        } catch (error) {
-          onError(error as Error);
-        }
-      });
-    } catch (error) {
-      onError(error as Error);
-    }
   }
 
   private handleTableChanges(
