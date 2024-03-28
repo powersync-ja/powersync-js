@@ -4,13 +4,13 @@ import Logger, { ILogger } from 'js-logger';
 
 import {
   BucketRequest,
+  StreamingSyncLine,
+  StreamingSyncRequest,
   isStreamingKeepalive,
   isStreamingSyncCheckpoint,
   isStreamingSyncCheckpointComplete,
   isStreamingSyncCheckpointDiff,
-  isStreamingSyncData,
-  StreamingSyncLine,
-  StreamingSyncRequest
+  isStreamingSyncData
 } from './streaming-sync-types';
 import { AbstractRemote } from './AbstractRemote';
 import ndjsonStream from 'can-ndjson-stream';
@@ -18,6 +18,7 @@ import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/Buck
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
 import { SyncDataBucket } from '../bucket/SyncDataBucket';
 import { BaseObserver, BaseListener, Disposable } from '../../../utils/BaseObserver';
+import { AbortOperation } from '../../../utils/AbortOperation';
 
 export enum LockType {
   CRUD = 'crud',
@@ -47,6 +48,14 @@ export interface AbstractStreamingSyncImplementationOptions {
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
+  /**
+   * Triggered whenever a status update has been attempted to be made or
+   * refreshed.
+   */
+  statusUpdated?: ((statusUpdate: SyncStatusOptions) => void) | undefined;
+  /**
+   * Triggers whenever the status' members have changed in value
+   */
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
@@ -86,6 +95,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
+  protected streamingSyncPromise?: Promise<void>;
 
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
@@ -224,16 +234,46 @@ export abstract class AbstractStreamingSyncImplementation
     if (this.abortController) {
       await this.disconnect();
     }
+
     this.abortController = new AbortController();
-    this.streamingSync(this.abortController.signal);
-    return this.waitForStatus({ connected: true });
+    this.streamingSyncPromise = this.streamingSync(this.abortController.signal);
+    return new Promise<void>((resolve, reject) => {
+      const l = this.registerListener({
+        statusUpdated: (update) => {
+          // This is triggered as soon as a connection is read from
+          if (update.connected) {
+            resolve();
+            l();
+          }
+          // The connection failed
+          if (update.connected == false) {
+            reject(new Error('Could not connect'));
+            l();
+          }
+        }
+      });
+    });
   }
 
   async disconnect(): Promise<void> {
     if (!this.abortController) {
       throw new Error('Disconnect not possible');
     }
-    this.abortController.abort('Disconnected');
+
+    // This might be called multiple times
+    if (!this.abortController.signal.aborted) {
+      this.abortController.abort(new AbortOperation('Disconnect has been requested'));
+    }
+
+    // Await any pending operations before completing the disconnect operation
+    try {
+      await this.streamingSyncPromise;
+    } catch (ex) {
+      // The operation might have failed, all we care about is if it has completed
+      this.logger.warn(ex);
+    }
+    this.streamingSyncPromise = undefined;
+
     this.abortController = null;
     this.updateSyncStatus({ connected: false });
   }
@@ -261,7 +301,11 @@ export abstract class AbstractStreamingSyncImplementation
     let nestedAbortController = new AbortController();
 
     signal.addEventListener('abort', () => {
-      nestedAbortController.abort('Retrying sync stream operation');
+      /**
+       * A request for disconnect was received upstream. Relay the request
+       * to the nested abort controller.
+       */
+      nestedAbortController.abort(signal?.reason ?? new AbortOperation('Received command to disconnect from upstream'));
       this.crudUpdateListener?.();
       this.crudUpdateListener = undefined;
       this.updateSyncStatus({
@@ -272,6 +316,12 @@ export abstract class AbstractStreamingSyncImplementation
       });
     });
 
+    /**
+     * This loops runs until [retry] is false or the abort signal is set to aborted.
+     * Aborting the nestedAbortController will:
+     *  - Abort any pending fetch requests
+     *  - Close any sync stream ReadableStreams (which will also close any established network requests)
+     */
     while (true) {
       try {
         if (signal?.aborted) {
@@ -279,28 +329,45 @@ export abstract class AbstractStreamingSyncImplementation
         }
         const { retry } = await this.streamingSyncIteration(nestedAbortController.signal);
         if (!retry) {
+          /**
+           * A sync error ocurred that we cannot recover from here.
+           * This loop must terminate.
+           * The nestedAbortController will close any open network requests and streams below.
+           */
           break;
         }
         // Continue immediately
       } catch (ex) {
-        this.logger.error(ex);
+        /**
+         * Either:
+         *  - A network request failed with a failed connection or not OKAY response code.
+         *  - There was a sync processing error.
+         * This loop will retry.
+         * The nested abort controller will cleanup any open network requests and streams.
+         * The WebRemote should only abort pending fetch requests or close active Readable streams.
+         */
+        if (ex instanceof AbortOperation) {
+          this.logger.warn(ex);
+        } else {
+          this.logger.error(ex);
+        }
+      } finally {
+        if (!signal.aborted) {
+          nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));
+          nestedAbortController = new AbortController();
+          await this.delayRetry();
+        }
+
         this.updateSyncStatus({
           connected: false
         });
 
         // On error, wait a little before retrying
-        await this.delayRetry();
-      } finally {
-        // Abort any open network requests. Create a new nested controller for retry.
-        nestedAbortController.abort('Closing network requests for retry');
-        nestedAbortController = new AbortController();
       }
     }
 
     // Mark as disconnected if here
-    if (this.abortController) {
-      await this.disconnect();
-    }
+    this.updateSyncStatus({ connected: false });
   }
 
   protected async streamingSyncIteration(signal: AbortSignal, progress?: () => void): Promise<{ retry?: boolean }> {
@@ -337,15 +404,6 @@ export abstract class AbstractStreamingSyncImplementation
           },
           signal
         )) {
-          // A connection is active and messages are being received
-          if (!this.syncStatus.connected) {
-            // There is a connection now
-            Promise.resolve().then(() => this.triggerCrudUpload());
-            this.updateSyncStatus({
-              connected: true
-            });
-          }
-
           if (isStreamingSyncCheckpoint(line)) {
             targetCheckpoint = line.checkpoint;
             const bucketsToDelete = new Set<string>(bucketSet);
@@ -477,6 +535,14 @@ export abstract class AbstractStreamingSyncImplementation
     signal?: AbortSignal
   ): AsyncGenerator<StreamingSyncLine> {
     const body = await this.options.remote.postStreaming('/sync/stream', req, {}, signal);
+
+    // A connection is active
+    // There is a connection now
+    Promise.resolve().then(() => this.triggerCrudUpload());
+    this.updateSyncStatus({
+      connected: true
+    });
+
     const stream = ndjsonStream(body);
     const reader = stream.getReader();
 
@@ -506,8 +572,12 @@ export abstract class AbstractStreamingSyncImplementation
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
       this.syncStatus = updatedStatus;
+      // Only trigger this is there was a change
       this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
     }
+
+    // trigger this for all updates
+    this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
   private async delayRetry() {

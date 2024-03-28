@@ -1,4 +1,4 @@
-import { AbstractRemote } from '@journeyapps/powersync-sdk-common';
+import { AbortOperation, AbstractRemote } from '@journeyapps/powersync-sdk-common';
 
 export class WebRemote extends AbstractRemote {
   async post(path: string, data: any, headers: Record<string, string> = {}): Promise<any> {
@@ -47,17 +47,23 @@ export class WebRemote extends AbstractRemote {
     const request = await this.buildRequest(path);
 
     /**
-     * This abort controller will abort the fetch request if it has not resolved yet.
-     * If the request has resolved, it will be used to close the stream.
-     * Aborting the request after the stream is resolved and is in use seems to throw
-     * unhandled exceptions on the window level.
+     * This abort controller will abort pending fetch requests.
+     * If the request has resolved, it will be used to close the readable stream.
+     * Which will cancel the network request.
+     *
+     * This nested controller is required since:
+     *  Aborting the active fetch request while it is being consumed seems to throw
+     *  an unhandled exception on the window level.
      */
     const controller = new AbortController();
     let requestResolved = false;
     signal?.addEventListener('abort', () => {
       if (!requestResolved) {
         // Only abort via the abort controller if the request has not resolved yet
-        controller.abort(signal.reason);
+        controller.abort(
+          signal.reason ??
+            new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.')
+        );
       }
     });
 
@@ -68,23 +74,21 @@ export class WebRemote extends AbstractRemote {
       signal: controller.signal,
       cache: 'no-store'
     }).catch((ex) => {
-      // Handle abort requests which occur before the response resolves
       if (ex.name == 'AbortError') {
-        this.logger.warn(`Fetch request for ${request.url} has been aborted`);
-        return;
+        throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
       }
       throw ex;
     });
 
     if (!res) {
-      throw new Error('Fetch request was aborted before resolving.');
+      throw new Error('Fetch request was aborted');
     }
 
     requestResolved = true;
 
     if (!res.ok || !res.body) {
       const text = await res.text();
-      console.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
+      this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
       const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
       error.status = res.status;
       throw error;
@@ -96,15 +100,23 @@ export class WebRemote extends AbstractRemote {
      * aborted.
      */
     const reader = res.body.getReader();
+    // This will close the network request and read stream
+    const closeReader = async () => {
+      try {
+        await reader.cancel();
+      } catch (ex) {
+        // an error will throw if the reader hasn't been used yet
+      }
+      reader.releaseLock();
+    };
+
     signal?.addEventListener('abort', () => {
-      // This will close the network request and read stream
-      reader.cancel();
+      closeReader();
     });
 
     const outputStream = new ReadableStream({
-      start(controller) {
-        processStream();
-        async function processStream(): Promise<void> {
+      start: (controller) => {
+        const processStream = async () => {
           while (!signal?.aborted) {
             try {
               const { done, value } = await reader.read();
@@ -115,17 +127,17 @@ export class WebRemote extends AbstractRemote {
               // Enqueue the next data chunk into our target stream
               controller.enqueue(value);
             } catch (ex) {
-              console.error(ex);
+              this.logger.error('Caught exception when reading sync stream', ex);
               break;
             }
           }
           if (!signal?.aborted) {
             // Close the downstream readable stream
-            reader.cancel();
+            await closeReader();
           }
           controller.close();
-          reader.releaseLock();
-        }
+        };
+        processStream();
       }
     });
 

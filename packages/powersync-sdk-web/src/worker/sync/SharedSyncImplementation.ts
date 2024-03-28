@@ -8,7 +8,8 @@ import {
   SqliteBucketStorage,
   StreamingSyncImplementationListener,
   SyncStatus,
-  SyncStatusOptions
+  SyncStatusOptions,
+  AbortOperation
 } from '@journeyapps/powersync-sdk-common';
 import {
   WebStreamingSyncImplementation,
@@ -66,7 +67,6 @@ export class SharedSyncImplementation
   protected ports: WrappedSyncPort[];
   protected syncStreamClient?: AbstractStreamingSyncImplementation;
 
-  protected abortController?: AbortController;
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
 
@@ -120,6 +120,12 @@ export class SharedSyncImplementation
     }
 
     const logger = params.streamOptions?.flags?.broadcastLogs ? this.broadCastLogger : Logger.get('shared-sync');
+
+    self.addEventListener('unhandledrejection', (event) => {
+      // Share any uncaught events on the broadcast logger
+      logger.error('Uncaught exception in PowerSync shared sync worker', event);
+    });
+
     this.syncStreamClient = new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(
         new WASQLiteDBAdapter({
@@ -201,14 +207,12 @@ export class SharedSyncImplementation
    */
   async connect() {
     await this.waitForReady();
-    this.disconnect();
-    this.abortController = new AbortController();
-    this.syncStreamClient?.streamingSync(this.abortController.signal);
+    return this.syncStreamClient?.connect();
   }
 
   async disconnect() {
-    this.abortController?.abort('Disconnected');
-    this.updateAllStatuses({ connected: false });
+    await this.waitForReady();
+    return this.syncStreamClient?.disconnect();
   }
 
   /**
@@ -250,7 +254,7 @@ export class SharedSyncImplementation
      */
     [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
       if (abortController?.activePort.port == port) {
-        abortController!.controller.abort('Closing pending requests after port is removed');
+        abortController!.controller.abort(new AbortOperation('Closing pending requests after client port is removed'));
       }
     });
   }

@@ -84,7 +84,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
      * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
      * connection attempts.
      */
-    return this.runExclusive(() => super.connect(connector));
+    return this.runExclusive(() => {
+      this.options.logger?.debug('Attempting to connect to PowerSync instance');
+      return super.connect(connector);
+    });
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {

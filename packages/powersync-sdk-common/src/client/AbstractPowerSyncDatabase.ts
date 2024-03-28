@@ -251,7 +251,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    this.syncStreamImplementation.connect();
+    await this.syncStreamImplementation.connect();
   }
 
   /**

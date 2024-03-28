@@ -1,4 +1,4 @@
-import { AbstractRemote } from '@journeyapps/powersync-sdk-common';
+import { AbortOperation, AbstractRemote } from '@journeyapps/powersync-sdk-common';
 import { Platform } from 'react-native';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
@@ -83,7 +83,10 @@ export class ReactNativeRemote extends AbstractRemote {
     signal?.addEventListener('abort', () => {
       if (!requestResolved) {
         // Only abort via the abort controller if the request has not resolved yet
-        controller.abort(signal.reason);
+        controller.abort(
+          signal.reason ??
+            new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.')
+        );
       }
     });
 
@@ -101,10 +104,8 @@ export class ReactNativeRemote extends AbstractRemote {
       // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
       reactNative: { textStreaming: true }
     }).catch((ex) => {
-      // Handle abort requests which occur before the response resolves
       if (ex.name == 'AbortError') {
-        this.logger.warn(`Fetch request for ${request.url} has been aborted`);
-        return;
+        throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
       }
       throw ex;
     });
@@ -114,7 +115,7 @@ export class ReactNativeRemote extends AbstractRemote {
     }
 
     if (!res) {
-      throw new Error('Fetch request was aborted before resolving.');
+      throw new Error('Fetch request was aborted');
     }
 
     requestResolved = true;
@@ -136,15 +137,23 @@ export class ReactNativeRemote extends AbstractRemote {
      * This should be improved when moving to Websockets
      */
     const reader = res.body!.getReader();
+    // This will close the network request and read stream
+    const closeReader = async () => {
+      try {
+        await reader.cancel();
+      } catch (ex) {
+        // an error will throw if the reader hasn't been used yet
+      }
+      reader.releaseLock();
+    };
+
     signal?.addEventListener('abort', () => {
-      // This will close the network request and read stream
-      reader.cancel();
+      closeReader();
     });
 
     const outputStream = new ReadableStream({
-      start(controller) {
-        processStream();
-        async function processStream(): Promise<void> {
+      start: (controller) => {
+        const processStream = async () => {
           while (!signal?.aborted) {
             try {
               const { done, value } = await reader.read();
@@ -155,17 +164,17 @@ export class ReactNativeRemote extends AbstractRemote {
               // Enqueue the next data chunk into our target stream
               controller.enqueue(value);
             } catch (ex) {
-              console.error(ex);
+              this.logger.error('Caught exception when reading sync stream', ex);
               break;
             }
           }
           if (!signal?.aborted) {
             // Close the downstream readable stream
-            reader.cancel();
+            await closeReader();
           }
           controller.close();
-          reader.releaseLock();
-        }
+        };
+        processStream();
       }
     });
 
