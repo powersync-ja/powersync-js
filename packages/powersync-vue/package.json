@@ -1,0 +1,39 @@
+{
+  "name": "@journeyapps/powersync-vue",
+  "version": "0.0.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "Vue components for JourneyApps PowerSync",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc -b -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com/resources/api-reference",
+  "dependencies": {
+    "@journeyapps/powersync-sdk-common": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.3",
+    "vue": "3.4.21"
+  }
+}
