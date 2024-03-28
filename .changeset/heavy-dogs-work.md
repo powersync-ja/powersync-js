@@ -2,4 +2,4 @@
 "powersync-example": minor
 ---
 
-Updated implementation of attachmentIds in PhotoAttachmentQueue to match updated abstract signature from AbstractAttachmentQueue.
+Updated/renamed implementation of `attachmentIds` to `onAttachmentIdsChange`, now implements a callback approach instead of AsyncGenerator.

@@ -62,14 +62,14 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
    *
    * @example
    * ```typescript
-   * attachmentIds(onResult: (ids: string[]) => void): void {
+   * onAttachmentIdsChange(onUpdate) {
    *    this.powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [], { 
-   *        onResult: result => onResult(result.rows?._array.map((r) => r.id) ?? []) 
+   *        onResult: result => onUpdate(result.rows?._array.map((r) => r.id) ?? []) 
    *    });
    * }
-   * 
+   * ```
    */
-  abstract attachmentIds(onResult: (ids: string[]) => void): void;
+  abstract onAttachmentIdsChange(onUpdate: (ids: string[]) => void): void;
 
 
   /**
@@ -111,7 +111,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   async watchAttachmentIds() {
-    this.attachmentIds(async (ids) => {
+    this.onAttachmentIdsChange(async (ids) => {
       const _ids = `${ids.map((id) => `'${id}'`).join(',')}`;
       console.debug(`Queuing for sync, attachment IDs: [${_ids}]`);
 

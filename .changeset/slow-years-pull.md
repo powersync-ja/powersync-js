@@ -2,4 +2,4 @@
 "@journeyapps/powersync-attachments": major
 ---
 
-Changed abstract attachmentIds member of AbstractAttachmentQueue to use callback instead of an AsyncGenerator.
+Renamed abstract `attachmentIds` to `onAttachmentIdsChange` in `AbstractAttachmentQueue`, changed to use callback signature instead of an AsyncGenerator.
