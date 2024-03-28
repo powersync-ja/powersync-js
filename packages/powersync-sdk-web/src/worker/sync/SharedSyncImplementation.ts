@@ -121,10 +121,10 @@ export class SharedSyncImplementation
 
     const logger = params.streamOptions?.flags?.broadcastLogs ? this.broadCastLogger : Logger.get('shared-sync');
 
-    self.addEventListener('unhandledrejection', (event) => {
+    self.onerror = (event) => {
       // Share any uncaught events on the broadcast logger
       logger.error('Uncaught exception in PowerSync shared sync worker', event);
-    });
+    };
 
     this.syncStreamClient = new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(
