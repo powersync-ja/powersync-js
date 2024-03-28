@@ -187,15 +187,14 @@ describe('Multiple Instances', () => {
     await stream2UpdatedPromise;
     expect(stream2.isConnected).true;
 
-    // Manual trigger since tests don't entirely configure watches for ps_crud
-    stream1.triggerCrudUpload();
-
     // Create something with CRUD in it.
     await db.execute('INSERT into customers (id, name, email) VALUES (uuid(), ?, ?)', [
       'steven',
       'steven@journeyapps.com'
     ]);
 
+    // Manual trigger since tests don't entirely configure watches for ps_crud
+    stream1.triggerCrudUpload();
     // The second connector should be called to upload
     await upload2TriggeredPromise;
 
