@@ -119,14 +119,15 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       streamOptions: {
         crudUploadThrottleMs,
         identifier,
-        retryDelayMs
+        retryDelayMs,
+        flags: this.webOptions.flags
       }
     });
 
     /**
      * Pass along any sync status updates to this listener
      */
-    this.clientProvider = new SharedSyncClientProvider(this.options, (status) => {
+    this.clientProvider = new SharedSyncClientProvider(this.webOptions, (status) => {
       this.iterateListeners((l) => this.updateSyncStatus(status));
     });
 

@@ -7,10 +7,9 @@ import {
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebPowerSyncFlags } from '../../db/PowerSyncDatabase';
 import { SSRDBAdapter } from './SSRDBAdapter';
 
-export type WebPowerSyncOpenFlags = {
-  enableMultiTabs?: boolean;
+export interface WebPowerSyncOpenFlags extends WebPowerSyncFlags {
   disableSSRWarning?: boolean;
-};
+}
 
 export interface WebPowerSyncOpenFactoryOptions extends PowerSyncOpenFactoryOptions {
   flags?: WebPowerSyncOpenFlags;
@@ -25,7 +24,8 @@ export const DEFAULT_POWERSYNC_FLAGS: WebPowerSyncOpenFlags = {
     typeof globalThis.navigator !== 'undefined' && // For SSR purposes
     typeof SharedWorker !== 'undefined' &&
     !navigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
-    !(window as any).safari
+    !(window as any).safari,
+  broadcastLogs: true
 };
 
 /**
@@ -74,7 +74,8 @@ export abstract class AbstractWebPowerSyncDatabaseOpenFactory extends AbstractPo
   protected resolveDBFlags(): WebPowerSyncFlags {
     let flags = {
       ...DEFAULT_POWERSYNC_FLAGS,
-      ssrMode: this.isServerSide()
+      ssrMode: this.isServerSide(),
+      ...(this.options.flags ?? {})
     };
     if (typeof this.options.flags?.enableMultiTabs != 'undefined') {
       flags.enableMultiTabs = this.options.flags.enableMultiTabs;

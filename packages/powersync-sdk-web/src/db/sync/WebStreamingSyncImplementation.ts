@@ -5,7 +5,11 @@ import {
   LockType
 } from '@journeyapps/powersync-sdk-common';
 
-export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {}
+export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
+  flags?: {
+    broadcastLogs?: boolean;
+  };
+}
 
 export class WebStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
   constructor(options: WebStreamingSyncImplementationOptions) {
