@@ -251,7 +251,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    await this.syncStreamImplementation.connect();
+    this.syncStreamImplementation.connect();
   }
 
   /**
@@ -260,6 +260,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
+    await this.waitForReady();
     await this.syncStreamImplementation?.disconnect();
     this.syncStatusListenerDisposer?.();
     await this.syncStreamImplementation?.dispose();

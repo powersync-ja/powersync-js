@@ -207,12 +207,14 @@ export class SharedSyncImplementation
    */
   async connect() {
     await this.waitForReady();
-    return this.syncStreamClient?.connect();
+    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
+    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.connect());
   }
 
   async disconnect() {
     await this.waitForReady();
-    return this.syncStreamClient?.disconnect();
+    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
+    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.disconnect());
   }
 
   /**

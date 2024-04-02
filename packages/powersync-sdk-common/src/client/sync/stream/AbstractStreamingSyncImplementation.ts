@@ -237,19 +237,26 @@ export abstract class AbstractStreamingSyncImplementation
 
     this.abortController = new AbortController();
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal);
-    return new Promise<void>((resolve, reject) => {
+
+    // Return a promise that resolves when the connection status is updated
+    return new Promise<void>((resolve) => {
       const l = this.registerListener({
         statusUpdated: (update) => {
           // This is triggered as soon as a connection is read from
-          if (update.connected) {
-            resolve();
-            l();
+          if (typeof update.connected == 'undefined') {
+            // only concern with connection updates
+            return;
           }
-          // The connection failed
+
           if (update.connected == false) {
-            reject(new Error('Could not connect'));
-            l();
+            /**
+             * This function does not reject if initial connect attempt failed
+             */
+            this.logger.warn('Initial connect attempt did not successfully connect to server');
           }
+
+          resolve();
+          l();
         }
       });
     });
@@ -257,7 +264,7 @@ export abstract class AbstractStreamingSyncImplementation
 
   async disconnect(): Promise<void> {
     if (!this.abortController) {
-      throw new Error('Disconnect not possible');
+      return;
     }
 
     // This might be called multiple times
