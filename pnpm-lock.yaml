@@ -672,6 +672,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.39.7
         version: 2.39.8
+      '@types/vuelidate':
+        specifier: ^0.7.21
+        version: 0.7.21
       '@vuelidate/core':
         specifier: ^2.0.3
         version: 2.0.3(vue@3.4.21)
@@ -14759,6 +14762,12 @@ packages:
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
     dev: true
 
+  /@types/vuelidate@0.7.21:
+    resolution: {integrity: sha512-vC+BysDb5JGUrPAL67GeIuw0eF4jdgg/piS2wc5AxosNillT9H8wKvsN5FfbSogcVWbiyuXb3ArXpE/amqsrSw==}
+    dependencies:
+      vue: 2.7.16
+    dev: false
+
   /@types/webpack@5.28.5(webpack-cli@5.1.4):
     resolution: {integrity: sha512-wR87cgvxj3p6D0Crt1r5avwqffqPXUkNlnQ1mjU93G7gCuFjufZR4I6j8cz5g1F1tTYpfOOFvly+cmIQwL9wvw==}
     dependencies:
@@ -15153,6 +15162,16 @@ packages:
     dependencies:
       '@vue/compiler-core': 3.4.21
       '@vue/shared': 3.4.21
+
+  /@vue/compiler-sfc@2.7.16:
+    resolution: {integrity: sha512-KWhJ9k5nXuNtygPU7+t1rX6baZeqOYLEforUPjgNDBnLicfHCoi48H87Q8XyLZOrNNsmhuwKqtpDQWjEFe6Ekg==}
+    dependencies:
+      '@babel/parser': 7.24.0
+      postcss: 8.4.38
+      source-map: 0.6.1
+    optionalDependencies:
+      prettier: 2.8.8
+    dev: false
 
   /@vue/compiler-sfc@3.4.21:
     resolution: {integrity: sha512-me7epoTxYlY+2CUM7hy9PCDdpMPfIwrOvAXud2Upk10g4YLv9UBW7kL798TvMeDhPthkZ0CONNrK2GoeI1ODiQ==}
@@ -26921,7 +26940,6 @@ packages:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-    dev: true
 
   /prettier@3.2.5:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
@@ -32004,6 +32022,14 @@ packages:
       semver: 7.6.0
       typescript: 5.4.2
     dev: true
+
+  /vue@2.7.16:
+    resolution: {integrity: sha512-4gCtFXaAA3zYZdTp5s4Hl2sozuySsgz4jy1EnpBHNfpMa9dK1ZCG7viqBPCwXtmgc8nHqUsAu3G4gtmXkkY3Sw==}
+    deprecated: Vue 2 has reached EOL and is no longer actively maintained. See https://v2.vuejs.org/eol/ for more details.
+    dependencies:
+      '@vue/compiler-sfc': 2.7.16
+      csstype: 3.1.3
+    dev: false
 
   /vue@3.4.21(typescript@5.4.2):
     resolution: {integrity: sha512-5hjyV/jLEIKD/jYl4cavMcnzKwjMKohureP8ejn3hhEjwhWIhWeuzL2kJAjzl/WyVsgPY56Sy4Z40C3lVshxXA==}

@@ -1,40 +1,38 @@
 <template>
-    <div>login</div>
-    <div>
-        <!-- <LoginDetailsWidget
-      title="Login"
-      submitTitle="Login"
-      onSubmit={async (values) => {
-        if (!supabase) {
-          throw new Error('Supabase has not been initialized yet');
-        }
-        await supabase.login(values.email, values.password);
-        navigate(DEFAULT_ENTRY_ROUTE);
-      }}
-      secondaryActions={[{
-        title: 'Register', onClick: () => {
-          navigate('/auth/register');
-        }
-      }]}
-    /> -->
-    </div>
+  <LoginDetailsWidget :secondaryActions="actions" @submit="onLogin" :errorMessage="errorMessage" />
 </template>
 
-<script setup>
+<script setup lang="ts">
+import LoginDetailsWidget from '@/components/widgets/LoginDetailsWidget.vue';
+import { REGISTER_ROUTE } from '@/plugins/router';
+import { supabase } from '@/plugins/supabase';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const errorMessage = ref<string>('');
+
+const onLogin = async (form: { email: string, password: string }) => {
+  if (!supabase) {
+    throw new Error('Supabase has not been initialized yet');
+  }
+  try {
+    await supabase.login(form.email, form.password);
+  } catch (error) {
+    errorMessage.value = (error as any).message || 'unknown failure';
+
+  }
+  // navigate(DEFAULT_ENTRY_ROUTE);
+  // router.push('/');
+};
+
+const actions = [
+  {
+    title: 'Register',
+    onClick: () => {
+      router.push(REGISTER_ROUTE);
+    },
+  },
+];
+
 </script>
-<!-- <LoginDetailsWidget
-      title="Login"
-      submitTitle="Login"
-      onSubmit={async (values) => {
-        if (!supabase) {
-          throw new Error('Supabase has not been initialized yet');
-        }
-        await supabase.login(values.email, values.password);
-        navigate(DEFAULT_ENTRY_ROUTE);
-      }}
-      secondaryActions={[{
-        title: 'Register', onClick: () => {
-          navigate('/auth/register');
-        }
-      }]}
-    /> -->

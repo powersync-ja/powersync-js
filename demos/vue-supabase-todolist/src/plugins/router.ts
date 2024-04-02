@@ -1,8 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { RouteRecordRaw, createRouter, createWebHistory } from 'vue-router';
 
 // Import your Vue components corresponding to the pages
 import LoginPage from '@/views/Login.vue';
-// import RegisterPage from '@/auth/register/Page.vue';
+import RegisterPage from '@/views/Register.vue';
 // import EntryPage from './page/Page.vue';
 // import TodoEditPage from './views/todo-lists/edit/Page.vue';
 // import TodoListsPage from './views/todo-lists/Page.vue';
@@ -20,7 +20,7 @@ export const DEFAULT_ENTRY_ROUTE = '/views/todo-lists';
 
 // Function to create router instance
 export function createAppRouter() {
-    const routes = [
+    const routes: RouteRecordRaw[] = [
         // {
         //     path: '/',
         //     component: EntryPage,
@@ -29,10 +29,10 @@ export function createAppRouter() {
             path: LOGIN_ROUTE,
             component: LoginPage,
         },
-        // {
-        //     path: REGISTER_ROUTE,
-        //     component: RegisterPage,
-        // },
+        {
+            path: REGISTER_ROUTE,
+            component: RegisterPage,
+        },
         {
             path: '/views',
             component: ViewsLayout,

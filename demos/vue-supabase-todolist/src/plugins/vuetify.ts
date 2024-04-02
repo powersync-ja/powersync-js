@@ -14,6 +14,15 @@ import { createVuetify } from 'vuetify'
 // https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export const vuetify = createVuetify({
   theme: {
-    defaultTheme: 'light',
+    defaultTheme: 'dark',
+    themes: {
+      light: {
+        dark: false,
+        colors: {
+          'card-background': '#121212',
+
+        }
+      },
+    },
   },
 })
