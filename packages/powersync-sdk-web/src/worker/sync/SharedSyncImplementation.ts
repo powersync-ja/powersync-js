@@ -279,4 +279,19 @@ export class SharedSyncImplementation
     this.syncStatus = new SyncStatus(status);
     this.ports.forEach((p) => p.clientProvider.statusChanged(status));
   }
+
+  /**
+   * A function only used for unit tests which updates the internal
+   * sync stream client and all tab client's sync status
+   */
+  private _testUpdateAllStatuses(status: SyncStatusOptions) {
+    if (!this.syncStreamClient) {
+      console.warn('no stream client has been initialized yet');
+    }
+
+    // Only assigning, don't call listeners for this test
+    this.syncStreamClient!.syncStatus = new SyncStatus(status);
+
+    this.updateAllStatuses(status);
+  }
 }
