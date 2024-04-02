@@ -72,15 +72,10 @@ const config: Config = {
       title: 'PowerSync JS SDKs',
       logo: {
         alt: 'PowerSync Logo',
-        src: 'img/powersync-logo.png'
+        src: 'img/powersync-logo.png',
+        href: '/react-native-sdk'
       },
       items: [
-        {
-          type: 'docSidebar',
-          sidebarId: 'docsSidebar',
-          position: 'left',
-          label: 'Docs'
-        },
         {
           href: 'https://github.com/powersync-ja',
           label: 'GitHub',
