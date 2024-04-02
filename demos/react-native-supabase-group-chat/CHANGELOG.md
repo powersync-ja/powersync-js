@@ -1,5 +1,15 @@
 # react-native-supabase-group-chat
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [9bf5a76]
+- Updated dependencies [fd7ebc8]
+  - @journeyapps/powersync-react@1.1.0
+  - @journeyapps/powersync-sdk-common@1.4.0
+  - @journeyapps/powersync-sdk-react-native@1.3.3
+
 ## 1.0.4
 
 ### Patch Changes
