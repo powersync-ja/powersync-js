@@ -18,7 +18,7 @@ export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
 
   onAttachmentIdsChange(onUpdate: (ids: string[]) => void): void {
     this.powersync.watch(`SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`, [], {
-      onResult: result => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
+      onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
     });
   }
 

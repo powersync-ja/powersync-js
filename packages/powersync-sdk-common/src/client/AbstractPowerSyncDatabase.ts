@@ -557,8 +557,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Can be overloaded to use a callback handler instead, for documentation see {@link watchWithCallback}.
    * 
    * @example
-   * ```typescript
-   * async *attachmentIds(): AsyncIterable<string[]> {
+   * ```javascript
+   * async *attachmentIds() {
    *   for await (const result of this.powersync.watch(
    *     `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
    *     []
@@ -573,15 +573,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * See {@link watchWithCallback}.
    * 
    * @example
-   * ```typescript
-   * attachmentIds(onResult: (ids: string[]) => void): void {
+   * ```javascript
+   * onAttachmentIdsChange(onResult) {
    *   this.powersync.watch(
    *     `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
    *     [],
    *     {
-   *       onResult: (result) => {
-   *         onResult(result.rows?._array.map((r) => r.id) ?? []);
-   *       }
+   *       onResult: (result) => onResult(result.rows?._array.map((r) => r.id) ?? [])
    *     }
    *   );
    * }
@@ -679,7 +677,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
   * 
   * @example
-  * ```typescript
+  * ```javascript
   * async monitorChanges() {
   *   for await (const event of this.powersync.onChange({tables: ['todos']})) {
   *     console.log('Detected change event:', event);
@@ -692,8 +690,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   * See {@link onChangeWithCallback}.
   * 
   * @example 
-  * ```typescript
-  * monitorChanges(): void {
+  * ```javascript
+  * monitorChanges() {
   *   this.powersync.onChange({
   *     onChange: (event) => {
   *       console.log('Change detected:', event);

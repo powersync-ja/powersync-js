@@ -61,10 +61,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
    * In most cases this will contain a watch query.
    *
    * @example
-   * ```typescript
+   * ```javascript
    * onAttachmentIdsChange(onUpdate) {
    *    this.powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [], { 
-   *        onResult: result => onUpdate(result.rows?._array.map((r) => r.id) ?? []) 
+   *        onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? []) 
    *    });
    * }
    * ```
