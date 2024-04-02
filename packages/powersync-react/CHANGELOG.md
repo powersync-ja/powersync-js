@@ -1,5 +1,16 @@
 # @journeyapps/powersync-react
 
+## 1.1.0
+
+### Minor Changes
+
+- 9bf5a76: No longer using the async iterator version of the watch method for the usePowerSyncWatchedQuery hook, using the callback version instead.
+
+### Patch Changes
+
+- Updated dependencies [fd7ebc8]
+  - @journeyapps/powersync-sdk-common@1.4.0
+
 ## 1.0.8
 
 ### Patch Changes

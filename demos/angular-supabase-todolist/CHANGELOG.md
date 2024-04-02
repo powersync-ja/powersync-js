@@ -1,5 +1,11 @@
 # PowerSync Angular Demo
 
+## 0.0.5
+
+### Patch Changes
+
+- @journeyapps/powersync-sdk-web@0.3.3
+
 ## 0.0.4
 
 ### Patch Changes

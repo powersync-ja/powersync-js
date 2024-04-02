@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- @journeyapps/powersync-sdk-web@0.3.3
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [8fc2164]
   - @journeyapps/powersync-sdk-web@0.3.2
 
