@@ -351,11 +351,11 @@ export abstract class AbstractStreamingSyncImplementation
         } else {
           this.logger.error(ex);
         }
+        await this.delayRetry();
       } finally {
         if (!signal.aborted) {
           nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));
           nestedAbortController = new AbortController();
-          await this.delayRetry();
         }
 
         this.updateSyncStatus({

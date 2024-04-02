@@ -21,8 +21,8 @@ export async function waitForConnectionStatus(
       resolve();
     }
     const l = db.registerListener({
-      statusChanged: (status) => {
-        if (_.every(statusCheck, (value, key) => _.isEqual(status.toJSON()[key as keyof SyncStatusOptions], value))) {
+      statusUpdated: (status) => {
+        if (_.every(statusCheck, (value, key) => _.isEqual(status[key as keyof SyncStatusOptions], value))) {
           resolve();
           l?.();
         }
@@ -67,14 +67,14 @@ export async function generateConnectedDatabase() {
 
   const streamOpened = waitForStream();
 
-  powersync.connect(new TestConnector());
+  const connectedPromise = powersync.connect(new TestConnector());
 
   await streamOpened;
 
   remote.streamController?.enqueue(new TextEncoder().encode('{"token_expires_in":3426}\n'));
 
   // Wait for connected to be true
-  await waitForConnectionStatus(powersync);
+  await connectedPromise;
 
   return {
     factory,
