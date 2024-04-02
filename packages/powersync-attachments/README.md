@@ -63,7 +63,7 @@ import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 export class AttachmentQueue extends AbstractAttachmentQueue {}
 ```
 
-2. Implement `attachmentIds`, an `AsyncIterator` method to return an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
+2. Implement `onAttachmentIdsChange`, which takes in a callback to handle an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
 
    In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
 
@@ -71,13 +71,10 @@ export class AttachmentQueue extends AbstractAttachmentQueue {}
 import { AbstractAttachmentQueue } from '@journeyapps/powersync-attachments';
 
 export class AttachmentQueue extends AbstractAttachmentQueue {
-  async *attachmentIds() {
-    for await (const result of this.powersync.watch(
-      `SELECT photo_id as id FROM checklists WHERE photo_id IS NOT NULL`,
-      []
-    )) {
-      yield result.rows?._array.map((r) => r.id) ?? [];
-    }
+  onAttachmentIdsChange(onUpdate) {
+    this.powersync.watch('SELECT photo_id as id FROM checklists WHERE photo_id IS NOT NULL', [], {
+      onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
+   });
   }
 }
 ```
