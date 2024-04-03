@@ -69,7 +69,7 @@ const config: Config = {
   themeConfig: {
     image: process.env.META_LOGO_URL,
     navbar: {
-      title: 'PowerSync JS SDKs',
+      title: 'API Reference for PowerSync JS SDKs',
       logo: {
         alt: 'PowerSync Logo',
         src: 'img/powersync-logo.png',
