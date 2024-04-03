@@ -1,3 +1,3 @@
-import { SupabaseConnector } from "@/library/powersync/SupabaseConnector";
+import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 
 export const supabase = new SupabaseConnector();

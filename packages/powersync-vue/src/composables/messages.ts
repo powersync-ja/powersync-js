@@ -33,4 +33,4 @@ const exampleFunction = async () => {
 }
 </script>
 \`\`\`
-`; 
+`;

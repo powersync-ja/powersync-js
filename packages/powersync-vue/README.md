@@ -61,7 +61,7 @@ powersync.value.getAll('SELECT * from lists').then((l: any[]) => list.value = l)
 ```
 
 ### Queries
-The `usePowerSyncQuery` composable provides a static view of a given query, but can you use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the error state, loading state, and a refresh callback that can be invoked to rerun the query manually.
+The `usePowerSyncQuery` composable provides a static view of a given query, but can you use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the error state and loading state, as well as a refresh callback that can be invoked to rerun the query manually.
 
 ```Vue
 // TodoListDisplayQuery.vue

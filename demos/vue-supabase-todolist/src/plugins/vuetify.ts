@@ -1,28 +1,22 @@
-/**
- * plugins/vuetify.ts
- *
- * Framework documentation: https://vuetifyjs.com`
- */
-
 // Styles
-import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css';
+import 'vuetify/styles';
 
 // Composables
-import { createVuetify } from 'vuetify'
+import { createVuetify } from 'vuetify';
+import { VFab } from 'vuetify/labs/VFab';
 
-// https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export const vuetify = createVuetify({
+  components: { VFab },
   theme: {
     defaultTheme: 'dark',
     themes: {
-      light: {
-        dark: false,
+      dark: {
+        dark: true,
         colors: {
-          'card-background': '#121212',
-
+          primary: '#c44eff'
         }
-      },
-    },
-  },
-})
+      }
+    }
+  }
+});

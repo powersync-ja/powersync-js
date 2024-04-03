@@ -14,9 +14,7 @@ const actions = [
     title: 'BACK',
     onClick: () => {
       router.push(LOGIN_ROUTE);
-    },
-  },
+    }
+  }
 ];
-
-
 </script>
