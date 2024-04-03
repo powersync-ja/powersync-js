@@ -2,4 +2,4 @@
 '@journeyapps/powersync-sdk-web': patch
 ---
 
-Fixed broadcast logger sanitation and error handling.
+Fixed shared sync broadcast logger sanitization and error handling. Added ability to disabled broadcast logging in `WebPowerSyncFlags`.
