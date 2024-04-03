@@ -1,5 +1,21 @@
 # react-native-supabase-todolist
 
+## 1.1.0
+
+### Minor Changes
+
+- d223454: Updated/renamed implementation of `attachmentIds` to `onAttachmentIdsChange`, now implements a callback approach instead of AsyncGenerator.
+
+### Patch Changes
+
+- Updated dependencies [9bf5a76]
+- Updated dependencies [d223454]
+- Updated dependencies [fd7ebc8]
+  - @journeyapps/powersync-react@1.1.0
+  - @journeyapps/powersync-attachments@2.0.0
+  - @journeyapps/powersync-sdk-common@1.4.0
+  - @journeyapps/powersync-sdk-react-native@1.3.3
+
 ## 1.0.7
 
 ### Patch Changes

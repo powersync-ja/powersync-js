@@ -2,7 +2,7 @@ import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import throttle from 'lodash/throttle';
-import { DBAdapter, QueryResult, Transaction, isBatchedUpdateNotification } from '../db/DBAdapter';
+import { BatchedUpdateNotification, DBAdapter, QueryResult, Transaction, UpdateNotification, isBatchedUpdateNotification } from '../db/DBAdapter';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { Schema } from '../db/schema/Schema';
@@ -58,6 +58,16 @@ export interface SQLWatchOptions {
 
 export interface WatchOnChangeEvent {
   changedTables: string[];
+}
+
+export interface WatchHandler {
+  onResult: (results: QueryResult) => void,
+  onError?: (error: Error) => void
+}
+
+export interface WatchOnChangeHandler {
+  onChange: (event: WatchOnChangeEvent) => void,
+  onError?: (error: Error) => void
 }
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
@@ -544,14 +554,107 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * This version of `watch` uses {@link AsyncGenerator}, for documentation see {@link watchWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link watchWithCallback}.
+   * 
+   * @example
+   * ```javascript
+   * async *attachmentIds() {
+   *   for await (const result of this.powersync.watch(
+   *     `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *     []
+   *   )) {
+   *     yield result.rows?._array.map((r) => r.id) ?? [];
+   *   }
+   * }
+   * ```
+   */
+  watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
+  /**
+   * See {@link watchWithCallback}.
+   * 
+   * @example
+   * ```javascript
+   * onAttachmentIdsChange(onResult) {
+   *   this.powersync.watch(
+   *     `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *     [],
+   *     {
+   *       onResult: (result) => onResult(result.rows?._array.map((r) => r.id) ?? [])
+   *     }
+   *   );
+   * }
+   * ```
+   */
+  watch(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
+
+  watch(sql: string, parameters?: any[], handlerOrOptions?: WatchHandler | SQLWatchOptions, maybeOptions?: SQLWatchOptions): void | AsyncIterable<QueryResult> {
+    if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onResult' in handlerOrOptions) {
+      const handler = handlerOrOptions as WatchHandler;
+      const options = maybeOptions;
+
+      return this.watchWithCallback(sql, parameters, handler, options);
+    }
+
+    const options = handlerOrOptions as SQLWatchOptions | undefined;
+    return this.watchWithAsyncGenerator(sql, parameters, options);
+  }
+
+  /**
+   * Execute a read query every time the source tables are modified.
+   * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
+   * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
+   * 
+   * Note that the `onChange` callback member of the handler is required.
+   */
+  watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions,
+  ): void {
+    const { onResult, onError = this.options.logger?.error } = handler ?? {};
+    if (!onResult) {
+      throw new Error('onResult is required');
+    }
+
+    (async () => {
+      try {
+        // Fetch initial data
+        onResult(await this.executeReadOnly(sql, parameters));
+
+        const resolvedTables = await this.resolveTables(sql, parameters, options);
+
+        this.onChangeWithCallback({ onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError }, {
+          ...(options ?? {}),
+          tables: resolvedTables
+        });
+      } catch (error) {
+        onError?.(error);
+      }
+    })();
+  }
+
+  /**
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    */
-  async *watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
-    // Fetch initial data
-    yield await this.executeReadOnly(sql, parameters);
+  watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
+    return new EventIterator<QueryResult>((eventOptions) => {
+      (async () => {
+        // Fetch initial data
+        eventOptions.push(await this.executeReadOnly(sql, parameters));
 
+        const resolvedTables = await this.resolveTables(sql, parameters, options);
+
+        for await (const event of this.onChangeWithAsyncGenerator({
+          ...(options ?? {}),
+          tables: resolvedTables
+        })) {
+          eventOptions.push(await this.executeReadOnly(sql, parameters));
+        }
+      })();
+    });
+  }
+
+  async resolveTables(sql: string, parameters?: any[], options?: SQLWatchOptions): Promise<string[]> {
     const resolvedTables = options?.tables ? [...options.tables] : [];
     if (!options?.tables) {
       const explained = await this.getAll<{ opcode: string; p3: number; p2: number }>(`EXPLAIN ${sql}`, parameters);
@@ -566,78 +669,161 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         resolvedTables.push(table.tbl_name.replace(POWERSYNC_TABLE_MATCH, ''));
       }
     }
-    for await (const event of this.onChange({
-      ...(options ?? {}),
-      tables: resolvedTables
-    })) {
-      yield await this.executeReadOnly(sql, parameters);
+
+    return resolvedTables;
+  }
+
+  /**
+  * This version of `onChange` uses {@link AsyncGenerator}, for documentation see {@link onChangeWithAsyncGenerator}.
+  * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
+  * 
+  * @example
+  * ```javascript
+  * async monitorChanges() {
+  *   for await (const event of this.powersync.onChange({tables: ['todos']})) {
+  *     console.log('Detected change event:', event);
+  *   }
+  * }
+  * ```
+  */
+  onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
+  /**
+  * See {@link onChangeWithCallback}.
+  * 
+  * @example 
+  * ```javascript
+  * monitorChanges() {
+  *   this.powersync.onChange({
+  *     onChange: (event) => {
+  *       console.log('Change detected:', event);
+  *     }
+  *   }, { tables: ['todos'] });
+  * }
+  * ```
+  */
+  onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void;
+
+  onChange(handlerOrOptions?: (WatchOnChangeHandler | SQLWatchOptions), maybeOptions?: SQLWatchOptions): (() => void) | AsyncIterable<WatchOnChangeEvent> {
+    if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onChange' in handlerOrOptions) {
+      const handler = handlerOrOptions as WatchOnChangeHandler;
+      const options = maybeOptions;
+
+      return this.onChangeWithCallback(handler, options);
     }
+
+    const options = handlerOrOptions as SQLWatchOptions | undefined;
+    return this.onChangeWithAsyncGenerator(options);
+  }
+
+  /**
+  * Invoke the provided callback on any changes to any of the specified tables.
+  * 
+  * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
+  * together when data is changed.
+  * 
+  * Note that the `onChange` callback member of the handler is required.
+  * 
+  * Returns dispose function to stop watching.
+  */
+  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
+    const { onChange, onError = this.options.logger?.error } = handler ?? {};
+    if (!onChange) {
+      throw new Error('onChange is required');
+    }
+
+    const resolvedOptions = options ?? {};
+    const watchedTables = new Set(resolvedOptions.tables ?? []);
+
+    const changedTables = new Set<string>();
+    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
+
+    const flushTableUpdates = throttle(
+      () => this.handleTableChanges(changedTables, watchedTables, (intersection) => {
+        onChange({ changedTables: intersection });
+      }),
+      throttleMs,
+      { leading: false, trailing: true }
+    );
+
+    const dispose = this.database.registerListener({
+      tablesUpdated: async (update) => {
+        try {
+          const { rawTableNames } = resolvedOptions;
+          this.processTableUpdates(update, rawTableNames, changedTables);
+          flushTableUpdates();
+        } catch (error) {
+          onError?.(error);
+        }
+      }
+    });
+
+    resolvedOptions.signal?.addEventListener('abort', () => {
+      dispose();
+    });
+
+    return () => dispose();
   }
 
   /**
    * Create a Stream of changes to any of the specified tables.
    *
-   * This is preferred over {@link watch} when multiple queries need to be performed
+   * This is preferred over {@link watchWithAsyncGenerator} when multiple queries need to be performed
    * together when data is changed.
    *
    * Note, do not declare this as `async *onChange` as it will not work in React Native
    */
-  onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
+  onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent> {
     const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
-
-    let changedTables = new Set<string>();
-    const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const flushTableUpdates = throttle(
-        () => {
-          if (changedTables.size > 0) {
-            const intersection = Array.from(changedTables.values()).filter((change) => watchedTables.has(change));
-            if (intersection.length) {
-              eventOptions.push({
-                changedTables: intersection
-              });
-            }
-          }
-          changedTables.clear();
-        },
-        throttleMs,
-        { leading: false, trailing: true }
-      );
-
-      const dispose = this.database.registerListener({
-        tablesUpdated: async (update) => {
-          const { rawTableNames } = resolvedOptions;
-
-          const tables = isBatchedUpdateNotification(update) ? update.tables : [update.table];
-
-          const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
-          if (!filteredTables.length) {
-            return;
-          }
-
-          // Remove any PowerSync table prefixes if necessary
-          const mappedTableNames = rawTableNames
-            ? filteredTables
-            : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
-
-          for (let table of mappedTableNames) {
-            changedTables.add(table);
-          }
-
-          flushTableUpdates();
-        }
-      });
+      const dispose = this.onChangeWithCallback({
+        onChange: (event): void => { eventOptions.push(event) },
+        onError: (error) => { eventOptions.fail(error) }
+      }, options);
 
       resolvedOptions.signal?.addEventListener('abort', () => {
-        dispose();
         eventOptions.stop();
         // Maybe fail?
       });
 
       return () => dispose();
     });
+  }
+
+  private handleTableChanges(
+    changedTables: Set<string>,
+    watchedTables: Set<string>,
+    onDetectedChanges: (changedTables: string[]) => void
+  ): void {
+    if (changedTables.size > 0) {
+      const intersection = Array.from(changedTables.values()).filter((change) => watchedTables.has(change));
+      if (intersection.length) {
+        onDetectedChanges(intersection);
+      }
+    }
+    changedTables.clear();
+  }
+
+  private processTableUpdates(
+    updateNotification: BatchedUpdateNotification | UpdateNotification,
+    rawTableNames: boolean | undefined,
+    changedTables: Set<string>
+  ): void {
+    const tables = isBatchedUpdateNotification(updateNotification) ? updateNotification.tables : [updateNotification.table];
+
+    const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
+    if (!filteredTables.length) {
+      return;
+    }
+
+    // Remove any PowerSync table prefixes if necessary
+    const mappedTableNames = rawTableNames
+      ? filteredTables
+      : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
+
+    for (let table of mappedTableNames) {
+      changedTables.add(table);
+    }
   }
 
   /**

@@ -1,5 +1,11 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.4.0
+
+### Minor Changes
+
+- fd7ebc8: Introduced overloaded versions of watch and onChange methods to support a callback approach to handle results and errors alongside the existing AsyncGenerator mechanism.
+
 ## 1.3.2
 
 ### Patch Changes

@@ -72,6 +72,46 @@ describe('Watch Tests', () => {
     expect(receivedUpdatesCount).equals(updatesCount);
   });
 
+  it('watch outside throttle limits (callback)', async () => {
+    const abortController = new AbortController();
+
+
+    const updatesCount = 2;
+    let receivedUpdatesCount = 0;
+
+    /**
+     * Promise which resolves once we received the same amount of update
+     * notifications as there are inserts.
+     */
+    const receivedUpdates = new Promise<void>((resolve) => {
+      const onUpdate = () => {
+        receivedUpdatesCount++;
+        if (receivedUpdatesCount == updatesCount) {
+          abortController.abort();
+          resolve();
+        }
+      };
+
+      powersync.watch(
+        'SELECT count() AS count FROM assets INNER JOIN customers ON customers.id = assets.customer_id',
+        [],
+        { onResult: onUpdate },
+        { signal: abortController.signal, throttleMs: throttleDuration }
+      );
+    });
+
+
+    for (let updateCount = 0; updateCount < updatesCount; updateCount++) {
+      await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+      // Wait the throttle duration, ensuring a watch update for each insert
+      await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
+    }
+
+    await receivedUpdates;
+    expect(receivedUpdatesCount).equals(updatesCount);
+  });
+
   it('watch inside throttle limits', async () => {
     const abortController = new AbortController();
 
@@ -89,6 +129,32 @@ describe('Watch Tests', () => {
         receivedUpdatesCount++;
       }
     })();
+
+    // Create the inserts as fast as possible
+    for (let updateCount = 0; updateCount < updatesCount; updateCount++) {
+      await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    abortController.abort();
+
+    // There should be one initial result plus one throttled result
+    expect(receivedUpdatesCount).equals(2);
+  });
+
+  it('watch inside throttle limits (callback)', async () => {
+    const abortController = new AbortController();
+
+    const updatesCount = 5;
+    let receivedUpdatesCount = 0;
+
+    const onUpdate = () => receivedUpdatesCount++;
+
+    powersync.watch(
+      'SELECT count() AS count FROM assets INNER JOIN customers ON customers.id = assets.customer_id',
+      [], { onResult: onUpdate },
+      { signal: abortController.signal, throttleMs: throttleDuration }
+    );
 
     // Create the inserts as fast as possible
     for (let updateCount = 0; updateCount < updatesCount; updateCount++) {
@@ -142,5 +208,63 @@ describe('Watch Tests', () => {
 
     // Only the initial result should have yielded.
     expect(receivedCustomersUpdatesCount).equals(1);
+  });
+
+  it('should only watch tables inside query (callback)', async () => {
+    const assetsAbortController = new AbortController();
+
+    let receivedAssetsUpdatesCount = 0;
+    const onWatchAssets = () => receivedAssetsUpdatesCount++;
+
+    powersync.watch('SELECT count() AS count FROM assets', [], { onResult: onWatchAssets }, {
+      signal: assetsAbortController.signal
+    });
+
+    const customersAbortController = new AbortController();
+
+    let receivedCustomersUpdatesCount = 0;
+    const onWatchCustomers = () => receivedCustomersUpdatesCount++;
+
+    powersync.watch('SELECT count() AS count FROM customers', [], { onResult: onWatchCustomers }, {
+      signal: customersAbortController.signal
+    });
+
+    // Create the inserts as fast as possible
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    assetsAbortController.abort();
+    customersAbortController.abort();
+
+    // There should be one initial result plus one throttled result
+    expect(receivedAssetsUpdatesCount).equals(2);
+
+    // Only the initial result should have yielded.
+    expect(receivedCustomersUpdatesCount).equals(1);
+  });
+
+
+  it('should handle watch onError callback', async () => {
+    const abortController = new AbortController();
+    const onResult = () => { }; // no-op
+    let receivedErrorCount = 0;
+
+    const receivedError = new Promise<void>((resolve) => {
+      const onError = () => {
+        receivedErrorCount++;
+        resolve();
+      };
+
+      powersync.watch(
+        'INVALID SQL QUERY', // Simulate an error with bad SQL
+        [],
+        { onResult, onError },
+        { signal: abortController.signal, throttleMs: throttleDuration }
+      );
+    });
+    abortController.abort();
+
+    await receivedError;
+    expect(receivedErrorCount).equals(1);
   });
 });

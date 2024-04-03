@@ -57,15 +57,20 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   /**
-   * Returns an async iterator that yields attachment IDs that need to be synced.
-   * In most cases this will be a watch query
+   * Takes in a callback that gets invoked with attachment IDs that need to be synced.
+   * In most cases this will contain a watch query.
    *
-   * Example:
-   * for await (const result of powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [])) {
-   *    yield result.rows?._array.map((r) => r.id) ?? [];
+   * @example
+   * ```javascript
+   * onAttachmentIdsChange(onUpdate) {
+   *    this.powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [], { 
+   *        onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? []) 
+   *    });
    * }
+   * ```
    */
-  abstract attachmentIds(): AsyncIterable<string[]>;
+  abstract onAttachmentIdsChange(onUpdate: (ids: string[]) => void): void;
+
 
   /**
    * Create a new AttachmentRecord, this gets called when the attachment id is not found in the database.
@@ -106,7 +111,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   async watchAttachmentIds() {
-    for await (const ids of this.attachmentIds()) {
+    this.onAttachmentIdsChange(async (ids) => {
       const _ids = `${ids.map((id) => `'${id}'`).join(',')}`;
       console.debug(`Queuing for sync, attachment IDs: [${_ids}]`);
 
@@ -157,7 +162,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
           AND
             id NOT IN (${ids.map((id) => `'${id}'`).join(',')})`
       );
-    }
+    });
   }
 
   async saveToQueue(record: Omit<AttachmentRecord, 'timestamp'>): Promise<AttachmentRecord> {
@@ -342,8 +347,8 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     return false;
   }
 
-  async *idsToUpload(): AsyncIterable<string[]> {
-    for await (const result of this.powersync.watch(
+  idsToUpload(onResult: (ids: string[]) => void): void {
+    this.powersync.watch(
       `SELECT id
               FROM ${this.table}
               WHERE
@@ -352,18 +357,17 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
                 (state = ${AttachmentState.QUEUED_UPLOAD}
               OR
                 state = ${AttachmentState.QUEUED_SYNC})`,
-      []
-    )) {
-      yield result.rows?._array.map((r) => r.id) || [];
-    }
+      [],
+      { onResult: (result) => onResult(result.rows?._array.map((r) => r.id) || []) }
+    );
   }
 
-  async watchUploads() {
-    for await (const ids of this.idsToUpload()) {
+  watchUploads() {
+    this.idsToUpload(async (ids) => {
       if (ids.length > 0) {
         await this.uploadRecords();
       }
-    }
+    })
   }
 
   /**
@@ -409,26 +413,25 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     return res.map((r) => r.id);
   }
 
-  async *idsToDownload(): AsyncIterable<string[]> {
-    for await (const result of this.powersync.watch(
+  idsToDownload(onResult: (ids: string[]) => void): void {
+    this.powersync.watch(
       `SELECT id
               FROM ${this.table}
               WHERE
                 state = ${AttachmentState.QUEUED_DOWNLOAD}
               OR
                 state = ${AttachmentState.QUEUED_SYNC}`,
-      []
-    )) {
-      yield result.rows?._array.map((r) => r.id) || [];
-    }
+      [],
+      { onResult: result => onResult(result.rows?._array.map(r => r.id) || []) }
+    )
   }
 
-  async watchDownloads() {
-    for await (const ids of this.idsToDownload()) {
+  watchDownloads() {
+    this.idsToDownload(async (ids) => {
       ids.map((id) => this.downloadQueue.add(id));
-      // No need to await this, the lock will ensure only loop is running at a time
+      // No need to await this, the lock will ensure only one loop is running at a time
       this.downloadRecords();
-    }
+    })
   }
 
   private async downloadRecords() {
