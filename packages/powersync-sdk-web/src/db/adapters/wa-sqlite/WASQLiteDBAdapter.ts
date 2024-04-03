@@ -78,6 +78,11 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
+  // TODO: Implement batch query execution
+  async executeBatch(query: string, parameterSet?: any[] | undefined): Promise<QueryResult> {
+    return new Promise(() => '') as Promise<QueryResult>;
+  }
+
   /**
    * Wraps the worker execute function, awaiting for it to be available
    */

@@ -63,6 +63,28 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   }
 
   /**
+   * Execute a query with different parameters sets in a batch.
+   * @param query - The query to execute
+   * @param parameterSet - The array of parameter sets to use in the batch query execution
+   * @example
+   * const query = 'INSERT INTO "User" (id, name, age) VALUES(?, ?, ?, ?)'
+   * const user1 = { id: 1, name: 'name2', age: 1 }
+   * const user2 = { id: 2, name: 'name2', age: 2 }
+   * const parameterSet = [Object.values(user1), Object.values(user2)]
+   *
+   * executeBatch(query, parameterSet)
+   */
+  executeBatch(query: string, parameterSet: any[] = []) {
+    const commands: any[] = [];
+
+    for (let i = 0; i < parameterSet.length; i++) {
+      commands.push([query, parameterSet[i]]);
+    }
+
+    return this.baseDB.executeBatch(commands) as Promise<QueryResult>;
+  }
+
+  /**
    * This provides a top-level read only execute method which is executed inside a read-lock.
    * This is necessary since the high level `execute` method uses a write-lock under
    * the hood. Helper methods such as `get`, `getAll` and `getOptional` are read only,
