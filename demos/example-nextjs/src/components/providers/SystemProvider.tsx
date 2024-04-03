@@ -8,7 +8,7 @@ import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
-// es-lint-expect-error
+// eslint-disable-next-line react-hooks/rules-of-hooks
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
@@ -16,8 +16,8 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'powersync2.db',
   schema: AppSchema,
   flags: {
-    disableSSRWarning: true,
-    enableMultiTabs: false
+    disableSSRWarning: true
+    // enableMultiTabs: false
   }
 }).getInstance();
 const connector = new BackendConnector();

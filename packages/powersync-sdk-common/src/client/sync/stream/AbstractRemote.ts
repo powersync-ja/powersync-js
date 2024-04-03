@@ -131,14 +131,25 @@ export abstract class AbstractRemote {
    * Connects to the sync/stream websocket endpoint
    */
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    const request = await this.buildRequest('/sync/stream');
+
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url: `ws://localhost:8080`
-      })
+      }),
+      setup: {
+        payload: {
+          data: null,
+          metadata: Buffer.from(
+            serialize({
+              token: request.headers.Authorization
+            })
+          )
+        }
+      }
     });
 
     // TODO better URL
-    const request = await this.buildRequest('/sync/stream');
     const rsocket = await connector.connect();
     const stream = new DataStream();
     const res = rsocket.requestStream(
@@ -146,8 +157,7 @@ export abstract class AbstractRemote {
         data: Buffer.from(serialize(options.data)),
         metadata: Buffer.from(
           serialize({
-            token:
-              'Token eyJhbGciOiJSUzI1NiIsImtpZCI6InBvd2Vyc3luYy0wZTNkNTM1NGYyIn0.eyJzdWIiOiJhbm9ueW1vdXMiLCJpYXQiOjE3MTEzNTA1NDAsImlzcyI6ImxvY2FsaG9zdCIsImF1ZCI6ImxvY2FsaG9zdCIsImV4cCI6MTcxMTQzNjk0MH0.rLu02FtNOj27KohYmpzBohB1JSuDnMVES-FcSyc8Xth61TG1ngsb8RbFfzufusjFCwubQREZyGHGbcsIypkMXGRokrbsH5dUb0BeG3ROU016eKVaya2zMnjh2d0Nh1WBucoFnlJzwQxZyLCEQds85kfMsoih7FOASG2dY9gq73Dfc4rUf02YELl52pRkziXFSd4ZMLwTKpc9g554vwqUTQQZiW0JnVXiIAlEKDEqhF-JkEU5GEGgwzL0c-E_XIzFy615DhThAd2X1vAILDnKVjVdUgD0QYGKHZFwQ9Zq7I37IPhaxfnOpMGZoIuxsdBNIzS7pfkmOLc3JmJ-94oRPA' //request.headers.Authorization
+            path: 'sync/stream'
           })
         )
       },
