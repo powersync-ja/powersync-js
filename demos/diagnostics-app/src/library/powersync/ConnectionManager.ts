@@ -4,22 +4,24 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from '@journeyapps/powersync-sdk-web';
-import { AppSchema } from './AppSchema';
-import { TokenConnector } from './TokenConnector';
-import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import Logger from 'js-logger';
+import { DynamicSchemaManager } from './DynamicSchemaManager';
+import { RecordingStorageAdapter } from './RecordingStorageAdapter';
+import { TokenConnector } from './TokenConnector';
 
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
+const schemaManager = new DynamicSchemaManager();
+
 export const db = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'example.db',
-  schema: AppSchema
+  schema: schemaManager.buildSchema()
 }).getInstance();
 export const connector = new TokenConnector();
 
 const remote = new WebRemote(connector);
-const adapter = new RecordingStorageAdapter(db.database);
+const adapter = new RecordingStorageAdapter(db.database, schemaManager);
 
 const syncOptions: WebStreamingSyncImplementationOptions = {
   adapter,
@@ -34,12 +36,6 @@ export const sync = new WebStreamingSyncImplementation(syncOptions);
 if (connector.hasCredentials()) {
   connect();
 }
-
-db.init().then(async () => {
-  // The schema is reverted to the base one, then initialized again.
-  // This will create a lot of overhead for large databases.
-  await adapter.updateSchema();
-});
 
 export async function connect() {
   await sync.connect();
