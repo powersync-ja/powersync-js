@@ -4,8 +4,8 @@
 
 To set up app-wide accessibility of PowerSync composables, create a PowerSync Vue plugin that configures a PowerSync instance and integrates it with the Vue instance. This approach provides the PowerSync client app wide so that any composable used has access to the instance.
 
-```Typescript
-// main.ts
+```javascript
+// main.js
 import { createApp } from 'vue'
 import App from './App.vue'
 import { createPowerSync } from '@journeyapps/powersync-vue'
@@ -29,7 +29,7 @@ Both `createPowerSync` and `providePowerSync` leverage Vue's [provide/inject mec
 
 ```Vue
 // Container.vue
-<script setup lang="ts">
+<script setup>
 import { providePowerSync } from '@journeyapps/powersync-vue'
 
 const db = // Setup PowerSync client
@@ -45,13 +45,13 @@ The provided PowerSync client is available with the `usePowerSync` composable.
 
 ```Vue
 // TodoListDisplay.vue
-<script setup lang="ts">
+<script setup>
 import { usePowerSync } from '@journeyapps/powersync-vue';
 import { ref } from 'vue';
 
 const powersync = usePowerSync();
-const list = ref<any[]>([]);
-powersync.value.getAll('SELECT * from lists').then((l: any[]) => list.value = l);
+const list = ref([]);
+powersync.value.getAll('SELECT * from lists').then((l) => list.value = l);
 </script>
 
 <template>
@@ -63,11 +63,11 @@ powersync.value.getAll('SELECT * from lists').then((l: any[]) => list.value = l)
 
 ### Queries
 
-The `usePowerSyncQuery` composable provides a static view of a given query, but can you use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the error state and loading state, as well as a refresh callback that can be invoked to rerun the query manually.
+The `usePowerSyncQuery` composable provides a static view of a given query, but can you use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the loading state and error state, as well as a refresh callback that can be invoked to rerun the query manually.
 
 ```Vue
 // TodoListDisplayQuery.vue
-<script setup lang="ts">
+<script setup>
 import { usePowerSyncQuery } from '@journeyapps/powersync-vue';
 import { ref } from 'vue';
 
@@ -77,11 +77,11 @@ const { data: list, error, loading, refresh} = usePowerSyncQuery(query);
 
 <template>
     <input v-model="query" />
-    <ul>
-        <li v-for="l in list" :key="l.id">{{ l.name }}</li>
-    </ul>
     <div v-if="loading">Loading...</div>
     <div v-else-if="error">{{ error }}</div>
+    <ul v-else>
+        <li v-for="l in list" :key="l.id">{{ l.name }}</li>
+    </ul>
     <button @click="refresh">Refresh</button>
 </template>
 ```
@@ -90,7 +90,7 @@ const { data: list, error, loading, refresh} = usePowerSyncQuery(query);
 
 The `usePowerSyncWatchedQuery` composable provides a dynamic view of a given query, the data will automatically update when a dependant table is updated.
 
-You use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results and the error state.
+You use refs as parameters to refresh the query when they change.The composable exposes reactive variables for the results, the loading state and error state.
 
 ```Vue
 // TodoListDisplayWatchedQuery.vue
@@ -99,7 +99,7 @@ import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-v
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
-const { data: list, error} = usePowerSyncWatchedQuery(query);
+const { data: list, loading, error} = usePowerSyncWatchedQuery(query);
 
 const powersync = usePowerSync();
 const addList = () => {
@@ -109,10 +109,11 @@ const addList = () => {
 
 <template>
     <input v-model="query" />
-    <ul>
+    <div v-if="loading">Loading...</div>
+    <div v-else-if="error">{{ error }}</div>
+    <ul v-else>
         <li v-for="l in list" :key="l.id">{{ l.name }}</li>
     </ul>
-    <div v-if="error">{{ error }}</div>
     <button @click="addList">Add list</button>
 </template>
 ```
@@ -121,13 +122,13 @@ const addList = () => {
 
 ### Top-level setup block
 
-The `usePowersync`, `usePowerSyncQuery`, and `usePowerSyncWatchedQuery` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.ts`.
+The `usePowersync`, `usePowerSyncQuery`, and `usePowerSyncWatchedQuery` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.js`.
 
 Incorrect Usage Example:
 Using powerSync composables in a nested function of a component.
 
-```typescript
-<script setup lang="ts">
+```javascript
+<script setup>
 import { usePowerSync } from '@journeyapps/powersync-vue';
 
 const exampleFunction = async () => {
@@ -141,8 +142,8 @@ const exampleFunction = async () => {
 Correct Usage Example:
 It's important to initialize usePowerSync at the top level of your setup function and then use the assigned constant.
 
-```typescript
-<script setup lang="ts">
+```javascript
+<script setup>
 import { usePowerSync } from '@journeyapps/powersync-vue';
 
 // ✅ Correct: usePowerSync initialized at the top level of setup function and used as a variable.

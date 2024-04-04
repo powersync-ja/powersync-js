@@ -3,7 +3,7 @@ import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk
 import { createPowerSync } from '@journeyapps/powersync-vue';
 
 export const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'todo.db',
+  dbFilename: 'example.db',
   schema: AppSchema
 }).getInstance();
 
