@@ -133,9 +133,7 @@ const TodoEditSection = () => {
         >
           <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
           <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              Enter a description for a new todo item
-            </DialogContentText>
+            <DialogContentText id="alert-dialog-description">Enter a description for a new todo item</DialogContentText>
             <TextField sx={{ marginTop: '10px' }} fullWidth inputRef={nameInputRef} autoFocus label="Task Name" />
           </DialogContent>
           <DialogActions>
@@ -147,7 +145,6 @@ const TodoEditSection = () => {
     </NavigationPage>
   );
 };
-
 
 export default function TodoEditPage() {
   return (

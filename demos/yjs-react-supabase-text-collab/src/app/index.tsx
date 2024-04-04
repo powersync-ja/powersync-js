@@ -12,12 +12,14 @@ const root = createRoot(document.getElementById('app')!);
 root.render(<App />);
 
 export function App() {
-  return <>
-    <CssBaseline />
-    <ThemeProviderContainer>
-      <SystemProvider>
-        <RouterProvider router={router} />
-      </SystemProvider>
-    </ThemeProviderContainer>
-  </>;
+  return (
+    <>
+      <CssBaseline />
+      <ThemeProviderContainer>
+        <SystemProvider>
+          <RouterProvider router={router} />
+        </SystemProvider>
+      </ThemeProviderContainer>
+    </>
+  );
 }

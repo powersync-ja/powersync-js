@@ -11,7 +11,7 @@ export default function LoginPage() {
     <LoginDetailsWidget
       onSubmit={async (values) => {
         await connector.signIn(values);
-        
+
         navigate(DEFAULT_ENTRY_ROUTE);
       }}
     />

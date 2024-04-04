@@ -15,7 +15,7 @@ export default function EntryPage() {
     const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
     const name = names[Math.floor(Math.random() * names.length)];
     db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
-    return () => { };
+    return () => {};
   }, []);
 
   return (
@@ -23,13 +23,10 @@ export default function EntryPage() {
       <S.CenteredGrid item xs={12} md={6} lg={5}>
         <div>
           <h1>Customers</h1>
-          {
-            customers.map(c =>
-              <ListItem key={c.id}>{c.name}</ListItem>
-            )
-          }
+          {customers.map((c) => (
+            <ListItem key={c.id}>{c.name}</ListItem>
+          ))}
           {customers.length == 0 ? <CircularProgress /> : []}
-
         </div>
       </S.CenteredGrid>
     </S.MainGrid>
