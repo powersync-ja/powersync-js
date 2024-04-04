@@ -1,19 +1,19 @@
-import { usePowerSyncWatchedQuery } from "@journeyapps/powersync-sdk-react-native";
-import { CheckCircle2, Circle } from "@tamagui/lucide-icons";
-import { useState } from "react";
-import { Input, ListItem, XStack, YStack } from "tamagui";
+import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { CheckCircle2, Circle } from '@tamagui/lucide-icons';
+import { useState } from 'react';
+import { Input, ListItem, XStack, YStack } from 'tamagui';
 
-import { List } from "../list";
-import { ProfileIcon } from "../profiles/ProfileIcon";
+import { List } from '../list';
+import { ProfileIcon } from '../profiles/ProfileIcon';
 
 export function MemberSelector({
   selectedContacts,
-  setSelectedContacts,
+  setSelectedContacts
 }: {
   selectedContacts: Set<string>;
   setSelectedContacts: React.Dispatch<React.SetStateAction<Set<string>>>;
 }) {
-  const [search, setSearch] = useState<string>("");
+  const [search, setSearch] = useState<string>('');
 
   const contacts = usePowerSyncWatchedQuery(
     "SELECT contacts.id, profiles.id as profile_id, profiles.name, profiles.handle, 'contact' as type FROM contacts LEFT JOIN profiles ON contacts.profile_id = profiles.id WHERE (profiles.name LIKE '%' || ?1 || '%' OR profiles.handle LIKE '%' || ?1 || '%') ORDER BY name ASC",
@@ -49,14 +49,8 @@ export function MemberSelector({
           <ListItem
             title={item.name}
             subTitle={`@${item.handle}`}
-            icon={<ProfileIcon handle={item.handle ?? ""} />}
-            iconAfter={
-              selectedContacts.has(item.profile_id) ? (
-                <CheckCircle2 size="$1.5" />
-              ) : (
-                <Circle size="$1.5" />
-              )
-            }
+            icon={<ProfileIcon handle={item.handle ?? ''} />}
+            iconAfter={selectedContacts.has(item.profile_id) ? <CheckCircle2 size="$1.5" /> : <Circle size="$1.5" />}
             onPress={() => handleContactSelection(item.profile_id)}
           />
         )}

@@ -42,8 +42,12 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     };
   }
 
-  uploadCrud(): Promise<void> {
-    return this.options.uploadCrud();
+  async uploadCrud(): Promise<void> {
+    /**
+     * Don't return anything here, just incase something which is not
+     * serializable is returned from the `uploadCrud` function.
+     */
+    await this.options.uploadCrud();
   }
 
   get logger() {
@@ -164,8 +168,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       data: {}
     };
 
-    (localStorage as any).setItem('posting close' + Math.random(), `$}`);
-
     this.messagePort.postMessage(closeMessagePayload);
 
     // Release the proxy
@@ -180,6 +182,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Used in tests to force a connection states
    */
   private async _testUpdateStatus(status: SyncStatus) {
-    return (this.syncManager as any).syncStreamClient.updateSyncStatus(status.toJSON());
+    return (this.syncManager as any)['_testUpdateAllStatuses'](status.toJSON());
   }
 }

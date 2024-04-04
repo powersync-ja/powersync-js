@@ -29,8 +29,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {
-      },
+      initialized: () => {},
       sessionStarted: () => {
         powerSync.connect(connector);
       }
@@ -45,9 +44,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     <Suspense fallback={<CircularProgress />}>
       <PowerSyncContext.Provider value={powerSync}>
         <SupabaseContext.Provider value={connector}>
-          <NavigationPanelContextProvider>
-            {children}
-          </NavigationPanelContextProvider>
+          <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
         </SupabaseContext.Provider>
       </PowerSyncContext.Provider>
     </Suspense>

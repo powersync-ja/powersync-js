@@ -18,6 +18,6 @@ Here are some helpful links:
 
 - [PowerSync Website](https://www.powersync.com/)
 - [PowerSync Docs](https://docs.powersync.com/)
-- [PowerSync React Native Client SDK](https://github.com/journeyapps/powersync-js/tree/main/packages/powersync-sdk-react-native)
+- [PowerSync React Native Client SDK Reference](https://docs.powersync.com/client-sdk-references/react-native-and-expo)
 - [Supabase Docs](https://supabase.com/docs)
 - [Expo Docs](https://docs.expo.dev/)

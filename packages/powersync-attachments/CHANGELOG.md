@@ -1,5 +1,31 @@
 # @journeyapps/powersync-attachments
 
+## 2.0.0
+
+### Major Changes
+
+- d223454: Renamed abstract `attachmentIds` to `onAttachmentIdsChange` in `AbstractAttachmentQueue`, changed to use callback signature instead of an AsyncGenerator.
+
+### Patch Changes
+
+- Updated dependencies [fd7ebc8]
+  - @journeyapps/powersync-sdk-common@1.4.0
+
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [8fc2164]
+  - @journeyapps/powersync-sdk-common@1.3.2
+
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [37e266d]
+- Updated dependencies [77b3078]
+  - @journeyapps/powersync-sdk-common@1.3.1
+
 ## 1.1.1
 
 ### Patch Changes

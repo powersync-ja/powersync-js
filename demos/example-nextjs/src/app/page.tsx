@@ -14,7 +14,7 @@ export default function EntryPage() {
     // Insert some test data
     const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
     const name = names[Math.floor(Math.random() * names.length)];
-    // inserting requires checkpoint updating
+    // inserting requires uploading upstream and validating checkpoints
     // db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
     return () => {};
   }, []);

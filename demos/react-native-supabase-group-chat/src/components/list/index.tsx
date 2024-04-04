@@ -1,12 +1,12 @@
-import { FlashList, ListRenderItem } from "@shopify/flash-list";
-import { Separator, Text } from "tamagui";
+import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import { Separator, Text } from 'tamagui';
 
 export function List<T>({
   data,
   renderItem,
   placeholder,
   extraData,
-  numColumns,
+  numColumns
 }: {
   data?: readonly T[] | null;
   renderItem?: ListRenderItem<T> | null;
@@ -14,8 +14,8 @@ export function List<T>({
   extraData?: any;
   numColumns?: number;
 }) {
-  placeholder ??= "No data";
-  if (typeof placeholder === "string") {
+  placeholder ??= 'No data';
+  if (typeof placeholder === 'string') {
     placeholder = (
       <Text padding="$3" textAlign="center">
         {placeholder}

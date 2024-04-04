@@ -125,7 +125,8 @@ export class SharedSyncImplementation
           flags: { enableMultiTabs: true },
           logger: this.broadCastLogger
         }),
-        new Mutex()
+        new Mutex(),
+        this.broadCastLogger
       ),
       remote: new WebRemote({
         fetchCredentials: async () => {
@@ -204,7 +205,7 @@ export class SharedSyncImplementation
 
   async disconnect() {
     this.abortController?.abort('Disconnected');
-    this.iterateListeners((l) => l.statusChanged?.(new SyncStatus({ connected: false })));
+    this.updateAllStatuses({ connected: false });
   }
 
   /**
@@ -277,5 +278,20 @@ export class SharedSyncImplementation
   private updateAllStatuses(status: SyncStatusOptions) {
     this.syncStatus = new SyncStatus(status);
     this.ports.forEach((p) => p.clientProvider.statusChanged(status));
+  }
+
+  /**
+   * A function only used for unit tests which updates the internal
+   * sync stream client and all tab client's sync status
+   */
+  private _testUpdateAllStatuses(status: SyncStatusOptions) {
+    if (!this.syncStreamClient) {
+      console.warn('no stream client has been initialized yet');
+    }
+
+    // Only assigning, don't call listeners for this test
+    this.syncStreamClient!.syncStatus = new SyncStatus(status);
+
+    this.updateAllStatuses(status);
   }
 }

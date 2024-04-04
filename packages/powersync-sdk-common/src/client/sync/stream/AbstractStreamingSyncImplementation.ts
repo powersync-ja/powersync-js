@@ -225,7 +225,10 @@ export abstract class AbstractStreamingSyncImplementation
     }
   }
 
-  connect() {
+  async connect() {
+    if (this.abortController) {
+      await this.disconnect();
+    }
     this.abortController = new AbortController();
     this.streamingSync(this.abortController.signal);
     return this.waitForStatus({ connected: true });
@@ -236,6 +239,8 @@ export abstract class AbstractStreamingSyncImplementation
       throw new Error('Disconnect not possible');
     }
     this.abortController.abort('Disconnected');
+    this.abortController = null;
+    this.updateSyncStatus({ connected: false });
   }
 
   /**
@@ -254,7 +259,14 @@ export abstract class AbstractStreamingSyncImplementation
       crudUpdate: () => this.triggerCrudUpload()
     });
 
+    /**
+     * Create a new abort controller which aborts items downstream.
+     * This is needed to close any previous connections on exception.
+     */
+    let nestedAbortController = new AbortController();
+
     signal.addEventListener('abort', () => {
+      nestedAbortController.abort();
       this.crudUpdateListener?.();
       this.crudUpdateListener = undefined;
       this.updateSyncStatus({
@@ -270,7 +282,10 @@ export abstract class AbstractStreamingSyncImplementation
         if (signal?.aborted) {
           break;
         }
-        await this.streamingSyncIteration(signal);
+        const { retry } = await this.streamingSyncIteration(nestedAbortController.signal);
+        if (!retry) {
+          break;
+        }
         // Continue immediately
       } catch (ex) {
         this.logger.error(ex);
@@ -280,7 +295,15 @@ export abstract class AbstractStreamingSyncImplementation
       } finally {
         // Wait a little before retrying
         await this.delayRetry();
+        // Abort any open network requests. Create a new nested controller for retry.
+        nestedAbortController.abort();
+        nestedAbortController = new AbortController();
       }
+    }
+
+    // Mark as disconnected if here
+    if (this.abortController) {
+      await this.disconnect();
     }
   }
 

@@ -1,5 +1,24 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.4.0
+
+### Minor Changes
+
+- fd7ebc8: Introduced overloaded versions of watch and onChange methods to support a callback approach to handle results and errors alongside the existing AsyncGenerator mechanism.
+
+## 1.3.2
+
+### Patch Changes
+
+- 8fc2164: Fixed regression where watched queries would update for table changes in external (not in query) tables.
+
+## 1.3.1
+
+### Patch Changes
+
+- 37e266d: Fixed issue where sync stream exceptions would not close previous streaming connections.
+- 77b3078: Reduce JS bundle size
+
 ## 1.3.0
 
 ### Minor Changes
