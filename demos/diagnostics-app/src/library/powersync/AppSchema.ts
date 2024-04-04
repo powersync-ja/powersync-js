@@ -10,8 +10,16 @@ export const local_bucket_data = new TableV2(
   { localOnly: true }
 );
 
+export const local_schema = new TableV2(
+  {
+    data: column.text
+  },
+  { localOnly: true }
+);
+
 export const AppSchema = new Schema({
-  local_bucket_data
+  local_bucket_data,
+  local_schema
 });
 
 export type Database = (typeof AppSchema)['types'];

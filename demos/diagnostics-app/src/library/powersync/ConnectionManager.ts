@@ -35,6 +35,12 @@ if (connector.hasCredentials()) {
   connect();
 }
 
+db.init().then(async () => {
+  // The schema is reverted to the base one, then initialized again.
+  // This will create a lot of overhead for large databases.
+  await adapter.updateSchema();
+});
+
 export async function connect() {
   await sync.connect();
 }

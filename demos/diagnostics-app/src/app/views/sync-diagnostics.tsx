@@ -153,7 +153,7 @@ export default function SyncDiagnosticsPage() {
                 }
               }
             }}
-            pageSizeOptions={[20]}
+            pageSizeOptions={[10, 50, 100]}
             disableRowSelectionOnClick
           />
         </S.QueryResultContainer>
