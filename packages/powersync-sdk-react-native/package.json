@@ -43,13 +43,11 @@
     "@journeyapps/powersync-react": "workspace:*",
     "@journeyapps/powersync-sdk-common": "workspace:*",
     "async-lock": "^1.4.0",
-    "react-native-quick-base64": "^2.0.8",
-    "readable-stream": "^4.5.2"
+    "react-native-quick-base64": "^2.0.8"
   },
   "devDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^1.1.2",
     "@types/async-lock": "^1.4.0",
-    "@types/readable-stream": "^4.0.11",
     "react": "18.2.0",
     "react-native": "0.72.4",
     "typescript": "^5.1.3"

@@ -38,9 +38,10 @@ The following polyfills are required for general use of the SDK:
 
 - base-64
 - react-native-get-random-values
+- text-encoding
 
 ```bash
-npx expo install react-native-polyfill-globals base-64 react-native-get-random-values
+npx expo install react-native-polyfill-globals base-64 react-native-get-random-values text-encoding
 ```
 
 ### HTTP Streams
@@ -50,7 +51,6 @@ The following `fetch` polyfills are required for the React Native implementation
 - react-native-fetch-api
 - react-native-polyfill-globals
 - react-native-url-polyfill
-- text-encoding
 - web-streams-polyfill
 
 These are listed as peer dependencies and need to be added to the React Native project
@@ -61,18 +61,7 @@ npx expo install react-native-fetch-api react-native-url-polyfill text-encoding 
 
 ### Web sockets
 
-Our web socket implementation support binary payloads which are encoded as BSON documents. The BSON library requires `TextEncoder` support.
-
-The following polyfills are required web socket communication:
-
-- react-native-polyfill-globals
-- text-encoding
-
-These are listed as peer dependencies and need to be added to the React Native project
-
-```bash
-npx expo install text-encoding
-```
+Our web socket implementation supports binary payloads which are encoded as BSON documents. The BSON library requires `TextEncoder` support. This is already listed in the common polyfills. No further changes are required for web sockets.
 
 ### Enable polyfills
 

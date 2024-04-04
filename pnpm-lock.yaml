@@ -931,9 +931,6 @@ importers:
 
   packages/powersync-sdk-common:
     dependencies:
-      async:
-        specifier: ^3.2.5
-        version: 3.2.5
       async-mutex:
         specifier: ^0.4.0
         version: 0.4.1
@@ -955,9 +952,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      readable-stream:
-        specifier: ^4.5.2
-        version: 4.5.2
       rsocket-core:
         specifier: 1.0.0-alpha.3
         version: 1.0.0-alpha.3
@@ -974,9 +968,6 @@ importers:
       '@types/node':
         specifier: ^20.5.9
         version: 20.11.17
-      '@types/readable-stream':
-        specifier: ^4.0.11
-        version: 4.0.11
       '@types/uuid':
         specifier: ^3.0.0
         version: 3.4.11
@@ -1016,9 +1007,6 @@ importers:
       react-native-url-polyfill:
         specifier: ^2.0.0
         version: 2.0.0(react-native@0.72.4)
-      readable-stream:
-        specifier: ^4.5.2
-        version: 4.5.2
       text-encoding:
         specifier: ^0.7.0
         version: 0.7.0
@@ -1032,9 +1020,6 @@ importers:
       '@types/async-lock':
         specifier: ^1.4.0
         version: 1.4.2
-      '@types/readable-stream':
-        specifier: ^4.0.11
-        version: 4.0.11
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -1062,9 +1047,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      readable-stream:
-        specifier: ^4.5.2
-        version: 4.5.2
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -1075,9 +1057,6 @@ importers:
       '@types/lodash':
         specifier: ^4.14.200
         version: 4.14.202
-      '@types/readable-stream':
-        specifier: ^4.0.11
-        version: 4.0.11
       '@types/uuid':
         specifier: ^9.0.6
         version: 9.0.8
@@ -8558,7 +8537,7 @@ packages:
       '@expo/env': 0.2.1
       '@expo/json-file': 8.3.0
       '@expo/spawn-async': 1.7.2
-      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.9)(@babel/preset-env@7.23.9)
+      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.5)(@babel/preset-env@7.24.0)
       babel-preset-fbjs: 3.4.0(@babel/core@7.23.9)
       chalk: 4.1.2
       debug: 4.3.4(supports-color@8.1.1)
@@ -14464,13 +14443,6 @@ packages:
       '@types/scheduler': 0.16.8
       csstype: 3.1.3
 
-  /@types/readable-stream@4.0.11:
-    resolution: {integrity: sha512-R3eUMUTTKoIoaz7UpYLxvZCrOmCRPRbAmoDDHKcimTEySltaJhF8hLzj4+EzyDifiX5eK6oDQGSfmNnXjxZzYQ==}
-    dependencies:
-      '@types/node': 20.11.26
-      safe-buffer: 5.1.2
-    dev: true
-
   /@types/resolve@1.17.1:
     resolution: {integrity: sha512-yy7HuzQhj0dhGpD8RLXSZWEkLsV9ibvxvi6EiJ3bkqLAO1RGo0WbkWQiwpRlSFymTJRz0d3k5LM3kkx8ArDbLw==}
     dependencies:
@@ -16350,13 +16322,6 @@ packages:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
-
-  /buffer@6.0.3:
-    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
-    dependencies:
-      base64-js: 1.5.1
-      ieee754: 1.2.1
-    dev: false
 
   /buffers@0.1.1:
     resolution: {integrity: sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==}
@@ -19550,7 +19515,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/config': 8.5.4
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -19617,7 +19582,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-font@11.10.2(expo@50.0.6):
@@ -19625,7 +19590,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
       fontfaceobserver: 2.3.0
     dev: false
 
@@ -19638,7 +19603,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-linking@6.2.2(expo@50.0.6):
@@ -19787,7 +19752,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/prebuild-config': 6.7.4(expo-modules-autolinking@1.10.3)
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - encoding
       - expo-modules-autolinking
@@ -26507,11 +26472,6 @@ packages:
   /process-nextick-args@2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
 
-  /process@0.11.10:
-    resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
-    engines: {node: '>= 0.6.0'}
-    dev: false
-
   /progress@2.0.3:
     resolution: {integrity: sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==}
     engines: {node: '>=0.4.0'}
@@ -27876,17 +27836,6 @@ packages:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
-
-  /readable-stream@4.5.2:
-    resolution: {integrity: sha512-yjavECdqeZ3GLXNgRXgeQEdz9fvDDkNKyHnbHRFtOr7/LcfgBcmct7t/ET+HaCTqfh06OzoAxrkN/IfjJBVe+g==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    dependencies:
-      abort-controller: 3.0.0
-      buffer: 6.0.3
-      events: 3.3.0
-      process: 0.11.10
-      string_decoder: 1.3.0
-    dev: false
 
   /readdir-glob@1.1.3:
     resolution: {integrity: sha512-v05I2k7xN8zXvPD9N+z/uhXPaj0sUFCe2rcWZIpBsqxfP7xXFQ0tipAd/wjj1YxWyWtUS5IDJpOG82JKt2EAVA==}

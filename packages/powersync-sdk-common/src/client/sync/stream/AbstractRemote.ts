@@ -158,7 +158,6 @@ export abstract class AbstractRemote {
     const request = await this.buildRequest(path);
 
     const connector = new RSocketConnector({
-      // TODO better url
       transport: new WebsocketClientTransport({
         url: this.options.socketUrlTransformer(request.url)
       }),
@@ -208,6 +207,7 @@ export abstract class AbstractRemote {
 
     const l = stream.registerListener({
       lowWater: async () => {
+        // TODO make configurable?
         res.request(1);
       },
       closed: () => {

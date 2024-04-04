@@ -26,7 +26,6 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "async": "^3.2.5",
     "async-mutex": "^0.4.0",
     "bson": "^6.5.0",
     "can-ndjson-stream": "^1.0.2",
@@ -34,7 +33,6 @@
     "event-iterator": "^2.0.0",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
-    "readable-stream": "^4.5.2",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
     "uuid": "^3.0.0"
@@ -42,7 +40,6 @@
   "devDependencies": {
     "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
-    "@types/readable-stream": "^4.0.11",
     "@types/uuid": "^3.0.0",
     "typescript": "^5.1.3"
   }
