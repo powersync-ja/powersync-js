@@ -10,7 +10,7 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types';
-import { AbstractRemote } from './AbstractRemote';
+import { AbstractRemote, SyncStreamOptions } from './AbstractRemote';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
 import { SyncDataBucket } from '../bucket/SyncDataBucket';
@@ -311,21 +311,23 @@ export abstract class AbstractStreamingSyncImplementation
         let bucketSet = new Set<string>(initialBuckets.keys());
 
         this.logger.debug('Requesting stream from server');
-        const connectionMethod =
-          this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
-            ? this.options.remote.postStream
-            : this.options.remote.socketStream;
 
-        const stream = await connectionMethod.call(this.options.remote, {
+        const options: SyncStreamOptions = {
           path: '/sync/stream',
           abortSignal: signal,
           data: {
             buckets: req,
             include_checksum: true,
             raw_data: true,
+            // Always use binary data for web sockets
             binary_data: true
           }
-        });
+        };
+
+        const stream =
+          this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
+            ? await this.options.remote.postStream(options)
+            : await this.options.remote.socketStream(options);
 
         this.logger.debug('Stream established. Processing events');
 

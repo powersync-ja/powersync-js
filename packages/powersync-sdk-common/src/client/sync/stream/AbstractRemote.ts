@@ -25,13 +25,36 @@ export type SyncStreamOptions = {
   fetchOptions?: Request;
 };
 
+export type AbstractRemoteOptions = {
+  /**
+   * Transforms the PowerSync base URL which might contain
+   * `http(s)://` to the corresponding web socket variant
+   * e.g. `ws(s)://`
+   */
+  socketUrlTransformer: (url: string) => string;
+};
+
+export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
+  socketUrlTransformer: (url) =>
+    url.replace(/^https?:\/\//, function (match) {
+      return match === 'https://' ? 'wss://' : 'ws://';
+    })
+};
+
 export abstract class AbstractRemote {
   protected credentials: PowerSyncCredentials | null = null;
+  protected options: AbstractRemoteOptions;
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER
-  ) {}
+    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    options?: Partial<AbstractRemoteOptions>
+  ) {
+    this.options = {
+      ...DEFAULT_REMOTE_OPTIONS,
+      ...(options ?? {})
+    };
+  }
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
     const { expiresAt } = this.credentials ?? {};
@@ -131,11 +154,13 @@ export abstract class AbstractRemote {
    * Connects to the sync/stream websocket endpoint
    */
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const request = await this.buildRequest('/sync/stream');
+    const { path } = options;
+    const request = await this.buildRequest(path);
 
     const connector = new RSocketConnector({
+      // TODO better url
       transport: new WebsocketClientTransport({
-        url: `ws://localhost:8080`
+        url: this.options.socketUrlTransformer(request.url)
       }),
       setup: {
         payload: {
@@ -149,7 +174,6 @@ export abstract class AbstractRemote {
       }
     });
 
-    // TODO better URL
     const rsocket = await connector.connect();
     const stream = new DataStream();
     const res = rsocket.requestStream(
@@ -157,7 +181,7 @@ export abstract class AbstractRemote {
         data: Buffer.from(serialize(options.data)),
         metadata: Buffer.from(
           serialize({
-            path: 'sync/stream'
+            path
           })
         )
       },
@@ -219,7 +243,7 @@ export abstract class AbstractRemote {
       throw error;
     }
 
-    // TODO handle closing errors better
+    // TODO handle closing errors better like on main
     const jsonS = ndjsonStream(res.body!);
     const stream = new DataStream({
       logger: this.logger
