@@ -59,124 +59,169 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
    */
   const execute = async (sql: string | TemplateStringsArray, bindings?: any[]): Promise<WASQLExecuteResult> => {
     // Running multiple statements on the same connection concurrently should not be allowed
-    return navigator.locks.request(`db-execute-${dbFileName}`, async () => {
-      const results = [];
-      for await (const stmt of sqlite3.statements(db, sql as string)) {
-        let columns;
-        const wrappedBindings = bindings ? [bindings] : [[]];
-        for (const binding of wrappedBindings) {
-          // TODO not sure why this is needed currently, but booleans break
-          binding.forEach((b, index, arr) => {
-            if (typeof b == 'boolean') {
-              arr[index] = b ? 1 : 0;
-            }
-          });
-
-          sqlite3.reset(stmt);
-          if (bindings) {
-            sqlite3.bind_collection(stmt, binding);
-          }
-
-          const rows = [];
-          while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
-            const row = sqlite3.row(stmt);
-            rows.push(row);
-          }
-
-          columns = columns ?? sqlite3.column_names(stmt);
-          if (columns.length) {
-            results.push({ columns, rows });
-          }
-        }
-
-        // When binding parameters, only a single statement is executed.
-        if (bindings) {
-          break;
-        }
-      }
-
-      let rows: Record<string, any>[] = [];
-      for (let resultset of results) {
-        for (let row of resultset.rows) {
-          let outRow: Record<string, any> = {};
-          resultset.columns.forEach((key, index) => {
-            outRow[key] = row[index];
-          });
-          rows.push(outRow);
-        }
-      }
-
-      const result = {
-        insertId: sqlite3.last_insert_id(db),
-        rowsAffected: sqlite3.changes(db),
-        rows: {
-          _array: rows,
-          length: rows.length
-        }
-      };
-
-      return result;
+    return _acquireExecuteLock(async () => {
+      return executeSingleStatement(sql, bindings);
     });
+    // return navigator.locks.request(`db-execute-${dbFileName}`, async () => {
+    //   const results = [];
+    //   for await (const stmt of sqlite3.statements(db, sql as string)) {
+    //     let columns;
+    //     const wrappedBindings = bindings ? [bindings] : [[]];
+    //     for (const binding of wrappedBindings) {
+    //       // TODO not sure why this is needed currently, but booleans break
+    //       binding.forEach((b, index, arr) => {
+    //         if (typeof b == 'boolean') {
+    //           arr[index] = b ? 1 : 0;
+    //         }
+    //       });
+
+    //       sqlite3.reset(stmt);
+    //       if (bindings) {
+    //         sqlite3.bind_collection(stmt, binding);
+    //       }
+
+    //       const rows = [];
+    //       while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
+    //         const row = sqlite3.row(stmt);
+    //         rows.push(row);
+    //       }
+
+    //       columns = columns ?? sqlite3.column_names(stmt);
+    //       if (columns.length) {
+    //         results.push({ columns, rows });
+    //       }
+    //     }
+
+    //     // When binding parameters, only a single statement is executed.
+    //     if (bindings) {
+    //       break;
+    //     }
+    //   }
+
+    //   let rows: Record<string, any>[] = [];
+    //   for (let resultset of results) {
+    //     for (let row of resultset.rows) {
+    //       let outRow: Record<string, any> = {};
+    //       resultset.columns.forEach((key, index) => {
+    //         outRow[key] = row[index];
+    //       });
+    //       rows.push(outRow);
+    //     }
+    //   }
+
+    //   const result = {
+    //     insertId: sqlite3.last_insert_id(db),
+    //     rowsAffected: sqlite3.changes(db),
+    //     rows: {
+    //       _array: rows,
+    //       length: rows.length
+    //     }
+    //   };
+
+    //   return result;
+    // });
+  };
+
+  const _acquireExecuteLock = (callback: () => Promise<any>): Promise<any> => {
+    return navigator.locks.request(`db-execute-${dbFileName}`, callback);
+  };
+
+  const executeSingleStatement = async (
+    sql: string | TemplateStringsArray,
+    bindings?: any[]
+  ): Promise<WASQLExecuteResult> => {
+    const results = [];
+    for await (const stmt of sqlite3.statements(db, sql as string)) {
+      let columns;
+      const wrappedBindings = bindings ? [bindings] : [[]];
+      for (const binding of wrappedBindings) {
+        // TODO not sure why this is needed currently, but booleans break
+        binding.forEach((b, index, arr) => {
+          if (typeof b == 'boolean') {
+            arr[index] = b ? 1 : 0;
+          }
+        });
+
+        sqlite3.reset(stmt);
+        if (bindings) {
+          sqlite3.bind_collection(stmt, binding);
+        }
+
+        const rows = [];
+        while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
+          const row = sqlite3.row(stmt);
+          rows.push(row);
+        }
+
+        columns = columns ?? sqlite3.column_names(stmt);
+        if (columns.length) {
+          results.push({ columns, rows });
+        }
+      }
+
+      // When binding parameters, only a single statement is executed.
+      if (bindings) {
+        break;
+      }
+    }
+
+    let rows: Record<string, any>[] = [];
+    for (let resultset of results) {
+      for (let row of resultset.rows) {
+        let outRow: Record<string, any> = {};
+        resultset.columns.forEach((key, index) => {
+          outRow[key] = row[index];
+        });
+        rows.push(outRow);
+      }
+    }
+
+    const result = {
+      insertId: sqlite3.last_insert_id(db),
+      rowsAffected: sqlite3.changes(db),
+      rows: {
+        _array: rows,
+        length: rows.length
+      }
+    };
+
+    return result;
   };
 
   /**
    * This executes SQL statements in batch.
    */
   const executeBatch = async (sql: string, bindings?: any[][]): Promise<WASQLExecuteResult> => {
-    return navigator.locks.request(`db-executeBatch-${dbFileName}`, async () => {
+    return _acquireExecuteLock(async () => {
       let affectedRows = 0;
-      await execute('BEGIN TRANSACTION');
-      const results = [];
-      // for await (const stmt of sqlite3.statements(db, sql as string)) {
-      let columns;
-      const wrappedBindings = bindings ? bindings : [];
-      for (const binding of wrappedBindings) {
-        // TODO not sure why this is needed currently, but booleans break
-        for (let i = 0; i < binding.length; i++) {
-          let b = binding[i];
-          if (typeof b == 'boolean') {
-            binding[i] = b ? 1 : 0;
-          }
-        }
-        for await (const stmt of sqlite3.statements(db, sql as string)) {
-          sqlite3.reset(stmt);
-          if (binding) {
-            sqlite3.bind_collection(stmt, binding);
-          }
+      let result;
+      try {
+        await executeSingleStatement('BEGIN TRANSACTION');
 
-          const rows = [];
-          while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
-            const row = sqlite3.row(stmt);
-            rows.push(row);
-            affectedRows += row.length;
+        const wrappedBindings = bindings ? bindings : [];
+        for (const binding of wrappedBindings) {
+          // TODO not sure why this is needed currently, but booleans break
+          for (let i = 0; i < binding.length; i++) {
+            let b = binding[i];
+            if (typeof b == 'boolean') {
+              binding[i] = b ? 1 : 0;
+            }
           }
-
-          columns = columns ?? sqlite3.column_names(stmt);
-          if (columns.length) {
-            results.push({ columns, rows });
-          }
+          result = await executeSingleStatement(sql, binding);
+          //This does not work for single or batch executions
+          affectedRows++;
         }
-      }
-      await execute('COMMIT');
-
-      let rows: Record<string, any>[] = [];
-      for (let resultset of results) {
-        for (let row of resultset.rows) {
-          let outRow: Record<string, any> = {};
-          resultset.columns.forEach((key, index) => {
-            outRow[key] = row[index];
-          });
-          rows.push(outRow);
-        }
+        await executeSingleStatement('COMMIT');
+      } catch (err) {
+        await executeSingleStatement('ROLLBACK');
+        return {
+          rowsAffected: 0
+        };
       }
 
-      const result = {
-        insertId: sqlite3.last_insert_id(db),
-        rowsAffected: affectedRows,
-        rows: {
-          _array: rows,
-          length: rows.length
-        }
+      result = {
+        ...result,
+        rowsAffected: affectedRows
       };
 
       return result;
