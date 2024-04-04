@@ -54,6 +54,40 @@ describe('CRUD Tests', () => {
     expect(tx.crud[0].equals(expectedCrudEntry)).true;
   });
 
+  it('INSERT batch', async () => {
+    expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
+
+    let params: any[] = [];
+    const query = `INSERT INTO assets(id, description) VALUES(?, ?)`;
+    const result = await powersync.executeBatch(query, [
+      [testId, 'test'],
+      ['testId', 'test1']
+    ]);
+
+    // expect(result.rowsAffected).equals(2);
+    expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
+      {
+        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"description":"test"}}`
+      },
+      {
+        data: `{"op":"PUT","type":"assets","id":"testId","data":{"description":"test1"}}`
+      }
+    ]);
+
+    const tx = (await powersync.getNextCrudTransaction())!;
+    expect(tx.transactionId).equals(1);
+    const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
+    expect(tx.crud[0].equals(expectedCrudEntry)).true;
+    await tx.complete();
+
+    // const crudBatch = (await powersync.getCrudBatch(2))!;
+    // expect(crudBatch.crud.length).equals(2);
+    // const expectedCrudEntry = new CrudEntry(1, UpdateType.PUT, 'assets', testId, 1, { description: 'test' });
+    // // const expectedCrudEntry2 = new CrudEntry(2, UpdateType.PUT, 'assets', 'testId', 1, { description: 'test1' });
+    // expect(crudBatch.crud[0].equals(expectedCrudEntry)).true;
+    // expect(crudBatch.crud[1]).equals(expectedCrudEntry2).true;
+  });
+
   it('INSERT OR REPLACE', async () => {
     await powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test']);
     await powersync.execute('DELETE FROM ps_crud WHERE 1');

@@ -65,7 +65,7 @@ export interface TableUpdateOperation {
   opType: RowUpdateType;
   rowId: number;
 }
-
+export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 /**
  * Notification of an update to one or more tables, for the purpose of realtime change notifications.
  */
@@ -96,6 +96,7 @@ export interface DBLockOptions {
 export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
   close: () => void;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
   name: string;
   readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;

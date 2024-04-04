@@ -11,7 +11,7 @@ import {
 } from '@journeyapps/powersync-sdk-common';
 import * as Comlink from 'comlink';
 import Logger, { ILogger } from 'js-logger';
-import type { DBWorkerInterface, OpenDB } from '../../../worker/db/open-db';
+import type { DBWorkerInterface, OpenDB, SQLBatchTuple } from '../../../worker/db/open-db';
 import { getWorkerDatabaseOpener } from '../../../worker/db/open-worker-database';
 
 export type WASQLiteFlags = {
@@ -78,6 +78,10 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+    return this.writeLock((ctx) => this._executeBatch(query, params));
+  }
+
   /**
    * Wraps the worker execute function, awaiting for it to be available
    */
@@ -90,6 +94,18 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         ...result.rows,
         item: (idx: number) => result.rows._array[idx]
       }
+    };
+  };
+
+  /**
+   * Wraps the worker executeBatch function, awaiting for it to be available
+   */
+  private _executeBatch = async (query: string, params?: any[]): Promise<QueryResult> => {
+    await this.initialized;
+    const result = await this.workerMethods!.executeBatch!(query, params);
+    return {
+      ...result,
+      rows: undefined,
     };
   };
 

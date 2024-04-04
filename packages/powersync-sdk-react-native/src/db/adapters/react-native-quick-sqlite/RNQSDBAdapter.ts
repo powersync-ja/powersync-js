@@ -62,6 +62,16 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     return this.baseDB.execute(query, params);
   }
 
+  executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+    const commands: any[] = [];
+
+    for(let i = 0; i < params.length; i++) {
+      commands.push([query, params[i]]);
+    }
+
+    return this.baseDB.executeBatch(commands) as Promise<QueryResult>;
+  };
+
   /**
    * This provides a top-level read only execute method which is executed inside a read-lock.
    * This is necessary since the high level `execute` method uses a write-lock under

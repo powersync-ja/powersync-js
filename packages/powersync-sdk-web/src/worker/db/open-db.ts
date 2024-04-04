@@ -15,13 +15,16 @@ export type DBWorkerInterface = {
   //   Close is only exposed when used in a single non shared webworker
   close?: () => void;
   execute: WASQLiteExecuteMethod;
+  executeBatch: WASQLiteExecuteBatchMethod;
   registerOnTableChange: (callback: OnTableChangeCallback) => void;
 };
 
 export type WASQLiteExecuteMethod = (sql: string, params?: any[]) => Promise<WASQLExecuteResult>;
-
+export type WASQLiteExecuteBatchMethod = (sql: string, params?: any[]) => Promise<WASQLExecuteResult>;
 export type OnTableChangeCallback = (opType: number, tableName: string, rowId: number) => void;
 export type OpenDB = (dbFileName: string) => DBWorkerInterface;
+
+export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 
 export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
   const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
@@ -116,8 +119,73 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
     });
   };
 
+  /**
+   * This executes SQL statements in batch.
+   */
+  const executeBatch = async (sql: string, bindings?: any[][]): Promise<WASQLExecuteResult> => {
+    return navigator.locks.request(`db-executeBatch-${dbFileName}`, async () => {
+      let affectedRows = 0;
+      await execute('BEGIN TRANSACTION');
+      const results = [];
+      // for await (const stmt of sqlite3.statements(db, sql as string)) {
+      let columns;
+      const wrappedBindings = bindings ? bindings : [];
+      for (const binding of wrappedBindings) {
+        // TODO not sure why this is needed currently, but booleans break
+        for (let i = 0; i < binding.length; i++) {
+          let b = binding[i];
+          if (typeof b == 'boolean') {
+            binding[i] = b ? 1 : 0;
+          }
+        }
+        for await (const stmt of sqlite3.statements(db, sql as string)) {
+          sqlite3.reset(stmt);
+          if (binding) {
+            sqlite3.bind_collection(stmt, binding);
+          }
+
+          const rows = [];
+          while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
+            const row = sqlite3.row(stmt);
+            rows.push(row);
+            affectedRows += row.length;
+          }
+
+          columns = columns ?? sqlite3.column_names(stmt);
+          if (columns.length) {
+            results.push({ columns, rows });
+          }
+        }
+      }
+      await execute('COMMIT');
+
+      let rows: Record<string, any>[] = [];
+      for (let resultset of results) {
+        for (let row of resultset.rows) {
+          let outRow: Record<string, any> = {};
+          resultset.columns.forEach((key, index) => {
+            outRow[key] = row[index];
+          });
+          rows.push(outRow);
+        }
+      }
+
+      const result = {
+        insertId: sqlite3.last_insert_id(db),
+        rowsAffected: affectedRows,
+        rows: {
+          _array: rows,
+          length: rows.length
+        }
+      };
+
+      return result;
+    });
+  };
+
   return {
     execute: Comlink.proxy(execute),
+    executeBatch: Comlink.proxy(executeBatch),
     registerOnTableChange: Comlink.proxy(registerOnTableChange),
     close: Comlink.proxy(() => {
       sqlite3.close(db);

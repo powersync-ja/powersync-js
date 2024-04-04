@@ -2,7 +2,7 @@ import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import throttle from 'lodash/throttle';
-import { BatchedUpdateNotification, DBAdapter, QueryResult, Transaction, UpdateNotification, isBatchedUpdateNotification } from '../db/DBAdapter';
+import { BatchedUpdateNotification, DBAdapter, QueryResult, SQLBatchTuple, Transaction, UpdateNotification, isBatchedUpdateNotification } from '../db/DBAdapter';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { Schema } from '../db/schema/Schema';
@@ -465,6 +465,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
     return this.database.execute(sql, parameters);
+  }
+
+  async executeBatch(query: string, params?: any[][]) {
+    await this.waitForReady();
+    return this.database.executeBatch(query, params);
   }
 
   /**
