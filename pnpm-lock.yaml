@@ -341,8 +341,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/powersync-sdk-react-native
       '@journeyapps/react-native-quick-sqlite':
-        specifier: 1.1.2
-        version: 1.1.2(react-native@0.73.4)(react@18.2.0)
+        specifier: 1.1.3
+        version: 1.1.3(react-native@0.73.4)(react@18.2.0)
       '@react-native-async-storage/async-storage':
         specifier: 1.21.0
         version: 1.21.0(react-native@0.73.4)
@@ -498,8 +498,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/powersync-sdk-react-native
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.2
-        version: 1.1.2(react-native@0.73.2)(react@18.2.0)
+        specifier: ^1.1.3
+        version: 1.1.3(react-native@0.73.2)(react@18.2.0)
       '@react-native-community/masked-view':
         specifier: ^0.1.11
         version: 0.1.11(react-native@0.73.2)(react@18.2.0)
@@ -1082,8 +1082,8 @@ importers:
         version: 3.3.2
     devDependencies:
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.2
-        version: 1.1.2(react-native@0.72.4)(react@18.2.0)
+        specifier: ^1.1.3
+        version: 1.1.3(react-native@0.72.4)(react@18.2.0)
       '@types/async-lock':
         specifier: ^1.4.0
         version: 1.4.2
@@ -9131,8 +9131,8 @@ packages:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
+  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -9143,8 +9143,8 @@ packages:
       uuid: 3.4.0
     dev: true
 
-  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.73.2)(react@18.2.0):
-    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
+  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -9155,8 +9155,8 @@ packages:
       uuid: 3.4.0
     dev: false
 
-  /@journeyapps/react-native-quick-sqlite@1.1.2(react-native@0.73.4)(react@18.2.0):
-    resolution: {integrity: sha512-daLSA6HRN439pzsAdU1tBE4iCtvRDGbjf8TV1WcIQdGiQVjetL08U5cOkY8FYEM0Yn/+yYm6dTCWIWqWvcd+kw==}
+  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.73.4)(react@18.2.0):
+    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -22712,8 +22712,6 @@ packages:
     peerDependenciesMeta:
       webpack:
         optional: true
-      webpack-sources:
-        optional: true
     dependencies:
       webpack: 5.89.0(esbuild@0.19.11)
       webpack-sources: 3.2.3
@@ -32198,6 +32196,7 @@ packages:
 
   /workbox-google-analytics@7.0.0:
     resolution: {integrity: sha512-MEYM1JTn/qiC3DbpvP2BVhyIH+dV/5BjHk756u9VbwuAhu0QHyKscTnisQuz21lfRpOwiS9z4XdqeVAKol0bzg==}
+    deprecated: It is not compatible with newer versions of GA starting with v4, as long as you are using GAv3 it should be ok, but the package is not longer being maintained
     dependencies:
       workbox-background-sync: 7.0.0
       workbox-core: 7.0.0
