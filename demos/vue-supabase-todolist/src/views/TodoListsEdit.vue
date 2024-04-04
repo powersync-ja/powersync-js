@@ -1,7 +1,10 @@
 <template>
   <div>
-    <v-list v-if="listName" class="py-7 pa-2 bg-black" lines="one">
+    <LoadingMessage v-if="loading" />
+    <v-list v-else-if="listName" class="py-7 pa-2 bg-black" lines="one">
+      <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
       <TodoItemWidget
+        v-else
         v-for="record of todoRecords"
         :key="record.id"
         :description="record.description"
@@ -24,6 +27,7 @@
             v-model="todoDescription"
             variant="outlined"
             label="Task Name"
+            @keyup.enter="submit"
           />
         </v-card-text>
 
@@ -73,10 +77,13 @@ onUnmounted(() => {
   pageSubtitle.value = '';
 });
 
-const { data: todoRecords } = usePowerSyncWatchedQuery<TodoRecord>(
-  `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
-  [listID]
-);
+const {
+  data: todoRecords,
+  loading,
+  error
+} = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [
+  listID
+]);
 
 const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
   const updatedRecord = { ...record, completed: completed };

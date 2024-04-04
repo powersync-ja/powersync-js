@@ -86,7 +86,7 @@ const v$ = useVuelidate(rules, state);
 const valid = computed(() => v$.value.$error === false);
 
 const emailMessage = computed(() => v$.value.email.$errors.map((e) => toValue(e.$message)));
-const passwordMessage = computed(() => props.errorMessage ?? v$.value.password.$errors.map((e) => toValue(e.$message)));
+const passwordMessage = computed(() => props.errorMessage || v$.value.password.$errors.map((e) => toValue(e.$message)));
 
 const handleSubmit = async () => {
   v$.value.$touch();

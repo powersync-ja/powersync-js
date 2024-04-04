@@ -28,7 +28,7 @@
     </v-list>
   </v-navigation-drawer>
 
-  <v-container class="pa-0">
+  <v-container class="pa-0" fluid>
     <router-view />
   </v-container>
 </template>

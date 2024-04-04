@@ -12,6 +12,7 @@
           v-model="listName"
           variant="outlined"
           label="List Name"
+          @keyup.enter="submit"
         />
       </v-card-text>
 

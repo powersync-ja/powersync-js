@@ -2,8 +2,8 @@
   <LoginDetailsWidget
     class="d-flex justify-center"
     :secondaryActions="actions"
-    @submit="onLogin"
     :errorMessage="errorMessage"
+    @submit="onLogin"
   />
 </template>
 

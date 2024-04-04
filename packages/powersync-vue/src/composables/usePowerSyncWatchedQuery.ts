@@ -2,7 +2,14 @@ import { SQLWatchOptions } from '@journeyapps/powersync-sdk-common';
 import { MaybeRef, Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
-export type WatchedQueryResult<T> = { data: Ref<T[]>; error: Ref<Error> };
+export type WatchedQueryResult<T> = {
+  data: Ref<T[]>;
+  /**
+   * Loading becomes false once the first set of results from the watched query is available or an error occurs.
+   */
+  loading: Ref<boolean>;
+  error: Ref<Error>;
+};
 
 /**
  * A composable to access the results of a watched query.
@@ -14,6 +21,11 @@ export const usePowerSyncWatchedQuery = <T = any>(
 ): WatchedQueryResult<T> => {
   const data = ref([]);
   const error = ref<Error>(undefined);
+
+  const loading = ref(true);
+  const finishLoading = () => {
+    if (loading.value) loading.value = false;
+  };
 
   const powerSync = usePowerSync();
 
@@ -33,10 +45,12 @@ export const usePowerSyncWatchedQuery = <T = any>(
       toValue(parameters),
       {
         onResult: (result) => {
+          finishLoading();
           data.value = result.rows?._array ?? [];
           error.value = undefined;
         },
         onError: (e: Error) => {
+          finishLoading();
           data.value = [];
 
           const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
@@ -51,5 +65,5 @@ export const usePowerSyncWatchedQuery = <T = any>(
     );
   });
 
-  return { data, error };
+  return { data, loading, error };
 };

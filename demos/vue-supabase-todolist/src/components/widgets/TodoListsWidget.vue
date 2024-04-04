@@ -1,14 +1,18 @@
 <template>
-  <v-list class="py-7 pa-2 bg-black" lines="two">
-    <ListItemWidget
-      v-for="record in listRecords"
-      :key="record.id"
-      :title="record.name || ''"
-      :description="description(record.total_tasks, record.completed_tasks)"
-      @delete="() => deleteList(record.id)"
-      @press="() => navigateToList(record.id)"
-    />
-  </v-list>
+  <div class="py-7 pa-2">
+    <LoadingMessage v-if="loading" />
+    <ErrorMessage v-else-if="error">{{ error.message }}</ErrorMessage>
+    <v-list v-else class="bg-black pa-0" lines="two">
+      <ListItemWidget
+        v-for="record in listRecords"
+        :key="record.id"
+        :title="record.name || ''"
+        :description="description(record.total_tasks, record.completed_tasks)"
+        @delete="() => deleteList(record.id)"
+        @press="() => navigateToList(record.id)"
+      />
+    </v-list>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -23,7 +27,11 @@ const powerSync = usePowerSync();
 // Vue Router for navigation
 const router = useRouter();
 
-const { data: listRecords } = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
+const {
+  data: listRecords,
+  loading,
+  error
+} = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
       SELECT 
         ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
       FROM 

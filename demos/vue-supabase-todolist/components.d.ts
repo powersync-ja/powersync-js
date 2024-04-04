@@ -7,16 +7,21 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    Fab: (typeof import('./src/components/buttons/Fab.vue'))['default'];
-    ListItemWidget: (typeof import('./src/components/widgets/ListItemWidget.vue'))['default'];
-    LoginDetailsWidget: (typeof import('./src/components/widgets/LoginDetailsWidget.vue'))['default'];
-    NavigationPanel: (typeof import('./src/components/navigation/NavigationPanel.vue'))['default'];
-    RouterLink: (typeof import('vue-router'))['RouterLink'];
-    RouterView: (typeof import('vue-router'))['RouterView'];
-    TodoItemWidget: (typeof import('./src/components/widgets/TodoItemWidget.vue'))['default'];
-    TodoListDisplay: (typeof import('./src/components/TodoListDisplay.vue'))['default'];
-    TodoListDisplayQuery: (typeof import('./src/components/TodoListDisplayQuery.vue'))['default'];
-    TodoListDisplayWatchedQuery: (typeof import('./src/components/TodoListDisplayWatchedQuery.vue'))['default'];
-    TodoListsWidget: (typeof import('./src/components/widgets/TodoListsWidget.vue'))['default'];
+    copy: typeof import('./src/components/Loading copy.vue')['default']
+    Error: typeof import('./src/components/Error.vue')['default']
+    ErrorMessage: typeof import('./src/components/ErrorMessage.vue')['default']
+    Fab: typeof import('./src/components/buttons/Fab.vue')['default']
+    ListItemWidget: typeof import('./src/components/widgets/ListItemWidget.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
+    LoadingMessage: typeof import('./src/components/LoadingMessage.vue')['default']
+    LoginDetailsWidget: typeof import('./src/components/widgets/LoginDetailsWidget.vue')['default']
+    NavigationPanel: (typeof import('./src/components/navigation/NavigationPanel.vue'))['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
+    TodoItemWidget: typeof import('./src/components/widgets/TodoItemWidget.vue')['default']
+    TodoListDisplay: (typeof import('./src/components/TodoListDisplay.vue'))['default']
+    TodoListDisplayQuery: (typeof import('./src/components/TodoListDisplayQuery.vue'))['default']
+    TodoListDisplayWatchedQuery: (typeof import('./src/components/TodoListDisplayWatchedQuery.vue'))['default']
+    TodoListsWidget: typeof import('./src/components/widgets/TodoListsWidget.vue')['default']
   }
 }
