@@ -2,7 +2,7 @@ import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from './router';
-import { connector } from '@/components/providers/SystemProvider';
+import { connector } from '@/library/powersync/ConnectionManager';
 
 export type LoginFormParams = {
   email: string;

@@ -10,8 +10,8 @@ export type LoginFormParams = {
 };
 
 const DEFAULT_QUERY = `
-WITH oplog_stats AS (SELECT bucket, sum(length(data) + length(row_type) + length(row_id) + length(bucket) + length(key) + 50) as data_size, count() as operation_count FROM ps_oplog GROUP BY bucket)
-SELECT local.id as name, stats.data_size, stats.operation_count, local.download_size, local.total_operations, local.downloading FROM local_bucket_data local JOIN oplog_stats stats ON stats.bucket = local.id`;
+WITH oplog_stats AS (SELECT bucket, sum(length(data)) as data_size, sum(length(row_type) + length(row_id) + length(bucket) + length(key) + 40) as metadata_size, count() as operation_count FROM ps_oplog GROUP BY bucket)
+SELECT local.id as name, stats.data_size, stats.metadata_size, stats.operation_count, local.download_size, local.total_operations, local.downloading FROM local_bucket_data local JOIN oplog_stats stats ON stats.bucket = local.id`;
 
 export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
@@ -59,8 +59,7 @@ export default function SQLConsolePage() {
                 if (queryInput) {
                   setQuery(queryInput);
                 }
-              }}
-            >
+              }}>
               Execute Query
             </Button>
           </S.CenteredGrid>

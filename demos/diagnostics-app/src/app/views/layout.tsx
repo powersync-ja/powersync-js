@@ -27,12 +27,13 @@ import { useNavigationPanel } from '@/components/navigation/NavigationPanelConte
 import { usePowerSync } from '@journeyapps/powersync-react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE } from '@/app/router';
+import { sync } from '@/library/powersync/ConnectionManager';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(powerSync.currentStatus);
+  const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
   const [openDrawer, setOpenDrawer] = React.useState(false);
   const { title } = useNavigationPanel();
 
@@ -56,7 +57,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   );
 
   React.useEffect(() => {
-    const l = powerSync.registerListener({
+    const l = sync.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
       }
@@ -74,8 +75,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
             color="inherit"
             aria-label="menu"
             sx={{ mr: 2 }}
-            onClick={() => setOpenDrawer(!openDrawer)}
-          >
+            onClick={() => setOpenDrawer(!openDrawer)}>
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
@@ -100,8 +100,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
                   await item.beforeNavigate?.();
                   navigate(item.path);
                   setOpenDrawer(false);
-                }}
-              >
+                }}>
                 <ListItemIcon>{item.icon()}</ListItemIcon>
                 <ListItemText primary={item.title} />
               </ListItemButton>
