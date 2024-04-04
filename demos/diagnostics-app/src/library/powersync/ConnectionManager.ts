@@ -12,7 +12,7 @@ import { TokenConnector } from './TokenConnector';
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
-const schemaManager = new DynamicSchemaManager();
+export const schemaManager = new DynamicSchemaManager();
 
 export const db = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'example.db',
@@ -43,6 +43,8 @@ export async function connect() {
 export async function clearData() {
   await sync.disconnect();
   await db.disconnectAndClear();
+  await schemaManager.clear();
+  await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
     await sync.connect();
   }

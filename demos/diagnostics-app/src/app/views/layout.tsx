@@ -26,7 +26,7 @@ import React from 'react';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { usePowerSync } from '@journeyapps/powersync-react';
 import { useNavigate } from 'react-router-dom';
-import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE } from '@/app/router';
+import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
 import { sync } from '@/library/powersync/ConnectionManager';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +39,16 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
 
   const NAVIGATION_ITEMS = React.useMemo(
     () => [
+      {
+        path: SYNC_DIAGNOSTICS_ROUTE,
+        title: 'Sync Overview',
+        icon: () => <TerminalIcon />
+      },
+      {
+        path: SCHEMA_ROUTE,
+        title: 'Dynamic Schema',
+        icon: () => <TerminalIcon />
+      },
       {
         path: SQL_CONSOLE_ROUTE,
         title: 'SQL Console',

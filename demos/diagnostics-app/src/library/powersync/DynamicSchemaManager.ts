@@ -8,6 +8,7 @@ import {
   Table
 } from '@journeyapps/powersync-sdk-web';
 import { AppSchema } from './AppSchema';
+import { JsSchemaGenerator } from './JsSchemaGenerator';
 
 /**
  * Record fields from downloaded data, then build a schema from it.
@@ -19,6 +20,12 @@ export class DynamicSchemaManager {
   constructor() {
     const tables = localStorage.getItem('powersync_dynamic_schema');
     this.tables = tables ? JSON.parse(tables) : {};
+  }
+
+  async clear() {
+    this.tables = {};
+    this.dirty = true;
+    localStorage.removeItem('powersync_dynamic_schema');
   }
 
   async updateFromOperations(batch: SyncDataBatch) {
@@ -94,5 +101,10 @@ export class DynamicSchemaManager {
       tables.push(table);
     }
     return new Schema(tables);
+  }
+
+  schemaToString() {
+    const filtered = this.buildSchema().tables.filter((table) => !table.localOnly);
+    return new JsSchemaGenerator().generate(new Schema(filtered));
   }
 }
