@@ -16,8 +16,8 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'powersync2.db',
   schema: AppSchema,
   flags: {
-    disableSSRWarning: true
-    // enableMultiTabs: false
+    disableSSRWarning: true,
+    enableMultiTabs: false
   }
 }).getInstance();
 const connector = new BackendConnector();
