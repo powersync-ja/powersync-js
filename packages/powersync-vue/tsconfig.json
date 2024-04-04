@@ -6,10 +6,7 @@
     "rootDir": "src",
     "composite": true,
     "outDir": "./lib",
-    "lib": [
-      "esnext",
-      "DOM"
-    ],
+    "lib": ["esnext", "DOM"],
     "module": "esnext",
     "sourceMap": true,
     "moduleResolution": "node",
