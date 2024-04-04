@@ -38,7 +38,7 @@ export default function EntryPage() {
           if (connector.currentSession) {
             navigate(DEFAULT_ENTRY_ROUTE);
           } else {
-            navigate(LOGIN_ROUTE)
+            navigate(LOGIN_ROUTE);
           }
         }
       });

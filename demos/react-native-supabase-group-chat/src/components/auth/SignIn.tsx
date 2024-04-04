@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Input, Square, XStack, YStack } from "tamagui";
+import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button, Input, Square, XStack, YStack } from 'tamagui';
 
-import { Logo } from "../Logo";
+import { Logo } from '../Logo';
 
-import { config } from "@/lib/config";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/providers/AuthProvider";
+import { config } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 
 export function SignIn() {
   const inlets = useSafeAreaInsets();
   const [signUp, setSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { signIn } = useAuth();
 
   async function handleSignUp() {
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
+      password
     });
 
     if (error) {
@@ -31,7 +31,7 @@ export function SignIn() {
   async function handleSignIn() {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password
     });
 
     if (error) {
@@ -42,14 +42,7 @@ export function SignIn() {
   }
 
   return (
-    <YStack
-      padding="$3"
-      paddingTop={inlets.top}
-      space="$3"
-      justifyContent="center"
-      alignItems="center"
-      fullscreen
-    >
+    <YStack padding="$3" paddingTop={inlets.top} space="$3" justifyContent="center" alignItems="center" fullscreen>
       <Square size="$8" marginBottom="$10">
         <Logo color={config.brand1} gradient={true} />
       </Square>

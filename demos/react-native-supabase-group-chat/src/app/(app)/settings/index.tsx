@@ -1,22 +1,16 @@
-import {
-  usePowerSync,
-  usePowerSyncWatchedQuery,
-} from "@journeyapps/powersync-sdk-react-native";
-import { useEffect, useState } from "react";
-import { Button, Input, Label, Switch, Text, XStack, YStack } from "tamagui";
+import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { useEffect, useState } from 'react';
+import { Button, Input, Label, Switch, Text, XStack, YStack } from 'tamagui';
 
-import { useAuth } from "@/providers/AuthProvider";
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function SettingsIndex() {
   const powerSync = usePowerSync();
   const { user, signOut, isSyncEnabled, setIsSyncEnabled } = useAuth();
-  const [name, setName] = useState("");
-  const [handle, setHandle] = useState("");
+  const [name, setName] = useState('');
+  const [handle, setHandle] = useState('');
 
-  const profiles = usePowerSyncWatchedQuery(
-    "SELECT * FROM profiles WHERE id = ?",
-    [user?.id]
-  );
+  const profiles = usePowerSyncWatchedQuery('SELECT * FROM profiles WHERE id = ?', [user?.id]);
 
   useEffect(() => {
     if (profiles.length > 0) {
@@ -32,15 +26,12 @@ export default function SettingsIndex() {
 
   async function handleUpdateProfile() {
     if (user) {
-      powerSync.execute(
-        "UPDATE profiles SET name = ?, handle = ? WHERE id = ?",
-        [name, handle, user.id]
-      );
+      powerSync.execute('UPDATE profiles SET name = ?, handle = ? WHERE id = ?', [name, handle, user.id]);
     }
   }
 
   useEffect(() => {
-    console.log("Sync Status 2", powerSync.currentStatus);
+    console.log('Sync Status 2', powerSync.currentStatus);
   }, [powerSync]);
 
   return (
@@ -56,22 +47,11 @@ export default function SettingsIndex() {
         >
           <Switch.Thumb animation="quick" backgroundColor="$brand1" />
         </Switch>
-        <Label
-          paddingRight="$0"
-          minWidth={90}
-          justifyContent="flex-end"
-          size="$3"
-          htmlFor="syncEnabled"
-        >
-          Sync {isSyncEnabled ? "enabled" : "disabled"}
+        <Label paddingRight="$0" minWidth={90} justifyContent="flex-end" size="$3" htmlFor="syncEnabled">
+          Sync {isSyncEnabled ? 'enabled' : 'disabled'}
         </Label>
       </XStack>
-      <Input
-        placeholder="Name"
-        width="80%"
-        onChangeText={(text) => setName(text)}
-        value={name}
-      />
+      <Input placeholder="Name" width="80%" onChangeText={(text) => setName(text)} value={name} />
       <Input
         placeholder="Handle"
         width="80%"
@@ -79,11 +59,7 @@ export default function SettingsIndex() {
         value={handle}
         autoCapitalize="none"
       />
-      <Button
-        backgroundColor="$brand1"
-        color="white"
-        onPress={handleUpdateProfile}
-      >
+      <Button backgroundColor="$brand1" color="white" onPress={handleUpdateProfile}>
         Update profile
       </Button>
       <Button onPress={handleSignOut}>Sign out</Button>

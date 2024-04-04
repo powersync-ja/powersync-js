@@ -24,9 +24,9 @@ export default function SQLConsolePage() {
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
-          field,
-          flex: 1
-        }))
+            field,
+            flex: 1
+          }))
         : [],
       rows: querySQLResult
     };
