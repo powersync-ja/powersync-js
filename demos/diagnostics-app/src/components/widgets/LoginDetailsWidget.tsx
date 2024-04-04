@@ -67,9 +67,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                   value={values.token}
                   error={!!errors.token}
                   helperText={errors.token}
-                  InputLabelProps={
-                    {shrink: true}
-                  }
+                  InputLabelProps={{ shrink: true }}
                 />
                 <S.TextInput
                   id="endpoint-input"
@@ -83,9 +81,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                   placeholder={getTokenEndpoint(values.token) ?? ''}
                   error={!!errors.endpoint}
                   helperText={errors.endpoint}
-                  InputLabelProps={
-                    {shrink: true}
-                  }
+                  InputLabelProps={{ shrink: true }}
                 />
               </FormGroup>
               <S.ActionButtonGroup>
@@ -155,7 +151,6 @@ namespace S {
     margin-bottom: 20px;
   `;
 }
-
 
 function getTokenEndpoint(token: string) {
   try {

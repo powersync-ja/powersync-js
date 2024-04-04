@@ -1,11 +1,11 @@
-import { Outlet, createBrowserRouter } from "react-router-dom";
-import LoginPage from "./auth/login/page";
-import RegisterPage from "./auth/register/page";
-import EntryPage from "./page";
-import TodoEditPage from "./views/todo-lists/edit/page";
-import TodoListsPage from "./views/todo-lists/page";
-import ViewsLayout from "./views/layout";
-import SQLConsolePage from "./views/sql-console/page";
+import { Outlet, createBrowserRouter } from 'react-router-dom';
+import LoginPage from './auth/login/page';
+import RegisterPage from './auth/register/page';
+import EntryPage from './page';
+import TodoEditPage from './views/todo-lists/edit/page';
+import TodoListsPage from './views/todo-lists/page';
+import ViewsLayout from './views/layout';
+import SQLConsolePage from './views/sql-console/page';
 
 export const TODO_LISTS_ROUTE = '/views/todo-lists';
 export const TODO_EDIT_ROUTE = '/views/todo-lists/:id';
@@ -20,21 +20,23 @@ export const DEFAULT_ENTRY_ROUTE = '/views/todo-lists';
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <EntryPage />,
+    path: '/',
+    element: <EntryPage />
   },
   {
     path: LOGIN_ROUTE,
-    element: <LoginPage />,
+    element: <LoginPage />
   },
   {
     path: REGISTER_ROUTE,
-    element: <RegisterPage />,
+    element: <RegisterPage />
   },
   {
-    element: <ViewsLayout>
-      <Outlet />
-    </ViewsLayout>,
+    element: (
+      <ViewsLayout>
+        <Outlet />
+      </ViewsLayout>
+    ),
     children: [
       {
         path: TODO_LISTS_ROUTE,
@@ -49,5 +51,5 @@ export const router = createBrowserRouter([
         element: <SQLConsolePage />
       }
     ]
-  },
+  }
 ]);

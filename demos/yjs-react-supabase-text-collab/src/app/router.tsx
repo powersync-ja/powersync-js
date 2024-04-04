@@ -1,7 +1,7 @@
-import { createBrowserRouter } from "react-router-dom";
-import EditorPage from "./editor/page";
-import EntryPage from "./page";
-import SQLConsolePage from "./sql-console/page";
+import { createBrowserRouter } from 'react-router-dom';
+import EditorPage from './editor/page';
+import EntryPage from './page';
+import SQLConsolePage from './sql-console/page';
 
 export const TODO_LISTS_ROUTE = '/views/todo-lists';
 export const TODO_EDIT_ROUTE = '/views/todo-lists/:id';
@@ -16,15 +16,15 @@ export const DEFAULT_ENTRY_ROUTE = '/views/todo-lists';
 
 export const router = createBrowserRouter([
   {
-    path: "/",
-    element: <EntryPage />,
+    path: '/',
+    element: <EntryPage />
   },
   {
-    path: "/editor/:id",
-    element: <EditorPage />,
+    path: '/editor/:id',
+    element: <EditorPage />
   },
   {
-    path: "/sql-console",
-    element: <SQLConsolePage />,
-  },
+    path: '/sql-console',
+    element: <SQLConsolePage />
+  }
 ]);

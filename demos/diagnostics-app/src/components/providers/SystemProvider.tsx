@@ -10,7 +10,6 @@ import React, { Suspense } from 'react';
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
-
 export const db = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'example.db',
   schema: AppSchema
@@ -24,15 +23,11 @@ if (connector.hasCredentials()) {
 
 (window as any).db = db;
 
-
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
-
   return (
     <Suspense fallback={<CircularProgress />}>
       <PowerSyncContext.Provider value={db}>
-          <NavigationPanelContextProvider>
-            {children}
-          </NavigationPanelContextProvider>
+        <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
       </PowerSyncContext.Provider>
     </Suspense>
   );

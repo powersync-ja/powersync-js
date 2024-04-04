@@ -12,15 +12,10 @@ export const NavigationPanelContext = React.createContext<NavigationPanelControl
   title: ''
 });
 
-
 export const NavigationPanelContextProvider = ({ children }: { children: React.ReactNode }) => {
   const [title, setTitle] = React.useState('');
 
-  return (
-    <NavigationPanelContext.Provider value={{ title, setTitle }}>
-      {children}
-    </NavigationPanelContext.Provider>
-  )
-}
+  return <NavigationPanelContext.Provider value={{ title, setTitle }}>{children}</NavigationPanelContext.Provider>;
+};
 
 export const useNavigationPanel = () => React.useContext(NavigationPanelContext);

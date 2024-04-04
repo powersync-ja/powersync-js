@@ -25,14 +25,19 @@ export const usePowerSyncWatchedQuery = <T = any>(
     abortController.current?.abort();
     abortController.current = new AbortController();
 
-    powerSync.watch(sqlStatement, parameters, {
-      onResult(results) {
-        setData(results.rows?._array ?? []);
+    powerSync.watch(
+      sqlStatement,
+      parameters,
+      {
+        onResult(results) {
+          setData(results.rows?._array ?? []);
+        }
       },
-    }, {
-      ...options,
-      signal: abortController.current.signal
-    });
+      {
+        ...options,
+        signal: abortController.current.signal
+      }
+    );
 
     return () => {
       abortController.current?.abort();

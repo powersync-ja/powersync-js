@@ -63,14 +63,13 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
    * @example
    * ```javascript
    * onAttachmentIdsChange(onUpdate) {
-   *    this.powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [], { 
-   *        onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? []) 
+   *    this.powersync.watch('SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL', [], {
+   *        onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
    *    });
    * }
    * ```
    */
   abstract onAttachmentIdsChange(onUpdate: (ids: string[]) => void): void;
-
 
   /**
    * Create a new AttachmentRecord, this gets called when the attachment id is not found in the database.
@@ -367,7 +366,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       if (ids.length > 0) {
         await this.uploadRecords();
       }
-    })
+    });
   }
 
   /**
@@ -422,8 +421,8 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
               OR
                 state = ${AttachmentState.QUEUED_SYNC}`,
       [],
-      { onResult: result => onResult(result.rows?._array.map(r => r.id) || []) }
-    )
+      { onResult: (result) => onResult(result.rows?._array.map((r) => r.id) || []) }
+    );
   }
 
   watchDownloads() {
@@ -431,7 +430,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       ids.map((id) => this.downloadQueue.add(id));
       // No need to await this, the lock will ensure only one loop is running at a time
       this.downloadRecords();
-    })
+    });
   }
 
   private async downloadRecords() {
