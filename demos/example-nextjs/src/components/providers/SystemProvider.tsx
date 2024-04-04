@@ -17,7 +17,7 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   flags: {
     disableSSRWarning: true
   }
-}).getInstance()
+}).getInstance();
 const connector = new BackendConnector();
 
 powerSync.connect(connector);
@@ -25,9 +25,7 @@ powerSync.connect(connector);
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <Suspense fallback={<CircularProgress />}>
-      <PowerSyncContext.Provider value={powerSync}>
-        {children}
-      </PowerSyncContext.Provider>
+      <PowerSyncContext.Provider value={powerSync}>{children}</PowerSyncContext.Provider>
     </Suspense>
   );
 };

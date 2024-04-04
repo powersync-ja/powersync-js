@@ -1,7 +1,7 @@
-import { Spinner, Text, YStack } from "tamagui";
+import { Spinner, Text, YStack } from 'tamagui';
 
 export function Loading({ message }: { message?: string }) {
-  message ??= "Loading";
+  message ??= 'Loading';
 
   return (
     <YStack fullscreen justifyContent="center">

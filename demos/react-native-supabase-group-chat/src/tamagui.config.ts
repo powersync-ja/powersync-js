@@ -1,16 +1,16 @@
-import { createInterFont } from "@tamagui/font-inter";
-import { shorthands } from "@tamagui/shorthands";
-import { themes, tokens } from "@tamagui/themes";
-import { createTamagui } from "tamagui";
+import { createInterFont } from '@tamagui/font-inter';
+import { shorthands } from '@tamagui/shorthands';
+import { themes, tokens } from '@tamagui/themes';
+import { createTamagui } from 'tamagui';
 
-import { config } from "./lib/config";
+import { config } from './lib/config';
 
 const headingFont = createInterFont();
 const bodyFont = createInterFont();
 
 const appConfig = createTamagui({
   themes,
-  defaultTheme: "dark",
+  defaultTheme: 'dark',
   shouldAddPrefersColorThemes: false,
   themeClassNameOnRoot: false,
   tokens: {
@@ -18,19 +18,19 @@ const appConfig = createTamagui({
     color: {
       ...tokens.color,
       brand1: config.brand1,
-      brand2: config.brand2,
-    },
+      brand2: config.brand2
+    }
   },
   shorthands,
   fonts: {
     heading: headingFont,
-    body: bodyFont,
-  },
+    body: bodyFont
+  }
 });
 
 export type AppConfig = typeof appConfig;
 
-declare module "@tamagui/core" {
+declare module '@tamagui/core' {
   interface TamaguiCustomConfig extends AppConfig {}
 }
 

@@ -1,56 +1,54 @@
-import { type ExpoConfig } from "expo/config";
+import { type ExpoConfig } from 'expo/config';
 
 const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
 const config: ExpoConfig = {
-  name: "PowerChat",
-  slug: "powerchat",
-  scheme: "powerchat",
-  version: "1.0.0",
-  orientation: "portrait",
-  icon: "./assets/icon.png",
-  userInterfaceStyle: "automatic",
+  name: 'PowerChat',
+  slug: 'powerchat',
+  scheme: 'powerchat',
+  version: '1.0.0',
+  orientation: 'portrait',
+  icon: './assets/icon.png',
+  userInterfaceStyle: 'automatic',
   splash: {
-    image: "./assets/splash.png",
-    resizeMode: "contain",
-    backgroundColor: "#cb62ff",
+    image: './assets/splash.png',
+    resizeMode: 'contain',
+    backgroundColor: '#cb62ff'
   },
   updates: {
-    url: `https://u.expo.dev/${projectId}`,
+    url: `https://u.expo.dev/${projectId}`
   },
-  assetBundlePatterns: ["**/*"],
+  assetBundlePatterns: ['**/*'],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.powerchat",
+    bundleIdentifier: 'com.powerchat',
     config: {
-      usesNonExemptEncryption: false,
+      usesNonExemptEncryption: false
     },
-    jsEngine: "jsc",
+    jsEngine: 'jsc'
   },
   experiments: {
-    tsconfigPaths: true,
+    tsconfigPaths: true
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#ffffff",
-    },
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#ffffff'
+    }
   },
   web: {
-    favicon: "./assets/favicon.png",
-    bundler: "metro",
+    favicon: './assets/favicon.png',
+    bundler: 'metro'
   },
   extra: {
     eas: {
-      projectId,
-    },
+      projectId
+    }
   },
   runtimeVersion: {
-    policy: "sdkVersion",
+    policy: 'sdkVersion'
   },
-  plugins: [
-    "expo-router"
-  ]
+  plugins: ['expo-router']
 };
 
 export default config;

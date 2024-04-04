@@ -1,16 +1,8 @@
-import { SvgXml } from "react-native-svg";
+import { SvgXml } from 'react-native-svg';
 
-import { minidenticon } from "./minidenticon";
+import { minidenticon } from './minidenticon';
 
-export function Identicon({
-  handle,
-  width,
-  color,
-}: {
-  handle: string;
-  width: number;
-  color?: string;
-}) {
+export function Identicon({ handle, width, color }: { handle: string; width: number; color?: string }) {
   const identicon = minidenticon(handle);
 
   return color ? (

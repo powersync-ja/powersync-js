@@ -75,7 +75,6 @@ describe('Watch Tests', () => {
   it('watch outside throttle limits (callback)', async () => {
     const abortController = new AbortController();
 
-
     const updatesCount = 2;
     let receivedUpdatesCount = 0;
 
@@ -99,7 +98,6 @@ describe('Watch Tests', () => {
         { signal: abortController.signal, throttleMs: throttleDuration }
       );
     });
-
 
     for (let updateCount = 0; updateCount < updatesCount; updateCount++) {
       await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
@@ -152,7 +150,8 @@ describe('Watch Tests', () => {
 
     powersync.watch(
       'SELECT count() AS count FROM assets INNER JOIN customers ON customers.id = assets.customer_id',
-      [], { onResult: onUpdate },
+      [],
+      { onResult: onUpdate },
       { signal: abortController.signal, throttleMs: throttleDuration }
     );
 
@@ -216,18 +215,28 @@ describe('Watch Tests', () => {
     let receivedAssetsUpdatesCount = 0;
     const onWatchAssets = () => receivedAssetsUpdatesCount++;
 
-    powersync.watch('SELECT count() AS count FROM assets', [], { onResult: onWatchAssets }, {
-      signal: assetsAbortController.signal
-    });
+    powersync.watch(
+      'SELECT count() AS count FROM assets',
+      [],
+      { onResult: onWatchAssets },
+      {
+        signal: assetsAbortController.signal
+      }
+    );
 
     const customersAbortController = new AbortController();
 
     let receivedCustomersUpdatesCount = 0;
     const onWatchCustomers = () => receivedCustomersUpdatesCount++;
 
-    powersync.watch('SELECT count() AS count FROM customers', [], { onResult: onWatchCustomers }, {
-      signal: customersAbortController.signal
-    });
+    powersync.watch(
+      'SELECT count() AS count FROM customers',
+      [],
+      { onResult: onWatchCustomers },
+      {
+        signal: customersAbortController.signal
+      }
+    );
 
     // Create the inserts as fast as possible
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
@@ -243,10 +252,9 @@ describe('Watch Tests', () => {
     expect(receivedCustomersUpdatesCount).equals(1);
   });
 
-
   it('should handle watch onError callback', async () => {
     const abortController = new AbortController();
-    const onResult = () => { }; // no-op
+    const onResult = () => {}; // no-op
     let receivedErrorCount = 0;
 
     const receivedError = new Promise<void>((resolve) => {

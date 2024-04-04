@@ -19,11 +19,14 @@ export default function LoginPage() {
         await supabase.login(values.email, values.password);
         navigate(DEFAULT_ENTRY_ROUTE);
       }}
-      secondaryActions={[{
-        title: 'Register', onClick: () => {
-          navigate('/auth/register');
+      secondaryActions={[
+        {
+          title: 'Register',
+          onClick: () => {
+            navigate('/auth/register');
+          }
         }
-      }]}
+      ]}
     />
   );
 }

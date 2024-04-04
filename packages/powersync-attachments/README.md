@@ -74,7 +74,7 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
   onAttachmentIdsChange(onUpdate) {
     this.powersync.watch('SELECT photo_id as id FROM checklists WHERE photo_id IS NOT NULL', [], {
       onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
-   });
+    });
   }
 }
 ```

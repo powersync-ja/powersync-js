@@ -1,25 +1,13 @@
-import type { AuthUser, AuthSession } from "@supabase/supabase-js";
-import {
-  ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import type { AuthUser, AuthSession } from '@supabase/supabase-js';
+import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { Loading } from "@/components/loading/Loading";
-import { supabase } from "@/lib/supabase";
+import { Loading } from '@/components/loading/Loading';
+import { supabase } from '@/lib/supabase';
 
 export const AuthContext = createContext<{
   session: AuthSession | null;
   user: AuthUser | null;
-  signIn: ({
-    session,
-    user,
-  }: {
-    session: AuthSession | null;
-    user: AuthUser | null;
-  }) => void;
+  signIn: ({ session, user }: { session: AuthSession | null; user: AuthUser | null }) => void;
   signOut: () => void;
   isSyncEnabled: boolean;
   setIsSyncEnabled: (isSyncEnabled: boolean) => void;
@@ -29,7 +17,7 @@ export const AuthContext = createContext<{
   signIn: () => {},
   signOut: () => {},
   isSyncEnabled: true,
-  setIsSyncEnabled: () => {},
+  setIsSyncEnabled: () => {}
 });
 
 export function useAuth() {
@@ -42,20 +30,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncEnabled, setIsSyncEnabled] = useState(true);
 
-  async function signIn({
-    session,
-    user,
-  }: {
-    session: AuthSession | null;
-    user: AuthUser | null;
-  }) {
-    console.log("signIn");
+  async function signIn({ session, user }: { session: AuthSession | null; user: AuthUser | null }) {
+    console.log('signIn');
     setSession(session);
     setUser(user);
   }
 
   async function signOut() {
-    console.log("signOut");
+    console.log('signOut');
     const { error } = await supabase.auth.signOut();
 
     setSession(null);
@@ -94,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         isSyncEnabled,
-        setIsSyncEnabled,
+        setIsSyncEnabled
       }}
     >
       {children}

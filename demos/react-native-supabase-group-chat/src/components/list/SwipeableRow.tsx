@@ -1,14 +1,14 @@
-import { ReactNode, useRef } from "react";
-import { Animated } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
-import { Button, XStack } from "tamagui";
+import { ReactNode, useRef } from 'react';
+import { Animated } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { Button, XStack } from 'tamagui';
 
 function RightAction({
   text,
   color,
   x,
   progress,
-  onPress,
+  onPress
 }: {
   text: ReactNode;
   color: string;
@@ -18,7 +18,7 @@ function RightAction({
 }) {
   const trans = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [x, 0],
+    outputRange: [x, 0]
   });
 
   return (
@@ -42,7 +42,7 @@ function RightAction({
 function RightActions({
   close,
   rightActions,
-  progress,
+  progress
 }: {
   close: () => void;
   rightActions: { text: ReactNode; color: string; onPress: () => void }[];
@@ -73,7 +73,7 @@ function RightActions({
 
 export function SwipeableRow({
   children,
-  rightActions,
+  rightActions
 }: {
   children: ReactNode;
   // leftActions?: { text: ReactNode; color: string; onPress: () => void }[];
@@ -95,13 +95,7 @@ export function SwipeableRow({
       // renderLeftActions={this.renderLeftActions}
       renderRightActions={
         rightActions
-          ? (progress) => (
-              <RightActions
-                close={close}
-                rightActions={rightActions}
-                progress={progress}
-              />
-            )
+          ? (progress) => <RightActions close={close} rightActions={rightActions} progress={progress} />
           : undefined
       }
       onSwipeableOpen={(direction) => {

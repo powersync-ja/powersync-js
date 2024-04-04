@@ -1,34 +1,23 @@
-import {
-  usePowerSync,
-  usePowerSyncWatchedQuery,
-} from "@journeyapps/powersync-sdk-react-native";
-import { Save, Trash, XCircle } from "@tamagui/lucide-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert } from "react-native";
-import { Button, Input, XStack, YStack } from "tamagui";
+import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { Save, Trash, XCircle } from '@tamagui/lucide-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert } from 'react-native';
+import { Button, Input, XStack, YStack } from 'tamagui';
 
-import { MemberSelector } from "@/components/groups/MemberSelector";
-import { uuid } from "@/lib/uuid";
+import { MemberSelector } from '@/components/groups/MemberSelector';
+import { uuid } from '@/lib/uuid';
 
 export default function GroupSettings() {
   const { group: groupId } = useLocalSearchParams<{ group: string }>();
   const router = useRouter();
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [members, setMembers] = useState<Set<string>>(new Set());
-  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(
-    new Set()
-  );
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const powerSync = usePowerSync();
 
-  const groups = usePowerSyncWatchedQuery(
-    "SELECT name FROM groups WHERE id = ?",
-    [groupId]
-  );
-  const groupMembers = usePowerSyncWatchedQuery(
-    "SELECT profile_id FROM memberships WHERE group_id = ?",
-    [groupId]
-  );
+  const groups = usePowerSyncWatchedQuery('SELECT name FROM groups WHERE id = ?', [groupId]);
+  const groupMembers = usePowerSyncWatchedQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId]);
 
   useEffect(() => {
     if (groups.length > 0) {
@@ -85,26 +74,23 @@ export default function GroupSettings() {
 
     await powerSync.writeTransaction(async (tx) => {
       try {
-        await tx.executeAsync("UPDATE groups SET name= ? WHERE id = ?", [
-          name,
-          groupId,
-        ]);
+        await tx.executeAsync('UPDATE groups SET name= ? WHERE id = ?', [name, groupId]);
         for (const profileId of removedContacts) {
-          const result = await tx.executeAsync(
-            "DELETE FROM memberships WHERE group_id = ? AND profile_id = ?",
-            [groupId, profileId]
-          );
+          const result = await tx.executeAsync('DELETE FROM memberships WHERE group_id = ? AND profile_id = ?', [
+            groupId,
+            profileId
+          ]);
         }
         for (const profileId of addedContacts) {
           const membershipId = uuid();
           const result = await tx.executeAsync(
-            "INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())",
+            'INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())',
             [membershipId, groupId, profileId]
           );
         }
         router.back();
       } catch (error) {
-        console.error("Error", error);
+        console.error('Error', error);
       }
     });
   }
@@ -113,37 +99,29 @@ export default function GroupSettings() {
     async function deleteTransaction() {
       await powerSync.writeTransaction(async (tx) => {
         try {
-          await tx.executeAsync("DELETE FROM memberships WHERE group_id = ?", [
-            groupId,
-          ]);
-          await tx.executeAsync("DELETE FROM messages WHERE group_id = ?", [
-            groupId,
-          ]);
-          await tx.executeAsync("DELETE FROM groups WHERE id = ?", [groupId]);
+          await tx.executeAsync('DELETE FROM memberships WHERE group_id = ?', [groupId]);
+          await tx.executeAsync('DELETE FROM messages WHERE group_id = ?', [groupId]);
+          await tx.executeAsync('DELETE FROM groups WHERE id = ?', [groupId]);
 
           router.back();
         } catch (error) {
-          console.error("Error", error);
+          console.error('Error', error);
         }
       });
     }
 
-    Alert.alert(
-      "Delete group",
-      "Are you sure you want to delete this group including all its messages?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          onPress: deleteTransaction,
-          style: "destructive",
-        },
-      ]
-    );
+    Alert.alert('Delete group', 'Are you sure you want to delete this group including all its messages?', [
+      {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel'
+      },
+      {
+        text: 'Delete',
+        onPress: deleteTransaction,
+        style: 'destructive'
+      }
+    ]);
   }
 
   return (
@@ -162,17 +140,9 @@ export default function GroupSettings() {
               value={name}
               borderRadius="$3"
             />
-            <Button
-              icon={<Save size="$1.5" />}
-              backgroundColor="$brand1"
-              color="white"
-              onPress={handleSave}
-            />
+            <Button icon={<Save size="$1.5" />} backgroundColor="$brand1" color="white" onPress={handleSave} />
           </XStack>
-          <MemberSelector
-            selectedContacts={selectedContacts}
-            setSelectedContacts={setSelectedContacts}
-          />
+          <MemberSelector selectedContacts={selectedContacts} setSelectedContacts={setSelectedContacts} />
           <Button
             icon={<Trash size="$1.5" />}
             backgroundColor="$red10"
