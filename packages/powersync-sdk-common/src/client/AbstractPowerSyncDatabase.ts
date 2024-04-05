@@ -132,12 +132,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Current connection status.
    */
   currentStatus?: SyncStatus;
+
+  /**
+   * Indicates whether there has been at least one full sync.
+   */
+  hasSynced: boolean;
+
   syncStreamImplementation?: StreamingSyncImplementation;
   sdkVersion: string;
 
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
+  protected _firstSyncPromise: Promise<void>;
+  private _resolveFirstSyncPromise: () => void;
   protected _schema: Schema;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
@@ -145,12 +153,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = undefined;
+    this.hasSynced = false;
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this._schema = options.schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
     this._isReadyPromise = this.initialize();
+
+    this._firstSyncPromise = new Promise((resolve) => {
+      this._resolveFirstSyncPromise = resolve;
+    });
   }
 
   /**
@@ -194,6 +207,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * @returns A promise which will resolve once the first full sync has completed.
+   */
+  async waitForFirstSync(): Promise<void> {
+    if (this.hasSynced) {
+      return;
+    }
+
+    await this._firstSyncPromise;
+  }
+
+  /**
    * Allows for extended implementations to execute custom initialization
    * logic as part of the total init process
    */
@@ -206,11 +230,45 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.options.database.execute('SELECT powersync_rs_version()');
+    const { database, schema } = this.options;
+    const version = await database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
-    await this.updateSchema(this.options.schema);
+
+    await this.updateSchema(schema);
+    await this.updateHasSynced(database);
+
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  async updateHasSynced(database: DBAdapter) {
+    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
+    const syncedResult = await database.execute(syncedSQL);
+    this.hasSynced = !!syncedResult.rows?.length;
+
+    if (this.hasSynced) {
+      this._resolveFirstSyncPromise();
+    } else {
+      const abortController = new AbortController();
+
+      this.watch(
+        syncedSQL,
+        [],
+        {
+          onResult: (result) => {
+            this.hasSynced = !!result.rows?.length;
+            if (this.hasSynced) {
+              this._resolveFirstSyncPromise();
+              abortController.abort();
+            }
+          }
+        },
+        {
+          rawTableNames: true,
+          signal: abortController.signal
+        }
+      );
+    }
   }
 
   /**

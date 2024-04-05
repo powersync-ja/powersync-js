@@ -1,5 +1,9 @@
 # PowerSync + Supabase Vue Demo: Todo List (TypeScript)
 
+## Note: Alpha Release
+
+This package is currently in a alpha release.
+
 ## Overview
 
 Demo app demonstrating use of the [PowerSync Vue](https://www.npmjs.com/package/@journeyapps/powersync-vue) together with Supabase.

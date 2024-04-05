@@ -9,6 +9,7 @@
         class="mr-n2 pa-0"
         icon="mdi-arrow-up"
       />
+
       <v-icon :color="syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
       <v-icon :icon="syncStatus?.connected ? 'mdi-wifi' : 'mdi-wifi-off'" />
     </div>
@@ -31,6 +32,12 @@
   <v-container class="pa-0" fluid>
     <router-view />
   </v-container>
+
+  <v-empty-state
+    icon="mdi-sync"
+    text="A full sync has not completed yet. Please wait a moment."
+    title="Sync in progress"
+  />
 </template>
 
 <script setup lang="ts">
@@ -40,10 +47,10 @@ import { supabase } from '@/plugins/supabase';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pageSubtitle } from '@/main';
+import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
 
 const openDrawer = ref(false);
-const syncStatus = ref(powerSync.currentStatus); // Simulate the syncStatus
-
+const { status: syncStatus } = usePowerSyncStatus();
 const router = useRouter();
 const route = useRoute();
 
@@ -82,10 +89,4 @@ const navigateTo = async (item: (typeof NAVIGATION_ITEMS)[0]) => {
   router.push(item.path);
   openDrawer.value = false;
 };
-
-powerSync.registerListener({
-  statusChanged: (status) => {
-    syncStatus.value = status;
-  }
-});
 </script>

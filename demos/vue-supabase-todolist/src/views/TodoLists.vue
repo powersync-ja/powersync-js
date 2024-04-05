@@ -35,6 +35,8 @@ import { usePowerSync } from '@journeyapps/powersync-vue';
 import { ref } from 'vue';
 
 const powerSync = usePowerSync();
+await powerSync.value.waitForFirstSync();
+
 const showPrompt = ref(false);
 const setShowPrompt = (state: boolean): void => {
   if (state) listName.value = '';

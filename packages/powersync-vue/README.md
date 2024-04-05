@@ -1,5 +1,9 @@
 # Vue composables for PowerSync
 
+## Note: Alpha Release
+
+This package is currently in a alpha release.
+
 ## Setup
 
 To set up app-wide accessibility of PowerSync composables, create a PowerSync Vue plugin that configures a PowerSync instance and integrates it with the Vue instance. This approach provides the PowerSync client app wide so that any composable used has access to the instance.
