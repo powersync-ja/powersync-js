@@ -65,7 +65,6 @@ export interface TableUpdateOperation {
   opType: RowUpdateType;
   rowId: number;
 }
-export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 /**
  * Notification of an update to one or more tables, for the purpose of realtime change notifications.
  */

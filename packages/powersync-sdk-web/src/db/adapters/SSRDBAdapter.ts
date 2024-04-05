@@ -5,8 +5,7 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  Transaction,
-  SQLBatchTuple
+  Transaction
 } from '@journeyapps/powersync-sdk-common';
 
 import { Mutex } from 'async-mutex';
@@ -54,7 +53,7 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
     return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
   }
 
-  async executeBatch(query: string, params?: any[][]): Promise<QueryResult>{
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
     return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
   }
 
