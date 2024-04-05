@@ -8,24 +8,24 @@ To set up app-wide accessibility of PowerSync composables, create a PowerSync Vu
 // main.js
 import { createApp } from 'vue'
 import App from './App.vue'
-import { createPowerSync } from '@journeyapps/powersync-vue'
+import { createPowerSyncPlugin } from '@journeyapps/powersync-vue'
 
 const db = // Setup PowerSync client
 
 const app = createApp(App);
-const powerSync = createPowerSync({database: db});
+const powerSyncPlugin = createPowerSyncPlugin({database: db});
 
-app.use(powerSync);
+app.use(powerSyncPlugin);
 app.mount('#app');
 ```
 
 ### Overriding the PowerSync instance
 
-The `createPowerSync` function is designed for setting up a PowerSync client that is available across your entire Vue application. It's the recommended approach for package setup. However, there may be situations where an app-wide setup isn't suitable, or you need a different PowerSync client for specific parts of your application.
+The `createPowerSyncPlugin` function is designed for setting up a PowerSync client that is available across your entire Vue application. It's the recommended approach for package setup. However, there may be situations where an app-wide setup isn't suitable, or you need a different PowerSync client for specific parts of your application.
 
-In these cases, you can use the `providePowerSync` function within a parent component to override the PowerSync instance for all its descendant components. This allows for more granular control over the which PowerSync client is used in different sections of your application. `providePowerSync` can be utilized regardless of whether `createPowerSync` has been used globally. If there are multiple uses of `providePowerSync` within a component hierarchy, the closest `providePowerSync` call to the composable invocation will determine the PowerSync instance used.
+In these cases, you can use the `providePowerSync` function within a parent component to override the PowerSync instance for all its descendant components. This allows for more granular control over the which PowerSync client is used in different sections of your application. `providePowerSync` can be utilized regardless of whether `createPowerSyncPlugin` has been used globally. If there are multiple uses of `providePowerSync` within a component hierarchy, the closest `providePowerSync` call to the composable invocation will determine the PowerSync instance used.
 
-Both `createPowerSync` and `providePowerSync` leverage Vue's [provide/inject mechanism](https://vuejs.org/guide/components/provide-inject) to ensure clients are available to the composables.
+Both `createPowerSyncPlugin` and `providePowerSync` leverage Vue's [provide/inject mechanism](https://vuejs.org/guide/components/provide-inject) to ensure clients are available to the composables.
 
 ```Vue
 // Container.vue

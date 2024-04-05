@@ -11,7 +11,6 @@ Logger.setLevel(Logger.DEBUG);
 
 powerSync.init();
 supabase.registerListener({
-  initialized: () => {},
   sessionStarted: () => {
     powerSync.connect(supabase);
   }
