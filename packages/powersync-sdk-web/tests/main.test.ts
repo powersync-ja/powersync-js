@@ -44,7 +44,6 @@ describe('Basic', () => {
       const res = await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
       const result = await db.get<User>('SELECT * FROM users');
 
-      console.log(JSON.stringify(res));
       expect(result.name).equals(testName);
     });
   });
@@ -57,7 +56,7 @@ describe('Basic', () => {
 
     it('should allow batch inserts', async () => {
       const testName = 'Mugi';
-      const res = await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
+      await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
         [uuid(), testName],
         [uuid(), 'Steven'],
         [uuid(), 'Chris']

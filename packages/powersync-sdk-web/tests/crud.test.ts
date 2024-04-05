@@ -57,7 +57,6 @@ describe('CRUD Tests', () => {
   it('BATCH INSERT', async () => {
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
 
-    let params: any[] = [];
     const query = `INSERT INTO assets(id, description) VALUES(?, ?)`;
     await powersync.executeBatch(query, [
       [testId, 'test'],

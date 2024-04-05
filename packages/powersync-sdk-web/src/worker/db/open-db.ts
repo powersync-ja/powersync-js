@@ -142,13 +142,23 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
    */
   const executeBatch = async (sql: string, bindings?: any[][]): Promise<WASQLExecuteResult> => {
     return _acquireExecuteLock(async () => {
-      let affectedRows = 0;
-      let result;
+      const results = [];
+
+      const str = sqlite3.str_new(db, sql);
+      const query = sqlite3.str_value(str);
       try {
         await executeSingleStatement('BEGIN TRANSACTION');
 
+        //Prepare statement once
+        let prepared = await sqlite3.prepare_v2(db, query);
+        if (prepared === null) {
+          return {
+            rowsAffected: 0
+          };
+        }
         const wrappedBindings = bindings ? bindings : [];
         for (const binding of wrappedBindings) {
+          let columns;
           // TODO not sure why this is needed currently, but booleans break
           for (let i = 0; i < binding.length; i++) {
             let b = binding[i];
@@ -156,21 +166,54 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
               binding[i] = b ? 1 : 0;
             }
           }
-          result = await executeSingleStatement(sql, binding);
-          //This does not work for single or batch executions
-          affectedRows++;
+
+          //Reset bindings
+          sqlite3.reset(prepared.stmt);
+          if (bindings) {
+            sqlite3.bind_collection(prepared.stmt, binding);
+          }
+
+          const rows = [];
+          while ((await sqlite3.step(prepared.stmt)) === SQLite.SQLITE_ROW) {
+            const row = sqlite3.row(prepared.stmt);
+            rows.push(row);
+          }
+
+          columns = columns ?? sqlite3.column_names(prepared.stmt);
+          if (columns.length) {
+            results.push({ columns, rows });
+          }
         }
+        //Finalize prepared statement
+        await sqlite3.finalize(prepared.stmt);
         await executeSingleStatement('COMMIT');
       } catch (err) {
         await executeSingleStatement('ROLLBACK');
         return {
           rowsAffected: 0
         };
+      } finally {
+        sqlite3.str_finish(str);
       }
 
-      result = {
-        ...result,
-        rowsAffected: affectedRows
+      let rows: Record<string, any>[] = [];
+      for (let resultset of results) {
+        for (let row of resultset.rows) {
+          let outRow: Record<string, any> = {};
+          resultset.columns.forEach((key, index) => {
+            outRow[key] = row[index];
+          });
+          rows.push(outRow);
+        }
+      }
+
+      const result = {
+        insertId: sqlite3.last_insert_id(db),
+        rowsAffected: sqlite3.changes(db),
+        rows: {
+          _array: rows,
+          length: rows.length
+        }
       };
 
       return result;
