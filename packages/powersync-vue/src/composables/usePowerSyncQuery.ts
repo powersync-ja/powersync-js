@@ -1,7 +1,19 @@
 import { MaybeRef, Ref, ref, toValue, watch } from 'vue';
 import { usePowerSync } from './powerSync';
 
-export type QueryOptions = { watchParameters: boolean; immediate: boolean };
+export type QueryOptions = {
+  /**
+   * Whether to watch the parameters for changes, any detected changes will cause the query to re-execute.
+   * Default is true.
+   */
+  watchParameters: boolean;
+
+  /**
+   * Whether to execute the query immediately when the composable is invoked.
+   * Default is true.
+   */
+  immediate: boolean;
+};
 export type QueryResult<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
 
 /**
@@ -30,10 +42,7 @@ export const usePowerSyncQuery = <T = any>(
       error.value = undefined;
       loading.value = true;
 
-      await powerSync.value.readLock(async (tx) => {
-        const result = await tx.getAll(toValue(sqlStatement), toValue(parameters));
-        data.value = result;
-      });
+      data.value = await powerSync.value.getAll(toValue(sqlStatement), toValue(parameters));
     } catch (e) {
       data.value = [];
 
