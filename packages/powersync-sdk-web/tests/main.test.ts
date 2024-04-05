@@ -64,7 +64,6 @@ describe('Basic', () => {
       ]);
       const result = await db.getAll<User>('SELECT * FROM users');
 
-      console.log(JSON.stringify(res));
       expect(result.length).equals(3);
       expect(result[0].name).equals(testName);
       expect(result[1].name).equals('Steven');
