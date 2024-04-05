@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated vue declaration files
+components.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
