@@ -41,9 +41,10 @@ describe('Basic', () => {
 
     it('should allow inserts', async () => {
       const testName = 'Steven';
-      await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
+      const res = await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
       const result = await db.get<User>('SELECT * FROM users');
 
+      console.log(JSON.stringify(res));
       expect(result.name).equals(testName);
     });
   });
@@ -54,18 +55,20 @@ describe('Basic', () => {
       expect(result.length).toEqual(0);
     });
 
-    it('should allow inserts', async () => {
+    it('should allow batch inserts', async () => {
       const testName = 'Mugi';
-      await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
+      const res = await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
         [uuid(), testName],
-        [uuid(), 'Steven']
+        [uuid(), 'Steven'],
+        [uuid(), 'Chris']
       ]);
-      // const result = await db.get<User>('SELECT * FROM users');
       const result = await db.getAll<User>('SELECT * FROM users');
 
-      expect(result.length).equals(2);
+      console.log(JSON.stringify(res));
+      expect(result.length).equals(3);
       expect(result[0].name).equals(testName);
       expect(result[1].name).equals('Steven');
+      expect(result[2].name).equals('Chris');
     });
   });
 });
