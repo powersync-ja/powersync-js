@@ -13,14 +13,7 @@ const items = Object.values(packageMap).map((config) => ({
 })) as unknown as SidebarsConfig;
 
 const sidebars: SidebarsConfig = {
-  docsSidebar: [
-    {
-      type: 'category',
-      label: 'Libraries',
-      collapsible: false,
-      items
-    }
-  ]
+  docsSidebar: [items]
 };
 
 export default sidebars;

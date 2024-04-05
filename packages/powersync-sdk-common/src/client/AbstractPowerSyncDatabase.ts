@@ -2,7 +2,14 @@ import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import throttle from 'lodash/throttle';
-import { BatchedUpdateNotification, DBAdapter, QueryResult, SQLBatchTuple, Transaction, UpdateNotification, isBatchedUpdateNotification } from '../db/DBAdapter';
+import {
+  BatchedUpdateNotification,
+  DBAdapter,
+  QueryResult,
+  Transaction,
+  UpdateNotification,
+  isBatchedUpdateNotification
+} from '../db/DBAdapter';
 import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { Schema } from '../db/schema/Schema';
@@ -61,13 +68,13 @@ export interface WatchOnChangeEvent {
 }
 
 export interface WatchHandler {
-  onResult: (results: QueryResult) => void,
-  onError?: (error: Error) => void
+  onResult: (results: QueryResult) => void;
+  onError?: (error: Error) => void;
 }
 
 export interface WatchOnChangeHandler {
-  onChange: (event: WatchOnChangeEvent) => void,
-  onError?: (error: Error) => void
+  onChange: (event: WatchOnChangeEvent) => void;
+  onError?: (error: Error) => void;
 }
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
@@ -261,7 +268,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    this.syncStreamImplementation.connect();
+    await this.syncStreamImplementation.connect();
   }
 
   /**
@@ -270,6 +277,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
+    await this.waitForReady();
     await this.syncStreamImplementation?.disconnect();
     this.syncStatusListenerDisposer?.();
     await this.syncStreamImplementation?.dispose();
@@ -560,7 +568,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * This version of `watch` uses {@link AsyncGenerator}, for documentation see {@link watchWithAsyncGenerator}.
    * Can be overloaded to use a callback handler instead, for documentation see {@link watchWithCallback}.
-   * 
+   *
    * @example
    * ```javascript
    * async *attachmentIds() {
@@ -576,7 +584,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   watch(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult>;
   /**
    * See {@link watchWithCallback}.
-   * 
+   *
    * @example
    * ```javascript
    * onAttachmentIdsChange(onResult) {
@@ -592,7 +600,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   watch(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void;
 
-  watch(sql: string, parameters?: any[], handlerOrOptions?: WatchHandler | SQLWatchOptions, maybeOptions?: SQLWatchOptions): void | AsyncIterable<QueryResult> {
+  watch(
+    sql: string,
+    parameters?: any[],
+    handlerOrOptions?: WatchHandler | SQLWatchOptions,
+    maybeOptions?: SQLWatchOptions
+  ): void | AsyncIterable<QueryResult> {
     if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onResult' in handlerOrOptions) {
       const handler = handlerOrOptions as WatchHandler;
       const options = maybeOptions;
@@ -608,11 +621,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
-   * 
+   *
    * Note that the `onChange` callback member of the handler is required.
    */
-  watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions,
-  ): void {
+  watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
     const { onResult, onError = this.options.logger?.error } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
@@ -625,10 +637,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
-        this.onChangeWithCallback({ onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError }, {
-          ...(options ?? {}),
-          tables: resolvedTables
-        });
+        this.onChangeWithCallback(
+          { onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError },
+          {
+            ...(options ?? {}),
+            tables: resolvedTables
+          }
+        );
       } catch (error) {
         onError?.(error);
       }
@@ -678,36 +693,39 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-  * This version of `onChange` uses {@link AsyncGenerator}, for documentation see {@link onChangeWithAsyncGenerator}.
-  * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
-  * 
-  * @example
-  * ```javascript
-  * async monitorChanges() {
-  *   for await (const event of this.powersync.onChange({tables: ['todos']})) {
-  *     console.log('Detected change event:', event);
-  *   }
-  * }
-  * ```
-  */
+   * This version of `onChange` uses {@link AsyncGenerator}, for documentation see {@link onChangeWithAsyncGenerator}.
+   * Can be overloaded to use a callback handler instead, for documentation see {@link onChangeWithCallback}.
+   *
+   * @example
+   * ```javascript
+   * async monitorChanges() {
+   *   for await (const event of this.powersync.onChange({tables: ['todos']})) {
+   *     console.log('Detected change event:', event);
+   *   }
+   * }
+   * ```
+   */
   onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
   /**
-  * See {@link onChangeWithCallback}.
-  * 
-  * @example 
-  * ```javascript
-  * monitorChanges() {
-  *   this.powersync.onChange({
-  *     onChange: (event) => {
-  *       console.log('Change detected:', event);
-  *     }
-  *   }, { tables: ['todos'] });
-  * }
-  * ```
-  */
+   * See {@link onChangeWithCallback}.
+   *
+   * @example
+   * ```javascript
+   * monitorChanges() {
+   *   this.powersync.onChange({
+   *     onChange: (event) => {
+   *       console.log('Change detected:', event);
+   *     }
+   *   }, { tables: ['todos'] });
+   * }
+   * ```
+   */
   onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void;
 
-  onChange(handlerOrOptions?: (WatchOnChangeHandler | SQLWatchOptions), maybeOptions?: SQLWatchOptions): (() => void) | AsyncIterable<WatchOnChangeEvent> {
+  onChange(
+    handlerOrOptions?: WatchOnChangeHandler | SQLWatchOptions,
+    maybeOptions?: SQLWatchOptions
+  ): (() => void) | AsyncIterable<WatchOnChangeEvent> {
     if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onChange' in handlerOrOptions) {
       const handler = handlerOrOptions as WatchOnChangeHandler;
       const options = maybeOptions;
@@ -720,15 +738,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-  * Invoke the provided callback on any changes to any of the specified tables.
-  * 
-  * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
-  * together when data is changed.
-  * 
-  * Note that the `onChange` callback member of the handler is required.
-  * 
-  * Returns dispose function to stop watching.
-  */
+   * Invoke the provided callback on any changes to any of the specified tables.
+   *
+   * This is preferred over {@link watchWithCallback} when multiple queries need to be performed
+   * together when data is changed.
+   *
+   * Note that the `onChange` callback member of the handler is required.
+   *
+   * Returns dispose function to stop watching.
+   */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
     const { onChange, onError = this.options.logger?.error } = handler ?? {};
     if (!onChange) {
@@ -742,9 +760,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
     const flushTableUpdates = throttle(
-      () => this.handleTableChanges(changedTables, watchedTables, (intersection) => {
-        onChange({ changedTables: intersection });
-      }),
+      () =>
+        this.handleTableChanges(changedTables, watchedTables, (intersection) => {
+          onChange({ changedTables: intersection });
+        }),
       throttleMs,
       { leading: false, trailing: true }
     );
@@ -780,10 +799,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const resolvedOptions = options ?? {};
 
     return new EventIterator<WatchOnChangeEvent>((eventOptions) => {
-      const dispose = this.onChangeWithCallback({
-        onChange: (event): void => { eventOptions.push(event) },
-        onError: (error) => { eventOptions.fail(error) }
-      }, options);
+      const dispose = this.onChangeWithCallback(
+        {
+          onChange: (event): void => {
+            eventOptions.push(event);
+          },
+          onError: (error) => {
+            eventOptions.fail(error);
+          }
+        },
+        options
+      );
 
       resolvedOptions.signal?.addEventListener('abort', () => {
         eventOptions.stop();
@@ -813,7 +839,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     rawTableNames: boolean | undefined,
     changedTables: Set<string>
   ): void {
-    const tables = isBatchedUpdateNotification(updateNotification) ? updateNotification.tables : [updateNotification.table];
+    const tables = isBatchedUpdateNotification(updateNotification)
+      ? updateNotification.tables
+      : [updateNotification.table];
 
     const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
     if (!filteredTables.length) {

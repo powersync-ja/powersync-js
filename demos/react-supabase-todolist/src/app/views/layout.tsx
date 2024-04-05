@@ -117,9 +117,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           ))}
         </List>
       </Drawer>
-      <S.MainBox>
-        {children}
-      </S.MainBox>
+      <S.MainBox>{children}</S.MainBox>
     </S.MainBox>
   );
 }

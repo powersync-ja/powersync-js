@@ -16,6 +16,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
+import { Mutex } from 'async-mutex';
 
 export interface WebPowerSyncFlags {
   /**
@@ -32,6 +33,11 @@ export interface WebPowerSyncFlags {
    * instances before the window unloads
    */
   externallyUnload?: boolean;
+  /**
+   * Broadcast logs from shared workers, such as the shared sync worker,
+   * to individual tabs. This defaults to true.
+   */
+  broadcastLogs?: boolean;
 }
 
 export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
@@ -39,6 +45,8 @@ export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
 }
 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  static SHARED_MUTEX = new Mutex();
+
   protected unloadListener?: () => Promise<void>;
 
   constructor(protected options: WebPowerSyncDatabaseOptions) {
@@ -76,11 +84,21 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
      * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
      * connection attempts.
      */
-    return navigator.locks.request(`connection-lock-${this.options.database.name}`, () => super.connect(connector));
+    return this.runExclusive(() => {
+      this.options.logger?.debug('Attempting to connect to PowerSync instance');
+      return super.connect(connector);
+    });
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+  }
+
+  protected runExclusive<T>(cb: () => Promise<T>) {
+    if (this.options.flags?.ssrMode) {
+      return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
+    }
+    return navigator.locks.request(`lock-${this.options.database.name}`, cb);
   }
 
   protected generateSyncStreamImplementation(
@@ -100,10 +118,19 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     };
 
     const { flags } = this.options;
+
     switch (true) {
       case flags?.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
       case flags?.enableMultiTabs:
+        if (!flags?.broadcastLogs) {
+          const warning = `
+Multiple tabs are enabled, but broadcasting of logs is disabled. 
+Logs for shared sync worker will only be available in the shared worker context
+          `;
+          const logger = this.options.logger;
+          logger ? logger.warn(warning) : console.warn(warning);
+        }
         return new SharedWebStreamingSyncImplementation(syncOptions);
       default:
         return new WebStreamingSyncImplementation(syncOptions);
