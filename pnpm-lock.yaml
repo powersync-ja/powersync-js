@@ -691,7 +691,7 @@ importers:
         specifier: '4'
         version: 4.3.0(vue@3.4.21)
       vuetify:
-        specifier: ^3.5.8
+        specifier: ^3.5.7
         version: 3.5.13(typescript@5.4.2)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
     devDependencies:
       '@types/vuelidate':

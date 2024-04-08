@@ -5,13 +5,13 @@
     <v-spacer />
     <div class="d-flex">
       <v-icon
-        :color="syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'"
+        :color="syncStatus.dataFlowStatus.uploading ? 'primary' : 'inherit'"
         class="mr-n2 pa-0"
         icon="mdi-arrow-up"
       />
 
-      <v-icon :color="syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
-      <v-icon :icon="syncStatus?.connected ? 'mdi-wifi' : 'mdi-wifi-off'" />
+      <v-icon :color="syncStatus.dataFlowStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
+      <v-icon :icon="syncStatus.connected ? 'mdi-wifi' : 'mdi-wifi-off'" />
     </div>
   </v-app-bar>
 
@@ -32,12 +32,6 @@
   <v-container class="pa-0" fluid>
     <router-view />
   </v-container>
-
-  <v-empty-state
-    icon="mdi-sync"
-    text="A full sync has not completed yet. Please wait a moment."
-    title="Sync in progress"
-  />
 </template>
 
 <script setup lang="ts">

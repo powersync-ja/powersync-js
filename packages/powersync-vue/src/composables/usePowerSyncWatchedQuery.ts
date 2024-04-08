@@ -1,13 +1,17 @@
-import { SQLWatchOptions } from '@journeyapps/powersync-sdk-common';
+import { QueryResult, SQLWatchOptions } from '@journeyapps/powersync-sdk-common';
 import { MaybeRef, Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
 export type WatchedQueryResult<T> = {
   data: Ref<T[]>;
   /**
-   * Loading becomes false once the first set of results from the watched query is available or an error occurs.
+   * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
   loading: Ref<boolean>;
+  /**
+   * Indicates whether the query is currently fetching data, is true during the initial load and any time when the query is re-evaluating (useful for large queries).
+   */
+  fetching: Ref<boolean>;
   error: Ref<Error>;
 };
 
@@ -16,54 +20,77 @@ export type WatchedQueryResult<T> = {
  */
 export const usePowerSyncWatchedQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
-  parameters: MaybeRef<any[]> = [],
+  sqlParameters: MaybeRef<any[]> = [],
   options: Omit<SQLWatchOptions, 'signal'> = {}
 ): WatchedQueryResult<T> => {
   const data = ref([]);
   const error = ref<Error>(undefined);
 
   const loading = ref(true);
+  const fetching = ref(true);
+
   const finishLoading = () => {
-    if (loading.value) loading.value = false;
+    loading.value = false;
+    fetching.value = false;
   };
 
   const powerSync = usePowerSync();
 
   let abortController = new AbortController();
-  watchEffect((onCleanup) => {
+  watchEffect(async (onCleanup) => {
     // Abort any previous watches when the effect triggers again, or when the component is unmounted
     onCleanup(() => abortController.abort());
     abortController = new AbortController();
+    loading.value = true;
+    fetching.value = true;
 
     if (!powerSync) {
       error.value = new Error('PowerSync not configured.');
       return;
     }
 
-    powerSync.value.watch(
-      toValue(sqlStatement),
-      toValue(parameters),
-      {
-        onResult: (result) => {
-          finishLoading();
-          data.value = result.rows?._array ?? [];
-          error.value = undefined;
-        },
-        onError: (e: Error) => {
-          finishLoading();
-          data.value = [];
+    const onResult = (result: QueryResult) => {
+      finishLoading();
+      data.value = result.rows?._array ?? [];
+      error.value = undefined;
+    };
 
-          const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
-          wrappedError.cause = e; // Include the original error as the cause
-          error.value = wrappedError;
+    const onError = (e: Error) => {
+      finishLoading();
+      data.value = [];
+
+      const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
+      wrappedError.cause = e; // Include the original error as the cause
+      error.value = wrappedError;
+    };
+
+    const sql = toValue(sqlStatement);
+    const parameters = toValue(sqlParameters);
+
+    try {
+      // Fetch initial data
+      onResult(await powerSync.value.executeReadOnly(sql, parameters));
+
+      const resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
+
+      powerSync.value.onChangeWithCallback(
+        {
+          onChange: async () => {
+            fetching.value = true;
+            onResult(await powerSync.value.executeReadOnly(sql, parameters));
+          },
+          onError
+        },
+        {
+          ...options,
+          signal: abortController.signal,
+          tables: resolvedTables
         }
-      },
-      {
-        ...options,
-        signal: abortController.signal
-      }
-    );
+      );
+    } catch (error) {
+      onError(error);
+    }
   });
 
-  return { data, loading, error };
+  return { data, loading, fetching, error };
 };

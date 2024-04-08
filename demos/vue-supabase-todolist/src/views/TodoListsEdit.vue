@@ -1,7 +1,7 @@
 <template>
-  <div>
-    <LoadingMessage v-if="loading" />
-    <v-list v-else-if="listName" class="py-7 pa-2 bg-black" lines="one">
+  <div class="py-7">
+    <LoadingMessage v-if="loading || fetching" :loading :fetching />
+    <v-list v-if="listName" class="pa-2 bg-black" lines="one">
       <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
       <TodoItemWidget
         v-else
@@ -13,7 +13,7 @@
         @toggle-completion="toggleCompletion(record, !record.completed)"
       />
     </v-list>
-    <h2 v-else class="text-subtitle-1">No matching List found, please navigate back...</h2>
+    <h2 v-else-if="!loading" class="text-subtitle-1">No matching List found, please navigate back...</h2>
 
     <v-dialog v-model="showPrompt" width="350" opacity="0.5" scrim="black">
       <v-card title="Create Todo Item" class="bg-surface-light">
@@ -80,6 +80,7 @@ onUnmounted(() => {
 const {
   data: todoRecords,
   loading,
+  fetching,
   error
 } = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [
   listID

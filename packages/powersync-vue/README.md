@@ -6,7 +6,7 @@ This package is currently in a alpha release.
 
 ## Setup
 
-To set up app-wide accessibility of PowerSync composables, create a PowerSync Vue plugin that configures a PowerSync instance and integrates it with the Vue instance. This approach provides the PowerSync client app wide so that any composable used has access to the instance.
+To set up app-wide accessibility of PowerSync composables, create a PowerSync Vue plugin that configures a PowerSync instance and integrates it with the Vue instance.
 
 ```javascript
 // main.js
@@ -27,7 +27,7 @@ app.mount('#app');
 
 The `createPowerSyncPlugin` function is designed for setting up a PowerSync client that is available across your entire Vue application. It's the recommended approach for package setup. However, there may be situations where an app-wide setup isn't suitable, or you need a different PowerSync client for specific parts of your application.
 
-In these cases, you can use the `providePowerSync` function within a parent component to override the PowerSync instance for all its descendant components. This allows for more granular control over the which PowerSync client is used in different sections of your application. `providePowerSync` can be utilized regardless of whether `createPowerSyncPlugin` has been used globally. If there are multiple uses of `providePowerSync` within a component hierarchy, the closest `providePowerSync` call to the composable invocation will determine the PowerSync instance used.
+In these cases, you can use the `providePowerSync` function within a parent component to override the PowerSync instance for all its descendant components. This allows for more granular control over which PowerSync client is used in different sections of your application. `providePowerSync` can be utilized regardless of whether `createPowerSyncPlugin` has been used globally. If there are multiple uses of `providePowerSync` within a component hierarchy, the closest `providePowerSync` call to the composable invocation will determine the PowerSync instance used.
 
 Both `createPowerSyncPlugin` and `providePowerSync` leverage Vue's [provide/inject mechanism](https://vuejs.org/guide/components/provide-inject) to ensure clients are available to the composables.
 
@@ -67,7 +67,7 @@ powersync.value.getAll('SELECT * from lists').then((l) => list.value = l);
 
 ### Queries
 
-The `usePowerSyncQuery` composable provides a static view of a given query, but can you use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the loading state and error state, as well as a refresh callback that can be invoked to rerun the query manually.
+The `usePowerSyncQuery` composable provides a static view of a given query. You can use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the loading state and error state, as well as a refresh callback that can be invoked to rerun the query manually.
 
 ```Vue
 // TodoListDisplayQuery.vue
@@ -92,18 +92,18 @@ const { data: list, error, loading, refresh} = usePowerSyncQuery(query);
 
 ### Watched Queries
 
-The `usePowerSyncWatchedQuery` composable provides a dynamic view of a given query, the data will automatically update when a dependant table is updated.
+The `usePowerSyncWatchedQuery` composable provides a dynamic view of a given query. The data will automatically update when a dependent table is updated.
 
-You use refs as parameters to refresh the query when they change.The composable exposes reactive variables for the results, the loading state and error state.
+You use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results as well as the loading, fetching, and and error states. Note that `loading` initicates that the initial result is being retrieved and `fetching` indicates the query is fetching data, which could be for the initial load or any time when the query is re-evaluating due to a change in a dependent table.
 
 ```Vue
 // TodoListDisplayWatchedQuery.vue
-<script setup lang="ts">
+<script setup>
 import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue';
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
-const { data: list, loading, error} = usePowerSyncWatchedQuery(query);
+const { data: list, loading, fetching, error} = usePowerSyncWatchedQuery(query);
 
 const powersync = usePowerSync();
 const addList = () => {
@@ -114,7 +114,9 @@ const addList = () => {
 <template>
     <input v-model="query" />
     <div v-if="loading">Loading...</div>
-    <div v-else-if="error">{{ error }}</div>
+    <div v-else-if="fetching">Updating results...</div>
+
+    <div v-if="error">{{ error }}</div>
     <ul v-else>
         <li v-for="l in list" :key="l.id">{{ l.name }}</li>
     </ul>
@@ -122,14 +124,36 @@ const addList = () => {
 </template>
 ```
 
+### Connection Status
+
+The `usePowerSyncStatus` composable provides general connectivity information such as the connection status, whether the initial full sync has completed, when the last sync completed, and whether any data is being uploaded or downloaded.
+
+```Vue
+// ConnectionStatus.vue
+<script setup>
+import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
+
+const { status, hasSynced } = usePowerSyncStatus();
+</script>
+
+<template>
+  <div v-if="!hasSynced">Waiting for initial sync to complete.</div>
+  <div v-else>
+    <div>Connected: {{ status.connected }}, last synced at: {{ status.lastSyncedAt }}</div>
+    <div v-if="status.dataFlowStatus.uploading">Uploading...</div>
+    <div v-if="status.dataFlowStatus.downloading">Downloading...</div>
+  </div>
+</template>
+```
+
 ## Important Usage Guidelines for PowerSync Composables
 
 ### Top-level setup block
 
-The `usePowersync`, `usePowerSyncQuery`, and `usePowerSyncWatchedQuery` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.js`.
+The `usePowersync`, `usePowerSyncQuery`, `usePowerSyncWatchedQuery`, and `usePowerSyncStatus` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.js`.
 
 Incorrect Usage Example:
-Using powerSync composables in a nested function of a component.
+Using PowerSync composables in a nested function of a component.
 
 ```javascript
 <script setup>

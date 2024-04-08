@@ -1,7 +1,8 @@
 <template>
   <div class="py-7 pa-2">
-    <LoadingMessage v-if="loading" />
-    <ErrorMessage v-else-if="error">{{ error.message }}</ErrorMessage>
+    <LoadingMessage v-if="loading || fetching" :loading :fetching />
+
+    <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
     <v-list v-else class="bg-black pa-0" lines="two">
       <ListItemWidget
         v-for="record in listRecords"
@@ -21,6 +22,7 @@ import { TODO_LISTS_ROUTE } from '@/plugins/router'; // Adjust this import accor
 import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue'; // Adjust according to your actual implementation
 import { useRouter } from 'vue-router';
 import ListItemWidget from './ListItemWidget.vue'; // Ensure this path is correct
+import LoadingMessage from '../LoadingMessage.vue';
 
 const powerSync = usePowerSync();
 
@@ -30,15 +32,16 @@ const router = useRouter();
 const {
   data: listRecords,
   loading,
+  fetching,
   error
 } = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
-      SELECT 
+      SELECT
         ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
-      FROM 
+      FROM
         ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} 
+      LEFT JOIN ${TODOS_TABLE}
         ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
-      GROUP BY 
+      GROUP BY
         ${LISTS_TABLE}.id;
       `);
 

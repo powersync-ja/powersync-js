@@ -14,7 +14,7 @@ export type QueryOptions = {
    */
   immediate: boolean;
 };
-export type QueryResult<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
+export type Result<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
 
 /**
  * A composable to access a single static query.
@@ -25,7 +25,7 @@ export const usePowerSyncQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
   parameters: MaybeRef<any[]> = [],
   queryOptions: QueryOptions = { watchParameters: true, immediate: true }
-): QueryResult<T> => {
+): Result<T> => {
   const data = ref([]);
   const loading = ref<boolean>(false);
   const error = ref<Error>(undefined);

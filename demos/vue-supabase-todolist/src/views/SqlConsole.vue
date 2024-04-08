@@ -5,8 +5,8 @@
       <v-btn @click="executeQuery" class="ml-2" color="primary" height="auto">Execute Query</v-btn>
     </div>
     <div class="mt-9">
-      <LoadingMessage v-if="loading" />
-      <ErrorMessage v-else-if="error">{{ error.message }}</ErrorMessage>
+      <LoadingMessage v-if="loading || fetching" :loading :fetching />
+      <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
       <v-container v-else-if="queryDataGridResult.columns.length > 0" class="mt-4 pa-0" fluid>
         <v-data-table
           class="bg-transparent table-outline rounded text-left"
@@ -28,7 +28,7 @@ const inputText = ref(query.value);
 const executeQuery = () => {
   query.value = inputText.value;
 };
-const { data: querySQLResult, loading, error } = usePowerSyncWatchedQuery(query);
+const { data: querySQLResult, loading, fetching, error } = usePowerSyncWatchedQuery(query);
 
 const queryDataGridResult = computed(() => {
   const firstItem = querySQLResult.value?.[0];
