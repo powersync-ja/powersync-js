@@ -173,7 +173,7 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
           }
 
           let result = await sqlite3.step(prepared.stmt);
-          if (result === SQLite.SQLITE_ROW || result === SQLite.SQLITE_DONE) {
+          if (result === SQLite.SQLITE_DONE) {
             //The value returned by sqlite3_changes() immediately after an INSERT, UPDATE or DELETE statement run on a view is always zero.
             affectedRows += sqlite3.changes(db);
           }
