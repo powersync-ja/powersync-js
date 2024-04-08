@@ -1,5 +1,15 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.5.0
+
+### Minor Changes
+
+- 8f7caa5: Added batch execution functionality to the web and react-native SDKs. This feature allows a SQL statement with multiple parameters to be executed in a single transaction, improving performance and consistency.
+
+### Patch Changes
+
+- 6c43ec6: Fixed potential unhandled exception when aborting stream fetch request for `/sync/stream` endpoint
+
 ## 1.4.0
 
 ### Minor Changes
