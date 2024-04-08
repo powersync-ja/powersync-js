@@ -1,17 +1,20 @@
 import * as Comlink from 'comlink';
-import { ILogger } from 'js-logger';
+import Logger, { ILogger } from 'js-logger';
 import {
   AbstractStreamingSyncImplementation,
   StreamingSyncImplementation,
-  AbstractStreamingSyncImplementationOptions,
   BaseObserver,
   LockOptions,
   SqliteBucketStorage,
   StreamingSyncImplementationListener,
   SyncStatus,
-  SyncStatusOptions
+  SyncStatusOptions,
+  AbortOperation
 } from '@journeyapps/powersync-sdk-common';
-import { WebStreamingSyncImplementation } from '../../db/sync/WebStreamingSyncImplementation';
+import {
+  WebStreamingSyncImplementation,
+  WebStreamingSyncImplementationOptions
+} from '../../db/sync/WebStreamingSyncImplementation';
 import { Mutex } from 'async-mutex';
 import { WebRemote } from '../../db/sync/WebRemote';
 
@@ -37,7 +40,7 @@ export type ManualSharedSyncPayload = {
 
 export type SharedSyncInitOptions = {
   dbName: string;
-  streamOptions: Omit<AbstractStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
+  streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
 };
 
 export interface SharedSyncImplementationListener extends StreamingSyncImplementationListener {
@@ -64,7 +67,6 @@ export class SharedSyncImplementation
   protected ports: WrappedSyncPort[];
   protected syncStreamClient?: AbstractStreamingSyncImplementation;
 
-  protected abortController?: AbortController;
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
 
@@ -117,16 +119,23 @@ export class SharedSyncImplementation
       return;
     }
 
+    const logger = params.streamOptions?.flags?.broadcastLogs ? this.broadCastLogger : Logger.get('shared-sync');
+
+    self.onerror = (event) => {
+      // Share any uncaught events on the broadcast logger
+      logger.error('Uncaught exception in PowerSync shared sync worker', event);
+    };
+
     this.syncStreamClient = new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(
         new WASQLiteDBAdapter({
           dbFilename: params.dbName,
           workerPort: dbWorkerPort,
           flags: { enableMultiTabs: true },
-          logger: this.broadCastLogger
+          logger
         }),
         new Mutex(),
-        this.broadCastLogger
+        logger
       ),
       remote: new WebRemote({
         fetchCredentials: async () => {
@@ -172,7 +181,7 @@ export class SharedSyncImplementation
       },
       ...params.streamOptions,
       // Logger cannot be transferred just yet
-      logger: this.broadCastLogger
+      logger
     });
 
     this.syncStreamClient.registerListener({
@@ -198,14 +207,14 @@ export class SharedSyncImplementation
    */
   async connect() {
     await this.waitForReady();
-    this.disconnect();
-    this.abortController = new AbortController();
-    this.syncStreamClient?.streamingSync(this.abortController.signal);
+    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
+    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.connect());
   }
 
   async disconnect() {
-    this.abortController?.abort('Disconnected');
-    this.updateAllStatuses({ connected: false });
+    await this.waitForReady();
+    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
+    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.disconnect());
   }
 
   /**
@@ -247,7 +256,7 @@ export class SharedSyncImplementation
      */
     [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
       if (abortController?.activePort.port == port) {
-        abortController!.controller.abort();
+        abortController!.controller.abort(new AbortOperation('Closing pending requests after client port is removed'));
       }
     });
   }
