@@ -173,7 +173,8 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
           }
 
           while ((await sqlite3.step(prepared.stmt)) === SQLite.SQLITE_ROW) {
-            affectedRows++;
+            //The value returned by sqlite3_changes() immediately after an INSERT, UPDATE or DELETE statement run on a view is always zero.
+            affectedRows += sqlite3.changes(db);
           }
         }
         //Finalize prepared statement
@@ -187,7 +188,6 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
       } finally {
         sqlite3.str_finish(str);
       }
-
       const result = {
         rowsAffected: affectedRows
       };
