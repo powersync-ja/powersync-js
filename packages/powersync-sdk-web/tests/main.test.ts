@@ -41,7 +41,7 @@ describe('Basic', () => {
 
     it('should allow inserts', async () => {
       const testName = 'Steven';
-      const res = await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
+      await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
       const result = await db.get<User>('SELECT * FROM users');
 
       expect(result.name).equals(testName);
