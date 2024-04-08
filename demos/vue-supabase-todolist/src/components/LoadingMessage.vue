@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-0 mb-6">
+  <div class="mt-0 mb-6" style="position: absolute; top: 68px; left: 50%; z-index: 100">
     <v-progress-circular indeterminate color="primary" />
 
     <v-tooltip :text="loadingMessage">

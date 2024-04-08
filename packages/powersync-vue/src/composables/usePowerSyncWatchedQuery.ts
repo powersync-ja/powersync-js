@@ -49,9 +49,9 @@ export const usePowerSyncWatchedQuery = <T = any>(
       return;
     }
 
-    const onResult = (result: QueryResult) => {
+    const onResult = (result: T[]) => {
       finishLoading();
-      data.value = result.rows?._array ?? [];
+      data.value = result;
       error.value = undefined;
     };
 
@@ -69,7 +69,7 @@ export const usePowerSyncWatchedQuery = <T = any>(
 
     try {
       // Fetch initial data
-      onResult(await powerSync.value.executeReadOnly(sql, parameters));
+      onResult(await powerSync.value.getAll<T>(sql, parameters));
 
       const resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
 
@@ -77,7 +77,8 @@ export const usePowerSyncWatchedQuery = <T = any>(
         {
           onChange: async () => {
             fetching.value = true;
-            onResult(await powerSync.value.executeReadOnly(sql, parameters));
+
+            onResult(await powerSync.value.getAll<T>(sql, parameters));
           },
           onError
         },

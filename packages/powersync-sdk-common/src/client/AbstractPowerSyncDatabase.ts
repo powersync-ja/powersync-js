@@ -920,7 +920,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
   }
 
-  async executeReadOnly(sql: string, params?: any[]) {
+  /**
+   * @ignore
+   */
+  private async executeReadOnly(sql: string, params?: any[]) {
     await this.waitForReady();
     return this.database.readLock((tx) => tx.execute(sql, params));
   }
