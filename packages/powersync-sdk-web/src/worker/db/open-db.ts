@@ -15,13 +15,16 @@ export type DBWorkerInterface = {
   //   Close is only exposed when used in a single non shared webworker
   close?: () => void;
   execute: WASQLiteExecuteMethod;
+  executeBatch: WASQLiteExecuteBatchMethod;
   registerOnTableChange: (callback: OnTableChangeCallback) => void;
 };
 
 export type WASQLiteExecuteMethod = (sql: string, params?: any[]) => Promise<WASQLExecuteResult>;
-
+export type WASQLiteExecuteBatchMethod = (sql: string, params?: any[]) => Promise<WASQLExecuteResult>;
 export type OnTableChangeCallback = (opType: number, tableName: string, rowId: number) => void;
 export type OpenDB = (dbFileName: string) => DBWorkerInterface;
+
+export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 
 export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
   const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
@@ -52,64 +55,142 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
   };
 
   /**
-   * This executes SQL statements.
+   * This executes single SQL statements inside a requested lock.
    */
   const execute = async (sql: string | TemplateStringsArray, bindings?: any[]): Promise<WASQLExecuteResult> => {
     // Running multiple statements on the same connection concurrently should not be allowed
-    return navigator.locks.request(`db-execute-${dbFileName}`, async () => {
-      const results = [];
-      for await (const stmt of sqlite3.statements(db, sql as string)) {
-        let columns;
-        const wrappedBindings = bindings ? [bindings] : [[]];
+    return _acquireExecuteLock(async () => {
+      return executeSingleStatement(sql, bindings);
+    });
+  };
+
+  /**
+   * This requests a lock for executing statements.
+   * Should only be used interanlly.
+   */
+  const _acquireExecuteLock = (callback: () => Promise<any>): Promise<any> => {
+    return navigator.locks.request(`db-execute-${dbFileName}`, callback);
+  };
+
+  /**
+   * This executes a single statement using SQLite3.
+   */
+  const executeSingleStatement = async (
+    sql: string | TemplateStringsArray,
+    bindings?: any[]
+  ): Promise<WASQLExecuteResult> => {
+    const results = [];
+    for await (const stmt of sqlite3.statements(db, sql as string)) {
+      let columns;
+      const wrappedBindings = bindings ? [bindings] : [[]];
+      for (const binding of wrappedBindings) {
+        // TODO not sure why this is needed currently, but booleans break
+        binding.forEach((b, index, arr) => {
+          if (typeof b == 'boolean') {
+            arr[index] = b ? 1 : 0;
+          }
+        });
+
+        sqlite3.reset(stmt);
+        if (bindings) {
+          sqlite3.bind_collection(stmt, binding);
+        }
+
+        const rows = [];
+        while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
+          const row = sqlite3.row(stmt);
+          rows.push(row);
+        }
+
+        columns = columns ?? sqlite3.column_names(stmt);
+        if (columns.length) {
+          results.push({ columns, rows });
+        }
+      }
+
+      // When binding parameters, only a single statement is executed.
+      if (bindings) {
+        break;
+      }
+    }
+
+    let rows: Record<string, any>[] = [];
+    for (let resultset of results) {
+      for (let row of resultset.rows) {
+        let outRow: Record<string, any> = {};
+        resultset.columns.forEach((key, index) => {
+          outRow[key] = row[index];
+        });
+        rows.push(outRow);
+      }
+    }
+
+    const result = {
+      insertId: sqlite3.last_insert_id(db),
+      rowsAffected: sqlite3.changes(db),
+      rows: {
+        _array: rows,
+        length: rows.length
+      }
+    };
+
+    return result;
+  };
+
+  /**
+   * This executes SQL statements in a batch.
+   */
+  const executeBatch = async (sql: string, bindings?: any[][]): Promise<WASQLExecuteResult> => {
+    return _acquireExecuteLock(async () => {
+      let affectedRows = 0;
+
+      const str = sqlite3.str_new(db, sql);
+      const query = sqlite3.str_value(str);
+      try {
+        await executeSingleStatement('BEGIN TRANSACTION');
+
+        //Prepare statement once
+        let prepared = await sqlite3.prepare_v2(db, query);
+        if (prepared === null) {
+          return {
+            rowsAffected: 0
+          };
+        }
+        const wrappedBindings = bindings ? bindings : [];
         for (const binding of wrappedBindings) {
           // TODO not sure why this is needed currently, but booleans break
-          binding.forEach((b, index, arr) => {
+          for (let i = 0; i < binding.length; i++) {
+            let b = binding[i];
             if (typeof b == 'boolean') {
-              arr[index] = b ? 1 : 0;
+              binding[i] = b ? 1 : 0;
             }
-          });
+          }
 
-          sqlite3.reset(stmt);
+          //Reset bindings
+          sqlite3.reset(prepared.stmt);
           if (bindings) {
-            sqlite3.bind_collection(stmt, binding);
+            sqlite3.bind_collection(prepared.stmt, binding);
           }
 
-          const rows = [];
-          while ((await sqlite3.step(stmt)) === SQLite.SQLITE_ROW) {
-            const row = sqlite3.row(stmt);
-            rows.push(row);
-          }
-
-          columns = columns ?? sqlite3.column_names(stmt);
-          if (columns.length) {
-            results.push({ columns, rows });
+          let result = await sqlite3.step(prepared.stmt);
+          if (result === SQLite.SQLITE_DONE) {
+            //The value returned by sqlite3_changes() immediately after an INSERT, UPDATE or DELETE statement run on a view is always zero.
+            affectedRows += sqlite3.changes(db);
           }
         }
-
-        // When binding parameters, only a single statement is executed.
-        if (bindings) {
-          break;
-        }
+        //Finalize prepared statement
+        await sqlite3.finalize(prepared.stmt);
+        await executeSingleStatement('COMMIT');
+      } catch (err) {
+        await executeSingleStatement('ROLLBACK');
+        return {
+          rowsAffected: 0
+        };
+      } finally {
+        sqlite3.str_finish(str);
       }
-
-      let rows: Record<string, any>[] = [];
-      for (let resultset of results) {
-        for (let row of resultset.rows) {
-          let outRow: Record<string, any> = {};
-          resultset.columns.forEach((key, index) => {
-            outRow[key] = row[index];
-          });
-          rows.push(outRow);
-        }
-      }
-
       const result = {
-        insertId: sqlite3.last_insert_id(db),
-        rowsAffected: sqlite3.changes(db),
-        rows: {
-          _array: rows,
-          length: rows.length
-        }
+        rowsAffected: affectedRows
       };
 
       return result;
@@ -118,6 +199,7 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
 
   return {
     execute: Comlink.proxy(execute),
+    executeBatch: Comlink.proxy(executeBatch),
     registerOnTableChange: Comlink.proxy(registerOnTableChange),
     close: Comlink.proxy(() => {
       sqlite3.close(db);
