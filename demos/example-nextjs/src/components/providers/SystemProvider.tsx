@@ -3,7 +3,7 @@
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { BackendConnector } from '@/library/powersync/BackendConnector';
 import { PowerSyncContext } from '@journeyapps/powersync-react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { SyncStreamConnectionMethod, WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
@@ -17,7 +17,12 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   schema: AppSchema,
   flags: {
     disableSSRWarning: true,
+    // Makes debugging easier for connection
+    // TODO enable again before merge
     enableMultiTabs: false
+  },
+  streamOptions: {
+    connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
   }
 }).getInstance();
 const connector = new BackendConnector();

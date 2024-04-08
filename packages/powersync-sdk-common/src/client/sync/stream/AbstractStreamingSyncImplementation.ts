@@ -79,7 +79,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
   logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+  connectionMethod: SyncStreamConnectionMethod.HTTP
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -292,9 +292,9 @@ export abstract class AbstractStreamingSyncImplementation
         this.updateSyncStatus({
           connected: false
         });
-      } finally {
-        // Wait a little before retrying
+        // On error, a little before retrying
         await this.delayRetry();
+      } finally {
         // Abort any open network requests. Create a new nested controller for retry.
         nestedAbortController.abort();
         nestedAbortController = new AbortController();

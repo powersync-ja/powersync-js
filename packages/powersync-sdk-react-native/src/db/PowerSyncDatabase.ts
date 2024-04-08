@@ -21,6 +21,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     const remote = new ReactNativeRemote(connector);
 
     return new ReactNativeStreamingSyncImplementation({
+      ...(this.options.streamOptions ?? {}),
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {

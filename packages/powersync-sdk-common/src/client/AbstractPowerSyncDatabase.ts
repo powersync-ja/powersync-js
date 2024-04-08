@@ -25,7 +25,8 @@ import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   StreamingSyncImplementationListener,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  SyncStreamConnectionMethod
 } from './sync/stream/AbstractStreamingSyncImplementation';
 
 export interface DisconnectAndClearOptions {
@@ -49,6 +50,12 @@ export interface PowerSyncDatabaseOptions {
    */
   crudUploadThrottleMs?: number;
   logger?: ILogger;
+  /**
+   * Options for the sync streaming connection
+   */
+  streamOptions?: {
+    connectionMethod?: SyncStreamConnectionMethod;
+  };
 }
 
 export interface SQLWatchOptions {
