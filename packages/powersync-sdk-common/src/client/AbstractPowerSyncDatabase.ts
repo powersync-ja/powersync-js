@@ -146,8 +146,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected _isReadyPromise: Promise<void>;
 
   protected _firstSyncPromise: Promise<void>;
-  private _resolveFirstSyncPromise: () => void;
-  private abortFirstSyncWatcher: () => void;
+  protected _resolveFirstSyncPromise: () => void;
 
   protected _schema: Schema;
 
@@ -246,9 +245,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // Abort the watch after the first sync is detected
     const abortController = new AbortController();
-    this.abortFirstSyncWatcher = () => {
-      abortController.abort();
-    };
 
     this.watch(
       syncedSQL,
@@ -535,8 +531,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set 
-   * and optionally return results. 
+   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
+   * and optionally return results.
    * This is faster than executing separately with each parameter set.
    */
   async executeBatch(sql: string, parameters?: any[][]) {
