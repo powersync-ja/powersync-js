@@ -144,8 +144,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected bucketStorageAdapter: BucketStorageAdapter;
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
+
   protected _firstSyncPromise: Promise<void>;
   private _resolveFirstSyncPromise: () => void;
+  private abortFirstSyncWatcher: () => void;
+
   protected _schema: Schema;
 
   constructor(protected options: PowerSyncDatabaseOptions) {
@@ -230,45 +233,44 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const { database, schema } = this.options;
-    const version = await database.execute('SELECT powersync_rs_version()');
+    const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
-
-    await this.updateSchema(schema);
-    await this.updateHasSynced(database);
-
+    await this.updateSchema(this.options.schema);
+    this.updateHasSynced();
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
-  async updateHasSynced(database: DBAdapter) {
+  protected async updateHasSynced() {
     const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
-    const syncedResult = await database.execute(syncedSQL);
-    this.hasSynced = !!syncedResult.rows?.length;
 
-    if (this.hasSynced) {
-      this._resolveFirstSyncPromise();
-    } else {
-      const abortController = new AbortController();
+    // Abort the watch after the first sync is detected
+    const abortController = new AbortController();
+    this.abortFirstSyncWatcher = () => {
+      abortController.abort();
+    };
 
-      this.watch(
-        syncedSQL,
-        [],
-        {
-          onResult: (result) => {
-            this.hasSynced = !!result.rows?.length;
-            if (this.hasSynced) {
-              this._resolveFirstSyncPromise();
-              abortController.abort();
-            }
+    this.watch(
+      syncedSQL,
+      [],
+      {
+        onResult: (result) => {
+          this.hasSynced = !!result.rows?.length;
+          if (this.hasSynced) {
+            abortController.abort();
+            this._resolveFirstSyncPromise();
           }
         },
-        {
-          rawTableNames: true,
-          signal: abortController.signal
+        onError: (ex) => {
+          this.options.logger?.warn('Failure while watching synced state', ex);
+          abortController.abort();
         }
-      );
-    }
+      },
+      {
+        rawTableNames: true,
+        signal: abortController.signal
+      }
+    );
   }
 
   /**
@@ -311,7 +313,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // close connection if one is open
     await this.disconnect();
-
     if (this.closed) {
       throw new Error('Cannot connect using a closed client');
     }
@@ -695,12 +696,23 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     (async () => {
       try {
         // Fetch initial data
-        onResult(await this.executeReadOnly(sql, parameters));
+        const result = await this.executeReadOnly(sql, parameters);
+        onResult(result);
 
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
         this.onChangeWithCallback(
-          { onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError },
+          {
+            onChange: async () => {
+              try {
+                const result = await this.executeReadOnly(sql, parameters);
+                onResult(result);
+              } catch (error) {
+                onError?.(error);
+              }
+            },
+            onError
+          },
           {
             ...(options ?? {}),
             tables: resolvedTables
@@ -824,6 +836,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const flushTableUpdates = throttle(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
+          if (resolvedOptions?.signal?.aborted) return;
+
           onChange({ changedTables: intersection });
         }),
       throttleMs,
