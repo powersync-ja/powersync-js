@@ -535,12 +535,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a batch write (INSERT/UPDATE/DELETE) query with multiple sets of parameters
-   * and optionally return results.
+   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set 
+   * and optionally return results. 
+   * This is faster than executing separately with each parameter set.
    */
-  async executeBatch(query: string, params?: any[][]) {
+  async executeBatch(sql: string, parameters?: any[][]) {
     await this.waitForReady();
-    return this.database.executeBatch(query, params);
+    return this.database.executeBatch(sql, parameters);
   }
 
   /**
