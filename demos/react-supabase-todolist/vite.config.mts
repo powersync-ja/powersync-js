@@ -21,6 +21,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      // https://jira.mongodb.org/browse/NODE-5773
       { find: 'bson', replacement: require.resolve('bson') }
     ]
   },
