@@ -79,6 +79,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
+  firstSync: () => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -145,8 +146,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  protected _firstSyncPromise: Promise<void>;
-  protected _resolveFirstSyncPromise: () => void;
+  private waitForFirstSyncDisposer?: () => void;
+  private hasSyncedWatchDisposer?: () => void;
 
   protected _schema: Schema;
 
@@ -162,10 +163,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.sdkVersion = '';
     // Start async init
     this._isReadyPromise = this.initialize();
-
-    this._firstSyncPromise = new Promise((resolve) => {
-      this._resolveFirstSyncPromise = resolve;
-    });
   }
 
   /**
@@ -211,12 +208,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * @returns A promise which will resolve once the first full sync has completed.
    */
-  async waitForFirstSync(): Promise<void> {
+  async waitForFirstSync(signal?: AbortSignal): Promise<void> {
     if (this.hasSynced) {
       return;
     }
+    return new Promise((resolve) => {
+      const dispose = this.registerListener({
+        firstSync: () => {
+          dispose();
+          resolve();
+        }
+      });
 
-    await this._firstSyncPromise;
+      signal?.addEventListener('abort', () => {
+        dispose();
+        resolve();
+      });
+
+      this.waitForFirstSyncDisposer = dispose;
+    });
   }
 
   /**
@@ -243,9 +253,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async updateHasSynced() {
     const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
 
-    // Abort the watch after the first sync is detected
     const abortController = new AbortController();
+    this.hasSyncedWatchDisposer = () => abortController.abort();
 
+    // Abort the watch after the first sync is detected
     this.watch(
       syncedSQL,
       [],
@@ -254,7 +265,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           this.hasSynced = !!result.rows?.length;
           if (this.hasSynced) {
             abortController.abort();
-            this._resolveFirstSyncPromise();
+            this.iterateListeners((l) => l.firstSync?.());
           }
         },
         onError: (ex) => {
@@ -387,6 +398,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
+    this.waitForFirstSyncDisposer?.();
+    this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;
     if (disconnect) {

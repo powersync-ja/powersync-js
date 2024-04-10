@@ -18,5 +18,5 @@ const props = defineProps({
   fetching: Boolean
 });
 
-const loadingMessage = computed(() => (props.loading ? 'Busy with initial sync' : 'Re-executing query'));
+const loadingMessage = computed(() => (props.loading ? 'Loading' : 'Re-executing query'));
 </script>
