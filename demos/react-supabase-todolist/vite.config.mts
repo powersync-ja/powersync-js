@@ -5,6 +5,8 @@ import { fileURLToPath, URL } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url); // Needed since the config file is also an ES module
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,7 +19,10 @@ export default defineConfig({
     emptyOutDir: true
   },
   resolve: {
-    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }]
+    alias: [
+      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      { find: 'bson', replacement: require.resolve('bson') }
+    ]
   },
   publicDir: '../public',
   envDir: '..', // Use this dir for env vars, not 'src'.
@@ -25,7 +30,7 @@ export default defineConfig({
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@journeyapps/powersync-sdk-web'],
-    include: ['object-hash', 'uuid', 'event-iterator', 'js-logger', 'lodash', 'can-ndjson-stream']
+    include: ['object-hash', 'uuid', 'event-iterator', 'js-logger', 'lodash', 'can-ndjson-stream', 'bson']
   },
   plugins: [
     wasm(),

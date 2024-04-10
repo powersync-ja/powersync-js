@@ -12,7 +12,8 @@ const config: UserConfigExport = {
        * first. This is required due to the format of Webworker URIs
        * they link to `.js` files.
        */
-      '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './lib/src')
+      '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './lib/src'),
+      bson: require.resolve('bson')
     }
   },
   worker: {
@@ -22,7 +23,8 @@ const config: UserConfigExport = {
   optimizeDeps: {
     // Don't optimise these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@journeyapps/powersync-sdk-web']
+    exclude: ['@journeyapps/wa-sqlite', '@journeyapps/powersync-sdk-web'],
+    include: ['bson']
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
