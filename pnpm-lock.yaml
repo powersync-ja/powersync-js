@@ -339,9 +339,6 @@ importers:
       react-native:
         specifier: 0.73.4
         version: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.0)(react@18.2.0)
-      react-native-fetch-api:
-        specifier: ^3.0.0
-        version: 3.0.0
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.4)(react@18.2.0)
@@ -8604,7 +8601,7 @@ packages:
       '@expo/env': 0.2.1
       '@expo/json-file': 8.3.0
       '@expo/spawn-async': 1.7.2
-      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.9)(@babel/preset-env@7.23.9)
+      '@react-native/babel-preset': 0.73.21(@babel/core@7.23.5)(@babel/preset-env@7.24.0)
       babel-preset-fbjs: 3.4.0(@babel/core@7.23.9)
       chalk: 4.1.2
       debug: 4.3.4(supports-color@8.1.1)
@@ -19547,7 +19544,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/config': 8.5.4
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -19618,7 +19615,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-font@11.10.2(expo@50.0.6):
@@ -19626,7 +19623,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
       fontfaceobserver: 2.3.0
     dev: false
 
@@ -19639,7 +19636,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-linking@6.2.2(expo@50.0.6):
@@ -19658,7 +19655,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/config': 8.5.4
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
       expo-json-utils: 0.12.3
     transitivePeerDependencies:
       - supports-color
@@ -19788,7 +19785,7 @@ packages:
       expo: '*'
     dependencies:
       '@expo/prebuild-config': 6.7.4(expo-modules-autolinking@1.10.3)
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     transitivePeerDependencies:
       - encoding
       - expo-modules-autolinking
@@ -19808,7 +19805,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 50.0.6(@babel/core@7.23.9)(@react-native/babel-preset@0.73.21)
+      expo: 50.0.6(@babel/core@7.23.5)(@react-native/babel-preset@0.73.21)
     dev: false
 
   /expo-updates@0.24.11(expo@50.0.6):

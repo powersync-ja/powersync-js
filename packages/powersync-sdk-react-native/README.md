@@ -32,13 +32,17 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 This SDK can connect to a PowerSync instance via HTTP streams or Web sockets. Different polyfill configurations are required for each method.
 
-### Common polyfills
+### Common Polyfills
 
 The following polyfills are required for general use of the SDK:
 
 - base-64
+
 - react-native-get-random-values
+  This is required for BSON and UUID generation
+
 - text-encoding
+  Required for BSON and NDJSON streaming of sync events
 
 ```bash
 npx expo install react-native-polyfill-globals base-64 react-native-get-random-values text-encoding
@@ -49,7 +53,7 @@ npx expo install react-native-polyfill-globals base-64 react-native-get-random-v
 The following `fetch` polyfills are required for the React Native implementation of `fetch`:
 
 - react-native-fetch-api
-- react-native-polyfill-globals
+  Required for live streaming of sync events
 - react-native-url-polyfill
 - web-streams-polyfill
 
@@ -61,9 +65,34 @@ npx expo install react-native-fetch-api react-native-url-polyfill text-encoding 
 
 ### Web sockets
 
-Our web socket implementation supports binary payloads which are encoded as BSON documents. The BSON library requires `TextEncoder` support. This is already listed in the common polyfills. No further changes are required for web sockets.
+Our web socket implementation supports binary payloads which are encoded as BSON documents.
 
-### Enable polyfills
+This requires support for the `Buffer` interface.
+
+Apply the `Buffer` polyfill
+
+```bash
+npx expo install @craftzdog/react-native-buffer
+```
+
+```javascript
+import { Buffer } from '@craftzdog/react-native-buffer';
+
+if (typeof global.Buffer == 'undefined') {
+  // @ts-ignore If using TypeScript
+  global.Buffer = Buffer;
+}
+```
+
+This library uses `RSocket` for reactive web socket streams which requires `process.nextTick` to be available. Apply a polyfill if not available.
+
+```javascript
+if (typeof process.nextTick == 'undefined') {
+  process.nextTick = setImmediate;
+}
+```
+
+### Enable Global Polyfills
 
 Enable the polyfills in React Native app with
 

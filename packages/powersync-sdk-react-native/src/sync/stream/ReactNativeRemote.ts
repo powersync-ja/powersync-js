@@ -1,41 +1,18 @@
-import {
-  AbstractRemote,
-  DEFAULT_REMOTE_LOGGER,
-  DataStream,
-  RemoteConnector,
-  StreamingSyncLine,
-  SyncStreamOptions
-} from '@journeyapps/powersync-sdk-common';
+import { AbstractRemote, DataStream, StreamingSyncLine, SyncStreamOptions } from '@journeyapps/powersync-sdk-common';
 import { Platform } from 'react-native';
-import { ILogger } from 'js-logger';
-import { Buffer } from '@craftzdog/react-native-buffer';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 export class ReactNativeRemote extends AbstractRemote {
-  constructor(
-    protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER
-  ) {
-    super(connector, logger);
-
-    /**
-     * Required for cross-fetch
-     */
-    if (typeof process.nextTick == 'undefined') {
-      process.nextTick = setImmediate;
-    }
-    if (typeof global.Buffer == 'undefined') {
-      // @ts-ignore
-      global.Buffer = Buffer;
-    }
-  }
-
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     // Ensure polyfills are present
-    if (typeof TextEncoder == 'undefined') {
+    if (
+      typeof TextEncoder == 'undefined' ||
+      typeof process.nextTick == 'undefined' ||
+      typeof global.Buffer == 'undefined'
+    ) {
       const errorMessage = `Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
-      "import 'react-native-polyfill-globals/auto';"
+      See package README for detailed instructions.
       `;
       this.logger.error(errorMessage);
       throw new Error(errorMessage);
@@ -51,7 +28,7 @@ export class ReactNativeRemote extends AbstractRemote {
       typeof TextDecoder == 'undefined'
     ) {
       const errorMessage = `Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
-      "import 'react-native-polyfill-globals/auto';"
+      See package README for detailed instructions.
       `;
       this.logger.error(errorMessage);
       throw new Error(errorMessage);
