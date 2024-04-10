@@ -4,6 +4,16 @@ import { usePowerSync } from './PowerSyncContext';
 
 /**
  * A hook to access the results of a watched query.
+ * @example
+ * export const Component = () => {
+ * const lists = usePowerSyncWatchedQuery('SELECT * from lists');
+ *
+ * return <View>
+ *   {lists.map((l) => (
+ *     <Text key={l.id}>{JSON.stringify(l)}</Text>
+ *   ))}
+ * </View>
+ * }
  */
 export const usePowerSyncWatchedQuery = <T = any>(
   sqlStatement: string,
