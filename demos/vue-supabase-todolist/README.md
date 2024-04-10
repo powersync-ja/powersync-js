@@ -2,7 +2,7 @@
 
 ## Note: Alpha Release
 
-This package is currently in a alpha release.
+This package is currently in an alpha release.
 
 ## Overview
 

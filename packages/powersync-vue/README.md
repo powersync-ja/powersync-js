@@ -2,7 +2,7 @@
 
 ## Note: Alpha Release
 
-This package is currently in a alpha release.
+This package is currently in an alpha release.
 
 ## Setup
 
@@ -94,7 +94,7 @@ const { data: list, error, loading, refresh} = usePowerSyncQuery(query);
 
 The `usePowerSyncWatchedQuery` composable provides a dynamic view of a given query. The data will automatically update when a dependent table is updated.
 
-You use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results as well as the loading, fetching, and and error states. Note that `loading` initicates that the initial result is being retrieved and `fetching` indicates the query is fetching data, which could be for the initial load or any time when the query is re-evaluating due to a change in a dependent table.
+You can use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results as well as the loading, fetching, and and error states. Note that `loading` initicates that the initial result is being retrieved and `fetching` indicates the query is fetching data, which could be for the initial load or any time when the query is re-evaluating due to a change in a dependent table.
 
 ```Vue
 // TodoListDisplayWatchedQuery.vue

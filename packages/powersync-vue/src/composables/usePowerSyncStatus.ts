@@ -5,7 +5,7 @@ import { usePowerSync } from './powerSync';
 export const usePowerSyncStatus = () => {
   const status = ref(
     new SyncStatus({
-      connected: true,
+      connected: false,
       lastSyncedAt: undefined,
       dataFlow: {
         uploading: false,
