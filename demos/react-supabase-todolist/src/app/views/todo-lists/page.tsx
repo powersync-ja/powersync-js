@@ -17,6 +17,7 @@ import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE } from '@/library/powersync/AppSchema';
+import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 
 export default function TodoListsPage() {
   const powerSync = usePowerSync();
@@ -50,6 +51,7 @@ export default function TodoListsPage() {
           <AddIcon />
         </S.FloatingActionButton>
         <Box>
+          <SearchBarWidget />
           <TodoListsWidget />
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
@@ -65,8 +67,7 @@ export default function TodoListsPage() {
             }
           }}
           aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
+          aria-describedby="alert-dialog-description">
           <DialogTitle id="alert-dialog-title">{'Create Todo List'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a name for a new todo list</DialogContentText>
