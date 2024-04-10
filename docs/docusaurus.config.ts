@@ -1,7 +1,8 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import { packageMap } from './utils/packageMap';
+import type { PluginOptions } from 'docusaurus-plugin-typedoc';
+import { DOC_FOLDER, packageMap } from './utils/packageMap';
 import 'dotenv/config';
 
 const PROJECT_NAME = process.env.GH_PROJECT_NAME;
@@ -13,8 +14,17 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     excludeExternals: true,
     entryPoints: config.entryPoints,
     tsconfig: config.tsconfig,
-    out: config.dirName
-  }
+    out: `${DOC_FOLDER}/${config.dirName}`,
+    parametersFormat: 'table',
+    propertiesFormat: 'table',
+    enumMembersFormat: 'table',
+    indexFormat: 'table',
+    typeDeclarationFormat: 'table',
+    membersWithOwnFile: ['Class', 'Enum', 'Function', 'Interface'],
+    textContentMappings: {
+      'title.memberPage': '{name}'
+    }
+  } as Partial<PluginOptions>
 ]);
 
 const config: Config = {
@@ -45,7 +55,6 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en']
   },
-
   presets: [
     [
       'classic',

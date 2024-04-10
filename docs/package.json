@@ -24,9 +24,9 @@
     "@docusaurus/tsconfig": "3.2.1",
     "@docusaurus/types": "3.2.1",
     "@types/node": "^20.12.5",
-    "docusaurus-plugin-typedoc": "^0.22.0",
+    "docusaurus-plugin-typedoc": "^1.0.0next.28",
     "typedoc": "^0.25.12",
-    "typedoc-plugin-markdown": "^3.17.1",
+    "typedoc-plugin-markdown": "^4.0.0next.55",
     "typescript": "~5.4.4"
   },
   "browserslist": {

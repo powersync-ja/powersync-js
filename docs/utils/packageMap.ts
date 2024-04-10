@@ -1,3 +1,5 @@
+export const DOC_FOLDER = 'docs';
+
 enum Packages {
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
