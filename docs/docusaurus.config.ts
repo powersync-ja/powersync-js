@@ -18,7 +18,7 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
 ]);
 
 const config: Config = {
-  title: 'React Native SDK Docs',
+  title: 'PowerSync JS SDK Docs',
   favicon: 'img/powersync-favicon.png',
   markdown: {
     format: 'detect'
@@ -129,15 +129,12 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`
     },
-    // This is commented out because we are waiting for feedback from Algolia
-    // as to why the search is not working as expected.
-    // Discord: https://discord.com/channels/477328979074744322/477749835307548672/1180109255257366579
-    // algolia: {
-    //   appId: process.env.ALGOLIA_APP_ID,
-    //   apiKey: process.env.ALGOLIA_PUBLIC_API_KEY,
-    //   indexName: 'powersync-react-native-sdk-react-native-sdk',
-    //   contextualSearch: false
-    // },
+    algolia: {
+      appId: process.env.ALGOLIA_APP_ID,
+      apiKey: process.env.ALGOLIA_API_KEY,
+      indexName: 'powersync-react-native-sdk-react-native-sdk',
+      contextualSearch: false
+    },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula
