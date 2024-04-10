@@ -25,7 +25,7 @@
     "@docusaurus/types": "3.2.1",
     "@types/node": "^20.12.5",
     "docusaurus-plugin-typedoc": "^1.0.0next.28",
-    "typedoc": "^0.25.12",
+    "typedoc": "^0.25.13",
     "typedoc-plugin-markdown": "^4.0.0next.55",
     "typescript": "~5.4.4"
   },

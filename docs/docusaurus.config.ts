@@ -1,4 +1,5 @@
 import { themes as prismThemes } from 'prism-react-renderer';
+import type { TypeDocOptionMap } from 'typedoc';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import type { PluginOptions } from 'docusaurus-plugin-typedoc';
@@ -24,7 +25,7 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     textContentMappings: {
       'title.memberPage': '{name}'
     }
-  } as Partial<PluginOptions>
+  } as Partial<PluginOptions | TypeDocOptionMap>
 ]);
 
 const config: Config = {

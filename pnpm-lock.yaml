@@ -864,11 +864,11 @@ importers:
         specifier: ^1.0.0next.28
         version: 1.0.0-next.28(typedoc-plugin-markdown@4.0.0-next.55)
       typedoc:
-        specifier: ^0.25.12
-        version: 0.25.12(typescript@5.4.4)
+        specifier: ^0.25.13
+        version: 0.25.13(typescript@5.4.4)
       typedoc-plugin-markdown:
         specifier: ^4.0.0next.55
-        version: 4.0.0-next.55(typedoc@0.25.12)
+        version: 4.0.0-next.55(typedoc@0.25.13)
       typescript:
         specifier: ~5.4.4
         version: 5.4.4
@@ -18146,7 +18146,7 @@ packages:
     peerDependencies:
       typedoc-plugin-markdown: '>=4.0.0-next.45'
     dependencies:
-      typedoc-plugin-markdown: 4.0.0-next.55(typedoc@0.25.12)
+      typedoc-plugin-markdown: 4.0.0-next.55(typedoc@0.25.13)
     dev: true
 
   /dom-converter@0.2.0:
@@ -30388,16 +30388,16 @@ packages:
     dependencies:
       is-typedarray: 1.0.0
 
-  /typedoc-plugin-markdown@4.0.0-next.55(typedoc@0.25.12):
+  /typedoc-plugin-markdown@4.0.0-next.55(typedoc@0.25.13):
     resolution: {integrity: sha512-bwEEBkAP0kHnjE10QzPBXAri5yHYmgb+vZP+xn9GirBLCk3lt7SMUiUx0fj7lEtTmbgIH0rv20f3xP+JWxCPHg==}
     peerDependencies:
       typedoc: 0.25.x
     dependencies:
-      typedoc: 0.25.12(typescript@5.4.4)
+      typedoc: 0.25.13(typescript@5.4.4)
     dev: true
 
-  /typedoc@0.25.12(typescript@5.4.4):
-    resolution: {integrity: sha512-F+qhkK2VoTweDXd1c42GS/By2DvI2uDF4/EpG424dTexSHdtCH52C6IcAvMA6jR3DzAWZjHpUOW+E02kyPNUNw==}
+  /typedoc@0.25.13(typescript@5.4.4):
+    resolution: {integrity: sha512-pQqiwiJ+Z4pigfOnnysObszLiU3mVLWAExSPf+Mu06G/qsc3wzbuM56SZQvONhHLncLUhYzOVkjFFpFfL5AzhQ==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
