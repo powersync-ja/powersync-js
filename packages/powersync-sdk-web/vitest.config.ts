@@ -13,6 +13,7 @@ const config: UserConfigExport = {
        * they link to `.js` files.
        */
       '@journeyapps/powersync-sdk-web': path.resolve(__dirname, './lib/src'),
+      // https://jira.mongodb.org/browse/NODE-5773
       bson: require.resolve('bson')
     }
   },
