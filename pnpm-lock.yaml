@@ -339,6 +339,9 @@ importers:
       react-native:
         specifier: 0.73.4
         version: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.0)(react@18.2.0)
+      react-native-fetch-api:
+        specifier: ^3.0.0
+        version: 3.0.0
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.4)(react@18.2.0)
@@ -439,9 +442,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.33.1
         version: 2.39.3
-      base-64:
-        specifier: ^1.0.0
-        version: 1.0.0
       base64-arraybuffer:
         specifier: ^1.0.2
         version: 1.0.2
@@ -548,9 +548,6 @@ importers:
       '@babel/preset-env':
         specifier: ^7.23.9
         version: 7.23.9(@babel/core@7.23.9)
-      '@types/base-64':
-        specifier: ^1.0.2
-        version: 1.0.2
       '@types/lodash':
         specifier: ^4.14.202
         version: 4.14.202
@@ -14185,10 +14182,6 @@ packages:
     resolution: {integrity: sha512-WXCyOcRtH37HAUkpXhUduaxdm82b4GSlyTqajXviN4EfiuPgNYR109xMCKvpl6zPIpua0DGlMEDCq+g8EdoheQ==}
     dependencies:
       '@babel/types': 7.24.0
-    dev: true
-
-  /@types/base-64@1.0.2:
-    resolution: {integrity: sha512-uPgKMmM9fmn7I+Zi6YBqctOye4SlJsHKcisjHIMWpb2YKZRc36GpKyNuQ03JcT+oNXg1m7Uv4wU94EVltn8/cw==}
     dev: true
 
   /@types/body-parser@1.19.5:
