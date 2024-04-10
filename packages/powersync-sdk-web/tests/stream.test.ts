@@ -21,8 +21,8 @@ export async function waitForConnectionStatus(
       resolve();
     }
     const l = db.registerListener({
-      statusChanged: (status) => {
-        if (_.every(statusCheck, (value, key) => _.isEqual(status.toJSON()[key as keyof SyncStatusOptions], value))) {
+      statusUpdated: (status) => {
+        if (_.every(statusCheck, (value, key) => _.isEqual(status[key as keyof SyncStatusOptions], value))) {
           resolve();
           l?.();
         }
@@ -67,14 +67,14 @@ export async function generateConnectedDatabase() {
 
   const streamOpened = waitForStream();
 
-  powersync.connect(new TestConnector());
+  const connectedPromise = powersync.connect(new TestConnector());
 
   await streamOpened;
 
   remote.streamController?.enqueue(new TextEncoder().encode('{"token_expires_in":3426}\n'));
 
   // Wait for connected to be true
-  await waitForConnectionStatus(powersync);
+  await connectedPromise;
 
   return {
     factory,
@@ -87,13 +87,29 @@ export async function generateConnectedDatabase() {
 describe('Stream test', () => {
   beforeAll(() => Logger.useDefaults());
 
-  it('PowerSync reconnect', async () => {
+  it('PowerSync reconnect on closed stream', async () => {
     const { powersync, waitForStream, remote } = await generateConnectedDatabase();
     expect(powersync.connected).true;
 
     // Close the stream
     const newStream = waitForStream();
     remote.streamController?.close();
+
+    // A new stream should be requested
+    await newStream;
+
+    await powersync.disconnectAndClear();
+    await powersync.close();
+  });
+
+  it('PowerSync reconnect multiple connect calls', async () => {
+    // This initially performs a connect call
+    const { powersync, waitForStream, remote } = await generateConnectedDatabase();
+    expect(powersync.connected).true;
+
+    // Call connect again, a new stream should be requested
+    const newStream = waitForStream();
+    powersync.connect(new TestConnector());
 
     // A new stream should be requested
     await newStream;

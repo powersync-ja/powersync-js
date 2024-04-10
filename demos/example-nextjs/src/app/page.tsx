@@ -8,7 +8,7 @@ import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-r
 export default function EntryPage() {
   const router = useRouter();
   const db = usePowerSync();
-  const customers = usePowerSyncWatchedQuery('SELECT id, name FROM lists');
+  const customers = usePowerSyncWatchedQuery('SELECT id, name FROM customers');
 
   useEffect(() => {
     // Insert some test data

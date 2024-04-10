@@ -53,6 +53,10 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
     return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
   }
 
+  async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+    return this.writeMutex.runExclusive(async () => MOCK_QUERY_RESPONSE);
+  }
+
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     return [];
   }

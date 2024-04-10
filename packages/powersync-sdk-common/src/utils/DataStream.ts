@@ -102,6 +102,10 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
       await this.iterateAsyncErrored(async (l) => l.lowWater?.());
     }
 
+    if (this.closed) {
+      throw new Error('Data stream is closed');
+    }
+
     return new Promise((resolve, reject) => {
       const l = this.registerListener({
         data: async (data) => {

@@ -1,5 +1,16 @@
 # react-native-supabase-todolist
 
+## 1.1.1
+
+### Patch Changes
+
+- Updated dependencies [8f7caa5]
+- Updated dependencies [6c43ec6]
+  - @journeyapps/powersync-sdk-react-native@1.4.0
+  - @journeyapps/powersync-sdk-common@1.5.0
+  - @journeyapps/powersync-attachments@2.0.1
+  - @journeyapps/powersync-react@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

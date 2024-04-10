@@ -275,7 +275,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    this.syncStreamImplementation.connect();
+    await this.syncStreamImplementation.connect();
   }
 
   /**
@@ -284,6 +284,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
+    await this.waitForReady();
     await this.syncStreamImplementation?.disconnect();
     this.syncStatusListenerDisposer?.();
     await this.syncStreamImplementation?.dispose();
@@ -479,6 +480,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async execute(sql: string, parameters?: any[]) {
     await this.waitForReady();
     return this.database.execute(sql, parameters);
+  }
+
+  /**
+   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set 
+   * and optionally return results. 
+   * This is faster than executing separately with each parameter set.
+   */
+  async executeBatch(sql: string, parameters?: any[][]) {
+    await this.waitForReady();
+    return this.database.executeBatch(sql, parameters);
   }
 
   /**
