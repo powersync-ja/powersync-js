@@ -1,7 +1,9 @@
 import { themes as prismThemes } from 'prism-react-renderer';
+import type { TypeDocOptionMap } from 'typedoc';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import { packageMap } from './utils/packageMap';
+import type { PluginOptions } from 'docusaurus-plugin-typedoc';
+import { DOC_FOLDER, packageMap } from './utils/packageMap';
 import 'dotenv/config';
 
 const PROJECT_NAME = process.env.GH_PROJECT_NAME;
@@ -13,12 +15,21 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     excludeExternals: true,
     entryPoints: config.entryPoints,
     tsconfig: config.tsconfig,
-    out: config.dirName
-  }
+    out: `${DOC_FOLDER}/${config.dirName}`,
+    parametersFormat: 'table',
+    propertiesFormat: 'table',
+    enumMembersFormat: 'table',
+    indexFormat: 'table',
+    typeDeclarationFormat: 'table',
+    membersWithOwnFile: ['Class', 'Enum', 'Function', 'Interface'],
+    textContentMappings: {
+      'title.memberPage': '{name}'
+    }
+  } as Partial<PluginOptions | TypeDocOptionMap>
 ]);
 
 const config: Config = {
-  title: 'React Native SDK Docs',
+  title: 'PowerSync JS SDK Docs',
   favicon: 'img/powersync-favicon.png',
   markdown: {
     format: 'detect'
@@ -45,7 +56,6 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en']
   },
-
   presets: [
     [
       'classic',
@@ -129,15 +139,12 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Journey Mobile, Inc.`
     },
-    // This is commented out because we are waiting for feedback from Algolia
-    // as to why the search is not working as expected.
-    // Discord: https://discord.com/channels/477328979074744322/477749835307548672/1180109255257366579
-    // algolia: {
-    //   appId: process.env.ALGOLIA_APP_ID,
-    //   apiKey: process.env.ALGOLIA_PUBLIC_API_KEY,
-    //   indexName: 'powersync-react-native-sdk-react-native-sdk',
-    //   contextualSearch: false
-    // },
+    algolia: {
+      appId: process.env.ALGOLIA_APP_ID,
+      apiKey: process.env.ALGOLIA_API_KEY,
+      indexName: 'powersync-react-native-sdk-react-native-sdk',
+      contextualSearch: false
+    },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula
