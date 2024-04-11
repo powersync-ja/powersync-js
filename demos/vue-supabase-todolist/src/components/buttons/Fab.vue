@@ -6,6 +6,6 @@
 .fab {
   bottom: 50px;
   right: 10px;
-  position: absolute;
+  position: fixed;
 }
 </style>

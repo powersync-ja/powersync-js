@@ -68,17 +68,22 @@ export const usePowerSyncWatchedQuery = <T = any>(
     const parameters = toValue(sqlParameters);
 
     try {
-      // Fetch initial data
-      onResult(await powerSync.value.getAll<T>(sql, parameters));
-
       const resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
+
+      // Fetch initial data
+      const result = await powerSync.value.getAll<T>(sql, parameters);
+      onResult(result);
 
       powerSync.value.onChangeWithCallback(
         {
           onChange: async () => {
             fetching.value = true;
-
-            onResult(await powerSync.value.getAll<T>(sql, parameters));
+            try {
+              const result = await powerSync.value.getAll<T>(sql, parameters);
+              onResult(result);
+            } catch (error) {
+              onError(error);
+            }
           },
           onError
         },

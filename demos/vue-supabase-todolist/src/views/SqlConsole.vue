@@ -19,17 +19,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue';
-
 const query = ref('SELECT * FROM lists');
 const inputText = ref(query.value);
 const executeQuery = () => {
   query.value = inputText.value;
 };
 const { data: querySQLResult, loading, fetching, error } = usePowerSyncWatchedQuery(query);
-
 const queryDataGridResult = computed(() => {
   const firstItem = querySQLResult.value?.[0];
   return {

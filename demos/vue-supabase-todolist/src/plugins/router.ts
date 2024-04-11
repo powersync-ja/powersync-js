@@ -6,8 +6,8 @@ import RegisterPage from '@/views/Register.vue';
 import EntryPage from '@/views/Entry.vue';
 import TodoListsPage from '@/views/TodoLists.vue';
 import TodoEditPage from '@/views/TodoListsEdit.vue';
-import ViewsLayout from '@/views/layouts/Layout.vue';
 import SQLConsolePage from '@/views/SqlConsole.vue';
+import ViewsLayout from '@/views/layouts/Layout.vue';
 
 // Route paths
 export const TODO_LISTS_ROUTE = '/views/todo-lists';
