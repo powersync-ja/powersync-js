@@ -1,6 +1,6 @@
 <template>
   <div class="py-10 pa-2">
-    <LoadingMessage v-if="loading || fetching" :loading :fetching />
+    <LoadingMessage :loading :fetching />
 
     <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
     <v-list v-else class="bg-black pa-0" lines="two">

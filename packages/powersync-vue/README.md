@@ -133,11 +133,11 @@ The `usePowerSyncStatus` composable provides general connectivity information su
 <script setup>
 import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
 
-const { status, hasSynced } = usePowerSyncStatus();
+const { status } = usePowerSyncStatus();
 </script>
 
 <template>
-  <div v-if="!hasSynced">Waiting for initial sync to complete.</div>
+  <div v-if="!status.hasSynced">Waiting for initial sync to complete.</div>
   <div v-else>
     <div>Connected: {{ status.connected }}, last synced at: {{ status.lastSyncedAt }}</div>
     <div v-if="status.dataFlowStatus.uploading">Uploading...</div>

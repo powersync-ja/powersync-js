@@ -79,7 +79,6 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
-  firstSync: () => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -132,12 +131,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Current connection status.
    */
-  currentStatus?: SyncStatus;
-
-  /**
-   * Indicates whether there has been at least one full sync.
-   */
-  hasSynced: boolean;
+  currentStatus: SyncStatus;
 
   syncStreamImplementation?: StreamingSyncImplementation;
   sdkVersion: string;
@@ -146,7 +140,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  private waitForFirstSyncDisposer?: () => void;
   private hasSyncedWatchDisposer?: () => void;
 
   protected _schema: Schema;
@@ -155,8 +148,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     super();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
-    this.currentStatus = undefined;
-    this.hasSynced = false;
+    this.currentStatus = new SyncStatus({});
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
     this._schema = options.schema;
     this.ready = false;
@@ -209,14 +201,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A promise which will resolve once the first full sync has completed.
    */
   async waitForFirstSync(signal?: AbortSignal): Promise<void> {
-    if (this.hasSynced) {
+    if (this.currentStatus.hasSynced) {
       return;
     }
     return new Promise((resolve) => {
       const dispose = this.registerListener({
-        firstSync: () => {
-          dispose();
-          resolve();
+        statusChanged: (status) => {
+          if (status.hasSynced) {
+            dispose();
+            resolve();
+          }
         }
       });
 
@@ -224,8 +218,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         dispose();
         resolve();
       });
-
-      this.waitForFirstSyncDisposer = dispose;
     });
   }
 
@@ -262,10 +254,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       [],
       {
         onResult: (result) => {
-          this.hasSynced = !!result.rows?.length;
-          if (this.hasSynced) {
+          const hasSynced = !!result.rows?.length;
+          if (hasSynced) {
             abortController.abort();
-            this.iterateListeners((l) => l.firstSync?.());
+            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
           }
         },
         onError: (ex) => {
@@ -327,8 +320,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
-        this.currentStatus = status;
-        this.iterateListeners((cb) => cb.statusChanged?.(status));
+        this.currentStatus = new SyncStatus({ ...status.toJSON(), hasSynced: this.currentStatus?.hasSynced });
+        this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
       }
     });
 
@@ -398,7 +391,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
-    this.waitForFirstSyncDisposer?.();
     this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;

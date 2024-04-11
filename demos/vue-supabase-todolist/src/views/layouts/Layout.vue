@@ -11,7 +11,7 @@
       />
 
       <v-icon :color="syncStatus.dataFlowStatus.downloading ? 'primary' : 'inherit'" icon="mdi-arrow-down" />
-      <v-icon :icon="syncStatus.connected ? 'mdi-wifi' : 'mdi-wifi-off'" />
+      <v-icon :icon="syncStatus.connected ? 'mdi-wifi' : 'mdi-wifi-strength-off'" />
     </div>
   </v-app-bar>
 

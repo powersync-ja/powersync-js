@@ -6,8 +6,8 @@
   >
     <v-progress-circular class="mr-4" indeterminate color="primary" />
 
-    <div v-if="!hasSynced">Busy with initial sync...</div>
-    <v-tooltip :text="loadingMessage">
+    <div v-if="!status.hasSynced">Busy with initial sync...</div>
+    <v-tooltip v-else :text="loadingMessage">
       <template v-slot:activator="{ props }"> <v-icon v-bind="props">mdi-information</v-icon> </template>
     </v-tooltip>
   </div>
@@ -19,7 +19,7 @@ import { ref } from 'vue';
 import { watchEffect } from 'vue';
 import { computed } from 'vue';
 
-const { hasSynced } = usePowerSyncStatus();
+const { status } = usePowerSyncStatus();
 
 const props = defineProps({
   loading: Boolean,
@@ -31,9 +31,8 @@ const showLoadingMessage = ref(false);
 
 watchEffect(() => {
   dispose();
-  showLoadingMessage.value = false;
 
-  if (props.fetching || props.loading || !hasSynced) {
+  if (props.fetching || props.loading || !status.value.hasSynced) {
     const timeout = setTimeout(() => {
       showLoadingMessage.value = true;
     }, 300);

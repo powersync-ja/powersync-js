@@ -3,17 +3,7 @@ import { onUnmounted, ref } from 'vue';
 import { usePowerSync } from './powerSync';
 
 export const usePowerSyncStatus = () => {
-  const status = ref(
-    new SyncStatus({
-      connected: false,
-      lastSyncedAt: undefined,
-      dataFlow: {
-        uploading: false,
-        downloading: false
-      }
-    })
-  );
-  const hasSynced = ref(false);
+  const status = ref(new SyncStatus({}));
 
   let cleanup = () => {};
   const powerSync = usePowerSync();
@@ -26,18 +16,8 @@ export const usePowerSyncStatus = () => {
       }
     });
 
-    const firstSyncAbortController = new AbortController();
-    hasSynced.value = powerSync.value.hasSynced;
-    if (!hasSynced.value) {
-      (async () => {
-        await powerSync.value.waitForFirstSync(firstSyncAbortController.signal);
-        hasSynced.value = powerSync.value.hasSynced;
-      })();
-    }
-
     cleanup = () => {
       disposeListener();
-      firstSyncAbortController.abort();
     };
   }
 
@@ -45,5 +25,5 @@ export const usePowerSyncStatus = () => {
     cleanup();
   });
 
-  return { status, hasSynced };
+  return { status };
 };
