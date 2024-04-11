@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
+    "@craftzdog/react-native-buffer": "^6.0.5",
     "@expo/vector-icons": "^14.0.0",
     "@journeyapps/powersync-attachments": "workspace:*",
     "@journeyapps/powersync-react": "workspace:*",
@@ -48,6 +49,7 @@
     "react-native-safe-area-view": "^1.1.1",
     "react-native-screens": "~3.29.0",
     "react-native-vector-icons": "^10.0.0",
+    "react-native-get-random-values": "^1.11.0",
     "react-navigation-stack": "^2.10.4",
     "uuid": "3.4.0"
   },

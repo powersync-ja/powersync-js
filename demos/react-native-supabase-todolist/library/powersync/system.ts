@@ -2,7 +2,7 @@ import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import 'react-native-get-random-values';
 import React from 'react';
-import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-react-native';
+import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory, SyncStreamConnectionMethod } from '@journeyapps/powersync-sdk-react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
@@ -10,6 +10,18 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@journeyapps/powersync-attachments';
+
+import { Buffer } from '@craftzdog/react-native-buffer';
+
+if (typeof global.Buffer == 'undefined') {
+  // @ts-ignore If using TypeScript
+  global.Buffer = Buffer;
+}
+
+if (typeof process.nextTick == 'undefined') {
+  process.nextTick = setImmediate;
+}
+
 
 export class System {
   kvStorage: KVStorage;
@@ -23,7 +35,10 @@ export class System {
     this.kvStorage = new KVStorage();
     const factory = new RNQSPowerSyncDatabaseOpenFactory({
       schema: AppSchema,
-      dbFilename: 'sqlite.db'
+      dbFilename: 'sqlite.db',
+      streamOptions: {
+        connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+      }
     });
 
     this.supabaseConnector = new SupabaseConnector(this);

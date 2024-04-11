@@ -344,7 +344,7 @@ importers:
         version: 6.2.3(react-native@0.73.4)(react@18.2.0)
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.11.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
       react-native-reanimated:
         specifier: ~3.6.2
         version: 3.6.2(@babel/core@7.23.5)(@babel/plugin-proposal-nullish-coalescing-operator@7.18.6)(@babel/plugin-proposal-optional-chaining@7.21.0)(@babel/plugin-transform-arrow-functions@7.23.3)(@babel/plugin-transform-shorthand-properties@7.23.3)(@babel/plugin-transform-template-literals@7.23.3)(react-native@0.73.4)(react@18.2.0)
@@ -397,6 +397,9 @@ importers:
       '@azure/core-asynciterator-polyfill':
         specifier: ^1.0.2
         version: 1.0.2
+      '@craftzdog/react-native-buffer':
+        specifier: ^6.0.5
+        version: 6.0.5(react-native@0.73.2)(react@18.2.0)
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.0.0
@@ -490,6 +493,9 @@ importers:
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.2)(react@18.2.0)
+      react-native-get-random-values:
+        specifier: ^1.11.0
+        version: 1.11.0(react-native@0.73.2)
       react-native-prompt-android:
         specifier: ^1.1.0
         version: 1.1.0
@@ -964,7 +970,7 @@ importers:
         version: 1.4.1
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.11.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
       web-streams-polyfill:
         specifier: ^3.2.1
         version: 3.3.2
@@ -6839,6 +6845,16 @@ packages:
     engines: {node: '>=0.1.90'}
     requiresBuild: true
     optional: true
+
+  /@craftzdog/react-native-buffer@6.0.5(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-Av+YqfwA9e7jhgI9GFE/gTpwl/H+dRRLmZyJPOpKTy107j9Oj7oXlm3/YiMNz+C/CEGqcKAOqnXDLs4OL6AAFw==}
+    dependencies:
+      ieee754: 1.2.1
+      react-native-quick-base64: 2.1.1(react-native@0.73.2)(react@18.2.0)
+    transitivePeerDependencies:
+      - react
+      - react-native
+    dev: false
 
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -27044,8 +27060,8 @@ packages:
       react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
-  /react-native-get-random-values@1.10.0(react-native@0.72.4):
-    resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
+  /react-native-get-random-values@1.11.0(react-native@0.72.4):
+    resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
     peerDependencies:
       react-native: '>=0.56'
     dependencies:
@@ -27053,8 +27069,17 @@ packages:
       react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
-  /react-native-get-random-values@1.8.0(react-native@0.73.4):
-    resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
+  /react-native-get-random-values@1.11.0(react-native@0.73.2):
+    resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
+    peerDependencies:
+      react-native: '>=0.56'
+    dependencies:
+      fast-base64-decode: 1.0.0
+      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
+    dev: false
+
+  /react-native-get-random-values@1.11.0(react-native@0.73.4):
+    resolution: {integrity: sha512-4BTbDbRmS7iPdhYLRcz3PGFIpFJBwNZg9g42iwa2P6FOv9vZj/xJc678RZXnLNZzd0qd7Q3CCF6Yd+CU2eoXKQ==}
     peerDependencies:
       react-native: '>=0.56'
     dependencies:
@@ -27080,7 +27105,7 @@ packages:
       react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
-  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2):
+  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.11.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2):
     resolution: {integrity: sha512-6ACmV1SjXvZP2LN6J2yK58yNACKddcvoiKLrSQdISx32IdYStfdmGXrbAfpd+TANrTlIaZ2SLoFXohNwhnqm/w==}
     peerDependencies:
       base-64: '*'
@@ -27092,13 +27117,13 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.10.0(react-native@0.72.4)
+      react-native-get-random-values: 1.11.0(react-native@0.72.4)
       react-native-url-polyfill: 2.0.0(react-native@0.72.4)
       text-encoding: 0.7.0
       web-streams-polyfill: 3.3.2
     dev: false
 
-  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2):
+  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.11.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3):
     resolution: {integrity: sha512-6ACmV1SjXvZP2LN6J2yK58yNACKddcvoiKLrSQdISx32IdYStfdmGXrbAfpd+TANrTlIaZ2SLoFXohNwhnqm/w==}
     peerDependencies:
       base-64: '*'
@@ -27110,14 +27135,25 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.8.0(react-native@0.73.4)
+      react-native-get-random-values: 1.11.0(react-native@0.73.4)
       react-native-url-polyfill: 2.0.0(react-native@0.73.4)
       text-encoding: 0.7.0
-      web-streams-polyfill: 3.3.2
+      web-streams-polyfill: 3.3.3
     dev: false
 
   /react-native-prompt-android@1.1.0:
     resolution: {integrity: sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==}
+    dev: false
+
+  /react-native-quick-base64@2.1.1(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-/L+SaapDLcLcHA3Kj0/cvEhFS/oLXyD6DUXwdckTR/75bzUjqf1FrusUTvJho/lzXnCR1VtBGn+EEvrLmkDTmw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      base64-js: 1.5.1
+      react: 18.2.0
+      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
     dev: false
 
   /react-native-ratings@8.0.4(react-native@0.73.2)(react@18.2.0):
@@ -31339,7 +31375,6 @@ packages:
   /web-streams-polyfill@3.3.3:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
-    dev: true
 
   /webdriver@8.32.3:
     resolution: {integrity: sha512-1/kpZvuftt59oikHs+6FvWXNfOM5tgMMMAk3LnMe7D938dVOoNGAe46fq0oL/xsxxPicbMRTRgIy1OifLiglaA==}

@@ -102,7 +102,11 @@ if (typeof process.nextTick == 'undefined') {
 
 ### Babel Plugins: Watched Queries
 
-Watched queries require support for Async Iterators. Expo apps currently require polyfill and Babel plugins in order to use this functionality.
+Watched queries can be used with either a callback response or Async Iterator response. 
+
+Watched queries using the async iterator response format require support for Async Iterators. 
+
+Expo apps currently require polyfill and Babel plugins in order to use this functionality.
 
 ```bash
 npx expo install @azure/core-asynciterator-polyfill

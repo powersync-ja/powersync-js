@@ -431,6 +431,10 @@ export abstract class AbstractStreamingSyncImplementation
 
         while (!stream.closed) {
           const line = await stream.read();
+          if (!line) {
+            // The stream has closed while waiting
+            return {retry: true}
+          }
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
             // There is a connection now

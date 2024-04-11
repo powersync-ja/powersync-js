@@ -96,14 +96,15 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
 
   /**
    * Reads data once from the data stream
+   * @returns a Data payload or Null if the stream closed.
    */
-  async read(): Promise<Data> {
+  async read(): Promise<Data | null> {
     if (this.dataQueue.length <= this.lowWatermark) {
       await this.iterateAsyncErrored(async (l) => l.lowWater?.());
     }
 
     if (this.closed) {
-      throw new Error('Data stream is closed');
+      return null;
     }
 
     return new Promise((resolve, reject) => {
@@ -114,7 +115,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
           l?.();
         },
         closed: () => {
-          reject(new Error('Data stream is closed'));
+          resolve(null);
           l?.();
         },
         error: (ex) => {

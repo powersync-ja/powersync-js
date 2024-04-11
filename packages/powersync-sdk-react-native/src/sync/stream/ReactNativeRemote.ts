@@ -3,36 +3,63 @@ import { Platform } from 'react-native';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
+type PolyfillTest = {
+  test: () => boolean;
+  name: string
+}
+
+const CommonPolyfills: PolyfillTest[] = [
+  {
+    name: 'TextEncoder',
+    test: () => typeof TextEncoder == 'undefined'
+  },
+]
+
+const SocketPolyfillTests: PolyfillTest[] = [
+  ...CommonPolyfills,
+   {
+    name: 'nextTick',
+    test: () => typeof process.nextTick == 'undefined'
+   },
+   {
+    name: 'Buffer',
+    test: () => typeof global.Buffer == 'undefined'
+   }
+]
+
+const HttpPolyfillTests: PolyfillTest[] = [
+  ...CommonPolyfills,
+  {
+    name: 'TextDecoder',
+    test: () => typeof TextDecoder == 'undefined'
+  },
+  {
+    name: 'ReadableStream',
+    test: () =>typeof ReadableStream == 'undefined'
+  },
+]
+
+const validatePolyfills= (tests: PolyfillTest[]) => {
+  const missingPolyfills = tests.filter(t => t.test()).map(t => t.name);
+  if (missingPolyfills.length) {
+    throw new Error(
+      `
+Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
+See package README for detailed instructions.
+The following polyfills appear to be missing:
+${missingPolyfills.join('\n')}`
+  );
+  }
+}
+
 export class ReactNativeRemote extends AbstractRemote {
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    // Ensure polyfills are present
-    if (
-      typeof TextEncoder == 'undefined' ||
-      typeof process.nextTick == 'undefined' ||
-      typeof global.Buffer == 'undefined'
-    ) {
-      const errorMessage = `Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
-      See package README for detailed instructions.
-      `;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
-    }
+    validatePolyfills(SocketPolyfillTests);
     return super.socketStream(options);
   }
 
   async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    // Ensure polyfills are present
-    if (
-      typeof ReadableStream == 'undefined' ||
-      typeof TextEncoder == 'undefined' ||
-      typeof TextDecoder == 'undefined'
-    ) {
-      const errorMessage = `Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
-      See package README for detailed instructions.
-      `;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
-    }
+    validatePolyfills(HttpPolyfillTests);
 
     const timeout =
       Platform.OS == 'android'
