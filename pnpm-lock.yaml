@@ -300,9 +300,6 @@ importers:
       '@tamagui/theme-base':
         specifier: 1.79.6
         version: 1.79.6
-      base-64:
-        specifier: ^1.0.0
-        version: 1.0.0
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
@@ -339,15 +336,9 @@ importers:
       react-native:
         specifier: 0.73.4
         version: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.0)(react@18.2.0)
-      react-native-fetch-api:
-        specifier: ^3.0.0
-        version: 3.0.0
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.4)(react@18.2.0)
-      react-native-get-random-values:
-        specifier: ~1.8.0
-        version: 1.8.0(react-native@0.73.4)
       react-native-pager-view:
         specifier: 6.2.3
         version: 6.2.3(react-native@0.73.4)(react@18.2.0)
@@ -375,12 +366,6 @@ importers:
       tamagui:
         specifier: 1.79.6
         version: 1.79.6(@types/react@18.2.55)(react-dom@18.2.0)(react-native-web@0.19.9)(react-native@0.73.4)(react@18.2.0)
-      text-encoding:
-        specifier: ^0.7.0
-        version: 0.7.0
-      web-streams-polyfill:
-        specifier: ^3.2.1
-        version: 3.3.2
     devDependencies:
       '@babel/core':
         specifier: 7.23.5
@@ -505,9 +490,6 @@ importers:
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.2)(react@18.2.0)
-      react-native-get-random-values:
-        specifier: ~1.10.0
-        version: 1.10.0(react-native@0.73.2)
       react-native-prompt-android:
         specifier: ^1.1.0
         version: 1.1.0
@@ -532,9 +514,6 @@ importers:
       react-navigation-stack:
         specifier: ^2.10.4
         version: 2.10.4(@react-native-community/masked-view@0.1.11)(react-native-gesture-handler@2.14.1)(react-native-safe-area-context@4.8.2)(react-native-screens@3.29.0)(react-native@0.73.2)(react-navigation@4.4.4)(react@18.2.0)
-      text-encoding:
-        specifier: ^0.7.0
-        version: 0.7.0
       uuid:
         specifier: 3.4.0
         version: 3.4.0
@@ -974,9 +953,6 @@ importers:
 
   packages/powersync-sdk-react-native:
     dependencies:
-      '@craftzdog/react-native-buffer':
-        specifier: ^6.0.5
-        version: 6.0.5(react-native@0.72.4)(react@18.2.0)
       '@journeyapps/powersync-react':
         specifier: workspace:*
         version: link:../powersync-react
@@ -986,27 +962,9 @@ importers:
       async-lock:
         specifier: ^1.4.0
         version: 1.4.1
-      base-64:
-        specifier: ^1.0.0
-        version: 1.0.0
-      react-native-fetch-api:
-        specifier: ^3.0.0
-        version: 3.0.0
-      react-native-get-random-values:
-        specifier: ^1.9.0
-        version: 1.10.0(react-native@0.72.4)
       react-native-polyfill-globals:
         specifier: ^3.1.0
         version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.2)
-      react-native-quick-base64:
-        specifier: ^2.0.8
-        version: 2.0.8(react-native@0.72.4)(react@18.2.0)
-      react-native-url-polyfill:
-        specifier: ^2.0.0
-        version: 2.0.0(react-native@0.72.4)
-      text-encoding:
-        specifier: ^0.7.0
-        version: 0.7.0
       web-streams-polyfill:
         specifier: ^3.2.1
         version: 3.3.2
@@ -6881,16 +6839,6 @@ packages:
     engines: {node: '>=0.1.90'}
     requiresBuild: true
     optional: true
-
-  /@craftzdog/react-native-buffer@6.0.5(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-Av+YqfwA9e7jhgI9GFE/gTpwl/H+dRRLmZyJPOpKTy107j9Oj7oXlm3/YiMNz+C/CEGqcKAOqnXDLs4OL6AAFw==}
-    dependencies:
-      ieee754: 1.2.1
-      react-native-quick-base64: 2.0.8(react-native@0.72.4)(react@18.2.0)
-    transitivePeerDependencies:
-      - react
-      - react-native
-    dev: false
 
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -27105,15 +27053,6 @@ packages:
       react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
-  /react-native-get-random-values@1.10.0(react-native@0.73.2):
-    resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
-    dev: false
-
   /react-native-get-random-values@1.8.0(react-native@0.73.4):
     resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
     peerDependencies:
@@ -27179,17 +27118,6 @@ packages:
 
   /react-native-prompt-android@1.1.0:
     resolution: {integrity: sha512-4JoyEaT2ZnK9IH+tDFpbTiQBgva8UIFGQf4/Uw/tnEVWBERlVlzcs5B82T9BkeEhEqXhp89JaiSBnLWj30lciw==}
-    dev: false
-
-  /react-native-quick-base64@2.0.8(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-2kMlnLSy0qz4NA0KXMGugd3qNB5EAizxZ6ghEVNGIxAOlc9CGvC8miv35wgpFbSKeiaBRfcPfkdTM/5Erb/6SQ==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      base64-js: 1.5.1
-      react: 18.2.0
-      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.0)(react@18.2.0)
     dev: false
 
   /react-native-ratings@8.0.4(react-native@0.73.2)(react@18.2.0):

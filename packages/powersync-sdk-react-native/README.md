@@ -32,35 +32,43 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 This SDK can connect to a PowerSync instance via HTTP streams or Web sockets. Different polyfill configurations are required for each method.
 
-### Common Polyfills
+### React Native Common Polyfills
 
-The following polyfills are required for general use of the SDK:
+This package requires polyfills for HTTP streaming and other text encoding functions. These functions can be provided with [react-native-polyfill-globals](https://www.npmjs.com/package/react-native-polyfill-globals).
 
-- base-64
-
-- react-native-get-random-values
-  This is required for BSON and UUID generation
-
-- text-encoding
-  Required for BSON and NDJSON streaming of sync events
+Install the collection of polyfills with:
 
 ```bash
-npx expo install react-native-polyfill-globals base-64 react-native-get-random-values text-encoding
+npx expo install react-native-polyfill-globals
 ```
 
-### HTTP Streams
-
-The following `fetch` polyfills are required for the React Native implementation of `fetch`:
-
-- react-native-fetch-api
-  Required for live streaming of sync events
-- react-native-url-polyfill
-- web-streams-polyfill
-
-These are listed as peer dependencies and need to be added to the React Native project
+The `react-native-polyfill-globals` package includes peer dependencies for individual functions. Most modern package managers install peer dependencies by default. If peer dependencies are explicitly installed, install them manually with:
 
 ```bash
-npx expo install react-native-fetch-api react-native-url-polyfill text-encoding web-streams-polyfill
+npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill base-64 react-native-get-random-values
+```
+
+Enable the polyfills in React Native app by adding the following in your top level entry point
+
+```JavaScript
+// App.js
+import 'react-native-polyfill-globals/auto';
+```
+
+### Random Values
+
+This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available. 
+
+Install [react-native-get-random-values](https://github.com/LinusU/react-native-get-random-values)
+
+```bash
+npx expo install react-native-get-random-values
+```
+
+Import the polyfill in our app entry point
+
+```javascript
+import 'react-native-get-random-values'
 ```
 
 ### Web sockets
@@ -90,15 +98,6 @@ This library uses `RSocket` for reactive web socket streams which requires `proc
 if (typeof process.nextTick == 'undefined') {
   process.nextTick = setImmediate;
 }
-```
-
-### Enable Global Polyfills
-
-Enable the polyfills in React Native app with
-
-```JavaScript
-// App.js
-import 'react-native-polyfill-globals/auto';
 ```
 
 ### Babel Plugins: Watched Queries
