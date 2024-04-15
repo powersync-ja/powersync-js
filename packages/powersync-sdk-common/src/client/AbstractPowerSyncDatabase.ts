@@ -483,8 +483,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set 
-   * and optionally return results. 
+   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
+   * and optionally return results.
    * This is faster than executing separately with each parameter set.
    */
   async executeBatch(sql: string, parameters?: any[][]) {
@@ -644,13 +644,24 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     (async () => {
       try {
-        // Fetch initial data
-        onResult(await this.executeReadOnly(sql, parameters));
-
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
+        // Fetch initial data
+        const result = await this.executeReadOnly(sql, parameters);
+        onResult(result);
+
         this.onChangeWithCallback(
-          { onChange: async () => onResult(await this.executeReadOnly(sql, parameters)), onError },
+          {
+            onChange: async () => {
+              try {
+                const result = await this.executeReadOnly(sql, parameters);
+                onResult(result);
+              } catch (error) {
+                onError?.(error);
+              }
+            },
+            onError
+          },
           {
             ...(options ?? {}),
             tables: resolvedTables
@@ -670,10 +681,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     return new EventIterator<QueryResult>((eventOptions) => {
       (async () => {
+        const resolvedTables = await this.resolveTables(sql, parameters, options);
+
         // Fetch initial data
         eventOptions.push(await this.executeReadOnly(sql, parameters));
-
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
 
         for await (const event of this.onChangeWithAsyncGenerator({
           ...(options ?? {}),

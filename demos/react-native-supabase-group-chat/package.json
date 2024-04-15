@@ -21,9 +21,9 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@faker-js/faker": "8.3.1",
-    "@journeyapps/powersync-sdk-react-native": "workspace:*",
-    "@journeyapps/powersync-sdk-common": "workspace:*",
     "@journeyapps/powersync-react": "workspace:*",
+    "@journeyapps/powersync-sdk-common": "workspace:*",
+    "@journeyapps/powersync-sdk-react-native": "workspace:*",
     "@journeyapps/react-native-quick-sqlite": "1.1.3",
     "@react-native-async-storage/async-storage": "1.21.0",
     "@shopify/flash-list": "1.6.3",
@@ -34,6 +34,7 @@
     "@tamagui/font-inter": "1.79.6",
     "@tamagui/lucide-icons": "1.79.6",
     "@tamagui/theme-base": "1.79.6",
+    "base-64": "^1.0.0",
     "date-fns": "^2.30.0",
     "expo": "~50.0.6",
     "expo-crypto": "~12.8.0",
@@ -46,7 +47,9 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.73.4",
+    "react-native-fetch-api": "^3.0.0",
     "react-native-gesture-handler": "~2.14.1",
+    "react-native-get-random-values": "^1.9.0",
     "react-native-pager-view": "6.2.3",
     "react-native-polyfill-globals": "^3.1.0",
     "react-native-reanimated": "~3.6.2",
@@ -55,7 +58,9 @@
     "react-native-svg": "14.1.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "0.19.9",
-    "tamagui": "1.79.6"
+    "tamagui": "1.79.6",
+    "text-encoding": "^0.7.0",
+    "web-streams-polyfill": "3.2.1"
   },
   "devDependencies": {
     "@babel/core": "7.23.5",
