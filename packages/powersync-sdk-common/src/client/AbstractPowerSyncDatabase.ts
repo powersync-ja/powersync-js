@@ -697,11 +697,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     (async () => {
       try {
+        const resolvedTables = await this.resolveTables(sql, parameters, options);
+
         // Fetch initial data
         const result = await this.executeReadOnly(sql, parameters);
         onResult(result);
-
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
 
         this.onChangeWithCallback(
           {
@@ -734,10 +734,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     return new EventIterator<QueryResult>((eventOptions) => {
       (async () => {
+        const resolvedTables = await this.resolveTables(sql, parameters, options);
+
         // Fetch initial data
         eventOptions.push(await this.executeReadOnly(sql, parameters));
-
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
 
         for await (const event of this.onChangeWithAsyncGenerator({
           ...(options ?? {}),

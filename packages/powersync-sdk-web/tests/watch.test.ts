@@ -195,6 +195,9 @@ describe('Watch Tests', () => {
       }
     })();
 
+    // Ensures insert doesn't form part of initial result
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
+
     // Create the inserts as fast as possible
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
 
@@ -238,7 +241,9 @@ describe('Watch Tests', () => {
       }
     );
 
-    // Create the inserts as fast as possible
+    // Ensures insert doesn't form part of initial result
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
+
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
 
     await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
