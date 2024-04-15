@@ -15,6 +15,7 @@ export type RemoteConnector = {
 
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
+const SYNC_QUEUE_REQUEST_N = 10;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
@@ -208,8 +209,7 @@ export abstract class AbstractRemote {
 
     const l = stream.registerListener({
       lowWater: async () => {
-        // TODO make configurable?
-        res.request(1);
+        res.request(SYNC_QUEUE_REQUEST_N);
       },
       closed: () => {
         l?.();
