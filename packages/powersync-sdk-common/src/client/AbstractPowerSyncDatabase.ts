@@ -209,6 +209,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
+    await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
@@ -476,8 +477,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set 
-   * and optionally return results. 
+   * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
+   * and optionally return results.
    * This is faster than executing separately with each parameter set.
    */
   async executeBatch(sql: string, parameters?: any[][]) {

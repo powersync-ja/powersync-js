@@ -1,6 +1,6 @@
 type ExtractGenerator = (jsonColumnName: string, columnName: string) => string;
 
-enum ExtractType {
+export enum ExtractType {
   columnOnly,
   columnInOperation
 }
@@ -8,18 +8,21 @@ enum ExtractType {
 type ExtractGeneratorMap = Map<ExtractType, ExtractGenerator>;
 
 function _createExtract(jsonColumnName: string, columnName: string): string {
-  return `json_extract($${jsonColumnName}, '$.${columnName}')`;
+  return `json_extract(${jsonColumnName}, '$.${columnName}')`;
 }
 
 const extractGeneratorsMap: ExtractGeneratorMap = new Map<ExtractType, ExtractGenerator>([
   [ExtractType.columnOnly, (jsonColumnName: string, columnName: string) => _createExtract(jsonColumnName, columnName)],
   [
     ExtractType.columnInOperation,
-    (jsonColumnName: string, columnName: string) => `${columnName} = ${_createExtract(jsonColumnName, columnName)}`
+    (jsonColumnName: string, columnName: string) => {
+      let extract = _createExtract(jsonColumnName, columnName);
+      return `${columnName} = ${extract}`;
+    }
   ]
 ]);
 
-function generateJsonExtracts(type: ExtractType, jsonColumnName: string, columns: string[]): string {
+export const generateJsonExtracts = (type: ExtractType, jsonColumnName: string, columns: string[]): string => {
   const generator = extractGeneratorsMap.get(type);
   if (generator == null) {
     throw new Error('Unexpected null generator for key: $type');
@@ -30,4 +33,4 @@ function generateJsonExtracts(type: ExtractType, jsonColumnName: string, columns
   }
 
   return columns.map((column) => generator(jsonColumnName, column)).join(', ');
-}
+};

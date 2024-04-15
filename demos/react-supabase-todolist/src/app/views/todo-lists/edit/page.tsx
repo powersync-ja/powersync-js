@@ -129,8 +129,7 @@ const TodoEditSection = () => {
               await createNewTodo(nameInputRef.current!.value);
               setShowPrompt(false);
             }
-          }}
-        >
+          }}>
           <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a description for a new todo item</DialogContentText>
