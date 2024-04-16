@@ -6,7 +6,7 @@ import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
-// For console testing purposes
+
 import { configureFts } from '../../app/utils/fts_setup';
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
@@ -25,7 +25,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     // Linting thinks this is a hook due to it's name
     Logger.useDefaults(); // eslint-disable-line
     Logger.setLevel(Logger.DEBUG);
-
+    // For console testing purposes
     (window as any)._powersync = powerSync;
 
     powerSync.init();
