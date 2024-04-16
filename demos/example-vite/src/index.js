@@ -61,6 +61,5 @@ const openDatabase = async () => {
 };
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  console.log('hello');
   openDatabase();
 });
