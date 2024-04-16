@@ -1,8 +1,8 @@
 <template>
   <div
     v-if="showLoadingMessage"
-    class="mt-0 mb-6 d-flex align-center"
-    style="position: absolute; top: 68px; left: 45%; z-index: 100"
+    class="mt-0 mb-6 d-flex align-center justify-center"
+    style="position: absolute; top: 68px; left: 0%; right: 0; margin: auto; z-index: 100; width: 350px"
   >
     <v-progress-circular class="mr-4" indeterminate color="primary" />
 
@@ -26,19 +26,22 @@ const props = defineProps({
   fetching: Boolean
 });
 
-let dispose = () => {};
+let dispose: (() => void) | undefined = undefined;
 const showLoadingMessage = ref(false);
 
 watchEffect(() => {
-  dispose();
-
   if (props.fetching || props.loading || !status.value.hasSynced) {
-    const timeout = setTimeout(() => {
-      showLoadingMessage.value = true;
-    }, 300);
+    if (!dispose) {
+      const timeout = setTimeout(() => {
+        showLoadingMessage.value = true;
+      }, 100);
 
-    dispose = () => clearTimeout(timeout);
+      dispose = () => clearTimeout(timeout);
+    }
   } else {
+    dispose?.();
+    dispose = undefined;
+
     showLoadingMessage.value = false;
   }
 });
