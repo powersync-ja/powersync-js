@@ -255,10 +255,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       {
         onResult: (result) => {
           const hasSynced = !!result.rows?.length;
-          if (hasSynced) {
-            abortController.abort();
+
+          if (hasSynced != this.currentStatus.hasSynced) {
             this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
             this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+          }
+
+          if (hasSynced) {
+            abortController.abort();
           }
         },
         onError: (ex) => {
