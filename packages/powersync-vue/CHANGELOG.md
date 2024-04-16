@@ -1,0 +1,1 @@
+# @journeyapps/powersync-vue
