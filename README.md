@@ -26,11 +26,11 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
 - [packages/powersync-attachments](./packages/powersync-attachments/README.md)
 
-  - Attachments helper package for React Native and and JS Web.
+  - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
-  - Kysely integration (ORM) for React Native and JS Web.
+  - Kysely integration (ORM) for React Native and JavaScript/TypeScript projects.
 
 - [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
