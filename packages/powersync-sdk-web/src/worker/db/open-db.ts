@@ -27,7 +27,7 @@ export type OpenDB = (dbFileName: string) => DBWorkerInterface;
 export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 
 export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
-  const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist-fts/wa-sqlite-async.mjs');
+  const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
