@@ -26,7 +26,7 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
 - [packages/powersync-attachments](./packages/powersync-attachments/README.md)
 
-  - Attachments helper package for React Native.
+  - Attachments helper package for React Native and and JS Web.
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
