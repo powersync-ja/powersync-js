@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue';
+import { usePowerSyncWatchedQuery } from '@powersync/vue';
 const query = ref('SELECT * FROM lists');
 const inputText = ref(query.value);
 const executeQuery = () => {

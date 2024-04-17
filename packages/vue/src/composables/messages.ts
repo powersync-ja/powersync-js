@@ -7,7 +7,7 @@ Using powerSync composables in a nested function of a component.
 
 \`\`\`typescript
 <script setup lang="ts">
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 
 const exampleFunction = async () => {
   // ❌ Incorrect: 'usePowerSync()' called inside a nested function
@@ -22,7 +22,7 @@ It's important to initialize usePowerSync at the top level of your setup functio
 
 \`\`\`typescript
 <script setup lang="ts">
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 
 // ✅ Correct: usePowerSync initialized at the top level of setup function and used as a variable.
 const powerSync = usePowerSync();

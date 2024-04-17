@@ -1,4 +1,4 @@
-# @journeyapps/powersync-vue
+# @powersync/vue
 
 ## 0.0.1
 
