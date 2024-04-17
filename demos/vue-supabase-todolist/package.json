@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@journeyapps/powersync-sdk-web": "workspace:*",
-    "@journeyapps/powersync-vue": "workspace:*",
+    "@powersync/vue": "workspace:*",
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.39.7",
     "@vuelidate/core": "^2.0.3",

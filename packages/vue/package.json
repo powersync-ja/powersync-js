@@ -1,5 +1,5 @@
 {
-  "name": "@journeyapps/powersync-vue",
+  "name": "@powersync/vue",
   "version": "0.0.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
