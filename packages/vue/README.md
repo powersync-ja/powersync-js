@@ -12,7 +12,7 @@ To set up app-wide accessibility of PowerSync composables, create a PowerSync Vu
 // main.js
 import { createApp } from 'vue'
 import App from './App.vue'
-import { createPowerSyncPlugin } from '@journeyapps/powersync-vue'
+import { createPowerSyncPlugin } from '@powersync/vue'
 
 const db = // Setup PowerSync client
 
@@ -34,7 +34,7 @@ Both `createPowerSyncPlugin` and `providePowerSync` leverage Vue's [provide/inje
 ```Vue
 // Container.vue
 <script setup>
-import { providePowerSync } from '@journeyapps/powersync-vue'
+import { providePowerSync } from '@powersync/vue'
 
 const db = // Setup PowerSync client
 
@@ -50,7 +50,7 @@ The provided PowerSync client is available with the `usePowerSync` composable.
 ```Vue
 // TodoListDisplay.vue
 <script setup>
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 import { ref } from 'vue';
 
 const powersync = usePowerSync();
@@ -72,7 +72,7 @@ The `usePowerSyncQuery` composable provides a static view of a given query. You 
 ```Vue
 // TodoListDisplayQuery.vue
 <script setup>
-import { usePowerSyncQuery } from '@journeyapps/powersync-vue';
+import { usePowerSyncQuery } from '@powersync/vue';
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
@@ -99,7 +99,7 @@ You can use refs as parameters to refresh the query when they change. The compos
 ```Vue
 // TodoListDisplayWatchedQuery.vue
 <script setup>
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/vue';
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
@@ -131,7 +131,7 @@ The `usePowerSyncStatus` composable provides general connectivity information su
 ```Vue
 // ConnectionStatus.vue
 <script setup>
-import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
+import { usePowerSyncStatus } from '@powersync/vue';
 
 const { status } = usePowerSyncStatus();
 </script>
@@ -157,7 +157,7 @@ Using PowerSync composables in a nested function of a component.
 
 ```javascript
 <script setup>
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 
 const exampleFunction = async () => {
   // ❌ Incorrect: `usePowerSync()` called inside a nested function
@@ -172,7 +172,7 @@ It's important to initialize usePowerSync at the top level of your setup functio
 
 ```javascript
 <script setup>
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 
 // ✅ Correct: usePowerSync initialized at the top level of setup function and used as a variable.
 const powerSync = usePowerSync();

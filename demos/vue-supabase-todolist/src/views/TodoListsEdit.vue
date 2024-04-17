@@ -48,7 +48,7 @@ import TodoItemWidget from '@/components/widgets/TodoItemWidget.vue';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import { pageSubtitle } from '@/main';
 import { supabase } from '@/plugins/supabase';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/vue';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { ref } from 'vue';
@@ -124,7 +124,7 @@ const createNewTodo = async () => {
   await powerSync.value.execute(
     `INSERT INTO
                 ${TODOS_TABLE}
-                    (id, created_at, created_by, description, list_id) 
+                    (id, created_at, created_by, description, list_id)
                 VALUES
                     (uuid(), datetime(), ?, ?, ?)`,
     [userID, todoDescription.value, listID!]

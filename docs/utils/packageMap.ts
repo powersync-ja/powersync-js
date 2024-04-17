@@ -39,8 +39,8 @@ export const packageMap: PackageMap = {
   [Packages.VueSdk]: {
     name: 'Vue SDK',
     dirName: Packages.VueSdk,
-    entryPoints: ['../packages/powersync-vue/src/index.ts'],
-    tsconfig: '../packages/powersync-vue/tsconfig.json',
+    entryPoints: ['../packages/vue/src/index.ts'],
+    tsconfig: '../packages/vue/tsconfig.json',
     id: Packages.VueSdk
   },
   [Packages.CommonSdk]: {
