@@ -31,11 +31,7 @@ let PowerSync;
 const openDatabase = async () => {
   PowerSync = new WASQLitePowerSyncDatabaseOpenFactory({
     schema: AppSchema,
-    dbFilename: 'test.sqlite',
-    flags: {
-      // This is disabled once CSR+SSR functionality is verified to be working correctly
-      disableSSRWarning: true
-    }
+    dbFilename: 'test.sqlite'
   }).getInstance();
 
   await PowerSync.init();
