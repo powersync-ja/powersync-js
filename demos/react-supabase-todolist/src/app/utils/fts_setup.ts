@@ -19,7 +19,7 @@ async function createFtsTable(tableName: string, columns: string[], tokenization
     `);
     // Copy over records already in table
     await tx.execute(`
-      INSERT INTO fts_${tableName}(rowid, id, ${stringColumns})
+      INSERT OR REPLACE INTO fts_${tableName}(rowid, id, ${stringColumns})
       SELECT rowid, id, ${generateJsonExtracts(ExtractType.columnOnly, 'data', columns)} FROM ${internalName};
     `);
     // Add INSERT, UPDATE and DELETE and triggers to keep fts table in sync with table
