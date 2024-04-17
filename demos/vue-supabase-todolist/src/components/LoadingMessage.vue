@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
+import { usePowerSyncStatus } from '@powersync/vue';
 import { ref } from 'vue';
 import { watchEffect } from 'vue';
 import { computed } from 'vue';

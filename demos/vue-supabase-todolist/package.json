@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@journeyapps/powersync-sdk-web": "workspace:*",
-    "@journeyapps/powersync-vue": "workspace:*",
+    "@powersync/vue": "workspace:*",
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.39.7",
     "@vuelidate/core": "^2.0.3",
@@ -30,7 +30,9 @@
     "unplugin-fonts": "^1.1.1",
     "unplugin-vue-components": "^0.26.0",
     "vite": "^5.2.0",
+    "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-vuetify": "^2.0.3",
+    "vite-plugin-wasm": "^3.3.0",
     "vue-tsc": "^2.0.6"
   }
 }
