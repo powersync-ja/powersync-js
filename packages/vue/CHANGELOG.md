@@ -1,5 +1,11 @@
 # @powersync/vue
 
+## 0.0.2
+
+### Patch Changes
+
+- 2a7b83f: rename package
+
 ## 0.0.1
 
 ### Patch Changes
