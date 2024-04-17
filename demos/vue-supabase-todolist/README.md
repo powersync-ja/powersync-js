@@ -6,7 +6,7 @@ This package is currently in an alpha release.
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync Vue](https://www.npmjs.com/package/@journeyapps/powersync-vue) together with Supabase.
+Demo app demonstrating use of the [PowerSync Vue](https://www.npmjs.com/package/@powersync/vue) together with Supabase.
 
 A step-by-step guide through the Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 
@@ -59,6 +59,6 @@ pnpm build
 
 ## Learn More
 
-Check out [PowerSync Vue on GitHub](https://github.com/powersync-ja/powersync-js/tree/main/packages/powersync-vue) - your feedback and contributions are welcome!
+Check out [PowerSync Vue on GitHub](https://github.com/powersync-ja/powersync-js/tree/main/packages/vue) - your feedback and contributions are welcome!
 
 To learn more about PowerSync, see the [PowerSync docs](https://docs.powersync.com).
