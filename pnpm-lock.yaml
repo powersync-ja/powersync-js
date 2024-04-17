@@ -711,13 +711,16 @@ importers:
         version: 1.1.1(vite@5.2.8)
       unplugin-vue-components:
         specifier: ^0.26.0
-        version: 0.26.0(vue@3.4.21)
+        version: 0.26.0(rollup@2.79.1)(vue@3.4.21)
       vite:
         specifier: ^5.2.0
         version: 5.2.8(sass@1.71.1)
+      vite-plugin-pwa:
+        specifier: ^0.19.2
+        version: 0.19.2(vite@5.2.8)(workbox-build@7.0.0)(workbox-window@7.0.0)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.8)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.8)
       vite-plugin-vuetify:
         specifier: ^2.0.3
         version: 2.0.3(vite@5.2.8)(vue@3.4.21)(vuetify@3.5.15)
@@ -13245,7 +13248,7 @@ packages:
       rollup: 2.79.1
     dev: true
 
-  /@rollup/pluginutils@5.1.0:
+  /@rollup/pluginutils@5.1.0(rollup@2.79.1):
     resolution: {integrity: sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -13257,6 +13260,7 @@ packages:
       '@types/estree': 1.0.5
       estree-walker: 2.0.2
       picomatch: 2.3.1
+      rollup: 2.79.1
     dev: true
 
   /@rollup/rollup-android-arm-eabi@4.10.0:
@@ -24485,8 +24489,6 @@ packages:
     peerDependenciesMeta:
       webpack:
         optional: true
-      webpack-sources:
-        optional: true
     dependencies:
       webpack: 5.89.0(esbuild@0.19.11)
       webpack-sources: 3.2.3
@@ -33068,7 +33070,7 @@ packages:
       vite: 5.2.8(sass@1.71.1)
     dev: true
 
-  /unplugin-vue-components@0.26.0(vue@3.4.21):
+  /unplugin-vue-components@0.26.0(rollup@2.79.1)(vue@3.4.21):
     resolution: {integrity: sha512-s7IdPDlnOvPamjunVxw8kNgKNK8A5KM1YpK5j/p97jEKTjlPNrA0nZBiSfAKKlK1gWZuyWXlKL5dk3EDw874LQ==}
     engines: {node: '>=14'}
     peerDependencies:
@@ -33082,7 +33084,7 @@ packages:
         optional: true
     dependencies:
       '@antfu/utils': 0.7.7
-      '@rollup/pluginutils': 5.1.0
+      '@rollup/pluginutils': 5.1.0(rollup@2.79.1)
       chokidar: 3.6.0
       debug: 4.3.4(supports-color@8.1.1)
       fast-glob: 3.3.2
@@ -33421,6 +33423,28 @@ packages:
       - supports-color
     dev: true
 
+  /vite-plugin-pwa@0.19.2(vite@5.2.8)(workbox-build@7.0.0)(workbox-window@7.0.0):
+    resolution: {integrity: sha512-LSQJFPxCAQYbRuSyc9EbRLRqLpaBA9onIZuQFomfUYjWSgHuQLonahetDlPSC9zsxmkSEhQH8dXZN8yL978h3w==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@vite-pwa/assets-generator': ^0.2.4
+      vite: ^3.1.0 || ^4.0.0 || ^5.0.0
+      workbox-build: ^7.0.0
+      workbox-window: ^7.0.0
+    peerDependenciesMeta:
+      '@vite-pwa/assets-generator':
+        optional: true
+    dependencies:
+      debug: 4.3.4(supports-color@8.1.1)
+      fast-glob: 3.3.2
+      pretty-bytes: 6.1.1
+      vite: 5.2.8(sass@1.71.1)
+      workbox-build: 7.0.0
+      workbox-window: 7.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /vite-plugin-top-level-await@1.4.1(rollup@2.79.1)(vite@5.1.5):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
@@ -33449,6 +33473,20 @@ packages:
       - rollup
     dev: true
 
+  /vite-plugin-top-level-await@1.4.1(rollup@2.79.1)(vite@5.2.8):
+    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
+    peerDependencies:
+      vite: '>=2.8'
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
+      '@swc/core': 1.4.6
+      uuid: 9.0.1
+      vite: 5.2.8(sass@1.71.1)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+    dev: true
+
   /vite-plugin-top-level-await@1.4.1(vite@5.1.1):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
@@ -33472,20 +33510,6 @@ packages:
       '@swc/core': 1.4.6
       uuid: 9.0.1
       vite: 5.1.4
-    transitivePeerDependencies:
-      - '@swc/helpers'
-      - rollup
-    dev: true
-
-  /vite-plugin-top-level-await@1.4.1(vite@5.2.8):
-    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
-    peerDependencies:
-      vite: '>=2.8'
-    dependencies:
-      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
-      '@swc/core': 1.4.6
-      uuid: 9.0.1
-      vite: 5.2.8(sass@1.71.1)
     transitivePeerDependencies:
       - '@swc/helpers'
       - rollup
@@ -34765,6 +34789,7 @@ packages:
 
   /workbox-google-analytics@7.0.0:
     resolution: {integrity: sha512-MEYM1JTn/qiC3DbpvP2BVhyIH+dV/5BjHk756u9VbwuAhu0QHyKscTnisQuz21lfRpOwiS9z4XdqeVAKol0bzg==}
+    deprecated: It is not compatible with newer versions of GA starting with v4, as long as you are using GAv3 it should be ok, but the package is not longer being maintained
     dependencies:
       workbox-background-sync: 7.0.0
       workbox-core: 7.0.0

@@ -5,6 +5,7 @@ import Vue from '@vitejs/plugin-vue';
 import ViteFonts from 'unplugin-fonts/vite';
 import Components from 'unplugin-vue-components/vite';
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // Utilities
 import { fileURLToPath, URL } from 'node:url';
@@ -26,6 +27,41 @@ export default defineConfig({
           {
             name: 'Roboto',
             styles: 'wght@100;300;400;500;700;900'
+          }
+        ]
+      }
+    }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['powersync-logo.svg', 'supabase-logo.png', 'favicon.ico'],
+      manifest: {
+        theme_color: '#c44eff',
+        background_color: '#c44eff',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        name: 'PowerSync Vue Demo',
+        short_name: 'PowerSync Vue',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-256x256.png',
+            sizes: '256x256',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-384x384.png',
+            sizes: '384x384',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
           }
         ]
       }
