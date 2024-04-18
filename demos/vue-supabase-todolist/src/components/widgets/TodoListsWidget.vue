@@ -19,7 +19,7 @@
 <script setup lang="ts">
 import { LISTS_TABLE, ListRecord, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import { TODO_LISTS_ROUTE } from '@/plugins/router'; // Adjust this import according to your project's structure
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-vue'; // Adjust according to your actual implementation
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/vue'; // Adjust according to your actual implementation
 import { useRouter } from 'vue-router';
 import ListItemWidget from './ListItemWidget.vue'; // Ensure this path is correct
 import LoadingMessage from '../LoadingMessage.vue';

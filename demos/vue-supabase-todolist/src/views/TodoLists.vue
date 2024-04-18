@@ -31,7 +31,7 @@
 import TodoListsWidget from '@/components/widgets/TodoListsWidget.vue';
 import { LISTS_TABLE } from '@/library/powersync/AppSchema';
 import { supabase } from '@/plugins/supabase';
-import { usePowerSync } from '@journeyapps/powersync-vue';
+import { usePowerSync } from '@powersync/vue';
 import { ref } from 'vue';
 
 const powerSync = usePowerSync();

@@ -41,7 +41,7 @@ import { supabase } from '@/plugins/supabase';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pageSubtitle } from '@/main';
-import { usePowerSyncStatus } from '@journeyapps/powersync-vue';
+import { usePowerSyncStatus } from '@powersync/vue';
 
 const openDrawer = ref(false);
 const { status: syncStatus } = usePowerSyncStatus();
