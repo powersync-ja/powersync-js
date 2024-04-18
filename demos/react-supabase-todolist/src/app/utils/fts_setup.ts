@@ -3,10 +3,15 @@ import { Table } from '@journeyapps/powersync-sdk-web';
 import { db } from '@/components/providers/SystemProvider';
 import { ExtractType, generateJsonExtracts } from './helpers';
 
-/// Create a Full Text Search table for the given table and columns
-/// with an option to use a different tokenizer otherwise it defaults
-/// to unicode61. It also creates the triggers that keep the FTS table
-/// and the PowerSync table in sync.
+/**
+ * Create a Full Text Search table for the given table and columns
+ * with an option to use a different tokenizer otherwise it defaults
+ * to unicode61. It also creates the triggers that keep the FTS table
+ * and the PowerSync table in sync.
+ * @param tableName
+ * @param columns
+ * @param tokenizationMethod
+ */
 async function createFtsTable(tableName: string, columns: string[], tokenizationMethod = 'unicode61'): Promise<void> {
   const internalName = (AppSchema.tables as Table[]).find((table) => table.name === tableName)?.internalName;
   const stringColumns = columns.join(', ');
@@ -49,9 +54,11 @@ async function createFtsTable(tableName: string, columns: string[], tokenization
   });
 }
 
-/// This is where you can add more methods to generate FTS tables
-/// that correspond to the tables in your schema and populate them
-/// with the data you would like to search on
+/**
+ * This is where you can add more methods to generate FTS tables in this demo
+ * that correspond to the tables in your schema and populate them
+ * with the data you would like to search on
+ */
 export async function configureFts(): Promise<void> {
   await createFtsTable('lists', ['name'], 'porter unicode61');
   await createFtsTable('todos', ['description', 'list_id']);

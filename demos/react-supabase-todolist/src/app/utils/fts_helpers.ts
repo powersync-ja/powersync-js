@@ -1,14 +1,23 @@
 import { db } from '@/components/providers/SystemProvider';
 
+/**
+ * adding * to the end of the search term will match any word that starts with the search term
+ * e.g. searching bl will match blue, black, etc.
+ * consult FTS5 Full-text Query Syntax documentation for more options
+ * @param searchTerm
+ * @returns a modified search term with options.
+ */
 function createSearchTermWithOptions(searchTerm: string): string {
-  // adding * to the end of the search term will match any word that starts with the search term
-  // e.g. searching bl will match blue, black, etc.
-  // consult FTS5 Full-text Query Syntax documentation for more options
   const searchTermWithOptions: string = `${searchTerm}*`;
   return searchTermWithOptions;
 }
 
-/// Search the FTS table for the given searchTerm
+/**
+ * Search the FTS table for the given searchTerm
+ * @param searchTerm
+ * @param tableName
+ * @returns results from the FTS table
+ */
 export async function searchTable(searchTerm: string, tableName: string): Promise<any[]> {
   const searchTermWithOptions = createSearchTermWithOptions(searchTerm);
   return await db.getAll(`SELECT * FROM fts_${tableName} WHERE fts_${tableName} MATCH ? ORDER BY rank`, [
