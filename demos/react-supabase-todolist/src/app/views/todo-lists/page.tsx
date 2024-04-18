@@ -67,7 +67,8 @@ export default function TodoListsPage() {
             }
           }}
           aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description">
+          aria-describedby="alert-dialog-description"
+        >
           <DialogTitle id="alert-dialog-title">{'Create Todo List'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a name for a new todo list</DialogContentText>

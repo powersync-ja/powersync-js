@@ -105,7 +105,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     const result = await this.workerMethods!.executeBatch!(query, params);
     return {
       ...result,
-      rows: undefined,
+      rows: undefined
     };
   };
 
