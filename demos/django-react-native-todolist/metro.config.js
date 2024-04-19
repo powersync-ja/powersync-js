@@ -1,5 +1,5 @@
 // Learn more https://docs.expo.dev/guides/monorepos
-const {getDefaultConfig} = require('expo/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 const path = require('node:path');
 
 // Find the project and workspace directories

@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { CircularProgress, Grid, ListItem, styled } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
 
 export default function EntryPage() {
   const router = useRouter();

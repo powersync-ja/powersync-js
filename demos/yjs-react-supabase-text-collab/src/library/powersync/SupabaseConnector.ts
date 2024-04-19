@@ -4,7 +4,7 @@ import {
   CrudEntry,
   PowerSyncBackendConnector,
   UpdateType
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 
 import {
   SupabaseClient,
@@ -82,13 +82,13 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
       return;
     }
 
-    let updateBatch: any[] = [];
+    const updateBatch: any[] = [];
 
     let lastOp: CrudEntry | null = null;
     try {
       // Note: If transactional consistency is important, use database functions
       // or edge functions to process the entire transaction in a single call.
-      for (let op of batch.crud) {
+      for (const op of batch.crud) {
         lastOp = op;
         const table = this.client.from(op.table);
         let result: any;

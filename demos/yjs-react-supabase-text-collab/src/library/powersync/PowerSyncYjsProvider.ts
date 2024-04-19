@@ -2,7 +2,7 @@ import * as Y from 'yjs';
 
 import { b64ToUint8Array, Uint8ArrayTob64 } from '@/library/binary-utils';
 import { v4 as uuidv4 } from 'uuid';
-import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
+import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { ObservableV2 } from 'lib0/observable';
 
 export interface PowerSyncYjsEvents {
@@ -44,13 +44,13 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
     let synced = false;
 
     const watchLoop = async () => {
-      for await (let results of updates) {
+      for await (const results of updates) {
         if (this.abortController.signal.aborted) {
           break;
         }
 
         // New data detected in the database
-        for (let update of results.rows!._array) {
+        for (const update of results.rows!._array) {
           // Ignore any updates we've already seen
           if (!this.seenDocUpdates.has(update.id)) {
             this.seenDocUpdates.add(update.id);

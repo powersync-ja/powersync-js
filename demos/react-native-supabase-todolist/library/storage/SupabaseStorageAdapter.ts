@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { decode as decodeBase64 } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system';
 import { AppConfig } from '../supabase/AppConfig';
-import { StorageAdapter } from '@journeyapps/powersync-attachments';
+import { StorageAdapter } from '@powersync/attachments';
 
 export interface SupabaseStorageAdapterOptions {
   client: SupabaseClient;

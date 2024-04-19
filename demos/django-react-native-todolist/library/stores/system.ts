@@ -2,7 +2,7 @@ import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import React from 'react';
 import { configure, makeAutoObservable, makeObservable, observable } from 'mobx';
-import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-react-native';
+import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
 import { AppSchema } from '../powersync/AppSchema';
 import { DjangoConnector } from '../django/DjangoConnector';
 import { ListStore } from './ListStore';

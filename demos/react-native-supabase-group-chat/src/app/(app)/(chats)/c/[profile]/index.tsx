@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
