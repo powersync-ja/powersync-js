@@ -1,5 +1,13 @@
 # yjs-react-supabase-text-collab
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-web@0.5.0
+  - @journeyapps/powersync-react@1.1.3
+
 ## 0.0.11
 
 ### Patch Changes
