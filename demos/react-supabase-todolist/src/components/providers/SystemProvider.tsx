@@ -38,6 +38,8 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     connector.init();
 
+    // Demo using SQLite Full-Text Search with PowerSync.
+    // See https://docs.powersync.com/usage-examples/full-text-search for more details
     configureFts();
 
     return () => l?.();

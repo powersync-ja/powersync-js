@@ -1,5 +1,12 @@
 # @powersync/kysely-driver
 
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-common@1.6.0
+
 ## 0.1.7
 
 ### Patch Changes

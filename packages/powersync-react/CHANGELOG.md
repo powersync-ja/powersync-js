@@ -1,5 +1,12 @@
 # @journeyapps/powersync-react
 
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-common@1.6.0
+
 ## 1.1.2
 
 ### Patch Changes
