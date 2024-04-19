@@ -11,7 +11,7 @@ The sample backend that you can run alongside this demo can be found here: [Powe
 
 ## Running the App
 
-Install the React Native SDK, then:
+Install the dependencies, including the React Native SDK:
 
 ```sh
 pnpm install
