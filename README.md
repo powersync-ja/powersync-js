@@ -41,7 +41,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 ### React Native
 - [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist): A React Native to-do list example app using a Supabase backend.
-- [demos/django-react-native-todolist](./demos/django-react-native-todolist.md) A React Native to-do list example app using a Django backend.
+- [demos/django-react-native-todolist](./demos/django-react-native-todolist) A React Native to-do list example app using a Django backend.
 
 ### Web
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
