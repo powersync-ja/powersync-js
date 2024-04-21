@@ -1,5 +1,5 @@
 {
-  "name": "@powersync/example-nextjs",
+  "name": "example-nextjs",
   "version": "0.0.8",
   "private": true,
   "scripts": {

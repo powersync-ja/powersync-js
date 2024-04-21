@@ -1,5 +1,5 @@
 {
-  "name": "powersync-example",
+  "name": "django-react-native-todolist",
   "version": "1.0.0",
   "main": "./index.js",
   "scripts": {

@@ -1,5 +1,5 @@
 {
-  "name": "PowerSync Angular Demo",
+  "name": "angular-supabase-todolist",
   "version": "0.0.8",
   "scripts": {
     "ng": "ng",
