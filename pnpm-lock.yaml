@@ -13114,7 +13114,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.5)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.23.5)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.23.9)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.23.5)
       react-refresh: 0.14.0
@@ -13167,7 +13167,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.5)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.23.5)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.24.4)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.23.5)
       react-refresh: 0.14.0
@@ -13272,7 +13272,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.24.0)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.24.0)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.24.4)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.24.0)
       react-refresh: 0.14.0

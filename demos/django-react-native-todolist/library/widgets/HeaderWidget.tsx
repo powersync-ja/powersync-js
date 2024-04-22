@@ -3,7 +3,7 @@ import { Alert, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation } from 'expo-router';
 import { useSystem } from '../stores/system';
-import { usePowerSyncStatus } from '@journeyapps/powersync-react';
+import { usePowerSyncStatus } from '@powersync/react';
 import { Header } from 'react-native-elements';
 import { observer } from 'mobx-react-lite';
 import { DrawerActions } from '@react-navigation/native';
