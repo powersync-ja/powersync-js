@@ -1,5 +1,5 @@
 ---
-"@journeyapps/powersync-react": patch
+"@journeyapps/powersync-react": minor
 ---
 
 Add `usePowerSyncStatus` hook
