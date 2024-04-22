@@ -1,5 +1,17 @@
 # @journeyapps/powersync-sdk-common
 
+## 1.6.0
+
+### Minor Changes
+
+- 3aaee03: Added support for Full text search out of the box and enabled recursive triggers.
+
+## 1.5.1
+
+### Patch Changes
+
+- 8cc1337: Resolving tables for watch() before handling any results, eliminating a potential race condition between initial result and changes. Also handling a potential uncaught exception.
+
 ## 1.5.0
 
 ### Minor Changes

@@ -22,5 +22,6 @@
     {
       "path": "../powersync-sdk-common"
     }
-  ]
+  ],
+  "include": ["src/**/*"]
 }

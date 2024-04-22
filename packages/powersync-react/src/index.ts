@@ -1,3 +1,4 @@
 export * from './hooks/PowerSyncContext';
-export * from './hooks/usePowerSyncQuery';
-export * from './hooks/usePowerSyncWatchedQuery';
+export { usePowerSyncQuery } from './hooks/usePowerSyncQuery';
+export { usePowerSyncWatchedQuery } from './hooks/usePowerSyncWatchedQuery';
+export { usePowerSyncStatus } from './hooks/usePowerSyncStatus';

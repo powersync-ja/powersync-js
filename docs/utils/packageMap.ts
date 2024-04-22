@@ -3,6 +3,7 @@ export const DOC_FOLDER = 'docs';
 enum Packages {
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
+  VueSdk = 'vue-sdk',
   CommonSdk = 'common-sdk',
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk'
@@ -34,6 +35,13 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/powersync-react/src/index.ts'],
     tsconfig: '../packages/powersync-react/tsconfig.json',
     id: Packages.ReactSdk
+  },
+  [Packages.VueSdk]: {
+    name: 'Vue SDK',
+    dirName: Packages.VueSdk,
+    entryPoints: ['../packages/vue/src/index.ts'],
+    tsconfig: '../packages/vue/tsconfig.json',
+    id: Packages.VueSdk
   },
   [Packages.CommonSdk]: {
     name: 'Common SDK',

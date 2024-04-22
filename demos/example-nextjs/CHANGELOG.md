@@ -1,5 +1,20 @@
 # example-nextjs
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-web@0.5.0
+  - @journeyapps/powersync-react@1.1.3
+
+## 0.0.7
+
+### Patch Changes
+
+- @journeyapps/powersync-react@1.1.2
+- @journeyapps/powersync-sdk-web@0.4.1
+
 ## 0.0.6
 
 ### Patch Changes
