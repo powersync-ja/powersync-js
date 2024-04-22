@@ -8,6 +8,7 @@ Configure a PowerSync DB connection and add it to a context provider.
 // App.jsx
 import { PowerSyncDatabase } from '@journeyapps/powersync-react-native';
 import { PowerSyncContext } from "@journeyapps/powersync-react";
+
 export const App = () => {
     const powerSync = React.useMemo(() => {
         // Setup PowerSync client
@@ -40,6 +41,22 @@ export const TodoListDisplay = () => {
         {lists.map(list => <li key={list.id}>{list.name}</li>)}
     </ul>
     }
+```
+
+### Accessing PowerSync Status
+
+The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
+
+```JSX
+import { usePowerSyncStatus } from "@journeyapps/powersync-react";
+
+const Component = () => {
+  const status = usePowerSyncStatus();
+
+  return <div>
+    status.connected ? 'wifi' : 'wifi-off'
+  </div>
+};
 ```
 
 ### Watched Queries
