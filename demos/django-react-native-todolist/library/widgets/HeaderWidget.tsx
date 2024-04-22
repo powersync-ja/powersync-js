@@ -3,6 +3,7 @@ import { Alert, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation } from 'expo-router';
 import { useSystem } from '../stores/system';
+import { usePowerSyncStatus } from '@journeyapps/powersync-react';
 import { Header } from 'react-native-elements';
 import { observer } from 'mobx-react-lite';
 import { DrawerActions } from '@react-navigation/native';
@@ -12,7 +13,9 @@ export const HeaderWidget: React.FC<{
 }> = observer((props) => {
   const { title } = props;
   const { powersync } = useSystem();
+  const status = usePowerSyncStatus();
   const navigation = useNavigation();
+
   return (
     <Header
       leftComponent={
@@ -28,7 +31,7 @@ export const HeaderWidget: React.FC<{
       }
       rightComponent={
         <Icon
-          name={powersync.connected ? 'wifi' : 'wifi-off'}
+          name={status.connected ? 'wifi' : 'wifi-off'}
           type="material-community"
           color="black"
           size={20}
@@ -36,8 +39,8 @@ export const HeaderWidget: React.FC<{
           onPress={() => {
             Alert.alert(
               'Status',
-              `${powersync.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
-                powersync.currentStatus?.lastSyncedAt.toISOString() ?? '-'
+              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
+                status.lastSyncedAt?.toISOString() ?? '-'
               }\nVersion: ${powersync.sdkVersion}`
             );
           }}

@@ -42,6 +42,22 @@ export const TodoListDisplay = () => {
     }
 ```
 
+### Accessing PowerSync Status
+
+The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
+
+```JSX
+import { usePowerSyncStatus } from "@powersync/react";
+
+const Component = () => {
+  const status = usePowerSyncStatus();
+
+  return <div>
+    status.connected ? 'wifi' : 'wifi-off'
+  </div>
+};
+```
+
 ### Watched Queries
 
 Watched queries will automatically update when a dependant table is updated.

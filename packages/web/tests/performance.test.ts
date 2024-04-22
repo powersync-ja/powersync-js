@@ -2,16 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Schema, TableV2, column } from '@powersync/common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 
-function randomIntFromInterval(min: number, max: number) {
-  // min included and max excluded
-  return Math.random() * (max - min) + min;
-}
-
-type User = {
-  name: string;
-  email: string;
-};
-
 describe('Basic', () => {
   const users = new TableV2({
     name: column.text,

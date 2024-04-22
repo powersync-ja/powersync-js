@@ -25,16 +25,16 @@ import React from 'react';
 
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { usePowerSync } from '@powersync/react';
+import { usePowerSync, usePowerSyncStatus } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
+  const status = usePowerSyncStatus();
   const supabase = useSupabase();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(powerSync.currentStatus);
   const [openDrawer, setOpenDrawer] = React.useState(false);
   const { title } = useNavigationPanel();
 
@@ -63,15 +63,6 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     [powerSync, supabase]
   );
 
-  React.useEffect(() => {
-    const l = powerSync.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
-      }
-    });
-    return () => l?.();
-  }, [powerSync]);
-
   return (
     <S.MainBox>
       <S.TopBar position="static">
@@ -89,12 +80,9 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography>{title}</Typography>
           </Box>
-          <NorthIcon
-            sx={{ marginRight: '-10px' }}
-            color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}
-          />
-          <SouthIcon color={syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
-          {syncStatus?.connected ? <WifiIcon /> : <SignalWifiOffIcon />}
+          <NorthIcon sx={{ marginRight: '-10px' }} color={status?.dataFlowStatus.uploading ? 'primary' : 'inherit'} />
+          <SouthIcon color={status?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
+          {status?.connected ? <WifiIcon /> : <SignalWifiOffIcon />}
         </Toolbar>
       </S.TopBar>
       <Drawer anchor={'left'} open={openDrawer} onClose={() => setOpenDrawer(false)}>
