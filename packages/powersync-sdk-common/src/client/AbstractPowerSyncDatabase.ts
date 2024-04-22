@@ -14,6 +14,7 @@ import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { Schema } from '../db/schema/Schema';
 import { BaseObserver } from '../utils/BaseObserver';
+import { DataStream } from '../utils/DataStream';
 import { mutexRunExclusive } from '../utils/mutex';
 import { quoteIdentifier } from '../utils/strings';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
@@ -24,8 +25,8 @@ import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  StreamingSyncImplementationListener,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation';
 
 export interface DisconnectAndClearOptions {
@@ -61,6 +62,10 @@ export interface SQLWatchOptions {
    * by not removing PowerSync table name prefixes
    */
   rawTableNames?: boolean;
+  /**
+   * Whether to manage high watermark overflow.
+   */
+  manageWatchOverflow?: boolean;
 }
 
 export interface WatchOnChangeEvent {
@@ -68,7 +73,7 @@ export interface WatchOnChangeEvent {
 }
 
 export interface WatchHandler {
-  onResult: (results: QueryResult) => void;
+  onResult: (results: QueryResult) => Promise<void> | void;
   onError?: (error: Error) => void;
 }
 
@@ -254,7 +259,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       syncedSQL,
       [],
       {
-        onResult: (result) => {
+        onResult: async (result) => {
           const hasSynced = !!result.rows?.length;
 
           if (hasSynced != this.currentStatus.hasSynced) {
@@ -702,26 +707,48 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     (async () => {
       try {
+        const resolvedOptions = options ?? {};
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
+        const stream = new DataStream<WatchOnChangeEvent | undefined>();
+        stream.forEach(async () => {
+          const result = await this.executeReadOnly(sql, parameters);
+
+          // Wait for processing to complete before continuing
+          await onResult(result);
+        });
+
+        const l = stream.registerListener({
+          highWater: async () => {
+            // If high watermark is exceeded, remove all but the last item. Last item would have triggered for the last change.
+            if (resolvedOptions.manageWatchOverflow && stream.dataQueue.length > stream.highWatermark) {
+              stream.dataQueue = stream.dataQueue.slice(stream.dataQueue.length - 1);
+            }
+          },
+          closed: () => {
+            l?.();
+          },
+          error: (error) => {
+            onError?.(error);
+          }
+        });
+
+        resolvedOptions.signal?.addEventListener('abort', () => {
+          stream.close();
+        });
+
         // Fetch initial data
-        const result = await this.executeReadOnly(sql, parameters);
-        onResult(result);
+        stream.enqueueData(undefined);
 
         this.onChangeWithCallback(
           {
-            onChange: async () => {
-              try {
-                const result = await this.executeReadOnly(sql, parameters);
-                onResult(result);
-              } catch (error) {
-                onError?.(error);
-              }
+            onChange: async (event) => {
+              stream.enqueueData(event);
             },
             onError
           },
           {
-            ...(options ?? {}),
+            ...resolvedOptions,
             tables: resolvedTables
           }
         );

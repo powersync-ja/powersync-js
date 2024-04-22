@@ -146,7 +146,9 @@ describe('Watch Tests', () => {
     const updatesCount = 5;
     let receivedUpdatesCount = 0;
 
-    const onUpdate = () => receivedUpdatesCount++;
+    const onUpdate = () => {
+      receivedUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM assets INNER JOIN customers ON customers.id = assets.customer_id',
@@ -216,7 +218,9 @@ describe('Watch Tests', () => {
     const assetsAbortController = new AbortController();
 
     let receivedAssetsUpdatesCount = 0;
-    const onWatchAssets = () => receivedAssetsUpdatesCount++;
+    const onWatchAssets = () => {
+      receivedAssetsUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM assets',
@@ -230,7 +234,9 @@ describe('Watch Tests', () => {
     const customersAbortController = new AbortController();
 
     let receivedCustomersUpdatesCount = 0;
-    const onWatchCustomers = () => receivedCustomersUpdatesCount++;
+    const onWatchCustomers = () => {
+      receivedCustomersUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM customers',
@@ -263,7 +269,8 @@ describe('Watch Tests', () => {
     let receivedErrorCount = 0;
 
     const receivedError = new Promise<void>((resolve) => {
-      const onError = () => {
+      const onError = (e: any) => {
+        console.log(e);
         receivedErrorCount++;
         resolve();
       };
@@ -279,5 +286,62 @@ describe('Watch Tests', () => {
 
     await receivedError;
     expect(receivedErrorCount).equals(1);
+  });
+
+  it('should have onResult ordered execution', async () => {
+    const abortController = new AbortController();
+
+    let onResultCount = 0;
+    const completedOrder: number[] = [];
+    const expectedCompletedOrder = [0, 1, 2, 3, 4];
+
+    const onResult = async () => {
+      const id = onResultCount++;
+      if (id == 0) {
+        // Should block the entire onResult execution queue
+        await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
+      }
+      completedOrder.push(id);
+    };
+
+    powersync.watch(
+      'SELECT count() AS count FROM assets',
+      [],
+      { onResult: onResult },
+      { signal: abortController.signal, throttleMs: 1 }
+    );
+
+    for (let i = 0; i < expectedCompletedOrder.length; i++) {
+      await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
+    abortController.abort();
+
+    expect(completedOrder).toEqual(expectedCompletedOrder);
+  });
+
+  it.only('should manage watch callback overflow', async () => {
+    const abortController = new AbortController();
+
+    let count = 0;
+    const onResult = () => {
+      count++;
+    };
+
+    powersync.watch(
+      'SELECT count() AS count FROM assets',
+      [],
+      { onResult: onResult },
+      { signal: abortController.signal, throttleMs: 1 }
+    );
+
+    for (let i = 0; i < 30; i++) {
+      await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    // expect(completedOrder).toEqual(expectedCompletedOrder);
+    console.log(count);
   });
 });

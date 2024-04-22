@@ -13,10 +13,10 @@ export type BaseListener = {
 };
 
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
-  protected listeners: { [id: string]: Partial<T> };
+  protected listeners: Map<string, Partial<T>>;
 
   constructor() {
-    this.listeners = {};
+    this.listeners = new Map();
   }
 
   /**
@@ -24,15 +24,19 @@ export class BaseObserver<T extends BaseListener = BaseListener> implements Base
    */
   registerListener(listener: Partial<T>): () => void {
     const id = v4();
-    this.listeners[id] = listener;
+    this.listeners.set(id, listener);
     return () => {
-      delete this.listeners[id];
+      this.listeners.delete(id);
     };
   }
 
   iterateListeners(cb: (listener: Partial<T>) => any) {
-    for (const i in this.listeners) {
-      cb(this.listeners[i]);
+    this.listeners.forEach((l) => cb(l));
+  }
+
+  async iterateAsyncListeners(cb: (listener: Partial<T>) => Promise<any>) {
+    for (let i of Array.from(this.listeners.values())) {
+      await cb(i);
     }
   }
 }
