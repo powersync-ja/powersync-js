@@ -1,25 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  AbstractPowerSyncDatabase,
-  Column,
-  ColumnType,
-  Schema,
-  Table,
-  TableV2,
-  column
-} from '@journeyapps/powersync-sdk-common';
-import { v4 as uuid } from 'uuid';
+import { AbstractPowerSyncDatabase, Schema, TableV2, column } from '@journeyapps/powersync-sdk-common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
-
-function randomIntFromInterval(min: number, max: number) {
-  // min included and max excluded
-  return Math.random() * (max - min) + min;
-}
-
-type User = {
-  name: string;
-  email: string;
-};
 
 describe('Basic', () => {
   const users = new TableV2({

@@ -1,9 +1,5 @@
 # PowerSync + Django React Native Demo: Todo List
 
-## Note: Alpha Release
-
-This package is currently in an alpha release. Functionality could change dramatically in future releases. Certain functions may be partially implemented or buggy.
-
 ## Overview
 
 Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@journeyapps/powersync-sdk-react-native) together with a Django backend.

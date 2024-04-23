@@ -3,7 +3,7 @@
     "baseUrl": "./",
     "esModuleInterop": true,
     "jsx": "react",
-    "rootDir": "src",
+    "rootDir": "../",
     "composite": true,
     "outDir": "./lib",
     "lib": ["esnext", "DOM"],
@@ -18,10 +18,5 @@
     "skipLibCheck": true,
     "target": "esnext"
   },
-  "references": [
-    {
-      "path": "../powersync-sdk-common"
-    }
-  ],
-  "include": ["src/**/*"]
+  "include": ["../src/**/*"]
 }
