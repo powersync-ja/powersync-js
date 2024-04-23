@@ -291,12 +291,12 @@ describe('Watch Tests', () => {
   it('should have onResult ordered execution', async () => {
     const abortController = new AbortController();
 
-    let onResultCount = 0;
+    let receivedUpdatesCount = 0;
     const completedOrder: number[] = [];
     const expectedCompletedOrder = [0, 1, 2, 3, 4];
 
     const onResult = async () => {
-      const id = onResultCount++;
+      const id = receivedUpdatesCount++;
       if (id == 0) {
         // Should block the entire onResult execution queue
         await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
@@ -321,27 +321,53 @@ describe('Watch Tests', () => {
     expect(completedOrder).toEqual(expectedCompletedOrder);
   });
 
-  it.only('should manage watch callback overflow', async () => {
+  it('should manage watch callback overflow', async () => {
     const abortController = new AbortController();
 
-    let count = 0;
-    const onResult = () => {
-      count++;
+    const updatesCount = 25;
+    let receivedUpdatesCount = 0;
+
+    const receivedUpdates = new Promise<void>((resolve) => {
+      const onResult = () => {
+        receivedUpdatesCount++;
+
+        if (receivedUpdatesCount == updatesCount) {
+          resolve();
+        }
+      };
+
+      powersync.watch(
+        'SELECT count() AS count FROM assets',
+        [],
+        { onResult: onResult },
+        { signal: abortController.signal, throttleMs: 1, manageWatchOverflow: false }
+      );
+    });
+
+    let receivedWithManagedOverflowCount = 0;
+    const onResultOverflow = () => {
+      receivedWithManagedOverflowCount++;
     };
 
+    const overflowAbortController = new AbortController();
     powersync.watch(
       'SELECT count() AS count FROM assets',
       [],
-      { onResult: onResult },
-      { signal: abortController.signal, throttleMs: 1 }
+      { onResult: onResultOverflow },
+      { signal: overflowAbortController.signal, throttleMs: 1, manageWatchOverflow: true }
     );
 
-    for (let i = 0; i < 30; i++) {
-      await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    // Perform a large number of inserts to trigger overflow
+    for (let i = 0; i < updatesCount; i++) {
+      powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
     }
 
-    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
-    // expect(completedOrder).toEqual(expectedCompletedOrder);
-    console.log(count);
+    await receivedUpdates;
+    abortController.abort();
+    overflowAbortController.abort();
+    expect(receivedUpdatesCount).toBe(updatesCount);
+
+    // Initial onResult plus one left after overflow was compacted
+    expect(receivedWithManagedOverflowCount).toBe(2);
   });
 });
