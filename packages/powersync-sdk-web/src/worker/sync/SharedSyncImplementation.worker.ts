@@ -1,6 +1,11 @@
 import * as Comlink from 'comlink';
 import { SharedSyncImplementation, SharedSyncClientEvent, ManualSharedSyncPayload } from './SharedSyncImplementation';
 import Logger from 'js-logger';
+import { Buffer } from 'buffer';
+
+if (typeof self.Buffer == 'undefined') {
+  self.Buffer = Buffer;
+}
 
 const _self: SharedWorkerGlobalScope = self as any;
 Logger.useDefaults();

@@ -8,6 +8,7 @@ import { RSocketConnector } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import { serialize, deserialize } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
+import { Buffer } from 'buffer';
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
@@ -34,13 +35,21 @@ export type AbstractRemoteOptions = {
    * e.g. `ws(s)://`
    */
   socketUrlTransformer: (url: string) => string;
+
+  /**
+   * Optionally provide the fetch implementation to use.
+   * Note that this usually needs to be bound to the global scope.
+   * Binding should be done before passing here.
+   */
+  fetchImplementation: typeof fetch;
 };
 
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   socketUrlTransformer: (url) =>
     url.replace(/^https?:\/\//, function (match) {
       return match === 'https://' ? 'wss://' : 'ws://';
-    })
+    }),
+  fetchImplementation: fetch.bind(globalThis)
 };
 
 export abstract class AbstractRemote {
@@ -56,6 +65,10 @@ export abstract class AbstractRemote {
       ...DEFAULT_REMOTE_OPTIONS,
       ...(options ?? {})
     };
+  }
+
+  get fetch() {
+    return this.options.fetchImplementation;
   }
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
@@ -107,7 +120,7 @@ export abstract class AbstractRemote {
   async get(path: string, headers?: Record<string, string>): Promise<any> {
     const request = await this.buildRequest(path);
 
-    const res = await fetch(request.url, {
+    const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {
         ...headers,
@@ -130,7 +143,7 @@ export abstract class AbstractRemote {
   ): Promise<any> {
     const request = await this.buildRequest(path);
 
-    const res = await fetch(request.url, {
+    const res = await this.fetch(request.url, {
       method: 'POST',
       headers: { ...headers, ...request.headers },
       body: JSON.stringify(data),
@@ -248,7 +261,7 @@ export abstract class AbstractRemote {
       }
     });
 
-    const res = await fetch(request.url, {
+    const res = await this.fetch(request.url, {
       method: 'POST',
       headers: { ...headers, ...request.headers },
       body: JSON.stringify(data),
