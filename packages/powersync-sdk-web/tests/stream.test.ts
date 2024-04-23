@@ -104,7 +104,7 @@ describe('Stream test', () => {
 
   it('PowerSync reconnect multiple connect calls', async () => {
     // This initially performs a connect call
-    const { powersync, waitForStream, remote } = await generateConnectedDatabase();
+    const { powersync, waitForStream } = await generateConnectedDatabase();
     expect(powersync.connected).true;
 
     // Call connect again, a new stream should be requested

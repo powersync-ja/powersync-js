@@ -1,5 +1,16 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.5.0
+
+### Minor Changes
+
+- 3aaee03: Added support for Full text search out of the box and enabled recursive triggers.
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-common@1.6.0
+
 ## 0.4.1
 
 ### Patch Changes

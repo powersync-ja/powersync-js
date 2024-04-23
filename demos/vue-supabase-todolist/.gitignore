@@ -25,3 +25,10 @@ components.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# PWA
+**/public/workbox-*.js
+**/public/sw.js
+**/public/swe-worker-*
+**/public/worker-*.js
+**/public/fallback-*.js

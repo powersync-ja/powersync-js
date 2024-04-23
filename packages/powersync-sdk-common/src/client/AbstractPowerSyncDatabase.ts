@@ -238,6 +238,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
     this.updateHasSynced();
+    await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
@@ -694,7 +695,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Note that the `onChange` callback member of the handler is required.
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    const { onResult, onError = this.options.logger?.error } = handler ?? {};
+    const { onResult, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
     }
@@ -828,7 +829,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Returns dispose function to stop watching.
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
-    const { onChange, onError = this.options.logger?.error } = handler ?? {};
+    const { onChange, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }
