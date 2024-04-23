@@ -63,9 +63,9 @@ export interface SQLWatchOptions {
    */
   rawTableNames?: boolean;
   /**
-   * Whether to manage high watermark overflow.
+   * Whether to compact the watch onResult calls when too many are queued up.
    */
-  manageWatchOverflow?: boolean;
+  compactWatchOverflow?: boolean;
 }
 
 export interface WatchOnChangeEvent {
@@ -721,7 +721,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         const l = stream.registerListener({
           highWater: async () => {
             // If high watermark is exceeded, remove all but the last item. Last item would have triggered for the lastest change.
-            if (resolvedOptions.manageWatchOverflow && stream.dataQueue.length > stream.highWatermark) {
+            if (resolvedOptions.compactWatchOverflow && stream.dataQueue.length > stream.highWatermark) {
               stream.dataQueue = stream.dataQueue.slice(stream.dataQueue.length - 1);
             }
           },

@@ -340,7 +340,7 @@ describe('Watch Tests', () => {
         'SELECT count() AS count FROM assets',
         [],
         { onResult: onResult },
-        { signal: abortController.signal, throttleMs: 1, manageWatchOverflow: false }
+        { signal: abortController.signal, throttleMs: 1, compactWatchOverflow: false }
       );
     });
 
@@ -354,7 +354,7 @@ describe('Watch Tests', () => {
       'SELECT count() AS count FROM assets',
       [],
       { onResult: onResultOverflow },
-      { signal: overflowAbortController.signal, throttleMs: 1, manageWatchOverflow: true }
+      { signal: overflowAbortController.signal, throttleMs: 1, compactWatchOverflow: true }
     );
 
     // Perform a large number of inserts to trigger overflow
