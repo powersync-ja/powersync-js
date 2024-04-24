@@ -31,12 +31,12 @@
     "event-iterator": "^2.0.0",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
-    "uuid": "^3.0.0"
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
-    "@types/uuid": "^3.0.0",
+    "@types/uuid": "^9.0.1",
     "typescript": "^5.1.3"
   }
 }
