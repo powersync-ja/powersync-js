@@ -4,6 +4,7 @@ import { usePowerSync } from './PowerSyncContext';
 
 /**
  * @deprecated use {@link useQuery} instead.
+ *
  * A hook to access the results of a watched query.
  * @example
  * export const Component = () => {

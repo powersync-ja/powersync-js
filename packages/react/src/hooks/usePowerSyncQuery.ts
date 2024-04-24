@@ -3,6 +3,7 @@ import { usePowerSync } from './PowerSyncContext';
 
 /**
  * @deprecated use {@link useQuery} instead.
+ *
  * A hook to access a single static query.
  * For an updated result, use {@link usePowerSyncWatchedQuery} instead.
  */
