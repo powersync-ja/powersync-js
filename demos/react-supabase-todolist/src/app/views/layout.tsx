@@ -25,13 +25,13 @@ import React from 'react';
 
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { usePowerSync, usePowerSyncStatus } from '@powersync/react';
+import { usePowerSync, useStatus } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
-  const status = usePowerSyncStatus();
+  const status = useStatus();
   const supabase = useSupabase();
   const navigate = useNavigate();
 

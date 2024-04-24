@@ -7,7 +7,7 @@ import prompt from 'react-native-prompt-android';
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
 import { useSystem } from '../../../library/powersync/system';
-import { usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { useQuery } from '@powersync/react-native';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 
 const description = (total: number, completed: number = 0) => {
@@ -16,7 +16,7 @@ const description = (total: number, completed: number = 0) => {
 
 const ListsViewWidget: React.FC = () => {
   const system = useSystem();
-  const listRecords = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
+  const { data: listRecords } = useQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
       SELECT
         ${LIST_TABLE}.*, COUNT(${TODO_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODO_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
       FROM

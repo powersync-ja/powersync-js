@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { PowerSyncContext } from './PowerSyncContext';
 
 /**
+ * @deprecated Use {@link useStatus} instead.
  * Custom hook that provides access to the current status of PowerSync.
  * @returns The PowerSync Database status.
  * @example

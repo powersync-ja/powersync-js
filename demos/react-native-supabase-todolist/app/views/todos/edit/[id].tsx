@@ -1,5 +1,5 @@
 import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
@@ -34,11 +34,11 @@ const TodoView: React.FC = () => {
   const params = useLocalSearchParams<{ id: string }>();
   const listID = params.id;
 
-  const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [
-    listID
-  ]);
+  const {
+    data: [listRecord]
+  } = useQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [listID]);
 
-  const todos = usePowerSyncWatchedQuery<TodoEntry>(
+  const { data: todos } = useQuery<TodoEntry>(
     `
         SELECT
             ${TODO_TABLE}.id AS todo_id,

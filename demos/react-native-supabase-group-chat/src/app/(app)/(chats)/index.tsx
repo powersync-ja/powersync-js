@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { MessageSquare, Plus } from '@tamagui/lucide-icons';
 import { Link, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -24,7 +24,7 @@ export default function ChatsIndex() {
     return unsubscribe;
   }, [navigation]);
 
-  const chats = usePowerSyncWatchedQuery(
+  const { data: chats } = useQuery(
     `SELECT profiles.id as partner_id, profiles.name as name, profiles.handle as handle, 'contact' as type, m.created_at as last_message_at FROM chats LEFT JOIN profiles on chats.id = profiles.id LEFT JOIN (SELECT * FROM messages WHERE (sender_id, recipient_id, created_at) IN (SELECT sender_id, recipient_id, MAX(created_at) FROM messages GROUP BY group_id)) as m ON m.recipient_id = chats.id OR m.sender_id = chats.id WHERE (name LIKE '%' || ?1 || '%' OR handle LIKE '%' || ?1 || '%') GROUP BY profiles.id UNION
     SELECT groups.id as partner_id, groups.name as name, '' as handle, 'group' as type, m.created_at as last_message_at FROM groups LEFT JOIN (SELECT * FROM messages WHERE (group_id, created_at) IN (SELECT group_id, MAX(created_at) FROM messages GROUP BY group_id)) as m ON m.group_id = groups.id WHERE (name LIKE '%' || ?1 || '%') GROUP BY groups.id ORDER BY last_message_at DESC`,
     [search]

@@ -47,10 +47,10 @@ export const TodoListDisplay = () => {
 The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
 
 ```JSX
-import { usePowerSyncStatus } from "@powersync/react";
+import { useStatus } from "@powersync/react";
 
 const Component = () => {
-  const status = usePowerSyncStatus();
+  const status = useStatus();
 
   return <div>
     status.connected ? 'wifi' : 'wifi-off'

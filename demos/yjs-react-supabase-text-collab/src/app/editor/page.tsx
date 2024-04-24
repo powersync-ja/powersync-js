@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
+import { usePowerSync, useQuery } from '@powersync/react';
 import { Box, Container, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -37,7 +37,7 @@ export default function EditorPage() {
   }, [ydoc, powerSync]);
 
   // watch for total number of document updates changing to update the counter
-  const docUpdatesCount = usePowerSyncWatchedQuery(
+  const { data: docUpdatesCount } = useQuery(
     'SELECT COUNT(*) as total_updates FROM document_updates WHERE document_id=?',
     [documentId]
   );

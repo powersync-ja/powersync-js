@@ -1,7 +1,7 @@
 import React from 'react';
-import { act, renderHook } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react';
 import { vi, describe, expect, it, afterEach } from 'vitest';
-import { usePowerSyncStatus } from '../src/hooks/usePowerSyncStatus';
+import { useStatus } from '../src/hooks/useStatus';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 
 const mockPowerSync = {
@@ -15,7 +15,7 @@ vi.mock('./PowerSyncContext', () => ({
   useContext: vi.fn(() => mockPowerSync)
 }));
 
-describe('usePowerSyncStatus', () => {
+describe('useStatus', () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
@@ -25,7 +25,7 @@ describe('usePowerSyncStatus', () => {
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
 
-    const { result } = renderHook(() => usePowerSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useStatus(), { wrapper });
     expect(result.current).toEqual(mockPowerSync.currentStatus);
   });
 
@@ -35,7 +35,7 @@ describe('usePowerSyncStatus', () => {
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
 
-    const { result } = renderHook(() => usePowerSyncStatus(), { wrapper });
+    const { result } = renderHook(() => useStatus(), { wrapper });
 
     act(() => {
       mockPowerSync.registerListener.mockResolvedValue({ statusChanged: vi.fn(() => 'updated') });
@@ -49,7 +49,7 @@ describe('usePowerSyncStatus', () => {
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
 
-    const { unmount } = renderHook(() => usePowerSyncStatus(), { wrapper });
+    const { unmount } = renderHook(() => useStatus(), { wrapper });
     const listenerUnsubscribe = mockPowerSync.registerListener;
 
     unmount();
