@@ -22,7 +22,6 @@ export type WatchedQueryResult<T> = {
 /**
  * A hook to access the results of a watched query.
  * @example
- * ```tsx
  * export const Component = () => {
  * const { data: lists }  = useQuery('SELECT * from lists');
  *
@@ -32,7 +31,6 @@ export type WatchedQueryResult<T> = {
  *   ))}
  * </View>
  * }
- * ```
  */
 export const useQuery = <T = any>(
   sqlStatement: string,
