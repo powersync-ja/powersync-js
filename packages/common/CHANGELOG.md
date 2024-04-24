@@ -1,5 +1,13 @@
 # @powersync/common
 
+## 1.6.1
+
+### Patch Changes
+
+- b902077: Updated UUID dependency.
+- ffe37cf: Update package names from @journey-apps/powersync- to @powersync/
+- f9b9a96: Fixed default onError callback for watch() and onChange() that used an unbounded member.
+
 ## 1.6.0
 
 ### Minor Changes

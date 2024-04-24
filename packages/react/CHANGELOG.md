@@ -1,5 +1,19 @@
 # @powersync/react
 
+## 1.2.0
+
+### Minor Changes
+
+- 385edf8: Add `usePowerSyncStatus` hook
+
+### Patch Changes
+
+- ffe37cf: Update package names from @journey-apps/powersync- to @powersync/
+- Updated dependencies [b902077]
+- Updated dependencies [ffe37cf]
+- Updated dependencies [f9b9a96]
+  - @powersync/common@1.6.1
+
 ## 1.1.3
 
 ### Patch Changes
