@@ -1,5 +1,5 @@
 ---
-"vue-supabase-todolist": patch
+'vue-supabase-todolist': patch
 ---
 
 Added PWA support.

@@ -25,7 +25,7 @@ import React from 'react';
 
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import { usePowerSync, usePowerSyncStatus } from '@journeyapps/powersync-react';
+import { usePowerSync, usePowerSyncStatus } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 

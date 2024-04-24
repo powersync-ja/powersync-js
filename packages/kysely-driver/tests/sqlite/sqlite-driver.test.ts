@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import * as SUT from '../../src/sqlite/sqlite-driver';
 import { PowerSyncConnection } from '../../src/sqlite/sqlite-connection';
 import { getPowerSyncDb } from '../setup/db';

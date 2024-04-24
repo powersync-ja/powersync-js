@@ -20,7 +20,7 @@
   },
   "references": [
     {
-      "path": "../powersync-sdk-common"
+      "path": "../common"
     }
   ]
 }

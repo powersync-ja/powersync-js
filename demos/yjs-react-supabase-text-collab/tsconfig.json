@@ -20,7 +20,7 @@
   "exclude": ["node_modules", "supabase"],
   "references": [
     {
-      "path": "../../packages/powersync-sdk-web"
+      "path": "../../packages/web"
     }
   ]
 }

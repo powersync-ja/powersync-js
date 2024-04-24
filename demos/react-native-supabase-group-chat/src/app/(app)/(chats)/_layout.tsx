@@ -1,4 +1,4 @@
-import { usePowerSync } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSync } from '@powersync/react-native';
 import { UserCog } from '@tamagui/lucide-icons';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';

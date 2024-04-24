@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { App, MaybeRef, Ref, inject, provide, ref, hasInjectionContext } from 'vue';
 import { setupTopLevelWarningMessage } from './messages';
 

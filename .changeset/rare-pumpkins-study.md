@@ -1,5 +1,5 @@
 ---
-"@journeyapps/powersync-sdk-common": patch
+'@journeyapps/powersync-sdk-common': patch
 ---
 
 Fixed default onError callback for watch() and onChange() that used an unbounded member.

@@ -1,7 +1,7 @@
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -76,7 +76,7 @@ const TodoEditSection = () => {
     await powerSync.execute(
       `INSERT INTO
                 ${TODOS_TABLE}
-                    (id, created_at, created_by, description, list_id) 
+                    (id, created_at, created_by, description, list_id)
                 VALUES
                     (uuid(), datetime(), ?, ?, ?)`,
       [userID, description, listID!]

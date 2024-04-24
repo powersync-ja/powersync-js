@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Input, Label, Switch, Text, XStack, YStack } from 'tamagui';
 

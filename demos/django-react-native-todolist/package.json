@@ -1,5 +1,5 @@
 {
-  "name": "powersync-example",
+  "name": "django-react-native-todolist",
   "version": "1.0.0",
   "main": "./index.js",
   "scripts": {
@@ -10,9 +10,9 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/vector-icons": "^14.0.0",
-    "@journeyapps/powersync-sdk-react-native": "workspace:*",
-    "@journeyapps/powersync-react": "workspace:*",
-    "@journeyapps/powersync-sdk-common": "workspace:*",
+    "@powersync/react-native": "workspace:*",
+    "@powersync/react": "workspace:*",
+    "@powersync/common": "workspace:*",
     "@journeyapps/react-native-quick-sqlite": "^1.1.4",
     "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/masked-view": "^0.1.11",

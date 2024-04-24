@@ -27,7 +27,7 @@
   },
   "homepage": "https://docs.powersync.com/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "workspace:*"
+    "@powersync/common": "workspace:*"
   },
   "peerDependencies": {
     "vue": "*"

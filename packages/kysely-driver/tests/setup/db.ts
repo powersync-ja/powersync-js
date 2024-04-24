@@ -1,4 +1,4 @@
-import { Schema, TableV2, WASQLitePowerSyncDatabaseOpenFactory, column } from '@journeyapps/powersync-sdk-web';
+import { Schema, TableV2, WASQLitePowerSyncDatabaseOpenFactory, column } from '@powersync/web';
 import { wrapPowerSyncWithKysely } from '../../src/sqlite/db';
 import { Database } from './types';
 

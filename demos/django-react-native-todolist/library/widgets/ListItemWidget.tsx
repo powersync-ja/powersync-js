@@ -35,7 +35,8 @@ export const ListItemWidget: React.FC<{
               pathname: 'views/todos/edit/[id]',
               params: { id: model.id }
             });
-          }}></ListItem.Chevron>
+          }}
+        ></ListItem.Chevron>
       </ListItem>
     </View>
   );

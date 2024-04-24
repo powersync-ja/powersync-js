@@ -17,7 +17,7 @@
   "include": ["src/**/*"],
   "references": [
     {
-      "path": "../powersync-sdk-common"
+      "path": "../common"
     }
   ]
 }

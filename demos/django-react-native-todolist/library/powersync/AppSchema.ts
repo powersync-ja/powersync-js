@@ -1,4 +1,4 @@
-import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@journeyapps/powersync-sdk-react-native';
+import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/react-native';
 
 export const AppSchema = new Schema([
   new Table({

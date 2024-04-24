@@ -25,11 +25,11 @@
     "test": "pnpm build && vitest"
   },
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "workspace:*",
+    "@powersync/common": "workspace:*",
     "kysely": "^0.27.2"
   },
   "devDependencies": {
-    "@journeyapps/powersync-sdk-web": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "^0.1.1",
     "@types/node": "^20.11.17",
     "@vitest/browser": "^1.3.1",
