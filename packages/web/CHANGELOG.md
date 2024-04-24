@@ -1,5 +1,15 @@
 # @powersync/web
 
+## 0.5.1
+
+### Patch Changes
+
+- ffe37cf: Update package names from @journey-apps/powersync- to @powersync/
+- Updated dependencies [b902077]
+- Updated dependencies [ffe37cf]
+- Updated dependencies [f9b9a96]
+  - @powersync/common@1.6.1
+
 ## 0.5.0
 
 ### Minor Changes

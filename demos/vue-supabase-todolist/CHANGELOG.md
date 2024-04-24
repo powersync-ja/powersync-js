@@ -1,5 +1,14 @@
 # vue-supabase-todolist
 
+## 0.0.4
+
+### Patch Changes
+
+- 93d9e7d: Added PWA support.
+- Updated dependencies [ffe37cf]
+  - @powersync/web@0.5.1
+  - @powersync/vue@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes
