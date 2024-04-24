@@ -24,7 +24,7 @@ export type WatchedQueryResult<T> = {
  * @example
  * ```tsx
  * export const Component = () => {
- * const lists = useQuery('SELECT * from lists');
+ * const { data: lists }  = useQuery('SELECT * from lists');
  *
  * return <View>
  *   {lists.map((l) => (
