@@ -1,5 +1,18 @@
 # @powersync/react-native
 
+## 1.4.3
+
+### Patch Changes
+
+- ffe37cf: Update package names from @journey-apps/powersync- to @powersync/
+- b902077: Updated react-native-quick-sqlite dependency.
+- Updated dependencies [385edf8]
+- Updated dependencies [b902077]
+- Updated dependencies [ffe37cf]
+- Updated dependencies [f9b9a96]
+  - @powersync/react@1.2.0
+  - @powersync/common@1.6.1
+
 ## 1.4.2
 
 ### Patch Changes
