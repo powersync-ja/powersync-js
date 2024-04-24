@@ -100,8 +100,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0
       '@journeyapps/react-native-quick-sqlite':
-        specifier: 1.1.3
-        version: 1.1.3(react-native@0.73.6)(react@18.2.0)
+        specifier: ^1.1.4
+        version: 1.1.4(react-native@0.73.6)(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -229,8 +229,8 @@ importers:
         specifier: ^3.1.2
         version: 3.1.2
       uuid:
-        specifier: 3.4.0
-        version: 3.4.0
+        specifier: ^9.0.1
+        version: 9.0.1
       web-streams-polyfill:
         specifier: ^3.3.3
         version: 3.3.3
@@ -582,8 +582,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.0
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.3
-        version: 1.1.3(react-native@0.73.2)(react@18.2.0)
+        specifier: ^1.1.4
+        version: 1.1.4(react-native@0.73.2)(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -714,8 +714,8 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0
       uuid:
-        specifier: 3.4.0
-        version: 3.4.0
+        specifier: ^9.0.1
+        version: 9.0.1
       web-streams-polyfill:
         specifier: ^3.3.2
         version: 3.3.2
@@ -739,8 +739,8 @@ importers:
         specifier: ~18.2.57
         version: 18.2.57
       '@types/uuid':
-        specifier: 3.4.11
-        version: 3.4.11
+        specifier: ^9.0.1
+        version: 9.0.8
       babel-preset-expo:
         specifier: ^10.0.1
         version: 10.0.1(@babel/core@7.23.9)
@@ -1139,8 +1139,8 @@ importers:
         specifier: ^4.17.21
         version: 4.17.21
       uuid:
-        specifier: ^3.0.0
-        version: 3.4.0
+        specifier: ^9.0.1
+        version: 9.0.1
     devDependencies:
       '@types/lodash':
         specifier: ^4.14.197
@@ -1149,8 +1149,8 @@ importers:
         specifier: ^20.5.9
         version: 20.12.5
       '@types/uuid':
-        specifier: ^3.0.0
-        version: 3.4.11
+        specifier: ^9.0.1
+        version: 9.0.8
       typescript:
         specifier: ^5.1.3
         version: 5.4.5
@@ -1260,8 +1260,8 @@ importers:
         version: 3.3.3
     devDependencies:
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.1.3
-        version: 1.1.3(react-native@0.72.4)(react@18.2.0)
+        specifier: ^1.1.4
+        version: 1.1.4(react-native@0.72.4)(react@18.2.0)
       '@types/async-lock':
         specifier: ^1.4.0
         version: 1.4.2
@@ -10991,30 +10991,6 @@ packages:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      lodash: 4.17.21
-      react: 18.2.0
-      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.4)(react@18.2.0)
-      uuid: 3.4.0
-    dev: true
-
-  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.73.2)(react@18.2.0):
-    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      lodash: 4.17.21
-      react: 18.2.0
-      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
-      uuid: 3.4.0
-    dev: false
-
   /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.73.4)(react@18.2.0):
     resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
     peerDependencies:
@@ -11027,8 +11003,32 @@ packages:
       uuid: 3.4.0
     dev: false
 
-  /@journeyapps/react-native-quick-sqlite@1.1.3(react-native@0.73.6)(react@18.2.0):
-    resolution: {integrity: sha512-dN8pw3LoqnWK9xwRFFKXVkfeY9SOFgKLyDkd2XbjYErRSF2BeklBba6GAbGkgX9WU4hI4ppGoAmaZD8VxBHLTA==}
+  /@journeyapps/react-native-quick-sqlite@1.1.4(react-native@0.72.4)(react@18.2.0):
+    resolution: {integrity: sha512-EygtxGTKNWygXrDrUNzMNvHMN/gg8WEfP0IjmxzNIIhAqm5XrUuYhNeQniAd4sP+hP76yfDKEA/+P2VsNg15kA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      lodash: 4.17.21
+      react: 18.2.0
+      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.4)(react@18.2.0)
+      uuid: 9.0.1
+    dev: true
+
+  /@journeyapps/react-native-quick-sqlite@1.1.4(react-native@0.73.2)(react@18.2.0):
+    resolution: {integrity: sha512-EygtxGTKNWygXrDrUNzMNvHMN/gg8WEfP0IjmxzNIIhAqm5XrUuYhNeQniAd4sP+hP76yfDKEA/+P2VsNg15kA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      lodash: 4.17.21
+      react: 18.2.0
+      react-native: 0.73.2(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
+      uuid: 9.0.1
+    dev: false
+
+  /@journeyapps/react-native-quick-sqlite@1.1.4(react-native@0.73.6)(react@18.2.0):
+    resolution: {integrity: sha512-EygtxGTKNWygXrDrUNzMNvHMN/gg8WEfP0IjmxzNIIhAqm5XrUuYhNeQniAd4sP+hP76yfDKEA/+P2VsNg15kA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -11036,7 +11036,7 @@ packages:
       lodash: 4.17.21
       react: 18.2.0
       react-native: 0.73.6(@babel/core@7.24.0)(@babel/preset-env@7.24.4)(react@18.2.0)
-      uuid: 3.4.0
+      uuid: 9.0.1
     dev: false
 
   /@journeyapps/wa-sqlite@0.0.2:
@@ -17070,10 +17070,6 @@ packages:
 
   /@types/unist@3.0.2:
     resolution: {integrity: sha512-dqId9J8K/vGi5Zr7oo212BGii5m3q5Hxlkwy3WpYuKPklmBEvsbMYYyLxAQpSffdLl/gdW0XUpKWFvYmyoWCoQ==}
-
-  /@types/uuid@3.4.11:
-    resolution: {integrity: sha512-CJNkbEu4IdVuBMRVaNC2GjASgJK7ziqDlVXWuJ1pvhOLADl7nzxhTKjHRdOmo2SuXuygcWBmzgYgn9foTX0UiA==}
-    dev: true
 
   /@types/uuid@9.0.8:
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
@@ -35140,6 +35136,7 @@ packages:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
     hasBin: true
+    dev: false
 
   /uuid@7.0.3:
     resolution: {integrity: sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==}
