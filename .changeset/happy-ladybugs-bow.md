@@ -1,5 +1,5 @@
 ---
-"@journeyapps/powersync-sdk-common": patch
+"@powersync/common": patch
 ---
 
 Updated UUID dependency.
