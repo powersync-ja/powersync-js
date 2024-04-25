@@ -6,11 +6,7 @@ const customers = new TableV2({
 });
 
 export const AppSchema = new Schema({
-  customers,
-  // TODO revert this before merge
-  lists: new TableV2({
-    name: column.text
-  })
+  customers
 });
 
 export type Database = (typeof AppSchema)['types'];

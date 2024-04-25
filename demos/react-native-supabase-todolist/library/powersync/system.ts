@@ -41,7 +41,9 @@ export class System {
       schema: AppSchema,
       dbFilename: 'sqlite.db',
       streamOptions: {
-        connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+        // HTTP by default. Change to below for web socket connections
+        // connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+        connectionMethod: SyncStreamConnectionMethod.HTTP
       }
     });
 

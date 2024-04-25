@@ -8,6 +8,13 @@ import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
+import { Buffer } from 'buffer';
+
+// Polyfill for web sockets
+if (typeof self.Buffer == 'undefined') {
+  self.Buffer = Buffer;
+}
+
 // eslint-disable-next-line react-hooks/rules-of-hooks
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
@@ -16,13 +23,7 @@ const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'powersync2.db',
   schema: AppSchema,
   flags: {
-    disableSSRWarning: true,
-    // Makes debugging easier for connection
-    // TODO enable again before merge
-    enableMultiTabs: false
-  },
-  streamOptions: {
-    connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+    disableSSRWarning: true
   }
 }).getInstance();
 const connector = new BackendConnector();
