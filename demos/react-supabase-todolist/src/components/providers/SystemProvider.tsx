@@ -2,7 +2,7 @@ import { NavigationPanelContextProvider } from '@/components/navigation/Navigati
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { PowerSyncContext } from '@powersync/react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { SyncStreamConnectionMethod, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
@@ -14,7 +14,10 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'example.db',
-  schema: AppSchema
+  schema: AppSchema,
+  streamOptions: {
+    connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+  }
 }).getInstance();
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {

@@ -116,6 +116,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
       dbName: this.options.identifier!,
       streamOptions: {
+        connectionMethod: this.webOptions.connectionMethod,
         crudUploadThrottleMs,
         identifier,
         retryDelayMs,

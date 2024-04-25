@@ -17,6 +17,7 @@ export type RemoteConnector = {
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
 const SYNC_QUEUE_REQUEST_N = 10;
+const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
@@ -189,7 +190,14 @@ export abstract class AbstractRemote {
     });
 
     const rsocket = await connector.connect();
-    const stream = new DataStream();
+    const stream = new DataStream({
+      logger: this.logger,
+      pressure: {
+        lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
+      }
+    });
+    // We initially request this amount and expect these to arrive eventually
+    let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
     const res = rsocket.requestStream(
       {
         data: Buffer.from(serialize(options.data)),
@@ -199,7 +207,7 @@ export abstract class AbstractRemote {
           })
         )
       },
-      1,
+      SYNC_QUEUE_REQUEST_N, // The initial N amount
       {
         onError: (e) => {
           this.logger.error(e);
@@ -210,6 +218,8 @@ export abstract class AbstractRemote {
           if (!data) {
             return;
           }
+          // Less events are now pending
+          pendingEventsCount--;
           const deserializedData = deserialize(data);
           stream.enqueueData(deserializedData);
         },
@@ -222,7 +232,9 @@ export abstract class AbstractRemote {
 
     const l = stream.registerListener({
       lowWater: async () => {
-        res.request(SYNC_QUEUE_REQUEST_N);
+        // Request to fill up the queue
+        res.request(SYNC_QUEUE_REQUEST_N - pendingEventsCount);
+        pendingEventsCount = SYNC_QUEUE_REQUEST_N;
       },
       closed: () => {
         l?.();

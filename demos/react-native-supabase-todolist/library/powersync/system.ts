@@ -17,6 +17,7 @@ import { type AttachmentRecord } from '@powersync/attachments';
 
 import { Buffer } from '@craftzdog/react-native-buffer';
 
+// Polyfills for Web sockets
 if (typeof global.Buffer == 'undefined') {
   // @ts-ignore If using TypeScript
   global.Buffer = Buffer;
@@ -40,7 +41,7 @@ export class System {
       schema: AppSchema,
       dbFilename: 'sqlite.db',
       streamOptions: {
-        connectionMethod: SyncStreamConnectionMethod.HTTP
+        connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
       }
     });
 
