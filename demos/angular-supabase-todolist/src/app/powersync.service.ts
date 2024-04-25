@@ -9,7 +9,7 @@ import {
   Schema,
   Table,
   WASQLitePowerSyncDatabaseOpenFactory
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 
 export interface ListRecord {
   id: string;

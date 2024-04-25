@@ -8,12 +8,7 @@ import {
   type User
 } from '@supabase/supabase-js';
 import { environment } from '../../environment';
-import {
-  type AbstractPowerSyncDatabase,
-  type CrudEntry,
-  UpdateType,
-  PowerSyncBackendConnector
-} from '@journeyapps/powersync-sdk-web';
+import { type AbstractPowerSyncDatabase, type CrudEntry, UpdateType, PowerSyncBackendConnector } from '@powersync/web';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -118,7 +113,7 @@ export class SupabaseService implements PowerSyncBackendConnector {
     try {
       // Note: If transactional consistency is important, use database functions
       // or edge functions to process the entire transaction in a single call.
-      for (let op of transaction.crud) {
+      for (const op of transaction.crud) {
         lastOp = op;
         const table = this.supabase.from(op.table);
         let result: any;

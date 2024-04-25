@@ -1,0 +1,7 @@
+{
+  "extends": "./node_modules/expo/tsconfig.base.json",
+  "compilerOptions": {
+    "strict": true,
+    "composite": true
+  }
+}

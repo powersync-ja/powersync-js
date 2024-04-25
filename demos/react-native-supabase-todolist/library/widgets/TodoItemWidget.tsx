@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, View, Modal, StyleSheet } from 'react-native'
 import { ListItem, Button, Icon, Image } from 'react-native-elements';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
-import { AttachmentRecord } from '@journeyapps/powersync-attachments';
+import { AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import { useSystem } from '../powersync/system';
 

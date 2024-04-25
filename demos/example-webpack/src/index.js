@@ -1,10 +1,4 @@
-import {
-  Column,
-  ColumnType,
-  WASQLitePowerSyncDatabaseOpenFactory,
-  Schema,
-  Table
-} from '@journeyapps/powersync-sdk-web';
+import { Column, ColumnType, WASQLitePowerSyncDatabaseOpenFactory, Schema, Table } from '@powersync/web';
 
 /**
  * A placeholder connector which doesn't do anything.
@@ -44,7 +38,7 @@ const openDatabase = async () => {
 
   console.log(
     `Attempting to connect in order to verify web workers are correctly loaded.
-    This doesn't use any actual network credentials. 
+    This doesn't use any actual network credentials.
     Network errors will be shown: these can be ignored.`
   );
 

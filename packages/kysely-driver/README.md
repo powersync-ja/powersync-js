@@ -20,7 +20,7 @@ Table column object type definitions are not yet available in JavaScript.
 
 ```js
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { appSchema } from './schema';
 
 const factory = new WASQLitePowerSyncDatabaseOpenFactory({
@@ -38,7 +38,7 @@ See an [example](https://github.com/powersync-ja/powersync-js/blob/main/demos/re
 
 ```TypeScript
 import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
-import { WASQLitePowerSyncDatabaseOpenFactory } from "@journeyapps/powersync-sdk-web";
+import { WASQLitePowerSyncDatabaseOpenFactory } from "@powersync/web";
 
 // Define schema as in: https://docs.powersync.com/usage/installation/client-side-setup/define-your-schema
 import { appSchema } from "./schema";

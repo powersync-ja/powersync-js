@@ -2,8 +2,8 @@
 
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { BackendConnector } from '@/library/powersync/BackendConnector';
-import { PowerSyncContext } from '@journeyapps/powersync-react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { PowerSyncContext } from '@powersync/react';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';

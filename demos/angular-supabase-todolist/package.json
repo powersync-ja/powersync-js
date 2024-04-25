@@ -1,6 +1,6 @@
 {
-  "name": "PowerSync Angular Demo",
-  "version": "0.0.7",
+  "name": "angular-supabase-todolist",
+  "version": "0.0.9",
   "scripts": {
     "ng": "ng",
     "serve": "ng serve",
@@ -20,7 +20,7 @@
     "@angular/platform-browser-dynamic": "^17.0.4",
     "@angular/router": "^17.0.4",
     "@angular/service-worker": "^17.0.4",
-    "@journeyapps/powersync-sdk-web": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "^0.0.2",
     "@supabase/supabase-js": "^2.38.5",
     "rxjs": "~7.8.1",

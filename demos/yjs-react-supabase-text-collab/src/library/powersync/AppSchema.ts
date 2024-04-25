@@ -1,4 +1,4 @@
-import { column, Schema, TableV2 } from '@journeyapps/powersync-sdk-web';
+import { column, Schema, TableV2 } from '@powersync/web';
 
 const documents = new TableV2({
   title: column.text,

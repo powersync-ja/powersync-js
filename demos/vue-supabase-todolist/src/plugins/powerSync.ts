@@ -1,5 +1,5 @@
 import { AppSchema } from '@/library/powersync/AppSchema';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-web';
+import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { createPowerSyncPlugin } from '@powersync/vue';
 
 export const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({

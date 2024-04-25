@@ -1,0 +1,42 @@
+{
+  "name": "@powersync/common",
+  "version": "1.6.1",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "API definitions for JourneyApps PowerSync",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com/resources/api-reference",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "async-mutex": "^0.4.0",
+    "can-ndjson-stream": "^1.0.2",
+    "event-iterator": "^2.0.0",
+    "js-logger": "^1.6.1",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.197",
+    "@types/node": "^20.5.9",
+    "@types/uuid": "^9.0.1",
+    "typescript": "^5.1.3"
+  }
+}

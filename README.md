@@ -12,19 +12,19 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
 ## Monorepo Structure: Packages
 
-- [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
+- [packages/react-native](./packages/react-native/README.md)
 
-  - React Native SDK implementation (extension of `packages/powersync-sdk-common`)
+  - React Native SDK implementation (extension of `packages/common`)
 
-- [packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)
+- [packages/web](./packages/web/README.md)
 
-  - JS Web SDK implementation (extension of `packages/powersync-sdk-common`)
+  - JS Web SDK implementation (extension of `packages/common`)
 
-- [packages/powersync-react](./packages/powersync-react/README.md)
+- [packages/react](./packages/react/README.md)
 
   - React integration for PowerSync.
 
-- [packages/powersync-attachments](./packages/powersync-attachments/README.md)
+- [packages/attachments](./packages/attachments/README.md)
 
   - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
@@ -32,18 +32,25 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
   - Kysely integration (ORM) for React Native and JavaScript/TypeScript projects.
 
-- [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
+- [packages/common](./packages/common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
 ## Demo Apps / Example Projects
 
 Demo applications are located in the [`demos/`](./demos/) directory. Also see our [Demo Apps / Example Projects](https://docs.powersync.com/resources/demo-apps-example-projects) gallery which lists all projects by the backend and client-side framework they use.
 
+### React Native
+
+- [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist): A React Native to-do list example app using a Supabase backend.
+- [demos/django-react-native-todolist](./demos/django-react-native-todolist) A React Native to-do list example app using a Django backend.
+
+### Web
+
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/yjs-react-supabase-text-collab](./demos/yjs-react-supabase-text-collab/README.md): A React real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
-- [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist): A React Native to-do list example app using a Supabase backend.
 - [demos/vue-supabase-todolist](./demos/vue-supabase-todolist/README.md): A Vue to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/angular-supabase-todolist](./demos/angular-supabase-todolist/README.md) An Angular to-do list example app using the PowerSync Web SDK and a Supabase backend.
+
 - [demos/example-webpack](./demos/example-webpack/README.md): A minimal example demonstrating bundling with Webpack.
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
 - [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.

@@ -1,6 +1,6 @@
 {
-  "name": "@journeyapps/powersync-react-supabase-todolist",
-  "version": "0.2.4",
+  "name": "react-supabase-todolist",
+  "version": "0.2.6",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -9,11 +9,12 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@journeyapps/powersync-react": "workspace:*",
-    "@journeyapps/powersync-sdk-web": "workspace:*",
-    "@journeyapps/wa-sqlite": "~0.1.1",
+    "@powersync/react": "workspace:*",
+    "@powersync/web": "workspace:*",
+    "@journeyapps/wa-sqlite": "~0.2.0",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
+    "@mui/icons-material": "^5.15.12",
     "@supabase/supabase-js": "^2.39.7",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",

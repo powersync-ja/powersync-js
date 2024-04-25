@@ -1,5 +1,30 @@
 # react-native-supabase-todolist
 
+## 1.1.4
+
+### Patch Changes
+
+- b902077: Updated UUID and react-native-quick-sqlite dependencies. Assumes that the recommended react native polyfills have been installed.
+- Updated dependencies [385edf8]
+- Updated dependencies [b902077]
+- Updated dependencies [ffe37cf]
+- Updated dependencies [f9b9a96]
+- Updated dependencies [b902077]
+  - @powersync/react@1.2.0
+  - @powersync/common@1.6.1
+  - @powersync/react-native@1.4.3
+  - @powersync/attachments@2.0.4
+
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-common@1.6.0
+  - @journeyapps/powersync-attachments@2.0.3
+  - @journeyapps/powersync-react@1.1.3
+  - @journeyapps/powersync-sdk-react-native@1.4.2
+
 ## 1.1.2
 
 ### Patch Changes

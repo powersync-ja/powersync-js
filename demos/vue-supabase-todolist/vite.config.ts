@@ -5,6 +5,7 @@ import Vue from '@vitejs/plugin-vue';
 import ViteFonts from 'unplugin-fonts/vite';
 import Components from 'unplugin-vue-components/vite';
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // Utilities
 import { fileURLToPath, URL } from 'node:url';
@@ -29,6 +30,41 @@ export default defineConfig({
           }
         ]
       }
+    }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['powersync-logo.svg', 'supabase-logo.png', 'favicon.ico'],
+      manifest: {
+        theme_color: '#c44eff',
+        background_color: '#c44eff',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        name: 'PowerSync Vue Demo',
+        short_name: 'PowerSync Vue',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-256x256.png',
+            sizes: '256x256',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-384x384.png',
+            sizes: '384x384',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
     })
   ],
   define: { 'process.env': {} },
@@ -41,13 +77,13 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@journeyapps/powersync-sdk-web'],
+    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
     include: [
-      '@journeyapps/powersync-sdk-common > uuid',
-      '@journeyapps/powersync-sdk-web > event-iterator',
-      '@journeyapps/powersync-sdk-web > js-logger',
-      '@journeyapps/powersync-sdk-web > lodash/throttle',
-      '@journeyapps/powersync-sdk-web > can-ndjson-stream'
+      '@powersync/web > uuid',
+      '@powersync/web > event-iterator',
+      '@powersync/web > js-logger',
+      '@powersync/web > lodash/throttle',
+      '@powersync/web > can-ndjson-stream'
     ]
   },
   worker: {
