@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@journeyapps/powersync-sdk-web';
+import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 
 export class BackendConnector implements PowerSyncBackendConnector {
   private powersyncUrl: string | undefined;

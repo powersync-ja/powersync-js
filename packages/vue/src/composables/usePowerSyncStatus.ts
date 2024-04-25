@@ -1,4 +1,4 @@
-import { SyncStatus } from '@journeyapps/powersync-sdk-common';
+import { SyncStatus } from '@powersync/common';
 import { onUnmounted, ref } from 'vue';
 import { usePowerSync } from './powerSync';
 

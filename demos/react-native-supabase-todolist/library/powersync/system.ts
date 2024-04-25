@@ -6,14 +6,14 @@ import {
   AbstractPowerSyncDatabase,
   RNQSPowerSyncDatabaseOpenFactory,
   SyncStreamConnectionMethod
-} from '@journeyapps/powersync-sdk-react-native';
+} from '@powersync/react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
-import { type AttachmentRecord } from '@journeyapps/powersync-attachments';
+import { type AttachmentRecord } from '@powersync/attachments';
 
 import { Buffer } from '@craftzdog/react-native-buffer';
 

@@ -3,7 +3,7 @@ import { Alert, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation } from 'expo-router';
 import { Header } from 'react-native-elements';
-import { usePowerSyncStatus } from '@journeyapps/powersync-react';
+import { usePowerSyncStatus } from '@powersync/react';
 import { DrawerActions } from '@react-navigation/native';
 import { useSystem } from '../powersync/system';
 
@@ -40,7 +40,8 @@ export const HeaderWidget: React.FC<{
             system.attachmentQueue.trigger();
             Alert.alert(
               'Status',
-              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${status?.lastSyncedAt?.toISOString() ?? '-'
+              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
+                status?.lastSyncedAt?.toISOString() ?? '-'
               }\nVersion: ${powersync.sdkVersion}`
             );
           }}

@@ -940,7 +940,7 @@ PODS:
     - React-Core
   - react-native-get-random-values (1.8.0):
     - React-Core
-  - react-native-quick-sqlite (1.1.3):
+  - react-native-quick-sqlite (1.1.4):
     - powersync-sqlite-core (~> 0.1.6)
     - React
     - React-callinvoker
@@ -1431,7 +1431,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
   react-native-get-random-values: a6ea6a8a65dc93e96e24a11105b1a9c8cfe1d72a
-  react-native-quick-sqlite: 2b663b5762b255d2047545fc95f58b0c246c265c
+  react-native-quick-sqlite: c4b0debdbfc2bcd282834f4268071e13a3c20cb4
   react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
   React-nativeconfig: b4d4e9901d4cabb57be63053fd2aa6086eb3c85f
   React-NativeModulesApple: cd26e56d56350e123da0c1e3e4c76cb58a05e1ee

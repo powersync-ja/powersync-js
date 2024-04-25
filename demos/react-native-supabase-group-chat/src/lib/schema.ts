@@ -5,7 +5,7 @@ import {
   IndexedColumn,
   Schema,
   Table,
-} from "@journeyapps/powersync-sdk-react-native";
+} from "@powersync/react-native";
 
 export const schema = new Schema([
   new Table({

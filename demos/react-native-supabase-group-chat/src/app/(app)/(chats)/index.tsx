@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
 import { MessageSquare, Plus } from '@tamagui/lucide-icons';
 import { Link, useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';

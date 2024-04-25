@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSyncWatchedQuery } from '@powersync/react';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { NavigationPage } from '@/components/navigation/NavigationPage';

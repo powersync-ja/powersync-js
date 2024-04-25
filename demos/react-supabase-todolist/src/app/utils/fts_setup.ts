@@ -1,5 +1,5 @@
 import { AppSchema } from '../../library/powersync/AppSchema';
-import { Table } from '@journeyapps/powersync-sdk-web';
+import { Table } from '@powersync/web';
 import { db } from '@/components/providers/SystemProvider';
 import { ExtractType, generateJsonExtracts } from './helpers';
 

@@ -1,4 +1,4 @@
-import { usePowerSync } from '@journeyapps/powersync-react';
+import { usePowerSync } from '@powersync/react';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,

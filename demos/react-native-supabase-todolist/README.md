@@ -2,7 +2,7 @@
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@journeyapps/powersync-sdk-react-native) together with Supabase.
+Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase.
 
 A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 
@@ -69,7 +69,7 @@ Run on Android
 pnpm android
 ```
 
-## Here are some helpful links:
+## Here are some helpful links
 
 - [PowerSync Website](https://www.powersync.com/)
 - [PowerSync Docs](https://docs.powersync.com/)

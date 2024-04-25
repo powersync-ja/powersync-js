@@ -1,4 +1,4 @@
-import { QueryResult, SQLWatchOptions } from '@journeyapps/powersync-sdk-common';
+import { SQLWatchOptions } from '@powersync/common';
 import { MaybeRef, Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 

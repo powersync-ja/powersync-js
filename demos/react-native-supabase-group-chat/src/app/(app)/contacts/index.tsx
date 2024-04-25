@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
 import { Search, Shuffle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Button, Input, XStack, YStack } from 'tamagui';

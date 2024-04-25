@@ -1,7 +1,6 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
-import 'react-native-get-random-values';
-import { PowerSyncContext, RNQSPowerSyncDatabaseOpenFactory } from '@journeyapps/powersync-sdk-react-native';
+import { PowerSyncContext, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
 import { ReactNode, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';

@@ -2,7 +2,7 @@ import { Kysely, SqliteAdapter, SqliteIntrospector, SqliteQueryCompiler } from '
 import * as SUT from '../../src/sqlite/sqlite-dialect';
 import { describe, it, expect, vitest } from 'vitest';
 import { PowerSyncDriver } from '../../src/sqlite/sqlite-driver';
-import { AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-web';
+import { AbstractPowerSyncDatabase } from '@powersync/web';
 
 describe('PowerSyncDialect', () => {
   const config = { db: {} as AbstractPowerSyncDatabase };

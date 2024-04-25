@@ -12,19 +12,19 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
 ## Monorepo Structure: Packages
 
-- [packages/powersync-sdk-react-native](./packages/powersync-sdk-react-native/README.md)
+- [packages/react-native](./packages/react-native/README.md)
 
-  - React Native SDK implementation (extension of `packages/powersync-sdk-common`)
+  - React Native SDK implementation (extension of `packages/common`)
 
-- [packages/powersync-sdk-web](./packages/powersync-sdk-web/README.md)
+- [packages/web](./packages/web/README.md)
 
-  - JS Web SDK implementation (extension of `packages/powersync-sdk-common`)
+  - JS Web SDK implementation (extension of `packages/common`)
 
-- [packages/powersync-react](./packages/powersync-react/README.md)
+- [packages/react](./packages/react/README.md)
 
   - React integration for PowerSync.
 
-- [packages/powersync-attachments](./packages/powersync-attachments/README.md)
+- [packages/attachments](./packages/attachments/README.md)
 
   - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
@@ -32,7 +32,7 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
   - Kysely integration (ORM) for React Native and JavaScript/TypeScript projects.
 
-- [packages/powersync-sdk-common](./packages/powersync-sdk-common/README.md)
+- [packages/common](./packages/common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
 ## Demo Apps / Example Projects

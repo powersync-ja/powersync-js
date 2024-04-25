@@ -1,4 +1,4 @@
-import { type AbstractPowerSyncDatabase, type Transaction } from '@journeyapps/powersync-sdk-common';
+import { type AbstractPowerSyncDatabase, type Transaction } from '@powersync/common';
 import { CompiledQuery, DatabaseConnection, QueryResult } from 'kysely';
 
 /**

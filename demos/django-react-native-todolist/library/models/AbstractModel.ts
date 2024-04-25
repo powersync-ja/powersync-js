@@ -1,4 +1,4 @@
-import { Transaction } from '@journeyapps/powersync-sdk-react-native';
+import { Transaction } from '@powersync/react-native';
 import { System } from '../stores/system';
 export interface ModelRecord {
   id: string;
@@ -10,7 +10,7 @@ export abstract class AbstractModel<Record extends ModelRecord = ModelRecord> {
   constructor(
     public record: Record,
     protected system: System
-  ) { }
+  ) {}
 
   get id() {
     return this.record.id;

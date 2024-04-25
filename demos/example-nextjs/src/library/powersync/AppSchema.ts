@@ -1,4 +1,4 @@
-import { column, Schema, TableV2 } from '@journeyapps/powersync-sdk-web';
+import { column, Schema, TableV2 } from '@powersync/web';
 
 const customers = new TableV2({
   name: column.text,

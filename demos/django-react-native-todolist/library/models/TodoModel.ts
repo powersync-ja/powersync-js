@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { AbstractModel, ModelRecord } from './AbstractModel';
-import { Transaction } from '@journeyapps/powersync-sdk-react-native';
+import { Transaction } from '@powersync/react-native';
 
 export interface TodoRecord extends ModelRecord {
   created_at: string;

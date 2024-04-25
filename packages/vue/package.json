@@ -1,6 +1,6 @@
 {
   "name": "@powersync/vue",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -27,7 +27,7 @@
   },
   "homepage": "https://docs.powersync.com/resources/api-reference",
   "dependencies": {
-    "@journeyapps/powersync-sdk-common": "workspace:*"
+    "@powersync/common": "workspace:*"
   },
   "peerDependencies": {
     "vue": "*"

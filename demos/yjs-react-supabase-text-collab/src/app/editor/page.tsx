@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
 import { Box, Container, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 

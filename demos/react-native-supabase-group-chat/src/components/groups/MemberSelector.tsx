@@ -1,4 +1,4 @@
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { usePowerSyncWatchedQuery } from '@powersync/react-native';
 import { CheckCircle2, Circle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Input, ListItem, XStack, YStack } from 'tamagui';

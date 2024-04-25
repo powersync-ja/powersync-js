@@ -6,7 +6,7 @@ This package is currently in a beta release.
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@journeyapps/powersync-sdk-web) together with Supabase.
+Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase.
 
 A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 
@@ -61,6 +61,6 @@ Open a browser on the served URL and install the PWA.
 
 ## Learn More
 
-Check out [the PowerSync Web SDK on GitHub](https://github.com/powersync-ja/powersync-js/tree/main/packages/powersync-sdk-web) - your feedback and contributions are welcome!
+Check out [the PowerSync Web SDK on GitHub](https://github.com/powersync-ja/powersync-js/tree/main/packages/web) - your feedback and contributions are welcome!
 
 To learn more about PowerSync, see the [PowerSync docs](https://docs.powersync.com).
