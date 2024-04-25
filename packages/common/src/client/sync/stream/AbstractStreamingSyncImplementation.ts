@@ -416,9 +416,7 @@ export abstract class AbstractStreamingSyncImplementation
           data: {
             buckets: req,
             include_checksum: true,
-            raw_data: true,
-            // Always use binary data for web sockets
-            binary_data: true
+            raw_data: true
           }
         };
 
@@ -433,7 +431,7 @@ export abstract class AbstractStreamingSyncImplementation
           const line = await stream.read();
           if (!line) {
             // The stream has closed while waiting
-            return {retry: true}
+            return { retry: true };
           }
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
