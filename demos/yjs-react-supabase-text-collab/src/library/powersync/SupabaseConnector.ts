@@ -68,7 +68,6 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     }
 
     return {
-      client: this.client,
       endpoint: data.powersync_url,
       token: data.token,
       expiresAt: undefined
