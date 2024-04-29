@@ -9,7 +9,7 @@ const mockPowerSync = {
   registerListener: vi.fn(() => ({
     statusChanged: vi.fn(() => 'updated')
   })),
-  watch: vi.fn(),
+  onChangeWithCallback: vi.fn(),
   getAll: vi.fn(() => ['list1', 'list2'])
 };
 
@@ -51,7 +51,7 @@ describe('useQuery', () => {
         expect(result.current.isLoading).toEqual(false);
         expect(result.current.data).toEqual(['list1', 'list2']);
         expect(result.current.isLoading).toEqual(false);
-        expect(mockPowerSync.watch).not.toHaveBeenCalled();
+        expect(mockPowerSync.onChangeWithCallback).not.toHaveBeenCalled();
         expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
       },
       { timeout: 100 }
@@ -101,5 +101,5 @@ describe('useQuery', () => {
     expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
   });
 
-  // TODO: Add tests for powersync.watch path
+  // TODO: Add tests for powersync.onChangeWithCallback path
 });

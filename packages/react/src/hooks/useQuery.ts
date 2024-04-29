@@ -12,7 +12,11 @@ export type WatchedQueryResult<T> = {
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
   isLoading: boolean;
-  error: Error;
+  /**
+   * Indicates whether the query is currently fetching data, is true during the initial load and any time when the query is re-evaluating (useful for large queries).
+   */
+  isFetching: boolean;
+  error: Error | undefined;
   /**
    * Function used to run the query again.
    */
@@ -39,12 +43,13 @@ export const useQuery = <T = any>(
 ): WatchedQueryResult<T> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
-    return { isLoading: false, data: [], error: new Error('PowerSync not configured.') };
+    return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
 
   const [data, setData] = React.useState<T[]>([]);
-  const [error, setError] = React.useState<Error>(undefined);
+  const [error, setError] = React.useState<Error | undefined>(undefined);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isFetching, setIsFetching] = React.useState(true);
 
   const memoizedParams = React.useMemo(() => parameters, [...parameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
@@ -52,12 +57,14 @@ export const useQuery = <T = any>(
 
   const handleResult = (result: T[]) => {
     setIsLoading(false);
+    setIsFetching(false);
     setData(result);
     setError(undefined);
   };
 
   const handleError = (e: Error) => {
     setIsLoading(false);
+    setIsFetching(false);
     setData([]);
     const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
     wrappedError.cause = e;
@@ -65,7 +72,7 @@ export const useQuery = <T = any>(
   };
 
   const fetchData = async () => {
-    setIsLoading(true);
+    setIsFetching(true);
     try {
       const result = await powerSync.getAll<T>(sqlStatement, parameters);
       handleResult(result);
@@ -82,12 +89,10 @@ export const useQuery = <T = any>(
     if (options.runQueryOnce) {
       fetchData();
     } else {
-      powerSync.watch(
-        sqlStatement,
-        parameters,
+      powerSync.onChangeWithCallback(
         {
-          onResult(results) {
-            handleResult(results.rows?._array ?? []);
+          onChange: async () => {
+            await fetchData();
           },
           onError(e) {
             handleError(e);
@@ -105,5 +110,5 @@ export const useQuery = <T = any>(
     };
   }, [powerSync, sqlStatement, memoizedParams, memoizedOptions]);
 
-  return { isLoading, data, error, refresh: fetchData };
+  return { isLoading, isFetching, data, error, refresh: fetchData };
 };
