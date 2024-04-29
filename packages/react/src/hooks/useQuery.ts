@@ -80,8 +80,15 @@ export const useQuery = <T = any>(
       handleError(e);
     }
   };
+
   const fetchTables = async () => {
-    const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+    let tables = [];
+    try {
+      tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+    } catch (e) {
+      handleError(e);
+    }
+
     return tables;
   };
 

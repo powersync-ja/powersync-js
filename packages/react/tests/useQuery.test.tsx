@@ -9,6 +9,7 @@ const mockPowerSync = {
   registerListener: vi.fn(() => ({
     statusChanged: vi.fn(() => 'updated')
   })),
+  resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
   getAll: vi.fn(() => ['list1', 'list2'])
 };
@@ -22,11 +23,12 @@ describe('useQuery', () => {
     vi.resetAllMocks();
   });
 
-  it('should error when PowerSync is not set', () => {
+  it('should error when PowerSync is not set', async () => {
     const { result } = renderHook(() => useQuery('SELECT * from lists'));
-    expect(result.current.error).toEqual(Error('PowerSync not configured.'));
-    expect(result.current.isLoading).toEqual(false);
-    expect(result.current.data).toEqual([]);
+    const currentResult = await result.current;
+    expect(currentResult.error).toEqual(Error('PowerSync not configured.'));
+    expect(currentResult.isLoading).toEqual(false);
+    expect(currentResult.data).toEqual([]);
   });
 
   it('should set isLoading to true on initial load', async () => {
@@ -35,7 +37,8 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists'), { wrapper });
-    expect(result.current.isLoading).toEqual(true);
+    const currentResult = await result.current;
+    expect(currentResult.isLoading).toEqual(true);
   });
 
   it('should run the query once if runQueryOnce flag is set', async () => {
@@ -44,13 +47,14 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    expect(result.current.isLoading).toEqual(true);
+    const currentResult = await result.current;
+    expect(currentResult.isLoading).toEqual(true);
 
     waitFor(
-      () => {
-        expect(result.current.isLoading).toEqual(false);
-        expect(result.current.data).toEqual(['list1', 'list2']);
-        expect(result.current.isLoading).toEqual(false);
+      async () => {
+        expect(currentResult.isLoading).toEqual(false);
+        expect(currentResult.data).toEqual(['list1', 'list2']);
+        expect(currentResult.isLoading).toEqual(false);
         expect(mockPowerSync.onChangeWithCallback).not.toHaveBeenCalled();
         expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
       },
@@ -64,14 +68,15 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    expect(result.current.isLoading).toEqual(true);
+    const currentResult = await result.current;
+    expect(currentResult.isLoading).toEqual(true);
 
     let refresh;
 
     waitFor(
-      () => {
-        refresh = result.current.refresh;
-        expect(result.current.isLoading).toEqual(false);
+      async () => {
+        refresh = currentResult.refresh;
+        expect(currentResult.isLoading).toEqual(false);
         expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
       },
       { timeout: 100 }
@@ -98,7 +103,8 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+    const currentResult = await result.current;
+    expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
   });
 
   // TODO: Add tests for powersync.onChangeWithCallback path
