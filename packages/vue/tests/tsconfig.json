@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
+    "baseUrl": "../",
     "esModuleInterop": true,
-    "jsx": "preserve",
-    "rootDir": "src",
+    "jsx": "react",
+    "rootDir": "../",
     "composite": true,
     "outDir": "./lib",
     "lib": [
-      "es2022",
+      "esnext",
       "DOM"
     ],
     "module": "esnext",
@@ -21,11 +21,6 @@
     "skipLibCheck": true,
     "target": "esnext"
   },
-  "references": [
-    {
-      "path": "../common"
-    }
-  ],
   "include": [
     "../src/**/*"
   ]

@@ -14,12 +14,25 @@ export type QueryOptions = {
    */
   immediate: boolean;
 };
-export type Result<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
+export type Result<T> = { data: Ref<T[]>; isLoading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
 
 /**
+ * @deprecated use {@link useQuery} instead.
+ *
  * A composable to access a single static query.
  * SQL Statement and query Parameters are watched by default.
  * For a result that updates as the source data changes, use {@link usePowerSyncWatchedQuery} instead.
+ * @example
+ * <script>
+ *  import { usePowerSyncQuery } from '@powersync/vue';
+ *
+ *  const listID = '123';
+ *
+ *  const { data: listRecords } = usePowerSyncQuery<{ name: string }>(
+ *    `SELECT name FROM ${LISTS_TABLE} WHERE id = ?`,
+ *    [listID]
+ *  );
+ * <script>
  */
 export const usePowerSyncQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
@@ -27,8 +40,8 @@ export const usePowerSyncQuery = <T = any>(
   queryOptions: QueryOptions = { watchParameters: true, immediate: true }
 ): Result<T> => {
   const data = ref([]);
-  const loading = ref<boolean>(false);
-  const error = ref<Error>(undefined);
+  const isLoading = ref<boolean>(false);
+  const error = ref<Error | undefined>(undefined);
 
   const powerSync = usePowerSync();
 
@@ -40,26 +53,27 @@ export const usePowerSyncQuery = <T = any>(
 
     try {
       error.value = undefined;
-      loading.value = true;
+      isLoading.value = true;
 
       data.value = await powerSync.value.getAll(toValue(sqlStatement), toValue(parameters));
     } catch (e) {
       data.value = [];
 
       const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
-      wrappedError.cause = e; // Include the original error as the cause
+      wrappedError.cause = e;
       error.value = wrappedError;
     } finally {
-      loading.value = false;
+      isLoading.value = false;
     }
   };
 
   if (queryOptions.watchParameters) {
     watch([powerSync, ref(sqlStatement), ref(parameters)], fetchData);
   }
+
   if (queryOptions.immediate) {
     fetchData();
   }
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, isLoading, error, refresh: fetchData };
 };

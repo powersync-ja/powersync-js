@@ -1,70 +1,72 @@
-import { SQLWatchOptions } from '@powersync/common';
-import { MaybeRef, Ref, ref, toValue, watchEffect } from 'vue';
+import { type SQLWatchOptions } from '@powersync/common';
+import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
+
+interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
+  runQueryOnce?: boolean;
+}
 
 export type WatchedQueryResult<T> = {
   data: Ref<T[]>;
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
-  loading: Ref<boolean>;
+  isLoading: Ref<boolean>;
   /**
    * Indicates whether the query is currently fetching data, is true during the initial load and any time when the query is re-evaluating (useful for large queries).
    */
-  fetching: Ref<boolean>;
-  error: Ref<Error>;
+  isFetching: Ref<boolean>;
+  error: Ref<Error | undefined>;
 };
 
 /**
- * @deprecated use {@link useQuery} instead.
- *
  * A composable to access the results of a watched query.
  */
-export const usePowerSyncWatchedQuery = <T = any>(
+export const useQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
   sqlParameters: MaybeRef<any[]> = [],
-  options: Omit<SQLWatchOptions, 'signal'> = {}
+  options: AdditionalOptions = {}
 ): WatchedQueryResult<T> => {
-  const data = ref([]);
+  const data = ref<T[]>([]) as Ref<T[]>;
   const error = ref<Error | undefined>(undefined);
-
-  const loading = ref(true);
-  const fetching = ref(true);
-
-  const finishLoading = () => {
-    loading.value = false;
-    fetching.value = false;
-  };
+  const isLoading = ref(true);
+  const isFetching = ref(true);
 
   const powerSync = usePowerSync();
+
+  const finishLoading = () => {
+    isLoading.value = false;
+    isFetching.value = false;
+  };
+
+  if (!powerSync) {
+    finishLoading();
+    error.value = new Error('PowerSync not configured.');
+    return { data, isLoading, isFetching, error };
+  }
+
+  const handleResult = (result: T[]) => {
+    finishLoading();
+    data.value = result;
+    error.value = undefined;
+  };
+
+  const handleError = (e: Error) => {
+    finishLoading();
+    data.value = [];
+
+    const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
+    wrappedError.cause = e;
+    error.value = wrappedError;
+  };
 
   let abortController = new AbortController();
   watchEffect(async (onCleanup) => {
     // Abort any previous watches when the effect triggers again, or when the component is unmounted
     onCleanup(() => abortController.abort());
     abortController = new AbortController();
-    loading.value = true;
-    fetching.value = true;
-
-    if (!powerSync) {
-      error.value = new Error('PowerSync not configured.');
-      return;
-    }
-
-    const onResult = (result: T[]) => {
-      finishLoading();
-      data.value = result;
-      error.value = undefined;
-    };
-
-    const onError = (e: Error) => {
-      finishLoading();
-      data.value = [];
-
-      const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
-      wrappedError.cause = e; // Include the original error as the cause
-      error.value = wrappedError;
-    };
+    isLoading.value = true;
+    isFetching.value = true;
 
     const sql = toValue(sqlStatement);
     const parameters = toValue(sqlParameters);
@@ -74,20 +76,24 @@ export const usePowerSyncWatchedQuery = <T = any>(
 
       // Fetch initial data
       const result = await powerSync.value.getAll<T>(sql, parameters);
-      onResult(result);
+      handleResult(result);
+
+      if (options.runQueryOnce) {
+        return;
+      }
 
       powerSync.value.onChangeWithCallback(
         {
           onChange: async () => {
-            fetching.value = true;
+            isFetching.value = true;
             try {
               const result = await powerSync.value.getAll<T>(sql, parameters);
-              onResult(result);
+              handleResult(result);
             } catch (error) {
-              onError(error);
+              handleError(error);
             }
           },
-          onError
+          onError: handleError
         },
         {
           ...options,
@@ -96,9 +102,9 @@ export const usePowerSyncWatchedQuery = <T = any>(
         }
       );
     } catch (error) {
-      onError(error);
+      handleError(error);
     }
   });
 
-  return { data, loading, fetching, error };
+  return { data, isLoading, isFetching, error };
 };
