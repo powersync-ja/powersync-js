@@ -38,7 +38,7 @@ const TodoView: React.FC = () => {
     data: [listRecord]
   } = useQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [listID]);
 
-  const { data: todos } = useQuery<TodoEntry>(
+  const { data: todos, isLoading } = useQuery<TodoEntry>(
     `
         SELECT
             ${TODO_TABLE}.id AS todo_id,
@@ -104,6 +104,12 @@ const TodoView: React.FC = () => {
       await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
     });
   };
+
+  if (isLoading) {
+    <View>
+      <Text>Loading...</Text>
+    </View>;
+  }
 
   if (listRecord == null) {
     return (
