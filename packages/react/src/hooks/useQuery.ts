@@ -1,12 +1,12 @@
-import { SQLWatchOptions } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
+import { type SQLWatchOptions, parseQuery, type CompilableQuery } from '@powersync/common';
 
-interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
+export interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
   runQueryOnce?: boolean;
 }
 
-export type QueryResult<T> = {
+export type Result<T> = {
   data: T[];
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
@@ -36,22 +36,24 @@ export type QueryResult<T> = {
  * </View>
  * }
  */
-export const useQuery = <T = any>(
-  sqlStatement: string,
+export const useQuery = async <T = any>(
+  query: string | CompilableQuery<T>,
   parameters: any[] = [],
   options: AdditionalOptions = {}
-): QueryResult<T> => {
+): Promise<Result<T>> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
+
+  const { sqlStatement, parameters: queryParameters } = parseQuery<T>(query);
 
   const [data, setData] = React.useState<T[]>([]);
   const [error, setError] = React.useState<Error | undefined>(undefined);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isFetching, setIsFetching] = React.useState(true);
 
-  const memoizedParams = React.useMemo(() => parameters, [...parameters]);
+  const memoizedParams = React.useMemo(() => parameters, [...parameters, ...queryParameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
