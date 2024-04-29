@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.4.4
+
+### Patch Changes
+
+- bed3be5: Updated @journeyapps/react-native-quick-sqlite dependency.
+
 ## 1.4.3
 
 ### Patch Changes
