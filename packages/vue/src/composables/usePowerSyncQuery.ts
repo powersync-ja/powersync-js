@@ -14,7 +14,7 @@ export type QueryOptions = {
    */
   immediate: boolean;
 };
-export type Result<T> = { data: Ref<T[]>; isLoading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
+export type Result<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
 
 /**
  * @deprecated use {@link useQuery} instead.
@@ -22,17 +22,6 @@ export type Result<T> = { data: Ref<T[]>; isLoading: Ref<boolean>; error: Ref<Er
  * A composable to access a single static query.
  * SQL Statement and query Parameters are watched by default.
  * For a result that updates as the source data changes, use {@link usePowerSyncWatchedQuery} instead.
- * @example
- * <script>
- *  import { usePowerSyncQuery } from '@powersync/vue';
- *
- *  const listID = '123';
- *
- *  const { data: listRecords } = usePowerSyncQuery<{ name: string }>(
- *    `SELECT name FROM ${LISTS_TABLE} WHERE id = ?`,
- *    [listID]
- *  );
- * <script>
  */
 export const usePowerSyncQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
@@ -40,7 +29,7 @@ export const usePowerSyncQuery = <T = any>(
   queryOptions: QueryOptions = { watchParameters: true, immediate: true }
 ): Result<T> => {
   const data = ref([]);
-  const isLoading = ref<boolean>(false);
+  const loading = ref<boolean>(false);
   const error = ref<Error | undefined>(undefined);
 
   const powerSync = usePowerSync();
@@ -53,7 +42,7 @@ export const usePowerSyncQuery = <T = any>(
 
     try {
       error.value = undefined;
-      isLoading.value = true;
+      loading.value = true;
 
       data.value = await powerSync.value.getAll(toValue(sqlStatement), toValue(parameters));
     } catch (e) {
@@ -63,7 +52,7 @@ export const usePowerSyncQuery = <T = any>(
       wrappedError.cause = e;
       error.value = wrappedError;
     } finally {
-      isLoading.value = false;
+      loading.value = false;
     }
   };
 
@@ -75,5 +64,5 @@ export const usePowerSyncQuery = <T = any>(
     fetchData();
   }
 
-  return { data, isLoading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData };
 };

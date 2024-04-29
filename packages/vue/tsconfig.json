@@ -6,10 +6,7 @@
     "rootDir": "src",
     "composite": true,
     "outDir": "./lib",
-    "lib": [
-      "es2022",
-      "DOM"
-    ],
+    "lib": ["es2022", "DOM"],
     "module": "esnext",
     "sourceMap": true,
     "moduleResolution": "node",
@@ -26,7 +23,5 @@
       "path": "../common"
     }
   ],
-  "include": [
-    "../src/**/*"
-  ]
+  "include": ["src/**/*"]
 }

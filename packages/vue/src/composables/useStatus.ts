@@ -4,11 +4,12 @@ import { usePowerSyncStatus } from './usePowerSyncStatus';
  * Retrieve the current synchronization status of PowerSync.
  * @returns SyncStatus
  * @example
- * <script>
- *  import { useStatus } from '@powersync/vue';
+ * ```vue
+ * <script setup>
+ * import { useStatus } from '@powersync/vue';
  *
- *  const status = useStatus()
- *  const { connected, dataFlow, lastSyncedAt, hasSynced } = status;
+ * const status = useStatus();
  * <script>
+ * ```
  */
 export const useStatus = usePowerSyncStatus;

@@ -17,10 +17,33 @@ export type WatchedQueryResult<T> = {
    */
   isFetching: Ref<boolean>;
   error: Ref<Error | undefined>;
+  /**
+   * Function used to run the query again.
+   */
+  refresh?: () => Promise<void>;
 };
 
 /**
  * A composable to access the results of a watched query.
+ *
+ * @example
+ * ```vue
+ * <script setup>
+ * import { useQuery } from '@powersync/vue';
+ *
+ * const { data, isLoading, isFetching, error} = useQuery('SELECT * FROM lists');
+ * </script>
+ *
+ * <template>
+ *    <div v-if="isLoading">Loading...</div>
+ *    <div v-else-if="isFetching">Updating results...</div>
+ *
+ *    <div v-if="error">{{ error }}</div>
+ *    <ul v-else>
+ *        <li v-for="l in data" :key="l.id">{{ l.name }}</li>
+ *    </ul>
+ * </template>
+ * ```
  */
 export const useQuery = <T = any>(
   sqlStatement: MaybeRef<string>,
@@ -60,51 +83,58 @@ export const useQuery = <T = any>(
     error.value = wrappedError;
   };
 
+  const fetchData = async (sql: string, parameters: any[]) => {
+    isFetching.value = true;
+    try {
+      const result = await powerSync.value.getAll<T>(sql, parameters);
+      handleResult(result);
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
   let abortController = new AbortController();
   watchEffect(async (onCleanup) => {
     // Abort any previous watches when the effect triggers again, or when the component is unmounted
     onCleanup(() => abortController.abort());
     abortController = new AbortController();
-    isLoading.value = true;
-    isFetching.value = true;
 
     const sql = toValue(sqlStatement);
     const parameters = toValue(sqlParameters);
 
+    let resolvedTables = [];
     try {
-      const resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
-
-      // Fetch initial data
-      const result = await powerSync.value.getAll<T>(sql, parameters);
-      handleResult(result);
-
-      if (options.runQueryOnce) {
-        return;
-      }
-
-      powerSync.value.onChangeWithCallback(
-        {
-          onChange: async () => {
-            isFetching.value = true;
-            try {
-              const result = await powerSync.value.getAll<T>(sql, parameters);
-              handleResult(result);
-            } catch (error) {
-              handleError(error);
-            }
-          },
-          onError: handleError
-        },
-        {
-          ...options,
-          signal: abortController.signal,
-          tables: resolvedTables
-        }
-      );
+      resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
     } catch (error) {
       handleError(error);
     }
+    // Fetch initial data
+    await fetchData(sql, parameters);
+
+    if (options.runQueryOnce) {
+      return;
+    }
+
+    powerSync.value.onChangeWithCallback(
+      {
+        onChange: async () => {
+          await fetchData(sql, parameters);
+        },
+        onError: handleError
+      },
+      {
+        ...options,
+        signal: abortController.signal,
+        tables: resolvedTables
+      }
+    );
   });
 
-  return { data, isLoading, isFetching, error };
+  return {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refresh: () => fetchData(toValue(sqlStatement), toValue(sqlParameters))
+  };
 };
