@@ -58,16 +58,16 @@ const Component = () => {
 };
 ```
 
-### Watched Queries
+### Queries
 
-Watched queries will automatically update when a dependant table is updated.
+Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag.
 
 ```JSX
 // TodoListDisplay.jsx
-import { usePowerSyncWatchedQuery } from "@powersync/react";
+import { useQuery } from "@powersync/react";
 
 export const TodoListDisplay = () => {
-    const todoLists = usePowerSyncWatchedQuery('SELECT * from lists');
+    const { data: todoLists } = useQuery('SELECT * from lists');
 
     return <View>
       {todoLists.map((l) => (
