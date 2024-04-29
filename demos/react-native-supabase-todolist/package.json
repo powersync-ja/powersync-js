@@ -15,7 +15,7 @@
     "@powersync/react": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react-native": "workspace:*",
-    "@journeyapps/react-native-quick-sqlite": "^1.1.4",
+    "@journeyapps/react-native-quick-sqlite": "^1.1.5",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^6.6.3",
     "@react-navigation/native": "^6.0.0",
