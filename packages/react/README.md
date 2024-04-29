@@ -44,7 +44,7 @@ export const TodoListDisplay = () => {
 
 ### Accessing PowerSync Status
 
-The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
+The provided PowerSync client status is available with the `useStatus` hook.
 
 ```JSX
 import { useStatus } from "@powersync/react";
