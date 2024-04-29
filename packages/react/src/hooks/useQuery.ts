@@ -80,11 +80,19 @@ export const useQuery = <T = any>(
       handleError(e);
     }
   };
+  const fetchTables = async () => {
+    const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+    return tables;
+  };
 
   React.useEffect(() => {
     // Abort any previous watches
     abortController.current?.abort();
     abortController.current = new AbortController();
+    let tables = [];
+    fetchTables().then((t) => {
+      tables = t;
+    });
 
     if (options.runQueryOnce) {
       fetchData();
@@ -100,7 +108,8 @@ export const useQuery = <T = any>(
         },
         {
           ...options,
-          signal: abortController.current.signal
+          signal: abortController.current.signal,
+          tables
         }
       );
     }
