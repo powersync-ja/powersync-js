@@ -1,5 +1,13 @@
 # django-react-native-todolist
 
+## 1.0.2
+
+### Patch Changes
+
+- bed3be5: Updated @journeyapps/react-native-quick-sqlite dependency.
+- Updated dependencies [bed3be5]
+  - @powersync/react-native@1.4.4
+
 ## 1.0.1
 
 ### Patch Changes

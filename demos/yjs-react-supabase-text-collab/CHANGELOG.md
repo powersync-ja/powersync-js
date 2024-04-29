@@ -1,5 +1,11 @@
 # yjs-react-supabase-text-collab
 
+## 0.0.14
+
+### Patch Changes
+
+- 371e8ce: Updated Vite Demo apps' `include` entries to use nested dependency syntax, fixes issue with CJS nested dependencies.
+
 ## 0.0.13
 
 ### Patch Changes
