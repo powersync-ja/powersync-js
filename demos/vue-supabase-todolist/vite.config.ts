@@ -79,7 +79,7 @@ export default defineConfig({
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
     include: [
-      '@powersync/common > uuid',
+      '@powersync/web > uuid',
       '@powersync/web > event-iterator',
       '@powersync/web > js-logger',
       '@powersync/web > lodash/throttle',
