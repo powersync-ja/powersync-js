@@ -92,7 +92,8 @@ describe('useQuery', () => {
       registerListener: vi.fn(() => ({
         statusChanged: vi.fn(() => 'updated')
       })),
-      watch: vi.fn(),
+      onChangeWithCallback: vi.fn(),
+      resolveTables: vi.fn(() => ['table1', 'table2']),
       getAll: vi.fn(() => {
         throw new Error('some error');
       })
@@ -104,7 +105,41 @@ describe('useQuery', () => {
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
     const currentResult = await result.current;
-    expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+
+    waitFor(
+      async () => {
+        expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+      },
+      { timeout: 100 }
+    );
+  });
+
+  it('should set error when error occurs', async () => {
+    const mockPowerSyncError = {
+      currentStatus: { status: 'initial' },
+      registerListener: vi.fn(() => ({
+        statusChanged: vi.fn(() => 'updated')
+      })),
+      onChangeWithCallback: vi.fn(),
+      resolveTables: vi.fn(() => ['table1', 'table2']),
+      getAll: vi.fn(() => {
+        throw new Error('some error');
+      })
+    };
+
+    const wrapper = ({ children }) => (
+      <PowerSyncContext.Provider value={mockPowerSyncError as any}>{children}</PowerSyncContext.Provider>
+    );
+
+    const { result } = renderHook(() => useQuery('SELECT * from lists', []), { wrapper });
+    const currentResult = await result.current;
+
+    waitFor(
+      async () => {
+        expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+      },
+      { timeout: 100 }
+    );
   });
 
   // TODO: Add tests for powersync.onChangeWithCallback path

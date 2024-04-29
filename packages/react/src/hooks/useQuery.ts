@@ -50,6 +50,7 @@ export const useQuery = <T = any>(
   const [error, setError] = React.useState<Error | undefined>(undefined);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isFetching, setIsFetching] = React.useState(true);
+  const [tables, setTables] = React.useState([]);
 
   const memoizedParams = React.useMemo(() => parameters, [...parameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
@@ -82,28 +83,27 @@ export const useQuery = <T = any>(
   };
 
   const fetchTables = async () => {
-    let tables = [];
     try {
-      tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+      const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+      setTables(tables);
     } catch (e) {
       handleError(e);
     }
-
-    return tables;
   };
+
+  React.useEffect(() => {
+    (async () => {
+      await fetchTables();
+      await fetchData();
+    })();
+  }, []);
 
   React.useEffect(() => {
     // Abort any previous watches
     abortController.current?.abort();
     abortController.current = new AbortController();
-    let tables = [];
-    fetchTables().then((t) => {
-      tables = t;
-    });
 
-    if (options.runQueryOnce) {
-      fetchData();
-    } else {
+    if (!options.runQueryOnce) {
       powerSync.onChangeWithCallback(
         {
           onChange: async () => {
@@ -124,7 +124,7 @@ export const useQuery = <T = any>(
     return () => {
       abortController.current?.abort();
     };
-  }, [powerSync, sqlStatement, memoizedParams, memoizedOptions]);
+  }, [powerSync, sqlStatement, memoizedParams, memoizedOptions, tables]);
 
   return { isLoading, isFetching, data, error, refresh: fetchData };
 };
