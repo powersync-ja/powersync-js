@@ -6,7 +6,7 @@ interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
   runQueryOnce?: boolean;
 }
 
-export type WatchedQueryResult<T> = {
+export type QueryResult<T> = {
   data: T[];
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
@@ -40,7 +40,7 @@ export const useQuery = <T = any>(
   sqlStatement: string,
   parameters: any[] = [],
   options: AdditionalOptions = {}
-): WatchedQueryResult<T> => {
+): QueryResult<T> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
