@@ -3,7 +3,7 @@
 This diagnostics app presents data from the perspective of a specific user (no server-side stats) and can be used to:
 - See stats about the user's local database.
 - Inspect tables and sync buckets on the device.
-- Identify common issues.
+- Identify common issues. E.g. too many sync buckets.
 - Get started quickly - play around with a SQLite database without creating an app.
 - Serve as a baseline to compare your own apps against if you run into issues such as slow sync.
 
