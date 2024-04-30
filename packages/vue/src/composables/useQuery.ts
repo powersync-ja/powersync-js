@@ -107,6 +107,7 @@ export const useQuery = <T = any>(
       resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
     } catch (error) {
       handleError(error);
+      return;
     }
     // Fetch initial data
     await fetchData(sql, parameters);
