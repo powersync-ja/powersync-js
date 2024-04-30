@@ -6,7 +6,7 @@ import { usePowerSync, useQuery } from '@powersync/react';
 
 export default function EntryPage() {
   const db = usePowerSync();
-  const { data: customers } = useQuery('SELECT id, name FROM customers');
+  const { data: customers, isLoading } = useQuery('SELECT id, name FROM customers');
 
   useEffect(() => {
     // Insert some test data
@@ -15,6 +15,10 @@ export default function EntryPage() {
     db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
     return () => {};
   }, []);
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
   return (
     <S.MainGrid container>

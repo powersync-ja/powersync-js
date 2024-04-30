@@ -1,6 +1,6 @@
 {
   "name": "django-react-native-todolist",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./index.js",
   "scripts": {
     "android": "expo run:android",
@@ -13,7 +13,7 @@
     "@powersync/react-native": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/common": "workspace:*",
-    "@journeyapps/react-native-quick-sqlite": "^1.1.4",
+    "@journeyapps/react-native-quick-sqlite": "^1.1.5",
     "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^6.6.15",

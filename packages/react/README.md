@@ -52,9 +52,12 @@ import { useStatus } from "@powersync/react";
 const Component = () => {
   const status = useStatus();
 
-  return <div>
-    status.connected ? 'wifi' : 'wifi-off'
-  </div>
+  return (
+    <>
+      <div>{status.connected ? 'wifi' : 'wifi-off'}</div>
+      <div>{!status.hasSynced ? 'Busy syncing...' : 'Data is here'}</div>
+    </>
+  )
 };
 ```
 

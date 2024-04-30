@@ -4,11 +4,11 @@ import { vi, describe, expect, it, afterEach } from 'vitest';
 import { useStatus } from '../src/hooks/useStatus';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 
+const callback = vi.fn();
+
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
-  registerListener: vi.fn(() => ({
-    statusChanged: vi.fn(() => 'updated')
-  }))
+  registerListener: () => callback
 };
 
 vi.mock('./PowerSyncContext', () => ({
@@ -31,17 +31,22 @@ describe('useStatus', () => {
 
   // TODO: Get this test to work
   it.skip('should update the status when the listener is called', () => {
+    const mockPowerSyncInTest = {
+      currentStatus: { status: 'initial' },
+      registerListener: () => ({
+        statusChanged: () => 'updated'
+      })
+    };
+
     const wrapper = ({ children }) => (
-      <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
+      <PowerSyncContext.Provider value={mockPowerSyncInTest as any}>{children}</PowerSyncContext.Provider>
     );
 
     const { result } = renderHook(() => useStatus(), { wrapper });
 
     act(() => {
-      mockPowerSync.registerListener.mockResolvedValue({ statusChanged: vi.fn(() => 'updated') });
+      expect(result.current).toEqual({ status: 'updated' });
     });
-
-    expect(result.current).toEqual({ status: 'updated' });
   });
 
   it('should run the listener on unmount', () => {
@@ -50,7 +55,7 @@ describe('useStatus', () => {
     );
 
     const { unmount } = renderHook(() => useStatus(), { wrapper });
-    const listenerUnsubscribe = mockPowerSync.registerListener;
+    const listenerUnsubscribe = callback;
 
     unmount();
 
