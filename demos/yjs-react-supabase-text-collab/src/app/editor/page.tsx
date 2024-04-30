@@ -1,7 +1,6 @@
-import { usePowerSync, useQuery } from '@powersync/react';
+import { usePowerSync, useQuery, useStatus } from '@powersync/react';
 import { Box, Container, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-
 import MenuBar from '@/components/widgets/MenuBar';
 import { PowerSyncYjsProvider } from '@/library/powersync/PowerSyncYjsProvider';
 import Collaboration from '@tiptap/extension-collaboration';
@@ -16,6 +15,7 @@ import { useParams } from 'react-router-dom';
 
 export default function EditorPage() {
   const powerSync = usePowerSync();
+  const status = useStatus();
   const { id: documentId } = useParams();
 
   // cache the last edited document ID in local storage
@@ -77,15 +77,21 @@ export default function EditorPage() {
           .
         </p>
       </Box>
-      <div className="editor">
-        {editor && <MenuBar editor={editor} />}
-        <EditorContent className="editor__content" editor={editor} />
-      </div>
-      <Box sx={{ mt: 1 }}>
-        <Typography variant="caption" display="block" gutterBottom>
-          {totalDocUpdates} total edit(s) in this document.
-        </Typography>
-      </Box>
+      {!status.hasSynced ? (
+        <p>Busy with sync...</p>
+      ) : (
+        <>
+          <div className="editor">
+            {editor && <MenuBar editor={editor} />}
+            <EditorContent className="editor__content" editor={editor} />
+          </div>
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="caption" display="block" gutterBottom>
+              {totalDocUpdates} total edit(s) in this document.
+            </Typography>
+          </Box>
+        </>
+      )}
     </Container>
   );
 }

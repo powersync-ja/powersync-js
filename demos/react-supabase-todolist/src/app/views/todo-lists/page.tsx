@@ -1,4 +1,4 @@
-import { usePowerSync } from '@powersync/react';
+import { usePowerSync, useStatus } from '@powersync/react';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -22,6 +22,7 @@ import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 export default function TodoListsPage() {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
+  const status = useStatus();
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -52,7 +53,7 @@ export default function TodoListsPage() {
         </S.FloatingActionButton>
         <Box>
           <SearchBarWidget />
-          <TodoListsWidget />
+          {!status.hasSynced ? <p>Busy with sync...</p> : <TodoListsWidget />}
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
