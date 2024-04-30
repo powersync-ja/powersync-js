@@ -39,7 +39,7 @@ export type QueryResult<T> = {
 export const useQuery = <T = any>(
   sqlStatement: string,
   parameters: any[] = [],
-  options: AdditionalOptions = {}
+  options: AdditionalOptions = { runQueryOnce: false }
 ): QueryResult<T> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
@@ -96,7 +96,7 @@ export const useQuery = <T = any>(
       await fetchTables();
       await fetchData();
     })();
-  }, []);
+  }, [powerSync, memoizedParams, sqlStatement]);
 
   React.useEffect(() => {
     // Abort any previous watches
