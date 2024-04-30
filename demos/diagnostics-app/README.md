@@ -44,19 +44,19 @@ When syncing large amounts of data:
 - Total operations is calculated from the checkpoint, will be populated quickly.
 - Other stats are populated as the data is downloaded, so this may take a while.
 
-### Dynamic schema
-The schema is dynamically generated and automatically updated from downloaded data. The schema used is displayed in a separate page:
-
-![](public/images/diagnostics-app-schema.png)
-
-This does mean that if a table has 0 synced rows, it won’t be present in the schema, and queries referencing it will fail.
-
-Tables and columns are only added to this schema - nothing is automatically removed when removed from sync rules. To refresh the schema, use the “Clear & Redownload” button on the main page.
-
 ### SQL console
 Same functionality as in the other demo apps:
 
 ![](public/images/diagnostics-app-sql-console.png)
+
+### Dynamic schema [internal]
+The schema is required for some functionality, and is dynamically generated and automatically updated from downloaded data. The schema used is displayed in a separate page:
+
+![](public/images/diagnostics-app-schema.png)
+
+If a table has 0 synced rows, it won’t be present in the schema, and queries referencing it will fail.
+
+Tables and columns are only added to this schema - nothing is automatically removed when removed from sync rules. To refresh the schema, use the “Clear & Redownload” button on the main page.
 
 ## Known issues
 At this stage, we recommend running the app with the dev console open, as some errors are currently not being surfaced to the UI, including:
