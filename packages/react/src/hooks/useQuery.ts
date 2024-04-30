@@ -96,7 +96,7 @@ export const useQuery = <T = any>(
       await fetchTables();
       await fetchData();
     })();
-  }, [powerSync, sqlStatement]);
+  }, [powerSync, memoizedParams, sqlStatement]);
 
   React.useEffect(() => {
     // Abort any previous watches
