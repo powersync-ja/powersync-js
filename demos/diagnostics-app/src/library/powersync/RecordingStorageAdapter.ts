@@ -5,7 +5,7 @@ import {
   DBAdapter,
   SqliteBucketStorage,
   SyncDataBatch
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 
 export class RecordingStorageAdapter extends SqliteBucketStorage {

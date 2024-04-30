@@ -3,7 +3,7 @@ import {
   WebRemote,
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';

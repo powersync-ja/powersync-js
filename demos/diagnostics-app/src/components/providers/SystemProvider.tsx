@@ -1,6 +1,6 @@
 import { NavigationPanelContextProvider } from '@/components/navigation/NavigationPanelContext';
 import { db } from '@/library/powersync/ConnectionManager';
-import { PowerSyncContext } from '@journeyapps/powersync-react';
+import { PowerSyncContext } from '@powersync/react';
 import { CircularProgress } from '@mui/material';
 import React, { Suspense } from 'react';
 

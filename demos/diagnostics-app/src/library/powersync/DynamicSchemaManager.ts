@@ -6,7 +6,7 @@ import {
   Schema,
   SyncDataBatch,
   Table
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 

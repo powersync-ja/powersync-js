@@ -24,7 +24,7 @@ import {
 import React from 'react';
 
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { usePowerSync } from '@journeyapps/powersync-react';
+import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
 import { sync } from '@/library/powersync/ConnectionManager';

@@ -1,4 +1,4 @@
-import { Column, Schema } from '@journeyapps/powersync-sdk-web';
+import { Column, Schema } from '@powersync/web';
 
 export class JsSchemaGenerator {
   generate(schema: Schema): string {

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@journeyapps/powersync-sdk-web';
+import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
 
 export interface Credentials {

@@ -1,6 +1,6 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { clearData } from '@/library/powersync/ConnectionManager';
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSyncWatchedQuery } from '@powersync/react';
 import {
   Box,
   Button,
