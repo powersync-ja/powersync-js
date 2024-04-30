@@ -1,4 +1,4 @@
-import { column, Schema, TableV2 } from '@journeyapps/powersync-sdk-web';
+import { column, Schema, TableV2 } from '@powersync/web';
 
 export const LISTS_TABLE = 'lists';
 export const TODOS_TABLE = 'todos';

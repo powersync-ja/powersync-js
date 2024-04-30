@@ -1,7 +1,7 @@
 {
   "name": "example-vite",
   "private": true,
-  "version": "0.0.14",
+  "version": "0.0.16",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@journeyapps/powersync-sdk-web": "workspace:*"
+    "@powersync/web": "workspace:*"
   },
   "devDependencies": {
     "vite": "^5.0.12",

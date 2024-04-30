@@ -1,4 +1,4 @@
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { useQuery } from '@powersync/react-native';
 import { CheckCircle2, Circle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Input, ListItem, XStack, YStack } from 'tamagui';
@@ -15,7 +15,7 @@ export function MemberSelector({
 }) {
   const [search, setSearch] = useState<string>('');
 
-  const contacts = usePowerSyncWatchedQuery(
+  const { data: contacts } = useQuery(
     "SELECT contacts.id, profiles.id as profile_id, profiles.name, profiles.handle, 'contact' as type FROM contacts LEFT JOIN profiles ON contacts.profile_id = profiles.id WHERE (profiles.name LIKE '%' || ?1 || '%' OR profiles.handle LIKE '%' || ?1 || '%') ORDER BY name ASC",
     [search]
   );

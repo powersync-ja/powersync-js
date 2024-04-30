@@ -1,5 +1,5 @@
-import { ATTACHMENT_TABLE, AttachmentRecord } from '@journeyapps/powersync-attachments';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-sdk-react-native';
+import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
@@ -34,24 +34,24 @@ const TodoView: React.FC = () => {
   const params = useLocalSearchParams<{ id: string }>();
   const listID = params.id;
 
-  const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [
-    listID
-  ]);
+  const {
+    data: [listRecord]
+  } = useQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [listID]);
 
-  const todos = usePowerSyncWatchedQuery<TodoEntry>(
+  const { data: todos, isLoading } = useQuery<TodoEntry>(
     `
         SELECT
             ${TODO_TABLE}.id AS todo_id,
             ${TODO_TABLE}.*,
-            ${ATTACHMENT_TABLE}.id AS attachment_id, 
+            ${ATTACHMENT_TABLE}.id AS attachment_id,
             ${ATTACHMENT_TABLE}.*
-        FROM 
+        FROM
             ${TODO_TABLE}
-        LEFT JOIN 
+        LEFT JOIN
             ${LIST_TABLE} ON ${TODO_TABLE}.list_id = ${LIST_TABLE}.id
-        LEFT JOIN 
+        LEFT JOIN
             ${ATTACHMENT_TABLE} ON ${TODO_TABLE}.photo_id = ${ATTACHMENT_TABLE}.id
-        WHERE 
+        WHERE
             ${TODO_TABLE}.list_id = ?`,
     [listID]
   );
@@ -89,7 +89,7 @@ const TodoView: React.FC = () => {
     await powerSync.execute(
       `INSERT INTO
               ${TODO_TABLE}
-                  (id, created_at, created_by, description, list_id) 
+                  (id, created_at, created_by, description, list_id)
               VALUES
                   (uuid(), datetime(), ?, ?, ?)`,
       [userID, description, listID!]
@@ -104,6 +104,12 @@ const TodoView: React.FC = () => {
       await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
     });
   };
+
+  if (isLoading) {
+    <View>
+      <Text>Loading...</Text>
+    </View>;
+  }
 
   if (listRecord == null) {
     return (

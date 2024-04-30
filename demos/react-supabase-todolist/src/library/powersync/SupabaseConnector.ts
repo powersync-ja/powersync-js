@@ -4,7 +4,7 @@ import {
   CrudEntry,
   PowerSyncBackendConnector,
   UpdateType
-} from '@journeyapps/powersync-sdk-web';
+} from '@powersync/web';
 
 import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
 
@@ -97,7 +97,6 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     console.debug('session expires at', session.expires_at);
 
     return {
-      client: this.client,
       endpoint: this.config.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined
@@ -115,7 +114,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     try {
       // Note: If transactional consistency is important, use database functions
       // or edge functions to process the entire transaction in a single call.
-      for (let op of transaction.crud) {
+      for (const op of transaction.crud) {
         lastOp = op;
         const table = this.client.from(op.table);
         let result: any;

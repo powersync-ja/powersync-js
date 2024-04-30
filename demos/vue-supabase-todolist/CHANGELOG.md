@@ -1,5 +1,20 @@
 # vue-supabase-todolist
 
+## 0.0.5
+
+### Patch Changes
+
+- 371e8ce: Updated Vite Demo apps' `include` entries to use nested dependency syntax, fixes issue with CJS nested dependencies.
+
+## 0.0.4
+
+### Patch Changes
+
+- 93d9e7d: Added PWA support.
+- Updated dependencies [ffe37cf]
+  - @powersync/web@0.5.1
+  - @powersync/vue@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

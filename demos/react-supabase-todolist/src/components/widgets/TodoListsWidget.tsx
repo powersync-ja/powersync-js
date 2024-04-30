@@ -1,6 +1,6 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
 import { LISTS_TABLE, ListRecord, TODOS_TABLE } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { usePowerSync, useQuery } from '@powersync/react';
 import { List } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ListItemWidget } from './ListItemWidget';
@@ -17,14 +17,14 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const listRecords = usePowerSyncWatchedQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
-      SELECT 
+  const { data: listRecords, isLoading } = useQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
+      SELECT
         ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
-      FROM 
+      FROM
         ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} 
+      LEFT JOIN ${TODOS_TABLE}
         ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
-      GROUP BY 
+      GROUP BY
         ${LISTS_TABLE}.id;
       `);
 
@@ -36,6 +36,10 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
       await tx.execute(`DELETE FROM ${LISTS_TABLE} WHERE id = ?`, [id]);
     });
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <List dense={false}>

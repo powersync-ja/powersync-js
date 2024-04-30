@@ -21,7 +21,7 @@ export default function EntryPage() {
         return;
       }
       // otherwise, create a new document
-      const { data, error } = await connector.client
+      const { data } = await connector.client
         .from('documents')
         .insert({
           title: 'Test Document ' + (1000 + Math.floor(Math.random() * 8999))

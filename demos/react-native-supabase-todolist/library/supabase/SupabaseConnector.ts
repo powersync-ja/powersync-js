@@ -1,9 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  CrudEntry,
-  PowerSyncBackendConnector,
-  UpdateType
-} from '@journeyapps/powersync-sdk-react-native';
+import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
 
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { AppConfig } from './AppConfig';
@@ -60,7 +55,6 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     console.debug('session expires at', session.expires_at);
 
     return {
-      client: this.client,
       endpoint: AppConfig.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,

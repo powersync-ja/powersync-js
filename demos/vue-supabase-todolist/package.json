@@ -1,7 +1,7 @@
 {
   "name": "vue-supabase-todolist",
   "private": true,
-  "version": "0.0.3",
+  "version": "0.0.5",
   "type": "module",
   "scripts": {
     "dev": "vue-tsc --noEmit --watch & vite dev",
@@ -10,7 +10,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@journeyapps/powersync-sdk-web": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@powersync/vue": "workspace:*",
     "@mdi/font": "7.4.47",
     "@supabase/supabase-js": "^2.39.7",

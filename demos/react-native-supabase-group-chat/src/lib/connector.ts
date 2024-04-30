@@ -3,7 +3,7 @@ import {
   CrudEntry,
   PowerSyncBackendConnector,
   UpdateType,
-} from "@journeyapps/powersync-sdk-react-native";
+} from "@powersync/react-native";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { config } from "./config";

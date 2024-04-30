@@ -1,6 +1,6 @@
 {
-  "name": "@journeyapps/powersync-yjs-text-collab-demo",
-  "version": "0.0.12",
+  "name": "yjs-react-supabase-text-collab",
+  "version": "0.0.14",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -12,8 +12,8 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.12",
-    "@journeyapps/powersync-react": "workspace:*",
-    "@journeyapps/powersync-sdk-web": "workspace:*",
+    "@powersync/react": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "~0.1.1",
     "@lexical/react": "^0.11.3",
     "@mui/icons-material": "^5.15.12",

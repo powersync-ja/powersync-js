@@ -1,9 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  CrudEntry,
-  PowerSyncBackendConnector,
-  UpdateType
-} from '@journeyapps/powersync-sdk-react-native';
+import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
 
 import { AppConfig } from './AppConfig';
 import { ApiClient } from './ApiClient';

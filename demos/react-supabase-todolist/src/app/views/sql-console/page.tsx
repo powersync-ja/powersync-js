@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePowerSyncWatchedQuery } from '@journeyapps/powersync-react';
+import { useQuery } from '@powersync/react';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
@@ -14,7 +14,7 @@ const DEFAULT_QUERY = 'SELECT * FROM lists';
 export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
-  const querySQLResult = usePowerSyncWatchedQuery(query);
+  const { data: querySQLResult } = useQuery(query);
 
   const queryDataGridResult = React.useMemo(() => {
     const firstItem = querySQLResult?.[0];

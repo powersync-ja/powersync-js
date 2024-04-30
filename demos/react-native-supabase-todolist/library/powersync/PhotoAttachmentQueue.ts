@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import { v4 as uuid } from 'uuid';
 import { AppConfig } from '../supabase/AppConfig';
-import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState } from '@journeyapps/powersync-attachments';
+import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState } from '@powersync/attachments';
 import { TODO_TABLE } from './AppSchema';
 
 export class PhotoAttachmentQueue extends AbstractAttachmentQueue {

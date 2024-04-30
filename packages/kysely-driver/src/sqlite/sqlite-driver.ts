@@ -1,4 +1,4 @@
-import { type AbstractPowerSyncDatabase } from '@journeyapps/powersync-sdk-common';
+import { type AbstractPowerSyncDatabase } from '@powersync/common';
 import { Driver } from 'kysely';
 import { PowerSyncConnection } from './sqlite-connection';
 
