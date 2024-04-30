@@ -1,5 +1,36 @@
 # @journeyapps/powersync-sdk-web
 
+## 0.5.0
+
+### Minor Changes
+
+- 3aaee03: Added support for Full text search out of the box and enabled recursive triggers.
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-common@1.6.0
+
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [8cc1337]
+  - @journeyapps/powersync-sdk-common@1.5.1
+
+## 0.4.0
+
+### Minor Changes
+
+- 8f7caa5: Added batch execution functionality to the web and react-native SDKs. This feature allows a SQL statement with multiple parameters to be executed in a single transaction, improving performance and consistency.
+
+### Patch Changes
+
+- 6c43ec6: Fixed shared sync broadcast logger sanitization and error handling. Added ability to disabled broadcast logging in `WebPowerSyncFlags`.
+- Updated dependencies [8f7caa5]
+- Updated dependencies [6c43ec6]
+  - @journeyapps/powersync-sdk-common@1.5.0
+
 ## 0.3.3
 
 ### Patch Changes

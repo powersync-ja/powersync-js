@@ -1,6 +1,6 @@
 # @journeyapps/powersync-attachments
 
-A [PowerSync](https://powersync.co) library to manage attachments in TypeScript and React Native apps.
+A [PowerSync](https://powersync.com) library to manage attachments in React Native and JavaScript/TypeScript apps.
 
 ## Installation
 

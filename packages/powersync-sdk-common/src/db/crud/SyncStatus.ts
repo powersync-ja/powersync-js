@@ -7,6 +7,7 @@ export type SyncStatusOptions = {
   connected?: boolean;
   dataFlow?: SyncDataFlowStatus;
   lastSyncedAt?: Date;
+  hasSynced?: boolean;
 };
 
 export class SyncStatus {
@@ -25,6 +26,14 @@ export class SyncStatus {
    */
   get lastSyncedAt() {
     return this.options.lastSyncedAt;
+  }
+
+  /**
+   * Indicates whether there has been at least one full sync, if any.
+   * Is undefined when unknown, for example when state is still being loaded from the database.
+   */
+  get hasSynced() {
+    return this.options.hasSynced;
   }
 
   /**
@@ -52,14 +61,15 @@ export class SyncStatus {
 
   getMessage() {
     const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} lastSyncedAt: ${this.lastSyncedAt}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
+    return `SyncStatus<connected: ${this.connected} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
   }
 
   toJSON(): SyncStatusOptions {
     return {
       connected: this.connected,
       dataFlow: this.dataFlowStatus,
-      lastSyncedAt: this.lastSyncedAt
+      lastSyncedAt: this.lastSyncedAt,
+      hasSynced: this.hasSynced
     };
   }
 }

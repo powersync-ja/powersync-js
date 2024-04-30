@@ -47,4 +47,26 @@ describe('Basic', () => {
       expect(result.name).equals(testName);
     });
   });
+
+  describe('executeBatchQuery', () => {
+    it('should execute a select query using getAll', async () => {
+      const result = await db.getAll('SELECT * FROM users');
+      expect(result.length).toEqual(0);
+    });
+
+    it('should allow batch inserts', async () => {
+      const testName = 'Mugi';
+      await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
+        [uuid(), testName],
+        [uuid(), 'Steven'],
+        [uuid(), 'Chris']
+      ]);
+      const result = await db.getAll<User>('SELECT * FROM users');
+
+      expect(result.length).equals(3);
+      expect(result[0].name).equals(testName);
+      expect(result[1].name).equals('Steven');
+      expect(result[2].name).equals('Chris');
+    });
+  });
 });

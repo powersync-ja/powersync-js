@@ -1,5 +1,29 @@
 # react-supabase-todolist
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [3aaee03]
+  - @journeyapps/powersync-sdk-web@0.5.0
+  - @journeyapps/powersync-react@1.1.3
+
+## 0.2.4
+
+### Patch Changes
+
+- @journeyapps/powersync-react@1.1.2
+- @journeyapps/powersync-sdk-web@0.4.1
+
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [6c43ec6]
+- Updated dependencies [8f7caa5]
+  - @journeyapps/powersync-sdk-web@0.4.0
+  - @journeyapps/powersync-react@1.1.1
+
 ## 0.2.2
 
 ### Patch Changes

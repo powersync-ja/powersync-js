@@ -1,6 +1,6 @@
 {
   "name": "@journeyapps/powersync-yjs-text-collab-demo",
-  "version": "0.0.9",
+  "version": "0.0.12",
   "private": true,
   "scripts": {
     "dev": "vite",
