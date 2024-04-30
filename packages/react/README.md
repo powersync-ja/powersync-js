@@ -54,8 +54,8 @@ const Component = () => {
 
   return (
     <>
-      <div>status.connected ? 'wifi' : 'wifi-off'</div>
-      <div>!status.hasSynced ? 'Busy syncing...' : 'Data is here'</div>
+      <div>{status.connected} ? 'wifi' : 'wifi-off'</div>
+      <div>{!status.hasSynced} ? 'Busy syncing...' : 'Data is here'</div>
     </>
   )
 };
