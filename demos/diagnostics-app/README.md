@@ -7,7 +7,7 @@ This diagnostics app presents data from the perspective of a specific user (no s
 - Get started quickly - play around with a SQLite database without creating an app.
 - Serve as a baseline to compare your own apps against if you run into issues such as slow sync.
 
-The app is currently available as a local standalone web app, and is largely based on the [web SDK](/packages/powersync-sdk-web/).
+The app is currently available as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
 
 ## Running the app
 
