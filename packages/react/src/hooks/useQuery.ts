@@ -46,7 +46,12 @@ export const useQuery = <T = any>(
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
 
-  const { sqlStatement, parameters: queryParameters } = parseQuery<T>(query);
+  const parsedQuery = parseQuery<T>(query, parameters);
+  if (parsedQuery instanceof Error) {
+    return { isLoading: false, isFetching: false, data: [], error: parsedQuery };
+  }
+
+  const { sqlStatement, parameters: queryParameters } = parsedQuery;
 
   const [data, setData] = React.useState<T[]>([]);
   const [error, setError] = React.useState<Error | undefined>(undefined);
@@ -54,7 +59,7 @@ export const useQuery = <T = any>(
   const [isFetching, setIsFetching] = React.useState(true);
   const [tables, setTables] = React.useState([]);
 
-  const memoizedParams = React.useMemo(() => parameters, [...parameters, ...queryParameters]);
+  const memoizedParams = React.useMemo(() => parameters, [...queryParameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
