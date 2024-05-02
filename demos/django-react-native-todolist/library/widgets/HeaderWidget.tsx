@@ -39,8 +39,7 @@ export const HeaderWidget: React.FC<{
           onPress={() => {
             Alert.alert(
               'Status',
-              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
-                status.lastSyncedAt?.toISOString() ?? '-'
+              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${status.lastSyncedAt?.toISOString() ?? '-'
               }\nVersion: ${powersync.sdkVersion}`
             );
           }}
