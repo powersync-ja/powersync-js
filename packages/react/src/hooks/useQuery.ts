@@ -85,7 +85,7 @@ export const useQuery = <T = any>(
   const fetchData = async () => {
     setIsFetching(true);
     try {
-      const result = await powerSync.getAll<T>(sqlStatement, parameters);
+      const result = await powerSync.getAll<T>(sqlStatement, queryParameters);
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
