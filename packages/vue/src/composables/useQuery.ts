@@ -1,4 +1,4 @@
-import { type SQLWatchOptions } from '@powersync/common';
+import { type SQLWatchOptions, parseQuery, type CompilableQuery, ParsedQuery } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
@@ -46,7 +46,7 @@ export type WatchedQueryResult<T> = {
  * ```
  */
 export const useQuery = <T = any>(
-  sqlStatement: MaybeRef<string>,
+  query: MaybeRef<string | CompilableQuery<T>>,
   sqlParameters: MaybeRef<any[]> = [],
   options: AdditionalOptions = {}
 ): WatchedQueryResult<T> => {
@@ -54,6 +54,9 @@ export const useQuery = <T = any>(
   const error = ref<Error | undefined>(undefined);
   const isLoading = ref(true);
   const isFetching = ref(true);
+
+  // Only defined when the query and parameters are successfully parsed and tables are resolved
+  let fetchData: () => Promise<void> | undefined;
 
   const powerSync = usePowerSync();
 
@@ -75,6 +78,7 @@ export const useQuery = <T = any>(
   };
 
   const handleError = (e: Error) => {
+    fetchData = undefined;
     finishLoading();
     data.value = [];
 
@@ -83,13 +87,14 @@ export const useQuery = <T = any>(
     error.value = wrappedError;
   };
 
-  const fetchData = async (sql: string, parameters: any[]) => {
+  const _fetchData = async (sql: string, parameters: any[]) => {
     isFetching.value = true;
     try {
       const result = await powerSync.value.getAll<T>(sql, parameters);
       handleResult(result);
-    } catch (error) {
-      handleError(error);
+    } catch (e) {
+      console.error('Failed to fetch data:', e);
+      handleError(e);
     }
   };
 
@@ -99,18 +104,28 @@ export const useQuery = <T = any>(
     onCleanup(() => abortController.abort());
     abortController = new AbortController();
 
-    const sql = toValue(sqlStatement);
-    const parameters = toValue(sqlParameters);
+    let parsedQuery: ParsedQuery;
+    try {
+      parsedQuery = parseQuery(toValue(query), toValue(sqlParameters));
+    } catch (e) {
+      console.error('Failed to parse query:', e);
+      handleError(e);
+      return;
+    }
+
+    const { sqlStatement: sql, parameters } = parsedQuery;
 
     let resolvedTables = [];
     try {
       resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
-    } catch (error) {
-      handleError(error);
+    } catch (e) {
+      console.error('Failed to fetch tables:', e);
+      handleError(e);
       return;
     }
     // Fetch initial data
-    await fetchData(sql, parameters);
+    fetchData = () => _fetchData(sql, parameters);
+    await fetchData();
 
     if (options.runQueryOnce) {
       return;
@@ -119,7 +134,7 @@ export const useQuery = <T = any>(
     powerSync.value.onChangeWithCallback(
       {
         onChange: async () => {
-          await fetchData(sql, parameters);
+          await fetchData();
         },
         onError: handleError
       },
@@ -136,6 +151,6 @@ export const useQuery = <T = any>(
     isLoading,
     isFetching,
     error,
-    refresh: () => fetchData(toValue(sqlStatement), toValue(sqlParameters))
+    refresh: () => fetchData?.()
   };
 };

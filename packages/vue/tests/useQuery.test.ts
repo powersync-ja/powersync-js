@@ -116,4 +116,28 @@ describe('useQuery', () => {
 
     expect(error.value).toEqual(Error('PowerSync failed to fetch data: some error'));
   });
+
+  it('should accept compilable queries', async () => {
+    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
+
+    const [{ isLoading }] = withSetup(() =>
+      useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) })
+    );
+
+    expect(isLoading.value).toEqual(true);
+    await flushPromises();
+    expect(isLoading.value).toEqual(false);
+  });
+
+  it('should set error for compilable query on useQuery parameters', async () => {
+    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
+
+    const [{ isLoading, error }] = withSetup(() =>
+      useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }, ['x'])
+    );
+
+    expect(error.value).toEqual(
+      Error('PowerSync failed to fetch data: You cannot pass parameters to a compiled query.')
+    );
+  });
 });
