@@ -62,7 +62,7 @@ export const useQuery = <T = any>(
   const [isFetching, setIsFetching] = React.useState(true);
   const [tables, setTables] = React.useState([]);
 
-  const memoizedParams = React.useMemo(() => parameters, [...queryParameters]);
+  const memoizedParams = React.useMemo(() => queryParameters, [...queryParameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
@@ -85,7 +85,7 @@ export const useQuery = <T = any>(
   const fetchData = async () => {
     setIsFetching(true);
     try {
-      const result = await powerSync.getAll<T>(sqlStatement, parameters);
+      const result = await powerSync.getAll<T>(sqlStatement, queryParameters);
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
