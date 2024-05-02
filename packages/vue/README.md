@@ -127,6 +127,7 @@ const { data, refresh } = useQuery('SELECT id, name FROM lists', [], {
 A type can be specified for each row returned by `useQuery`. Remember to declare `lang="ts"` when defining a `script setup` block.
 
 ```Vue
+// TodoListDisplayStaticQueryTypeScript.vue
 <script setup lang="ts">
 import { useQuery } from '@powersync/vue';
 
