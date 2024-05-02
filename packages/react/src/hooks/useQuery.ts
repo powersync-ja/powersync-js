@@ -1,8 +1,8 @@
-import { SQLWatchOptions } from '@powersync/common';
+import { type SQLWatchOptions, parseQuery, type CompilableQuery, type ParsedQuery } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
 
-interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
+export interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
   runQueryOnce?: boolean;
 }
 
@@ -37,7 +37,7 @@ export type QueryResult<T> = {
  * }
  */
 export const useQuery = <T = any>(
-  sqlStatement: string,
+  query: string | CompilableQuery<T>,
   parameters: any[] = [],
   options: AdditionalOptions = { runQueryOnce: false }
 ): QueryResult<T> => {
@@ -46,13 +46,23 @@ export const useQuery = <T = any>(
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
 
+  let parsedQuery: ParsedQuery;
+  try {
+    parsedQuery = parseQuery(query, parameters);
+  } catch (error) {
+    console.error('Failed to parse query:', error);
+    return { isLoading: false, isFetching: false, data: [], error };
+  }
+
+  const { sqlStatement, parameters: queryParameters } = parsedQuery;
+
   const [data, setData] = React.useState<T[]>([]);
   const [error, setError] = React.useState<Error | undefined>(undefined);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isFetching, setIsFetching] = React.useState(true);
   const [tables, setTables] = React.useState([]);
 
-  const memoizedParams = React.useMemo(() => parameters, [...parameters]);
+  const memoizedParams = React.useMemo(() => parameters, [...queryParameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
@@ -78,6 +88,7 @@ export const useQuery = <T = any>(
       const result = await powerSync.getAll<T>(sqlStatement, parameters);
       handleResult(result);
     } catch (e) {
+      console.error('Failed to fetch data:', e);
       handleError(e);
     }
   };
@@ -87,6 +98,7 @@ export const useQuery = <T = any>(
       const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
       setTables(tables);
     } catch (e) {
+      console.error('Failed to fetch tables:', e);
       handleError(e);
     }
   };
