@@ -1,9 +1,11 @@
 import type { CompilableQuery } from '../types/types';
 
-export const parseQuery = <T>(
-  query: string | CompilableQuery<T>,
-  parameters: any[]
-): { sqlStatement: string; parameters: any[] } | Error => {
+export interface ParsedQuery {
+  sqlStatement: string;
+  parameters: any[];
+}
+
+export const parseQuery = <T>(query: string | CompilableQuery<T>, parameters: any[]): ParsedQuery => {
   let sqlStatement: string;
 
   if (typeof query == 'string') {

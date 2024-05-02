@@ -1,4 +1,4 @@
-import { type SQLWatchOptions, parseQuery, type CompilableQuery } from '@powersync/common';
+import { type SQLWatchOptions, parseQuery, type CompilableQuery, type ParsedQuery } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
 
@@ -46,9 +46,12 @@ export const useQuery = <T = any>(
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
 
-  const parsedQuery = parseQuery<T>(query, parameters);
-  if (parsedQuery instanceof Error) {
-    return { isLoading: false, isFetching: false, data: [], error: parsedQuery };
+  let parsedQuery: ParsedQuery;
+  try {
+    parsedQuery = parseQuery(query, parameters);
+  } catch (error) {
+    console.error('Failed to parse query:', error);
+    return { isLoading: false, isFetching: false, data: [], error };
   }
 
   const { sqlStatement, parameters: queryParameters } = parsedQuery;
@@ -85,6 +88,7 @@ export const useQuery = <T = any>(
       const result = await powerSync.getAll<T>(sqlStatement, parameters);
       handleResult(result);
     } catch (e) {
+      console.error('Failed to fetch data:', e);
       handleError(e);
     }
   };
@@ -94,6 +98,7 @@ export const useQuery = <T = any>(
       const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
       setTables(tables);
     } catch (e) {
+      console.error('Failed to fetch tables:', e);
       handleError(e);
     }
   };
