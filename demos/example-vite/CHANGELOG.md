@@ -1,5 +1,11 @@
 # example-vite
 
+## 0.0.16
+
+### Patch Changes
+
+- 371e8ce: Updated Vite Demo apps' `include` entries to use nested dependency syntax, fixes issue with CJS nested dependencies.
+
 ## 0.0.15
 
 ### Patch Changes

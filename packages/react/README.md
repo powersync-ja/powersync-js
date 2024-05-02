@@ -44,30 +44,33 @@ export const TodoListDisplay = () => {
 
 ### Accessing PowerSync Status
 
-The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
+The provided PowerSync client status is available with the `useStatus` hook.
 
 ```JSX
-import { usePowerSyncStatus } from "@powersync/react";
+import { useStatus } from "@powersync/react";
 
 const Component = () => {
-  const status = usePowerSyncStatus();
+  const status = useStatus();
 
-  return <div>
-    status.connected ? 'wifi' : 'wifi-off'
-  </div>
+  return (
+    <>
+      <div>{status.connected ? 'wifi' : 'wifi-off'}</div>
+      <div>{!status.hasSynced ? 'Busy syncing...' : 'Data is here'}</div>
+    </>
+  )
 };
 ```
 
-### Watched Queries
+### Queries
 
-Watched queries will automatically update when a dependant table is updated.
+Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag.
 
 ```JSX
 // TodoListDisplay.jsx
-import { usePowerSyncWatchedQuery } from "@powersync/react";
+import { useQuery } from "@powersync/react";
 
 export const TodoListDisplay = () => {
-    const todoLists = usePowerSyncWatchedQuery('SELECT * from lists');
+    const { data: todoLists } = useQuery('SELECT * from lists');
 
     return <View>
       {todoLists.map((l) => (

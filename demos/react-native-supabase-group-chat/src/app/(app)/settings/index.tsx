@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Input, Label, Switch, Text, XStack, YStack } from 'tamagui';
 
@@ -10,7 +10,7 @@ export default function SettingsIndex() {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
 
-  const profiles = usePowerSyncWatchedQuery('SELECT * FROM profiles WHERE id = ?', [user?.id]);
+  const { data: profiles } = useQuery('SELECT * FROM profiles WHERE id = ?', [user?.id]);
 
   useEffect(() => {
     if (profiles.length > 0) {

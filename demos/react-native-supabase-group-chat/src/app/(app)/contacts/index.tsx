@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { Search, Shuffle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Button, Input, XStack, YStack } from 'tamagui';
@@ -17,7 +17,7 @@ export default function ContactsIndex() {
   const [search, setSearch] = useState<string>('');
   const [profiles, setProfiles] = useState<any[]>([]);
 
-  const contacts = usePowerSyncWatchedQuery(
+  const { data: contacts } = useQuery(
     "SELECT contacts.id, profiles.id as profile_id, profiles.name, profiles.handle, 'contact' as type FROM contacts LEFT JOIN profiles ON contacts.profile_id = profiles.id WHERE (profiles.name LIKE '%' || ?1 || '%' OR profiles.handle LIKE '%' || ?1 || '%') ORDER BY name ASC",
     [search]
   );

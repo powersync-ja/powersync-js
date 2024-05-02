@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
@@ -12,10 +12,10 @@ export default function ChatsChatIndex() {
   const { group: groupId } = useLocalSearchParams<{ group: string }>();
   const { user } = useAuth();
   const powerSync = usePowerSync();
-  const groups = usePowerSyncWatchedQuery('SELECT id, name FROM groups WHERE id = ?', [groupId]);
+  const { data: groups } = useQuery('SELECT id, name FROM groups WHERE id = ?', [groupId]);
   const group = groups.length ? groups[0] : undefined;
 
-  const messages = usePowerSyncWatchedQuery(
+  const { data: messages } = useQuery(
     'SELECT sender_id, content, created_at FROM messages WHERE group_id = ? ORDER BY created_at ASC',
     [group?.id]
   );
