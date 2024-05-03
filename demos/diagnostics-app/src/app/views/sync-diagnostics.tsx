@@ -1,9 +1,10 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { clearData } from '@/library/powersync/ConnectionManager';
-import { usePowerSyncWatchedQuery } from '@powersync/react';
+import { usePowerSyncWatchedQuery, useQuery } from '@powersync/react';
 import {
   Box,
   Button,
+  CircularProgress,
   Grid,
   Paper,
   Table,
@@ -54,12 +55,12 @@ SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_opl
 `;
 
 export default function SyncDiagnosticsPage() {
-  const bucketRows = usePowerSyncWatchedQuery(BUCKETS_QUERY, undefined, {
+  const { data: bucketRows, isLoading: bucketRowsLoading } = useQuery(BUCKETS_QUERY, undefined, {
     rawTableNames: true,
     tables: ['ps_oplog', 'ps_data_local__local_bucket_data'],
     throttleMs: 500
   });
-  const tableRows = usePowerSyncWatchedQuery(TABLES_QUERY, undefined, {
+  const { data: tableRows, isLoading: tableRowsLoading } = useQuery(TABLES_QUERY, undefined, {
     rawTableNames: true,
     tables: ['ps_oplog', 'ps_data_local__local_bucket_data'],
     throttleMs: 500
@@ -220,7 +221,7 @@ export default function SyncDiagnosticsPage() {
       <S.MainContainer>
         <S.CenteredGrid container>
           <S.CenteredGrid item xs={12} md={6}>
-            {totalsTable}
+            {bucketRowsLoading ? <CircularProgress /> : totalsTable}
           </S.CenteredGrid>
           <S.CenteredGrid item xs={12} md={2}>
             <Button
@@ -234,10 +235,10 @@ export default function SyncDiagnosticsPage() {
           </S.CenteredGrid>
 
           <S.CenteredGrid item xs={12} md={8}>
-            {tablesTable}
+            {tableRowsLoading ? <CircularProgress /> : tablesTable}
           </S.CenteredGrid>
           <S.CenteredGrid item xs={12} md={12}>
-            {bucketsTable}
+            {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
           </S.CenteredGrid>
         </S.CenteredGrid>
       </S.MainContainer>

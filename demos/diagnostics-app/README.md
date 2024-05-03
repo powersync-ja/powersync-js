@@ -75,7 +75,6 @@ At this stage, we recommend running the app with the dev console open, as some e
 
 - No errors are displayed when the token is invalid, or when it expires later.
   - The user is also “logged in” to the app with an invalid token after an initial delay
-- If the query in the SQL console contains an error, nothing is displayed.
 
 Other known issues:
 
