@@ -22,11 +22,20 @@ export class TokenConnector implements PowerSyncBackendConnector {
   }
 
   async signIn(credentials: Credentials) {
-    localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
-    await connect();
+    try {
+      localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
+      await connect();
+    } catch (e) {
+      this.clearCredentials();
+      throw e;
+    }
   }
 
   hasCredentials() {
     return localStorage.getItem('powersync_credentials') != null;
+  }
+
+  clearCredentials() {
+    localStorage.removeItem('powersync_credentials');
   }
 }

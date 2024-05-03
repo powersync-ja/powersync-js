@@ -27,13 +27,14 @@ import { useNavigationPanel } from '@/components/navigation/NavigationPanelConte
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
-import { sync } from '@/library/powersync/ConnectionManager';
+import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
   const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
+  const [syncError, setSyncError] = React.useState<Error | null>(null);
   const [openDrawer, setOpenDrawer] = React.useState(false);
   const { title } = useNavigationPanel();
 
@@ -58,7 +59,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         path: LOGIN_ROUTE,
         title: 'Sign Out',
         beforeNavigate: async () => {
-          await powerSync.disconnectAndClear();
+          await signOut();
         },
         icon: () => <ExitToAppIcon />
       }
@@ -72,8 +73,17 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         setSyncStatus(status);
       }
     });
-    return () => l?.();
+    return () => l();
   }, [powerSync]);
+
+  React.useEffect(() => {
+    const l = syncErrorTracker.registerListener({
+      lastErrorUpdated(error) {
+        setSyncError(error);
+      }
+    });
+    return () => l();
+  }, []);
 
   return (
     <S.MainBox>
@@ -96,7 +106,11 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
             color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}
           />
           <SouthIcon color={syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
-          {syncStatus?.connected ? <WifiIcon /> : <SignalWifiOffIcon />}
+          {syncStatus?.connected ? (
+            <WifiIcon />
+          ) : (
+            <SignalWifiOffIcon titleAccess={syncError?.message ?? 'Not connected'} />
+          )}
         </Toolbar>
       </S.TopBar>
       <Drawer anchor={'left'} open={openDrawer} onClose={() => setOpenDrawer(false)}>
