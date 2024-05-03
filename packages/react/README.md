@@ -63,14 +63,14 @@ const Component = () => {
 
 ### Queries
 
-Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag.
+Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
 ```JSX
 // TodoListDisplay.jsx
 import { useQuery } from "@powersync/react";
 
 export const TodoListDisplay = () => {
-    const { data: todoLists } = useQuery('SELECT * from lists');
+    const { data: todoLists } = useQuery('SELECT * FROM lists WHERE id = ?', ['id-1'], {runQueryOnce: false});
 
     return <View>
       {todoLists.map((l) => (
