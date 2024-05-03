@@ -6,6 +6,9 @@ import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
 import SouthIcon from '@mui/icons-material/South';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import WifiIcon from '@mui/icons-material/Wifi';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import StorageIcon from '@mui/icons-material/Storage';
+
 import {
   AppBar,
   Box,
@@ -60,12 +63,12 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
       {
         path: SYNC_DIAGNOSTICS_ROUTE,
         title: 'Sync Overview',
-        icon: () => <TerminalIcon />
+        icon: () => <TableChartIcon />
       },
       {
         path: SCHEMA_ROUTE,
         title: 'Dynamic Schema',
-        icon: () => <TerminalIcon />
+        icon: () => <StorageIcon />
       },
       {
         path: SQL_CONSOLE_ROUTE,
