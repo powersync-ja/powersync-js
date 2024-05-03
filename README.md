@@ -55,6 +55,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
 - [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.
 
+### Electron
+
+- [demos/electron-supabase-todolist](./demos/electron-supabase-todolist/README.md) An Electron to-do list example app using the PowerSync Web SDK and a Supabase backend.
+
 # Development
 
 This monorepo uses pnpm.
