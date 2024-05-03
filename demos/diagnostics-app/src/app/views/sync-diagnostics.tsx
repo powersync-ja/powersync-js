@@ -1,6 +1,5 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { clearData } from '@/library/powersync/ConnectionManager';
-import { usePowerSyncWatchedQuery, useQuery } from '@powersync/react';
+import { clearData, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 import {
   Box,
   Button,
@@ -11,12 +10,13 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Typography,
   styled
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useQuery } from '@powersync/react';
+import React from 'react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -65,6 +65,17 @@ export default function SyncDiagnosticsPage() {
     tables: ['ps_oplog', 'ps_data_local__local_bucket_data'],
     throttleMs: 500
   });
+
+  const [syncError, setSyncError] = React.useState<Error | null>(syncErrorTracker.lastSyncError);
+
+  React.useEffect(() => {
+    const l = syncErrorTracker.registerListener({
+      lastErrorUpdated(error) {
+        setSyncError(error);
+      }
+    });
+    return () => l();
+  }, []);
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 2 },

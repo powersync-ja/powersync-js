@@ -1,13 +1,12 @@
-import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import MenuIcon from '@mui/icons-material/Menu';
 import NorthIcon from '@mui/icons-material/North';
 import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
 import SouthIcon from '@mui/icons-material/South';
+import StorageIcon from '@mui/icons-material/Storage';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import WifiIcon from '@mui/icons-material/Wifi';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import StorageIcon from '@mui/icons-material/Storage';
 
 import {
   AppBar,
@@ -26,11 +25,11 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
+import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
-import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
-import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
