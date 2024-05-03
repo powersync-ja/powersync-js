@@ -2,7 +2,7 @@
 
 ## Note: Beta Release
 
-This package is currently in a beta release.
+The [web SDK](/packages/web/) is currently in a beta release.
 
 ## Overview
 
