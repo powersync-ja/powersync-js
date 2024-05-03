@@ -1,6 +1,6 @@
 import React from 'react';
-import { usePowerSyncWatchedQuery } from '@powersync/react';
-import { Box, Button, Grid, TextField, styled } from '@mui/material';
+import { useQuery } from '@powersync/react';
+import { Box, Button, CircularProgress, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 
@@ -9,7 +9,7 @@ const DEFAULT_QUERY = `SELECT name FROM ps_buckets`;
 export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
-  const querySQLResult = usePowerSyncWatchedQuery(query);
+  const { data: querySQLResult, isLoading, error } = useQuery(query);
 
   const queryDataGridResult = React.useMemo(() => {
     const firstItem = querySQLResult?.[0];
@@ -24,6 +24,8 @@ export default function SQLConsolePage() {
       rows: querySQLResult
     };
   }, [querySQLResult]);
+
+  const errorMessage = (error?.cause as any)?.message ?? error?.message;
 
   return (
     <NavigationPage title="SQL Console">
@@ -41,6 +43,8 @@ export default function SQLConsolePage() {
                   setQuery(inputValue);
                 }
               }}
+              error={error != null}
+              helperText={errorMessage}
             />
           </S.CenteredGrid>
           <S.CenteredGrid item xs={12} md={2}>
@@ -58,7 +62,7 @@ export default function SQLConsolePage() {
           </S.CenteredGrid>
         </S.CenteredGrid>
 
-        {queryDataGridResult ? (
+        {!isLoading ? (
           <S.QueryResultContainer>
             {queryDataGridResult.columns ? (
               <DataGrid
@@ -77,7 +81,9 @@ export default function SQLConsolePage() {
               />
             ) : null}
           </S.QueryResultContainer>
-        ) : null}
+        ) : (
+          <CircularProgress />
+        )}
       </S.MainContainer>
     </NavigationPage>
   );
