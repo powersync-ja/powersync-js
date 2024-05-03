@@ -1,4 +1,14 @@
-import { ChecklistRtl, ExitToApp, Menu, North, SignalWifiOff, South, Terminal, Wifi } from '@mui/icons-material';
+import {
+  ChecklistRtl,
+  ExitToApp,
+  Menu,
+  North,
+  SignalWifiOff,
+  South,
+  Terminal,
+  Wifi,
+  ArrowBack
+} from '@mui/icons-material';
 import {
   AppBar,
   Box,
@@ -34,14 +44,14 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   const NAVIGATION_ITEMS = React.useMemo(
     () => [
       {
-        path: SQL_CONSOLE_ROUTE,
-        title: 'SQL Console',
-        icon: () => <Terminal />
-      },
-      {
         path: TODO_LISTS_ROUTE,
         title: 'TODO Lists',
         icon: () => <ChecklistRtl />
+      },
+      {
+        path: SQL_CONSOLE_ROUTE,
+        title: 'SQL Console',
+        icon: () => <Terminal />
       },
       {
         path: LOGIN_ROUTE,
@@ -60,6 +70,16 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     <S.MainBox>
       <S.TopBar position="static">
         <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+            onClick={() => navigate(-1)}
+          >
+            <ArrowBack />
+          </IconButton>
           <IconButton
             size="large"
             edge="start"
