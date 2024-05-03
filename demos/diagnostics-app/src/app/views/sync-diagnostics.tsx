@@ -219,28 +219,17 @@ export default function SyncDiagnosticsPage() {
   return (
     <NavigationPage title="Sync Diagnostics">
       <S.MainContainer>
-        <S.CenteredGrid container>
-          <S.CenteredGrid item xs={12} md={6}>
-            {bucketRowsLoading ? <CircularProgress /> : totalsTable}
-          </S.CenteredGrid>
-          <S.CenteredGrid item xs={12} md={2}>
-            <Button
-              sx={{ margin: '10px' }}
-              variant="contained"
-              onClick={() => {
-                clearData();
-              }}>
-              Clear & Redownload
-            </Button>
-          </S.CenteredGrid>
-
-          <S.CenteredGrid item xs={12} md={8}>
-            {tableRowsLoading ? <CircularProgress /> : tablesTable}
-          </S.CenteredGrid>
-          <S.CenteredGrid item xs={12} md={12}>
-            {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
-          </S.CenteredGrid>
-        </S.CenteredGrid>
+        {bucketRowsLoading ? <CircularProgress /> : totalsTable}
+        <Button
+          sx={{ margin: '10px' }}
+          variant="contained"
+          onClick={() => {
+            clearData();
+          }}>
+          Clear & Redownload
+        </Button>
+        {tableRowsLoading ? <CircularProgress /> : tablesTable}
+        {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
       </S.MainContainer>
     </NavigationPage>
   );

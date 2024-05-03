@@ -35,8 +35,25 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
 
   const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
   const [syncError, setSyncError] = React.useState<Error | null>(null);
-  const [openDrawer, setOpenDrawer] = React.useState(false);
   const { title } = useNavigationPanel();
+
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [isClosing, setIsClosing] = React.useState(false);
+
+  const handleDrawerClose = () => {
+    setIsClosing(true);
+    setMobileOpen(false);
+  };
+
+  const handleDrawerTransitionEnd = () => {
+    setIsClosing(false);
+  };
+
+  const handleDrawerToggle = () => {
+    if (!isClosing) {
+      setMobileOpen(!mobileOpen);
+    }
+  };
 
   const NAVIGATION_ITEMS = React.useMemo(
     () => [
@@ -84,18 +101,46 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     });
     return () => l();
   }, []);
+  const drawerWidth = 320;
+
+  const drawer = (
+    <>
+      <S.PowerSyncLogo alt="PowerSync Logo" width={250} height={100} src="/powersync-logo.svg" />
+      <Divider />
+      <List>
+        {NAVIGATION_ITEMS.map((item) => (
+          <ListItem key={item.path}>
+            <ListItemButton
+              onClick={async () => {
+                await item.beforeNavigate?.();
+                navigate(item.path);
+                // setOpenDrawer(false);
+              }}>
+              <ListItemIcon>{item.icon()}</ListItemIcon>
+              <ListItemText primary={item.title} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </>
+  );
 
   return (
-    <S.MainBox>
-      <S.TopBar position="static">
+    <S.MainBox sx={{ display: 'flex' }}>
+      <S.TopBar
+        position="absolute"
+        sx={{
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` }
+        }}>
         <Toolbar>
           <IconButton
             size="large"
             edge="start"
             color="inherit"
             aria-label="menu"
-            sx={{ mr: 2 }}
-            onClick={() => setOpenDrawer(!openDrawer)}>
+            sx={{ mr: 2, display: { md: 'none' } }}
+            onClick={handleDrawerToggle}>
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
@@ -113,26 +158,32 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           )}
         </Toolbar>
       </S.TopBar>
-      <Drawer anchor={'left'} open={openDrawer} onClose={() => setOpenDrawer(false)}>
-        <S.PowerSyncLogo alt="PowerSync Logo" width={250} height={100} src="/powersync-logo.svg" />
-        <Divider />
-        <List>
-          {NAVIGATION_ITEMS.map((item) => (
-            <ListItem key={item.path}>
-              <ListItemButton
-                onClick={async () => {
-                  await item.beforeNavigate?.();
-                  navigate(item.path);
-                  setOpenDrawer(false);
-                }}>
-                <ListItemIcon>{item.icon()}</ListItemIcon>
-                <ListItemText primary={item.title} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
-      </Drawer>
-      <S.MainBox>{children}</S.MainBox>
+      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onTransitionEnd={handleDrawerTransitionEnd}
+          onClose={handleDrawerClose}
+          ModalProps={{
+            keepMounted: true // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
+          }}></Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
+          }}
+          open>
+          {drawer}
+        </Drawer>
+      </Box>
+      <S.MainBox sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, marginTop: '50px' }}>
+        {children}
+      </S.MainBox>
     </S.MainBox>
   );
 }
