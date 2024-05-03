@@ -71,12 +71,8 @@ Tables and columns are only added to this schema - nothing is automatically remo
 
 ## Known issues
 
-At this stage, we recommend running the app with the dev console open, as some errors are currently not being surfaced to the UI, including:
-
-- No errors are displayed when the token is invalid, or when it expires later.
-  - The user is also “logged in” to the app with an invalid token after an initial delay
+At this stage, we recommend running the app with the dev console open, as some errors are currently not being surfaced to the UI.
 
 Other known issues:
 
-- When signed out, there is no automatic redirect to the login page.
 - When a lot of data is synced, the main dashboard may be slow.
