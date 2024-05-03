@@ -1,0 +1,60 @@
+{
+  "name": "electron-supabase-todolist",
+  "productName": "electron-supabase-todolist",
+  "version": "1.0.0",
+  "description": "My Electron application description",
+  "main": ".vite/build/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron-forge start --inspect-electron",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint --ext .ts,.tsx ."
+  },
+  "keywords": [],
+  "author": {
+    "name": "PowerSync"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@journeyapps/wa-sqlite": "~0.2.0",
+    "@mui/icons-material": "^5.15.16",
+    "@mui/material": "^5.15.16",
+    "@mui/x-data-grid": "^6.19.11",
+    "@powersync/react": "workspace:*",
+    "@powersync/web": "workspace:*",
+    "@supabase/supabase-js": "^2.43.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "js-logger": "^1.6.1",
+    "lodash": "^4.17.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.0"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron-forge/plugin-vite": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
+    "@types/lodash": "^4.17.0",
+    "@types/node": "^20.12.8",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "babel-loader": "^9.1.3",
+    "electron": "30.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "~4.5.5",
+    "vite": "^5.2.11",
+    "vite-plugin-require": "^1.1.14",
+    "vite-plugin-top-level-await": "^1.4.1",
+    "vite-plugin-wasm": "^3.3.0"
+  }
+}
