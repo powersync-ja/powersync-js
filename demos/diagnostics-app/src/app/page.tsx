@@ -4,15 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from './router';
 import { connector } from '@/library/powersync/ConnectionManager';
 
-export type LoginFormParams = {
-  email: string;
-  password: string;
-};
-
-/**
- * This page shows a loading spinner we detect a session
- * and redirect either to the app or auth flow.
- */
 export default function EntryPage() {
   const navigate = useNavigate();
 
