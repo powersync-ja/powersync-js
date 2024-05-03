@@ -141,6 +141,22 @@ const { data } = useQuery<{ id: string, name: string }>('SELECT id, name FROM li
 </template>
 ```
 
+You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
+
+```Vue
+// TodolistDisplayQueryKysely.vue
+<script setup lang="ts">
+import { usePowerSync, useQuery } from '@powersync/vue';
+import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
+import { Database } from '@/library/powersync/AppSchema';
+
+const powerSync = usePowerSync();
+const db = wrapPowerSyncWithKysely<Database>(powerSync.value);
+
+const { data } = useQuery(db.selectFrom('lists').selectAll().where('name', 'like', '%Shopping%'));
+</script>
+```
+
 ## Connection Status
 
 The `useStatus` composable provides general connectivity information such as the connection status, whether the initial full sync has completed, when the last sync completed, and whether any data is being uploaded or downloaded.
