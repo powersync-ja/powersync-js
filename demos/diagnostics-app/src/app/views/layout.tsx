@@ -116,7 +116,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               onClick={async () => {
                 await item.beforeNavigate?.();
                 navigate(item.path);
-                // setOpenDrawer(false);
+                setMobileOpen(false);
               }}>
               <ListItemIcon>{item.icon()}</ListItemIcon>
               <ListItemText primary={item.title} />
@@ -172,7 +172,9 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           sx={{
             display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
-          }}></Drawer>
+          }}>
+          {drawer}
+        </Drawer>
         <Drawer
           variant="permanent"
           sx={{
