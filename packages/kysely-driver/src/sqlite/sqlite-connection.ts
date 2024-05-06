@@ -105,9 +105,7 @@ export class PowerSyncConnection implements DatabaseConnection {
     this.releaseTransaction();
   }
 
-  async releaseConnection(): Promise<void> {
-    this.#db.close();
-  }
+  async releaseConnection(): Promise<void> {}
 
   private releaseTransaction() {
     if (!this.#completeTransaction) {
