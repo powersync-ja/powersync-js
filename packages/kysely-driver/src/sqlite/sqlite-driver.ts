@@ -35,5 +35,8 @@ export class PowerSyncDriver implements Driver {
     await connection.releaseConnection();
   }
 
+  /**
+    This will do nothing. Instead use PowerSync `disconnectAndClear` function.
+   */
   async destroy(): Promise<void> {}
 }
