@@ -4,7 +4,7 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
-import { RSocketConnector } from 'rsocket-core';
+import { RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import { serialize, deserialize } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
@@ -178,6 +178,8 @@ export abstract class AbstractRemote {
         url: this.options.socketUrlTransformer(request.url)
       }),
       setup: {
+        dataMimeType: 'application/bson',
+        metadataMimeType: 'application/bson',
         payload: {
           data: null,
           metadata: Buffer.from(
@@ -198,43 +200,61 @@ export abstract class AbstractRemote {
     });
     // We initially request this amount and expect these to arrive eventually
     let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
-    const res = rsocket.requestStream(
-      {
-        data: Buffer.from(serialize(options.data)),
-        metadata: Buffer.from(
-          serialize({
-            path
-          })
-        )
-      },
-      SYNC_QUEUE_REQUEST_N, // The initial N amount
-      {
-        onError: (e) => {
-          this.logger.error(e);
-          stream.close();
+
+    const socket = await new Promise<Requestable>((resolve, reject) => {
+      let connectionEstablished = false;
+
+      const res = rsocket.requestStream(
+        {
+          data: Buffer.from(serialize(options.data)),
+          metadata: Buffer.from(
+            serialize({
+              path
+            })
+          )
         },
-        onNext: (payload) => {
-          const { data } = payload;
-          if (!data) {
-            return;
-          }
-          // Less events are now pending
-          pendingEventsCount--;
-          const deserializedData = deserialize(data);
-          stream.enqueueData(deserializedData);
-        },
-        onComplete: () => {
-          stream.close();
-        },
-        onExtension: () => {}
-      }
-    );
+        SYNC_QUEUE_REQUEST_N, // The initial N amount
+        {
+          onError: (e) => {
+            this.logger.error(e);
+            stream.close();
+            // Handles cases where the connection failed e.g. auth error or connection error
+            if (!connectionEstablished) {
+              reject(e);
+            }
+          },
+          onNext: (payload) => {
+            // The connection is active
+            if (!connectionEstablished) {
+              connectionEstablished = true;
+              resolve(res);
+            }
+            const { data } = payload;
+            // Less events are now pending
+            pendingEventsCount--;
+            if (!data) {
+              return;
+            }
+
+            const deserializedData = deserialize(data);
+            stream.enqueueData(deserializedData);
+          },
+          onComplete: () => {
+            stream.close();
+          },
+          onExtension: () => {}
+        }
+      );
+    });
 
     const l = stream.registerListener({
       lowWater: async () => {
         // Request to fill up the queue
-        res.request(SYNC_QUEUE_REQUEST_N - pendingEventsCount);
-        pendingEventsCount = SYNC_QUEUE_REQUEST_N;
+        const required = SYNC_QUEUE_REQUEST_N - pendingEventsCount;
+        if (required > 0) {
+          socket.request(SYNC_QUEUE_REQUEST_N - pendingEventsCount);
+          pendingEventsCount = SYNC_QUEUE_REQUEST_N;
+        }
       },
       closed: () => {
         l?.();
