@@ -28,14 +28,14 @@ import React from 'react';
 import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
-import { usePowerSync } from '@powersync/react';
+import { usePowerSync, useStatus } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
+  const syncStatus = useStatus();
   const [syncError, setSyncError] = React.useState<Error | null>(null);
   const { title } = useNavigationPanel();
 
@@ -85,15 +85,6 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     ],
     [powerSync]
   );
-
-  React.useEffect(() => {
-    const l = sync.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
-      }
-    });
-    return () => l();
-  }, [powerSync]);
 
   React.useEffect(() => {
     const l = syncErrorTracker.registerListener({
