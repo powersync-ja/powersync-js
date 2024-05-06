@@ -4,9 +4,8 @@ This diagnostics app presents data from the perspective of a specific user (no s
 
 - See stats about the user's local database.
 - Inspect tables and sync buckets on the device.
-- Identify common issues. E.g. too many sync buckets.
 - Get started quickly - play around with a SQLite database without creating an app.
-- Serve as a baseline to compare your own apps against if you run into issues such as slow sync.
+- Serve as a baseline to compare your own apps against if you run into issues.
 
 The app is currently available as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
 
@@ -75,4 +74,5 @@ At this stage, we recommend running the app with the dev console open, as some e
 
 Other known issues:
 
+- Having the app open in multiple tabs may cause issues.
 - When a lot of data is synced, the main dashboard may be slow.
