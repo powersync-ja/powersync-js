@@ -98,11 +98,10 @@ export const useQuery = <T = any>(
     }
   };
 
-  let abortController = new AbortController();
   watchEffect(async (onCleanup) => {
+    const abortController = new AbortController();
     // Abort any previous watches when the effect triggers again, or when the component is unmounted
     onCleanup(() => abortController.abort());
-    abortController = new AbortController();
 
     let parsedQuery: ParsedQuery;
     try {

@@ -78,7 +78,7 @@ import { usePowerSync, useQuery } from '@powersync/vue';
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
-const { data, isLoading, isFetching, error} = useQuery(query);
+const { data:list, isLoading, isFetching, error} = useQuery(query);
 
 const powersync = usePowerSync();
 const addList = () => {
@@ -88,8 +88,8 @@ const addList = () => {
 
 <template>
     <input v-model="query" />
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="fetching">Updating results...</div>
+    <div v-if="isLoading">Loading...</div>
+    <div v-else-if="isFetching">Updating results...</div>
 
     <div v-if="error">{{ error }}</div>
     <ul v-else>
@@ -108,14 +108,14 @@ The `useQuery` composable can be configured to only execute initially and not ev
 <script setup>
 import { useQuery } from '@powersync/vue';
 
-const { data, refresh } = useQuery('SELECT id, name FROM lists', [], {
+const { data: list, refresh } = useQuery('SELECT id, name FROM lists', [], {
   runQueryOnce: true
 });
 </script>
 
 <template>
   <ul>
-    <li v-for="l in data" :key="l.name">{{ l.name }} + {{ l.id }}</li>
+    <li v-for="l in list" :key="l.name">{{ l.name }} + {{ l.id }}</li>
   </ul>
   <button @click="refresh">Refresh list</button>
 </template>
