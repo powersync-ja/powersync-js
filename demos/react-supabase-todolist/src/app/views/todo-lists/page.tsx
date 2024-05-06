@@ -13,11 +13,11 @@ import {
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
 import React from 'react';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { useSupabase } from '@/components/providers/SystemProvider';
-import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
-import { LISTS_TABLE } from '@/library/powersync/AppSchema';
-import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
+import { useSupabase } from '../../../components/providers/SystemProvider';
+import { LISTS_TABLE } from '../../../library/powersync/AppSchema';
+import { NavigationPage } from '../../../components/navigation/NavigationPage';
+import { SearchBarWidget } from '../../../components/widgets/SearchBarWidget';
+import { TodoListsWidget } from '../../../components/widgets/TodoListsWidget';
 
 export default function TodoListsPage() {
   const powerSync = usePowerSync();

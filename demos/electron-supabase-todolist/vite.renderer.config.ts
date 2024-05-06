@@ -40,40 +40,6 @@ export default defineConfig((env) => {
       topLevelAwait(),
       react(),
       vitePluginRequire.default(),
-      //   registerType: 'autoUpdate',
-      //   includeAssets: ['powersync-logo.svg', 'supabase-logo.png', 'favicon.ico'],
-      //   manifest: {
-      //     theme_color: '#c44eff',
-      //     background_color: '#c44eff',
-      //     display: 'standalone',
-      //     scope: '/',
-      //     start_url: '/',
-      //     name: 'PowerSync React Demo',
-      //     short_name: 'PowerSync React',
-      //     icons: [
-      //       {
-      //         src: '/icons/icon-192x192.png',
-      //         sizes: '192x192',
-      //         type: 'image/png'
-      //       },
-      //       {
-      //         src: '/icons/icon-256x256.png',
-      //         sizes: '256x256',
-      //         type: 'image/png'
-      //       },
-      //       {
-      //         src: '/icons/icon-384x384.png',
-      //         sizes: '384x384',
-      //         type: 'image/png'
-      //       },
-      //       {
-      //         src: '/icons/icon-512x512.png',
-      //         sizes: '512x512',
-      //         type: 'image/png'
-      //       }
-      //     ]
-      //   }
-      // }),
       pluginExposeRenderer(name)
     ],
     worker: {

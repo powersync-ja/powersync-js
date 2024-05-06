@@ -1,8 +1,8 @@
 import React from 'react';
-import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
-import { useSupabase } from '@/components/providers/SystemProvider';
 import { useNavigate } from 'react-router-dom';
-import { DEFAULT_ENTRY_ROUTE } from '@/app/router';
+import { LoginDetailsWidget } from '../../../components/widgets/LoginDetailsWidget';
+import { useSupabase } from '../../../components/providers/SystemProvider';
+import { DEFAULT_ENTRY_ROUTE } from '../../router';
 
 export default function LoginPage() {
   const supabase = useSupabase();
