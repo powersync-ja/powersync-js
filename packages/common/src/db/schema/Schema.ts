@@ -16,7 +16,9 @@ export class Schema<S extends SchemaType = SchemaType> {
   */
   readonly types: SchemaTableType<S>;
   readonly props: S;
-  constructor(public tables: ClassicTable[] | S) {
+  readonly tables: ClassicTable[];
+
+  constructor(tables: ClassicTable[] | S) {
     if (Array.isArray(tables)) {
       this.tables = tables;
     } else {

@@ -59,6 +59,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/electron-supabase-todolist](./demos/electron-supabase-todolist/README.md) An Electron to-do list example app using the PowerSync Web SDK and a Supabase backend.
 
+## Tools
+
+- [tools/diagnostics-app](./tools/diagnostics-app): A standalone web app that presents stats about a user's local database (incl. tables and sync buckets).
+
 # Development
 
 This monorepo uses pnpm.
