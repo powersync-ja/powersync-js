@@ -15,7 +15,7 @@ describe('CRUD operations', () => {
   });
 
   afterEach(async () => {
-    await db.destroy();
+    await powerSyncDb.disconnectAndClear();
   });
 
   it('should insert a user and select that user', async () => {

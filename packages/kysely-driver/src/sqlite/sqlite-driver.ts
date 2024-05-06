@@ -35,7 +35,5 @@ export class PowerSyncDriver implements Driver {
     await connection.releaseConnection();
   }
 
-  async destroy(): Promise<void> {
-    this.#db.disconnectAndClear();
-  }
+  async destroy(): Promise<void> {}
 }
