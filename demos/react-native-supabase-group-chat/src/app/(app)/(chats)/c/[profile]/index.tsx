@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -13,12 +13,12 @@ export default function ChatsChatIndex() {
   const { profile: profileId } = useLocalSearchParams<{ profile: string }>();
   const { user } = useAuth();
   const powerSync = usePowerSync();
-  const profiles = usePowerSyncWatchedQuery('SELECT id, name, handle, demo FROM profiles WHERE id = ?', [profileId]);
+  const { data: profiles } = useQuery('SELECT id, name, handle, demo FROM profiles WHERE id = ?', [profileId]);
   const profile = profiles.length ? profiles[0] : undefined;
   const [draftId, setDraftId] = useState<string>();
   const [listMessages, setListMessages] = useState<any[]>([]);
 
-  const messages = usePowerSyncWatchedQuery(
+  const { data: messages } = useQuery(
     'SELECT sender_id, content, created_at FROM messages WHERE (((sender_id = ?1 AND recipient_id = ?2) OR (sender_id = ?2 AND recipient_id = ?1)) AND NOT (sender_id = ?1 AND sent_at IS NULL)) ORDER BY created_at ASC',
     [user?.id, profile?.id]
   );

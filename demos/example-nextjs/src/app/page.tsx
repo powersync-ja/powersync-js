@@ -2,13 +2,11 @@
 
 import { useEffect } from 'react';
 import { CircularProgress, Grid, ListItem, styled } from '@mui/material';
-import { useRouter } from 'next/navigation';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
+import { usePowerSync, useQuery } from '@powersync/react';
 
 export default function EntryPage() {
-  const router = useRouter();
   const db = usePowerSync();
-  const customers = usePowerSyncWatchedQuery('SELECT id, name FROM customers');
+  const { data: customers, isLoading } = useQuery('SELECT id, name FROM customers');
 
   useEffect(() => {
     // Insert some test data
@@ -19,6 +17,10 @@ export default function EntryPage() {
     // db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
     return () => {};
   }, []);
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
 
   return (
     <S.MainGrid container>

@@ -1,7 +1,7 @@
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react';
+import { usePowerSync, useQuery } from '@powersync/react';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -32,11 +32,11 @@ const TodoEditSection = () => {
   const supabase = useSupabase();
   const { id: listID } = useParams();
 
-  const [listRecord] = usePowerSyncWatchedQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [
-    listID
-  ]);
+  const {
+    data: [listRecord]
+  } = useQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [listID]);
 
-  const todos = usePowerSyncWatchedQuery<TodoRecord>(
+  const { data: todos } = useQuery<TodoRecord>(
     `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
     [listID]
   );

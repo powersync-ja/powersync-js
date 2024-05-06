@@ -41,10 +41,10 @@ import { supabase } from '@/plugins/supabase';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { pageSubtitle } from '@/main';
-import { usePowerSyncStatus } from '@powersync/vue';
+import { useStatus } from '@powersync/vue';
 
 const openDrawer = ref(false);
-const { status: syncStatus } = usePowerSyncStatus();
+const syncStatus = useStatus();
 const router = useRouter();
 const route = useRoute();
 

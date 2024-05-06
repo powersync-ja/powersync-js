@@ -1,4 +1,4 @@
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { Save, Trash, XCircle } from '@tamagui/lucide-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -16,8 +16,8 @@ export default function GroupSettings() {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const powerSync = usePowerSync();
 
-  const groups = usePowerSyncWatchedQuery('SELECT name FROM groups WHERE id = ?', [groupId]);
-  const groupMembers = usePowerSyncWatchedQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId]);
+  const { data: groups } = useQuery('SELECT name FROM groups WHERE id = ?', [groupId]);
+  const { data: groupMembers } = useQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId]);
 
   useEffect(() => {
     if (groups.length > 0) {
@@ -74,16 +74,13 @@ export default function GroupSettings() {
 
     await powerSync.writeTransaction(async (tx) => {
       try {
-        await tx.executeAsync('UPDATE groups SET name= ? WHERE id = ?', [name, groupId]);
+        await tx.execute('UPDATE groups SET name= ? WHERE id = ?', [name, groupId]);
         for (const profileId of removedContacts) {
-          const result = await tx.executeAsync('DELETE FROM memberships WHERE group_id = ? AND profile_id = ?', [
-            groupId,
-            profileId
-          ]);
+          await tx.execute('DELETE FROM memberships WHERE group_id = ? AND profile_id = ?', [groupId, profileId]);
         }
         for (const profileId of addedContacts) {
           const membershipId = uuid();
-          const result = await tx.executeAsync(
+          await tx.execute(
             'INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())',
             [membershipId, groupId, profileId]
           );
@@ -99,9 +96,9 @@ export default function GroupSettings() {
     async function deleteTransaction() {
       await powerSync.writeTransaction(async (tx) => {
         try {
-          await tx.executeAsync('DELETE FROM memberships WHERE group_id = ?', [groupId]);
-          await tx.executeAsync('DELETE FROM messages WHERE group_id = ?', [groupId]);
-          await tx.executeAsync('DELETE FROM groups WHERE id = ?', [groupId]);
+          await tx.execute('DELETE FROM memberships WHERE group_id = ?', [groupId]);
+          await tx.execute('DELETE FROM messages WHERE group_id = ?', [groupId]);
+          await tx.execute('DELETE FROM groups WHERE id = ?', [groupId]);
 
           router.back();
         } catch (error) {
@@ -148,8 +145,7 @@ export default function GroupSettings() {
             backgroundColor="$red10"
             color="white"
             onPress={handleDelete}
-            margin="$3"
-          >
+            margin="$3">
             Delete group
           </Button>
         </YStack>

@@ -1,5 +1,24 @@
 # react-supabase-todolist
 
+## 0.3.0
+
+### Minor Changes
+
+- d62f367: Deprecate usePowerSyncStatus, usePowerSyncQuery and usePowerSyncWatchedQuery in favor of useQuery and useStatus
+
+### Patch Changes
+
+- Updated dependencies [c94be6a]
+- Updated dependencies [d62f367]
+  - @powersync/react@1.3.0
+  - @powersync/web@0.5.2
+
+## 0.2.7
+
+### Patch Changes
+
+- 371e8ce: Updated Vite Demo apps' `include` entries to use nested dependency syntax, fixes issue with CJS nested dependencies.
+
 ## 0.2.6
 
 ### Patch Changes

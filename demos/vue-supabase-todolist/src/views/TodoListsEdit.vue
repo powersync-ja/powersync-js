@@ -1,6 +1,6 @@
 <template>
   <div class="py-10">
-    <LoadingMessage v-if="loading || fetching" :loading :fetching />
+    <LoadingMessage v-if="isLoading || isFetching" :isLoading :isFetching />
     <v-list v-if="listName" class="pa-2 bg-black" lines="one">
       <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
       <TodoItemWidget
@@ -13,7 +13,7 @@
         @toggle-completion="toggleCompletion(record, !record.completed)"
       />
     </v-list>
-    <h2 v-else-if="!loading" class="text-subtitle-1">No matching List found, please navigate back...</h2>
+    <h2 v-else-if="!isLoading" class="text-subtitle-1">No matching List found, please navigate back...</h2>
 
     <v-dialog v-model="showPrompt" width="350" opacity="0.5" scrim="black">
       <v-card title="Create Todo Item" class="bg-surface-light">
@@ -48,7 +48,7 @@ import TodoItemWidget from '@/components/widgets/TodoItemWidget.vue';
 import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import { pageSubtitle } from '@/main';
 import { supabase } from '@/plugins/supabase';
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/vue';
+import { usePowerSync, useQuery } from '@powersync/vue';
 import { watch } from 'vue';
 import { onUnmounted } from 'vue';
 import { ref } from 'vue';
@@ -64,10 +64,7 @@ const setShowPrompt = (state: boolean): void => {
   showPrompt.value = state;
 };
 const { id: listID = '' } = useRoute().params;
-const { data: listRecords } = usePowerSyncWatchedQuery<{ name: string }>(
-  `SELECT name FROM ${LISTS_TABLE} WHERE id = ?`,
-  [listID]
-);
+const { data: listRecords } = useQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [listID]);
 
 const listName = computed(() => listRecords.value[0]?.name);
 watch(listName, () => {
@@ -79,12 +76,10 @@ onUnmounted(() => {
 
 const {
   data: todoRecords,
-  loading,
-  fetching,
+  isLoading,
+  isFetching,
   error
-} = usePowerSyncWatchedQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [
-  listID
-]);
+} = useQuery<TodoRecord>(`SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`, [listID]);
 
 const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
   const updatedRecord = { ...record, completed: completed };

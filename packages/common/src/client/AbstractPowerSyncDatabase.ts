@@ -374,6 +374,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
       await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
       await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
+      await tx.execute(`DELETE FROM ${PSInternalTable.UNTYPED}`);
 
       const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
 

@@ -44,30 +44,33 @@ export const TodoListDisplay = () => {
 
 ### Accessing PowerSync Status
 
-The provided PowerSync client status is available with the `usePowerSyncStatus` hook.
+The provided PowerSync client status is available with the `useStatus` hook.
 
 ```JSX
-import { usePowerSyncStatus } from "@powersync/react";
+import { useStatus } from "@powersync/react";
 
 const Component = () => {
-  const status = usePowerSyncStatus();
+  const status = useStatus();
 
-  return <div>
-    status.connected ? 'wifi' : 'wifi-off'
-  </div>
+  return (
+    <>
+      <div>{status.connected ? 'wifi' : 'wifi-off'}</div>
+      <div>{!status.hasSynced ? 'Busy syncing...' : 'Data is here'}</div>
+    </>
+  )
 };
 ```
 
-### Watched Queries
+### Queries
 
-Watched queries will automatically update when a dependant table is updated.
+Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
 ```JSX
 // TodoListDisplay.jsx
-import { usePowerSyncWatchedQuery } from "@powersync/react";
+import { useQuery } from "@powersync/react";
 
 export const TodoListDisplay = () => {
-    const todoLists = usePowerSyncWatchedQuery('SELECT * from lists');
+    const { data: todoLists } = useQuery('SELECT * FROM lists WHERE id = ?', ['id-1'], {runQueryOnce: false});
 
     return <View>
       {todoLists.map((l) => (

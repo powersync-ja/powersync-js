@@ -16,6 +16,8 @@ export type WatchedQueryResult<T> = {
 };
 
 /**
+ * @deprecated use {@link useQuery} instead.
+ *
  * A composable to access the results of a watched query.
  */
 export const usePowerSyncWatchedQuery = <T = any>(
@@ -24,7 +26,7 @@ export const usePowerSyncWatchedQuery = <T = any>(
   options: Omit<SQLWatchOptions, 'signal'> = {}
 ): WatchedQueryResult<T> => {
   const data = ref([]);
-  const error = ref<Error>(undefined);
+  const error = ref<Error | undefined>(undefined);
 
   const loading = ref(true);
   const fetching = ref(true);

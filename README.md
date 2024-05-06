@@ -55,6 +55,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
 - [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.
 
+## Tools
+
+- [tools/diagnostics-app](./tools/diagnostics-app): A standalone web app that presents stats about a user's local database (incl. tables and sync buckets).
+
 # Development
 
 This monorepo uses pnpm.

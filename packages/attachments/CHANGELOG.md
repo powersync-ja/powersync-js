@@ -1,5 +1,14 @@
 # @powersync/attachments
 
+## 2.0.5
+
+### Patch Changes
+
+- Updated dependencies [c94be6a]
+- Updated dependencies [2f1e034]
+- Updated dependencies [21801b9]
+  - @powersync/common@1.7.0
+
 ## 2.0.4
 
 ### Patch Changes
