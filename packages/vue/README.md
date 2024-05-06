@@ -23,7 +23,7 @@ app.use(powerSyncPlugin);
 app.mount('#app');
 ```
 
-### Overriding the PowerSync instance
+## Overriding the PowerSync instance
 
 The `createPowerSyncPlugin` function is designed for setting up a PowerSync client that is available across your entire Vue application. It's the recommended approach for package setup. However, there may be situations where an app-wide setup isn't suitable, or you need a different PowerSync client for specific parts of your application.
 
@@ -43,7 +43,7 @@ providePowerSync(db);
 </script>
 ```
 
-### Accessing PowerSync
+## Accessing PowerSync
 
 The provided PowerSync client is available with the `usePowerSync` composable.
 
@@ -65,45 +65,20 @@ powersync.value.getAll('SELECT * from lists').then((l) => list.value = l);
 </template>
 ```
 
-### Queries
+## Query
 
-The `usePowerSyncQuery` composable provides a static view of a given query. You can use refs as parameters instead to automatically refresh the query when they change. The composable exposes reactive variables for the results, the loading state and error state, as well as a refresh callback that can be invoked to rerun the query manually.
+The `useQuery` composable provides a dynamic view of a given query. The data will automatically update when a dependent table is updated.
+
+You can use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results as well as the loading, fetching, and and error states. Note that `isLoading` indicates that the initial result is being retrieved and `isFetching` indicates the query is fetching data, which could be for the initial load or any time when the query is re-evaluating due to a change in a dependent table.
 
 ```Vue
 // TodoListDisplayQuery.vue
 <script setup>
-import { usePowerSyncQuery } from '@powersync/vue';
+import { usePowerSync, useQuery } from '@powersync/vue';
 import { ref } from 'vue';
 
 const query = ref('SELECT * from lists');
-const { data: list, error, loading, refresh} = usePowerSyncQuery(query);
-</script>
-
-<template>
-    <input v-model="query" />
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="error">{{ error }}</div>
-    <ul v-else>
-        <li v-for="l in list" :key="l.id">{{ l.name }}</li>
-    </ul>
-    <button @click="refresh">Refresh</button>
-</template>
-```
-
-### Watched Queries
-
-The `usePowerSyncWatchedQuery` composable provides a dynamic view of a given query. The data will automatically update when a dependent table is updated.
-
-You can use refs as parameters to refresh the query when they change. The composable exposes reactive variables for the results as well as the loading, fetching, and and error states. Note that `loading` initicates that the initial result is being retrieved and `fetching` indicates the query is fetching data, which could be for the initial load or any time when the query is re-evaluating due to a change in a dependent table.
-
-```Vue
-// TodoListDisplayWatchedQuery.vue
-<script setup>
-import { usePowerSync, usePowerSyncWatchedQuery } from '@powersync/vue';
-import { ref } from 'vue';
-
-const query = ref('SELECT * from lists');
-const { data: list, loading, fetching, error} = usePowerSyncWatchedQuery(query);
+const { data:list, isLoading, isFetching, error} = useQuery(query);
 
 const powersync = usePowerSync();
 const addList = () => {
@@ -113,8 +88,8 @@ const addList = () => {
 
 <template>
     <input v-model="query" />
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="fetching">Updating results...</div>
+    <div v-if="isLoading">Loading...</div>
+    <div v-else-if="isFetching">Updating results...</div>
 
     <div v-if="error">{{ error }}</div>
     <ul v-else>
@@ -124,16 +99,74 @@ const addList = () => {
 </template>
 ```
 
-### Connection Status
+### Static query
 
-The `usePowerSyncStatus` composable provides general connectivity information such as the connection status, whether the initial full sync has completed, when the last sync completed, and whether any data is being uploaded or downloaded.
+The `useQuery` composable can be configured to only execute initially and not every time changes to dependent tables are detected. The query can be manually re-executed by using the returned `refresh` function.
+
+```Vue
+// TodoListDisplayStaticQuery.vue
+<script setup>
+import { useQuery } from '@powersync/vue';
+
+const { data: list, refresh } = useQuery('SELECT id, name FROM lists', [], {
+  runQueryOnce: true
+});
+</script>
+
+<template>
+  <ul>
+    <li v-for="l in list" :key="l.name">{{ l.name }} + {{ l.id }}</li>
+  </ul>
+  <button @click="refresh">Refresh list</button>
+</template>
+
+```
+
+### TypeScript Support
+
+A type can be specified for each row returned by `useQuery`. Remember to declare `lang="ts"` when defining a `script setup` block.
+
+```Vue
+// TodoListDisplayStaticQueryTypeScript.vue
+<script setup lang="ts">
+import { useQuery } from '@powersync/vue';
+
+const { data } = useQuery<{ id: string, name: string }>('SELECT id, name FROM lists');
+</script>
+
+<template>
+   <ul>
+       <li v-for="l in data" :key="l.id">{{ l.name }}</li>
+   </ul>
+</template>
+```
+
+You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
+
+```Vue
+// TodolistDisplayQueryKysely.vue
+<script setup lang="ts">
+import { usePowerSync, useQuery } from '@powersync/vue';
+import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
+import { Database } from '@/library/powersync/AppSchema';
+
+const powerSync = usePowerSync();
+const db = wrapPowerSyncWithKysely<Database>(powerSync.value);
+
+const { data } = useQuery(db.selectFrom('lists').selectAll().where('name', 'like', '%Shopping%'));
+</script>
+```
+
+## Connection Status
+
+The `useStatus` composable provides general connectivity information such as the connection status, whether the initial full sync has completed, when the last sync completed, and whether any data is being uploaded or downloaded.
 
 ```Vue
 // ConnectionStatus.vue
 <script setup>
-import { usePowerSyncStatus } from '@powersync/vue';
+import { useStatus } from '@powersync/vue';
 
-const { status } = usePowerSyncStatus();
+const status = useStatus();
 </script>
 
 <template>
@@ -150,7 +183,7 @@ const { status } = usePowerSyncStatus();
 
 ### Top-level setup block
 
-The `usePowersync`, `usePowerSyncQuery`, `usePowerSyncWatchedQuery`, and `usePowerSyncStatus` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.js`.
+The `usePowersync`, `useQuery`, and `useStatus` composables are meant to be invoked in the top-level setup block. Vue expects certain Composition API functions, like `inject` which this package depends on, to be resolved in the setup context and not inside nested or asynchronous functions. For use cases where you need to do this, you should access the PowerSync `AbstractPowerSyncDatabase` instance directly - like exporting it as singleton after configuring Vue with it in `main.js`.
 
 Incorrect Usage Example:
 Using PowerSync composables in a nested function of a component.

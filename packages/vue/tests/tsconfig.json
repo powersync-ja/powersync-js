@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
+    "baseUrl": "../",
     "esModuleInterop": true,
-    "jsx": "preserve",
-    "rootDir": "src",
+    "jsx": "react",
+    "rootDir": "../",
     "composite": true,
     "outDir": "./lib",
-    "lib": ["es2022", "DOM"],
+    "lib": [
+      "esnext",
+      "DOM"
+    ],
     "module": "esnext",
     "sourceMap": true,
     "moduleResolution": "node",
@@ -18,10 +21,7 @@
     "skipLibCheck": true,
     "target": "esnext"
   },
-  "references": [
-    {
-      "path": "../common"
-    }
-  ],
-  "include": ["src/**/*"]
+  "include": [
+    "../src/**/*"
+  ]
 }

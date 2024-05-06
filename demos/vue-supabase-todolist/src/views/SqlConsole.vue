@@ -5,7 +5,7 @@
       <v-btn @click="executeQuery" class="ml-2" color="primary" height="auto">Execute Query</v-btn>
     </div>
     <div class="mt-9">
-      <LoadingMessage v-if="loading || fetching" :loading :fetching />
+      <LoadingMessage v-if="isLoading || isFetching" :isLoading :isFetching />
       <ErrorMessage v-if="error">{{ error.message }}</ErrorMessage>
       <v-container v-else-if="queryDataGridResult.columns.length > 0" class="mt-4 pa-0" fluid>
         <v-data-table
@@ -21,13 +21,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { usePowerSyncWatchedQuery } from '@powersync/vue';
+import { useQuery } from '@powersync/vue';
 const query = ref('SELECT * FROM lists');
 const inputText = ref(query.value);
 const executeQuery = () => {
   query.value = inputText.value;
 };
-const { data: querySQLResult, loading, fetching, error } = usePowerSyncWatchedQuery(query);
+const { data: querySQLResult, isLoading, isFetching, error } = useQuery(query);
 const queryDataGridResult = computed(() => {
   const firstItem = querySQLResult.value?.[0];
   return {
