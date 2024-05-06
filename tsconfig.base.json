@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "lib": ["esnext", "DOM"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noStrictGenericChecks": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "esnext"
+  }
+}
