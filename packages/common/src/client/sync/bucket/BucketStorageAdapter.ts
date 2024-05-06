@@ -42,7 +42,8 @@ export enum PSInternalTable {
   DATA = 'ps_data',
   CRUD = 'ps_crud',
   BUCKETS = 'ps_buckets',
-  OPLOG = 'ps_oplog'
+  OPLOG = 'ps_oplog',
+  UNTYPED = 'ps_untyped'
 }
 
 export interface BucketStorageListener extends BaseListener {
