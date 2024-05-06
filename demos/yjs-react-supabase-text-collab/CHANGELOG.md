@@ -1,5 +1,18 @@
 # yjs-react-supabase-text-collab
 
+## 0.1.0
+
+### Minor Changes
+
+- d62f367: Deprecate usePowerSyncStatus, usePowerSyncQuery and usePowerSyncWatchedQuery in favor of useQuery and useStatus
+
+### Patch Changes
+
+- Updated dependencies [c94be6a]
+- Updated dependencies [d62f367]
+  - @powersync/react@1.3.0
+  - @powersync/web@0.5.2
+
 ## 0.0.14
 
 ### Patch Changes

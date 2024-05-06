@@ -1,6 +1,6 @@
 {
   "name": "@powersync/vue",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
