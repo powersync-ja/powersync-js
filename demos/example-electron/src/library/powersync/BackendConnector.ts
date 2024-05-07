@@ -13,9 +13,6 @@ export class BackendConnector implements PowerSyncBackendConnector {
 
   async fetchCredentials() {
     // TODO: Use an authentication service or custom implementation here.
-    console.log(this.powersyncToken);
-    console.log(this.powersyncUrl);
-
     if (this.powersyncToken == null || this.powersyncUrl == null) {
       return null;
     }
