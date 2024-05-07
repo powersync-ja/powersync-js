@@ -25,7 +25,8 @@ import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   StreamingSyncImplementationListener,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
 
 export interface DisconnectAndClearOptions {
@@ -313,7 +314,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Connects to stream of events from the PowerSync instance.
    */
-  async connect(connector: PowerSyncBackendConnector) {
+  async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
 
     // close connection if one is open
@@ -332,7 +333,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     await this.syncStreamImplementation.waitForReady();
     this.syncStreamImplementation.triggerCrudUpload();
-    await this.syncStreamImplementation.connect();
+    await this.syncStreamImplementation.connect(options);
   }
 
   /**

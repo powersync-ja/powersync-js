@@ -2,7 +2,11 @@ import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import 'react-native-get-random-values';
 import React from 'react';
-import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
+import {
+  AbstractPowerSyncDatabase,
+  RNQSPowerSyncDatabaseOpenFactory,
+  SyncStreamConnectionMethod
+} from '@powersync/react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
@@ -59,7 +63,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
 
     await this.attachmentQueue.init();
   }

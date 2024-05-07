@@ -1,6 +1,6 @@
 import Logger, { ILogger } from 'js-logger';
 import { fetch } from 'cross-fetch';
-import { PowerSyncCredentials, SyncStreamConnectionMethod } from '../../connection/PowerSyncCredentials';
+import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
@@ -169,7 +169,7 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream websocket endpoint
    */
-  protected async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { path } = options;
     const request = await this.buildRequest(path);
 
@@ -216,7 +216,10 @@ export abstract class AbstractRemote {
         SYNC_QUEUE_REQUEST_N, // The initial N amount
         {
           onError: (e) => {
-            this.logger.error(e);
+            // Don't log closed as an error
+            if (e.message !== 'Closed. ') {
+              this.logger.error(e);
+            }
             stream.close();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
@@ -262,13 +265,25 @@ export abstract class AbstractRemote {
       }
     });
 
+    /**
+     * Handle abort operations here.
+     * Unfortunately cannot insert them into the connection.
+     */
+    if (options.abortSignal?.aborted) {
+      stream.close();
+    } else {
+      options.abortSignal?.addEventListener('abort', () => {
+        stream.close();
+      });
+    }
+
     return stream;
   }
 
   /**
    * Connects to the sync/stream http endpoint
    */
-  protected async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { data, path, headers, abortSignal } = options;
 
     const request = await this.buildRequest(path);
@@ -400,20 +415,5 @@ export abstract class AbstractRemote {
     });
 
     return stream;
-  }
-
-  /**
-   * Streams updates from the PowerSync instance.
-   * Uses either web sockets or HTTP streams based on the option provided by
-   * the [PowerSyncBackendConnector]
-   */
-  async streamUpdates(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const credentials = await this.getCredentials();
-    switch (credentials?.streamConnectionMethod) {
-      case SyncStreamConnectionMethod.WEB_SOCKET:
-        return this.socketStream(options);
-      default:
-        return this.postStream(options);
-    }
   }
 }
