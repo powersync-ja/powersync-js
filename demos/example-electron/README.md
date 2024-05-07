@@ -1,4 +1,4 @@
-# PowerSync + Supabase Electron with rendered Web App Demo: Todo List
+# PowerSync + Electron with rendered Web App Demo
 
 ## Note: Beta Release
 
@@ -6,9 +6,7 @@ The [web SDK](/packages/web/) is currently in a beta release.
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase and an Electron rendered Web App.
-
-A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
+Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with an Electron rendered Web App.
 
 ## Getting Started
 
@@ -31,7 +29,7 @@ Set up the Environment variables: Copy the `.env.local.template` file:
 cp .env.local.template .env.local
 ```
 
-And then edit `.env.local` to insert your credentials for Supabase.
+And then edit `.env.local` to insert your PowerSync URL and development token. You can generate a [temporary development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens), or leave blank to test with local-only data.
 
 Run the development server:
 
