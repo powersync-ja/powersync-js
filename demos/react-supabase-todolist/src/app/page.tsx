@@ -1,6 +1,6 @@
 import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
-import { useSupabase } from '../components/providers/SystemProvider';
+import { useSupabase } from '@/components/providers/SystemProvider';
 import { useNavigate } from 'react-router-dom';
 import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from './router';
 

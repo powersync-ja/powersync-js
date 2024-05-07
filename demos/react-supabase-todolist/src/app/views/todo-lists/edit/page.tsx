@@ -17,10 +17,10 @@ import {
 import Fab from '@mui/material/Fab';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSupabase } from '../../../../components/providers/SystemProvider';
-import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '../../../../library/powersync/AppSchema';
-import { NavigationPage } from '../../../../components/navigation/NavigationPage';
-import { TodoItemWidget } from '../../../../components/widgets/TodoItemWidget';
+import { useSupabase } from '@/components/providers/SystemProvider';
+import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 
 /**
  * useSearchParams causes the entire element to fall back to client side rendering

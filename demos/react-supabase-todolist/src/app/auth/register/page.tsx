@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabase } from '../../../components/providers/SystemProvider';
-import { LoginDetailsWidget } from '../../../components/widgets/LoginDetailsWidget';
+import { useSupabase } from '@/components/providers/SystemProvider';
+import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
 import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from '../../router';
 
 export default function RegisterPage() {

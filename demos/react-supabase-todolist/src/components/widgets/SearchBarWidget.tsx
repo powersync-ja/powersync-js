@@ -2,9 +2,9 @@ import { Autocomplete, Box, Card, CardContent, FormControl, TextField, Typograph
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePowerSync } from '@powersync/react';
-import { LISTS_TABLE, ListRecord } from '../../library/powersync/AppSchema';
-import { SearchResult, searchTable } from '../../app/utils/fts_helpers';
-import { TODO_LISTS_ROUTE } from '../../app/router';
+import { LISTS_TABLE, ListRecord } from '@/library/powersync/AppSchema';
+import { SearchResult, searchTable } from '@/app/utils/fts_helpers';
+import { TODO_LISTS_ROUTE } from '@/app/router';
 
 // This is a simple search bar widget that allows users to search for lists and todo items
 export const SearchBarWidget: React.FC<any> = () => {

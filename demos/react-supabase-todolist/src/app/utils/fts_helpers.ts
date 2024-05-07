@@ -1,4 +1,4 @@
-import { db } from '../../components/providers/SystemProvider';
+import { db } from '@/components/providers/SystemProvider';
 
 /**
  * adding * to the end of the search term will match any word that starts with the search term

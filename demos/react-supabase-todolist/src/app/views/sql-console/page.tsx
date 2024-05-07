@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@powersync/react';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { NavigationPage } from '../../../components/navigation/NavigationPage';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
 
 export type LoginFormParams = {
   email: string;
