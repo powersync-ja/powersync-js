@@ -1,6 +1,6 @@
 import Logger, { ILogger } from 'js-logger';
 import { fetch } from 'cross-fetch';
-import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
+import { PowerSyncCredentials, SyncStreamConnectionMethod } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
@@ -169,7 +169,7 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream websocket endpoint
    */
-  async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  protected async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { path } = options;
     const request = await this.buildRequest(path);
 
@@ -257,6 +257,7 @@ export abstract class AbstractRemote {
         }
       },
       closed: () => {
+        rsocket.close();
         l?.();
       }
     });
@@ -267,7 +268,7 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream http endpoint
    */
-  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  protected async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { data, path, headers, abortSignal } = options;
 
     const request = await this.buildRequest(path);
@@ -399,5 +400,20 @@ export abstract class AbstractRemote {
     });
 
     return stream;
+  }
+
+  /**
+   * Streams updates from the PowerSync instance.
+   * Uses either web sockets or HTTP streams based on the option provided by
+   * the [PowerSyncBackendConnector]
+   */
+  async streamUpdates(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    const credentials = await this.getCredentials();
+    switch (credentials?.streamConnectionMethod) {
+      case SyncStreamConnectionMethod.WEB_SOCKET:
+        return this.socketStream(options);
+      default:
+        return this.postStream(options);
+    }
   }
 }

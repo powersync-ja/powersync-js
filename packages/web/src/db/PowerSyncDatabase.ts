@@ -108,7 +108,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...this.options,
-      ...(this.options.streamOptions ?? {}),
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {

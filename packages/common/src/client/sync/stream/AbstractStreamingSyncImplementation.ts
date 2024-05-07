@@ -30,11 +30,6 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
-export enum SyncStreamConnectionMethod {
-  HTTP = 'http',
-  WEB_SOCKET = 'web-socket'
-}
-
 export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   uploadCrud: () => Promise<void>;
@@ -47,7 +42,6 @@ export interface AbstractStreamingSyncImplementationOptions {
   logger?: ILogger;
   remote: AbstractRemote;
   retryDelayMs?: number;
-  connectionMethod?: SyncStreamConnectionMethod;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
@@ -87,8 +81,7 @@ export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
   logger: Logger.get('PowerSyncStream'),
-  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  connectionMethod: SyncStreamConnectionMethod.HTTP
+  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -420,10 +413,7 @@ export abstract class AbstractStreamingSyncImplementation
           }
         };
 
-        const stream =
-          this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
-            ? await this.options.remote.postStream(options)
-            : await this.options.remote.socketStream(options);
+        const stream = await this.options.remote.streamUpdates(options);
 
         this.logger.debug('Stream established. Processing events');
 
@@ -526,6 +516,11 @@ export abstract class AbstractStreamingSyncImplementation
             if (remaining_seconds == 0) {
               // Connection would be closed automatically right after this
               this.logger.debug('Token expiring; reconnect');
+              /**
+               * For a rare case where the backend connector does not update the token
+               * (uses the same one), this should have some delay.
+               */
+              await this.delayRetry();
               return { retry: true };
             }
             this.triggerCrudUpload();

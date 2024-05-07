@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
+import {
+  AbstractPowerSyncDatabase,
+  CrudEntry,
+  PowerSyncBackendConnector,
+  SyncStreamConnectionMethod,
+  UpdateType
+} from '@powersync/react-native';
 
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { AppConfig } from './AppConfig';
@@ -58,7 +64,10 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       endpoint: AppConfig.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
-      userID: session.user.id
+      /**
+       * Currently the default is HTTP. Web sockets work nicer in React Native
+       */
+      streamConnectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
     };
   }
 
