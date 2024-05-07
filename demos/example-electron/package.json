@@ -5,6 +5,7 @@
   "description": "Example of using Electron with PowerSync",
   "main": ".vite/build/main.js",
   "type": "module",
+  "private": true,
   "scripts": {
     "start": "electron-forge start --inspect-electron",
     "package": "electron-forge package",
