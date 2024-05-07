@@ -57,7 +57,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 ### Electron
 
-- [demos/electron-supabase-todolist](./demos/electron-supabase-todolist/README.md) An Electron to-do list example app using the PowerSync Web SDK and a Supabase backend.
+- [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK.
 
 ## Tools
 
