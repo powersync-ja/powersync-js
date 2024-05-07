@@ -1,11 +1,11 @@
 import { Outlet, createBrowserRouter } from 'react-router-dom';
-import LoginPage from './auth/login/page';
-import RegisterPage from './auth/register/page';
-import EntryPage from './page';
-import TodoEditPage from './views/todo-lists/edit/page';
-import TodoListsPage from './views/todo-lists/page';
-import ViewsLayout from './views/layout';
-import SQLConsolePage from './views/sql-console/page';
+import LoginPage from '@/app/auth/login/page';
+import RegisterPage from '@/app/auth/register/page';
+import EntryPage from '@/app/page';
+import TodoEditPage from '@/app/views/todo-lists/edit/page';
+import TodoListsPage from '@/app/views/todo-lists/page';
+import ViewsLayout from '@/app/views/layout';
+import SQLConsolePage from '@/app/views/sql-console/page';
 
 export const TODO_LISTS_ROUTE = '/views/todo-lists';
 export const TODO_EDIT_ROUTE = '/views/todo-lists/:id';

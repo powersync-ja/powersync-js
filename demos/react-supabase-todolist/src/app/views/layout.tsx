@@ -22,11 +22,10 @@ import {
   styled
 } from '@mui/material';
 import React from 'react';
-
-import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { useSupabase } from '@/components/providers/SystemProvider';
 import { usePowerSync, useStatus } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
+import { useSupabase } from '@/components/providers/SystemProvider';
+import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { LOGIN_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {

@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-import { SystemProvider } from '../components/providers/SystemProvider';
-import { ThemeProviderContainer } from '../components/providers/ThemeProviderContainer';
-import { router } from './router';
+import { SystemProvider } from '@/components/providers/SystemProvider';
+import { ThemeProviderContainer } from '@/components/providers/ThemeProviderContainer';
+import { router } from '@/app/router';
 
 const root = createRoot(document.getElementById('app')!);
 root.render(<App />);
