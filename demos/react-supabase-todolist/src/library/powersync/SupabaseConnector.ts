@@ -3,8 +3,6 @@ import {
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,
-  PowerSyncCredentials,
-  SyncStreamConnectionMethod,
   UpdateType
 } from '@powersync/web';
 
@@ -86,7 +84,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.updateSession(session);
   }
 
-  async fetchCredentials(): Promise<PowerSyncCredentials> {
+  async fetchCredentials() {
     const {
       data: { session },
       error
@@ -101,8 +99,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     return {
       endpoint: this.config.powersyncUrl,
       token: session.access_token ?? '',
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
-      streamConnectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined
     };
   }
 

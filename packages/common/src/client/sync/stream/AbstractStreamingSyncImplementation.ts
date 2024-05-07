@@ -21,6 +21,12 @@ export enum LockType {
   CRUD = 'crud',
   SYNC = 'sync'
 }
+
+export enum SyncStreamConnectionMethod {
+  HTTP = 'http',
+  WEB_SOCKET = 'web-socket'
+}
+
 /**
  * Abstract Lock to be implemented by various JS environments
  */
@@ -87,11 +93,6 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
   waitForStatus(status: SyncStatusOptions): Promise<void>;
-}
-
-export enum SyncStreamConnectionMethod {
-  HTTP = 'http',
-  WEB_SOCKET = 'web-socket'
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;

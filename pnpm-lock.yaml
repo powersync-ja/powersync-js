@@ -515,14 +515,14 @@ importers:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.4)(react@18.2.0)
       react-native-get-random-values:
-        specifier: ^1.9.0
-        version: 1.10.0(react-native@0.73.4)
+        specifier: ^1.8.0
+        version: 1.8.0(react-native@0.73.4)
       react-native-pager-view:
         specifier: 6.2.3
         version: 6.2.3(react-native@0.73.4)(react@18.2.0)
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.2.1)
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.2.1)
       react-native-reanimated:
         specifier: ~3.6.2
         version: 3.6.2(@babel/core@7.23.5)(@babel/plugin-proposal-nullish-coalescing-operator@7.18.6)(@babel/plugin-proposal-optional-chaining@7.21.0)(@babel/plugin-transform-arrow-functions@7.24.1)(@babel/plugin-transform-shorthand-properties@7.24.1)(@babel/plugin-transform-template-literals@7.24.1)(react-native@0.73.4)(react@18.2.0)
@@ -1257,10 +1257,7 @@ importers:
         version: 1.4.1
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
-      web-streams-polyfill:
-        specifier: ^3.2.1
-        version: 3.3.3
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
     devDependencies:
       '@journeyapps/react-native-quick-sqlite':
         specifier: ^1.1.5
@@ -6833,7 +6830,6 @@ packages:
     dependencies:
       '@babel/core': 7.24.0
       '@babel/helper-plugin-utils': 7.24.0
-    dev: false
 
   /@babel/plugin-transform-parameters@7.24.1(@babel/core@7.23.5):
     resolution: {integrity: sha512-8Jl6V24g+Uw5OGPeWNKrKqXPDw2YDjLc53ojwfMcKwlEoETKU9rU0mHUtcg9JntWI/QYzGAXNWEcVHZ+fR+XXg==}
@@ -13796,7 +13792,7 @@ packages:
       '@babel/plugin-transform-literals': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.22.5(@babel/core@7.23.5)
-      '@babel/plugin-transform-parameters': 7.24.1(@babel/core@7.23.5)
+      '@babel/plugin-transform-parameters': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-private-methods': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-private-property-in-object': 7.23.4(@babel/core@7.23.5)
       '@babel/plugin-transform-react-display-name': 7.23.3(@babel/core@7.23.5)
@@ -13809,7 +13805,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.5)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.23.5)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.23.9)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.23.5)
       react-refresh: 0.14.0
@@ -13849,7 +13845,7 @@ packages:
       '@babel/plugin-transform-literals': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.22.5(@babel/core@7.23.5)
-      '@babel/plugin-transform-parameters': 7.24.1(@babel/core@7.23.5)
+      '@babel/plugin-transform-parameters': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-private-methods': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-private-property-in-object': 7.23.4(@babel/core@7.23.5)
       '@babel/plugin-transform-react-display-name': 7.23.3(@babel/core@7.23.5)
@@ -13862,7 +13858,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.23.5)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.5)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.23.5)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.24.4)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.23.5)
       react-refresh: 0.14.0
@@ -13954,7 +13950,7 @@ packages:
       '@babel/plugin-transform-literals': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.22.5(@babel/core@7.23.9)
-      '@babel/plugin-transform-parameters': 7.24.1(@babel/core@7.23.9)
+      '@babel/plugin-transform-parameters': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-private-methods': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-private-property-in-object': 7.23.4(@babel/core@7.23.9)
       '@babel/plugin-transform-react-display-name': 7.23.3(@babel/core@7.23.9)
@@ -13967,7 +13963,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.9)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.23.9)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.24.4)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.23.9)
       react-refresh: 0.14.0
@@ -14007,7 +14003,7 @@ packages:
       '@babel/plugin-transform-literals': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-named-capturing-groups-regex': 7.22.5(@babel/core@7.24.0)
-      '@babel/plugin-transform-parameters': 7.24.1(@babel/core@7.24.0)
+      '@babel/plugin-transform-parameters': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-private-methods': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-private-property-in-object': 7.23.4(@babel/core@7.24.0)
       '@babel/plugin-transform-react-display-name': 7.23.3(@babel/core@7.24.0)
@@ -14020,7 +14016,7 @@ packages:
       '@babel/plugin-transform-sticky-regex': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.24.0)
       '@babel/plugin-transform-unicode-regex': 7.23.3(@babel/core@7.24.0)
-      '@babel/template': 7.24.0
+      '@babel/template': 7.23.9
       '@react-native/babel-plugin-codegen': 0.73.4(@babel/preset-env@7.24.4)
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.24.0)
       react-refresh: 0.14.0
@@ -31485,24 +31481,6 @@ packages:
       react-native: 0.73.6(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
     dev: false
 
-  /react-native-get-random-values@1.10.0(react-native@0.72.4):
-    resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.4)(react@18.2.0)
-    dev: false
-
-  /react-native-get-random-values@1.10.0(react-native@0.73.4):
-    resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.4)(react@18.2.0)
-    dev: false
-
   /react-native-get-random-values@1.10.0(react-native@0.73.6):
     resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
     peerDependencies:
@@ -31510,6 +31488,24 @@ packages:
     dependencies:
       fast-base64-decode: 1.0.0
       react-native: 0.73.6(@babel/core@7.23.9)(@babel/preset-env@7.23.9)(react@18.2.0)
+    dev: false
+
+  /react-native-get-random-values@1.8.0(react-native@0.72.4):
+    resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
+    peerDependencies:
+      react-native: '>=0.56'
+    dependencies:
+      fast-base64-decode: 1.0.0
+      react-native: 0.72.4(@babel/core@7.24.0)(@babel/preset-env@7.24.4)(react@18.2.0)
+    dev: false
+
+  /react-native-get-random-values@1.8.0(react-native@0.73.4):
+    resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
+    peerDependencies:
+      react-native: '>=0.56'
+    dependencies:
+      fast-base64-decode: 1.0.0
+      react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.4)(react@18.2.0)
     dev: false
 
   /react-native-get-random-values@1.8.0(react-native@0.73.6):
@@ -31539,7 +31535,7 @@ packages:
       react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.4)(react@18.2.0)
     dev: false
 
-  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.2.1):
+  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.2.1):
     resolution: {integrity: sha512-6ACmV1SjXvZP2LN6J2yK58yNACKddcvoiKLrSQdISx32IdYStfdmGXrbAfpd+TANrTlIaZ2SLoFXohNwhnqm/w==}
     peerDependencies:
       base-64: '*'
@@ -31551,28 +31547,10 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.10.0(react-native@0.73.4)
+      react-native-get-random-values: 1.8.0(react-native@0.73.4)
       react-native-url-polyfill: 2.0.0(react-native@0.73.4)
       text-encoding: 0.7.0
       web-streams-polyfill: 3.2.1
-    dev: false
-
-  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3):
-    resolution: {integrity: sha512-6ACmV1SjXvZP2LN6J2yK58yNACKddcvoiKLrSQdISx32IdYStfdmGXrbAfpd+TANrTlIaZ2SLoFXohNwhnqm/w==}
-    peerDependencies:
-      base-64: '*'
-      react-native-fetch-api: '*'
-      react-native-get-random-values: '*'
-      react-native-url-polyfill: '*'
-      text-encoding: '*'
-      web-streams-polyfill: '*'
-    dependencies:
-      base-64: 1.0.0
-      react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.10.0(react-native@0.72.4)
-      react-native-url-polyfill: 2.0.0(react-native@0.72.4)
-      text-encoding: 0.7.0
-      web-streams-polyfill: 3.3.3
     dev: false
 
   /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3):
@@ -31587,8 +31565,8 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.8.0(react-native@0.73.6)
-      react-native-url-polyfill: 2.0.0(react-native@0.73.6)
+      react-native-get-random-values: 1.8.0(react-native@0.72.4)
+      react-native-url-polyfill: 2.0.0(react-native@0.72.4)
       text-encoding: 0.7.0
       web-streams-polyfill: 3.3.3
     dev: false
@@ -34403,7 +34381,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.22
       esbuild: 0.19.11
       jest-worker: 27.5.1
       schema-utils: 3.3.0
@@ -34428,7 +34406,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.22
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.2
@@ -34476,7 +34454,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.22
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.2

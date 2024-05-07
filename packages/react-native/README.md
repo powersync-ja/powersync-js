@@ -45,7 +45,7 @@ npx expo install react-native-polyfill-globals
 The `react-native-polyfill-globals` package uses peer dependencies for individual functions. Most modern package managers install peer dependencies by default, however currently the peer dependency version ranges are quite broad and might result in certain packages being incompatible. Currently an [issue](https://github.com/acostalima/react-native-polyfill-globals/issues/6) is open for a breaking change in one of the dependencies. The best practice is to currently add the packages as explicit dependencies with version ranges to your project with the command below.
 
 ```bash
-npx expo install react-native-fetch-api@^3.0.0 react-native-url-polyfill@^2.0.0 text-encoding@^0.7.0 web-streams-polyfill@3.2.1 base-64@^1.0.0 react-native-get-random-values@^1.9.0
+npx expo install react-native-fetch-api@^3.0.0 react-native-url-polyfill@^2.0.0 text-encoding@^0.7.0 web-streams-polyfill@3.2.1 base-64@^1.0.0 react-native-get-random-values@^1.8.0
 ```
 
 Enable the polyfills in React Native app by adding the following in your top level entry point

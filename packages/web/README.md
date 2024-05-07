@@ -36,7 +36,7 @@ npm install @journeyapps/wa-sqlite
 
 ### Buffer
 
-The web socket sync connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfills in the application for cases where multiple tabs are not supported.
+The web socket sync connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfilled in the application for cases where multiple tabs are not supported.
 
 Install a suitable Buffer implementation
 

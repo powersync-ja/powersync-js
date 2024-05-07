@@ -58,7 +58,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       endpoint: AppConfig.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
-      userID: session?.user?.id
+      userID: session.user.id
     };
   }
 
