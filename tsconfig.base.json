@@ -2,8 +2,6 @@
   "compilerOptions": {
     "composite": true,
     "esModuleInterop": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
     "lib": ["esnext", "DOM"],
     "module": "esnext",
     "moduleResolution": "node",
@@ -13,6 +11,7 @@
     "noStrictGenericChecks": false,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "sourceMap": true,
     "target": "esnext"
   }
 }
