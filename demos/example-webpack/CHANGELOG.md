@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- @powersync/web@0.5.2
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [ffe37cf]
   - @powersync/web@0.5.1
 

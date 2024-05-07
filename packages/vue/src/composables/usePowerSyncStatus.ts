@@ -1,29 +1,32 @@
 import { SyncStatus } from '@powersync/common';
-import { onUnmounted, ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
+/**
+ * @deprecated Use {@link useStatus} instead.
+ */
 export const usePowerSyncStatus = () => {
+  const powerSync = usePowerSync();
   const status = ref(new SyncStatus({}));
 
-  let cleanup = () => {};
-  const powerSync = usePowerSync();
-  if (powerSync) {
-    status.value = powerSync.value.currentStatus || status.value;
+  if (!powerSync) {
+    return status;
+  }
 
-    const disposeListener = powerSync.value.registerListener({
+  status.value = powerSync.value.currentStatus || status.value;
+
+  watchEffect((onCleanup) => {
+    const listener = powerSync.value.registerListener({
       statusChanged: (newStatus: SyncStatus) => {
         status.value = newStatus;
       }
     });
 
-    cleanup = () => {
-      disposeListener();
-    };
-  }
-
-  onUnmounted(() => {
-    cleanup();
+    // Cleanup previous listener when the effect triggers again, or when the component is unmounted
+    onCleanup(() => {
+      listener();
+    });
   });
 
-  return { status };
+  return status;
 };
