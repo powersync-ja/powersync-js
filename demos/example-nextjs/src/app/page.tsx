@@ -12,11 +12,9 @@ export default function EntryPage() {
     // Insert some test data
     const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
     const name = names[Math.floor(Math.random() * names.length)];
-    // TODO revert this before merge
-    // inserting requires uploading upstream and validating checkpoints
-    // db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
+    db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
     return () => {};
-  }, []);
+  }, [db]);
 
   if (isLoading) {
     return <CircularProgress />;
