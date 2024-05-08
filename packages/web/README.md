@@ -34,7 +34,11 @@ npm install @journeyapps/wa-sqlite
 
 ## Polyfills
 
-### Buffer
+### Web sockets
+
+Note: Beta Release - web sockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
+
+#### Buffer
 
 The web socket sync connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfilled in the application for cases where multiple tabs are not supported.
 

@@ -57,7 +57,7 @@ import 'react-native-polyfill-globals/auto';
 
 ### Random Values
 
-This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available.
+This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available. This is currently required for both HTTP and web socket connection methods.
 
 Install [react-native-get-random-values](https://github.com/LinusU/react-native-get-random-values)
 
@@ -71,7 +71,13 @@ Import the polyfill in our app entry point
 import 'react-native-get-random-values';
 ```
 
-### Web sockets
+### HTTP Connections
+
+HTTP connections require the HTTP streaming polyfills included in the [common section](#react-native-common-polyfills). See additional [setup](https://docs.powersync.com/client-sdk-references/react-native-and-expo#android-flipper-network-plugin) required for Android.
+
+### Web Sockets
+
+Note: Beta Release - web sockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
 
 Our web socket implementation supports binary payloads which are encoded as BSON documents.
 
