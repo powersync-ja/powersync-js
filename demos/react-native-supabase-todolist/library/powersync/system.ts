@@ -1,6 +1,5 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
-import 'react-native-get-random-values';
 import React from 'react';
 import {
   AbstractPowerSyncDatabase,

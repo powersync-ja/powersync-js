@@ -55,22 +55,6 @@ Enable the polyfills in React Native app by adding the following in your top lev
 import 'react-native-polyfill-globals/auto';
 ```
 
-### Random Values
-
-This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available. This is currently required for both HTTP and web socket connection methods.
-
-Install [react-native-get-random-values](https://github.com/LinusU/react-native-get-random-values)
-
-```bash
-npx expo install react-native-get-random-values
-```
-
-Import the polyfill in our app entry point
-
-```javascript
-import 'react-native-get-random-values';
-```
-
 ### HTTP Connections
 
 HTTP connections require the HTTP streaming polyfills included in the [common section](#react-native-common-polyfills). See additional [setup](https://docs.powersync.com/client-sdk-references/react-native-and-expo#android-flipper-network-plugin) required for Android.
