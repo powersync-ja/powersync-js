@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build:packages": "pnpm run --filter './packages/**' -r build",
+    // extra prod build command
     "build": "pnpm run -r build",
     "ci:publish": "changeset publish && git push --follow-tags",
     "ci:version": "changeset version && pnpm install --no-frozen-lockfile",
