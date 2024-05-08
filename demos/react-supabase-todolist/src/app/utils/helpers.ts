@@ -16,7 +16,7 @@ const extractGeneratorsMap: ExtractGeneratorMap = new Map<ExtractType, ExtractGe
   [
     ExtractType.columnInOperation,
     (jsonColumnName: string, columnName: string) => {
-      let extract = _createExtract(jsonColumnName, columnName);
+      const extract = _createExtract(jsonColumnName, columnName);
       return `${columnName} = ${extract}`;
     }
   ]
