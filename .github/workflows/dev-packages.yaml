@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Build
-        run: pnpm build:packages
+        run: pnpm build:packages --sourceMap false
       - name: Publish
         run: |
           pnpm changeset version --no-git-tag --snapshot dev

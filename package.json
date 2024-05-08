@@ -14,7 +14,7 @@
     "docs:start": "pnpm --filter docs start",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "release": "pnpm build:packages && pnpm changeset publish",
+    "release": "pnpm build:packages --sourceMap false && pnpm changeset publish",
     "test": "pnpm run -r test"
   },
   "keywords": [],
