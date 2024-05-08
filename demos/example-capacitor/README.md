@@ -21,4 +21,4 @@ To run the iOS version of the app run:
 To run the Android version of the app run:
 
  1. `pnpm sync`
- 2. `pnpm android`
+ 2. `pnpm android` (to see console run `chrome://inspect/#devices` in browser)

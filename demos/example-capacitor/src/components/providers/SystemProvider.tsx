@@ -11,10 +11,7 @@ Logger.setLevel(Logger.DEBUG);
 
 const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'powersync2.db',
-  schema: AppSchema,
-  flags: {
-    disableSSRWarning: true
-  }
+  schema: AppSchema
 }).getInstance();
 const connector = new BackendConnector();
 
