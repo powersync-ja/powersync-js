@@ -43,7 +43,7 @@ This SDK requires HTTP streaming in order to function. The following `fetch` pol
 These are listed as peer dependencies and need to be added to the React Native project
 
 ```bash
-npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill@3.2.1 base-64 react-native-get-random-values@1.9.0
+npx expo install react-native-fetch-api react-native-polyfill-globals react-native-url-polyfill text-encoding web-streams-polyfill@3.2.1 base-64
 ```
 
 Enable the polyfills in React Native app with

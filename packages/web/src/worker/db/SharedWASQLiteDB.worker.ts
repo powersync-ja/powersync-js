@@ -1,7 +1,6 @@
 import '@journeyapps/wa-sqlite';
 
 import * as Comlink from 'comlink';
-import { v4 as uuid } from 'uuid';
 
 import { DBWorkerInterface, _openDB } from './open-db';
 
@@ -10,7 +9,7 @@ import { DBWorkerInterface, _openDB } from './open-db';
  * are using it.
  */
 type SharedDBWorkerConnection = {
-  clientIds: Set<string>;
+  clientIds: Set<number>;
   db: DBWorkerInterface;
 };
 
@@ -19,13 +18,15 @@ const _self: SharedWorkerGlobalScope = self as any;
 const DBMap = new Map<string, SharedDBWorkerConnection>();
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
+let nextClientId = 1;
+
 const openDB = async (dbFileName: string): Promise<DBWorkerInterface> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return navigator.locks.request(OPEN_DB_LOCK, async () => {
-    const clientId = uuid();
+    const clientId = nextClientId++;
 
     if (!DBMap.has(dbFileName)) {
-      const clientIds = new Set<string>();
+      const clientIds = new Set<number>();
       const connection = await _openDB(dbFileName);
       DBMap.set(dbFileName, {
         clientIds,
