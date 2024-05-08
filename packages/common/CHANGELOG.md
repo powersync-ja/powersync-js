@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.7.0
+
+### Minor Changes
+
+- c94be6a: Allow compilable queries to be used as hook arguments
+
+### Patch Changes
+
+- 2f1e034: Fix type of Schema.tables
+- 21801b9: Fix disconnectAndClear() not clearing ps_untyped
+
 ## 1.6.1
 
 ### Patch Changes

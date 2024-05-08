@@ -1,6 +1,5 @@
 import React from 'react';
 import { ListItem, IconButton, ListItemAvatar, ListItemText, Box, styled, Paper, ListItemButton } from '@mui/material';
-
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';

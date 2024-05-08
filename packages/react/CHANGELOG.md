@@ -1,5 +1,19 @@
 # @powersync/react
 
+## 1.3.0
+
+### Minor Changes
+
+- c94be6a: Allow compilable queries to be used as hook arguments
+- d62f367: Deprecate usePowerSyncStatus, usePowerSyncQuery and usePowerSyncWatchedQuery in favor of useQuery and useStatus
+
+### Patch Changes
+
+- Updated dependencies [c94be6a]
+- Updated dependencies [2f1e034]
+- Updated dependencies [21801b9]
+  - @powersync/common@1.7.0
+
 ## 1.2.0
 
 ### Minor Changes

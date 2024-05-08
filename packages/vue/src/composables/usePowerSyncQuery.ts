@@ -17,6 +17,8 @@ export type QueryOptions = {
 export type Result<T> = { data: Ref<T[]>; loading: Ref<boolean>; error: Ref<Error>; refresh: () => Promise<void> };
 
 /**
+ * @deprecated use {@link useQuery} instead.
+ *
  * A composable to access a single static query.
  * SQL Statement and query Parameters are watched by default.
  * For a result that updates as the source data changes, use {@link usePowerSyncWatchedQuery} instead.
@@ -28,7 +30,7 @@ export const usePowerSyncQuery = <T = any>(
 ): Result<T> => {
   const data = ref([]);
   const loading = ref<boolean>(false);
-  const error = ref<Error>(undefined);
+  const error = ref<Error | undefined>(undefined);
 
   const powerSync = usePowerSync();
 
@@ -47,7 +49,7 @@ export const usePowerSyncQuery = <T = any>(
       data.value = [];
 
       const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
-      wrappedError.cause = e; // Include the original error as the cause
+      wrappedError.cause = e;
       error.value = wrappedError;
     } finally {
       loading.value = false;
@@ -57,6 +59,7 @@ export const usePowerSyncQuery = <T = any>(
   if (queryOptions.watchParameters) {
     watch([powerSync, ref(sqlStatement), ref(parameters)], fetchData);
   }
+
   if (queryOptions.immediate) {
     fetchData();
   }

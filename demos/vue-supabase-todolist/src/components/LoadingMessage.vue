@@ -14,27 +14,27 @@
 </template>
 
 <script setup lang="ts">
-import { usePowerSyncStatus } from '@powersync/vue';
+import { useStatus } from '@powersync/vue';
 import { ref } from 'vue';
 import { watchEffect } from 'vue';
 import { computed } from 'vue';
 
-const { status } = usePowerSyncStatus();
+const status = useStatus();
 
 const props = defineProps({
-  loading: Boolean,
-  fetching: Boolean
+  isLoading: Boolean,
+  isFetching: Boolean
 });
 
 let dispose: (() => void) | undefined = undefined;
 const showLoadingMessage = ref(false);
 
 watchEffect(() => {
-  if (props.fetching || props.loading || !status.value.hasSynced) {
+  if (props.isFetching || props.isLoading || !status.value.hasSynced) {
     if (!dispose) {
       const timeout = setTimeout(() => {
         showLoadingMessage.value = true;
-      }, 100);
+      }, 300);
 
       dispose = () => clearTimeout(timeout);
     }
@@ -46,5 +46,5 @@ watchEffect(() => {
   }
 });
 
-const loadingMessage = computed(() => (props.loading ? 'Loading' : 'Re-executing query'));
+const loadingMessage = computed(() => (props.isLoading ? 'Loading' : 'Re-executing query'));
 </script>

@@ -1,5 +1,22 @@
 # react-native-supabase-todolist
 
+## 1.2.0
+
+### Minor Changes
+
+- d62f367: Deprecate usePowerSyncStatus, usePowerSyncQuery and usePowerSyncWatchedQuery in favor of useQuery and useStatus
+
+### Patch Changes
+
+- Updated dependencies [c94be6a]
+- Updated dependencies [2f1e034]
+- Updated dependencies [21801b9]
+- Updated dependencies [d62f367]
+  - @powersync/common@1.7.0
+  - @powersync/react@1.3.0
+  - @powersync/attachments@2.0.5
+  - @powersync/react-native@1.4.5
+
 ## 1.1.5
 
 ### Patch Changes
