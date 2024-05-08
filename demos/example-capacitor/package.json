@@ -1,29 +1,31 @@
 {
   "name": "example-capacitor",
-  "version": "1.0.0",
-  "description": "An Amazing Capacitor App",
+  "version": "0.0.0",
+  "description": "Example of using Capacitor with PowerSync",
   "main": "index.js",
   "private": true,
+  "author": "PowerSync",
   "keywords": [
     "capacitor",
     "mobile"
   ],
   "type": "module",
   "scripts": {
+    "sync": "npx cap sync",
+    "ios": "npx cap run ios",
+    "android": "npx cap run android",
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
-    "@capacitor/camera": "latest",
     "@capacitor/core": "latest",
     "@capacitor/ios": "^6.0.0",
     "@capacitor/splash-screen": "latest",
     "@journeyapps/wa-sqlite": "^0.2.0",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:^",
-    "i": "^0.3.7",
     "js-logger": "^1.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -40,7 +42,5 @@
     "vite-plugin-require": "^1.1.14",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
-  },
-  "author": "",
-  "license": "ISC"
+  }
 }
