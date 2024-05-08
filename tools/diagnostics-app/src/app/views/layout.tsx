@@ -94,7 +94,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
       }
     });
     return () => l();
-  }, [powerSync]);
+  }, []);
 
   React.useEffect(() => {
     const l = syncErrorTracker.registerListener({
