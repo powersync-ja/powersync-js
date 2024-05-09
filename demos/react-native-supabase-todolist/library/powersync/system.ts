@@ -9,14 +9,14 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
+import { AppConfig } from '../supabase/AppConfig';
 
 export class System {
   kvStorage: KVStorage;
   storage: SupabaseStorageAdapter;
   supabaseConnector: SupabaseConnector;
   powersync: AbstractPowerSyncDatabase;
-
-  attachmentQueue: PhotoAttachmentQueue;
+  attachmentQueue: PhotoAttachmentQueue | undefined = undefined;
 
   constructor() {
     this.kvStorage = new KVStorage();
@@ -29,26 +29,30 @@ export class System {
     this.storage = this.supabaseConnector.storage;
     this.powersync = factory.getInstance();
 
-    this.attachmentQueue = new PhotoAttachmentQueue({
-      powersync: this.powersync,
-      storage: this.storage,
-      // Use this to handle download errors where you can use the attachment
-      // and/or the exception to decide if you want to retry the download
-      onDownloadError: async (attachment: AttachmentRecord, exception: any) => {
-        if (exception.toString() === 'StorageApiError: Object not found') {
-          return { retry: false };
-        }
+    if (AppConfig.supabaseBucket) {
+      this.attachmentQueue = new PhotoAttachmentQueue({
+        powersync: this.powersync,
+        storage: this.storage,
+        // Use this to handle download errors where you can use the attachment
+        // and/or the exception to decide if you want to retry the download
+        onDownloadError: async (attachment: AttachmentRecord, exception: any) => {
+          if (exception.toString() === 'StorageApiError: Object not found') {
+            return { retry: false };
+          }
 
-        return { retry: true };
-      }
-    });
+          return { retry: true };
+        }
+      });
+    }
   }
 
   async init() {
     await this.powersync.init();
     await this.powersync.connect(this.supabaseConnector);
 
-    await this.attachmentQueue.init();
+    if (this.attachmentQueue) {
+      await this.attachmentQueue.init();
+    }
   }
 }
 

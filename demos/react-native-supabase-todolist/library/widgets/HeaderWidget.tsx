@@ -37,7 +37,9 @@ export const HeaderWidget: React.FC<{
           size={20}
           style={{ padding: 5 }}
           onPress={() => {
-            system.attachmentQueue.trigger();
+            if (system.attachmentQueue) {
+              system.attachmentQueue.trigger();
+            }
             Alert.alert(
               'Status',
               `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
