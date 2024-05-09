@@ -30,7 +30,10 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 ## Install Polyfills
 
-This SDK can connect to a PowerSync instance via HTTP streams or Web sockets. Different polyfill configurations are required for each method.
+This package connects to a PowerSync instance via HTTP streams (enabled by default) or web sockets. 
+* Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below. 
+* The web socket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
+* Other polyfills are required for the [`uuid` library](#random-values) and [watched queries](#babel-plugins-watched-queries).
 
 ### React Native Common Polyfills
 
@@ -55,23 +58,7 @@ Enable the polyfills in React Native app by adding the following in your top lev
 import 'react-native-polyfill-globals/auto';
 ```
 
-### Random Values
-
-This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available.
-
-Install [react-native-get-random-values](https://github.com/LinusU/react-native-get-random-values)
-
-```bash
-npx expo install react-native-get-random-values
-```
-
-Import the polyfill in our app entry point
-
-```javascript
-import 'react-native-get-random-values';
-```
-
-### Web sockets
+### Web sockets: Buffer
 
 Our web socket implementation supports binary payloads which are encoded as BSON documents.
 
@@ -98,6 +85,22 @@ This library uses `RSocket` for reactive web socket streams which requires `proc
 if (typeof process.nextTick == 'undefined') {
   process.nextTick = setImmediate;
 }
+```
+
+### Random Values
+
+This packages uses the `uuid` library for generating UUIDs. This requires `crypto.getRandomValues` to be available.
+
+Install [react-native-get-random-values](https://github.com/LinusU/react-native-get-random-values)
+
+```bash
+npx expo install react-native-get-random-values
+```
+
+Import the polyfill in our app entry point
+
+```javascript
+import 'react-native-get-random-values';
 ```
 
 ### Babel Plugins: Watched Queries
