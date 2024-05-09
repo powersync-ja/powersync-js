@@ -30,9 +30,9 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 ## Install Polyfills
 
-This package connects to a PowerSync instance via HTTP streams (enabled by default) or web sockets. 
+This package connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets. 
 * Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below. 
-* The web socket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
+* The WebSocket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
 * Other polyfills are required for [watched queries](#babel-plugins-watched-queries).
 
 ### React Native Common Polyfills
@@ -62,11 +62,11 @@ import 'react-native-polyfill-globals/auto';
 
 HTTP connections require the HTTP streaming polyfills included in the [common section](#react-native-common-polyfills). See additional [setup](https://docs.powersync.com/client-sdk-references/react-native-and-expo#android-flipper-network-plugin) required for Android.
 
-### Web Sockets: Buffer
+### WebSocket Connections: Buffer
 
-Note: Beta Release - web sockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
+Note: Beta Release - WebSockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
 
-Our web socket implementation supports binary payloads which are encoded as BSON documents.
+Our WebSocket implementation supports binary payloads which are encoded as BSON documents.
 
 This requires support for the `Buffer` interface.
 
@@ -85,7 +85,7 @@ if (typeof global.Buffer == 'undefined') {
 }
 ```
 
-This library uses `RSocket` for reactive web socket streams which requires `process.nextTick` to be available. Apply a polyfill if not available.
+This library uses `RSocket` for reactive WebSocket streams which requires `process.nextTick` to be available. Apply a polyfill if not available.
 
 ```javascript
 if (typeof process.nextTick == 'undefined') {

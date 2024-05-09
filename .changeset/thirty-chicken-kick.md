@@ -4,4 +4,4 @@
 '@journeyapps/powersync-sdk-web': minor
 ---
 
-Added support for Web Socket sync stream connections.
+Added support for WebSocket sync stream connections.

@@ -9,7 +9,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
-// Polyfill for web sockets
+// Polyfill for WebSockets
 if (typeof self.Buffer == 'undefined') {
   self.Buffer = Buffer;
 }

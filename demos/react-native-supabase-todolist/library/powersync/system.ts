@@ -17,7 +17,7 @@ import { AppConfig } from '../supabase/AppConfig';
 
 import { Buffer } from '@craftzdog/react-native-buffer';
 
-// Polyfills for Web sockets
+// Polyfills for WebSockets
 if (typeof global.Buffer == 'undefined') {
   // @ts-ignore If using TypeScript
   global.Buffer = Buffer;

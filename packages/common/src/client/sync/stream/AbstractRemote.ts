@@ -37,7 +37,7 @@ export type SyncStreamOptions = {
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain
-   * `http(s)://` to the corresponding web socket variant
+   * `http(s)://` to the corresponding WebSocket variant
    * e.g. `ws(s)://`
    */
   socketUrlTransformer: (url: string) => string;

@@ -10,7 +10,7 @@ import React, { Suspense } from 'react';
 
 import { Buffer } from 'buffer';
 
-// Polyfill for web sockets
+// Polyfill for WebSockets
 if (typeof self.Buffer == 'undefined') {
   self.Buffer = Buffer;
 }
