@@ -4,7 +4,7 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
-import { RSocketConnector, Requestable } from 'rsocket-core';
+import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import { serialize, deserialize } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
@@ -191,13 +191,32 @@ export abstract class AbstractRemote {
       }
     });
 
-    const rsocket = await connector.connect();
+    let rsocket: RSocket;
+    try {
+      rsocket = await connector.connect();
+    } catch (ex) {
+      /**
+       * On React native the connection exception can be `undefined` this causes issues
+       * with detecting the exception inside async-mutex
+       */
+      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex)}`);
+    }
+
     const stream = new DataStream({
       logger: this.logger,
       pressure: {
         lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
       }
     });
+
+    let socketIsClosed = false;
+    const closeSocket = () => {
+      if (socketIsClosed) {
+        return;
+      }
+      socketIsClosed = true;
+      rsocket.close();
+    }
     // We initially request this amount and expect these to arrive eventually
     let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
 
@@ -220,6 +239,9 @@ export abstract class AbstractRemote {
             if (e.message !== 'Closed. ') {
               this.logger.error(e);
             }
+            // RSocket will close this automatically
+            // Attempting to close multiple times causes a console warning
+            socketIsClosed = true;
             stream.close();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
@@ -260,7 +282,7 @@ export abstract class AbstractRemote {
         }
       },
       closed: () => {
-        rsocket.close();
+        closeSocket();
         l?.();
       }
     });
