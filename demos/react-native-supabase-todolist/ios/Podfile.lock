@@ -16,6 +16,8 @@ PODS:
     - ExpoModulesCore
     - ZXingObjC/OneD
     - ZXingObjC/PDF417
+  - ExpoCrypto (12.8.0):
+    - ExpoModulesCore
   - ExpoFileSystem (16.0.9):
     - ExpoModulesCore
   - ExpoHead (3.4.8):
@@ -1152,6 +1154,7 @@ DEPENDENCIES:
   - EXManifests (from `../../../node_modules/expo-manifests/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoCamera (from `../../../node_modules/expo-camera/ios`)
+  - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoHead (from `../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
@@ -1248,6 +1251,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoCamera:
     :path: "../../../node_modules/expo-camera/ios"
+  ExpoCrypto:
+    :path: "../node_modules/expo-crypto/ios"
   ExpoFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   ExpoHead:
@@ -1386,6 +1391,7 @@ SPEC CHECKSUMS:
   EXManifests: 5e8c29f36c716af768a4ea47ec05e1b89ab93091
   Expo: 2cdb5916749a1509cf88114f1f510bd458630eb4
   ExpoCamera: f3f157db67e5a491e1104a2c0018c240242936e7
+  ExpoCrypto: e2ca148f5c93a0514959df86b34256bb3c50d358
   ExpoFileSystem: 74cc0fae916f9f044248433971dcfc8c3befd057
   ExpoHead: 8224345e80abcf4c97b31c99805dd5a3c8d3404d
   ExpoKeepAwake: 0f5cad99603a3268e50af9a6eb8b76d0d9ac956c

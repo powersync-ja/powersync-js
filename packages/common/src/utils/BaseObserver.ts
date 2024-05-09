@@ -1,5 +1,3 @@
-import { v4 } from 'uuid';
-
 export interface Disposable {
   dispose: () => Promise<void>;
 }
@@ -13,25 +11,24 @@ export type BaseListener = {
 };
 
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
-  protected listeners: Map<string, Partial<T>>;
+  protected listeners = new Set<Partial<T>>();
 
-  constructor() {
-    this.listeners = new Map();
-  }
+  constructor() {}
 
   /**
    * Register a listener for updates to the PowerSync client.
    */
   registerListener(listener: Partial<T>): () => void {
-    const id = v4();
-    this.listeners.set(id, listener);
+    this.listeners.add(listener);
     return () => {
-      this.listeners.delete(id);
+      this.listeners.delete(listener);
     };
   }
 
   iterateListeners(cb: (listener: Partial<T>) => any) {
-    this.listeners.forEach((l) => cb(l));
+    for (const listener of this.listeners) {
+      cb(listener);
+    }
   }
 
   async iterateAsyncListeners(cb: (listener: Partial<T>) => Promise<any>) {

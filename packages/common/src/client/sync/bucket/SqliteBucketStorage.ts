@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 import { Mutex } from 'async-mutex';
 import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter';
 import {
@@ -108,10 +107,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     // To achieve this, we rename the bucket to a new temp name, and change all ops to remove.
     // By itself, this new bucket would ensure that the previous objects are deleted if they contain no more references.
     // If the old bucket is re-added, this new bucket would have no effect.
-    const newName = `$delete_${bucket}_${uuid()}`;
-    this.logger.debug('Deleting bucket', bucket);
-    // This
     await this.writeTransaction(async (tx) => {
+      const { uuid } = await tx.get<{ uuid: string }>('select uuid() as uuid');
+      const newName = `$delete_${bucket}_${uuid}`;
+      this.logger.debug('Deleting bucket', bucket);
       await tx.execute(
         `UPDATE ps_oplog SET op=${OpTypeEnum.REMOVE}, data=NULL WHERE op=${OpTypeEnum.PUT} AND superseded=0 AND bucket=?`,
         [bucket]

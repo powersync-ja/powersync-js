@@ -29,6 +29,7 @@
     "expo-constants": "~15.4.6",
     "expo-file-system": "^16.0.9",
     "expo-linking": "~6.2.2",
+    "expo-crypto": "~12.8.0",
     "expo-modules-autolinking": "^1.5.1",
     "expo-router": "3.4.8",
     "expo-secure-store": "~12.8.1",
@@ -44,6 +45,7 @@
     "react-native-encrypted-storage": "^4.0.3",
     "react-native-fetch-api": "^3.0.0",
     "react-native-gesture-handler": "~2.14.1",
+    "react-native-polyfill-globals": "^3.1.0",
     "react-native-prompt-android": "^1.1.0",
     "react-native-reanimated": "~3.6.2",
     "react-native-reanimated-table": "^0.0.2",
@@ -54,7 +56,6 @@
     "react-native-vector-icons": "^10.0.0",
     "react-navigation-stack": "^2.10.4",
     "text-encoding": "^0.7.0",
-    "uuid": "^9.0.1",
     "web-streams-polyfill": "^3.3.2"
   },
   "devDependencies": {
@@ -63,7 +64,6 @@
     "@babel/preset-env": "^7.23.9",
     "@types/lodash": "^4.14.202",
     "@types/react": "~18.2.57",
-    "@types/uuid": "^9.0.1",
     "babel-preset-expo": "^10.0.1",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"
