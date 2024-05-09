@@ -325,7 +325,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
-        this.currentStatus = new SyncStatus({ ...status.toJSON(), hasSynced: !!status.lastSyncedAt });
+        this.currentStatus = new SyncStatus({
+          ...status.toJSON(),
+          hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
+        });
         this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
       }
     });
