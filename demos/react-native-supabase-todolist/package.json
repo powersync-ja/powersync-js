@@ -26,6 +26,7 @@
     "expo-build-properties": "~0.11.0",
     "expo-camera": "~14.0.3",
     "expo-constants": "~15.4.5",
+    "expo-crypto": "~12.8.0",
     "expo-file-system": "^16.0.5",
     "expo-linking": "~6.2.2",
     "expo-modules-autolinking": "^1.5.1",
@@ -43,7 +44,6 @@
     "react-native-encrypted-storage": "^4.0.3",
     "react-native-fetch-api": "^3.0.0",
     "react-native-gesture-handler": "~2.14.1",
-    "react-native-get-random-values": "~1.10.0",
     "react-native-polyfill-globals": "^3.1.0",
     "react-native-prompt-android": "^1.1.0",
     "react-native-reanimated": "~3.6.2",
@@ -55,7 +55,6 @@
     "react-native-vector-icons": "^10.0.0",
     "react-navigation-stack": "^2.10.4",
     "text-encoding": "^0.7.0",
-    "uuid": "^9.0.1",
     "web-streams-polyfill": "^3.3.2"
   },
   "devDependencies": {
@@ -65,7 +64,6 @@
     "@types/base-64": "^1.0.2",
     "@types/lodash": "^4.14.202",
     "@types/react": "~18.2.57",
-    "@types/uuid": "^9.0.1",
     "babel-preset-expo": "^10.0.1",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"

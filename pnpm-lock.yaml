@@ -126,9 +126,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.42.4
         version: 2.43.1
-      '@types/react-native-get-random-values':
-        specifier: ^1.8.2
-        version: 1.8.2
       base-64:
         specifier: ^1.0.0
         version: 1.0.0
@@ -186,12 +183,9 @@ importers:
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.6)(react@18.2.0)
-      react-native-get-random-values:
-        specifier: ~1.8.0
-        version: 1.8.0(react-native@0.73.6)
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
       react-native-prompt-android:
         specifier: ^1.1.0
         version: 1.1.0
@@ -225,9 +219,6 @@ importers:
       typed-async-storage:
         specifier: ^3.1.2
         version: 3.1.2
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
       web-streams-polyfill:
         specifier: ^3.3.3
         version: 3.3.3
@@ -431,9 +422,6 @@ importers:
       simplify-js:
         specifier: ^1.2.4
         version: 1.2.4
-      uuid:
-        specifier: 9.0.1
-        version: 9.0.1
     devDependencies:
       '@types/lodash':
         specifier: ^4.14.202
@@ -447,9 +435,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.21
         version: 18.3.0
-      '@types/uuid':
-        specifier: 9.0.8
-        version: 9.0.8
       autoprefixer:
         specifier: ^10.4.18
         version: 10.4.19(postcss@8.4.38)
@@ -611,15 +596,12 @@ importers:
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.4)(react@18.2.0)
-      react-native-get-random-values:
-        specifier: ~1.8.0
-        version: 1.8.0(react-native@0.73.4)
       react-native-pager-view:
         specifier: 6.2.3
         version: 6.2.3(react-native@0.73.4)(react@18.2.0)
       react-native-polyfill-globals:
         specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
+        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
       react-native-reanimated:
         specifier: ~3.6.2
         version: 3.6.3(@babel/core@7.23.5)(@babel/plugin-proposal-nullish-coalescing-operator@7.18.6)(@babel/plugin-proposal-optional-chaining@7.21.0)(@babel/plugin-transform-arrow-functions@7.24.1)(@babel/plugin-transform-shorthand-properties@7.24.1)(@babel/plugin-transform-template-literals@7.24.1)(react-native@0.73.4)(react@18.2.0)
@@ -726,6 +708,9 @@ importers:
       expo-constants:
         specifier: ~15.4.5
         version: 15.4.6(expo@50.0.17)
+      expo-crypto:
+        specifier: ~12.8.0
+        version: 12.8.1(expo@50.0.17)
       expo-file-system:
         specifier: ^16.0.5
         version: 16.0.9(expo@50.0.17)
@@ -777,9 +762,6 @@ importers:
       react-native-gesture-handler:
         specifier: ~2.14.1
         version: 2.14.1(react-native@0.73.2)(react@18.2.0)
-      react-native-get-random-values:
-        specifier: ~1.10.0
-        version: 1.10.0(react-native@0.73.2)
       react-native-polyfill-globals:
         specifier: ^3.1.0
         version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
@@ -813,9 +795,6 @@ importers:
       text-encoding:
         specifier: ^0.7.0
         version: 0.7.0
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
       web-streams-polyfill:
         specifier: ^3.3.2
         version: 3.3.3
@@ -838,9 +817,6 @@ importers:
       '@types/react':
         specifier: ~18.2.57
         version: 18.2.79
-      '@types/uuid':
-        specifier: ^9.0.1
-        version: 9.0.8
       babel-preset-expo:
         specifier: ^10.0.1
         version: 10.0.2(@babel/core@7.24.5)
@@ -950,9 +926,6 @@ importers:
       js-logger:
         specifier: ^1.6.1
         version: 1.6.1
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
       vue:
         specifier: ^3.4.21
         version: 3.4.21(typescript@5.4.5)
@@ -1108,7 +1081,7 @@ importers:
         specifier: ^1.2.4
         version: 1.2.4
       uuid:
-        specifier: 9.0.1
+        specifier: ^9.0.1
         version: 9.0.1
       y-prosemirror:
         specifier: 1.0.20
@@ -1238,9 +1211,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
     devDependencies:
       '@types/lodash':
         specifier: ^4.14.197
@@ -1343,9 +1313,6 @@ importers:
       react-native-fetch-api:
         specifier: ^3.0.0
         version: 3.0.0
-      react-native-get-random-values:
-        specifier: ^1.9.0
-        version: 1.10.0(react-native@0.72.4)
       react-native-polyfill-globals:
         specifier: ^3.1.0
         version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.10.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3)
@@ -1414,9 +1381,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      uuid:
-        specifier: ^9.0.1
-        version: 9.0.1
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: ~0.2.0
@@ -1433,6 +1397,9 @@ importers:
       typescript:
         specifier: ^5.2.2
         version: 5.4.5
+      uuid:
+        specifier: ^9.0.1
+        version: 9.0.1
       vite:
         specifier: ^5.1.1
         version: 5.2.11(sass@1.76.0)
@@ -14607,10 +14574,6 @@ packages:
     dependencies:
       '@types/react': 18.2.79
     dev: true
-
-  /@types/react-native-get-random-values@1.8.2:
-    resolution: {integrity: sha512-CmtnfZnHKkVupG71SI9S7DDqkV6dtxxNIAzh2r1F1/tB8vg2weBtLhHmcruMIwp9Y69IZZ3DwJ0BhRpsbj42QA==}
-    dev: false
 
   /@types/react-native-table-component@1.2.8(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(react@18.2.0):
     resolution: {integrity: sha512-ZhWnoW3LpzXx+fCyosNBVasVCuaWNCMDMcP0mO9FSSK8eRE4ihLTqKiit6zjpph9ot4LQ/mD8hmbhV0YpRLvOQ==}
@@ -28433,40 +28396,13 @@ packages:
       react-native: 0.73.6(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(react@18.2.0)
     dev: false
 
-  /react-native-get-random-values@1.10.0(react-native@0.72.4):
+  /react-native-get-random-values@1.10.0(react-native@0.73.4):
     resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(react@18.2.0)
-    dev: false
-
-  /react-native-get-random-values@1.10.0(react-native@0.73.2):
-    resolution: {integrity: sha512-gZ1zbXhbb8+Jy9qYTV8c4Nf45/VB4g1jmXuavY5rPfUn7x3ok9Vl3FTl0dnE92Z4FFtfbUNNwtSfcmomdtWg+A==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.73.2(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(react@18.2.0)
-    dev: false
-
-  /react-native-get-random-values@1.8.0(react-native@0.73.4):
-    resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
     peerDependencies:
       react-native: '>=0.56'
     dependencies:
       fast-base64-decode: 1.0.0
       react-native: 0.73.4(@babel/core@7.23.5)(@babel/preset-env@7.24.5)(react@18.2.0)
-    dev: false
-
-  /react-native-get-random-values@1.8.0(react-native@0.73.6):
-    resolution: {integrity: sha512-H/zghhun0T+UIJLmig3+ZuBCvF66rdbiWUfRSNS6kv5oDSpa1ZiVyvRWtuPesQpT8dXj+Bv7WJRQOUP+5TB1sA==}
-    peerDependencies:
-      react-native: '>=0.56'
-    dependencies:
-      fast-base64-decode: 1.0.0
-      react-native: 0.73.6(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(react@18.2.0)
     dev: false
 
   /react-native-iphone-x-helper@1.3.1(react-native@0.73.2):
@@ -28507,25 +28443,7 @@ packages:
     dependencies:
       base-64: 1.0.0
       react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.10.0(react-native@0.73.2)
-      react-native-url-polyfill: 2.0.0(react-native@0.73.2)
-      text-encoding: 0.7.0
-      web-streams-polyfill: 3.3.3
-    dev: false
-
-  /react-native-polyfill-globals@3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.8.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.3.3):
-    resolution: {integrity: sha512-6ACmV1SjXvZP2LN6J2yK58yNACKddcvoiKLrSQdISx32IdYStfdmGXrbAfpd+TANrTlIaZ2SLoFXohNwhnqm/w==}
-    peerDependencies:
-      base-64: '*'
-      react-native-fetch-api: '*'
-      react-native-get-random-values: '*'
-      react-native-url-polyfill: '*'
-      text-encoding: '*'
-      web-streams-polyfill: '*'
-    dependencies:
-      base-64: 1.0.0
-      react-native-fetch-api: 3.0.0
-      react-native-get-random-values: 1.8.0(react-native@0.73.4)
+      react-native-get-random-values: 1.10.0(react-native@0.73.4)
       react-native-url-polyfill: 2.0.0(react-native@0.73.4)
       text-encoding: 0.7.0
       web-streams-polyfill: 3.3.3

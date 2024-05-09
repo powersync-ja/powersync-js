@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'expo-crypto';
 import { AppConfig } from '../supabase/AppConfig';
 import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState } from '@powersync/attachments';
 import { TODO_TABLE } from './AppSchema';
@@ -23,7 +23,7 @@ export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
   }
 
   async newAttachmentRecord(record?: Partial<AttachmentRecord>): Promise<AttachmentRecord> {
-    const photoId = record?.id ?? uuid();
+    const photoId = record?.id ?? randomUUID();
     const filename = record?.filename ?? `${photoId}.jpg`;
     return {
       id: photoId,
