@@ -32,6 +32,30 @@ Install it in your app with:
 npm install @journeyapps/wa-sqlite
 ```
 
+## Polyfills
+
+### WebSocket Connections: Buffer
+
+Note: Beta Release - WebSockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
+
+This SDK connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets. The WebSocket connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfills in the application for cases where multiple tabs are not supported.
+
+Install a suitable Buffer implementation
+
+```bash
+npm install buffer
+```
+
+Apply it in your application if not yet provided
+
+```Javascript
+import { Buffer } from 'buffer';
+
+if (typeof self.Buffer == 'undefined') {
+  self.Buffer = Buffer;
+}
+```
+
 # Getting Started
 
 Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web) contains everything you need to know to get started implementing PowerSync in your project.

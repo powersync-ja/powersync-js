@@ -1,7 +1,11 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import React from 'react';
-import { AbstractPowerSyncDatabase, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
+import {
+  AbstractPowerSyncDatabase,
+  RNQSPowerSyncDatabaseOpenFactory,
+  SyncStreamConnectionMethod
+} from '@powersync/react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
@@ -10,6 +14,18 @@ import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
+
+import { Buffer } from '@craftzdog/react-native-buffer';
+
+// Polyfills for WebSockets
+if (typeof global.Buffer == 'undefined') {
+  // @ts-ignore If using TypeScript
+  global.Buffer = Buffer;
+}
+
+if (typeof process.nextTick == 'undefined') {
+  process.nextTick = setImmediate;
+}
 
 export class System {
   kvStorage: KVStorage;
@@ -48,7 +64,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();

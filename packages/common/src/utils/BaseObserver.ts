@@ -30,4 +30,10 @@ export class BaseObserver<T extends BaseListener = BaseListener> implements Base
       cb(listener);
     }
   }
+
+  async iterateAsyncListeners(cb: (listener: Partial<T>) => Promise<any>) {
+    for (let i of Array.from(this.listeners.values())) {
+      await cb(i);
+    }
+  }
 }

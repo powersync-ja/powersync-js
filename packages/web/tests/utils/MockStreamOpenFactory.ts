@@ -5,7 +5,10 @@ import {
   AbstractRemote,
   RemoteConnector,
   AbstractStreamingSyncImplementation,
-  PowerSyncDatabaseOptions
+  PowerSyncDatabaseOptions,
+  SyncStreamOptions,
+  DataStream,
+  StreamingSyncLine
 } from '@powersync/common';
 import {
   PowerSyncDatabase,
@@ -44,7 +47,12 @@ export class MockRemote extends AbstractRemote {
   get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
     throw new Error('Method not implemented.');
   }
-  async postStreaming(path: string, data: any, headers?: Record<string, string>, signal?: AbortSignal): Promise<any> {
+  async postStreaming(
+    path: string,
+    data: any,
+    headers?: Record<string, string>,
+    signal?: AbortSignal
+  ): Promise<ReadableStream> {
     const stream = new ReadableStream({
       start: (controller) => {
         this.streamController = controller;
@@ -58,7 +66,43 @@ export class MockRemote extends AbstractRemote {
         });
       }
     });
-    return new Response(stream).body;
+    return new Response(stream).body!;
+  }
+
+  socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    throw new Error('Method not implemented.');
+  }
+
+  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
+    const mockReader = mockResponse.getReader();
+    const stream = new DataStream<StreamingSyncLine>({
+      logger: this.logger
+    });
+
+    const l = stream.registerListener({
+      lowWater: async () => {
+        try {
+          const { done, value } = await mockReader.read();
+          // Exit if we're done
+          if (done) {
+            stream.close();
+            l?.();
+            return;
+          }
+          stream.enqueueData(value);
+        } catch (ex) {
+          stream.close();
+          throw ex;
+        }
+      },
+      closed: () => {
+        mockReader.releaseLock();
+        l?.();
+      }
+    });
+
+    return stream;
   }
 }
 
@@ -80,7 +124,8 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      identifier: this.options.database.name
+      identifier: this.options.database.name,
+      retryDelayMs: 0
     });
   }
 }

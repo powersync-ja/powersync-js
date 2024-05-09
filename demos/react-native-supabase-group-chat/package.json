@@ -24,7 +24,7 @@
     "@powersync/react-native": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
-    "@journeyapps/react-native-quick-sqlite": "1.1.5",
+    "@journeyapps/react-native-quick-sqlite": "1.1.6",
     "@react-native-async-storage/async-storage": "1.21.0",
     "@shopify/flash-list": "1.6.3",
     "@supabase/supabase-js": "2.39.0",
@@ -59,7 +59,7 @@
     "react-native-web": "0.19.9",
     "tamagui": "1.79.6",
     "text-encoding": "^0.7.0",
-    "web-streams-polyfill": "^3.2.1"
+    "web-streams-polyfill": "3.2.1"
   },
   "devDependencies": {
     "@babel/core": "7.23.5",

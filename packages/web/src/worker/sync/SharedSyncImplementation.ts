@@ -9,7 +9,8 @@ import {
   StreamingSyncImplementationListener,
   SyncStatus,
   SyncStatusOptions,
-  AbortOperation
+  AbortOperation,
+  PowerSyncConnectionOptions
 } from '@powersync/common';
 import {
   WebStreamingSyncImplementation,
@@ -205,10 +206,10 @@ export class SharedSyncImplementation
    * The connection will simply be reconnected whenever a new tab
    * connects.
    */
-  async connect() {
+  async connect(options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.connect());
+    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.connect(options));
   }
 
   async disconnect() {
