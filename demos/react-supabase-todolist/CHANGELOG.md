@@ -1,5 +1,12 @@
 # react-supabase-todolist
 
+## 0.3.1
+
+### Patch Changes
+
+- @powersync/react@1.3.1
+- @powersync/web@0.5.3
+
 ## 0.3.0
 
 ### Minor Changes

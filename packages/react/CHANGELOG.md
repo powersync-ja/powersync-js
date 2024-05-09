@@ -1,5 +1,12 @@
 # @powersync/react
 
+## 1.3.1
+
+### Patch Changes
+
+- Updated dependencies [3c421ea]
+  - @powersync/common@1.7.1
+
 ## 1.3.0
 
 ### Minor Changes
