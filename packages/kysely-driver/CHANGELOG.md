@@ -1,5 +1,12 @@
 # @powersync/kysely-driver
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [3c421ea]
+  - @powersync/common@1.7.1
+
 ## 0.2.0
 
 ### Minor Changes

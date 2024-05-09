@@ -326,7 +326,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
-        this.currentStatus = new SyncStatus({ ...status.toJSON(), hasSynced: this.currentStatus?.hasSynced });
+        this.currentStatus = new SyncStatus({
+          ...status.toJSON(),
+          hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
+        });
         this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
       }
     });
@@ -767,7 +770,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         `SELECT DISTINCT tbl_name FROM sqlite_master WHERE rootpage IN (SELECT json_each.value FROM json_each(?))`,
         [JSON.stringify(rootPages)]
       );
-      for (let table of tables) {
+      for (const table of tables) {
         resolvedTables.push(table.tbl_name.replace(POWERSYNC_TABLE_MATCH, ''));
       }
     }
@@ -938,7 +941,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       ? filteredTables
       : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
 
-    for (let table of mappedTableNames) {
+    for (const table of mappedTableNames) {
       changedTables.add(table);
     }
   }
