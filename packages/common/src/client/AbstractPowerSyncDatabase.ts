@@ -237,9 +237,45 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const version = await this.options.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
+    this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  protected async updateHasSynced() {
+    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
+
+    const abortController = new AbortController();
+    this.hasSyncedWatchDisposer = () => abortController.abort();
+
+    // Abort the watch after the first sync is detected
+    this.watch(
+      syncedSQL,
+      [],
+      {
+        onResult: (result) => {
+          const hasSynced = !!result.rows?.length;
+
+          if (hasSynced != this.currentStatus.hasSynced) {
+            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+          }
+
+          if (hasSynced) {
+            abortController.abort();
+          }
+        },
+        onError: (ex) => {
+          this.options.logger?.warn('Failure while watching synced state', ex);
+          abortController.abort();
+        }
+      },
+      {
+        rawTableNames: true,
+        signal: abortController.signal
+      }
+    );
   }
 
   /**
@@ -289,7 +325,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
-        this.currentStatus = new SyncStatus({ ...status.toJSON(), hasSynced: true });
+        this.currentStatus = new SyncStatus({ ...status.toJSON(), hasSynced: !!status.lastSyncedAt });
         this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
       }
     });
