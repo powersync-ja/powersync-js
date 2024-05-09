@@ -938,9 +938,7 @@ PODS:
     - React-debug
   - react-native-encrypted-storage (4.0.3):
     - React-Core
-  - react-native-get-random-values (1.8.0):
-    - React-Core
-  - react-native-quick-sqlite (1.1.4):
+  - react-native-quick-sqlite (1.1.6):
     - powersync-sqlite-core (~> 0.1.6)
     - React
     - React-callinvoker
@@ -1192,7 +1190,6 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-encrypted-storage (from `../../../node_modules/react-native-encrypted-storage`)
-  - react-native-get-random-values (from `../../../node_modules/react-native-get-random-values`)
   - "react-native-quick-sqlite (from `../../../node_modules/@journeyapps/react-native-quick-sqlite`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
@@ -1322,8 +1319,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-encrypted-storage:
     :path: "../../../node_modules/react-native-encrypted-storage"
-  react-native-get-random-values:
-    :path: "../../../node_modules/react-native-get-random-values"
   react-native-quick-sqlite:
     :path: "../../../node_modules/@journeyapps/react-native-quick-sqlite"
   react-native-safe-area-context:
@@ -1430,8 +1425,7 @@ SPEC CHECKSUMS:
   React-logger: 3eb80a977f0d9669468ef641a5e1fabbc50a09ec
   React-Mapbuffer: 84ea43c6c6232049135b1550b8c60b2faac19fab
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
-  react-native-get-random-values: a6ea6a8a65dc93e96e24a11105b1a9c8cfe1d72a
-  react-native-quick-sqlite: c4b0debdbfc2bcd282834f4268071e13a3c20cb4
+  react-native-quick-sqlite: f320de0724dba0f6b7d038a6b54dbcd7f119f01b
   react-native-safe-area-context: 0ee144a6170530ccc37a0fd9388e28d06f516a89
   React-nativeconfig: b4d4e9901d4cabb57be63053fd2aa6086eb3c85f
   React-NativeModulesApple: cd26e56d56350e123da0c1e3e4c76cb58a05e1ee
