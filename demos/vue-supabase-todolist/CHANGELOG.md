@@ -1,5 +1,14 @@
 # vue-supabase-todolist
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [395ea24]
+- Updated dependencies [9d1dc6f]
+  - @powersync/web@0.6.0
+  - @powersync/vue@0.1.2
+
 ## 0.0.7
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # example-vite
 
+## 0.0.19
+
+### Patch Changes
+
+- Updated dependencies [395ea24]
+- Updated dependencies [9d1dc6f]
+  - @powersync/web@0.6.0
+
 ## 0.0.18
 
 ### Patch Changes
