@@ -1,6 +1,5 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
-import 'react-native-get-random-values';
 import React from 'react';
 import {
   AbstractPowerSyncDatabase,
@@ -39,12 +38,7 @@ export class System {
     this.kvStorage = new KVStorage();
     const factory = new RNQSPowerSyncDatabaseOpenFactory({
       schema: AppSchema,
-      dbFilename: 'sqlite.db',
-      streamOptions: {
-        // HTTP by default. Change to below for web socket connections
-        // connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
-        connectionMethod: SyncStreamConnectionMethod.HTTP
-      }
+      dbFilename: 'sqlite.db'
     });
 
     this.supabaseConnector = new SupabaseConnector(this);
@@ -68,7 +62,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
 
     await this.attachmentQueue.init();
   }

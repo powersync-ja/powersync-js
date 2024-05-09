@@ -216,7 +216,10 @@ export abstract class AbstractRemote {
         SYNC_QUEUE_REQUEST_N, // The initial N amount
         {
           onError: (e) => {
-            this.logger.error(e);
+            // Don't log closed as an error
+            if (e.message !== 'Closed. ') {
+              this.logger.error(e);
+            }
             stream.close();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
@@ -257,9 +260,22 @@ export abstract class AbstractRemote {
         }
       },
       closed: () => {
+        rsocket.close();
         l?.();
       }
     });
+
+    /**
+     * Handle abort operations here.
+     * Unfortunately cannot insert them into the connection.
+     */
+    if (options.abortSignal?.aborted) {
+      stream.close();
+    } else {
+      options.abortSignal?.addEventListener('abort', () => {
+        stream.close();
+      });
+    }
 
     return stream;
   }

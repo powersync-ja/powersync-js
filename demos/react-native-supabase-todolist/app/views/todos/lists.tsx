@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
-import { FAB } from 'react-native-elements';
+import { FAB, Text } from 'react-native-elements';
 import prompt from 'react-native-prompt-android';
 
 import { router, Stack } from 'expo-router';
@@ -79,7 +79,7 @@ const ListsViewWidget: React.FC = () => {
       />
       <ScrollView key={'lists'} style={{ maxHeight: '90%' }}>
         {!status.hasSynced ? (
-          <p>Busy with sync...</p>
+          <Text>Busy with sync...</Text>
         ) : (
           listRecords.map((r) => (
             <ListItemWidget

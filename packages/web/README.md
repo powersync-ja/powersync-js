@@ -34,7 +34,9 @@ npm install @journeyapps/wa-sqlite
 
 ## Polyfills
 
-### Web sockets: Buffer
+### Web Sockets: Buffer
+
+Note: Beta Release - web sockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
 
 This SDK connects to a PowerSync instance via HTTP streams (enabled by default) or web sockets. The web socket connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfills in the application for cases where multiple tabs are not supported.
 

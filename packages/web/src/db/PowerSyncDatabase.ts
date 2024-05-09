@@ -6,7 +6,8 @@ import {
   BucketStorageAdapter,
   PowerSyncDatabaseOptions,
   PowerSyncCloseOptions,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS
+  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
+  PowerSyncConnectionOptions
 } from '@powersync/common';
 
 import { WebRemote } from './sync/WebRemote';
@@ -78,7 +79,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     });
   }
 
-  connect(connector: PowerSyncBackendConnector): Promise<void> {
+  connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
     /**
      * Using React strict mode might cause calls to connect to fire multiple times
      * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
@@ -86,7 +87,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
      */
     return this.runExclusive(() => {
       this.options.logger?.debug('Attempting to connect to PowerSync instance');
-      return super.connect(connector);
+      return super.connect(connector, options);
     });
   }
 
@@ -108,7 +109,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...this.options,
-      ...(this.options.streamOptions ?? {}),
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {

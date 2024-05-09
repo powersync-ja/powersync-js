@@ -21,6 +21,12 @@ export enum LockType {
   CRUD = 'crud',
   SYNC = 'sync'
 }
+
+export enum SyncStreamConnectionMethod {
+  HTTP = 'http',
+  WEB_SOCKET = 'web-socket'
+}
+
 /**
  * Abstract Lock to be implemented by various JS environments
  */
@@ -28,11 +34,6 @@ export interface LockOptions<T> {
   callback: () => Promise<T>;
   type: LockType;
   signal?: AbortSignal;
-}
-
-export enum SyncStreamConnectionMethod {
-  HTTP = 'http',
-  WEB_SOCKET = 'web-socket'
 }
 
 export interface AbstractStreamingSyncImplementationOptions {
@@ -47,7 +48,6 @@ export interface AbstractStreamingSyncImplementationOptions {
   logger?: ILogger;
   remote: AbstractRemote;
   retryDelayMs?: number;
-  connectionMethod?: SyncStreamConnectionMethod;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
@@ -62,11 +62,24 @@ export interface StreamingSyncImplementationListener extends BaseListener {
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
+/**
+ * Configurable options to be used when connecting to the PowerSync
+ * backend instance.
+ */
+export interface PowerSyncConnectionOptions {
+  /**
+   * The connection method to use when streaming updates from
+   * the PowerSync backend instance.
+   * Defaults to a HTTP streaming connection.
+   */
+  connectionMethod?: SyncStreamConnectionMethod;
+}
+
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**
    * Connects to the sync service
    */
-  connect(): Promise<void>;
+  connect(options?: PowerSyncConnectionOptions): Promise<void>;
   /**
    * Disconnects from the sync services.
    * @throws if not connected or if abort is not controlled internally
@@ -87,7 +100,10 @@ export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: 5000,
   logger: Logger.get('PowerSyncStream'),
-  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
+};
+
+export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
   connectionMethod: SyncStreamConnectionMethod.HTTP
 };
 
@@ -235,13 +251,13 @@ export abstract class AbstractStreamingSyncImplementation
     }
   }
 
-  async connect() {
+  async connect(options?: PowerSyncConnectionOptions) {
     if (this.abortController) {
       await this.disconnect();
     }
 
     this.abortController = new AbortController();
-    this.streamingSyncPromise = this.streamingSync(this.abortController.signal);
+    this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
     // Return a promise that resolves when the connection status is updated
     return new Promise<void>((resolve) => {
@@ -293,7 +309,7 @@ export abstract class AbstractStreamingSyncImplementation
   /**
    * @deprecated use [connect instead]
    */
-  async streamingSync(signal?: AbortSignal): Promise<void> {
+  async streamingSync(signal?: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
     if (!signal) {
       this.abortController = new AbortController();
       signal = this.abortController.signal;
@@ -339,7 +355,7 @@ export abstract class AbstractStreamingSyncImplementation
         if (signal?.aborted) {
           break;
         }
-        const { retry } = await this.streamingSyncIteration(nestedAbortController.signal);
+        const { retry } = await this.streamingSyncIteration(nestedAbortController.signal, options);
         if (!retry) {
           /**
            * A sync error ocurred that we cannot recover from here.
@@ -382,11 +398,19 @@ export abstract class AbstractStreamingSyncImplementation
     this.updateSyncStatus({ connected: false });
   }
 
-  protected async streamingSyncIteration(signal: AbortSignal, progress?: () => void): Promise<{ retry?: boolean }> {
+  protected async streamingSyncIteration(
+    signal: AbortSignal,
+    options?: PowerSyncConnectionOptions
+  ): Promise<{ retry?: boolean }> {
     return await this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
+        const resolvedOptions: Required<PowerSyncConnectionOptions> = {
+          ...DEFAULT_STREAM_CONNECTION_OPTIONS,
+          ...(options ?? {})
+        };
+
         this.logger.debug('Streaming sync iteration started');
         this.options.adapter.startSession();
         const bucketEntries = await this.options.adapter.getBucketStates();
@@ -410,7 +434,7 @@ export abstract class AbstractStreamingSyncImplementation
 
         this.logger.debug('Requesting stream from server');
 
-        const options: SyncStreamOptions = {
+        const syncOptions: SyncStreamOptions = {
           path: '/sync/stream',
           abortSignal: signal,
           data: {
@@ -421,9 +445,9 @@ export abstract class AbstractStreamingSyncImplementation
         };
 
         const stream =
-          this.options.connectionMethod == SyncStreamConnectionMethod.HTTP
-            ? await this.options.remote.postStream(options)
-            : await this.options.remote.socketStream(options);
+          resolvedOptions?.connectionMethod == SyncStreamConnectionMethod.HTTP
+            ? await this.options.remote.postStream(syncOptions)
+            : await this.options.remote.socketStream(syncOptions);
 
         this.logger.debug('Stream established. Processing events');
 
@@ -526,6 +550,11 @@ export abstract class AbstractStreamingSyncImplementation
             if (remaining_seconds == 0) {
               // Connection would be closed automatically right after this
               this.logger.debug('Token expiring; reconnect');
+              /**
+               * For a rare case where the backend connector does not update the token
+               * (uses the same one), this should have some delay.
+               */
+              await this.delayRetry();
               return { retry: true };
             }
             this.triggerCrudUpload();
@@ -559,7 +588,6 @@ export abstract class AbstractStreamingSyncImplementation
               }
             }
           }
-          progress?.();
         }
         this.logger.debug('Stream input empty');
         // Connection closed. Likely due to auth issue.
