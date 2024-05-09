@@ -33,7 +33,7 @@ npx expo install @journeyapps/react-native-quick-sqlite
 This package connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets. 
 * Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below. 
 * The WebSocket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
-* Other polyfills are required for [watched queries](#babel-plugins-watched-queries).
+* Other polyfills are required for [watched queries](#babel-plugins-watched-queries) using the Async Iterator response format.
 
 ### React Native Common Polyfills
 
@@ -97,7 +97,7 @@ if (typeof process.nextTick == 'undefined') {
 
 Watched queries can be used with either a callback response or Async Iterator response.
 
-Watched queries using the async iterator response format require support for Async Iterators.
+Watched queries using the Async Iterator response format require support for Async Iterators.
 
 Expo apps currently require polyfill and Babel plugins in order to use this functionality.
 
