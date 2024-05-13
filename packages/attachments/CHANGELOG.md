@@ -1,5 +1,13 @@
 # @powersync/attachments
 
+## 2.0.8
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+
 ## 2.0.7
 
 ### Patch Changes

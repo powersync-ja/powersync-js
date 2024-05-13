@@ -1,5 +1,15 @@
 # react-native-supabase-todolist
 
+## 1.2.3
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/react-native@1.5.1
+  - @powersync/attachments@2.0.8
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
 ## 1.2.2
 
 ### Patch Changes
