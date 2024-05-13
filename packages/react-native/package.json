@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -27,16 +27,10 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^1.1.5",
-    "base-64": "^1.0.0",
+    "@journeyapps/react-native-quick-sqlite": "^1.1.6",
     "react": "*",
     "react-native": "*",
-    "react-native-fetch-api": "^3.0.0",
-    "react-native-get-random-values": "^1.9.0",
-    "react-native-polyfill-globals": "^3.1.0",
-    "react-native-url-polyfill": "^2.0.0",
-    "text-encoding": "^0.7.0",
-    "web-streams-polyfill": "^3.2.1"
+    "react-native-polyfill-globals": "^3.1.0"
   },
   "dependencies": {
     "@powersync/react": "workspace:*",
@@ -44,10 +38,10 @@
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^1.1.5",
+    "@journeyapps/react-native-quick-sqlite": "^1.1.6",
     "@types/async-lock": "^1.4.0",
-    "react-native": "0.72.4",
     "react": "18.2.0",
+    "react-native": "0.72.4",
     "typescript": "^5.1.3"
   },
   "keywords": [

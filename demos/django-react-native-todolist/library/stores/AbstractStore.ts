@@ -1,5 +1,3 @@
-// Needed to import early for uuids
-import 'react-native-get-random-values';
 import _ from 'lodash';
 import { action, makeObservable, observable } from 'mobx';
 import { AbstractModel } from '../models/AbstractModel';

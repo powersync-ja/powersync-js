@@ -1,7 +1,6 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
 import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
-import { v4 as uuid } from 'uuid';
 import { QueryResult } from '@powersync/common';
 
 export type WASQLExecuteResult = Omit<QueryResult, 'rows'> & {
@@ -26,6 +25,8 @@ export type OpenDB = (dbFileName: string) => DBWorkerInterface;
 
 export type SQLBatchTuple = [string] | [string, Array<any> | Array<Array<any>>];
 
+let nextId = 1;
+
 export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
   const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
   const module = await moduleFactory();
@@ -40,14 +41,14 @@ export async function _openDB(dbFileName: string): Promise<DBWorkerInterface> {
   /**
    * Listeners are exclusive to the DB connection.
    */
-  const listeners = new Map<string, OnTableChangeCallback>();
+  const listeners = new Map<number, OnTableChangeCallback>();
 
   sqlite3.register_table_onchange_hook(db, (opType: number, tableName: string, rowId: number) => {
     Array.from(listeners.values()).forEach((l) => l(opType, tableName, rowId));
   });
 
   const registerOnTableChange = (callback: OnTableChangeCallback) => {
-    const id = uuid();
+    const id = nextId++;
     listeners.set(id, callback);
     return Comlink.proxy(() => {
       listeners.delete(id);

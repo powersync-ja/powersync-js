@@ -1,6 +1,6 @@
 {
   "name": "yjs-react-supabase-text-collab",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -44,7 +44,7 @@
     "remixicon": "^2.5.0",
     "shiki": "^0.10.1",
     "simplify-js": "^1.2.4",
-    "uuid": "9.0.1",
+    "uuid": "^9.0.1",
     "y-prosemirror": "1.0.20",
     "y-protocols": "1.0.6",
     "yjs": "^13.6.14"

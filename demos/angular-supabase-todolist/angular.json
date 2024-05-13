@@ -24,7 +24,6 @@
               "object-hash",
               "event-iterator",
               "can-ndjson-stream",
-              "uuid",
               "lodash",
               "js-logger",
               "websocket"

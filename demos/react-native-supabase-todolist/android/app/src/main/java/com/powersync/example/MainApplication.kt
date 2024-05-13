@@ -52,9 +52,9 @@ class MainApplication : Application(), ReactApplication {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       load()
     }
-    // if (BuildConfig.DEBUG) {
-    //   ReactNativeFlipper.initializeFlipper(this, reactNativeHost.reactInstanceManager)
-    // }
+    if (BuildConfig.DEBUG) {
+      ReactNativeFlipper.initializeFlipper(this, reactNativeHost.reactInstanceManager)
+    }
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
   }
 
