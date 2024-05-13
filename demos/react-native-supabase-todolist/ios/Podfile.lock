@@ -3,23 +3,23 @@ PODS:
   - DoubleConversion (1.1.6)
   - EXConstants (16.0.1):
     - ExpoModulesCore
-  - Expo (51.0.0):
+  - Expo (51.0.4):
     - ExpoModulesCore
   - ExpoAsset (10.0.6):
     - ExpoModulesCore
-  - ExpoCamera (15.0.4):
+  - ExpoCamera (15.0.7):
     - ExpoModulesCore
     - ZXingObjC/OneD
     - ZXingObjC/PDF417
   - ExpoFileSystem (17.0.1):
     - ExpoModulesCore
-  - ExpoFont (12.0.4):
+  - ExpoFont (12.0.5):
     - ExpoModulesCore
   - ExpoHead (3.5.10):
     - ExpoModulesCore
   - ExpoKeepAwake (13.0.1):
     - ExpoModulesCore
-  - ExpoModulesCore (1.12.9):
+  - ExpoModulesCore (1.12.10):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1264,7 +1264,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated (3.10.0):
+  - RNReanimated (3.10.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1575,14 +1575,14 @@ SPEC CHECKSUMS:
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   EXConstants: 9a008dbf262550884e6280dea95b81b51f65ea6f
-  Expo: 17eb02cbf2ac0db49a6bc0c80a6b635a900d4f60
+  Expo: ce2265cc694f9f71c2eb572c8fe05edbc75137a8
   ExpoAsset: 9b7433ecc5f1b608ccbb823492e062bde944abd2
-  ExpoCamera: 9ba1b9f2dc0b49f7fb100deec5bf07d1562297e9
+  ExpoCamera: fba16df0c1b7cc542c461f107089fbf06515b9a2
   ExpoFileSystem: 80bfe850b1f9922c16905822ecbf97acd711dc51
-  ExpoFont: 331cf28d549edc7b6300d3be19302fc5069d9bb1
+  ExpoFont: 690b76008be824e47907f200cb0764870108dfd1
   ExpoHead: f27f34fd61e2a55b2facd0bba0fe85bc7958fbe0
   ExpoKeepAwake: f3a7b0ff4b4911957264dad8cb584ef688326a22
-  ExpoModulesCore: 070bbb7162641709919cbf50230f0b535b8190b1
+  ExpoModulesCore: 4c5576eec261d09549d78b751ccd62d94d4506ac
   ExpoSecureStore: 5f6b712785986b54d95a92bd365aabb82a52088e
   EXSplashScreen: d439ca817211886dc80a00f3761e3b6d861d7205
   FBLazyVector: 898d14d17bf19e2435cafd9ea2a1033efe445709
@@ -1643,7 +1643,7 @@ SPEC CHECKSUMS:
   ReactCommon: f42444e384d82ab89184aed5d6f3142748b54768
   RNCMaskedView: 0e1bc4bfa8365eba5fbbb71e07fbdc0555249489
   RNGestureHandler: 2282cfbcf86c360d29f44ace393203afd5c6cff7
-  RNReanimated: daf22f7ef44083dd6aadc8550cae88e5d8d7190a
+  RNReanimated: 35f9ac9c3ac42d0497ebd1cce5c39d7687a8493e
   RNScreens: b32a9ff15bea7fcdbe5dff6477bc503f792b1208
   RNVectorIcons: 2a2f79274248390b80684ea3c4400bd374a15c90
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d

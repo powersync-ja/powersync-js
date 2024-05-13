@@ -59,6 +59,9 @@ const config: ExpoConfig = {
       {
         ios: {
           deploymentTarget: '13.4'
+        },
+        android: {
+          minSdkVersion: 23
         }
       }
     ],
