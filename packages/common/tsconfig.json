@@ -1,24 +1,13 @@
 {
+  "extends": "../../tsconfig.base",
   "compilerOptions": {
     "baseUrl": "./",
-    "esModuleInterop": true,
     "jsx": "react",
     "types": ["node"],
     "rootDir": "src",
     "outDir": "./lib",
-    "composite": true,
     "lib": ["esnext"],
-    "module": "esnext",
     "declaration": true,
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noImplicitUseStrict": false,
-    "noStrictGenericChecks": false,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "target": "esnext",
     "strictNullChecks": true
   },
   "include": ["src/**/*"]

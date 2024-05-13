@@ -1,22 +1,10 @@
 {
+  "extends": "../../tsconfig.base",
   "compilerOptions": {
     "baseUrl": "./",
-    "esModuleInterop": true,
     "jsx": "preserve",
-    "rootDir": "src",
-    "composite": true,
     "outDir": "./lib",
-    "lib": ["es2022", "DOM"],
-    "module": "esnext",
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noImplicitUseStrict": false,
-    "noStrictGenericChecks": false,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "target": "esnext"
+    "rootDir": "src"
   },
   "references": [
     {

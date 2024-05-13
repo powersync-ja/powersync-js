@@ -20,7 +20,7 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc --build",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
