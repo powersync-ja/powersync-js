@@ -9,7 +9,7 @@ import {
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
-import { PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
+import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
 
 /**
@@ -89,7 +89,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
-
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
@@ -143,9 +142,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Starts the sync process, this effectively acts as a call to
    * `connect` if not yet connected.
    */
-  async connect(): Promise<void> {
+  async connect(options?: PowerSyncConnectionOptions): Promise<void> {
     await this.waitForReady();
-    return this.syncManager.connect();
+    return this.syncManager.connect(options);
   }
 
   async disconnect(): Promise<void> {

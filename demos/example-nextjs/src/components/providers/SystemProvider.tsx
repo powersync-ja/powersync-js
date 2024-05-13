@@ -8,6 +8,14 @@ import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
+import { Buffer } from 'buffer';
+
+// Polyfill for WebSockets
+if (typeof self.Buffer == 'undefined') {
+  self.Buffer = Buffer;
+}
+
+// eslint-disable-next-line react-hooks/rules-of-hooks
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 

@@ -1,5 +1,21 @@
 # @powersync/common
 
+## 1.8.0
+
+### Minor Changes
+
+- 9d1dc6f: Added support for WebSocket sync stream connections.
+
+### Patch Changes
+
+- 395ea24: Remove uuid dependency
+
+## 1.7.1
+
+### Patch Changes
+
+- 3c421ea: Fix hasSynced to change when there is no data on app load
+
 ## 1.7.0
 
 ### Minor Changes

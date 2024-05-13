@@ -1,7 +1,7 @@
 {
   "name": "example-vite",
   "private": true,
-  "version": "0.0.17",
+  "version": "0.0.19",
   "type": "module",
   "scripts": {
     "dev": "vite",
