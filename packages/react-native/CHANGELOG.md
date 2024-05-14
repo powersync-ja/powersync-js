@@ -1,5 +1,14 @@
 # @powersync/react-native
 
+## 1.5.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
 ## 1.5.0
 
 ### Minor Changes

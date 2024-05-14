@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.8.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+
 ## 1.8.0
 
 ### Minor Changes

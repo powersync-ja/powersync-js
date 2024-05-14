@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.1.3
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @powersync/web
 
+## 0.6.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+
 ## 0.6.0
 
 ### Minor Changes
