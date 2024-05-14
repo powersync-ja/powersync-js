@@ -6,6 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build:packages": "pnpm run --filter './packages/**' -r build",
+    "build:packages:prod": "pnpm build:packages --sourceMap false",
+    "watch:packages": "pnpm run --parallel --filter './packages/**' -r build -w",
     "build": "pnpm run -r build",
     "ci:publish": "changeset publish && git push --follow-tags",
     "ci:version": "changeset version && pnpm install --no-frozen-lockfile",
@@ -14,7 +16,7 @@
     "docs:start": "pnpm --filter docs start",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "release": "pnpm build:packages && pnpm changeset publish",
+    "release": "pnpm build:packages:prod && pnpm changeset publish",
     "test": "pnpm run -r test"
   },
   "keywords": [],

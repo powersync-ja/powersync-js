@@ -1,5 +1,36 @@
 # @powersync/react-native
 
+## 1.5.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
+## 1.5.0
+
+### Minor Changes
+
+- 9d1dc6f: Added support for WebSocket sync stream connections.
+
+### Patch Changes
+
+- 395ea24: Remove react-native-get-random-values dependency
+- Updated dependencies [395ea24]
+- Updated dependencies [9d1dc6f]
+  - @powersync/common@1.8.0
+  - @powersync/react@1.3.2
+
+## 1.4.6
+
+### Patch Changes
+
+- Updated dependencies [3c421ea]
+  - @powersync/common@1.7.1
+  - @powersync/react@1.3.1
+
 ## 1.4.5
 
 ### Patch Changes

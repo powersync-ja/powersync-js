@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { CircularProgress, Grid, ListItem, styled } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
 
@@ -14,7 +14,7 @@ export default function EntryPage() {
     const name = names[Math.floor(Math.random() * names.length)];
     db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
     return () => {};
-  }, []);
+  }, [db]);
 
   if (isLoading) {
     return <CircularProgress />;

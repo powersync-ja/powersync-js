@@ -1,5 +1,38 @@
 # react-native-supabase-todolist
 
+## 1.2.3
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/react-native@1.5.1
+  - @powersync/attachments@2.0.8
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
+## 1.2.2
+
+### Patch Changes
+
+- Updated dependencies [395ea24]
+- Updated dependencies [395ea24]
+- Updated dependencies [9d1dc6f]
+  - @powersync/common@1.8.0
+  - @powersync/react-native@1.5.0
+  - @powersync/attachments@2.0.7
+  - @powersync/react@1.3.2
+
+## 1.2.1
+
+### Patch Changes
+
+- b553527: Using <Text> instead of <p> in react native HTML
+- Updated dependencies [3c421ea]
+  - @powersync/common@1.7.1
+  - @powersync/attachments@2.0.6
+  - @powersync/react@1.3.1
+  - @powersync/react-native@1.4.6
+
 ## 1.2.0
 
 ### Minor Changes

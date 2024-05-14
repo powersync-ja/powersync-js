@@ -1,5 +1,28 @@
 # @powersync/kysely-driver
 
+## 0.2.3
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [395ea24]
+- Updated dependencies [9d1dc6f]
+  - @powersync/common@1.8.0
+
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [3c421ea]
+  - @powersync/common@1.7.1
+
 ## 0.2.0
 
 ### Minor Changes
