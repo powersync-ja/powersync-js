@@ -53,6 +53,7 @@ export class BackendConnector implements PowerSyncBackendConnector {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function shouldDiscardDataOnError(error: any) {
   // TODO: Ignore non-retryable errors here
   return false;

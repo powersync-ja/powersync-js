@@ -7,7 +7,6 @@ import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
-
 import { Buffer } from 'buffer';
 
 // Polyfill for WebSockets
