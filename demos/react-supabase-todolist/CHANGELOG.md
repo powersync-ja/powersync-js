@@ -1,5 +1,11 @@
 # react-supabase-todolist
 
+## 0.3.4
+
+### Patch Changes
+
+- c3588c0: Updated the vite conf include rules for bson, buffer, rsocket and cross-fetch.
+
 ## 0.3.3
 
 ### Patch Changes
