@@ -9,21 +9,19 @@ const EntryPage = () => {
   const status = useStatus();
   const { data: customers } = useQuery('SELECT id, name FROM customers');
 
-  const addCustomer = () => {
+  const addCustomer = async () => {
     const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
     const name = names[Math.floor(Math.random() * names.length)];
-    db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
+    await db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
   };
 
-  const deleteCustomers = () => {
-    const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
-    const name = names[Math.floor(Math.random() * names.length)];
-    db.execute('DELETE FROM customers', [name]);
+  const deleteCustomers = async () => {
+    await db.execute('DELETE FROM customers');
   };
 
-  console.log(process.env.NEXT_PUBLIC_POWERSYNC_URL && process.env.NEXT_PUBLIC_POWERSYNC_TOKEN && !status.hasSynced);
+  const areVariablesSet = process.env.NEXT_PUBLIC_POWERSYNC_URL && process.env.NEXT_PUBLIC_POWERSYNC_TOKEN;
 
-  if (process.env.NEXT_PUBLIC_POWERSYNC_URL && process.env.NEXT_PUBLIC_POWERSYNC_TOKEN && !status.hasSynced) {
+  if (areVariablesSet && !status.hasSynced) {
     return (
       <S.MainGrid container>
         <CircularProgress />
@@ -33,6 +31,13 @@ const EntryPage = () => {
 
   return (
     <S.MainGrid container>
+      {!areVariablesSet && (
+        <S.CenteredGrid>
+          <h4 style={{ color: 'red' }}>
+            You have not set up a connection to the backend, this will only sync to the local database.
+          </h4>
+        </S.CenteredGrid>
+      )}
       <S.CenteredGrid>
         <div style={{ marginBottom: '12px' }}>
           <h1>Customers</h1>
@@ -73,7 +78,7 @@ const EntryPage = () => {
 
       {customers.length === 0 ? (
         <S.CenteredGrid>
-          <p>You currently have no customers. Please set them in the database or add them here.</p>
+          <p>You currently have no customers</p>
         </S.CenteredGrid>
       ) : (
         <S.CenteredGrid item xs={12} md={6} lg={5}>
