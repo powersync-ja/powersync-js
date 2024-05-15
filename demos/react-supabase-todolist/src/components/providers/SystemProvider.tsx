@@ -19,7 +19,10 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new WASQLitePowerSyncDatabaseOpenFactory({
   dbFilename: 'example.db',
-  schema: AppSchema
+  schema: AppSchema,
+  flags: {
+    enableMultiTabs: false
+  }
 }).getInstance();
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
