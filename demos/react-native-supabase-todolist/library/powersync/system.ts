@@ -19,7 +19,7 @@ import { Buffer } from '@craftzdog/react-native-buffer';
 
 // Polyfills for WebSockets
 if (typeof global.Buffer == 'undefined') {
-  // @ts-ignore If using TypeScript
+  // @ts-expect-error If using TypeScript
   global.Buffer = Buffer;
 }
 

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { CircularProgress, Grid, ListItem, styled } from '@mui/material';
 import { useQuery, useStatus } from '@powersync/react';
 
@@ -53,6 +52,7 @@ const EntryPage = () => {
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 namespace S {
   export const CenteredGrid = styled(Grid)`
     display: flex;
