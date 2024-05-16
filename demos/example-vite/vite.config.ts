@@ -1,6 +1,5 @@
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
-
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -12,12 +11,6 @@ export default defineConfig({
       input: 'src/index.html'
     },
     emptyOutDir: true
-  },
-  resolve: {
-    alias: [
-      // https://jira.mongodb.org/browse/NODE-5773
-      { find: 'bson', replacement: require.resolve('bson') }
-    ]
   },
   envDir: '..', // Use this dir for env vars, not 'src'.
   optimizeDeps: {

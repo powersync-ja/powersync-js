@@ -10,7 +10,12 @@ module.exports = {
   devtool: 'source-map',
   mode: 'development',
   resolve: {
-    extensions: ['.js']
+    extensions: ['.js'],
+    fallback: {
+      crypto: require.resolve('crypto-browserify'),
+      stream: require.resolve('stream-browserify'),
+      vm: require.resolve('vm-browserify')
+    }
   },
   plugins: [
     new HtmlWebpackPlugin({
