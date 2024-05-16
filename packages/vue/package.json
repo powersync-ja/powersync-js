@@ -31,7 +31,8 @@
     "@powersync/common": "workspace:*"
   },
   "peerDependencies": {
-    "vue": "*"
+    "vue": "*",
+    "@powersync/common": "1.x"
   },
   "devDependencies": {
     "flush-promises": "^1.0.2",

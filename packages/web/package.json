@@ -46,7 +46,8 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "~0.2.0"
+    "@journeyapps/wa-sqlite": "~0.2.0",
+    "@powersync/common": "1.x"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",

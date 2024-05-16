@@ -31,7 +31,8 @@
     "@powersync/common": "workspace:*"
   },
   "peerDependencies": {
-    "react": "*"
+    "react": "*",
+    "@powersync/common": "1.x"
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.2",
