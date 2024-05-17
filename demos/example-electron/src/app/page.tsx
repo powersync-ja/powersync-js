@@ -1,37 +1,55 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CircularProgress, Grid, ListItem, styled } from '@mui/material';
-import { usePowerSync, useQuery } from '@powersync/react';
+import { useQuery, useStatus } from '@powersync/react';
 
-export default function EntryPage() {
-  const db = usePowerSync();
-  const { data: customers, isLoading } = useQuery('SELECT id, name FROM customers');
+const EntryPage = () => {
+  const status = useStatus();
+  const { data: customers } = useQuery('SELECT id, name FROM customers');
 
-  useEffect(() => {
-    // Insert some test data
-    const names = ['Fred', 'Willard', 'Tina', 'Jake', 'Corey'];
-    const name = names[Math.floor(Math.random() * names.length)];
-    db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
-    return () => {};
-  }, []);
+  const areVariablesSet = import.meta.env.VITE_POWERSYNC_URL && import.meta.env.VITE_PUBLIC_POWERSYNC_TOKEN;
 
-  if (isLoading) {
-    return <CircularProgress />;
+  if (areVariablesSet && !status.hasSynced) {
+    return (
+      <S.MainGrid container>
+        <p>
+        Syncing down from the backend. This will load indefinitely if you have not set up the connection correctly. Check the console for issues.
+        </p>
+        <CircularProgress />
+      </S.MainGrid>
+    );
+  }
+
+  if (!areVariablesSet) {
+    return (
+      <S.CenteredGrid>
+        <h4 style={{ color: 'red' }}>You have not set up a connection to the backend, please connect your backend.</h4>
+      </S.CenteredGrid>
+    );
   }
 
   return (
     <S.MainGrid container>
-      <S.CenteredGrid item xs={12} md={6} lg={5}>
-        <div>
-          <h1>Customers</h1>
-          {customers.map((c) => (
-            <ListItem key={c.id}>{c.name}</ListItem>
-          ))}
-          {customers.length == 0 ? <CircularProgress /> : []}
-        </div>
+      <S.CenteredGrid>
+        <h1>Customers</h1>
       </S.CenteredGrid>
+
+      {customers.length === 0 ? (
+        <S.CenteredGrid>
+          <p>You currently have no customers. Please connect PowerSync to your database to see them sync down.</p>
+        </S.CenteredGrid>
+      ) : (
+        <S.CenteredGrid item xs={12} md={6} lg={5}>
+          <div>
+            {customers.map((c) => (
+              <ListItem key={c.id}>{c.name}</ListItem>
+            ))}
+            {customers.length == 0 ? <CircularProgress /> : []}
+          </div>
+        </S.CenteredGrid>
+      )}
     </S.MainGrid>
   );
-}
+};
 
 namespace S {
   export const CenteredGrid = styled(Grid)`
@@ -42,5 +60,9 @@ namespace S {
 
   export const MainGrid = styled(CenteredGrid)`
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   `;
 }
+
+export default EntryPage;
