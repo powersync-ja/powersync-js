@@ -26,8 +26,7 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
-  "devDependencies": {},
-  "dependencies": {
-    "@powersync/common": "workspace:*"
+  "peerDependencies": {
+    "@powersync/common": "workspace:1.x"
   }
 }

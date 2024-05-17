@@ -27,11 +27,9 @@
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.com/resources/api-reference",
-  "dependencies": {
-    "@powersync/common": "workspace:*"
-  },
   "peerDependencies": {
-    "vue": "*"
+    "vue": "*",
+    "@powersync/common": "workspace:1.x"
   },
   "devDependencies": {
     "flush-promises": "^1.0.2",
