@@ -185,7 +185,7 @@ export abstract class AbstractRemote {
     const { path } = options;
     const request = await this.buildRequest(path);
 
-    const BSON = await this.getBSON();
+    const bson = await this.getBSON();
 
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
@@ -199,7 +199,7 @@ export abstract class AbstractRemote {
         payload: {
           data: null,
           metadata: Buffer.from(
-            BSON.serialize({
+            bson.serialize({
               token: request.headers.Authorization
             })
           )
@@ -241,9 +241,9 @@ export abstract class AbstractRemote {
 
       const res = rsocket.requestStream(
         {
-          data: Buffer.from(BSON.serialize(options.data)),
+          data: Buffer.from(bson.serialize(options.data)),
           metadata: Buffer.from(
-            BSON.serialize({
+            bson.serialize({
               path
             })
           )
@@ -277,7 +277,7 @@ export abstract class AbstractRemote {
               return;
             }
 
-            const deserializedData = BSON.deserialize(data);
+            const deserializedData = bson.deserialize(data);
             stream.enqueueData(deserializedData);
           },
           onComplete: () => {
