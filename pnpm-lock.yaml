@@ -1197,7 +1197,7 @@ importers:
   packages/attachments:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
 
   packages/common:
@@ -1252,7 +1252,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
       kysely:
         specifier: ^0.27.2
@@ -1298,7 +1298,7 @@ importers:
   packages/react:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
     devDependencies:
       '@testing-library/react':
@@ -1320,7 +1320,7 @@ importers:
   packages/react-native:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
       '@powersync/react':
         specifier: workspace:*
@@ -1351,7 +1351,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
     devDependencies:
       flush-promises:
@@ -1373,7 +1373,7 @@ importers:
   packages/web:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:1.x
         version: link:../common
       async-mutex:
         specifier: ^0.4.0
@@ -8978,7 +8978,7 @@ packages:
       '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-syntax-jsx': 7.23.3(@babel/core@7.23.9)
-      '@babel/plugin-transform-modules-commonjs': 7.24.1(@babel/core@7.23.9)
+      '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.23.9)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.23.9)
     dev: false
 
@@ -8992,7 +8992,7 @@ packages:
       '@babel/helper-plugin-utils': 7.24.0
       '@babel/helper-validator-option': 7.23.5
       '@babel/plugin-syntax-jsx': 7.23.3(@babel/core@7.24.0)
-      '@babel/plugin-transform-modules-commonjs': 7.24.1(@babel/core@7.24.0)
+      '@babel/plugin-transform-modules-commonjs': 7.23.3(@babel/core@7.24.0)
       '@babel/plugin-transform-typescript': 7.23.6(@babel/core@7.24.0)
 
   /@babel/register@7.23.7(@babel/core@7.24.0):
