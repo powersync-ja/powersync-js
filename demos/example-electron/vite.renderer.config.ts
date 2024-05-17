@@ -30,7 +30,6 @@ export default defineConfig((env) => {
         '@powersync/web > js-logger',
         '@powersync/web > lodash/throttle',
         '@powersync/web > can-ndjson-stream',
-        '@powersync/web > bson',
         '@powersync/web > buffer',
         '@powersync/web > rsocket-core',
         '@powersync/web > rsocket-websocket-client',
