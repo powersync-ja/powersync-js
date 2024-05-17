@@ -52,7 +52,7 @@ const EntryPage = () => {
   );
 };
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
+
 namespace S {
   export const CenteredGrid = styled(Grid)`
     display: flex;
