@@ -56,6 +56,14 @@ if (typeof self.Buffer == 'undefined') {
 }
 ```
 
+## Webpack
+
+See the [example Webpack config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-webpack/webpack.config.js) for details on polyfills and requirements.
+
+## Vite
+
+See the [example Vite config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-vite/vite.config.ts) for details on polyfills and requirements.
+
 # Getting Started
 
 Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web) contains everything you need to know to get started implementing PowerSync in your project.

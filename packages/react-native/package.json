@@ -35,7 +35,8 @@
   },
   "dependencies": {
     "@powersync/react": "workspace:*",
-    "async-lock": "^1.4.0"
+    "async-lock": "^1.4.0",
+    "bson": "^6.6.0"
   },
   "devDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^1.1.6",

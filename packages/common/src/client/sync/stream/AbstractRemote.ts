@@ -6,9 +6,11 @@ import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
-import { serialize, deserialize } from 'bson';
+import type { BSON } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
 import { Buffer } from 'buffer';
+
+export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
@@ -172,11 +174,18 @@ export abstract class AbstractRemote {
   }
 
   /**
+   * Provides a BSON implementation. The import nature of this varies depending on the platform
+   */
+  abstract getBSON(): Promise<BSONImplementation>;
+
+  /**
    * Connects to the sync/stream websocket endpoint
    */
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { path } = options;
     const request = await this.buildRequest(path);
+
+    const bson = await this.getBSON();
 
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
@@ -190,7 +199,7 @@ export abstract class AbstractRemote {
         payload: {
           data: null,
           metadata: Buffer.from(
-            serialize({
+            bson.serialize({
               token: request.headers.Authorization
             })
           )
@@ -223,7 +232,7 @@ export abstract class AbstractRemote {
       }
       socketIsClosed = true;
       rsocket.close();
-    }
+    };
     // We initially request this amount and expect these to arrive eventually
     let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
 
@@ -232,9 +241,9 @@ export abstract class AbstractRemote {
 
       const res = rsocket.requestStream(
         {
-          data: Buffer.from(serialize(options.data)),
+          data: Buffer.from(bson.serialize(options.data)),
           metadata: Buffer.from(
-            serialize({
+            bson.serialize({
               path
             })
           )
@@ -268,7 +277,7 @@ export abstract class AbstractRemote {
               return;
             }
 
-            const deserializedData = deserialize(data);
+            const deserializedData = bson.deserialize(data);
             stream.enqueueData(deserializedData);
           },
           onComplete: () => {

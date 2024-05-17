@@ -5,8 +5,6 @@ import { fileURLToPath, URL } from 'url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url); // Needed since the config file is also an ES module
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -19,11 +17,7 @@ export default defineConfig({
     emptyOutDir: true
   },
   resolve: {
-    alias: [
-      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-      // https://jira.mongodb.org/browse/NODE-5773
-      { find: 'bson', replacement: require.resolve('bson') }
-    ]
+    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }]
   },
   publicDir: '../public',
   envDir: '..', // Use this dir for env vars, not 'src'.
@@ -36,7 +30,6 @@ export default defineConfig({
       '@powersync/web > js-logger',
       '@powersync/web > lodash/throttle',
       '@powersync/web > can-ndjson-stream',
-      '@powersync/web > bson',
       '@powersync/web > buffer',
       '@powersync/web > rsocket-core',
       '@powersync/web > rsocket-websocket-client',

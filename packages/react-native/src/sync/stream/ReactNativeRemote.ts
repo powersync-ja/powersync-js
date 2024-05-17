@@ -1,6 +1,13 @@
-import { AbstractRemote, DataStream, StreamingSyncLine, SyncStreamOptions } from '@powersync/common';
+import {
+  AbstractRemote,
+  BSONImplementation,
+  DataStream,
+  StreamingSyncLine,
+  SyncStreamOptions
+} from '@powersync/common';
 import { Platform } from 'react-native';
-
+// Note docs for React Native https://github.com/mongodb/js-bson?tab=readme-ov-file#react-native
+import { BSON } from 'bson';
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 type PolyfillTest = {
@@ -53,6 +60,10 @@ ${missingPolyfills.join('\n')}`
 };
 
 export class ReactNativeRemote extends AbstractRemote {
+  async getBSON(): Promise<BSONImplementation> {
+    return BSON;
+  }
+
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     validatePolyfills(SocketPolyfillTests);
     return super.socketStream(options);

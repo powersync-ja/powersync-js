@@ -70,11 +70,7 @@ export default defineConfig({
   ],
   define: { 'process.env': {} },
   resolve: {
-    alias: [
-      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-      // https://jira.mongodb.org/browse/NODE-5773
-      { find: 'bson', replacement: require.resolve('bson') }
-    ],
+    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }],
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue']
   },
   optimizeDeps: {
@@ -86,7 +82,6 @@ export default defineConfig({
       '@powersync/web > js-logger',
       '@powersync/web > lodash/throttle',
       '@powersync/web > can-ndjson-stream',
-      '@powersync/web > bson',
       '@powersync/web > buffer',
       '@powersync/web > rsocket-core',
       '@powersync/web > rsocket-websocket-client',
