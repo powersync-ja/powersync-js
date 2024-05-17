@@ -7,15 +7,16 @@ module.exports = {
     filename: 'index.js',
     path: path.join(__dirname, 'dist')
   },
+  externals: {
+    // BSON includes imports to these, but does not have a hard requirement for them to be present.
+    crypto: 'Crypto',
+    stream: 'Stream',
+    vm: 'VM'
+  },
   devtool: 'source-map',
   mode: 'development',
   resolve: {
-    extensions: ['.js'],
-    fallback: {
-      crypto: require.resolve('crypto-browserify'),
-      stream: require.resolve('stream-browserify'),
-      vm: require.resolve('vm-browserify')
-    }
+    extensions: ['.js']
   },
   plugins: [
     new HtmlWebpackPlugin({
