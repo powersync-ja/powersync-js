@@ -6,7 +6,8 @@ import ViteFonts from 'unplugin-fonts/vite';
 import Components from 'unplugin-vue-components/vite';
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 import { VitePWA } from 'vite-plugin-pwa';
-
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url); // Needed since the config file is also an ES module
 // Utilities
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
@@ -69,9 +70,7 @@ export default defineConfig({
   ],
   define: { 'process.env': {} },
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }],
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue']
   },
   optimizeDeps: {
@@ -82,7 +81,11 @@ export default defineConfig({
       '@powersync/web > event-iterator',
       '@powersync/web > js-logger',
       '@powersync/web > lodash/throttle',
-      '@powersync/web > can-ndjson-stream'
+      '@powersync/web > can-ndjson-stream',
+      '@powersync/web > buffer',
+      '@powersync/web > rsocket-core',
+      '@powersync/web > rsocket-websocket-client',
+      '@powersync/web > cross-fetch'
     ]
   },
   worker: {

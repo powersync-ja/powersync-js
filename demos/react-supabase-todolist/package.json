@@ -1,6 +1,6 @@
 {
   "name": "react-supabase-todolist",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -11,12 +11,15 @@
   "dependencies": {
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@emotion/react": "11.11.4",
+    "@emotion/styled": "11.11.5",
     "@journeyapps/wa-sqlite": "~0.2.0",
     "@mui/icons-material": "^5.15.12",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@supabase/supabase-js": "^2.39.7",
     "buffer": "^6.0.3",
+    "formik": "^2.4.6",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
     "react": "^18.2.0",

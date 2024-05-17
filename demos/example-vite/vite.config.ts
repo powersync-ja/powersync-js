@@ -1,6 +1,5 @@
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
-
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -13,12 +12,6 @@ export default defineConfig({
     },
     emptyOutDir: true
   },
-  resolve: {
-    alias: [
-      // https://jira.mongodb.org/browse/NODE-5773
-      { find: 'bson', replacement: require.resolve('bson') }
-    ]
-  },
   envDir: '..', // Use this dir for env vars, not 'src'.
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
@@ -29,7 +22,10 @@ export default defineConfig({
       '@powersync/web > js-logger',
       '@powersync/web > lodash/throttle',
       '@powersync/web > can-ndjson-stream',
-      '@powersync/web > bson'
+      '@powersync/web > buffer',
+      '@powersync/web > rsocket-core',
+      '@powersync/web > rsocket-websocket-client',
+      '@powersync/web > cross-fetch'
     ]
   },
   plugins: [wasm(), topLevelAwait()],
