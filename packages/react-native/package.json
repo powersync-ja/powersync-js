@@ -31,7 +31,7 @@
     "react": "*",
     "react-native": "*",
     "react-native-polyfill-globals": "^3.1.0",
-    "@powersync/common": "workspace:1.x"
+    "@powersync/common": "workspace:^1"
   },
   "dependencies": {
     "@powersync/react": "workspace:*",

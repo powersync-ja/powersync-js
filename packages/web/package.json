@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "~0.2.0",
-    "@powersync/common": "workspace:1.x"
+    "@powersync/common": "workspace:^1"
   },
   "dependencies": {
     "async-mutex": "^0.4.0",

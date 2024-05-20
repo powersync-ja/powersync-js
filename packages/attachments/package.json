@@ -27,6 +27,6 @@
     "watch": "tsc -b -w"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:1.x"
+    "@powersync/common": "workspace:^1"
   }
 }
