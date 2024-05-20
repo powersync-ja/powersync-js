@@ -1,5 +1,13 @@
 # @powersync/attachments
 
+## 2.0.9
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+  - @powersync/common@1.9.0
+
 ## 2.0.8
 
 ### Patch Changes
