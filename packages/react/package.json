@@ -29,7 +29,7 @@
   "homepage": "https://docs.powersync.com/resources/api-reference",
   "peerDependencies": {
     "react": "*",
-    "@powersync/common": "workspace:^1"
+    "@powersync/common": "workspace:>= 1.7.0 < 2"
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.2",

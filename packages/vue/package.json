@@ -29,7 +29,7 @@
   "homepage": "https://docs.powersync.com/resources/api-reference",
   "peerDependencies": {
     "vue": "*",
-    "@powersync/common": "workspace:^1"
+    "@powersync/common": "workspace:>= 1.7.0 < 2"
   },
   "devDependencies": {
     "flush-promises": "^1.0.2",
