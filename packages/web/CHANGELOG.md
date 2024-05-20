@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 0.7.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+  - @powersync/common@1.9.0
+
 ## 0.6.1
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @powersync/react-native
 
+## 1.6.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/common@1.9.0
+  - @powersync/react@1.3.4
+
 ## 1.5.1
 
 ### Patch Changes

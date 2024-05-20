@@ -1,5 +1,14 @@
 # example-electron
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/web@0.7.0
+  - @powersync/react@1.3.4
+
 ## 1.0.4
 
 ### Patch Changes

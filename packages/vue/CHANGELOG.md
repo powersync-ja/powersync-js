@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.1.4
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+  - @powersync/common@1.9.0
+
 ## 0.1.3
 
 ### Patch Changes
