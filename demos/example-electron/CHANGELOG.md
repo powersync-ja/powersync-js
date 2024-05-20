@@ -1,5 +1,11 @@
 # example-electron
 
+## 1.0.4
+
+### Patch Changes
+
+- c3588c0: Updated the vite conf include rules for bson, buffer, rsocket and cross-fetch.
+
 ## 1.0.3
 
 ### Patch Changes

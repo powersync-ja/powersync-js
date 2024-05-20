@@ -1,5 +1,11 @@
 # example-vite
 
+## 0.0.21
+
+### Patch Changes
+
+- c3588c0: Updated the vite conf include rules for bson, buffer, rsocket and cross-fetch.
+
 ## 0.0.20
 
 ### Patch Changes

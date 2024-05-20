@@ -8,7 +8,8 @@ import {
   PowerSyncDatabaseOptions,
   SyncStreamOptions,
   DataStream,
-  StreamingSyncLine
+  StreamingSyncLine,
+  BSONImplementation
 } from '@powersync/common';
 import {
   PowerSyncDatabase,
@@ -39,6 +40,10 @@ export class MockRemote extends AbstractRemote {
   ) {
     super(connector);
     this.streamController = null;
+  }
+
+  async getBSON(): Promise<BSONImplementation> {
+    return import('bson');
   }
 
   post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {

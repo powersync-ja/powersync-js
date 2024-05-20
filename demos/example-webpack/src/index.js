@@ -1,4 +1,7 @@
 import { Column, ColumnType, WASQLitePowerSyncDatabaseOpenFactory, Schema, Table } from '@powersync/web';
+import Logger from 'js-logger';
+
+Logger.useDefaults();
 
 /**
  * A placeholder connector which doesn't do anything.
