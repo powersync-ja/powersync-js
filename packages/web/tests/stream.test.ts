@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Logger from 'js-logger';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { v4 as uuid } from 'uuid';
-import { AbstractPowerSyncDatabase, Column, ColumnType, Schema, SyncStatusOptions, Table } from '@powersync/common';
+import { AbstractPowerSyncDatabase, Schema, SyncStatusOptions, TableV2, column } from '@powersync/common';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './utils/MockStreamOpenFactory';
 
 export async function waitForConnectionStatus(
@@ -24,7 +24,7 @@ export async function waitForConnectionStatus(
   });
 }
 
-export async function generateConnectedDatabase() {
+export async function generateConnectedDatabase(useWebWorker = true) {
   /**
    * Very basic implementation of a listener pattern.
    * Required since we cannot extend multiple classes.
@@ -32,18 +32,22 @@ export async function generateConnectedDatabase() {
   const callbacks: Map<string, () => void> = new Map();
   const remote = new MockRemote(new TestConnector(), () => callbacks.forEach((c) => c()));
 
+  const users = new TableV2({
+    name: column.text
+  });
+
+  const schema = new Schema({
+    users
+  });
+
   const factory = new MockStreamOpenFactory(
     {
       dbFilename: 'test-stream-connection.db',
       flags: {
-        enableMultiTabs: false
+        enableMultiTabs: false,
+        useWebWorker
       },
-      schema: new Schema([
-        new Table({
-          name: 'users',
-          columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
-        })
-      ])
+      schema
     },
     remote
   );
@@ -78,36 +82,73 @@ export async function generateConnectedDatabase() {
 }
 
 describe('Stream test', () => {
-  beforeAll(() => Logger.useDefaults());
+  describe('With Web Worker', () => {
+    beforeAll(() => Logger.useDefaults());
 
-  it('PowerSync reconnect on closed stream', async () => {
-    const { powersync, waitForStream, remote } = await generateConnectedDatabase();
-    expect(powersync.connected).true;
+    it('PowerSync reconnect on closed stream', async () => {
+      const { powersync, waitForStream, remote } = await generateConnectedDatabase();
+      expect(powersync.connected).true;
 
-    // Close the stream
-    const newStream = waitForStream();
-    remote.streamController?.close();
+      // Close the stream
+      const newStream = waitForStream();
+      remote.streamController?.close();
 
-    // A new stream should be requested
-    await newStream;
+      // A new stream should be requested
+      await newStream;
 
-    await powersync.disconnectAndClear();
-    await powersync.close();
+      await powersync.disconnectAndClear();
+      await powersync.close();
+    });
+
+    it('PowerSync reconnect multiple connect calls', async () => {
+      // This initially performs a connect call
+      const { powersync, waitForStream } = await generateConnectedDatabase();
+      expect(powersync.connected).true;
+
+      // Call connect again, a new stream should be requested
+      const newStream = waitForStream();
+      powersync.connect(new TestConnector());
+
+      // A new stream should be requested
+      await newStream;
+
+      await powersync.disconnectAndClear();
+      await powersync.close();
+    });
   });
 
-  it('PowerSync reconnect multiple connect calls', async () => {
-    // This initially performs a connect call
-    const { powersync, waitForStream } = await generateConnectedDatabase();
-    expect(powersync.connected).true;
+  describe('Without Web Worker', () => {
+    beforeAll(() => Logger.useDefaults());
 
-    // Call connect again, a new stream should be requested
-    const newStream = waitForStream();
-    powersync.connect(new TestConnector());
+    it('PowerSync reconnect on closed stream', async () => {
+      const { powersync, waitForStream, remote } = await generateConnectedDatabase(false);
+      expect(powersync.connected).true;
 
-    // A new stream should be requested
-    await newStream;
+      // Close the stream
+      const newStream = waitForStream();
+      remote.streamController?.close();
 
-    await powersync.disconnectAndClear();
-    await powersync.close();
+      // A new stream should be requested
+      await newStream;
+
+      await powersync.disconnectAndClear();
+      await powersync.close();
+    });
+
+    it('PowerSync reconnect multiple connect calls', async () => {
+      // This initially performs a connect call
+      const { powersync, waitForStream } = await generateConnectedDatabase(false);
+      expect(powersync.connected).true;
+
+      // Call connect again, a new stream should be requested
+      const newStream = waitForStream();
+      powersync.connect(new TestConnector());
+
+      // A new stream should be requested
+      await newStream;
+
+      await powersync.disconnectAndClear();
+      await powersync.close();
+    });
   });
 });
