@@ -16,11 +16,11 @@ export interface WebPowerSyncOpenFactoryOptions extends PowerSyncOpenFactoryOpti
 }
 
 export const DEFAULT_POWERSYNC_FLAGS: WebPowerSyncOpenFlags = {
+  useWebWorker: true,
   /**
    * Multiple tabs are by default not supported on Android, iOS and Safari.
    * Other platforms will have multiple tabs enabled by default.
    */
-  useWebWorker: true,
   enableMultiTabs:
     typeof globalThis.navigator !== 'undefined' && // For SSR purposes
     typeof SharedWorker !== 'undefined' &&
