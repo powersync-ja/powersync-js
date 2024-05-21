@@ -28,5 +28,8 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:>=1.9.0"
+  },
+  "dependencies": {
+    "@powersync/common": "workspace:*"
   }
 }

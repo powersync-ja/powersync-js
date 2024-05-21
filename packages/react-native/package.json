@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@powersync/react": "workspace:*",
+    "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0"
   },

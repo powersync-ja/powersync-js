@@ -31,6 +31,9 @@
     "react": "*",
     "@powersync/common": "workspace:>=1.9.0"
   },
+  "dependencies": {
+    "@powersync/common": "workspace:*"
+  },
   "devDependencies": {
     "@testing-library/react": "^15.0.2",
     "@types/react": "^18.2.34",
