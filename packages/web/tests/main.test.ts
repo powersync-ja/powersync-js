@@ -34,29 +34,29 @@ describe('Basic', () => {
       expect(result.length).toEqual(0);
     });
 
-    itWithDBs('should allow inserts', async () => {
+    itWithDBs('should allow inserts', async (db) => {
       const testName = 'Steven';
-      await dbWithWebWorker.execute('INSERT INTO customers (id, name) VALUES(?, ?)', [uuid(), testName]);
-      const result = await dbWithWebWorker.get<TestDatabase['customers']>('SELECT * FROM customers');
+      await db.execute('INSERT INTO customers (id, name) VALUES(?, ?)', [uuid(), testName]);
+      const result = await db.get<TestDatabase['customers']>('SELECT * FROM customers');
 
       expect(result.name).equals(testName);
     });
   });
 
   describe('executeBatchQuery', () => {
-    itWithDBs('should execute a select query using getAll', async () => {
-      const result = await dbWithWebWorker.getAll('SELECT * FROM customers');
+    itWithDBs('should execute a select query using getAll', async (db) => {
+      const result = await db.getAll('SELECT * FROM customers');
       expect(result.length).toEqual(0);
     });
 
-    itWithDBs('should allow batch inserts', async () => {
+    itWithDBs('should allow batch inserts', async (db) => {
       const testName = 'Mugi';
-      await dbWithWebWorker.executeBatch('INSERT INTO customers (id, name) VALUES(?, ?)', [
+      await db.executeBatch('INSERT INTO customers (id, name) VALUES(?, ?)', [
         [uuid(), testName],
         [uuid(), 'Steven'],
         [uuid(), 'Chris']
       ]);
-      const result = await dbWithWebWorker.getAll<TestDatabase['customers']>('SELECT * FROM customers');
+      const result = await db.getAll<TestDatabase['customers']>('SELECT * FROM customers');
 
       expect(result.length).equals(3);
       expect(result[0].name).equals(testName);
