@@ -1,21 +1,23 @@
 import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBGetUtils,
-  DBLockOptions,
-  LockContext,
-  PowerSyncOpenFactoryOptions,
-  QueryResult,
-  Transaction
+  type DBAdapter,
+  type DBAdapterListener,
+  type DBGetUtils,
+  type DBLockOptions,
+  type LockContext,
+  type PowerSyncOpenFactoryOptions,
+  type QueryResult,
+  type Transaction,
+  BaseObserver
 } from '@powersync/common';
 import * as Comlink from 'comlink';
-import Logger, { ILogger } from 'js-logger';
-import type { DBWorkerInterface, OpenDB } from '../../../worker/db/open-db';
+import Logger, { type ILogger } from 'js-logger';
+import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
+import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener } from '../../../worker/db/open-worker-database';
 
 export type WASQLiteFlags = {
   enableMultiTabs?: boolean;
+  useWebWorker?: boolean;
 };
 
 export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptions, 'schema'> {
@@ -34,13 +36,13 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   private initialized: Promise<void>;
   private logger: ILogger;
   private dbGetHelpers: DBGetUtils | null;
-  private workerMethods: DBWorkerInterface | null;
+  private methods: DBFunctionsInterface | null;
 
   constructor(protected options: WASQLiteDBAdapterOptions) {
     super();
     this.logger = Logger.get('WASQLite');
     this.dbGetHelpers = null;
-    this.workerMethods = null;
+    this.methods = null;
     this.initialized = this.init();
     this.dbGetHelpers = this.generateDBHelpers({ execute: this._execute.bind(this) });
   }
@@ -56,22 +58,31 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   getWorker() {}
 
   protected async init() {
-    const { enableMultiTabs } = this.flags;
+    const { enableMultiTabs, useWebWorker } = this.flags;
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
-    const dbOpener = this.options.workerPort
-      ? Comlink.wrap<OpenDB>(this.options.workerPort)
-      : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs);
+    if (useWebWorker) {
+      const dbOpener = this.options.workerPort
+        ? Comlink.wrap<OpenDB>(this.options.workerPort)
+        : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs);
 
-    this.workerMethods = await dbOpener(this.options.dbFilename);
+      this.methods = await dbOpener(this.options.dbFilename);
 
-    this.workerMethods.registerOnTableChange(
-      Comlink.proxy((opType: number, tableName: string, rowId: number) => {
-        this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
-      })
-    );
+      this.methods!.registerOnTableChange(
+        Comlink.proxy((opType: number, tableName: string, rowId: number) => {
+          this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
+        })
+      );
+
+      return;
+    }
+    this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
+
+    this.methods.registerOnTableChange((opType: number, tableName: string, rowId: number) => {
+      this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
+    });
   }
 
   async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
@@ -87,7 +98,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
    */
   private _execute = async (sql: string, bindings?: any[]): Promise<QueryResult> => {
     await this.initialized;
-    const result = await this.workerMethods!.execute!(sql, bindings);
+    const result = await this.methods!.execute!(sql, bindings);
     return {
       ...result,
       rows: {
@@ -102,7 +113,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
    */
   private _executeBatch = async (query: string, params?: any[]): Promise<QueryResult> => {
     await this.initialized;
-    const result = await this.workerMethods!.executeBatch!(query, params);
+    const result = await this.methods!.executeBatch!(query, params);
     return {
       ...result,
       rows: undefined
@@ -115,7 +126,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
    * tabs are still using it.
    */
   close() {
-    this.workerMethods?.close?.();
+    this.methods?.close?.();
   }
 
   async getAll<T>(sql: string, parameters?: any[] | undefined): Promise<T[]> {

@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink';
-import { OpenDB } from './open-db';
+import type { OpenDB } from '../../shared/types';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections

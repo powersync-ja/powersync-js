@@ -1,4 +1,4 @@
-import { PowerSyncCredentials, SyncStatusOptions } from '@powersync/common';
+import type { PowerSyncCredentials, SyncStatusOptions } from '@powersync/common';
 
 /**
  * The client side port should provide these methods.
