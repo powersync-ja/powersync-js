@@ -87,7 +87,7 @@ describe('Stream test', () => {
 
     it('PowerSync reconnect on closed stream', async () => {
       const { powersync, waitForStream, remote } = await generateConnectedDatabase();
-      expect(powersync.connected).true;
+      expect(powersync.connected).toBe(true);
 
       // Close the stream
       const newStream = waitForStream();
@@ -98,12 +98,22 @@ describe('Stream test', () => {
 
       await powersync.disconnectAndClear();
       await powersync.close();
+
+      // Do the same as the above for the case where there is no web worker
+      const resultWithoutWebWorker = await generateConnectedDatabase({ useWebWorker: false });
+      expect(resultWithoutWebWorker.powersync.connected).toBe(true);
+
+      const newStream2 = resultWithoutWebWorker.waitForStream();
+      resultWithoutWebWorker.remote.streamController?.close();
+      await newStream2;
+      await resultWithoutWebWorker.powersync.disconnectAndClear();
+      await resultWithoutWebWorker.powersync.close();
     });
 
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, waitForStream } = await generateConnectedDatabase();
-      expect(powersync.connected).true;
+      expect(powersync.connected).toBe(true);
 
       // Call connect again, a new stream should be requested
       const newStream = waitForStream();
@@ -114,41 +124,16 @@ describe('Stream test', () => {
 
       await powersync.disconnectAndClear();
       await powersync.close();
-    });
-  });
 
-  describe('Without Web Worker', () => {
-    beforeAll(() => Logger.useDefaults());
+      // Do the same as the above for the case where there is no web worker
+      const resultWithoutWebWorker = await generateConnectedDatabase({ useWebWorker: false });
+      expect(resultWithoutWebWorker.powersync.connected).toBe(true);
 
-    it('PowerSync reconnect on closed stream', async () => {
-      const { powersync, waitForStream, remote } = await generateConnectedDatabase({ useWebWorker: false });
-      expect(powersync.connected).true;
-
-      // Close the stream
-      const newStream = waitForStream();
-      remote.streamController?.close();
-
-      // A new stream should be requested
-      await newStream;
-
-      await powersync.disconnectAndClear();
-      await powersync.close();
-    });
-
-    it('PowerSync reconnect multiple connect calls', async () => {
-      // This initially performs a connect call
-      const { powersync, waitForStream } = await generateConnectedDatabase({ useWebWorker: false });
-      expect(powersync.connected).true;
-
-      // Call connect again, a new stream should be requested
-      const newStream = waitForStream();
-      powersync.connect(new TestConnector());
-
-      // A new stream should be requested
-      await newStream;
-
-      await powersync.disconnectAndClear();
-      await powersync.close();
+      const newStream2 = resultWithoutWebWorker.waitForStream();
+      resultWithoutWebWorker.powersync.connect(new TestConnector());
+      await newStream2;
+      await resultWithoutWebWorker.powersync.disconnectAndClear();
+      await resultWithoutWebWorker.powersync.close();
     });
   });
 });
