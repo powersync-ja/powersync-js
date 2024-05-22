@@ -20,6 +20,7 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     propertiesFormat: 'table',
     enumMembersFormat: 'table',
     indexFormat: 'table',
+    useCodeBlocks: true,
     typeDeclarationFormat: 'table',
     membersWithOwnFile: ['Class', 'Enum', 'Function', 'Interface'],
     textContentMappings: {
