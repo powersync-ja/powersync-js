@@ -24,7 +24,7 @@ export async function waitForConnectionStatus(
   });
 }
 
-export async function generateConnectedDatabase(useWebWorker = true) {
+export async function generateConnectedDatabase({ useWebWorker } = { useWebWorker: true }) {
   /**
    * Very basic implementation of a listener pattern.
    * Required since we cannot extend multiple classes.
@@ -121,7 +121,7 @@ describe('Stream test', () => {
     beforeAll(() => Logger.useDefaults());
 
     it('PowerSync reconnect on closed stream', async () => {
-      const { powersync, waitForStream, remote } = await generateConnectedDatabase(false);
+      const { powersync, waitForStream, remote } = await generateConnectedDatabase({ useWebWorker: false });
       expect(powersync.connected).true;
 
       // Close the stream
@@ -137,7 +137,7 @@ describe('Stream test', () => {
 
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
-      const { powersync, waitForStream } = await generateConnectedDatabase(false);
+      const { powersync, waitForStream } = await generateConnectedDatabase({ useWebWorker: false });
       expect(powersync.connected).true;
 
       // Call connect again, a new stream should be requested

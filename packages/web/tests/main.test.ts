@@ -1,135 +1,84 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AbstractPowerSyncDatabase, Schema, TableV2, column } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { v4 as uuid } from 'uuid';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { TestDatabase, generateTestDb } from './utils/testDb';
 // TODO import tests from a common package
 
-type User = {
-  name: string;
-};
-
-const users = new TableV2({
-  name: column.text
-});
-
-const schema = new Schema({
-  users
-});
-
-describe('Using Web Worker', () => {
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test.db',
-    flags: {
-      enableMultiTabs: false,
-      useWebWorker: true
-    },
-    schema
-  });
-
-  let db: AbstractPowerSyncDatabase;
+describe('Basic', () => {
+  let dbWithoutWebWorker: AbstractPowerSyncDatabase;
+  let dbWithWebWorker: AbstractPowerSyncDatabase;
 
   beforeEach(() => {
-    db = factory.getInstance();
+    dbWithoutWebWorker = generateTestDb({ useWebWorker: false });
+    dbWithWebWorker = generateTestDb();
   });
 
   afterEach(async () => {
-    await db.disconnectAndClear();
-    await db.close();
+    await dbWithWebWorker.disconnectAndClear();
+    await dbWithWebWorker.close();
+    await dbWithoutWebWorker.disconnectAndClear();
+    await dbWithoutWebWorker.close();
   });
 
   describe('executeQuery', () => {
     it('should execute a select query using getAll', async () => {
-      const result = await db.getAll('SELECT * FROM users');
+      const result = await dbWithWebWorker.getAll('SELECT * FROM customers');
       expect(result.length).toEqual(0);
+
+      const result2 = await dbWithoutWebWorker.getAll('SELECT * FROM customers');
+      expect(result2.length).toEqual(0);
     });
 
     it('should allow inserts', async () => {
       const testName = 'Steven';
-      await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
-      const result = await db.get<User>('SELECT * FROM users');
+      await dbWithWebWorker.execute('INSERT INTO customers (id, name) VALUES(?, ?)', [uuid(), testName]);
+      const result = await dbWithWebWorker.get<TestDatabase['customers']>('SELECT * FROM customers');
 
       expect(result.name).equals(testName);
+
+      const testName2 = 'Steven2';
+      await dbWithoutWebWorker.execute('INSERT INTO customers (id, name) VALUES(?, ?)', [uuid(), testName2]);
+      const result2 = await dbWithoutWebWorker.get<TestDatabase['customers']>('SELECT * FROM customers');
+
+      expect(result2.name).equals(testName2);
     });
   });
 
   describe('executeBatchQuery', () => {
     it('should execute a select query using getAll', async () => {
-      const result = await db.getAll('SELECT * FROM users');
+      const result = await dbWithWebWorker.getAll('SELECT * FROM customers');
       expect(result.length).toEqual(0);
+
+      const result2 = await dbWithoutWebWorker.getAll('SELECT * FROM customers');
+      expect(result2.length).toEqual(0);
     });
 
     it('should allow batch inserts', async () => {
       const testName = 'Mugi';
-      await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
+      await dbWithWebWorker.executeBatch('INSERT INTO customers (id, name) VALUES(?, ?)', [
         [uuid(), testName],
         [uuid(), 'Steven'],
         [uuid(), 'Chris']
       ]);
-      const result = await db.getAll<User>('SELECT * FROM users');
+      const result = await dbWithWebWorker.getAll<TestDatabase['customers']>('SELECT * FROM customers');
 
       expect(result.length).equals(3);
       expect(result[0].name).equals(testName);
       expect(result[1].name).equals('Steven');
       expect(result[2].name).equals('Chris');
-    });
-  });
-});
 
-describe('Without Web Worker', () => {
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test.db',
-    flags: {
-      enableMultiTabs: false,
-      useWebWorker: false
-    },
-    schema
-  });
-
-  let db: AbstractPowerSyncDatabase;
-
-  beforeEach(() => {
-    db = factory.getInstance();
-  });
-
-  afterEach(async () => {
-    await db.disconnectAndClear();
-    await db.close();
-  });
-
-  describe('executeQuery', () => {
-    it('should execute a select query using getAll', async () => {
-      const result = await db.getAll('SELECT * FROM users');
-      expect(result.length).toEqual(0);
-    });
-
-    it('should allow inserts', async () => {
-      const testName = 'Steven';
-      await db.execute('INSERT INTO users (id, name) VALUES(?, ?)', [uuid(), testName]);
-      const result = await db.get<User>('SELECT * FROM users');
-
-      expect(result.name).equals(testName);
-    });
-  });
-
-  describe('executeBatchQuery', () => {
-    it('should execute a select query using getAll', async () => {
-      const result = await db.getAll('SELECT * FROM users');
-      expect(result.length).toEqual(0);
-    });
-
-    it('should allow batch inserts', async () => {
-      const testName = 'Mugi';
-      await db.executeBatch('INSERT INTO users (id, name) VALUES(?, ?)', [
-        [uuid(), testName],
-        [uuid(), 'Steven'],
-        [uuid(), 'Chris']
+      const testName2 = 'Mugi2';
+      await dbWithoutWebWorker.executeBatch('INSERT INTO customers (id, name) VALUES(?, ?)', [
+        [uuid(), testName2],
+        [uuid(), 'Steven2'],
+        [uuid(), 'Chris2']
       ]);
-      const result = await db.getAll<User>('SELECT * FROM users');
+      const result2 = await dbWithoutWebWorker.getAll<TestDatabase['customers']>('SELECT * FROM customers');
 
-      expect(result.length).equals(3);
-      expect(result[0].name).equals(testName);
-      expect(result[1].name).equals('Steven');
-      expect(result[2].name).equals('Chris');
+      expect(result2.length).equals(3);
+      expect(result2[0].name).equals(testName2);
+      expect(result2[1].name).equals('Steven2');
+      expect(result2[2].name).equals('Chris2');
     });
   });
 });
