@@ -1,5 +1,13 @@
 # @powersync/react
 
+## 1.3.4
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+  - @powersync/common@1.9.0
+
 ## 1.3.3
 
 ### Patch Changes

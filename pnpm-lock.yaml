@@ -1237,7 +1237,7 @@ importers:
   packages/attachments:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
 
   packages/common:
@@ -1292,7 +1292,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
       kysely:
         specifier: ^0.27.2
@@ -1338,7 +1338,7 @@ importers:
   packages/react:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
     devDependencies:
       '@testing-library/react':
@@ -1360,7 +1360,7 @@ importers:
   packages/react-native:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
       '@powersync/react':
         specifier: workspace:*
@@ -1394,7 +1394,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
     devDependencies:
       flush-promises:
@@ -1416,7 +1416,7 @@ importers:
   packages/web:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1
+        specifier: workspace:>=1.9.0
         version: link:../common
       async-mutex:
         specifier: ^0.4.0

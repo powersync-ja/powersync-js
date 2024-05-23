@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -31,7 +31,7 @@
     "react": "*",
     "react-native": "*",
     "react-native-polyfill-globals": "^3.1.0",
-    "@powersync/common": "workspace:^1"
+    "@powersync/common": "workspace:>=1.9.0"
   },
   "dependencies": {
     "@powersync/react": "workspace:*",
