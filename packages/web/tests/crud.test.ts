@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { testSchema } from './utils/test-schema';
+import { generateTestDb, testSchema } from './utils/testDb';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -10,18 +10,7 @@ describe('CRUD Tests', () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
-    powersync = new WASQLitePowerSyncDatabaseOpenFactory({
-      /**
-       * Deleting the IndexDB seems to freeze the test.
-       * Use a new DB for each run to keep CRUD counters
-       * consistent
-       */
-      dbFilename: `test-crud-${uuid()}.db`,
-      schema: testSchema,
-      flags: {
-        enableMultiTabs: false
-      }
-    }).getInstance();
+    powersync = generateTestDb();
   });
 
   afterEach(async () => {

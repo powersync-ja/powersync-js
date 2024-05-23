@@ -1,5 +1,9 @@
 import * as Comlink from 'comlink';
-import { SharedSyncImplementation, SharedSyncClientEvent, ManualSharedSyncPayload } from './SharedSyncImplementation';
+import {
+  SharedSyncImplementation,
+  SharedSyncClientEvent,
+  type ManualSharedSyncPayload
+} from './SharedSyncImplementation';
 import Logger from 'js-logger';
 import { Buffer } from 'buffer';
 

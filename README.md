@@ -59,6 +59,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK.
 
+### Capacitor
+
+- [demos/example-capacitor](./demos/example-capacitor/README.md) A Capacitor example app using the PowerSync Web SDK.
+
 ## Tools
 
 - [tools/diagnostics-app](./tools/diagnostics-app): A standalone web app that presents stats about a user's local database (incl. tables and sync buckets).

@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Checkpoint } from '@powersync/common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { Mutex } from 'async-mutex';
-import { testSchema } from './utils/test-schema';
+import { testSchema } from './utils/testDb';
 
 const putAsset1_1 = OplogEntry.fromRow({
   op_id: '1',
