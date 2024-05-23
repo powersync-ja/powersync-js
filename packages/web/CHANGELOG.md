@@ -1,5 +1,15 @@
 # @powersync/web
 
+## 0.8.0
+
+### Minor Changes
+
+- 7943626: Allow package to be used without web workers
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+
 ## 0.7.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @powersync/vue
 
+## 0.1.5
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+
 ## 0.1.4
 
 ### Patch Changes

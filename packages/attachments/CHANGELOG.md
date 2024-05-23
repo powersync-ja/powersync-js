@@ -1,5 +1,11 @@
 # @powersync/attachments
 
+## 2.0.10
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+
 ## 2.0.9
 
 ### Patch Changes

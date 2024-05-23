@@ -1,5 +1,11 @@
 # @powersync/kysely-driver
 
+## 0.2.5
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+
 ## 0.2.4
 
 ### Patch Changes
