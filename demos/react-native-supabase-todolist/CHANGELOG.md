@@ -1,5 +1,11 @@
 # react-native-supabase-todolist
 
+## 1.3.0
+
+### Minor Changes
+
+- 72cfd5d: Updates the React Native Supabase todolist application to Expo 51.
+
 ## 1.2.5
 
 ### Patch Changes
