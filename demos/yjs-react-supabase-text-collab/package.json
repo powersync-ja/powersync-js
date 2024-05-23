@@ -1,6 +1,6 @@
 {
   "name": "yjs-react-supabase-text-collab",
-  "version": "0.1.2",
+  "version": "0.1.6",
   "private": true,
   "scripts": {
     "dev": "vite",

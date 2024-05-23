@@ -1,5 +1,35 @@
 # @powersync/web
 
+## 0.8.0
+
+### Minor Changes
+
+- 7943626: Allow package to be used without web workers
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+
+## 0.7.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+  - @powersync/common@1.9.0
+
+## 0.6.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+
 ## 0.6.0
 
 ### Minor Changes

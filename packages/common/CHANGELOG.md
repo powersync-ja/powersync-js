@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.9.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+## 1.8.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+
 ## 1.8.0
 
 ### Minor Changes

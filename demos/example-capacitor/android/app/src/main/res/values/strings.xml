@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">powersync-capacitor</string>
+    <string name="title_activity_main">powersync-capacitor</string>
+    <string name="package_name">com.powersync.example</string>
+    <string name="custom_url_scheme">com.powersync.example</string>
+</resources>

@@ -16,6 +16,7 @@ export interface WebPowerSyncOpenFactoryOptions extends PowerSyncOpenFactoryOpti
 }
 
 export const DEFAULT_POWERSYNC_FLAGS: WebPowerSyncOpenFlags = {
+  useWebWorker: true,
   /**
    * Multiple tabs are by default not supported on Android, iOS and Safari.
    * Other platforms will have multiple tabs enabled by default.
@@ -79,6 +80,9 @@ export abstract class AbstractWebPowerSyncDatabaseOpenFactory extends AbstractPo
     };
     if (typeof this.options.flags?.enableMultiTabs != 'undefined') {
       flags.enableMultiTabs = this.options.flags.enableMultiTabs;
+    }
+    if (flags.useWebWorker === false) {
+      flags.enableMultiTabs = false;
     }
     return flags;
   }

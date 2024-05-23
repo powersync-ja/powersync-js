@@ -1,6 +1,6 @@
 {
   "name": "react-native-supabase-todolist",
-  "version": "1.2.2",
+  "version": "1.2.5",
   "main": "./index.js",
   "scripts": {
     "android": "expo run:android",

@@ -1,5 +1,37 @@
 # vue-supabase-todolist
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies [7943626]
+- Updated dependencies [48cc01c]
+  - @powersync/web@0.8.0
+  - @powersync/vue@0.1.5
+
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/web@0.7.0
+  - @powersync/vue@0.1.4
+
+## 0.0.10
+
+### Patch Changes
+
+- c3588c0: Updated the vite conf include rules for bson, buffer, rsocket and cross-fetch.
+
+## 0.0.9
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/vue@0.1.3
+  - @powersync/web@0.6.1
+
 ## 0.0.8
 
 ### Patch Changes
