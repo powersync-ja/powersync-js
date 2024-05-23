@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "nodenext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "strict": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "jsx": "preserve"
+  },
+  "references": [
+    {
+      "path": "../../packages/web"
+    }
+  ]
+}

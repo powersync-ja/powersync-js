@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "build:packages": "pnpm run --filter './packages/**' -r build",
+    "clean:packages": "pnpm run --filter './packages/**' -r clean",
     "build:packages:prod": "pnpm build:packages --sourceMap false",
     "watch:packages": "pnpm run --parallel --filter './packages/**' -r build -w",
     "build": "pnpm run -r build",
