@@ -1,5 +1,13 @@
 # PowerSync Angular Demo
 
+## 0.0.15
+
+### Patch Changes
+
+- Updated dependencies [7943626]
+- Updated dependencies [48cc01c]
+  - @powersync/web@0.8.0
+
 ## 0.0.14
 
 ### Patch Changes

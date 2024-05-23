@@ -1,5 +1,13 @@
 # @powersync/react-native
 
+## 1.6.1
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+- Updated dependencies [48cc01c]
+  - @powersync/react@1.3.5
+
 ## 1.6.0
 
 ### Minor Changes
