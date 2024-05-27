@@ -28,6 +28,8 @@ import {
   StreamingSyncImplementation,
   PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
+import { ControlledExecutor } from '../utils/ControlledExecutor';
+import { DataStream } from '../utils/DataStream';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -62,6 +64,10 @@ export interface SQLWatchOptions {
    * by not removing PowerSync table name prefixes
    */
   rawTableNames?: boolean;
+  /**
+   * If true, excessive table changes will be compacted into fewer.
+   */
+  compactWatch?: boolean;
 }
 
 export interface WatchOnChangeEvent {
@@ -69,7 +75,7 @@ export interface WatchOnChangeEvent {
 }
 
 export interface WatchHandler {
-  onResult: (results: QueryResult) => void;
+  onResult: (results: QueryResult) => Promise<void> | void;
   onError?: (error: Error) => void;
 }
 
@@ -704,24 +710,32 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (!onResult) {
       throw new Error('onResult is required');
     }
-
+    const resolvedOptions = options ?? {};
     (async () => {
       try {
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
+        const executor = new ControlledExecutor(
+          async () => {
+            try {
+              const result = await this.executeReadOnly(sql, parameters);
+
+              // Wait for processing to complete before continuing
+              await onResult(result);
+            } catch (error) {
+              onError?.(error);
+            }
+          },
+          { enableThrottle: !!resolvedOptions.compactWatch }
+        );
+
         // Fetch initial data
-        const result = await this.executeReadOnly(sql, parameters);
-        onResult(result);
+        executor.schedule();
 
         this.onChangeWithCallback(
           {
             onChange: async () => {
-              try {
-                const result = await this.executeReadOnly(sql, parameters);
-                onResult(result);
-              } catch (error) {
-                onError?.(error);
-              }
+              executor.schedule();
             },
             onError
           },

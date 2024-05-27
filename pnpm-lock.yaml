@@ -973,8 +973,8 @@ importers:
         specifier: '4'
         version: 4.3.2(vue@3.4.21)
       vuetify:
-        specifier: ^3.5.7
-        version: 3.6.3(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+        specifier: 3.5.7
+        version: 3.5.7(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
     devDependencies:
       '@types/vuelidate':
         specifier: ^0.7.21
@@ -1005,7 +1005,7 @@ importers:
         version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-vuetify:
         specifier: ^2.0.3
-        version: 2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.6.3)
+        version: 2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.5.7)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -1180,10 +1180,10 @@ importers:
         version: 3.3.2(@docusaurus/types@3.2.1)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/preset-classic':
         specifier: ^3.2.1
-        version: 3.3.2(@algolia/client-search@4.23.3)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5)
+        version: 3.3.2(@algolia/client-search@4.23.3)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5)
       '@mdx-js/react':
         specifier: ^3.0.1
-        version: 3.0.1(@types/react@18.2.79)(react@18.2.0)
+        version: 3.0.1(@types/react@18.3.2)(react@18.2.0)
       clsx:
         specifier: ^1.2.1
         version: 1.2.1
@@ -1205,7 +1205,7 @@ importers:
         version: 3.3.2(react-dom@18.2.0)(react@18.2.0)
       '@docusaurus/theme-classic':
         specifier: ^3.2.1
-        version: 3.3.2(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
+        version: 3.3.2(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/tsconfig':
         specifier: 3.2.1
         version: 3.2.1
@@ -6120,7 +6120,7 @@ packages:
     resolution: {integrity: sha512-+sbxb71sWre+PwDK7X2T8+bhS6clcVMLwBPznX45Qu6opJcgRjAp7gYSDzVFp187J+feSj5dNBN1mJoi6ckkUQ==}
     dev: false
 
-  /@docsearch/react@3.6.0(@algolia/client-search@4.23.3)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0):
+  /@docsearch/react@3.6.0(@algolia/client-search@4.23.3)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0):
     resolution: {integrity: sha512-HUFut4ztcVNmqy9gp/wxNbC7pTOHhgVVkHVGCACTuLhUKUhKAF9KYHJtMiLUJxEqiFLQiuri1fWF8zqwM/cu1w==}
     peerDependencies:
       '@types/react': '>= 16.8.0 < 19.0.0'
@@ -6140,7 +6140,7 @@ packages:
       '@algolia/autocomplete-core': 1.9.3(@algolia/client-search@4.23.3)(algoliasearch@4.23.3)(search-insights@2.13.0)
       '@algolia/autocomplete-preset-algolia': 1.9.3(@algolia/client-search@4.23.3)(algoliasearch@4.23.3)
       '@docsearch/css': 3.6.0
-      '@types/react': 18.2.79
+      '@types/react': 18.3.2
       algoliasearch: 4.23.3
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -6757,7 +6757,7 @@ packages:
       - webpack-cli
     dev: false
 
-  /@docusaurus/preset-classic@3.3.2(@algolia/client-search@4.23.3)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5):
+  /@docusaurus/preset-classic@3.3.2(@algolia/client-search@4.23.3)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5):
     resolution: {integrity: sha512-1SDS7YIUN1Pg3BmD6TOTjhB7RSBHJRpgIRKx9TpxqyDrJ92sqtZhomDc6UYoMMLQNF2wHFZZVGFjxJhw2VpL+Q==}
     engines: {node: '>=18.0'}
     peerDependencies:
@@ -6773,9 +6773,9 @@ packages:
       '@docusaurus/plugin-google-gtag': 3.3.2(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/plugin-google-tag-manager': 3.3.2(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/plugin-sitemap': 3.3.2(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
-      '@docusaurus/theme-classic': 3.3.2(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
+      '@docusaurus/theme-classic': 3.3.2(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/theme-common': 3.3.2(@docusaurus/types@3.3.2)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
-      '@docusaurus/theme-search-algolia': 3.3.2(@algolia/client-search@4.23.3)(@docusaurus/types@3.3.2)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5)
+      '@docusaurus/theme-search-algolia': 3.3.2(@algolia/client-search@4.23.3)(@docusaurus/types@3.3.2)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5)
       '@docusaurus/types': 3.3.2(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -6806,10 +6806,10 @@ packages:
     peerDependencies:
       react: '*'
     dependencies:
-      '@types/react': 18.2.79
+      '@types/react': 18.3.2
       react: 18.2.0
 
-  /@docusaurus/theme-classic@3.3.2(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5):
+  /@docusaurus/theme-classic@3.3.2(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-gepHFcsluIkPb4Im9ukkiO4lXrai671wzS3cKQkY9BXQgdVwsdPf/KS0Vs4Xlb0F10fTz+T3gNjkxNEgSN9M0A==}
     engines: {node: '>=18.0'}
     peerDependencies:
@@ -6828,7 +6828,7 @@ packages:
       '@docusaurus/utils': 3.3.2(@docusaurus/types@3.3.2)(typescript@5.4.5)
       '@docusaurus/utils-common': 3.3.2(@docusaurus/types@3.3.2)
       '@docusaurus/utils-validation': 3.3.2(@docusaurus/types@3.3.2)(typescript@5.4.5)
-      '@mdx-js/react': 3.0.1(@types/react@18.2.79)(react@18.2.0)
+      '@mdx-js/react': 3.0.1(@types/react@18.3.2)(react@18.2.0)
       clsx: 2.1.1
       copy-text-to-clipboard: 3.2.0
       infima: 0.2.0-alpha.43
@@ -6905,14 +6905,14 @@ packages:
       - vue-template-compiler
       - webpack-cli
 
-  /@docusaurus/theme-search-algolia@3.3.2(@algolia/client-search@4.23.3)(@docusaurus/types@3.3.2)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5):
+  /@docusaurus/theme-search-algolia@3.3.2(@algolia/client-search@4.23.3)(@docusaurus/types@3.3.2)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)(typescript@5.4.5):
     resolution: {integrity: sha512-qLkfCl29VNBnF1MWiL9IyOQaHxUvicZp69hISyq/xMsNvFKHFOaOfk9xezYod2Q9xx3xxUh9t/QPigIei2tX4w==}
     engines: {node: '>=18.0'}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
     dependencies:
-      '@docsearch/react': 3.6.0(@algolia/client-search@4.23.3)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)
+      '@docsearch/react': 3.6.0(@algolia/client-search@4.23.3)(@types/react@18.3.2)(react-dom@18.2.0)(react@18.2.0)(search-insights@2.13.0)
       '@docusaurus/core': 3.3.2(@docusaurus/types@3.3.2)(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
       '@docusaurus/logger': 3.3.2
       '@docusaurus/plugin-content-docs': 3.3.2(react-dom@18.2.0)(react@18.2.0)(typescript@5.4.5)
@@ -10237,14 +10237,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@mdx-js/react@3.0.1(@types/react@18.2.79)(react@18.2.0):
+  /@mdx-js/react@3.0.1(@types/react@18.3.2)(react@18.2.0):
     resolution: {integrity: sha512-9ZrPIU4MGf6et1m1ov3zKf+q9+deetI51zprKB1D/z3NOb+rUxxtEl3mCjW5wTGh6VhRdwPueh1oRzi6ezkA8A==}
     peerDependencies:
       '@types/react': '>=16'
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.13
-      '@types/react': 18.2.79
+      '@types/react': 18.3.2
       react: 18.2.0
 
   /@motionone/animation@10.17.0:
@@ -16461,7 +16461,7 @@ packages:
       vue-demi: 0.13.11(vue@3.4.21)
     dev: false
 
-  /@vuetify/loader-shared@2.0.3(vue@3.4.21)(vuetify@3.6.3):
+  /@vuetify/loader-shared@2.0.3(vue@3.4.21)(vuetify@3.5.7):
     resolution: {integrity: sha512-Ss3GC7eJYkp2SF6xVzsT7FAruEmdihmn4OCk2+UocREerlXKWgOKKzTN5PN3ZVN5q05jHHrsNhTuWbhN61Bpdg==}
     peerDependencies:
       vue: ^3.0.0
@@ -16469,7 +16469,7 @@ packages:
     dependencies:
       upath: 2.0.1
       vue: 3.4.21(typescript@5.4.5)
-      vuetify: 3.6.3(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+      vuetify: 3.5.7(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
 
   /@wdio/config@8.36.1:
     resolution: {integrity: sha512-yCENnym0CrYuLKMJ3fv00WkjCR8QpPqVohGBkq5FvZOZpVJEpoG86Q8l4HtyRnd6ggMTKCA1vTQ/myhbPmZmaQ==}
@@ -33938,7 +33938,7 @@ packages:
       - rollup
     dev: true
 
-  /vite-plugin-vuetify@2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.6.3):
+  /vite-plugin-vuetify@2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.5.7):
     resolution: {integrity: sha512-HbYajgGgb/noaVKNRhnnXIiQZrNXfNIeanUGAwXgOxL6h/KULS40Uf51Kyz8hNmdegF+DwjgXXI/8J1PNS83xw==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
@@ -33946,12 +33946,12 @@ packages:
       vue: ^3.0.0
       vuetify: ^3.0.0
     dependencies:
-      '@vuetify/loader-shared': 2.0.3(vue@3.4.21)(vuetify@3.6.3)
+      '@vuetify/loader-shared': 2.0.3(vue@3.4.21)(vuetify@3.5.7)
       debug: 4.3.4(supports-color@8.1.1)
       upath: 2.0.1
       vite: 5.2.11(sass@1.76.0)
       vue: 3.4.21(typescript@5.4.5)
-      vuetify: 3.6.3(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
+      vuetify: 3.5.7(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21)
     transitivePeerDependencies:
       - supports-color
 
@@ -34475,15 +34475,15 @@ packages:
       '@vue/shared': 3.4.21
       typescript: 5.4.5
 
-  /vuetify@3.6.3(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21):
-    resolution: {integrity: sha512-OBYYJYnNeUYA7kwrv8Rag1EBFbGWAQxJpp0s98U2KQ6SPU7MzzcrvNn7t69vcDbj7mR7Dcf9/jvFapfranXZvA==}
+  /vuetify@3.5.7(typescript@5.4.5)(vite-plugin-vuetify@2.0.3)(vue@3.4.21):
+    resolution: {integrity: sha512-BFj/puY8odRwY50pRfE1gpawnxreY8PtPb/tDw3oumxSLXhoXw8q6YLA6QUvqZrYEzcYpojxZIYhNWUky2KN1w==}
     engines: {node: ^12.20 || >=14.13}
     peerDependencies:
       typescript: '>=4.7'
-      vite-plugin-vuetify: '>=1.0.0'
+      vite-plugin-vuetify: '>=1.0.0-alpha.12'
       vue: ^3.3.0
       vue-i18n: ^9.0.0
-      webpack-plugin-vuetify: '>=2.0.0'
+      webpack-plugin-vuetify: '>=2.0.0-alpha.11'
     peerDependenciesMeta:
       typescript:
         optional: true
@@ -34495,7 +34495,7 @@ packages:
         optional: true
     dependencies:
       typescript: 5.4.5
-      vite-plugin-vuetify: 2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.6.3)
+      vite-plugin-vuetify: 2.0.3(vite@5.2.11)(vue@3.4.21)(vuetify@3.5.7)
       vue: 3.4.21(typescript@5.4.5)
 
   /w3c-keyname@2.2.8:

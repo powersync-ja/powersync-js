@@ -1,6 +1,7 @@
 import { type SQLWatchOptions, parseQuery, type CompilableQuery, type ParsedQuery } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
+import { ControlledExecutor } from '@powersync/common/src/utils/ControlledExecutor';
 
 export interface AdditionalOptions extends Omit<SQLWatchOptions, 'signal'> {
   runQueryOnce?: boolean;
@@ -61,10 +62,10 @@ export const useQuery = <T = any>(
   const [isLoading, setIsLoading] = React.useState(true);
   const [isFetching, setIsFetching] = React.useState(true);
   const [tables, setTables] = React.useState([]);
-
   const memoizedParams = React.useMemo(() => queryParameters, [...queryParameters]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
+  const executor = React.useRef(new ControlledExecutor(() => {}));
 
   const handleResult = (result: T[]) => {
     setIsLoading(false);
@@ -84,13 +85,7 @@ export const useQuery = <T = any>(
 
   const fetchData = async () => {
     setIsFetching(true);
-    try {
-      const result = await powerSync.getAll<T>(sqlStatement, queryParameters);
-      handleResult(result);
-    } catch (e) {
-      console.error('Failed to fetch data:', e);
-      handleError(e);
-    }
+    executor.current.schedule();
   };
 
   const fetchTables = async () => {
@@ -105,6 +100,22 @@ export const useQuery = <T = any>(
 
   React.useEffect(() => {
     (async () => {
+      executor.current.dispose();
+
+      executor.current = new ControlledExecutor(
+        async () => {
+          try {
+            const result = await powerSync.getAll<T>(sqlStatement, queryParameters);
+
+            handleResult(result);
+          } catch (e) {
+            console.error('Failed to fetch data:', e);
+            handleError(e);
+          }
+        },
+        { enableThrottle: true }
+      );
+
       await fetchTables();
       await fetchData();
     })();
