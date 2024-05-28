@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
-const platform = Capacitor.getPlatform()
+const platform = Capacitor.getPlatform();
 const isIOs = platform === 'ios';
 // Web worker implementation does not work on iOS
 const useWebWorker = !isIOs;
