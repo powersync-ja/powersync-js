@@ -132,7 +132,7 @@ export class SharedSyncImplementation
         new WASQLiteDBAdapter({
           dbFilename: params.dbName,
           workerPort: dbWorkerPort,
-          flags: { enableMultiTabs: true },
+          flags: { enableMultiTabs: true, useWebWorker: true },
           logger
         }),
         new Mutex(),

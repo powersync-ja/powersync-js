@@ -69,8 +69,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs);
 
       this.methods = await dbOpener(this.options.dbFilename);
-
-      this.methods!.registerOnTableChange(
+      this.methods.registerOnTableChange(
         Comlink.proxy((opType: number, tableName: string, rowId: number) => {
           this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
         })
@@ -79,7 +78,6 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       return;
     }
     this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
-
     this.methods.registerOnTableChange((opType: number, tableName: string, rowId: number) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
     });
