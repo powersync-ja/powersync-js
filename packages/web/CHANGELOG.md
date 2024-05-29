@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 0.8.1
+
+### Patch Changes
+
+- c3f29a1: Created a fix to resolve the issue where watched queries would not update after syncing upstream changes
+
 ## 0.8.0
 
 ### Minor Changes

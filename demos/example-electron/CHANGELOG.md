@@ -1,5 +1,12 @@
 # example-electron
 
+## 1.0.7
+
+### Patch Changes
+
+- Updated dependencies [c3f29a1]
+  - @powersync/web@0.8.1
+
 ## 1.0.6
 
 ### Patch Changes
