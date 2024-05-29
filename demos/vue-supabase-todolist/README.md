@@ -1,8 +1,8 @@
 # PowerSync + Supabase Vue Demo: Todo List (TypeScript)
 
-## Note: Alpha Release
+## Note: Beta Release
 
-This package is currently in an alpha release.
+This package is currently in an beta release.
 
 ## Overview
 
