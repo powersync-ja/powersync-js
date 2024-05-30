@@ -23,6 +23,7 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     excludePrivate: true,
     indexFormat: 'table',
     disableSources: true,
+    expandObjects: true,
     useCodeBlocks: true,
     typeDeclarationFormat: 'table',
     membersWithOwnFile: ['Class', 'Enum', 'Function', 'Interface'],
