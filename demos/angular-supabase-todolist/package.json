@@ -1,6 +1,6 @@
 {
   "name": "angular-supabase-todolist",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "scripts": {
     "ng": "ng",
     "serve": "ng serve",

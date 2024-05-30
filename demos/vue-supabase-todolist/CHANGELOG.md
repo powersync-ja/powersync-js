@@ -1,5 +1,17 @@
 # vue-supabase-todolist
 
+## 0.0.14
+
+### Patch Changes
+
+- 4463851: Moved Vue package to beta.
+- e86e61d: Update PowerSync branding
+- Updated dependencies [4463851]
+- Updated dependencies [32dc7e3]
+- Updated dependencies [e86e61d]
+  - @powersync/vue@0.1.6
+  - @powersync/web@1.0.0
+
 ## 0.0.13
 
 ### Patch Changes
