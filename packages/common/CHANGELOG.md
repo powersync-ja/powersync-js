@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.10.0
+
+### Minor Changes
+
+- 32dc7e3: Added a mechanism for throttling watch callback executions.
+
 ## 1.9.0
 
 ### Minor Changes

@@ -1,5 +1,14 @@
 # yjs-react-supabase-text-collab
 
+## 0.1.8
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [32dc7e3]
+- Updated dependencies [e86e61d]
+  - @powersync/web@1.0.0
+
 ## 0.1.7
 
 ### Patch Changes

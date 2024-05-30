@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.0.0
+
+### Major Changes
+
+- 32dc7e3: Bump version for Stable release.
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [32dc7e3]
+  - @powersync/common@1.10.0
+
 ## 0.8.1
 
 ### Patch Changes

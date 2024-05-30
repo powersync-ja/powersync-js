@@ -1,5 +1,13 @@
 # @powersync/kysely-driver
 
+## 0.2.6
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [32dc7e3]
+  - @powersync/common@1.10.0
+
 ## 0.2.5
 
 ### Patch Changes
