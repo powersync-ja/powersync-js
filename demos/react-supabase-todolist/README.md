@@ -1,9 +1,5 @@
 # PowerSync + Supabase Web Demo: Todo List
 
-## Note: Beta Release
-
-This package is currently in a beta release.
-
 ## Overview
 
 Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase.
