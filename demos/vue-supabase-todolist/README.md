@@ -2,7 +2,7 @@
 
 ## Note: Beta Release
 
-This package is currently in an beta release.
+This package is currently in a beta release.
 
 ## Overview
 
