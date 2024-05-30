@@ -2,7 +2,7 @@
 
 ## Note: Beta Release
 
-The `@powersync/vue` package is currently in a beta release.
+The `powersync/vue` package is currently in a beta release.
 
 ## Overview
 
