@@ -4,6 +4,14 @@
 
 ### Patch Changes
 
+- Updated dependencies [32dc7e3]
+- Updated dependencies [e86e61d]
+  - @powersync/web@1.0.0
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [c3f29a1]
   - @powersync/web@0.8.1
 

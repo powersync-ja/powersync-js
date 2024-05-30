@@ -1,5 +1,15 @@
 # react-native-supabase-todolist
 
+## 1.3.1
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [e86e61d]
+- Updated dependencies [32dc7e3]
+  - @powersync/react-native@1.6.2
+  - @powersync/common@1.10.0
+
 ## 1.3.0
 
 ### Minor Changes

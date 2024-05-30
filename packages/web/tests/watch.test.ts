@@ -146,7 +146,9 @@ describe('Watch Tests', () => {
     const updatesCount = 5;
     let receivedUpdatesCount = 0;
 
-    const onUpdate = () => receivedUpdatesCount++;
+    const onUpdate = () => {
+      receivedUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM assets INNER JOIN customers ON customers.id = assets.customer_id',
@@ -216,7 +218,9 @@ describe('Watch Tests', () => {
     const assetsAbortController = new AbortController();
 
     let receivedAssetsUpdatesCount = 0;
-    const onWatchAssets = () => receivedAssetsUpdatesCount++;
+    const onWatchAssets = () => {
+      receivedAssetsUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM assets',
@@ -230,7 +234,9 @@ describe('Watch Tests', () => {
     const customersAbortController = new AbortController();
 
     let receivedCustomersUpdatesCount = 0;
-    const onWatchCustomers = () => receivedCustomersUpdatesCount++;
+    const onWatchCustomers = () => {
+      receivedCustomersUpdatesCount++;
+    };
 
     powersync.watch(
       'SELECT count() AS count FROM customers',
@@ -279,5 +285,40 @@ describe('Watch Tests', () => {
 
     await receivedError;
     expect(receivedErrorCount).equals(1);
+  });
+
+  it('should throttle watch callback overflow', async () => {
+    const abortController = new AbortController();
+
+    const updatesCount = 25;
+
+    let receivedWithManagedOverflowCount = 0;
+    const onResultOverflow = () => {
+      receivedWithManagedOverflowCount++;
+    };
+
+    const overflowAbortController = new AbortController();
+    powersync.watch(
+      'SELECT count() AS count FROM assets',
+      [],
+      { onResult: onResultOverflow },
+      { signal: overflowAbortController.signal, throttleMs: 1 }
+    );
+
+    // Allows us to count the number of updates received without the initial trigger
+    await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
+
+    // Perform a large number of inserts to trigger overflow
+    for (let i = 0; i < updatesCount; i++) {
+      powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    }
+
+    await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
+
+    abortController.abort();
+    overflowAbortController.abort();
+
+    // Initial onResult plus two left after overflow was throttled for onChange triggers
+    expect(receivedWithManagedOverflowCount).toBe(3);
   });
 });

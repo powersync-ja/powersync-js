@@ -1,5 +1,13 @@
 # @powersync/react-native
 
+## 1.6.2
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [32dc7e3]
+  - @powersync/common@1.10.0
+
 ## 1.6.1
 
 ### Patch Changes

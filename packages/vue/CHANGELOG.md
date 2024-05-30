@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.1.6
+
+### Patch Changes
+
+- 4463851: Moved Vue package to beta.
+- Updated dependencies [32dc7e3]
+  - @powersync/common@1.10.0
+
 ## 0.1.5
 
 ### Patch Changes
