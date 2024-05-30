@@ -28,6 +28,7 @@ import {
   StreamingSyncImplementation,
   PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
+import { ControlledExecutor } from '../utils/ControlledExecutor';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -74,7 +75,7 @@ export interface WatchHandler {
 }
 
 export interface WatchOnChangeHandler {
-  onChange: (event: WatchOnChangeEvent) => void;
+  onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
   onError?: (error: Error) => void;
 }
 
@@ -845,12 +846,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
+    const executor = new ControlledExecutor(async (e: WatchOnChangeEvent) => {
+      await onChange(e);
+    });
+
     const flushTableUpdates = throttle(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
           if (resolvedOptions?.signal?.aborted) return;
-
-          onChange({ changedTables: intersection });
+          executor.schedule({ changedTables: intersection });
         }),
       throttleMs,
       { leading: false, trailing: true }
@@ -869,6 +873,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
 
     resolvedOptions.signal?.addEventListener('abort', () => {
+      executor.dispose();
       dispose();
     });
 
