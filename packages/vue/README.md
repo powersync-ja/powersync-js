@@ -1,8 +1,8 @@
 # Vue composables for PowerSync
 
-## Note: Alpha Release
+## Note: Beta Release
 
-This package is currently in an alpha release.
+This package is currently in a beta release.
 
 ## Setup
 
