@@ -10,10 +10,6 @@ This package (`packages/web`) is the PowerSync SDK for JavaScript Web clients. I
 
 See a summary of features [here](https://docs.powersync.com/client-sdk-references/js-web).
 
-## Beta Release
-
-The web SDK package is currently in a Beta release.
-
 # Installation
 
 ## Install Package
