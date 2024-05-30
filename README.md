@@ -24,6 +24,10 @@ _Bad connectivity is everywhere, and we're tired of it. PowerSync is on a missio
 
   - React integration for PowerSync.
 
+- [packages/vue](./packages/vue/README.md)
+
+  - Vue composables for PowerSync.
+
 - [packages/attachments](./packages/attachments/README.md)
 
   - Attachments helper package for React Native and JavaScript/TypeScript projects.
