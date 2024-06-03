@@ -1,22 +1,11 @@
 <template>
   <div class="container mx-auto my-10 px-4">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-md font-semibold text-gray-900">
-        Status: {{ status.connected ? "Connected" : "Disconnected" }}
-      </h1>
-      <button
-        @click="logout()"
-        class="text-red-500 hover:text-red-700 font-semibold"
-      >
-        Logout
-      </button>
+      <h1 class="text-md font-semibold text-gray-900">Status: {{ status.connected ? 'Connected' : 'Disconnected' }}</h1>
+      <button @click="logout()" class="text-red-500 hover:text-red-700 font-semibold">Logout</button>
     </div>
 
-    <h1
-      class="text-center text-3xl md:text-4xl font-semibold text-gray-900 mb-6"
-    >
-      To Do List
-    </h1>
+    <h1 class="text-center text-3xl md:text-4xl font-semibold text-gray-900 mb-6">To Do List</h1>
     <div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
       <form @submit.prevent="addTodo">
         <div class="flex items-center mb-4 space-x-3">
@@ -50,19 +39,11 @@
               @change="updateTodo(index)"
               :checked="todo.completed === 1"
             />
-            <div
-              :class="{ 'line-through': todo.completed }"
-              class="text-lg text-gray-800"
-            >
+            <div :class="{ 'line-through': todo.completed }" class="text-lg text-gray-800">
               {{ todo.description }}
             </div>
           </div>
-          <button
-            @click.prevent="removeTodo(index)"
-            class="text-red-500 hover:text-red-700 font-semibold"
-          >
-            X
-          </button>
+          <button @click.prevent="removeTodo(index)" class="text-red-500 hover:text-red-700 font-semibold">X</button>
         </li>
       </ul>
     </div>
@@ -71,11 +52,11 @@
 
 // TodoList.vue
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { usePowerSync, useStatus } from "@powersync/vue";
-import { TodoRecord } from "../library/AppSchema";
-import { supabase } from "../plugins/supabase";
-import { useRouter } from "vue-router";
+import { ref } from 'vue';
+import { usePowerSync, useQuery, useStatus } from '@powersync/vue';
+import { TodoRecord } from '../library/AppSchema';
+import { supabase } from '../plugins/supabase';
+import { useRouter } from 'vue-router';
 
 const powersync = usePowerSync();
 const status = useStatus();
@@ -87,51 +68,42 @@ if (!supabase.ready) {
        * Redirect if on the entry view
        */
       if (supabase.currentSession) {
-        router.push("/");
+        router.push('/');
       } else {
-        router.push("/login");
+        router.push('/login');
       }
-    },
+    }
   });
 } else {
-  router.push("/");
+  router.push('/');
 }
 
 // Define a type for the Todo item
 type Todo = TodoRecord;
 
-const newTodo = ref<string>("");
-const todos = ref<Todo[]>([]);
+const newTodo = ref<string>('');
+const { data: todos } = useQuery<Todo>('SELECT * from todos');
+
 const logout = async () => {
   await supabase.client.auth.signOut();
 };
 const addTodo = async () => {
   if (newTodo.value.trim()) {
     await powersync.value.execute(
-      "INSERT INTO todos (id, created_at, description, completed) VALUES (uuid(), datetime(), ?, ?) RETURNING *",
+      'INSERT INTO todos (id, created_at, description, completed) VALUES (uuid(), datetime(), ?, ?) RETURNING *',
       [newTodo.value, 0]
     );
-    todos.value = await powersync.value.getAll("SELECT * from todos");
-    newTodo.value = "";
+    newTodo.value = '';
   }
 };
 
 const updateTodo = async (index: number) => {
   const todo = todos.value[index];
-  await powersync.value.execute("UPDATE todos SET completed = ? WHERE id = ?", [
-    !todo.completed,
-    todo.id,
-  ]);
-  todos.value = await powersync.value.getAll("SELECT * from todos");
+  await powersync.value.execute('UPDATE todos SET completed = ? WHERE id = ?', [!todo.completed, todo.id]);
 };
 
 const removeTodo = async (index: number) => {
   const todo = todos.value[index];
-  await powersync.value.execute("DELETE FROM todos WHERE id = ?", [todo.id]);
-  todos.value = await powersync.value.getAll("SELECT * from todos");
+  await powersync.value.execute('DELETE FROM todos WHERE id = ?', [todo.id]);
 };
-
-onMounted(async () => {
-  todos.value = await powersync.value.getAll("SELECT * from todos");
-});
 </script>
