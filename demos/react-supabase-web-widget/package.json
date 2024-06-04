@@ -17,7 +17,6 @@
     "@webflow/webflow-cli": "^1.6.9",
     "async-mutex": "^0.5.0",
     "autoprefixer": "10.4.14",
-    "cors": "^2.8.5",
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
     "postcss": "8.4.27",

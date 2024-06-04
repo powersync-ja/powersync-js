@@ -115,6 +115,16 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
                                   )`);
   };
 
+  const handleTelemetry = useCallback(
+    async (operation: string) => {
+      await powersync.execute(
+        `INSERT INTO operations (id, created_at, user_id, operation) VALUES (uuid(), datetime(), ?, ?)`,
+        [userID, operation]
+      );
+    },
+    [userID]
+  );
+
   const handleCreate = useCallback(async () => {
     const { count } = await powersync.get<{ count: number }>(`SELECT COUNT(*) as count FROM ${TABLE_NAME}`, []);
 
@@ -126,6 +136,8 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
       `INSERT INTO ${TABLE_NAME} (id, created_at, user_id, shape) VALUES (uuid(), datetime(), ?, ?)`,
       [userID, randomPebbleShape()]
     );
+
+    handleTelemetry(CrudVerb.CREATE);
     addLog(buildLog(CrudVerb.CREATE, elapsedTime));
   }, [userID]);
 
@@ -144,6 +156,8 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
         tx.execute(`UPDATE ${TABLE_NAME} SET shape = ? WHERE id = ?`, [randomPebbleShape(), pebble.id]);
       });
     });
+
+    handleTelemetry(CrudVerb.UPDATE);
     addLog(buildLog(CrudVerb.UPDATE, elapsedTime, setOfPebbles.length));
   }, [userID]);
 
@@ -161,6 +175,8 @@ export const UserComponent: React.FC<UserComponentProps> = (props) => {
         LIMIT 1
       )`
     );
+
+    handleTelemetry(CrudVerb.DELETE);
     addLog(buildLog(CrudVerb.DELETE, elapsedTime));
   }, [userID]);
 

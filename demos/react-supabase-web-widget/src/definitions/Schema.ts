@@ -29,6 +29,14 @@ export const AppSchema = new Schema([
     ]
   }),
   new Table({
+    name: 'operations',
+    columns: [
+      new Column({ name: 'operation', type: ColumnType.TEXT }),
+      new Column({ name: 'created_at', type: ColumnType.TEXT }),
+      new Column({ name: 'user_id', type: ColumnType.TEXT })
+    ]
+  }),
+  new Table({
     name: 'settings',
     localOnly: true,
     columns: [new Column({ name: 'initialized', type: ColumnType.INTEGER })]
