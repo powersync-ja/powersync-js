@@ -148,7 +148,6 @@ export abstract class AbstractRemote {
 
   async get(path: string, headers?: Record<string, string>): Promise<any> {
     const request = await this.buildRequest(path);
-    const _fetch = this.fetch;
     const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {
