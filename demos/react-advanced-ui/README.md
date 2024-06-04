@@ -1,6 +1,6 @@
 # PowerSync + Supabase Web Demo: Advanced UI
 
-This is a demo of the widget displayed on the [PowerSync homepage](http://powersync.com) and demonstrates how data flows from one PowerSync client to another.
+This is a demo of the widget displayed on the [PowerSync homepage](http://powersync.com) and demonstrates how data flows from one PowerSync client to another. It also includes an implementation of Supabase's [anonymous auth](https://supabase.com/docs/guides/auth/auth-anonymous) feature.
 
 ![website-widget](./public/website-widget.png)
 
@@ -30,7 +30,7 @@ This demo app uses Supabase as its Postgres database and backend:
 
 ### 3. Auth setup
 
-For ease of demoing, this app uses Supabase's [anonymous sign-In](https://supabase.com/docs/guides/auth/auth-anonymous) feature.
+For ease of demoing, this app uses Supabase's [anonymous sign-in](https://supabase.com/docs/guides/auth/auth-anonymous) feature.
 Ensure that it is enabled under "Project Settings" -> "Authentication" in Supabase and confirming `Allow anonymous sign-ins` is toggled on. Click "Save" if you toggled this setting.
 
 The RLS rules defined in the `database.sql` script are setup to only allow the anonymous user CRUD access to their pebbles.
