@@ -1,4 +1,4 @@
-# PowerSync + Supabase Web Demo: Widget
+# PowerSync + Supabase Web Demo: Advanced UI
 
 This is a demo of the widget for the [PowerSync](http://powersync.com) to demonstrate how data flows from one PowerSync client to another.
 

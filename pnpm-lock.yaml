@@ -301,7 +301,7 @@ importers:
         version: 1.2.14(vite@5.2.11)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.11)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -404,7 +404,7 @@ importers:
         version: 1.1.14(css-loader@6.11.0)(prettier@3.2.5)(react-dom@18.2.0)(react@18.2.0)(vite@5.2.11)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.11)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -511,7 +511,7 @@ importers:
         version: 5.2.11(sass@1.76.0)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.11)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -537,6 +537,85 @@ importers:
       webpack-cli:
         specifier: ^5.1.4
         version: 5.1.4(webpack@5.91.0)
+
+  demos/react-advanced-ui:
+    dependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: ~0.2.0
+        version: 0.2.0
+      '@powersync/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@powersync/web':
+        specifier: workspace:*
+        version: link:../../packages/web
+      '@supabase/supabase-js':
+        specifier: ^2.43.1
+        version: 2.43.1
+      '@vitejs/plugin-react':
+        specifier: ^4.2.1
+        version: 4.2.1(vite@5.2.11)
+      '@webflow/webflow-cli':
+        specifier: ^1.6.9
+        version: 1.6.12
+      async-mutex:
+        specifier: ^0.5.0
+        version: 0.5.0
+      autoprefixer:
+        specifier: 10.4.14
+        version: 10.4.14(postcss@8.4.27)
+      js-logger:
+        specifier: ^1.6.1
+        version: 1.6.1
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
+      postcss:
+        specifier: 8.4.27
+        version: 8.4.27
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+    devDependencies:
+      '@types/cors':
+        specifier: ~2.8.17
+        version: 2.8.17
+      '@types/lodash':
+        specifier: ^4.14.202
+        version: 4.17.1
+      '@types/node':
+        specifier: ^20.10.0
+        version: 20.12.12
+      '@types/react':
+        specifier: ^18.2.38
+        version: 18.3.2
+      '@types/react-dom':
+        specifier: ^18.2.17
+        version: 18.3.0
+      prettier:
+        specifier: ^3.1.0
+        version: 3.2.5
+      supabase:
+        specifier: ^1.165.0
+        version: 1.172.2
+      typescript:
+        specifier: ^5.3.2
+        version: 5.4.5
+      vite:
+        specifier: ^5.1.5
+        version: 5.2.11(@types/node@20.12.12)
+      vite-plugin-pwa:
+        specifier: ^0.19.2
+        version: 0.19.8(vite@5.2.11)(workbox-build@7.1.0)(workbox-window@7.1.0)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.1
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
+      vite-plugin-wasm:
+        specifier: ^3.3.0
+        version: 3.3.0(vite@5.2.11)
 
   demos/react-native-supabase-group-chat:
     dependencies:
@@ -943,85 +1022,6 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
 
-  demos/react-supabase-web-widget:
-    dependencies:
-      '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
-      '@powersync/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      '@powersync/web':
-        specifier: workspace:*
-        version: link:../../packages/web
-      '@supabase/supabase-js':
-        specifier: ^2.43.1
-        version: 2.43.1
-      '@vitejs/plugin-react':
-        specifier: ^4.2.1
-        version: 4.2.1(vite@5.2.11)
-      '@webflow/webflow-cli':
-        specifier: ^1.6.9
-        version: 1.6.12
-      async-mutex:
-        specifier: ^0.5.0
-        version: 0.5.0
-      autoprefixer:
-        specifier: 10.4.14
-        version: 10.4.14(postcss@8.4.27)
-      js-logger:
-        specifier: ^1.6.1
-        version: 1.6.1
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
-      postcss:
-        specifier: 8.4.27
-        version: 8.4.27
-      react:
-        specifier: ^18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.2.0(react@18.2.0)
-    devDependencies:
-      '@types/cors':
-        specifier: ~2.8.17
-        version: 2.8.17
-      '@types/lodash':
-        specifier: ^4.14.202
-        version: 4.17.1
-      '@types/node':
-        specifier: ^20.10.0
-        version: 20.12.12
-      '@types/react':
-        specifier: ^18.2.38
-        version: 18.3.2
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.0
-      prettier:
-        specifier: ^3.1.0
-        version: 3.2.5
-      supabase:
-        specifier: ^1.165.0
-        version: 1.172.2
-      typescript:
-        specifier: ^5.3.2
-        version: 5.4.5
-      vite:
-        specifier: ^5.1.5
-        version: 5.2.11(@types/node@20.12.12)
-      vite-plugin-pwa:
-        specifier: ^0.19.2
-        version: 0.19.8(vite@5.2.11)(workbox-build@7.1.0)(workbox-window@7.1.0)
-      vite-plugin-top-level-await:
-        specifier: ^1.4.1
-        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
-      vite-plugin-wasm:
-        specifier: ^3.3.0
-        version: 3.3.0(vite@5.2.11)
-
   demos/vue-supabase-todolist:
     dependencies:
       '@mdi/font':
@@ -1397,7 +1397,7 @@ importers:
         version: 5.2.11(@types/node@20.12.8)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.11)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -1533,7 +1533,7 @@ importers:
         version: 5.2.11(sass@1.76.0)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(vite@5.2.11)
+        version: 1.4.1(rollup@2.79.1)(vite@5.2.11)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.2.11)
@@ -1551,7 +1551,7 @@ importers:
         version: 0.1.1
       '@mui/material':
         specifier: ^5.15.12
-        version: 5.15.16(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
+        version: 5.15.16(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
       '@mui/x-data-grid':
         specifier: ^6.19.6
         version: 6.19.11(@mui/material@5.15.16)(@mui/system@5.15.15)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
@@ -10544,40 +10544,6 @@ packages:
       react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
     dev: false
 
-  /@mui/material@5.15.16(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-ery2hFReewko9gpDBqOr2VmXwQG9ifXofPhGzIx09/b9JqCQC/06kZXZDGGrOTpIddK9HlIf4yrS+G70jPAzUQ==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@types/react': ^17.0.0 || ^18.0.0
-      react: ^17.0.0 || ^18.0.0
-      react-dom: ^17.0.0 || ^18.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@types/react':
-        optional: true
-    dependencies:
-      '@babel/runtime': 7.24.5
-      '@mui/base': 5.0.0-beta.40(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
-      '@mui/core-downloads-tracker': 5.15.16
-      '@mui/system': 5.15.15(@types/react@18.2.79)(react@18.2.0)
-      '@mui/types': 7.2.14(@types/react@18.2.79)
-      '@mui/utils': 5.15.14(@types/react@18.2.79)(react@18.2.0)
-      '@types/react': 18.2.79
-      '@types/react-transition-group': 4.4.10
-      clsx: 2.1.1
-      csstype: 3.1.3
-      prop-types: 15.8.1
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-is: 18.3.1
-      react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
-    dev: false
-
   /@mui/material@5.15.16(@types/react@18.3.1)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-ery2hFReewko9gpDBqOr2VmXwQG9ifXofPhGzIx09/b9JqCQC/06kZXZDGGrOTpIddK9HlIf4yrS+G70jPAzUQ==}
     engines: {node: '>=12.0.0'}
@@ -10775,34 +10741,6 @@ packages:
       '@mui/types': 7.2.14(@types/react@18.3.2)
       '@mui/utils': 5.15.14(@types/react@18.3.2)(react@18.2.0)
       '@types/react': 18.3.2
-      clsx: 2.1.1
-      csstype: 3.1.3
-      prop-types: 15.8.1
-      react: 18.2.0
-    dev: false
-
-  /@mui/system@5.15.15(@types/react@18.2.79)(react@18.2.0):
-    resolution: {integrity: sha512-aulox6N1dnu5PABsfxVGOZffDVmlxPOVgj56HrUnJE8MCSh8lOvvkd47cebIVQQYAjpwieXQXiDPj5pwM40jTQ==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@emotion/react': ^11.5.0
-      '@emotion/styled': ^11.3.0
-      '@types/react': ^17.0.0 || ^18.0.0
-      react: ^17.0.0 || ^18.0.0
-    peerDependenciesMeta:
-      '@emotion/react':
-        optional: true
-      '@emotion/styled':
-        optional: true
-      '@types/react':
-        optional: true
-    dependencies:
-      '@babel/runtime': 7.24.5
-      '@mui/private-theming': 5.15.14(@types/react@18.2.79)(react@18.2.0)
-      '@mui/styled-engine': 5.15.14(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(react@18.2.0)
-      '@mui/types': 7.2.14(@types/react@18.2.79)
-      '@mui/utils': 5.15.14(@types/react@18.2.79)(react@18.2.0)
-      '@types/react': 18.2.79
       clsx: 2.1.1
       csstype: 3.1.3
       prop-types: 15.8.1
@@ -33978,7 +33916,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       fast-glob: 3.3.2
       pretty-bytes: 6.1.1
-      vite: 5.2.11(@types/node@20.12.8)
+      vite: 5.2.11(@types/node@20.12.12)
       workbox-build: 7.1.0
       workbox-window: 7.1.0
     transitivePeerDependencies:
@@ -34088,20 +34026,6 @@ packages:
     dev: true
 
   /vite-plugin-top-level-await@1.4.1(rollup@2.79.1)(vite@5.2.11):
-    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
-    peerDependencies:
-      vite: '>=2.8'
-    dependencies:
-      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
-      '@swc/core': 1.4.17
-      uuid: 9.0.1
-      vite: 5.2.11(@types/node@20.12.8)
-    transitivePeerDependencies:
-      - '@swc/helpers'
-      - rollup
-    dev: true
-
-  /vite-plugin-top-level-await@1.4.1(vite@5.2.11):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
       vite: '>=2.8'
