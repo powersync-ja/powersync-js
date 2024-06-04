@@ -1,6 +1,8 @@
 # PowerSync + Supabase Web Demo: Advanced UI
 
-This is a demo of the widget for the [PowerSync](http://powersync.com) to demonstrate how data flows from one PowerSync client to another.
+This is a demo of the widget displayed on the [PowerSync homepage](http://powersync.com) and demonstrates how data flows from one PowerSync client to another.
+
+![website-widget](./public/website-widget.png)
 
 ## Webflow Devlink Components
 
@@ -8,7 +10,7 @@ Note that some of the UI components are generated from elements created in (Webf
 
 ## Setup Instructions
 
-Note that this setup guide has minor deviations from the [Supabase + PowerSync integration guide](https://docs.powersync.com/integration-guides/supabase-+-powersync).
+Note that this setup guide has minor deviations from the [Supabase + PowerSync integration guide](https://docs.powersync.com/integration-guides/supabase-+-powersync). Below we refer to sections in this guide where relevant.
 
 ### 1. Install dependencies
 
@@ -29,7 +31,7 @@ This demo app uses Supabase as its Postgres database and backend:
 ### 3. Auth setup
 
 For ease of demoing, this app uses Supabase's [anonymous sign-In](https://supabase.com/docs/guides/auth/auth-anonymous) feature.
-Ensure that it is enabled by going to `settings/auth` in Supabase and confirming `Allow anonymous sign-ins` is ticked.
+Ensure that it is enabled under "Project Settings" -> "Authentication" in Supabase and confirming `Allow anonymous sign-ins` is toggled on. Click "Save" if you toggled this setting.
 
 The RLS rules defined in the `database.sql` script are setup to only allow the anonymous user CRUD access to their pebbles.
 
@@ -39,9 +41,8 @@ Follow the [Connect PowerSync to Your Supabase](https://docs.powersync.com/integ
 
 ### 5. Create Sync Rules on PowerSync
 
-1. Open the [`sync-rules.yaml`](sync-rules.yaml) in this repo and copy the contents.
-2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the 'sync-rules.yaml' editor panel.
-3. Click the "Deploy sync rules" button and select your PowerSync instance from the drop-down list.
+Create sync rules by following the [Configure Sync Rules](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-sync-rules) section.
+The sync rules for this demo are defined in [`sync-rules.yaml`](sync-rules.yaml) in this directory. Copy its contents and paste it into the 'sync-rules.yaml' file in the Dashboard as described in the guide.
 
 ### 6. Set up local environment variables
 
@@ -55,7 +56,7 @@ And then edit `.env.local` to insert your credentials for Supabase and PowerSync
 
 ### 8. Run the demo app
 
-In the repo directory, run the following to start the development server:
+In this directory, run the following to start the development server:
 
 ```bash
 pnpm dev
