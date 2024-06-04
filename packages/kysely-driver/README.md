@@ -1,8 +1,6 @@
 # PowerSync Kysely Driver
 
-[PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
-
-This package (`packages/kysely-driver`) brings the benefits of an ORM through our maintained [Kysely](https://kysely.dev/) driver to PowerSync.
+This package (`packages/kysely-driver`) brings the benefits of an ORM through our maintained [Kysely](https://kysely.dev/) driver to [PowerSync](https://powersync.com).
 
 ## Beta Release
 
