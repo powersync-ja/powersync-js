@@ -31,6 +31,7 @@ const config: ExpoConfig = {
     tsconfigPaths: true
   },
   android: {
+    package: 'com.powerchat',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff'
@@ -48,7 +49,28 @@ const config: ExpoConfig = {
   runtimeVersion: {
     policy: 'sdkVersion'
   },
-  plugins: ['expo-router']
+  plugins: [
+    'expo-router',
+    [
+      'expo-build-properties',
+      {
+        ios: {
+          deploymentTarget: '13.4',
+          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
+          newArchEnabled: false
+        },
+        android: {
+          minSdkVersion: 23,
+          compileSdkVersion: 34,
+          targetSdkVersion: 34,
+          buildToolsVersion: '34.0.0',
+          networkInspector: false,
+          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
+          newArchEnabled: false
+        }
+      }
+    ]
+  ]
 };
 
 export default config;
