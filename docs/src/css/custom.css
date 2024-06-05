@@ -59,6 +59,8 @@
 /* Expand parameter and enumeration tables to full width */
 #parameters + table,
 [id^="parameters-"] + table,
+#properties + table,
+[id^="properties-"] + table,
 #enumeration-members + table,
 [id^="enumeration-members-"] + table {
   width: 100%;
