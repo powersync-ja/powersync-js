@@ -15,6 +15,7 @@
   --ifm-color-primary-lightest: #c44dff;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-table-cell-padding: 0.4rem;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -27,4 +28,49 @@
   --ifm-color-primary-lighter: #d580ff;
   --ifm-color-primary-lightest: #e5b2ff;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Hide "return", "type parameters", and "inherited from" sections */
+#returns,
+#returns + p,
+#returns + p + table,
+#returns + p + p,
+#returns + p + p + table,
+#returns + div,
+#returns + div + table,
+[id^="returns-"],
+[id^="returns-"] + p,
+[id^="returns-"] + p + p,
+[id^="returns-"] + p + p,
+[id^="returns-"] + p + p + table,
+[id^="returns-"] + div,
+[id^="returns-"] + div + table,
+#type-parameters,
+#type-parameters + table,
+[id^="type-parameters-"],
+[id^="type-parameters-"] + table,
+#inherited-from,
+#inherited-from + p,
+[id^="inherited-from-"],
+[id^="inherited-from-"] + p {
+  display: none;
+}
+
+/* Expand parameter and enumeration tables to full width */
+#parameters + table,
+[id^="parameters-"] + table,
+#enumeration-members + table,
+[id^="enumeration-members-"] + table {
+  width: 100%;
+  table-layout: fixed;
+  display: table;
+}
+
+th {
+  text-transform: uppercase;
+  font-size: 80%;
+}
+
+table th {
+  color: #767676;
 }
