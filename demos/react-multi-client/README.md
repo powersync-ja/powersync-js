@@ -1,4 +1,4 @@
-# PowerSync + Supabase Web Demo: Advanced UI
+# PowerSync + Supabase Web Demo: Multi Client
 
 This is a demo of the widget displayed on the [PowerSync homepage](http://powersync.com) and demonstrates how data flows from one PowerSync client to another. It also includes an implementation of Supabase's [anonymous auth](https://supabase.com/docs/guides/auth/auth-anonymous) feature.
 
