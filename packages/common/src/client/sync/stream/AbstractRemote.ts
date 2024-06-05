@@ -36,6 +36,20 @@ export type SyncStreamOptions = {
   fetchOptions?: Request;
 };
 
+export type FetchImplementation = typeof fetch;
+
+/**
+ * Class wrapper for providing a fetch implementation.
+ * The class wrapper is used to distinguish the fetchImplementation
+ * option in [AbstractRemoteOptions] from the general fetch method
+ * which is typeof "function"
+ */
+export class FetchImplementationProvider {
+  getFetch(): FetchImplementation {
+    return fetch.bind(globalThis);
+  }
+}
+
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain
@@ -49,7 +63,7 @@ export type AbstractRemoteOptions = {
    * Note that this usually needs to be bound to the global scope.
    * Binding should be done before passing here.
    */
-  fetchImplementation: typeof fetch;
+  fetchImplementation: FetchImplementation | FetchImplementationProvider;
 };
 
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
@@ -57,7 +71,7 @@ export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
     url.replace(/^https?:\/\//, function (match) {
       return match === 'https://' ? 'wss://' : 'ws://';
     }),
-  fetchImplementation: fetch.bind(globalThis)
+  fetchImplementation: new FetchImplementationProvider()
 };
 
 export abstract class AbstractRemote {
@@ -75,8 +89,15 @@ export abstract class AbstractRemote {
     };
   }
 
-  get fetch() {
-    return this.options.fetchImplementation;
+  /**
+   * @returns a fetch implementation (function)
+   * which can be called to perform fetch requests
+   */
+  get fetch(): FetchImplementation {
+    const { fetchImplementation } = this.options;
+    return fetchImplementation instanceof FetchImplementationProvider
+      ? fetchImplementation.getFetch()
+      : fetchImplementation;
   }
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
@@ -127,7 +148,6 @@ export abstract class AbstractRemote {
 
   async get(path: string, headers?: Record<string, string>): Promise<any> {
     const request = await this.buildRequest(path);
-
     const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {

@@ -1,14 +1,35 @@
+import { ILogger } from 'js-logger';
+
 import {
   AbstractRemote,
+  AbstractRemoteOptions,
   BSONImplementation,
+  DEFAULT_REMOTE_LOGGER,
   DataStream,
+  FetchImplementation,
+  FetchImplementationProvider,
+  RemoteConnector,
   StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
 import { Platform } from 'react-native';
 // Note docs for React Native https://github.com/mongodb/js-bson?tab=readme-ov-file#react-native
 import { BSON } from 'bson';
+
+import { fetch } from 'react-native-fetch-api';
+
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
+
+/**
+ * Directly imports fetch implementation from react-native-fetch-api.
+ * This removes the requirement for the global `fetch` to be overridden by
+ * a polyfill.
+ */
+class ReactNativeFetchProvider extends FetchImplementationProvider {
+  getFetch(): FetchImplementation {
+    return fetch.bind(globalThis);
+  }
+}
 
 type PolyfillTest = {
   test: () => boolean;
@@ -60,6 +81,17 @@ ${missingPolyfills.join('\n')}`
 };
 
 export class ReactNativeRemote extends AbstractRemote {
+  constructor(
+    protected connector: RemoteConnector,
+    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    options?: Partial<AbstractRemoteOptions>
+  ) {
+    super(connector, logger, {
+      ...(options ?? {}),
+      fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider()
+    });
+  }
+
   async getBSON(): Promise<BSONImplementation> {
     return BSON;
   }

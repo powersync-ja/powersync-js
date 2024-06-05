@@ -37,7 +37,8 @@
     "@powersync/react": "workspace:*",
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
-    "bson": "^6.6.0"
+    "bson": "^6.6.0",
+    "react-native-fetch-api": "^3.0.0"
   },
   "devDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^1.1.6",
