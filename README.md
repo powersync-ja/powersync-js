@@ -43,13 +43,14 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 ### React Native
 
-- [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist): A React Native to-do list example app using a Supabase backend.
-- [demos/django-react-native-todolist](./demos/django-react-native-todolist) A React Native to-do list example app using a Django backend.
+- [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist/README.md): A React Native to-do list example app using a Supabase backend.
+- [demos/react-native-supabase-group-chat](./demos/react-native-supabase-group-chat/README.md): A React Native group chat example app using a Supabase backend.
+- [demos/django-react-native-todolist](./demos/django-react-native-todolist/README.md) A React Native to-do list example app using a Django backend.
 
 ### Web
 
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
-- [demos/react-advanced-ui](./demos/react-advanced-ui/README.md): A React widget that illustrates how data flows from one PowerSync client to another.
+- [demos/react-multi-client](./demos/react-multi-client/README.md): A React widget that illustrates how data flows from one PowerSync client to another.
 - [demos/yjs-react-supabase-text-collab](./demos/yjs-react-supabase-text-collab/README.md): A React real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
 - [demos/vue-supabase-todolist](./demos/vue-supabase-todolist/README.md): A Vue to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/angular-supabase-todolist](./demos/angular-supabase-todolist/README.md) An Angular to-do list example app using the PowerSync Web SDK and a Supabase backend.

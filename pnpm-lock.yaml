@@ -538,7 +538,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack@5.91.0)
 
-  demos/react-advanced-ui:
+  demos/react-multi-client:
     dependencies:
       '@journeyapps/wa-sqlite':
         specifier: ~0.2.0
