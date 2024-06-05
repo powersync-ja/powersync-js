@@ -42,7 +42,7 @@ export type FetchImplementation = typeof fetch;
  * Class wrapper for providing a fetch implementation.
  * The class wrapper is used to distinguish the fetchImplementation
  * option in [AbstractRemoteOptions] from the general fetch method
- * which typeof "function"
+ * which is typeof "function"
  */
 export class FetchImplementationProvider {
   getFetch(): FetchImplementation {
