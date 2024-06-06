@@ -221,13 +221,18 @@ export abstract class AbstractStreamingSyncImplementation
             }
           } catch (ex) {
             this.updateSyncStatus({
-              connected: false,
               dataFlow: {
                 uploading: false
               }
             });
             await this.delayRetry();
-            break;
+            if (!this.isConnected) {
+              // Exit the upload loop if the sync stream is no longer connected
+              break;
+            }
+            this.logger.debug(
+              `Caught exception when uploading. Upload will retry after a delay. Exception: ${ex.message}`
+            );
           } finally {
             this.updateSyncStatus({
               dataFlow: {
