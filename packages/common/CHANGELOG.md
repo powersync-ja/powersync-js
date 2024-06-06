@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.11.0
+
+### Minor Changes
+
+- 820a81d: [internal] Added ability to provide fetch implementation via FetchImplementationProvider
+
 ## 1.10.0
 
 ### Minor Changes
