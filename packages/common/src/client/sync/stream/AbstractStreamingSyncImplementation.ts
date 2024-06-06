@@ -431,6 +431,7 @@ export abstract class AbstractStreamingSyncImplementation
         let appliedCheckpoint: Checkpoint | null = null;
 
         let bucketSet = new Set<string>(initialBuckets.keys());
+        const { params = undefined } = (await this.options.remote.getCredentials()) ?? {};
 
         this.logger.debug('Requesting stream from server');
 
@@ -440,7 +441,8 @@ export abstract class AbstractStreamingSyncImplementation
           data: {
             buckets: req,
             include_checksum: true,
-            raw_data: true
+            raw_data: true,
+            parameters: params
           }
         };
 

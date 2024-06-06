@@ -75,6 +75,11 @@ export interface StreamingSyncRequest {
    * Changes the response to stringified data in each OplogEntry
    */
   raw_data: boolean;
+
+  /**
+   * Client parameters to be passed to the sync rules.
+   */
+  parameters?: Record<string, string>;
 }
 
 export interface StreamingSyncCheckpoint {

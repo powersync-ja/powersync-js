@@ -29,6 +29,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     if (credentials == null) {
       return null;
     }
+
     /**
      * The credentials need to be serializable.
      * Users might extend [PowerSyncCredentials] to contain
@@ -38,7 +39,8 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return {
       endpoint: credentials.endpoint,
       token: credentials.token,
-      expiresAt: credentials.expiresAt
+      expiresAt: credentials.expiresAt,
+      params: credentials.params
     };
   }
 
