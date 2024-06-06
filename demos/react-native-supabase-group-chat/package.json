@@ -1,6 +1,6 @@
 {
   "name": "react-native-supabase-group-chat",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "main": "expo-router/entry",
   "scripts": {
     "clear": "find ./ -type d -and \\( -name node_modules -or -name build -or -name dist \\) -exec rm -rf '{}' +",
