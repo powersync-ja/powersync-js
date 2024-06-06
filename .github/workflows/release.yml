@@ -40,6 +40,8 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
+          # Update the monorepo lockfile after versioning
+          version: pnpm changeset version && pnpm install --lockfile-only --frozen-lockfile=false
           # This expects you to have a script called release which does a build for your packages and calls changeset publish
           publish: pnpm release
         env:
