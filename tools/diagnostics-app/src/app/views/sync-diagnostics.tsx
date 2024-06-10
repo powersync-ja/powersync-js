@@ -43,12 +43,12 @@ SELECT
   stats.tables,
   stats.data_size,
   stats.metadata_size,
-  stats.row_count,
+  IFNULL(stats.row_count, 0) as row_count,
   local.download_size,
   local.total_operations,
   local.downloading
 FROM local_bucket_data local
-JOIN oplog_stats stats ON stats.name = local.id`;
+LEFT JOIN oplog_stats stats ON stats.name = local.id`;
 
 const TABLES_QUERY = `
 SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
