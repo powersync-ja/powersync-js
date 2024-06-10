@@ -75,7 +75,7 @@ export interface PowerSyncConnectionOptions {
   connectionMethod?: SyncStreamConnectionMethod;
 
   /**
-   * Parameters to be passed to the sync rules. Parameters be available under the`user_parameters` object.
+   * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, any>;
 }
