@@ -73,6 +73,11 @@ export interface PowerSyncConnectionOptions {
    * Defaults to a HTTP streaming connection.
    */
   connectionMethod?: SyncStreamConnectionMethod;
+
+  /**
+   * Parameters to be passed to the sync rules. Parameters be available under the`user_parameters` object.
+   */
+  params?: Record<string, any>;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
@@ -104,7 +109,8 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 };
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
-  connectionMethod: SyncStreamConnectionMethod.HTTP
+  connectionMethod: SyncStreamConnectionMethod.HTTP,
+  params: {}
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -436,7 +442,6 @@ export abstract class AbstractStreamingSyncImplementation
         let appliedCheckpoint: Checkpoint | null = null;
 
         let bucketSet = new Set<string>(initialBuckets.keys());
-        const { params = undefined } = (await this.options.remote.getCredentials()) ?? {};
 
         this.logger.debug('Requesting stream from server');
 
@@ -447,7 +452,7 @@ export abstract class AbstractStreamingSyncImplementation
             buckets: req,
             include_checksum: true,
             raw_data: true,
-            parameters: params
+            parameters: resolvedOptions.params
           }
         };
 
