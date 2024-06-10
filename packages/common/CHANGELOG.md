@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.11.1
+
+### Patch Changes
+
+- 1b66145: Fixed CRUD uploads which would not retry after failing until the connection status was updated. A failed CRUD operation should not change the status to `connected: false`.
+
 ## 1.11.0
 
 ### Minor Changes
