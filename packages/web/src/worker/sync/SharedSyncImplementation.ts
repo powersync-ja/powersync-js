@@ -1,16 +1,16 @@
 import * as Comlink from 'comlink';
-import Logger, { ILogger } from 'js-logger';
+import Logger, { type ILogger } from 'js-logger';
 import {
-  AbstractStreamingSyncImplementation,
-  StreamingSyncImplementation,
+  type AbstractStreamingSyncImplementation,
+  type StreamingSyncImplementation,
+  type LockOptions,
+  type StreamingSyncImplementationListener,
+  type SyncStatusOptions,
+  type PowerSyncConnectionOptions,
   BaseObserver,
-  LockOptions,
   SqliteBucketStorage,
-  StreamingSyncImplementationListener,
   SyncStatus,
-  SyncStatusOptions,
-  AbortOperation,
-  PowerSyncConnectionOptions
+  AbortOperation
 } from '@powersync/common';
 import {
   WebStreamingSyncImplementation,
@@ -132,7 +132,7 @@ export class SharedSyncImplementation
         new WASQLiteDBAdapter({
           dbFilename: params.dbName,
           workerPort: dbWorkerPort,
-          flags: { enableMultiTabs: true },
+          flags: { enableMultiTabs: true, useWebWorker: true },
           logger
         }),
         new Mutex(),

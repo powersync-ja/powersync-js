@@ -1,5 +1,68 @@
 # react-native-supabase-todolist
 
+## 1.3.3
+
+### Patch Changes
+
+- Updated dependencies [1b66145]
+  - @powersync/common@1.11.1
+  - @powersync/react-native@1.7.1
+
+## 1.3.2
+
+### Patch Changes
+
+- Updated dependencies [820a81d]
+- Updated dependencies [820a81d]
+  - @powersync/react-native@1.7.0
+  - @powersync/common@1.11.0
+
+## 1.3.1
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [e86e61d]
+- Updated dependencies [32dc7e3]
+  - @powersync/react-native@1.6.2
+  - @powersync/common@1.10.0
+
+## 1.3.0
+
+### Minor Changes
+
+- 72cfd5d: Updates the React Native Supabase todolist application to Expo 51.
+
+## 1.2.5
+
+### Patch Changes
+
+- Updated dependencies [48cc01c]
+  - @powersync/react-native@1.6.1
+  - @powersync/attachments@2.0.10
+  - @powersync/react@1.3.5
+
+## 1.2.4
+
+### Patch Changes
+
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/react-native@1.6.0
+  - @powersync/common@1.9.0
+  - @powersync/attachments@2.0.9
+  - @powersync/react@1.3.4
+
+## 1.2.3
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/react-native@1.5.1
+  - @powersync/attachments@2.0.8
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
 ## 1.2.2
 
 ### Patch Changes

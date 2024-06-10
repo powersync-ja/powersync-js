@@ -8,7 +8,8 @@ import {
   PowerSyncDatabaseOptions,
   SyncStreamOptions,
   DataStream,
-  StreamingSyncLine
+  StreamingSyncLine,
+  BSONImplementation
 } from '@powersync/common';
 import {
   PowerSyncDatabase,
@@ -26,7 +27,8 @@ export class TestConnector implements PowerSyncBackendConnector {
     };
   }
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
-    return;
+    const tx = await database.getNextCrudTransaction();
+    await tx?.complete();
   }
 }
 
@@ -41,11 +43,23 @@ export class MockRemote extends AbstractRemote {
     this.streamController = null;
   }
 
+  async getBSON(): Promise<BSONImplementation> {
+    return import('bson');
+  }
+
   post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {
     throw new Error('Method not implemented.');
   }
-  get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
-    throw new Error('Method not implemented.');
+  async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
+    // mock a response for write checkpoint API
+    if (path.includes('checkpoint')) {
+      return {
+        data: {
+          write_checkpoint: '1000'
+        }
+      };
+    }
+    throw new Error('Not implemented');
   }
   async postStreaming(
     path: string,

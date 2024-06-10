@@ -1,11 +1,14 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import { PowerSyncContext, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
+import Logger from 'js-logger';
 import { ReactNode, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
 import { Connector } from '../lib/connector';
 import { schema } from '../lib/schema';
+
+Logger.useDefaults();
 
 const factory = new RNQSPowerSyncDatabaseOpenFactory({
   schema,

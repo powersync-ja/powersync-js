@@ -6,8 +6,6 @@ Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.n
 
 A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 
-![docs-react-native-supabase-powersync-setup](https://github.com/journeyapps/powersync-supabase-react-native-todolist-demo/assets/277659/923dc9a2-6a0e-4ce4-934d-29e3ab8b0f09)
-
 ## Set up Supabase Project
 
 Create a new Supabase project, and paste and run the contents of [database.sql](./database.sql) in the Supabase SQL editor.

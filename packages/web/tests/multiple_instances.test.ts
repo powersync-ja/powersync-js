@@ -6,7 +6,7 @@ import {
   WebRemote,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
-import { testSchema } from './utils/test-schema';
+import { testSchema } from './utils/testDb';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { Mutex } from 'async-mutex';
 

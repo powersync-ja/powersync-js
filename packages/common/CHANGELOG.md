@@ -1,5 +1,35 @@
 # @powersync/common
 
+## 1.11.1
+
+### Patch Changes
+
+- 1b66145: Fixed CRUD uploads which would not retry after failing until the connection status was updated. A failed CRUD operation should not change the status to `connected: false`.
+
+## 1.11.0
+
+### Minor Changes
+
+- 820a81d: [internal] Added ability to provide fetch implementation via FetchImplementationProvider
+
+## 1.10.0
+
+### Minor Changes
+
+- 32dc7e3: Added a mechanism for throttling watch callback executions.
+
+## 1.9.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+## 1.8.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+
 ## 1.8.0
 
 ### Minor Changes

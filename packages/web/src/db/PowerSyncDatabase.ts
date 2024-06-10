@@ -1,15 +1,15 @@
 import {
+  type AbstractStreamingSyncImplementation,
+  type PowerSyncBackendConnector,
+  type BucketStorageAdapter,
+  type PowerSyncDatabaseOptions,
+  type PowerSyncCloseOptions,
+  type PowerSyncConnectionOptions,
   AbstractPowerSyncDatabase,
-  AbstractStreamingSyncImplementation,
-  PowerSyncBackendConnector,
   SqliteBucketStorage,
-  BucketStorageAdapter,
-  PowerSyncDatabaseOptions,
-  PowerSyncCloseOptions,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
-  PowerSyncConnectionOptions
+  DEFAULT_POWERSYNC_CLOSE_OPTIONS
 } from '@powersync/common';
-
+import { Mutex } from 'async-mutex';
 import { WebRemote } from './sync/WebRemote';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
@@ -17,13 +17,13 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { Mutex } from 'async-mutex';
 
 export interface WebPowerSyncFlags {
   /**
    * Enables multi tab support
    */
   enableMultiTabs?: boolean;
+  useWebWorker?: boolean;
   /**
    * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
    */
@@ -126,8 +126,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       case flags?.enableMultiTabs:
         if (!flags?.broadcastLogs) {
           const warning = `
-Multiple tabs are enabled, but broadcasting of logs is disabled.
-Logs for shared sync worker will only be available in the shared worker context
+            Multiple tabs are enabled, but broadcasting of logs is disabled.
+            Logs for shared sync worker will only be available in the shared worker context
           `;
           const logger = this.options.logger;
           logger ? logger.warn(warning) : console.warn(warning);

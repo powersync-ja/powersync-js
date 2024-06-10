@@ -1,8 +1,7 @@
 import '@journeyapps/wa-sqlite';
-
 import * as Comlink from 'comlink';
-
-import { DBWorkerInterface, _openDB } from './open-db';
+import { _openDB } from '../../shared/open-db';
+import type { DBFunctionsInterface } from '../../shared/types';
 
 /**
  * Keeps track of open DB connections and the clients which
@@ -10,7 +9,7 @@ import { DBWorkerInterface, _openDB } from './open-db';
  */
 type SharedDBWorkerConnection = {
   clientIds: Set<number>;
-  db: DBWorkerInterface;
+  db: DBFunctionsInterface;
 };
 
 const _self: SharedWorkerGlobalScope = self as any;
@@ -20,7 +19,7 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 let nextClientId = 1;
 
-const openDB = async (dbFileName: string): Promise<DBWorkerInterface> => {
+const openDB = async (dbFileName: string): Promise<DBFunctionsInterface> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return navigator.locks.request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;

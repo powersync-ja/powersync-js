@@ -1,5 +1,61 @@
 # example-vite
 
+## 0.0.27
+
+### Patch Changes
+
+- @powersync/web@1.0.2
+
+## 0.0.26
+
+### Patch Changes
+
+- @powersync/web@1.0.1
+
+## 0.0.25
+
+### Patch Changes
+
+- Updated dependencies [32dc7e3]
+- Updated dependencies [e86e61d]
+  - @powersync/web@1.0.0
+
+## 0.0.24
+
+### Patch Changes
+
+- Updated dependencies [c3f29a1]
+  - @powersync/web@0.8.1
+
+## 0.0.23
+
+### Patch Changes
+
+- Updated dependencies [7943626]
+- Updated dependencies [48cc01c]
+  - @powersync/web@0.8.0
+
+## 0.0.22
+
+### Patch Changes
+
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/web@0.7.0
+
+## 0.0.21
+
+### Patch Changes
+
+- c3588c0: Updated the vite conf include rules for bson, buffer, rsocket and cross-fetch.
+
+## 0.0.20
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/web@0.6.1
+
 ## 0.0.19
 
 ### Patch Changes

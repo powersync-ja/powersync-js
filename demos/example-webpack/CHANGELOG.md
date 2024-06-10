@@ -4,6 +4,50 @@
 
 ### Patch Changes
 
+- @powersync/web@1.0.2
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [32dc7e3]
+- Updated dependencies [e86e61d]
+  - @powersync/web@1.0.0
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [c3f29a1]
+  - @powersync/web@0.8.1
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [7943626]
+- Updated dependencies [48cc01c]
+  - @powersync/web@0.8.0
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/web@0.7.0
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [f5e42af]
+  - @powersync/web@0.6.1
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [395ea24]
 - Updated dependencies [9d1dc6f]
   - @powersync/web@0.6.0

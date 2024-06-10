@@ -6,9 +6,11 @@ import { DataStream } from '../../../utils/DataStream';
 import ndjsonStream from 'can-ndjson-stream';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
-import { serialize, deserialize } from 'bson';
+import type { BSON } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
 import { Buffer } from 'buffer';
+
+export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
@@ -34,6 +36,20 @@ export type SyncStreamOptions = {
   fetchOptions?: Request;
 };
 
+export type FetchImplementation = typeof fetch;
+
+/**
+ * Class wrapper for providing a fetch implementation.
+ * The class wrapper is used to distinguish the fetchImplementation
+ * option in [AbstractRemoteOptions] from the general fetch method
+ * which is typeof "function"
+ */
+export class FetchImplementationProvider {
+  getFetch(): FetchImplementation {
+    return fetch.bind(globalThis);
+  }
+}
+
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain
@@ -47,7 +63,7 @@ export type AbstractRemoteOptions = {
    * Note that this usually needs to be bound to the global scope.
    * Binding should be done before passing here.
    */
-  fetchImplementation: typeof fetch;
+  fetchImplementation: FetchImplementation | FetchImplementationProvider;
 };
 
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
@@ -55,7 +71,7 @@ export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
     url.replace(/^https?:\/\//, function (match) {
       return match === 'https://' ? 'wss://' : 'ws://';
     }),
-  fetchImplementation: fetch.bind(globalThis)
+  fetchImplementation: new FetchImplementationProvider()
 };
 
 export abstract class AbstractRemote {
@@ -73,8 +89,15 @@ export abstract class AbstractRemote {
     };
   }
 
-  get fetch() {
-    return this.options.fetchImplementation;
+  /**
+   * @returns a fetch implementation (function)
+   * which can be called to perform fetch requests
+   */
+  get fetch(): FetchImplementation {
+    const { fetchImplementation } = this.options;
+    return fetchImplementation instanceof FetchImplementationProvider
+      ? fetchImplementation.getFetch()
+      : fetchImplementation;
   }
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
@@ -125,7 +148,6 @@ export abstract class AbstractRemote {
 
   async get(path: string, headers?: Record<string, string>): Promise<any> {
     const request = await this.buildRequest(path);
-
     const res = await this.fetch(request.url, {
       method: 'GET',
       headers: {
@@ -172,11 +194,18 @@ export abstract class AbstractRemote {
   }
 
   /**
+   * Provides a BSON implementation. The import nature of this varies depending on the platform
+   */
+  abstract getBSON(): Promise<BSONImplementation>;
+
+  /**
    * Connects to the sync/stream websocket endpoint
    */
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const { path } = options;
     const request = await this.buildRequest(path);
+
+    const bson = await this.getBSON();
 
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
@@ -190,7 +219,7 @@ export abstract class AbstractRemote {
         payload: {
           data: null,
           metadata: Buffer.from(
-            serialize({
+            bson.serialize({
               token: request.headers.Authorization
             })
           )
@@ -223,7 +252,7 @@ export abstract class AbstractRemote {
       }
       socketIsClosed = true;
       rsocket.close();
-    }
+    };
     // We initially request this amount and expect these to arrive eventually
     let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
 
@@ -232,9 +261,9 @@ export abstract class AbstractRemote {
 
       const res = rsocket.requestStream(
         {
-          data: Buffer.from(serialize(options.data)),
+          data: Buffer.from(bson.serialize(options.data)),
           metadata: Buffer.from(
-            serialize({
+            bson.serialize({
               path
             })
           )
@@ -268,7 +297,7 @@ export abstract class AbstractRemote {
               return;
             }
 
-            const deserializedData = deserialize(data);
+            const deserializedData = bson.deserialize(data);
             stream.enqueueData(deserializedData);
           },
           onComplete: () => {

@@ -4,7 +4,6 @@ enum Packages {
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
   VueSdk = 'vue-sdk',
-  CommonSdk = 'common-sdk',
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk'
 }
@@ -42,13 +41,6 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/vue/src/index.ts'],
     tsconfig: '../packages/vue/tsconfig.json',
     id: Packages.VueSdk
-  },
-  [Packages.CommonSdk]: {
-    name: 'Common SDK',
-    dirName: Packages.CommonSdk,
-    entryPoints: ['../packages/common/src/index.ts'],
-    tsconfig: '../packages/common/tsconfig.json',
-    id: Packages.CommonSdk
   },
   [Packages.AttachmentsSdk]: {
     name: 'Attachments SDK',

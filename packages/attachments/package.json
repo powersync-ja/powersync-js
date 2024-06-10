@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.0.7",
+  "version": "2.0.10",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -26,8 +26,7 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w"
   },
-  "devDependencies": {},
-  "dependencies": {
-    "@powersync/common": "workspace:*"
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.9.0"
   }
 }

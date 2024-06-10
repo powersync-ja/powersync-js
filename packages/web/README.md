@@ -1,18 +1,14 @@
 <p align="center">
-  <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/19345049/602bafa0-41ce-4cee-a432-56848c278722"/></a>
+  <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
 # PowerSync SDK for Web
 
-[PowerSync](https://powersync.com) is a service and set of SDKs that keeps Postgres databases in sync with on-device SQLite databases.
+*[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline.*
 
 This package (`packages/web`) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/common`.
 
 See a summary of features [here](https://docs.powersync.com/client-sdk-references/js-web).
-
-## Beta Release
-
-The web SDK package is currently in a Beta release.
 
 # Installation
 
@@ -55,6 +51,14 @@ if (typeof self.Buffer == 'undefined') {
   self.Buffer = Buffer;
 }
 ```
+
+## Webpack
+
+See the [example Webpack config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-webpack/webpack.config.js) for details on polyfills and requirements.
+
+## Vite
+
+See the [example Vite config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-vite/vite.config.ts) for details on polyfills and requirements.
 
 # Getting Started
 

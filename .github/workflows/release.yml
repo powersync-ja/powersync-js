@@ -21,7 +21,7 @@ jobs:
       - uses: pnpm/action-setup@v2
         name: Install pnpm
         with:
-          version: 8
+          version: 9
           run_install: false
       - name: Get pnpm store directory
         shell: bash
@@ -40,6 +40,8 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
+          # Update the monorepo lockfile after versioning
+          version: pnpm changeset:version
           # This expects you to have a script called release which does a build for your packages and calls changeset publish
           publish: pnpm release
         env:

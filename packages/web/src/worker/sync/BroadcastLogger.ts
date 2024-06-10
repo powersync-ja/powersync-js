@@ -1,4 +1,4 @@
-import Logger, { ILogLevel, ILogger } from 'js-logger';
+import Logger, { type ILogLevel, type ILogger } from 'js-logger';
 import { type WrappedSyncPort } from './SharedSyncImplementation';
 
 /**
@@ -88,7 +88,7 @@ export class BroadcastLogger implements ILogger {
    * and proceeds to execute for all clients.
    */
   protected async iterateClients(callback: (client: WrappedSyncPort) => Promise<void>) {
-    for (let client of this.clients) {
+    for (const client of this.clients) {
       try {
         await callback(client);
       } catch (ex) {

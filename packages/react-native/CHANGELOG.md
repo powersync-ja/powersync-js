@@ -1,5 +1,62 @@
 # @powersync/react-native
 
+## 1.7.1
+
+### Patch Changes
+
+- Updated dependencies [1b66145]
+  - @powersync/common@1.11.1
+
+## 1.7.0
+
+### Minor Changes
+
+- 820a81d: Fixed potentially using incorrect `fetch` implementation by directly depending on `react-native-fetch-api`
+
+### Patch Changes
+
+- Updated dependencies [820a81d]
+  - @powersync/common@1.11.0
+
+## 1.6.2
+
+### Patch Changes
+
+- e86e61d: Update PowerSync branding
+- Updated dependencies [32dc7e3]
+  - @powersync/common@1.10.0
+
+## 1.6.1
+
+### Patch Changes
+
+- 48cc01c: Reinclude common package as a dependency
+- Updated dependencies [48cc01c]
+  - @powersync/react@1.3.5
+
+## 1.6.0
+
+### Minor Changes
+
+- 62e43aa: Improved import and usage of BSON library.
+
+### Patch Changes
+
+- 6b01811: Add @powersync/common as peer dependency
+- Updated dependencies [62e43aa]
+- Updated dependencies [6b01811]
+  - @powersync/common@1.9.0
+  - @powersync/react@1.3.4
+
+## 1.5.1
+
+### Patch Changes
+
+- f5e42af: Introduced base tsconfig. SourceMaps are now excluded in dev and release publishes.
+- Updated dependencies [f5e42af]
+  - @powersync/common@1.8.1
+  - @powersync/react@1.3.3
+
 ## 1.5.0
 
 ### Minor Changes

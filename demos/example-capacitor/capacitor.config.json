@@ -1,0 +1,11 @@
+{
+  "appId": "com.powersync.example",
+  "appName": "powersync-capacitor",
+  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
