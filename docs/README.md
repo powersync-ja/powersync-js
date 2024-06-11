@@ -4,11 +4,18 @@ This website is built using [Docusaurus 3](https://docusaurus.io/), a modern sta
 
 ### Installation
 
+In the root of the repo:
+
 ```bash
-pnpm
+pnpm install
+pnpm build:packages
 ```
 
 ### Local Development
+
+In this directory:
+
+Copy `.env.example` to `.env`.
 
 ```bash
 pnpm start

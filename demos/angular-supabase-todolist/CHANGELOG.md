@@ -1,5 +1,17 @@
 # PowerSync Angular Demo
 
+## 0.0.19
+
+### Patch Changes
+
+- @powersync/web@1.0.2
+
+## 0.0.18
+
+### Patch Changes
+
+- @powersync/web@1.0.1
+
 ## 0.0.17
 
 ### Patch Changes
