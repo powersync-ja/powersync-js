@@ -55,7 +55,14 @@ export interface SyncResponse {
   checkpoint?: Checkpoint;
 }
 
-export type StreamingSyncRequestParameterType = string | number | boolean | null | undefined;
+type JSONValue = string | number | boolean | null | undefined | JSONObject | JSONArray;
+
+interface JSONObject {
+  [key: string]: JSONValue;
+}
+type JSONArray = JSONValue[];
+
+export type StreamingSyncRequestParameterType = JSONValue;
 
 export interface StreamingSyncRequest {
   /**
