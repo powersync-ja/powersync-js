@@ -55,6 +55,8 @@ export interface SyncResponse {
   checkpoint?: Checkpoint;
 }
 
+export type StreamingSyncRequestParameterType = string | number | boolean | null | undefined;
+
 export interface StreamingSyncRequest {
   /**
    * Existing bucket states.
@@ -79,7 +81,7 @@ export interface StreamingSyncRequest {
   /**
    * Client parameters to be passed to the sync rules.
    */
-  parameters?: Record<string, any>;
+  parameters?: Record<string, StreamingSyncRequestParameterType>;
 }
 
 export interface StreamingSyncCheckpoint {

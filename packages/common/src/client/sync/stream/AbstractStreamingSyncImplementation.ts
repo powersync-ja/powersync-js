@@ -4,6 +4,7 @@ import Logger, { ILogger } from 'js-logger';
 
 import {
   BucketRequest,
+  StreamingSyncRequestParameterType,
   isStreamingKeepalive,
   isStreamingSyncCheckpoint,
   isStreamingSyncCheckpointComplete,
@@ -77,7 +78,7 @@ export interface PowerSyncConnectionOptions {
   /**
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
-  params?: Record<string, any>;
+  params?: Record<string, StreamingSyncRequestParameterType>;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
