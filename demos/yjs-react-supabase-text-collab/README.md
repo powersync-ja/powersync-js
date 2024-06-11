@@ -91,7 +91,7 @@ cp .env.local.template .env.local
 
 ### 8. Run the demo app
 
-In the repo directory, run the following to start the development server:
+In this directory, run the following to start the development server:
 
 ```bash
 pnpm dev

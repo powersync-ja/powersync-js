@@ -1,0 +1,68 @@
+.widget-wrapper {
+  user-select: none;
+  height: 328px;
+}
+
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.user-statuslog-text {
+  user-select: text;
+}
+
+.user-a-io {
+  --user-io-color: var(--user-orange);
+}
+
+.user-b-io {
+  --user-io-color: var(--user-pink);
+}
+
+.user__reads--active [class^='user'][class*='reads'],
+.user__writes--active [class^='user'][class*='writes'] {
+  [class$='pill'],
+  [class$='label'] {
+    background-color: var(--user-io-color);
+    border-color: var(--user-io-color);
+  }
+  [class$='label'] {
+    color: var(--user-dark);
+  }
+  #animate-arrows {
+    stroke-dasharray: 12;
+    stroke-dashoffset: 100;
+    animation-name: flow;
+  }
+}
+
+.log-container {
+  width: 248px;
+}
+
+.log-line {
+  margin-bottom: 0;
+  line-height: 1.4;
+}
+
+.toggle-button-green--on [class^='toggle-button-green'] {
+  opacity: 1;
+}
+
+.button-toggle--on [class^='button-toggle'] {
+  transform: translateX(222%) translateY(0px) translateZ(0px);
+}
+
+.toggle-button-green {
+  transition: opacity 500ms ease 0s;
+}
+
+.button-toggle {
+  transform-style: preserve-3d;
+  transition: transform 500ms ease 0s;
+  transform: translateX(0px) translateY(0px) translateZ(0px);
+}
