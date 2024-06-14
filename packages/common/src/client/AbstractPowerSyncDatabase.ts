@@ -29,16 +29,24 @@ import {
   PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
+import { SQLOpenFactory, SQLOpenOptions } from './SQLOpenFactory';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
-export interface PowerSyncDatabaseOptions {
+type OneOf<T, K extends keyof T = keyof T> = K extends keyof T
+  ? { [P in K]: T[K] } & Partial<Record<Exclude<keyof T, K>, never>>
+  : never;
+
+/**
+ * Base options for creating a {@link PowerSyncDatabase}
+ */
+export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
-  database: DBAdapter;
+
   /**
    * Delay for retrying sync streaming operations
    * from the PowerSync backend after an error occurs.
@@ -52,6 +60,16 @@ export interface PowerSyncDatabaseOptions {
   crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
+
+/**
+ * Options for opening a {@link PowerSyncDatabase} client.
+ */
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
+  OneOf<{
+    databaseOptions: SQLOpenOptions;
+    databaseOpenFactory: SQLOpenFactory;
+    database: DBAdapter;
+  }>;
 
 export interface SQLWatchOptions {
   signal?: AbortSignal;
@@ -146,8 +164,22 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected _schema: Schema;
 
+  private _database: DBAdapter;
+
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
+    const { database, databaseOpenFactory, databaseOptions } = options;
+
+    if (database) {
+      this._database = database;
+    } else if (databaseOpenFactory) {
+      this._database = databaseOpenFactory.openDB();
+    } else if (databaseOptions) {
+      this._database = this.openDBAdapter(databaseOptions);
+    } else {
+      throw new Error('Either [database], [databaseOpenFactory] or [databaseOptions]  are required.');
+    }
+
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
@@ -172,7 +204,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
    */
   get database() {
-    return this.options.database;
+    return this._database;
   }
 
   /**
@@ -181,6 +213,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   get connected() {
     return this.currentStatus?.connected || false;
   }
+
+  /**
+   * Opens the DBAdapter given open options using a default open factory
+   */
+  protected abstract openDBAdapter(options: SQLOpenOptions): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector
@@ -236,7 +273,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.options.database.execute('SELECT powersync_rs_version()');
+    const version = await this.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
     this.updateHasSynced();

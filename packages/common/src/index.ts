@@ -1,5 +1,6 @@
 export * from './client/AbstractPowerSyncDatabase';
 export * from './client/AbstractPowerSyncOpenFactory';
+export * from './client/SQLOpenFactory';
 export * from './client/connection/PowerSyncBackendConnector';
 export * from './client/connection/PowerSyncCredentials';
 export * from './client/sync/bucket/BucketStorageAdapter';

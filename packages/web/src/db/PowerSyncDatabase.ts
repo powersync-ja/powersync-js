@@ -7,7 +7,9 @@ import {
   type PowerSyncConnectionOptions,
   AbstractPowerSyncDatabase,
   SqliteBucketStorage,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS
+  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
+  DBAdapter,
+  SQLOpenOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { WebRemote } from './sync/WebRemote';
@@ -17,51 +19,93 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
+import { WASqliteOpenFactory } from './adapters/wa-sqlite/WASqliteOpenFactory';
+import { WebSQLFlags } from './adapters/AbstractWebSQLOpenFactory';
 
-export interface WebPowerSyncFlags {
+export const DEFAULT_POWERSYNC_FLAGS: WebPowerSyncFlags = {
+  broadcastLogs: true,
+  disableSSRWarning: false,
   /**
-   * Enables multi tab support
+   * Multiple tabs are by default not supported on Android, iOS and Safari.
+   * Other platforms will have multiple tabs enabled by default.
    */
-  enableMultiTabs?: boolean;
-  useWebWorker?: boolean;
-  /**
-   * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
-   */
-  ssrMode?: boolean;
+  enableMultiTabs:
+    typeof globalThis.navigator !== 'undefined' && // For SSR purposes
+    typeof SharedWorker !== 'undefined' &&
+    !navigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
+    !(window as any).safari,
+  useWebWorker: true
+};
+
+export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
    * Externally unload open PowerSync database instances when the window closes.
    * Setting this to `true` requires calling `close` on all open PowerSyncDatabase
    * instances before the window unloads
    */
   externallyUnload?: boolean;
-  /**
-   * Broadcast logs from shared workers, such as the shared sync worker,
-   * to individual tabs. This defaults to true.
-   */
-  broadcastLogs?: boolean;
 }
 
-export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
+export type WebPowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   flags?: WebPowerSyncFlags;
+};
+
+export function isServerSide() {
+  return typeof window == 'undefined';
 }
 
+export function resolveDBFlags(flags?: WebPowerSyncFlags): WebPowerSyncFlags {
+  const resolvedFlags = {
+    ...DEFAULT_POWERSYNC_FLAGS,
+    ssrMode: isServerSide(),
+    ...(flags ?? {})
+  };
+  if (typeof flags?.enableMultiTabs != 'undefined') {
+    resolvedFlags.enableMultiTabs = flags.enableMultiTabs;
+  }
+  if (flags?.useWebWorker === false) {
+    resolvedFlags.enableMultiTabs = false;
+  }
+  return resolvedFlags;
+}
+
+/**
+ * A PowerSync database which provides SQLite functionality
+ * which is automatically synced.
+ *
+ * @example
+ * ```typescript
+ * export const db = new PowerSyncDatabase({
+ *  schema: AppSchema,
+ *  databaseOptions: {
+ *    dbFilename: 'example.db'
+ *  }
+ * });
+ * ```
+ */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   static SHARED_MUTEX = new Mutex();
 
   protected unloadListener?: () => Promise<void>;
+  protected resolvedFlags: WebPowerSyncFlags;
 
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
-    const { flags } = this.options;
+    this.resolvedFlags = resolveDBFlags(options.flags);
 
-    if (flags?.enableMultiTabs && !flags.externallyUnload) {
+    if (this.resolvedFlags?.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
       this.unloadListener = () => this.close({ disconnect: false });
       window.addEventListener('unload', this.unloadListener);
     }
   }
 
   async _initialize(): Promise<void> {}
+
+  protected openDBAdapter(options: SQLOpenOptions): DBAdapter {
+    const defaultFactory = new WASqliteOpenFactory({ ...options, flags: this.resolvedFlags });
+    return defaultFactory.openDB();
+  }
 
   /**
    * Closes the database connection.
@@ -75,7 +119,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
-      disconnect: options.disconnect ?? !this.options.flags?.enableMultiTabs
+      disconnect: options.disconnect ?? !this.resolvedFlags.enableMultiTabs
     });
   }
 
@@ -96,10 +140,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected runExclusive<T>(cb: () => Promise<T>) {
-    if (this.options.flags?.ssrMode) {
+    if (this.resolvedFlags.ssrMode) {
       return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }
-    return navigator.locks.request(`lock-${this.options.database.name}`, cb);
+    return navigator.locks.request(`lock-${this.database.name}`, cb);
   }
 
   protected generateSyncStreamImplementation(
@@ -115,16 +159,16 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      identifier: this.options.database.name
+      identifier: this.database.name
     };
 
-    const { flags } = this.options;
+    const resolvedFlags = this.resolvedFlags;
 
     switch (true) {
-      case flags?.ssrMode:
+      case resolvedFlags.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
-      case flags?.enableMultiTabs:
-        if (!flags?.broadcastLogs) {
+      case resolvedFlags.enableMultiTabs:
+        if (!resolvedFlags.broadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context
