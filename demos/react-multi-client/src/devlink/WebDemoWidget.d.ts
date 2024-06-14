@@ -1,0 +1,36 @@
+import * as React from "react";
+import * as Types from "./types";
+
+declare function WebDemoWidget(props: {
+  as?: React.ElementType;
+  userAContent?: Types.Devlink.Slot;
+  userBContent?: Types.Devlink.Slot;
+  userAButtonCreate?: Types.Devlink.RuntimeProps;
+  userAButtonUpdate?: Types.Devlink.RuntimeProps;
+  userAButtonDelete?: Types.Devlink.RuntimeProps;
+  userBButtonCreate?: Types.Devlink.RuntimeProps;
+  userBButtonUpdate?: Types.Devlink.RuntimeProps;
+  userBButtonDelete?: Types.Devlink.RuntimeProps;
+  userALogText?: React.ReactNode;
+  userBLogText?: React.ReactNode;
+  userAOnline?: Types.Visibility.VisibilityConditions;
+  userBOnline?: Types.Visibility.VisibilityConditions;
+  userAOffline?: Types.Visibility.VisibilityConditions;
+  userBOffline?: Types.Visibility.VisibilityConditions;
+  userAWritesFalse?: Types.Visibility.VisibilityConditions;
+  userAWritesTrue?: Types.Visibility.VisibilityConditions;
+  userBWritesFalse?: Types.Visibility.VisibilityConditions;
+  userBWritesTrue?: Types.Visibility.VisibilityConditions;
+  userAReadsFalse?: Types.Visibility.VisibilityConditions;
+  userAReadsTrue?: Types.Visibility.VisibilityConditions;
+  userBReadsFalse?: Types.Visibility.VisibilityConditions;
+  userBReadsTrue?: Types.Visibility.VisibilityConditions;
+  userBRead?: Types.Devlink.RuntimeProps;
+  userBWrite?: Types.Devlink.RuntimeProps;
+  userARead?: Types.Devlink.RuntimeProps;
+  userAWrite?: Types.Devlink.RuntimeProps;
+  writeBackendToDb?: Types.Devlink.RuntimeProps;
+  readDbToPs?: Types.Devlink.RuntimeProps;
+  userASlot?: Types.Devlink.Slot;
+  userBSlot?: Types.Devlink.Slot;
+}): React.JSX.Element;
