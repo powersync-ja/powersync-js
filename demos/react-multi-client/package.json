@@ -1,0 +1,40 @@
+{
+  "name": "react-multi-client",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "start": "pnpm build && pnpm preview"
+  },
+  "dependencies": {
+    "@journeyapps/wa-sqlite": "~0.2.0",
+    "@powersync/react": "workspace:*",
+    "@powersync/web": "workspace:*",
+    "@supabase/supabase-js": "^2.43.1",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@webflow/webflow-cli": "^1.6.9",
+    "async-mutex": "^0.5.0",
+    "autoprefixer": "10.4.14",
+    "js-logger": "^1.6.1",
+    "lodash": "^4.17.21",
+    "postcss": "8.4.27",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/cors": "~2.8.17",
+    "@types/lodash": "^4.14.202",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.38",
+    "@types/react-dom": "^18.2.17",
+    "prettier": "^3.1.0",
+    "supabase": "^1.165.0",
+    "typescript": "^5.3.2",
+    "vite": "^5.1.5",
+    "vite-plugin-pwa": "^0.19.2",
+    "vite-plugin-top-level-await": "^1.4.1",
+    "vite-plugin-wasm": "^3.3.0"
+  }
+}
