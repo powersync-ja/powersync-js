@@ -55,6 +55,15 @@ export interface SyncResponse {
   checkpoint?: Checkpoint;
 }
 
+type JSONValue = string | number | boolean | null | undefined | JSONObject | JSONArray;
+
+interface JSONObject {
+  [key: string]: JSONValue;
+}
+type JSONArray = JSONValue[];
+
+export type StreamingSyncRequestParameterType = JSONValue;
+
 export interface StreamingSyncRequest {
   /**
    * Existing bucket states.
@@ -75,6 +84,11 @@ export interface StreamingSyncRequest {
    * Changes the response to stringified data in each OplogEntry
    */
   raw_data: boolean;
+
+  /**
+   * Client parameters to be passed to the sync rules.
+   */
+  parameters?: Record<string, StreamingSyncRequestParameterType>;
 }
 
 export interface StreamingSyncCheckpoint {

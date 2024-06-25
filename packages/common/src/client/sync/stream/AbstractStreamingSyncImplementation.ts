@@ -4,6 +4,7 @@ import Logger, { ILogger } from 'js-logger';
 
 import {
   BucketRequest,
+  StreamingSyncRequestParameterType,
   isStreamingKeepalive,
   isStreamingSyncCheckpoint,
   isStreamingSyncCheckpointComplete,
@@ -73,6 +74,11 @@ export interface PowerSyncConnectionOptions {
    * Defaults to a HTTP streaming connection.
    */
   connectionMethod?: SyncStreamConnectionMethod;
+
+  /**
+   * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
+   */
+  params?: Record<string, StreamingSyncRequestParameterType>;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
@@ -104,7 +110,8 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 };
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
-  connectionMethod: SyncStreamConnectionMethod.HTTP
+  connectionMethod: SyncStreamConnectionMethod.HTTP,
+  params: {}
 };
 
 export abstract class AbstractStreamingSyncImplementation
@@ -445,7 +452,8 @@ export abstract class AbstractStreamingSyncImplementation
           data: {
             buckets: req,
             include_checksum: true,
-            raw_data: true
+            raw_data: true,
+            parameters: resolvedOptions.params
           }
         };
 
