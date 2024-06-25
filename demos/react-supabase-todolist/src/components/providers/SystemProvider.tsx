@@ -19,7 +19,7 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  databaseOptions: {
+  database: {
     dbFilename: 'example.db'
   }
 });

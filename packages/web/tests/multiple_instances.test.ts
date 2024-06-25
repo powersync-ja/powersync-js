@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@powersync/common';
 import {
+  PowerSyncDatabase,
   SharedWebStreamingSyncImplementation,
-  WASQLitePowerSyncDatabaseOpenFactory,
   WebRemote,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
@@ -12,15 +12,18 @@ import { Mutex } from 'async-mutex';
 
 describe('Multiple Instances', () => {
   const dbFilename = 'test-multiple-instances.db';
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename,
-    schema: testSchema
-  });
-
   let db: AbstractPowerSyncDatabase;
 
+  const openDatabase = () =>
+    new PowerSyncDatabase({
+      database: {
+        dbFilename
+      },
+      schema: testSchema
+    });
+
   beforeEach(() => {
-    db = factory.getInstance();
+    db = openDatabase();
   });
 
   afterEach(async () => {
@@ -37,7 +40,7 @@ describe('Multiple Instances', () => {
     await createAsset();
 
     // Create a new connection and verify it can read existing assets
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
     const assets = await db2.getAll('SELECT * FROM assets');
     expect(assets.length).equals(1);
 
@@ -50,7 +53,7 @@ describe('Multiple Instances', () => {
      * The shared connection should only be closed if all PowerSync clients
      * close themselves.
      */
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
     await db2.close();
 
     // Create an asset on the first connection
@@ -58,7 +61,7 @@ describe('Multiple Instances', () => {
   });
 
   it('should watch table changes between instances', async () => {
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
 
     const watchedPromise = new Promise<void>(async (resolve) => {
       const controller = new AbortController();

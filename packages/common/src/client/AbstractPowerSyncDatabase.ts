@@ -29,21 +29,23 @@ import {
   PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
-import { SQLOpenFactory, SQLOpenOptions } from './SQLOpenFactory';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
-type OneOf<T, K extends keyof T = keyof T> = K extends keyof T
-  ? { [P in K]: T[K] } & Partial<Record<Exclude<keyof T, K>, never>>
-  : never;
+export interface PowerSyncDatabaseOptions {
+  /**
+   * Source for a SQLite database connection.
+   * This can be either:
+   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
+   *  = A {@link SQLOpenFactory} which will be used to open a SQLite connection
+   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
+   */
+  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
 
-/**
- * Base options for creating a {@link PowerSyncDatabase}
- */
-export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
 
@@ -60,16 +62,6 @@ export interface BasePowerSyncDatabaseOptions {
   crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
-
-/**
- * Options for opening a {@link PowerSyncDatabase} client.
- */
-export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
-  OneOf<{
-    databaseOptions: SQLOpenOptions;
-    databaseOpenFactory: SQLOpenFactory;
-    database: DBAdapter;
-  }>;
 
 export interface SQLWatchOptions {
   signal?: AbortSignal;
@@ -168,16 +160,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    const { database, databaseOpenFactory, databaseOptions } = options;
+    const { database } = options;
 
-    if (database) {
+    if (isDBAdapter(database)) {
       this._database = database;
-    } else if (databaseOpenFactory) {
-      this._database = databaseOpenFactory.openDB();
-    } else if (databaseOptions) {
-      this._database = this.openDBAdapter(databaseOptions);
-    } else {
-      throw new Error('Either [database], [databaseOpenFactory] or [databaseOptions]  are required.');
+    } else if (isSQLOpenFactory(database)) {
+      this._database = database.openDB();
+    } else if (isSQLOpenOptions(database)) {
+      this._database = this.openDBAdapter(database);
     }
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();

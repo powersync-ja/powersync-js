@@ -10,7 +10,7 @@ import {
 } from '@powersync/common';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Checkpoint } from '@powersync/common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { Mutex } from 'async-mutex';
 import { testSchema } from './utils/testDb';
 
@@ -58,19 +58,19 @@ const removeAsset1_5 = OplogEntry.fromRow({
 });
 
 describe('Bucket Storage', () => {
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test-bucket-storage.db',
-    flags: {
-      enableMultiTabs: false
-    },
-    schema: testSchema
-  });
-
   let db: AbstractPowerSyncDatabase;
   let bucketStorage: BucketStorageAdapter;
 
   beforeEach(async () => {
-    db = factory.getInstance();
+    db = new PowerSyncDatabase({
+      database: {
+        dbFilename: 'test-bucket-storage.db'
+      },
+      flags: {
+        enableMultiTabs: false
+      },
+      schema: testSchema
+    });
     await db.waitForReady();
     bucketStorage = new SqliteBucketStorage(db.database, new Mutex());
   });

@@ -19,7 +19,7 @@ import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick
  * ```typescript
  * export const db = new PowerSyncDatabase({
  *  schema: AppSchema,
- *  databaseOptions: {
+ *  database: {
  *    dbFilename: 'example.db'
  *  }
  * });

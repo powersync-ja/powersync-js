@@ -36,7 +36,7 @@ export class System {
     this.storage = this.supabaseConnector.storage;
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      databaseOptions: {
+      database: {
         dbFilename: 'sqlite.db'
       }
     });

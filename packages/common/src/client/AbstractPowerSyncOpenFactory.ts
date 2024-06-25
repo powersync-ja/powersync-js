@@ -1,14 +1,10 @@
 import Logger from 'js-logger';
 import { DBAdapter } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
-import {
-  AbstractPowerSyncDatabase,
-  BasePowerSyncDatabaseOptions,
-  PowerSyncDatabaseOptions
-} from './AbstractPowerSyncDatabase';
+import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
 import { SQLOpenOptions } from './SQLOpenFactory';
 
-export interface PowerSyncOpenFactoryOptions extends Partial<BasePowerSyncDatabaseOptions>, SQLOpenOptions {
+export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions>, SQLOpenOptions {
   /** Schema used for the local database. */
   schema: Schema;
 }

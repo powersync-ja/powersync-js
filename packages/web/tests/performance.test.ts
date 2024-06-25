@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Schema, TableV2, column } from '@powersync/common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 
 describe('Basic', () => {
   const users = new TableV2({
@@ -8,18 +8,16 @@ describe('Basic', () => {
     email: column.text
   });
 
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test-user.db',
-    flags: {
-      enableMultiTabs: false
-    },
-    schema: new Schema({ users })
-  });
-
   let db: AbstractPowerSyncDatabase;
 
   beforeEach(() => {
-    db = factory.getInstance();
+    db = new PowerSyncDatabase({
+      database: { dbFilename: 'test-user.db' },
+      flags: {
+        enableMultiTabs: false
+      },
+      schema: new Schema({ users })
+    });
   });
 
   afterEach(async () => {

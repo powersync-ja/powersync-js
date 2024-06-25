@@ -1,4 +1,4 @@
-import { column, Schema, TableV2, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { column, PowerSyncDatabase, Schema, TableV2 } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 
 const assets = new TableV2(
@@ -22,28 +22,17 @@ const customers = new TableV2({
 
 export const testSchema = new Schema({ assets, customers });
 
-export const dbFactory = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'test-bucket-storage.db',
-  flags: {
-    enableMultiTabs: false
-  },
-  schema: testSchema
-});
-
 export const generateTestDb = ({ useWebWorker } = { useWebWorker: true }) => {
-  const db = new WASQLitePowerSyncDatabaseOpenFactory({
-    /**
-     * Deleting the IndexDB seems to freeze the test.
-     * Use a new DB for each run to keep CRUD counters
-     * consistent
-     */
-    dbFilename: `test-crud-${uuid()}.db`,
+  const db = new PowerSyncDatabase({
+    database: {
+      dbFilename: `test-crud-${uuid()}.db`
+    },
     schema: testSchema,
     flags: {
       enableMultiTabs: false,
       useWebWorker
     }
-  }).getInstance();
+  });
 
   return db;
 };

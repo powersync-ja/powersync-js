@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 
 type SchemaVersionResult = {
   schema_version: number;
@@ -75,23 +75,21 @@ const generateSchemaTables = (assetsTableGenerator: () => Table = generateAssets
 const schema = new Schema(generateSchemaTables());
 
 describe('Schema Tests', () => {
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    /**
-     * Deleting the IndexDB seems to freeze the test.
-     * Use a new DB for each run to keep CRUD counters
-     * consistent
-     */
-    dbFilename: 'test.db',
-    schema,
-    flags: {
-      enableMultiTabs: false
-    }
-  });
-
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
-    powersync = factory.getInstance();
+    powersync = new PowerSyncDatabase({
+      /**
+       * Deleting the IndexDB seems to freeze the test.
+       * Use a new DB for each run to keep CRUD counters
+       * consistent
+       */
+      database: { dbFilename: 'test.db' },
+      schema,
+      flags: {
+        enableMultiTabs: false
+      }
+    });
   });
 
   afterEach(async () => {

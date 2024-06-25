@@ -8,7 +8,7 @@ import {
   PowerSyncDatabase,
   WebPowerSyncDatabaseOptions,
   WebPowerSyncFlags,
-  resolveDBFlags
+  resolveWebPowerSyncFlags
 } from '../../db/PowerSyncDatabase';
 
 /**
@@ -37,7 +37,7 @@ export abstract class AbstractWebPowerSyncDatabaseOpenFactory extends AbstractPo
       ...this.options,
       database: this.openDB(),
       schema: this.schema,
-      flags: resolveDBFlags(this.options.flags)
+      flags: resolveWebPowerSyncFlags(this.options.flags)
     };
   }
 

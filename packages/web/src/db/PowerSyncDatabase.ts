@@ -19,23 +19,8 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { WASqliteOpenFactory } from './adapters/wa-sqlite/WASqliteOpenFactory';
-import { WebSQLFlags } from './adapters/AbstractWebSQLOpenFactory';
-
-export const DEFAULT_POWERSYNC_FLAGS: WebPowerSyncFlags = {
-  broadcastLogs: true,
-  disableSSRWarning: false,
-  /**
-   * Multiple tabs are by default not supported on Android, iOS and Safari.
-   * Other platforms will have multiple tabs enabled by default.
-   */
-  enableMultiTabs:
-    typeof globalThis.navigator !== 'undefined' && // For SSR purposes
-    typeof SharedWorker !== 'undefined' &&
-    !navigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
-    !(window as any).safari,
-  useWebWorker: true
-};
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { DEFAULT_WEB_SQL_FLAGS, resolveWebSQLFlags, WebSQLFlags } from './adapters/web-sql-flags';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -46,28 +31,22 @@ export interface WebPowerSyncFlags extends WebSQLFlags {
   externallyUnload?: boolean;
 }
 
-export type WebPowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
+export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
   flags?: WebPowerSyncFlags;
+}
+
+export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
+  ...DEFAULT_WEB_SQL_FLAGS,
+  externallyUnload: false
 };
 
-export function isServerSide() {
-  return typeof window == 'undefined';
-}
-
-export function resolveDBFlags(flags?: WebPowerSyncFlags): WebPowerSyncFlags {
-  const resolvedFlags = {
+export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): WebPowerSyncFlags => {
+  return {
     ...DEFAULT_POWERSYNC_FLAGS,
-    ssrMode: isServerSide(),
-    ...(flags ?? {})
+    ...flags,
+    ...resolveWebSQLFlags(flags)
   };
-  if (typeof flags?.enableMultiTabs != 'undefined') {
-    resolvedFlags.enableMultiTabs = flags.enableMultiTabs;
-  }
-  if (flags?.useWebWorker === false) {
-    resolvedFlags.enableMultiTabs = false;
-  }
-  return resolvedFlags;
-}
+};
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -77,7 +56,7 @@ export function resolveDBFlags(flags?: WebPowerSyncFlags): WebPowerSyncFlags {
  * ```typescript
  * export const db = new PowerSyncDatabase({
  *  schema: AppSchema,
- *  databaseOptions: {
+ *  database: {
  *    dbFilename: 'example.db'
  *  }
  * });
@@ -92,9 +71,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
-    this.resolvedFlags = resolveDBFlags(options.flags);
+    this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
 
-    if (this.resolvedFlags?.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
+    if (this.resolvedFlags.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
       this.unloadListener = () => this.close({ disconnect: false });
       window.addEventListener('unload', this.unloadListener);
     }
@@ -103,7 +82,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   async _initialize(): Promise<void> {}
 
   protected openDBAdapter(options: SQLOpenOptions): DBAdapter {
-    const defaultFactory = new WASqliteOpenFactory({ ...options, flags: this.resolvedFlags });
+    const defaultFactory = new WASQLiteOpenFactory({ ...options, flags: this.resolvedFlags });
     return defaultFactory.openDB();
   }
 

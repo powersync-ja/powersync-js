@@ -17,3 +17,24 @@ export interface SQLOpenFactory {
    */
   openDB(): DBAdapter;
 }
+
+/**
+ * Tests if the input is a {@link SQLOpenOptions}
+ */
+export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
+  return typeof test == 'object' && 'dbFilename' in test;
+};
+
+/**
+ * Tests if input is a {@link SQLOpenFactory}
+ */
+export const isSQLOpenFactory = (test: any): test is SQLOpenFactory => {
+  return typeof test?.openDB == 'function';
+};
+
+/**
+ * Tests if input is a {@link DBAdapter}
+ */
+export const isDBAdapter = (test: any): test is DBAdapter => {
+  return typeof test?.writeTransaction == 'function';
+};
