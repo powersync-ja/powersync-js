@@ -26,7 +26,7 @@ const plugins = Object.entries(packageMap).map(([id, config]) => [
     expandObjects: true,
     useCodeBlocks: true,
     typeDeclarationFormat: 'table',
-    membersWithOwnFile: ['Class', 'Enum', 'Function', 'Interface'],
+    membersWithOwnFile: ['Class', 'Enum', 'Function'],
     textContentMappings: {
       'title.memberPage': '{name}'
     }
