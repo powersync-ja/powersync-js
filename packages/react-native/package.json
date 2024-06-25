@@ -6,10 +6,11 @@
     "access": "public"
   },
   "description": "PowerSync - sync Postgres with SQLite in your React Native app for offline-first and real-time data",
-  "main": "./lib/index.js",
+  "main": "./dist/main.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "scripts": {
     "build": "tsc -b",
