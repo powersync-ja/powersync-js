@@ -4,4 +4,4 @@
 '@powersync/web': minor
 ---
 
-Improved constructor behaviour of PowerSyncDatabase and logic for open factories
+Improved constructor behavior of `PowerSyncDatabase` and logic for open factories. Deprecated `RNQSPowerSyncDatabaseOpenFactory` and `WASQLitePowerSyncDatabaseOpenFactory`.
