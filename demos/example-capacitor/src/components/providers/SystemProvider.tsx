@@ -1,5 +1,5 @@
 import { PowerSyncContext } from '@powersync/react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
@@ -15,14 +15,14 @@ const isIOs = platform === 'ios';
 // Web worker implementation does not work on iOS
 const useWebWorker = !isIOs;
 
-const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'powersync2.db',
+const powerSync = new PowerSyncDatabase({
+  database: { dbFilename: 'powersync2.db' },
   schema: AppSchema,
   flags: {
     enableMultiTabs: false,
     useWebWorker
   }
-}).getInstance();
+});
 const connector = new BackendConnector();
 
 powerSync.connect(connector);

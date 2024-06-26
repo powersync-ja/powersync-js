@@ -9,6 +9,7 @@ import {
 import { testSchema } from './utils/testDb';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { Mutex } from 'async-mutex';
+import Logger from 'js-logger';
 
 describe('Multiple Instances', () => {
   const dbFilename = 'test-multiple-instances.db';
@@ -45,6 +46,47 @@ describe('Multiple Instances', () => {
     expect(assets.length).equals(1);
 
     await db2.close();
+  });
+
+  it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
+    const logger = Logger.get('test-logger');
+    const spiedErrorLogger = vi.spyOn(logger, 'error');
+    const spiedDebugLogger = vi.spyOn(logger, 'debug');
+    const db = new PowerSyncDatabase({
+      schema: testSchema,
+      database: {
+        dbFilename: 'log-test.sqlite'
+      },
+      logger
+    });
+
+    db.connect({
+      fetchCredentials: async () => {
+        return {
+          endpoint: 'http://localhost/does-not-exist',
+          token: 'none'
+        };
+      },
+      uploadData: async (db) => {}
+    });
+
+    // Should log that a connection attempt has been made
+    const message = 'Streaming sync iteration started';
+    await vi.waitFor(
+      () =>
+        expect(
+          spiedDebugLogger.mock.calls
+            .flat(1)
+            .find((argument) => typeof argument == 'string' && argument.includes(message))
+        ).exist,
+      { timeout: 2000 }
+    );
+
+    // The connection should fail with an error
+    await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+    // This test seems to take quite long while waiting for this disconnect call
+    await db.disconnectAndClear();
+    await db.close();
   });
 
   it('should maintain DB connections if instances call close', async () => {

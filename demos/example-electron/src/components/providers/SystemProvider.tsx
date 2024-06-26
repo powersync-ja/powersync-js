@@ -1,5 +1,5 @@
 import { PowerSyncContext } from '@powersync/react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
@@ -9,13 +9,13 @@ import { BackendConnector } from '../../library/powersync/BackendConnector.js';
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
-const powerSync = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'powersync2.db',
+const powerSync = new PowerSyncDatabase({
+  database: { dbFilename: 'powersync2.db' },
   schema: AppSchema,
   flags: {
     disableSSRWarning: true
   }
-}).getInstance();
+});
 const connector = new BackendConnector();
 
 powerSync.connect(connector);
