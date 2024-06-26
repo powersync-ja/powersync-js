@@ -141,13 +141,11 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       identifier: this.database.name
     };
 
-    const resolvedFlags = this.resolvedFlags;
-
     switch (true) {
-      case resolvedFlags.ssrMode:
+      case this.resolvedFlags.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
-      case resolvedFlags.enableMultiTabs:
-        if (!resolvedFlags.broadcastLogs) {
+      case this.resolvedFlags.enableMultiTabs:
+        if (!this.resolvedFlags.broadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context

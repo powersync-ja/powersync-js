@@ -13,9 +13,11 @@ import { ReactNativeQuickSqliteOpenFactory } from './ReactNativeQuickSQLiteOpenF
  * @deprecated {@link PowerSyncDatabase} can now be constructed directly
  * @example
  * ```typescript
- * const powersync = new PowerSyncDatabase({database: {
- *  dbFileName: 'powersync.db'
- * }});
+ * const powersync = new PowerSyncDatabase({
+ *  database: {
+ *    dbFileName: 'powersync.db'
+ *  }
+ * });
  * ```
  */
 export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseOpenFactory {
