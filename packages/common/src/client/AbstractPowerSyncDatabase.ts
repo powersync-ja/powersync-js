@@ -41,7 +41,7 @@ export interface PowerSyncDatabaseOptions {
    * Source for a SQLite database connection.
    * This can be either:
    *  - A {@link DBAdapter} if providing an instantiated SQLite connection
-   *  = A {@link SQLOpenFactory} which will be used to open a SQLite connection
+   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
    *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
    */
   database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
