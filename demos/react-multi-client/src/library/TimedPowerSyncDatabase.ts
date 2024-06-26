@@ -29,7 +29,7 @@ export class TimedPowerSyncDatabase extends PowerSyncDatabase {
 
   constructor(options: WebPowerSyncDatabaseOptions) {
     super(options);
-    this.localKey = `${this.options.database.name}_connecting`;
+    this.localKey = `${this.database.name}_connecting`;
   }
 
   registerListener(listener: Partial<TimedPowerSyncListener>) {
