@@ -54,7 +54,7 @@ export interface BasePowerSyncDatabaseOptions {
   logger?: ILogger;
 }
 
-export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & {
+export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
   /**
    * Source for a SQLite database connection.
    * This can be either:
@@ -63,7 +63,7 @@ export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & {
    *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
    */
   database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-};
+}
 
 export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
   database: DBAdapter;

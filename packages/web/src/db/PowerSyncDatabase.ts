@@ -79,7 +79,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   constructor(options: WebPowerSyncDatabaseOptionsWithOpenFactory);
   constructor(options: WebPowerSyncDatabaseOptionsWithSettings);
   constructor(options: WebPowerSyncDatabaseOptions);
-  constructor(options: WebPowerSyncDatabaseOptions) {
+  constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
     this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
