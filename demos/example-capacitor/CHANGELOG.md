@@ -1,5 +1,12 @@
 # example-capacitor
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/web@1.1.0
+
 ## 0.0.5
 
 ### Patch Changes
