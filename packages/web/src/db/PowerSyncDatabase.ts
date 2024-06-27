@@ -2,14 +2,17 @@ import {
   type AbstractStreamingSyncImplementation,
   type PowerSyncBackendConnector,
   type BucketStorageAdapter,
-  type PowerSyncDatabaseOptions,
   type PowerSyncCloseOptions,
   type PowerSyncConnectionOptions,
   AbstractPowerSyncDatabase,
   SqliteBucketStorage,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
   DBAdapter,
-  SQLOpenOptions
+  SQLOpenOptions,
+  PowerSyncDatabaseOptionsWithDBAdapter,
+  PowerSyncDatabaseOptionsWithOpenFactory,
+  PowerSyncDatabaseOptionsWithSettings,
+  PowerSyncDatabaseOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { WebRemote } from './sync/WebRemote';
@@ -31,9 +34,13 @@ export interface WebPowerSyncFlags extends WebSQLFlags {
   externallyUnload?: boolean;
 }
 
-export interface WebPowerSyncDatabaseOptions extends PowerSyncDatabaseOptions {
-  flags?: WebPowerSyncFlags;
-}
+type WithWebFlags<Base> = Base & { flags?: WebPowerSyncFlags };
+
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>;
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>;
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebFlags<PowerSyncDatabaseOptionsWithSettings>;
+
+export type WebPowerSyncDatabaseOptions = WithWebFlags<PowerSyncDatabaseOptions>;
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,
@@ -68,7 +75,11 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected unloadListener?: () => Promise<void>;
   protected resolvedFlags: WebPowerSyncFlags;
 
-  constructor(protected options: WebPowerSyncDatabaseOptions) {
+  constructor(options: WebPowerSyncDatabaseOptionsWithAdapter);
+  constructor(options: WebPowerSyncDatabaseOptionsWithOpenFactory);
+  constructor(options: WebPowerSyncDatabaseOptionsWithSettings);
+  constructor(options: WebPowerSyncDatabaseOptions);
+  constructor(options: WebPowerSyncDatabaseOptions) {
     super(options);
 
     this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);

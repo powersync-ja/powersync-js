@@ -36,16 +36,7 @@ export interface DisconnectAndClearOptions {
   clearLocal?: boolean;
 }
 
-export interface PowerSyncDatabaseOptions {
-  /**
-   * Source for a SQLite database connection.
-   * This can be either:
-   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
-   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
-   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
-   */
-  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-
+export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
 
@@ -61,6 +52,27 @@ export interface PowerSyncDatabaseOptions {
    */
   crudUploadThrottleMs?: number;
   logger?: ILogger;
+}
+
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & {
+  /**
+   * Source for a SQLite database connection.
+   * This can be either:
+   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
+   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
+   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
+   */
+  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
+};
+
+export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
+  database: DBAdapter;
+}
+export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
+  database: SQLOpenFactory;
+}
+export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
+  database: SQLOpenOptions;
 }
 
 export interface SQLWatchOptions {
@@ -158,6 +170,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private _database: DBAdapter;
 
+  constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
+  constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
+  constructor(options: PowerSyncDatabaseOptionsWithSettings);
+  constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
     const { database } = options;
