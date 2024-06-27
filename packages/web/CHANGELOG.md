@@ -1,5 +1,16 @@
 # @powersync/web
 
+## 1.1.0
+
+### Minor Changes
+
+- 590ee67: Added initial support for client parameters. These parameters can be specified as part of the `connect` method's options object.
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/common@1.12.0
+
 ## 1.0.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.12.0
+
+### Minor Changes
+
+- 590ee67: Added initial support for client parameters. These parameters can be specified as part of the `connect` method's options object.
+
 ## 1.11.1
 
 ### Patch Changes
