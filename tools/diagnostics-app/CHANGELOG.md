@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.1.12
+
+### Patch Changes
+
+- e78aa48: Display empty buckets in sync diagnostics
+- Updated dependencies [590ee67]
+  - @powersync/web@1.1.0
+
 ## 0.1.11
 
 ### Patch Changes
