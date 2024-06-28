@@ -1,5 +1,12 @@
 # diagnostics-app
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/web@1.2.0
+
 ## 0.1.12
 
 ### Patch Changes
