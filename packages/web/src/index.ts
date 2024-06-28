@@ -6,3 +6,6 @@ export * from './db/sync/SharedWebStreamingSyncImplementation';
 export * from './db/adapters/wa-sqlite/WASQLiteDBAdapter';
 export * from './db/adapters/wa-sqlite/WASQLitePowerSyncDatabaseOpenFactory';
 export * from './db/adapters/AbstractWebPowerSyncDatabaseOpenFactory';
+export * from './db/adapters/web-sql-flags';
+export * from './db/adapters/AbstractWebSQLOpenFactory';
+export * from './db/adapters/wa-sqlite/WASQLiteOpenFactory';

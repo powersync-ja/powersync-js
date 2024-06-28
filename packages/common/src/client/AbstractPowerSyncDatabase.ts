@@ -29,16 +29,17 @@ import {
   PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
   clearLocal?: boolean;
 }
 
-export interface PowerSyncDatabaseOptions {
+export interface BasePowerSyncDatabaseOptions {
   /** Schema used for the local database. */
   schema: Schema;
-  database: DBAdapter;
+
   /**
    * Delay for retrying sync streaming operations
    * from the PowerSync backend after an error occurs.
@@ -51,6 +52,27 @@ export interface PowerSyncDatabaseOptions {
    */
   crudUploadThrottleMs?: number;
   logger?: ILogger;
+}
+
+export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
+  /**
+   * Source for a SQLite database connection.
+   * This can be either:
+   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
+   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
+   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
+   */
+  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
+}
+
+export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
+  database: DBAdapter;
+}
+export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
+  database: SQLOpenFactory;
+}
+export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
+  database: SQLOpenOptions;
 }
 
 export interface SQLWatchOptions {
@@ -146,8 +168,24 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected _schema: Schema;
 
+  private _database: DBAdapter;
+
+  constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
+  constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
+  constructor(options: PowerSyncDatabaseOptionsWithSettings);
+  constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
+    const { database } = options;
+
+    if (isDBAdapter(database)) {
+      this._database = database;
+    } else if (isSQLOpenFactory(database)) {
+      this._database = database.openDB();
+    } else if (isSQLOpenOptions(database)) {
+      this._database = this.openDBAdapter(database);
+    }
+
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
@@ -172,7 +210,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * For the most part, behavior is the same whether querying on the underlying database, or on {@link AbstractPowerSyncDatabase}.
    */
   get database() {
-    return this.options.database;
+    return this._database;
   }
 
   /**
@@ -181,6 +219,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   get connected() {
     return this.currentStatus?.connected || false;
   }
+
+  /**
+   * Opens the DBAdapter given open options using a default open factory
+   */
+  protected abstract openDBAdapter(options: SQLOpenOptions): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector
@@ -236,7 +279,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.options.database.execute('SELECT powersync_rs_version()');
+    const version = await this.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
     this.updateHasSynced();

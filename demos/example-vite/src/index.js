@@ -1,4 +1,4 @@
-import { Column, ColumnType, WASQLitePowerSyncDatabaseOpenFactory, Schema, Table } from '@powersync/web';
+import { Column, ColumnType, Schema, Table, PowerSyncDatabase } from '@powersync/web';
 import Logger from 'js-logger';
 
 Logger.useDefaults();
@@ -26,10 +26,10 @@ export const AppSchema = new Schema([
 let PowerSync;
 
 const openDatabase = async () => {
-  PowerSync = new WASQLitePowerSyncDatabaseOpenFactory({
+  PowerSync = new PowerSyncDatabase({
     schema: AppSchema,
-    dbFilename: 'test.sqlite'
-  }).getInstance();
+    database: { dbFilename: 'test.sqlite' }
+  });
 
   await PowerSync.init();
 

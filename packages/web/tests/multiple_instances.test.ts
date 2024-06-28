@@ -1,26 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@powersync/common';
 import {
+  PowerSyncDatabase,
   SharedWebStreamingSyncImplementation,
-  WASQLitePowerSyncDatabaseOpenFactory,
   WebRemote,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
 import { testSchema } from './utils/testDb';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { Mutex } from 'async-mutex';
+import Logger from 'js-logger';
 
 describe('Multiple Instances', () => {
   const dbFilename = 'test-multiple-instances.db';
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename,
-    schema: testSchema
-  });
-
   let db: AbstractPowerSyncDatabase;
 
+  const openDatabase = () =>
+    new PowerSyncDatabase({
+      database: {
+        dbFilename
+      },
+      schema: testSchema
+    });
+
   beforeEach(() => {
-    db = factory.getInstance();
+    db = openDatabase();
   });
 
   afterEach(async () => {
@@ -37,11 +41,52 @@ describe('Multiple Instances', () => {
     await createAsset();
 
     // Create a new connection and verify it can read existing assets
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
     const assets = await db2.getAll('SELECT * FROM assets');
     expect(assets.length).equals(1);
 
     await db2.close();
+  });
+
+  it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
+    const logger = Logger.get('test-logger');
+    const spiedErrorLogger = vi.spyOn(logger, 'error');
+    const spiedDebugLogger = vi.spyOn(logger, 'debug');
+    const db = new PowerSyncDatabase({
+      schema: testSchema,
+      database: {
+        dbFilename: 'log-test.sqlite'
+      },
+      logger
+    });
+
+    db.connect({
+      fetchCredentials: async () => {
+        return {
+          endpoint: 'http://localhost/does-not-exist',
+          token: 'none'
+        };
+      },
+      uploadData: async (db) => {}
+    });
+
+    // Should log that a connection attempt has been made
+    const message = 'Streaming sync iteration started';
+    await vi.waitFor(
+      () =>
+        expect(
+          spiedDebugLogger.mock.calls
+            .flat(1)
+            .find((argument) => typeof argument == 'string' && argument.includes(message))
+        ).exist,
+      { timeout: 2000 }
+    );
+
+    // The connection should fail with an error
+    await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+    // This test seems to take quite long while waiting for this disconnect call
+    await db.disconnectAndClear();
+    await db.close();
   });
 
   it('should maintain DB connections if instances call close', async () => {
@@ -50,7 +95,7 @@ describe('Multiple Instances', () => {
      * The shared connection should only be closed if all PowerSync clients
      * close themselves.
      */
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
     await db2.close();
 
     // Create an asset on the first connection
@@ -58,7 +103,7 @@ describe('Multiple Instances', () => {
   });
 
   it('should watch table changes between instances', async () => {
-    const db2 = factory.getInstance();
+    const db2 = openDatabase();
 
     const watchedPromise = new Promise<void>(async (resolve) => {
       const controller = new AbortController();

@@ -14,11 +14,13 @@ import Logger, { type ILogger } from 'js-logger';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener } from '../../../worker/db/open-worker-database';
+import { WebSQLFlags } from '../web-sql-flags';
 
-export type WASQLiteFlags = {
-  enableMultiTabs?: boolean;
-  useWebWorker?: boolean;
-};
+/**
+ * These flags are the same as {@link WebSQLFlags}.
+ * This export is maintained only for API consistency
+ */
+export type WASQLiteFlags = WebSQLFlags;
 
 export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptions, 'schema'> {
   flags?: WASQLiteFlags;
@@ -30,7 +32,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
 }
 
 /**
- * Adapter for WA-SQLite
+ * Adapter for WA-SQLite SQLite connections.
  */
 export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   private initialized: Promise<void>;
