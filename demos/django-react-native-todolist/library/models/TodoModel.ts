@@ -13,7 +13,7 @@ export interface TodoRecord extends ModelRecord {
   list_id: string;
 }
 
-export const TODO_TABLE = 'api_todo';
+export const TODO_TABLE = 'todos';
 
 export class TodoModel extends AbstractModel<TodoRecord> {
   get table() {

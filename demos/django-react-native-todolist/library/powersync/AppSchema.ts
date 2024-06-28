@@ -2,9 +2,10 @@ import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powers
 
 export const AppSchema = new Schema([
   new Table({
-    name: 'api_todo',
+    name: 'todos',
     columns: [
       new Column({ name: 'list_id', type: ColumnType.TEXT }),
+      new Column({ name: 'photo_id', type: ColumnType.TEXT }),
       new Column({ name: 'created_at', type: ColumnType.TEXT }),
       new Column({ name: 'completed_at', type: ColumnType.TEXT }),
       new Column({ name: 'description', type: ColumnType.TEXT }),
@@ -12,10 +13,15 @@ export const AppSchema = new Schema([
       new Column({ name: 'created_by', type: ColumnType.TEXT }),
       new Column({ name: 'completed_by', type: ColumnType.TEXT })
     ],
-    indexes: [new Index({ name: 'list', columns: [new IndexedColumn({ name: 'list_id' })] })]
+    indexes: [
+      new Index({
+        name: 'list',
+        columns: [new IndexedColumn({ name: 'list_id' })]
+      })
+    ]
   }),
   new Table({
-    name: 'api_list',
+    name: 'lists',
     columns: [
       new Column({ name: 'created_at', type: ColumnType.TEXT }),
       new Column({ name: 'name', type: ColumnType.TEXT }),

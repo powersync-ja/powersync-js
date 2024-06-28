@@ -8,7 +8,7 @@ export interface ListRecord extends ModelRecord {
   owner_id: string;
 }
 
-export const LIST_TABLE = 'api_list';
+export const LIST_TABLE = 'lists';
 
 export class ListModel extends AbstractModel<ListRecord> {
   get table() {
