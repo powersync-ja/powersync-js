@@ -33,11 +33,6 @@ export class System {
     this.listStore = new ListStore(this);
     this.todoStore = new TodoStore(this);
 
-    makeObservable(this.powersync, {
-      currentStatus: observable,
-      closed: observable
-    });
-    makeAutoObservable(this);
   }
 
   async init() {
