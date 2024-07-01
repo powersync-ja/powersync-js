@@ -16,34 +16,34 @@ type PolyfillTest = {
 };
 
 const CommonPolyfills: PolyfillTest[] = [
-  {
-    name: 'TextEncoder',
-    test: () => typeof TextEncoder == 'undefined'
-  }
+  // {
+  //   name: 'TextEncoder',
+  //   test: () => typeof TextEncoder == 'undefined'
+  // }
 ];
 
 const SocketPolyfillTests: PolyfillTest[] = [
-  ...CommonPolyfills,
-  {
-    name: 'nextTick',
-    test: () => typeof process.nextTick == 'undefined'
-  },
-  {
-    name: 'Buffer',
-    test: () => typeof global.Buffer == 'undefined'
-  }
+  ...CommonPolyfills
+  // {
+  //   name: 'nextTick',
+  //   test: () => typeof process.nextTick == 'undefined'
+  // },
+  // {
+  //   name: 'Buffer',
+  //   test: () => typeof global.Buffer == 'undefined'
+  // }
 ];
 
 const HttpPolyfillTests: PolyfillTest[] = [
-  ...CommonPolyfills,
-  {
-    name: 'TextDecoder',
-    test: () => typeof TextDecoder == 'undefined'
-  },
-  {
-    name: 'ReadableStream',
-    test: () => typeof ReadableStream == 'undefined'
-  }
+  ...CommonPolyfills
+  // {
+  //   name: 'TextDecoder',
+  //   test: () => typeof TextDecoder == 'undefined'
+  // },
+  // {
+  //   name: 'ReadableStream',
+  //   test: () => typeof ReadableStream == 'undefined'
+  // }
 ];
 
 const validatePolyfills = (tests: PolyfillTest[]) => {

@@ -8,14 +8,12 @@ module.exports = {
     react: "require('react')",
     'react-native': "require('react-native')",
     '@powersync/react': "require('@powersync/react')",
-    bson: "require('bson')"
-    // crypto: "require('crypto')"
+    crypto: 'crypto'
   },
   output: {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist')
   },
-  target: ['es5', 'web'],
   module: {
     rules: [
       {
@@ -24,9 +22,7 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            cacheDirectory: true,
-            presets: ['module:metro-react-native-babel-preset'],
-            plugins: [['react-native-web', { commonjs: true }]]
+            presets: ['@babel/preset-env', '@babel/preset-react']
           }
         }
       }
