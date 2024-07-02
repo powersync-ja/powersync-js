@@ -44,7 +44,7 @@ export class DjangoConnector implements PowerSyncBackendConnector {
     }
     const session = await this.apiClient.getToken(userId);
     return {
-      endpoint: session.powersync_url,
+      endpoint: AppConfig.powersyncUrl,
       token: session.token ?? '',
       expiresAt: undefined,
       userID: userId

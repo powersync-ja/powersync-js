@@ -1,8 +1,5 @@
-import _ from 'lodash';
-import { AbstractModel, ModelRecord } from './AbstractModel';
-import { Transaction } from '@powersync/react-native';
-
-export interface TodoRecord extends ModelRecord {
+export interface TodoRecord {
+  id: string;
   created_at: string;
   completed: boolean;
   description: string;
@@ -14,42 +11,3 @@ export interface TodoRecord extends ModelRecord {
 }
 
 export const TODO_TABLE = 'todos';
-
-export class TodoModel extends AbstractModel<TodoRecord> {
-  get table() {
-    return TODO_TABLE;
-  }
-
-  async update(record: TodoRecord): Promise<void> {
-    await this.system.powersync.execute(
-      `UPDATE ${this.table} SET created_at = ?, completed = ?, completed_at = ?, description = ?, created_by = ?, completed_by = ?, list_id = ? WHERE id = ?`,
-      [
-        record.created_at,
-        record.completed,
-        record.completed_at,
-        record.description,
-        record.created_by,
-        record.completed_by,
-        record.list_id,
-        record.id
-      ]
-    );
-    _.merge(this.record, record);
-  }
-
-  async toggleCompletion(completed: boolean) {
-    const { userID } = await this.system.djangoConnector.fetchCredentials();
-
-    return this.update({
-      ...this.record,
-      completed_at: completed ? new Date().toISOString() : undefined,
-      completed,
-      completed_by: completed ? userID : undefined
-    });
-  }
-
-  async _delete(tx: Transaction): Promise<void> {
-    await tx.execute(`DELETE FROM  ${this.table} WHERE id = ?`, [this.id]);
-    this.system.todoStore.removeModel(this);
-  }
-}

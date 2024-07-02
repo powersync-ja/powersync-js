@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
+    "@craftzdog/react-native-buffer": "^6.0.5",
     "@expo/vector-icons": "^14.0.0",
     "@journeyapps/react-native-quick-sqlite": "^1.1.7",
     "@powersync/common": "workspace:*",
