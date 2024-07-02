@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { observer } from 'mobx-react-lite';
-import { useSystem } from '../library/stores/system';
 import { router } from 'expo-router';
 import Logger from 'js-logger';
 /**
@@ -10,9 +8,7 @@ import Logger from 'js-logger';
  *  - If one is present redirect to app views.
  *  - If not, reditect to login/register flow
  */
-const App = observer(() => {
-  const { djangoConnector } = useSystem();
-
+const App = () => {
   React.useEffect(() => {
     Logger.useDefaults();
     Logger.setLevel(Logger.DEBUG);
@@ -25,6 +21,6 @@ const App = observer(() => {
       <ActivityIndicator />
     </View>
   );
-});
+};
 
 export default App;

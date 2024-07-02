@@ -1,7 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB } from 'react-native-elements';
-import { observer } from 'mobx-react-lite';
 import prompt from 'react-native-prompt-android';
 
 import { useSystem } from '../../../library/stores/system';
@@ -10,7 +9,7 @@ import { Stack } from 'expo-router';
 import { LIST_TABLE } from '../../../library/models/ListModel';
 import { useQuery } from '@powersync/react';
 
-const App = observer(() => {
+const App = () => {
   const system = useSystem();
   const { data: lists } = useQuery(`SELECT * FROM ${LIST_TABLE}`);
 
@@ -55,6 +54,6 @@ const App = observer(() => {
       <StatusBar style={'light'} />
     </View>
   );
-});
+};
 
 export default App;

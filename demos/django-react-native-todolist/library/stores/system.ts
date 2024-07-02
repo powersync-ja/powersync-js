@@ -1,7 +1,6 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import React from 'react';
-import { configure } from 'mobx';
 import {
   AbstractPowerSyncDatabase,
   RNQSPowerSyncDatabaseOpenFactory,
@@ -19,10 +18,6 @@ if (typeof global.Buffer == 'undefined') {
   // @ts-ignore
   global.Buffer = Buffer;
 }
-
-configure({
-  enforceActions: 'never' // TODO for when PowerSyncDatabase is more observable friendly
-});
 
 export class System {
   djangoConnector: DjangoConnector;

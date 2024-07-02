@@ -1,11 +1,10 @@
 import { View, Text, ActivityIndicator } from 'react-native';
-import { observer } from 'mobx-react-lite';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@powersync/react';
 import { LIST_TABLE, ListRecord } from '../../../../library/models/ListModel';
 import { ListTodosWidget } from '../../../../library/widgets/ListTodosWidget';
 
-const TodoView = observer(() => {
+const TodoView = () => {
   const params = useLocalSearchParams<{ id: string }>();
 
   const id = params.id;
@@ -25,6 +24,6 @@ const TodoView = observer(() => {
   }
 
   return <ListTodosWidget record={listRecord} />;
-});
+};
 
 export default TodoView;
