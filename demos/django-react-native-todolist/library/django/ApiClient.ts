@@ -37,7 +37,7 @@ export class ApiClient {
   }
 
   async getToken(userId: string) {
-    const response = await fetch(`${this.baseUrl}/api/get_token/`, {
+    const response = await fetch(`${this.baseUrl}/api/get_powersync_token/`, {
       method: 'GET',
       headers: this.headers
     });

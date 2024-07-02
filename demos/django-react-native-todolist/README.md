@@ -25,12 +25,31 @@ Run on Android
 pnpm android
 ```
 
-## Set up Django Backend
+## Service Configuration
+
+This demo can be used with cloud or local services.
+
+### Local Services
+
+The [Self Hosting Demo](https://github.com/powersync-ja/self-host-demo) repository contains a Docker Compose Django backend demo which can be used with this client.
+See [instructions](https://github.com/powersync-ja/self-host-demo/blob/feature/django-backend/demos/django/README.md) for starting the backend locally.
+
+#### Android
+
+Note that Android requires port forwarding of local services. These can be configured with ADB as below:
+
+```bash
+adb reverse tcp:8080 tcp:8080 && adb reverse tcp:6061 tcp:6061
+```
+
+### Cloud Services
+
+#### Set up Django Backend
 
 This demo requires that you have the [PowerSync Django Backend: Todo List Demo](https://github.com/powersync-ja/powersync-django-backend-todolist-demo) running on your machine.
 Follow the guide in the README of the PowerSync Django Backend to set it up.
 
-## Set up PowerSync Instance
+#### Set up PowerSync Instance
 
 Create a new PowerSync instance, connecting to the database of the Supabase project.
 
@@ -46,7 +65,7 @@ bucket_definitions:
       - select * from todos
 ```
 
-## Configure The App
+#### Configure The App
 
 Copy the `AppConfig.template.ts` to a usable file
 
