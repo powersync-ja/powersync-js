@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
 import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { generateTestDb, testSchema } from './utils/testDb';
+import { generateTestDb } from './utils/testDb';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 

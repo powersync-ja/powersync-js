@@ -4,6 +4,13 @@
 
 ### Patch Changes
 
+- Updated dependencies [dca599f]
+  - @powersync/web@1.2.0
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [590ee67]
   - @powersync/web@1.1.0
 

@@ -1,5 +1,5 @@
 import { PowerSyncContext } from '@powersync/react';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
@@ -17,10 +17,12 @@ if (typeof self.Buffer == 'undefined') {
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
 
-export const db = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'example.db',
-  schema: AppSchema
-}).getInstance();
+export const db = new PowerSyncDatabase({
+  schema: AppSchema,
+  database: {
+    dbFilename: 'example.db'
+  }
+});
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [connector] = React.useState(new SupabaseConnector());

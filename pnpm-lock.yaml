@@ -1365,7 +1365,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.12.0
+        specifier: workspace:^1.13.0
         version: link:../common
       kysely:
         specifier: ^0.27.2

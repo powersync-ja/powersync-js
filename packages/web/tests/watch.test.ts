@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { v4 as uuid } from 'uuid';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { testSchema } from './utils/testDb';
 vi.useRealTimers();
 
@@ -16,18 +16,16 @@ vi.useRealTimers();
 const throttleDuration = 1000;
 
 describe('Watch Tests', () => {
-  const factory = new WASQLitePowerSyncDatabaseOpenFactory({
-    dbFilename: 'test-watch.db',
-    schema: testSchema,
-    flags: {
-      enableMultiTabs: false
-    }
-  });
-
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
-    powersync = factory.getInstance();
+    powersync = new PowerSyncDatabase({
+      database: { dbFilename: 'test-watch.db' },
+      schema: testSchema,
+      flags: {
+        enableMultiTabs: false
+      }
+    });
   });
 
   afterEach(async () => {

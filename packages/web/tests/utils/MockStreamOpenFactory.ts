@@ -138,7 +138,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      identifier: this.options.database.name,
+      identifier: this.database.name,
       retryDelayMs: 0
     });
   }
