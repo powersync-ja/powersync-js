@@ -23,8 +23,21 @@ export class ApiClient {
     return await response.json();
   }
 
+  async register(username: string, password: string) {
+    const requestBody = { username, password };
+    const response = await fetch(`${this.baseUrl}/api/register/`, {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+      headers: this.headers
+    });
+    if (response.status !== 200) {
+      throw new Error(`Server returned HTTP ${response.status}, ${await response.text()}`);
+    }
+    return await response.json();
+  }
+
   async getToken(userId: string) {
-    const response = await fetch(`${this.baseUrl}/api/get_token/`, {
+    const response = await fetch(`${this.baseUrl}/api/get_powersync_token/`, {
       method: 'GET',
       headers: this.headers
     });
@@ -32,6 +45,16 @@ export class ApiClient {
       throw new Error(`Server returned HTTP ${response.status}`);
     }
     return await response.json();
+  }
+
+  async getSession() {
+    const response = await fetch(`${this.baseUrl}/api/get_session/`, {
+      method: 'GET',
+      headers: this.headers
+    });
+    if (response.status !== 200) {
+      throw new Error(`Server returned HTTP ${response.status}`);
+    }
   }
 
   async update(data: any): Promise<void> {

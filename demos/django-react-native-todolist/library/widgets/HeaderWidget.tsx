@@ -5,12 +5,11 @@ import { useNavigation } from 'expo-router';
 import { useSystem } from '../stores/system';
 import { useStatus } from '@powersync/react';
 import { Header } from 'react-native-elements';
-import { observer } from 'mobx-react-lite';
 import { DrawerActions } from '@react-navigation/native';
 
 export const HeaderWidget: React.FC<{
   title?: string;
-}> = observer((props) => {
+}> = (props) => {
   const { title } = props;
   const { powersync } = useSystem();
   const status = useStatus();
@@ -39,7 +38,8 @@ export const HeaderWidget: React.FC<{
           onPress={() => {
             Alert.alert(
               'Status',
-              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${status.lastSyncedAt?.toISOString() ?? '-'
+              `${status.connected ? 'Connected' : 'Disconnected'}. \nLast Synced at ${
+                status.lastSyncedAt?.toISOString() ?? '-'
               }\nVersion: ${powersync.sdkVersion}`
             );
           }}
@@ -48,4 +48,4 @@ export const HeaderWidget: React.FC<{
       centerComponent={<Text style={{ padding: 5, color: '#fff' }}>{title}</Text>}
     />
   );
-});
+};

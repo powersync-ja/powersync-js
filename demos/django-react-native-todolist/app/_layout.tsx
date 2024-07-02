@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
-import React from 'react';
+import { PowerSyncContext } from '@powersync/react';
+import { useSystem } from '../library/stores/system';
 
 /**
  * This App uses a nested navigation stack.
@@ -16,14 +17,16 @@ import React from 'react';
  *          - Sign out. Psuedo view to initiate signout flow. Navigates back to first layer.
  */
 const HomeLayout = () => {
+  const system = useSystem();
   return (
-    <Stack screenOptions={{ headerTintColor: '#fff', headerStyle: { backgroundColor: '#2196f3' } }}>
-      <Stack.Screen name="signin" options={{ title: 'Supabase Login' }} />
-      <Stack.Screen name="register" options={{ title: 'Register' }} />
-
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="views" options={{ headerShown: false }} />
-    </Stack>
+    <PowerSyncContext.Provider value={system.powersync}>
+      <Stack screenOptions={{ headerTintColor: '#fff', headerStyle: { backgroundColor: '#2196f3' } }}>
+        <Stack.Screen name="signin" options={{ title: 'Supabase Login' }} />
+        <Stack.Screen name="register" options={{ title: 'Register' }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="views" options={{ headerShown: false }} />
+      </Stack>
+    </PowerSyncContext.Provider>
   );
 };
 
