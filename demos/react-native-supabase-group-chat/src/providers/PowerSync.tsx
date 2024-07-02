@@ -1,17 +1,14 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
-import { PowerSyncContext, RNQSPowerSyncDatabaseOpenFactory } from '@powersync/react-native';
+import { PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
+import Logger from 'js-logger';
 import { ReactNode, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
 import { Connector } from '../lib/connector';
 import { schema } from '../lib/schema';
 
-const factory = new RNQSPowerSyncDatabaseOpenFactory({
-  schema,
-  dbFilename: 'test.sqlite'
-  //location: 'optional location directory to DB file'
-});
+Logger.useDefaults();
 
 const connector = new Connector();
 
@@ -19,7 +16,12 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
   const { isSyncEnabled } = useAuth();
 
   const powerSync = useMemo(() => {
-    const powerSync = factory.getInstance();
+    const powerSync = new PowerSyncDatabase({
+      schema,
+      database: { dbFilename: 'test.sqlite' }
+      //location: 'optional location directory to DB file'
+    });
+
     powerSync.init();
 
     if (isSyncEnabled) {

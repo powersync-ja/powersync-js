@@ -1,5 +1,29 @@
 # @powersync/common
 
+## 1.13.0
+
+### Minor Changes
+
+- dca599f: Improved constructor behavior of `PowerSyncDatabase` and logic for open factories. Deprecated `RNQSPowerSyncDatabaseOpenFactory` and `WASQLitePowerSyncDatabaseOpenFactory`.
+
+## 1.12.0
+
+### Minor Changes
+
+- 590ee67: Added initial support for client parameters. These parameters can be specified as part of the `connect` method's options object.
+
+## 1.11.1
+
+### Patch Changes
+
+- 1b66145: Fixed CRUD uploads which would not retry after failing until the connection status was updated. A failed CRUD operation should not change the status to `connected: false`.
+
+## 1.11.0
+
+### Minor Changes
+
+- 820a81d: [internal] Added ability to provide fetch implementation via FetchImplementationProvider
+
 ## 1.10.0
 
 ### Minor Changes

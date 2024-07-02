@@ -1,5 +1,41 @@
 # @powersync/react-native
 
+## 1.8.0
+
+### Minor Changes
+
+- dca599f: Improved constructor behavior of `PowerSyncDatabase` and logic for open factories. Deprecated `RNQSPowerSyncDatabaseOpenFactory` and `WASQLitePowerSyncDatabaseOpenFactory`.
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/common@1.13.0
+
+## 1.7.2
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/common@1.12.0
+
+## 1.7.1
+
+### Patch Changes
+
+- Updated dependencies [1b66145]
+  - @powersync/common@1.11.1
+
+## 1.7.0
+
+### Minor Changes
+
+- 820a81d: Fixed potentially using incorrect `fetch` implementation by directly depending on `react-native-fetch-api`
+
+### Patch Changes
+
+- Updated dependencies [820a81d]
+  - @powersync/common@1.11.0
+
 ## 1.6.2
 
 ### Patch Changes

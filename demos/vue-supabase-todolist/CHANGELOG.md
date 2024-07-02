@@ -1,5 +1,32 @@
 # vue-supabase-todolist
 
+## 0.0.18
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/web@1.2.0
+
+## 0.0.17
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/web@1.1.0
+
+## 0.0.16
+
+### Patch Changes
+
+- 7ac4911: Updated Vuetify dependency, used lab components are now in Vuetify core library.
+  - @powersync/web@1.0.2
+
+## 0.0.15
+
+### Patch Changes
+
+- @powersync/web@1.0.1
+
 ## 0.0.14
 
 ### Patch Changes

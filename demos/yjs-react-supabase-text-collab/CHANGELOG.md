@@ -1,5 +1,31 @@
 # yjs-react-supabase-text-collab
 
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/web@1.2.0
+
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/web@1.1.0
+
+## 0.1.10
+
+### Patch Changes
+
+- @powersync/web@1.0.2
+
+## 0.1.9
+
+### Patch Changes
+
+- @powersync/web@1.0.1
+
 ## 0.1.8
 
 ### Patch Changes

@@ -2,18 +2,11 @@ import Logger from 'js-logger';
 import { DBAdapter } from '../db/DBAdapter';
 import { Schema } from '../db/schema/Schema';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase';
+import { SQLOpenOptions } from './SQLOpenFactory';
 
-export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions> {
+export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOptions>, SQLOpenOptions {
   /** Schema used for the local database. */
   schema: Schema;
-  /**
-   * Filename for the database.
-   */
-  dbFilename: string;
-  /**
-   * Directory where the database file is located.
-   */
-  dbLocation?: string;
 }
 
 export abstract class AbstractPowerSyncDatabaseOpenFactory {

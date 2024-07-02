@@ -15,8 +15,8 @@ const config = [
     },
     plugins: [
       json(),
-      nodeResolve({}),
-      commonjs(),
+      nodeResolve({ preferBuiltins: false }),
+      commonjs({}),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
         ReadableStream: ['web-streams-polyfill', 'ReadableStream'],
@@ -24,7 +24,14 @@ const config = [
         TextDecoder: ['text-encoding', 'TextDecoder']
       })
     ],
-    external: ['bson', 'react-native', 'react', '@powersync/react', 'node-fetch']
+    external: [
+      'bson',
+      'react-native',
+      'react-native/Libraries/Blob/BlobManager',
+      'react',
+      '@powersync/react',
+      'node-fetch'
+    ]
   }
 ];
 

@@ -1,5 +1,41 @@
 # @powersync/web
 
+## 1.2.0
+
+### Minor Changes
+
+- dca599f: Improved constructor behavior of `PowerSyncDatabase` and logic for open factories. Deprecated `RNQSPowerSyncDatabaseOpenFactory` and `WASQLitePowerSyncDatabaseOpenFactory`.
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/common@1.13.0
+
+## 1.1.0
+
+### Minor Changes
+
+- 590ee67: Added initial support for client parameters. These parameters can be specified as part of the `connect` method's options object.
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/common@1.12.0
+
+## 1.0.2
+
+### Patch Changes
+
+- Updated dependencies [1b66145]
+  - @powersync/common@1.11.1
+
+## 1.0.1
+
+### Patch Changes
+
+- Updated dependencies [820a81d]
+  - @powersync/common@1.11.0
+
 ## 1.0.0
 
 ### Major Changes

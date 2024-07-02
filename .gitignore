@@ -6,3 +6,5 @@ tsconfig.tsbuildinfo
 .DS_STORE
 .idea
 .fleet
+# Useful if running repository in VSCode dev container
+.pnpm-store

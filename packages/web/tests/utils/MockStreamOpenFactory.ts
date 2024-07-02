@@ -27,7 +27,8 @@ export class TestConnector implements PowerSyncBackendConnector {
     };
   }
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
-    return;
+    const tx = await database.getNextCrudTransaction();
+    await tx?.complete();
   }
 }
 
@@ -49,8 +50,16 @@ export class MockRemote extends AbstractRemote {
   post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {
     throw new Error('Method not implemented.');
   }
-  get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
-    throw new Error('Method not implemented.');
+  async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
+    // mock a response for write checkpoint API
+    if (path.includes('checkpoint')) {
+      return {
+        data: {
+          write_checkpoint: '1000'
+        }
+      };
+    }
+    throw new Error('Not implemented');
   }
   async postStreaming(
     path: string,
@@ -129,7 +138,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      identifier: this.options.database.name,
+      identifier: this.database.name,
       retryDelayMs: 0
     });
   }

@@ -1,5 +1,38 @@
 # django-react-native-todolist
 
+## 1.1.10
+
+### Patch Changes
+
+- Updated dependencies [dca599f]
+  - @powersync/react-native@1.8.0
+  - @powersync/common@1.13.0
+
+## 1.1.9
+
+### Patch Changes
+
+- Updated dependencies [590ee67]
+  - @powersync/common@1.12.0
+  - @powersync/react-native@1.7.2
+
+## 1.1.8
+
+### Patch Changes
+
+- Updated dependencies [1b66145]
+  - @powersync/common@1.11.1
+  - @powersync/react-native@1.7.1
+
+## 1.1.7
+
+### Patch Changes
+
+- Updated dependencies [820a81d]
+- Updated dependencies [820a81d]
+  - @powersync/react-native@1.7.0
+  - @powersync/common@1.11.0
+
 ## 1.1.6
 
 ### Patch Changes
