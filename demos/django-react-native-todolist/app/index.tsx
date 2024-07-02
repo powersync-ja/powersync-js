@@ -17,20 +17,7 @@ const App = observer(() => {
     Logger.useDefaults();
     Logger.setLevel(Logger.DEBUG);
 
-    const getSession = async () => {
-      const response = await fetch('http://127.0.0.1:8000/api/get_session', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      if (data) {
-        router.replace('signin');
-      }
-    };
-
-    getSession();
+    setImmediate(() => router.replace('signin'));
   }, []);
 
   return (
