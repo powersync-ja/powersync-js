@@ -25,12 +25,13 @@ const config = [
       })
     ],
     external: [
+      '@journeyapps/react-native-quick-sqlite',
+      '@powersync/react',
       'bson',
+      'node-fetch',
       'react-native',
       'react-native/Libraries/Blob/BlobManager',
-      'react',
-      '@powersync/react',
-      'node-fetch'
+      'react'
     ]
   }
 ];

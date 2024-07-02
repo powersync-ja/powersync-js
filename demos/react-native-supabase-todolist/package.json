@@ -22,7 +22,7 @@
     "@supabase/supabase-js": "^2.33.1",
     "base-64": "^1.0.0",
     "base64-arraybuffer": "^1.0.2",
-    "expo": "~51.0.10",
+    "expo": "51.0.10",
     "expo-build-properties": "~0.12.1",
     "expo-camera": "~15.0.10",
     "expo-constants": "~16.0.2",
