@@ -31,6 +31,10 @@ export class DjangoConnector implements PowerSyncBackendConnector {
     }
   }
 
+  async register(username: string, password: string) {
+    return this.apiClient.register(username, password);
+  }
+
   async fetchCredentials() {
     // The demo does not invalidate or update a user token, you should implement this in your app
     // The app stores the user id in local storage
@@ -40,7 +44,7 @@ export class DjangoConnector implements PowerSyncBackendConnector {
     }
     const session = await this.apiClient.getToken(userId);
     return {
-      endpoint: session.powersync_url,
+      endpoint: AppConfig.powersyncUrl,
       token: session.token ?? '',
       expiresAt: undefined,
       userID: userId

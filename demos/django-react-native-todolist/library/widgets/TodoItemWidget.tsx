@@ -1,14 +1,15 @@
 import React from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { ListItem, Icon } from 'react-native-elements';
-import { TodoModel } from '../models/TodoModel';
+import { usePowerSync } from '@powersync/react';
+import { TODO_TABLE, TodoRecord } from '../powersync/AppSchema';
 
 export const TodoItemWidget: React.FC<{
-  model: TodoModel;
+  record: TodoRecord;
 }> = (props) => {
-  const { model } = props;
+  const { record } = props;
   const [loading, setLoading] = React.useState(false);
-
+  const powerSync = usePowerSync();
   return (
     <View style={{ padding: 10 }}>
       <ListItem bottomDivider>
@@ -19,11 +20,14 @@ export const TodoItemWidget: React.FC<{
             iconType="material-community"
             checkedIcon="checkbox-marked"
             uncheckedIcon="checkbox-blank-outline"
-            checked={!!model.record.completed}
+            checked={!!record.completed}
             onPress={async () => {
               setLoading(true);
               try {
-                await model.toggleCompletion(!model.record.completed);
+                await powerSync.execute(`UPDATE ${TODO_TABLE} SET completed =? WHERE id = ?`, [
+                  !record.completed,
+                  record.id
+                ]);
               } catch (ex) {
                 console.error(ex);
               } finally {
@@ -33,7 +37,7 @@ export const TodoItemWidget: React.FC<{
           />
         )}
         <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title>{model.record.description}</ListItem.Title>
+          <ListItem.Title>{record.description}</ListItem.Title>
         </ListItem.Content>
         <Icon
           name="delete"
@@ -41,7 +45,13 @@ export const TodoItemWidget: React.FC<{
             Alert.alert(
               'Confirm',
               'This item will be permanently deleted',
-              [{ text: 'Cancel' }, { text: 'Delete', onPress: () => model.delete() }],
+              [
+                { text: 'Cancel' },
+                {
+                  text: 'Delete',
+                  onPress: () => powerSync.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [record.id])
+                }
+              ],
               { cancelable: true }
             );
           }}

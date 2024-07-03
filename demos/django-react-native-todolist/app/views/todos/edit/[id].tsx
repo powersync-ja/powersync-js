@@ -1,76 +1,29 @@
-import * as React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { ScrollView, View, Text } from 'react-native';
-import { FAB } from 'react-native-elements';
-import { observer } from 'mobx-react-lite';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import prompt from 'react-native-prompt-android';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { useQuery } from '@powersync/react';
+import { ListTodosWidget } from '../../../../library/widgets/ListTodosWidget';
+import { LIST_TABLE, ListRecord } from '../../../../library/powersync/AppSchema';
 
-import { useSystem } from '../../../../library/stores/system';
-import { TodoItemWidget } from '../../../../library/widgets/TodoItemWidget';
-
-const TodoView = observer(() => {
-  const { listStore, todoStore } = useSystem();
+const TodoView = () => {
   const params = useLocalSearchParams<{ id: string }>();
 
   const id = params.id;
-  const listModel = React.useMemo(() => {
-    if (!id) {
-      return null;
-    }
-    const listModel = listStore.getById(id);
+  const { data: result, isLoading } = useQuery<ListRecord>(`SELECT * FROM ${LIST_TABLE} WHERE id = ?`, [id]);
+  const listRecord = result[0];
 
-    return listModel;
-  }, [id]);
-
-  if (!listModel) {
+  if (!listRecord && !isLoading) {
     return (
       <View>
-        <Text>No matching List found</Text>
+        <Text>No matching list found</Text>
       </View>
     );
   }
 
-  return (
-    <View style={{ flexGrow: 1 }}>
-      <Stack.Screen
-        options={{
-          title: listModel.record.name
-        }}
-      />
-      <FAB
-        style={{ zIndex: 99, bottom: 0 }}
-        icon={{ name: 'add', color: 'white' }}
-        size="small"
-        placement="right"
-        onPress={() => {
-          prompt(
-            'Add a new Todo',
-            '',
-            (text) => {
-              if (!text) {
-                return;
-              }
+  if (isLoading) {
+    return <ActivityIndicator />;
+  }
 
-              todoStore.createModel({
-                list_id: listModel.id,
-                description: text,
-                completed: false
-              });
-            },
-            { placeholder: 'Todo description', style: 'shimo' }
-          );
-        }}
-      />
-      <ScrollView style={{ maxHeight: '90%' }}>
-        {listModel.todos.map((t) => {
-          return <TodoItemWidget key={t.id} model={t} />;
-        })}
-      </ScrollView>
-
-      <StatusBar style={'light'} />
-    </View>
-  );
-});
+  return <ListTodosWidget record={listRecord} />;
+};
 
 export default TodoView;

@@ -1,1 +1,1 @@
-create publication powersync for table api_list, api_todo;
+create publication powersync for table lists, todos;
