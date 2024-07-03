@@ -31,55 +31,6 @@ class ReactNativeFetchProvider extends FetchImplementationProvider {
   }
 }
 
-type PolyfillTest = {
-  test: () => boolean;
-  name: string;
-};
-
-const CommonPolyfills: PolyfillTest[] = [
-  // {
-  //   name: 'TextEncoder',
-  //   test: () => typeof TextEncoder == 'undefined'
-  // }
-];
-
-const SocketPolyfillTests: PolyfillTest[] = [
-  ...CommonPolyfills
-  // {
-  //   name: 'nextTick',
-  //   test: () => typeof process.nextTick == 'undefined'
-  // },
-  // {
-  //   name: 'Buffer',
-  //   test: () => typeof global.Buffer == 'undefined'
-  // }
-];
-
-const HttpPolyfillTests: PolyfillTest[] = [
-  ...CommonPolyfills
-  // {
-  //   name: 'TextDecoder',
-  //   test: () => typeof TextDecoder == 'undefined'
-  // },
-  // {
-  //   name: 'ReadableStream',
-  //   test: () => typeof ReadableStream == 'undefined'
-  // }
-];
-
-const validatePolyfills = (tests: PolyfillTest[]) => {
-  const missingPolyfills = tests.filter((t) => t.test()).map((t) => t.name);
-  if (missingPolyfills.length) {
-    throw new Error(
-      `
-Polyfills are undefined. Please ensure React Native polyfills are installed and imported in the app entrypoint.
-See package README for detailed instructions.
-The following polyfills appear to be missing:
-${missingPolyfills.join('\n')}`
-    );
-  }
-};
-
 export class ReactNativeRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
@@ -97,13 +48,10 @@ export class ReactNativeRemote extends AbstractRemote {
   }
 
   async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    validatePolyfills(SocketPolyfillTests);
     return super.socketStream(options);
   }
 
   async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    validatePolyfills(HttpPolyfillTests);
-
     const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {

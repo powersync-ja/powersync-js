@@ -3,15 +3,18 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
-const input = 'lib/index.js';
+export default (commandLineArgs) => {
+  const sourcemap = (commandLineArgs.sourceMap || 'true') == 'true';
 
-const config = [
-  {
-    input,
+  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
+  delete commandLineArgs.sourceMap;
+
+  return {
+    input: 'lib/index.js',
     output: {
       file: 'dist/main.js',
       format: 'cjs',
-      sourcemap: true
+      sourcemap: sourcemap
     },
     plugins: [
       json(),
@@ -33,7 +36,5 @@ const config = [
       'react-native/Libraries/Blob/BlobManager',
       'react'
     ]
-  }
-];
-
-export default config;
+  };
+};
