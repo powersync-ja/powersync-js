@@ -1,11 +1,7 @@
 import '@azure/core-asynciterator-polyfill';
 import 'react-native-polyfill-globals/auto';
 import React from 'react';
-import {
-  AbstractPowerSyncDatabase,
-  RNQSPowerSyncDatabaseOpenFactory,
-  SyncStreamConnectionMethod
-} from '@powersync/react-native';
+import { AbstractPowerSyncDatabase, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
 import { Buffer } from '@craftzdog/react-native-buffer';
 import { AppSchema } from '../powersync/AppSchema';
 import { DjangoConnector } from '../django/DjangoConnector';
@@ -26,13 +22,12 @@ export class System {
   storage: any;
 
   constructor() {
-    const factory = new RNQSPowerSyncDatabaseOpenFactory({
+    this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      dbFilename: 'sqlite.db'
+      database: { dbFilename: 'sqlite.db' }
     });
 
     this.djangoConnector = new DjangoConnector();
-    this.powersync = factory.getInstance();
   }
 
   async init() {
