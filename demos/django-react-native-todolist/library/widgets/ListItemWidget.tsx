@@ -1,9 +1,9 @@
 import React from 'react';
-import { LIST_TABLE, ListRecord } from '../models/ListModel';
 import { Alert, View } from 'react-native';
 import { ListItem, Icon } from 'react-native-elements';
 import { router } from 'expo-router';
 import { usePowerSync } from '@powersync/react';
+import { LIST_TABLE, ListRecord } from '../powersync/AppSchema';
 
 export const ListItemWidget: React.FC<{
   record: ListRecord;

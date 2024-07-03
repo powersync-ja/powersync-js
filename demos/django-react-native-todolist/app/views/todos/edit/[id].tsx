@@ -1,8 +1,8 @@
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@powersync/react';
-import { LIST_TABLE, ListRecord } from '../../../../library/models/ListModel';
 import { ListTodosWidget } from '../../../../library/widgets/ListTodosWidget';
+import { LIST_TABLE, ListRecord } from '../../../../library/powersync/AppSchema';
 
 const TodoView = () => {
   const params = useLocalSearchParams<{ id: string }>();

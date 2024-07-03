@@ -1,12 +1,11 @@
 import React from 'react';
-import { ListRecord } from '../models/ListModel';
 import { ScrollView, StatusBar, View } from 'react-native';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { Stack } from 'expo-router';
 import { FAB } from 'react-native-elements';
 import { TodoItemWidget } from './TodoItemWidget';
-import { TODO_TABLE, TodoRecord } from '../models/TodoModel';
 import prompt from 'react-native-prompt-android';
+import { ListRecord, TODO_TABLE, TodoRecord } from '../powersync/AppSchema';
 
 export const ListTodosWidget: React.FC<{
   record: ListRecord;
@@ -19,7 +18,7 @@ export const ListTodosWidget: React.FC<{
     <View style={{ flexGrow: 1 }}>
       <Stack.Screen
         options={{
-          title: record.name
+          title: record.name!
         }}
       />
       <FAB

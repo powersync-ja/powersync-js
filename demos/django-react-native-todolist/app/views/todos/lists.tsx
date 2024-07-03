@@ -6,8 +6,8 @@ import prompt from 'react-native-prompt-android';
 import { useSystem } from '../../../library/stores/system';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 import { Stack } from 'expo-router';
-import { LIST_TABLE } from '../../../library/models/ListModel';
 import { useQuery } from '@powersync/react';
+import { LIST_TABLE } from '../../../library/powersync/AppSchema';
 
 const App = () => {
   const system = useSystem();

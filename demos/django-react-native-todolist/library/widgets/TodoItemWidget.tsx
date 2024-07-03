@@ -1,8 +1,8 @@
 import React from 'react';
 import { ActivityIndicator, Alert, View } from 'react-native';
 import { ListItem, Icon } from 'react-native-elements';
-import { TODO_TABLE, TodoRecord } from '../models/TodoModel';
 import { usePowerSync } from '@powersync/react';
+import { TODO_TABLE, TodoRecord } from '../powersync/AppSchema';
 
 export const TodoItemWidget: React.FC<{
   record: TodoRecord;
