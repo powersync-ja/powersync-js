@@ -5,12 +5,11 @@ import { router } from 'expo-router';
 import { useSystem } from '../../library/stores/system';
 
 export default function Signout() {
-  const { powersync, supabaseConnector } = useSystem();
+  const { powersync } = useSystem();
 
   React.useEffect(() => {
     (async () => {
       await powersync.disconnectAndClear();
-      await supabaseConnector.supabaseClient.auth.signOut();
       router.replace('signin');
     })();
   }, []);
