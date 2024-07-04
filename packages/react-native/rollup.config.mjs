@@ -1,7 +1,13 @@
-import inject from '@rollup/plugin-inject';
-import nodeResolve from '@rollup/plugin-node-resolve';
+import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
+import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
+import nodeResolve from '@rollup/plugin-node-resolve';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default (commandLineArgs) => {
   const sourcemap = (commandLineArgs.sourceMap || 'true') == 'true';
@@ -25,12 +31,15 @@ export default (commandLineArgs) => {
         ReadableStream: ['web-streams-polyfill', 'ReadableStream'],
         TextEncoder: ['text-encoding', 'TextEncoder'],
         TextDecoder: ['text-encoding', 'TextDecoder']
+      }),
+      alias({
+        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') }]
       })
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
       '@powersync/react',
-      'bson',
+      // @common
       'node-fetch',
       'react-native',
       'react-native/Libraries/Blob/BlobManager',
