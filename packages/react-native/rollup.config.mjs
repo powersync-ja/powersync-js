@@ -28,7 +28,6 @@ export default (commandLineArgs) => {
       commonjs({}),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
-        ReadableStream: ['web-streams-polyfill', 'ReadableStream'],
         TextEncoder: ['text-encoding', 'TextEncoder'],
         TextDecoder: ['text-encoding', 'TextDecoder']
       }),
@@ -39,7 +38,7 @@ export default (commandLineArgs) => {
     external: [
       '@journeyapps/react-native-quick-sqlite',
       '@powersync/react',
-      // @common
+      // '@powersync/common',
       'node-fetch',
       'react-native',
       'react-native/Libraries/Blob/BlobManager',

@@ -31,8 +31,7 @@
     "@journeyapps/react-native-quick-sqlite": "^1.1.6",
     "@powersync/common": "workspace:^1.13.0",
     "react": "*",
-    "react-native": "*",
-    "react-native-polyfill-globals": "^3.1.0"
+    "react-native": "*"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
@@ -49,7 +48,6 @@
     "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-typescript": "11.1.6",
     "@types/async-lock": "^1.4.0",
     "react": "18.2.0",
     "react-native": "0.72.4",

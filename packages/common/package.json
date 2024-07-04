@@ -22,7 +22,7 @@
   },
   "homepage": "https://docs.powersync.com/resources/api-reference",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest"
   },
@@ -38,11 +38,17 @@
     "rsocket-websocket-client": "1.0.0-alpha.3"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-inject": "^5.0.5",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
     "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
     "@types/uuid": "^9.0.1",
+    "bson": "^6.6.0",
+    "rollup": "4.14.3",
     "typescript": "^5.1.3",
     "vitest": "^1.5.2",
-    "bson": "^6.6.0"
+    "web-streams-polyfill": "3.2.1"
   }
 }
