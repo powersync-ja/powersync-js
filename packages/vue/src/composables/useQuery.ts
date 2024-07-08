@@ -105,7 +105,7 @@ export const useQuery = <T = any>(
 
     let parsedQuery: ParsedQuery;
     try {
-      parsedQuery = parseQuery(toValue(query), toValue(sqlParameters));
+      parsedQuery = parseQuery(toValue(query), toValue(sqlParameters).map(toValue));
     } catch (e) {
       console.error('Failed to parse query:', e);
       handleError(e);
