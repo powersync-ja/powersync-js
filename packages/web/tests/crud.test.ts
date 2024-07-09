@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
-import { WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { generateTestDb } from './utils/testDb';
 
@@ -165,13 +165,15 @@ describe('CRUD Tests', () => {
   it('INSERT-only tables', async () => {
     await powersync.disconnectAndClear();
 
-    powersync = new WASQLitePowerSyncDatabaseOpenFactory({
+    powersync = new PowerSyncDatabase({
       /**
        * Deleting the IndexDB seems to freeze the test.
        * Use a new DB for each run to keep CRUD counters
        * consistent
        */
-      dbFilename: 'test.db' + uuid(),
+      database: {
+        dbFilename: 'test.db' + uuid()
+      },
       schema: new Schema([
         new Table({
           name: 'logs',
@@ -185,7 +187,7 @@ describe('CRUD Tests', () => {
       flags: {
         enableMultiTabs: false
       }
-    }).getInstance();
+    });
 
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
 

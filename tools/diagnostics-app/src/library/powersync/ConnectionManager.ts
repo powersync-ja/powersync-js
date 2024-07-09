@@ -1,7 +1,7 @@
 import {
   BaseListener,
   BaseObserver,
-  WASQLitePowerSyncDatabaseOpenFactory,
+  PowerSyncDatabase,
   WebRemote,
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -16,10 +16,12 @@ Logger.setLevel(Logger.DEBUG);
 
 export const schemaManager = new DynamicSchemaManager();
 
-export const db = new WASQLitePowerSyncDatabaseOpenFactory({
-  dbFilename: 'example.db',
+export const db = new PowerSyncDatabase({
+  database: {
+    dbFilename: 'example.db'
+  },
   schema: schemaManager.buildSchema()
-}).getInstance();
+});
 export const connector = new TokenConnector();
 
 const remote = new WebRemote(connector);

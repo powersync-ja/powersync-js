@@ -1,12 +1,4 @@
-import {
-  Column,
-  ColumnType,
-  DBAdapter,
-  OpTypeEnum,
-  Schema,
-  SyncDataBatch,
-  Table
-} from '@powersync/web';
+import { Column, ColumnType, DBAdapter, OpTypeEnum, Schema, SyncDataBatch, Table } from '@powersync/web';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 
@@ -30,14 +22,14 @@ export class DynamicSchemaManager {
 
   async updateFromOperations(batch: SyncDataBatch) {
     let schemaDirty = false;
-    for (let bucket of batch.buckets) {
+    for (const bucket of batch.buckets) {
       // Build schema
-      for (let op of bucket.data) {
+      for (const op of bucket.data) {
         if (op.op.value == OpTypeEnum.PUT && op.data != null) {
           this.tables[op.object_type!] ??= {};
           const table = this.tables[op.object_type!];
           const data = JSON.parse(op.data);
-          for (let [key, value] of Object.entries(data)) {
+          for (const [key, value] of Object.entries(data)) {
             if (key == 'id') {
               continue;
             }
