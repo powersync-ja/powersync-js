@@ -24,7 +24,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
   async setTargetCheckpoint(checkpoint: Checkpoint) {
     await super.setTargetCheckpoint(checkpoint);
     await this.rdb.writeTransaction(async (tx) => {
-      for (let bucket of checkpoint.buckets) {
+      for (const bucket of checkpoint.buckets) {
         await tx.execute(
           `INSERT OR REPLACE INTO local_bucket_data(id, total_operations, last_op, download_size, downloading)
            VALUES (
@@ -53,7 +53,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
     await super.saveSyncData(batch);
 
     await this.rdb.writeTransaction(async (tx) => {
-      for (let bucket of batch.buckets) {
+      for (const bucket of batch.buckets) {
         // Record metrics
         const size = JSON.stringify(bucket.data).length;
         await tx.execute(
