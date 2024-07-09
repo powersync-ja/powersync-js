@@ -6,9 +6,9 @@ Configure a PowerSync DB connection and add it to a context provider.
 
 ```JSX
 // App.jsx
-import { PowerSyncDatabase } from '@powersync/react-native';
-// or for Web
-// import { PowerSyncDatabase } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
+// or for React Native
+// import { PowerSyncDatabase } from '@powersync/react-native';
 import { PowerSyncContext } from "@powersync/react";
 export const App = () => {
     const powerSync = React.useMemo(() => {
