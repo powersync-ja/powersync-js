@@ -1345,7 +1345,22 @@ importers:
       rsocket-websocket-client:
         specifier: 1.0.0-alpha.3
         version: 1.0.0-alpha.3
+      web-streams-polyfill:
+        specifier: 3.2.1
+        version: 3.2.1
     devDependencies:
+      '@rollup/plugin-commonjs':
+        specifier: ^25.0.7
+        version: 25.0.8(rollup@4.14.3)
+      '@rollup/plugin-inject':
+        specifier: ^5.0.5
+        version: 5.0.5(rollup@4.14.3)
+      '@rollup/plugin-json':
+        specifier: ^6.1.0
+        version: 6.1.0(rollup@4.14.3)
+      '@rollup/plugin-node-resolve':
+        specifier: 15.2.3
+        version: 15.2.3(rollup@4.14.3)
       '@types/lodash':
         specifier: ^4.14.197
         version: 4.17.6
@@ -1358,6 +1373,9 @@ importers:
       bson:
         specifier: ^6.6.0
         version: 6.8.0
+      rollup:
+        specifier: 4.14.3
+        version: 4.14.3
       typescript:
         specifier: ^5.1.3
         version: 5.4.5
@@ -1450,9 +1468,6 @@ importers:
       react-native-fetch-api:
         specifier: ^3.0.0
         version: 3.0.0
-      react-native-polyfill-globals:
-        specifier: ^3.1.0
-        version: 3.1.0(base-64@1.0.0)(react-native-fetch-api@3.0.0)(react-native-get-random-values@1.11.0)(react-native-url-polyfill@2.0.0)(text-encoding@0.7.0)(web-streams-polyfill@3.2.1)
     devDependencies:
       '@craftzdog/react-native-buffer':
         specifier: ^6.0.5
@@ -1460,6 +1475,9 @@ importers:
       '@journeyapps/react-native-quick-sqlite':
         specifier: ^1.1.6
         version: 1.1.7(react-native@0.72.4)(react@18.2.0)
+      '@rollup/plugin-alias':
+        specifier: ^5.1.0
+        version: 5.1.0(rollup@4.14.3)
       '@rollup/plugin-commonjs':
         specifier: ^25.0.7
         version: 25.0.8(rollup@4.14.3)
@@ -1472,9 +1490,6 @@ importers:
       '@rollup/plugin-node-resolve':
         specifier: 15.2.3
         version: 15.2.3(rollup@4.14.3)
-      '@rollup/plugin-typescript':
-        specifier: 11.1.6
-        version: 11.1.6(rollup@4.14.3)(typescript@5.4.5)
       '@types/async-lock':
         specifier: ^1.4.0
         version: 1.4.2
@@ -1546,6 +1561,21 @@ importers:
       '@journeyapps/wa-sqlite':
         specifier: ~0.2.0
         version: 0.2.0
+      '@rollup/plugin-commonjs':
+        specifier: ^25.0.7
+        version: 25.0.8(rollup@4.14.3)
+      '@rollup/plugin-inject':
+        specifier: ^5.0.5
+        version: 5.0.5(rollup@4.14.3)
+      '@rollup/plugin-json':
+        specifier: ^6.1.0
+        version: 6.1.0(rollup@4.14.3)
+      '@rollup/plugin-node-resolve':
+        specifier: 15.2.3
+        version: 15.2.3(rollup@4.14.3)
+      '@rollup/plugin-wasm':
+        specifier: ^6.2.2
+        version: 6.2.2(rollup@4.14.3)
       '@types/lodash':
         specifier: ^4.14.200
         version: 4.17.6
@@ -1555,6 +1585,15 @@ importers:
       '@vitest/browser':
         specifier: ^1.3.1
         version: 1.6.0(vitest@1.6.0)(webdriverio@8.39.0)
+      es6-promise:
+        specifier: ^4.2.8
+        version: 4.2.8
+      rollup:
+        specifier: 4.14.3
+        version: 4.14.3
+      rollup-plugin-web-worker-loader:
+        specifier: ^1.6.1
+        version: 1.6.1(rollup@4.14.3)
       typescript:
         specifier: ^5.2.2
         version: 5.4.5
@@ -1566,7 +1605,7 @@ importers:
         version: 5.3.3(sass@1.77.6)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.1(rollup@2.79.1)(vite@5.3.3)
+        version: 1.4.1(rollup@4.14.3)(vite@5.3.3)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.3)
@@ -7592,7 +7631,7 @@ packages:
     peerDependencies:
       react-native: '*'
     dependencies:
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@expo/multipart-body-parser@1.1.0:
@@ -8279,7 +8318,7 @@ packages:
       react-native: '*'
     dependencies:
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@journeyapps/wa-sqlite@0.0.2:
@@ -10231,7 +10270,7 @@ packages:
       '@react-navigation/native': 6.1.17(react-native@0.74.1)(react@18.2.0)
       color: 4.2.3
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1)(react@18.2.0)
       react-native-screens: 3.31.1(react-native@0.74.1)(react@18.2.0)
       warn-once: 0.1.1
@@ -10312,7 +10351,7 @@ packages:
       '@react-navigation/elements': 1.3.30(@react-navigation/native@6.1.17)(react-native-safe-area-context@4.10.1)(react-native@0.74.1)(react@18.2.0)
       '@react-navigation/native': 6.1.17(react-native@0.74.1)(react@18.2.0)
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1)(react@18.2.0)
       react-native-screens: 3.31.1(react-native@0.74.1)(react@18.2.0)
       warn-once: 0.1.1
@@ -10485,6 +10524,19 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@rollup/plugin-alias@5.1.0(rollup@4.14.3):
+    resolution: {integrity: sha512-lpA3RZ9PdIG7qqhEfv79tBffNaoDuukFDrmhLqg9ifv99u/ehn+lOg30x2zmhf8AQqQUZaMk/B9fZraQ6/acDQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+    dependencies:
+      rollup: 4.14.3
+      slash: 4.0.0
+    dev: true
+
   /@rollup/plugin-babel@5.3.1(@babel/core@7.24.5)(rollup@2.79.1):
     resolution: {integrity: sha512-WFfdLWU/xVWKeRQnKmIAQULUI7Il0gZnBIH/ZFO069wYIfPu+8zrfp/KMW0atmELoRDq8FbiP3VCss9MhCut7Q==}
     engines: {node: '>= 10.0.0'}
@@ -10611,25 +10663,6 @@ packages:
       terser: 5.31.1
     dev: true
 
-  /@rollup/plugin-typescript@11.1.6(rollup@4.14.3)(typescript@5.4.5):
-    resolution: {integrity: sha512-R92yOmIACgYdJ7dJ97p4K69I8gg6IEHt8M7dUBxN3W6nrO8uUxX5ixl0yU/N3aZTi8WhPuICvOHXQvF6FaykAA==}
-    engines: {node: '>=14.0.0'}
-    peerDependencies:
-      rollup: ^2.14.0||^3.0.0||^4.0.0
-      tslib: '*'
-      typescript: '>=3.7.0'
-    peerDependenciesMeta:
-      rollup:
-        optional: true
-      tslib:
-        optional: true
-    dependencies:
-      '@rollup/pluginutils': 5.1.0(rollup@4.14.3)
-      resolve: 1.22.8
-      rollup: 4.14.3
-      typescript: 5.4.5
-    dev: true
-
   /@rollup/plugin-virtual@3.0.2(rollup@2.79.1):
     resolution: {integrity: sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A==}
     engines: {node: '>=14.0.0'}
@@ -10640,6 +10673,31 @@ packages:
         optional: true
     dependencies:
       rollup: 2.79.1
+    dev: true
+
+  /@rollup/plugin-virtual@3.0.2(rollup@4.14.3):
+    resolution: {integrity: sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+    dependencies:
+      rollup: 4.14.3
+    dev: true
+
+  /@rollup/plugin-wasm@6.2.2(rollup@4.14.3):
+    resolution: {integrity: sha512-gpC4R1G9Ni92ZIRTexqbhX7U+9estZrbhP+9SRb0DW9xpB9g7j34r+J2hqrcW/lRI7dJaU84MxZM0Rt82tqYPQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+    dependencies:
+      '@rollup/pluginutils': 5.1.0(rollup@4.14.3)
+      rollup: 4.14.3
     dev: true
 
   /@rollup/pluginutils@3.1.0(rollup@2.79.1):
@@ -13666,7 +13724,7 @@ packages:
       '@vitest/utils': 1.6.0
       magic-string: 0.30.10
       sirv: 2.0.4
-      vitest: 1.6.0(@types/node@20.14.9)(@vitest/browser@1.6.0)
+      vitest: 1.6.0(@vitest/browser@1.6.0)
       webdriverio: 8.39.0(typescript@5.4.5)
     dev: true
 
@@ -17844,6 +17902,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /es6-promise@4.2.8:
+    resolution: {integrity: sha512-HJDGx5daxeIvxdBxvG2cb9g4tEvwIk3i8+nhX0yGrYmZUzbkdg8QbDevheDB8gd0//uPj4c1EQua8Q+MViT0/w==}
+    dev: true
 
   /esbuild-register@3.5.0(esbuild@0.19.12):
     resolution: {integrity: sha512-+4G/XmakeBAsvJuDugJvtyF1x+XJT4FMocynNpxrvEBViirpfUn2PgNpCHedfWhF4WokNsO/OvMKrmJOIJsI5A==}
@@ -26527,7 +26589,7 @@ packages:
       lodash: 4.17.21
       prop-types: 15.8.1
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /react-native-get-random-values@1.11.0(react-native@0.74.1):
@@ -26536,7 +26598,7 @@ packages:
       react-native: '>=0.56'
     dependencies:
       fast-base64-decode: 1.0.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /react-native-helmet-async@2.0.4(react@18.2.0):
@@ -26668,7 +26730,7 @@ packages:
       convert-source-map: 2.0.0
       invariant: 2.2.4
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -26680,7 +26742,7 @@ packages:
       react-native: '*'
     dependencies:
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /react-native-safe-area-view@0.14.9(react-native@0.74.1)(react@18.2.0):
@@ -26717,7 +26779,7 @@ packages:
     dependencies:
       react: 18.2.0
       react-freeze: 1.0.4(react@18.2.0)
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
       warn-once: 0.1.1
     dev: false
 
@@ -26750,7 +26812,7 @@ packages:
     peerDependencies:
       react-native: '*'
     dependencies:
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.3.3)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.7)(@types/react@18.2.79)(react@18.2.0)
       whatwg-url-without-unicode: 8.0.0-3
     dev: false
 
@@ -27813,6 +27875,14 @@ packages:
   /robust-predicates@3.0.2:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
     dev: false
+
+  /rollup-plugin-web-worker-loader@1.6.1(rollup@4.14.3):
+    resolution: {integrity: sha512-4QywQSz1NXFHKdyiou16mH3ijpcfLtLGOrAqvAqu1Gx+P8+zj+3gwC2BSL/VW1d+LW4nIHC8F7d7OXhs9UdR2A==}
+    peerDependencies:
+      rollup: ^1.9.2 || ^2.0.0
+    dependencies:
+      rollup: 4.14.3
+    dev: true
 
   /rollup@2.79.1:
     resolution: {integrity: sha512-uKxbd0IhMZOhjAiD5oAFp7BqvkA4Dv47qpOCtaNvng4HBwdbWtdOh8f5nZNuk2rp51PMGk3bzfWu5oayNEuYnw==}
@@ -30653,6 +30723,20 @@ packages:
       - rollup
     dev: true
 
+  /vite-plugin-top-level-await@1.4.1(rollup@4.14.3)(vite@5.3.3):
+    resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
+    peerDependencies:
+      vite: '>=2.8'
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.14.3)
+      '@swc/core': 1.6.6
+      uuid: 9.0.1
+      vite: 5.3.3(sass@1.77.6)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+    dev: true
+
   /vite-plugin-vuetify@2.0.3(vite@5.3.3)(vue@3.4.21)(vuetify@3.6.8):
     resolution: {integrity: sha512-HbYajgGgb/noaVKNRhnnXIiQZrNXfNIeanUGAwXgOxL6h/KULS40Uf51Kyz8hNmdegF+DwjgXXI/8J1PNS83xw==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -30675,7 +30759,7 @@ packages:
     peerDependencies:
       vite: ^2 || ^3 || ^4 || ^5
     dependencies:
-      vite: 5.3.3(@types/node@20.14.9)
+      vite: 5.3.3(sass@1.77.6)
     dev: true
 
   /vite@5.1.7(@types/node@20.14.9)(less@4.2.0)(sass@1.71.1)(terser@5.29.1):

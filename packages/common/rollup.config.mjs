@@ -9,21 +9,41 @@ export default (commandLineArgs) => {
   // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
   delete commandLineArgs.sourceMap;
 
-  return {
-    input: 'lib/index.js',
-    output: {
-      file: 'dist/main.js',
-      format: 'cjs',
-      sourcemap: sourcemap
+  return [
+    {
+      input: 'lib/index.js',
+      output: {
+        file: 'dist/index.js',
+        format: 'esm',
+        sourcemap: sourcemap
+      },
+      plugins: [
+        json(),
+        nodeResolve({ preferBuiltins: false, browser: true }),
+        commonjs({}),
+        inject({
+          Buffer: ['buffer', 'Buffer']
+        })
+      ]
     },
-    plugins: [
-      json(),
-      nodeResolve({ preferBuiltins: false }),
-      commonjs({}),
-      inject({
-        // Buffer: ['buffer', 'Buffer']
-      })
-    ]
-    // external: ['node-fetch']
-  };
+    // Todo: This was just to have a copy of what I tried for react-native.
+    // It's likely that we need to produce separate builds for web and react-native. This output isn't currently targeted by the rn package
+    {
+      input: 'lib/index.js',
+      output: {
+        file: 'dist/index.rn.cjs',
+        format: 'cjs',
+        exports: 'named',
+        sourcemap: sourcemap
+      },
+      plugins: [
+        json(),
+        nodeResolve({ preferBuiltins: false, browser: true }),
+        commonjs({}),
+        inject({
+          Buffer: ['buffer', 'Buffer']
+        })
+      ]
+    }
+  ];
 };

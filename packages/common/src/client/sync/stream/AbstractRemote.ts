@@ -9,7 +9,6 @@ import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import type { BSON } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
 import { Buffer } from 'buffer';
-import { ReadableStream } from 'web-streams-polyfill';
 
 export type BSONImplementation = typeof BSON;
 

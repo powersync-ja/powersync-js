@@ -1,18 +1,12 @@
-import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase } from '@powersync/web';
-import { CircularProgress } from '@mui/material';
-import Logger from 'js-logger';
-import React, { Suspense } from 'react';
-import { Buffer } from 'buffer';
 import { configureFts } from '@/app/utils/fts_setup';
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
+import { CircularProgress } from '@mui/material';
+import { PowerSyncContext } from '@powersync/react';
+import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/web';
+import Logger from 'js-logger';
+import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
-
-// Polyfill for WebSockets
-if (typeof self.Buffer == 'undefined') {
-  self.Buffer = Buffer;
-}
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
