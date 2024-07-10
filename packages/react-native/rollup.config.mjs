@@ -38,8 +38,10 @@ export default (commandLineArgs) => {
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
+      '@powersync/common',
       '@powersync/react',
       'node-fetch',
+      'js-logger',
       'react-native',
       'react-native/Libraries/Blob/BlobManager',
       'react'

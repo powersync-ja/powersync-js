@@ -49,6 +49,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@types/async-lock": "^1.4.0",
+    "crypto-browserify": "^3.12.0",
     "react": "18.2.0",
     "react-native": "0.72.4",
     "rollup": "4.14.3",

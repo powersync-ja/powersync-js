@@ -442,7 +442,7 @@ export abstract class AbstractRemote {
       }
     });
 
-    const jsonS = ndjsonStream(new Response(outputStream).body);
+    const jsonS = ndjsonStream(outputStream);
 
     const stream = new DataStream({
       logger: this.logger

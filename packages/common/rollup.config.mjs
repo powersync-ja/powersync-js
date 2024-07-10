@@ -22,8 +22,18 @@ export default (commandLineArgs) => {
         nodeResolve({ preferBuiltins: false, browser: true }),
         commonjs({}),
         inject({
-          Buffer: ['buffer', 'Buffer']
+          Buffer: ['buffer', 'Buffer'],
+          ReadableStream: ['web-streams-polyfill', 'ReadableStream' ],
+          // Used by can-ndjson-stream
+          TextDecoder: ['text-encoding', 'TextDecoder']
         })
+      ],
+      // This makes life easier 
+      external: [
+        // This has dynamic logic - makes bundling hard
+        'cross-fetch',
+        // TODO: make the useDefaults logic better. Currently need access to this package directly
+         'js-logger'
       ]
     },
     // Todo: This was just to have a copy of what I tried for react-native.
@@ -41,9 +51,10 @@ export default (commandLineArgs) => {
         nodeResolve({ preferBuiltins: false, browser: true }),
         commonjs({}),
         inject({
-          Buffer: ['buffer', 'Buffer']
+          Buffer: ['buffer', 'Buffer'],
+     
         })
-      ]
+      ],
     }
   ];
 };

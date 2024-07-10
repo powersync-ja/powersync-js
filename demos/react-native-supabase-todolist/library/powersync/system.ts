@@ -10,6 +10,9 @@ import { KVStorage } from '../storage/KVStorage';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
+import Logger from 'js-logger';
+
+Logger.useDefaults();
 
 export class System {
   kvStorage: KVStorage;
