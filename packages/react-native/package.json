@@ -35,12 +35,12 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*",
-    "async-lock": "^1.4.0",
-    "bson": "^6.6.0",
-    "react-native-fetch-api": "^3.0.0"
+    "@powersync/react": "workspace:*"
   },
   "devDependencies": {
+    "async-lock": "^1.4.0",
+    "bson": "^6.6.0",
+    "react-native-fetch-api": "^3.0.0",
     "@craftzdog/react-native-buffer": "^6.0.5",
     "@journeyapps/react-native-quick-sqlite": "^1.1.6",
     "@rollup/plugin-alias": "^5.1.0",

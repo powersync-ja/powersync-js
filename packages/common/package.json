@@ -11,7 +11,8 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -27,16 +28,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "async-mutex": "^0.4.0",
-    "buffer": "^6.0.3",
-    "can-ndjson-stream": "^1.0.2",
     "cross-fetch": "^4.0.0",
-    "event-iterator": "^2.0.0",
-    "js-logger": "^1.6.1",
-    "lodash": "^4.17.21",
-    "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3",
-    "web-streams-polyfill": "3.2.1"
+    "js-logger": "^1.6.1"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -46,10 +39,18 @@
     "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
     "@types/uuid": "^9.0.1",
+    "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
+    "buffer": "^6.0.3",
+    "can-ndjson-stream": "^1.0.2",
+    "event-iterator": "^2.0.0",
+    "lodash": "^4.17.21",
     "rollup": "4.14.3",
+    "rsocket-core": "1.0.0-alpha.3",
+    "rsocket-websocket-client": "1.0.0-alpha.3",
     "text-encoding": "^0.7.0",
     "typescript": "^5.1.3",
-    "vitest": "^1.5.2"
+    "vitest": "^1.5.2",
+    "web-streams-polyfill": "3.2.1"
   }
 }
