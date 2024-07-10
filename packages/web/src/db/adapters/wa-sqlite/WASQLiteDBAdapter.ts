@@ -199,7 +199,12 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         return result;
       } catch (ex) {
         this.logger.debug('Caught ex in transaction', ex);
-        await rollback();
+        try {
+          await rollback();
+        } catch (ex2) {
+          // In rare cases, a rollback may fail.
+          // Safe to ignore.
+        }
         throw ex;
       }
     };
