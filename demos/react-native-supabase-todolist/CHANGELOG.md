@@ -1,5 +1,13 @@
 # react-native-supabase-todolist
 
+## 1.3.6
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+  - @powersync/react-native@1.8.1
+
 ## 1.3.5
 
 ### Patch Changes

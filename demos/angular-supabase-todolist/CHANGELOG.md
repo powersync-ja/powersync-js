@@ -1,5 +1,13 @@
 # PowerSync Angular Demo
 
+## 0.0.22
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+  - @powersync/web@1.2.1
+
 ## 0.0.21
 
 ### Patch Changes

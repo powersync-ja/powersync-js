@@ -1,5 +1,13 @@
 # yjs-react-supabase-text-collab
 
+## 0.1.13
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+  - @powersync/web@1.2.1
+
 ## 0.1.12
 
 ### Patch Changes

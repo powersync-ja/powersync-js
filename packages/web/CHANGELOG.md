@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.2.1
+
+### Patch Changes
+
+- 8d5b702: Silencing transactions that are reporting on failed rollback exceptions when they are safe to ignore.
+
 ## 1.2.0
 
 ### Minor Changes
