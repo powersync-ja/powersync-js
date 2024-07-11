@@ -119,7 +119,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
         if (result.error) {
           console.error(result.error);
-          throw new Error(`Could not update Supabase. Received error: ${result.error.message}`);
+          result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;
+          throw result.error;
         }
       }
 
@@ -127,7 +128,9 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
         console.log('inserting batch of size', updateBatch.length);
         const result = await this.client.rpc('insert_document_updates', { batch: JSON.stringify(updateBatch) });
         if (result.error) {
-          throw new Error(`Could not update Supabase. Received error: ${result.error.message}`);
+          console.error(result.error);
+          result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;
+          throw result.error;
         }
       }
 
@@ -142,7 +145,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
          * If protecting against data loss is important, save the failing records
          * elsewhere instead of discarding, and/or notify the user.
          */
-        console.error(`Data upload error - discarding ${lastOp}`, ex);
+        console.error('Data upload error - discarding:', lastOp, ex);
         await batch.complete();
       } else {
         // Error may be retryable - e.g. network error or temporary server error.

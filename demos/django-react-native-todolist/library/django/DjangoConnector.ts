@@ -90,7 +90,7 @@ export class DjangoConnector implements PowerSyncBackendConnector {
          * If protecting against data loss is important, save the failing records
          * elsewhere instead of discarding, and/or notify the user.
          */
-        console.error(`Data upload error - discarding ${lastOp}`, ex);
+        console.error('Data upload error - discarding:', lastOp, ex);
         await transaction.complete();
       } else {
         // Error may be retryable - e.g. network error or temporary server error.
