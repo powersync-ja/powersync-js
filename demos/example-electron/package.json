@@ -1,7 +1,7 @@
 {
   "name": "example-electron",
   "productName": "example-electron",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Example of using Electron with PowerSync",
   "main": ".vite/build/main.js",
   "type": "module",

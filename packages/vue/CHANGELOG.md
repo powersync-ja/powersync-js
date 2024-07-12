@@ -1,5 +1,11 @@
 # @powersync/vue
 
+## 0.1.7
+
+### Patch Changes
+
+- 86cfa71: Fixed comlink issue caused when using reactive sql parameters.
+
 ## 0.1.6
 
 ### Patch Changes

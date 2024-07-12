@@ -1,5 +1,15 @@
 # vue-supabase-todolist
 
+## 0.0.19
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+- Updated dependencies [86cfa71]
+  - @powersync/web@1.2.1
+  - @powersync/vue@0.1.7
+
 ## 0.0.18
 
 ### Patch Changes
