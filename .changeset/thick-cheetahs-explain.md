@@ -1,5 +1,5 @@
 ---
-'@powersync/web': minor
+'@powersync/web': major
 ---
 
 The Package name for the underlying SQLite wrapper package has been changed from

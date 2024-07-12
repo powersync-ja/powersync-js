@@ -1,5 +1,5 @@
 ---
-'@powersync/react-native': minor
+'@powersync/react-native': major
 ---
 
 The Package name for the underlying SQLite wrapper package has been changed from
