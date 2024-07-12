@@ -1,5 +1,6 @@
 import * as Comlink from 'comlink';
 import type { OpenDB } from '../../shared/types';
+import SharedPsWorker from './SharedWASQLiteDB.worker?sharedworker&inline';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
@@ -11,17 +12,18 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
    *  This enables multi tab support by default, but falls back if SharedWorker is not available
    *  (in the case of Android)
    */
-  return multipleTabs
-    ? new SharedWorker(new URL('./SharedWASQLiteDB.worker.js', import.meta.url), {
-        /* @vite-ignore */
-        name: `shared-DB-worker-${workerIdentifier}`,
-        type: 'module'
-      }).port
-    : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
-        /* @vite-ignore */
-        name: `DB-worker-${workerIdentifier}`,
-        type: 'module'
-      });
+  return new SharedPsWorker({ name: `shared-DB-worker-${workerIdentifier}` }).port;
+  // return multipleTabs
+  //   ? new SharedWorker(new URL('./SharedWASQLiteDB.worker.js', import.meta.url), {
+  //       /* @vite-ignore */
+  //       name: `shared-DB-worker-${workerIdentifier}`,
+  //       type: 'module'
+  //     }).port
+  //   : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+  //       /* @vite-ignore */
+  //       name: `DB-worker-${workerIdentifier}`,
+  //       type: 'module'
+  //     });
 }
 
 /**
