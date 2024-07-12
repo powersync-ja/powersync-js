@@ -10,11 +10,9 @@
 'example-capacitor': patch
 'example-electron': patch
 '@powersync/kysely-driver': patch
-'@powersync/react-native': minor
 'diagnostics-app': patch
 'example-nextjs': patch
 'example-vite': patch
-'@powersync/web': minor
 ---
 
 Move from @journeyapps sqlite packages to @powersync sqlite packages
