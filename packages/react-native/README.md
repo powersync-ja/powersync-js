@@ -20,18 +20,18 @@ npx expo install @powersync/react-native
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@journeyapps/react-native-quick-sqlite` as a peer dependency.
+This SDK currently requires `@powersync/react-native-quick-sqlite` as a peer dependency.
 
 Install it in your app with:
 
 ```bash
-npx expo install @journeyapps/react-native-quick-sqlite
+npx expo install @powersync/react-native-quick-sqlite
 ```
 
 ## Install Polyfills
 
-This package connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets. 
-* Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below. 
+This package connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
+* Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below.
 * The WebSocket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
 * Other polyfills are required for [watched queries](#babel-plugins-watched-queries) using the Async Iterator response format.
 

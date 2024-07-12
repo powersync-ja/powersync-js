@@ -8,7 +8,7 @@ import {
   DBGetUtils,
   QueryResult
 } from '@powersync/common';
-import { QuickSQLiteConnection } from '@journeyapps/react-native-quick-sqlite';
+import { QuickSQLiteConnection } from '@powersync/react-native-quick-sqlite';
 
 /**
  * Adapter for React Native Quick SQLite

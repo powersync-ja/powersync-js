@@ -1,4 +1,4 @@
-import '@journeyapps/wa-sqlite';
+import '@powersync/wa-sqlite';
 import * as Comlink from 'comlink';
 import { _openDB } from '../../shared/open-db';
 import type { DBFunctionsInterface } from '../../shared/types';

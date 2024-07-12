@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@journeyapps/wa-sqlite": "~0.2.0",
+    "@powersync/wa-sqlite": "~0.2.1",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
     "@mui/x-data-grid": "^6.19.11",
