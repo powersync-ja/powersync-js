@@ -1,5 +1,13 @@
 # react-native-supabase-group-chat
 
+## 1.1.11
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+  - @powersync/react-native@1.8.1
+
 ## 1.1.10
 
 ### Patch Changes

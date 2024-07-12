@@ -1,5 +1,17 @@
 # django-react-native-todolist
 
+## 1.2.0
+
+### Minor Changes
+
+- 9842df6: Use react hooks. Remove Mobx stores.
+
+### Patch Changes
+
+- 27126e6: Ensuring that SupabaseConnector's error codes are evaluated when processing upload queue.
+- Updated dependencies [8d5b702]
+  - @powersync/react-native@1.8.1
+
 ## 1.1.10
 
 ### Patch Changes
