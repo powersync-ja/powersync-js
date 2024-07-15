@@ -2,7 +2,7 @@
   "name": "@powersync/web",
   "version": "1.2.0",
   "description": "A Web SDK for JourneyApps PowerSync",
-  "main": "dist/index.js",
+  "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "files": [
     "lib",
@@ -19,7 +19,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc --build && vite build",
+    "build": "tsc --build",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"

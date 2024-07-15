@@ -11,7 +11,6 @@ import {
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
-import SharedSyncImplementationWorker from '../../worker/sync/SharedSyncImplementation.worker?sharedworker&inline';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -94,13 +93,14 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
-    const syncWorker = new SharedSyncImplementationWorker({ name: `shared-sync-${this.webOptions.identifier}` });
-
-    // new SharedWorker(new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
-    //   /* @vite-ignore */
-    //   name: `shared-sync-${this.webOptions.identifier}`,
-    //   type: 'module'
-    // });
+    const syncWorker = new SharedWorker(
+      new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
+      {
+        /* @vite-ignore */
+        name: `shared-sync-${this.webOptions.identifier}`,
+        type: 'module'
+      }
+    );
     this.messagePort = syncWorker.port;
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
@@ -112,7 +112,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true) as any;
+    const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true) as MessagePort;
     this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
       dbName: this.options.identifier!,
       streamOptions: {
