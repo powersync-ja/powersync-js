@@ -181,50 +181,40 @@ export default function SyncDiagnosticsPage() {
   );
 
   const tablesTable = (
-    <S.QueryResultContainer>
-      <Typography variant="h4" gutterBottom>
-        Tables
-      </Typography>
-      <DataGrid
-        autoHeight={true}
-        rows={tablesRows}
-        columns={tablesColumns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 10
-            }
+    <DataGrid
+      autoHeight={true}
+      rows={tablesRows}
+      columns={tablesColumns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 10
           }
-        }}
-        pageSizeOptions={[10, 50, 100]}
-        disableRowSelectionOnClick
-      />
-    </S.QueryResultContainer>
+        }
+      }}
+      pageSizeOptions={[10, 50, 100]}
+      disableRowSelectionOnClick
+    />
   );
 
   const bucketsTable = (
-    <S.QueryResultContainer>
-      <Typography variant="h4" gutterBottom>
-        Buckets
-      </Typography>
-      <DataGrid
-        autoHeight={true}
-        rows={rows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 50
-            }
-          },
-          sorting: {
-            sortModel: [{ field: 'total_operations', sort: 'desc' }]
+    <DataGrid
+      autoHeight={true}
+      rows={rows}
+      columns={columns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 50
           }
-        }}
-        pageSizeOptions={[10, 50, 100]}
-        disableRowSelectionOnClick
-      />
-    </S.QueryResultContainer>
+        },
+        sorting: {
+          sortModel: [{ field: 'total_operations', sort: 'desc' }]
+        }
+      }}
+      pageSizeOptions={[10, 50, 100]}
+      disableRowSelectionOnClick
+    />
   );
 
   return (
@@ -239,8 +229,18 @@ export default function SyncDiagnosticsPage() {
           }}>
           Clear & Redownload
         </Button>
-        {tableRowsLoading ? <CircularProgress /> : tablesTable}
-        {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
+        <S.QueryResultContainer>
+          <Typography variant="h4" gutterBottom>
+            Tables
+          </Typography>
+          {tableRowsLoading ? <CircularProgress /> : tablesTable}
+        </S.QueryResultContainer>
+        <S.QueryResultContainer>
+          <Typography variant="h4" gutterBottom>
+            Buckets
+          </Typography>
+          {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
+        </S.QueryResultContainer>
       </S.MainContainer>
     </NavigationPage>
   );
