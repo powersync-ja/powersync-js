@@ -46,7 +46,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.logger = Logger.get('WASQLite');
     this.dbGetHelpers = null;
     this.methods = null;
-    this.debugMode = options.debugMode ?? process.env.NODE_ENV !== 'production';
+    this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {
       const originalExecute = this._execute.bind(this);
       this._execute = async (sql, bindings) => {
