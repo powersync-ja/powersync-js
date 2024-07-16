@@ -2,6 +2,7 @@ import {
   BaseListener,
   BaseObserver,
   PowerSyncDatabase,
+  SyncStreamConnectionMethod,
   WebRemote,
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -10,6 +11,12 @@ import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
+
+import { Buffer } from 'buffer';
+
+if (typeof self.Buffer == 'undefined') {
+  self.Buffer = Buffer;
+}
 
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
@@ -71,7 +78,7 @@ if (connector.hasCredentials()) {
 }
 
 export async function connect() {
-  await sync.connect();
+  await sync.connect({ connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
     sync.disconnect();
@@ -87,7 +94,7 @@ export async function clearData() {
   await schemaManager.clear();
   await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
-    await sync.connect();
+    await sync.connect({ connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
   }
 }
 
