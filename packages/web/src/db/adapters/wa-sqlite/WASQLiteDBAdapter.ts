@@ -46,7 +46,9 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.dbGetHelpers = null;
     this.methods = null;
     this.initialized = this.init();
-    this.dbGetHelpers = this.generateDBHelpers({ execute: this._execute.bind(this) });
+    this.dbGetHelpers = this.generateDBHelpers({
+      execute: (query, params) => this.acquireLock(() => this._execute(query, params))
+    });
   }
 
   get name() {
