@@ -21,7 +21,7 @@
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
-  "homepage": "https://docs.powersync.com/resources/api-reference",
+  "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",

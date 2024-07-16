@@ -1,6 +1,6 @@
 {
   "name": "django-react-native-todolist",
-  "version": "1.1.10",
+  "version": "1.2.0",
   "main": "./index.js",
   "scripts": {
     "android": "expo run:android",
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
+    "@craftzdog/react-native-buffer": "^6.0.5",
     "@expo/vector-icons": "^14.0.0",
     "@journeyapps/react-native-quick-sqlite": "^1.1.7",
     "@powersync/common": "workspace:*",
@@ -31,8 +32,6 @@
     "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
     "metro": "~0.80.8",
-    "mobx": "^6.10.2",
-    "mobx-react-lite": "^4.0.4",
     "react": "18.2.0",
     "react-native": "0.74.1",
     "react-native-elements": "^3.4.3",

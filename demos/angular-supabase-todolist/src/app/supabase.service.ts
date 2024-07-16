@@ -131,7 +131,9 @@ export class SupabaseService implements PowerSyncBackendConnector {
         }
 
         if (result.error) {
-          throw new Error(`Could not update Supabase. Received error: ${result.error.message}`);
+          console.error(result.error);
+          result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;
+          throw result.error;
         }
       }
 
@@ -147,7 +149,7 @@ export class SupabaseService implements PowerSyncBackendConnector {
          * If protecting against data loss is important, save the failing records
          * elsewhere instead of discarding, and/or notify the user.
          */
-        console.error(`Data upload error - discarding ${lastOp}`, ex);
+        console.error('Data upload error - discarding:', lastOp, ex);
         await transaction.complete();
       } else {
         // Error may be retryable - e.g. network error or temporary server error.

@@ -1,6 +1,6 @@
 import flushPromises from 'flush-promises';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { isProxy, isRef, ref } from 'vue';
 import * as PowerSync from '../src/composables/powerSync';
 import { useQuery } from '../src/composables/useQuery';
 import { withSetup } from './utils';
@@ -59,6 +59,21 @@ describe('useQuery', () => {
     expect(isLoading.value).toEqual(false);
     expect(isFetching.value).toEqual(false);
     expect(error.value).toEqual(undefined);
+  });
+
+  // ensure that Proxy wrapper object is stripped
+  it('should propagate raw reactive sql parameters', async () => {
+    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
+    const getAllSpy = mockPowerSync.getAll;
+
+    const [{ data, isLoading, isFetching, error }] = withSetup(() =>
+      useQuery('SELECT * from lists where id = $1', ref([ref('test')]))
+    );
+    await flushPromises();
+    expect(getAllSpy).toHaveBeenCalledTimes(1);
+    const sqlParam = (getAllSpy.mock.calls[0] as Array<any>)[1];
+    expect(isRef(sqlParam)).toEqual(false);
+    expect(isProxy(sqlParam)).toEqual(false);
   });
 
   it('should rerun the query when refresh is used', async () => {
@@ -132,7 +147,7 @@ describe('useQuery', () => {
   it('should set error for compilable query on useQuery parameters', async () => {
     vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
 
-    const [{ isLoading, error }] = withSetup(() =>
+    const [{ error }] = withSetup(() =>
       useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }, ['x'])
     );
 

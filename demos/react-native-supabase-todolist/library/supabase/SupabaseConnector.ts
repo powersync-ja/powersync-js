@@ -92,7 +92,9 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
         }
 
         if (result.error) {
-          throw new Error(`Could not ${op.op} data to Supabase error: ${JSON.stringify(result)}`);
+          console.error(result.error);
+          result.error.message = `Could not ${op.op} data to Supabase error: ${JSON.stringify(result)}`;
+          throw result.error;
         }
       }
 
@@ -108,7 +110,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
          * If protecting against data loss is important, save the failing records
          * elsewhere instead of discarding, and/or notify the user.
          */
-        console.error(`Data upload error - discarding ${lastOp}`, ex);
+        console.error('Data upload error - discarding:', lastOp, ex);
         await transaction.complete();
       } else {
         // Error may be retryable - e.g. network error or temporary server error.

@@ -1,16 +1,18 @@
-import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB } from 'react-native-elements';
-import { observer } from 'mobx-react-lite';
 import prompt from 'react-native-prompt-android';
 
 import { useSystem } from '../../../library/stores/system';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 import { Stack } from 'expo-router';
+import { useQuery } from '@powersync/react';
+import { LIST_TABLE } from '../../../library/powersync/AppSchema';
 
-const App = observer(() => {
-  const { listStore } = useSystem();
+const App = () => {
+  const system = useSystem();
+  const { data: lists } = useQuery(`SELECT * FROM ${LIST_TABLE}`);
+
   return (
     <View style={{ flex: 1, flexGrow: 1 }}>
       <Stack.Screen
@@ -27,28 +29,31 @@ const App = observer(() => {
           prompt(
             'Add a new list',
             '',
-            (text) => {
+            async (text) => {
               if (!text) {
                 return;
               }
 
-              listStore.createModel({
-                name: text
-              });
+              const { userID } = await system.djangoConnector.fetchCredentials();
+
+              await system.powersync.execute(
+                `INSERT INTO ${LIST_TABLE} (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?)`,
+                [text, userID]
+              );
             },
             { placeholder: 'List name', style: 'shimo' }
           );
         }}
       />
       <ScrollView style={{ maxHeight: '90%' }}>
-        {listStore.collection.map((t) => (
-          <ListItemWidget key={t.id} model={t} />
+        {lists.map((t) => (
+          <ListItemWidget key={t.id} record={t} />
         ))}
       </ScrollView>
 
       <StatusBar style={'light'} />
     </View>
   );
-});
+};
 
 export default App;

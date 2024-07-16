@@ -6,6 +6,7 @@ import { useSystem } from '../library/stores/system';
 import { TextInputWidget } from '../library/widgets/TextInputWidget';
 import { SignInStyles } from './signin';
 import { Icon } from 'react-native-elements';
+import { router } from 'expo-router';
 
 export default function Register() {
   const { djangoConnector } = useSystem();
@@ -24,6 +25,7 @@ export default function Register() {
 
           <TextInputWidget
             placeholder="Username"
+            autoCapitalize="none"
             onChangeText={(value) => setCredentials({ ...credentials, username: value })}
           />
           <TextInputWidget
@@ -39,19 +41,8 @@ export default function Register() {
                 setLoading(true);
                 setError('');
                 try {
-                  // const { data, error } = await djangoConnector.supabaseClient.auth.signUp({
-                  //   email: credentials.username,
-                  //   password: credentials.password
-                  // });
-                  // if (error) {
-                  //   throw error;
-                  // }
-                  // if (data.session) {
-                  //   // djangoConnector.supabaseClient.auth.setSession(data.session);
-                  //   router.replace('views/todos/lists');
-                  // } else {
-                  //   router.replace('signin');
-                  // }
+                  await djangoConnector.register(credentials.username, credentials.password);
+                  router.replace('signin');
                 } catch (ex: any) {
                   console.error(ex);
                   setError(ex.message || 'Could not register');
