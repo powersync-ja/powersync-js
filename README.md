@@ -17,7 +17,7 @@
 - [packages/web](./packages/web/README.md)
 
   - JS Web SDK implementation (extension of `packages/common`)
-  
+
 - [packages/react](./packages/react/README.md)
 
   - React integration for PowerSync.
@@ -109,16 +109,16 @@ Merging a PR with Changesets will automatically create a PR with version bumps. 
 
 The PowerSync React Native SDK uses [a fork of react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite)
 
-Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not work with standard `yarn link` commands. Metro does not work well with symlinks <https://github.com/facebook/metro/issues/286>.
+Testing live development changes to `@powersync/react-native-quick-sqlite` will not work with standard `yarn link` commands. Metro does not work well with symlinks <https://github.com/facebook/metro/issues/286>.
 
-The process of releasing development packages for `@journeyapps/react-native-quick-sqlite` for each change can be tedious and slow. A faster (and hackier) method is to use [mtsl](https://www.npmjs.com/package/mtsl) which will watch and copy the package into this workspace's `node_modules`.
+The process of releasing development packages for `@powersync/react-native-quick-sqlite` for each change can be tedious and slow. A faster (and hackier) method is to use [mtsl](https://www.npmjs.com/package/mtsl) which will watch and copy the package into this workspace's `node_modules`.
 
 ```bash
 npm install -g mtsl
 ```
 
 ```bash
-mtsl add -s "[source path to your react-native-quick-sqlite repo folder]" -d "[this workspaces root node_modules folder]"/@journeyapps/react-native-quick-sqlite
+mtsl add -s "[source path to your react-native-quick-sqlite repo folder]" -d "[this workspaces root node_modules folder]"/@powersync/react-native-quick-sqlite
 ```
 
 ```bash

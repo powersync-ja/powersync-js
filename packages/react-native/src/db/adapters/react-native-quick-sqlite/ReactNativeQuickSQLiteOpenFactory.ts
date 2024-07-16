@@ -1,4 +1,4 @@
-import { open, QuickSQLite, QuickSQLiteConnection } from '@journeyapps/react-native-quick-sqlite';
+import { open, QuickSQLite, QuickSQLiteConnection } from '@powersync/react-native-quick-sqlite';
 
 import { DBAdapter, SQLOpenOptions, SQLOpenFactory } from '@powersync/common';
 import { RNQSDBAdapter } from './RNQSDBAdapter';

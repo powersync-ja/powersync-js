@@ -1,5 +1,5 @@
-import * as SQLite from '@journeyapps/wa-sqlite';
-import '@journeyapps/wa-sqlite';
+import * as SQLite from '@powersync/wa-sqlite';
+import '@powersync/wa-sqlite';
 import * as Comlink from 'comlink';
 import type { DBFunctionsInterface, OnTableChangeCallback, WASQLExecuteResult } from './types';
 import { Mutex } from 'async-mutex';
@@ -10,11 +10,11 @@ export async function _openDB(
   dbFileName: string,
   options: { useWebWorker: boolean } = { useWebWorker: true }
 ): Promise<DBFunctionsInterface> {
-  const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
+  const { default: moduleFactory } = await import('@powersync/wa-sqlite/dist/wa-sqlite-async.mjs');
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
-  const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
+  const { IDBBatchAtomicVFS } = await import('@powersync/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
   const vfs = new IDBBatchAtomicVFS(dbFileName);
   sqlite3.vfs_register(vfs, true);
 

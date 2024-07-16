@@ -56,7 +56,7 @@ const config: ExpoConfig = {
       {
         ios: {
           deploymentTarget: '13.4',
-          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
+          // TODO: New architecture is currently not yet supported by @powersync/react-native-quick-sqlite
           newArchEnabled: false
         },
         android: {
@@ -65,7 +65,7 @@ const config: ExpoConfig = {
           targetSdkVersion: 34,
           buildToolsVersion: '34.0.0',
           networkInspector: false,
-          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
+          // TODO: New architecture is currently not yet supported by @powersync/react-native-quick-sqlite
           newArchEnabled: false
         }
       }
