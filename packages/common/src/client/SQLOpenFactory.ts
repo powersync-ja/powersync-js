@@ -13,8 +13,11 @@ export interface SQLOpenOptions {
   /**
    * Enable debugMode to log queries to the performance timeline.
    *
-   * Defaults to false if `process.env.NODE_ENV == 'production'`,
-   * true otherwise.
+   * Defaults to false.
+   *
+   * To enable in development builds, use:
+   *
+   *    debugMode: process.env.NODE_ENV !== 'production'
    */
   debugMode?: boolean;
 }
