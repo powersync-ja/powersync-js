@@ -21,7 +21,6 @@ describe('PowerSyncConnection', () => {
 
     it('should execute a select query using getAll from the table', async () => {
       await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(uuid(), ?)', ['John']);
-
       const getAllSpy = vi.spyOn(powerSyncDb, 'getAll');
 
       const compiledQuery: CompiledQuery = {
@@ -35,7 +34,7 @@ describe('PowerSyncConnection', () => {
 
       expect(rows.length).toEqual(1);
       expect(rows[0].name).toEqual('John');
-      expect(getAllSpy).toHaveBeenCalledTimes(1);
+      expect(getAllSpy).toHaveBeenCalledWith('SELECT * From users', []);
     });
 
     it('should insert to the table', async () => {

@@ -18,5 +18,3 @@ export const getPowerSyncDb = () => {
 
   return database;
 };
-
-export const getKyselyDb = wrapPowerSyncWithKysely<Database>(getPowerSyncDb());
