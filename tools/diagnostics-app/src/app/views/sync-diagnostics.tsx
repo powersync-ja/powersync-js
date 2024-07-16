@@ -73,30 +73,37 @@ export default function SyncDiagnosticsPage() {
   const bucketRowsLoading = bucketRows == null;
   const tableRowsLoading = tableRows == null;
 
+  const refreshStats = async () => {
+    // Similar to db.currentState.hasSynced, but synchronized to the onChange events
+    const hasSynced = await db.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
+    if (hasSynced != null) {
+      // These are potentially expensive queries - do not run during initial sync
+      const bucketRows = await db.getAll(BUCKETS_QUERY);
+      const tableRows = await db.getAll(TABLES_QUERY);
+      setBucketRows(bucketRows);
+      setTableRows(tableRows);
+    } else {
+      // Fast query to show progress during initial sync
+      const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
+      setBucketRows(bucketRows);
+      setTableRows(null);
+    }
+  };
+
   React.useEffect(() => {
     const controller = new AbortController();
 
     db.onChangeWithCallback(
       {
         async onChange(event) {
-          // Similar to db.currentState.hasSynced, but synchronized to the onChange events
-          const hasSynced = await db.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
-          if (hasSynced != null) {
-            // These are potentially expensive queries - do not run during initial sync
-            const bucketRows = await db.getAll(BUCKETS_QUERY);
-            const tableRows = await db.getAll(TABLES_QUERY);
-            setBucketRows(bucketRows);
-            setTableRows(tableRows);
-          } else {
-            // Fast query to show progress during initial sync
-            const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
-            setBucketRows(bucketRows);
-            setTableRows(null);
-          }
+          await refreshStats();
         }
       },
       { rawTableNames: true, tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data'], throttleMs: 500 }
     );
+
+    refreshStats();
+
     return () => {
       controller.abort();
     };
