@@ -53,10 +53,53 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         const start = performance.now();
         try {
           const r = await originalExecute(sql, bindings);
-          performance.measure(`SQL: ${sql}`, { start });
+          const end = performance.now();
+          const message = `[SQL] ${sql}`;
+          performance.measure(message, { start, end });
+          const duration = end - start;
+          if (duration >= 10) {
+            if (duration >= 50) {
+              const rw = await originalExecute(`EXPLAIN QUERY PLAN ${sql}`, bindings);
+              const explain = rw.rows?._array ?? [];
+              if (explain.length > 0) {
+                const emessage = explain.map((r) => `      ${r.detail}`).join('\n');
+
+                console.log(
+                  '%c[SQL] %c%s %c%s\n%c%s\n%c%s',
+                  'color: grey',
+                  durationStyle(duration),
+                  `[${duration.toFixed(1)}ms]`,
+                  'color: grey',
+                  sql,
+                  'color: blue',
+                  '[EXPLAIN QUERY PLAN]',
+                  'color: grey',
+                  emessage
+                );
+              } else {
+                console.log(
+                  '%c[SQL] %c%s %c%s',
+                  'color: grey',
+                  durationStyle(duration),
+                  `[${duration.toFixed(1)}ms]`,
+                  'color: grey',
+                  sql
+                );
+              }
+            } else {
+              console.log(
+                '%c[SQL] %c%s %c%s',
+                'color: grey',
+                durationStyle(duration),
+                `[${duration.toFixed(1)}ms]`,
+                'color: grey',
+                sql
+              );
+            }
+          }
           return r;
         } catch (e: any) {
-          performance.measure(`SQL ERROR: ${e.message} | ${sql}`, { start });
+          performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
           throw e;
         }
       };
@@ -261,5 +304,15 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         return first;
       }
     };
+  }
+}
+
+function durationStyle(duration: number) {
+  if (duration < 30) {
+    return 'color: grey';
+  } else if (duration < 300) {
+    return 'color: blue';
+  } else {
+    return 'color: red';
   }
 }
