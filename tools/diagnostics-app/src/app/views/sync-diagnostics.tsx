@@ -24,9 +24,9 @@ WITH
     (SELECT
       bucket,
       row_type,
-      sum(length(data)) as data_size,
+      sum(case when op = 3 and superseded = 0 then length(data) else 0 end) as data_size,
       sum(length(row_type) + length(row_id) + length(bucket) + length(key) + 40) as metadata_size,
-      count() as row_count
+      sum(case when op = 3 and superseded = 0 then 1 else 0 end) as row_count
     FROM ps_oplog GROUP BY bucket, row_type),
 
   oplog_stats AS
@@ -51,7 +51,7 @@ FROM local_bucket_data local
 LEFT JOIN oplog_stats stats ON stats.name = local.id`;
 
 const TABLES_QUERY = `
-SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
+SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog WHERE superseded = 0 and op = 3 GROUP BY row_type
 `;
 
 export default function SyncDiagnosticsPage() {
