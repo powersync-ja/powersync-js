@@ -54,48 +54,30 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         try {
           const r = await originalExecute(sql, bindings);
           const end = performance.now();
-          const message = `[SQL] ${sql}`;
-          performance.measure(message, { start, end });
+          performance.measure(`[SQL] ${sql}`, { start, end });
           const duration = end - start;
           if (duration >= 10) {
-            if (duration >= 50) {
-              const rw = await originalExecute(`EXPLAIN QUERY PLAN ${sql}`, bindings);
-              const explain = rw.rows?._array ?? [];
-              if (explain.length > 0) {
-                const emessage = explain.map((r) => `      ${r.detail}`).join('\n');
-
-                console.log(
-                  '%c[SQL] %c%s %c%s\n%c%s\n%c%s',
-                  'color: grey',
-                  durationStyle(duration),
-                  `[${duration.toFixed(1)}ms]`,
-                  'color: grey',
-                  sql,
-                  'color: blue',
-                  '[EXPLAIN QUERY PLAN]',
-                  'color: grey',
-                  emessage
-                );
-              } else {
-                console.log(
-                  '%c[SQL] %c%s %c%s',
-                  'color: grey',
-                  durationStyle(duration),
-                  `[${duration.toFixed(1)}ms]`,
-                  'color: grey',
-                  sql
-                );
-              }
-            } else {
-              console.log(
-                '%c[SQL] %c%s %c%s',
-                'color: grey',
-                durationStyle(duration),
-                `[${duration.toFixed(1)}ms]`,
-                'color: grey',
-                sql
-              );
+            const rw = await originalExecute(`EXPLAIN QUERY PLAN ${sql}`, bindings);
+            const explain = rw.rows?._array ?? [];
+            const sqlMessage = sql.trim();
+            const newline = sqlMessage.indexOf('\n');
+            const firstLine = newline >= 0 ? sqlMessage.substring(0, newline) + '...' : sqlMessage;
+            console.groupCollapsed(
+              '%c[SQL] %c%s %c%s',
+              'color: grey; font-weight: normal',
+              durationStyle(duration),
+              `[${duration.toFixed(1)}ms]`,
+              'color: grey; font-weight: normal',
+              firstLine
+            );
+            if (newline >= 0) {
+              console.log('%c%s', 'color: grey', sqlMessage);
             }
+            if (explain.length > 0) {
+              const emessage = explain.map((r) => `  ${r.detail}`).join('\n');
+              console.log('%c%s\n%c%s', 'color: blue', '[EXPLAIN QUERY PLAN]', 'color: grey', emessage);
+            }
+            console.groupEnd();
           }
           return r;
         } catch (e: any) {
@@ -309,10 +291,10 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
 function durationStyle(duration: number) {
   if (duration < 30) {
-    return 'color: grey';
+    return 'color: grey; font-weight: normal';
   } else if (duration < 300) {
-    return 'color: blue';
+    return 'color: blue; font-weight: normal';
   } else {
-    return 'color: red';
+    return 'color: red; font-weight: normal';
   }
 }
