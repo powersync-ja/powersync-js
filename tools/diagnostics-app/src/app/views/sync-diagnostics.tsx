@@ -15,7 +15,6 @@ import {
   styled
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useQuery } from '@powersync/react';
 import React from 'react';
 
 const BUCKETS_QUERY = `
