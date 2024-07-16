@@ -2,6 +2,7 @@ import * as SQLite from '@journeyapps/wa-sqlite';
 import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
 import type { DBFunctionsInterface, OnTableChangeCallback, WASQLExecuteResult } from './types';
+import { Mutex } from 'async-mutex';
 
 let nextId = 1;
 
@@ -18,6 +19,7 @@ export async function _openDB(
   sqlite3.vfs_register(vfs, true);
 
   const db = await sqlite3.open_v2(dbFileName);
+  const statementMutex = new Mutex();
 
   /**
    * Listeners are exclusive to the DB connection.
@@ -40,10 +42,10 @@ export async function _openDB(
 
   /**
    * This requests a lock for executing statements.
-   * Should only be used interanlly.
+   * Should only be used internally.
    */
   const _acquireExecuteLock = (callback: () => Promise<any>): Promise<any> => {
-    return navigator.locks.request(`db-execute-${dbFileName}`, callback);
+    return statementMutex.runExclusive(callback);
   };
 
   /**
