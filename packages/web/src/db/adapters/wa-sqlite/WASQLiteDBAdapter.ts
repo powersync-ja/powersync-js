@@ -53,10 +53,10 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         const start = performance.now();
         try {
           const r = await originalExecute(sql, bindings);
-          performance.measure(`SQL: ${sql}`, { start });
+          performance.measure(`[SQL] ${sql}`, { start });
           return r;
         } catch (e: any) {
-          performance.measure(`SQL ERROR: ${e.message} | ${sql}`, { start });
+          performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
           throw e;
         }
       };
