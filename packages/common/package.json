@@ -28,7 +28,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "cross-fetch": "^4.0.0",
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
@@ -43,6 +42,7 @@
     "bson": "^6.6.0",
     "buffer": "^6.0.3",
     "can-ndjson-stream": "^1.0.2",
+    "cross-fetch": "^4.0.0",
     "event-iterator": "^2.0.0",
     "lodash": "^4.17.21",
     "rollup": "4.14.3",
