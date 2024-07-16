@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.8.1
+
+### Patch Changes
+
+- 8d5b702: Updated dependencies
+
 ## 1.8.0
 
 ### Minor Changes
