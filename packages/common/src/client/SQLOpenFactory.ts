@@ -9,6 +9,14 @@ export interface SQLOpenOptions {
    * Directory where the database file is located.
    */
   dbLocation?: string;
+
+  /**
+   * Enable debugMode to log queries to the performance timeline.
+   *
+   * Defaults to false if `process.env.NODE_ENV == 'production'`,
+   * true otherwise.
+   */
+  debugMode?: boolean;
 }
 
 export interface SQLOpenFactory {
