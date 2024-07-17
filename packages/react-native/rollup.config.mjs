@@ -28,7 +28,7 @@ export default (commandLineArgs) => {
       commonjs({}),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
-        ReadableStream: ['web-streams-polyfill', 'ReadableStream'],
+        ReadableStream: ['web-streams-polyfill/ponyfill/es2018', 'ReadableStream'],
         TextEncoder: ['text-encoding', 'TextEncoder'],
         TextDecoder: ['text-encoding', 'TextDecoder']
       }),
