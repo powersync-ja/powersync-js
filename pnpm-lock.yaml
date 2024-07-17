@@ -96,9 +96,6 @@ importers:
       '@azure/core-asynciterator-polyfill':
         specifier: ^1.0.2
         version: 1.0.2
-      '@craftzdog/react-native-buffer':
-        specifier: ^6.0.5
-        version: 6.0.5(react-native@0.74.1)(react@18.2.0)
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.0.2
@@ -438,9 +435,6 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
       js-logger:
         specifier: ^1.6.1
         version: 1.6.1
@@ -776,9 +770,6 @@ importers:
       '@azure/core-asynciterator-polyfill':
         specifier: ^1.0.2
         version: 1.0.2
-      '@craftzdog/react-native-buffer':
-        specifier: ^6.0.5
-        version: 6.0.5(react-native@0.74.1)(react@18.2.0)
       '@expo/vector-icons':
         specifier: ^14.0.0
         version: 14.0.2
@@ -948,9 +939,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.39.7
         version: 2.44.4
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
       formik:
         specifier: ^2.4.6
         version: 2.4.6(react@18.2.0)
@@ -1567,12 +1555,6 @@ importers:
       rollup:
         specifier: 4.14.3
         version: 4.14.3
-      rollup-plugin-web-worker-loader:
-        specifier: ^1.6.1
-        version: 1.6.1(rollup@4.14.3)
-      rollup-plugin-workers:
-        specifier: ^2.1.1
-        version: 2.1.1
       typescript:
         specifier: ^5.2.2
         version: 5.4.5
@@ -5148,16 +5130,6 @@ packages:
       - react
       - react-native
     dev: true
-
-  /@craftzdog/react-native-buffer@6.0.5(react-native@0.74.1)(react@18.2.0):
-    resolution: {integrity: sha512-Av+YqfwA9e7jhgI9GFE/gTpwl/H+dRRLmZyJPOpKTy107j9Oj7oXlm3/YiMNz+C/CEGqcKAOqnXDLs4OL6AAFw==}
-    dependencies:
-      ieee754: 1.2.1
-      react-native-quick-base64: 2.1.2(react-native@0.74.1)(react@18.2.0)
-    transitivePeerDependencies:
-      - react
-      - react-native
-    dev: false
 
   /@cspotcode/source-map-support@0.8.1:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -15391,6 +15363,7 @@ packages:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
+    dev: true
 
   /builtin-modules@3.3.0:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
@@ -18717,10 +18690,6 @@ packages:
     dependencies:
       '@types/estree-jsx': 1.0.5
       '@types/unist': 3.0.2
-
-  /estree-walker@0.6.1:
-    resolution: {integrity: sha512-SqmZANLWS0mnatqbSfRP5g8OXZC12Fgg1IwNtLsyHDzJizORW4khDfjPqJZsemPWBB2uqykUah5YpQ6epsqC/w==}
-    dev: true
 
   /estree-walker@1.0.1:
     resolution: {integrity: sha512-1fMXF3YP4pZZVozF8j/ZLfvnR8NSIljt56UhbZ5PeeDmmGHpgpdwQt7ITlGvYaQukCvuBRMLEiKiYC+oeIg4cg==}
@@ -26857,17 +26826,6 @@ packages:
       react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.24.8)(react@18.2.0)
     dev: true
 
-  /react-native-quick-base64@2.1.2(react-native@0.74.1)(react@18.2.0):
-    resolution: {integrity: sha512-xghaXpWdB0ji8OwYyo0fWezRroNxiNFCNFpGUIyE7+qc4gA/IGWnysIG5L0MbdoORv8FkTKUvfd6yCUN5R2VFA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      base64-js: 1.5.1
-      react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8)(@types/react@18.2.79)(react@18.2.0)
-    dev: false
-
   /react-native-ratings@8.0.4(react-native@0.74.1)(react@18.2.0):
     resolution: {integrity: sha512-Xczu5lskIIRD6BEdz9A0jDRpEck/SFxRqiglkXi0u67yAtI1/pcJC76P4MukCbT8K4BPVl+42w83YqXBoBRl7A==}
     peerDependencies:
@@ -28058,28 +28016,6 @@ packages:
   /robust-predicates@3.0.2:
     resolution: {integrity: sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg==}
     dev: false
-
-  /rollup-plugin-web-worker-loader@1.6.1(rollup@4.14.3):
-    resolution: {integrity: sha512-4QywQSz1NXFHKdyiou16mH3ijpcfLtLGOrAqvAqu1Gx+P8+zj+3gwC2BSL/VW1d+LW4nIHC8F7d7OXhs9UdR2A==}
-    peerDependencies:
-      rollup: ^1.9.2 || ^2.0.0
-    dependencies:
-      rollup: 4.14.3
-    dev: true
-
-  /rollup-plugin-workers@2.1.1:
-    resolution: {integrity: sha512-Wfg7JCtmlM2RLrhXlE9/cMU4gfOIV8M4VqoH+Z0AritiBIgfg9lghnQeNuPP8vFOZ8IMIPzI0IUdiqbY1GyaPQ==}
-    dependencies:
-      magic-string: 0.25.9
-      rollup-pluginutils: 2.8.2
-      traveler: github.com/tsbehlman/traveler/f94765d0e8d2c540dfbeee04be8be9c516b6a881
-    dev: true
-
-  /rollup-pluginutils@2.8.2:
-    resolution: {integrity: sha512-EEp9NhnUkwY8aif6bxgovPHMoMoNr2FulJziTndpt5H9RdwC47GSGuII9XxpSdzVGM0GWrNPHV6ie1LTNJPaLQ==}
-    dependencies:
-      estree-walker: 0.6.1
-    dev: true
 
   /rollup@2.79.1:
     resolution: {integrity: sha512-uKxbd0IhMZOhjAiD5oAFp7BqvkA4Dv47qpOCtaNvng4HBwdbWtdOh8f5nZNuk2rp51PMGk3bzfWu5oayNEuYnw==}
@@ -32643,9 +32579,3 @@ packages:
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
-
-  github.com/tsbehlman/traveler/f94765d0e8d2c540dfbeee04be8be9c516b6a881:
-    resolution: {tarball: https://codeload.github.com/tsbehlman/traveler/tar.gz/f94765d0e8d2c540dfbeee04be8be9c516b6a881}
-    name: traveler
-    version: 1.0.0
-    dev: true

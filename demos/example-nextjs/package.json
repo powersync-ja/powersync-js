@@ -19,7 +19,6 @@
     "@mui/material": "^5.15.18",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
-    "buffer": "^6.0.3",
     "js-logger": "^1.6.1",
     "lato-font": "^3.0.0",
     "lexical": "^0.15.0",
