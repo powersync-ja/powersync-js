@@ -3,6 +3,7 @@ import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { generateTestDb } from './utils/testDb';
+import pDefer from 'p-defer';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -288,5 +289,26 @@ describe('CRUD Tests', () => {
     expect(tx2.crud[0].equals(expectedCrudEntry2)).true;
     await tx2.complete();
     expect(await powersync.getNextCrudTransaction()).equals(null);
+  });
+
+  it('Transaction exclusivity', async () => {
+    const outside = pDefer();
+    const inTx = pDefer();
+
+    const txPromise = powersync.writeTransaction(async (tx) => {
+      await tx.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test1']);
+      inTx.resolve();
+      await outside.promise;
+      await tx.rollback();
+    });
+
+    await inTx.promise;
+
+    const r = powersync.getOptional<any>('SELECT * FROM assets WHERE id = ?', [testId]);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    outside.resolve();
+
+    await txPromise;
+    expect(await r).toEqual(null);
   });
 });

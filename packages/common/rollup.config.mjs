@@ -22,7 +22,7 @@ export default (commandLineArgs) => {
       commonjs({}),
       inject({
         Buffer: ['buffer', 'Buffer'],
-        ReadableStream: ['web-streams-polyfill/ponyfill/es2018', 'ReadableStream'],
+        ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
         // Used by can-ndjson-stream
         TextDecoder: ['text-encoding', 'TextDecoder']
       })

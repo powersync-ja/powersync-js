@@ -1,5 +1,5 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { clearData, syncErrorTracker } from '@/library/powersync/ConnectionManager';
+import { clearData, db, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 import {
   Box,
   Button,
@@ -15,7 +15,6 @@ import {
   styled
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useQuery } from '@powersync/react';
 import React from 'react';
 
 const BUCKETS_QUERY = `
@@ -24,9 +23,9 @@ WITH
     (SELECT
       bucket,
       row_type,
-      sum(length(data)) as data_size,
+      sum(case when op = 3 and superseded = 0 then length(data) else 0 end) as data_size,
       sum(length(row_type) + length(row_id) + length(bucket) + length(key) + 40) as metadata_size,
-      count() as row_count
+      sum(case when op = 3 and superseded = 0 then 1 else 0 end) as row_count
     FROM ps_oplog GROUP BY bucket, row_type),
 
   oplog_stats AS
@@ -51,22 +50,64 @@ FROM local_bucket_data local
 LEFT JOIN oplog_stats stats ON stats.name = local.id`;
 
 const TABLES_QUERY = `
-SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
+SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog WHERE superseded = 0 and op = 3 GROUP BY row_type
 `;
 
-export default function SyncDiagnosticsPage() {
-  const { data: bucketRows, isLoading: bucketRowsLoading } = useQuery(BUCKETS_QUERY, undefined, {
-    rawTableNames: true,
-    tables: ['ps_oplog', 'ps_data_local__local_bucket_data'],
-    throttleMs: 500
-  });
-  const { data: tableRows, isLoading: tableRowsLoading } = useQuery(TABLES_QUERY, undefined, {
-    rawTableNames: true,
-    tables: ['ps_oplog', 'ps_data_local__local_bucket_data'],
-    throttleMs: 500
-  });
+const BUCKETS_QUERY_FAST = `
+SELECT
+  local.id as name,
+  '[]' as tables,
+  0 as data_size,
+  0 as metadata_size,
+  0 as row_count,
+  local.download_size,
+  local.total_operations,
+  local.downloading
+FROM local_bucket_data local`;
 
+export default function SyncDiagnosticsPage() {
+  const [bucketRows, setBucketRows] = React.useState<null | any[]>(null);
+  const [tableRows, setTableRows] = React.useState<null | any[]>(null);
   const [syncError, setSyncError] = React.useState<Error | null>(syncErrorTracker.lastSyncError);
+
+  const bucketRowsLoading = bucketRows == null;
+  const tableRowsLoading = tableRows == null;
+
+  const refreshStats = async () => {
+    // Similar to db.currentState.hasSynced, but synchronized to the onChange events
+    const hasSynced = await db.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
+    if (hasSynced != null) {
+      // These are potentially expensive queries - do not run during initial sync
+      const bucketRows = await db.getAll(BUCKETS_QUERY);
+      const tableRows = await db.getAll(TABLES_QUERY);
+      setBucketRows(bucketRows);
+      setTableRows(tableRows);
+    } else {
+      // Fast query to show progress during initial sync
+      const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
+      setBucketRows(bucketRows);
+      setTableRows(null);
+    }
+  };
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    db.onChangeWithCallback(
+      {
+        async onChange(event) {
+          await refreshStats();
+        }
+      },
+      { rawTableNames: true, tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data'], throttleMs: 500 }
+    );
+
+    refreshStats();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   React.useEffect(() => {
     const l = syncErrorTracker.registerListener({
@@ -111,7 +152,7 @@ export default function SyncDiagnosticsPage() {
     }
   ];
 
-  const rows = bucketRows.map((r) => {
+  const rows = (bucketRows ?? []).map((r) => {
     return {
       id: r.name,
       name: r.name,
@@ -146,7 +187,7 @@ export default function SyncDiagnosticsPage() {
     }
   ];
 
-  const tablesRows = tableRows.map((r) => {
+  const tablesRows = (tableRows ?? []).map((r) => {
     return {
       id: r.name,
       ...r
@@ -181,50 +222,40 @@ export default function SyncDiagnosticsPage() {
   );
 
   const tablesTable = (
-    <S.QueryResultContainer>
-      <Typography variant="h4" gutterBottom>
-        Tables
-      </Typography>
-      <DataGrid
-        autoHeight={true}
-        rows={tablesRows}
-        columns={tablesColumns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 10
-            }
+    <DataGrid
+      autoHeight={true}
+      rows={tablesRows}
+      columns={tablesColumns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 10
           }
-        }}
-        pageSizeOptions={[10, 50, 100]}
-        disableRowSelectionOnClick
-      />
-    </S.QueryResultContainer>
+        }
+      }}
+      pageSizeOptions={[10, 50, 100]}
+      disableRowSelectionOnClick
+    />
   );
 
   const bucketsTable = (
-    <S.QueryResultContainer>
-      <Typography variant="h4" gutterBottom>
-        Buckets
-      </Typography>
-      <DataGrid
-        autoHeight={true}
-        rows={rows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 50
-            }
-          },
-          sorting: {
-            sortModel: [{ field: 'total_operations', sort: 'desc' }]
+    <DataGrid
+      autoHeight={true}
+      rows={rows}
+      columns={columns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 50
           }
-        }}
-        pageSizeOptions={[10, 50, 100]}
-        disableRowSelectionOnClick
-      />
-    </S.QueryResultContainer>
+        },
+        sorting: {
+          sortModel: [{ field: 'total_operations', sort: 'desc' }]
+        }
+      }}
+      pageSizeOptions={[10, 50, 100]}
+      disableRowSelectionOnClick
+    />
   );
 
   return (
@@ -239,8 +270,18 @@ export default function SyncDiagnosticsPage() {
           }}>
           Clear & Redownload
         </Button>
-        {tableRowsLoading ? <CircularProgress /> : tablesTable}
-        {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
+        <S.QueryResultContainer>
+          <Typography variant="h4" gutterBottom>
+            Tables
+          </Typography>
+          {tableRowsLoading ? <CircularProgress /> : tablesTable}
+        </S.QueryResultContainer>
+        <S.QueryResultContainer>
+          <Typography variant="h4" gutterBottom>
+            Buckets
+          </Typography>
+          {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
+        </S.QueryResultContainer>
       </S.MainContainer>
     </NavigationPage>
   );
