@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.2.2
+
+### Patch Changes
+
+- a1b52be: Fix read statements not using the transaction lock
+
 ## 1.2.1
 
 ### Patch Changes
