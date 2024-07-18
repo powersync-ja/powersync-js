@@ -22,6 +22,7 @@
     "vuetify": "3.6.8"
   },
   "devDependencies": {
+    "@swc/core": "~1.6.0",
     "@types/vuelidate": "^0.7.21",
     "@vitejs/plugin-vue": "^5.0.4",
     "sass": "^1.71.1",
