@@ -17,10 +17,19 @@ module.exports = (config, options, targetOptions) => {
       path: config.path,
       clean: true
     },
+    experiments: {
+      ...config.experiments,
+      topLevelAwait: true
+    },
+    externals: {
+      // BSON includes imports to these, but does not have a hard requirement for them to be present.
+      crypto: 'Crypto',
+      stream: 'Stream',
+      vm: 'VM'
+    },
     resolveLoader: { symlinks: true },
     cache: config.cache,
     target: config.target,
-    experiments: config.experiments,
     stats: config.stats,
     devtool: 'source-map',
     mode: 'development'
