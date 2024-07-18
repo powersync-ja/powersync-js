@@ -1,5 +1,4 @@
 import '@azure/core-asynciterator-polyfill';
-import 'react-native-polyfill-globals/auto';
 import React from 'react';
 import { AbstractPowerSyncDatabase, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
 import { AppSchema } from '../powersync/AppSchema';

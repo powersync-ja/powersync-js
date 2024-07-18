@@ -6,7 +6,7 @@
 
 _[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
 
-This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
+This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`. It connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
 
 See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
 
@@ -30,40 +30,7 @@ npx expo install @journeyapps/react-native-quick-sqlite
 
 ## Install Polyfills
 
-This package connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
-
-- Both connection methods require the [React Native Common Polyfills](#react-native-common-polyfills), as detailed below.
-- The WebSocket method requires an [additional polyfill](#web-sockets-buffer) for the `Buffer` interface.
-- Other polyfills are required for [watched queries](#babel-plugins-watched-queries) using the Async Iterator response format.
-
-### React Native Common Polyfills
-
-This package requires polyfills for HTTP streaming and other text encoding functions. These functions can be provided with [react-native-polyfill-globals](https://www.npmjs.com/package/react-native-polyfill-globals).
-
-Install the collection of polyfills with:
-
-```bash
-npx expo install react-native-polyfill-globals
-```
-
-The `react-native-polyfill-globals` package uses peer dependencies for individual functions. Most modern package managers install peer dependencies by default, however currently the peer dependency version ranges are quite broad and might result in certain packages being incompatible. Currently an [issue](https://github.com/acostalima/react-native-polyfill-globals/issues/6) is open for a breaking change in one of the dependencies. The best practice is to currently add the packages as explicit dependencies with version ranges to your project with the command below.
-
-```bash
-npx expo install react-native-fetch-api@^3.0.0 react-native-url-polyfill@^2.0.0 text-encoding@^0.7.0 web-streams-polyfill@3.2.1 base-64@^1.0.0
-```
-
-Enable the polyfills in React Native app by adding the following in your top level entry point
-
-```JavaScript
-// App.js
-import 'react-native-polyfill-globals/auto';
-```
-
-### HTTP Connections
-
-HTTP connections require the HTTP streaming polyfills included in the [common section](#react-native-common-polyfills). See additional [setup](https://docs.powersync.com/client-sdk-references/react-native-and-expo#android-flipper-network-plugin) required for Android.
-
-This library uses `RSocket` for reactive WebSocket streams which requires `process.nextTick` to be available. Apply a polyfill if not available.
+- Polyfills are required for [watched queries](#babel-plugins-watched-queries) using the Async Iterator response format.
 
 ### Babel Plugins: Watched Queries
 
