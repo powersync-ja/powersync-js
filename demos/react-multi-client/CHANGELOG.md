@@ -1,5 +1,13 @@
 # react-multi-client
 
+## 0.0.5
+
+### Patch Changes
+
+- cfd54e3: Locking `swc/core` dependency to `~1.6.0` to fix builds of demos using vite.
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.0.4
 
 ### Patch Changes

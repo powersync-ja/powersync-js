@@ -1,5 +1,12 @@
 # example-nextjs
 
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.1.12
 
 ### Patch Changes
