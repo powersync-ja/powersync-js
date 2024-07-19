@@ -1,6 +1,6 @@
 {
   "name": "react-multi-client",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -24,6 +24,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@swc/core": "~1.6.0",
     "@types/cors": "~2.8.17",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.0",

@@ -1,5 +1,17 @@
 # diagnostics-app
 
+## 0.2.0
+
+### Minor Changes
+
+- 1b2b207: Faster initial sync and other fixes
+
+### Patch Changes
+
+- cfd54e3: Locking `swc/core` dependency to `~1.6.0` to fix builds of demos using vite.
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.1.14
 
 ### Patch Changes

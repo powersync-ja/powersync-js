@@ -48,8 +48,8 @@
     "rollup": "4.14.3",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
-    "text-encoding": "^0.7.0",
-    "typescript": "^5.1.3",
+    "text-encoding": "^0.7.0",  
+    "typescript": "^5.5.3",
     "vitest": "^1.5.2",
     "web-streams-polyfill": "3.2.1"
   }

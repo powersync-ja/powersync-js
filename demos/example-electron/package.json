@@ -1,7 +1,7 @@
 {
   "name": "example-electron",
   "productName": "example-electron",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Example of using Electron with PowerSync",
   "main": ".vite/build/main.js",
   "type": "module",
@@ -41,6 +41,7 @@
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron-forge/plugin-vite": "^7.4.0",
     "@electron/fuses": "^1.8.0",
+    "@swc/core": "~1.6.0",
     "@types/node": "^20.12.8",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
