@@ -256,6 +256,13 @@ export abstract class AbstractRemote {
     // We initially request this amount and expect these to arrive eventually
     let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
 
+    const closedListener = stream.registerListener({
+      closed: () => {
+        closeSocket();
+        closedListener();
+      }
+    });
+
     const socket = await new Promise<Requestable>((resolve, reject) => {
       let connectionEstablished = false;
 
@@ -275,9 +282,8 @@ export abstract class AbstractRemote {
             if (e.message !== 'Closed. ') {
               this.logger.error(e);
             }
-            // RSocket will close this automatically
-            // Attempting to close multiple times causes a console warning
-            socketIsClosed = true;
+            // RSocket will close the RSocket stream automatically
+            // Close the downstream stream as well - this will close the RSocket connection
             stream.close();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
@@ -318,8 +324,7 @@ export abstract class AbstractRemote {
         }
       },
       closed: () => {
-        closeSocket();
-        l?.();
+        l();
       }
     });
 
