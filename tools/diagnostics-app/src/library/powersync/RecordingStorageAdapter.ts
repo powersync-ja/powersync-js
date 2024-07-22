@@ -42,7 +42,11 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
 
   async syncLocalDatabase(checkpoint: Checkpoint) {
     const r = await super.syncLocalDatabase(checkpoint);
-    await this.schemaManager.refreshSchema(this.rdb);
+    // Refresh schema asynchronously, to allow us to better measure
+    // performance of initial sync.
+    setTimeout(() => {
+      this.schemaManager.refreshSchema(this.rdb);
+    }, 60);
     if (r.checkpointValid) {
       await this.rdb.execute('UPDATE local_bucket_data SET downloading = FALSE');
     }

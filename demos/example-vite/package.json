@@ -1,7 +1,7 @@
 {
   "name": "example-vite",
   "private": true,
-  "version": "0.0.30",
+  "version": "0.0.31",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "@powersync/web": "workspace:*"
   },
   "devDependencies": {
+    "@swc/core": "~1.6.0",
     "vite": "^5.0.12",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"

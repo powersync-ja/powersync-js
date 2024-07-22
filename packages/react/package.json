@@ -26,7 +26,7 @@
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
-  "homepage": "https://docs.powersync.com/resources/api-reference",
+  "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "react": "*",
     "@powersync/common": "workspace:^"
@@ -36,6 +36,6 @@
     "@types/react": "^18.2.34",
     "jsdom": "^24.0.0",
     "react": "18.2.0",
-    "typescript": "^5.1.3"
+    "typescript": "^5.5.3"
   }
 }
