@@ -3,6 +3,12 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import os from 'os';
 
+/**
+ * There can sometimes be differences between running/building demos
+ * inside and outside of the monorepo. This script will copy each demo
+ * to a temporary project which has its dependencies installed and its 
+ * `build` script executed.
+ */
 const demosDir = path.resolve('demos');
 
 const tmpDir = path.resolve(os.tmpdir(), 'temp-demos');
