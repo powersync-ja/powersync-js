@@ -1,6 +1,6 @@
 {
   "name": "@powersync/kysely-driver",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Kysely driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -25,7 +25,7 @@
     "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.13.0"
+    "@powersync/common": "workspace:^"
   },
   "dependencies": {
     "kysely": "^0.27.2"

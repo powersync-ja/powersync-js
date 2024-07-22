@@ -1,5 +1,11 @@
 # @powersync/kysely-driver
 
+## 0.2.7
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 0.2.6
 
 ### Patch Changes

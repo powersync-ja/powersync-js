@@ -1,5 +1,11 @@
 # @powersync/vue
 
+## 0.1.8
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 0.1.7
 
 ### Patch Changes
