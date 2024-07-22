@@ -49,13 +49,15 @@ jobs:
       - name: Prepare For Test Publish
         run: npx tsx scripts/test-publish-helper.ts
 
-      - name: Config Temporary Registry
-        run: echo "registry=http://localhost:4873" >> ~/.npmrc
 
       # No actual auth is ever supplied to this action.
       # It should never be able to publish to NPMJS
       - name: Test publish
-        run: pnpm -r publish --no-git-checks
+        run: pnpm -r publish --registry=http://localhost:4873  --no-git-checks
+
+      - name: Config Temporary Registry
+        run: echo "registry=http://localhost:4873" >> ~/.npmrc
 
       - name: Test Demos
         run: npx tsx scripts/isolated-demo-test.ts
+
