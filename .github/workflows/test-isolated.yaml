@@ -1,4 +1,4 @@
-# Ensures packages test correctly
+# Ensures packages and demos test correctly
 name: Test Isolated Demos
 
 on:
@@ -40,8 +40,22 @@ jobs:
       - name: Install
         run: pnpm install
 
-      - name: Publish with Verdaccio
-        uses: verdaccio/github-actions/publish@master
+      - name: Start Verdaccio
+        run: |
+          npm install -g verdaccio
+          nohup verdaccio -c verdaccio-config.yaml &
+          sleep 10 # Give Verdaccio some time to start
+
+      - name: Prepare For Test Publish
+        run: npx tsx scripts/test-publish-helper.ts
+
+      - name: Config Temporary Registry
+        run: echo "registry=http://localhost:4873" >> ~/.npmrc
+
+      # No actual auth is ever supplied to this action.
+      # It should never be able to publish to NPMJS
+      - name: Test publish
+        run: pnpm -r publish --no-git-checks
 
       - name: Test Demos
         run: npx tsx scripts/isolated-demo-test.ts

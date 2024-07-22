@@ -7,8 +7,6 @@ const demosDir = path.resolve('../demos');
 
 const tmpDir = path.resolve(os.tmpdir(), 'temp-demos');
 
-const REGISTRY_PORT = 4873;
-
 // Ensure tmp directory exists
 const ensureTmpDirExists = async () => {
   try {
@@ -57,8 +55,6 @@ const processDemo = async (demoName: string) => {
   // Update package.json
   const packageJsonPath = path.join(demoDest, 'package.json');
   await updateDependencies(packageJsonPath);
-
-  execSync(`pnpm set registry http://localhost:${REGISTRY_PORT}/`, { cwd: demoDest, stdio: 'inherit' });
 
   // Run pnpm install and pnpm build
   execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
