@@ -1546,6 +1546,9 @@ importers:
       '@vitest/browser':
         specifier: ^1.3.1
         version: 1.6.0(vitest@1.6.0)(webdriverio@8.39.1(typescript@5.5.3))
+      p-defer:
+        specifier: ^4.0.1
+        version: 4.0.1
       typescript:
         specifier: ^5.5.3
         version: 5.5.3
@@ -12387,6 +12390,10 @@ packages:
   p-defer@3.0.0:
     resolution: {integrity: sha512-ugZxsxmtTln604yeYd29EGrNhazN2lywetzpKhfmQjW/VJmhpDmWbiX+h0zL8V91R0UXkhb3KtPmyq9PZw3aYw==}
     engines: {node: '>=8'}
+
+  p-defer@4.0.1:
+    resolution: {integrity: sha512-Mr5KC5efvAK5VUptYEIopP1bakB85k2IWXaRC0rsh1uwn1L6M0LVml8OIQ4Gudg4oyZakf7FmeRLkMMtZW1i5A==}
+    engines: {node: '>=12'}
 
   p-filter@2.1.0:
     resolution: {integrity: sha512-ZBxxZ5sL2HghephhpGAQdoskxplTwr7ICaehZwLIlfL6acuVgZPm8yBNuRAFBGEqtD/hmUeq9eqLg2ys9Xr/yw==}
@@ -32589,6 +32596,8 @@ snapshots:
   p-defer@1.0.0: {}
 
   p-defer@3.0.0: {}
+
+  p-defer@4.0.1: {}
 
   p-filter@2.1.0:
     dependencies:
