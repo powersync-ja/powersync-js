@@ -875,6 +875,9 @@ importers:
       react-native-elements:
         specifier: ^3.4.3
         version: 3.4.3(react-native-safe-area-context@4.10.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0))(react-native-vector-icons@10.1.0)(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+      react-native-encrypted-storage:
+        specifier: ^4.0.3
+        version: 4.0.3(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       react-native-fetch-api:
         specifier: ^3.0.0
         version: 3.0.0
@@ -33671,6 +33674,11 @@ snapshots:
     transitivePeerDependencies:
       - react
       - react-native
+
+  react-native-encrypted-storage@4.0.3(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.8(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
   react-native-encrypted-storage@4.0.3(react-native@0.74.1(@babel/core@7.24.7)(@babel/preset-env@7.24.8(@babel/core@7.24.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0):
     dependencies:
