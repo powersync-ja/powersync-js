@@ -50,7 +50,7 @@ jobs:
         run: npx tsx scripts/test-publish-helper.ts
 
       - name: Registry login
-        run: npx npm-cli-login -u Test -p test -e test@example.com -r http://localhost:4873 
+        run: npx npm-cli-login -u test -p test -e test@example.com -r http://localhost:4873 
 
       # No actual auth is ever supplied to this action.
       # It should never be able to publish to NPMJS
