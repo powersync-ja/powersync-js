@@ -53,16 +53,15 @@ jobs:
         run: npx tsx scripts/test-publish-helper.ts
 
       - name: Registry login
-        run: npx npm-cli-login -u test -p test -e test@example.com -r http://localhost:4873 
+        run: npx npm-cli-login -u test -p test -e test@example.com -r http://localhost:4873
 
       - name: Config Temporary Registry
-        run: echo "registry=http://localhost:4873" >> ~/.npmrc
+        run: echo "@powersync:registry=http://localhost:4873" >> ~/.npmrc
 
       # No actual auth is ever supplied to this action.
       # It should never be able to publish to NPMJS
       - name: Test publish
-        run: pnpm -r publish --registry=http://localhost:4873  --no-git-checks
+        run: pnpm -r publish --no-git-checks
 
       - name: Test Demos
         run: npx tsx scripts/isolated-demo-test.ts
-

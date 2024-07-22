@@ -14,16 +14,16 @@ const packagesDir = path.resolve('packages');
  * Deletes publishConfig.registry if present
  */
 const processPackageJson = (packageJsonPath: string) => {
-    // Read and parse package.json
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-    
-    // Remove the publishConfig.registry if it exists
-    if (packageJson.publishConfig && packageJson.publishConfig.registry) {
-      delete packageJson.publishConfig.registry;
-    }
-    
-    // Write the modified package.json back to the file system
-    fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+  // Read and parse package.json
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+  // Remove the publishConfig.registry if it exists
+  if (packageJson.publishConfig && packageJson.publishConfig.registry) {
+    delete packageJson.publishConfig.registry;
+  }
+
+  // Write the modified package.json back to the file system
+  fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 };
 
 // Get all subdirectories in the packages directory
@@ -37,11 +37,11 @@ const promises = packageDirs.map((dir) => {
   return processPackageJson(packageJsonPath);
 });
 
-
 Promise.all(promises)
   .then(() => {
     console.log('All packages modified successfully.');
   })
   .catch((error) => {
     console.error('Error modifying some packages:', error);
+    process.exit(1);
   });
