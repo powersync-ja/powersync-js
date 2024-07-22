@@ -1,5 +1,13 @@
 # @powersync/react-native
 
+## 1.8.2
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+- Updated dependencies [31c61b9]
+  - @powersync/react@1.3.6
+
 ## 1.8.1
 
 ### Patch Changes
