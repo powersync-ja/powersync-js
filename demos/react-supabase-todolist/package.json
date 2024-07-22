@@ -1,6 +1,6 @@
 {
   "name": "react-supabase-todolist",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "private": true,
   "scripts": {
     "dev": "vite",

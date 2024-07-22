@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.2.3
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 1.2.2
 
 ### Patch Changes

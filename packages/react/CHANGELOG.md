@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 1.3.6
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 1.3.5
 
 ### Patch Changes

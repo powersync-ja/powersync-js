@@ -1,5 +1,13 @@
 # react-multi-client
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [31c61b9]
+  - @powersync/react@1.3.6
+  - @powersync/web@1.2.3
+
 ## 0.0.5
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @powersync/attachments
 
+## 2.0.11
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 2.0.10
 
 ### Patch Changes
