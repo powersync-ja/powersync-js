@@ -12,4 +12,5 @@ packages:
     proxy: false
   '**':
     proxy: npmjs
+    access: $all
 log: { type: stdout, format: pretty, level: http }
