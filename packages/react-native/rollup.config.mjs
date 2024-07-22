@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,6 +24,8 @@ export default (commandLineArgs) => {
       sourcemap: sourcemap
     },
     plugins: [
+      // We do this so that we can inject on BSON's crypto usage.
+      replace({'const { crypto } = globalThis;': '// removed crypto destructuring assingment from globalThis', delimiters: ['', ''], preventAssignment: true}),
       json(),
       nodeResolve({ preferBuiltins: false }),
       commonjs({}),
@@ -30,10 +33,13 @@ export default (commandLineArgs) => {
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
         TextEncoder: ['text-encoding', 'TextEncoder'],
-        TextDecoder: ['text-encoding', 'TextDecoder']
+        TextDecoder: ['text-encoding', 'TextDecoder'],
+        // injecting our crypto implementation
+        'crypto': path.resolve( './vendor/crypto.js' ),
+
       }),
       alias({
-        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') }]
+        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs')}]
       })
     ],
     external: [
