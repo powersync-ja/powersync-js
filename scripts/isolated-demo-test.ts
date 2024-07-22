@@ -3,7 +3,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 import os from 'os';
 
-const demosDir = path.resolve('../demos');
+const demosDir = path.resolve('demos');
 
 const tmpDir = path.resolve(os.tmpdir(), 'temp-demos');
 
@@ -74,6 +74,7 @@ const main = async () => {
     console.log('All demos processed successfully.');
   } catch (err) {
     console.error(`Error processing demos: ${err}`);
+    process.exit(1);
   }
 };
 
