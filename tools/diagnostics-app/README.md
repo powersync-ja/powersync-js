@@ -24,7 +24,11 @@ Then in this directory run:
 pnpm dev
 ```
 
+The app is now available on [http://localhost:5173/](http://localhost:5173/).
+
 Generate a [development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens) and sign in. For development tokens, the PowerSync endpoint should be populated automatically. For some others like Supabase tokens, it needs to be entered manually.
+
+If you run powersync inside docker (such as via the [self-host-demo](https://github.com/powersync-ja/self-host-demo)) the returned powersync_url is internal to the docker network and will be unreachable outside of it. Since we run the diagnostics app outside of docker, you can then connect to the endpoint as exposed by docker-proxy, e.g. `http://localhost:8080`.
 
 **Note**: Please see the known usability issues listed below.
 
