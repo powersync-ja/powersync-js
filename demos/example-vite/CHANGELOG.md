@@ -1,5 +1,11 @@
 # example-vite
 
+## 0.0.33
+
+### Patch Changes
+
+- @powersync/web@1.2.4
+
 ## 0.0.32
 
 ### Patch Changes
