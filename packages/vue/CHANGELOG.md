@@ -1,5 +1,12 @@
 # @powersync/vue
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+
 ## 0.1.8
 
 ### Patch Changes
