@@ -24,7 +24,7 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
     "test": "vitest"
   },
   "dependencies": {
@@ -35,6 +35,7 @@
     "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
     "@types/uuid": "^9.0.1",
@@ -48,7 +49,7 @@
     "rollup": "4.14.3",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
-    "text-encoding": "^0.7.0",  
+    "text-encoding": "^0.7.0",
     "typescript": "^5.5.3",
     "vitest": "^1.5.2",
     "web-streams-polyfill": "3.2.1"

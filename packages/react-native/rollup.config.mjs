@@ -6,6 +6,7 @@ import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import terser from '@rollup/plugin-terser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,7 +26,11 @@ export default (commandLineArgs) => {
     },
     plugins: [
       // We do this so that we can inject on BSON's crypto usage.
-      replace({'const { crypto } = globalThis;': '// removed crypto destructuring assingment from globalThis', delimiters: ['', ''], preventAssignment: true}),
+      replace({
+        'const { crypto } = globalThis;': '// removed crypto destructuring assingment from globalThis',
+        delimiters: ['', ''],
+        preventAssignment: true
+      }),
       json(),
       nodeResolve({ preferBuiltins: false }),
       commonjs({}),
@@ -35,12 +40,12 @@ export default (commandLineArgs) => {
         TextEncoder: ['text-encoding', 'TextEncoder'],
         TextDecoder: ['text-encoding', 'TextDecoder'],
         // injecting our crypto implementation
-        'crypto': path.resolve( './vendor/crypto.js' ),
-
+        crypto: path.resolve('./vendor/crypto.js')
       }),
       alias({
-        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs')}]
-      })
+        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') }]
+      }),
+      terser()
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',

@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w"
   },
   "repository": {
@@ -46,6 +46,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/async-lock": "^1.4.0",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
