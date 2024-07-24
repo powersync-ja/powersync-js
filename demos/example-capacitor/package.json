@@ -16,7 +16,8 @@
     "android": "pnpm build && pnpm sync && npx cap run android",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:build": "pnpm build"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",

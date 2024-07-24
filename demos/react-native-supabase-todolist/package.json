@@ -5,7 +5,8 @@
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "clean": "watchman watch-del-all && rm -rf .expo"
+    "clean": "watchman watch-del-all && rm -rf .expo",
+    "test:build": "pnpm build"
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",

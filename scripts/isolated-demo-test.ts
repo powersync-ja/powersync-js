@@ -7,7 +7,7 @@ import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 /**
  * There can sometimes be differences between running/building demos
  * inside and outside of the monorepo. This script will copy each demo
- * to a temporary project which has its dependencies installed and its 
+ * to a temporary project which has its dependencies installed and its
  * `build` script executed.
  */
 const demosDir = path.resolve('demos');
@@ -32,7 +32,7 @@ const updateDependencies = async (packageJsonPath: string) => {
   const updateDeps = async (deps: { [key: string]: string }) => {
     for (const dep in deps) {
       if (deps[dep].startsWith('workspace:')) {
-        const matchingPackage = workspacePackages.find(p => p.manifest.name == dep);
+        const matchingPackage = workspacePackages.find((p) => p.manifest.name == dep);
         deps[dep] = `^${matchingPackage!.manifest.version!}`;
       }
     }
@@ -67,7 +67,7 @@ const processDemo = async (demoName: string) => {
 
   // Run pnpm install and pnpm build
   execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
-  execSync('pnpm build', { cwd: demoDest, stdio: 'inherit' });
+  execSync('pnpm test:build', { cwd: demoDest, stdio: 'inherit' });
 };
 
 // Main function to read demos directory and process each demo
