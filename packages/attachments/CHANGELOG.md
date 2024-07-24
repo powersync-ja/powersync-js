@@ -1,5 +1,12 @@
 # @powersync/attachments
 
+## 2.0.12
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+
 ## 2.0.11
 
 ### Patch Changes

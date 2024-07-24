@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.0.11",
+  "version": "2.0.12",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

@@ -1,5 +1,12 @@
 # example-capacitor
 
+## 0.0.11
+
+### Patch Changes
+
+- @powersync/react@1.3.7
+- @powersync/web@1.2.4
+
 ## 0.0.10
 
 ### Patch Changes
