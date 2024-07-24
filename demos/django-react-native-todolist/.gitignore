@@ -3,9 +3,6 @@
 # idea
 .idea
 
-# Credentials
-library/django/AppConfig.ts
-
 # dependencies
 node_modules/
 
