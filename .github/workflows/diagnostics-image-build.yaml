@@ -1,0 +1,25 @@
+name: Diagnostics Image Build
+
+on:
+  push:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  build-docker-image:
+    name: Build diagnostics-app Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Image
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64
+          cache-from: type=registry,ref=${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}:latest
+          context: .
+          file: ./tools/diagnostics-app/Dockerfile
