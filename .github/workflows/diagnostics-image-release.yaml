@@ -1,6 +1,6 @@
-#  Publishes the Docker image to DockerHub
-#  This is triggered whenever the `service` is versioned and tagged
-name: Docker Image Release
+#  Publishes the Diagnostics App Docker image to DockerHub
+#  This is triggered whenever the `diagnostics-app` package is versioned and tagged
+name: Diagnostics Image Release
 
 on:
   workflow_dispatch:
