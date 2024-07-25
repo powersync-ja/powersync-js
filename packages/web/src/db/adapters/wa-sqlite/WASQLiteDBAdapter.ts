@@ -39,12 +39,28 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   private logger: ILogger;
   private dbGetHelpers: DBGetUtils | null;
   private methods: DBFunctionsInterface | null;
+  private debugMode: boolean;
 
   constructor(protected options: WASQLiteDBAdapterOptions) {
     super();
     this.logger = Logger.get('WASQLite');
     this.dbGetHelpers = null;
     this.methods = null;
+    this.debugMode = options.debugMode ?? false;
+    if (this.debugMode) {
+      const originalExecute = this._execute.bind(this);
+      this._execute = async (sql, bindings) => {
+        const start = performance.now();
+        try {
+          const r = await originalExecute(sql, bindings);
+          performance.measure(`[SQL] ${sql}`, { start });
+          return r;
+        } catch (e: any) {
+          performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
+          throw e;
+        }
+      };
+    }
     this.initialized = this.init();
     this.dbGetHelpers = this.generateDBHelpers({
       execute: (query, params) => this.acquireLock(() => this._execute(query, params))
