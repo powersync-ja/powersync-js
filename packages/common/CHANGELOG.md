@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.14.0
+
+### Minor Changes
+
+- 05f3dbd: Add debugMode flag to log queries on the performance timeline
+
 ## 1.13.1
 
 ### Patch Changes

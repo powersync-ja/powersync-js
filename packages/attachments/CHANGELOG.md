@@ -1,5 +1,13 @@
 # @powersync/attachments
 
+## 2.0.13
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
 ## 2.0.12
 
 ### Patch Changes

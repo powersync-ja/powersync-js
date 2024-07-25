@@ -1,5 +1,15 @@
 # @powersync/react-native
 
+## 1.8.4
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [843cfec]
+- Updated dependencies [05f3dbd]
+  - @powersync/react@1.3.8
+  - @powersync/common@1.14.0
+
 ## 1.8.3
 
 ### Patch Changes
