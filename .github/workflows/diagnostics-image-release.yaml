@@ -5,6 +5,8 @@ name: Diagnostics Image Release
 on:
   workflow_dispatch:
   push:
+    tags:
+      - '@powersync/diagnostics-app*'
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -12,6 +14,7 @@ jobs:
   release-docker-image:
     name: Build and Release diagnostics-app Docker Image
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,7 +43,7 @@ jobs:
           push: true
           file: ./tools/diagnostics-app/Dockerfile
 
-      #   # Updates the README section on the DockerHub page
+      # Updates the README section on the DockerHub page
       - name: Update repo description
         #  Note that this 3rd party extention is recommended in the DockerHub docs:
         #  https://docs.docker.com/build/ci/github-actions/update-dockerhub-desc/
