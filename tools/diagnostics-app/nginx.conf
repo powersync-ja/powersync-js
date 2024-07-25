@@ -1,0 +1,8 @@
+server { 
+ listen 80;
+ server_name frontend;
+ location / {
+   root /usr/share/nginx/html;
+   try_files $uri /index.html;
+ }
+}
