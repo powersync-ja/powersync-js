@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.3.0
+
+### Minor Changes
+
+- 05f3dbd: Add debugMode flag to log queries on the performance timeline
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
 ## 1.2.4
 
 ### Patch Changes

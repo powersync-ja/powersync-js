@@ -1,5 +1,13 @@
 # @powersync/kysely-driver
 
+## 0.2.9
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
 ## 0.2.8
 
 ### Patch Changes

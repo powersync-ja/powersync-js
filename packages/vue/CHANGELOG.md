@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.1.10
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
 ## 0.1.9
 
 ### Patch Changes
