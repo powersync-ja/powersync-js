@@ -1,29 +1,28 @@
 import {
   type AbstractStreamingSyncImplementation,
-  type PowerSyncBackendConnector,
   type BucketStorageAdapter,
+  type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type PowerSyncConnectionOptions,
   AbstractPowerSyncDatabase,
-  SqliteBucketStorage,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
   DBAdapter,
-  SQLOpenOptions,
+  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
+  PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
-  PowerSyncDatabaseOptions
+  SqliteBucketStorage
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { WebRemote } from './sync/WebRemote';
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { DEFAULT_WEB_SQL_FLAGS, resolveWebSQLFlags, WebSQLFlags } from './adapters/web-sql-flags';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
+import { WebRemote } from './sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
-import { DEFAULT_WEB_SQL_FLAGS, resolveWebSQLFlags, WebSQLFlags } from './adapters/web-sql-flags';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -92,8 +91,11 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   async _initialize(): Promise<void> {}
 
-  protected openDBAdapter(options: SQLOpenOptions): DBAdapter {
-    const defaultFactory = new WASQLiteOpenFactory({ ...options, flags: this.resolvedFlags });
+  protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
+    const defaultFactory = new WASQLiteOpenFactory({
+      ...options.database,
+      flags: resolveWebPowerSyncFlags(options.flags)
+    });
     return defaultFactory.openDB();
   }
 
