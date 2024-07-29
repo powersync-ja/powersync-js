@@ -67,23 +67,43 @@ const processDemo = async (demoName: string) => {
 
   // Run pnpm install and pnpm build
   execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
-  execSync('pnpm run --if-present test:build', { cwd: demoDest, stdio: 'inherit' });
+  console.log(`::notice file=${demoName},line=1,col=1::Install Passed`);
+
+  const packageJSONPath = path.join(demoDest, 'package.json');
+  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+  if (!pkg.scripts['test:build']) {
+    console.log(`::warning file=${demoName},line=1,col=1::Does not have test build script.`);
+    return;
+  }
+  execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
+  console.log(`::notice file=${demoName},line=1,col=1::Build passed`);
 };
 
 // Main function to read demos directory and process each demo
 const main = async () => {
+  let errored = false;
   try {
     await ensureTmpDirExists();
 
     const demoNames = await fs.readdir(demosDir);
     for (const demoName of demoNames) {
-      await processDemo(demoName);
+      try {
+        await processDemo(demoName);
+      } catch (ex) {
+        errored = true;
+        console.log(`::error file=${demoName},line=1,col=1::${ex}`);
+      }
     }
-
-    console.log('All demos processed successfully.');
   } catch (err) {
     console.error(`Error processing demos: ${err}`);
     process.exit(1);
+  }
+
+  if (errored) {
+    console.error(`Some demos did not pass`);
+    process.exit(1);
+  } else {
+    console.log('All demos processed successfully.');
   }
 };
 
