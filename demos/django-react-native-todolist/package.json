@@ -5,8 +5,7 @@
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "clean": "watchman watch-del-all && rm -rf .expo",
-    "test:build": "tsc -b tsconfig.test.json"
+    "clean": "watchman watch-del-all && rm -rf .expo"
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",

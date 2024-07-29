@@ -11,8 +11,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx .",
-    "test:build": "pnpm make"
+    "lint": "eslint --ext .ts,.tsx ."
   },
   "keywords": [],
   "author": {

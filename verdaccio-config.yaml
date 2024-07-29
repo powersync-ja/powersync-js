@@ -2,15 +2,9 @@ storage: /tmp/storage
 auth:
   htpasswd:
     file: /tmp/htpasswd
-uplinks:
-  npmjs:
-    url: https://registry.npmjs.org/
 packages:
   '@powersync/*':
     access: $all
     publish: $all
     proxy: false
-  '**':
-    proxy: npmjs
-    access: $all
 log: { type: stdout, format: pretty, level: http }
