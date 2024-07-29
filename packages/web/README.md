@@ -4,7 +4,7 @@
 
 # PowerSync SDK for Web
 
-*[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline.*
+_[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
 
 This package (`packages/web`) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/common`.
 
@@ -26,30 +26,6 @@ Install it in your app with:
 
 ```bash
 npm install @journeyapps/wa-sqlite
-```
-
-## Polyfills
-
-### WebSocket Connections: Buffer
-
-Note: Beta Release - WebSockets are currently in a beta release. It should be safe to use in production if sufficient testing is done on the client side.
-
-This SDK connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets. The WebSocket connection method requires `Buffer` to be available in the global scope. When multiple tabs are used the shared web worker will apply a polyfill in its own scope, but the `Buffer` class should be polyfills in the application for cases where multiple tabs are not supported.
-
-Install a suitable Buffer implementation
-
-```bash
-npm install buffer
-```
-
-Apply it in your application if not yet provided
-
-```Javascript
-import { Buffer } from 'buffer';
-
-if (typeof self.Buffer == 'undefined') {
-  self.Buffer = Buffer;
-}
 ```
 
 ## Webpack

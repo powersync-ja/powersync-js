@@ -1,5 +1,5 @@
 import Logger, { ILogger } from 'js-logger';
-import { fetch } from 'cross-fetch';
+import { type fetch } from 'cross-fetch';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
 import { DataStream } from '../../../utils/DataStream';
@@ -46,7 +46,7 @@ export type FetchImplementation = typeof fetch;
  */
 export class FetchImplementationProvider {
   getFetch(): FetchImplementation {
-    return fetch.bind(globalThis);
+    throw new Error('Unspecified fetch implementation');
   }
 }
 
@@ -130,7 +130,7 @@ export abstract class AbstractRemote {
 
   async post(path: string, data: any, headers: Record<string, string> = {}): Promise<any> {
     const request = await this.buildRequest(path);
-    const res = await fetch(request.url, {
+    const res = await this.fetch(request.url, {
       method: 'POST',
       headers: {
         ...headers,
@@ -449,7 +449,7 @@ export abstract class AbstractRemote {
       }
     });
 
-    const jsonS = ndjsonStream(new Response(outputStream).body);
+    const jsonS = ndjsonStream(outputStream);
 
     const stream = new DataStream({
       logger: this.logger

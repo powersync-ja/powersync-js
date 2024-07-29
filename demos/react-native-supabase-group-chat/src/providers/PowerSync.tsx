@@ -1,5 +1,4 @@
 import '@azure/core-asynciterator-polyfill';
-import 'react-native-polyfill-globals/auto';
 import { PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 import Logger from 'js-logger';
 import { ReactNode, useMemo } from 'react';
