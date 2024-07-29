@@ -12,12 +12,6 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
 
-import { Buffer } from 'buffer';
-
-if (typeof self.Buffer == 'undefined') {
-  self.Buffer = Buffer;
-}
-
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
