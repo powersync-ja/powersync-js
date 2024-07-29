@@ -1,5 +1,25 @@
 # diagnostics-app
 
+## 0.3.0
+
+### Minor Changes
+
+- 79eaa25: Add docker image
+
+### Patch Changes
+
+- Updated dependencies [843cfec]
+- Updated dependencies [05f3dbd]
+  - @powersync/react@1.3.8
+  - @powersync/web@1.3.0
+
+## 0.2.2
+
+### Patch Changes
+
+- @powersync/react@1.3.7
+- @powersync/web@1.2.4
+
 ## 0.2.1
 
 ### Patch Changes

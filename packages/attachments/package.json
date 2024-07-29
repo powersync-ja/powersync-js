@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.0.11",
+  "version": "2.0.13",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -27,6 +27,6 @@
     "watch": "tsc -b -w"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^"
+    "@powersync/common": "workspace:^1.14.0"
   }
 }

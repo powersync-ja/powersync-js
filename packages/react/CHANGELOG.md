@@ -1,5 +1,20 @@
 # @powersync/react
 
+## 1.3.8
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
+## 1.3.7
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+
 ## 1.3.6
 
 ### Patch Changes

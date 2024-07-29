@@ -19,7 +19,8 @@ export const schemaManager = new DynamicSchemaManager();
 
 export const db = new PowerSyncDatabase({
   database: {
-    dbFilename: 'example.db'
+    dbFilename: 'example.db',
+    debugMode: true
   },
   schema: schemaManager.buildSchema()
 });

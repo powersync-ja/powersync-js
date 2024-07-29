@@ -1,6 +1,6 @@
 {
-  "name": "diagnostics-app",
-  "version": "0.2.1",
+  "name": "@powersync/diagnostics-app",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "vite",

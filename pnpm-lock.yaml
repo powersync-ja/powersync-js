@@ -1262,7 +1262,7 @@ importers:
   packages/attachments:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^
+        specifier: workspace:^1.14.0
         version: link:../common
 
   packages/common:
@@ -1341,7 +1341,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^
+        specifier: workspace:^1.14.0
         version: link:../common
       kysely:
         specifier: ^0.27.2
@@ -1387,7 +1387,7 @@ importers:
   packages/react:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^
+        specifier: workspace:^1.14.0
         version: link:../common
     devDependencies:
       '@testing-library/react':
@@ -1479,7 +1479,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^
+        specifier: workspace:^1.14.0
         version: link:../common
     devDependencies:
       flush-promises:
@@ -7016,8 +7016,8 @@ packages:
     dependencies:
       '@babel/runtime': 7.24.8
       '@expo/code-signing-certificates': 0.0.5
-      '@expo/config': 9.0.1
-      '@expo/config-plugins': 8.0.4
+      '@expo/config': 9.0.3
+      '@expo/config-plugins': 8.0.8
       '@expo/devcert': 1.1.2
       '@expo/env': 0.3.0
       '@expo/image-utils': 0.5.1
@@ -7202,7 +7202,7 @@ packages:
     resolution: {integrity: sha512-0tjaXBstTbXmD4z+UMFBkh2SZFwilizSQhW6DlaTMnPG5ezuw93zSFEWAuEC3YzkpVtNQTmYzxAYjxwh6seOGg==}
     dependencies:
       '@babel/code-frame': 7.10.4
-      '@expo/config-plugins': 8.0.4
+      '@expo/config-plugins': 8.0.8
       '@expo/config-types': 51.0.2
       '@expo/json-file': 8.3.3
       getenv: 1.0.0
@@ -7370,7 +7370,7 @@ packages:
       '@babel/generator': 7.24.10
       '@babel/parser': 7.24.8
       '@babel/types': 7.24.9
-      '@expo/config': 9.0.1
+      '@expo/config': 9.0.3
       '@expo/env': 0.3.0
       '@expo/json-file': 8.3.3
       '@expo/spawn-async': 1.7.2
@@ -7554,8 +7554,8 @@ packages:
     peerDependencies:
       expo-modules-autolinking: '>=0.8.1'
     dependencies:
-      '@expo/config': 9.0.1
-      '@expo/config-plugins': 8.0.4
+      '@expo/config': 9.0.3
+      '@expo/config-plugins': 8.0.8
       '@expo/config-types': 51.0.2
       '@expo/image-utils': 0.5.1
       '@expo/json-file': 8.3.3
@@ -19538,7 +19538,7 @@ packages:
   /filelist@1.0.4:
     resolution: {integrity: sha512-w1cEuf3S+DrLCQL7ET6kz+gmlJdbq9J7yXCSjK/OZCPA+qEN1WyF4ZAf0YYJa4/shHJra2t/d/r8SV4Ji+x+8Q==}
     dependencies:
-      minimatch: 5.1.2
+      minimatch: 5.1.6
     dev: true
 
   /filename-reserved-regex@2.0.0:

@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.14.0
+
+### Minor Changes
+
+- 05f3dbd: Add debugMode flag to log queries on the performance timeline
+
+## 1.13.1
+
+### Patch Changes
+
+- 44c568b: Fix issue where WebSockets might not close under some error conditions.
+
 ## 1.13.0
 
 ### Minor Changes
