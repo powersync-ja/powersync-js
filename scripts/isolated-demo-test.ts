@@ -5,6 +5,13 @@ import * as fs from 'fs/promises';
 import os from 'os';
 import * as path from 'path';
 
+/**
+ * There can sometimes be differences between running/building demos
+ * inside and outside of the monorepo. This script will copy each demo
+ * to a temporary project which has its dependencies installed and its
+ * `build` script executed.
+ */
+
 enum TestState {
   PASSED = 'passed',
   FAILED = 'failed',
@@ -33,12 +40,6 @@ const displayState = (state: TestState) => {
   }
 };
 
-/**
- * There can sometimes be differences between running/building demos
- * inside and outside of the monorepo. This script will copy each demo
- * to a temporary project which has its dependencies installed and its
- * `build` script executed.
- */
 const demosDir = path.resolve('demos');
 
 const tmpDir = path.resolve(os.tmpdir(), 'temp-demos');
