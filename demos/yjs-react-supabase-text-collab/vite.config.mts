@@ -33,16 +33,7 @@ export default defineConfig({
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: [
-      '@powersync/web > event-iterator',
-      '@powersync/web > js-logger',
-      '@powersync/web > lodash/throttle',
-      '@powersync/web > can-ndjson-stream',
-      '@powersync/web > buffer',
-      '@powersync/web > rsocket-core',
-      '@powersync/web > rsocket-websocket-client',
-      '@powersync/web > cross-fetch'
-    ]
+    include: []
   },
   plugins: [
     wasm(),
