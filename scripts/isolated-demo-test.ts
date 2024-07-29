@@ -1,8 +1,8 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { execSync } from 'child_process';
-import os from 'os';
 import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
+import { execSync } from 'child_process';
+import * as fs from 'fs/promises';
+import os from 'os';
+import * as path from 'path';
 
 /**
  * There can sometimes be differences between running/building demos
@@ -67,7 +67,7 @@ const processDemo = async (demoName: string) => {
 
   // Run pnpm install and pnpm build
   execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
-  execSync('pnpm test:build', { cwd: demoDest, stdio: 'inherit' });
+  execSync('pnpm run --if-present test:build', { cwd: demoDest, stdio: 'inherit' });
 };
 
 // Main function to read demos directory and process each demo
