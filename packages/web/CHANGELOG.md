@@ -1,5 +1,18 @@
 # @powersync/web
 
+## 1.4.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling dependencies with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- 32e342a: Fix: correctly apply SQLOpen flags. This fixes an issue where `PowerSyncDatabase` constructor `flags` options were not used when opening SQLite connections in web.
+- Updated dependencies [32e342a]
+- Updated dependencies [02ae5de]
+  - @powersync/common@1.15.0
+
 ## 1.3.0
 
 ### Minor Changes
