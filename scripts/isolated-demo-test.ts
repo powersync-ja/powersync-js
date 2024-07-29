@@ -1,8 +1,37 @@
+import * as core from '@actions/core';
 import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import os from 'os';
 import * as path from 'path';
+
+enum TestState {
+  PASSED = 'passed',
+  FAILED = 'failed',
+  WARN = 'warn'
+}
+
+type TestResult = {
+  state: TestState;
+  error?: string;
+};
+
+type DemoResult = {
+  name: string;
+  installResult: TestResult;
+  buildResult: TestResult;
+};
+
+const displayState = (state: TestState) => {
+  switch (state) {
+    case TestState.PASSED:
+      return `Pass ✅`;
+    case TestState.FAILED:
+      return `Fail ❌`;
+    case TestState.WARN:
+      return `Pass ⚠️`;
+  }
+};
 
 /**
  * There can sometimes be differences between running/building demos
@@ -50,7 +79,7 @@ const updateDependencies = async (packageJsonPath: string) => {
 };
 
 // Function to process each demo
-const processDemo = async (demoName: string) => {
+const processDemo = async (demoName: string): Promise<DemoResult> => {
   const demoSrc = path.join(demosDir, demoName);
   const demoDest = path.join(tmpDir, demoName);
 
@@ -65,32 +94,71 @@ const processDemo = async (demoName: string) => {
   const packageJsonPath = path.join(demoDest, 'package.json');
   await updateDependencies(packageJsonPath);
 
+  const result: DemoResult = {
+    name: demoName,
+    installResult: {
+      state: TestState.WARN
+    },
+    buildResult: {
+      state: TestState.WARN
+    }
+  };
+
   // Run pnpm install and pnpm build
-  execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
-  console.log(`::notice file=${demoName},line=1,col=1::Install Passed`);
+  try {
+    execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
+    console.log(`::notice file=${demoName},line=1,col=1::Install Passed`);
+    result.installResult.state = TestState.PASSED;
+  } catch (ex) {
+    result.installResult.state = TestState.FAILED;
+    result.installResult.error = ex.message;
+    console.log(`::error file=${demoName},line=1,col=1::${ex.message}`);
+    return result;
+  }
 
   const packageJSONPath = path.join(demoDest, 'package.json');
   const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
   if (!pkg.scripts['test:build']) {
     console.log(`::warning file=${demoName},line=1,col=1::Does not have test build script.`);
-    return;
+    result.buildResult.state = TestState.WARN;
+    return result;
   }
-  execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
-  console.log(`::notice file=${demoName},line=1,col=1::Build passed`);
+
+  try {
+    execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
+    console.log(`::notice file=${demoName},line=1,col=1::Build passed`);
+    result.buildResult.state = TestState.PASSED;
+  } catch (ex) {
+    result.buildResult.state = TestState.FAILED;
+    result.buildResult.error = ex.message;
+    console.log(`::error file=${demoName},line=1,col=1::${ex.message}`);
+  }
+
+  return result;
 };
 
 // Main function to read demos directory and process each demo
 const main = async () => {
-  let errored = false;
+  const results: DemoResult[] = [];
+
   try {
     await ensureTmpDirExists();
 
     const demoNames = await fs.readdir(demosDir);
     for (const demoName of demoNames) {
       try {
-        await processDemo(demoName);
+        results.push(await processDemo(demoName));
       } catch (ex) {
-        errored = true;
+        results.push({
+          name: demoName,
+          installResult: {
+            state: TestState.FAILED,
+            error: ex.message
+          },
+          buildResult: {
+            state: TestState.FAILED
+          }
+        });
         console.log(`::error file=${demoName},line=1,col=1::${ex}`);
       }
     }
@@ -98,6 +166,22 @@ const main = async () => {
     console.error(`Error processing demos: ${err}`);
     process.exit(1);
   }
+
+  const errored = !!results.find(
+    (r) => r.installResult.state == TestState.FAILED || r.buildResult.state == TestState.FAILED
+  );
+
+  await core.summary
+    .addHeading('Test Results')
+    .addTable([
+      [
+        { data: 'Demo', header: true },
+        { data: 'Install', header: true },
+        { data: 'Build', header: true }
+      ],
+      ...results.map((r) => [r.name, displayState(r.installResult.state), displayState(r.buildResult.state)])
+    ])
+    .write();
 
   if (errored) {
     console.error(`Some demos did not pass`);
