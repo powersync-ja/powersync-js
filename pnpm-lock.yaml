@@ -1518,9 +1518,6 @@ importers:
       bson:
         specifier: ^6.6.0
         version: 6.8.0
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
       comlink:
         specifier: ^4.4.1
         version: 4.4.1
