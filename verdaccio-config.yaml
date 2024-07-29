@@ -1,0 +1,10 @@
+storage: /tmp/storage
+auth:
+  htpasswd:
+    file: /tmp/htpasswd
+packages:
+  '@powersync/*':
+    access: $all
+    publish: $all
+    proxy: false
+log: { type: stdout, format: pretty, level: http }

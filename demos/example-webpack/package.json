@@ -5,7 +5,8 @@
   "scripts": {
     "build": "webpack",
     "serve": "serve ./dist",
-    "start": "pnpm build && pnpm serve"
+    "start": "pnpm build && pnpm serve",
+    "test:build": "pnpm build"
   },
   "dependencies": {
     "@powersync/web": "workspace:*"

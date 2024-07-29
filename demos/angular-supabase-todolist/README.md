@@ -13,9 +13,11 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 ## Quick Start
 
 1. Run `pnpm install`
-2. Run `pnpm watch` to build application and check for code changes
-3. In a new terminal run `pnpm start` to start the server
-4. Go to <http://localhost:8080>
+2. Create a `.env` file by copying the template `cp .env.template .env`
+3. Populate the `.env` file with PowerSync and Supabase details
+4. Run `pnpm watch` to build application and check for code changes
+5. In a new terminal run `pnpm start` to start the server
+6. Go to <http://localhost:8080>
 
 **Note:** The Angular development server (`pnpm serve`) doesn't support service worker applications
 

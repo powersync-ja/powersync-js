@@ -7,7 +7,7 @@ import {
   type SupabaseClient,
   type User
 } from '@supabase/supabase-js';
-import { environment } from '../../environment';
+import { environment } from '../environment';
 import { type AbstractPowerSyncDatabase, type CrudEntry, UpdateType, PowerSyncBackendConnector } from '@powersync/web';
 
 /// Postgres Response codes that we cannot recover from by retrying.
