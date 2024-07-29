@@ -19,6 +19,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
     "@journeyapps/wa-sqlite": "~0.2.0",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
