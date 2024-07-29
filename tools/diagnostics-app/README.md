@@ -7,7 +7,9 @@ This diagnostics app presents data from the perspective of a specific user (no s
 - Get started quickly - play around with a SQLite database without creating an app.
 - Serve as a baseline to compare your own apps against if you run into issues.
 
-The app is currently available as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
+The app is currently available at [https://diagnostics-app.powersync.com/](https://diagnostics-app.powersync.com/)
+
+It can also be run as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
 
 ## Running the app
 
