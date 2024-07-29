@@ -107,31 +107,26 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
-    console.log(`::notice file=${demoName},line=1,col=1::Install Passed`);
     result.installResult.state = TestState.PASSED;
   } catch (ex) {
     result.installResult.state = TestState.FAILED;
     result.installResult.error = ex.message;
-    console.log(`::error file=${demoName},line=1,col=1::${ex.message}`);
     return result;
   }
 
   const packageJSONPath = path.join(demoDest, 'package.json');
   const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
   if (!pkg.scripts['test:build']) {
-    console.log(`::warning file=${demoName},line=1,col=1::Does not have test build script.`);
     result.buildResult.state = TestState.WARN;
     return result;
   }
 
   try {
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
-    console.log(`::notice file=${demoName},line=1,col=1::Build passed`);
     result.buildResult.state = TestState.PASSED;
   } catch (ex) {
     result.buildResult.state = TestState.FAILED;
     result.buildResult.error = ex.message;
-    console.log(`::error file=${demoName},line=1,col=1::${ex.message}`);
   }
 
   return result;
