@@ -1,5 +1,17 @@
 # @powersync/kysely-driver
 
+## 0.3.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling dependencies with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- Updated dependencies [32e342a]
+- Updated dependencies [02ae5de]
+  - @powersync/common@1.15.0
+
 ## 0.2.9
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.15.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling common package with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- 32e342a: Fix: correctly apply SQLOpen flags. This fixes an issue where `PowerSyncDatabase` constructor `flags` options were not used when opening SQLite connections in web.
+
 ## 1.14.0
 
 ### Minor Changes
