@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "pnpm build && pnpm preview"
+    "start": "pnpm build && pnpm preview",
+    "test:build": "pnpm build"
   },
   "dependencies": {
     "@powersync/react": "workspace:*",
