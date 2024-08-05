@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import React, { useMemo } from 'react';
 import { useSystem } from '../library/powersync/system';
-import { PowerSyncContext } from '@powersync/react-native';
+import { PowerSyncContext } from '@powersync/react';
 
 /**
  * This App uses a nested navigation stack.

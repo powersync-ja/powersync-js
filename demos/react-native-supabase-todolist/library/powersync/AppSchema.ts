@@ -1,5 +1,5 @@
 import { AttachmentTable } from '@powersync/attachments';
-import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/react-native';
+import { Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/common';
 
 export const TODO_TABLE = 'todos';
 export const LIST_TABLE = 'lists';

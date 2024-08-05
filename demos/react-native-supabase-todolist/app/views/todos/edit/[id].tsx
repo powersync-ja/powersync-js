@@ -1,5 +1,5 @@
 import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
-import { usePowerSync, useQuery } from '@powersync/react-native';
+import { usePowerSync, useQuery } from '@powersync/react';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';

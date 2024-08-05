@@ -7,7 +7,7 @@ import prompt from 'react-native-prompt-android';
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
 import { useSystem } from '../../../library/powersync/system';
-import { useQuery, useStatus } from '@powersync/react-native';
+import { useQuery, useStatus } from '@powersync/react';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 
 const description = (total: number, completed: number = 0) => {

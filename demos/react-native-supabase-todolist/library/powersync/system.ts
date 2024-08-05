@@ -1,7 +1,9 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
+import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
+import { PowerSyncDatabase as PowerSyncDatabaseWeb } from '@powersync/web';
+import { AbstractPowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
@@ -18,19 +20,28 @@ export class System {
   kvStorage: KVStorage;
   storage: SupabaseStorageAdapter;
   supabaseConnector: SupabaseConnector;
-  powersync: PowerSyncDatabase;
+  powersync: AbstractPowerSyncDatabase;
   attachmentQueue: PhotoAttachmentQueue | undefined = undefined;
 
   constructor() {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    this.powersync = new PowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: 'sqlite.db'
-      }
-    });
+    if (PowerSyncDatabaseNative) {
+      this.powersync = new PowerSyncDatabaseNative({
+        schema: AppSchema,
+        database: {
+          dbFilename: 'sqlite.db'
+        }
+      });
+    } else {
+      this.powersync = new PowerSyncDatabaseWeb({
+        schema: AppSchema,
+        database: {
+          dbFilename: 'sqlite.db'
+        },
+      });
+    }
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({
@@ -53,6 +64,7 @@ export class System {
     await this.powersync.init();
     await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
 
+    console.log("connected")
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
     }

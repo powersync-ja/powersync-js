@@ -10,8 +10,10 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/vector-icons": "^14.0.0",
+    "@expo/metro-runtime": "^3.2.1",
     "@journeyapps/react-native-quick-sqlite": "^1.1.7",
     "@powersync/attachments": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",
@@ -46,6 +48,7 @@
     "react-native-safe-area-view": "^1.1.1",
     "react-native-screens": "~3.31.1",
     "react-native-vector-icons": "^10.0.0",
+    "react-native-web": "^0.19.12",
     "react-navigation-stack": "^2.10.4"
   },
   "devDependencies": {

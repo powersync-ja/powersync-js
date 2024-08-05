@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
+import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/common';
 
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { AppConfig } from './AppConfig';
