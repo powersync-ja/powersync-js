@@ -28,12 +28,12 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^1.1.8",
     "@powersync/common": "workspace:^1.15.0",
     "react": "*",
     "react-native": "*"
   },
   "dependencies": {
+    "@op-engineering/op-sqlite": "^7.1.0",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*"
   },

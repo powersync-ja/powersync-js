@@ -9,7 +9,7 @@ import {
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
-import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
+import { OPSqliteOpenFactory } from './adapters/op-sqlite/OPSqliteDBOpenFactory';
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -33,7 +33,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * default SQLite open factory.
    */
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
-    const defaultFactory = new ReactNativeQuickSqliteOpenFactory(options.database);
+    const defaultFactory = new OPSqliteOpenFactory(options.database);
     return defaultFactory.openDB();
   }
 

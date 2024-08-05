@@ -21,7 +21,7 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (13.0.2):
     - ExpoModulesCore
-  - ExpoModulesCore (1.12.13):
+  - ExpoModulesCore (1.12.19):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -74,6 +74,10 @@ PODS:
   - hermes-engine (0.74.1):
     - hermes-engine/Pre-built (= 0.74.1)
   - hermes-engine/Pre-built (0.74.1)
+  - op-sqlite (7.1.0):
+    - React
+    - React-callinvoker
+    - React-Core
   - powersync-sqlite-core (0.1.6)
   - RCT-Folly (2024.01.01.00):
     - boost
@@ -1005,11 +1009,6 @@ PODS:
     - React-debug
   - react-native-encrypted-storage (4.0.3):
     - React-Core
-  - react-native-quick-sqlite (1.1.8):
-    - powersync-sqlite-core (~> 0.1.6)
-    - React
-    - React-callinvoker
-    - React-Core
   - react-native-safe-area-context (4.10.1):
     - React-Core
   - React-nativeconfig (0.74.1)
@@ -1340,7 +1339,7 @@ DEPENDENCIES:
   - boost (from `../../../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../../../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
-  - Expo (from `../node_modules/expo`)
+  - Expo (from `../../../node_modules/expo`)
   - ExpoAsset (from `../../../node_modules/expo-asset/ios`)
   - ExpoCamera (from `../../../node_modules/expo-camera/ios`)
   - ExpoCrypto (from `../../../node_modules/expo-crypto/ios`)
@@ -1348,13 +1347,15 @@ DEPENDENCIES:
   - ExpoFont (from `../../../node_modules/expo-font/ios`)
   - ExpoHead (from `../../../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
-  - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoModulesCore (from `../../../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../../../node_modules/expo-secure-store/ios`)
   - EXSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - FBLazyVector (from `../../../node_modules/react-native/Libraries/FBLazyVector`)
   - fmt (from `../../../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../../../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - "op-sqlite (from `../../../node_modules/@op-engineering/op-sqlite`)"
+  - powersync-sqlite-core (~> 0.1.6)
   - RCT-Folly (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../../../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -1382,7 +1383,6 @@ DEPENDENCIES:
   - React-logger (from `../../../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../../../node_modules/react-native/ReactCommon`)
   - react-native-encrypted-storage (from `../../../node_modules/react-native-encrypted-storage`)
-  - "react-native-quick-sqlite (from `../../../node_modules/@journeyapps/react-native-quick-sqlite`)"
   - react-native-safe-area-context (from `../../../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../../../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../../../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1428,7 +1428,7 @@ EXTERNAL SOURCES:
   EXConstants:
     :path: "../../../node_modules/expo-constants/ios"
   Expo:
-    :path: "../node_modules/expo"
+    :path: "../../../node_modules/expo"
   ExpoAsset:
     :path: "../../../node_modules/expo-asset/ios"
   ExpoCamera:
@@ -1444,7 +1444,7 @@ EXTERNAL SOURCES:
   ExpoKeepAwake:
     :path: "../../../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
-    :path: "../node_modules/expo-modules-core"
+    :path: "../../../node_modules/expo-modules-core"
   ExpoSecureStore:
     :path: "../../../node_modules/expo-secure-store/ios"
   EXSplashScreen:
@@ -1458,6 +1458,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2024-04-25-RNv0.74.1-b54a3a01c531f4f5f1904cb0770033e8b7153dff
+  op-sqlite:
+    :path: "../../../node_modules/@op-engineering/op-sqlite"
   RCT-Folly:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTDeprecation:
@@ -1508,8 +1510,6 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native/ReactCommon"
   react-native-encrypted-storage:
     :path: "../../../node_modules/react-native-encrypted-storage"
-  react-native-quick-sqlite:
-    :path: "../../../node_modules/@journeyapps/react-native-quick-sqlite"
   react-native-safe-area-context:
     :path: "../../../node_modules/react-native-safe-area-context"
   React-nativeconfig:
@@ -1583,13 +1583,14 @@ SPEC CHECKSUMS:
   ExpoFont: e7f2275c10ca8573c991e007329ad6bf98086485
   ExpoHead: 8eb4deb289c2fdd8bb624f996cd31414cd07f38a
   ExpoKeepAwake: 3b8815d9dd1d419ee474df004021c69fdd316d08
-  ExpoModulesCore: a4b45b5f081f5fe9b8e87667906d180cd52f32d7
+  ExpoModulesCore: 734c1802786b23c9598f4d15273753a779969368
   ExpoSecureStore: 060cebcb956b80ddae09821610ac1aa9e1ac74cd
   EXSplashScreen: fbf0ec78e9cee911df188bf17b4fe51d15a84b87
   FBLazyVector: 898d14d17bf19e2435cafd9ea2a1033efe445709
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 16b8530de1b383cdada1476cf52d1b52f0692cbc
+  op-sqlite: 08424826d655c42293b1404db0b29ac7f2093d30
   powersync-sqlite-core: 4c38c8f470f6dca61346789fd5436a6826d1e3dd
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: efb313d8126259e9294dc4ee0002f44a6f676aba
@@ -1616,7 +1617,6 @@ SPEC CHECKSUMS:
   React-logger: 7e7403a2b14c97f847d90763af76b84b152b6fce
   React-Mapbuffer: 11029dcd47c5c9e057a4092ab9c2a8d10a496a33
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
-  react-native-quick-sqlite: 7ad498d81c8506803da2e1c2b64c8cb7758e04cb
   react-native-safe-area-context: dcab599c527c2d7de2d76507a523d20a0b83823d
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
   React-NativeModulesApple: df46ff3e3de5b842b30b4ca8a6caae6d7c8ab09f
