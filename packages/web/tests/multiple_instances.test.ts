@@ -1,4 +1,3 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@powersync/common';
 import {
   PowerSyncDatabase,
@@ -6,10 +5,11 @@ import {
   WebRemote,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
-import { testSchema } from './utils/testDb';
-import { TestConnector } from './utils/MockStreamOpenFactory';
 import { Mutex } from 'async-mutex';
 import Logger from 'js-logger';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestConnector } from './utils/MockStreamOpenFactory';
+import { testSchema } from './utils/testDb';
 
 describe('Multiple Instances', () => {
   const dbFilename = 'test-multiple-instances.db';
@@ -22,6 +22,8 @@ describe('Multiple Instances', () => {
       },
       schema: testSchema
     });
+
+  beforeAll(() => Logger.useDefaults());
 
   beforeEach(() => {
     db = openDatabase();
@@ -184,34 +186,44 @@ describe('Multiple Instances', () => {
     });
 
     // Create the first streaming client
-    const syncOptions1: WebStreamingSyncImplementationOptions = {
+    const stream1 = new SharedWebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(db.database, new Mutex()),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         triggerUpload1();
         connector1.uploadData(db);
       },
-      identifier
-    };
-    const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
+      identifier,
+      retryDelayMs: 100,
+      flags: {
+        broadcastLogs: true
+      }
+    });
 
     // Generate the second streaming sync implementation
     const connector2 = new TestConnector();
-    const spy2 = vi.spyOn(connector2, 'uploadData');
+    // The second connector will be called first to upload, we don't want it to actually upload
+    // This will cause the sync uploads to be delayed as the CRUD queue did not change
+    const spy2 = vi.spyOn(connector2, 'uploadData').mockImplementation(async () => {});
+
     let triggerUpload2: () => void;
     const upload2TriggeredPromise = new Promise<void>((resolve) => {
       triggerUpload2 = resolve;
     });
-    const syncOptions2: WebStreamingSyncImplementationOptions = {
+
+    const stream2 = new SharedWebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(db.database, new Mutex()),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         triggerUpload2();
         connector2.uploadData(db);
       },
-      identifier
-    };
-    const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
+      identifier,
+      retryDelayMs: 100,
+      flags: {
+        broadcastLogs: true
+      }
+    });
 
     // Waits for the stream to be marked as connected
     const stream2UpdatedPromise = new Promise<void>((resolve, reject) => {
@@ -230,6 +242,8 @@ describe('Multiple Instances', () => {
 
     // The status in the second stream client should be updated
     await stream2UpdatedPromise;
+
+    console.log('stream  2 status updated');
     expect(stream2.isConnected).true;
 
     // Create something with CRUD in it.
@@ -242,6 +256,8 @@ describe('Multiple Instances', () => {
     stream1.triggerCrudUpload();
     // The second connector should be called to upload
     await upload2TriggeredPromise;
+
+    console.log('2 upload was triggered');
 
     // It should call the latest connected client
     expect(spy2).toHaveBeenCalledOnce();
