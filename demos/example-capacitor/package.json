@@ -1,6 +1,6 @@
 {
   "name": "example-capacitor",
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "Example of using Capacitor with PowerSync",
   "main": "index.js",
   "private": true,
@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
+    "@swc/core": "~1.6.0",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",

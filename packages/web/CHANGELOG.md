@@ -1,5 +1,49 @@
 # @powersync/web
 
+## 1.4.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling dependencies with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- 32e342a: Fix: correctly apply SQLOpen flags. This fixes an issue where `PowerSyncDatabase` constructor `flags` options were not used when opening SQLite connections in web.
+- Updated dependencies [32e342a]
+- Updated dependencies [02ae5de]
+  - @powersync/common@1.15.0
+
+## 1.3.0
+
+### Minor Changes
+
+- 05f3dbd: Add debugMode flag to log queries on the performance timeline
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
+## 1.2.4
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+
+## 1.2.3
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
+## 1.2.2
+
+### Patch Changes
+
+- a1b52be: Fix read statements not using the transaction lock
+
 ## 1.2.1
 
 ### Patch Changes

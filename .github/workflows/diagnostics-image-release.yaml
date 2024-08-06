@@ -1,0 +1,56 @@
+#  Publishes the Diagnostics App Docker image to DockerHub
+#  This is triggered whenever the `diagnostics-app` package is versioned and tagged
+name: Diagnostics Image Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '@powersync/diagnostics-app*'
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release-docker-image:
+    name: Build and Release diagnostics-app Docker Image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        # This uses the service's package.json version for the Docker Image tag
+      - name: Get Image Version from package.json
+        id: get_version
+        run: echo "IMAGE_VERSION=$(node -p "require('./tools/diagnostics-app/package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Build Image and Push
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/amd64
+          cache-from: type=registry,ref=${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}:latest
+          context: .
+          tags: ${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}:latest,${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}:${{steps.get_version.outputs.IMAGE_VERSION}}
+          push: true
+          file: ./tools/diagnostics-app/Dockerfile
+
+      # Updates the README section on the DockerHub page
+      - name: Update repo description
+        #  Note that this 3rd party extention is recommended in the DockerHub docs:
+        #  https://docs.docker.com/build/ci/github-actions/update-dockerhub-desc/
+        uses: peter-evans/dockerhub-description@e98e4d1628a5f3be2be7c231e50981aee98723ae # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{vars.DIAGNOSTICS_DOCKER_REGISTRY}}
+          #   This is the contents of what will be shown on DockerHub
+          readme-filepath: ./tools/diagnostics-app/README.md

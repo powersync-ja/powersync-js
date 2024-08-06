@@ -1,19 +1,20 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "PowerSync - sync Postgres with SQLite in your React Native app for offline-first and real-time data",
-  "main": "./lib/index.js",
+  "main": "./dist/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w"
   },
   "repository": {
@@ -28,24 +29,35 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^1.1.8",
+    "@powersync/common": "workspace:^1.15.0",
     "react": "*",
-    "react-native": "*",
-    "react-native-polyfill-globals": "^3.1.0",
-    "@powersync/common": "workspace:^1.13.0"
+    "react-native": "*"
   },
   "dependencies": {
-    "@powersync/react": "workspace:*",
     "@powersync/common": "workspace:*",
-    "async-lock": "^1.4.0",
-    "bson": "^6.6.0",
-    "react-native-fetch-api": "^3.0.0"
+    "@powersync/react": "workspace:*"
   },
   "devDependencies": {
+    "@craftzdog/react-native-buffer": "^6.0.5",
     "@journeyapps/react-native-quick-sqlite": "^1.1.8",
+    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-inject": "^5.0.5",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-terser": "^0.4.4",
     "@types/async-lock": "^1.4.0",
+    "async-lock": "^1.4.0",
+    "bson": "^6.6.0",
+    "fast-base64-decode": "^1.0.0",
     "react": "18.2.0",
     "react-native": "0.72.4",
-    "typescript": "^5.1.3"
+    "react-native-fetch-api": "^3.0.0",
+    "rollup": "4.14.3",
+    "text-encoding": "^0.7.0",
+    "typescript": "^5.5.3",
+    "web-streams-polyfill": "3.2.1"
   },
   "keywords": [
     "data sync",

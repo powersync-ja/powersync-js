@@ -1,5 +1,28 @@
 # vue-supabase-todolist
 
+## 0.0.22
+
+### Patch Changes
+
+- @powersync/vue@0.1.9
+- @powersync/web@1.2.4
+
+## 0.0.21
+
+### Patch Changes
+
+- Updated dependencies [31c61b9]
+  - @powersync/vue@0.1.8
+  - @powersync/web@1.2.3
+
+## 0.0.20
+
+### Patch Changes
+
+- cfd54e3: Locking `swc/core` dependency to `~1.6.0` to fix builds of demos using vite.
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.0.19
 
 ### Patch Changes

@@ -21,12 +21,8 @@
               "path": "./extra-webpack.config.js"
             },
             "allowedCommonJsDependencies": [
-              "object-hash",
-              "event-iterator",
-              "can-ndjson-stream",
-              "lodash",
               "js-logger",
-              "websocket"
+              "ws"
             ],
             "outputPath": "dist",
             "index": "src/index.html",

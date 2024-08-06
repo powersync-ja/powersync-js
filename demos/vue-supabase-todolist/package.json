@@ -1,13 +1,14 @@
 {
   "name": "vue-supabase-todolist",
   "private": true,
-  "version": "0.0.19",
+  "version": "0.0.22",
   "type": "module",
   "scripts": {
     "dev": "vue-tsc --noEmit --watch & vite dev",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "test:build": "pnpm build"
   },
   "dependencies": {
     "@powersync/web": "workspace:*",
@@ -22,10 +23,11 @@
     "vuetify": "3.6.8"
   },
   "devDependencies": {
+    "@swc/core": "~1.6.0",
     "@types/vuelidate": "^0.7.21",
     "@vitejs/plugin-vue": "^5.0.4",
     "sass": "^1.71.1",
-    "typescript": "^5.2.2",
+    "typescript": "^5.5.3",
     "unplugin-fonts": "^1.1.1",
     "unplugin-vue-components": "^0.26.0",
     "vite": "^5.2.0",

@@ -13,6 +13,8 @@ Install the dependencies, including the React Native SDK:
 pnpm install
 ```
 
+Update the `.env` file with PowerSync and Django details
+
 Run on iOS
 
 ```sh

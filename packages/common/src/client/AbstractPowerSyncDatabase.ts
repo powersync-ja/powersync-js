@@ -14,8 +14,10 @@ import { SyncStatus } from '../db/crud/SyncStatus';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
 import { Schema } from '../db/schema/Schema';
 import { BaseObserver } from '../utils/BaseObserver';
+import { ControlledExecutor } from '../utils/ControlledExecutor';
 import { mutexRunExclusive } from '../utils/mutex';
 import { quoteIdentifier } from '../utils/strings';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
 import { CrudBatch } from './sync/bucket/CrudBatch';
@@ -24,12 +26,10 @@ import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import {
   AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  StreamingSyncImplementationListener,
+  PowerSyncConnectionOptions,
   StreamingSyncImplementation,
-  PowerSyncConnectionOptions
+  StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation';
-import { ControlledExecutor } from '../utils/ControlledExecutor';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -139,6 +139,14 @@ export const DEFAULT_POWERSYNC_DB_OPTIONS = {
  */
 export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 
+/**
+ * Tests if the input is a {@link PowerSyncDatabaseOptionsWithSettings}
+ * @internal
+ */
+export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is PowerSyncDatabaseOptionsWithSettings => {
+  return typeof test == 'object' && isSQLOpenOptions(test.database);
+};
+
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
    * Transactions should be queued in the DBAdapter, but we also want to prevent
@@ -182,8 +190,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this._database = database;
     } else if (isSQLOpenFactory(database)) {
       this._database = database.openDB();
-    } else if (isSQLOpenOptions(database)) {
-      this._database = this.openDBAdapter(database);
+    } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
+      this._database = this.openDBAdapter(options);
     }
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
@@ -223,7 +231,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Opens the DBAdapter given open options using a default open factory
    */
-  protected abstract openDBAdapter(options: SQLOpenOptions): DBAdapter;
+  protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector

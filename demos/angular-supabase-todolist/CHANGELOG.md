@@ -1,5 +1,26 @@
 # PowerSync Angular Demo
 
+## 0.0.25
+
+### Patch Changes
+
+- @powersync/web@1.2.4
+
+## 0.0.24
+
+### Patch Changes
+
+- Updated dependencies [31c61b9]
+  - @powersync/web@1.2.3
+
+## 0.0.23
+
+### Patch Changes
+
+- a567998: Upgrade to Angular 18 and fix build issues
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.0.22
 
 ### Patch Changes

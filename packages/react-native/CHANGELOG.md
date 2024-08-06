@@ -1,5 +1,45 @@
 # @powersync/react-native
 
+## 1.9.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling react-native dependencies with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- Updated dependencies [02ae5de]
+- Updated dependencies [32e342a]
+- Updated dependencies [02ae5de]
+  - @powersync/react@1.4.0
+  - @powersync/common@1.15.0
+
+## 1.8.4
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [843cfec]
+- Updated dependencies [05f3dbd]
+  - @powersync/react@1.3.8
+  - @powersync/common@1.14.0
+
+## 1.8.3
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+  - @powersync/react@1.3.7
+
+## 1.8.2
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+- Updated dependencies [31c61b9]
+  - @powersync/react@1.3.6
+
 ## 1.8.1
 
 ### Patch Changes

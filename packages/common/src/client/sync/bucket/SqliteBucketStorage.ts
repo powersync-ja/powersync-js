@@ -1,5 +1,7 @@
 import { Mutex } from 'async-mutex';
+import Logger, { ILogger } from 'js-logger';
 import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter';
+import { BaseObserver } from '../../../utils/BaseObserver';
 import {
   BucketState,
   BucketStorageAdapter,
@@ -8,12 +10,10 @@ import {
   PSInternalTable,
   SyncLocalDatabaseResult
 } from './BucketStorageAdapter';
-import { OpTypeEnum } from './OpType';
 import { CrudBatch } from './CrudBatch';
-import { CrudEntry } from './CrudEntry';
+import { CrudEntry, CrudEntryJSON } from './CrudEntry';
+import { OpTypeEnum } from './OpType';
 import { SyncDataBatch } from './SyncDataBatch';
-import Logger, { ILogger } from 'js-logger';
-import { BaseObserver } from '../../../utils/BaseObserver';
 
 const COMPACT_OPERATION_INTERVAL = 1_000;
 
@@ -51,10 +51,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async init() {
     this._hasCompletedSync = false;
-    const existingTableRows = await this.db.execute(
+    const existingTableRows = await this.db.getAll<{ name: string }>(
       `SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'`
     );
-    for (const row of existingTableRows.rows?._array ?? []) {
+    for (const row of existingTableRows ?? []) {
       this.tableNames.add(row.name);
     }
   }
@@ -72,10 +72,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   startSession(): void {}
 
   async getBucketStates(): Promise<BucketState[]> {
-    const result = await this.db.execute(
+    const result = await this.db.getAll<BucketState>(
       'SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0'
     );
-    return result.rows?._array ?? [];
+    return result;
   }
 
   async saveSyncData(batch: SyncDataBatch) {
@@ -258,19 +258,20 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
-    const rs1 = await this.db.execute("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
+    const rs1 = await this.db.getAll("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
       SqliteBucketStorage.MAX_OP_ID
     ]);
-    if (!rs1.rows?.length) {
+    if (!rs1.length) {
       // Nothing to update
       return false;
     }
-    const rs = await this.db.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
-    if (!rs.rows?.length) {
+    const rs = await this.db.getAll<{ seq: number }>("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+    if (!rs.length) {
       // Nothing to update
       return false;
     }
-    const seqBefore: number = rs.rows?.item(0)['seq'];
+
+    const seqBefore: number = rs[0]['seq'];
 
     const opId = await cb();
 
@@ -304,9 +305,17 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     });
   }
 
+  async nextCrudItem(): Promise<CrudEntry | undefined> {
+    const next = await this.db.getOptional<CrudEntryJSON>('SELECT * FROM ps_crud ORDER BY id ASC LIMIT 1');
+    if (!next) {
+      return;
+    }
+    return CrudEntry.fromRow(next);
+  }
+
   async hasCrud(): Promise<boolean> {
-    const anyData = await this.db.execute('SELECT 1 FROM ps_crud LIMIT 1');
-    return !!anyData.rows?.length;
+    const anyData = await this.db.getOptional('SELECT 1 FROM ps_crud LIMIT 1');
+    return !!anyData;
   }
 
   /**
@@ -318,10 +327,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       return null;
     }
 
-    const crudResult = await this.db.execute('SELECT * FROM ps_crud ORDER BY id ASC LIMIT ?', [limit]);
+    const crudResult = await this.db.getAll<CrudEntryJSON>('SELECT * FROM ps_crud ORDER BY id ASC LIMIT ?', [limit]);
 
     const all: CrudEntry[] = [];
-    for (const row of crudResult.rows?._array ?? []) {
+    for (const row of crudResult) {
       all.push(CrudEntry.fromRow(row));
     }
 

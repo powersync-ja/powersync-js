@@ -1,5 +1,38 @@
 # @powersync/react
 
+## 1.4.0
+
+### Minor Changes
+
+- 02ae5de: Prebundling dependencies with the aim of reducing the need for polyfills.
+
+### Patch Changes
+
+- Updated dependencies [32e342a]
+- Updated dependencies [02ae5de]
+  - @powersync/common@1.15.0
+
+## 1.3.8
+
+### Patch Changes
+
+- 843cfec: revert peer dep change
+- Updated dependencies [05f3dbd]
+  - @powersync/common@1.14.0
+
+## 1.3.7
+
+### Patch Changes
+
+- Updated dependencies [44c568b]
+  - @powersync/common@1.13.1
+
+## 1.3.6
+
+### Patch Changes
+
+- 31c61b9: Change @powersync/common peerDep to ^
+
 ## 1.3.5
 
 ### Patch Changes

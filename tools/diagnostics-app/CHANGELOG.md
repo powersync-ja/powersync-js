@@ -1,5 +1,54 @@
 # diagnostics-app
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [02ae5de]
+- Updated dependencies [32e342a]
+  - @powersync/react@1.4.0
+  - @powersync/web@1.4.0
+
+## 0.3.0
+
+### Minor Changes
+
+- 79eaa25: Add docker image
+
+### Patch Changes
+
+- Updated dependencies [843cfec]
+- Updated dependencies [05f3dbd]
+  - @powersync/react@1.3.8
+  - @powersync/web@1.3.0
+
+## 0.2.2
+
+### Patch Changes
+
+- @powersync/react@1.3.7
+- @powersync/web@1.2.4
+
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [31c61b9]
+  - @powersync/react@1.3.6
+  - @powersync/web@1.2.3
+
+## 0.2.0
+
+### Minor Changes
+
+- 1b2b207: Faster initial sync and other fixes
+
+### Patch Changes
+
+- cfd54e3: Locking `swc/core` dependency to `~1.6.0` to fix builds of demos using vite.
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.1.14
 
 ### Patch Changes

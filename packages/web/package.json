@@ -1,12 +1,13 @@
 {
   "name": "@powersync/web",
-  "version": "1.2.1",
+  "version": "1.4.0",
   "description": "A Web SDK for JourneyApps PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "files": [
     "lib",
-    "!lib/tests"
+    "!lib/tests",
+    "dist"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -34,12 +35,11 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "~0.2.0",
-    "@powersync/common": "workspace:^1.13.0"
+    "@powersync/common": "workspace:^1.15.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
     "async-mutex": "^0.4.0",
-    "buffer": "^6.0.3",
     "bson": "^6.6.0",
     "comlink": "^4.4.1",
     "js-logger": "^1.6.1",
@@ -47,15 +47,21 @@
   },
   "devDependencies": {
     "@journeyapps/wa-sqlite": "~0.2.0",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-inject": "^5.0.5",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "15.2.3",
     "@types/lodash": "^4.14.200",
     "@types/uuid": "^9.0.6",
     "@vitest/browser": "^1.3.1",
-    "typescript": "^5.2.2",
+    "p-defer": "^4.0.1",
+    "rollup": "4.14.3",
+    "typescript": "^5.5.3",
+    "uuid": "^9.0.1",
     "vite": "^5.1.1",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0",
     "vitest": "^1.3.1",
-    "webdriverio": "^8.32.3",
-    "uuid": "^9.0.1"
+    "webdriverio": "^8.32.3"
   }
 }

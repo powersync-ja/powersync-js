@@ -1,5 +1,27 @@
 # example-nextjs
 
+## 0.1.15
+
+### Patch Changes
+
+- @powersync/react@1.3.7
+- @powersync/web@1.2.4
+
+## 0.1.14
+
+### Patch Changes
+
+- Updated dependencies [31c61b9]
+  - @powersync/react@1.3.6
+  - @powersync/web@1.2.3
+
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [a1b52be]
+  - @powersync/web@1.2.2
+
 ## 0.1.12
 
 ### Patch Changes

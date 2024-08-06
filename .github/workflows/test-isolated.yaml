@@ -1,0 +1,69 @@
+# Ensures packages and demos test correctly
+name: Test Isolated Demos
+
+on:
+  push:
+
+jobs:
+  test:
+    name: Test Isolated Demos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          # Pnpm 9.4 introduces this https://github.com/pnpm/pnpm/pull/7633
+          # which causes workspace:^1.2.0 to be converted to 1.2.0^1.2.0
+          version: 9.3
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install
+        run: pnpm install
+
+      - name: Build Packages
+        run: pnpm build:packages
+
+      - name: Start Verdaccio
+        run: |
+          npm install -g verdaccio
+          nohup verdaccio -c verdaccio-config.yaml &
+          sleep 10 # Give Verdaccio some time to start
+
+      - name: Prepare For Test Publish
+        run: npx tsx scripts/test-publish-helper.ts
+
+      - name: Registry login
+        run: npx npm-cli-login -u test -p test -e test@example.com -r http://localhost:4873
+
+      - name: Config Temporary Registry
+        run: echo "@powersync:registry=http://localhost:4873" >> ~/.npmrc
+
+      # No actual auth is ever supplied to this action.
+      # It should never be able to publish to NPMJS
+      - name: Test publish
+        run: pnpm -r publish --no-git-checks
+
+      - name: Test Demos
+        run: npx tsx scripts/isolated-demo-test.ts
