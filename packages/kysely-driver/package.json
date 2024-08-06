@@ -25,7 +25,7 @@
     "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.15.0"
+    "@powersync/common": "workspace:^1.16.0"
   },
   "dependencies": {
     "kysely": "^0.27.2"
