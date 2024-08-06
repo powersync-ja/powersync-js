@@ -21,7 +21,7 @@ PODS:
     - ExpoModulesCore
   - ExpoKeepAwake (13.0.2):
     - ExpoModulesCore
-  - ExpoModulesCore (1.12.13):
+  - ExpoModulesCore (1.12.19):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1340,7 +1340,7 @@ DEPENDENCIES:
   - boost (from `../../../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../../../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - EXConstants (from `../../../node_modules/expo-constants/ios`)
-  - Expo (from `../node_modules/expo`)
+  - Expo (from `../../../node_modules/expo`)
   - ExpoAsset (from `../../../node_modules/expo-asset/ios`)
   - ExpoCamera (from `../../../node_modules/expo-camera/ios`)
   - ExpoCrypto (from `../../../node_modules/expo-crypto/ios`)
@@ -1348,7 +1348,7 @@ DEPENDENCIES:
   - ExpoFont (from `../../../node_modules/expo-font/ios`)
   - ExpoHead (from `../../../node_modules/expo-router/ios`)
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
-  - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoModulesCore (from `../../../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../../../node_modules/expo-secure-store/ios`)
   - EXSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - FBLazyVector (from `../../../node_modules/react-native/Libraries/FBLazyVector`)
@@ -1428,7 +1428,7 @@ EXTERNAL SOURCES:
   EXConstants:
     :path: "../../../node_modules/expo-constants/ios"
   Expo:
-    :path: "../node_modules/expo"
+    :path: "../../../node_modules/expo"
   ExpoAsset:
     :path: "../../../node_modules/expo-asset/ios"
   ExpoCamera:
@@ -1444,7 +1444,7 @@ EXTERNAL SOURCES:
   ExpoKeepAwake:
     :path: "../../../node_modules/expo-keep-awake/ios"
   ExpoModulesCore:
-    :path: "../node_modules/expo-modules-core"
+    :path: "../../../node_modules/expo-modules-core"
   ExpoSecureStore:
     :path: "../../../node_modules/expo-secure-store/ios"
   EXSplashScreen:
@@ -1583,7 +1583,7 @@ SPEC CHECKSUMS:
   ExpoFont: e7f2275c10ca8573c991e007329ad6bf98086485
   ExpoHead: 8eb4deb289c2fdd8bb624f996cd31414cd07f38a
   ExpoKeepAwake: 3b8815d9dd1d419ee474df004021c69fdd316d08
-  ExpoModulesCore: a4b45b5f081f5fe9b8e87667906d180cd52f32d7
+  ExpoModulesCore: 734c1802786b23c9598f4d15273753a779969368
   ExpoSecureStore: 060cebcb956b80ddae09821610ac1aa9e1ac74cd
   EXSplashScreen: fbf0ec78e9cee911df188bf17b4fe51d15a84b87
   FBLazyVector: 898d14d17bf19e2435cafd9ea2a1033efe445709
