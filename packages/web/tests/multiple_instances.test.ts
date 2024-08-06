@@ -243,7 +243,6 @@ describe('Multiple Instances', () => {
     // The status in the second stream client should be updated
     await stream2UpdatedPromise;
 
-    console.log('stream  2 status updated');
     expect(stream2.isConnected).true;
 
     // Create something with CRUD in it.
@@ -256,8 +255,6 @@ describe('Multiple Instances', () => {
     stream1.triggerCrudUpload();
     // The second connector should be called to upload
     await upload2TriggeredPromise;
-
-    console.log('2 upload was triggered');
 
     // It should call the latest connected client
     expect(spy2).toHaveBeenCalledOnce();
