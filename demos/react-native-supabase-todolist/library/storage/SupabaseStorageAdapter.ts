@@ -59,6 +59,7 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     fileURI: string,
     options?: { encoding?: FileSystem.EncodingType; mediaType?: string }
   ): Promise<ArrayBuffer> {
+    throw '';
     const { encoding = FileSystem.EncodingType.UTF8 } = options ?? {};
     const { exists } = await FileSystem.getInfoAsync(fileURI);
     if (!exists) {
@@ -95,15 +96,16 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   }
 
   async fileExists(fileURI: string): Promise<boolean> {
-    const { exists } = await FileSystem.getInfoAsync(fileURI);
-    return exists;
+    // const { exists } = await FileSystem.getInfoAsync(fileURI);
+    // return exists;
+    return false;
   }
 
   async makeDir(uri: string): Promise<void> {
-    const { exists } = await FileSystem.getInfoAsync(uri);
-    if (!exists) {
-      await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
-    }
+    // const { exists } = await FileSystem.getInfoAsync(uri);
+    // if (!exists) {
+    //   await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
+    // }
   }
 
   async copyFile(sourceUri: string, targetUri: string): Promise<void> {
