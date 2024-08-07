@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 1.10.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
+### Patch Changes
+
+- Updated dependencies [042589c]
+  - @powersync/common@1.16.0
+
 ## 1.9.0
 
 ### Minor Changes

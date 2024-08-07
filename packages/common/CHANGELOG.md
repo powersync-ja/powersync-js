@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.16.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
 ## 1.15.0
 
 ### Minor Changes
