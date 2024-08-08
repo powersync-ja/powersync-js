@@ -234,16 +234,16 @@ importers:
     dependencies:
       '@capacitor/android':
         specifier: ^6.0.0
-        version: 6.1.1(@capacitor/core@6.1.1)
+        version: 6.1.1(@capacitor/core@6.1.2)
       '@capacitor/core':
         specifier: latest
-        version: 6.1.1
+        version: 6.1.2
       '@capacitor/ios':
         specifier: ^6.0.0
-        version: 6.1.1(@capacitor/core@6.1.1)
+        version: 6.1.1(@capacitor/core@6.1.2)
       '@capacitor/splash-screen':
         specifier: latest
-        version: 6.0.1(@capacitor/core@6.1.1)
+        version: 6.0.1(@capacitor/core@6.1.2)
       '@journeyapps/wa-sqlite':
         specifier: ^0.2.0
         version: 0.2.0
@@ -1432,6 +1432,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
+      async-mutex:
+        specifier: ^0.5.0
+        version: 0.5.0
     devDependencies:
       '@craftzdog/react-native-buffer':
         specifier: ^6.0.5
@@ -2756,8 +2759,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@capacitor/core@6.1.1':
-    resolution: {integrity: sha512-b1s4WDMy3Y1/owTG2/XNGCI6G5SDpF2NT1JMAgcShue13fiAuHA+Ans7Wfei6McvR0KdopAE6tMHmDAfL5PM8Q==}
+  '@capacitor/core@6.1.2':
+    resolution: {integrity: sha512-xFy1/4qLFLp5WCIzIhtwUuVNNoz36+V7/BzHmLqgVJcvotc4MMjswW/TshnPQaLLujEOaLkA4h8ZJ0uoK3ImGg==}
 
   '@capacitor/ios@6.1.1':
     resolution: {integrity: sha512-he6+Fhj6x1dSnOzM98xaPvioOU8MNO+qpodCJwnHE3mIRonTpFutXJK8DP8fnNhjDPk2km9VafLSfOeiZXNv3Q==}
@@ -18950,9 +18953,9 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.7
       to-fast-properties: 2.0.0
 
-  '@capacitor/android@6.1.1(@capacitor/core@6.1.1)':
+  '@capacitor/android@6.1.1(@capacitor/core@6.1.2)':
     dependencies:
-      '@capacitor/core': 6.1.1
+      '@capacitor/core': 6.1.2
 
   '@capacitor/cli@6.1.1':
     dependencies:
@@ -18977,17 +18980,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@6.1.1':
+  '@capacitor/core@6.1.2':
     dependencies:
       tslib: 2.6.3
 
-  '@capacitor/ios@6.1.1(@capacitor/core@6.1.1)':
+  '@capacitor/ios@6.1.1(@capacitor/core@6.1.2)':
     dependencies:
-      '@capacitor/core': 6.1.1
+      '@capacitor/core': 6.1.2
 
-  '@capacitor/splash-screen@6.0.1(@capacitor/core@6.1.1)':
+  '@capacitor/splash-screen@6.0.1(@capacitor/core@6.1.2)':
     dependencies:
-      '@capacitor/core': 6.1.1
+      '@capacitor/core': 6.1.2
 
   '@changesets/apply-release-plan@7.0.4':
     dependencies:
@@ -34265,7 +34268,7 @@ snapshots:
       yaml: 2.4.5
     optionalDependencies:
       postcss: 8.4.39
-      ts-node: 10.9.2(@swc/core@1.7.0)(@types/node@20.14.11)(typescript@5.5.4)
+      ts-node: 10.9.2(@swc/core@1.7.0(@swc/helpers@0.5.5))(@types/node@20.14.11)(typescript@5.5.4)
 
   postcss-loader@7.3.4(postcss@8.4.39)(typescript@5.4.5)(webpack@5.93.0):
     dependencies:
