@@ -174,12 +174,11 @@ export class SharedSyncImplementation
         }
       });
 
-      await this.syncStreamClient?.connect(options);
+      await this.syncStreamClient.connect(options);
     });
   }
 
   async disconnect() {
-    this.logger.info('disconnecting');
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
     return navigator.locks.request('shared-sync-connect', async () => {
@@ -253,7 +252,7 @@ export class SharedSyncImplementation
   }
 
   protected generateStreamingImplementation() {
-    // The waitForReady call ensures these should be present
+    // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
 
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
