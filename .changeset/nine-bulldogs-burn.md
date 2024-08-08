@@ -1,6 +1,6 @@
 ---
 '@powersync/react-native': minor
-'@powersync/common': minor
+'@powersync/web': minor
 ---
 
 Updated default streaming connection method to use WebSockets
