@@ -6,7 +6,7 @@
 
 _[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
 
-This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`. It connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
+This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`. It connects to a PowerSync instance via WebSockets (enabled by default) or HTTP streams (if selected).
 
 See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
 
