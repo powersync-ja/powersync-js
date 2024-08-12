@@ -172,8 +172,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  private hasSyncedWatchDisposer?: () => void;
-
   protected _schema: Schema;
 
   private _database: DBAdapter;
@@ -299,40 +297,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async updateHasSynced() {
     const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
 
-    if (this.hasSyncedWatchDisposer) {
-      this.hasSyncedWatchDisposer();
-      this.hasSyncedWatchDisposer = undefined;
+    const result = await this.getAll<any>(syncedSQL);
+    const hasSynced = !!result.length;
+
+    if (hasSynced != this.currentStatus.hasSynced) {
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+      this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
-    const abortController = new AbortController();
-    this.hasSyncedWatchDisposer = () => abortController.abort();
-
-    // Abort the watch after the first sync is detected
-    this.watch(
-      syncedSQL,
-      [],
-      {
-        onResult: (result) => {
-          const hasSynced = !!result.rows?.length;
-
-          if (hasSynced != this.currentStatus.hasSynced) {
-            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
-            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
-          }
-
-          if (hasSynced) {
-            abortController.abort();
-          }
-        },
-        onError: (ex) => {
-          this.options.logger?.warn('Failure while watching synced state', ex);
-          abortController.abort();
-        }
-      },
-      {
-        rawTableNames: true,
-        signal: abortController.signal
-      }
-    );
   }
 
   /**
@@ -449,9 +420,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // The data has been deleted - reset the sync status
     this.currentStatus = new SyncStatus({});
     this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
-
-    // Priming the has synced trigger.
-    this.updateHasSynced();
   }
 
   /**
@@ -464,7 +432,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
-    this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;
     if (disconnect) {
