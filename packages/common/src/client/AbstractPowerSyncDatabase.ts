@@ -295,10 +295,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected async updateHasSynced() {
-    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
-
-    const result = await this.database.execute(syncedSQL);
-    const hasSynced = !!result.rows?.length;
+    const result = await this.database.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
+    const hasSynced = !!result;
 
     if (hasSynced != this.currentStatus.hasSynced) {
       this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
