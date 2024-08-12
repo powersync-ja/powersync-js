@@ -299,6 +299,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async updateHasSynced() {
     const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
 
+    if (this.hasSyncedWatchDisposer) {
+      this.hasSyncedWatchDisposer();
+      this.hasSyncedWatchDisposer = undefined;
+    }
     const abortController = new AbortController();
     this.hasSyncedWatchDisposer = () => abortController.abort();
 
@@ -441,6 +445,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
       }
     });
+
+    // The data has been deleted - reset the sync status
+    this.currentStatus = new SyncStatus({});
+    this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+
+    // Priming the has synced trigger.
+    this.updateHasSynced();
   }
 
   /**
