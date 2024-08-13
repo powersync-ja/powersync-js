@@ -1,5 +1,13 @@
 # @powersync/web
 
+## 1.5.1
+
+### Patch Changes
+
+- 58fd059: Fix an issue where the shared sync manager would not discard stale credentials
+- Updated dependencies [7668495]
+  - @powersync/common@1.16.1
+
 ## 1.5.0
 
 ### Minor Changes

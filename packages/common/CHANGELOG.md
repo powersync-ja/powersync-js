@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.16.1
+
+### Patch Changes
+
+- 7668495: Correctly resetting hasSynced value upon a disconnectAndClear call.
+
 ## 1.16.0
 
 ### Minor Changes
