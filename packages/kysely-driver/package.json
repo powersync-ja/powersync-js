@@ -2,6 +2,7 @@
   "name": "@powersync/kysely-driver",
   "version": "0.3.0",
   "description": "Kysely driver for PowerSync",
+  "type": "module",
   "main": "lib/cjs/index.js",
   "module": "lib/esm/index.js",
   "types": "lib/esm/index.d.ts",
