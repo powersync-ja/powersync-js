@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.3.3
+
+### Patch Changes
+
+- d3379c5: Improve extracting endpoint from token audience.
+- Updated dependencies [58fd059]
+  - @powersync/web@1.5.1
+
 ## 0.3.2
 
 ### Patch Changes
