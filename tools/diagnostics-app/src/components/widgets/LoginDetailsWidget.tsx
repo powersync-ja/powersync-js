@@ -155,10 +155,23 @@ function getTokenEndpoint(token: string) {
   try {
     const [head, body, signature] = token.split('.');
     const payload = JSON.parse(atob(body));
-    const aud = payload.aud as string | undefined;
-    if (aud?.endsWith('.journeyapps.com')) {
-      return aud;
+    const aud = payload.aud as string | string[] | undefined;
+    const audiences = Array.isArray(aud) ? aud : [aud];
+
+    // Prioritize public powersync URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:.*.journeyapps.com/)) {
+        return aud;
+      }
     }
+
+    // Fallback to any URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:/)) {
+        return aud;
+      }
+    }
+
     return null;
   } catch (e) {
     return null;
