@@ -9,6 +9,14 @@
     "!lib/tests",
     "dist"
   ],
+  "exports": {
+    ".": "./lib/src/index.js",
+    "./umd": {
+      "import": "./dist/index.umd.js",
+      "require": "./dist/index.umd.js",
+      "types": "./lib/src/index.d.ts"
+    }
+  },
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"

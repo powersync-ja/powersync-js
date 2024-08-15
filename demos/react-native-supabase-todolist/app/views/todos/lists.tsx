@@ -2,13 +2,13 @@ import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
 import { FAB, Text } from 'react-native-elements';
-import prompt from 'react-native-prompt-android';
 
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
 import { useSystem } from '../../../library/powersync/system';
 import { useQuery, useStatus } from '@powersync/react';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
+import { prompt } from '../../../library/utils/prompt';
 
 const description = (total: number, completed: number = 0) => {
   return `${total - completed} pending, ${completed} completed`;
@@ -63,7 +63,7 @@ const ListsViewWidget: React.FC = () => {
         icon={{ name: 'add', color: 'white' }}
         size="small"
         placement="right"
-        onPress={() => {
+        onPress={async () => {
           prompt(
             'Add a new list',
             '',
@@ -73,7 +73,7 @@ const ListsViewWidget: React.FC = () => {
               }
               await createNewList(name);
             },
-            { placeholder: 'List name', style: 'shimo' }
+            { placeholder: 'List name' }
           );
         }}
       />
