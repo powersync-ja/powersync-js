@@ -11,6 +11,7 @@ import {
   SyncLocalDatabaseResult
 } from './BucketStorageAdapter';
 import { CrudBatch } from './CrudBatch';
+import { MAX_OP_ID } from '../../constants';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry';
 import { OpTypeEnum } from './OpType';
 import { SyncDataBatch } from './SyncDataBatch';
@@ -18,8 +19,6 @@ import { SyncDataBatch } from './SyncDataBatch';
 const COMPACT_OPERATION_INTERVAL = 1_000;
 
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
-  static MAX_OP_ID = '9223372036854775807';
-
   public tableNames: Set<string>;
   private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
@@ -64,7 +63,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   getMaxOpId() {
-    return SqliteBucketStorage.MAX_OP_ID;
+    return MAX_OP_ID;
   }
   /**
    * Reset any caches.
@@ -245,7 +244,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
     const rs1 = await this.db.getAll("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
-      SqliteBucketStorage.MAX_OP_ID
+      MAX_OP_ID
     ]);
     if (!rs1.length) {
       // Nothing to update
