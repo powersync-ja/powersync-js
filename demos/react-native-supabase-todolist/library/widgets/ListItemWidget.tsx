@@ -1,6 +1,7 @@
 import React from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { ListItem, Icon, Button } from 'react-native-elements';
+import { alert } from '../utils/alert';
 
 export interface ListItemWidgetProps {
   title: string;
@@ -27,16 +28,13 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
             type="clear"
             icon={{ name: 'delete', color: 'red' }}
             onPress={() => {
-              Alert.alert(
-                'Confirm',
-                'This list will be permanently deleted',
-                [{ text: 'Cancel' }, { text: 'Delete', onPress: () => onDelete?.() }],
-                { cancelable: true }
-              );
+              alert('Confirm', 'This list will be permanently deleted', {
+                confirmation: true,
+                onConfirm: () => onDelete?.()
+              });
             }}
           />
-        }
-      >
+        }>
         <Icon name="format-list-checks" type="material-community" color="grey" />
         <ListItem.Content style={{ minHeight: 80 }}>
           <ListItem.Title>{title}</ListItem.Title>
