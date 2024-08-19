@@ -185,7 +185,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     const { database, schema } = options;
 
-    if (false == schema instanceof Schema) {
+    if (typeof schema?.toJSON != 'function') {
       throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
     }
 
