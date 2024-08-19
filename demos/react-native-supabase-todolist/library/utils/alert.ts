@@ -1,11 +1,13 @@
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 export function alert(
   title = '',
-  description: string | undefined = undefined,
+  description: string = '',
   options: { confirmation: boolean; onConfirm: Function } = { confirmation: false, onConfirm: () => {} }
 ) {
-  if (typeof window !== 'undefined' && typeof window.alert === 'function' && typeof window.confirm === 'function') {
+  const isWeb = Platform.OS === 'web';
+
+  if (isWeb) {
     const message = `${title}\n${description}`;
     if (options.confirmation) {
       const confirm = window.confirm(message);

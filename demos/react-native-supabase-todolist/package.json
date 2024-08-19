@@ -5,18 +5,20 @@
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "web": "expo start --web",
     "clean": "watchman watch-del-all && rm -rf .expo"
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
-    "@expo/vector-icons": "^14.0.0",
     "@expo/metro-runtime": "^3.2.1",
+    "@expo/vector-icons": "^14.0.0",
     "@journeyapps/react-native-quick-sqlite": "^1.1.7",
     "@powersync/attachments": "workspace:*",
-    "@powersync/web": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",
+    "@powersync/web": "workspace:*",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^6.6.3",
     "@react-navigation/native": "^6.0.0",

@@ -19,16 +19,16 @@ const FATAL_RESPONSE_CODES = [
 
 export class SupabaseConnector implements PowerSyncBackendConnector {
   client: SupabaseClient;
-  // storage: SupabaseStorageAdapter;
+  storage: SupabaseStorageAdapter;
 
   constructor(protected system: System) {
     this.client = createClient(AppConfig.supabaseUrl, AppConfig.supabaseAnonKey, {
       auth: {
-        persistSession: true
-        // storage: this.system.kvStorage
+        persistSession: true,
+        storage: this.system.kvStorage
       }
     });
-    // this.storage = new SupabaseStorageAdapter({ client: this.client });
+    this.storage = new SupabaseStorageAdapter({ client: this.client });
   }
 
   async login(username: string, password: string) {

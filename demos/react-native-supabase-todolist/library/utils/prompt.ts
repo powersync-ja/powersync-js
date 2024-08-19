@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import rnPrompt from 'react-native-prompt-android';
 
 export async function prompt(
@@ -6,13 +7,12 @@ export async function prompt(
   onInput = (_input: string | null): void | Promise<void> => {},
   options: { placeholder: string | undefined } = { placeholder: undefined }
 ) {
+  const isWeb = Platform.OS === 'web';
   let name: string | null = null;
 
-  // Check if window.prompt is available
-  if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+  if (isWeb) {
     name = window.prompt(`${title}\n${description}`, options.placeholder);
   } else {
-    // Use react-native-prompt-android if window.prompt is not available
     name = await new Promise((resolve) => {
       rnPrompt(
         title,

@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { decode as decodeBase64 } from 'base64-arraybuffer';
-import * as FileSystem from 'expo-file-system';
 import { AppConfig } from '../supabase/AppConfig';
-import { StorageAdapter } from '@powersync/attachments';
+import { EncodingType, StorageAdapter } from '@powersync/attachments';
+import { FileSystem } from './FileSystem';
 
 export interface SupabaseStorageAdapterOptions {
   client: SupabaseClient;
@@ -49,24 +49,20 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     fileURI: string,
     base64Data: string,
     options?: {
-      encoding?: FileSystem.EncodingType;
+      encoding?: EncodingType;
     }
   ): Promise<void> {
-    const { encoding = FileSystem.EncodingType.UTF8 } = options ?? {};
+    const { encoding = EncodingType.UTF8 } = options ?? {};
     await FileSystem.writeAsStringAsync(fileURI, base64Data, { encoding });
   }
-  async readFile(
-    fileURI: string,
-    options?: { encoding?: FileSystem.EncodingType; mediaType?: string }
-  ): Promise<ArrayBuffer> {
-    throw '';
-    const { encoding = FileSystem.EncodingType.UTF8 } = options ?? {};
+  async readFile(fileURI: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
+    const { encoding = EncodingType.UTF8 } = options ?? {};
     const { exists } = await FileSystem.getInfoAsync(fileURI);
     if (!exists) {
       throw new Error(`File does not exist: ${fileURI}`);
     }
     const fileContent = await FileSystem.readAsStringAsync(fileURI, options);
-    if (encoding === FileSystem.EncodingType.Base64) {
+    if (encoding === EncodingType.Base64) {
       return this.base64ToArrayBuffer(fileContent);
     }
     return this.stringToArrayBuffer(fileContent);
@@ -96,16 +92,15 @@ export class SupabaseStorageAdapter implements StorageAdapter {
   }
 
   async fileExists(fileURI: string): Promise<boolean> {
-    // const { exists } = await FileSystem.getInfoAsync(fileURI);
-    // return exists;
-    return false;
+    const { exists } = await FileSystem.getInfoAsync(fileURI);
+    return exists;
   }
 
   async makeDir(uri: string): Promise<void> {
-    // const { exists } = await FileSystem.getInfoAsync(uri);
-    // if (!exists) {
-    //   await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
-    // }
+    const { exists } = await FileSystem.getInfoAsync(uri);
+    if (!exists) {
+      await FileSystem.makeDirectoryAsync(uri, { intermediates: true });
+    }
   }
 
   async copyFile(sourceUri: string, targetUri: string): Promise<void> {
