@@ -182,7 +182,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    const { database } = options;
+
+    const { database, schema } = options;
+
+    if (false == schema instanceof Schema) {
+      throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
+    }
 
     if (isDBAdapter(database)) {
       this._database = database;
@@ -190,13 +195,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this._database = database.openDB();
     } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
       this._database = this.openDBAdapter(options);
+    } else {
+      throw new Error('The provided `database` option is invalid.');
     }
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
-    this._schema = options.schema;
+    this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
