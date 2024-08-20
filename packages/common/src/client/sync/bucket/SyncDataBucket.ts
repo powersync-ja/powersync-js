@@ -9,8 +9,6 @@ export type SyncDataBucketJSON = {
   data: OplogEntryJSON[];
 };
 
-export const MAX_OP_ID = '9223372036854775807';
-
 export class SyncDataBucket {
   static fromRow(row: SyncDataBucketJSON) {
     return new SyncDataBucket(

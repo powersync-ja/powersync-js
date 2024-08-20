@@ -174,7 +174,7 @@ export class SharedSyncImplementation
         }
       });
 
-      await this.syncStreamClient?.connect(options);
+      await this.syncStreamClient.connect(options);
     });
   }
 
@@ -253,7 +253,7 @@ export class SharedSyncImplementation
   }
 
   protected generateStreamingImplementation() {
-    // The waitForReady call ensures these should be present
+    // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
 
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.

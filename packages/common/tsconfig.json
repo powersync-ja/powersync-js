@@ -8,6 +8,7 @@
     "outDir": "./lib",
     "lib": ["esnext"],
     "declaration": true,
+    "preserveConstEnums": true,
     "strictNullChecks": true
   },
   "include": ["src/**/*"]

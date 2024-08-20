@@ -172,8 +172,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  private hasSyncedWatchDisposer?: () => void;
-
   protected _schema: Schema;
 
   private _database: DBAdapter;
@@ -290,45 +288,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const version = await this.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
-    this.updateHasSynced();
+    await this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
   protected async updateHasSynced() {
-    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
+    const result = await this.database.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
+    const hasSynced = !!result;
 
-    const abortController = new AbortController();
-    this.hasSyncedWatchDisposer = () => abortController.abort();
-
-    // Abort the watch after the first sync is detected
-    this.watch(
-      syncedSQL,
-      [],
-      {
-        onResult: (result) => {
-          const hasSynced = !!result.rows?.length;
-
-          if (hasSynced != this.currentStatus.hasSynced) {
-            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
-            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
-          }
-
-          if (hasSynced) {
-            abortController.abort();
-          }
-        },
-        onError: (ex) => {
-          this.options.logger?.warn('Failure while watching synced state', ex);
-          abortController.abort();
-        }
-      },
-      {
-        rawTableNames: true,
-        signal: abortController.signal
-      }
-    );
+    if (hasSynced != this.currentStatus.hasSynced) {
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+      this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+    }
   }
 
   /**
@@ -441,6 +414,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
       }
     });
+
+    // The data has been deleted - reset the sync status
+    this.currentStatus = new SyncStatus({});
+    this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
   /**
@@ -453,7 +430,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
-    this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;
     if (disconnect) {

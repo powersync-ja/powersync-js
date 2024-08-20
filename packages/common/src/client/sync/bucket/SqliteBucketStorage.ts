@@ -11,6 +11,7 @@ import {
   SyncLocalDatabaseResult
 } from './BucketStorageAdapter';
 import { CrudBatch } from './CrudBatch';
+import { MAX_OP_ID } from '../../constants';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry';
 import { OpTypeEnum } from './OpType';
 import { SyncDataBatch } from './SyncDataBatch';
@@ -18,8 +19,6 @@ import { SyncDataBatch } from './SyncDataBatch';
 const COMPACT_OPERATION_INTERVAL = 1_000;
 
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
-  static MAX_OP_ID = '9223372036854775807';
-
   public tableNames: Set<string>;
   private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
@@ -64,7 +63,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   getMaxOpId() {
-    return SqliteBucketStorage.MAX_OP_ID;
+    return MAX_OP_ID;
   }
   /**
    * Reset any caches.
@@ -103,26 +102,12 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
    * Mark a bucket for deletion.
    */
   private async deleteBucket(bucket: string) {
-    // Delete a bucket, but allow it to be re-created.
-    // To achieve this, we rename the bucket to a new temp name, and change all ops to remove.
-    // By itself, this new bucket would ensure that the previous objects are deleted if they contain no more references.
-    // If the old bucket is re-added, this new bucket would have no effect.
     await this.writeTransaction(async (tx) => {
-      const { uuid } = await tx.get<{ uuid: string }>('select uuid() as uuid');
-      const newName = `$delete_${bucket}_${uuid}`;
-      this.logger.debug('Deleting bucket', bucket);
       await tx.execute(
-        `UPDATE ps_oplog SET op=${OpTypeEnum.REMOVE}, data=NULL WHERE op=${OpTypeEnum.PUT} AND superseded=0 AND bucket=?`,
-        [bucket]
-      );
-      // Rename bucket
-      await tx.execute('UPDATE ps_oplog SET bucket=? WHERE bucket=?', [newName, bucket]);
-      await tx.execute('DELETE FROM ps_buckets WHERE name = ?', [bucket]);
-      await tx.execute(
-        'INSERT INTO ps_buckets(name, pending_delete, last_op) SELECT ?, 1, IFNULL(MAX(op_id), 0) FROM ps_oplog WHERE bucket = ?',
-        [newName, newName]
-      );
+          'INSERT INTO powersync_operations(op, data) VALUES(?, ?)',
+          ['delete_bucket', bucket]);
     });
+
     this.logger.debug('done deleting bucket');
     this.pendingBucketDeletes = true;
   }
@@ -259,7 +244,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
     const rs1 = await this.db.getAll("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
-      SqliteBucketStorage.MAX_OP_ID
+      MAX_OP_ID
     ]);
     if (!rs1.length) {
       // Nothing to update
