@@ -179,7 +179,6 @@ export class SharedSyncImplementation
   }
 
   async disconnect() {
-    this.logger.info('disconnecting');
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
     return navigator.locks.request('shared-sync-connect', async () => {
