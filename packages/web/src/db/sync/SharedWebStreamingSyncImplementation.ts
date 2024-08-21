@@ -93,14 +93,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
-    const syncWorker = new SharedWorker(
-      new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
-      {
-        /* @vite-ignore */
-        name: `shared-sync-${this.webOptions.identifier}`,
-        type: 'module'
-      }
-    );
+    const syncWorker = new SharedWorker('/public/worker_SharedSyncImplementation.umd.js', {
+      /* @vite-ignore */
+      name: `shared-sync-${this.webOptions.identifier}`
+    });
     this.messagePort = syncWorker.port;
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;

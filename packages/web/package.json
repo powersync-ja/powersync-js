@@ -28,8 +28,9 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build:tsc": "tsc --build",
-    "build:webpack": "webpack",
-    "build": "npm run build:tsc -- \"$@\" && npm run build:webpack",
+    "build:webpack-main": "webpack",
+    "build:webpack-workers": "webpack --config webpack.workers.config.js",
+    "build": "npm run build:tsc -- \"$@\" && npm run build:webpack-main && npm run build:webpack-workers",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
@@ -57,16 +58,11 @@
   },
   "devDependencies": {
     "@journeyapps/wa-sqlite": "~0.2.0",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-inject": "^5.0.5",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "15.2.3",
     "@types/lodash": "^4.14.200",
     "@types/uuid": "^9.0.6",
     "@vitest/browser": "^1.3.1",
     "crypto-browserify": "^3.12.0",
     "p-defer": "^4.0.1",
-    "rollup": "4.14.3",
     "stream-browserify": "^3.0.0",
     "terser-webpack-plugin": "^5.3.9",
     "typescript": "^5.5.3",

@@ -27,7 +27,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         type: 'empty'
       };
     }
-    const mapping = { 'react-native': 'react-native-web', '@powersync/web': '@powersync/web/umd' };
+    const mapping = { 'react-native': 'react-native-web', '@powersync/web': '@powersync/web/dist/index.umd.js' };
     if (mapping[moduleName]) {
       console.log('remapping', moduleName);
       return context.resolveRequest(context, mapping[moduleName], platform);

@@ -12,15 +12,13 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
    *  (in the case of Android)
    */
   return multipleTabs
-    ? new SharedWorker(new URL('./SharedWASQLiteDB.worker.js', import.meta.url), {
+    ? new SharedWorker('/public/worker_SharedWASQLiteDB.umd.js', {
         /* @vite-ignore */
-        name: `shared-DB-worker-${workerIdentifier}`,
-        type: 'module'
+        name: `shared-DB-worker-${workerIdentifier}`
       }).port
-    : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+    : new Worker('/public/worker_WASQLiteDB.umd.js', {
         /* @vite-ignore */
-        name: `DB-worker-${workerIdentifier}`,
-        type: 'module'
+        name: `DB-worker-${workerIdentifier}`
       });
 }
 
