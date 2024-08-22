@@ -57,8 +57,8 @@ importers:
         specifier: ^18.1.1
         version: 18.1.2(@angular/common@18.1.2(@angular/core@18.1.2(rxjs@7.8.1)(zone.js@0.14.8))(rxjs@7.8.1))(@angular/core@18.1.2(rxjs@7.8.1)(zone.js@0.14.8))
       '@journeyapps/wa-sqlite':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
@@ -245,8 +245,8 @@ importers:
         specifier: latest
         version: 6.0.2(@capacitor/core@6.1.2)
       '@journeyapps/wa-sqlite':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -303,8 +303,8 @@ importers:
         specifier: ^11.13.0
         version: 11.13.0(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@mui/icons-material':
         specifier: ^5.15.16
         version: 5.16.5(@mui/material@5.16.5(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.2.0))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/react@18.3.3)(react@18.2.0)
@@ -418,8 +418,8 @@ importers:
         specifier: ^5.0.13
         version: 5.0.13
       '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@lexical/react':
         specifier: ^0.15.0
         version: 0.15.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.18)
@@ -538,8 +538,8 @@ importers:
   demos/react-multi-client:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -907,8 +907,8 @@ importers:
         specifier: 11.11.5
         version: 11.11.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@mui/icons-material':
         specifier: ^5.15.12
         version: 5.16.5(@mui/material@5.16.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.2.0))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/react@18.3.3)(react@18.2.0)
@@ -1071,8 +1071,8 @@ importers:
         specifier: ^5.0.12
         version: 5.0.13
       '@journeyapps/wa-sqlite':
-        specifier: ~0.1.1
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@lexical/react':
         specifier: ^0.11.3
         version: 0.11.3(lexical@0.11.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.18)
@@ -1363,8 +1363,8 @@ importers:
         version: 0.27.4
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -1535,8 +1535,8 @@ importers:
         version: 4.17.21
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ~0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@rollup/plugin-commonjs':
         specifier: ^25.0.7
         version: 25.0.8(rollup@4.14.3)
@@ -1589,8 +1589,8 @@ importers:
   tools/diagnostics-app:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ~0.1.1
-        version: 0.1.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@mui/material':
         specifier: ^5.15.12
         version: 5.16.5(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.2.0))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react@18.2.0))(@types/react@18.3.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -3944,11 +3944,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  '@journeyapps/wa-sqlite@0.1.1':
-    resolution: {integrity: sha512-cLPddbJYBpzII7ZBAA4fNKW2yLf3H03cGrz+JteXCfSjzxbYhnflAGD8WjefmeLXQUr2vcOYm3SgC82LJYZyzQ==}
-
-  '@journeyapps/wa-sqlite@0.2.0':
-    resolution: {integrity: sha512-cZ0n1p4tteouancHulODtR3VChjp/teYhGQkAw4cCmeFytu+OcLTaMLhvFcUVoZdIT9LEu2hait/UTHx/ZaNHw==}
+  '@journeyapps/wa-sqlite@0.3.0':
+    resolution: {integrity: sha512-LQMjcMh92myqzq9kpKFJJ+t1zY7owHTq8TvVYG83luCKzaZepNk86jNB/56fb/vCEy1PQBRc/cI7BTt10SfItA==}
 
   '@jridgewell/gen-mapping@0.3.5':
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -22303,9 +22300,7 @@ snapshots:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.24.9)(@babel/preset-env@7.25.2(@babel/core@7.24.9))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/wa-sqlite@0.1.1': {}
-
-  '@journeyapps/wa-sqlite@0.2.0': {}
+  '@journeyapps/wa-sqlite@0.3.0': {}
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
