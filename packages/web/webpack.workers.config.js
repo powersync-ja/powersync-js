@@ -5,12 +5,9 @@ const { experiments } = require('webpack');
 module.exports = () => {
   return {
     entry: {
-      worker_SharedSyncImplementation: path.join(
-        __dirname,
-        './lib/src/worker/sync/worker/SharedSyncImplementation.worker.js'
-      ),
-      worker_SharedWASQLiteDB: path.join(__dirname, './lib/src/worker/db/worker/SharedWASQLiteDB.worker.js'),
-      worker_WASQLiteDB: path.join(__dirname, './lib/src/worker/db/worker/WASQLiteDB.worker.js')
+      worker_SharedSyncImplementation: path.join(__dirname, './lib/src/worker/sync/SharedSyncImplementation.worker.js'),
+      worker_SharedWASQLiteDB: path.join(__dirname, './lib/src/worker/db/SharedWASQLiteDB.worker.js'),
+      worker_WASQLiteDB: path.join(__dirname, './lib/src/worker/db/WASQLiteDB.worker.js')
     },
     experiments: {
       topLevelAwait: true // Enable top-level await in Webpack
@@ -18,7 +15,7 @@ module.exports = () => {
     output: {
       filename: '[name].umd.js',
       path: path.join(__dirname, 'dist'),
-      publicPath: '/public/',
+      // publicPath: '/public/',
       library: {
         name: 'sdk_web',
         type: 'var'

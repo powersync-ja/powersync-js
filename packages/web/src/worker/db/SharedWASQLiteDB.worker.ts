@@ -1,7 +1,7 @@
 import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
-import { _openDB } from '../../../shared/open-db';
-import type { DBFunctionsInterface } from '../../../shared/types';
+import { _openDB } from '../../shared/open-db';
+import type { DBFunctionsInterface } from '../../shared/types';
 
 /**
  * Keeps track of open DB connections and the clients which

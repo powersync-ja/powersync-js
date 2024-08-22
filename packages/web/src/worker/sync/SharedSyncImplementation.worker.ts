@@ -3,7 +3,7 @@ import {
   SharedSyncImplementation,
   SharedSyncClientEvent,
   type ManualSharedSyncPayload
-} from '../SharedSyncImplementation';
+} from './SharedSyncImplementation';
 import Logger from 'js-logger';
 
 const _self: SharedWorkerGlobalScope = self as any;
