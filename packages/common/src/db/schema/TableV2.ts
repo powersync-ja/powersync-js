@@ -1,6 +1,7 @@
 import { ColumnType } from '../Column';
 import { Index } from './Index';
 import { IndexedColumn } from './IndexedColumn';
+import { InvalidSQLCharacters } from './Table';
 
 export type BaseColumnType<T extends number | string | null> = {
   type: ColumnType;
@@ -17,6 +18,10 @@ const integer: BaseColumnType<number | null> = {
 const real: BaseColumnType<number | null> = {
   type: ColumnType.REAL
 };
+
+// There is maximum of 127 arguments for any function in SQLite. Currently we use json_object which uses 1 arg per key (column name)
+// and one per value, which limits it to 63 arguments.
+const MAX_AMOUNT_OF_COLUMNS = 63;
 
 export const column = {
   text,
@@ -53,6 +58,8 @@ export class TableV2<Columns extends ColumnsType = ColumnsType> {
     public columns: Columns,
     public options: TableV2Options = {}
   ) {
+    this.validateTable(columns);
+
     if (options?.indexes) {
       this.indexes = Object.entries(options.indexes).map(([name, columns]) => {
         if (name.startsWith('-')) {
@@ -68,5 +75,25 @@ export class TableV2<Columns extends ColumnsType = ColumnsType> {
         });
       });
     }
+  }
+
+  private validateTable(columns: Columns) {
+    const columnNames = Object.keys(columns);
+    const columnLength = columnNames.length;
+
+    if (columnNames.includes('id')) {
+      throw new Error(`An id column is automatically added, custom id columns are not supported`);
+    }
+
+    if (columnLength > MAX_AMOUNT_OF_COLUMNS) {
+      throw new Error(`TableV2 cannot have more than ${MAX_AMOUNT_OF_COLUMNS} columns`);
+    }
+
+    columnNames
+      .map((column) => {
+        if (InvalidSQLCharacters.test(column)) {
+          throw new Error(`Invalid characters in column name: ${column}`);
+        }
+      })
   }
 }
