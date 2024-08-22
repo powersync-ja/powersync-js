@@ -105,7 +105,7 @@ export class Table {
       throw new Error(`Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
-    if(this.columns.length >= MAX_AMOUNT_OF_COLUMNS) {
+    if(this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
       throw new Error(`Table ${this.name} has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
     }
 
