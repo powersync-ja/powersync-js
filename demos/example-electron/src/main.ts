@@ -1,6 +1,8 @@
 import { app, BrowserWindow } from 'electron';
-import path from 'path';
+import express from 'express';
+import { AddressInfo } from 'node:net';
 import * as url from 'node:url';
+import path from 'path';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -22,7 +24,51 @@ const createWindow = () => {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    /**
+     * The PowerSync web SDK relies on SharedWorkers.
+     * The default Electron configuration serves the HTML content from a `file://` URI
+     * which sets `window.orgin` as `file://`.
+     *
+     * Usually creating multiple `SharedWorker` instances from the same JS context should
+     * link to the same instance of the shared worker. However, multiple worker instances
+     * will be created if the origin is not the same. Apparently `file://` origins cause
+     * the latter.
+     *
+     * For example:
+     * ```js
+     *  const worker1 = new SharedWorker('url');
+     *  const worker2 = new SharedWorker('url');
+     *```
+     *
+     * Should only create 1 instance of a SharedWorker with `worker1` and `worker2`
+     * pointing to the same instance.
+     *
+     * When the content is served from a file `worker1` and `worker2` point to different
+     * (unique) instances of the shared worker code.
+     *
+     * The PowerSync SDK relies on a single shared worker instance being present.
+     *
+     * See: https://github.com/electron/electron/issues/13952
+     *
+     * This serves the production HTML assets via a HTTP server. This sets the Window
+     * origin to a the server address. This results in expected SharedWorker
+     * functionality.
+     */
+    const expressApp = express();
+
+    // The Vite production output should all be here.
+    const bundleDir = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}`);
+
+    // Serve the assets production assets
+    expressApp.use(express.static(bundleDir));
+
+    // Use a dynamic port
+    const server = expressApp.listen(0, async () => {
+      const serverAddress = server.address() as AddressInfo;
+      mainWindow.loadURL(`http://127.0.0.1:${serverAddress.port}`);
+    });
+
+    app.on('quit', () => server.close());
   }
 
   // Open the DevTools.
