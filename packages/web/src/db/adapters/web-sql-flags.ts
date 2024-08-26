@@ -34,6 +34,18 @@ export interface WebSQLFlags {
    * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
    */
   ssrMode?: boolean;
+
+  /**
+   * This allows you to customize the location of the worker scripts, which can
+   * be useful in different deployment environments. Should only be needed in exceptional cases.
+   *
+   * Example:
+   *
+   * ```javascript
+   * workerPath: '/public/';
+   * ```
+   */
+  workerPath?: string;
 }
 
 /**
@@ -51,6 +63,7 @@ export const DEFAULT_WEB_SQL_FLAGS: Required<WebSQLFlags> = {
   broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
+  workerPath: '',
   /**
    * Multiple tabs are by default not supported on Android, iOS and Safari.
    * Other platforms will have multiple tabs enabled by default.

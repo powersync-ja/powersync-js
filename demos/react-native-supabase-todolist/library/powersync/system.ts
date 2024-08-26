@@ -2,7 +2,7 @@ import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
 import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
-import { PowerSyncDatabase as PowerSyncDatabaseWeb } from '@powersync/web';
+import { PowerSyncDatabase as PowerSyncDatabaseWeb } from '@powersync/web/umd';
 import { AbstractPowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -40,6 +40,10 @@ export class System {
         database: {
           dbFilename: 'sqlite.db'
         },
+        flags: {
+          // Only works when `enableMultiTabs` is true.
+          workerPath: '/node_modules/@powersync/web/dist/'
+        }
       });
     }
 
@@ -62,9 +66,8 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
+    await this.powersync.connect(this.supabaseConnector);
 
-    console.log("connected")
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
     }

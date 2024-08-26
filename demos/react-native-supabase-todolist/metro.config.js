@@ -18,6 +18,8 @@ config.resolver.nodeModulesPaths = [
 // #3 - Force resolving nested modules to the folders below
 config.resolver.disableHierarchicalLookup = true;
 config.resolver.unstable_enableSymlinks = true;
+
+// Needed to make `@powersync/web/umd` imports work
 config.resolver.unstable_enablePackageExports = true;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {

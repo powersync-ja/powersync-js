@@ -8,6 +8,7 @@ import {
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   flags?: {
     broadcastLogs?: boolean;
+    workerPath?: string;
   };
 }
 

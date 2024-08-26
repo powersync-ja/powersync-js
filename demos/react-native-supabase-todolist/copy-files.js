@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-// Source directory
+
 const sourceDir = path.join(__dirname, 'node_modules', '@powersync', 'web', 'dist');
 const destDir = path.join(__dirname, 'public');
+
 function copyRecursiveSync(src, dest) {
   if (fs.existsSync(src) && fs.statSync(src).isDirectory()) {
     // Create the destination directory if it doesn't exist
@@ -24,6 +25,6 @@ function copyRecursiveSync(src, dest) {
     console.error(`Source directory ${src} does not exist or is not a directory.`);
   }
 }
-// Execute the copy
+
 copyRecursiveSync(sourceDir, destDir);
 console.log(`Files copied from ${sourceDir} to ${destDir} successfully.`);
