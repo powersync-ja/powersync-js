@@ -1,6 +1,5 @@
 import { app, BrowserWindow } from 'electron';
 import express from 'express';
-import { AddressInfo } from 'node:net';
 import * as url from 'node:url';
 import path from 'path';
 
@@ -25,9 +24,20 @@ const createWindow = () => {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     /**
-     * The PowerSync web SDK relies on SharedWorkers.
-     * The default Electron configuration serves the HTML content from a `file://` URI
-     * which sets `window.orgin` as `file://`.
+     * The PowerSync web SDK relies on SharedWorkers for multiple tab support.
+     * Multiple tab support in Electron is required if multiple `BrowserWindow`s
+     * require the PowerSync client simultaneously.
+     *
+     * The default solution of serving HTML assets from a file is sufficient if multiple
+     * tab support is not required.
+     *
+     * ```js
+     *  mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+     * ```
+     *
+     * Extra steps are required if multiple tab support is required.
+     *
+     * Serving from a file results in `window.origin` being set as `file://`.
      *
      * Usually creating multiple `SharedWorker` instances from the same JS context should
      * link to the same instance of the shared worker. However, multiple worker instances
@@ -62,10 +72,16 @@ const createWindow = () => {
     // Serve the assets production assets
     expressApp.use(express.static(bundleDir));
 
-    // Use a dynamic port
-    const server = expressApp.listen(0, async () => {
-      const serverAddress = server.address() as AddressInfo;
-      mainWindow.loadURL(`http://127.0.0.1:${serverAddress.port}`);
+    /**
+     * If the port used here is dynamic e.g. `0` then the session would be cleared
+     * if the port changes. A fixed port should be used in production.
+     * Care should be taken when selecting this port to avoid conflicts.
+     * This demo uses a random fixed port for demonstration purposes. More advanced
+     * port management should be implemented if using this in production.
+     */
+    const port = process.env.PORT || 40031;
+    const server = expressApp.listen(port, () => {
+      mainWindow.loadURL(`http://127.0.0.1:${port}`);
     });
 
     app.on('quit', () => server.close());
