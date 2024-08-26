@@ -1,16 +1,16 @@
 import '@azure/core-asynciterator-polyfill';
 
+import { PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
-import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
-import { AppSchema } from './AppSchema';
-import { SupabaseConnector } from '../supabase/SupabaseConnector';
-import { KVStorage } from '../storage/KVStorage';
-import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
-import { AppConfig } from '../supabase/AppConfig';
 import Logger from 'js-logger';
+import { KVStorage } from '../storage/KVStorage';
+import { AppConfig } from '../supabase/AppConfig';
+import { SupabaseConnector } from '../supabase/SupabaseConnector';
+import { AppSchema } from './AppSchema';
+import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
 Logger.useDefaults();
 
@@ -51,7 +51,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
+    await this.powersync.connect(this.supabaseConnector);
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();

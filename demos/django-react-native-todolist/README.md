@@ -61,7 +61,7 @@ Then deploy the following sync rules:
 bucket_definitions:
   user_lists:
     # Separate bucket per todo list
-    parameters: select id as list_id from lists where owner_id = token_parameters.user_id
+    parameters: select id as list_id from lists where owner_id = request.user_id()
     data:
       - select * from lists
       - select * from todos

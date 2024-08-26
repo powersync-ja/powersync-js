@@ -1,6 +1,6 @@
 {
   "name": "@powersync/common",
-  "version": "1.16.0",
+  "version": "1.16.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -51,7 +51,7 @@
     "rsocket-websocket-client": "1.0.0-alpha.3",
     "text-encoding": "^0.7.0",
     "typescript": "^5.5.3",
-    "vitest": "^1.5.2",
+    "vitest": "^2.0.5",
     "web-streams-polyfill": "3.2.1"
   }
 }

@@ -33,7 +33,8 @@ export interface SQLOpenFactory {
  * Tests if the input is a {@link SQLOpenOptions}
  */
 export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
-  return typeof test == 'object' && 'dbFilename' in test;
+  // typeof null is `object`, but you cannot use the `in` operator on `null.
+  return test && typeof test == 'object' && 'dbFilename' in test;
 };
 
 /**

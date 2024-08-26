@@ -1,5 +1,19 @@
 # @powersync/common
 
+## 1.16.2
+
+### Patch Changes
+
+- 9521e24: Change internals of `deleteBucket` to use simpler action
+- 7d04f74: Added basic validations for required options in `PowerSyncDatabase` constructor.
+- 4fc1de3: Allow enums to be accessed at runtime by adding `preserveConstEnums` to tsconfig
+
+## 1.16.1
+
+### Patch Changes
+
+- 7668495: Correctly resetting hasSynced value upon a disconnectAndClear call.
+
 ## 1.16.0
 
 ### Minor Changes

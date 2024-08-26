@@ -111,7 +111,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 };
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
-  connectionMethod: SyncStreamConnectionMethod.HTTP,
+  connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
 

@@ -3,7 +3,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
@@ -33,7 +33,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector, {connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET});
+        powerSync.connect(connector);
       }
     });
 

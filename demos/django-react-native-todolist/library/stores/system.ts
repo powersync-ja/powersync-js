@@ -1,8 +1,8 @@
 import '@azure/core-asynciterator-polyfill';
+import { AbstractPowerSyncDatabase, PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
-import { AbstractPowerSyncDatabase, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
-import { AppSchema } from '../powersync/AppSchema';
 import { DjangoConnector } from '../django/DjangoConnector';
+import { AppSchema } from '../powersync/AppSchema';
 
 export class System {
   djangoConnector: DjangoConnector;
@@ -21,7 +21,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.djangoConnector, { connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET });
+    await this.powersync.connect(this.djangoConnector);
   }
 }
 
