@@ -8,7 +8,7 @@ import { ScrollView, View, Text } from 'react-native';
 import { FAB } from 'react-native-elements';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import prompt from 'react-native-prompt-android';
-import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
+import { TODOS_TABLE, TodoRecord, LISTS_TABLE } from '../../../../library/powersync/AppSchema';
 import { useSystem } from '../../../../library/powersync/system';
 import { TodoItemWidget } from '../../../../library/widgets/TodoItemWidget';
 
@@ -36,23 +36,23 @@ const TodoView: React.FC = () => {
 
   const {
     data: [listRecord]
-  } = useQuery<{ name: string }>(`SELECT name FROM ${LIST_TABLE} WHERE id = ?`, [listID]);
+  } = useQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [listID]);
 
   const { data: todos, isLoading } = useQuery<TodoEntry>(
     `
         SELECT
-            ${TODO_TABLE}.id AS todo_id,
-            ${TODO_TABLE}.*,
+            ${TODOS_TABLE}.id AS todo_id,
+            ${TODOS_TABLE}.*,
             ${ATTACHMENT_TABLE}.id AS attachment_id,
             ${ATTACHMENT_TABLE}.*
         FROM
-            ${TODO_TABLE}
+            ${TODOS_TABLE}
         LEFT JOIN
-            ${LIST_TABLE} ON ${TODO_TABLE}.list_id = ${LIST_TABLE}.id
+            ${LISTS_TABLE} ON ${TODOS_TABLE}.list_id = ${LISTS_TABLE}.id
         LEFT JOIN
-            ${ATTACHMENT_TABLE} ON ${TODO_TABLE}.photo_id = ${ATTACHMENT_TABLE}.id
+            ${ATTACHMENT_TABLE} ON ${TODOS_TABLE}.photo_id = ${ATTACHMENT_TABLE}.id
         WHERE
-            ${TODO_TABLE}.list_id = ?`,
+            ${TODOS_TABLE}.list_id = ?`,
     [listID]
   );
 
@@ -63,11 +63,11 @@ const TodoView: React.FC = () => {
       updatedRecord.completed_at = new Date().toISOString();
       updatedRecord.completed_by = userID;
     } else {
-      updatedRecord.completed_at = undefined;
-      updatedRecord.completed_by = undefined;
+      updatedRecord.completed_at = null;
+      updatedRecord.completed_by = null;
     }
     await system.powersync.execute(
-      `UPDATE ${TODO_TABLE}
+      `UPDATE ${TODOS_TABLE}
             SET completed = ?,
                 completed_at = ?,
                 completed_by = ?
@@ -78,9 +78,9 @@ const TodoView: React.FC = () => {
 
   const savePhoto = async (id: string, data: CameraCapturedPicture) => {
     // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
-    const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
+    const { id: photoId } = await system.attachmentQueue!.savePhoto(data.base64!);
 
-    await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+    await system.powersync.execute(`UPDATE ${TODOS_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
   };
 
   const createNewTodo = async (description: string) => {
@@ -88,7 +88,7 @@ const TodoView: React.FC = () => {
 
     await powerSync.execute(
       `INSERT INTO
-              ${TODO_TABLE}
+              ${TODOS_TABLE}
                   (id, created_at, created_by, description, list_id)
               VALUES
                   (uuid(), datetime(), ?, ?, ?)`,
@@ -99,9 +99,9 @@ const TodoView: React.FC = () => {
   const deleteTodo = async (id: string, photoRecord?: AttachmentRecord) => {
     await system.powersync.writeTransaction(async (tx) => {
       if (photoRecord != null) {
-        await system.attachmentQueue.delete(photoRecord, tx);
+        await system.attachmentQueue?.delete(photoRecord, tx);
       }
-      await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
+      await tx.execute(`DELETE FROM ${TODOS_TABLE} WHERE id = ?`, [id]);
     });
   };
 

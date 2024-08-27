@@ -1,4 +1,4 @@
-import { Column, ColumnType, Table, TableOptions } from '@powersync/common';
+import { column, ColumnsType, TableV2 } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
@@ -20,27 +20,29 @@ export enum AttachmentState {
   ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
+export interface AttachmentTableOptions {
   name?: string;
-  additionalColumns?: Column[];
+  additionalColumns?: ColumnsType;
 }
 
-export class AttachmentTable extends Table {
+export class AttachmentTable extends TableV2 {
   constructor(options?: AttachmentTableOptions) {
-    super({
-      ...options,
-      name: options?.name ?? ATTACHMENT_TABLE,
-      localOnly: true,
-      insertOnly: false,
-      columns: [
-        new Column({ name: 'filename', type: ColumnType.TEXT }),
-        new Column({ name: 'local_uri', type: ColumnType.TEXT }),
-        new Column({ name: 'timestamp', type: ColumnType.INTEGER }),
-        new Column({ name: 'size', type: ColumnType.INTEGER }),
-        new Column({ name: 'media_type', type: ColumnType.TEXT }),
-        new Column({ name: 'state', type: ColumnType.INTEGER }), // Corresponds to AttachmentState
-        ...(options?.additionalColumns ?? [])
-      ]
-    });
+    super(
+        {
+          filename: column.text,
+          local_uri: column.text,
+          timestamp: column.integer,
+          size: column.integer,
+          media_type: column.text,
+          // Corresponds to AttachmentState
+          state: column.integer,
+          ...options?.additionalColumns
+        },
+        {
+          localOnly: true,
+          insertOnly: false,
+          viewName: options?.name ?? ATTACHMENT_TABLE
+        }
+    );
   }
 }

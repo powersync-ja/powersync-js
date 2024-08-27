@@ -2,7 +2,7 @@ import * as FileSystem from 'expo-file-system';
 import { randomUUID } from 'expo-crypto';
 import { AppConfig } from '../supabase/AppConfig';
 import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState } from '@powersync/attachments';
-import { TODO_TABLE } from './AppSchema';
+import { TODOS_TABLE } from './AppSchema';
 
 export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
   async init() {
@@ -17,7 +17,7 @@ export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
   }
 
   onAttachmentIdsChange(onUpdate: (ids: string[]) => void): void {
-    this.powersync.watch(`SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`, [], {
+    this.powersync.watch(`SELECT photo_id as id FROM ${TODOS_TABLE} WHERE photo_id IS NOT NULL`, [], {
       onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
     });
   }
