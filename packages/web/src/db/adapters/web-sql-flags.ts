@@ -36,16 +36,15 @@ export interface WebSQLFlags {
   ssrMode?: boolean;
 
   /**
-   * This allows you to customize the location of the worker scripts, which can
-   * be useful in different deployment environments. Should only be needed in exceptional cases.
+   * This allows you to override the default worker resolution.
    *
-   * Example:
-   *
-   * ```javascript
-   * workerPath: '/public/';
-   * ```
+   * You can either provide a string representing the path to the worker script
+   * or a factory method that returns a Worker or SharedWorker instance.
    */
-  workerPath?: string;
+  workers?: {
+    sharedSyncWorker?: string | (() => SharedWorker);
+    wasqliteDBWorker?: string | (() => Worker | SharedWorker);
+  };
 }
 
 /**
@@ -63,7 +62,7 @@ export const DEFAULT_WEB_SQL_FLAGS: Required<WebSQLFlags> = {
   broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
-  workerPath: '',
+  workers: {},
   /**
    * Multiple tabs are by default not supported on Android, iOS and Safari.
    * Other platforms will have multiple tabs enabled by default.

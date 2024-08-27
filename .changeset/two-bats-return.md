@@ -1,5 +1,5 @@
 ---
-'@powersync/web': patch
+'@powersync/web': minor
 ---
 
 Added react-native-web support.

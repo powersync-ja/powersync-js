@@ -90,18 +90,22 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
 
-    const { workerPath = '' } = options.flags ?? {};
+    const { workers } = options.flags ?? {};
 
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
     let syncWorker: SharedWorker;
-    if (workerPath) {
-      syncWorker = new SharedWorker(`${workerPath}worker_SharedSyncImplementation.umd.js`, {
-        /* @vite-ignore */
-        name: `shared-sync-${this.webOptions.identifier}`
-      });
+    if (workers?.sharedSyncWorker) {
+      if (typeof workers.sharedSyncWorker === 'string') {
+        syncWorker = new SharedWorker(`${workers.sharedSyncWorker}`, {
+          /* @vite-ignore */
+          name: `shared-sync-${this.webOptions.identifier}`
+        });
+      } else {
+        syncWorker = workers.sharedSyncWorker();
+      }
     } else {
       syncWorker = new SharedWorker(new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
         /* @vite-ignore */
@@ -121,14 +125,21 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true, workerPath) as MessagePort;
+    const dbOpenerPort = openWorkerDatabasePort(
+      this.options.identifier!,
+      true,
+      workers?.wasqliteDBWorker
+    ) as MessagePort;
+
+    const flags = { ...this.webOptions.flags, workers: undefined };
+
     this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
       dbName: this.options.identifier!,
       streamOptions: {
         crudUploadThrottleMs,
         identifier,
         retryDelayMs,
-        flags: this.webOptions.flags
+        flags: flags
       }
     });
 

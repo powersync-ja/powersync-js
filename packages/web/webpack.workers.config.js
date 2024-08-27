@@ -33,7 +33,12 @@ module.exports = () => {
       ]
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js']
+      extensions: ['.tsx', '.ts', '.js'],
+      fallback: {
+        crypto: require.resolve('crypto-browserify'),
+        stream: require.resolve('stream-browserify'),
+        vm: require.resolve('vm-browserify')
+      }
     },
 
     devtool: production ? 'source-map' : 'cheap-module-source-map',

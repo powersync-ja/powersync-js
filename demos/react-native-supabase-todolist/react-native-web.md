@@ -4,13 +4,13 @@ To ensure that `PowerSync` features are fully supported in your `React Native We
 
 ## Known limitations
 
-Currently `React Native Web` is only supported when `enableMultiTabs` is true
+Currently `React Native Web` is only supported when `enableMultiTabs` is true.
 
-## 1. Configuring the worker path
+## 1. Configuring the workers
 
-### 1.1 Recommended `workerPath`
+### 1.1 Recommended `workers`
 
-With `React Native Web` path to the workers should be configured with the `workerPath` flag when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the `workerPath` to `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workerPath`](#12-copying-dist-and-custom-workerpath).
+With `React Native Web` path to the workers should be configured with the `workerPath` flag when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the `workers` to point to `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers).
 
 ```javascript
 const powersync = new PowerSyncDatabase({
@@ -19,15 +19,40 @@ const powersync = new PowerSyncDatabase({
     dbFilename: 'sqlite.db'
   },
   flags: {
-    workerPath: '/node_modules/@powersync/web/dist/'
+    workers: {
+      // You can specify paths to the workers
+      sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
+      wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+
+      // Or provide factory functions to create the workers
+      // sharedSyncWorker: () =>
+      //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
+      //     name: `shared-sync-sqlite.db`
+      //   }),
+      // wasqliteDBWorker: () =>
+      //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
+      //     name: `shared-DB-worker-sqlite.db`
+      //   })
+    }
   }
 });
 ```
 
-### 1.2 Copying `dist` and custom `workerPath`
+### 1.2 Copying `dist` and custom `workers` locations
 
-You can copy the contents of the `dist` directory to somewhere else like `./public` in which case, configure the `workerPath` to `/public/`.
-A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the content to `./public`.
+You can copy the contents of the `dist` directory to somewhere else like `./public`, in which case configure the `workers` accordingly:
+
+```javascript
+flags: {
+  workers: {
+    // You can specify paths to the workers
+    sharedSyncWorker: '/public/worker_SharedSyncImplementation.umd.js',
+    wasqliteDBWorker: '/public/worker_SharedWASQLiteDB.umd.js'
+  }
+}
+```
+
+A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the contents to `./public`.
 It can be run with:
 
 ```
@@ -41,7 +66,7 @@ A common use case for `React Native Web` is to have a single `react-native` proj
 ### Metro config
 
 Refer to the example [here](./metro.config.js).
-Pay attention to the `resolveRequest` configuration, which resolves dependencies based on the target platform.
+Setting `config.resolver.resolveRequest` allows Metro to behave differently based on the platform.
 
 ```javascript
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -167,9 +192,9 @@ import { prompt } from 'util/prompt';
 />;
 ```
 
-## 3. TypeScript Configuration for UMD Imports
+## 3. TypeScript Configuration to allow UMD imports
 
-A `UDM` version of `@powersync/web` is available at `@powersync/web/udm`.
+A `UMD` version of `@powersync/web` is available at `@powersync/web/umd`.
 To support the version, two changes are required to the project.
 
 1. Add `config.resolver.unstable_enablePackageExports = true;` to your `metro.config.js` file.

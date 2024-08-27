@@ -78,7 +78,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   getWorker() {}
 
   protected async init() {
-    const { enableMultiTabs, useWebWorker, workerPath } = this.flags;
+    const { enableMultiTabs, useWebWorker, workers } = this.flags;
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
@@ -86,7 +86,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     if (useWebWorker) {
       const dbOpener = this.options.workerPort
         ? Comlink.wrap<OpenDB>(this.options.workerPort)
-        : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, workerPath);
+        : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, workers?.wasqliteDBWorker);
 
       this.methods = await dbOpener(this.options.dbFilename);
       this.methods.registerOnTableChange(
