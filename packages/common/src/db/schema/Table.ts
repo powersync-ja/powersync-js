@@ -1,5 +1,6 @@
-import { Column } from '../Column';
-import type { Index } from './Index';
+import { BaseColumnType, column, Column, ColumnsType, ColumnType, ExtractColumnValueType } from '../Column';
+import { Index } from './Index';
+import { IndexedColumn } from './IndexedColumn';
 import { TableV2 } from './TableV2';
 
 export interface TableOptions {
@@ -14,18 +15,35 @@ export interface TableOptions {
   viewName?: string;
 }
 
-export const DEFAULT_TABLE_OPTIONS: Partial<TableOptions> = {
+export type RowType<T extends TableV2<any>> = {
+  [K in keyof T['columnMap']]: ExtractColumnValueType<T['columnMap'][K]>;
+} & {
+  id: string;
+};
+
+export type IndexShorthand = Record<string, string[]>;
+
+export interface TableV2Options {
+  indexes?: IndexShorthand;
+  localOnly?: boolean;
+  insertOnly?: boolean;
+  viewName?: string;
+}
+
+export const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
   localOnly: false
 };
 
-const MAX_AMOUNT_OF_COLUMNS = 63
+const MAX_AMOUNT_OF_COLUMNS = 63;
 
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
-export class Table {
+export class Table<Columns extends ColumnsType = ColumnsType> {
   protected options: TableOptions;
+
+  protected _mappedColumns: Columns;
 
   static createLocalOnly(options: TableOptions) {
     return new Table({ ...options, localOnly: true, insertOnly: false });
@@ -35,7 +53,7 @@ export class Table {
     return new Table({ ...options, localOnly: false, insertOnly: true });
   }
 
-  static createTable(name: string, table: TableV2) {
+  static createTable(name: string, table: Table) {
     return new Table({
       name,
       columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type })),
@@ -46,8 +64,58 @@ export class Table {
     });
   }
 
-  constructor(options: TableOptions) {
-    this.options = { ...DEFAULT_TABLE_OPTIONS, ...options };
+  constructor(columns: Columns, options?: TableV2Options);
+  constructor(options: TableOptions);
+  constructor(optionsOrColumns: Columns | TableOptions, v2Options?: TableV2Options) {
+    if (!Array.isArray(optionsOrColumns.columns)) {
+      this._mappedColumns = optionsOrColumns as Columns;
+    }
+
+    // This is a WIP, might cleanup
+
+    // Convert mappings to base columns and indexes
+    const columns = Array.isArray(optionsOrColumns.columns)
+      ? optionsOrColumns.columns
+      : Object.entries(optionsOrColumns).map(
+          ([name, columnInfo]) =>
+            new Column({
+              name,
+              type: columnInfo.type
+            })
+        );
+
+    const indexes = Array.isArray(optionsOrColumns.indexes)
+      ? optionsOrColumns.indexes
+      : Object.entries(v2Options?.indexes ?? {}).map(
+          ([name, columnNames]) =>
+            new Index({
+              name: name,
+              columns: columnNames.map(
+                (name) =>
+                  new IndexedColumn({
+                    name: name.replace(/^-/, ''),
+                    ascending: !name.startsWith('-')
+                  })
+              )
+            })
+        );
+
+    const insertOnly =
+      typeof optionsOrColumns.insertOnly == 'boolean'
+        ? optionsOrColumns.insertOnly
+        : (v2Options?.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly);
+    const viewName = typeof optionsOrColumns.viewName == 'string' ? optionsOrColumns.viewName : v2Options?.viewName;
+    const localOnly =
+      typeof optionsOrColumns.localOnly == 'boolean' ? optionsOrColumns.localOnly : v2Options?.localOnly;
+
+    this.options = {
+      columns,
+      name: typeof optionsOrColumns.name == 'string' ? optionsOrColumns.name : 'missing',
+      indexes,
+      insertOnly,
+      localOnly,
+      viewName
+    };
   }
 
   get name() {
@@ -64,6 +132,16 @@ export class Table {
 
   get columns() {
     return this.options.columns;
+  }
+
+  get columnMap(): Columns {
+    return (
+      this._mappedColumns ??
+      this.columns.reduce((hash: Record<string, BaseColumnType<any>>, column) => {
+        hash[column.name] = { type: column.type ?? ColumnType.TEXT };
+        return hash;
+      }, {} as Columns)
+    );
   }
 
   get indexes() {
@@ -105,8 +183,10 @@ export class Table {
       throw new Error(`Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
-    if(this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
-      throw new Error(`Table ${this.name} has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
+    if (this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
+      throw new Error(
+        `Table ${this.name} has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`
+      );
     }
 
     const columnNames = new Set<string>();
@@ -156,3 +236,18 @@ export class Table {
     };
   }
 }
+
+const test = new Table(
+  {
+    list_id: column.text,
+    created_at: column.text,
+    completed_at: column.text,
+    description: column.text,
+    created_by: column.text,
+    completed_by: column.text,
+    completed: column.integer
+  },
+  { indexes: { list: ['list_id'] } }
+);
+
+const r = test.columnMap;
