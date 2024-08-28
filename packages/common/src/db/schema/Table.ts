@@ -190,7 +190,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   get viewName() {
-    return this.viewNameOverride ?? this.name;
+    return this.viewNameOverride ? this.viewNameOverride : this.name;
   }
 
   get columns() {
