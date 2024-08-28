@@ -1,4 +1,4 @@
-import { ColumnsType } from '../Column';
+import { ColumnsType } from './Column';
 import { Table } from './Table';
 
 /*

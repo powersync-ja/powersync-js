@@ -12,3 +12,5 @@
 **/assets/**
 **/bin/**
 **/ios/**
+
+pnpm-lock.yaml

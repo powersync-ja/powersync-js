@@ -32,7 +32,7 @@ const real: BaseColumnType<number | null> = {
 
 // There is maximum of 127 arguments for any function in SQLite. Currently we use json_object which uses 1 arg per key (column name)
 // and one per value, which limits it to 63 arguments.
-const MAX_AMOUNT_OF_COLUMNS = 63;
+export const MAX_AMOUNT_OF_COLUMNS = 63;
 
 export const column = {
   text,

@@ -103,9 +103,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
    */
   private async deleteBucket(bucket: string) {
     await this.writeTransaction(async (tx) => {
-      await tx.execute(
-          'INSERT INTO powersync_operations(op, data) VALUES(?, ?)',
-          ['delete_bucket', bucket]);
+      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', ['delete_bucket', bucket]);
     });
 
     this.logger.debug('done deleting bucket');

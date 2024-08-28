@@ -1,4 +1,11 @@
-import { BaseColumnType, column, Column, ColumnsType, ColumnType, ExtractColumnValueType } from '../Column';
+import {
+  BaseColumnType,
+  Column,
+  ColumnsType,
+  ColumnType,
+  ExtractColumnValueType,
+  MAX_AMOUNT_OF_COLUMNS
+} from './Column';
 import { Index } from './Index';
 import { IndexedColumn } from './IndexedColumn';
 import { TableV2 } from './TableV2';
@@ -36,8 +43,6 @@ export const DEFAULT_TABLE_OPTIONS = {
   localOnly: false
 };
 
-const MAX_AMOUNT_OF_COLUMNS = 63;
-
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 export class Table<Columns extends ColumnsType = ColumnsType> {
@@ -67,55 +72,55 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   constructor(columns: Columns, options?: TableV2Options);
   constructor(options: TableOptions);
   constructor(optionsOrColumns: Columns | TableOptions, v2Options?: TableV2Options) {
-    if (!Array.isArray(optionsOrColumns.columns)) {
-      this._mappedColumns = optionsOrColumns as Columns;
+    if (this.isTableV1(optionsOrColumns)) {
+      this.initTableV1(optionsOrColumns);
+    } else {
+      this.initTableV2(optionsOrColumns, v2Options);
     }
+  }
 
-    // This is a WIP, might cleanup
+  private isTableV1(arg: TableOptions | Columns): arg is TableOptions {
+    return 'columns' in arg && Array.isArray(arg.columns);
+  }
 
-    // Convert mappings to base columns and indexes
-    const columns = Array.isArray(optionsOrColumns.columns)
-      ? optionsOrColumns.columns
-      : Object.entries(optionsOrColumns).map(
-          ([name, columnInfo]) =>
-            new Column({
-              name,
-              type: columnInfo.type
-            })
-        );
+  private initTableV1(options: TableOptions) {
+    this.options = {
+      ...options,
+      indexes: options.indexes || [],
+      insertOnly: options.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
+      localOnly: options.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly
+    };
+  }
 
-    const indexes = Array.isArray(optionsOrColumns.indexes)
-      ? optionsOrColumns.indexes
-      : Object.entries(v2Options?.indexes ?? {}).map(
-          ([name, columnNames]) =>
-            new Index({
-              name: name,
-              columns: columnNames.map(
-                (name) =>
-                  new IndexedColumn({
-                    name: name.replace(/^-/, ''),
-                    ascending: !name.startsWith('-')
-                  })
-              )
-            })
-        );
+  private initTableV2(columns: Columns, options?: TableV2Options) {
+    const convertedColumns = Object.entries(columns).map(
+      ([name, columnInfo]) => new Column({ name, type: columnInfo.type })
+    );
 
-    const insertOnly =
-      typeof optionsOrColumns.insertOnly == 'boolean'
-        ? optionsOrColumns.insertOnly
-        : (v2Options?.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly);
-    const viewName = typeof optionsOrColumns.viewName == 'string' ? optionsOrColumns.viewName : v2Options?.viewName;
-    const localOnly =
-      typeof optionsOrColumns.localOnly == 'boolean' ? optionsOrColumns.localOnly : v2Options?.localOnly;
+    const convertedIndexes = Object.entries(options?.indexes ?? {}).map(
+      ([name, columnNames]) =>
+        new Index({
+          name,
+          columns: columnNames.map(
+            (name) =>
+              new IndexedColumn({
+                name: name.replace(/^-/, ''),
+                ascending: !name.startsWith('-')
+              })
+          )
+        })
+    );
 
     this.options = {
-      columns,
-      name: typeof optionsOrColumns.name == 'string' ? optionsOrColumns.name : 'missing',
-      indexes,
-      insertOnly,
-      localOnly,
-      viewName
+      name: '',
+      columns: convertedColumns,
+      indexes: convertedIndexes,
+      insertOnly: options?.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
+      localOnly: options?.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly,
+      viewName: options?.viewName
     };
+
+    this._mappedColumns = columns;
   }
 
   get name() {
@@ -176,7 +181,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
-      throw new Error(`Invalid characters in table name: ${this.name}`);
+      throw new Error(`Invalid characters in table name ${this.name ?? ""}`);
     }
 
     if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
@@ -185,7 +190,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
     if (this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
       throw new Error(
-        `Table ${this.name} has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`
+        `Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`
       );
     }
 
@@ -194,25 +199,24 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     for (const column of this.columns) {
       const { name: columnName } = column;
       if (column.name === 'id') {
-        throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
+        throw new Error(`An id column is automatically added, custom id columns are not supported`);
       }
       if (columnNames.has(columnName)) {
         throw new Error(`Duplicate column ${columnName}`);
       }
       if (InvalidSQLCharacters.test(columnName)) {
-        throw new Error(`Invalid characters in column name: $name.${column}`);
+        throw new Error(`Invalid characters in column name: ${column.name}`);
       }
       columnNames.add(columnName);
     }
 
     const indexNames = new Set<string>();
-
     for (const index of this.indexes) {
       if (indexNames.has(index.name)) {
-        throw new Error(`Duplicate index $name.${index}`);
+        throw new Error(`Duplicate index ${index}`);
       }
       if (InvalidSQLCharacters.test(index.name)) {
-        throw new Error(`Invalid characters in index name: $name.${index}`);
+        throw new Error(`Invalid characters in index name: ${index}`);
       }
 
       for (const column of index.columns) {
@@ -236,18 +240,3 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     };
   }
 }
-
-const test = new Table(
-  {
-    list_id: column.text,
-    created_at: column.text,
-    completed_at: column.text,
-    description: column.text,
-    created_by: column.text,
-    completed_by: column.text,
-    completed: column.integer
-  },
-  { indexes: { list: ['list_id'] } }
-);
-
-const r = test.columnMap;
