@@ -58,6 +58,13 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     return new Table({ ...options, localOnly: false, insertOnly: true });
   }
 
+  /**
+   * Create a table.
+   * @deprecated This was only only included for TableV2 and is no longer necessary.
+   * Prefer to use new Table() directly.
+   *
+   * TODO remove in the next major release.
+   */
   static createTable(name: string, table: Table) {
     return new Table({
       name,

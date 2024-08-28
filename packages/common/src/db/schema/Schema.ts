@@ -40,7 +40,8 @@ export class Schema<S extends SchemaType = SchemaType> {
 
   private convertToClassicTables(props: S) {
     return Object.entries(props).map(([name, table]) => {
-      return Table.createTable(name, table);
+      const convertedTable = new Table({ name, columns: table.columns });
+      return convertedTable;
     });
   }
 }
