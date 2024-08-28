@@ -41,14 +41,7 @@ export class Schema<S extends SchemaType = SchemaType> {
 
   private convertToClassicTables(props: S) {
     return Object.entries(props).map(([name, table]) => {
-      const convertedTable = new Table({
-        name,
-        columns: table.columns,
-        indexes: table.indexes,
-        localOnly: table.localOnly,
-        insertOnly: table.insertOnly,
-        viewName: table.viewName
-      });
+      const convertedTable = Table.createTable(name, table);
       return convertedTable;
     });
   }
