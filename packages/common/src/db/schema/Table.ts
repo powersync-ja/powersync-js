@@ -68,7 +68,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   static createTable(name: string, table: Table) {
     return new Table({
       name,
-      columns: Object.entries(table.columns).map(([name, col]) => new Column({ name, type: col.type })),
+      columns: table.columns,
       indexes: table.indexes,
       localOnly: table.options.localOnly,
       insertOnly: table.options.insertOnly,
@@ -76,7 +76,58 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     });
   }
 
+  /**
+   * Creates a new Table instance.
+   *
+   * This constructor supports two different versions:
+   * 1. New constructor: Using a Columns object and an optional TableV2Options object
+   * 2. Deprecated constructor: Using a TableOptions object (will be removed in the next major release)
+   *
+   * @constructor
+   * @param {Columns | TableOptions} optionsOrColumns - Either a Columns object (for V2 syntax) or a TableOptions object (for V1 syntax)
+   * @param {TableV2Options} [v2Options] - Optional configuration options for V2 syntax
+   *
+   * @example
+   * <caption>New constructor example</caption>
+   * ```javascript
+   * const table = new Table(
+   *   {
+   *     name: { type: ColumnType.TEXT },
+   *     age: { type: ColumnType.INTEGER }
+   *   },
+   *   { indexes: { nameIndex: ['name'] } }
+   * );
+   *```
+   *
+   *
+   * @example
+   * <caption>Deprecated constructor example</caption>
+   * ```javascript
+   * const table = new Table({
+   *   name: 'users',
+   *   columns: [
+   *     new Column({ name: 'name', type: ColumnType.TEXT }),
+   *     new Column({ name: 'age', type: ColumnType.INTEGER })
+   *   ]
+   * });
+   *```
+   */
   constructor(columns: Columns, options?: TableV2Options);
+  /**
+  * @deprecated This constructor will be removed in the next major release.
+  * Use the new constructor shown below instead.
+  * @example
+  * <caption>Use this instead</caption>
+  * ```javascript
+  *   const table = new Table(
+  *     {
+  *       name: { type: ColumnType.TEXT },
+  *       age: { type: ColumnType.INTEGER }
+  *     },
+  *     { indexes: { nameIndex: ['name'] } }
+  *   );
+  *```
+  */
   constructor(options: TableOptions);
   constructor(optionsOrColumns: Columns | TableOptions, v2Options?: TableV2Options) {
     if (this.isTableV1(optionsOrColumns)) {

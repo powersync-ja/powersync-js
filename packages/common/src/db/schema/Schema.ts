@@ -34,13 +34,21 @@ export class Schema<S extends SchemaType = SchemaType> {
 
   toJSON() {
     return {
+      // This is required because "name" field is not present in TableV2
       tables: this.tables.map((t) => t.toJSON())
     };
   }
 
   private convertToClassicTables(props: S) {
     return Object.entries(props).map(([name, table]) => {
-      const convertedTable = new Table({ name, columns: table.columns });
+      const convertedTable = new Table({
+        name,
+        columns: table.columns,
+        indexes: table.indexes,
+        localOnly: table.localOnly,
+        insertOnly: table.insertOnly,
+        viewName: table.viewName
+      });
       return convertedTable;
     });
   }
