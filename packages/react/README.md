@@ -102,15 +102,15 @@ export const TodoListsDisplayDemo = () => {
         }}>
         Loading todo lists...
       </div>
-      <div
+      <ul
         style={{
           opacity: isLoading ? 0 : 1,
           transition: 'opacity 1s ease-in-out'
         }}>
         {todoLists.map(() => (
-          <div key={l.id}>{JSON.stringify(l)}</div>
+          <li key={l.id}>{JSON.stringify(l)}</li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
