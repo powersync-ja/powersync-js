@@ -181,7 +181,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
-      throw new Error(`Invalid characters in table name ${this.name ?? ""}`);
+      throw new Error(`Invalid characters in table`);
     }
 
     if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
@@ -213,10 +213,10 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     const indexNames = new Set<string>();
     for (const index of this.indexes) {
       if (indexNames.has(index.name)) {
-        throw new Error(`Duplicate index ${index}`);
+        throw new Error(`Duplicate index ${index.name}`);
       }
       if (InvalidSQLCharacters.test(index.name)) {
-        throw new Error(`Invalid characters in index name: ${index}`);
+        throw new Error(`Invalid characters in index name: ${index.name}`);
       }
 
       for (const column of index.columns) {
