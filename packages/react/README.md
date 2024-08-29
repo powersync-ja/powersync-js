@@ -84,7 +84,7 @@ export const TodoListDisplay = () => {
 
 #### Query Loading
 
-The result from `useQuery` contains information about the data loading and fetching states. This can be used to show loading spinners or conditional widgets.
+The response from `useQuery` includes the `isLoading` and `isFetching` properties, which indicate the current state of data retrieval. This can be used to show loading spinners or conditional widgets.
 
 ```JSX
 // TodoListDisplay.jsx
