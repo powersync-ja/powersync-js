@@ -1,22 +1,22 @@
 import {
-  PowerSyncBackendConnector,
-  PowerSyncCredentials,
   AbstractPowerSyncDatabase,
   AbstractRemote,
-  RemoteConnector,
   AbstractStreamingSyncImplementation,
-  PowerSyncDatabaseOptions,
-  SyncStreamOptions,
+  BSONImplementation,
   DataStream,
+  PowerSyncBackendConnector,
+  PowerSyncCredentials,
+  PowerSyncDatabaseOptions,
+  RemoteConnector,
   StreamingSyncLine,
-  BSONImplementation
+  SyncStreamOptions
 } from '@powersync/common';
 import {
   PowerSyncDatabase,
-  WebPowerSyncDatabaseOptions,
-  WebStreamingSyncImplementation,
   WASQLitePowerSyncDatabaseOpenFactory,
-  WebPowerSyncOpenFactoryOptions
+  WebPowerSyncDatabaseOptions,
+  WebPowerSyncOpenFactoryOptions,
+  WebStreamingSyncImplementation
 } from '@powersync/web';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -84,7 +84,8 @@ export class MockRemote extends AbstractRemote {
   }
 
   socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    throw new Error('Method not implemented.');
+    // For this test mock these are essentially the same
+    return this.postStream(options);
   }
 
   async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {

@@ -1,5 +1,38 @@
 # @powersync/web
 
+## 1.6.0
+
+### Minor Changes
+
+- 9f95437: Updated default streaming connection method to use WebSockets
+
+### Patch Changes
+
+- 2db0e8f: Debounce update notifications to fix performance issue with large amounts of data synced
+- Updated dependencies [9521e24]
+- Updated dependencies [7d04f74]
+- Updated dependencies [4fc1de3]
+  - @powersync/common@1.16.2
+
+## 1.5.1
+
+### Patch Changes
+
+- 58fd059: Fix an issue where the shared sync manager would not discard stale credentials
+- Updated dependencies [7668495]
+  - @powersync/common@1.16.1
+
+## 1.5.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
+### Patch Changes
+
+- Updated dependencies [042589c]
+  - @powersync/common@1.16.0
+
 ## 1.4.0
 
 ### Minor Changes

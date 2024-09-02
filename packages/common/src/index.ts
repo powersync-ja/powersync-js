@@ -4,7 +4,7 @@ export * from './client/SQLOpenFactory';
 export * from './client/connection/PowerSyncBackendConnector';
 export * from './client/connection/PowerSyncCredentials';
 export * from './client/sync/bucket/BucketStorageAdapter';
-export * from './client/sync/bucket/CrudEntry';
+export { UpdateType, CrudEntry, OpId } from './client/sync/bucket/CrudEntry';
 export * from './client/sync/bucket/SqliteBucketStorage';
 export * from './client/sync/bucket/CrudBatch';
 export * from './client/sync/bucket/CrudTransaction';
@@ -15,6 +15,7 @@ export * from './client/sync/bucket/OplogEntry';
 export * from './client/sync/stream/AbstractRemote';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation';
 export * from './client/sync/stream/streaming-sync-types';
+export { MAX_OP_ID } from './client/constants'
 
 export * from './db/crud/SyncStatus';
 export * from './db/crud/UploadQueueStatus';

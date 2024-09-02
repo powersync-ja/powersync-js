@@ -1,13 +1,12 @@
 import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react';
-import { ActivityIndicator, View, Modal, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, View, Modal, StyleSheet } from 'react-native';
 import { ListItem, Button, Icon, Image } from 'react-native-elements';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
 import { AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import { useSystem } from '../powersync/system';
-import { alert } from '../utils/alert';
 
 export interface TodoItemWidgetProps {
   record: TodoRecord;
@@ -44,13 +43,16 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             type="clear"
             icon={{ name: 'delete', color: 'red' }}
             onPress={() => {
-              alert('Confirm', 'This item will be permanently deleted', {
-                confirmation: true,
-                onConfirm: () => onDelete?.()
-              });
+              Alert.alert(
+                'Confirm',
+                'This item will be permanently deleted',
+                [{ text: 'Cancel' }, { text: 'Delete', onPress: () => onDelete?.() }],
+                { cancelable: true }
+              );
             }}
           />
-        }>
+        }
+      >
         {loading ? (
           <ActivityIndicator />
         ) : (

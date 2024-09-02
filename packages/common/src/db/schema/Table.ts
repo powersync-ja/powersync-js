@@ -20,6 +20,8 @@ export const DEFAULT_TABLE_OPTIONS: Partial<TableOptions> = {
   localOnly: false
 };
 
+const MAX_AMOUNT_OF_COLUMNS = 63
+
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 export class Table {
@@ -103,11 +105,15 @@ export class Table {
       throw new Error(`Invalid characters in view name: ${this.viewNameOverride}`);
     }
 
+    if(this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
+      throw new Error(`Table ${this.name} has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
+    }
+
     const columnNames = new Set<string>();
     columnNames.add('id');
     for (const column of this.columns) {
       const { name: columnName } = column;
-      if (column.name == 'id') {
+      if (column.name === 'id') {
         throw new Error(`${this.name}: id column is automatically added, custom id columns are not supported`);
       }
       if (columnNames.has(columnName)) {

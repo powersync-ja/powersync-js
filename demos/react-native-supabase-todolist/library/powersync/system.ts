@@ -1,18 +1,16 @@
 import '@azure/core-asynciterator-polyfill';
 
+import { PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
-import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
-import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory } from '@powersync/web';
-import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
-import { AppSchema } from './AppSchema';
-import { SupabaseConnector } from '../supabase/SupabaseConnector';
-import { KVStorage } from '../storage/KVStorage';
-import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
-import { AppConfig } from '../supabase/AppConfig';
 import Logger from 'js-logger';
+import { KVStorage } from '../storage/KVStorage';
+import { AppConfig } from '../supabase/AppConfig';
+import { SupabaseConnector } from '../supabase/SupabaseConnector';
+import { AppSchema } from './AppSchema';
+import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
 Logger.useDefaults();
 
@@ -20,42 +18,19 @@ export class System {
   kvStorage: KVStorage;
   storage: SupabaseStorageAdapter;
   supabaseConnector: SupabaseConnector;
-  powersync: AbstractPowerSyncDatabase;
+  powersync: PowerSyncDatabase;
   attachmentQueue: PhotoAttachmentQueue | undefined = undefined;
 
   constructor() {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    if (PowerSyncDatabaseNative) {
-      this.powersync = new PowerSyncDatabaseNative({
-        schema: AppSchema,
-        database: {
-          dbFilename: 'sqlite.db'
-        }
-      });
-    } else {
-      const factory = new WASQLiteOpenFactory({
-        dbFilename: 'sqlite.db',
-        // You can specify paths to the workers
-        sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
-        wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
-
-        // Or provide factory functions to create the workers
-        // sharedSyncWorker: () =>
-        //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
-        //     name: `shared-sync-sqlite.db`
-        //   }),
-        // wasqliteDBWorker: () =>
-        //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
-        //     name: `shared-DB-worker-sqlite.db`
-        //   })
-      });
-      this.powersync = new PowerSyncDatabaseWeb({
-        schema: AppSchema,
-        database: factory
-      });
-    }
+    this.powersync = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'sqlite.db'
+      }
+    });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({

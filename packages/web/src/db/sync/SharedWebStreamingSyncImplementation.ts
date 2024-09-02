@@ -1,16 +1,16 @@
+import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import {
-  WebStreamingSyncImplementation,
-  WebStreamingSyncImplementationOptions
-} from './WebStreamingSyncImplementation';
+import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
+import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
-import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
-import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
-import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
+import {
+  WebStreamingSyncImplementation,
+  WebStreamingSyncImplementationOptions
+} from './WebStreamingSyncImplementation';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -164,6 +164,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    */
   async connect(options?: PowerSyncConnectionOptions): Promise<void> {
     await this.waitForReady();
+    // This is needed since a new tab won't have any reference to the
+    // shared worker sync implementation since that is only created on the first call to `connect`.
+    await this.disconnect();
     return this.syncManager.connect(options);
   }
 
@@ -190,9 +193,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     };
 
     this.messagePort.postMessage(closeMessagePayload);
-
     // Release the proxy
     this.syncManager[Comlink.releaseProxy]();
+    this.messagePort.close();
   }
 
   async waitForReady() {

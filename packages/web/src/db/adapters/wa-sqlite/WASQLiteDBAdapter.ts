@@ -90,16 +90,16 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
       this.methods = await dbOpener(this.options.dbFilename);
       this.methods.registerOnTableChange(
-        Comlink.proxy((opType: number, tableName: string, rowId: number) => {
-          this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
+        Comlink.proxy((event) => {
+          this.iterateListeners((cb) => cb.tablesUpdated?.(event));
         })
       );
 
       return;
     }
     this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
-    this.methods.registerOnTableChange((opType: number, tableName: string, rowId: number) => {
-      this.iterateListeners((cb) => cb.tablesUpdated?.({ opType, table: tableName, rowId }));
+    this.methods.registerOnTableChange((event) => {
+      this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });
   }
 

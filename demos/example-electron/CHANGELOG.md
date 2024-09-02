@@ -1,5 +1,9 @@
 # example-electron
 
+## 1.1.0
+
+- Added HTTP server to serve app assets in production builds. This fixes multiple tab use cases.
+
 ## 1.0.16
 
 ### Patch Changes

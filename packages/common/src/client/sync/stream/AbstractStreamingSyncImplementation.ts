@@ -2,6 +2,13 @@ import throttle from 'lodash/throttle';
 
 import Logger, { ILogger } from 'js-logger';
 
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
+import { AbortOperation } from '../../../utils/AbortOperation';
+import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver';
+import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
+import { CrudEntry } from '../bucket/CrudEntry';
+import { SyncDataBucket } from '../bucket/SyncDataBucket';
+import { AbstractRemote, SyncStreamOptions } from './AbstractRemote';
 import {
   BucketRequest,
   StreamingSyncRequestParameterType,
@@ -11,12 +18,6 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types';
-import { AbstractRemote, SyncStreamOptions } from './AbstractRemote';
-import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
-import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
-import { SyncDataBucket } from '../bucket/SyncDataBucket';
-import { BaseObserver, BaseListener, Disposable } from '../../../utils/BaseObserver';
-import { AbortOperation } from '../../../utils/AbortOperation';
 
 export enum LockType {
   CRUD = 'crud',
@@ -110,7 +111,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 };
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
-  connectionMethod: SyncStreamConnectionMethod.HTTP,
+  connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
 
@@ -215,18 +216,40 @@ export abstract class AbstractStreamingSyncImplementation
     return this.obtainLock({
       type: LockType.CRUD,
       callback: async () => {
-        this.updateSyncStatus({
-          dataFlow: {
-            uploading: true
-          }
-        });
+        /**
+         * Keep track of the first item in the CRUD queue for the last `uploadCrud` iteration.
+         */
+        let checkedCrudItem: CrudEntry | undefined;
+
         while (true) {
+          this.updateSyncStatus({
+            dataFlow: {
+              uploading: true
+            }
+          });
           try {
-            const done = await this.uploadCrudBatch();
-            if (done) {
+            /**
+             * This is the first item in the FIFO CRUD queue.
+             */
+            const nextCrudItem = await this.options.adapter.nextCrudItem();
+            if (nextCrudItem) {
+              if (nextCrudItem.id == checkedCrudItem?.id) {
+                // This will force a higher log level than exceptions which are caught here.
+                this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
+Make sure to handle uploads and complete CRUD transactions or batches by calling and awaiting their [.complete()] method.
+The next upload iteration will be delayed.`);
+                throw new Error('Delaying due to previously encountered CRUD item.');
+              }
+
+              checkedCrudItem = nextCrudItem;
+              await this.options.uploadCrud();
+            } else {
+              // Uploading is completed
+              await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
               break;
             }
           } catch (ex) {
+            checkedCrudItem = undefined;
             this.updateSyncStatus({
               dataFlow: {
                 uploading: false
@@ -250,17 +273,6 @@ export abstract class AbstractStreamingSyncImplementation
         }
       }
     });
-  }
-
-  protected async uploadCrudBatch(): Promise<boolean> {
-    const hasCrud = await this.options.adapter.hasCrud();
-    if (hasCrud) {
-      await this.options.uploadCrud();
-      return false;
-    } else {
-      await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
-      return true;
-    }
   }
 
   async connect(options?: PowerSyncConnectionOptions) {

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { Table, Row } from 'react-native-reanimated-table';
-import { QueryResult } from '@powersync/common';
+import { QueryResult } from '@powersync/react-native';
 import { useSystem } from '../../library/powersync/system';
 import { ScrollView, TextInput } from 'react-native-gesture-handler';
 

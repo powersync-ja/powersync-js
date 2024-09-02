@@ -1,5 +1,5 @@
 import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
-import { usePowerSync, useQuery } from '@powersync/react';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
@@ -7,10 +7,10 @@ import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View, Text } from 'react-native';
 import { FAB } from 'react-native-elements';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import prompt from 'react-native-prompt-android';
 import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
 import { useSystem } from '../../../../library/powersync/system';
 import { TodoItemWidget } from '../../../../library/widgets/TodoItemWidget';
-import { prompt } from '../../../../library/utils/prompt';
 
 type TodoEntry = TodoRecord & Partial<Omit<AttachmentRecord, 'id'>> & { todo_id: string; attachment_id: string | null };
 
@@ -147,7 +147,7 @@ const TodoView: React.FC = () => {
 
               return createNewTodo(text);
             },
-            { placeholder: 'Todo description' }
+            { placeholder: 'Todo description', style: 'shimo' }
           );
         }}
       />

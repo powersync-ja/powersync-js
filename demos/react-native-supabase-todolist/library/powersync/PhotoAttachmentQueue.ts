@@ -1,8 +1,8 @@
+import * as FileSystem from 'expo-file-system';
 import { randomUUID } from 'expo-crypto';
 import { AppConfig } from '../supabase/AppConfig';
-import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState, EncodingType } from '@powersync/attachments';
+import { AbstractAttachmentQueue, AttachmentRecord, AttachmentState } from '@powersync/attachments';
 import { TODO_TABLE } from './AppSchema';
-import { FileSystem } from '../storage/FileSystem';
 
 export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
   async init() {
@@ -38,7 +38,7 @@ export class PhotoAttachmentQueue extends AbstractAttachmentQueue {
     const photoAttachment = await this.newAttachmentRecord();
     photoAttachment.local_uri = this.getLocalFilePathSuffix(photoAttachment.filename);
     const localUri = this.getLocalUri(photoAttachment.local_uri);
-    await this.storage.writeFile(localUri, base64Data, { encoding: EncodingType.Base64 });
+    await this.storage.writeFile(localUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
 
     const fileInfo = await FileSystem.getInfoAsync(localUri);
     if (fileInfo.exists) {

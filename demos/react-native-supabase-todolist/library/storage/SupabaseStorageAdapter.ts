@@ -1,8 +1,8 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { decode as decodeBase64 } from 'base64-arraybuffer';
+import * as FileSystem from 'expo-file-system';
 import { AppConfig } from '../supabase/AppConfig';
-import { EncodingType, StorageAdapter } from '@powersync/attachments';
-import { FileSystem } from './FileSystem';
+import { StorageAdapter } from '@powersync/attachments';
 
 export interface SupabaseStorageAdapterOptions {
   client: SupabaseClient;
@@ -49,20 +49,23 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     fileURI: string,
     base64Data: string,
     options?: {
-      encoding?: EncodingType;
+      encoding?: FileSystem.EncodingType;
     }
   ): Promise<void> {
-    const { encoding = EncodingType.UTF8 } = options ?? {};
+    const { encoding = FileSystem.EncodingType.UTF8 } = options ?? {};
     await FileSystem.writeAsStringAsync(fileURI, base64Data, { encoding });
   }
-  async readFile(fileURI: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
-    const { encoding = EncodingType.UTF8 } = options ?? {};
+  async readFile(
+    fileURI: string,
+    options?: { encoding?: FileSystem.EncodingType; mediaType?: string }
+  ): Promise<ArrayBuffer> {
+    const { encoding = FileSystem.EncodingType.UTF8 } = options ?? {};
     const { exists } = await FileSystem.getInfoAsync(fileURI);
     if (!exists) {
       throw new Error(`File does not exist: ${fileURI}`);
     }
     const fileContent = await FileSystem.readAsStringAsync(fileURI, options);
-    if (encoding === EncodingType.Base64) {
+    if (encoding === FileSystem.EncodingType.Base64) {
       return this.base64ToArrayBuffer(fileContent);
     }
     return this.stringToArrayBuffer(fileContent);

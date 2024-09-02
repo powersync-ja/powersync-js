@@ -81,3 +81,38 @@ export const TodoListDisplay = () => {
     </View>
 }
 ```
+
+#### Query Loading
+
+The response from `useQuery` includes the `isLoading` and `isFetching` properties, which indicate the current state of data retrieval. This can be used to show loading spinners or conditional widgets.
+
+```JSX
+// TodoListDisplay.jsx
+import { useQuery } from "@powersync/react";
+
+export const TodoListsDisplayDemo = () => {
+  const { data: todoLists, isLoading, isFetching } = useQuery('SELECT * FROM lists');
+  return (
+    <div>
+      <h1>Todo Lists {isFetching ? '⟳' : ''}</h1>
+      <div
+        style={{
+          opacity: isLoading ? 1 : 0,
+          transition: 'opacity 0.5s ease-in-out'
+        }}>
+        Loading todo lists...
+      </div>
+      <ul
+        style={{
+          opacity: isLoading ? 0 : 1,
+          transition: 'opacity 1s ease-in-out'
+        }}>
+        {todoLists.map(() => (
+          <li key={l.id}>{JSON.stringify(l)}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+```

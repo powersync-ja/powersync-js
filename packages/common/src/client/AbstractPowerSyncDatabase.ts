@@ -172,8 +172,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  private hasSyncedWatchDisposer?: () => void;
-
   protected _schema: Schema;
 
   private _database: DBAdapter;
@@ -184,7 +182,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    const { database } = options;
+
+    const { database, schema } = options;
+
+    if (typeof schema?.toJSON != 'function') {
+      throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
+    }
 
     if (isDBAdapter(database)) {
       this._database = database;
@@ -192,13 +195,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this._database = database.openDB();
     } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
       this._database = this.openDBAdapter(options);
+    } else {
+      throw new Error('The provided `database` option is invalid.');
     }
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
-    this._schema = options.schema;
+    this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
@@ -290,45 +295,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const version = await this.database.execute('SELECT powersync_rs_version()');
     this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
     await this.updateSchema(this.options.schema);
-    this.updateHasSynced();
+    await this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
   protected async updateHasSynced() {
-    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
+    const result = await this.database.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
+    const hasSynced = !!result;
 
-    const abortController = new AbortController();
-    this.hasSyncedWatchDisposer = () => abortController.abort();
-
-    // Abort the watch after the first sync is detected
-    this.watch(
-      syncedSQL,
-      [],
-      {
-        onResult: (result) => {
-          const hasSynced = !!result.rows?.length;
-
-          if (hasSynced != this.currentStatus.hasSynced) {
-            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
-            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
-          }
-
-          if (hasSynced) {
-            abortController.abort();
-          }
-        },
-        onError: (ex) => {
-          this.options.logger?.warn('Failure while watching synced state', ex);
-          abortController.abort();
-        }
-      },
-      {
-        rawTableNames: true,
-        signal: abortController.signal
-      }
-    );
+    if (hasSynced != this.currentStatus.hasSynced) {
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+      this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+    }
   }
 
   /**
@@ -441,6 +421,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
       }
     });
+
+    // The data has been deleted - reset the sync status
+    this.currentStatus = new SyncStatus({});
+    this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
   /**
@@ -453,7 +437,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
-    this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;
     if (disconnect) {

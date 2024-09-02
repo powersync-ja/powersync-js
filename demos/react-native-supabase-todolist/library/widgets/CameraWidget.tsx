@@ -1,4 +1,4 @@
-import { Camera, CameraCapturedPicture } from 'expo-camera';
+import { Camera, CameraCapturedPicture, CameraType } from 'expo-camera';
 import React, { useRef } from 'react';
 import {
   StyleSheet,
@@ -19,10 +19,6 @@ export interface Props {
 const isAndroid = Platform.OS === 'android';
 
 export const CameraWidget: React.FC<Props> = (props) => {
-  if (Platform.OS === 'web') {
-    // Todo Camera is not available on web, consider supporting file upload
-    return <div>Camera not available</div>;
-  }
   const cameraRef = useRef<Camera>(null);
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [ready, setReady] = React.useState(false);
@@ -80,7 +76,8 @@ export const CameraWidget: React.FC<Props> = (props) => {
         style={{ ...styles.camera, height: height, width: '100%' }}
         type={CameraType.back}
         onCameraReady={onReady}
-        ratio={isAndroid ? '16:9' : undefined}>
+        ratio={isAndroid ? '16:9' : undefined}
+      >
         <TouchableOpacity onPress={props.onClose} style={styles.backButton}>
           <Icon name={'chevron-left'} type={'font-awesome'} color={'white'} />
         </TouchableOpacity>

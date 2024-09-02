@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.9.0",
+  "version": "1.11.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -29,7 +29,7 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^1.1.8",
-    "@powersync/common": "workspace:^1.15.0",
+    "@powersync/common": "workspace:^1.16.2",
     "react": "*",
     "react-native": "*"
   },
