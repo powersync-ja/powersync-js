@@ -2,4 +2,4 @@
 '@powersync/web': minor
 ---
 
-Added react-native-web support.
+Added UMD dist to add `react-native-web` support.

@@ -6,4 +6,4 @@
 '@powersync/react-native': patch
 ---
 
-Added react-native-web support.
+Updated dependencies.
