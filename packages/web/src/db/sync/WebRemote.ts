@@ -10,6 +10,8 @@ import {
   RemoteConnector
 } from '@powersync/common';
 
+import { version as POWERSYNC_WEB_VERSION } from '../../../package.json';
+
 /*
  * Depends on browser's implementation of global fetch.
  */
@@ -31,6 +33,10 @@ export class WebRemote extends AbstractRemote {
       ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new WebFetchProvider()
     });
+  }
+
+  getUserAgent(): string {
+    return `${super.getUserAgent()} (web/${POWERSYNC_WEB_VERSION})`;
   }
 
   async getBSON(): Promise<BSONImplementation> {
