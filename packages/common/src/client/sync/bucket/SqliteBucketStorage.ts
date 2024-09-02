@@ -103,9 +103,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
    */
   private async deleteBucket(bucket: string) {
     await this.writeTransaction(async (tx) => {
-      await tx.execute(
-          'INSERT INTO powersync_operations(op, data) VALUES(?, ?)',
-          ['delete_bucket', bucket]);
+      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', ['delete_bucket', bucket]);
     });
 
     this.logger.debug('done deleting bucket');
@@ -219,12 +217,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   private async deletePendingBuckets() {
     if (this.pendingBucketDeletes !== false) {
       await this.writeTransaction(async (tx) => {
-        await tx.execute(
-          'DELETE FROM ps_oplog WHERE bucket IN (SELECT name FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op)'
-        );
-        await tx.execute(
-          'DELETE FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op'
-        );
+        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['delete_pending_buckets', '']);
       });
       // Executed once after start-up, and again when there are pending deletes.
       this.pendingBucketDeletes = false;

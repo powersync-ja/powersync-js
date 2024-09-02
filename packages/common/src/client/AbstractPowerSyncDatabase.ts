@@ -16,7 +16,6 @@ import { Schema } from '../db/schema/Schema';
 import { BaseObserver } from '../utils/BaseObserver';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
 import { mutexRunExclusive } from '../utils/mutex';
-import { quoteIdentifier } from '../utils/strings';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
@@ -400,26 +399,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.UNTYPED}`);
-
-      const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
-
-      const existingTableRows = await tx.execute(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name GLOB ?
-      `,
-        [tableGlob]
-      );
-
-      if (!existingTableRows.rows?.length) {
-        return;
-      }
-      for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
-      }
+      await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
     });
 
     // The data has been deleted - reset the sync status
