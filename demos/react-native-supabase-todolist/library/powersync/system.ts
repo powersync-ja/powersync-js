@@ -2,7 +2,7 @@ import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
 import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
-import { PowerSyncDatabase as PowerSyncDatabaseWeb } from '@powersync/web';
+import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory } from '@powersync/web';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -35,28 +35,25 @@ export class System {
         }
       });
     } else {
+      const factory = new WASQLiteOpenFactory({
+        dbFilename: 'sqlite.db',
+        // You can specify paths to the workers
+        sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
+        wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+
+        // Or provide factory functions to create the workers
+        // sharedSyncWorker: () =>
+        //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
+        //     name: `shared-sync-sqlite.db`
+        //   }),
+        // wasqliteDBWorker: () =>
+        //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
+        //     name: `shared-DB-worker-sqlite.db`
+        //   })
+      });
       this.powersync = new PowerSyncDatabaseWeb({
         schema: AppSchema,
-        database: {
-          dbFilename: 'sqlite.db'
-        },
-        flags: {
-          workers: {
-            // You can specify paths to the workers
-            sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
-            wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
-
-            // Or provide factory functions to create the workers
-            // sharedSyncWorker: () =>
-            //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
-            //     name: `shared-sync-sqlite.db`
-            //   }),
-            // wasqliteDBWorker: () =>
-            //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
-            //     name: `shared-DB-worker-sqlite.db`
-            //   })
-          }
-        }
+        database: factory
       });
     }
 

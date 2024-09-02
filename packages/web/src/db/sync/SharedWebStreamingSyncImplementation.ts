@@ -90,21 +90,21 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
 
-    const { workers } = options.flags ?? {};
-
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
     let syncWorker: SharedWorker;
-    if (workers?.sharedSyncWorker) {
-      if (typeof workers.sharedSyncWorker === 'string') {
-        syncWorker = new SharedWorker(`${workers.sharedSyncWorker}`, {
+
+    const optionsSSW = options.database?.options?.sharedSyncWorker;
+    if (optionsSSW) {
+      if (typeof optionsSSW === 'string') {
+        syncWorker = new SharedWorker(`${optionsSSW}`, {
           /* @vite-ignore */
           name: `shared-sync-${this.webOptions.identifier}`
         });
       } else {
-        syncWorker = workers.sharedSyncWorker();
+        syncWorker = optionsSSW();
       }
     } else {
       syncWorker = new SharedWorker(new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
@@ -128,7 +128,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const dbOpenerPort = openWorkerDatabasePort(
       this.options.identifier!,
       true,
-      workers?.wasqliteDBWorker
+      options.database?.options?.wasqliteDBWorker
     ) as MessagePort;
 
     const flags = { ...this.webOptions.flags, workers: undefined };

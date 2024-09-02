@@ -20,6 +20,22 @@ export interface SQLOpenOptions {
    *    debugMode: process.env.NODE_ENV !== 'production'
    */
   debugMode?: boolean;
+
+  /**
+   * Allows you to override the default shared sync worker.
+   *
+   * You can either provide a string representing the path to the worker script
+   * or a factory method that returns a SharedWorker instance.
+   */
+
+  sharedSyncWorker?: string | (() => SharedWorker);
+  /**
+   * Allows you to override the default wasqlite db worker.
+   *
+   * You can either provide a string representing the path to the worker script
+   * or a factory method that returns a Worker or SharedWorker instance.
+   */
+  wasqliteDBWorker?: string | (() => Worker | SharedWorker);
 }
 
 export interface SQLOpenFactory {

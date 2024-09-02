@@ -8,7 +8,9 @@ import {
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   flags?: {
     broadcastLogs?: boolean;
-    workers?: {
+  };
+  database?: {
+    options: {
       sharedSyncWorker?: string | (() => SharedWorker);
       wasqliteDBWorker?: string | (() => Worker | SharedWorker);
     };

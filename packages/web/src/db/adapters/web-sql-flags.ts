@@ -34,17 +34,6 @@ export interface WebSQLFlags {
    * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
    */
   ssrMode?: boolean;
-
-  /**
-   * This allows you to override the default worker resolution.
-   *
-   * You can either provide a string representing the path to the worker script
-   * or a factory method that returns a Worker or SharedWorker instance.
-   */
-  workers?: {
-    sharedSyncWorker?: string | (() => SharedWorker);
-    wasqliteDBWorker?: string | (() => Worker | SharedWorker);
-  };
 }
 
 /**
@@ -62,7 +51,6 @@ export const DEFAULT_WEB_SQL_FLAGS: Required<WebSQLFlags> = {
   broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
-  workers: {},
   /**
    * Multiple tabs are by default not supported on Android, iOS and Safari.
    * Other platforms will have multiple tabs enabled by default.

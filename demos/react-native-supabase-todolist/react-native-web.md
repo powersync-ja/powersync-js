@@ -10,31 +10,29 @@ Currently `React Native Web` is only supported when `enableMultiTabs` is true.
 
 ### 1.1 Recommended `workers`
 
-With `React Native Web` path to the workers should be configured with the `workerPath` flag when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the `workers` to point to `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers).
+With `React Native Web` path to the workers should be configured when instantiating a database factory for `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the workers to point to `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers-locations).
 
 ```javascript
-const powersync = new PowerSyncDatabase({
-  schema: AppSchema,
-  database: {
-    dbFilename: 'sqlite.db'
-  },
-  flags: {
-    workers: {
-      // You can specify paths to the workers
-      sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
-      wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+const factory = new WASQLiteOpenFactory({
+  dbFilename: 'sqlite.db',
+  // You can specify paths to the workers
+  sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
+  wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
 
-      // Or provide factory functions to create the workers
-      // sharedSyncWorker: () =>
-      //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
-      //     name: `shared-sync-sqlite.db`
-      //   }),
-      // wasqliteDBWorker: () =>
-      //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
-      //     name: `shared-DB-worker-sqlite.db`
-      //   })
-    }
-  }
+  // Or provide factory functions to create the workers
+  // sharedSyncWorker: () =>
+  //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
+  //     name: `shared-sync-sqlite.db`
+  //   }),
+  // wasqliteDBWorker: () =>
+  //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
+  //     name: `shared-DB-worker-sqlite.db`
+  //   })
+});
+
+const powersync = new PowerSyncDatabaseWeb({
+  schema: AppSchema,
+  database: factory
 });
 ```
 
@@ -43,13 +41,13 @@ const powersync = new PowerSyncDatabase({
 You can copy the contents of the `dist` directory to somewhere else like `./public`, in which case configure the `workers` accordingly:
 
 ```javascript
-flags: {
-  workers: {
-    // You can specify paths to the workers
-    sharedSyncWorker: '/public/worker_SharedSyncImplementation.umd.js',
-    wasqliteDBWorker: '/public/worker_SharedWASQLiteDB.umd.js'
-  }
-}
+const factory = new WASQLiteOpenFactory({
+  dbFilename: 'sqlite.db',
+
+  // You can specify paths to the workers
+  sharedSyncWorker: '/public/worker_SharedSyncImplementation.umd.js',
+  wasqliteDBWorker: '/public/worker_SharedWASQLiteDB.umd.js'
+});
 ```
 
 A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the contents to `./public`.
@@ -117,14 +115,15 @@ if (PowerSyncDatabaseNative) {
     }
   });
 } else {
+  const factory = new WASQLiteOpenFactory({
+    dbFilename: 'sqlite.db',
+    sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
+    wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+  });
+
   this.powersync = new PowerSyncDatabaseWeb({
     schema: AppSchema,
-    database: {
-      dbFilename: 'sqlite.db'
-    },
-    flags: {
-      workerPath: '/node_modules/@powersync/web/dist/'
-    }
+    database: factory
   });
 }
 ```
