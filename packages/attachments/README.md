@@ -30,27 +30,23 @@ The `AttachmentQueue` class is used to manage and sync attachments in your app.
 
 In this example, the user captures photos when checklist items are completed as part of an inspection workflow.
 
-The schema for the `checklist` table:
+The schema for the `checklists` table:
 
 ```javascript
-const AppSchema = new Schema([
-  new Table({
-    name: 'checklists',
-    columns: [
-      new Column({ name: 'photo_id', type: ColumnType.TEXT }),
-      new Column({ name: 'description', type: ColumnType.TEXT }),
-      new Column({ name: 'completed', type: ColumnType.INTEGER }),
-      new Column({ name: 'completed_at', type: ColumnType.TEXT }),
-      new Column({ name: 'completed_by', type: ColumnType.TEXT })
-    ],
-    indexes: [
-      new Index({
-        name: 'inspections',
-        columns: [new IndexedColumn({ name: 'checklist_id' })]
-      })
-    ]
-  })
-]);
+const checklists = new TableV2(
+  {
+    photo_id: column.text,
+    description: column.text,
+    completed: column.integer
+    completed_at: column.text,
+    completed_by: column.text,
+  },
+  { indexes: { inspections: ['checklist_id'] } }
+);
+
+const AppSchema = new Schema({
+  checklists
+});
 ```
 
 ### Steps to implement
@@ -63,7 +59,7 @@ import { AbstractAttachmentQueue } from '@powersync/attachments';
 export class AttachmentQueue extends AbstractAttachmentQueue {}
 ```
 
-2. Implement `onAttachmentIdsChange`, which takes in a callback to handle an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
+2. Implement `onAttachmentIdsChange`, which takes in a callback to handle an array of `string` values of IDs that     relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
 
    In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
 
@@ -107,10 +103,12 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 ```javascript
 import { AttachmentTable } from '@powersync/attachments';
 
-const AppSchema = new Schema([
+const attachmentTable = new AttachmentTable()
+
+const AppSchema = new Schema({
   // ... other tables
-  new AttachmentTable()
-]);
+  attachmentTable
+});
 ```
 
 In addition to `Table` options, the `AttachmentTable` can optionally be configured with the following options:

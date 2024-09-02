@@ -1,4 +1,4 @@
-import { Camera, CameraCapturedPicture, CameraType } from 'expo-camera';
+import { Camera, CameraCapturedPicture, CameraType } from 'expo-camera/legacy';
 import React, { useRef } from 'react';
 import {
   StyleSheet,
