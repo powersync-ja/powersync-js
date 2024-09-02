@@ -94,27 +94,29 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
-    let syncWorker: SharedWorker;
 
-    const optionsSSW = options.database?.options?.sharedSyncWorker;
-    if (optionsSSW) {
-      if (typeof optionsSSW === 'string') {
-        syncWorker = new SharedWorker(`${optionsSSW}`, {
+    const syncWorker = options.sync?.worker;
+    if (syncWorker) {
+      if (typeof syncWorker === 'function') {
+        this.messagePort = syncWorker();
+      } else {
+        this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
           name: `shared-sync-${this.webOptions.identifier}`
-        });
-      } else {
-        syncWorker = optionsSSW();
+        }).port;
       }
     } else {
-      syncWorker = new SharedWorker(new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url), {
-        /* @vite-ignore */
-        name: `shared-sync-${this.webOptions.identifier}`,
-        type: 'module'
-      });
+      this.messagePort = new SharedWorker(
+        new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
+        {
+          /* @vite-ignore */
+          name: `shared-sync-${this.webOptions.identifier}`,
+          type: 'module'
+        }
+      ).port;
     }
 
-    this.messagePort = syncWorker.port;
+    // this.messagePort = syncWorker.port;
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
@@ -125,11 +127,11 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const dbOpenerPort = openWorkerDatabasePort(
-      this.options.identifier!,
-      true,
-      options.database?.options?.wasqliteDBWorker
-    ) as MessagePort;
+
+    const dbOpenerPort =
+      typeof options.database?.options?.worker === 'function'
+        ? options.database?.options?.worker()
+        : (openWorkerDatabasePort(this.options.identifier!, true, options.database?.options?.worker) as MessagePort);
 
     const flags = { ...this.webOptions.flags, workers: undefined };
 

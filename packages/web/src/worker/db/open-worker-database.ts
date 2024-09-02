@@ -4,26 +4,17 @@ import type { OpenDB } from '../../shared/types';
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
  */
-export function openWorkerDatabasePort(
-  workerIdentifier: string,
-  multipleTabs = true,
-  worker: string | (() => Worker | SharedWorker) = ''
-) {
+export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
   if (worker) {
-    if (typeof worker === 'string') {
-      return multipleTabs
-        ? new SharedWorker(`${worker}`, {
-            /* @vite-ignore */
-            name: `shared-DB-worker-${workerIdentifier}`
-          }).port
-        : new Worker(`${worker}`, {
-            /* @vite-ignore */
-            name: `DB-worker-${workerIdentifier}`
-          });
-    }
-
-    const workerInstance = worker();
-    return isSharedWorker(workerInstance) ? workerInstance.port : workerInstance;
+    return multipleTabs
+      ? new SharedWorker(`${worker}`, {
+          /* @vite-ignore */
+          name: `shared-DB-worker-${workerIdentifier}`
+        }).port
+      : new Worker(`${worker}`, {
+          /* @vite-ignore */
+          name: `DB-worker-${workerIdentifier}`
+        });
   } else {
     /**
      *  Webpack V5 can bundle the worker automatically if the full Worker constructor syntax is used
@@ -45,18 +36,10 @@ export function openWorkerDatabasePort(
   }
 }
 
-function isSharedWorker(worker: Worker | SharedWorker): worker is SharedWorker {
-  return 'port' in worker;
-}
-
 /**
  * @returns A function which allows for opening database connections inside
  * a worker.
  */
-export function getWorkerDatabaseOpener(
-  workerIdentifier: string,
-  multipleTabs = true,
-  worker: string | (() => Worker | SharedWorker) = ''
-) {
+export function getWorkerDatabaseOpener(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
   return Comlink.wrap<OpenDB>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
 }

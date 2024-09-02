@@ -38,23 +38,28 @@ export class System {
     } else {
       const factory = new WASQLiteOpenFactory({
         dbFilename: 'sqlite.db',
-        // You can specify paths to the workers
-        sharedSyncWorker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js',
-        wasqliteDBWorker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+        // You can specify a path to the db worker
+        worker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
 
-        // Or provide factory functions to create the workers
-        // sharedSyncWorker: () =>
-        //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
-        //     name: `shared-sync-sqlite.db`
-        //   }),
-        // wasqliteDBWorker: () =>
+        // Or provide factory function to create the worker
+        // worker: () =>
         //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
         //     name: `shared-DB-worker-sqlite.db`
-        //   })
+        //   }).port
       });
       this.powersync = new PowerSyncDatabaseWeb({
         schema: AppSchema,
-        database: factory
+        database: factory,
+        sync: {
+          // You can specify a path to the sync worker
+          worker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js'
+
+          // Or provide factory function to create the worker
+          // worker: () =>
+          //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
+          //     name: `shared-sync-sqlite.db`
+          //   }).port,
+        }
       });
     }
 

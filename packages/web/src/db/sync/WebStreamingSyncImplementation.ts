@@ -11,9 +11,11 @@ export interface WebStreamingSyncImplementationOptions extends AbstractStreaming
   };
   database?: {
     options: {
-      sharedSyncWorker?: string | (() => SharedWorker);
-      wasqliteDBWorker?: string | (() => Worker | SharedWorker);
+      worker?: string | URL | (() => MessagePort);
     };
+  };
+  sync?: {
+    worker?: string | URL | (() => MessagePort);
   };
 }
 

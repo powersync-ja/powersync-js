@@ -35,11 +35,31 @@ export interface WebPowerSyncFlags extends WebSQLFlags {
 
 type WithWebFlags<Base> = Base & { flags?: WebPowerSyncFlags };
 
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebFlags<PowerSyncDatabaseOptionsWithSettings>;
+export interface WebSyncOptions {
+  /**
+   * Allows you to override the default sync worker.
+   *
+   * You can either provide a path to the worker script
+   * or a factory method that creates a worker and returns its MessagePort.
+   */
+  worker: string | URL | (() => MessagePort);
+}
 
-export type WebPowerSyncDatabaseOptions = WithWebFlags<PowerSyncDatabaseOptions>;
+type WithWebSyncOptions<Base> = Base & {
+  sync?: WebSyncOptions;
+};
+
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
+>;
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
+>;
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithSettings>
+>;
+
+export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,

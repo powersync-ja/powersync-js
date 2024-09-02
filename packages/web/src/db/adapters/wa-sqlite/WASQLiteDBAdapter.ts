@@ -29,6 +29,8 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
    * A worker will be initialized if none is provided
    */
   workerPort?: MessagePort;
+
+  worker?: string | URL | (() => MessagePort);
 }
 
 /**
@@ -86,7 +88,9 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     if (useWebWorker) {
       const dbOpener = this.options.workerPort
         ? Comlink.wrap<OpenDB>(this.options.workerPort)
-        : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, this.options.wasqliteDBWorker);
+        : typeof this.options.worker === 'function'
+          ? Comlink.wrap<OpenDB>(this.options.worker())
+          : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, this.options.worker);
 
       this.methods = await dbOpener(this.options.dbFilename);
       this.methods.registerOnTableChange(
