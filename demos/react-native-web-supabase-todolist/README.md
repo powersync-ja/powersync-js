@@ -59,7 +59,7 @@ Currently `React Native Web` is only supported when `enableMultiTabs` is true.
 
 #### 1.1 Recommended `workers`
 
-With `React Native Web` the workers need to be configured when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the workers to point to `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers-locations).
+With `React Native Web` the workers need to be configured when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the worker options to the provided workers under `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers-locations).
 
 The following example shows how to configure the DB worker and the sync worker:
 
@@ -67,11 +67,11 @@ The following example shows how to configure the DB worker and the sync worker:
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
   // You can specify a path to the db worker
-  worker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+  worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
 
   // Or provide factory function to create the worker
   // worker: () =>
-  //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
+  //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js`, {
   //     name: `shared-DB-worker-sqlite.db`
   //   }).port
 });
@@ -99,7 +99,7 @@ You can copy the contents of the `dist` directory to somewhere else like `./publ
 ```javascript
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
-  worker: '/public/worker_SharedWASQLiteDB.umd.js'
+  worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
 });
 
 this.powersync = new PowerSyncDatabaseWeb({
@@ -178,7 +178,7 @@ if (PowerSyncDatabaseNative) {
 } else {
   const factory = new WASQLiteOpenFactory({
     dbFilename: 'sqlite.db',
-    worker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+    worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
   });
 
   this.powersync = new PowerSyncDatabaseWeb({

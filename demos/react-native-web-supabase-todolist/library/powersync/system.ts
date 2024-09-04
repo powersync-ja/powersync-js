@@ -39,11 +39,11 @@ export class System {
       const factory = new WASQLiteOpenFactory({
         dbFilename: 'sqlite.db',
         // You can specify a path to the db worker
-        worker: '/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js'
+        worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
 
         // Or provide factory function to create the worker
         // worker: () =>
-        //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_SharedWASQLiteDB.umd.js`, {
+        //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js`, {
         //     name: `shared-DB-worker-sqlite.db`
         //   }).port
       });
@@ -58,7 +58,7 @@ export class System {
           // worker: () =>
           //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
           //     name: `shared-sync-sqlite.db`
-          //   }).port,
+          //   }).port
         }
       });
     }

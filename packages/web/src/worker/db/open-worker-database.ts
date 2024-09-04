@@ -23,7 +23,7 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
      *  (in the case of Android)
      */
     return multipleTabs
-      ? new SharedWorker(new URL('./SharedWASQLiteDB.worker.js', import.meta.url), {
+      ? new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
           /* @vite-ignore */
           name: `shared-DB-worker-${workerIdentifier}`,
           type: 'module'

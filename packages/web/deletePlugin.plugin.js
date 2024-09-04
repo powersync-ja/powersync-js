@@ -1,30 +1,21 @@
 const path = require('path');
 const fs = require('fs');
+const glob = require('glob');
 
-// Temporary workaround until we can figure out how not to bundle workers twice
+// Deletes all files matching the pattern lib_src_worker_*, we are assuming that the workers will be generated twice (once from tsc and once from webpack)
 class DeleteAssetsPlugin {
   apply(compiler) {
     compiler.hooks.afterEmit.tap('DeleteAssetsPlugin', (compilation) => {
-      const assetsToDelete = [
-        'lib_src_worker_sync_SharedSyncImplementation_worker_js.index.umd.js',
-        'lib_src_worker_sync_SharedSyncImplementation_worker_js.index.umd.js.map',
-        'lib_src_worker_sync_SharedSyncImplementation_worker_js.umd.js',
-        'lib_src_worker_sync_SharedSyncImplementation_worker_js.umd.js.map',
-        'lib_src_worker_db_SharedWASQLiteDB_worker_js.umd.js',
-        'lib_src_worker_db_SharedWASQLiteDB_worker_js.umd.js.map',
-        'lib_src_worker_db_SharedWASQLiteDB_worker_js.index.umd.js',
-        'lib_src_worker_db_SharedWASQLiteDB_worker_js.index.umd.js.map',
-        'lib_src_worker_db_WASQLiteDB_worker_js.index.umd.js',
-        'lib_src_worker_db_WASQLiteDB_worker_js.index.umd.js.map',
-        'lib_src_worker_db_WASQLiteDB_worker_js.umd.js',
-        'lib_src_worker_db_WASQLiteDB_worker_js.umd.js.map'
-      ];
+      const outputPath = compilation.outputOptions.path;
+      const pattern = path.join(outputPath, 'lib_src_worker_*');
 
-      assetsToDelete.forEach((asset) => {
-        const assetPath = path.join(compilation.outputOptions.path, asset);
-        if (fs.existsSync(assetPath)) {
-          fs.unlinkSync(assetPath);
-          console.log(`Deleted ${assetPath}`);
+      // Find all files matching the pattern
+      const filesToDelete = glob.sync(pattern);
+
+      filesToDelete.forEach((file) => {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+          console.log(`Deleted ${file}`);
         }
       });
     });

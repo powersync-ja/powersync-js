@@ -8,7 +8,6 @@ module.exports = () => {
   return {
     entry: {
       worker_SharedSyncImplementation: path.join(__dirname, './lib/src/worker/sync/SharedSyncImplementation.worker.js'),
-      worker_SharedWASQLiteDB: path.join(__dirname, './lib/src/worker/db/SharedWASQLiteDB.worker.js'),
       worker_WASQLiteDB: path.join(__dirname, './lib/src/worker/db/WASQLiteDB.worker.js')
     },
     experiments: {
