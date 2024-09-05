@@ -74,23 +74,24 @@ export class ReactNativeRemote extends AbstractRemote {
           }, STREAMING_POST_TIMEOUT_MS)
         : null;
 
-    const result = await super.postStream({
-      ...options,
-      fetchOptions: {
-        ...options.fetchOptions,
-        /**
-         * The `react-native-fetch-api` polyfill provides streaming support via
-         * this non-standard flag
-         * https://github.com/react-native-community/fetch#enable-text-streaming
-         */
-        // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
-        reactNative: { textStreaming: true }
+    try {
+      return await super.postStream({
+        ...options,
+        fetchOptions: {
+          ...options.fetchOptions,
+          /**
+           * The `react-native-fetch-api` polyfill provides streaming support via
+           * this non-standard flag
+           * https://github.com/react-native-community/fetch#enable-text-streaming
+           */
+          // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
+          reactNative: { textStreaming: true }
+        }
+      });
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
       }
-    });
-
-    if (timeout) {
-      clearTimeout(timeout);
     }
-    return result;
   }
 }
