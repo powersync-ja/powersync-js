@@ -10,7 +10,6 @@ import {
   RemoteConnector
 } from '@powersync/common';
 
-import { version as POWERSYNC_WEB_VERSION } from '../../../package.json';
 import { getUserAgentInfo } from './userAgent';
 
 /*
@@ -37,7 +36,7 @@ export class WebRemote extends AbstractRemote {
   }
 
   getUserAgent(): string {
-    let ua = [super.getUserAgent(), `powersync-web/${POWERSYNC_WEB_VERSION}`];
+    let ua = [super.getUserAgent(), `powersync-web`];
     try {
       ua.push(...getUserAgentInfo());
     } catch (e) {

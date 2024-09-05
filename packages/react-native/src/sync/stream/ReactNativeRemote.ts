@@ -18,8 +18,6 @@ import { BSON } from 'bson';
 
 import { fetch } from 'react-native-fetch-api';
 
-import { version as POWERSYNC_RN_VERSION } from '../../../package.json';
-
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
 /**
@@ -48,7 +46,7 @@ export class ReactNativeRemote extends AbstractRemote {
   getUserAgent(): string {
     return [
       super.getUserAgent(),
-      `powersync-react-native/${POWERSYNC_RN_VERSION}`,
+      `powersync-react-native`,
       `react-native/${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}`,
       `${Platform.OS}/${Platform.Version}`
     ].join(' ');
