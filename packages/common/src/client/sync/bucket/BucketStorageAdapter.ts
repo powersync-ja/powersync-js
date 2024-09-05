@@ -79,4 +79,9 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
   forceCompact(): Promise<void>;
 
   getMaxOpId(): string;
+
+  /**
+   * Get an unique client id.
+   */
+  getClientId(): Promise<string>;
 }

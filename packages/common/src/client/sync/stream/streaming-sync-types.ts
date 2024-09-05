@@ -89,6 +89,8 @@ export interface StreamingSyncRequest {
    * Client parameters to be passed to the sync rules.
    */
   parameters?: Record<string, StreamingSyncRequestParameterType>;
+
+  client_id?: string;
 }
 
 export interface StreamingSyncCheckpoint {

@@ -16,7 +16,6 @@ import { Schema } from '../db/schema/Schema';
 import { BaseObserver } from '../utils/BaseObserver';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
 import { mutexRunExclusive } from '../utils/mutex';
-import { quoteIdentifier } from '../utils/strings';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
@@ -292,8 +291,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.database.execute('SELECT powersync_rs_version()');
-    this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this._loadVersion();
     await this.updateSchema(this.options.schema);
     await this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
@@ -301,12 +299,39 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
+  private async _loadVersion() {
+    try {
+      const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
+      this.sdkVersion = version;
+    } catch (e) {
+      throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
+    }
+    let versionInts: number[];
+    try {
+      versionInts = this.sdkVersion!.split(/[.\/]/)
+        .slice(0, 3)
+        .map((n) => parseInt(n));
+    } catch (e) {
+      throw new Error(
+        `Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}. Details: ${e.message}`
+      );
+    }
+
+    // Validate ^0.2.0
+    if (versionInts[0] != 0 || versionInts[1] != 2 || versionInts[2] < 0) {
+      throw new Error(`Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}`);
+    }
+  }
+
   protected async updateHasSynced() {
-    const result = await this.database.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
-    const hasSynced = !!result;
+    const result = await this.database.get<{ synced_at: string | null }>(
+      'SELECT powersync_last_synced_at() as synced_at'
+    );
+    const hasSynced = result.synced_at != null;
+    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
 
     if (hasSynced != this.currentStatus.hasSynced) {
-      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }
@@ -400,26 +425,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.UNTYPED}`);
-
-      const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
-
-      const existingTableRows = await tx.execute(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name GLOB ?
-      `,
-        [tableGlob]
-      );
-
-      if (!existingTableRows.rows?.length) {
-        return;
-      }
-      for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
-      }
+      await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
     });
 
     // The data has been deleted - reset the sync status
@@ -551,6 +557,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         txId
       );
     });
+  }
+
+  /**
+   * Get an unique client id for this database.
+   *
+   * The id is not reset when the database is cleared, only when the database is deleted.
+   */
+  async getClientId(): Promise<string> {
+    return this.bucketStorageAdapter.getClientId();
   }
 
   private async handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string) {

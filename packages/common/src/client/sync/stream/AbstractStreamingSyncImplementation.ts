@@ -208,7 +208,9 @@ export abstract class AbstractStreamingSyncImplementation
   }
 
   async getWriteCheckpoint(): Promise<string> {
-    const response = await this.options.remote.get('/write-checkpoint2.json');
+    const clientId = await this.options.adapter.getClientId();
+    let path = `/write-checkpoint2.json?client_id=${clientId}`;
+    const response = await this.options.remote.get(path);
     return response['data']['write_checkpoint'] as string;
   }
 
@@ -456,6 +458,8 @@ The next upload iteration will be delayed.`);
 
         let bucketSet = new Set<string>(initialBuckets.keys());
 
+        const clientId = await this.options.adapter.getClientId();
+
         this.logger.debug('Requesting stream from server');
 
         const syncOptions: SyncStreamOptions = {
@@ -465,7 +469,8 @@ The next upload iteration will be delayed.`);
             buckets: req,
             include_checksum: true,
             raw_data: true,
-            parameters: resolvedOptions.params
+            parameters: resolvedOptions.params,
+            client_id: clientId
           }
         };
 
