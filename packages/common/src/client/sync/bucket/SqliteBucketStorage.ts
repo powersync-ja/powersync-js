@@ -291,7 +291,9 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         return false;
       }
 
-      const response = await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
+      const response = await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+        opId
+      ]);
       this.logger.debug(['[updateLocalTarget] Response from updating target_op ', JSON.stringify(response)]);
       return true;
     });
@@ -340,10 +342,14 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
           if (writeCheckpoint) {
             const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
             if (crudResult.rows?.length) {
-              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+              await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+                writeCheckpoint
+              ]);
             }
           } else {
-            await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
+            await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+              this.getMaxOpId()
+            ]);
           }
         });
       }
