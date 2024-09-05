@@ -15,8 +15,8 @@ export async function _openDB(
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
-  // @ts-ignore TODO update types
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
+  // @ts-ignore TODO update types
   const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'shared+hint' });
   sqlite3.vfs_register(vfs, true);
 
@@ -117,7 +117,7 @@ export async function _openDB(
     }
 
     const result = {
-      insertId: 1, // TODO sqlite3.last_insert_id(db),
+      insertId: sqlite3.last_insert_id(db), // TODO sqlite3.last_insert_id(db),
       rowsAffected: sqlite3.changes(db),
       rows: {
         _array: rows,

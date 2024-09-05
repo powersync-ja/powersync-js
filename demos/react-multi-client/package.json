@@ -10,7 +10,7 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20240905132709",
+    "@journeyapps/wa-sqlite": "0.0.0-dev-20240905151914",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
     "@supabase/supabase-js": "^2.43.1",
