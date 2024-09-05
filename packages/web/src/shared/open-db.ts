@@ -117,7 +117,7 @@ export async function _openDB(
     }
 
     const result = {
-      insertId: sqlite3.last_insert_id(db), // TODO sqlite3.last_insert_id(db),
+      insertId: sqlite3.last_insert_id(db),
       rowsAffected: sqlite3.changes(db),
       rows: {
         _array: rows,
