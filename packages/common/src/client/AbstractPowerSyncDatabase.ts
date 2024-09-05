@@ -533,6 +533,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
   }
 
+  /**
+   * Get an unique client id for this database.
+   *
+   * The id is not reset when the database is cleared, only when the database is deleted.
+   */
+  async getClientId(): Promise<string> {
+    return this.bucketStorageAdapter.getClientId();
+  }
+
   private async handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string) {
     return this.writeTransaction(async (tx) => {
       await tx.execute(`DELETE FROM ${PSInternalTable.CRUD} WHERE id <= ?`, [lastClientId]);

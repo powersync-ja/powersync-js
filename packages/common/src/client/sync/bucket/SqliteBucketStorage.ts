@@ -23,6 +23,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
   private updateListener: () => void;
+  private _clientId?: Promise<string>;
 
   /**
    * Count up, and do a compact on startup.
@@ -62,9 +63,22 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     this.updateListener?.();
   }
 
+  async _getClientId() {
+    const row = await this.db.get<{ client_id: string }>('SELECT powersync_client_id() as client_id');
+    return row['client_id'];
+  }
+
+  getClientId() {
+    if (this._clientId == null) {
+      this._clientId = this._getClientId();
+    }
+    return this._clientId!;
+  }
+
   getMaxOpId() {
     return MAX_OP_ID;
   }
+
   /**
    * Reset any caches.
    */
