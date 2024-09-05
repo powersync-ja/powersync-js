@@ -1,0 +1,46 @@
+name: Build docs
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    env:
+      META_LOGO_URL: ${{vars.META_LOGO_URL}}
+      ALGOLIA_APP_ID: ${{vars.ALGOLIA_APP_ID}}
+      ALGOLIA_API_KEY: ${{vars.ALGOLIA_API_KEY}}
+      ALGOLIA_INDEX_NAME: ${{vars.ALGOLIA_INDEX_NAME}}
+      GH_URL: ${{vars.GH_URL}}
+      GH_ORG: ${{vars.GH_ORG}}
+      GH_PROJECT_NAME: ${{vars.GH_PROJECT_NAME}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build Packages
+        run: pnpm build:packages
+      - name: Build Docs
+        run: pnpm docs:build
