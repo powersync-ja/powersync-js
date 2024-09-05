@@ -18,7 +18,8 @@ export function getUserAgentInfo(nav?: NavigatorInfo): string[] {
 
   const browser = getBrowserInfo(nav);
   const os = getOsInfo(nav);
-  return [browser, os].filter((v) => v != null);
+  // The cast below is to cater for TypeScript < 5.5.0
+  return [browser, os].filter((v) => v != null) as string[];
 }
 
 function getBrowserInfo(nav: NavigatorInfo): string | null {
