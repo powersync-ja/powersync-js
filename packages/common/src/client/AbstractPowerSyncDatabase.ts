@@ -291,13 +291,36 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.database.execute('SELECT powersync_rs_version()');
-    this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this._loadVersion();
     await this.updateSchema(this.options.schema);
     await this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  private async _loadVersion() {
+    try {
+      const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
+      this.sdkVersion = version;
+    } catch (e) {
+      throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
+    }
+    let versionInts: number[];
+    try {
+      versionInts = this.sdkVersion!.split(/[.\/]/)
+        .slice(0, 3)
+        .map((n) => parseInt(n));
+    } catch (e) {
+      throw new Error(
+        `Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}. Details: ${e.message}`
+      );
+    }
+
+    // Validate ^0.2.0
+    if (versionInts[0] != 0 || versionInts[1] != 2 || versionInts[2] < 0) {
+      throw new Error(`Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}`);
+    }
   }
 
   protected async updateHasSynced() {
