@@ -217,7 +217,7 @@ export abstract class AbstractRemote {
     const bson = await this.getBSON();
 
     // Add the user agent in the setup payload - we can't set custom
-    // headers with websockets. The browser userAgent is however added
+    // headers with websockets on web. The browser userAgent is however added
     // automatically as a header.
     const userAgent = this.getUserAgent();
 

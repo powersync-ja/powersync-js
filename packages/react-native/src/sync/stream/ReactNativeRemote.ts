@@ -46,7 +46,12 @@ export class ReactNativeRemote extends AbstractRemote {
   }
 
   getUserAgent(): string {
-    return `${super.getUserAgent()} (react-native/${POWERSYNC_RN_VERSION}) react-native/${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor} ${Platform.OS}/${Platform.Version} `;
+    return [
+      super.getUserAgent(),
+      `powersync-react-native/${POWERSYNC_RN_VERSION}`,
+      `react-native/${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}`,
+      `${Platform.OS}/${Platform.Version}`
+    ].join(' ');
   }
 
   async getBSON(): Promise<BSONImplementation> {

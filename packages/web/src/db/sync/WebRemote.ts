@@ -11,6 +11,7 @@ import {
 } from '@powersync/common';
 
 import { version as POWERSYNC_WEB_VERSION } from '../../../package.json';
+import { getUserAgentInfo } from './userAgent';
 
 /*
  * Depends on browser's implementation of global fetch.
@@ -36,7 +37,13 @@ export class WebRemote extends AbstractRemote {
   }
 
   getUserAgent(): string {
-    return `${super.getUserAgent()} (web/${POWERSYNC_WEB_VERSION})`;
+    let ua = [super.getUserAgent(), `powersync-web/${POWERSYNC_WEB_VERSION}`];
+    try {
+      ua.push(...getUserAgentInfo());
+    } catch (e) {
+      this.logger.warn('Failed to get user agent info', e);
+    }
+    return ua.join(' ');
   }
 
   async getBSON(): Promise<BSONImplementation> {
