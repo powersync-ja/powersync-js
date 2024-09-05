@@ -301,11 +301,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected async updateHasSynced() {
-    const result = await this.database.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
-    const hasSynced = !!result;
+    const result = await this.database.get<{ synced_at: string | null }>(
+      'SELECT powersync_last_synced_at() as synced_at'
+    );
+    const hasSynced = result.synced_at != null;
+    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
 
     if (hasSynced != this.currentStatus.hasSynced) {
-      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }

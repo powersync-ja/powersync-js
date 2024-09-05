@@ -128,8 +128,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     if (this._hasCompletedSync) {
       return true;
     }
-    const r = await this.db.execute(`SELECT name, last_applied_op FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1`);
-    const completed = !!r.rows?.length;
+    const r = await this.db.get<{ synced_at: string | null }>(`SELECT powersync_last_synced_at() as synced_at`);
+    const completed = r.synced_at != null;
     if (completed) {
       this._hasCompletedSync = true;
     }
