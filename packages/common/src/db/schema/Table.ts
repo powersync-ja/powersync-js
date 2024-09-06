@@ -92,8 +92,8 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
    * ```javascript
    * const table = new Table(
    *   {
-   *     name: { type: ColumnType.TEXT },
-   *     age: { type: ColumnType.INTEGER }
+   *     name: column.text,
+   *     age: column.integer
    *   },
    *   { indexes: { nameIndex: ['name'] } }
    * );
@@ -190,7 +190,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   get viewName() {
-    return this.viewNameOverride ? this.viewNameOverride : this.name;
+    return this.viewNameOverride ?? this.name;
   }
 
   get columns() {

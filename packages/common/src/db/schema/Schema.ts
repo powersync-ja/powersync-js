@@ -47,7 +47,7 @@ export class Schema<S extends SchemaType = SchemaType> {
         indexes: table.indexes,
         localOnly: table.localOnly,
         insertOnly: table.insertOnly,
-        viewName: table.viewName
+        viewName: table.viewNameOverride || name
       });
       return convertedTable;
     });
