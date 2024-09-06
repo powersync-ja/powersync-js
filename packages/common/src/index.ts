@@ -31,7 +31,6 @@ export * from './db/DBAdapter';
 
 export * from './utils/AbortOperation';
 export * from './utils/BaseObserver';
-export * from './utils/strings';
 export * from './utils/DataStream';
 export * from './utils/parseQuery';
 

@@ -10,6 +10,8 @@ import {
   RemoteConnector
 } from '@powersync/common';
 
+import { getUserAgentInfo } from './userAgent';
+
 /*
  * Depends on browser's implementation of global fetch.
  */
@@ -31,6 +33,16 @@ export class WebRemote extends AbstractRemote {
       ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new WebFetchProvider()
     });
+  }
+
+  getUserAgent(): string {
+    let ua = [super.getUserAgent(), `powersync-web`];
+    try {
+      ua.push(...getUserAgentInfo());
+    } catch (e) {
+      this.logger.warn('Failed to get user agent info', e);
+    }
+    return ua.join(' ');
   }
 
   async getBSON(): Promise<BSONImplementation> {

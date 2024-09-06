@@ -10,6 +10,8 @@ import type { BSON } from 'bson';
 import { AbortOperation } from '../../../utils/AbortOperation';
 import { Buffer } from 'buffer';
 
+import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
+
 export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
@@ -109,6 +111,10 @@ export abstract class AbstractRemote {
     return this.credentials;
   }
 
+  getUserAgent() {
+    return `powersync-js/${POWERSYNC_JS_VERSION}`;
+  }
+
   protected async buildRequest(path: string) {
     const credentials = await this.getCredentials();
     if (credentials != null && (credentials.endpoint == null || credentials.endpoint == '')) {
@@ -119,11 +125,14 @@ export abstract class AbstractRemote {
       throw error;
     }
 
+    const userAgent = this.getUserAgent();
+
     return {
       url: credentials.endpoint + path,
       headers: {
         'content-type': 'application/json',
-        Authorization: `Token ${credentials.token}`
+        Authorization: `Token ${credentials.token}`,
+        'x-user-agent': userAgent
       }
     };
   }
@@ -207,6 +216,11 @@ export abstract class AbstractRemote {
 
     const bson = await this.getBSON();
 
+    // Add the user agent in the setup payload - we can't set custom
+    // headers with websockets on web. The browser userAgent is however added
+    // automatically as a header.
+    const userAgent = this.getUserAgent();
+
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url: this.options.socketUrlTransformer(request.url)
@@ -220,7 +234,8 @@ export abstract class AbstractRemote {
           data: null,
           metadata: Buffer.from(
             bson.serialize({
-              token: request.headers.Authorization
+              token: request.headers.Authorization,
+              user_agent: userAgent
             })
           )
         }
