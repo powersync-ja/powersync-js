@@ -115,7 +115,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   constructor(columns: Columns, options?: TableV2Options);
   /**
   * @deprecated This constructor will be removed in the next major release.
-  * Use the new constructor shown below instead.
+  * Use the new constructor shown below instead as this does not show types.
   * @example
   * <caption>Use this instead</caption>
   * ```javascript
