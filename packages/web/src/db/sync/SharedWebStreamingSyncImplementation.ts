@@ -98,7 +98,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker();
+        this.messagePort = syncWorker(options.flags);
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
@@ -116,7 +116,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       ).port;
     }
 
-    // this.messagePort = syncWorker.port;
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
@@ -130,7 +129,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     const dbOpenerPort =
       typeof options.database?.options?.worker === 'function'
-        ? options.database?.options?.worker()
+        ? (options.database?.options?.worker(options.flags) as MessagePort)
         : (openWorkerDatabasePort(this.options.identifier!, true, options.database?.options?.worker) as MessagePort);
 
     const flags = { ...this.webOptions.flags, workers: undefined };

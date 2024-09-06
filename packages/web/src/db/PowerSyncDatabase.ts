@@ -42,7 +42,7 @@ export interface WebSyncOptions {
    * You can either provide a path to the worker script
    * or a factory method that creates a worker and returns its MessagePort.
    */
-  worker: string | URL | (() => MessagePort);
+  worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort);
 }
 
 type WithWebSyncOptions<Base> = Base & {

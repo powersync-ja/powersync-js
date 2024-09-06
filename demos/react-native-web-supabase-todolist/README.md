@@ -67,27 +67,35 @@ The following example shows how to configure the DB worker and the sync worker:
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
   // You can specify a path to the db worker
-  worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
+  worker: '/node_modules/@powersync/web/dist/WASQLiteDB.umd.js'
 
-  // Or provide factory function to create the worker
-  // worker: () =>
-  //   new SharedWorker(`/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js`, {
-  //     name: `shared-DB-worker-sqlite.db`
-  //   }).port
+  // Or provide a factory function to create the worker.
+  // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
+  // worker: (flags) => {
+  //   if (flags?.enableMultiTabs) {
+  //     return new SharedWorker(`/node_modules/@powersync/web/dist/WASQLiteDB.umd.js`, {
+  //       name: `shared-DB-worker-sqlite.db`
+  //     }).port;
+  //   } else {
+  //     return new Worker(`/node_modules/@powersync/web/dist/WASQLiteDB.umd.js`, {
+  //       name: `DB-worker-sqlite.db`
+  //     });
+  //   }
+  // }
 });
-
-const powersync = new PowerSyncDatabaseWeb({
+this.powersync = new PowerSyncDatabaseWeb({
   schema: AppSchema,
   database: factory,
   sync: {
     // You can specify a path to the sync worker
-    worker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js'
 
-    // Or provide factory function to create the worker
+    worker: '/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js'
+    // Or provide a factory function to create the worker.
+    // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
     // worker: () =>
-    //   new SharedWorker('/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js', {
+    //   new SharedWorker('/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js', {
     //     name: `shared-sync-sqlite.db`
-    //   }).port,
+    //   }).port
   }
 });
 ```
@@ -99,14 +107,14 @@ You can copy the contents of the `dist` directory to somewhere else like `./publ
 ```javascript
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
-  worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
+  worker: '/public/WASQLiteDB.umd.js'
 });
 
 this.powersync = new PowerSyncDatabaseWeb({
   schema: AppSchema,
   database: factory,
   sync: {
-    worker: '/public/worker_SharedSyncImplementation.umd.js'
+    worker: '/public/SharedSyncImplementation.umd.js'
   }
 });
 ```
@@ -178,14 +186,14 @@ if (PowerSyncDatabaseNative) {
 } else {
   const factory = new WASQLiteOpenFactory({
     dbFilename: 'sqlite.db',
-    worker: '/node_modules/@powersync/web/dist/worker_WASQLiteDB.umd.js'
+    worker: '/node_modules/@powersync/web/dist/WASQLiteDB.umd.js'
   });
 
   this.powersync = new PowerSyncDatabaseWeb({
     schema: AppSchema,
     database: factory,
     sync: {
-      worker: '/node_modules/@powersync/web/dist/worker_SharedSyncImplementation.umd.js'
+      worker: '/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js'
     }
   });
 }

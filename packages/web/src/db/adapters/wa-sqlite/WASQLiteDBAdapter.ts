@@ -30,7 +30,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
    */
   workerPort?: MessagePort;
 
-  worker?: string | URL | (() => MessagePort);
+  worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort | Worker);
 }
 
 /**
@@ -89,7 +89,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       const dbOpener = this.options.workerPort
         ? Comlink.wrap<OpenDB>(this.options.workerPort)
         : typeof this.options.worker === 'function'
-          ? Comlink.wrap<OpenDB>(this.options.worker())
+          ? Comlink.wrap<OpenDB>(this.options.worker(this.flags))
           : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, this.options.worker);
 
       this.methods = await dbOpener(this.options.dbFilename);

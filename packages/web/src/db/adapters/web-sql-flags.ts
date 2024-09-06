@@ -48,7 +48,7 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * You can either provide a path to the worker script
    * or a factory method that creates a worker and returns its MessagePort.
    */
-  worker?: string | URL | (() => MessagePort);
+  worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort | Worker);
 }
 
 export function isServerSide() {

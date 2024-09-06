@@ -2,13 +2,12 @@ const production = process.env.NODE_ENV === 'production';
 const TerserPlugin = require('terser-webpack-plugin');
 const path = require('path');
 const DeleteAssetsPlugin = require('./deletePlugin.plugin');
-const { ProvidePlugin } = require('webpack');
 
 module.exports = () => {
   return {
     entry: {
-      worker_SharedSyncImplementation: path.join(__dirname, './lib/src/worker/sync/SharedSyncImplementation.worker.js'),
-      worker_WASQLiteDB: path.join(__dirname, './lib/src/worker/db/WASQLiteDB.worker.js')
+      SharedSyncImplementation: path.join(__dirname, './lib/src/worker/sync/SharedSyncImplementation.worker.js'),
+      WASQLiteDB: path.join(__dirname, './lib/src/worker/db/WASQLiteDB.worker.js')
     },
     experiments: {
       topLevelAwait: true // Enable top-level await in Webpack
