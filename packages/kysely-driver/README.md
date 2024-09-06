@@ -21,7 +21,7 @@ export const powerSyncDb = new PowerSyncDatabase({
   database: {
     dbFilename: 'test.sqlite'
   },
-  schema: appSchema,
+  schema: appSchema
 });
 
 export const db = wrapPowerSyncWithKysely(powerSyncDb);
