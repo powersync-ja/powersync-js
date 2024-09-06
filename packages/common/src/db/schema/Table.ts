@@ -239,7 +239,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
   validate() {
     if (InvalidSQLCharacters.test(this.name)) {
-      throw new Error(`Invalid characters in table`);
+      throw new Error(`Invalid characters in table name: ${this.name}`);
     }
 
     if (this.viewNameOverride && InvalidSQLCharacters.test(this.viewNameOverride!)) {
