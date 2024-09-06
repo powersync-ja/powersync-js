@@ -21,7 +21,7 @@ class DummyConnector {
 
 const customers = new Table({ name: column.text })
 
-export const AppSchema = new Schema(customers);
+export const AppSchema = new Schema({ customers });
 
 let PowerSync;
 
