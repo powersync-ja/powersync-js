@@ -15,6 +15,16 @@
       "import": "./dist/index.umd.js",
       "require": "./dist/index.umd.js",
       "types": "./lib/src/index.d.ts"
+    },
+    "./umd/worker/db": {
+      "import": "./dist/WASQLiteDB.umd.js",
+      "require": "./dist/WASQLiteDB.umd.js",
+      "types": "./lib/src/index.d.ts"
+    },
+    "./umd/worker/sync": {
+      "import": "./dist/SharedSyncImplementation.umd.js",
+      "require": "./dist/SharedSyncImplementation.umd.js",
+      "types": "./lib/src/index.d.ts"
     }
   },
   "repository": "https://github.com/powersync-ja/powersync-js",

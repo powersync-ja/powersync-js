@@ -21,6 +21,10 @@ config.resolver.unstable_enableSymlinks = true;
 
 // Needed to make `@powersync/web/umd` imports work
 config.resolver.unstable_enablePackageExports = true;
+const b = require.resolve('@powersync/web/umd/worker/sync');
+console.log('Resolving export?\n\n\n', b);
+
+config.transformer.unstable_renameRequire = false;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === 'web') {
@@ -29,7 +33,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         type: 'empty'
       };
     }
-    const mapping = { 'react-native': 'react-native-web', '@powersync/web': '@powersync/web/dist/index.umd.js' };
+    const mapping = { 'react-native': 'react-native-web', '@powersync/web': '@powersync/web/umd' };
     if (mapping[moduleName]) {
       console.log('remapping', moduleName);
       return context.resolveRequest(context, mapping[moduleName], platform);

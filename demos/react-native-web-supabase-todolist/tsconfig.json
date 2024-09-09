@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "composite": true,
-    "moduleResolution": "Bundler"
+    "moduleResolution": "Bundler",
+    "module": "ES2020"
   }
 }
