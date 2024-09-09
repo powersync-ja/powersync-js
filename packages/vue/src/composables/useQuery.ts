@@ -1,4 +1,4 @@
-import { type SQLWatchOptions, parseQuery, type CompilableQuery, ParsedQuery } from '@powersync/common';
+import { type CompilableQuery, ParsedQuery, type SQLWatchOptions, parseQuery } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
@@ -87,10 +87,10 @@ export const useQuery = <T = any>(
     error.value = wrappedError;
   };
 
-  const _fetchData = async (sql: string, parameters: any[]) => {
+  const _fetchData = async (executor: () => Promise<T[]>) => {
     isFetching.value = true;
     try {
-      const result = await powerSync.value.getAll<T>(sql, parameters);
+      const result = await executor();
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
@@ -104,8 +104,9 @@ export const useQuery = <T = any>(
     onCleanup(() => abortController.abort());
 
     let parsedQuery: ParsedQuery;
+    const queryValue = toValue(query);
     try {
-      parsedQuery = parseQuery(toValue(query), toValue(sqlParameters).map(toValue));
+      parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (e) {
       console.error('Failed to parse query:', e);
       handleError(e);
@@ -123,7 +124,9 @@ export const useQuery = <T = any>(
       return;
     }
     // Fetch initial data
-    fetchData = () => _fetchData(sql, parameters);
+    const executor =
+      typeof queryValue == 'string' ? () => powerSync.value.getAll<T>(sql, parameters) : () => queryValue.execute();
+    fetchData = () => _fetchData(executor);
     await fetchData();
 
     if (options.runQueryOnce) {
