@@ -21,10 +21,6 @@ config.resolver.unstable_enableSymlinks = true;
 
 // Needed to make `@powersync/web/umd` imports work
 config.resolver.unstable_enablePackageExports = true;
-const b = require.resolve('@powersync/web/umd/worker/sync');
-console.log('Resolving export?\n\n\n', b);
-
-config.transformer.unstable_renameRequire = false;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === 'web') {

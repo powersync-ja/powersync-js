@@ -7,7 +7,7 @@ class DeleteAssetsPlugin {
   apply(compiler) {
     compiler.hooks.afterEmit.tap('DeleteAssetsPlugin', (compilation) => {
       const outputPath = compilation.outputOptions.path;
-      const pattern = path.join(outputPath, 'lib_src_worker_*');
+      const pattern = path.join(outputPath, '**/lib_src_worker_*');
 
       // Find all files matching the pattern
       const filesToDelete = glob.sync(pattern);

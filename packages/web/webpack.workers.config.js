@@ -13,7 +13,7 @@ module.exports = () => {
       topLevelAwait: true // Enable top-level await in Webpack
     },
     output: {
-      filename: '[name].umd.js',
+      filename: 'worker/[name].umd.js',
       path: path.join(__dirname, 'dist'),
       library: {
         name: 'sdk_web',

@@ -35,43 +35,38 @@ export class System {
         }
       });
     } else {
-      const a = () => {
-        const b = require.resolve('@powersync/web/umd/worker/sync');
-        console.log('Resolving export?\n\n\n', b);
-      };
-      a();
       const factory = new WASQLiteOpenFactory({
         dbFilename: 'sqlite.db',
         // You can specify a path to the db worker
-        // worker: '/public/WASQLiteDB.umd.js'
+        worker: '/@powersync/worker/WASQLiteDB.umd.js'
 
         // Or provide a factory function to create the worker.
         // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-        worker: (flags) => {
-          if (flags?.enableMultiTabs) {
-            return new SharedWorker(`/public/WASQLiteDB.umd.js`, {
-              name: `shared-DB-worker-sqlite.db`
-            }).port;
-          } else {
-            return new Worker(`/public/WASQLiteDB.umd.js`, {
-              name: `DB-worker-sqlite.db`
-            });
-          }
-        }
+        // worker: (flags) => {
+        //   if (flags?.enableMultiTabs) {
+        //     return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
+        //       name: `shared-DB-worker-sqlite.db`
+        //     }).port;
+        //   } else {
+        //     return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
+        //       name: `DB-worker-sqlite.db`
+        //     });
+        //   }
+        // }
       });
       this.powersync = new PowerSyncDatabaseWeb({
         schema: AppSchema,
         database: factory,
         sync: {
           // You can specify a path to the sync worker
-          // worker: '/public/SharedSyncImplementation.umd.js'
+          worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
 
           // Or provide a factory function to create the worker.
           // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-          worker: () =>
-            new SharedWorker('/public/SharedSyncImplementation.umd.js', {
-              name: `shared-sync-sqlite.db`
-            }).port
+          // worker: () =>
+          //   new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
+          //     name: `shared-sync-sqlite.db`
+          //   }).port
         }
       });
     }

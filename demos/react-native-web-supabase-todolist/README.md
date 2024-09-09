@@ -51,33 +51,37 @@ General information on defining environment variables with Expo can be found her
 
 To ensure that `PowerSync` features are fully supported in your `React Native Web` project, follow these steps. This documentation covers necessary configurations, setup, and multi-platform implementation.
 
-### Known limitations
-
-Currently `React Native Web` is only supported when `enableMultiTabs` is true.
-
 ### 1. Configuring the workers
 
-#### 1.1 Recommended `workers`
+With `React Native Web` the workers need to be configured when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). The contents of `node_modules/@powersync/web/dist` should be copied to the root of your project (typically in the `public ` directory). You can then specify the resolution for each worker (available in the `worker` directory of the `dist` contents).
 
-With `React Native Web` the workers need to be configured when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). It is recommended to configure the worker options to the provided workers under `/node_modules/@powersync/web/dist/`. If this doesn't work out of the box, try the next section [Copying `dist` and custom `workers` locations](#12-copying-dist-and-custom-workers-locations).
+To make it easier to manage these files in the `public` directory, it is recommended to place the contents in a nested directory like `@powersync`.
 
-The following example shows how to configure the DB worker and the sync worker:
+A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the contents to `/public/@powersync` and the workers will be available at `/public/@powersync/worker`.
+
+It can be run with:
+
+```
+node copy-files.js
+```
+
+The example below demonstrates how to configure the DB and sync workers:
 
 ```javascript
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
   // You can specify a path to the db worker
-  worker: '/node_modules/@powersync/web/dist/WASQLiteDB.umd.js'
+  worker: '/@powersync/worker/WASQLiteDB.umd.js'
 
   // Or provide a factory function to create the worker.
   // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
   // worker: (flags) => {
   //   if (flags?.enableMultiTabs) {
-  //     return new SharedWorker(`/node_modules/@powersync/web/dist/WASQLiteDB.umd.js`, {
+  //     return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
   //       name: `shared-DB-worker-sqlite.db`
   //     }).port;
   //   } else {
-  //     return new Worker(`/node_modules/@powersync/web/dist/WASQLiteDB.umd.js`, {
+  //     return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
   //       name: `DB-worker-sqlite.db`
   //     });
   //   }
@@ -88,42 +92,16 @@ this.powersync = new PowerSyncDatabaseWeb({
   database: factory,
   sync: {
     // You can specify a path to the sync worker
+    worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
 
-    worker: '/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js'
     // Or provide a factory function to create the worker.
     // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
     // worker: () =>
-    //   new SharedWorker('/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js', {
+    //   new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
     //     name: `shared-sync-sqlite.db`
     //   }).port
   }
 });
-```
-
-#### 1.2 Copying `dist` and custom `workers` locations
-
-You can copy the contents of the `dist` directory to somewhere else like `./public`, in which case configure the `workers` accordingly:
-
-```javascript
-const factory = new WASQLiteOpenFactory({
-  dbFilename: 'sqlite.db',
-  worker: '/public/WASQLiteDB.umd.js'
-});
-
-this.powersync = new PowerSyncDatabaseWeb({
-  schema: AppSchema,
-  database: factory,
-  sync: {
-    worker: '/public/SharedSyncImplementation.umd.js'
-  }
-});
-```
-
-A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the contents to `./public`.
-It can be run with:
-
-```
-node copy-files.js
 ```
 
 ### 2. Multi-platform support
@@ -186,14 +164,13 @@ if (PowerSyncDatabaseNative) {
 } else {
   const factory = new WASQLiteOpenFactory({
     dbFilename: 'sqlite.db',
-    worker: '/node_modules/@powersync/web/dist/WASQLiteDB.umd.js'
+    worker: '/@powersync/worker/WASQLiteDB.umd.js'
   });
-
   this.powersync = new PowerSyncDatabaseWeb({
     schema: AppSchema,
     database: factory,
     sync: {
-      worker: '/node_modules/@powersync/web/dist/SharedSyncImplementation.umd.js'
+      worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
     }
   });
 }

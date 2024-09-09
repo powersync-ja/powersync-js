@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const sourceDir = path.join(__dirname, 'node_modules', '@powersync', 'web', 'dist');
-const destDir = path.join(__dirname, 'public');
+const destDir = path.join(__dirname, 'public', '@powersync');
 
 function copyRecursiveSync(src, dest) {
   if (fs.existsSync(src) && fs.statSync(src).isDirectory()) {
