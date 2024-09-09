@@ -1,4 +1,4 @@
-import { Column, ColumnType, Schema, Table, PowerSyncDatabase } from '@powersync/web';
+import { column, Schema, Table, PowerSyncDatabase } from '@powersync/web';
 import Logger from 'js-logger';
 
 Logger.useDefaults();
