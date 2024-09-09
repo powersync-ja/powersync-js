@@ -1,9 +1,9 @@
-import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
-import { vi, describe, expect, it, afterEach } from 'vitest';
-import { useQuery } from '../src/hooks/useQuery';
-import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import * as commonSdk from '@powersync/common';
+import { renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
+import { useQuery } from '../src/hooks/useQuery';
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
@@ -154,6 +154,23 @@ describe('useQuery', () => {
     );
     const currentResult = result.current;
     expect(currentResult.isLoading).toEqual(true);
+  });
+
+  it('should execute compatible queries', async () => {
+    const wrapper = ({ children }) => (
+      <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
+    );
+
+    const query = () =>
+      useQuery({
+        execute: () => [{ test: 'custom' }] as any,
+        compile: () => ({ sql: 'SELECT * from lists', parameters: [] })
+      });
+    const { result } = renderHook(query, { wrapper });
+
+    await vi.waitFor(() => {
+      expect(result.current.data[0]?.test).toEqual('custom');
+    });
   });
 
   // The test returns unhandled errors when run with all the others.
