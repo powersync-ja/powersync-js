@@ -19,8 +19,10 @@ export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
    * A SSR implementation is loaded if SSR mode is detected.
    */
   openDB() {
-    const isSSR = isServerSide();
-    if (isSSR && !this.resolvedFlags.disableSSRWarning) {
+    const {
+      resolvedFlags: { disableSSRWarning, enableMultiTabs, ssrMode = isServerSide() }
+    } = this;
+    if (ssrMode && !disableSSRWarning) {
       console.warn(
         `
   Running PowerSync in SSR mode.
@@ -29,13 +31,13 @@ export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
       );
     }
 
-    if (!this.resolvedFlags.enableMultiTabs) {
+    if (!enableMultiTabs) {
       console.warn(
         'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
       );
     }
 
-    if (isSSR) {
+    if (ssrMode) {
       return new SSRDBAdapter();
     }
 
