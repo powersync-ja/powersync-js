@@ -1,5 +1,4 @@
 import {
-  type AbstractStreamingSyncImplementation,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
@@ -11,7 +10,8 @@ import {
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
-  SqliteBucketStorage
+  SqliteBucketStorage,
+  StreamingSyncImplementation
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
@@ -138,9 +138,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return navigator.locks.request(`lock-${this.database.name}`, cb);
   }
 
-  protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
-  ): AbstractStreamingSyncImplementation {
+  protected generateSyncStreamImplementation(connector: PowerSyncBackendConnector): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
 
     const syncOptions: WebStreamingSyncImplementationOptions = {

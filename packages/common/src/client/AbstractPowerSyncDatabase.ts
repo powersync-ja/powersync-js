@@ -23,7 +23,6 @@ import { CrudBatch } from './sync/bucket/CrudBatch';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
 import { CrudTransaction } from './sync/bucket/CrudTransaction';
 import {
-  AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
@@ -239,7 +238,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector
-  ): AbstractStreamingSyncImplementation;
+  ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
 
