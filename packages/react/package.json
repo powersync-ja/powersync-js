@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -29,7 +29,7 @@
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "react": "*",
-    "@powersync/common": "workspace:^1.15.0"
+    "@powersync/common": "workspace:^1.17.0"
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.2",

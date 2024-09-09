@@ -1,5 +1,22 @@
 # @powersync/common
 
+## 1.17.0
+
+### Minor Changes
+
+- 447f979: Improve performance of MOVE and REMOVE operations.
+- b1a76b3: Fixed SSR Mode detection for DB adapters. Removed the potential for SSR Web Streamining implementations from to perform syncing operations.
+- f202944: Merge `Table` and `TableV2` but kept `TableV2` to avoid making this a breaking change.
+- 447f979: Add custom x-user-agent header and client_id parameter to requests.
+- 447f979: Emit update notifications on `disconnectAndClear()`.
+- 447f979: Persist lastSyncedAt timestamp.
+
+### Patch Changes
+
+- e77b1ab: Add a check for maximum number of columns allowed
+- 447f979: Always cast `target_op` (write checkpoint) to ensure it's an integer.
+- 447f979: Validate that the powersync-sqlite-core version number is in a compatible range of ^0.2.0.
+
 ## 1.16.2
 
 ### Patch Changes
