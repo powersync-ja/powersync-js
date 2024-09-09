@@ -1,5 +1,24 @@
 # @powersync/kysely-driver
 
+## 0.4.0
+
+### Minor Changes
+
+- c04ecfc: Made `dialect` in `wrapPowerSyncWithKysely` options optional since the method provides a PowerSync dialect by default.
+
+### Patch Changes
+
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
 ## 0.3.0
 
 ### Minor Changes

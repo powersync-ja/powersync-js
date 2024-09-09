@@ -1,5 +1,22 @@
 # @powersync/react
 
+## 1.4.1
+
+### Patch Changes
+
+- a65cd8c: chore: Added `isLoading` example to README
+- c04ecfc: React and Vue helpers should execute queries from compatible query executor methods. This should allow Kysely queries with plugins to function correctly.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
 ## 1.4.0
 
 ### Minor Changes

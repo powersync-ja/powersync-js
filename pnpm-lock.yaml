@@ -1362,7 +1362,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.16.2
+        specifier: workspace:^1.17.0
         version: link:../common
       kysely:
         specifier: ^0.27.2
@@ -1408,7 +1408,7 @@ importers:
   packages/react:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.15.0
+        specifier: workspace:^1.17.0
         version: link:../common
     devDependencies:
       '@testing-library/react':
@@ -1497,7 +1497,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.15.0
+        specifier: workspace:^1.17.0
         version: link:../common
     devDependencies:
       flush-promises:
