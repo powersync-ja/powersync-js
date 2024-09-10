@@ -88,8 +88,8 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
    * @param {TableV2Options} [v2Options] - Optional configuration options for V2 syntax
    *
    * @example
-   * <caption>New constructor example</caption>
    * ```javascript
+   * // New Constructor
    * const table = new Table(
    *   {
    *     name: column.text,
@@ -101,8 +101,8 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
    *
    *
    * @example
-   * <caption>Deprecated constructor example</caption>
    * ```javascript
+   * // Deprecated Constructor
    * const table = new Table({
    *   name: 'users',
    *   columns: [
