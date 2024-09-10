@@ -39,13 +39,12 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     for (let statement of statements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
-          DB.execute(statement);
-          console.log(`Executed statement ${statement}`);
+          let res = DB.execute(statement);
           break;
         } catch (e) {
-          console.log('Error executing statement', statement, e);
-          console.log(`${e}`);
-          // if (e instanceof sqlite.SqliteException && e.resultCode === sqlite.SqlError.SQLITE_BUSY && tries < 29) {
+          //TODO better error handling for SQLITE_BUSY(5)
+          console.log('Error executing pragma statement', statement, e);
+          // if (e.errorCode === 5 && tries < 29) {
           //   continue;
           // } else {
           //   throw e;
