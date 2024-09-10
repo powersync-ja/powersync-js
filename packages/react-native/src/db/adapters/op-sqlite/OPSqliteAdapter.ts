@@ -5,7 +5,7 @@ import { OPSQLiteConnection } from './OPSQLiteConnection';
 /**
  * Adapter for React Native Quick SQLite
  */
-export type OPSQliteAdapterOptions = {
+export type OPSQLiteAdapterOptions = {
   writeConnection: OPSQLiteConnection;
   readConnections: OPSQLiteConnection[];
   name: string;
@@ -16,10 +16,10 @@ enum LockType {
   WRITE = 'write'
 }
 
-export class OPSQliteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   name: string;
   protected locks: Lock;
-  constructor(protected options: OPSQliteAdapterOptions) {
+  constructor(protected options: OPSQLiteAdapterOptions) {
     super();
     this.name = this.options.name;
     // Changes should only occur in the write connection

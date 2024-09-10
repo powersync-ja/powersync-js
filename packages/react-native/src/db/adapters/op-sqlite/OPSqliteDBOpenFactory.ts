@@ -1,6 +1,6 @@
 import { DB, open } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
-import { OPSQliteDBAdapter } from './OPSqliteAdapter';
+import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 
 const READ_CONNECTIONS = 5;
@@ -19,11 +19,50 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       //   location: this.options.dbLocation
     });
 
-    DB.loadExtension('powersync-sqlite-core', 'sqlite3_powersync_init');
+    DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
 
-    return new OPSQliteDBAdapter({
+    console.log(DB.execute('SELECT powersync_rs_version()'));
+
+    // TODO setup WAL and read mode
+    let statements: string[] = [];
+
+    statements.push('PRAGMA busy_timeout = 30000');
+
+    statements.push('PRAGMA journal_mode = WAL');
+
+    let defaultJournalSize = 6 * 1024 * 1024;
+
+    statements.push(`PRAGMA journal_size_limit = ${defaultJournalSize}`);
+
+    statements.push('PRAGMA synchronous = NORMAL');
+
+    for (let statement of statements) {
+      for (let tries = 0; tries < 30; tries++) {
+        try {
+          DB.execute(statement);
+          console.log(`Executed statement ${statement}`);
+          break;
+        } catch (e) {
+          console.log('Error executing statement', statement, e);
+          console.log(`${e}`);
+          // if (e instanceof sqlite.SqliteException && e.resultCode === sqlite.SqlError.SQLITE_BUSY && tries < 29) {
+          //   continue;
+          // } else {
+          //   throw e;
+          // }
+        }
+      }
+    }
+
+    let readConnections: OPSQLiteConnection[] = [];
+    for (let i = 0; i < READ_CONNECTIONS; i++) {
+      let conn = this.openConnection();
+      readConnections.push(conn);
+    }
+
+    return new OPSQLiteDBAdapter({
       name: dbFilename,
-      readConnections: new Array().fill(READ_CONNECTIONS).map(() => this.openConnection()),
+      readConnections: readConnections,
       writeConnection: this.openConnection()
     });
   }
@@ -36,9 +75,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       //   location: this.options.dbLocation
     });
 
-    DB.loadExtension('powersync-sqlite-core', 'sqlite3_powersync_init');
-
-    // TODO setup WAL and read mode
+    DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
 
     return new OPSQLiteConnection({
       baseDB: DB

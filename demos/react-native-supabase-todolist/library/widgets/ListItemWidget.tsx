@@ -9,8 +9,8 @@ export interface ListItemWidgetProps {
   onDelete?: () => void;
 }
 
-export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
-  const { title, description, onDelete, onPress } = props;
+export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, description, onPress, onDelete }) => {
+  // const { title, description, onDelete, onPress } = props;
 
   return (
     <View style={{ padding: 10 }}>
@@ -35,11 +35,10 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               );
             }}
           />
-        }
-      >
+        }>
         <Icon name="format-list-checks" type="material-community" color="grey" />
         <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title>{title}</ListItem.Title>
+          <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
           <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
         </ListItem.Content>
 
