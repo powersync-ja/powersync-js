@@ -1,5 +1,5 @@
 {
-  "name": "react-native-supabase-todolist",
+  "name": "react-native-web-supabase-todolist",
   "version": "0.0.1",
   "main": "./index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/metro-runtime": "^3.2.1",
     "@expo/vector-icons": "^14.0.0",
-    "@journeyapps/react-native-quick-sqlite": "^1.1.7",
+    "@journeyapps/react-native-quick-sqlite": "^1.3.0",
     "@powersync/attachments": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",

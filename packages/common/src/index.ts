@@ -15,7 +15,7 @@ export * from './client/sync/bucket/OplogEntry';
 export * from './client/sync/stream/AbstractRemote';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation';
 export * from './client/sync/stream/streaming-sync-types';
-export { MAX_OP_ID } from './client/constants'
+export { MAX_OP_ID } from './client/constants';
 
 export * from './db/crud/SyncStatus';
 export * from './db/crud/UploadQueueStatus';
@@ -23,15 +23,14 @@ export * from './db/schema/Schema';
 export * from './db/schema/Table';
 export * from './db/schema/Index';
 export * from './db/schema/IndexedColumn';
+export * from './db/schema/Column';
+export * from './db/schema/TableV2';
 export * from './db/crud/SyncStatus';
 export * from './db/crud/UploadQueueStatus';
 export * from './db/DBAdapter';
-export * from './db/Column';
-export * from './db/schema/TableV2';
 
 export * from './utils/AbortOperation';
 export * from './utils/BaseObserver';
-export * from './utils/strings';
 export * from './utils/DataStream';
 export * from './utils/parseQuery';
 

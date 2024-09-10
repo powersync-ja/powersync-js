@@ -144,6 +144,22 @@ describe('useQuery', () => {
     expect(isLoading.value).toEqual(false);
   });
 
+  it('should execute compilable queries', async () => {
+    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
+
+    const [{ isLoading, data }] = withSetup(() =>
+      useQuery({
+        execute: () => [{ test: 'custom' }] as any,
+        compile: () => ({ sql: 'SELECT * from lists', parameters: [] })
+      })
+    );
+
+    expect(isLoading.value).toEqual(true);
+    await flushPromises();
+    expect(isLoading.value).toEqual(false);
+    expect(data.value[0].test).toEqual('custom');
+  });
+
   it('should set error for compilable query on useQuery parameters', async () => {
     vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
 

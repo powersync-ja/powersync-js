@@ -1,5 +1,25 @@
 # @powersync/web
 
+## 1.7.0
+
+### Minor Changes
+
+- b1a76b3: Fixed SSR Mode detection for DB adapters. Removed the potential for SSR Web Streamining implementations from to perform syncing operations.
+- 447f979: Use wa-sqlite 0.3.0 / powersync-sqlite-core 0.2.0.
+
+### Patch Changes
+
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
 ## 1.6.0
 
 ### Minor Changes

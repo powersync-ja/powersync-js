@@ -1,10 +1,34 @@
 import { describe, it, expect } from 'vitest';
-import { TableV2 } from '../../../src/db/schema/TableV2';
+import { Table } from '../../../src/db/schema/Table';
 import { column, Column, ColumnType } from '../../../src/db/schema/Column';
+import { Index } from '../../../src/db/schema/Index';
+import { IndexedColumn } from '../../../src/db/schema/IndexedColumn';
 
-describe('TableV2', () => {
-  it('should create a table', () => {
-    const table = new TableV2(
+describe('Table', () => {
+  it('should create a table with V1 syntax', () => {
+    const table = new Table({
+      name: 'users',
+      columns: [
+        new Column({ name: 'name', type: ColumnType.TEXT }),
+        new Column({ name: 'age', type: ColumnType.INTEGER })
+      ],
+      indexes: [
+        new Index({
+          name: 'profile_id',
+          columns: [new IndexedColumn({ name: 'age' })]
+        })
+      ]
+    });
+
+    expect(table.name).toBe('users');
+    expect(table.columns.length).toBe(2);
+    expect(table.columns[0].name).toBe('name');
+    expect(table.columns[1].name).toBe('age');
+    expect(table.indexes[0].name).toBe('profile_id');
+  });
+
+  it('should create a table with V2 syntax', () => {
+    const table = new Table(
       {
         name: column.text,
         age: column.integer
@@ -20,7 +44,7 @@ describe('TableV2', () => {
   });
 
   it('should create a local-only table', () => {
-    const table = new TableV2(
+    const table = new Table(
       {
         data: column.text
       },
@@ -32,7 +56,7 @@ describe('TableV2', () => {
   });
 
   it('should create an insert-only table', () => {
-    const table = new TableV2(
+    const table = new Table(
       {
         data: column.text
       },
@@ -44,13 +68,13 @@ describe('TableV2', () => {
   });
 
   it('should create correct internal name', () => {
-    const normalTable = new TableV2({
+    const normalTable = new Table({
       data: column.text
     });
 
     expect(normalTable.internalName).toBe('ps_data__');
 
-    const localTable = new TableV2(
+    const localTable = new Table(
       {
         data: column.text
       },
@@ -61,7 +85,7 @@ describe('TableV2', () => {
   });
 
   it('should generate correct JSON representation', () => {
-    const table = new TableV2(
+    const table = new Table(
       {
         name: column.text,
         age: column.integer
@@ -88,7 +112,7 @@ describe('TableV2', () => {
   });
 
   it('should handle descending index', () => {
-    const table = new TableV2(
+    const table = new Table(
       {
         name: column.text,
         age: column.integer
@@ -105,7 +129,7 @@ describe('TableV2', () => {
   describe("validate", () => {
     it('should throw an error for invalid view names', () => {
       expect(() => {
-        new TableV2(
+        new Table(
           {
             data: column.text
           },
@@ -116,7 +140,7 @@ describe('TableV2', () => {
 
     it('should throw an error for custom id columns', () => {
       expect(() => {
-        new TableV2({
+        new Table({
           id: column.text
         }).validate();
       }).toThrow('id column is automatically added, custom id columns are not supported');
@@ -128,13 +152,13 @@ describe('TableV2', () => {
         columns[`column${i}`] = column.text;
       }
 
-      expect(() => new TableV2(columns).validate()).toThrowError('Table has too many columns. The maximum number of columns is 63.');
+      expect(() => new Table(columns).validate()).toThrowError('Table has too many columns. The maximum number of columns is 63.');
     });
 
     it('should throw an error if an id column is provided', () => {
       expect(
         () =>
-          new TableV2({
+          new Table({
             id: column.text,
             name: column.text
           }).validate()
@@ -144,7 +168,7 @@ describe('TableV2', () => {
     it('should throw an error if a column name contains invalid SQL characters', () => {
       expect(
         () =>
-          new TableV2({
+          new Table({
             '#invalid-name': column.text
           }).validate()
       ).toThrowError('Invalid characters in column name: #invalid-name');

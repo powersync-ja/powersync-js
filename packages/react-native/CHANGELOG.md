@@ -1,5 +1,29 @@
 # @powersync/react-native
 
+## 1.12.0
+
+### Minor Changes
+
+- 447f979: Use react-native-quick-sqlite 1.3.0 / powersync-sqlite-core 0.2.1.
+
+### Patch Changes
+
+- b4d64f0: Updated crypto.js vendor file to include fast-base64-decode dependency instead of bundling it.
+- 892e172: fixed Flipper warning still showing if an HTTP request rejected due to an error.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [a65cd8c]
+- Updated dependencies [c04ecfc]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+  - @powersync/react@1.4.1
+
 ## 1.11.0
 
 ### Minor Changes

@@ -23,6 +23,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
   private updateListener: () => void;
+  private _clientId?: Promise<string>;
 
   /**
    * Count up, and do a compact on startup.
@@ -62,9 +63,22 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     this.updateListener?.();
   }
 
+  async _getClientId() {
+    const row = await this.db.get<{ client_id: string }>('SELECT powersync_client_id() as client_id');
+    return row['client_id'];
+  }
+
+  getClientId() {
+    if (this._clientId == null) {
+      this._clientId = this._getClientId();
+    }
+    return this._clientId!;
+  }
+
   getMaxOpId() {
     return MAX_OP_ID;
   }
+
   /**
    * Reset any caches.
    */
@@ -103,9 +117,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
    */
   private async deleteBucket(bucket: string) {
     await this.writeTransaction(async (tx) => {
-      await tx.execute(
-          'INSERT INTO powersync_operations(op, data) VALUES(?, ?)',
-          ['delete_bucket', bucket]);
+      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', ['delete_bucket', bucket]);
     });
 
     this.logger.debug('done deleting bucket');
@@ -116,8 +128,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     if (this._hasCompletedSync) {
       return true;
     }
-    const r = await this.db.execute(`SELECT name, last_applied_op FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1`);
-    const completed = !!r.rows?.length;
+    const r = await this.db.get<{ synced_at: string | null }>(`SELECT powersync_last_synced_at() as synced_at`);
+    const completed = r.synced_at != null;
     if (completed) {
       this._hasCompletedSync = true;
     }
@@ -219,12 +231,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   private async deletePendingBuckets() {
     if (this.pendingBucketDeletes !== false) {
       await this.writeTransaction(async (tx) => {
-        await tx.execute(
-          'DELETE FROM ps_oplog WHERE bucket IN (SELECT name FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op)'
-        );
-        await tx.execute(
-          'DELETE FROM ps_buckets WHERE pending_delete = 1 AND last_applied_op = last_op AND last_op >= target_op'
-        );
+        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['delete_pending_buckets', '']);
       });
       // Executed once after start-up, and again when there are pending deletes.
       this.pendingBucketDeletes = false;
@@ -284,7 +291,9 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         return false;
       }
 
-      const response = await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [opId]);
+      const response = await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+        opId
+      ]);
       this.logger.debug(['[updateLocalTarget] Response from updating target_op ', JSON.stringify(response)]);
       return true;
     });
@@ -333,10 +342,14 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
           if (writeCheckpoint) {
             const crudResult = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
             if (crudResult.rows?.length) {
-              await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [writeCheckpoint]);
+              await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+                writeCheckpoint
+              ]);
             }
           } else {
-            await tx.execute("UPDATE ps_buckets SET target_op = ? WHERE name='$local'", [this.getMaxOpId()]);
+            await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
+              this.getMaxOpId()
+            ]);
           }
         });
       }

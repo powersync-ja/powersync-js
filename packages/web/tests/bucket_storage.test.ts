@@ -338,22 +338,13 @@ describe('Bucket Storage', () => {
             OplogEntry.fromRow({
               op_id: '1',
               op: new OpType(OpTypeEnum.MOVE).toJSON(),
-              checksum: 1,
-              data: '{"target": "3"}'
+              checksum: 1
             })
           ],
           false
         )
       ])
     );
-
-    // At this point, we have target: 3, but don't have that op yet, so we cannot sync.
-    const result = await bucketStorage.syncLocalDatabase({
-      last_op_id: '2',
-      buckets: [{ bucket: 'bucket1', checksum: 1 }]
-    });
-    // Checksum passes, but we don't have a complete checkpoint
-    expect(result).deep.equals({ ready: false, checkpointValid: true });
 
     await bucketStorage.saveSyncData(new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_3], false)]));
 
