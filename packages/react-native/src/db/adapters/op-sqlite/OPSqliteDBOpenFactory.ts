@@ -2,13 +2,20 @@ import { DB, open } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
+import { SqliteOptions } from './SqliteOptions';
+
+export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
+  sqliteOptions?: SqliteOptions;
+}
 
 const READ_CONNECTIONS = 5;
+const DEFAULT_JOURNAL_SIZE = 6 * 1024 * 1024;
 
 export class OPSqliteOpenFactory implements SQLOpenFactory {
-  constructor(protected options: SQLOpenOptions) {}
+  constructor(protected options: OPSQLiteOpenFactoryOptions) {}
 
   openDB(): DBAdapter {
+    const sqliteOptions = this.options.sqliteOptions ?? new SqliteOptions();
     const { dbFilename } = this.options;
     const openOptions = { location: this.options.dbLocation };
     console.log('opening', dbFilename);
@@ -16,30 +23,36 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     let DB: DB;
     DB = open({
       name: dbFilename
-      //   location: this.options.dbLocation
+      // location: this.options.dbLocation
     });
 
     DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
 
     console.log(DB.execute('SELECT powersync_rs_version()'));
 
-    // TODO setup WAL and read mode
+    // TODO setup read mode
     let statements: string[] = [];
 
-    statements.push('PRAGMA busy_timeout = 30000');
+    if (sqliteOptions.lockTimeout != null) {
+      statements.push(`PRAGMA busy_timeout = ${sqliteOptions.lockTimeout * 1000}`);
+    }
 
-    statements.push('PRAGMA journal_mode = WAL');
+    if (sqliteOptions.journalMode != null) {
+      statements.push(`PRAGMA journal_mode = ${sqliteOptions.journalMode}`);
+    }
 
-    let defaultJournalSize = 6 * 1024 * 1024;
+    if (sqliteOptions.journalSizeLimit != null) {
+      statements.push(`PRAGMA journal_size_limit = ${sqliteOptions.journalSizeLimit}`);
+    }
 
-    statements.push(`PRAGMA journal_size_limit = ${defaultJournalSize}`);
-
-    statements.push('PRAGMA synchronous = NORMAL');
+    if (sqliteOptions.synchronous != null) {
+      statements.push(`PRAGMA synchronous = ${sqliteOptions.synchronous}`);
+    }
 
     for (let statement of statements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
-          let res = DB.execute(statement);
+          DB.execute(statement);
           break;
         } catch (e) {
           //TODO better error handling for SQLITE_BUSY(5)
@@ -74,6 +87,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       //   location: this.options.dbLocation
     });
 
+    //Load extension for all connections
     DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
 
     return new OPSQLiteConnection({

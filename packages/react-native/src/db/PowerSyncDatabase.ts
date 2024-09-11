@@ -33,6 +33,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * default SQLite open factory.
    */
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
+    //TODO switch between RNQS and OPSQLite based on options
     const defaultFactory = new OPSqliteOpenFactory(options.database);
     return defaultFactory.openDB();
   }
