@@ -68,23 +68,25 @@ The example below demonstrates how to configure the DB and sync workers:
 ```javascript
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
+
   // You can specify a path to the db worker
   worker: '/@powersync/worker/WASQLiteDB.umd.js'
 
   // Or provide a factory function to create the worker.
   // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-  // worker: (flags) => {
-  //   if (flags?.enableMultiTabs) {
+  // worker: (options) => {
+  //   if (options?.flags?.enableMultiTabs) {
   //     return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-  //       name: `shared-DB-worker-sqlite.db`
-  //     }).port;
+  //       name: `shared-DB-worker-${options?.dbFilename}`
+  //     });
   //   } else {
   //     return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-  //       name: `DB-worker-sqlite.db`
+  //       name: `DB-worker-${options?.dbFilename}`
   //     });
   //   }
   // }
 });
+
 this.powersync = new PowerSyncDatabaseWeb({
   schema: AppSchema,
   database: factory,
@@ -94,10 +96,11 @@ this.powersync = new PowerSyncDatabaseWeb({
 
     // Or provide a factory function to create the worker.
     // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-    // worker: () =>
-    //   new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
-    //     name: `shared-sync-sqlite.db`
-    //   }).port
+    // worker: (options) => {
+    //   return new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
+    //     name: `shared-sync-${options?.dbFilename}`
+    //   });
+    // }
   }
 });
 ```
