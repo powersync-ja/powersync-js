@@ -1,4 +1,4 @@
-export class SqliteOptions {
+export interface SqliteOptions {
   /**
    * SQLite journal mode. Defaults to [SqliteJournalMode.wal].
    */
@@ -18,25 +18,11 @@ export class SqliteOptions {
   journalSizeLimit?: number;
 
   /**
-   * Timeout in seconds waiting for locks to be released by other connections.
+   * Timeout in milliseconds waiting for locks to be released by other connections.
    * Defaults to 30 seconds.
    * Set to null or zero to fail immediately when the database is locked.
    */
-  lockTimeout?: number;
-
-  constructor(
-    options: {
-      journalMode?: SqliteJournalMode;
-      journalSizeLimit?: number;
-      synchronous?: SqliteSynchronous;
-      lockTimeout?: number;
-    } = {}
-  ) {
-    this.journalMode = options.journalMode ?? SqliteJournalMode.wal;
-    this.journalSizeLimit = options.journalSizeLimit ?? 6 * 1024 * 1024;
-    this.synchronous = options.synchronous ?? SqliteSynchronous.normal;
-    this.lockTimeout = options.lockTimeout ?? 30;
-  }
+  lockTimeoutMs?: number;
 }
 
 // SQLite journal mode. Set on the primary connection.
@@ -59,3 +45,10 @@ enum SqliteSynchronous {
   full = 'FULL',
   off = 'OFF'
 }
+
+export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
+  journalMode: SqliteJournalMode.wal,
+  synchronous: SqliteSynchronous.normal,
+  journalSizeLimit: 6 * 1024 * 1024,
+  lockTimeoutMs: 30_000
+};

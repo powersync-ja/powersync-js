@@ -2,7 +2,7 @@ import { DB, open } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
-import { SqliteOptions } from './SqliteOptions';
+import { DEFAULT_SQLITE_OPTIONS, SqliteOptions } from './SqliteOptions';
 
 export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
   sqliteOptions?: SqliteOptions;
@@ -11,39 +11,30 @@ export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
 const READ_CONNECTIONS = 5;
 
 export class OPSqliteOpenFactory implements SQLOpenFactory {
-  constructor(protected options: OPSQLiteOpenFactoryOptions) {}
+  private sqliteOptions: Required<SqliteOptions>;
+
+  constructor(protected options: OPSQLiteOpenFactoryOptions) {
+    this.sqliteOptions = { ...DEFAULT_SQLITE_OPTIONS, ...this.options.sqliteOptions };
+  }
 
   openDB(): DBAdapter {
-    const sqliteOptions = this.options.sqliteOptions ?? new SqliteOptions();
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.sqliteOptions;
     const { dbFilename, dbLocation } = this.options;
     console.log('opening', dbFilename);
 
-    let DB: DB;
-    DB = open({
+    const DB = open({
       name: dbFilename
       // location: dbLocation fails when undefined
     });
 
-    // TODO setup read mode
-    let statements: string[] = [];
+    const statements: string[] = [
+      `PRAGMA busy_timeout = ${lockTimeoutMs}`,
+      `PRAGMA journal_mode = ${journalMode}`,
+      `PRAGMA journal_size_limit = ${journalSizeLimit}`,
+      `PRAGMA synchronous = ${synchronous}`
+    ];
 
-    if (sqliteOptions.lockTimeout != null) {
-      statements.push(`PRAGMA busy_timeout = ${sqliteOptions.lockTimeout * 1000}`);
-    }
-
-    if (sqliteOptions.journalMode != null) {
-      statements.push(`PRAGMA journal_mode = ${sqliteOptions.journalMode}`);
-    }
-
-    if (sqliteOptions.journalSizeLimit != null) {
-      statements.push(`PRAGMA journal_size_limit = ${sqliteOptions.journalSizeLimit}`);
-    }
-
-    if (sqliteOptions.synchronous != null) {
-      statements.push(`PRAGMA synchronous = ${sqliteOptions.synchronous}`);
-    }
-
-    for (let statement of statements) {
+    for (const statement of statements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
           DB.execute(statement);
@@ -60,9 +51,10 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       }
     }
 
-    let readConnections: OPSQLiteConnection[] = [];
+    const readConnections: OPSQLiteConnection[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      let conn = this.openConnection();
+      const conn = this.openConnection();
+      DB.execute('PRAGMA query_only = true');
       readConnections.push(conn);
     }
 
@@ -74,11 +66,11 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
   }
 
   protected openConnection() {
-    const { dbFilename } = this.options;
+    const { dbFilename, dbLocation } = this.options;
     const openOptions = { location: this.options.dbLocation };
     const DB = open({
       name: dbFilename
-      //   location: this.options.dbLocation
+      // location: dbLocation fails when undefined
     });
 
     //Load extension for all connections
