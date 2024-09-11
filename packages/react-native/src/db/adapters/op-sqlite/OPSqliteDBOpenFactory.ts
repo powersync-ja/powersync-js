@@ -26,10 +26,6 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       // location: this.options.dbLocation
     });
 
-    DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
-
-    console.log(DB.execute('SELECT powersync_rs_version()'));
-
     // TODO setup read mode
     let statements: string[] = [];
 
