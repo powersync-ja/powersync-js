@@ -57,12 +57,10 @@ With `React Native Web` the workers need to be configured when instantiating `Po
 
 To make it easier to manage these files in the `public` directory, it is recommended to place the contents in a nested directory like `@powersync`.
 
-A helper script is available [here](./copy-files.js) to automate the copying process. It will copy the contents to `/public/@powersync` and the workers will be available at `/public/@powersync/worker`.
-
-It can be run with:
+You can run the following bash command to automate the copying process. It will copy the contents to `/public/@powersync`.
 
 ```
-node copy-files.js
+mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
 ```
 
 The example below demonstrates how to configure the DB and sync workers:
