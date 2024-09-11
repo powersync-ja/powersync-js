@@ -50,7 +50,7 @@ export interface WebSQLOpenFactoryOptions extends BaseWebSQLOpenOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options?: WebSQLOpenFactoryOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options?: BaseWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 export function isServerSide() {

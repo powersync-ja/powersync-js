@@ -14,7 +14,7 @@ export interface WebStreamingSyncImplementationOptions extends AbstractStreaming
     };
   };
   sync?: {
-    worker?: string | URL | ((flags?: WebSQLFlags) => SharedWorker);
+    worker?: string | URL | ((options?: Partial<BaseWebSQLOpenOptions>) => SharedWorker);
   };
 }
 

@@ -15,7 +15,12 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
-import { DEFAULT_WEB_SQL_FLAGS, resolveWebSQLFlags, WebSQLFlags } from './adapters/web-sql-flags';
+import {
+  BaseWebSQLOpenOptions,
+  DEFAULT_WEB_SQL_FLAGS,
+  resolveWebSQLFlags,
+  WebSQLFlags
+} from './adapters/web-sql-flags';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -42,7 +47,7 @@ export interface WebSyncOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((flags?: WebSQLFlags) => SharedWorker);
+  worker?: string | URL | ((options?: BaseWebSQLOpenOptions) => SharedWorker);
 }
 
 type WithWebSyncOptions<Base> = Base & {

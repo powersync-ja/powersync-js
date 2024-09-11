@@ -98,7 +98,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(options.flags).port;
+        this.messagePort = syncWorker(options).port;
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
