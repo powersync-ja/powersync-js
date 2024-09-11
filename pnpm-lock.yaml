@@ -289,7 +289,7 @@ importers:
         version: 1.2.14(@swc/core@1.6.13)(vite@5.3.5)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.2(rollup@2.79.1)(vite@5.3.5)
+        version: 1.4.2(vite@5.3.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.5)
@@ -407,7 +407,7 @@ importers:
         version: 1.2.14(@swc/core@1.6.13)(vite@5.3.5)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.2(rollup@2.79.1)(vite@5.3.5)
+        version: 1.4.2(vite@5.3.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.5)
@@ -514,7 +514,7 @@ importers:
         version: 5.3.5(sass@1.77.8)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.2(rollup@2.79.1)(vite@5.3.5)
+        version: 1.4.2(vite@5.3.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.5)
@@ -1551,7 +1551,7 @@ importers:
         version: 5.3.5(@types/node@20.14.13)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.2(rollup@2.79.1)(vite@5.3.5)
+        version: 1.4.2(vite@5.3.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.5)
@@ -1712,6 +1712,9 @@ importers:
       p-defer:
         specifier: ^4.0.1
         version: 4.0.1
+      source-map-loader:
+        specifier: ^5.0.0
+        version: 5.0.0(webpack@5.93.0)
       stream-browserify:
         specifier: ^3.0.0
         version: 3.0.0
@@ -1729,7 +1732,7 @@ importers:
         version: 5.3.5(sass@1.77.8)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.2(rollup@2.79.1)(vite@5.3.5)
+        version: 1.4.2(vite@5.3.5)
       vite-plugin-wasm:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.3.5)
@@ -15387,7 +15390,7 @@ packages:
       '@vitest/utils': 1.6.0
       magic-string: 0.30.11
       sirv: 2.0.4
-      vitest: 1.6.0(@types/node@20.14.13)(@vitest/browser@1.6.0)
+      vitest: 1.6.0(@vitest/browser@1.6.0)
       webdriverio: 8.39.1(typescript@5.5.4)
     dev: true
 
@@ -31127,6 +31130,17 @@ packages:
       webpack: 5.92.1(esbuild@0.21.5)
     dev: true
 
+  /source-map-loader@5.0.0(webpack@5.93.0):
+    resolution: {integrity: sha512-k2Dur7CbSLcAH73sBcIkV5xjPV4SzqO1NJ7+XaQl8if3VODDUj3FNchNGpqgJSKbvUfJuhVdv8K2Eu8/TNl2eA==}
+    engines: {node: '>= 18.12.0'}
+    peerDependencies:
+      webpack: ^5.72.1
+    dependencies:
+      iconv-lite: 0.6.3
+      source-map-js: 1.2.0
+      webpack: 5.93.0(webpack-cli@5.1.4)
+    dev: true
+
   /source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
     dependencies:
@@ -33348,6 +33362,20 @@ packages:
       - rollup
     dev: true
 
+  /vite-plugin-top-level-await@1.4.2(vite@5.3.5):
+    resolution: {integrity: sha512-Lz9ZGlDEqLpIJ/NU3toXSUrjmovlJf9qV/LNNa5RB2NYbN3SptfnZEz91//uqahhZtFzL5lKREPwv3YJmlnybg==}
+    peerDependencies:
+      vite: '>=2.8'
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.1)
+      '@swc/core': 1.7.3
+      uuid: 10.0.0
+      vite: 5.3.5(sass@1.77.8)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+    dev: true
+
   /vite-plugin-vuetify@2.0.3(vite@5.3.5)(vue@3.4.21)(vuetify@3.6.8):
     resolution: {integrity: sha512-HbYajgGgb/noaVKNRhnnXIiQZrNXfNIeanUGAwXgOxL6h/KULS40Uf51Kyz8hNmdegF+DwjgXXI/8J1PNS83xw==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -33370,7 +33398,7 @@ packages:
     peerDependencies:
       vite: ^2 || ^3 || ^4 || ^5
     dependencies:
-      vite: 5.3.5(@types/node@20.14.13)
+      vite: 5.3.5(sass@1.77.8)
     dev: true
 
   /vite@5.3.2(@types/node@20.14.13)(less@4.2.0)(sass@1.77.6)(terser@5.29.2):
