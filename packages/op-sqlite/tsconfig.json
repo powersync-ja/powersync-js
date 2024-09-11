@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "jsx": "react",
+    "rootDir": "src",
+    "outDir": "./lib",
+    "strictNullChecks": true
+  },
+  "references": [
+    {
+      "path": "../common"
+    }
+  ]
+}

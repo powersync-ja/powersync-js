@@ -1,11 +1,7 @@
 {
-  "name": "@powersync/react-native",
-  "version": "1.9.0",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "description": "PowerSync - sync Postgres with SQLite in your React Native app for offline-first and real-time data",
+  "name": "@powersync/react-native-op-sqlite",
+  "version": "1.0.0",
+  "description": "OPSQLite adapter",
   "main": "./dist/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -21,27 +17,20 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "POWERSYNC",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.15.0",
-    "react": "*",
-    "react-native": "*"
+    "@powersync/common": "workspace:^1.15.0"
   },
   "dependencies": {
     "@op-engineering/op-sqlite": "^7.1.0",
-    "@journeyapps/react-native-quick-sqlite": "^1.3.0",
-    "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*",
-    "@powersync/react-native-op-sqlite": "workspace:*",
-    "async-mutex": "^0.5.0"
+    "@powersync/common": "workspace:*"
   },
   "devDependencies": {
-    "@craftzdog/react-native-buffer": "^6.0.5",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-inject": "^5.0.5",
@@ -49,17 +38,8 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/async-lock": "^1.4.0",
-    "async-lock": "^1.4.0",
-    "bson": "^6.6.0",
-    "fast-base64-decode": "^1.0.0",
-    "react": "18.2.0",
-    "react-native": "0.72.4",
-    "react-native-fetch-api": "^3.0.0",
     "rollup": "4.14.3",
-    "text-encoding": "^0.7.0",
-    "typescript": "^5.5.3",
-    "web-streams-polyfill": "3.2.1"
+    "typescript": "^5.5.3"
   },
   "keywords": [
     "data sync",
@@ -67,5 +47,6 @@
     "sqlite",
     "real-time data stream",
     "live data"
-  ]
+  ],
+  "private": true
 }

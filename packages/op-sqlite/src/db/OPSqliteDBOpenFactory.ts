@@ -9,21 +9,19 @@ export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
 }
 
 const READ_CONNECTIONS = 5;
-const DEFAULT_JOURNAL_SIZE = 6 * 1024 * 1024;
 
 export class OPSqliteOpenFactory implements SQLOpenFactory {
   constructor(protected options: OPSQLiteOpenFactoryOptions) {}
 
   openDB(): DBAdapter {
     const sqliteOptions = this.options.sqliteOptions ?? new SqliteOptions();
-    const { dbFilename } = this.options;
-    const openOptions = { location: this.options.dbLocation };
+    const { dbFilename, dbLocation } = this.options;
     console.log('opening', dbFilename);
 
     let DB: DB;
     DB = open({
       name: dbFilename
-      // location: this.options.dbLocation
+      // location: dbLocation fails when undefined
     });
 
     // TODO setup read mode
