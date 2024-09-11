@@ -27,7 +27,7 @@ npm-debug.*
 *.pem
 
 # local env files
-.env*.local
+.env*.local*
 
 # typescript
 *.tsbuildinfo

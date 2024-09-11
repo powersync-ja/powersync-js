@@ -35,9 +35,13 @@ bucket_definitions:
 
 ## Configure The App
 
-Replace the necessary credentials in the [.env](./.env) file.
-Generally, the `.env` file is used for storing common environment variables shared across all instances of the application, while `.env.local` is for overriding or providing environment-specific configurations, particularly for local development.
-As `.env.local` is normally not checked into source control (this project has a git-ignore rule), you can copy `.env`, name it `.env.local`, and then configure as needed.
+Set up the Environment variables: Copy the `.env.local.template` file:
+
+```bash
+cp .env.local.template .env.local
+```
+
+And then edit `.env.local` to insert your credentials.
 
 ### EAS Build configuration
 
