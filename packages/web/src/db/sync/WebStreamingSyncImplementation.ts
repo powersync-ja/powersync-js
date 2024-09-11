@@ -10,11 +10,11 @@ export interface WebStreamingSyncImplementationOptions extends AbstractStreaming
   flags?: WebSQLFlags;
   database?: {
     options: {
-      worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort | Worker);
+      worker?: string | URL | ((flags?: WebSQLFlags) => Worker | SharedWorker);
     };
   };
   sync?: {
-    worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort);
+    worker?: string | URL | ((flags?: WebSQLFlags) => SharedWorker);
   };
 }
 

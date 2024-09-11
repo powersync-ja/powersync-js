@@ -43,3 +43,12 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
 export function getWorkerDatabaseOpener(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
   return Comlink.wrap<OpenDB>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
 }
+
+export function resolveWorkerDatabasePortFactory(worker: () => Worker | SharedWorker) {
+  const workerInstance = worker();
+  return isSharedWorker(workerInstance) ? workerInstance.port : workerInstance;
+}
+
+export function isSharedWorker(worker: Worker | SharedWorker): worker is SharedWorker {
+  return 'port' in worker;
+}

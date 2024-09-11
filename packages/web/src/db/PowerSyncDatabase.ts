@@ -40,9 +40,9 @@ export interface WebSyncOptions {
    * Allows you to override the default sync worker.
    *
    * You can either provide a path to the worker script
-   * or a factory method that creates a worker and returns its MessagePort.
+   * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort);
+  worker?: string | URL | ((flags?: WebSQLFlags) => SharedWorker);
 }
 
 type WithWebSyncOptions<Base> = Base & {

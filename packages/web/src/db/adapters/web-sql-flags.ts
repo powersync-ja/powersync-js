@@ -46,9 +46,9 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * Allows you to override the default wasqlite db worker.
    *
    * You can either provide a path to the worker script
-   * or a factory method that creates a worker and returns its MessagePort.
+   * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((flags?: WebSQLFlags) => MessagePort | Worker);
+  worker?: string | URL | ((flags?: WebSQLFlags) => Worker | SharedWorker);
 }
 
 export function isServerSide() {

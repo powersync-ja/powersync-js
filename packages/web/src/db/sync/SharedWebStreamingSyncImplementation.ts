@@ -1,6 +1,6 @@
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
+import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../worker/db/open-worker-database';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
@@ -98,7 +98,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(options.flags);
+        this.messagePort = syncWorker(options.flags).port;
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
@@ -127,10 +127,12 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
 
+    const dbWorker = options.database?.options?.worker;
+
     const dbOpenerPort =
-      typeof options.database?.options?.worker === 'function'
-        ? (options.database?.options?.worker(options.flags) as MessagePort)
-        : (openWorkerDatabasePort(this.options.identifier!, true, options.database?.options?.worker) as MessagePort);
+      typeof dbWorker === 'function'
+        ? (resolveWorkerDatabasePortFactory(() => dbWorker(options.flags)) as MessagePort)
+        : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
 
     const flags = { ...this.webOptions.flags, workers: undefined };
 
