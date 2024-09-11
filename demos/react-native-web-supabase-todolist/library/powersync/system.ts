@@ -1,6 +1,5 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
 import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
 import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory } from '@powersync/web';
@@ -37,36 +36,45 @@ export class System {
     } else {
       const factory = new WASQLiteOpenFactory({
         dbFilename: 'sqlite.db',
+        flags: {
+          // enableMultiTabs: true
+          // disableSSRWarning: true
+        },
         // You can specify a path to the db worker
-        worker: '/@powersync/worker/WASQLiteDB.umd.js'
+        // worker: '/@powersync/worker/WASQLiteDB.umd.js'
 
         // Or provide a factory function to create the worker.
         // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-        // worker: (flags) => {
-        //   if (flags?.enableMultiTabs) {
-        //     return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-        //       name: `shared-DB-worker-sqlite.db`
-        //     }).port;
-        //   } else {
-        //     return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
-        //       name: `DB-worker-sqlite.db`
-        //     });
-        //   }
-        // }
+        worker: (options) => {
+          console.log(options);
+          // if (flags?.enableMultiTabs) {
+          return new SharedWorker(`/@powersync/worker/WASQLiteDB.umd.js`, {
+            name: `shared-DB-worker-sqlite.db`
+          });
+          // } else {
+          //   return new Worker(`/@powersync/worker/WASQLiteDB.umd.js`, {
+          //     name: `DB-worker-sqlite.db`
+          //   });
+          // }
+        }
       });
       this.powersync = new PowerSyncDatabaseWeb({
         schema: AppSchema,
         database: factory,
+        flags: {
+          enableMultiTabs: false,
+          disableSSRWarning: true
+        },
         sync: {
           // You can specify a path to the sync worker
-          worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
+          // worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
 
           // Or provide a factory function to create the worker.
           // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
-          // worker: () =>
-          //   new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
-          //     name: `shared-sync-sqlite.db`
-          //   }).port
+          worker: () =>
+            new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
+              name: `shared-sync-sqlite.db`
+            })
         }
       });
     }

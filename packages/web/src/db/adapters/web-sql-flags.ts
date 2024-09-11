@@ -36,19 +36,21 @@ export interface WebSQLFlags {
   ssrMode?: boolean;
 }
 
+export interface BaseWebSQLOpenOptions extends SQLOpenOptions {
+  flags?: WebSQLFlags;
+}
+
 /**
  * Options for opening a Web SQL connection
  */
-export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
-  flags?: WebSQLFlags;
-
+export interface WebSQLOpenFactoryOptions extends BaseWebSQLOpenOptions {
   /**
    * Allows you to override the default wasqlite db worker.
    *
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((flags?: WebSQLFlags) => Worker | SharedWorker);
+  worker?: string | URL | ((options?: WebSQLOpenFactoryOptions) => Worker | SharedWorker);
 }
 
 export function isServerSide() {

@@ -131,7 +131,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     const dbOpenerPort =
       typeof dbWorker === 'function'
-        ? (resolveWorkerDatabasePortFactory(() => dbWorker(options.flags)) as MessagePort)
+        ? (resolveWorkerDatabasePortFactory(() => dbWorker(options)) as MessagePort)
         : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
 
     const flags = { ...this.webOptions.flags, workers: undefined };
