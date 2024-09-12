@@ -1,7 +1,6 @@
 import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
-import throttle from 'lodash/throttle';
 import {
   BatchedUpdateNotification,
   DBAdapter,
@@ -16,6 +15,7 @@ import { Schema } from '../db/schema/Schema';
 import { BaseObserver } from '../utils/BaseObserver';
 import { ControlledExecutor } from '../utils/ControlledExecutor';
 import { mutexRunExclusive } from '../utils/mutex';
+import { throttleTrailing } from '../utils/throttle.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
@@ -898,14 +898,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       await onChange(e);
     });
 
-    const flushTableUpdates = throttle(
+    const flushTableUpdates = throttleTrailing(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
           if (resolvedOptions?.signal?.aborted) return;
           executor.schedule({ changedTables: intersection });
         }),
-      throttleMs,
-      { leading: false, trailing: true }
+      throttleMs
     );
 
     const dispose = this.database.registerListener({

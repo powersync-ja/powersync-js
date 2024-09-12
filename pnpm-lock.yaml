@@ -1307,9 +1307,6 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.14.3)
-      '@types/lodash':
-        specifier: ^4.14.197
-        version: 4.17.7
       '@types/node':
         specifier: ^20.5.9
         version: 20.16.3
@@ -1334,9 +1331,6 @@ importers:
       event-iterator:
         specifier: ^2.0.0
         version: 2.0.0
-      lodash:
-        specifier: ^4.17.21
-        version: 4.17.21
       rollup:
         specifier: 4.14.3
         version: 4.14.3
