@@ -773,15 +773,15 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
+      '@powersync/op-sqlite':
+        specifier: workspace:*
+        version: link:../../packages/op-sqlite
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
       '@powersync/react-native':
         specifier: workspace:*
         version: link:../../packages/react-native
-      '@powersync/react-native-op-sqlite':
-        specifier: workspace:*
-        version: link:../../packages/op-sqlite
       '@react-native-community/masked-view':
         specifier: ^0.1.11
         version: 0.1.11(react-native@0.74.1)(react@18.2.0)
@@ -1413,22 +1413,40 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-    devDependencies:
-      '@jest/globals':
-        specifier: ^29.7.0
-        version: 29.7.0
-      '@types/jest':
-        specifier: ^29.5.12
-        version: 29.5.12
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0
+      chai:
+        specifier: ^4.3.7
+        version: 4.4.1
+      mocha:
+        specifier: ^10.1.0
+        version: 10.7.3
       react:
         specifier: 18.2.0
         version: 18.2.0
       react-native:
         specifier: 0.74.0
         version: 0.74.0(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(react@18.2.0)
+      react-native-restart:
+        specifier: ^0.0.27
+        version: 0.0.27(react-native@0.74.0)(react@18.2.0)
+    devDependencies:
+      '@jest/globals':
+        specifier: ^29.7.0
+        version: 29.7.0
+      '@types/chai':
+        specifier: ^4.3.4
+        version: 4.3.19
+      '@types/chance':
+        specifier: ^1.1.3
+        version: 1.1.6
+      '@types/jest':
+        specifier: ^29.5.12
+        version: 29.5.12
+      '@types/mocha':
+        specifier: ^10.0.1
+        version: 10.0.7
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0
       ts-jest:
         specifier: ^29.2.5
         version: 29.2.5(@babel/core@7.24.5)(jest@29.7.0)(typescript@5.5.4)
@@ -1463,18 +1481,12 @@ importers:
       '@journeyapps/react-native-quick-sqlite':
         specifier: ^1.3.0
         version: 1.3.0(react-native@0.72.4)(react@18.2.0)
-      '@op-engineering/op-sqlite':
-        specifier: ^7.1.0
-        version: 7.4.0(react-native@0.72.4)(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
-      '@powersync/react-native-op-sqlite':
-        specifier: workspace:*
-        version: link:../op-sqlite
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
@@ -9301,7 +9313,7 @@ packages:
     peerDependencies:
       react-native: '*'
     dependencies:
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@expo/multipart-body-parser@1.1.0:
@@ -10336,7 +10348,7 @@ packages:
       react-native: '*'
     dependencies:
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@journeyapps/wa-sqlite@0.1.1:
@@ -11952,16 +11964,6 @@ packages:
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     dev: true
 
-  /@op-engineering/op-sqlite@7.4.0(react-native@0.72.4)(react@18.2.0):
-    resolution: {integrity: sha512-45jSBAG6BPiX/HMqdChNKBnjemD/7X1fDx0xcAzKzoacnT96Z73MtNc7dbS2uE4UYom/mC0gd7eC+4AHovq86Q==}
-    peerDependencies:
-      react: '*'
-      react-native: '>0.73.0'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(react@18.2.0)
-    dev: false
-
   /@op-engineering/op-sqlite@7.4.0(react-native@0.74.0)(react@18.2.0):
     resolution: {integrity: sha512-45jSBAG6BPiX/HMqdChNKBnjemD/7X1fDx0xcAzKzoacnT96Z73MtNc7dbS2uE4UYom/mC0gd7eC+4AHovq86Q==}
     peerDependencies:
@@ -12539,6 +12541,7 @@ packages:
       fast-glob: 3.3.2
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-clean@13.6.6:
     resolution: {integrity: sha512-cBwJTwl0NyeA4nyMxbhkWZhxtILYkbU3TW3k8AXLg+iGphe0zikYMGB3T+haTvTc6alTyEFwPbimk9bGIqkjAQ==}
@@ -12573,6 +12576,7 @@ packages:
       joi: 17.13.1
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-config@13.6.6:
     resolution: {integrity: sha512-mbG425zCKr8JZhv/j11382arezwS/70juWMsn8j2lmrGTrP1cUdW0MF15CCIFtJsqyK3Qs+FTmqttRpq81QfSg==}
@@ -12599,6 +12603,7 @@ packages:
       serve-static: 1.15.0
     transitivePeerDependencies:
       - supports-color
+    dev: false
 
   /@react-native-community/cli-debugger-ui@13.6.6:
     resolution: {integrity: sha512-Vv9u6eS4vKSDAvdhA0OiQHoA7y39fiPIgJ6biT32tN4avHDtxlc6TWZGiqv7g98SBvDWvoVAmdPLcRf3kU+c8g==}
@@ -12653,6 +12658,7 @@ packages:
       yaml: 2.4.2
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-doctor@13.6.6:
     resolution: {integrity: sha512-TWZb5g6EmQe2Ua2TEWNmyaEayvlWH4GmdD9ZC+p8EpKFpB1NpDGMK6sXbpb42TDvwZg5s4TDRplK0PBEA/SVDg==}
@@ -12697,6 +12703,7 @@ packages:
       hermes-profile-transformer: 0.0.6
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-hermes@13.6.6:
     resolution: {integrity: sha512-La5Ie+NGaRl3klei6WxKoOxmCUSGGxpOk6vU5pEGf0/O7ky+Ay0io+zXYUZqlNMi/cGpO7ZUijakBYOB/uyuFg==}
@@ -12730,6 +12737,7 @@ packages:
       logkitty: 0.7.1
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-platform-android@13.6.6:
     resolution: {integrity: sha512-/tMwkBeNxh84syiSwNlYtmUz/Ppc+HfKtdopL/5RB+fd3SV1/5/NPNjMlyLNgFKnpxvKCInQ7dnl6jGHJjeHjg==}
@@ -12754,6 +12762,7 @@ packages:
       ora: 5.4.1
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-platform-apple@13.6.6:
     resolution: {integrity: sha512-bOmSSwoqNNT3AmCRZXEMYKz1Jf1l2F86Nhs7qBcXdY/sGiJ+Flng564LOqvdAlVLTbkgz47KjNKCS2pP4Jg0Mg==}
@@ -12785,6 +12794,7 @@ packages:
       '@react-native-community/cli-platform-apple': 13.6.4
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-platform-ios@13.6.6:
     resolution: {integrity: sha512-vjDnRwhlSN5ryqKTas6/DPkxuouuyFBAqAROH4FR1cspTbn6v78JTZKDmtQy9JMMo7N5vZj1kASU5vbFep9IOQ==}
@@ -12849,6 +12859,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
 
   /@react-native-community/cli-server-api@13.6.6:
     resolution: {integrity: sha512-ZtCXxoFlM7oDv3iZ3wsrT3SamhtUJuIkX2WePLPlN5bcbq7zimbPm2lHyicNJtpcGQ5ymsgpUWPCNZsWQhXBqQ==}
@@ -12899,6 +12910,7 @@ packages:
       sudo-prompt: 9.2.1
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /@react-native-community/cli-tools@13.6.6:
     resolution: {integrity: sha512-ptOnn4AJczY5njvbdK91k4hcYazDnGtEPrqIwEI+k/CTBHNdb27Rsm2OZ7ye6f7otLBqF8gj/hK6QzJs8CEMgw==}
@@ -12926,6 +12938,7 @@ packages:
     resolution: {integrity: sha512-NxGCNs4eYtVC8x0wj0jJ/MZLRy8C+B9l8lY8kShuAcvWTv5JXRqmXjg8uK1aA+xikPh0maq4cc/zLw1roroY/A==}
     dependencies:
       joi: 17.13.1
+    dev: false
 
   /@react-native-community/cli-types@13.6.6:
     resolution: {integrity: sha512-733iaYzlmvNK7XYbnWlMjdE+2k0hlTBJW071af/xb6Bs+hbJqBP9c03FZuYH2hFFwDDntwj05bkri/P7VgSxug==}
@@ -12988,6 +13001,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
 
   /@react-native-community/cli@13.6.6:
     resolution: {integrity: sha512-IqclB7VQ84ye8Fcs89HOpOscY4284VZg2pojHNl8H0Lzd4DadXJWQoxC7zWm8v2f8eyeX2kdhxp2ETD5tceIgA==}
@@ -13034,6 +13048,7 @@ packages:
   /@react-native/assets-registry@0.74.81:
     resolution: {integrity: sha512-ms+D6pJ6l30epm53pwnAislW79LEUHJxWfe1Cu0LWyTTBlg1OFoqXfB3eIbpe4WyH3nrlkQAh0yyk4huT2mCvw==}
     engines: {node: '>=18'}
+    dev: false
 
   /@react-native/assets-registry@0.74.83:
     resolution: {integrity: sha512-2vkLMVnp+YTZYTNSDIBZojSsjz8sl5PscP3j4GcV6idD8V978SZfwFlk8K0ti0BzRs11mzL0Pj17km597S/eTQ==}
@@ -13047,6 +13062,7 @@ packages:
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
+    dev: false
 
   /@react-native/babel-plugin-codegen@0.74.83(@babel/preset-env@7.24.5):
     resolution: {integrity: sha512-+S0st3t4Ro00bi9gjT1jnK8qTFOU+CwmziA7U9odKyWrCoRJrgmrvogq/Dr1YXlpFxexiGIupGut1VHxr+fxJA==}
@@ -13139,6 +13155,7 @@ packages:
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
+    dev: false
 
   /@react-native/babel-preset@0.74.83(@babel/core@7.24.5)(@babel/preset-env@7.24.5):
     resolution: {integrity: sha512-KJuu3XyVh3qgyUer+rEqh9a/JoUxsDOzkJNfRpDyXiAyjDRoVch60X/Xa/NcEQ93iCVHAWs0yQ+XGNGIBCYE6g==}
@@ -13387,6 +13404,7 @@ packages:
       nullthrows: 1.1.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
 
   /@react-native/codegen@0.74.83(@babel/preset-env@7.24.5):
     resolution: {integrity: sha512-GgvgHS3Aa2J8/mp1uC/zU8HuTh8ZT5jz7a4mVMWPw7+rGyv70Ba8uOVBq6UH2Q08o617IATYc+0HfyzAfm4n0w==}
@@ -13482,6 +13500,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
 
   /@react-native/community-cli-plugin@0.74.83(@babel/core@7.24.5)(@babel/preset-env@7.24.5):
     resolution: {integrity: sha512-7GAFjFOg1mFSj8bnFNQS4u8u7+QtrEeflUIDVZGEfBZQ3wMNI5ycBzbBGycsZYiq00Xvoc6eKFC7kvIaqeJpUQ==}
@@ -13535,6 +13554,7 @@ packages:
   /@react-native/debugger-frontend@0.74.81:
     resolution: {integrity: sha512-HCYF1/88AfixG75558HkNh9wcvGweRaSZGBA71KoZj03umXM8XJy0/ZpacGOml2Fwiqpil72gi6uU+rypcc/vw==}
     engines: {node: '>=18'}
+    dev: false
 
   /@react-native/debugger-frontend@0.74.83:
     resolution: {integrity: sha512-RGQlVUegBRxAUF9c1ss1ssaHZh6CO+7awgtI9sDeU0PzDZY/40ImoPD5m0o0SI6nXoVzbPtcMGzU+VO590pRfA==}
@@ -13562,6 +13582,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
 
   /@react-native/dev-middleware@0.74.83:
     resolution: {integrity: sha512-UH8iriqnf7N4Hpi20D7M2FdvSANwTVStwFCSD7VMU9agJX88Yk0D1T6Meh2RMhUu4kY2bv8sTkNRm7LmxvZqgA==}
@@ -13592,6 +13613,7 @@ packages:
   /@react-native/gradle-plugin@0.74.81:
     resolution: {integrity: sha512-7YQ4TLnqfe2kplWWzBWO6k0rPSrWEbuEiRXSJNZQCtCk+t2YX985G62p/9jWm3sGLN4UTcpDXaFNTTPBvlycoQ==}
     engines: {node: '>=18'}
+    dev: false
 
   /@react-native/gradle-plugin@0.74.83:
     resolution: {integrity: sha512-Pw2BWVyOHoBuJVKxGVYF6/GSZRf6+v1Ygc+ULGz5t20N8qzRWPa2fRZWqoxsN7TkNLPsECYY8gooOl7okOcPAQ==}
@@ -13603,6 +13625,7 @@ packages:
   /@react-native/js-polyfills@0.74.81:
     resolution: {integrity: sha512-o4MiR+/kkHoeoQ/zPwt81LnTm6pqdg0wOhU7S7vIZUqzJ7YUpnpaAvF+/z7HzUOPudnavoCN0wvcZPe/AMEyCA==}
     engines: {node: '>=18'}
+    dev: false
 
   /@react-native/js-polyfills@0.74.83:
     resolution: {integrity: sha512-/t74n8r6wFhw4JEoOj3bN71N1NDLqaawB75uKAsSjeCwIR9AfCxlzZG0etsXtOexkY9KMeZIQ7YwRPqUdNXuqw==}
@@ -13621,6 +13644,7 @@ packages:
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
+    dev: false
 
   /@react-native/metro-babel-transformer@0.74.83(@babel/core@7.24.5)(@babel/preset-env@7.24.5):
     resolution: {integrity: sha512-hGdx5N8diu8y+GW/ED39vTZa9Jx1di2ZZ0aapbhH4egN1agIAusj5jXTccfNBwwWF93aJ5oVbRzfteZgjbutKg==}
@@ -13659,6 +13683,7 @@ packages:
 
   /@react-native/normalize-colors@0.74.81:
     resolution: {integrity: sha512-g3YvkLO7UsSWiDfYAU+gLhRHtEpUyz732lZB+N8IlLXc5MnfXHC8GKneDGY3Mh52I3gBrs20o37D5viQX9E1CA==}
+    dev: false
 
   /@react-native/normalize-colors@0.74.83:
     resolution: {integrity: sha512-jhCY95gRDE44qYawWVvhTjTplW1g+JtKTKM3f8xYT1dJtJ8QWv+gqEtKcfmOHfDkSDaMKG0AGBaDTSK8GXLH8Q==}
@@ -13690,6 +13715,7 @@ packages:
       nullthrows: 1.1.1
       react: 18.2.0
       react-native: 0.74.0(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(react@18.2.0)
+    dev: false
 
   /@react-native/virtualized-lists@0.74.83(@types/react@18.2.79)(react-native@0.74.1)(react@18.2.0):
     resolution: {integrity: sha512-rmaLeE34rj7py4FxTod7iMTC7BAsm+HrGA8WxYmEJeyTV7WSaxAkosKoYBz8038mOiwnG9VwA/7FrB6bEQvn1A==}
@@ -13706,7 +13732,7 @@ packages:
       invariant: 2.2.4
       nullthrows: 1.1.1
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@react-native/virtualized-lists@0.74.83(@types/react@18.3.2)(react-native@0.74.1)(react@18.2.0):
@@ -13740,7 +13766,7 @@ packages:
       '@react-navigation/native': 6.1.17(react-native@0.74.1)(react@18.2.0)
       color: 4.2.3
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1)(react@18.2.0)
       react-native-screens: 3.31.1(react-native@0.74.1)(react@18.2.0)
       warn-once: 0.1.1
@@ -13821,7 +13847,7 @@ packages:
       '@react-navigation/elements': 1.3.30(@react-navigation/native@6.1.17)(react-native-safe-area-context@4.10.1)(react-native@0.74.1)(react@18.2.0)
       '@react-navigation/native': 6.1.17(react-native@0.74.1)(react@18.2.0)
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1)(react@18.2.0)
       react-native-screens: 3.31.1(react-native@0.74.1)(react@18.2.0)
       warn-once: 0.1.1
@@ -16676,6 +16702,14 @@ packages:
       '@types/responselike': 1.0.3
     dev: true
 
+  /@types/chai@4.3.19:
+    resolution: {integrity: sha512-2hHHvQBVE2FiSK4eN0Br6snX9MtolHaTo/batnLjlGRhoQzlCL61iVpxoqO7SfFyOw+P/pwv+0zNHzKoGWz9Cw==}
+    dev: true
+
+  /@types/chance@1.1.6:
+    resolution: {integrity: sha512-V+pm3stv1Mvz8fSKJJod6CglNGVqEQ6OyuqitoDkWywEODM/eJd1eSuIp9xt6DrX8BWZ2eDSIzbw1tPCUTvGbQ==}
+    dev: true
+
   /@types/cli-progress@3.11.5:
     resolution: {integrity: sha512-D4PbNRbviKyppS5ivBGyFO29POlySLmA2HyUFE4p5QGazAMM3CwkKWcvTl8gvElSuxRh6FPKL8XmidX873ou4g==}
     dependencies:
@@ -16880,6 +16914,10 @@ packages:
 
   /@types/minimist@1.2.5:
     resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
+    dev: true
+
+  /@types/mocha@10.0.7:
+    resolution: {integrity: sha512-GN8yJ1mNTcFcah/wKEFIJckJx9iJLoMSzWcfRRuxz/Jk+U6KQNnml+etbtxFK8lPjzOw3zp4Ha/kjSst9fsHYw==}
     dev: true
 
   /@types/ms@0.7.34:
@@ -18245,7 +18283,6 @@ packages:
   /ansi-colors@4.1.3:
     resolution: {integrity: sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw==}
     engines: {node: '>=6'}
-    dev: true
 
   /ansi-diff@1.1.1:
     resolution: {integrity: sha512-XnTdFDQzbEewrDx8epWXdw7oqHMvv315vEtfqDiEhhWghIf4++h26c3/FMz7iTLhNrnj56DNIXpbxHZq+3s6qw==}
@@ -18572,7 +18609,6 @@ packages:
 
   /assertion-error@1.1.0:
     resolution: {integrity: sha512-jgsaNduz+ndvGyFt3uSuWqvy4lCnIJiovtouQN5JZHOKCS2QuhEdbcQHFhVksz2N2U9hXJo8odG7ETyWlEeuDw==}
-    dev: true
 
   /ast-types-flow@0.0.8:
     resolution: {integrity: sha512-OH/2E5Fg20h2aPrbe+QL8JZQFko0YZaF+j4mnQ7BGhfavO7OpSLa8a0y9sBwomHdSbkhTS8TQNayBfnW5DwbvQ==}
@@ -19312,6 +19348,10 @@ packages:
       wcwidth: 1.0.1
     dev: true
 
+  /browser-stdout@1.3.1:
+    resolution: {integrity: sha512-qhAVI1+Av2X7qelOfAIYwXONood6XlZE/fXaBSmW/T5SzLAmCgzi+eiWE7fUvbHaeNBQH13UftjpXxsfLkMpgw==}
+    dev: false
+
   /browserslist@4.23.0:
     resolution: {integrity: sha512-QW8HiM1shhT2GuzkvklfjcKDiWFXHOeFCIA/huJPwHsslwcydgk7X+z2zXpEijP98UCY7HbubZt5J2Zgvf0CaQ==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -19636,7 +19676,6 @@ packages:
       loupe: 2.3.7
       pathval: 1.1.1
       type-detect: 4.0.8
-    dev: true
 
   /chalk-template@0.4.0:
     resolution: {integrity: sha512-/ghrgmhfY8RaSdeo43hNXxpoHAtxdbskUHjPpfqUWGttFgycUhYPGx3YZBCnUCvOa7Doivn1IZec3DEGFoMgLg==}
@@ -19696,7 +19735,6 @@ packages:
     resolution: {integrity: sha512-iKEoDYaRmd1mxM90a2OEfWhjsjPpYPuQ+lMYsoxB126+t8fw7ySEO48nmDg5COTjxDI65/Y2OWpeEHk3ZOe8zg==}
     dependencies:
       get-func-name: 2.0.2
-    dev: true
 
   /cheerio-select@2.1.0:
     resolution: {integrity: sha512-9v9kG0LvzrlcungtnJtpGNxY+fzECQKhK4EGJX2vByejiMX84MFNQw4UxPJl3bFbTMw+Dfs37XaIkCwTZfLh4g==}
@@ -21301,6 +21339,11 @@ packages:
     resolution: {integrity: sha512-z2S+W9X73hAUUki+N+9Za2lBlun89zigOyGrsax+KUQ6wKW4ZoWpEYBkGhQjwAjjDCkWxhY0VKEhk8wzY7F5cA==}
     engines: {node: '>=0.10.0'}
 
+  /decamelize@4.0.0:
+    resolution: {integrity: sha512-9iE1PgSik9HeIIw2JO94IidnE3eBoQrFJ3w7sFuzSX4DpmZ3v5sZpUiV5Swcf6mQEF+Y0ru8Neo+p+nyh2J+hQ==}
+    engines: {node: '>=10'}
+    dev: false
+
   /decamelize@6.0.0:
     resolution: {integrity: sha512-Fv96DCsdOgB6mdGl67MT5JaTNKRzrzill5OH5s8bjYJXVlcXyPYGyPsUkWyGV5p1TXI5esYIYMMeDJL0hEIwaA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -21348,7 +21391,6 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       type-detect: 4.0.8
-    dev: true
 
   /deep-extend@0.6.0:
     resolution: {integrity: sha512-LOHxIOaPYdHlJRtCQfDIVZtfw/ufM8+rVj649RIHzcm/vGwQRXFt6OPqIFWsm2XEMrNIEtWR64sY1LEKD2vAOA==}
@@ -21575,6 +21617,11 @@ packages:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
     engines: {node: '>=0.3.1'}
     dev: true
+
+  /diff@5.2.0:
+    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
+    engines: {node: '>=0.3.1'}
+    dev: false
 
   /dir-compare@4.2.0:
     resolution: {integrity: sha512-2xMCmOoMrdQIPHdsTawECdNPwlVFB9zGcz3kuhmBO6U3oU+UQjsue0i8ayLKpgBcm+hcXPMVSGUN9d+pvJ6+VQ==}
@@ -23097,7 +23144,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.24.5)
+      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.25.3)
       expo-constants: 16.0.2(expo@51.0.10)
       invariant: 2.2.4
       md5-file: 3.2.3
@@ -23141,7 +23188,7 @@ packages:
     dependencies:
       '@expo/config': 9.0.1
       '@expo/env': 0.3.0
-      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.24.5)
+      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.25.3)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -23208,7 +23255,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.24.5)
+      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.25.3)
     dev: false
 
   /expo-font@12.0.10(expo@51.0.10):
@@ -23216,7 +23263,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.24.5)
+      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.25.3)
       fontfaceobserver: 2.3.0
     dev: false
 
@@ -23229,7 +23276,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.24.5)
+      expo: 51.0.10(@babel/core@7.24.5)(@babel/preset-env@7.25.3)
     dev: false
 
   /expo-linking@6.3.1(expo@51.0.10):
@@ -24283,7 +24330,6 @@ packages:
 
   /get-func-name@2.0.2:
     resolution: {integrity: sha512-8vXOvuE167CtIc3OyItco7N/dpRtBbYOsPsXCz7X/PMnlGjYjSGuZJgM1Y7mmew7BKf9BqvLX2tnOVy1BBUsxQ==}
-    dev: true
 
   /get-installed-path@2.1.1:
     resolution: {integrity: sha512-Qkn9eq6tW5/q9BDVdMpB8tOHljX9OSP0jRC5TRNVA4qRc839t4g8KQaR8t0Uv0EFVL0MlyG7m/ofjEgAROtYsA==}
@@ -24477,7 +24523,6 @@ packages:
       inherits: 2.0.4
       minimatch: 5.1.6
       once: 1.4.0
-    dev: true
 
   /glob@9.3.5:
     resolution: {integrity: sha512-e1LleDykUz2Iu+MTYdkSsuWX8lvAjAcs0Xef0lNIu0S2wOAzuTxCJtcd9S3cijlwYF18EsU3rzb8jPVobxDh9Q==}
@@ -27348,7 +27393,6 @@ packages:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
     dependencies:
       get-func-name: 2.0.2
-    dev: true
 
   /lower-case@2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
@@ -28876,7 +28920,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
-    dev: true
 
   /minimatch@8.0.4:
     resolution: {integrity: sha512-W0Wvr9HyFXZRGIDgCicunpQ299OKXs9RgZfaukz4qAW/pJhcpUfupc9c+OObPOFueNy8VSrZgEmDtk6Kh4WzDA==}
@@ -29036,6 +29079,33 @@ packages:
       pkg-types: 1.1.0
       ufo: 1.5.3
     dev: true
+
+  /mocha@10.7.3:
+    resolution: {integrity: sha512-uQWxAu44wwiACGqjbPYmjo7Lg8sFrS3dQe7PP2FQI+woptP4vZXSMcfMyFL/e1yFEeEpV4RtyTpZROOKmxis+A==}
+    engines: {node: '>= 14.0.0'}
+    hasBin: true
+    dependencies:
+      ansi-colors: 4.1.3
+      browser-stdout: 1.3.1
+      chokidar: 3.6.0
+      debug: 4.3.7(supports-color@8.1.1)
+      diff: 5.2.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 8.1.0
+      he: 1.2.0
+      js-yaml: 4.1.0
+      log-symbols: 4.1.0
+      minimatch: 5.1.6
+      ms: 2.1.3
+      serialize-javascript: 6.0.2
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      workerpool: 6.5.1
+      yargs: 16.2.0
+      yargs-parser: 20.2.9
+      yargs-unparser: 2.0.0
+    dev: false
 
   /moment@2.30.1:
     resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
@@ -30281,7 +30351,6 @@ packages:
 
   /pathval@1.1.1:
     resolution: {integrity: sha512-Dp6zGqpTdETdR63lehJYPeIOqpiNBNtc7BpWSLrOje7UaIsE5aY92r/AunQA7rsXvet3lrJ3JnZX29UPTKXyKQ==}
-    dev: true
 
   /pe-library@1.0.1:
     resolution: {integrity: sha512-nh39Mo1eGWmZS7y+mK/dQIqg7S1lp38DpRxkyoHf0ZcUs/HDc+yyTjuOtTvSMZHmfSLuSQaX945u05Y2Q6UWZg==}
@@ -31707,7 +31776,7 @@ packages:
       lodash: 4.17.21
       prop-types: 15.8.1
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /react-native-helmet-async@2.0.4(react@18.2.0):
@@ -31792,9 +31861,19 @@ packages:
       convert-source-map: 2.0.0
       invariant: 2.2.4
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /react-native-restart@0.0.27(react-native@0.74.0)(react@18.2.0):
+    resolution: {integrity: sha512-8KScVICrXwcTSJ1rjWkqVTHyEKQIttm5AIMGSK1QG1+RS5owYlE4z/1DykOTdWfVl9l16FIk0w9Xzk9ZO6jxlA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.0(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(react@18.2.0)
     dev: false
 
   /react-native-safe-area-context@4.10.1(react-native@0.74.1)(react@18.2.0):
@@ -31804,7 +31883,7 @@ packages:
       react-native: '*'
     dependencies:
       react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /react-native-safe-area-view@0.14.9(react-native@0.74.1)(react@18.2.0):
@@ -31841,7 +31920,7 @@ packages:
     dependencies:
       react: 18.2.0
       react-freeze: 1.0.4(react@18.2.0)
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0)
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.3)(@types/react@18.2.79)(react@18.2.0)
       warn-once: 0.1.1
     dev: false
 
@@ -32032,6 +32111,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
 
   /react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.24.5)(@types/react@18.2.79)(react@18.2.0):
     resolution: {integrity: sha512-0H2XpmghwOtfPpM2LKqHIN7gxy+7G/r1hwJHKLV6uoyXGC/gCojRtoo5NqyKrWpFC8cqyT6wTYCLuG7CxEKilg==}
@@ -37769,6 +37849,10 @@ packages:
       workbox-core: 7.1.0
     dev: true
 
+  /workerpool@6.5.1:
+    resolution: {integrity: sha512-Fs4dNYcsdpYSAfVxhnl1L5zTksjvOJxtC5hzMNl+1t9B8hTJTdKDyZ5ju7ztgPy+ft9tBFXoOlDNiOT9WUXZlA==}
+    dev: false
+
   /wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
     engines: {node: '>=8'}
@@ -38051,6 +38135,16 @@ packages:
   /yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
+
+  /yargs-unparser@2.0.0:
+    resolution: {integrity: sha512-7pRTIA9Qc1caZ0bZ6RYRGbHJthJWuakf+WmHK0rVeLkNrrGhfoabBNdue6kdINI6r4if7ocq9aD/n7xwKOdzOA==}
+    engines: {node: '>=10'}
+    dependencies:
+      camelcase: 6.3.0
+      decamelize: 4.0.0
+      flat: 5.0.2
+      is-plain-obj: 2.1.0
+    dev: false
 
   /yargs@15.4.1:
     resolution: {integrity: sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==}

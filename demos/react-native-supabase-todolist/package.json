@@ -16,7 +16,7 @@
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",
-    "@powersync/react-native-op-sqlite": "workspace:*",
+    "@powersync/op-sqlite": "workspace:*",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^6.6.3",
     "@react-navigation/native": "^6.0.0",

@@ -2,16 +2,15 @@
   "extends": "../../tsconfig.base",
   "compilerOptions": {
     "baseUrl": "./",
-    "outDir": "./lib",
-    "rootDir": ".",
     "jsx": "react",
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true
+    "outDir": "./lib",
+    "strictNullChecks": true,
+    "declaration": true
   },
   "references": [
     {
       "path": "../common"
     }
   ],
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*"]
 }

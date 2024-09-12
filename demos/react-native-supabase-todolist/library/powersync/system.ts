@@ -15,7 +15,7 @@ import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import Logger from 'js-logger';
-import { OPSqliteOpenFactory } from '@powersync/react-native-op-sqlite';
+import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 
 Logger.useDefaults();
 

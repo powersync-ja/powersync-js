@@ -75,11 +75,34 @@ PODS:
     - hermes-engine/Pre-built (= 0.74.1)
   - hermes-engine/Pre-built (0.74.1)
   - op-sqlite (7.4.0):
-    - powersync-sqlite-core (~> 0.1.7)
     - React
     - React-callinvoker
     - React-Core
-  - powersync-sqlite-core (0.1.8)
+  - powersync-opsqlite (1.0.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - powersync-sqlite-core (~> 0.2.1)
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Codegen
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - powersync-sqlite-core (0.2.1)
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -1010,6 +1033,11 @@ PODS:
     - React-debug
   - react-native-encrypted-storage (4.0.3):
     - React-Core
+  - react-native-quick-sqlite (1.3.0):
+    - powersync-sqlite-core (~> 0.2.1)
+    - React
+    - React-callinvoker
+    - React-Core
   - react-native-safe-area-context (4.10.1):
     - React-Core
   - React-nativeconfig (0.74.1)
@@ -1356,7 +1384,7 @@ DEPENDENCIES:
   - glog (from `../../../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - "op-sqlite (from `../../../node_modules/@op-engineering/op-sqlite`)"
-  - powersync-sqlite-core (~> 0.1.7)
+  - "powersync-opsqlite (from `../node_modules/@powersync/op-sqlite`)"
   - RCT-Folly (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../../../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -1384,6 +1412,7 @@ DEPENDENCIES:
   - React-logger (from `../../../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../../../node_modules/react-native/ReactCommon`)
   - react-native-encrypted-storage (from `../../../node_modules/react-native-encrypted-storage`)
+  - "react-native-quick-sqlite (from `../../../node_modules/@journeyapps/react-native-quick-sqlite`)"
   - react-native-safe-area-context (from `../../../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../../../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../../../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1461,6 +1490,8 @@ EXTERNAL SOURCES:
     :tag: hermes-2024-04-25-RNv0.74.1-b54a3a01c531f4f5f1904cb0770033e8b7153dff
   op-sqlite:
     :path: "../../../node_modules/@op-engineering/op-sqlite"
+  powersync-opsqlite:
+    :path: "../node_modules/@powersync/op-sqlite"
   RCT-Folly:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec"
   RCTDeprecation:
@@ -1511,6 +1542,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native/ReactCommon"
   react-native-encrypted-storage:
     :path: "../../../node_modules/react-native-encrypted-storage"
+  react-native-quick-sqlite:
+    :path: "../../../node_modules/@journeyapps/react-native-quick-sqlite"
   react-native-safe-area-context:
     :path: "../../../node_modules/react-native-safe-area-context"
   React-nativeconfig:
@@ -1591,8 +1624,9 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 16b8530de1b383cdada1476cf52d1b52f0692cbc
-  op-sqlite: 7d8e4d98813a06d1c938868d565ccc81a77a158f
-  powersync-sqlite-core: 9325150c88515df0b5ea992007708588c3f01518
+  op-sqlite: 93397f1a6cc24e9662ee8c0ee5e59466baa06f4a
+  powersync-opsqlite: fe90a95060493238eea75ecf0b7d662327022883
+  powersync-sqlite-core: 38ead13d8b21920cfbc79e9b3415b833574a506d
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: efb313d8126259e9294dc4ee0002f44a6f676aba
   RCTRequired: f49ea29cece52aee20db633ae7edc4b271435562
@@ -1618,6 +1652,7 @@ SPEC CHECKSUMS:
   React-logger: 7e7403a2b14c97f847d90763af76b84b152b6fce
   React-Mapbuffer: 11029dcd47c5c9e057a4092ab9c2a8d10a496a33
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
+  react-native-quick-sqlite: 3d7faa9ac557da507cb8a1684fb78682fefb1cfb
   react-native-safe-area-context: dcab599c527c2d7de2d76507a523d20a0b83823d
   React-nativeconfig: b0073a590774e8b35192fead188a36d1dca23dec
   React-NativeModulesApple: df46ff3e3de5b842b30b4ca8a6caae6d7c8ab09f

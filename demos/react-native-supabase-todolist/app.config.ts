@@ -60,13 +60,13 @@ const config: ExpoConfig = {
         ios: {
           deploymentTarget: '13.4',
           // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
-          newArchEnabled: false,
-          extraPods: [
-            {
-              name: 'powersync-sqlite-core',
-              version: '~> 0.1.6'
-            }
-          ]
+          newArchEnabled: false
+          // extraPods: [
+          //   {
+          //     name: 'powersync-sqlite-core',
+          //     version: '~> 0.1.6'
+          //   }
+          // ]
         },
         android: {
           minSdkVersion: 23,
