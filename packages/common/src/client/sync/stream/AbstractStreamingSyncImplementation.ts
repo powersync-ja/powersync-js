@@ -1,5 +1,3 @@
-import throttle from 'lodash/throttle';
-
 import Logger, { ILogger } from 'js-logger';
 
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
@@ -18,6 +16,7 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types';
+import { throttleLeadingTrailing } from '../../../utils/throttle';
 
 export enum LockType {
   CRUD = 'crud',
@@ -142,16 +141,12 @@ export abstract class AbstractStreamingSyncImplementation
     });
     this.abortController = null;
 
-    this.triggerCrudUpload = throttle(
-      () => {
-        if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
-          return;
-        }
-        this._uploadAllCrud();
-      },
-      this.options.crudUploadThrottleMs,
-      { trailing: true }
-    );
+    this.triggerCrudUpload = throttleLeadingTrailing(() => {
+      if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
+        return;
+      }
+      this._uploadAllCrud();
+    }, this.options.crudUploadThrottleMs!);
   }
 
   async waitForReady() {}
