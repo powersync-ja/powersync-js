@@ -120,7 +120,7 @@ You can run the following bash command to automate the copying process. It will 
 mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
 ```
 
-### 3. Instantite Web Workers
+### 3. Instantiate Web Workers
 The example below demonstrates how to instantiate the workers (PowerSync requires a database and a sync worker) when instantiating `PowerSyncDatabase`. You can either specify a path to the worker (they are available in the `worker` directory of the `dist` contents), or provide a factory function to create the worker. 
 
 ```javascript
@@ -300,13 +300,13 @@ import { prompt } from 'util/prompt';
 />;
 ```
 
-### 5. TypeScript Configuration to allow UMD imports
+### 5. Configure UMD target
 
-A `UMD` version of `@powersync/web` is available at `@powersync/web/umd`.
-To support the version, two changes are required to the project.
+React Native Web requires the UMD target of `@powersync/web` (available at `@powersync/web/umd`).
+To fully support this target version, configure the following in your project:
 
 1. Add `config.resolver.unstable_enablePackageExports = true;` to your `metro.config.js` file.
-2. In the `tsconfig.json` file specify the `moduleResolution` to be `Bundler`.
+2. TypeScript projects: In the `tsconfig.json` file specify the `moduleResolution` to be `Bundler`.
 
 ```json
  "compilerOptions": {
