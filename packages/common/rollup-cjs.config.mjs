@@ -11,10 +11,11 @@ export default (commandLineArgs) => {
   delete commandLineArgs.sourceMap;
 
   return {
+    // esm input is better, even for cjs output
     input: 'lib/index.js',
     output: {
-      file: 'dist/bundle.mjs',
-      format: 'esm',
+      file: 'dist/bundle.cjs',
+      format: 'cjs',
       sourcemap: sourcemap
     },
     plugins: [

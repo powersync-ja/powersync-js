@@ -6,9 +6,18 @@
     "access": "public"
   },
   "description": "API definitions for JourneyApps PowerSync",
-  "main": "dist/index.js",
-  "types": "lib/index.d.ts",
   "type": "module",
+  "main": "dist/bundle.cjs",
+  "module": "dist/bundle.mjs",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/bundle.mjs",
+      "require": "./dist/bundle.cjs",
+      "default": "./dist/bundle.mjs",
+      "types": "./lib/index.d.ts"
+    }
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
@@ -24,8 +33,8 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
+    "build": "tsc -b && rollup -c rollup.config.mjs && rollup -c rollup-cjs.config.mjs",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest"
   },
   "dependencies": {

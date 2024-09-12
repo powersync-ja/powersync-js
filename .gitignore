@@ -1,7 +1,8 @@
 node_modules
 lib
 dist
-tsconfig.tsbuildinfo
+cjs
+*.tsbuildinfo
 .vscode
 .DS_STORE
 .idea

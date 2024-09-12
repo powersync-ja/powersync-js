@@ -5,7 +5,7 @@
     "jsx": "react",
     "types": ["node"],
     "rootDir": "src",
-    "outDir": "./lib/esm",
+    "outDir": "./lib",
     "lib": ["esnext"],
     "declaration": true,
     "module": "node16",
