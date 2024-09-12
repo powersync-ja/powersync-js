@@ -36,28 +36,32 @@ export interface WebSQLFlags {
   ssrMode?: boolean;
 }
 
-export interface BaseWebSQLOpenOptions extends SQLOpenOptions {
-  flags?: WebSQLFlags;
+export type RequiredWebSQLFlags = Required<WebSQLFlags>;
+
+export interface RequiredWebSQLOpenOptions extends SQLOpenOptions {
+  flags: WebSQLFlags;
 }
 
 /**
  * Options for opening a Web SQL connection
  */
-export interface WebSQLOpenFactoryOptions extends BaseWebSQLOpenOptions {
+export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
+  flags?: WebSQLFlags;
+
   /**
    * Allows you to override the default wasqlite db worker.
    *
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options?: BaseWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 export function isServerSide() {
   return typeof window == 'undefined';
 }
 
-export const DEFAULT_WEB_SQL_FLAGS: Required<WebSQLFlags> = {
+export const DEFAULT_WEB_SQL_FLAGS: RequiredWebSQLFlags = {
   broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
@@ -73,7 +77,7 @@ export const DEFAULT_WEB_SQL_FLAGS: Required<WebSQLFlags> = {
   useWebWorker: true
 };
 
-export function resolveWebSQLFlags(flags?: WebSQLFlags): WebSQLFlags {
+export function resolveWebSQLFlags(flags?: WebSQLFlags): RequiredWebSQLFlags {
   const resolvedFlags = {
     ...DEFAULT_WEB_SQL_FLAGS,
     ...(flags ?? {})

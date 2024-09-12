@@ -14,7 +14,7 @@ import Logger, { type ILogger } from 'js-logger';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
-import { BaseWebSQLOpenOptions, WebSQLFlags } from '../web-sql-flags';
+import { RequiredWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
@@ -30,7 +30,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
    */
   workerPort?: MessagePort;
 
-  worker?: string | URL | ((options?: BaseWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 /**
@@ -73,8 +73,8 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.options.dbFilename;
   }
 
-  protected get flags(): WASQLiteFlags {
-    return this.options.flags ?? {};
+  protected get flags(): Required<WASQLiteFlags> {
+    return resolveWebSQLFlags(this.options.flags ?? {});
   }
 
   getWorker() {}
@@ -91,7 +91,14 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       const dbOpener = this.options.workerPort
         ? Comlink.wrap<OpenDB>(this.options.workerPort)
         : typeof optionsDbWorker === 'function'
-          ? Comlink.wrap<OpenDB>(resolveWorkerDatabasePortFactory(() => optionsDbWorker(this.options)))
+          ? Comlink.wrap<OpenDB>(
+              resolveWorkerDatabasePortFactory(() =>
+                optionsDbWorker({
+                  ...this.options,
+                  flags: this.flags
+                })
+              )
+            )
           : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, optionsDbWorker);
 
       this.methods = await dbOpener(this.options.dbFilename);

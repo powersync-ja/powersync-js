@@ -1,9 +1,9 @@
 import { DBAdapter, SQLOpenFactory } from '@powersync/common';
 import { SSRDBAdapter } from './SSRDBAdapter';
-import { WebSQLFlags, WebSQLOpenFactoryOptions, isServerSide, resolveWebSQLFlags } from './web-sql-flags';
+import { RequiredWebSQLFlags, WebSQLOpenFactoryOptions, isServerSide, resolveWebSQLFlags } from './web-sql-flags';
 
 export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
-  protected resolvedFlags: WebSQLFlags;
+  protected resolvedFlags: RequiredWebSQLFlags;
 
   constructor(protected options: WebSQLOpenFactoryOptions) {
     this.resolvedFlags = resolveWebSQLFlags(options.flags);

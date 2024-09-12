@@ -11,6 +11,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
+import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -94,11 +95,16 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
+    const resolvedWorkerOptions = {
+      ...options,
+      dbFilename: this.options.identifier!,
+      flags: resolveWebSQLFlags(options.flags)
+    };
 
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(options).port;
+        this.messagePort = syncWorker(resolvedWorkerOptions).port;
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
@@ -131,7 +137,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     const dbOpenerPort =
       typeof dbWorker === 'function'
-        ? (resolveWorkerDatabasePortFactory(() => dbWorker(options)) as MessagePort)
+        ? (resolveWorkerDatabasePortFactory(() => dbWorker(resolvedWorkerOptions)) as MessagePort)
         : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
 
     const flags = { ...this.webOptions.flags, workers: undefined };
