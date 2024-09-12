@@ -4,11 +4,12 @@ import {
   BucketStorageAdapter,
   DBAdapter,
   PowerSyncBackendConnector,
-  PowerSyncDatabaseOptionsWithOpenFactory,
+  PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
+import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -31,8 +32,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * Opens a DBAdapter using React Native Quick SQLite as the
    * default SQLite open factory.
    */
-  protected openDBAdapter(options: PowerSyncDatabaseOptionsWithOpenFactory): DBAdapter {
-    const defaultFactory = options.database;
+  protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
+    const defaultFactory = new ReactNativeQuickSqliteOpenFactory(options.database);
     return defaultFactory.openDB();
   }
 
