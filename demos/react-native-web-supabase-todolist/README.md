@@ -2,9 +2,9 @@
 
 ## Overview
 
-This demo app is an extension of the [Supabase Todo List App](../react-native-supabase-todolist/) and demonstrates the use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase in a [React Native Web](https://necolas.github.io/react-native-web/) project.
+This demo app is an extension of the [Supabase Todo List App](../react-native-supabase-todolist/) and demonstrates the use of the PowerSync SDKs for [React Native](https://www.npmjs.com/package/@powersync/react-native) and [Web](https://www.npmjs.com/package/@powersync/web) in a [React Native Web](https://necolas.github.io/react-native-web/) project. This configuration allows developers to use one React Native codebase to target mobile and well as web platforms.
 
-To use PowerSync in a React Native for Web project, additional config is required. This is detailed in the [Configuring PowerSync for React Native for Web](#configuring-powersync-for-react-native-for-web) section further below.
+To use PowerSync in your own React Native for Web project, additional config is required. This is detailed in the [Configuring PowerSync for React Native for Web](#configuring-powersync-for-react-native-for-web) section further below.
 
 To run this demo, follow these instructions:
 
@@ -98,32 +98,39 @@ Run on Android:
 pnpm android
 ```
 
-## Configuring PowerSync for React Native for Web
+## Configuring PowerSync in React Native for Web projects
 
-To ensure that `PowerSync` features are fully supported in your `React Native Web` project, follow these steps. This documentation covers necessary configurations, setup, and multi-platform implementation.
+To ensure that PowerSync features are fully supported in your React Native Web project, follow the below steps. This documentation covers necessary web worker configurations, database instantiation, and multi-platform implementations.
 
-### 1. Configuring the workers
+### 1. Install Web SDK
 
-With `React Native Web` the workers need to be configured when instantiating `PowerSyncDatabase`, refer to the example [here](./library/powersync/system.ts). The contents of `node_modules/@powersync/web/dist` should be copied to the root of your project (typically in the `public ` directory). You can then specify the resolution for each worker (available in the `worker` directory of the `dist` contents).
+The PowerSync Web SDK, alongside the PowerSync React Native SDK, is required for Web support.
 
-To make it easier to manage these files in the `public` directory, it is recommended to place the contents in a nested directory like `@powersync`.
+See installation instructions [here](https://www.npmjs.com/package/@powersync/web).
 
-You can run the following bash command to automate the copying process. It will copy the contents to `/public/@powersync`.
+### 2. Configure Web Workers
+
+For React Native for Web, workers need to be configured when instantiating `PowerSyncDatabase`. An example of this is avaiable [here](./library/powersync/system.ts).
+
+To do this, copy the contents of `node_modules/@powersync/web/dist` to the root of your project (typically in the `public ` directory). To make it easier to manage these files in the `public` directory, it is recommended to place the contents in a nested directory like `@powersync`.
+
+You can run the following bash command to automate the copying process. It will create copy the contents to `/public/@powersync`.
 
 ```
 mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
 ```
 
-The example below demonstrates how to configure the DB and sync workers:
+### 3. Instantite Web Workers
+The example below demonstrates how to instantiate the workers (PowerSync requires a database and a sync worker) when instantiating `PowerSyncDatabase`. You can either specify a path to the worker (they are available in the `worker` directory of the `dist` contents), or provide a factory function to create the worker. 
 
 ```javascript
 const factory = new WASQLiteOpenFactory({
   dbFilename: 'sqlite.db',
 
-  // You can specify a path to the db worker
+  // Option 1: Specify a path to the database worker
   worker: '/@powersync/worker/WASQLiteDB.umd.js'
 
-  // Or provide a factory function to create the worker.
+  // Option 2: Or provide a factory function to create the worker.
   // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
   // worker: (options) => {
   //   if (options?.flags?.enableMultiTabs) {
@@ -142,10 +149,10 @@ this.powersync = new PowerSyncDatabaseWeb({
   schema: AppSchema,
   database: factory,
   sync: {
-    // You can specify a path to the sync worker
+    // Option 1: You can specify a path to the sync worker
     worker: '/@powersync/worker/SharedSyncImplementation.umd.js'
 
-    // Or provide a factory function to create the worker.
+    //Option 2: Or provide a factory function to create the worker.
     // The worker name should be unique for the database filename to avoid conflicts if multiple clients with different databases are present.
     // worker: (options) => {
     //   return new SharedWorker(`/@powersync/worker/SharedSyncImplementation.umd.js`, {
@@ -156,9 +163,11 @@ this.powersync = new PowerSyncDatabaseWeb({
 });
 ```
 
-### 2. Multi-platform support
+This `PowerSyncDatabaseWeb` database will be used alongside the native `PowerSyncDatabase` to support platform-specific implementations. See the [Instantiating PowerSync](#instantiating-powersync) below for more details.
 
-A common use case for `React Native Web` is to have a single `react-native` project that targets both mobile and web platforms. To support this setup, you need to adjust the Metro configuration and handle platform-specific libraries accordingly.
+### 4. Multi-platform support
+
+To target both mobile and web platforms, you need to adjust the Metro configuration and handle platform-specific libraries accordingly.
 
 #### Metro config
 
@@ -195,11 +204,11 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
 #### Implementations
 
-Many `React-native` and `web` packages are implemented with only their specific platform in mind, as such there may be times where you will need to evaluate the platform and provide alternative implementations.
+Many `react-native` and `web` packages are implemented with only their specific platform in mind, as such there may be times where you will need to evaluate the platform and provide alternative implementations.
 
 ##### Instantiating PowerSync
 
-The following snippet constructs the correct PowerSync database depending on the platform that the code is executing on.
+The following snippet constructs the correct `PowerSyncDatabase` depending on the platform that the code is executing on.
 
 ```javascript
 import React from 'react';
