@@ -16,7 +16,7 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types';
-import { throttleLeadingTrailing } from 'src/utils/throttle';
+import { throttleLeadingTrailing } from '../../../utils/throttle';
 
 export enum LockType {
   CRUD = 'crud',
