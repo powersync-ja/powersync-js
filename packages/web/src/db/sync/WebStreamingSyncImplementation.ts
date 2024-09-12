@@ -4,18 +4,18 @@ import {
   LockOptions,
   LockType
 } from '@powersync/common';
-import { RequiredWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags';
+import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   flags?: WebSQLFlags;
 
   database?: {
     options: {
-      worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => Worker | SharedWorker);
+      worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
     };
   };
   sync?: {
-    worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => SharedWorker);
+    worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
   };
 }
 

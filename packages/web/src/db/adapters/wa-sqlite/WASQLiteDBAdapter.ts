@@ -14,7 +14,7 @@ import Logger, { type ILogger } from 'js-logger';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
-import { RequiredWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
+import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
@@ -30,7 +30,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
    */
   workerPort?: MessagePort;
 
-  worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 /**

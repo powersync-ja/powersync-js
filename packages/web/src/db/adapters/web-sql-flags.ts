@@ -36,9 +36,9 @@ export interface WebSQLFlags {
   ssrMode?: boolean;
 }
 
-export type RequiredWebSQLFlags = Required<WebSQLFlags>;
+export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
 
-export interface RequiredWebSQLOpenOptions extends SQLOpenOptions {
+export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
   flags: WebSQLFlags;
 }
 
@@ -54,14 +54,14 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => Worker | SharedWorker);
+  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 export function isServerSide() {
   return typeof window == 'undefined';
 }
 
-export const DEFAULT_WEB_SQL_FLAGS: RequiredWebSQLFlags = {
+export const DEFAULT_WEB_SQL_FLAGS: ResolvedWebSQLFlags = {
   broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
@@ -77,7 +77,7 @@ export const DEFAULT_WEB_SQL_FLAGS: RequiredWebSQLFlags = {
   useWebWorker: true
 };
 
-export function resolveWebSQLFlags(flags?: WebSQLFlags): RequiredWebSQLFlags {
+export function resolveWebSQLFlags(flags?: WebSQLFlags): ResolvedWebSQLFlags {
   const resolvedFlags = {
     ...DEFAULT_WEB_SQL_FLAGS,
     ...(flags ?? {})

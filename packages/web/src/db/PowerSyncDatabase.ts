@@ -16,7 +16,7 @@ import {
 import { Mutex } from 'async-mutex';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
-  RequiredWebSQLOpenOptions,
+  ResolvedWebSQLOpenOptions,
   DEFAULT_WEB_SQL_FLAGS,
   resolveWebSQLFlags,
   WebSQLFlags
@@ -47,7 +47,7 @@ export interface WebSyncOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options: RequiredWebSQLOpenOptions) => SharedWorker);
+  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
 }
 
 type WithWebSyncOptions<Base> = Base & {
