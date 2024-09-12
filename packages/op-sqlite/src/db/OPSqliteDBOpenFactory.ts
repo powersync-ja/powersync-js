@@ -53,8 +53,8 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
 
     const readConnections: OPSQLiteConnection[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const conn = this.openConnection();
-      DB.execute('PRAGMA query_only = true');
+      const conn = this.openConnection(this.options.dbFilename + ' '.repeat(i + 1));
+      conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);
     }
 
@@ -65,11 +65,11 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     });
   }
 
-  protected openConnection() {
+  protected openConnection(filenameOverride?: string) {
     const { dbFilename, dbLocation } = this.options;
     const openOptions = { location: this.options.dbLocation };
     const DB = open({
-      name: dbFilename
+      name: filenameOverride ?? dbFilename
       // location: dbLocation fails when undefined
     });
 
