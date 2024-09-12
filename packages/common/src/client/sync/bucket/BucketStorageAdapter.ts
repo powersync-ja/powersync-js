@@ -1,7 +1,7 @@
-import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver';
-import { CrudBatch } from './CrudBatch';
-import { CrudEntry, OpId } from './CrudEntry';
-import { SyncDataBatch } from './SyncDataBatch';
+import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { CrudBatch } from './CrudBatch.js';
+import { CrudEntry, OpId } from './CrudEntry.js';
+import { SyncDataBatch } from './SyncDataBatch.js';
 
 export interface Checkpoint {
   last_op_id: OpId;

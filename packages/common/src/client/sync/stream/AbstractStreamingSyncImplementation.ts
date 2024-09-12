@@ -1,12 +1,12 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus';
-import { AbortOperation } from '../../../utils/AbortOperation';
-import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver';
-import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter';
-import { CrudEntry } from '../bucket/CrudEntry';
-import { SyncDataBucket } from '../bucket/SyncDataBucket';
-import { AbstractRemote, SyncStreamOptions } from './AbstractRemote';
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
+import { AbortOperation } from '../../../utils/AbortOperation.js';
+import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
+import { CrudEntry } from '../bucket/CrudEntry.js';
+import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
+import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {
   BucketRequest,
   StreamingSyncRequestParameterType,
@@ -15,8 +15,8 @@ import {
   isStreamingSyncCheckpointComplete,
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
-} from './streaming-sync-types';
-import { throttleLeadingTrailing } from '../../../utils/throttle';
+} from './streaming-sync-types.js';
+import { throttleLeadingTrailing } from '../../../utils/throttle.js';
 
 export enum LockType {
   CRUD = 'crud',

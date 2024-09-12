@@ -1,5 +1,5 @@
-import { ColumnsType } from './Column';
-import { Table } from './Table';
+import { ColumnsType } from './Column.js';
+import { Table } from './Table.js';
 
 /**
   Generate a new table from the columns and indexes

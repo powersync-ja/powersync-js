@@ -8,6 +8,7 @@
   "description": "API definitions for JourneyApps PowerSync",
   "main": "dist/index.js",
   "types": "lib/index.d.ts",
+  "type": "module",
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [

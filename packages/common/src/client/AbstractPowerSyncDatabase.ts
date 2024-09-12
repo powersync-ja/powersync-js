@@ -8,26 +8,26 @@ import {
   Transaction,
   UpdateNotification,
   isBatchedUpdateNotification
-} from '../db/DBAdapter';
-import { SyncStatus } from '../db/crud/SyncStatus';
-import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
-import { Schema } from '../db/schema/Schema';
-import { BaseObserver } from '../utils/BaseObserver';
-import { ControlledExecutor } from '../utils/ControlledExecutor';
-import { mutexRunExclusive } from '../utils/mutex';
+} from '../db/DBAdapter.js';
+import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
+import { Schema } from '../db/schema/Schema.js';
+import { BaseObserver } from '../utils/BaseObserver.js';
+import { ControlledExecutor } from '../utils/ControlledExecutor.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/throttle.js';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
-import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
-import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudBatch } from './sync/bucket/CrudBatch';
-import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
-import { CrudTransaction } from './sync/bucket/CrudTransaction';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
+import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
+import { CrudBatch } from './sync/bucket/CrudBatch.js';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
+import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
-} from './sync/stream/AbstractStreamingSyncImplementation';
+} from './sync/stream/AbstractStreamingSyncImplementation.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */

@@ -1,4 +1,4 @@
-import { DBAdapter } from '../db/DBAdapter';
+import { DBAdapter } from '../db/DBAdapter.js';
 
 export interface SQLOpenOptions {
   /**

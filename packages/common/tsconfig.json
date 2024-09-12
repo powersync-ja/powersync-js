@@ -5,10 +5,14 @@
     "jsx": "react",
     "types": ["node"],
     "rootDir": "src",
-    "outDir": "./lib",
+    "outDir": "./lib/esm",
     "lib": ["esnext"],
     "declaration": true,
+    "module": "node16",
+    "moduleResolution": "node16",
     "preserveConstEnums": true,
+    "esModuleInterop": false,
+    "skipLibCheck": false,
     "strictNullChecks": true
   },
   "include": ["src/**/*"]
