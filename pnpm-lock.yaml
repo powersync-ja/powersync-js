@@ -1484,6 +1484,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
+      '@powersync/op-sqlite':
+        specifier: workspace:*
+        version: link:../op-sqlite
       '@powersync/react':
         specifier: workspace:*
         version: link:../react

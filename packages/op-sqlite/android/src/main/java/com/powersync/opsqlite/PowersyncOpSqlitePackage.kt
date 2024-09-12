@@ -15,5 +15,5 @@ class PowersyncOpSqlitePackage : ReactPackage {
 
     override fun createNativeModules(
         reactContext: ReactApplicationContext
-    ): MutableList<NativeModule> = listOf(PowersyncOpSqliteModule(reactContext)).toMutableList()
+    ): MutableList<NativeModule> = listOf<NativeModule>(PowersyncOpSqliteModule(reactContext)).toMutableList()
 }

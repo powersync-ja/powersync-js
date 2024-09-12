@@ -45,6 +45,10 @@ android {
     ndkVersion rootProject.ext.ndkVersion
   }
 
+  buildFeatures {
+    prefab true
+  }
+
    defaultConfig {
     minSdkVersion 23
     targetSdkVersion safeExtGet('targetSdkVersion', 34)
@@ -70,6 +74,7 @@ android {
               "**/libjsi.so",
               "**/libreact_nativemodule_core.so",
               "**/libturbomodulejsijni.so",
+              "**/libc++_shared.so",
               "**/libfbjni.so"
       ]
     }
@@ -81,11 +86,11 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
-  externalNativeBuild {
-    cmake {
-      path "CMakeLists.txt"
-    }
-  }
+//   externalNativeBuild {
+//     cmake {
+//       path "CMakeLists.txt"
+//     }
+//   }
 }
 
 repositories {

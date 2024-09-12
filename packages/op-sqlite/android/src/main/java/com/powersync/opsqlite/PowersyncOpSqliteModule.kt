@@ -2,15 +2,14 @@ package com.powersync.opsqlite
 
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
-import com.powersyncopsqlite.NativePowersyncOpSqliteSpec
+import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReactContextBaseJavaModule
 
 class PowersyncOpSqliteModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context) {
   override fun getName(): String = NAME
 
-  @ReactMethod
   fun foo(a: Double, b: Double, promise: Promise) {
-    // Use the implementation instance to execute the function.
-    implementation.foo(a, b, promise)
+    promise.resolve(a + b)
   }
 
   companion object {
