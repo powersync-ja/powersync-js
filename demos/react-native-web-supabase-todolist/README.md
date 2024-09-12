@@ -165,7 +165,7 @@ this.powersync = new PowerSyncDatabaseWeb({
 
 This `PowerSyncDatabaseWeb` database will be used alongside the native `PowerSyncDatabase` to support platform-specific implementations. See the [Instantiating PowerSync](#instantiating-powersync) below for more details.
 
-### 4. Multi-platform support
+### 4. Enable multiple platforms
 
 To target both mobile and web platforms, you need to adjust the Metro configuration and handle platform-specific libraries accordingly.
 
@@ -300,7 +300,7 @@ import { prompt } from 'util/prompt';
 />;
 ```
 
-### 3. TypeScript Configuration to allow UMD imports
+### 5. TypeScript Configuration to allow UMD imports
 
 A `UMD` version of `@powersync/web` is available at `@powersync/web/umd`.
 To support the version, two changes are required to the project.
