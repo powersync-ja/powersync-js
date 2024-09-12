@@ -1,30 +1,10 @@
-import _ from 'lodash';
+import { Schema, TableV2, column } from '@powersync/common';
 import Logger from 'js-logger';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { v4 as uuid } from 'uuid';
-import { AbstractPowerSyncDatabase, Schema, SyncStatusOptions, TableV2, column } from '@powersync/common';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './utils/MockStreamOpenFactory';
 
 const UPLOAD_TIMEOUT_MS = 3000;
-
-export async function waitForConnectionStatus(
-  db: AbstractPowerSyncDatabase,
-  statusCheck: SyncStatusOptions = { connected: true }
-) {
-  await new Promise<void>((resolve) => {
-    if (db.connected) {
-      resolve();
-    }
-    const l = db.registerListener({
-      statusUpdated: (status) => {
-        if (_.every(statusCheck, (value, key) => _.isEqual(status[key as keyof SyncStatusOptions], value))) {
-          resolve();
-          l?.();
-        }
-      }
-    });
-  });
-}
 
 export async function generateConnectedDatabase({ useWebWorker } = { useWebWorker: true }) {
   /**
