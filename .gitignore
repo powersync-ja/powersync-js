@@ -1,7 +1,6 @@
 node_modules
 lib
 dist
-cjs
 *.tsbuildinfo
 .vscode
 .DS_STORE
