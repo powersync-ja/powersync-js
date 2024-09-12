@@ -1,12 +1,27 @@
-# PowerSync + Supabase React Native Web Demo: Todo List
+# PowerSync + Supabase Todo List App: React Native for Web Demo
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase in a React Native Web project.
+This demo app is an extension of the [Supabase Todo List App](../react-native-supabase-todolist/) and demonstrates the use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase in a [React Native Web](https://necolas.github.io/react-native-web/) project.
 
-A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
+To use PowerSync in a React Native for Web project, additional config is required. This is detailed in the [Configuring PowerSync for React Native for Web](#configuring-powersync-for-react-native-for-web) section further below.
 
-## Set up Supabase Project
+To run this demo, follow these instructions:
+
+## Running this demo
+
+### Install dependencies
+
+In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
+pnpm build:packages
+```
+
+### Set up Supabase Project
+
+Detailed instructions for integrating PowerSync with Supabase can be found in the [integration guide](https://docs.powersync.com/integration-guides/supabase). Below are the main steps required to get this demo running.
 
 Create a new Supabase project, and paste and run the contents of [database.sql](./database.sql) in the Supabase SQL editor.
 
@@ -17,9 +32,9 @@ It does the following:
 3. Enable row level security and storage policies, allowing users to only view and edit their own data.
 4. Create a trigger to populate some sample data when a user registers.
 
-## Set up PowerSync Instance
+### Set up PowerSync Instance
 
-Create a new PowerSync instance, connecting to the database of the Supabase project (find detailed instructions in the [Supabase<>PowerSync integration guide](https://docs.powersync.com/integration-guides/supabase)).
+Create a new PowerSync instance, connecting to the database of the Supabase project. See instructions [here](https://docs.powersync.com/integration-guides/supabase-+-powersync#connect-powersync-to-your-supabase).
 
 Then deploy the following sync rules:
 
@@ -33,15 +48,25 @@ bucket_definitions:
       - select * from todos where list_id = bucket.list_id
 ```
 
-## Configure The App
+### Configure the app
 
-Set up the Environment variables: Copy the `.env.local.template` file:
+#### 1. Set up environment variables: 
+
+Copy the `.env.local.template` file:
 
 ```bash
 cp .env.local.template .env.local
 ```
 
-And then edit `.env.local` to insert your credentials.
+Then edit `.env.local` to insert your Supabase and PowerSync project credentials.
+
+#### 2. Configure web workers
+
+This is required for the React Native Web implementation. Learn more in [Configuring PowerSync for React Native for Web](#configuring-powersync-for-react-native-for-web).
+
+```bash
+mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
+```
 
 ### EAS Build configuration
 
@@ -51,7 +76,29 @@ For secret/sensitive environment variables which shouldn't be checked into sourc
 
 General information on defining environment variables with Expo can be found here [here](https://docs.expo.dev/build-reference/variables/#can-eas-build-use-env-files).
 
-## Adding React Native Web Support
+### Run the app
+
+Run on Web:
+
+```sh
+pnpm web
+```
+
+Web bundling can take a few seconds.
+
+Run on iOS:
+
+```sh
+pnpm ios
+```
+
+Run on Android:
+
+```sh
+pnpm android
+```
+
+## Configuring PowerSync for React Native for Web
 
 To ensure that `PowerSync` features are fully supported in your `React Native Web` project, follow these steps. This documentation covers necessary configurations, setup, and multi-platform implementation.
 
@@ -257,37 +304,3 @@ To support the version, two changes are required to the project.
     "moduleResolution": "Bundler"
   }
 ```
-
-## Run the App
-
-Install the dependencies, including the React Native SDK:
-
-```sh
-pnpm i
-```
-
-Run on Web
-
-```sh
-pnpm web
-```
-
-Run on iOS
-
-```sh
-pnpm ios
-```
-
-Run on Android
-
-```sh
-pnpm android
-```
-
-## Here are some helpful links
-
-- [PowerSync Website](https://www.powersync.com/)
-- [PowerSync Docs](https://docs.powersync.com/)
-- [PowerSync React Native Client SDK Reference](https://docs.powersync.com/client-sdk-references/react-native-and-expo)
-- [Supabase Docs](https://supabase.com/docs)
-- [Expo Docs](https://docs.expo.dev/)
