@@ -1,5 +1,5 @@
-import { OpId } from './CrudEntry';
-import { OpType, OpTypeJSON } from './OpType';
+import { OpId } from './CrudEntry.js';
+import { OpType, OpTypeJSON } from './OpType.js';
 
 export interface OplogEntryJSON {
   checksum: number;

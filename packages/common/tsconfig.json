@@ -8,7 +8,11 @@
     "outDir": "./lib",
     "lib": ["esnext"],
     "declaration": true,
+    "module": "node16",
+    "moduleResolution": "node16",
     "preserveConstEnums": true,
+    "esModuleInterop": false,
+    "skipLibCheck": false,
     "strictNullChecks": true
   },
   "include": ["src/**/*"]

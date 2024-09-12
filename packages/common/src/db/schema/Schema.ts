@@ -1,4 +1,4 @@
-import { RowType, Table } from './Table';
+import { RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
 

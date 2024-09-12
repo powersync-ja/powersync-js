@@ -1,4 +1,4 @@
-import type { CompilableQuery } from '../types/types';
+import type { CompilableQuery } from '../types/types.js';
 
 export interface ParsedQuery {
   sqlStatement: string;

@@ -1,4 +1,4 @@
-import { SyncDataBucket } from './SyncDataBucket';
+import { SyncDataBucket } from './SyncDataBucket.js';
 
 // TODO JSON
 
