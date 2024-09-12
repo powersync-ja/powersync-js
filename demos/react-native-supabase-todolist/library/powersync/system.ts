@@ -1,7 +1,11 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/react-native';
+import {
+  PowerSyncDatabase,
+  ReactNativeQuickSqliteOpenFactory,
+  SyncStreamConnectionMethod
+} from '@powersync/react-native';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { AppSchema } from './AppSchema';
@@ -11,6 +15,7 @@ import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { type AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import Logger from 'js-logger';
+import { OPSqliteOpenFactory } from '@powersync/react-native-op-sqlite';
 
 Logger.useDefaults();
 
@@ -25,12 +30,10 @@ export class System {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    this.powersync = new PowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: 'sqlite.db'
-      }
+    const factory = new OPSqliteOpenFactory({
+      dbFilename: 'sqlite.db'
     });
+    this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({
