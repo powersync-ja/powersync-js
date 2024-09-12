@@ -50,6 +50,7 @@ android {
     targetSdkVersion safeExtGet('targetSdkVersion', 34)
     versionCode 1
     versionName "1.0"
+    buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString())
     
     externalNativeBuild {
         cmake {
@@ -83,20 +84,6 @@ android {
   externalNativeBuild {
     cmake {
       path "CMakeLists.txt"
-    }
-  }
-
-  sourceSets.main {
-    java {
-      if (isNewArchitectureEnabled()) {
-          srcDirs += [
-            "src/turbo",
-            // This is needed to build Kotlin project with NewArch enabled
-            "${project.buildDir}/generated/source/codegen/java"
-          ]
-      } else {
-          srcDirs += ["src/legacy"]
-      }
     }
   }
 }
