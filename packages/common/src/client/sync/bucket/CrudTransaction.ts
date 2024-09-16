@@ -1,5 +1,5 @@
-import { CrudBatch } from './CrudBatch';
-import { CrudEntry } from './CrudEntry';
+import { CrudBatch } from './CrudBatch.js';
+import { CrudEntry } from './CrudEntry.js';
 
 export class CrudTransaction extends CrudBatch {
   constructor(

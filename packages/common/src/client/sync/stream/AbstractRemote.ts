@@ -1,14 +1,14 @@
-import Logger, { ILogger } from 'js-logger';
-import { type fetch } from 'cross-fetch';
-import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials';
-import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types';
-import { DataStream } from '../../../utils/DataStream';
+import type { BSON } from 'bson';
+import { Buffer } from 'buffer';
 import ndjsonStream from 'can-ndjson-stream';
+import { type fetch } from 'cross-fetch';
+import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
-import type { BSON } from 'bson';
-import { AbortOperation } from '../../../utils/AbortOperation';
-import { Buffer } from 'buffer';
+import { AbortOperation } from '../../../utils/AbortOperation.js';
+import { DataStream } from '../../../utils/DataStream.js';
+import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
+import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
 
 import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
 

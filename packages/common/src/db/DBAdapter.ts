@@ -3,7 +3,7 @@
  * different SQLite DB implementations.
  */
 
-import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver';
+import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
 
 /**
  * TODO most of these types could be exported to a common `types` package
