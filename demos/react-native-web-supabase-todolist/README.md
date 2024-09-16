@@ -12,7 +12,7 @@ To run this demo, follow these instructions:
 
 ### Install dependencies
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+In the repo root, use [pnpm](https://pnpm.io/installation) to install dependencies:
 
 ```bash
 pnpm install
@@ -67,14 +67,6 @@ This is required for the React Native Web implementation. Learn more in [Configu
 ```bash
 mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
 ```
-
-### EAS Build configuration
-
-Take note that you will need an [Expo](https://expo.dev/) account if you want to use EAS for your builds. The Expo project ID should then also be configured in the environment file.
-
-For secret/sensitive environment variables which shouldn't be checked into source control, you can configure them as EAS secrets. They can be added via either the Expo website or the EAS CLI, both are explained [here](https://docs.expo.dev/build-reference/variables/#using-secrets-in-environment-variables).
-
-General information on defining environment variables with Expo can be found here [here](https://docs.expo.dev/build-reference/variables/#can-eas-build-use-env-files).
 
 ### Run the app
 
