@@ -51,6 +51,11 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       }
     }
 
+    //Load extension for all connections
+    DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
+
+    DB.execute('SELECT powersync_init()');
+
     const readConnections: OPSQLiteConnection[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = this.openConnection(this.options.dbFilename + ' '.repeat(i + 1));
@@ -75,6 +80,8 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
 
     //Load extension for all connections
     DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
+
+    DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
       baseDB: DB
