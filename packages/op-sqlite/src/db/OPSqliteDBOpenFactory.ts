@@ -58,21 +58,28 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
 
     const readConnections: OPSQLiteConnection[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const conn = this.openConnection(this.options.dbFilename + ' '.repeat(i + 1));
+      // Workaround to create read-only connections
+      let baseName = dbFilename.slice(0, dbFilename.lastIndexOf('.'));
+      let dbName = baseName + '\u0020'.repeat(i + 1) + `.db`;
+      const conn = this.openConnection(dbName);
       conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);
     }
 
+    const writeConnection = new OPSQLiteConnection({
+      baseDB: DB
+    });
+
     return new OPSQLiteDBAdapter({
       name: dbFilename,
       readConnections: readConnections,
-      writeConnection: this.openConnection()
+      writeConnection: writeConnection
     });
   }
 
   protected openConnection(filenameOverride?: string) {
     const { dbFilename, dbLocation } = this.options;
-    const openOptions = { location: this.options.dbLocation };
+    const openOptions = { location: dbLocation };
     const DB = open({
       name: filenameOverride ?? dbFilename
       // location: dbLocation fails when undefined
