@@ -15,7 +15,12 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
-import { DEFAULT_WEB_SQL_FLAGS, resolveWebSQLFlags, WebSQLFlags } from './adapters/web-sql-flags';
+import {
+  ResolvedWebSQLOpenOptions,
+  DEFAULT_WEB_SQL_FLAGS,
+  resolveWebSQLFlags,
+  WebSQLFlags
+} from './adapters/web-sql-flags';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -35,11 +40,31 @@ export interface WebPowerSyncFlags extends WebSQLFlags {
 
 type WithWebFlags<Base> = Base & { flags?: WebPowerSyncFlags };
 
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebFlags<PowerSyncDatabaseOptionsWithSettings>;
+export interface WebSyncOptions {
+  /**
+   * Allows you to override the default sync worker.
+   *
+   * You can either provide a path to the worker script
+   * or a factory method that returns a worker.
+   */
+  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
+}
 
-export type WebPowerSyncDatabaseOptions = WithWebFlags<PowerSyncDatabaseOptions>;
+type WithWebSyncOptions<Base> = Base & {
+  sync?: WebSyncOptions;
+};
+
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
+>;
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
+>;
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
+  WithWebFlags<PowerSyncDatabaseOptionsWithSettings>
+>;
+
+export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,
@@ -142,7 +167,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     const remote = new WebRemote(connector);
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
-      ...this.options,
+      ...(this.options as {}),
       flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,

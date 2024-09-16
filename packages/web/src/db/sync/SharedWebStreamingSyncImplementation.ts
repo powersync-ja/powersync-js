@@ -1,6 +1,6 @@
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort } from '../../worker/db/open-worker-database';
+import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../worker/db/open-worker-database';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
@@ -11,6 +11,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
+import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -89,19 +90,38 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   constructor(options: WebStreamingSyncImplementationOptions) {
     super(options);
+
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
      */
-    const syncWorker = new SharedWorker(
-      new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
-      {
-        /* @vite-ignore */
-        name: `shared-sync-${this.webOptions.identifier}`,
-        type: 'module'
+    const resolvedWorkerOptions = {
+      ...options,
+      dbFilename: this.options.identifier!,
+      flags: resolveWebSQLFlags(options.flags)
+    };
+
+    const syncWorker = options.sync?.worker;
+    if (syncWorker) {
+      if (typeof syncWorker === 'function') {
+        this.messagePort = syncWorker(resolvedWorkerOptions).port;
+      } else {
+        this.messagePort = new SharedWorker(`${syncWorker}`, {
+          /* @vite-ignore */
+          name: `shared-sync-${this.webOptions.identifier}`
+        }).port;
       }
-    );
-    this.messagePort = syncWorker.port;
+    } else {
+      this.messagePort = new SharedWorker(
+        new URL('../../worker/sync/SharedSyncImplementation.worker.js', import.meta.url),
+        {
+          /* @vite-ignore */
+          name: `shared-sync-${this.webOptions.identifier}`,
+          type: 'module'
+        }
+      ).port;
+    }
+
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
@@ -112,14 +132,23 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const dbOpenerPort = openWorkerDatabasePort(this.options.identifier!, true) as MessagePort;
+
+    const dbWorker = options.database?.options?.worker;
+
+    const dbOpenerPort =
+      typeof dbWorker === 'function'
+        ? (resolveWorkerDatabasePortFactory(() => dbWorker(resolvedWorkerOptions)) as MessagePort)
+        : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
+
+    const flags = { ...this.webOptions.flags, workers: undefined };
+
     this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
       dbName: this.options.identifier!,
       streamOptions: {
         crudUploadThrottleMs,
         identifier,
         retryDelayMs,
-        flags: this.webOptions.flags
+        flags: flags
       }
     });
 
