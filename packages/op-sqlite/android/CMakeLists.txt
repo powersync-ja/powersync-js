@@ -1,15 +1,12 @@
 project(PowersyncOpSqlite)
 cmake_minimum_required(VERSION 3.9.0)
 
-set (PACKAGE_NAME "powersync-opsqlite")
+set (PACKAGE_NAME "powersync-op-sqlite")
 set (CMAKE_VERBOSE_MAKEFILE ON)
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 20)
 set (BUILD_DIR ${CMAKE_SOURCE_DIR}/build)
 
-add_library(
-  ${PACKAGE_NAME}
-  SHARED
-)
+add_library(${PACKAGE_NAME} INTERFACE)
 
 set_target_properties(
   ${PACKAGE_NAME} PROPERTIES
@@ -32,6 +29,7 @@ endif()
 
 target_link_libraries(
   ${PACKAGE_NAME}
+  INTERFACE
   ${LOG_LIB}
   fbjni::fbjni
   ReactAndroid::jsi

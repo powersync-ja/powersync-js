@@ -86,11 +86,11 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
-//   externalNativeBuild {
-//     cmake {
-//       path "CMakeLists.txt"
-//     }
-//   }
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
 }
 
 repositories {
@@ -99,6 +99,6 @@ repositories {
 }
 
 dependencies {
-  implementation 'com.facebook.react:react-native'
   implementation 'co.powersync:powersync-sqlite-core:0.2.1'
+  implementation 'com.facebook.react:react-native'
 }
