@@ -39,7 +39,7 @@ export interface WebSQLFlags {
 export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
-  flags: WebSQLFlags;
+  flags: ResolvedWebSQLFlags;
 }
 
 /**
