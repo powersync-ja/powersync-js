@@ -1,5 +1,19 @@
 # diagnostics-app
 
+## 0.4.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+
+### Patch Changes
+
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [02f0ce7]
+  - @powersync/react@1.4.2
+  - @powersync/web@1.8.0
+
 ## 0.3.5
 
 ### Patch Changes
