@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, Column, ColumnType, Schema, Table } from '@powersync/common';
+import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -143,7 +143,7 @@ describe('Schema Tests', () => {
     ]);
   });
 
-  // Indicates that we don't need to refresh the refresh the schema explicitly
+  // Indicates that we don't need to refresh the the schema explicitly
   it('Correct source table after switching schema', async () => {
     const customerWatchTables = await getSourceTables(db, 'SELECT * FROM customers');
     expect(customerWatchTables.includes('ps_data_local__local_customers')).toBeTruthy();
