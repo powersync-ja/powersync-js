@@ -55,7 +55,6 @@ export default function TodoListsPage() {
         <Box>
           <TodoListsWidget />
         </Box>
-        {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
           open={showPrompt}
           onClose={() => setShowPrompt(false)}

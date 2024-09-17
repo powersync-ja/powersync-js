@@ -1,6 +1,6 @@
 {
-  "name": "react-supabase-todolist",
-  "version": "0.3.16",
+  "name": "react-supabase-todolist-optional-sync",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",

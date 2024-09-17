@@ -111,6 +111,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           {NAVIGATION_ITEMS.map((item) => (
             <ListItem key={item.path}>
               <ListItemButton
+                disabled={item.title == 'Sign Out' && !supabase?.hasCredentials}
                 onClick={async () => {
                   const redirect = await item.beforeNavigate?.();
                   if (!redirect) {

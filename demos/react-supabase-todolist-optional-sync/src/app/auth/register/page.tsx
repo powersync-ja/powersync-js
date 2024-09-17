@@ -30,7 +30,6 @@ export default function RegisterPage() {
           return;
         }
 
-        // TODO better dialog
         alert('Registration successful, please login');
         navigate(LOGIN_ROUTE);
       }}

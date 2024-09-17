@@ -68,16 +68,6 @@ export function makeSchema(synced: boolean) {
   });
 }
 
-// This is only used for typing purposes
-export const AppSchema = makeSchema(false);
-
-export type Database = (typeof AppSchema)['types'];
-export type TodoRecord = Database['todos'];
-// OR:
-// export type Todo = RowType<typeof todos>;
-
-export type ListRecord = Database['lists'];
-
 export async function switchToSyncedSchema(db: AbstractPowerSyncDatabase, userId: string) {
   await db.updateSchema(makeSchema(true));
 
@@ -105,3 +95,13 @@ export async function switchToLocalSchema(db: AbstractPowerSyncDatabase) {
   await db.updateSchema(makeSchema(false));
   setSyncEnabled(db.database.name, false);
 }
+
+// This is only used for typing purposes
+export const AppSchema = makeSchema(false);
+
+export type Database = (typeof AppSchema)['types'];
+export type TodoRecord = Database['todos'];
+// OR:
+// export type Todo = RowType<typeof todos>;
+
+export type ListRecord = Database['lists'];

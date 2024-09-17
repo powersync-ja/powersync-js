@@ -41,6 +41,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
   currentSession: Session | null;
 
+  hasCredentials: boolean;
+
   constructor() {
     super();
     this.config = {
@@ -56,6 +58,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     });
     this.currentSession = null;
     this.ready = false;
+
+    this.hasCredentials = !(
+      this.config.supabaseUrl == 'https://foo.supabase.co' ||
+      this.config.powersyncUrl == 'https://foo.powersync.journeyapps.com'
+    );
   }
 
   async init() {
