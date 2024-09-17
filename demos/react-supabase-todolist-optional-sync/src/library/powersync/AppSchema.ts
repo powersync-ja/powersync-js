@@ -1,6 +1,21 @@
 import { AbstractPowerSyncDatabase, column, ColumnsType, Schema, Table, TableV2Options } from '@powersync/web';
 import { setSyncEnabled } from './SyncMode';
 
+/**
+ * This schema design supports a local-only to sync-enabled workflow by managing data
+ * across two versions of each table: one for local-only use without syncing before a user registers,
+ * the other for sync-enabled use after the user registers/signs in.
+ *
+ * This is done by utilizing the viewName property to override the default view name
+ * of a table.
+ *
+ * See the README for details.
+ *
+ * `switchToSyncedSchema()` copies data from the local-only tables to the sync-enabled tables
+ * so that it ends up in the upload queue.
+ *
+ */
+
 export const LISTS_TABLE = 'lists';
 export const TODOS_TABLE = 'todos';
 
@@ -70,9 +85,6 @@ export function makeSchema(synced: boolean) {
 
 export async function switchToSyncedSchema(db: AbstractPowerSyncDatabase, userId: string) {
   await db.updateSchema(makeSchema(true));
-
-  // needed to ensure that watches/queries are aware of the updated schema
-  // await db.refreshSchema();
   setSyncEnabled(db.database.name, true);
 
   await db.writeTransaction(async (tx) => {
