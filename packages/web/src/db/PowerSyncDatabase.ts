@@ -16,8 +16,8 @@ import {
 import { Mutex } from 'async-mutex';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
-  ResolvedWebSQLOpenOptions,
   DEFAULT_WEB_SQL_FLAGS,
+  ResolvedWebSQLOpenOptions,
   resolveWebSQLFlags,
   WebSQLFlags
 } from './adapters/web-sql-flags';

@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.18.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+- 367d65d: Correctly identify @powersync/common as an ES module
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+
 ## 1.17.0
 
 ### Minor Changes
