@@ -14,7 +14,8 @@
   ],
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
+    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w"
   },
   "repository": {
