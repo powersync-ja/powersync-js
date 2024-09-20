@@ -3,6 +3,9 @@ import p from 'p-defer';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './stream.test';
 
+// Don't want to actually export the warning string from the package
+const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
+
 describe('CRUD Uploads', () => {
   let connectedUtils: ConnectedDatabaseUtils;
   const logger = Logger.get('crud-logger');
@@ -13,11 +16,7 @@ describe('CRUD Uploads', () => {
     connectedUtils = await generateConnectedDatabase({
       powerSyncOptions: {
         logger,
-        /**
-         * The timeout here is set to longer than the default test timeout
-         * A retry wil cause tests to fail.
-         */
-        crudUploadThrottleMs: 10_000,
+        crudUploadThrottleMs: 1_000,
         flags: {
           enableMultiTabs: false
         }
@@ -52,11 +51,7 @@ describe('CRUD Uploads', () => {
 
     await vi.waitFor(
       () => {
-        expect(
-          loggerSpy.mock.calls.find((logArgs) =>
-            logArgs[0].includes('Potentially previously uploaded CRUD entries are still present')
-          )
-        ).exist;
+        expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).exist;
       },
       {
         timeout: 500
@@ -66,15 +61,15 @@ describe('CRUD Uploads', () => {
 
   it('should immediately upload sequential transactions', async () => {
     const { powersync, uploadSpy } = connectedUtils;
+    const loggerSpy = vi.spyOn(logger, 'warn');
+
     const deferred = p();
 
     uploadSpy.mockImplementation(async (db) => {
-      // This upload method does not perform an upload
       const nextTransaction = await db.getNextCrudTransaction();
       if (!nextTransaction) {
         return;
       }
-
       // Mockingly delete the crud op in order to progress through the CRUD queue
       for (const op of nextTransaction.crud) {
         await db.execute(`DELETE FROM ps_crud WHERE id = ?`, [op.clientId]);
@@ -111,5 +106,7 @@ describe('CRUD Uploads', () => {
         timeout: 5_000
       }
     );
+
+    expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).toBeUndefined;
   });
 });
