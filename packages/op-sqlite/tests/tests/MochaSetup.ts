@@ -1,6 +1,4 @@
 import 'mocha';
-import type * as MochaTypes from 'mocha';
-// import type { RowItemType } from '../navigators/children/TestingScreen/RowItemType';
 import { clearTests, rootSuite } from './MochaRNAdapter';
 
 export async function runTests(...registrators: Array<() => void>) {
@@ -8,16 +6,21 @@ export async function runTests(...registrators: Array<() => void>) {
   // console.log('setting up mocha');
 
   const promise = new Promise((resolve) => {
-    const { EVENT_RUN_BEGIN, EVENT_RUN_END, EVENT_TEST_FAIL, EVENT_TEST_PASS, EVENT_SUITE_BEGIN, EVENT_SUITE_END } =
+    const { EVENT_RUN_BEGIN, EVENT_RUN_END, EVENT_TEST_FAIL, EVENT_TEST_PASS, EVENT_SUITE_BEGIN } =
       Mocha.Runner.constants;
 
     clearTests();
-    const results: any[] = [];
-    var runner = new Mocha.Runner(rootSuite) as MochaTypes.Runner;
+    const results: {
+      description: string;
+      key: string;
+      type: string;
+      errorMsg?: string;
+    }[] = [];
+    var runner = new Mocha.Runner(rootSuite);
 
     runner
       .once(EVENT_RUN_BEGIN, () => {})
-      .on(EVENT_SUITE_BEGIN, (suite: MochaTypes.Suite) => {
+      .on(EVENT_SUITE_BEGIN, (suite) => {
         const name = suite.title;
         if (name !== '') {
           results.push({
@@ -27,7 +30,7 @@ export async function runTests(...registrators: Array<() => void>) {
           });
         }
       })
-      .on(EVENT_TEST_PASS, (test: MochaTypes.Runnable) => {
+      .on(EVENT_TEST_PASS, (test) => {
         results.push({
           description: test.title,
           key: Math.random().toString(),
@@ -35,7 +38,7 @@ export async function runTests(...registrators: Array<() => void>) {
         });
         // console.log(`${indent()}pass: ${test.fullTitle()}`);
       })
-      .on(EVENT_TEST_FAIL, (test: MochaTypes.Runnable, err: Error) => {
+      .on(EVENT_TEST_FAIL, (test, err: Error) => {
         results.push({
           description: test.title,
           key: Math.random().toString(),
@@ -50,9 +53,7 @@ export async function runTests(...registrators: Array<() => void>) {
         resolve(results);
       });
 
-    registrators.forEach((register) => {
-      register();
-    });
+    registrators.forEach((register) => register());
     runner.run();
   });
 

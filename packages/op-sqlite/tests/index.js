@@ -1,10 +1,10 @@
 import { registerRootComponent } from 'expo';
+import {Buffer} from '@craftzdog/react-native-buffer';
 import App from './App';
-import { Buffer } from '@craftzdog/react-native-buffer';
 
 global.Buffer = Buffer;
 global.process.cwd = () => 'sxsx';
-global.process.env = { NODE_ENV: 'production' };
+global.process.env = {NODE_ENV: 'production'};
 global.location = {};
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
