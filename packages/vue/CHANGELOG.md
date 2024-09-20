@@ -1,5 +1,14 @@
 # @powersync/vue
 
+## 0.2.2
+
+### Patch Changes
+
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
 ## 0.2.1
 
 ### Patch Changes

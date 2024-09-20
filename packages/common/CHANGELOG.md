@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.18.1
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+
 ## 1.18.0
 
 ### Minor Changes
