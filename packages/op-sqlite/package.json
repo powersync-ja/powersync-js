@@ -27,10 +27,12 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.15.0"
+    "@powersync/common": "workspace:^1.15.0",
+    "react": "*",
+    "react-native": "*"
   },
   "dependencies": {
-    "@op-engineering/op-sqlite": "^7.1.0",
+    "@op-engineering/op-sqlite": "^8.0.1",
     "@powersync/common": "workspace:*",
     "react": "18.2.0",
     "react-native": "0.74.0"
@@ -38,6 +40,15 @@
   "devDependencies": {
     "typescript": "^5.5.4"
   },
+  "op-sqlite": {
+	  "sqlcipher": false,
+	  "crsqlite": false,
+	  "performanceMode": "2",
+	  "iosSqlite": false,
+	  "fts5": true,
+	  "libsql": false,
+	  "sqliteVec": false
+	},
   "keywords": [
     "data sync",
     "offline-first",

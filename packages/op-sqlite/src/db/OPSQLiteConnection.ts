@@ -36,26 +36,26 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
   }
 
   execute(query: string, params?: any[]): Promise<QueryResult> {
-    return this.DB.executeAsync(query, params);
+    return this.DB.execute(query, params);
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));
 
-    const result = await this.DB.executeBatchAsync(tuple);
+    const result = await this.DB.executeBatch(tuple);
     return {
       rowsAffected: result.rowsAffected ?? 0
     };
   }
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    const result = await this.DB.executeAsync(sql, parameters);
+    const result = await this.DB.execute(sql, parameters);
     return result.rows?._array ?? [];
   }
 
   async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    const result = await this.DB.executeAsync(sql, parameters);
+    const result = await this.DB.execute(sql, parameters);
     return result.rows?._array?.[0] ?? null;
   }
 
