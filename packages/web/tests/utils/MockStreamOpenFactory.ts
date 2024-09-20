@@ -133,6 +133,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
     connector: PowerSyncBackendConnector
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
+      logger: this.options.logger,
       adapter: this.bucketStorageAdapter,
       remote: this.remote,
       uploadCrud: async () => {
@@ -140,7 +141,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await connector.uploadData(this);
       },
       identifier: this.database.name,
-      retryDelayMs: 0
+      retryDelayMs: this.options.crudUploadThrottleMs ?? 0 // The zero here makes tests faster
     });
   }
 }
