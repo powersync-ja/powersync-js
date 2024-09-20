@@ -3,6 +3,7 @@ import Logger, { ILogger } from 'js-logger';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { throttleLeadingTrailing } from '../../../utils/throttle.js';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
@@ -16,7 +17,6 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { throttleLeadingTrailing } from '../../../utils/throttle.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -230,7 +230,7 @@ export abstract class AbstractStreamingSyncImplementation
              */
             const nextCrudItem = await this.options.adapter.nextCrudItem();
             if (nextCrudItem) {
-              if (nextCrudItem.id == checkedCrudItem?.id) {
+              if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
                 this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
 Make sure to handle uploads and complete CRUD transactions or batches by calling and awaiting their [.complete()] method.
