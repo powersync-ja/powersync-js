@@ -71,7 +71,6 @@ describe('CRUD Uploads', () => {
     uploadSpy.mockImplementation(async (db) => {
       // This upload method does not perform an upload
       const nextTransaction = await db.getNextCrudTransaction();
-      console.log('uploading trans', nextTransaction);
       if (!nextTransaction) {
         return;
       }
@@ -99,7 +98,7 @@ describe('CRUD Uploads', () => {
     // Create a second item
     await powersync.execute('INSERT into users (id, name) VALUES (uuid(), ?)', ['steven2']);
 
-    // The empty upload handler should have been called
+    // The empty upload handler should have been called.
     // Timeouts seem to be weird in Vitest Browser mode.
     // This makes the check below more stable.
     await deferred.promise;
