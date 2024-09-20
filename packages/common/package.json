@@ -33,7 +33,7 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs",
+    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest"
   },
