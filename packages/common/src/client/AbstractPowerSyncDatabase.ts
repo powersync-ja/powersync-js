@@ -79,7 +79,7 @@ export interface SQLWatchOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
-   * @deprecated Underlying tables of tables specified in {@link tables} will be watched automatically.
+   * @deprecated All tables specified in {@link tables} will be watched, including PowerSync tables with prefixes.
    *
    * Allows for watching any SQL table
    * by not removing PowerSync table name prefixes
