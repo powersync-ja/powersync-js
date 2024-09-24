@@ -31,9 +31,7 @@ export class System {
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
     const factory = new OPSqliteOpenFactory({
-      sqliteOptions: {
-        dbFilename: 'powersync.db'
-      },
+      dbFilename: 'powersync.db'
     });
     this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
 

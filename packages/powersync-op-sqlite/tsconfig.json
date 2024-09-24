@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    // "paths": {
+    //   "@powersync/op-sqlite": ["./src/index"]
+    // },
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "references": [
+    {
+      "path": "../common"
+    }
+  ],
+  "include": ["src/**/*"]
+}
