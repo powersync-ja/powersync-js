@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-app",
-  "version": "0.3.5",
+  "version": "0.4.1",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -15,14 +15,12 @@
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "js-logger": "^1.6.1",
-    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
-    "@types/lodash": "^4.14.202",
     "@types/node": "^20.11.25",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",

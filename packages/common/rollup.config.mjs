@@ -13,7 +13,7 @@ export default (commandLineArgs) => {
   return {
     input: 'lib/index.js',
     output: {
-      file: 'dist/index.js',
+      file: 'dist/bundle.mjs',
       format: 'esm',
       sourcemap: sourcemap
     },

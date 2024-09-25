@@ -1,5 +1,5 @@
 import Logger, { ILogger } from 'js-logger';
-import { BaseListener, BaseObserver } from './BaseObserver';
+import { BaseListener, BaseObserver } from './BaseObserver.js';
 
 export type DataStreamOptions = {
   /**

@@ -5,10 +5,10 @@ import {
   ColumnType,
   ExtractColumnValueType,
   MAX_AMOUNT_OF_COLUMNS
-} from './Column';
-import { Index } from './Index';
-import { IndexedColumn } from './IndexedColumn';
-import { TableV2 } from './TableV2';
+} from './Column.js';
+import { Index } from './Index.js';
+import { IndexedColumn } from './IndexedColumn.js';
+import { TableV2 } from './TableV2.js';
 
 export interface TableOptions {
   /**
@@ -114,20 +114,20 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
    */
   constructor(columns: Columns, options?: TableV2Options);
   /**
-  * @deprecated This constructor will be removed in the next major release.
-  * Use the new constructor shown below instead as this does not show types.
-  * @example
-  * <caption>Use this instead</caption>
-  * ```javascript
-  *   const table = new Table(
-  *     {
+   * @deprecated This constructor will be removed in the next major release.
+   * Use the new constructor shown below instead as this does not show types.
+   * @example
+   * <caption>Use this instead</caption>
+   * ```javascript
+   *   const table = new Table(
+   *     {
    *      name: column.text,
    *      age: column.integer
-  *     },
-  *     { indexes: { nameIndex: ['name'] } }
-  *   );
-  *```
-  */
+   *     },
+   *     { indexes: { nameIndex: ['name'] } }
+   *   );
+   *```
+   */
   constructor(options: TableOptions);
   constructor(optionsOrColumns: Columns | TableOptions, v2Options?: TableV2Options) {
     if (this.isTableV1(optionsOrColumns)) {
@@ -247,9 +247,7 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     }
 
     if (this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
-      throw new Error(
-        `Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`
-      );
+      throw new Error(`Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
     }
 
     const columnNames = new Set<string>();
