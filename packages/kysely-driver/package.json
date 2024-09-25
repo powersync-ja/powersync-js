@@ -1,6 +1,6 @@
 {
   "name": "@powersync/kysely-driver",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Kysely driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -20,12 +20,13 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc --build",
+    "build:prod": "tsc --build --sourceMap false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.18.0"
+    "@powersync/common": "workspace:^1.18.1"
   },
   "dependencies": {
     "kysely": "^0.27.2"

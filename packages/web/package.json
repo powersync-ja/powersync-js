@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "A Web SDK for JourneyApps PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -40,8 +40,9 @@
     "build:tsc": "tsc --build",
     "build:webpack-main": "webpack",
     "build:webpack-workers": "webpack --config webpack.workers.config.js",
-    "build": "npm run build:tsc -- \"$@\" && npm run build:webpack-main && npm run build:webpack-workers",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
+    "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
@@ -56,7 +57,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "^0.3.0",
-    "@powersync/common": "workspace:^1.18.0"
+    "@powersync/common": "workspace:^1.18.1"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
