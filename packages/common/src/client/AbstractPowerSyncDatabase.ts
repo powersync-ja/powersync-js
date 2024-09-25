@@ -79,6 +79,8 @@ export interface SQLWatchOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
+   * @deprecated All tables specified in {@link tables} will be watched, including PowerSync tables with prefixes.
+   *
    * Allows for watching any SQL table
    * by not removing PowerSync table name prefixes
    */
@@ -889,7 +891,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
+    const watchedTables = new Set<string>(
+      (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
+    );
 
     const changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
@@ -910,8 +914,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {
         try {
-          const { rawTableNames } = resolvedOptions;
-          this.processTableUpdates(update, rawTableNames, changedTables);
+          this.processTableUpdates(update, changedTables);
           flushTableUpdates();
         } catch (error) {
           onError?.(error);
@@ -976,24 +979,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private processTableUpdates(
     updateNotification: BatchedUpdateNotification | UpdateNotification,
-    rawTableNames: boolean | undefined,
     changedTables: Set<string>
   ): void {
     const tables = isBatchedUpdateNotification(updateNotification)
       ? updateNotification.tables
       : [updateNotification.table];
 
-    const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
-    if (!filteredTables.length) {
-      return;
-    }
-
-    // Remove any PowerSync table prefixes if necessary
-    const mappedTableNames = rawTableNames
-      ? filteredTables
-      : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
-
-    for (const table of mappedTableNames) {
+    for (const table of tables) {
       changedTables.add(table);
     }
   }
