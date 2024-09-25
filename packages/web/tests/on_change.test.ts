@@ -3,19 +3,10 @@ import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { testSchema } from './utils/testDb';
-vi.useRealTimers();
 
-/**
- * There seems to be an issue with Vitest browser mode's setTimeout and
- * fake timer functionality.
- * e.g. calling:
- *      await new Promise<void>((resolve) => setTimeout(resolve, 10));
- * waits for 1 second instead of 10ms.
- * Setting this to 1 second as a work around.
- */
-const throttleDuration = 1000;
+const UPLOAD_TIMEOUT_MS = 3000;
 
-describe('Watch Tests', () => {
+describe('OnChange Tests', () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
@@ -36,17 +27,20 @@ describe('Watch Tests', () => {
   async function runOnChangeTest(tablesToWatch: string[], expectedChangedTables: string[]) {
     const changedTables: string[] = [];
     const abortController = new AbortController();
-    const onChange = (event: WatchOnChangeEvent) => {
+    const onChange = vi.fn((event: WatchOnChangeEvent) => {
       changedTables.push(...event.changedTables);
-    };
+    });
 
-    powersync.onChange(
-      { onChange },
-      { tables: tablesToWatch, signal: abortController.signal, throttleMs: throttleDuration }
+    powersync.onChange({ onChange }, { tables: tablesToWatch, signal: abortController.signal });
+    powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    await vi.waitFor(
+      () => {
+        expect(onChange).toHaveBeenCalled();
+      },
+      {
+        timeout: UPLOAD_TIMEOUT_MS
+      }
     );
-
-    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
-    await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration));
 
     abortController.abort();
     expect(changedTables).toEqual(expectedChangedTables);
