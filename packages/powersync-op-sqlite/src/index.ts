@@ -23,10 +23,11 @@ const PowerSyncOpSqlite = PowerSyncOpSqliteModule
       }
     );
 
-export function multiply(a: number, b: number): Promise<number> {
-  return PowerSyncOpSqlite.multiply(a, b);
+export function getBundlePath(): Promise<string> {
+  return PowerSyncOpSqlite.getBundlePath();
+  // .then((path: string) => {
+  //   PowerSyncOpSqlite.bundlePath = path;
+  // });
 }
 
-export * from './db/OPSqliteDBOpenFactory'; 
-
-export default require("./NativePowerSyncOpSqlite").default;
+export * from './db/OPSqliteDBOpenFactory';

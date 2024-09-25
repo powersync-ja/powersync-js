@@ -12,11 +12,3 @@
 
 @end
 #endif
-
-// @interface PowerSyncOpSqlite : NSObject <NativePowerSyncOpSqliteSpec>
-// #ifdef RCT_NEW_ARCH_ENABLED
-// #import <React/RCTBridgeModule.h>
-
-// @interface PowerSyncOpSqlite : NSObject <RCTBridgeModule>
-// #endif
-// @end

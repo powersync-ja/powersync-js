@@ -1,4 +1,11 @@
-import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import {
+  BaseObserver,
+  DBAdapter,
+  DBAdapterListener,
+  DBLockOptions,
+  QueryResult,
+  Transaction,
+} from '@powersync/common';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 
@@ -13,10 +20,13 @@ export type OPSQLiteAdapterOptions = {
 
 enum LockType {
   READ = 'read',
-  WRITE = 'write'
+  WRITE = 'write',
 }
 
-export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+export class OPSQLiteDBAdapter
+  extends BaseObserver<DBAdapterListener>
+  implements DBAdapter
+{
   name: string;
   protected locks: Lock;
   constructor(protected options: OPSQLiteAdapterOptions) {
@@ -24,7 +34,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.name = this.options.name;
     // Changes should only occur in the write connection
     options.writeConnection.registerListener({
-      tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
+      tablesUpdated: (notification) =>
+        this.iterateListeners((cb) => cb.tablesUpdated?.(notification)),
     });
     this.locks = new Lock();
   }
@@ -34,10 +45,16 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.options.readConnections.forEach((c) => c.close());
   }
 
-  async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+  async readLock<T>(
+    fn: (tx: OPSQLiteConnection) => Promise<T>,
+    options?: DBLockOptions
+  ): Promise<T> {
     // TODO better
     const sortedConnections = this.options.readConnections
-      .map((connection, index) => ({ lockKey: `${LockType.READ}-${index}`, connection }))
+      .map((connection, index) => ({
+        lockKey: `${LockType.READ}-${index}`,
+        connection,
+      }))
       .sort((a, b) => {
         const aBusy = this.locks.isBusy(a.lockKey);
         const bBusy = this.locks.isBusy(b.lockKey);
@@ -60,7 +77,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+  writeLock<T>(
+    fn: (tx: OPSQLiteConnection) => Promise<T>,
+    options?: DBLockOptions
+  ): Promise<T> {
     return new Promise(async (resolve, reject) => {
       try {
         await this.locks.acquire(
@@ -76,11 +96,17 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
+  readTransaction<T>(
+    fn: (tx: Transaction) => Promise<T>,
+    options?: DBLockOptions
+  ): Promise<T> {
     return this.readLock((ctx) => this.internalTransaction(ctx, fn));
   }
 
-  writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
+  writeTransaction<T>(
+    fn: (tx: Transaction) => Promise<T>,
+    options?: DBLockOptions
+  ): Promise<T> {
     return this.writeLock((ctx) => this.internalTransaction(ctx, fn));
   }
 
@@ -100,7 +126,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeBatch(
+    query: string,
+    params: any[][] = []
+  ): Promise<QueryResult> {
     return this.writeLock((ctx) => ctx.executeBatch(query, params));
   }
 
@@ -131,7 +160,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         getAll: (query, params) => connection.getAll(query, params),
         getOptional: (query, params) => connection.getOptional(query, params),
         commit,
-        rollback
+        rollback,
       });
       await commit();
       return result;
