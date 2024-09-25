@@ -987,11 +987,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     for (const table of tables) {
       changedTables.add(table);
-
-      // if an underlying table is a `ps_` table then add the mapped table name
-      if (table.match(POWERSYNC_TABLE_MATCH)) {
-        changedTables.add(table.replace(POWERSYNC_TABLE_MATCH, ''));
-      }
     }
   }
 
