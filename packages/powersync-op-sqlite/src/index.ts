@@ -25,9 +25,13 @@ const PowerSyncOpSqlite = PowerSyncOpSqliteModule
 
 export function getBundlePath(): Promise<string> {
   return PowerSyncOpSqlite.getBundlePath();
-  // .then((path: string) => {
-  //   PowerSyncOpSqlite.bundlePath = path;
-  // });
 }
 
-export * from './db/OPSqliteDBOpenFactory';
+export function getBundlePathSync(): string {
+  return PowerSyncOpSqlite.getBundlePathSync();
+}
+
+export {
+  OPSqliteOpenFactory,
+  OPSQLiteOpenFactoryOptions,
+} from './db/OPSqliteDBOpenFactory';

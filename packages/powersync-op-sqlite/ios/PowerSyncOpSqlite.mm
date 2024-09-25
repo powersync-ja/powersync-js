@@ -6,12 +6,16 @@
 @implementation PowerSyncOpSqlite
 RCT_EXPORT_MODULE()
 
-RCT_EXPORT_METHOD(getBundlePath:
-                  resolve:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(getBundlePath:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 {
     NSString* bundlePath = [NSBundle mainBundle].bundlePath;
     resolve(bundlePath);
+}
+
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(getBundlePathSync)
+{
+    return [NSBundle mainBundle].bundlePath;
 }
 
 // Don't compile this code when we build for the old architecture.

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from '@powersync/op-sqlite';
 
 export default function App() {
   const [result, setResult] = useState<number | undefined>();
 
-  useEffect(() => {
-    multiply(3, 7).then(setResult);
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <View style={styles.container}>

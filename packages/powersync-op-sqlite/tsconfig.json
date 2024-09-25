@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "rootDir": ".",
-    // "paths": {
-    //   "@powersync/op-sqlite": ["./src/index"]
-    // },
+    "paths": {
+      "@powersync/op-sqlite": ["./src/index"]
+    },
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
     "noEmit": true,
