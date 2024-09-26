@@ -1,9 +1,9 @@
-import { DB, open } from '@op-engineering/op-sqlite';
+import { open } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
+import { NativeModules } from 'react-native';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { DEFAULT_SQLITE_OPTIONS, SqliteOptions } from './SqliteOptions';
-import { NativeModules } from 'react-native';
 
 export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
   sqliteOptions?: SqliteOptions;
@@ -71,7 +71,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       // Workaround to create read-only connections
       let baseName = dbFilename.slice(0, dbFilename.lastIndexOf('.'));
-      let dbName = baseName + '\u0020'.repeat(i + 1) + `.db`;
+      let dbName = './'.repeat(i + 1) + baseName + `.db`;
       const conn = this.openConnection(libPath, dbName);
       conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);

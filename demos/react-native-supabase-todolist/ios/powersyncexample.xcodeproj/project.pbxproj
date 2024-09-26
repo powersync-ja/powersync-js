@@ -317,13 +317,11 @@
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-powersyncexample/Pods-powersyncexample-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/op-sqlite/crsqlite.framework/crsqlite",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/powersync-sqlite-core/powersync-sqlite-core.framework/powersync-sqlite-core",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/crsqlite.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/powersync-sqlite-core.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
