@@ -51,8 +51,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               );
             }}
           />
-        }
-      >
+        }>
         {loading ? (
           <ActivityIndicator />
         ) : (
@@ -71,18 +70,19 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         <ListItem.Content style={{ minHeight: 80 }}>
           <ListItem.Title>{record.description}</ListItem.Title>
         </ListItem.Content>
-        {AppConfig.supabaseBucket &&
-          (record.photo_id == null ? (
-            <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
-          ) : photoAttachment?.local_uri != null ? (
-            <Image
-              source={{ uri: system.attachmentQueue.getLocalUri(photoAttachment.local_uri) }}
-              containerStyle={styles.item}
-              PlaceholderContent={<ActivityIndicator />}
-            />
-          ) : (
-            <ActivityIndicator />
-          ))}
+        {record.photo_id == null ? (
+          <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
+        ) : photoAttachment?.local_uri != null ? (
+          <Image
+            source={{
+              uri: system.attachmentQueue?.getLocalUri(photoAttachment.local_uri) ?? ''
+            }}
+            containerStyle={styles.item}
+            PlaceholderContent={<ActivityIndicator />}
+          />
+        ) : (
+          <ActivityIndicator />
+        )}
       </ListItem.Swipeable>
     </View>
   );

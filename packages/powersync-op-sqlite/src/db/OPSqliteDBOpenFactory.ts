@@ -1,6 +1,6 @@
-import { open } from '@op-engineering/op-sqlite';
+import { open, DB } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
-import { NativeModules } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { DEFAULT_SQLITE_OPTIONS, SqliteOptions } from './SqliteOptions';
@@ -25,10 +25,6 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } =
       this.sqliteOptions;
     const { dbFilename, dbLocation } = this.options;
-
-    const bundlePath: string =
-      NativeModules.PowerSyncOpSqlite.getBundlePathSync();
-    console.log('Native Bundle path Sync', bundlePath);
     console.log('opening', dbFilename);
 
     const DB = open({
@@ -59,11 +55,8 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
         }
       }
     }
-    console.log('BUNDLE PATH: ', bundlePath);
-    const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
-    console.log('LIB PATH: ', libPath);
-    //Load extension for all connections
-    DB.loadExtension(libPath, 'sqlite3_powersync_init');
+   
+    this.loadExtension(DB);
 
     DB.execute('SELECT powersync_init()');
 
@@ -72,7 +65,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       // Workaround to create read-only connections
       let baseName = dbFilename.slice(0, dbFilename.lastIndexOf('.'));
       let dbName = './'.repeat(i + 1) + baseName + `.db`;
-      const conn = this.openConnection(libPath, dbName);
+      const conn = this.openConnection(dbName);
       conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);
     }
@@ -88,7 +81,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     });
   }
 
-  protected openConnection(libPath: string, filenameOverride?: string) {
+  protected openConnection(filenameOverride?: string) {
     const { dbFilename, dbLocation } = this.options;
     const openOptions = { location: dbLocation };
     const DB = open({
@@ -97,12 +90,24 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     });
 
     //Load extension for all connections
-    DB.loadExtension(libPath, 'sqlite3_powersync_init');
+    this.loadExtension(DB);
 
     DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
       baseDB: DB,
     });
+  }
+
+  private loadExtension(DB: DB) {
+    if(Platform.OS === 'ios') {
+      const bundlePath: string =
+      NativeModules.PowerSyncOpSqlite.getBundlePathSync();
+      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      DB.loadExtension(libPath, 'sqlite3_powersync_init');
+    } else {
+      DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
+    }
+    
   }
 }
