@@ -95,7 +95,10 @@ export async function switchToSyncedSchema(db: AbstractPowerSyncDatabase, userId
       [userId]
     );
 
-    await tx.execute('INSERT INTO todos SELECT * FROM inactive_local_todos');
+    await tx.execute(
+      'INSERT INTO todos(id, list_id, created_at, completed_at, description, completed, created_by) SELECT id, list_id, created_at, completed_at, description, completed, ? FROM inactive_local_todos',
+      [userId]
+    );
 
     // Delete the local-only data.
     await tx.execute('DELETE FROM inactive_local_todos');
