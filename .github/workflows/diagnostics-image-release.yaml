@@ -14,7 +14,6 @@ jobs:
   release-docker-image:
     name: Build and Release diagnostics-app Docker Image
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
