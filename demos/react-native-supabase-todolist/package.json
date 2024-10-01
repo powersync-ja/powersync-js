@@ -11,6 +11,7 @@
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/vector-icons": "^14.0.3",
     "@op-engineering/op-sqlite": "8.0.3",
+    "@journeyapps/react-native-quick-sqlite": "^1.4.0",
     "@powersync/attachments": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/op-sqlite": "workspace:*",
@@ -58,15 +59,6 @@
     "babel-preset-expo": "^11.0.5",
     "prettier": "^3.2.5",
     "typescript": "^5.3.3"
-  },
-  "op-sqlite": {
-    "sqlcipher": false,
-    "crsqlite": true,
-    "performanceMode": "2",
-    "iosSqlite": false,
-    "fts5": false,
-    "libsql": false,
-    "sqliteVec": false
   },
   "private": true
 }
