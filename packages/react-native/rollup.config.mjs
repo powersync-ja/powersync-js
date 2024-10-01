@@ -33,7 +33,14 @@ export default (commandLineArgs) => {
       }),
       json(),
       nodeResolve({ preferBuiltins: false }),
-      commonjs({}),
+      commonjs({
+        ignore: (id) => {
+          if (id === '@journeyapps/react-native-quick-sqlite') {
+            return true;
+          }
+          return false;
+        },
+      }),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],

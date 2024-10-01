@@ -15,18 +15,21 @@ See a summary of features [here](https://docs.powersync.co/client-sdk-references
 ## Install Package
 
 ```bash
-npx expo install @powersync/react-native
+npx expo install @powersync/op-sqlite
 ```
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@op-engineering/op-sqlite` as a peer dependency.
+This SDK currently requires `@powersync/react-native` and `@op-engineering/op-sqlite` as a peer dependency.
 
 Install it in your app with:
 
 ```bash
+npx expo install @powersync/react-native
 npx expo install @op-engineering/op-sqlite
 ```
+
+**Note**: This package cannot be installed alongside `@journeyapps/react-native-quick-sqlite`. Please ensure you do not depend on both packages at the same time.
 
 ## Install Polyfills
 

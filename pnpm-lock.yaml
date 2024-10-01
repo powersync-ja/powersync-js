@@ -761,9 +761,6 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.3
         version: 14.0.3
-      '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.4.0
-        version: 1.4.0(react-native@0.74.5)(react@18.2.0)
       '@op-engineering/op-sqlite':
         specifier: 8.0.3
         version: 8.0.3(react-native@0.74.5)(react@18.2.0)
@@ -9396,16 +9393,6 @@ packages:
     dependencies:
       react: 18.2.0
       react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.3.9)(react@18.2.0)
-    dev: false
-
-  /@journeyapps/react-native-quick-sqlite@1.4.0(react-native@0.74.5)(react@18.2.0):
-    resolution: {integrity: sha512-x8RCvPlzRwSeZXOuOQ8XGeDz1ie6q4ajbMYdrmBUK38WCgtvfl+yaLcszHdpa501g1LXObzQAfSmlDT9EWkXLQ==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
   /@journeyapps/wa-sqlite@0.1.1:

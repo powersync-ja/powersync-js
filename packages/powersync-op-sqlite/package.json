@@ -63,12 +63,14 @@
     "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
+    "@op-engineering/op-sqlite": "8.0.3",
+    "@powersync/react-native": "workspace:^1.9.0",
     "@powersync/common": "workspace:^1.15.0",
     "react": "*",
     "react-native": "*"
   },
   "dependencies": {
-    "@powersync/common": "workspace:^",
+    "@powersync/common": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.75.3"
   },

@@ -30,16 +30,20 @@ export class System {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    // const factory = new OPSqliteOpenFactory({
-    //   dbFilename: 'powersync.db'
-    // });
-    // this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
-    this.powersync = new PowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: 'sqlite.db'
-      }
+    const factory = new OPSqliteOpenFactory({
+      dbFilename: 'powersync.db'
     });
+    this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
+    //
+    /**
+     * The code below uses React Native Quick SQLite as the default database adapter.
+     */
+    // this.powersync = new PowerSyncDatabase({
+    //   schema: AppSchema,
+    //   database: {
+    //     dbFilename: 'sqlite.db'
+    //   }
+    // });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({

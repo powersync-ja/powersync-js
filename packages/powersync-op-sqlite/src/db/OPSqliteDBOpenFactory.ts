@@ -55,7 +55,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
         }
       }
     }
-   
+
     this.loadExtension(DB);
 
     DB.execute('SELECT powersync_init()');
@@ -100,14 +100,13 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
   }
 
   private loadExtension(DB: DB) {
-    if(Platform.OS === 'ios') {
+    if (Platform.OS === 'ios') {
       const bundlePath: string =
-      NativeModules.PowerSyncOpSqlite.getBundlePathSync();
+        NativeModules.PowerSyncOpSqlite.getBundlePathSync();
       const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {
       DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
     }
-    
   }
 }
