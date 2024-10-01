@@ -15,6 +15,5 @@
     {
       "path": "../common"
     }
-  ],
-  "include": ["src/**/*"]
+  ]
 }

@@ -1,5 +1,3 @@
-// import { open, QuickSQLite, QuickSQLiteConnection } from '@journeyapps/react-native-quick-sqlite';
-
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { RNQSDBAdapter } from './RNQSDBAdapter';
 
@@ -18,22 +16,24 @@ export class ReactNativeQuickSqliteOpenFactory implements SQLOpenFactory {
      * in the options (if provided)
      * https://github.com/margelo/react-native-quick-sqlite/blob/main/README.md#loading-existing-dbs
      */
-    // const { dbFilename } = this.options;
-    // const openOptions = { location: this.options.dbLocation };
-    // let DB: QuickSQLiteConnection;
-    // try {
-    //   // Hot reloads can sometimes clear global JS state, but not close DB on native side
-    //   DB = open(dbFilename, openOptions);
-    // } catch (ex) {
-    //   if (ex.message.includes('already open')) {
-    //     QuickSQLite.close(dbFilename);
-    //     DB = open(dbFilename, openOptions);
-    //   } else {
-    //     throw ex;
-    //   }
-    // }
 
-    // TODO need to conditionally use this package
-    return new RNQSDBAdapter({} as any, this.options.dbFilename);
+    const { dbFilename } = this.options;
+    const openOptions = { location: this.options.dbLocation };
+    let DB;
+    try {
+      const rnqs = require('@journeyapps/react-native-quick-sqlite');
+      // Hot reloads can sometimes clear global JS state, but not close DB on native side
+      DB = rnqs.open(dbFilename, openOptions);
+    } catch (ex) {
+      const rnqs = require('@journeyapps/react-native-quick-sqlite');
+      if (ex.message.includes('already open')) {
+        rnqs.QuickSQLite.close(dbFilename);
+        DB = rnqs.open(dbFilename, openOptions);
+      } else {
+        throw ex;
+      }
+    }
+
+    return new RNQSDBAdapter(DB, this.options.dbFilename);
   }
 }

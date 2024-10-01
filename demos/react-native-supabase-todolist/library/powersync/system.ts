@@ -30,10 +30,16 @@ export class System {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    const factory = new OPSqliteOpenFactory({
-      dbFilename: 'powersync.db'
+    // const factory = new OPSqliteOpenFactory({
+    //   dbFilename: 'powersync.db'
+    // });
+    // this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
+    this.powersync = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'sqlite.db'
+      }
     });
-    this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({
