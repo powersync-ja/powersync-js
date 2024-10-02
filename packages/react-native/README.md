@@ -71,6 +71,26 @@ module.exports = function (api) {
 };
 ```
 
+# Metro config
+
+The `@powersync/react-native` has issues with inline requires. If you are not using Expo then you may see this error `Super expression must either be null or a function` in which case you need to add this to your `metro.config.js`:
+
+```js
+const config = {
+    transformer: {
+        getTransformOptions: async () => ({
+            transform: {
+                inlineRequires: {
+                  blockList: {
+                    [require.resolve("@powersync/react-native")]: true,
+                  },
+                },
+              },
+        })
+    }
+};
+```
+
 # Native Projects
 
 This package uses native libraries. Create native Android and iOS projects (if not created already) by running:
