@@ -71,15 +71,18 @@ module.exports = function (api) {
 };
 ```
 
-# Metro config
+## Metro config (optional)
 
-The `@powersync/react-native` has issues with inline requires. If you are not using Expo then you may see this error
+When using a bare react native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
+
+If you see the following error message
+
 
 ```bash
 Super expression must either be null or a function
 ```
 
-in which case you need to add this to your `metro.config.js`:
+then you will need to add this to your `metro.config.js`:
 
 ```js
 const config = {
