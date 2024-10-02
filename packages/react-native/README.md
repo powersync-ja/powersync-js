@@ -73,7 +73,7 @@ module.exports = function (api) {
 
 ## Metro config (optional)
 
-When using a bare react native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
+When using a bare React Native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
 
 If you see the following error message
 
