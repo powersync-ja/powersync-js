@@ -54,7 +54,7 @@
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
   "author": "PowerSync",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
@@ -80,7 +80,6 @@
     "@types/async-lock": "^1.4.0",
     "@types/react": "^18.2.44",
     "async-lock": "^1.4.0",
-    "commitlint": "^17.0.2",
     "del-cli": "^5.1.0",
     "eslint": "^8.51.0",
     "eslint-config-prettier": "^9.0.0",
@@ -90,42 +89,10 @@
     "turbo": "^1.10.7",
     "typescript": "^5.2.2"
   },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "eslintConfig": {
-    "root": true,
-    "extends": [
-      "@react-native",
-      "prettier"
-    ],
-    "rules": {
-      "react/react-in-jsx-scope": "off",
-      "prettier/prettier": [
-        "error",
-        {
-          "quoteProps": "consistent",
-          "singleQuote": true,
-          "tabWidth": 2,
-          "trailingComma": "es5",
-          "useTabs": false
-        }
-      ]
-    }
-  },
   "eslintIgnore": [
     "node_modules/",
     "lib/"
   ],
-  "prettier": {
-    "quoteProps": "consistent",
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "es5",
-    "useTabs": false
-  },
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
