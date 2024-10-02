@@ -64,7 +64,6 @@
   },
   "peerDependencies": {
     "@op-engineering/op-sqlite": "8.0.3",
-    "@powersync/react-native": "workspace:^1.9.0",
     "@powersync/common": "workspace:^1.15.0",
     "react": "*",
     "react-native": "*"

@@ -1,4 +1,10 @@
-import { open, DB } from '@op-engineering/op-sqlite';
+import {
+  ANDROID_DATABASE_PATH,
+  IOS_LIBRARY_PATH,
+  open,
+  OPSQLite,
+  type DB,
+} from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { NativeModules, Platform } from 'react-native';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
@@ -25,12 +31,27 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } =
       this.sqliteOptions;
     const { dbFilename, dbLocation } = this.options;
+    //This is needed because an undefined dbLocation will cause the open function to fail
+    const location = this.getDbLocation(dbLocation);
     console.log('opening', dbFilename);
-
-    const DB = open({
-      name: dbFilename,
-      // location: dbLocation fails when undefined
-    });
+    let DB: DB;
+    try {
+      DB = open({
+        name: dbFilename,
+        location: location,
+      });
+      console.log('opened', dbFilename);
+    } catch (ex) {
+      if (ex.message.includes('one JS connection per database')) {
+        console.log('Error opening database', ex);
+        DB.close();
+        console.log('reopening', dbFilename);
+        DB = open({
+          name: dbFilename,
+          location: location,
+        });
+      }
+    }
 
     const statements: string[] = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -65,7 +86,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
       // Workaround to create read-only connections
       let baseName = dbFilename.slice(0, dbFilename.lastIndexOf('.'));
       let dbName = './'.repeat(i + 1) + baseName + `.db`;
-      const conn = this.openConnection(dbName);
+      const conn = this.openConnection(location, dbName);
       conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);
     }
@@ -81,13 +102,28 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     });
   }
 
-  protected openConnection(filenameOverride?: string) {
-    const { dbFilename, dbLocation } = this.options;
-    const openOptions = { location: dbLocation };
-    const DB = open({
-      name: filenameOverride ?? dbFilename,
-      // location: dbLocation fails when undefined
-    });
+  protected openConnection(
+    dbLocation: string,
+    filenameOverride?: string
+  ): OPSQLiteConnection {
+    const { dbFilename } = this.options;
+    let DB: DB;
+    try {
+      DB = open({
+        name: filenameOverride ?? dbFilename,
+        location: dbLocation,
+      });
+    } catch (ex) {
+      if (ex.message.includes('one JS connection per database')) {
+        console.log('Error opening connection', ex);
+        OPSQLite.open;
+        console.log('reopening connection', filenameOverride ?? dbFilename);
+        DB = open({
+          name: filenameOverride ?? dbFilename,
+          location: dbLocation,
+        });
+      }
+    }
 
     //Load extension for all connections
     this.loadExtension(DB);
@@ -97,6 +133,22 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     return new OPSQLiteConnection({
       baseDB: DB,
     });
+  }
+
+  private getDbLocation(dbLocation?: string): string {
+    if (Platform.OS === 'ios') {
+      return dbLocation ?? IOS_LIBRARY_PATH;
+    } else {
+      return dbLocation ?? ANDROID_DATABASE_PATH;
+    }
+  }
+
+  private openDatabase(dbFilename: string): DB {
+    const DB = open({
+      name: dbFilename,
+      // location: dbLocation fails when undefined
+    });
+    return DB;
   }
 
   private loadExtension(DB: DB) {
