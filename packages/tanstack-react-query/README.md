@@ -63,7 +63,7 @@ export const TodoListDisplay = () => {
 
   return (
     <ul>
-      {todoLists.map((list) => (
+      {todoLists?.map((list) => (
         <li key={list.id}>{list.name}</li>
       ))}
     </ul>
@@ -98,7 +98,7 @@ const TodoListContent = () => {
 
 export const TodoListDisplaySuspense = () => {
   return (
-    {/* Will show fallback while query is loading */}
+    /* Will show fallback while query is loading */
     <Suspense fallback={<div>Loading todo lists...</div>}>
       <TodoListContent />
     </Suspense>
@@ -151,7 +151,7 @@ export const TodoListDisplay = () => {
 
   return (
     <ul>
-      {todoLists.map((list) => (
+      {todoLists?.map((list) => (
         <li key={list.id}>{list.name}</li>
       ))}
     </ul>
