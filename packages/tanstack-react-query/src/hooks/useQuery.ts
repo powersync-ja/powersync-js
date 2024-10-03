@@ -104,7 +104,6 @@ function useQueryCore<
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       return typeof query == 'string' ? powerSync.getAll<TData>(sqlStatement, queryParameters) : query.execute();
     } catch (e) {
       return Promise.reject(e);
