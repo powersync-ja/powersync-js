@@ -74,7 +74,6 @@
     "react-native": "0.75.3"
   },
   "devDependencies": {
-    "@commitlint/config-conventional": "^17.0.2",
     "@op-engineering/op-sqlite": "8.0.3",
     "@react-native/eslint-config": "^0.73.1",
     "@types/async-lock": "^1.4.0",

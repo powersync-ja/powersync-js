@@ -1,4 +1,4 @@
-import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, OPSQLite, type DB } from '@op-engineering/op-sqlite';
+import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { NativeModules, Platform } from 'react-native';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
