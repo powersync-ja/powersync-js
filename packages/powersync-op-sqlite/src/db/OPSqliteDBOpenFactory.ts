@@ -1,10 +1,4 @@
-import {
-  ANDROID_DATABASE_PATH,
-  IOS_LIBRARY_PATH,
-  open,
-  OPSQLite,
-  type DB,
-} from '@op-engineering/op-sqlite';
+import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, OPSQLite, type DB } from '@op-engineering/op-sqlite';
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/common';
 import { NativeModules, Platform } from 'react-native';
 import { OPSQLiteDBAdapter } from './OPSqliteAdapter';
@@ -23,41 +17,26 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
   constructor(protected options: OPSQLiteOpenFactoryOptions) {
     this.sqliteOptions = {
       ...DEFAULT_SQLITE_OPTIONS,
-      ...this.options.sqliteOptions,
+      ...this.options.sqliteOptions
     };
   }
 
   openDB(): DBAdapter {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } =
-      this.sqliteOptions;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.sqliteOptions;
     const { dbFilename, dbLocation } = this.options;
     //This is needed because an undefined dbLocation will cause the open function to fail
     const location = this.getDbLocation(dbLocation);
     console.log('opening', dbFilename);
-    let DB: DB;
-    try {
-      DB = open({
-        name: dbFilename,
-        location: location,
-      });
-      console.log('opened', dbFilename);
-    } catch (ex) {
-      if (ex.message.includes('one JS connection per database')) {
-        console.log('Error opening database', ex);
-        DB.close();
-        console.log('reopening', dbFilename);
-        DB = open({
-          name: dbFilename,
-          location: location,
-        });
-      }
-    }
+    const DB: DB = open({
+      name: dbFilename,
+      location: location
+    });
 
     const statements: string[] = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
       `PRAGMA journal_mode = ${journalMode}`,
       `PRAGMA journal_size_limit = ${journalSizeLimit}`,
-      `PRAGMA synchronous = ${synchronous}`,
+      `PRAGMA synchronous = ${synchronous}`
     ];
 
     for (const statement of statements) {
@@ -92,38 +71,22 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     }
 
     const writeConnection = new OPSQLiteConnection({
-      baseDB: DB,
+      baseDB: DB
     });
 
     return new OPSQLiteDBAdapter({
       name: dbFilename,
       readConnections: readConnections,
-      writeConnection: writeConnection,
+      writeConnection: writeConnection
     });
   }
 
-  protected openConnection(
-    dbLocation: string,
-    filenameOverride?: string
-  ): OPSQLiteConnection {
+  protected openConnection(dbLocation: string, filenameOverride?: string): OPSQLiteConnection {
     const { dbFilename } = this.options;
-    let DB: DB;
-    try {
-      DB = open({
-        name: filenameOverride ?? dbFilename,
-        location: dbLocation,
-      });
-    } catch (ex) {
-      if (ex.message.includes('one JS connection per database')) {
-        console.log('Error opening connection', ex);
-        OPSQLite.open;
-        console.log('reopening connection', filenameOverride ?? dbFilename);
-        DB = open({
-          name: filenameOverride ?? dbFilename,
-          location: dbLocation,
-        });
-      }
-    }
+    const DB: DB = open({
+      name: filenameOverride ?? dbFilename,
+      location: dbLocation
+    });
 
     //Load extension for all connections
     this.loadExtension(DB);
@@ -131,7 +94,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB,
+      baseDB: DB
     });
   }
 
@@ -143,18 +106,9 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     }
   }
 
-  private openDatabase(dbFilename: string): DB {
-    const DB = open({
-      name: dbFilename,
-      // location: dbLocation fails when undefined
-    });
-    return DB;
-  }
-
   private loadExtension(DB: DB) {
     if (Platform.OS === 'ios') {
-      const bundlePath: string =
-        NativeModules.PowerSyncOpSqlite.getBundlePathSync();
+      const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
       const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {

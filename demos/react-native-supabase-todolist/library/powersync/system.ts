@@ -34,9 +34,10 @@ export class System {
       dbFilename: 'powersync.db'
     });
     this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
-    //
     /**
-     * The code below uses React Native Quick SQLite as the default database adapter.
+     * The snippet below uses React Native Quick SQLite as the default database adapter.
+     * You will have to uninstall `@op-engineering/op-sqlite` and
+     * install `@journeyapps/react-native-quick-sqlite` to use this.
      */
     // this.powersync = new PowerSyncDatabase({
     //   schema: AppSchema,

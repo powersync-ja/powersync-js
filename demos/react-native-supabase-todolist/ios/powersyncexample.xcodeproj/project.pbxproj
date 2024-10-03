@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -30,7 +30,7 @@
 		6C2E3173556A471DD304B334 /* Pods-powersyncexample.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-powersyncexample.debug.xcconfig"; path = "Target Support Files/Pods-powersyncexample/Pods-powersyncexample.debug.xcconfig"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-powersyncexample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-powersyncexample.release.xcconfig"; path = "Target Support Files/Pods-powersyncexample/Pods-powersyncexample.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = powersyncexample/SplashScreen.storyboard; sourceTree = "<group>"; };
-		B284FA24BD76960755859400 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = powersyncexample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B284FA24BD76960755859400 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = powersyncexample/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		BE3FEE71380B474FA303C46B /* powersyncexample-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "powersyncexample-Bridging-Header.h"; path = "powersyncexample/powersyncexample-Bridging-Header.h"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -380,8 +380,56 @@
 				);
 				INFOPLIST_FILE = powersyncexample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
+				OTHER_CFLAGS = (
+					"$(inherited)",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoAsset/ExpoAsset.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoCamera/ExpoCamera.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoCrypto/ExpoCrypto.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFont/ExpoFont.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoHead/ExpoHead.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoKeepAwake/ExpoKeepAwake.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoModulesCore/ExpoModulesCore.modulemap\"",
+					"-fmodule-map-file=\"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSecureStore/ExpoSecureStore.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/DoubleConversion/DoubleConversion.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTDeprecation/RCTDeprecation.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RCTTypeSafety/RCTTypeSafety.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/RNReanimated/RNReanimated.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React-Core/React/React-Core.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React-RCTFabric/RCTFabric/React-RCTFabric.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ReactCommon/ReactCommon.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Codegen/React-Codegen.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_Fabric/React-Fabric.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_NativeModulesApple/React-NativeModulesApple.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/React_RCTAppDelegate/React-RCTAppDelegate.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/ZXingObjC/ZXingObjC.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/folly/RCT-Folly.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/glog/glog.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jsi/React-jsi.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/jsinspector_modern/React-jsinspector.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_debug/React-debug.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_featureflags/React-featureflags.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_debug/React-rendererdebug.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_graphics/React-graphics.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_renderer_imagemanager/React-ImageManager.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/react_utils/React-utils.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/reacthermes/React-hermes.modulemap\"",
+					"-fmodule-map-file=\"${PODS_ROOT}/Headers/Public/yoga/Yoga.modulemap\"",
+					"$(inherited)",
+					"-DFOLLY_NO_CONFIG",
+					"-DFOLLY_MOBILE=1",
+					"-DFOLLY_USE_LIBCPP=1",
+					"-Wno-comma",
+					"-Wno-shorten-64-to-32",
+					"-DREACT_NATIVE_MINOR_VERSION=74",
+					"-DREANIMATED_VERSION=3.15.3",
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -408,7 +456,10 @@
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = powersyncexample/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -477,7 +528,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD = "";
 				LDPLUSPLUS = "";
-				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -536,7 +590,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
 				LD = "";
 				LDPLUSPLUS = "";
-				LD_RUNPATH_SEARCH_PATHS = "/usr/lib/swift $(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					/usr/lib/swift,
+					"$(inherited)",
+				);
 				LIBRARY_SEARCH_PATHS = "$(SDKROOT)/usr/lib/swift\"$(inherited)\"";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				OTHER_LDFLAGS = (

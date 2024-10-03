@@ -231,9 +231,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Opens the DBAdapter given open options using a default open factory
    */
-  protected abstract openDBAdapter(
-    options: PowerSyncDatabaseOptionsWithSettings | PowerSyncDatabaseOptionsWithOpenFactory
-  ): DBAdapter;
+  protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector

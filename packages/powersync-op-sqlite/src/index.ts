@@ -19,19 +19,12 @@ const PowerSyncOpSqlite = PowerSyncOpSqliteModule
       {
         get() {
           throw new Error(LINKING_ERROR);
-        },
+        }
       }
     );
 
-export function getBundlePath(): Promise<string> {
+export function getBundlePath(): string {
   return PowerSyncOpSqlite.getBundlePath();
 }
 
-export function getBundlePathSync(): string {
-  return PowerSyncOpSqlite.getBundlePathSync();
-}
-
-export {
-  OPSqliteOpenFactory,
-  OPSQLiteOpenFactoryOptions,
-} from './db/OPSqliteDBOpenFactory';
+export { OPSqliteOpenFactory, OPSQLiteOpenFactoryOptions } from './db/OPSqliteDBOpenFactory';
