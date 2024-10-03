@@ -1081,24 +1081,15 @@ importers:
       '@mui/x-data-grid':
         specifier: ^6.19.6
         version: 6.20.4(@mui/material@5.16.5)(@mui/system@5.16.5)(@types/react@18.3.3)(react-dom@18.2.0)(react@18.2.0)
-      '@powersync/kysely-driver':
-        specifier: workspace:^
-        version: link:../../packages/kysely-driver
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@powersync/tanstack-react-query':
-        specifier: workspace:*
-        version: link:../../packages/tanstack-react-query
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
       '@supabase/supabase-js':
         specifier: ^2.39.7
         version: 2.45.0
-      '@tanstack/react-query':
-        specifier: ^5.55.4
-        version: 5.55.4(react@18.2.0)
       formik:
         specifier: ^2.4.6
         version: 2.4.6(react@18.2.0)
