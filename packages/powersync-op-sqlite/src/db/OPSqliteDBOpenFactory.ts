@@ -26,7 +26,6 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     const { dbFilename, dbLocation } = this.options;
     //This is needed because an undefined dbLocation will cause the open function to fail
     const location = this.getDbLocation(dbLocation);
-    console.log('opening', dbFilename);
     const DB: DB = open({
       name: dbFilename,
       location: location
@@ -46,7 +45,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
           break;
         } catch (e) {
           //TODO better error handling for SQLITE_BUSY(5)
-          console.log('Error executing pragma statement', statement, e);
+          console.error('Error executing pragma statement', statement, e);
           // if (e.errorCode === 5 && tries < 29) {
           //   continue;
           // } else {
