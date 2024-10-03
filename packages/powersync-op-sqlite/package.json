@@ -2,9 +2,10 @@
   "name": "@powersync/op-sqlite",
   "version": "0.1.0",
   "description": "Powersync",
-  "source": "./src/index.tsx",
+  "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
+  "types": "./lib/typescript/commonjs/src/index.d.ts",
   "exports": {
     ".": {
       "import": {
@@ -37,11 +38,9 @@
   ],
   "scripts": {
     "build": "bob build",
-    "example": "yarn workspace @powersync/op-sqlite-example",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "release": "release-it"
+    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib"
   },
   "keywords": [
     "react-native",
@@ -63,7 +62,7 @@
   },
   "peerDependencies": {
     "@op-engineering/op-sqlite": "8.0.3",
-    "@powersync/common": "workspace:^1.15.0",
+    "@powersync/common": "workspace:^1.18.0",
     "react": "*",
     "react-native": "*"
   },
@@ -120,7 +119,7 @@
   },
   "codegenConfig": {
     "name": "RNPowerSyncOpSqliteSpec",
-    "type": "all",
+    "type": "modules",
     "jsSrcsDir": "src",
     "outputDir": {
       "ios": "ios/generated",
