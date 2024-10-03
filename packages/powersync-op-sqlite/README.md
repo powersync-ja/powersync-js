@@ -20,7 +20,7 @@ npx expo install @powersync/op-sqlite
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@powersync/react-native` and `@op-engineering/op-sqlite` as a peer dependency.
+This SDK currently requires `@powersync/react-native` and `@op-engineering/op-sqlite` as peer dependencies.
 
 Install it in your app with:
 

@@ -36,12 +36,12 @@
     "!**/.*"
   ],
   "scripts": {
+    "build": "bob build",
     "example": "yarn workspace @powersync/op-sqlite-example",
     "test": "jest",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
-    "prepare": "bob build",
     "release": "release-it"
   },
   "keywords": [
