@@ -1,5 +1,60 @@
 # @powersync/common
 
+## 1.18.1
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+
+## 1.18.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+- 367d65d: Correctly identify @powersync/common as an ES module
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+
+## 1.17.0
+
+### Minor Changes
+
+- 447f979: Improve performance of MOVE and REMOVE operations.
+- b1a76b3: Fixed SSR Mode detection for DB adapters. Removed the potential for SSR Web Streamining implementations from to perform syncing operations.
+- f202944: Merge `Table` and `TableV2` but kept `TableV2` to avoid making this a breaking change.
+- 447f979: Add custom x-user-agent header and client_id parameter to requests.
+- 447f979: Emit update notifications on `disconnectAndClear()`.
+- 447f979: Persist lastSyncedAt timestamp.
+
+### Patch Changes
+
+- e77b1ab: Add a check for maximum number of columns allowed
+- 447f979: Always cast `target_op` (write checkpoint) to ensure it's an integer.
+- 447f979: Validate that the powersync-sqlite-core version number is in a compatible range of ^0.2.0.
+
+## 1.16.2
+
+### Patch Changes
+
+- 9521e24: Change internals of `deleteBucket` to use simpler action
+- 7d04f74: Added basic validations for required options in `PowerSyncDatabase` constructor.
+- 4fc1de3: Allow enums to be accessed at runtime by adding `preserveConstEnums` to tsconfig
+
+## 1.16.1
+
+### Patch Changes
+
+- 7668495: Correctly resetting hasSynced value upon a disconnectAndClear call.
+
+## 1.16.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
 ## 1.15.0
 
 ### Minor Changes

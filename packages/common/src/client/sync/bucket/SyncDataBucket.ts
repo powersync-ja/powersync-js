@@ -1,5 +1,5 @@
-import { OpId } from './CrudEntry';
-import { OplogEntry, OplogEntryJSON } from './OplogEntry';
+import { OpId } from './CrudEntry.js';
+import { OplogEntry, OplogEntryJSON } from './OplogEntry.js';
 
 export type SyncDataBucketJSON = {
   bucket: string;
@@ -8,8 +8,6 @@ export type SyncDataBucketJSON = {
   next_after?: string;
   data: OplogEntryJSON[];
 };
-
-export const MAX_OP_ID = '9223372036854775807';
 
 export class SyncDataBucket {
   static fromRow(row: SyncDataBucketJSON) {

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { AbstractPowerSyncDatabase, Schema } from '@powersync/common';
 import {
   PowerSyncDatabase,
   WASQLiteDBAdapter,
@@ -126,5 +126,94 @@ describe('Open Methods', () => {
 
     expect(sharedSpy).toBeCalledTimes(0);
     expect(dedicatedSpy).toBeCalledTimes(0);
+  });
+
+  /**
+   * TypeScript should prevent this kind of error. This scenario could happen
+   * in pure JavaScript with no language server checking types.
+   */
+  it('Should throw if schema setting is not valid', async () => {
+    const schemaError = 'The `schema` option should be provided';
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          database: { dbFilename: 'test.sqlite' },
+          // @ts-expect-error
+          schema: null
+        })
+    ).throws(schemaError);
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          database: { dbFilename: 'test.sqlite' },
+          // @ts-expect-error
+          schema: {}
+        })
+    ).throws(schemaError);
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          database: { dbFilename: 'test.sqlite' },
+          // @ts-expect-error
+          schema: 'schema'
+        })
+    ).throws(schemaError);
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          database: { dbFilename: 'test.sqlite' },
+          // @ts-expect-error
+          schema: undefined
+        })
+    ).throws(schemaError);
+
+    // An Extended class should be fine
+    class ExtendedSchema extends Schema {}
+
+    const extendedClient = new PowerSyncDatabase({
+      database: { dbFilename: 'test.sqlite' },
+      schema: new ExtendedSchema([])
+    });
+
+    await extendedClient.close();
+  });
+
+  /**
+   * TypeScript should prevent this kind of error. This scenario could happen
+   * in pure JavaScript with no language server checking types.
+   */
+  it('Should throw if database setting is not valid', async () => {
+    const dbError = 'The provided `database` option is invalid.';
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          // @ts-expect-error
+          database: null,
+          schema: new Schema([])
+        })
+    ).throws(dbError);
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          // @ts-expect-error
+          database: {},
+          schema: new Schema([])
+        })
+    ).throws(dbError);
+
+    expect(
+      () =>
+        new PowerSyncDatabase({
+          // @ts-expect-error
+          database: 'db.sqlite',
+          schema: new Schema([])
+        })
+    ).throws(dbError);
   });
 });

@@ -1,6 +1,6 @@
-import { BucketChecksum, Checkpoint } from '../bucket/BucketStorageAdapter';
-import { CrudEntry, OpId } from '../bucket/CrudEntry';
-import { SyncDataBucketJSON } from '../bucket/SyncDataBucket';
+import { BucketChecksum, Checkpoint } from '../bucket/BucketStorageAdapter.js';
+import { CrudEntry, OpId } from '../bucket/CrudEntry.js';
+import { SyncDataBucketJSON } from '../bucket/SyncDataBucket.js';
 
 /**
  * For sync2.json
@@ -89,6 +89,8 @@ export interface StreamingSyncRequest {
    * Client parameters to be passed to the sync rules.
    */
   parameters?: Record<string, StreamingSyncRequestParameterType>;
+
+  client_id?: string;
 }
 
 export interface StreamingSyncCheckpoint {

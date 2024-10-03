@@ -11,7 +11,7 @@ The app is currently available at [https://diagnostics-app.powersync.com/](https
 
 It can also be run as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
 
-## Running the app
+## Running the app locally
 
 In the root of the repository, run:
 
@@ -28,11 +28,15 @@ pnpm dev
 
 The app is now available on [http://localhost:5173/](http://localhost:5173/).
 
-Generate a [development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens) and sign in. For development tokens, the PowerSync endpoint should be populated automatically. For some others like Supabase tokens, it needs to be entered manually.
+## Sign in
 
-If you run powersync inside docker (such as via the [self-host-demo](https://github.com/powersync-ja/self-host-demo)) the returned powersync_url is internal to the docker network and will be unreachable outside of it. Since we run the diagnostics app outside of docker, you can then connect to the endpoint as exposed by docker-proxy, e.g. `http://localhost:8080`.
+Signing in as a user requires a PowerSync Token (JWT) and Endpoint.
 
-**Note**: Please see the known usability issues listed below.
+**PowerSync Token**:
+
+Generate a [development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens) for the user.
+
+**PowerSync Endpoint**: For PowerSync development tokens, the endpoint should be populated automatically. For other JWTs, e.g. Supabase tokens, it needs to be entered manually. For PowerSync Cloud, this is your instance URL. For self-hosted setups (running the PowerSync service inside Docker) the returned instance URL is internal to the Docker network and will be unreachable outside of it. Since we run the diagnostics app outside of docker, you can then connect to the endpoint as exposed by docker-proxy, e.g. `http://localhost:8080`.
 
 ## Functionality
 

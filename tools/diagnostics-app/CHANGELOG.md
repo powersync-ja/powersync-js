@@ -1,5 +1,62 @@
 # diagnostics-app
 
+## 0.4.1
+
+### Patch Changes
+
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/web@1.8.1
+  - @powersync/react@1.4.3
+
+## 0.4.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+
+### Patch Changes
+
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [02f0ce7]
+  - @powersync/react@1.4.2
+  - @powersync/web@1.8.0
+
+## 0.3.5
+
+### Patch Changes
+
+- Updated dependencies [b1a76b3]
+- Updated dependencies [a65cd8c]
+- Updated dependencies [c04ecfc]
+- Updated dependencies [447f979]
+  - @powersync/web@1.7.0
+  - @powersync/react@1.4.1
+
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [9f95437]
+- Updated dependencies [2db0e8f]
+  - @powersync/web@1.6.0
+
+## 0.3.3
+
+### Patch Changes
+
+- d3379c5: Improve extracting endpoint from token audience.
+- Updated dependencies [58fd059]
+  - @powersync/web@1.5.1
+
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [042589c]
+  - @powersync/web@1.5.0
+
 ## 0.3.1
 
 ### Patch Changes

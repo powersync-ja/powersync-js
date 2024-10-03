@@ -3,6 +3,7 @@ import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
 import type { DBFunctionsInterface, OnTableChangeCallback, WASQLExecuteResult } from './types';
 import { Mutex } from 'async-mutex';
+import { BatchedUpdateNotification } from '@powersync/common';
 
 let nextId = 1;
 
@@ -26,8 +27,21 @@ export async function _openDB(
    */
   const listeners = new Map<number, OnTableChangeCallback>();
 
+  let updatedTables = new Set<string>();
+  let updateTimer: any = null;
+
+  function fireUpdates() {
+    updateTimer = null;
+    const event: BatchedUpdateNotification = { tables: [...updatedTables], groupedUpdates: {}, rawUpdates: [] };
+    updatedTables.clear();
+    Array.from(listeners.values()).forEach((l) => l(event));
+  }
+
   sqlite3.register_table_onchange_hook(db, (opType: number, tableName: string, rowId: number) => {
-    Array.from(listeners.values()).forEach((l) => l(opType, tableName, rowId));
+    updatedTables.add(tableName);
+    if (updateTimer == null) {
+      updateTimer = setTimeout(fireUpdates, 0);
+    }
   });
 
   /**

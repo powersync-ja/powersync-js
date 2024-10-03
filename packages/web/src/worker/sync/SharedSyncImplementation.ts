@@ -1,23 +1,24 @@
-import * as Comlink from 'comlink';
-import Logger, { type ILogger } from 'js-logger';
 import {
   type AbstractStreamingSyncImplementation,
-  type StreamingSyncImplementation,
   type LockOptions,
+  type PowerSyncConnectionOptions,
+  type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   type SyncStatusOptions,
-  type PowerSyncConnectionOptions,
+  AbortOperation,
   BaseObserver,
+  DBAdapter,
   SqliteBucketStorage,
-  SyncStatus,
-  AbortOperation
+  SyncStatus
 } from '@powersync/common';
+import { Mutex } from 'async-mutex';
+import * as Comlink from 'comlink';
+import Logger, { type ILogger } from 'js-logger';
+import { WebRemote } from '../../db/sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation';
-import { Mutex } from 'async-mutex';
-import { WebRemote } from '../../db/sync/WebRemote';
 
 import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
@@ -66,7 +67,7 @@ export class SharedSyncImplementation
   implements StreamingSyncImplementation
 {
   protected ports: WrappedSyncPort[];
-  protected syncStreamClient?: AbstractStreamingSyncImplementation;
+  protected syncStreamClient: AbstractStreamingSyncImplementation | null;
 
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
@@ -74,12 +75,20 @@ export class SharedSyncImplementation
   protected fetchCredentialsController?: RemoteOperationAbortController;
   protected uploadDataController?: RemoteOperationAbortController;
 
+  protected dbAdapter: DBAdapter | null;
+  protected syncParams: SharedSyncInitOptions | null;
+  protected logger: ILogger;
+
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
 
   constructor() {
     super();
     this.ports = [];
+    this.dbAdapter = null;
+    this.syncParams = null;
+    this.syncStreamClient = null;
+    this.logger = Logger.get('shared-sync');
 
     this.isInitialized = new Promise((resolve) => {
       const callback = this.registerListener({
@@ -115,81 +124,28 @@ export class SharedSyncImplementation
    * Configures the DBAdapter connection and a streaming sync client.
    */
   async init(dbWorkerPort: MessagePort, params: SharedSyncInitOptions) {
-    if (this.syncStreamClient) {
+    if (this.dbAdapter) {
       // Cannot modify already existing sync implementation
       return;
     }
 
-    const logger = params.streamOptions?.flags?.broadcastLogs ? this.broadCastLogger : Logger.get('shared-sync');
+    this.dbAdapter = new WASQLiteDBAdapter({
+      dbFilename: params.dbName,
+      workerPort: dbWorkerPort,
+      flags: { enableMultiTabs: true, useWebWorker: true },
+      logger: this.logger
+    });
+
+    this.syncParams = params;
+
+    if (params.streamOptions?.flags?.broadcastLogs) {
+      this.logger = this.broadCastLogger;
+    }
 
     self.onerror = (event) => {
       // Share any uncaught events on the broadcast logger
-      logger.error('Uncaught exception in PowerSync shared sync worker', event);
+      this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
     };
-
-    this.syncStreamClient = new WebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(
-        new WASQLiteDBAdapter({
-          dbFilename: params.dbName,
-          workerPort: dbWorkerPort,
-          flags: { enableMultiTabs: true, useWebWorker: true },
-          logger
-        }),
-        new Mutex(),
-        logger
-      ),
-      remote: new WebRemote({
-        fetchCredentials: async () => {
-          const lastPort = this.ports[this.ports.length - 1];
-          return new Promise(async (resolve, reject) => {
-            const abortController = new AbortController();
-            this.fetchCredentialsController = {
-              controller: abortController,
-              activePort: lastPort
-            };
-
-            abortController.signal.onabort = reject;
-            try {
-              resolve(await lastPort.clientProvider.fetchCredentials());
-            } catch (ex) {
-              reject(ex);
-            } finally {
-              this.fetchCredentialsController = undefined;
-            }
-          });
-        }
-      }),
-      uploadCrud: async () => {
-        const lastPort = this.ports[this.ports.length - 1];
-
-        return new Promise(async (resolve, reject) => {
-          const abortController = new AbortController();
-          this.uploadDataController = {
-            controller: abortController,
-            activePort: lastPort
-          };
-
-          // Resolving will make it retry
-          abortController.signal.onabort = () => resolve();
-          try {
-            resolve(await lastPort.clientProvider.uploadCrud());
-          } catch (ex) {
-            reject(ex);
-          } finally {
-            this.uploadDataController = undefined;
-          }
-        });
-      },
-      ...params.streamOptions,
-      // Logger cannot be transferred just yet
-      logger
-    });
-
-    this.syncStreamClient.registerListener({
-      statusChanged: (status) => {
-        this.updateAllStatuses(status.toJSON());
-      }
-    });
 
     this.iterateListeners((l) => l.initialized?.());
   }
@@ -209,13 +165,27 @@ export class SharedSyncImplementation
   async connect(options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.connect(options));
+    return navigator.locks.request('shared-sync-connect', async () => {
+      this.syncStreamClient = this.generateStreamingImplementation();
+
+      this.syncStreamClient.registerListener({
+        statusChanged: (status) => {
+          this.updateAllStatuses(status.toJSON());
+        }
+      });
+
+      await this.syncStreamClient.connect(options);
+    });
   }
 
   async disconnect() {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return navigator.locks.request('shared-sync-connect', () => this.syncStreamClient?.disconnect());
+    return navigator.locks.request('shared-sync-connect', async () => {
+      await this.syncStreamClient?.disconnect();
+      await this.syncStreamClient?.dispose();
+      this.syncStreamClient = null;
+    });
   }
 
   /**
@@ -281,6 +251,62 @@ export class SharedSyncImplementation
     return this.syncStreamClient!.getWriteCheckpoint();
   }
 
+  protected generateStreamingImplementation() {
+    // This should only be called after initialization has completed
+    const syncParams = this.syncParams!;
+
+    // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
+    return new WebStreamingSyncImplementation({
+      adapter: new SqliteBucketStorage(this.dbAdapter!, new Mutex(), this.logger),
+      remote: new WebRemote({
+        fetchCredentials: async () => {
+          const lastPort = this.ports[this.ports.length - 1];
+          return new Promise(async (resolve, reject) => {
+            const abortController = new AbortController();
+            this.fetchCredentialsController = {
+              controller: abortController,
+              activePort: lastPort
+            };
+
+            abortController.signal.onabort = reject;
+            try {
+              console.log('calling the last port client provider for credentials');
+              resolve(await lastPort.clientProvider.fetchCredentials());
+            } catch (ex) {
+              reject(ex);
+            } finally {
+              this.fetchCredentialsController = undefined;
+            }
+          });
+        }
+      }),
+      uploadCrud: async () => {
+        const lastPort = this.ports[this.ports.length - 1];
+
+        return new Promise(async (resolve, reject) => {
+          const abortController = new AbortController();
+          this.uploadDataController = {
+            controller: abortController,
+            activePort: lastPort
+          };
+
+          // Resolving will make it retry
+          abortController.signal.onabort = () => resolve();
+          try {
+            resolve(await lastPort.clientProvider.uploadCrud());
+          } catch (ex) {
+            reject(ex);
+          } finally {
+            this.uploadDataController = undefined;
+          }
+        });
+      },
+      ...syncParams.streamOptions,
+      // Logger cannot be transferred just yet
+      logger: this.logger
+    });
+  }
+
   /**
    * A method to update the all shared statuses for each
    * client.
@@ -296,7 +322,8 @@ export class SharedSyncImplementation
    */
   private _testUpdateAllStatuses(status: SyncStatusOptions) {
     if (!this.syncStreamClient) {
-      console.warn('no stream client has been initialized yet');
+      // This is just for testing purposes
+      this.syncStreamClient = this.generateStreamingImplementation();
     }
 
     // Only assigning, don't call listeners for this test

@@ -4,9 +4,9 @@
 
 # PowerSync SDK for React Native
 
-_[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
+*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
 
-This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`. It connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
+This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
 
 See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
 
@@ -68,6 +68,35 @@ module.exports = function (api) {
      '@babel/plugin-transform-async-generator-functions'
    ]
  };
+};
+```
+
+## Metro config (optional)
+
+When using a bare React Native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
+
+If you see the following error message
+
+
+```bash
+Super expression must either be null or a function
+```
+
+then you will need to add this to your `metro.config.js`:
+
+```js
+const config = {
+    transformer: {
+        getTransformOptions: async () => ({
+            transform: {
+                inlineRequires: {
+                  blockList: {
+                    [require.resolve("@powersync/react-native")]: true,
+                  },
+                },
+              },
+        })
+    }
 };
 ```
 

@@ -1,32 +1,39 @@
-import _ from 'lodash';
+import { Schema, Table, column } from '@powersync/common';
+import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import Logger from 'js-logger';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { v4 as uuid } from 'uuid';
-import { AbstractPowerSyncDatabase, Schema, SyncStatusOptions, TableV2, column } from '@powersync/common';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './utils/MockStreamOpenFactory';
+
+type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
+
+export type ConnectedDatabaseUtils = UnwrapPromise<ReturnType<typeof generateConnectedDatabase>>;
+export type GenerateConnectedDatabaseOptions = {
+  powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
+};
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
-export async function waitForConnectionStatus(
-  db: AbstractPowerSyncDatabase,
-  statusCheck: SyncStatusOptions = { connected: true }
-) {
-  await new Promise<void>((resolve) => {
-    if (db.connected) {
-      resolve();
-    }
-    const l = db.registerListener({
-      statusUpdated: (status) => {
-        if (_.every(statusCheck, (value, key) => _.isEqual(status[key as keyof SyncStatusOptions], value))) {
-          resolve();
-          l?.();
-        }
-      }
-    });
-  });
-}
+export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = {
+  powerSyncOptions: {
+    dbFilename: 'test-stream-connection.db',
+    flags: {
+      enableMultiTabs: false,
+      useWebWorker: true
+    },
+    // Makes tests faster
+    crudUploadThrottleMs: 0,
+    schema: new Schema({
+      users: new Table({ name: column.text })
+    })
+  }
+};
 
-export async function generateConnectedDatabase({ useWebWorker } = { useWebWorker: true }) {
+export async function generateConnectedDatabase(
+  options: GenerateConnectedDatabaseOptions = DEFAULT_CONNECTED_POWERSYNC_OPTIONS
+) {
+  const { powerSyncOptions } = options;
+  const { powerSyncOptions: defaultPowerSyncOptions } = DEFAULT_CONNECTED_POWERSYNC_OPTIONS;
   /**
    * Very basic implementation of a listener pattern.
    * Required since we cannot extend multiple classes.
@@ -36,24 +43,14 @@ export async function generateConnectedDatabase({ useWebWorker } = { useWebWorke
   const uploadSpy = vi.spyOn(connector, 'uploadData');
   const remote = new MockRemote(connector, () => callbacks.forEach((c) => c()));
 
-  const users = new TableV2({
-    name: column.text
-  });
-
-  const schema = new Schema({
-    users
-  });
-
   const factory = new MockStreamOpenFactory(
     {
-      dbFilename: 'test-stream-connection.db',
+      ...defaultPowerSyncOptions,
+      ...powerSyncOptions,
       flags: {
-        enableMultiTabs: false,
-        useWebWorker
-      },
-      // Makes tests faster
-      crudUploadThrottleMs: 0,
-      schema
+        ...(defaultPowerSyncOptions.flags ?? {}),
+        ...(powerSyncOptions.flags ?? {})
+      }
     },
     remote
   );
@@ -103,7 +100,14 @@ describe('Streaming', () => {
     test: (createConnectedDatabase: () => ReturnType<typeof generateConnectedDatabase>) => Promise<void>
   ) => {
     const funcWithWebWorker = generateConnectedDatabase;
-    const funcWithoutWebWorker = () => generateConnectedDatabase({ useWebWorker: false });
+    const funcWithoutWebWorker = () =>
+      generateConnectedDatabase({
+        powerSyncOptions: {
+          flags: {
+            useWebWorker: false
+          }
+        }
+      });
 
     it(`${name} - with web worker`, () => test(funcWithWebWorker));
     it(`${name} - without web worker`, () => test(funcWithoutWebWorker));

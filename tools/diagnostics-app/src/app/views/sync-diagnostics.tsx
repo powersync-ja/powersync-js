@@ -69,14 +69,16 @@ export default function SyncDiagnosticsPage() {
   const [bucketRows, setBucketRows] = React.useState<null | any[]>(null);
   const [tableRows, setTableRows] = React.useState<null | any[]>(null);
   const [syncError, setSyncError] = React.useState<Error | null>(syncErrorTracker.lastSyncError);
+  const [lastSyncedAt, setlastSyncedAt] = React.useState<Date | null>(null);
 
   const bucketRowsLoading = bucketRows == null;
   const tableRowsLoading = tableRows == null;
 
   const refreshStats = async () => {
     // Similar to db.currentState.hasSynced, but synchronized to the onChange events
-    const hasSynced = await db.getOptional('SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1');
-    if (hasSynced != null) {
+    const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
+    setlastSyncedAt(synced_at ? new Date(synced_at + 'Z') : null);
+    if (synced_at != null) {
       // These are potentially expensive queries - do not run during initial sync
       const bucketRows = await db.getAll(BUCKETS_QUERY);
       const tableRows = await db.getAll(TABLES_QUERY);
@@ -207,6 +209,7 @@ export default function SyncDiagnosticsPage() {
             <TableCell component="th">Total Data Size</TableCell>
             <TableCell component="th">Total Metadata Size</TableCell>
             <TableCell component="th">Total Downloaded Size</TableCell>
+            <TableCell component="th">Last Synced At</TableCell>
           </TableRow>
           <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
             <TableCell align="right">{totals.buckets}</TableCell>
@@ -215,6 +218,7 @@ export default function SyncDiagnosticsPage() {
             <TableCell align="right">{formatBytes(totals.data_size)}</TableCell>
             <TableCell align="right">{formatBytes(totals.metadata_size)}</TableCell>
             <TableCell align="right">{formatBytes(totals.download_size)}</TableCell>
+            <TableCell align="right">{lastSyncedAt?.toLocaleTimeString()}</TableCell>
           </TableRow>
         </TableBody>
       </Table>

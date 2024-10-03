@@ -1,5 +1,5 @@
 bucket_definitions:
   user_lists:
-    parameters: SELECT token_parameters.user_id as user_id
+    parameters: SELECT request.user_id() as user_id
     data:
       - SELECT * FROM pebbles WHERE user_id = bucket.user_id

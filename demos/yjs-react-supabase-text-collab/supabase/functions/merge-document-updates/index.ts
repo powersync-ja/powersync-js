@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: String(err?.message ?? err) }, { status: 500, headers: responseHeaders })
+      JSON.stringify({ error: String(err?.message ?? err) }),
+      { status: 500, headers: responseHeaders }
     );
   }
 });

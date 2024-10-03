@@ -4,7 +4,7 @@
 
 # PowerSync SDK for Web
 
-_[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
+*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
 
 This package (`packages/web`) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/common`.
 

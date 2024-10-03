@@ -1,5 +1,41 @@
 # @powersync/react
 
+## 1.4.3
+
+### Patch Changes
+
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
+## 1.4.2
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+
+## 1.4.1
+
+### Patch Changes
+
+- a65cd8c: chore: Added `isLoading` example to README
+- c04ecfc: React and Vue helpers should execute queries from compatible query executor methods. This should allow Kysely queries with plugins to function correctly.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
 ## 1.4.0
 
 ### Minor Changes

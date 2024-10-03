@@ -1,7 +1,7 @@
-import { OpId } from './CrudEntry';
-import { CrudBatch } from './CrudBatch';
-import { SyncDataBatch } from './SyncDataBatch';
-import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver';
+import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { CrudBatch } from './CrudBatch.js';
+import { CrudEntry, OpId } from './CrudEntry.js';
+import { SyncDataBatch } from './SyncDataBatch.js';
 
 export interface Checkpoint {
   last_op_id: OpId;
@@ -62,6 +62,7 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   syncLocalDatabase(checkpoint: Checkpoint): Promise<{ checkpointValid: boolean; ready: boolean; failures?: any[] }>;
 
+  nextCrudItem(): Promise<CrudEntry | undefined>;
   hasCrud(): Promise<boolean>;
   getCrudBatch(limit?: number): Promise<CrudBatch | null>;
 
@@ -78,4 +79,9 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
   forceCompact(): Promise<void>;
 
   getMaxOpId(): string;
+
+  /**
+   * Get an unique client id.
+   */
+  getClientId(): Promise<string>;
 }

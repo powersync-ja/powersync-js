@@ -1,5 +1,82 @@
 # @powersync/react-native
 
+## 1.12.2
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+  - @powersync/react@1.4.3
+
+## 1.12.1
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+  - @powersync/react@1.4.2
+
+## 1.12.0
+
+### Minor Changes
+
+- 447f979: Use react-native-quick-sqlite 1.3.0 / powersync-sqlite-core 0.2.1.
+
+### Patch Changes
+
+- b4d64f0: Updated crypto.js vendor file to include fast-base64-decode dependency instead of bundling it.
+- 892e172: fixed Flipper warning still showing if an HTTP request rejected due to an error.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [a65cd8c]
+- Updated dependencies [c04ecfc]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+  - @powersync/react@1.4.1
+
+## 1.11.0
+
+### Minor Changes
+
+- 9f95437: Updated default streaming connection method to use WebSockets
+
+### Patch Changes
+
+- Updated dependencies [9521e24]
+- Updated dependencies [7d04f74]
+- Updated dependencies [4fc1de3]
+  - @powersync/common@1.16.2
+
+## 1.10.1
+
+### Patch Changes
+
+- Updated dependencies [7668495]
+  - @powersync/common@1.16.1
+
+## 1.10.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
+### Patch Changes
+
+- Updated dependencies [042589c]
+  - @powersync/common@1.16.0
+
 ## 1.9.0
 
 ### Minor Changes

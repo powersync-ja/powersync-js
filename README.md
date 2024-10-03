@@ -2,7 +2,7 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-*[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline.*
+*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
 
 # PowerSync JavaScript SDKs
 
@@ -45,6 +45,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist/README.md): A React Native to-do list example app using a Supabase backend.
 - [demos/react-native-supabase-group-chat](./demos/react-native-supabase-group-chat/README.md): A React Native group chat example app using a Supabase backend.
+- [demos/react-native-web-supabase-todolist](./demos/react-native-web-supabase-todolist/README.md) A React Native to-do list example app using a Supabase backend that's compatible with React Native for Web.
 - [demos/django-react-native-todolist](./demos/django-react-native-todolist/README.md) A React Native to-do list example app using a Django backend.
 
 ### Web

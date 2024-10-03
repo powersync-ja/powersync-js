@@ -1,7 +1,6 @@
 import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
-import throttle from 'lodash/throttle';
 import {
   BatchedUpdateNotification,
   DBAdapter,
@@ -9,27 +8,26 @@ import {
   Transaction,
   UpdateNotification,
   isBatchedUpdateNotification
-} from '../db/DBAdapter';
-import { SyncStatus } from '../db/crud/SyncStatus';
-import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
-import { Schema } from '../db/schema/Schema';
-import { BaseObserver } from '../utils/BaseObserver';
-import { ControlledExecutor } from '../utils/ControlledExecutor';
-import { mutexRunExclusive } from '../utils/mutex';
-import { quoteIdentifier } from '../utils/strings';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
-import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
-import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudBatch } from './sync/bucket/CrudBatch';
-import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
-import { CrudTransaction } from './sync/bucket/CrudTransaction';
+} from '../db/DBAdapter.js';
+import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
+import { Schema } from '../db/schema/Schema.js';
+import { BaseObserver } from '../utils/BaseObserver.js';
+import { ControlledExecutor } from '../utils/ControlledExecutor.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
+import { throttleTrailing } from '../utils/throttle.js';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
+import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
+import { CrudBatch } from './sync/bucket/CrudBatch.js';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
+import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
-  AbstractStreamingSyncImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
-} from './sync/stream/AbstractStreamingSyncImplementation';
+} from './sync/stream/AbstractStreamingSyncImplementation.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -81,6 +79,8 @@ export interface SQLWatchOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
+   * @deprecated All tables specified in {@link tables} will be watched, including PowerSync tables with prefixes.
+   *
    * Allows for watching any SQL table
    * by not removing PowerSync table name prefixes
    */
@@ -172,8 +172,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
 
-  private hasSyncedWatchDisposer?: () => void;
-
   protected _schema: Schema;
 
   private _database: DBAdapter;
@@ -184,7 +182,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    const { database } = options;
+
+    const { database, schema } = options;
+
+    if (typeof schema?.toJSON != 'function') {
+      throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
+    }
 
     if (isDBAdapter(database)) {
       this._database = database;
@@ -192,13 +195,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this._database = database.openDB();
     } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
       this._database = this.openDBAdapter(options);
+    } else {
+      throw new Error('The provided `database` option is invalid.');
     }
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
     this.options = { ...DEFAULT_POWERSYNC_DB_OPTIONS, ...options };
-    this._schema = options.schema;
+    this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
     // Start async init
@@ -235,7 +240,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector
-  ): AbstractStreamingSyncImplementation;
+  ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
 
@@ -287,48 +292,49 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    const version = await this.database.execute('SELECT powersync_rs_version()');
-    this.sdkVersion = version.rows?.item(0)['powersync_rs_version()'] ?? '';
+    await this._loadVersion();
     await this.updateSchema(this.options.schema);
-    this.updateHasSynced();
+    await this.updateHasSynced();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
+  private async _loadVersion() {
+    try {
+      const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
+      this.sdkVersion = version;
+    } catch (e) {
+      throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
+    }
+    let versionInts: number[];
+    try {
+      versionInts = this.sdkVersion!.split(/[.\/]/)
+        .slice(0, 3)
+        .map((n) => parseInt(n));
+    } catch (e) {
+      throw new Error(
+        `Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}. Details: ${e.message}`
+      );
+    }
+
+    // Validate ^0.2.0
+    if (versionInts[0] != 0 || versionInts[1] != 2 || versionInts[2] < 0) {
+      throw new Error(`Unsupported powersync extension version. Need ^0.2.0, got: ${this.sdkVersion}`);
+    }
+  }
+
   protected async updateHasSynced() {
-    const syncedSQL = 'SELECT 1 FROM ps_buckets WHERE last_applied_op > 0 LIMIT 1';
-
-    const abortController = new AbortController();
-    this.hasSyncedWatchDisposer = () => abortController.abort();
-
-    // Abort the watch after the first sync is detected
-    this.watch(
-      syncedSQL,
-      [],
-      {
-        onResult: (result) => {
-          const hasSynced = !!result.rows?.length;
-
-          if (hasSynced != this.currentStatus.hasSynced) {
-            this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced });
-            this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
-          }
-
-          if (hasSynced) {
-            abortController.abort();
-          }
-        },
-        onError: (ex) => {
-          this.options.logger?.warn('Failure while watching synced state', ex);
-          abortController.abort();
-        }
-      },
-      {
-        rawTableNames: true,
-        signal: abortController.signal
-      }
+    const result = await this.database.get<{ synced_at: string | null }>(
+      'SELECT powersync_last_synced_at() as synced_at'
     );
+    const hasSynced = result.synced_at != null;
+    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
+
+    if (hasSynced != this.currentStatus.hasSynced) {
+      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
+      this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+    }
   }
 
   /**
@@ -420,27 +426,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${PSInternalTable.OPLOG}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.CRUD}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.BUCKETS}`);
-      await tx.execute(`DELETE FROM ${PSInternalTable.UNTYPED}`);
-
-      const tableGlob = clearLocal ? 'ps_data_*' : 'ps_data__*';
-
-      const existingTableRows = await tx.execute(
-        `
-      SELECT name FROM sqlite_master WHERE type='table' AND name GLOB ?
-      `,
-        [tableGlob]
-      );
-
-      if (!existingTableRows.rows?.length) {
-        return;
-      }
-      for (const row of existingTableRows.rows._array) {
-        await tx.execute(`DELETE FROM ${quoteIdentifier(row.name)} WHERE 1`);
-      }
+      await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
     });
+
+    // The data has been deleted - reset the sync status
+    this.currentStatus = new SyncStatus({});
+    this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
   /**
@@ -453,7 +444,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
-    this.hasSyncedWatchDisposer?.();
 
     const { disconnect } = options;
     if (disconnect) {
@@ -568,6 +558,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         txId
       );
     });
+  }
+
+  /**
+   * Get an unique client id for this database.
+   *
+   * The id is not reset when the database is cleared, only when the database is deleted.
+   */
+  async getClientId(): Promise<string> {
+    return this.bucketStorageAdapter.getClientId();
   }
 
   private async handleCrudCheckpoint(lastClientId: number, writeCheckpoint?: string) {
@@ -892,7 +891,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
+    const watchedTables = new Set<string>(
+      (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
+    );
 
     const changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
@@ -901,21 +902,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       await onChange(e);
     });
 
-    const flushTableUpdates = throttle(
+    const flushTableUpdates = throttleTrailing(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
           if (resolvedOptions?.signal?.aborted) return;
           executor.schedule({ changedTables: intersection });
         }),
-      throttleMs,
-      { leading: false, trailing: true }
+      throttleMs
     );
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {
         try {
-          const { rawTableNames } = resolvedOptions;
-          this.processTableUpdates(update, rawTableNames, changedTables);
+          this.processTableUpdates(update, changedTables);
           flushTableUpdates();
         } catch (error) {
           onError?.(error);
@@ -980,24 +979,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private processTableUpdates(
     updateNotification: BatchedUpdateNotification | UpdateNotification,
-    rawTableNames: boolean | undefined,
     changedTables: Set<string>
   ): void {
     const tables = isBatchedUpdateNotification(updateNotification)
       ? updateNotification.tables
       : [updateNotification.table];
 
-    const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
-    if (!filteredTables.length) {
-      return;
-    }
-
-    // Remove any PowerSync table prefixes if necessary
-    const mappedTableNames = rawTableNames
-      ? filteredTables
-      : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
-
-    for (const table of mappedTableNames) {
+    for (const table of tables) {
       changedTables.add(table);
     }
   }

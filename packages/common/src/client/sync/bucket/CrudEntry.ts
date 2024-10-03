@@ -23,7 +23,7 @@ export type CrudEntryJSON = {
   tx_id?: number;
 };
 
-export type CrudEntryDataJSON = {
+type CrudEntryDataJSON = {
   data: Record<string, any>;
   op: UpdateType;
   type: string;
@@ -33,7 +33,7 @@ export type CrudEntryDataJSON = {
 /**
  * The output JSON seems to be a third type of JSON, not the same as the input JSON.
  */
-export type CrudEntryOutputJSON = {
+type CrudEntryOutputJSON = {
   op_id: number;
   op: UpdateType;
   type: string;

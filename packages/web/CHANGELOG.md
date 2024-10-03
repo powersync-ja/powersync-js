@@ -1,5 +1,82 @@
 # @powersync/web
 
+## 1.8.1
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
+## 1.8.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+- 02f0ce7: DB and sync workers instantiation can now be overriden with a path or a factory method. Added UMD distribution to introduce `react-native-web` support (available under `@powersync/web/umd`).
+
+### Patch Changes
+
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+
+## 1.7.0
+
+### Minor Changes
+
+- b1a76b3: Fixed SSR Mode detection for DB adapters. Removed the potential for SSR Web Streamining implementations from to perform syncing operations.
+- 447f979: Use wa-sqlite 0.3.0 / powersync-sqlite-core 0.2.0.
+
+### Patch Changes
+
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
+## 1.6.0
+
+### Minor Changes
+
+- 9f95437: Updated default streaming connection method to use WebSockets
+
+### Patch Changes
+
+- 2db0e8f: Debounce update notifications to fix performance issue with large amounts of data synced
+- Updated dependencies [9521e24]
+- Updated dependencies [7d04f74]
+- Updated dependencies [4fc1de3]
+  - @powersync/common@1.16.2
+
+## 1.5.1
+
+### Patch Changes
+
+- 58fd059: Fix an issue where the shared sync manager would not discard stale credentials
+- Updated dependencies [7668495]
+  - @powersync/common@1.16.1
+
+## 1.5.0
+
+### Minor Changes
+
+- 042589c: Added a warning if connector `uploadData` functions don't process CRUD items completely.
+
+### Patch Changes
+
+- Updated dependencies [042589c]
+  - @powersync/common@1.16.0
+
 ## 1.4.0
 
 ### Minor Changes
