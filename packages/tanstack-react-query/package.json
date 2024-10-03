@@ -1,0 +1,44 @@
+{
+  "name": "@powersync/tanstack-react-query",
+  "version": "0.0.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "PowerSync integration with Tanstack React Query for offline-first and real-time data synchronization in React apps",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc -b -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.18.1",
+    "react": "*"
+  },
+  "dependencies": {
+    "@powersync/common": "workspace:*",
+    "@powersync/react": "workspace:*",
+    "@tanstack/react-query": "^5.55.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.34",
+    "jsdom": "^24.0.0",
+    "react": "18.2.0",
+    "typescript": "^5.5.3"
+  }
+}

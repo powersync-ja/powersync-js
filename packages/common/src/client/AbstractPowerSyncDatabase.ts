@@ -1,7 +1,6 @@
 import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
-import throttle from 'lodash/throttle';
 import {
   BatchedUpdateNotification,
   DBAdapter,
@@ -9,25 +8,26 @@ import {
   Transaction,
   UpdateNotification,
   isBatchedUpdateNotification
-} from '../db/DBAdapter';
-import { SyncStatus } from '../db/crud/SyncStatus';
-import { UploadQueueStats } from '../db/crud/UploadQueueStatus';
-import { Schema } from '../db/schema/Schema';
-import { BaseObserver } from '../utils/BaseObserver';
-import { ControlledExecutor } from '../utils/ControlledExecutor';
-import { mutexRunExclusive } from '../utils/mutex';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory';
-import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector';
-import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter';
-import { CrudBatch } from './sync/bucket/CrudBatch';
-import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry';
-import { CrudTransaction } from './sync/bucket/CrudTransaction';
+} from '../db/DBAdapter.js';
+import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
+import { Schema } from '../db/schema/Schema.js';
+import { BaseObserver } from '../utils/BaseObserver.js';
+import { ControlledExecutor } from '../utils/ControlledExecutor.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
+import { throttleTrailing } from '../utils/throttle.js';
+import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
+import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
+import { CrudBatch } from './sync/bucket/CrudBatch.js';
+import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
+import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
-} from './sync/stream/AbstractStreamingSyncImplementation';
+} from './sync/stream/AbstractStreamingSyncImplementation.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -79,6 +79,8 @@ export interface SQLWatchOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
+   * @deprecated All tables specified in {@link tables} will be watched, including PowerSync tables with prefixes.
+   *
    * Allows for watching any SQL table
    * by not removing PowerSync table name prefixes
    */
@@ -889,7 +891,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     const resolvedOptions = options ?? {};
-    const watchedTables = new Set(resolvedOptions.tables ?? []);
+    const watchedTables = new Set<string>(
+      (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
+    );
 
     const changedTables = new Set<string>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
@@ -898,21 +902,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       await onChange(e);
     });
 
-    const flushTableUpdates = throttle(
+    const flushTableUpdates = throttleTrailing(
       () =>
         this.handleTableChanges(changedTables, watchedTables, (intersection) => {
           if (resolvedOptions?.signal?.aborted) return;
           executor.schedule({ changedTables: intersection });
         }),
-      throttleMs,
-      { leading: false, trailing: true }
+      throttleMs
     );
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {
         try {
-          const { rawTableNames } = resolvedOptions;
-          this.processTableUpdates(update, rawTableNames, changedTables);
+          this.processTableUpdates(update, changedTables);
           flushTableUpdates();
         } catch (error) {
           onError?.(error);
@@ -977,24 +979,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private processTableUpdates(
     updateNotification: BatchedUpdateNotification | UpdateNotification,
-    rawTableNames: boolean | undefined,
     changedTables: Set<string>
   ): void {
     const tables = isBatchedUpdateNotification(updateNotification)
       ? updateNotification.tables
       : [updateNotification.table];
 
-    const filteredTables = rawTableNames ? tables : tables.filter((t) => !!t.match(POWERSYNC_TABLE_MATCH));
-    if (!filteredTables.length) {
-      return;
-    }
-
-    // Remove any PowerSync table prefixes if necessary
-    const mappedTableNames = rawTableNames
-      ? filteredTables
-      : filteredTables.map((t) => t.replace(POWERSYNC_TABLE_MATCH, ''));
-
-    for (const table of mappedTableNames) {
+    for (const table of tables) {
       changedTables.add(table);
     }
   }

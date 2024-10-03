@@ -1,7 +1,8 @@
 import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter';
-import { BaseObserver } from '../../../utils/BaseObserver';
+import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter.js';
+import { BaseObserver } from '../../../utils/BaseObserver.js';
+import { MAX_OP_ID } from '../../constants.js';
 import {
   BucketState,
   BucketStorageAdapter,
@@ -9,12 +10,10 @@ import {
   Checkpoint,
   PSInternalTable,
   SyncLocalDatabaseResult
-} from './BucketStorageAdapter';
-import { CrudBatch } from './CrudBatch';
-import { MAX_OP_ID } from '../../constants';
-import { CrudEntry, CrudEntryJSON } from './CrudEntry';
-import { OpTypeEnum } from './OpType';
-import { SyncDataBatch } from './SyncDataBatch';
+} from './BucketStorageAdapter.js';
+import { CrudBatch } from './CrudBatch.js';
+import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
+import { SyncDataBatch } from './SyncDataBatch.js';
 
 const COMPACT_OPERATION_INTERVAL = 1_000;
 

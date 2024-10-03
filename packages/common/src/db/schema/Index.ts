@@ -1,5 +1,5 @@
-import { IndexedColumn } from './IndexedColumn';
-import { Table } from './Table';
+import { IndexedColumn } from './IndexedColumn.js';
+import { Table } from './Table.js';
 
 export interface IndexOptions {
   name: string;

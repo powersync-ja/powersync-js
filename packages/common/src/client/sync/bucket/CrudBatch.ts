@@ -1,4 +1,4 @@
-import { CrudEntry } from './CrudEntry';
+import { CrudEntry } from './CrudEntry.js';
 
 /**
  * A batch of client-side changes.

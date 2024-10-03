@@ -13,8 +13,8 @@ import * as Comlink from 'comlink';
 import Logger, { type ILogger } from 'js-logger';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
-import { getWorkerDatabaseOpener } from '../../../worker/db/open-worker-database';
-import { WebSQLFlags } from '../web-sql-flags';
+import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
+import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
@@ -29,6 +29,8 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
    * A worker will be initialized if none is provided
    */
   workerPort?: MessagePort;
+
+  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 }
 
 /**
@@ -71,8 +73,8 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.options.dbFilename;
   }
 
-  protected get flags(): WASQLiteFlags {
-    return this.options.flags ?? {};
+  protected get flags(): Required<WASQLiteFlags> {
+    return resolveWebSQLFlags(this.options.flags ?? {});
   }
 
   getWorker() {}
@@ -84,9 +86,20 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
 
     if (useWebWorker) {
+      const optionsDbWorker = this.options.worker;
+
       const dbOpener = this.options.workerPort
         ? Comlink.wrap<OpenDB>(this.options.workerPort)
-        : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs);
+        : typeof optionsDbWorker === 'function'
+          ? Comlink.wrap<OpenDB>(
+              resolveWorkerDatabasePortFactory(() =>
+                optionsDbWorker({
+                  ...this.options,
+                  flags: this.flags
+                })
+              )
+            )
+          : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, optionsDbWorker);
 
       this.methods = await dbOpener(this.options.dbFilename);
       this.methods.registerOnTableChange(

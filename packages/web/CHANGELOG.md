@@ -1,5 +1,29 @@
 # @powersync/web
 
+## 1.8.1
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
+## 1.8.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+- 02f0ce7: DB and sync workers instantiation can now be overriden with a path or a factory method. Added UMD distribution to introduce `react-native-web` support (available under `@powersync/web/umd`).
+
+### Patch Changes
+
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+
 ## 1.7.0
 
 ### Minor Changes

@@ -1,5 +1,24 @@
 # @powersync/kysely-driver
 
+## 0.4.2
+
+### Patch Changes
+
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
+## 0.4.1
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+
 ## 0.4.0
 
 ### Minor Changes

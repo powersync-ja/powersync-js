@@ -1,5 +1,5 @@
-import { ColumnType } from './Column';
-import { Table } from './Table';
+import { ColumnType } from './Column.js';
+import { Table } from './Table.js';
 
 export interface IndexColumnOptions {
   name: string;

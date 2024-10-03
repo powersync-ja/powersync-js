@@ -1,5 +1,5 @@
-import { OpId } from './CrudEntry';
-import { OplogEntry, OplogEntryJSON } from './OplogEntry';
+import { OpId } from './CrudEntry.js';
+import { OplogEntry, OplogEntryJSON } from './OplogEntry.js';
 
 export type SyncDataBucketJSON = {
   bucket: string;
