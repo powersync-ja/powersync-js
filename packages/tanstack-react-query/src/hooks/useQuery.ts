@@ -75,13 +75,19 @@ function useQueryCore<
     }
   }, [powerSync, query, parameters, options.queryKey]);
 
-  let parsedQuery: ParsedQuery;
-  try {
-    parsedQuery = parseQuery(query, parameters);
-  } catch (e) {
-    setError(e);
+  let sqlStatement = '';
+  let queryParameters = [];
+
+  if (query) {
+    try {
+      const parsedQuery = parseQuery(query, parameters);
+
+      sqlStatement = parsedQuery.sqlStatement;
+      queryParameters = parsedQuery.parameters;
+    } catch (e) {
+      setError(e);
+    }
   }
-  const { sqlStatement, parameters: queryParameters } = parsedQuery;
 
   const fetchTables = async () => {
     try {
@@ -93,6 +99,8 @@ function useQueryCore<
   };
 
   React.useEffect(() => {
+    if (!query) return;
+
     (async () => {
       await fetchTables();
     })();
@@ -108,10 +116,10 @@ function useQueryCore<
     } catch (e) {
       return Promise.reject(e);
     }
-  }, [powerSync, query, parameters, options.queryKey]);
+  }, [powerSync, query, parameters, options.queryKey, error]);
 
   React.useEffect(() => {
-    if (error) return () => {};
+    if (error || !query) return () => {};
 
     const abort = new AbortController();
     powerSync.onChangeWithCallback(
@@ -120,6 +128,9 @@ function useQueryCore<
           queryClient.invalidateQueries({
             queryKey: options.queryKey
           });
+        },
+        onError: (e) => {
+          setError(e);
         }
       },
       {
@@ -133,7 +144,7 @@ function useQueryCore<
   return useQueryFn(
     {
       ...(resolvedOptions as TQueryOptions),
-      queryFn
+      queryFn: query ? queryFn : resolvedOptions.queryFn
     } as TQueryOptions,
     queryClient
   );
