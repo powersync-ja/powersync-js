@@ -1649,6 +1649,9 @@ importers:
 
   packages/powersync-op-sqlite:
     dependencies:
+      '@op-engineering/op-sqlite':
+        specifier: 8.0.3
+        version: 8.0.3(react-native@0.75.3)(react@18.3.1)
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -1659,9 +1662,6 @@ importers:
         specifier: 0.75.3
         version: 0.75.3(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.3.8)(react@18.3.1)(typescript@5.5.4)
     devDependencies:
-      '@op-engineering/op-sqlite':
-        specifier: 8.0.3
-        version: 8.0.3(react-native@0.75.3)(react@18.3.1)
       '@react-native/eslint-config':
         specifier: ^0.73.1
         version: 0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)
@@ -4377,7 +4377,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.25.2
-      '@babel/helper-plugin-utils': 7.24.8
+      '@babel/helper-plugin-utils': 7.25.7
       '@babel/plugin-syntax-flow': 7.24.7(@babel/core@7.25.2)
     dev: true
 
@@ -11191,7 +11191,7 @@ packages:
     dependencies:
       react: 18.3.1
       react-native: 0.75.3(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.3.8)(react@18.3.1)(typescript@5.5.4)
-    dev: true
+    dev: false
 
   /@pkgjs/parseargs@0.11.0:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -13071,6 +13071,7 @@ packages:
       nullthrows: 1.1.1
       react: 18.3.1
       react-native: 0.75.3(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.3.8)(react@18.3.1)(typescript@5.5.4)
+    dev: false
 
   /@react-navigation/bottom-tabs@6.5.20(@react-navigation/native@6.1.18)(react-native-safe-area-context@4.10.1)(react-native-screens@3.31.1)(react-native@0.74.1)(react@18.2.0):
     resolution: {integrity: sha512-ow6Z06iS4VqBO8d7FP+HsGjJLWt2xTWIvuWjpoCvsM/uQXzCRDIjBv9HaKcXbF0yTW7IMir0oDAbU5PFzEDdgA==}
@@ -31858,6 +31859,7 @@ packages:
       - supports-color
       - typescript
       - utf-8-validate
+    dev: false
 
   /react-navigation-stack@2.10.4(@react-native-community/masked-view@0.1.11)(react-native-gesture-handler@2.16.2)(react-native-safe-area-context@4.10.5)(react-native-screens@3.31.1)(react-native@0.74.5)(react-navigation@4.4.4)(react@18.2.0):
     resolution: {integrity: sha512-3LE1PFsFV9v4PUlZRATMotqs6H7MOOpIKtjyP+l8D1cyzYmsMQh3EFikeDfzGQUXIvy8VyLAMtcEssicQPYvFA==}
@@ -32053,6 +32055,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
+    dev: false
 
   /read-binary-file-arch@1.0.6:
     resolution: {integrity: sha512-BNg9EN3DD3GsDXX7Aa8O4p92sryjkmzYYgmgTAc6CA4uGLEDzFfxOxugu21akOxpcXHiEgsYkC6nPsQvLLLmEg==}

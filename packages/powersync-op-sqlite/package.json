@@ -61,12 +61,12 @@
     "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
-    "@op-engineering/op-sqlite": "8.0.3",
     "@powersync/common": "workspace:^1.18.0",
     "react": "*",
     "react-native": "*"
   },
   "dependencies": {
+    "@op-engineering/op-sqlite": "8.0.3",
     "@powersync/common": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.75.3"
@@ -122,10 +122,9 @@
     "type": "modules",
     "jsSrcsDir": "src",
     "outputDir": {
-      "ios": "ios/generated",
-      "android": "android/generated"
+      "ios": "codegen",
+      "android": "codegen"
     },
-    "includesGeneratedCode": true,
     "android": {
       "javaPackageName": "com.powersync.opsqlite"
     }

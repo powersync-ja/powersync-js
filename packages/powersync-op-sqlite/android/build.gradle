@@ -90,10 +90,7 @@ android {
     main {
       if (isNewArchitectureEnabled()) {
         java.srcDirs += [
-          "src/newarch",
-          // Codegen specs
-          "generated/java",
-          "generated/jni"
+          "src/newarch"
         ]
       } else {
         java.srcDirs += ["src/oldarch"]
