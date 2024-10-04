@@ -57,8 +57,18 @@ function useQueryCore<
 >(
   options: UseBaseQueryOptions<TQueryOptions>,
   queryClient: Tanstack.QueryClient,
-  useQueryFn: (options: TQueryOptions) => TQueryResult
+  useQueryFn: (options: TQueryOptions, queryClient?: Tanstack.QueryClient) => TQueryResult
 ): TQueryResult {
+  const { query, parameters, ...resolvedOptions } = options;
+
+  if (!query) {
+    return useQueryFn(
+      {
+        ...resolvedOptions
+      } as TQueryOptions,
+      queryClient
+    );
+  }
   const powerSync = usePowerSync();
 
   if (!powerSync) {
@@ -67,7 +77,6 @@ function useQueryCore<
 
   const [error, setError] = React.useState<Error | null>(null);
   const [tables, setTables] = React.useState<string[]>([]);
-  const { query, parameters, ...resolvedOptions } = options;
 
   React.useEffect(() => {
     if (error) {
@@ -130,8 +139,11 @@ function useQueryCore<
     return () => abort.abort();
   }, [powerSync, options.queryKey, queryClient, tables, error]);
 
-  return useQueryFn({
-    ...(resolvedOptions as TQueryOptions),
-    queryFn
-  } as TQueryOptions);
+  return useQueryFn(
+    {
+      ...(resolvedOptions as TQueryOptions),
+      queryFn
+    } as TQueryOptions,
+    queryClient
+  );
 }
