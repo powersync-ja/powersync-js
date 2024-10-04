@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.19.0
+
+### Minor Changes
+
+- 9dea1b9: Deprecated `rawTableNames` field in `SQLWatchOptions`. All tables specified in `tables` will now be watched, including PowerSync tables with prefixes.
+
 ## 1.18.1
 
 ### Patch Changes
