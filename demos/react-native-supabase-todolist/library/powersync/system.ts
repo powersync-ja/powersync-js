@@ -11,7 +11,6 @@ import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 
 Logger.useDefaults();
 
@@ -26,21 +25,28 @@ export class System {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
-    const factory = new OPSqliteOpenFactory({
-      dbFilename: 'powersync.db'
+    this.powersync = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'sqlite.db'
+      }
     });
-    this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
     /**
-     * The snippet below uses React Native Quick SQLite as the default database adapter.
-     * You will have to uninstall `@op-engineering/op-sqlite` and
-     * install `@journeyapps/react-native-quick-sqlite` to use this.
+     * The snippet below uses OP-SQLite as the default database adapter.
+     * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
+     * install both `@powersync/op-sqlite` and `@op-engineering/op-sqlite` to use this.
+     *
+     * import { OPSqliteOpenFactory } from '@powersync/op-sqlite'; // Add this import
+     *
+     * const factory = new OPSqliteOpenFactory({
+     * dbFilename: 'sqlite.db'
+     * });
+     * this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
      */
-    // this.powersync = new PowerSyncDatabase({
-    //   schema: AppSchema,
-    //   database: {
-    //     dbFilename: 'sqlite.db'
-    //   }
+    // const factory = new OPSqliteOpenFactory({
+    //   dbFilename: 'sqlite.db'
     // });
+    // this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({

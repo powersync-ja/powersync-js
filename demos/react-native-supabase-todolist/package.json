@@ -10,10 +10,9 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/vector-icons": "^14.0.3",
-    "@op-engineering/op-sqlite": "8.0.3",
+    "@journeyapps/react-native-quick-sqlite": "^1.4.0",
     "@powersync/attachments": "workspace:*",
     "@powersync/common": "workspace:*",
-    "@powersync/op-sqlite": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",
     "@react-native-community/masked-view": "^0.1.11",
