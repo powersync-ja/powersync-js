@@ -7,6 +7,7 @@ import replace from '@rollup/plugin-replace';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import terser from '@rollup/plugin-terser';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,10 @@ export default (commandLineArgs) => {
         delimiters: ['', ''],
         preventAssignment: true
       }),
+      nodePolyfills(),
+      nodeResolve({
+        preferBuiltins: false,
+      }),
       json(),
       commonjs({}),
       inject({
@@ -41,12 +46,11 @@ export default (commandLineArgs) => {
         // injecting our crypto implementation
         crypto: path.resolve('./vendor/crypto.js')
       }),
-      // alias({
-      //   entries: [
-      //     { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
-      //     // { find: '@journeyapps/react-native-quick-sqlite', replacement: path.resolve(__dirname, '../../node_modules/@journeyapps/react-native-quick-sqlite/lib/commonjs/index.js') },
-      //   ]
-      // }),
+      alias({
+        entries: [
+          { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
+        ]
+      }),
       terser()
     ],
     external: [
