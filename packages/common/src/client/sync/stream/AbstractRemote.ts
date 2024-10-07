@@ -14,6 +14,7 @@ import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
 
 export type BSONImplementation = typeof BSON;
 
+const POWERSYNC_TRAILING_SLASH_MATCH =/\/+$/;
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
@@ -117,18 +118,23 @@ export abstract class AbstractRemote {
 
   protected async buildRequest(path: string) {
     const credentials = await this.getCredentials();
+    let endPoint = credentials?.endpoint;
     if (credentials != null && (credentials.endpoint == null || credentials.endpoint == '')) {
       throw new Error('PowerSync endpoint not configured');
     } else if (credentials?.token == null || credentials?.token == '') {
       const error: any = new Error(`Not signed in`);
       error.status = 401;
       throw error;
+    } else if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
+      this.logger.warn('A trailing forward slash "/" was entered after the POWERSYNC_URL environment variable. ' +
+        'Remove the trailing "/" from the variable to get rid of this warning.');
+      endPoint = credentials?.endpoint.replace(POWERSYNC_TRAILING_SLASH_MATCH, "");
     }
 
     const userAgent = this.getUserAgent();
 
     return {
-      url: credentials.endpoint + path,
+      url: endPoint + path,
       headers: {
         'content-type': 'application/json',
         Authorization: `Token ${credentials.token}`,
