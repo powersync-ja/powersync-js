@@ -14,6 +14,7 @@ import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
 
 export type BSONImplementation = typeof BSON;
 
+const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
@@ -108,6 +109,11 @@ export abstract class AbstractRemote {
       return this.credentials!;
     }
     this.credentials = await this.connector.fetchCredentials();
+    if (this.credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
+      throw new Error(
+        'A trailing forward slash "/" was entered after the POWERSYNC_URL environment variable. Remove the trailing "/" from the variable to fix this error.'
+      );
+    }
     return this.credentials;
   }
 
