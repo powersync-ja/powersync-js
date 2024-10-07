@@ -1,6 +1,6 @@
-import { column, Schema, TableV2 } from '@powersync/web';
+import { column, Schema, Table } from '@powersync/web';
 
-export const local_bucket_data = new TableV2(
+export const local_bucket_data = new Table(
   {
     total_operations: column.integer,
     last_op: column.text,
@@ -10,7 +10,7 @@ export const local_bucket_data = new TableV2(
   { localOnly: true }
 );
 
-export const local_schema = new TableV2(
+export const local_schema = new Table(
   {
     data: column.text
   },
