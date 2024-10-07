@@ -27,20 +27,12 @@ export default (commandLineArgs) => {
     plugins: [
       // We do this so that we can inject on BSON's crypto usage.
       replace({
-        'const { crypto } = globalThis;': '// removed crypto destructuring assingment from globalThis',
+        'const { crypto } = globalThis;': '// removed crypto destructuring assignment from globalThis',
         delimiters: ['', ''],
         preventAssignment: true
       }),
       json(),
-      nodeResolve({ preferBuiltins: false }),
-      commonjs({
-        ignore: (id) => {
-          if (id === '@journeyapps/react-native-quick-sqlite') {
-            return true;
-          }
-          return false;
-        },
-      }),
+      commonjs({}),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
@@ -49,9 +41,12 @@ export default (commandLineArgs) => {
         // injecting our crypto implementation
         crypto: path.resolve('./vendor/crypto.js')
       }),
-      alias({
-        entries: [{ find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') }]
-      }),
+      // alias({
+      //   entries: [
+      //     { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
+      //     // { find: '@journeyapps/react-native-quick-sqlite', replacement: path.resolve(__dirname, '../../node_modules/@journeyapps/react-native-quick-sqlite/lib/commonjs/index.js') },
+      //   ]
+      // }),
       terser()
     ],
     external: [
