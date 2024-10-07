@@ -9,6 +9,7 @@ export default function SchemaPage() {
  * Because this schema is generated on-the-fly based on the data received by the app, it can
  * be incomplete and should NOT be relied upon as a source of truth for your app schema.
  * If a table is empty, it will not be shown here.
+ * If a column contains only NULL values, the column will not be shown here.
  * Tables and columns are only added here. Nothing is removed until the database is cleared.
  */`;
   return (
