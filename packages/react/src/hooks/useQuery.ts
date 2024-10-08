@@ -80,16 +80,16 @@ export const useQuery = <T = any>(
   previousQueryRef.current = { sqlStatement, memoizedParams };
 
   const handleResult = (result: T[]) => {
+    setData(result);
     setIsLoading(false);
     setIsFetching(false);
-    setData(result);
     setError(undefined);
   };
 
   const handleError = (e: Error) => {
+    setData([]);
     setIsLoading(false);
     setIsFetching(false);
-    setData([]);
     const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
     wrappedError.cause = e;
     setError(wrappedError);
