@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "PowerSync integration with Tanstack React Query for offline-first and real-time data synchronization in React apps",
+  "description": "PowerSync integration with TanStack Query for offline-first and real-time data synchronization in React apps",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [

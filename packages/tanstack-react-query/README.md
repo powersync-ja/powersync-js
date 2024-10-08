@@ -1,6 +1,6 @@
-# Tanstack React Query Integration for PowerSync
+# TanStack Query Integration for PowerSync
 
-`@powersync/tanstack-react-query` provides seamless integration between [PowerSync](https://powersync.com) and [Tanstack React Query](https://tanstack.com/query/latest/docs/framework/react/overview). It wraps Tanstack's `useQuery` and `useSuspenseQuery` hooks to work easily with PowerSync's SQL queries. This combines PowerSync's existing watched queries with Tanstack's features like the [paginated queries](https://tanstack.com/query/latest/docs/framework/react/guides/paginated-queries), [caching](https://tanstack.com/query/latest/docs/framework/react/guides/caching), and [suspense](https://tanstack.com/query/latest/docs/framework/react/guides/suspense).
+`@powersync/tanstack-react-query` provides seamless integration between PowerSync's Web SDK and [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) for React. It wraps TanStack's `useQuery` and `useSuspenseQuery` hooks to work easily with PowerSync's SQL queries. This combines PowerSync's existing watched queries with TanStack's features like the [paginated queries](https://tanstack.com/query/latest/docs/framework/react/guides/paginated-queries), [caching](https://tanstack.com/query/latest/docs/framework/react/guides/caching), and [Suspense](https://tanstack.com/query/latest/docs/framework/react/guides/suspense).
 
 ## Note: Alpha Release
 
@@ -8,7 +8,7 @@ This package is currently in an alpha release.
 
 ## Getting started
 
-To use `@powersync/tanstack-react-query`, you need to set up both the `PowerSync context` and the `Tanstack React Query client` in your application.
+To use `@powersync/tanstack-react-query`, you need to set up both the `PowerSync context` and the `TanStack React Query client` in your application.
 
 ```JSX
 // App.jsx
@@ -40,7 +40,7 @@ export const App = () => {
 
 ### useQuery
 
-The `useQuery` hook from `@powersync/tanstack-react-query` works similarly to the standard `Tanstack React Query` `useQuery` hook but integrates with PowerSync for watched query functionality. Queries automatically update when dependent tables change.
+The `useQuery` hook from `@powersync/tanstack-react-query` works similarly to the standard `TanStack React Query` `useQuery` hook but integrates with PowerSync for watched query functionality. Queries automatically update when dependent tables change.
 
 ```JSX
 // TodoListDisplay.jsx
