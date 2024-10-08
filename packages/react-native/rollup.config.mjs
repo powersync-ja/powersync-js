@@ -32,11 +32,11 @@ export default (commandLineArgs) => {
         delimiters: ['', ''],
         preventAssignment: true
       }),
+      json(),
       nodePolyfills(),
       nodeResolve({
         preferBuiltins: false,
       }),
-      json(),
       commonjs({}),
       inject({
         Buffer: ['@craftzdog/react-native-buffer', 'Buffer'],
@@ -51,7 +51,7 @@ export default (commandLineArgs) => {
           { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
         ]
       }),
-      terser()
+      // terser()
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
