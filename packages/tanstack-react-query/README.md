@@ -49,7 +49,7 @@ import { useQuery } from '@powersync/tanstack-react-query';
 export const TodoListDisplay = () => {
   const { data: todoLists, isLoading, isFetching, error } = useQuery({
     queryKey: ['todoLists'],
-    query: 'SELECT * FROM lists WHERE id = ?', // use `query` instead of `queryFn` to define a SQL query
+    query: 'SELECT * FROM lists WHERE id = ?', // use `query` instead of `queryFn` to define a SQL query - this allows watching underlying tables for changes
     parameters: ['id-1'], // supply query parameters for the SQL query
   });
 
