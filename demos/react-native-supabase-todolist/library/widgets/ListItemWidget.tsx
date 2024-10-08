@@ -10,8 +10,6 @@ export interface ListItemWidgetProps {
 }
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, description, onPress, onDelete }) => {
-  // const { title, description, onDelete, onPress } = props;
-
   return (
     <View style={{ padding: 10 }}>
       <ListItem.Swipeable

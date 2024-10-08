@@ -62,8 +62,7 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     const readConnections: OPSQLiteConnection[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       // Workaround to create read-only connections
-      let baseName = dbFilename.slice(0, dbFilename.lastIndexOf('.'));
-      let dbName = './'.repeat(i + 1) + baseName + `.db`;
+      let dbName = './'.repeat(i + 1) + dbFilename;
       const conn = this.openConnection(location, dbName);
       conn.execute('PRAGMA query_only = true');
       readConnections.push(conn);

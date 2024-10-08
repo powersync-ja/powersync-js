@@ -4,11 +4,9 @@
 
 # PowerSync SDK for React Native
 
-_[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync layer, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon)._
 
-This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`. It connects to a PowerSync instance via HTTP streams (enabled by default) or WebSockets.
-
-See a summary of features [here](https://docs.powersync.co/client-sdk-references/react-native-and-expo).
+This package (`packages/powersync-op-sqlite`) enables using OP-SQLite with PowerSync. It is an extension of `packages/common`.
 
 # Installation
 
@@ -20,59 +18,15 @@ npx expo install @powersync/op-sqlite
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@powersync/react-native` and `@op-engineering/op-sqlite` as peer dependencies.
+This SDK currently requires `@op-engineering/op-sqlite` as a dependency.
 
 Install it in your app with:
 
 ```bash
-npx expo install @powersync/react-native
 npx expo install @op-engineering/op-sqlite
 ```
 
-**Note**: This package cannot be installed alongside `@journeyapps/react-native-quick-sqlite`. Please ensure you do not depend on both packages at the same time.
-
-## Install Polyfills
-
-- Polyfills are required for [watched queries](#babel-plugins-watched-queries) using the Async Iterator response format.
-
-### Babel Plugins: Watched Queries
-
-Watched queries can be used with either a callback response or Async Iterator response.
-
-Watched queries using the Async Iterator response format require support for Async Iterators.
-
-Expo apps currently require polyfill and Babel plugins in order to use this functionality.
-
-```bash
-npx expo install @azure/core-asynciterator-polyfill
-```
-
-Make sure to import the polyfill early in your application
-
-```JavaScript
-// App.js
-import '@azure/core-asynciterator-polyfill';
-```
-
-Install the async generator Babel plugin
-
-```bash
-pnpm add -D @babel/plugin-transform-async-generator-functions
-```
-
-Add the Babel plugin to your `babel.config.js` file
-
-```JavaScript
-module.exports = function (api) {
- return {
-   presets: [...],
-   plugins: [
-     // ... Other plugins
-     '@babel/plugin-transform-async-generator-functions'
-   ]
- };
-};
-```
+**Note**: This package cannot be installed alongside `@journeyapps/react-native-quick-sqlite`. Please ensure you do **not** install both packages at the same time.
 
 # Native Projects
 
