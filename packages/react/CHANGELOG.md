@@ -1,5 +1,13 @@
 # @powersync/react
 
+## 1.4.4
+
+### Patch Changes
+
+- 70a70d5: Fixed issue with `useQuery` not supporting dynamic query parameters.
+- Updated dependencies [9dea1b9]
+  - @powersync/common@1.19.0
+
 ## 1.4.3
 
 ### Patch Changes
