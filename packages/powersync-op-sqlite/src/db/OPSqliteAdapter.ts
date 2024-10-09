@@ -1,14 +1,25 @@
-import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import {
+  BaseObserver,
+  DBAdapter,
+  DBAdapterListener,
+  DBLockOptions,
+  QueryResult,
+  SQLOpenOptions,
+  Transaction
+} from '@powersync/common';
+import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
+import { NativeModules, Platform } from 'react-native';
+import { DEFAULT_SQLITE_OPTIONS, SqliteOptions } from './SqliteOptions';
 
 /**
  * Adapter for React Native Quick SQLite
  */
 export type OPSQLiteAdapterOptions = {
-  writeConnection: OPSQLiteConnection;
-  readConnections: OPSQLiteConnection[];
   name: string;
+  dbLocation?: string;
+  sqliteOptions?: SqliteOptions;
 };
 
 enum LockType {
@@ -16,37 +27,139 @@ enum LockType {
   WRITE = 'write'
 }
 
+const READ_CONNECTIONS = 5;
+
 export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   name: string;
   protected locks: Lock;
+
+  protected initialized: Promise<void>;
+
+  protected readConnections: OPSQLiteConnection[] | null;
+
+  protected writeConnection: OPSQLiteConnection | null;
+
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
     this.name = this.options.name;
+
+    this.locks = new Lock();
+    this.readConnections = null;
+    this.writeConnection = null;
+    this.initialized = this.init();
+  }
+
+  protected async init() {
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.options.sqliteOptions;
+    // const { dbFilename, dbLocation } = this.options;
+    const dbFilename = this.options.name;
+    //This is needed because an undefined dbLocation will cause the open function to fail
+    const location = this.getDbLocation(this.options.dbLocation);
+    const DB: DB = open({
+      name: dbFilename,
+      location: location
+    });
+
+    const statements: string[] = [
+      `PRAGMA busy_timeout = ${lockTimeoutMs}`,
+      `PRAGMA journal_mode = ${journalMode}`,
+      `PRAGMA journal_size_limit = ${journalSizeLimit}`,
+      `PRAGMA synchronous = ${synchronous}`
+    ];
+
+    for (const statement of statements) {
+      for (let tries = 0; tries < 30; tries++) {
+        try {
+          await DB.execute(statement);
+          break;
+        } catch (e) {
+          //TODO better error handling for SQLITE_BUSY(5)
+          console.error('Error executing pragma statement', statement, e);
+          // if (e.errorCode === 5 && tries < 29) {
+          //   continue;
+          // } else {
+          //   throw e;
+          // }
+        }
+      }
+    }
+
+    this.loadExtension(DB);
+
+    await DB.execute('SELECT powersync_init()');
+
+    this.readConnections = [];
+    for (let i = 0; i < READ_CONNECTIONS; i++) {
+      // Workaround to create read-only connections
+      let dbName = './'.repeat(i + 1) + dbFilename;
+      const conn = await this.openConnection(location, dbName);
+      await conn.execute('PRAGMA query_only = true');
+      this.readConnections.push(conn);
+    }
+
+    this.writeConnection = new OPSQLiteConnection({
+      baseDB: DB
+    });
+
     // Changes should only occur in the write connection
-    options.writeConnection.registerListener({
+    this.writeConnection!.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
     });
-    this.locks = new Lock();
+  }
+
+  protected async openConnection(dbLocation: string, filenameOverride?: string): Promise<OPSQLiteConnection> {
+    const DB: DB = open({
+      name: filenameOverride ?? this.options.name,
+      location: dbLocation
+    });
+
+    //Load extension for all connections
+    this.loadExtension(DB);
+
+    await DB.execute('SELECT powersync_init()');
+
+    return new OPSQLiteConnection({
+      baseDB: DB
+    });
+  }
+
+  private getDbLocation(dbLocation?: string): string {
+    if (Platform.OS === 'ios') {
+      return dbLocation ?? IOS_LIBRARY_PATH;
+    } else {
+      return dbLocation ?? ANDROID_DATABASE_PATH;
+    }
+  }
+
+  private loadExtension(DB: DB) {
+    if (Platform.OS === 'ios') {
+      const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
+      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      DB.loadExtension(libPath, 'sqlite3_powersync_init');
+    } else {
+      DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
+    }
   }
 
   close() {
-    this.options.writeConnection.close();
-    this.options.readConnections.forEach((c) => c.close());
+    this.initialized.then(() => {
+      this.writeConnection!.close();
+      this.readConnections!.forEach((c) => c.close());
+    });
   }
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    // TODO better
-    const sortedConnections = this.options.readConnections
-      .map((connection, index) => ({
-        lockKey: `${LockType.READ}-${index}`,
-        connection
-      }))
-      .sort((a, b) => {
-        const aBusy = this.locks.isBusy(a.lockKey);
-        const bBusy = this.locks.isBusy(b.lockKey);
-        // Sort by ones which are not busy
-        return aBusy > bBusy ? 1 : 0;
-      });
+    await this.initialized;
+    // TODO: Use async queues to handle multiple read connections
+    const sortedConnections = this.readConnections!.map((connection, index) => ({
+      lockKey: `${LockType.READ}-${index}`,
+      connection
+    })).sort((a, b) => {
+      const aBusy = this.locks.isBusy(a.lockKey);
+      const bBusy = this.locks.isBusy(b.lockKey);
+      // Sort by ones which are not busy
+      return aBusy > bBusy ? 1 : 0;
+    });
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -63,13 +176,15 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+  async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    await this.initialized;
+
     return new Promise(async (resolve, reject) => {
       try {
         await this.locks.acquire(
           LockType.WRITE,
           async () => {
-            resolve(await fn(this.options.writeConnection));
+            resolve(await fn(this.writeConnection!));
           },
           { timeout: options?.timeoutMs }
         );

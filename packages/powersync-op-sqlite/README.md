@@ -8,6 +8,10 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 This package (`packages/powersync-op-sqlite`) enables using OP-SQLite with PowerSync. It is an extension of `packages/common`.
 
+## Alpha release
+
+This package is currently in an alpha release. If you find a bug or issue, please open a [GitHub issue](https://github.com/powersync-ja/powersync-js/issues). Questions or feedback can be posted on our [community Discord](https://discord.gg/powersync) - we'd love to hear from you.
+
 # Installation
 
 ## Install Package
@@ -18,7 +22,7 @@ npx expo install @powersync/op-sqlite
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@op-engineering/op-sqlite` as a dependency.
+This SDK currently requires `@op-engineering/op-sqlite` as a peer dependency.
 
 Install it in your app with:
 
@@ -27,6 +31,19 @@ npx expo install @op-engineering/op-sqlite
 ```
 
 **Note**: This package cannot be installed alongside `@journeyapps/react-native-quick-sqlite`. Please ensure you do **not** install both packages at the same time.
+
+## Usage
+
+```typescript
+import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
+import { PowerSyncDatabase } from '@powersync/react-native';
+
+const factory = new OPSqliteOpenFactory({
+  dbFilename: 'sqlite.db'
+});
+
+this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
+```
 
 # Native Projects
 
