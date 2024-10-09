@@ -75,8 +75,7 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
   async get<T>(sql: string, parameters?: any[]): Promise<T> {
     const result = await this.getOptional(sql, parameters);
     if (!result) {
-      // TODO more consistent error
-      throw new Error(`No row returned for [get] query`);
+      throw new Error('Result set is empty');
     }
     return result as T;
   }
