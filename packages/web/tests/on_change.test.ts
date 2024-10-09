@@ -32,7 +32,7 @@ describe('OnChange Tests', () => {
     });
 
     powersync.onChange({ onChange }, { tables: tablesToWatch, signal: abortController.signal });
-    powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
     await vi.waitFor(
       () => {
         expect(onChange).toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe('OnChange Tests', () => {
     await runOnChangeTest(['ps_data__assets'], ['ps_data__assets']);
   });
 
-  it('internal "ps_oplog" table onChange test', async () => {
-    await runOnChangeTest(['ps_oplog'], ['ps_oplog']);
+  it('internal "ps_crud" table onChange test', async () => {
+    await runOnChangeTest(['ps_crud'], ['ps_crud']);
   });
 });
