@@ -72,14 +72,12 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         try {
           await DB.execute(statement);
           break;
-        } catch (e) {
-          //TODO better error handling for SQLITE_BUSY(5)
-          console.error('Error executing pragma statement', statement, e);
-          // if (e.errorCode === 5 && tries < 29) {
-          //   continue;
-          // } else {
-          //   throw e;
-          // }
+        } catch (e: any) {
+          if (e instanceof Error && e.message.includes('database is locked') && tries < 29) {
+            continue;
+          } else {
+            throw e;
+          }
         }
       }
     }
