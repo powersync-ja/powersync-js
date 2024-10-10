@@ -13,6 +13,8 @@ import {
 } from './WebStreamingSyncImplementation';
 import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 
+const POWERSYNC_TRAILING_SLASH_MATCH =/\/+$/;
+
 /**
  * The shared worker will trigger methods on this side of the message port
  * via this client provider.
@@ -27,8 +29,13 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
     const credentials = await this.options.remote.getCredentials();
+    let endPoint = credentials?.endpoint;
     if (credentials == null) {
       return null;
+    } else if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
+      this.logger?.warn('A trailing forward slash "/" was entered after the POWERSYNC_URL environment variable. ' +
+        'Remove the trailing "/" from the variable to get rid of this warning.');
+      endPoint = credentials.endpoint.replace(POWERSYNC_TRAILING_SLASH_MATCH, "");
     }
     /**
      * The credentials need to be serializable.
@@ -37,7 +44,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
      * This returns only the essential fields.
      */
     return {
-      endpoint: credentials.endpoint,
+      endpoint: endPoint || '',
       token: credentials.token,
       expiresAt: credentials.expiresAt
     };
