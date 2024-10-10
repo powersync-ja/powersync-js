@@ -5,7 +5,8 @@ enum Packages {
   ReactSdk = 'react-sdk',
   VueSdk = 'vue-sdk',
   AttachmentsSdk = 'attachments-sdk',
-  WebSdk = 'web-sdk'
+  WebSdk = 'web-sdk',
+  TanstackReactQuerySdk = 'tanstack-react-query-sdk'
 }
 
 interface Package {
@@ -55,5 +56,12 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/web/src/index.ts'],
     tsconfig: '../packages/web/tsconfig.json',
     id: Packages.WebSdk
+  },
+  [Packages.TanstackReactQuerySdk]: {
+    name: 'Tanstack React Query SDK',
+    dirName: Packages.TanstackReactQuerySdk,
+    entryPoints: ['../packages/tanstack-react-query/src/index.ts'],
+    tsconfig: '../packages/tanstack-react-query/tsconfig.json',
+    id: Packages.TanstackReactQuerySdk
   }
 };
