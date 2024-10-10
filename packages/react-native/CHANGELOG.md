@@ -1,5 +1,12 @@
 # @powersync/react-native
 
+## 1.12.4
+
+### Patch Changes
+
+- Updated dependencies [f8ac369]
+  - @powersync/react@1.4.5
+
 ## 1.12.3
 
 ### Patch Changes

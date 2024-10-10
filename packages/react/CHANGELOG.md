@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 1.4.5
+
+### Patch Changes
+
+- f8ac369: Ensuring that `useQuery`'s `isFetching` becomes true immediately after the query changes.
+
 ## 1.4.4
 
 ### Patch Changes
