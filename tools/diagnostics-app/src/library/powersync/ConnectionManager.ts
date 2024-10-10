@@ -23,7 +23,7 @@ export const db = new PowerSyncDatabase({
   },
   schema: schemaManager.buildSchema()
 });
-db.execute('PRAGMA cache_size=-50000');
+db.execute('PRAGMA cache_size=-500000');
 
 export const connector = new TokenConnector();
 
