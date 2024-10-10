@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, View } from 'react-native';
-import { ListItem, Icon, Button } from 'react-native-elements';
+import { ListItem, Icon, Button } from '@rneui/themed';
 
 export interface ListItemWidgetProps {
   title: string;

@@ -1,7 +1,7 @@
 import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react';
 import { ActivityIndicator, Alert, View, Modal, StyleSheet } from 'react-native';
-import { ListItem, Button, Icon, Image } from 'react-native-elements';
+import { ListItem, Button, Icon, Image } from '@rneui/themed';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
 import { AttachmentRecord } from '@powersync/attachments';
@@ -35,13 +35,23 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         bottomDivider
         rightContent={
           <Button
+            buttonStyle={{
+              flexDirection: 'column',
+              alignContent: 'center',
+              borderColor: 'transparent',
+              minHeight: '100%'
+            }}
             containerStyle={{
               flex: 1,
+              flexGrow: 1,
+              height: '100%',
               justifyContent: 'center',
-              backgroundColor: '#d3d3d3'
+              backgroundColor: 'rgba(240, 15, 15, 0.9)'
             }}
+            title="Delete"
+            titleStyle={{ color: 'white' }}
             type="clear"
-            icon={{ name: 'delete', color: 'red' }}
+            icon={{ name: 'trash', type: 'font-awesome', color: 'white' }}
             onPress={() => {
               Alert.alert(
                 'Confirm',
@@ -68,11 +78,22 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
           />
         )}
         <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title>{record.description}</ListItem.Title>
+          <ListItem.Title style={{ fontSize: 20 }}>{record.description}</ListItem.Title>
         </ListItem.Content>
         {AppConfig.supabaseBucket &&
           (record.photo_id == null ? (
-            <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
+            <Button
+              type="outline"
+              buttonStyle={{ borderColor: 'transparent' }}
+              onPress={() => setCameraVisible(true)}
+              icon={{
+                name: 'camera',
+                type: 'font-awesome',
+                color: 'black',
+                size: 28
+              }}>
+              {/* <Icon name={'camera'} type="material" color={'black'} size={32} /> */}
+            </Button>
           ) : photoAttachment?.local_uri != null ? (
             <Image
               source={{ uri: system.attachmentQueue?.getLocalUri(photoAttachment.local_uri) }}

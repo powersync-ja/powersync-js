@@ -1,5 +1,5 @@
-import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
-import React from 'react';
+import { CameraView, useCameraPermissions, CameraCapturedPicture } from 'expo-camera';
+import React, { useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Platform
 } from 'react-native';
-import { Button, Icon } from 'react-native-elements';
+import { Button, Icon } from '@rneui/themed';
 
 export interface Props {
   onCaptured: (photo: CameraCapturedPicture) => void;
@@ -19,7 +19,7 @@ export interface Props {
 const isAndroid = Platform.OS === 'android';
 
 export const CameraWidget: React.FC<Props> = (props) => {
-  const cameraRef = React.useRef<CameraView>(null);
+  const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -75,17 +75,18 @@ export const CameraWidget: React.FC<Props> = (props) => {
         ref={cameraRef}
         style={{ ...styles.camera, height: height, width: '100%' }}
         facing="back"
-        onCameraReady={onReady}
-        ratio={isAndroid ? '16:9' : undefined}>
-        <TouchableOpacity onPress={props.onClose} style={styles.backButton}>
-          <Icon name={'chevron-left'} type={'font-awesome'} color={'white'} />
-        </TouchableOpacity>
+        onCameraReady={onReady}>
         <View style={styles.bottomCamera}>
           <TouchableOpacity disabled={loading} style={styles.shutterButton} onPress={captureImageAsync}>
             <ActivityIndicator animating={loading} />
           </TouchableOpacity>
         </View>
       </CameraView>
+      <View style={styles.backButtonContainer}>
+        <TouchableOpacity onPress={props.onClose} style={styles.backButton}>
+          <Icon name={'close'} type={'material'} color={'white'} size={32} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -95,10 +96,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center'
   },
-  backButton: {
+  backButtonContainer: {
     position: 'absolute',
-    top: 16,
-    left: 16
+    top: 0,
+    left: 0,
+    width: '100%',
+    backgroundColor: 'rgba(52, 52, 52, 0.5)'
+  },
+  backButton: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginLeft: 10,
+    marginTop: 10
   },
   camera: {
     flex: 1
