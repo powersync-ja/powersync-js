@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.12.3",
+  "version": "1.12.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
