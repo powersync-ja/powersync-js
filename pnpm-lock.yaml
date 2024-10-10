@@ -106,8 +106,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.3
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.3.0
-        version: 1.3.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -632,8 +632,8 @@ importers:
         specifier: 8.3.1
         version: 8.3.1
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.3.0
-        version: 1.3.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.3.8)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.3.8)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -768,8 +768,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.3
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.3.0
-        version: 1.3.1(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -916,8 +916,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.3
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.3.0
-        version: 1.3.1(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -1679,8 +1679,8 @@ importers:
         specifier: ^6.0.5
         version: 6.0.5(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^1.3.0
-        version: 1.3.1(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@rollup/plugin-alias':
         specifier: ^5.1.0
         version: 5.1.0(rollup@4.14.3)
@@ -4364,8 +4364,8 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/react-native-quick-sqlite@1.3.1':
-    resolution: {integrity: sha512-RJtSTDfHMgWwuRdBPhnFUU3OBR1DS3gLK3+LVRcu7IuGrjhWy7bBzCdnZGyvJKG1zNmKXNyQJcfW8LIkE2HI4g==}
+  '@journeyapps/react-native-quick-sqlite@2.0.0':
+    resolution: {integrity: sha512-jOmIOB1K49564eWd0GJP6ZvGTXiipsIShFQWhGJO4HCF0r8DdX1ll3RLbLBVaeclJYGl0KWIf8/6FhYst8FR8g==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -22577,22 +22577,22 @@ snapshots:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  '@journeyapps/react-native-quick-sqlite@1.3.1(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.0.0(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@1.3.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.3.8)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.0.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.3.8)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.3.8)(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@1.3.1(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.0.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@1.3.1(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.0.0(react-native@0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.25.2)(@babel/preset-env@7.25.4(@babel/core@7.25.2))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
