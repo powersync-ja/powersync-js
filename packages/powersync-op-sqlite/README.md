@@ -2,11 +2,11 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-# PowerSync SDK for React Native
+# OP-SQLite factory for the PowerSync React Native SDK
 
 _[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon)._
 
-This package (`packages/powersync-op-sqlite`) enables using OP-SQLite with PowerSync. It is an extension of `packages/common`.
+This package (`packages/powersync-op-sqlite`) enables using OP-SQLite with PowerSync. It is an extension of `packages/common` and it is used with `@powersync/react-native` ([Usage](#usage)).
 
 ## Alpha release
 
