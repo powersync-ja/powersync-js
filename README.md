@@ -26,6 +26,10 @@
 
   - Vue composables for PowerSync.
 
+- [packages/tanstack-query](./packages/tanstack-query/README.md)
+
+  - Tanstack Query integration for React.
+
 - [packages/attachments](./packages/attachments/README.md)
 
   - Attachments helper package for React Native and JavaScript/TypeScript projects.
