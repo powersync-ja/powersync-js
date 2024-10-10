@@ -7,7 +7,6 @@ import replace from '@rollup/plugin-replace';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import terser from '@rollup/plugin-terser';
-import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,11 +28,11 @@ export default (commandLineArgs) => {
       // We do this so that we can inject on BSON's crypto usage.
       replace({
         'const { crypto } = globalThis;': '// removed crypto destructuring assignment from globalThis',
+        "require('crypto').randomBytes;": 'nodejsMathRandomBytes; // removed crypto.randomBytes',
         delimiters: ['', ''],
         preventAssignment: true
       }),
       json(),
-      nodePolyfills(),
       nodeResolve({
         preferBuiltins: false,
       }),

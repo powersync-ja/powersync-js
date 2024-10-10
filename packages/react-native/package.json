@@ -61,7 +61,6 @@
     "react-native": "0.72.4",
     "react-native-fetch-api": "^3.0.0",
     "rollup": "4.14.3",
-    "rollup-plugin-node-polyfills": "^0.2.1",
     "text-encoding": "^0.7.0",
     "typescript": "^5.5.3",
     "web-streams-polyfill": "3.2.1"
