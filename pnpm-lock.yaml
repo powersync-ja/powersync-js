@@ -846,7 +846,7 @@ importers:
         specifier: 0.74.5
         version: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.2.79)(react@18.2.0)
       react-native-elements:
-        specifier: ^3.4.3
+        specifier: ^3.4.2
         version: 3.4.3(react-native-safe-area-context@4.10.5)(react-native-vector-icons@10.2.0)(react-native@0.74.5)(react@18.2.0)
       react-native-encrypted-storage:
         specifier: ^4.0.3
@@ -866,9 +866,6 @@ importers:
       react-native-safe-area-context:
         specifier: 4.10.5
         version: 4.10.5(react-native@0.74.5)(react@18.2.0)
-      react-native-safe-area-view:
-        specifier: ^1.1.1
-        version: 1.1.1(react-native-safe-area-context@4.10.5)(react-native@0.74.5)(react@18.2.0)
       react-native-screens:
         specifier: ~3.31.1
         version: 3.31.1(react-native@0.74.5)(react@18.2.0)
