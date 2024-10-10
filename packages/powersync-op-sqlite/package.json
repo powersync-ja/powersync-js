@@ -1,6 +1,6 @@
 {
   "name": "@powersync/op-sqlite",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Powersync",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
