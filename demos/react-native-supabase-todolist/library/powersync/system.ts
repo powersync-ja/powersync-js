@@ -43,10 +43,6 @@ export class System {
      * });
      * this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
      */
-    // const factory = new OPSqliteOpenFactory({
-    //   dbFilename: 'sqlite.db'
-    // });
-    // this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
 
     if (AppConfig.supabaseBucket) {
       this.attachmentQueue = new PhotoAttachmentQueue({
