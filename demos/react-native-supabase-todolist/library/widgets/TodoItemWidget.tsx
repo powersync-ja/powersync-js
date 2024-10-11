@@ -7,6 +7,7 @@ import { TodoRecord } from '../powersync/AppSchema';
 import { AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import { useSystem } from '../powersync/system';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export interface TodoItemWidgetProps {
   record: TodoRecord;
@@ -29,7 +30,9 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
   return (
     <View key={`todo-item-${record.id}`} style={{ padding: 10 }}>
       <Modal animationType="slide" transparent={false} visible={isCameraVisible} onRequestClose={handleCancel}>
-        <CameraWidget onCaptured={onSavePhoto} onClose={handleCancel} />
+        <SafeAreaProvider>
+          <CameraWidget onCaptured={onSavePhoto} onClose={handleCancel} />
+        </SafeAreaProvider>
       </Modal>
       <ListItem.Swipeable
         bottomDivider

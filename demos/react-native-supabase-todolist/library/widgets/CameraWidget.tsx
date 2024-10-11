@@ -10,6 +10,8 @@ import {
   Platform
 } from 'react-native';
 import { Button, Icon } from '@rneui/themed';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CameraType } from 'expo-camera/build/legacy/Camera.types';
 
 export interface Props {
   onCaptured: (photo: CameraCapturedPicture) => void;
@@ -23,6 +25,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [facing, setFacing] = React.useState(CameraType.back);
 
   // Getting width and height of the screen
   const { width } = useWindowDimensions();
@@ -54,6 +57,10 @@ export const CameraWidget: React.FC<Props> = (props) => {
     }
   };
 
+  const onFlipPress = () => {
+    setFacing(facing === CameraType.back ? CameraType.front : CameraType.back);
+  };
+
   if (!permission) {
     // Camera permissions are still loading
     return <View />;
@@ -70,57 +77,71 @@ export const CameraWidget: React.FC<Props> = (props) => {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.topBarContainer}>
+        <TouchableOpacity onPress={props.onClose} style={styles.topBarCloseIcon}>
+          <Icon name={'close'} type={'material'} color={'white'} size={32} />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onFlipPress} style={styles.topBarFlipIcon}>
+          <Icon name={'flip-camera-ios'} type={'material'} color={'white'} size={32} />
+        </TouchableOpacity>
+      </View>
       <CameraView
         ref={cameraRef}
         style={{ ...styles.camera, height: height, width: '100%' }}
-        facing="back"
-        onCameraReady={onReady}>
-        <View style={styles.bottomCamera}>
-          <TouchableOpacity disabled={loading} style={styles.shutterButton} onPress={captureImageAsync}>
-            <ActivityIndicator animating={loading} />
-          </TouchableOpacity>
-        </View>
-      </CameraView>
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity onPress={props.onClose} style={styles.backButton}>
-          <Icon name={'close'} type={'material'} color={'white'} size={32} />
+        facing={facing}
+        onCameraReady={onReady}></CameraView>
+      <View style={styles.bottomCamera}>
+        <TouchableOpacity disabled={loading} style={styles.shutterButton} onPress={captureImageAsync}>
+          <ActivityIndicator animating={loading} />
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center'
+    flexDirection: 'column',
+    justifyContent: 'center',
+    backgroundColor: 'transparent'
   },
-  backButtonContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    backgroundColor: 'rgba(52, 52, 52, 0.5)'
-  },
-  backButton: {
-    flex: 1,
+  topBarContainer: {
+    flex: 0,
+    display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginLeft: 10,
-    marginTop: 10
+    justifyContent: 'space-between',
+    padding: 20,
+    width: '100%',
+    backgroundColor: 'black',
+    height: 80
+  },
+  topBarCloseIcon: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start'
+  },
+  topBarFlipIcon: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end'
   },
   camera: {
     flex: 1
   },
   bottomCamera: {
-    flex: 1,
-    alignSelf: 'stretch',
+    flex: 0,
+    // alignSelf: 'stretch',
     alignItems: 'flex-end',
     justifyContent: 'center',
     flexDirection: 'row',
     columnGap: 30,
-    backgroundColor: 'transparent'
+    backgroundColor: 'black',
+    minHeight: 100
   },
   shutterButton: {
     width: 70,
