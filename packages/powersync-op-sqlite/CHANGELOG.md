@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.0.3
+
+### Patch Changes
+
+- c9145d3: Fixes bundled dependencies and code generation.
+
 ## 0.0.2
 
 ### Patch Changes
