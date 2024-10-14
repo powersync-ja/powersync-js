@@ -99,17 +99,17 @@
     "output": "lib",
     "targets": [
       "codegen",
-      [	 
-        "commonjs",
-        {	
-          "esm": true	
-        }	
-      ],	
       [	
-        "module",	
-        {	
-          "esm": true	
-        }	
+        "commonjs"
+        {
+          "esm": true
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
       ],
       [
         "typescript",
