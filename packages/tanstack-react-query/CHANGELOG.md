@@ -1,5 +1,11 @@
 # @powersync/tanstack-react-query
 
+## 0.0.3
+
+### Patch Changes
+
+- 9dd9f4e: Fix for some build files being excluded.
+
 ## 0.0.2
 
 ### Patch Changes
