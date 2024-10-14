@@ -6,7 +6,6 @@
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
-  "react-native": "./src/index",
   "files": [
     "src",
     "lib",
@@ -33,9 +32,11 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib"
   },
   "keywords": [
-    "react-native",
-    "ios",
-    "android"
+    "data sync",
+    "offline-first",
+    "sqlite",
+    "real-time data stream",
+    "live data"
   ],
   "repository": {
     "type": "git",
