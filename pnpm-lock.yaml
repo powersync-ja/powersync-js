@@ -1598,7 +1598,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.19.0
+        specifier: workspace:^1.20.0
         version: link:../common
       kysely:
         specifier: ^0.27.2
@@ -19176,9 +19176,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.7(@babel/core@7.24.5)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.7(@babel/core@7.25.2)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.24.5
+      '@babel/core': 7.25.2
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -28673,7 +28673,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.7(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.7(@babel/core@7.25.2)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -34942,7 +34942,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.7(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.7(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.7(@babel/core@7.25.2)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1
