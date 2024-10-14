@@ -99,7 +99,7 @@
     "output": "lib",
     "targets": [
       "codegen",
-      [	
+      [
         "commonjs",
         {
           "esm": true
