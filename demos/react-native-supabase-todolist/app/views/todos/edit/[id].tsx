@@ -77,10 +77,12 @@ const TodoView: React.FC = () => {
   };
 
   const savePhoto = async (id: string, data: CameraCapturedPicture) => {
-    // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
-    const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
+    if (system.attachmentQueue) {
+      // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
+      const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
 
-    await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+      await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+    }
   };
 
   const createNewTodo = async (description: string) => {
@@ -98,7 +100,7 @@ const TodoView: React.FC = () => {
 
   const deleteTodo = async (id: string, photoRecord?: AttachmentRecord) => {
     await system.powersync.writeTransaction(async (tx) => {
-      if (photoRecord != null) {
+      if (system.attachmentQueue && photoRecord != null) {
         await system.attachmentQueue.delete(photoRecord, tx);
       }
       await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
