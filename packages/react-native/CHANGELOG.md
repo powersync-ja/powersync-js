@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 1.14.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
+### Patch Changes
+
+- Updated dependencies [77e196d]
+  - @powersync/common@1.20.0
+
 ## 1.13.0
 
 ### Minor Changes

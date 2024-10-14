@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.20.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
 ## 1.19.0
 
 ### Minor Changes
