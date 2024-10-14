@@ -100,7 +100,7 @@
     "targets": [
       "codegen",
       [	
-        "commonjs"
+        "commonjs",
         {
           "esm": true
         }
