@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.14.1
+
+### Patch Changes
+
+- a3f625e: Fix inline require for react-native-quick-sqlite
+
 ## 1.14.0
 
 ### Minor Changes
