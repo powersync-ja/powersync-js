@@ -77,7 +77,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       }
     }
 
-    await this.writeConnection!.execute('SELECT powersync_init()');
     // Changes should only occur in the write connection
     this.writeConnection!.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
