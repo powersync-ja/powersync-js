@@ -124,9 +124,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   private openDatabase(dbFilename: string, encryptionKey?: string): DB {
     //This is needed because an undefined/null dbLocation will cause the open function to fail
     const location = this.getDbLocation(this.options.dbLocation);
-    if (encryptionKey && encryptionKey === '') {
-      throw new Error('Encryption key cannot be empty when using SQLCipher');
-    }
     //Simarlily if the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
     if (encryptionKey) {
       return open({
