@@ -44,7 +44,7 @@ export const TodoListDisplay = () => {
     }
 ```
 
-### Accessing PowerSync Status
+## Accessing PowerSync Status
 
 The provided PowerSync client status is available with the `useStatus` hook.
 
@@ -63,7 +63,7 @@ const Component = () => {
 };
 ```
 
-### Queries
+## Queries
 
 Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
@@ -82,7 +82,7 @@ export const TodoListDisplay = () => {
 }
 ```
 
-#### Query Loading
+### Query Loading
 
 The response from `useQuery` includes the `isLoading` and `isFetching` properties, which indicate the current state of data retrieval. This can be used to show loading spinners or conditional widgets.
 
@@ -115,4 +115,156 @@ export const TodoListsDisplayDemo = () => {
   );
 };
 
+```
+
+### Suspense
+
+The `useSuspenseQuery` hook is available to handle the loading/fetching state through suspense.
+Unlike `useQuery`, the hook doesn't return `isLoading` or `isFetching` for the loading states nor `error` for the error state. These should be handled with variants of `<Suspense>` and `<ErrorBoundary>` respectively.
+
+```JSX
+// TodoListDisplaySuspense.jsx
+import { ErrorBoundary } from 'react-error-boundary';
+import { Suspense } from 'react';
+import { useSuspenseQuery } from '@powersync/react';
+
+const TodoListContent = () => {
+  const { data: todoLists } = useSuspenseQuery("SELECT * FROM lists");
+
+  return (
+    <ul>
+      {todoLists.map((list) => (
+        <li key={list.id}>{list.name}</li>
+      ))}
+    </ul>
+  );
+};
+
+
+export const TodoListDisplaySuspense = () => {
+  return (
+  <ErrorBoundary fallback={<div>Something went wrong</div>}>
+    <Suspense fallback={<div>Loading todo lists...</div>}>
+      <TodoListContent />
+    </Suspense>
+  </ErrorBoundary>
+  );
+};
+```
+
+#### Blocking navigation on Suspense
+
+When you provide a suspense fallback, suspending components will cause the fallback to render. Alternatively, React's [startTransition](https://react.dev/reference/react/startTransition) allows navigation to be blocked until the suspending components have completed, preventing the fallback from displaying. This behavior can be facilitated by your router — for example, react-router supports this with its [startTransition flag](https://reactrouter.com/en/main/upgrading/future#v7_starttransition).
+
+> Note: In this example, the `<Suspense>` boundary is intentionally omitted to delegate the handling of the suspending state to the router.
+
+```JSX
+// routerAndLists.jsx
+import { RouterProvider } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
+import { useSuspenseQuery } from '@powersync/react';
+
+export const Index() {
+  return <RouterProvider router={router} future={{v7_startTransition: true}} />
+}
+
+const TodoListContent = () => {
+  const { data: todoLists } = useSuspenseQuery("SELECT * FROM lists");
+
+  return (
+    <ul>
+      {todoLists.map((list) => (
+        <li key={list.id}>{list.name}</li>
+      ))}
+    </ul>
+  );
+};
+
+
+export const TodoListsPage = () => {
+  return (
+  <ErrorBoundary fallback={<div>Something went wrong</div>}>
+      <TodoListContent />
+  </ErrorBoundary>
+  );
+};
+```
+
+#### Managing Suspense When Updating `useSuspenseQuery` Parameters
+
+When data in dependent tables changes, `useSuspenseQuery` automatically updates without suspending. However, changing the query parameters causes the hook to restart and enter a suspending state again, which triggers the suspense fallback. To prevent this and keep displaying the stale data until the new data is loaded, wrap the parameter changes in React's [startTransition](https://react.dev/reference/react/startTransition) or use [useDeferredValue](https://react.dev/reference/react/useDeferredValue).
+
+```JSX
+// TodoListDisplaySuspenseTransition.jsx
+import { ErrorBoundary } from 'react-error-boundary';
+import React, { Suspense } from 'react';
+import { useSuspenseQuery } from '@powersync/react';
+
+const TodoListContent = () => {
+  const [query, setQuery] = React.useState('SELECT * FROM lists');
+  const { data: todoLists } = useSuspenseQuery(query);
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          React.startTransition(() => setQuery('SELECT * from lists limit 1'));
+        }}>
+        Update
+      </button>
+      <ul>
+        {todoLists.map((list) => (
+          <li key={list.id}>{list.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export const TodoListDisplaySuspense = () => {
+  return (
+    <ErrorBoundary fallback={<div>Something went wrong</div>}>
+      <Suspense fallback={<div>Loading todo lists...</div>}>
+        <TodoListContent />
+      </Suspense>
+    </ErrorBoundary>
+  );
+};
+```
+
+and
+
+```JSX
+// TodoListDisplaySuspenseDeferred.jsx
+import { ErrorBoundary } from 'react-error-boundary';
+import React, { Suspense } from 'react';
+import { useSuspenseQuery } from '@powersync/react';
+
+const TodoListContent = () => {
+  const [query, setQuery] = React.useState('SELECT * FROM lists');
+  const deferredQueryQuery = React.useDeferredValue(query);
+
+  const { data: todoLists } = useSuspenseQuery(deferredQueryQuery);
+
+  return (
+    <div>
+      <button onClick={() => setQuery('SELECT * from lists limit 1')}>Update</button>
+      <ul>
+        {todoLists.map((list) => (
+          <li key={list.id}>{list.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export const TodoListDisplaySuspense = () => {
+  return (
+    <ErrorBoundary fallback={<div>Something went wrong</div>}>
+      <Suspense fallback={<div>Loading todo lists...</div>}>
+        <TodoListContent />
+      </Suspense>
+    </ErrorBoundary>
+  );
+};
 ```

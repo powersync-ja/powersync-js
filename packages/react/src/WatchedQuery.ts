@@ -55,7 +55,7 @@ export class WatchedQuery {
       if (this.isReady || this.controller == null) {
         release();
       } else {
-        // If the query is is taking long, keep the temporay hold.
+        // If the query is taking long, keep the temporary hold.
         timeout = setTimeout(release, 5_000);
       }
     };
