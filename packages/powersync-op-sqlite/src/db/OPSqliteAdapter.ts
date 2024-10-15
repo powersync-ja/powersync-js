@@ -11,7 +11,8 @@ import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engi
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { NativeModules, Platform } from 'react-native';
-import { DEFAULT_SQLITE_OPTIONS, SqliteOptions } from './SqliteOptions';
+import { SqliteOptions } from './SqliteOptions';
+import Logger, { ILogger } from 'js-logger';
 
 /**
  * Adapter for React Native Quick SQLite
@@ -39,6 +40,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected writeConnection: OPSQLiteConnection | null;
 
+  protected logger: ILogger = Logger.get('OPSQLiteAdapter');
+
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
     this.name = this.options.name;
@@ -50,15 +53,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected async init() {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.options.sqliteOptions;
-    // const { dbFilename, dbLocation } = this.options;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, encryptionKey } = this.options.sqliteOptions;
     const dbFilename = this.options.name;
-    //This is needed because an undefined dbLocation will cause the open function to fail
-    const location = this.getDbLocation(this.options.dbLocation);
-    const DB: DB = open({
-      name: dbFilename,
-      location: location
-    });
+
+    const DB: DB = this.openDatabase(dbFilename, encryptionKey);
 
     const statements: string[] = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -90,7 +88,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       // Workaround to create read-only connections
       let dbName = './'.repeat(i + 1) + dbFilename;
-      const conn = await this.openConnection(location, dbName);
+      const conn = await this.openConnection(dbName);
       await conn.execute('PRAGMA query_only = true');
       this.readConnections.push(conn);
     }
@@ -105,11 +103,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  protected async openConnection(dbLocation: string, filenameOverride?: string): Promise<OPSQLiteConnection> {
-    const DB: DB = open({
-      name: filenameOverride ?? this.options.name,
-      location: dbLocation
-    });
+  protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
+    const DB: DB = this.openDatabase(filenameOverride ?? this.options.name, this.options.sqliteOptions.encryptionKey);
 
     //Load extension for all connections
     this.loadExtension(DB);
@@ -126,6 +121,27 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       return dbLocation ?? IOS_LIBRARY_PATH;
     } else {
       return dbLocation ?? ANDROID_DATABASE_PATH;
+    }
+  }
+
+  private openDatabase(dbFilename: string, encryptionKey?: string): DB {
+    //This is needed because an undefined/null dbLocation will cause the open function to fail
+    const location = this.getDbLocation(this.options.dbLocation);
+    if (encryptionKey && encryptionKey === '') {
+      throw new Error('Encryption key cannot be empty when using SQLCipher');
+    }
+    //Simarlily if the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
+    if (encryptionKey) {
+      return open({
+        name: dbFilename,
+        location: location,
+        encryptionKey: encryptionKey
+      });
+    } else {
+      return open({
+        name: dbFilename,
+        location: location
+      });
     }
   }
 
