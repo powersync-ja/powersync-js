@@ -1,30 +1,50 @@
-class SDKNavigator extends Navigator {
-  private static instance: SDKNavigator | null = null;
+import { Mutex } from 'async-mutex';
 
-  constructor() {
-    super();
-    Object.setPrototypeOf(this, SDKNavigator.prototype);
+export const getNavigationLocks = (): LockManager => {
+  if ('locks' in navigator && navigator.locks) {
+    return navigator.locks;
   }
+  console.warn('Navigator locks are not available in this context.' +
+                'This may be due to running in an unsecure context. ' +
+                'Consider using HTTPS or a secure context for full functionality.' +
+                'Using fallback implementation.');
 
-  public static getInstance(): SDKNavigator {
-    if (!SDKNavigator.instance) {
-      SDKNavigator.instance = new SDKNavigator();
-    }
-    return SDKNavigator.instance;
-  }
+  const mutexes = new Map<string, Mutex>();
 
-  get locks(): LockManager {
-    if (!super.locks) {
-    throw new Error('Navigator locks are not available in this context. ' +
-                    'This may be due to running in an unsecure context. ' +
-                    'Consider using HTTPS or a secure context for full functionality.');
+  const getMutex = (name: string): Mutex => {
+    if (!mutexes.has(name)) {
+      mutexes.set(name, new Mutex());
     }
-    return new Proxy(super.locks, {
-      get(target: LockManager, prop: keyof LockManager) {
-        return target[prop];
+    return mutexes.get(name)!;
+  };
+
+  const fallbackLockManager: LockManager = {
+    request: async (
+      name: string,
+      optionsOrCallback: LockOptions | LockGrantedCallback,
+      maybeCallback?: LockGrantedCallback
+    ): Promise<LockManagerSnapshot> => {
+      const callback = typeof optionsOrCallback === 'function' ? optionsOrCallback : maybeCallback!;
+      const options: LockOptions = typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+
+      const mutex = getMutex(name);
+      const release = await mutex.acquire();
+      try {
+        const lock: Lock = { name, mode: options.mode || 'exclusive' };
+        return await callback(lock);
+      } finally {
+        release();
+        mutexes.delete(name);
       }
-    });
-  }
-}
+    },
 
-export const sdkNavigator = SDKNavigator.getInstance();
+    query: async (): Promise<LockManagerSnapshot> => {
+      return {
+        held: Array.from(mutexes.keys()).map(name => ({ name, mode: 'exclusive' as const })),
+        pending: [] // We can't accurately track pending locks in this implementation as this requires a queue
+      };
+    }
+  };
+
+  return fallbackLockManager;
+}

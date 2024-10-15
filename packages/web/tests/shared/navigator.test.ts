@@ -1,48 +1,87 @@
-import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest';
-import { sdkNavigator } from '../../src/shared/navigator';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { getNavigationLocks } from '../../src/shared/navigator';
 
-describe('sdkNavigator', () => {
-  let originalNavigator: Navigator;
-
-  beforeEach(() => {
-    originalNavigator = global.navigator;
-    vi.stubGlobal('navigator', {
-      ...originalNavigator,
-      locks: {
-        request: vi.fn(),
-      },
-    });
-  });
-
+describe('getNavigationLocks', () => {
   afterEach(() => {
-    vi.stubGlobal('navigator', originalNavigator);
+    vi.restoreAllMocks();
   });
 
-  test('should inherit properties from Navigator', () => {
-    expect(sdkNavigator.userAgent).toBe(navigator.userAgent);
+  it('should return native navigator.locks if available', () => {
+    const mockLocks = {
+      request: vi.fn(),
+      query: vi.fn(),
+    };
+
+    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(mockLocks);
+
+    const result = getNavigationLocks();
+    expect(result).toBe(mockLocks);
   });
 
-  test('should have locks property', () => {
-    expect(sdkNavigator.locks).toBeDefined();
-    expect(typeof sdkNavigator.locks.request).toBe('function');
+  it('should return fallback implementation if navigator.locks is not available', () => {
+    // @ts-ignore
+    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined);
+
+    const result = getNavigationLocks();
+    expect(result).toHaveProperty('request');
+    expect(result).toHaveProperty('query');
+    expect(result).not.toBe(navigator.locks);
   });
 
-  test('should throw error when locks are not available', () => {
-    vi.stubGlobal('navigator', { ...originalNavigator, locks: undefined });
-    expect(() => sdkNavigator.locks).toThrowError('Navigator locks are not available in this context.');
+  it('fallback request should acquire and release a lock', async () => {
+    // @ts-ignore
+    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined);
+    const locks = getNavigationLocks();
+
+    const mockCallback = vi.fn().mockResolvedValue('result');
+    const result = await locks.request('test-lock', mockCallback);
+
+    expect(mockCallback).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'test-lock',
+      mode: 'exclusive'
+    }));
+    expect(result).toBe('result');
   });
 
-  test('locks proxy should pass through method calls when locks are available', () => {
-    const mockCallback = vi.fn();
-    sdkNavigator.locks.request('test', mockCallback);
-    expect(navigator.locks.request).toHaveBeenCalledWith('test', mockCallback);
-  });
+  it('fallback query should return held locks', async () => {
+    // @ts-ignore
+    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined);
+    const locks = getNavigationLocks();
 
-  test('should only expose expected Navigator properties', () => {
-    const sdkNavigatorKeys = Object.keys(sdkNavigator);
-    const navigatorKeys = Object.keys(navigator);
-    sdkNavigatorKeys.forEach(key => {
-      expect(navigatorKeys).toContain(key);
+    // Acquire a lock first
+    await locks.request('test-lock', async () => {
+      const queryResult = await locks.query();
+      expect(queryResult.held).toHaveLength(1);
+      expect(queryResult.held![0]).toEqual(expect.objectContaining({
+        name: 'test-lock',
+        mode: 'exclusive'
+      }));
+      expect(queryResult.pending).toHaveLength(0);
     });
+
+    const finalQueryResult = await locks.query();
+    expect(finalQueryResult.held).toHaveLength(0);
+  });
+
+  it('fallback implementation should handle concurrent requests', async () => {
+    // @ts-ignore
+    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined);
+    const locks = getNavigationLocks();
+
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const request1 = locks.request('test-lock', async () => {
+      await delay(200);
+      return 'first';
+    });
+
+    const request2 = locks.request('test-lock', async () => {
+      return 'second';
+    });
+
+    const [result1, result2] = await Promise.all([request1, request2]);
+
+    expect(result1).toBe('first');
+    expect(result2).toBe('second');
   });
 });

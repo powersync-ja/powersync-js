@@ -6,7 +6,7 @@ import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
 import { _openDB } from '../../shared/open-db';
 import type { DBFunctionsInterface } from '../../shared/types';
-import { sdkNavigator } from '../../shared/navigator';
+import { getNavigationLocks } from '../../shared/navigator';
 
 /**
  * Keeps track of open DB connections and the clients which
@@ -24,7 +24,7 @@ let nextClientId = 1;
 
 const openDBShared = async (dbFileName: string): Promise<DBFunctionsInterface> => {
   // Prevent multiple simultaneous opens from causing race conditions
-  return sdkNavigator.locks.request(OPEN_DB_LOCK, async () => {
+  return getNavigationLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;
 
     if (!DBMap.has(dbFileName)) {
