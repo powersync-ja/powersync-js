@@ -23,19 +23,21 @@ WITH
     (SELECT
       bucket,
       row_type,
-      sum(case when op = 3 and superseded = 0 then length(data) else 0 end) as data_size,
-      sum(length(row_type) + length(row_id) + length(bucket) + length(key) + 40) as metadata_size,
-      sum(case when op = 3 and superseded = 0 then 1 else 0 end) as row_count
-    FROM ps_oplog GROUP BY bucket, row_type),
+      sum(length(ifnull(data, ''))) as data_size,
+      sum(length(row_type) + length(row_id) + length(key) + 44) as metadata_size,
+      count() as row_count
+    FROM ps_oplog
+    GROUP BY bucket, row_type),
 
   oplog_stats AS
     (SELECT
-      bucket as name,
+      bucket as bucket_id,
       sum(data_size) as data_size,
       sum(metadata_size) as metadata_size,
       sum(row_count) as row_count,
       json_group_array(row_type) tables
-    FROM oplog_by_table GROUP BY bucket)
+    FROM oplog_by_table
+    GROUP BY bucket)
 
 SELECT
   local.id as name,
@@ -47,10 +49,11 @@ SELECT
   local.total_operations,
   local.downloading
 FROM local_bucket_data local
-LEFT JOIN oplog_stats stats ON stats.name = local.id`;
+LEFT JOIN ps_buckets ON ps_buckets.name = local.id
+LEFT JOIN oplog_stats stats ON stats.bucket_id = ps_buckets.id`;
 
 const TABLES_QUERY = `
-SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog WHERE superseded = 0 and op = 3 GROUP BY row_type
+SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
 `;
 
 const BUCKETS_QUERY_FAST = `

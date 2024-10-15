@@ -33,7 +33,7 @@ export const HeaderWidget: React.FC<{
         <Icon
           name={status.connected ? 'wifi' : 'wifi-off'}
           type="material-community"
-          color="black"
+          color="white"
           size={20}
           style={{ padding: 5 }}
           onPress={() => {
@@ -49,7 +49,8 @@ export const HeaderWidget: React.FC<{
           }}
         />
       }
-      centerComponent={<Text style={{ padding: 5, color: '#fff' }}>{title}</Text>}
+      centerContainerStyle={{ justifyContent: 'center', alignItems: 'center' }}
+      centerComponent={{ text: title, style: { color: '#fff' } }}
     />
   );
 };
