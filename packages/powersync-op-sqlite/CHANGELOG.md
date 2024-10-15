@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.0.4
+
+### Patch Changes
+
+- 070454a: Encryption for databases using SQLCipher.
+
 ## 0.0.3
 
 ### Patch Changes
