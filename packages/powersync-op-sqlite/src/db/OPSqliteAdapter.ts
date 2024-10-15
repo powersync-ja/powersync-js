@@ -53,7 +53,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, encryptionKey } = this.options.sqliteOptions;
     const dbFilename = this.options.name;
 
-    const DB: DB = this.openDatabase(dbFilename, encryptionKey);
+    this.writeConnection = await this.openConnection(dbFilename);
 
     const statements: string[] = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -65,7 +65,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     for (const statement of statements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
-          await DB.execute(statement);
+          await this.writeConnection!.execute(statement);
           break;
         } catch (e: any) {
           if (e instanceof Error && e.message.includes('database is locked') && tries < 29) {
@@ -77,9 +77,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       }
     }
 
-    this.loadExtension(DB);
-
-    await DB.execute('SELECT powersync_init()');
+    await this.writeConnection!.execute('SELECT powersync_init()');
+    // Changes should only occur in the write connection
+    this.writeConnection!.registerListener({
+      tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
+    });
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
@@ -89,19 +91,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await conn.execute('PRAGMA query_only = true');
       this.readConnections.push(conn);
     }
-
-    this.writeConnection = new OPSQLiteConnection({
-      baseDB: DB
-    });
-
-    // Changes should only occur in the write connection
-    this.writeConnection!.registerListener({
-      tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
-    });
   }
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
-    const DB: DB = this.openDatabase(filenameOverride ?? this.options.name, this.options.sqliteOptions.encryptionKey);
+    const dbFilename = filenameOverride ?? this.options.name;
+    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions.encryptionKey);
 
     //Load extension for all connections
     this.loadExtension(DB);
