@@ -12,7 +12,6 @@ import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { NativeModules, Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
-import Logger, { ILogger } from 'js-logger';
 
 /**
  * Adapter for React Native Quick SQLite
@@ -39,8 +38,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   protected readConnections: OPSQLiteConnection[] | null;
 
   protected writeConnection: OPSQLiteConnection | null;
-
-  protected logger: ILogger = Logger.get('OPSQLiteAdapter');
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
