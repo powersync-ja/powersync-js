@@ -57,7 +57,7 @@ To enable SQLCipher you need to add the following configuration option to your a
 }
 ```
 
-Additionally you will need to add an encryption key to the OPSQLite factory constructor
+Additionally you will need to add an [encryption key](https://www.zetetic.net/sqlcipher/sqlcipher-api/#key) to the OPSQLite factory constructor
 
 ```typescript
 const factory = new OPSqliteOpenFactory({
