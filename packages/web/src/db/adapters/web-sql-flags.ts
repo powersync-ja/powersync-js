@@ -1,4 +1,5 @@
 import { SQLOpenOptions } from '@powersync/common';
+import { sdkNavigator } from '../../shared/navigator';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -72,7 +73,7 @@ export const DEFAULT_WEB_SQL_FLAGS: ResolvedWebSQLFlags = {
   enableMultiTabs:
     typeof globalThis.navigator !== 'undefined' && // For SSR purposes
     typeof SharedWorker !== 'undefined' &&
-    !navigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
+    !sdkNavigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
     !(window as any).safari,
   useWebWorker: true
 };

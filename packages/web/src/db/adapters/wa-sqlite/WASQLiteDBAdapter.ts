@@ -15,6 +15,7 @@ import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
+import { sdkNavigator } from '../../../shared/navigator';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
@@ -186,7 +187,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected acquireLock(callback: () => Promise<any>): Promise<any> {
-    return navigator.locks.request(`db-lock-${this.options.dbFilename}`, callback);
+    return sdkNavigator.locks.request(`db-lock-${this.options.dbFilename}`, callback);
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
