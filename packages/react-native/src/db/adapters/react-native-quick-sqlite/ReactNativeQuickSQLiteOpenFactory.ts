@@ -16,7 +16,13 @@ export class ReactNativeQuickSqliteOpenFactory implements SQLOpenFactory {
      * in the options (if provided)
      * https://github.com/margelo/react-native-quick-sqlite/blob/main/README.md#loading-existing-dbs
      */
-    const rnqs = require('@journeyapps/react-native-quick-sqlite');
+
+    try {
+      var rnqs = require('@journeyapps/react-native-quick-sqlite');
+    } catch (e) {
+      throw new Error(`Could not resolve @journeyapps/react-native-quick-sqlite.
+To open databases with React Native Quick SQLite please install @journeyapps/react-native-quick-sqlite.`);
+    }
     const { dbFilename } = this.options;
     const openOptions = { location: this.options.dbLocation };
     let DB;
