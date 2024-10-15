@@ -11,7 +11,6 @@ import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite'; // Add this import
 
 Logger.useDefaults();
 
