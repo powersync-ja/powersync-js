@@ -767,18 +767,15 @@ importers:
       '@expo/vector-icons':
         specifier: ^14.0.3
         version: 14.0.3
-      '@op-engineering/op-sqlite':
-        specifier: ^9.1.3
-        version: 9.1.3(react-native@0.74.5)(react@18.2.0)
+      '@journeyapps/react-native-quick-sqlite':
+        specifier: ^2.0.0
+        version: 2.0.0(react-native@0.74.5)(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
-      '@powersync/op-sqlite':
-        specifier: workspace:*
-        version: link:../../packages/powersync-op-sqlite
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -12742,16 +12739,6 @@ packages:
     engines: {node: '>=12.0.0'}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     dev: true
-
-  /@op-engineering/op-sqlite@9.1.3(react-native@0.74.5)(react@18.2.0):
-    resolution: {integrity: sha512-yOdJiystmGaf9x4PfgwhdTJhmicVoPOdSJXZ7gkEXZBGnCYWNL4oMq2FuGAnPclfVKMipne2PRHVKscZ+oC6sA==}
-    peerDependencies:
-      react: '*'
-      react-native: '>0.73.0'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.4)(@types/react@18.2.79)(react@18.2.0)
-    dev: false
 
   /@op-engineering/op-sqlite@9.1.3(react-native@0.75.3)(react@18.3.1):
     resolution: {integrity: sha512-yOdJiystmGaf9x4PfgwhdTJhmicVoPOdSJXZ7gkEXZBGnCYWNL4oMq2FuGAnPclfVKMipne2PRHVKscZ+oC6sA==}
