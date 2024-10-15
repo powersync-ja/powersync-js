@@ -31,7 +31,6 @@ export class System {
         dbFilename: 'sqlite.db'
       }
     });
-
     /**
      * The snippet below uses OP-SQLite as the default database adapter.
      * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
