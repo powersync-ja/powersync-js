@@ -1,5 +1,13 @@
-import { AbstractPowerSyncDatabase, CompilableQuery, SQLWatchOptions } from '@powersync/common';
+import { AbstractPowerSyncDatabase, SQLWatchOptions } from '@powersync/common';
 import { Query, WatchedQuery } from './WatchedQuery';
+
+export function generateQueryKey(
+  sqlStatement: string,
+  parameters: any[],
+  options: Omit<SQLWatchOptions, 'signal'>
+): string {
+  return `${sqlStatement} -- ${JSON.stringify(parameters)} -- ${JSON.stringify(options)}`;
+}
 
 export class QueryStore {
   cache = new Map<string, WatchedQuery>();

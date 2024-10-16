@@ -1,5 +1,5 @@
 import React from 'react';
-import { getQueryStore } from '../QueryStore';
+import { generateQueryKey, getQueryStore } from '../QueryStore';
 import { usePowerSync } from './PowerSyncContext';
 import { CompilableQuery, ParsedQuery, parseQuery, SQLWatchOptions } from '@powersync/common';
 import { WatchedQuery } from '../WatchedQuery';
@@ -23,7 +23,7 @@ export const useSuspenseQuery = <T = any>(
   } catch (error) {
     throw new Error('Failed to parse query: ' + error.message);
   }
-  const key = `${parsedQuery.sqlStatement} -- ${JSON.stringify(parsedQuery.parameters)} -- ${JSON.stringify(options)}`;
+  const key = generateQueryKey(parsedQuery.sqlStatement, parsedQuery.parameters, options);
 
   // When the component is suspended, all state is discarded. We don't get
   // any notification of that. So checkoutQuery reserves a temporary hold
