@@ -56,7 +56,7 @@ export class WatchedQuery {
         release();
       } else {
         // If the query is taking long, keep the temporary hold.
-        timeout = setTimeout(release, 5_000);
+        timeout = setTimeout(timeoutRelease, 5_000);
       }
     };
 
