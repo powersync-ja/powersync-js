@@ -4,14 +4,18 @@ import { Box, Button, Grid, IconButton, styled, TextField } from '@mui/material'
 import { FormEvent, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import { safeParse } from '@/library/safeParse/safeParse';
+
+const jsonToObjectArray = (json: Object) => {
+  const entrySet = Object.entries(json);
+  return entrySet.map(([key, value]) => ({
+    key,
+    value
+  }));
+};
 
 function ClientParamsPage() {
-  const [params, setParams] = useState(
-    Object.entries(JSON.parse(localStorage.getItem('currentParams') || '{}')).map(([key, value]) => ({
-      key,
-      value
-    }))
-  );
+  const [params, setParams] = useState(jsonToObjectArray(safeParse(localStorage.getItem('currentParams'))));
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

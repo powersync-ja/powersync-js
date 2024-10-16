@@ -10,6 +10,7 @@ import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
+import { safeParse } from '../safeParse/safeParse';
 
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
@@ -75,7 +76,7 @@ if (connector.hasCredentials()) {
 
 export async function connect() {
   const stringifiedParams = localStorage.getItem('currentParams');
-  const params = stringifiedParams ? JSON.parse(stringifiedParams) : {};
+  const params = safeParse(stringifiedParams);
   await sync.connect({ params });
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
@@ -93,7 +94,7 @@ export async function clearData() {
   await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
     const stringifiedParams = localStorage.getItem('currentParams');
-    const params = stringifiedParams ? JSON.parse(stringifiedParams) : {};
+    const params = safeParse(stringifiedParams);
     await sync.connect({ params });
   }
 }
