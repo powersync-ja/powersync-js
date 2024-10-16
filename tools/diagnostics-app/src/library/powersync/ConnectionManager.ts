@@ -74,7 +74,9 @@ if (connector.hasCredentials()) {
 }
 
 export async function connect() {
-  await sync.connect();
+  const stringifiedParams = localStorage.getItem('currentParams');
+  const params = stringifiedParams ? JSON.parse(stringifiedParams) : {};
+  await sync.connect({ params });
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
     sync.disconnect();
@@ -90,7 +92,9 @@ export async function clearData() {
   await schemaManager.clear();
   await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
-    await sync.connect();
+    const stringifiedParams = localStorage.getItem('currentParams');
+    const params = stringifiedParams ? JSON.parse(stringifiedParams) : {};
+    await sync.connect({ params });
   }
 }
 
@@ -102,5 +106,11 @@ export async function signOut() {
   connector.clearCredentials();
   await db.disconnectAndClear();
 }
+
+export const setParams = (p: object) => {
+  const stringified = JSON.stringify(p);
+  localStorage.setItem('currentParams', stringified);
+  connect();
+};
 
 (window as any).db = db;
