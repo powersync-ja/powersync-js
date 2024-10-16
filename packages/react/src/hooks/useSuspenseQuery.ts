@@ -3,14 +3,14 @@ import { generateQueryKey, getQueryStore } from '../QueryStore';
 import { usePowerSync } from './PowerSyncContext';
 import { CompilableQuery, ParsedQuery, parseQuery, SQLWatchOptions } from '@powersync/common';
 import { WatchedQuery } from '../WatchedQuery';
-import { QueryResult } from './useQuery';
+import { AdditionalOptions, QueryResult } from './useQuery';
 
 export type SuspenseQueryResult<T> = Pick<QueryResult<T>, 'data' | 'refresh'>;
 
 export const useSuspenseQuery = <T = any>(
   query: string | CompilableQuery<T>,
   parameters: any[] = [],
-  options: Omit<SQLWatchOptions, 'signal'> = {}
+  options: AdditionalOptions = {}
 ): SuspenseQueryResult<T> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
@@ -35,6 +35,7 @@ export const useSuspenseQuery = <T = any>(
     { rawQuery: query, sqlStatement: parsedQuery.sqlStatement, queryParameters: parsedQuery.parameters },
     options
   );
+
   const addedHoldTo = React.useRef<WatchedQuery | undefined>(undefined);
   const releaseTemporaryHold = React.useRef<(() => void) | undefined>(undefined);
 

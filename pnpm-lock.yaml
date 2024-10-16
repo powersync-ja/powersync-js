@@ -1711,6 +1711,9 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
+      react-error-boundary:
+        specifier: ^4.1.0
+        version: 4.1.0(react@18.2.0)
       typescript:
         specifier: ^5.5.3
         version: 5.5.4
@@ -19715,7 +19718,7 @@ packages:
     dependencies:
       ansi-align: 3.0.1
       camelcase: 7.0.1
-      chalk: 5.0.1
+      chalk: 5.3.0
       cli-boxes: 3.0.0
       string-width: 5.1.2
       type-fest: 2.19.0
@@ -32010,6 +32013,16 @@ packages:
       '@babel/runtime': 7.25.7
       react: 18.2.0
     dev: false
+
+  /react-error-boundary@4.1.0(react@18.2.0):
+    resolution: {integrity: sha512-GFnM3kyswd+9Oy7oX1lxdr39ANHD3ty6cyAK4Kyku+w8Aq9fnK7+yRytKOaPLzOhgtGq18AfTXmDtwlojBPTRg==}
+    engines: {node: '>=20', pnpm: '=9'}
+    peerDependencies:
+      react: '>=16.13.1'
+    dependencies:
+      '@babel/runtime': 7.25.7
+      react: 18.2.0
+    dev: true
 
   /react-error-overlay@6.0.11:
     resolution: {integrity: sha512-/6UZ2qgEyH2aqzYZgQPxEnz33NJ2gNsnHA2o5+o4wW9bLM/JYQitNP9xPhsXwC08hMMovfGe/8retsdDsczPRg==}

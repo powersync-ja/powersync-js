@@ -1,11 +1,8 @@
 import { AbstractPowerSyncDatabase, SQLWatchOptions } from '@powersync/common';
 import { Query, WatchedQuery } from './WatchedQuery';
+import { AdditionalOptions } from './hooks/useQuery';
 
-export function generateQueryKey(
-  sqlStatement: string,
-  parameters: any[],
-  options: Omit<SQLWatchOptions, 'signal'>
-): string {
+export function generateQueryKey(sqlStatement: string, parameters: any[], options: AdditionalOptions): string {
   return `${sqlStatement} -- ${JSON.stringify(parameters)} -- ${JSON.stringify(options)}`;
 }
 
@@ -14,7 +11,7 @@ export class QueryStore {
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
-  getQuery(key: string, query: Query<unknown>, options: SQLWatchOptions) {
+  getQuery(key: string, query: Query<unknown>, options: AdditionalOptions) {
     if (this.cache.has(key)) {
       return this.cache.get(key);
     }
