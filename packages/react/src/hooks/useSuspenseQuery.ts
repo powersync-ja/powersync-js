@@ -1,12 +1,33 @@
 import React from 'react';
 import { generateQueryKey, getQueryStore } from '../QueryStore';
 import { usePowerSync } from './PowerSyncContext';
-import { CompilableQuery, ParsedQuery, parseQuery, SQLWatchOptions } from '@powersync/common';
+import { CompilableQuery, ParsedQuery, parseQuery } from '@powersync/common';
 import { WatchedQuery } from '../WatchedQuery';
 import { AdditionalOptions, QueryResult } from './useQuery';
 
 export type SuspenseQueryResult<T> = Pick<QueryResult<T>, 'data' | 'refresh'>;
 
+/**
+ * A hook to access the results of a watched query that suspends until the initial result has loaded.
+ * @example
+ * export const ContentComponent = () => {
+ * const { data: lists }  = useSuspenseQuery('SELECT * from lists');
+ *
+ * return <View>
+ *   {lists.map((l) => (
+ *     <Text key={l.id}>{JSON.stringify(l)}</Text>
+ *   ))}
+ * </View>;
+ * }
+ *
+ * export const DisplayComponent = () => {
+ * return (
+ *    <Suspense fallback={<div>Loading content...</div>}>
+ *       <ContentComponent />
+ *    </Suspense>
+ * );
+ * }
+ */
 export const useSuspenseQuery = <T = any>(
   query: string | CompilableQuery<T>,
   parameters: any[] = [],
