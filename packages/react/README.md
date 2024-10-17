@@ -1,6 +1,10 @@
-# React components for PowerSync
+# React Hooks for PowerSync
 
-## Context
+The `powersync/react` package provides React hooks for use with the JavaScript Web SDK or React Native SDK. These hooks are designed to support reactivity, and can be used to automatically re-render React components when query results update or to access PowerSync connectivity status changes.
+
+## Usage
+
+### Context
 
 Configure a PowerSync DB connection and add it to a context provider.
 
@@ -63,9 +67,9 @@ const Component = () => {
 };
 ```
 
-## Queries
+## Reactive Queries
 
-Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
+The `useQuery` hook allows you to access the results of a watched query. Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
 ```JSX
 // TodoListDisplay.jsx
@@ -119,8 +123,7 @@ export const TodoListsDisplayDemo = () => {
 
 ### Suspense
 
-The `useSuspenseQuery` hook is available to handle the loading/fetching state through suspense.
-Unlike `useQuery`, the hook doesn't return `isLoading` or `isFetching` for the loading states nor `error` for the error state. These should be handled with variants of `<Suspense>` and `<ErrorBoundary>` respectively.
+The `useSuspenseQuery` hook also allows you to access the results of a watched query, but its loading and fetching states are handled through [Suspense](https://react.dev/reference/react/Suspense). Unlike `useQuery`, the hook doesn't return `isLoading` or `isFetching` for the loading states nor `error` for the error state. These should be handled with variants of `<Suspense>` and `<ErrorBoundary>` respectively.
 
 ```JSX
 // TodoListDisplaySuspense.jsx
@@ -154,7 +157,7 @@ export const TodoListDisplaySuspense = () => {
 
 #### Blocking navigation on Suspense
 
-When you provide a suspense fallback, suspending components will cause the fallback to render. Alternatively, React's [startTransition](https://react.dev/reference/react/startTransition) allows navigation to be blocked until the suspending components have completed, preventing the fallback from displaying. This behavior can be facilitated by your router — for example, react-router supports this with its [startTransition flag](https://reactrouter.com/en/main/upgrading/future#v7_starttransition).
+When you provide a Suspense fallback, suspending components will cause the fallback to render. Alternatively, React's [startTransition](https://react.dev/reference/react/startTransition) allows navigation to be blocked until the suspending components have completed, preventing the fallback from displaying. This behavior can be facilitated by your router — for example, react-router supports this with its [startTransition flag](https://reactrouter.com/en/main/upgrading/future#v7_starttransition).
 
 > Note: In this example, the `<Suspense>` boundary is intentionally omitted to delegate the handling of the suspending state to the router.
 
