@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { generateQueryKey, getQueryStore, QueryStore } from '../src/QueryStore';
 import { AbstractPowerSyncDatabase, SQLWatchOptions } from '@powersync/common';
 

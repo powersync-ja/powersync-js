@@ -1,5 +1,5 @@
-import { AbstractPowerSyncDatabase, CompilableQuery, QueryResult, SQLWatchOptions } from '@powersync/common';
-import { AdditionalOptions } from 'src/hooks/useQuery';
+import { AbstractPowerSyncDatabase, CompilableQuery } from '@powersync/common';
+import { AdditionalOptions } from './hooks/useQuery';
 
 export class Query<T> {
   rawQuery: string | CompilableQuery<T>;

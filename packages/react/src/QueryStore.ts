@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, SQLWatchOptions } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { Query, WatchedQuery } from './WatchedQuery';
 import { AdditionalOptions } from './hooks/useQuery';
 

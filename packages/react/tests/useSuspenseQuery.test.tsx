@@ -1,10 +1,10 @@
 import * as commonSdk from '@powersync/common';
-import { cleanup, render, renderHook, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React, { Suspense } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi, Mock } from 'vitest';
+import { ErrorBoundary } from 'react-error-boundary';
+import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useSuspenseQuery } from '../src/hooks/useSuspenseQuery';
-import { ErrorBoundary } from 'react-error-boundary';
 
 const defaultQueryResult = ['list1', 'list2'];
 
