@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, CompilableQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, BaseListener, BaseObserver, CompilableQuery } from '@powersync/common';
 import { AdditionalOptions } from './hooks/useQuery';
 
 export class Query<T> {
@@ -7,9 +7,11 @@ export class Query<T> {
   queryParameters: any[];
 }
 
-export class WatchedQuery {
-  listeners = new Set<() => void>();
+export interface WatchedQueryListener extends BaseListener {
+  onUpdate: () => void;
+}
 
+export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
   readyPromise: Promise<void>;
   isReady: boolean = false;
   currentData: any[] | undefined;
@@ -27,6 +29,7 @@ export class WatchedQuery {
   private disposer: () => void;
 
   constructor(db: AbstractPowerSyncDatabase, query: Query<unknown>, options: AdditionalOptions, disposer: () => void) {
+    super();
     this.db = db;
     this.query = query;
     this.options = options;
@@ -65,12 +68,12 @@ export class WatchedQuery {
     return release;
   }
 
-  addListener(l: () => void) {
-    this.listeners.add(l);
+  registerListener(listener: Partial<WatchedQueryListener>): () => void {
+    const disposer = super.registerListener(listener);
 
     this.maybeListen();
     return () => {
-      this.listeners.delete(l);
+      disposer();
       this.maybeDispose();
     };
   }
@@ -142,9 +145,7 @@ export class WatchedQuery {
     this.currentError = undefined;
     this.resolveReady?.();
 
-    for (let listener of this.listeners) {
-      listener();
-    }
+    this.iterateListeners((l) => l?.onUpdate());
   }
 
   private setError(error: any) {
@@ -153,9 +154,7 @@ export class WatchedQuery {
     this.currentError = error;
     this.resolveReady?.();
 
-    for (let listener of this.listeners) {
-      listener();
-    }
+    this.iterateListeners((l) => l?.onUpdate());
   }
 
   private maybeDispose() {

@@ -48,10 +48,12 @@ export const useSuspenseQuery = <T = any>(
   const [_counter, setUpdateCounter] = React.useState(0);
 
   React.useEffect(() => {
-    const dispose = q.addListener(() => {
-      setUpdateCounter((counter) => {
-        return counter + 1;
-      });
+    const dispose = q.registerListener({
+      onUpdate: () => {
+        setUpdateCounter((counter) => {
+          return counter + 1;
+        });
+      }
     });
 
     releaseTemporaryHold.current?.();
