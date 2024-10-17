@@ -73,7 +73,7 @@ function ClientParamsPage() {
               <AddIcon />
             </IconButton>
           </S.CenteredGrid>
-          <Button type="submit" sx={{ margin: '10px' }} variant="contained" onClick={addRow}>
+          <Button type="submit" sx={{ margin: '10px' }} variant="contained">
             Submit
           </Button>
         </form>
