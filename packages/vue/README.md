@@ -1,6 +1,6 @@
 # Vue composables for PowerSync
 
-The `powersync/vue` package package is a Vue-specific wrapper for PowerSync. It provides Vue composables that are designed to support reactivity, and can be used to automatically re-render components when query results update or to access PowerSync connectivity status changes.
+The `powersync/vue` package is a Vue-specific wrapper for PowerSync. It provides Vue composables that are designed to support reactivity, and can be used to automatically re-render components when query results update or to access PowerSync connectivity status changes.
 
 ## Note: Beta Release
 
