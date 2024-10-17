@@ -1,5 +1,7 @@
 # Vue composables for PowerSync
 
+The `powersync/vue` package is a Vue-specific wrapper for PowerSync. It provides Vue composables that are designed to support reactivity, and can be used to automatically re-render components when query results update or to access PowerSync connectivity status changes.
+
 ## Note: Beta Release
 
 This package is currently in a beta release.
@@ -65,7 +67,7 @@ powersync.value.getAll('SELECT * from lists').then((l) => list.value = l);
 </template>
 ```
 
-## Query
+## Reactive Query
 
 The `useQuery` composable provides a dynamic view of a given query. The data will automatically update when a dependent table is updated.
 
