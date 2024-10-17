@@ -23,6 +23,12 @@ export interface SqliteOptions {
    * Set to null or zero to fail immediately when the database is locked.
    */
   lockTimeoutMs?: number;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using SQLCipher.
+   */
+  encryptionKey?: string;
 }
 
 // SQLite journal mode. Set on the primary connection.
@@ -36,14 +42,14 @@ enum SqliteJournalMode {
   truncate = 'TRUNCATE',
   persist = 'PERSIST',
   memory = 'MEMORY',
-  off = 'OFF',
+  off = 'OFF'
 }
 
 // SQLite file commit mode.
 enum SqliteSynchronous {
   normal = 'NORMAL',
   full = 'FULL',
-  off = 'OFF',
+  off = 'OFF'
 }
 
 export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
@@ -51,4 +57,5 @@ export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
   synchronous: SqliteSynchronous.normal,
   journalSizeLimit: 6 * 1024 * 1024,
   lockTimeoutMs: 30000,
+  encryptionKey: null
 };
