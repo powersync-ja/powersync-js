@@ -15,6 +15,14 @@ import { safeParse } from '../safeParse/safeParse';
 Logger.useDefaults();
 Logger.setLevel(Logger.DEBUG);
 
+export const PARAMS_STORE = 'currentParams';
+
+export const getParams = () => {
+  const stringifiedParams = localStorage.getItem(PARAMS_STORE);
+  const params = safeParse(stringifiedParams);
+  return params;
+}
+
 export const schemaManager = new DynamicSchemaManager();
 
 export const db = new PowerSyncDatabase({
@@ -75,8 +83,7 @@ if (connector.hasCredentials()) {
 }
 
 export async function connect() {
-  const stringifiedParams = localStorage.getItem('currentParams');
-  const params = safeParse(stringifiedParams);
+  const params = getParams();
   await sync.connect({ params });
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
@@ -93,8 +100,7 @@ export async function clearData() {
   await schemaManager.clear();
   await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
-    const stringifiedParams = localStorage.getItem('currentParams');
-    const params = safeParse(stringifiedParams);
+    const params = getParams();
     await sync.connect({ params });
   }
 }
@@ -110,7 +116,7 @@ export async function signOut() {
 
 export const setParams = (p: object) => {
   const stringified = JSON.stringify(p);
-  localStorage.setItem('currentParams', stringified);
+  localStorage.setItem(PARAMS_STORE, stringified);
   connect();
 };
 

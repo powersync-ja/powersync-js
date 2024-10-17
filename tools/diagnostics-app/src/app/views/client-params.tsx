@@ -1,10 +1,9 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { setParams as setParamsGlobal } from '@/library/powersync/ConnectionManager';
+import { getParams, setParams as setParamsGlobal } from '@/library/powersync/ConnectionManager';
 import { Box, Button, Grid, IconButton, styled, TextField } from '@mui/material';
 import { FormEvent, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import { safeParse } from '@/library/safeParse/safeParse';
 
 const jsonToObjectArray = (json: Object) => {
   const entrySet = Object.entries(json);
@@ -15,7 +14,7 @@ const jsonToObjectArray = (json: Object) => {
 };
 
 function ClientParamsPage() {
-  const [params, setParams] = useState(jsonToObjectArray(safeParse(localStorage.getItem('currentParams'))));
+  const [params, setParams] = useState(jsonToObjectArray(getParams()));
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
