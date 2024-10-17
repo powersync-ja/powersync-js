@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, BaseListener, BaseObserver, CompilableQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, BaseListener, BaseObserver, CompilableQuery, Disposable } from '@powersync/common';
 import { AdditionalOptions } from './hooks/useQuery';
 
 export class Query<T> {
@@ -9,9 +9,10 @@ export class Query<T> {
 
 export interface WatchedQueryListener extends BaseListener {
   onUpdate: () => void;
+  disposed: () => void;
 }
 
-export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
+export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements Disposable {
   readyPromise: Promise<void>;
   isReady: boolean = false;
   currentData: any[] | undefined;
@@ -26,14 +27,12 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
 
   readonly query: Query<unknown>;
   readonly options: AdditionalOptions;
-  private disposer: () => void;
 
-  constructor(db: AbstractPowerSyncDatabase, query: Query<unknown>, options: AdditionalOptions, disposer: () => void) {
+  constructor(db: AbstractPowerSyncDatabase, query: Query<unknown>, options: AdditionalOptions) {
     super();
     this.db = db;
     this.query = query;
     this.options = options;
-    this.disposer = disposer;
 
     this.readyPromise = new Promise((resolve) => {
       this.resolveReady = resolve;
@@ -106,7 +105,8 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
     if (this.controller != null) {
       return;
     }
-    if (this.listeners.size == 0 && this.temporaryHolds.size == 0) {
+
+    if (this.onUpdateListenersCount() == 0 && this.temporaryHolds.size == 0) {
       return;
     }
 
@@ -145,7 +145,7 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
     this.currentError = undefined;
     this.resolveReady?.();
 
-    this.iterateListeners((l) => l?.onUpdate());
+    this.iterateListeners((l) => l.onUpdate?.());
   }
 
   private setError(error: any) {
@@ -154,21 +154,29 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> {
     this.currentError = error;
     this.resolveReady?.();
 
-    this.iterateListeners((l) => l?.onUpdate());
+    this.iterateListeners((l) => l.onUpdate?.());
+  }
+
+  private onUpdateListenersCount(): number {
+    return Array.from(this.listeners).filter((listener) => listener.onUpdate !== undefined).length;
   }
 
   private maybeDispose() {
-    if (this.listeners.size == 0 && this.temporaryHolds.size == 0) {
+    if (this.onUpdateListenersCount() == 0 && this.temporaryHolds.size == 0) {
       this.controller?.abort();
       this.controller = undefined;
       this.isReady = false;
       this.currentData = undefined;
       this.currentError = undefined;
-      this.disposer?.();
+      this.dispose();
 
       this.readyPromise = new Promise((resolve, reject) => {
         this.resolveReady = resolve;
       });
     }
+  }
+
+  async dispose() {
+    this.iterateAsyncListeners(async (l) => l.disposed?.());
   }
 }

@@ -15,10 +15,15 @@ export class QueryStore {
     if (this.cache.has(key)) {
       return this.cache.get(key);
     }
-    const disposer = () => {
-      this.cache.delete(key);
-    };
-    const q = new WatchedQuery(this.db, query, options, disposer);
+
+    const q = new WatchedQuery(this.db, query, options);
+    const disposer = q.registerListener({
+      disposed: () => {
+        this.cache.delete(key);
+        disposer?.();
+      }
+    });
+
     this.cache.set(key, q);
 
     return q;
