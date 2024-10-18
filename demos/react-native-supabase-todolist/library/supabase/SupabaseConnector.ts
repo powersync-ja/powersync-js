@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
+import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType, type PowerSyncCredentials } from '@powersync/react-native';
 
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { AppConfig } from './AppConfig';
@@ -58,8 +58,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
       endpoint: AppConfig.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
-      userID: session.user.id
-    };
+    } satisfies PowerSyncCredentials;
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {

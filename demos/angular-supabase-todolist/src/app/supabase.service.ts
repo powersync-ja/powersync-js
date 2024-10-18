@@ -8,7 +8,7 @@ import {
   type User
 } from '@supabase/supabase-js';
 import { environment } from '../environment';
-import { type AbstractPowerSyncDatabase, type CrudEntry, UpdateType, PowerSyncBackendConnector } from '@powersync/web';
+import { type AbstractPowerSyncDatabase, type CrudEntry, UpdateType, PowerSyncBackendConnector, type PowerSyncCredentials } from '@powersync/web';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -65,11 +65,10 @@ export class SupabaseService implements PowerSyncBackendConnector {
     }
 
     return {
-      client: this.supabase,
       endpoint: environment.powersyncUrl,
       token: session.access_token ?? '',
       expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined
-    };
+    } satisfies PowerSyncCredentials;
   }
 
   authChanges(callback: (event: AuthChangeEvent, session: Session | null) => void) {
