@@ -7,6 +7,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import WifiIcon from '@mui/icons-material/Wifi';
+import UserIcon from '@mui/icons-material/VerifiedUser';
 
 import {
   AppBar,
@@ -25,7 +26,13 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { LOGIN_ROUTE, SCHEMA_ROUTE, SQL_CONSOLE_ROUTE, SYNC_DIAGNOSTICS_ROUTE } from '@/app/router';
+import {
+  CLIENT_PARAMETERS_ROUTE,
+  LOGIN_ROUTE,
+  SCHEMA_ROUTE,
+  SQL_CONSOLE_ROUTE,
+  SYNC_DIAGNOSTICS_ROUTE
+} from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 import { usePowerSync } from '@powersync/react';
@@ -73,6 +80,11 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         path: SQL_CONSOLE_ROUTE,
         title: 'SQL Console',
         icon: () => <TerminalIcon />
+      },
+      {
+        path: CLIENT_PARAMETERS_ROUTE,
+        title: 'Client Parameters',
+        icon: () => <UserIcon />
       },
       {
         path: LOGIN_ROUTE,
