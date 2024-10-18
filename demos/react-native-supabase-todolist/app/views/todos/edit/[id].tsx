@@ -4,8 +4,8 @@ import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, View, Text } from 'react-native';
-import { FAB } from 'react-native-elements';
+import { ScrollView, View } from 'react-native';
+import { FAB, Text } from '@rneui/themed';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import prompt from 'react-native-prompt-android';
 import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
@@ -136,6 +136,7 @@ const TodoView: React.FC = () => {
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
         icon={{ name: 'add', color: 'white' }}
+        color="#aa00ff"
         size="small"
         placement="right"
         onPress={() => {

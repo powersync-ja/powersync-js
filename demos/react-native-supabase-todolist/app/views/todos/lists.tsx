@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
-import { FAB, Text } from 'react-native-elements';
+import { FAB, Text } from '@rneui/themed';
 import prompt from 'react-native-prompt-android';
 
 import { router, Stack } from 'expo-router';
@@ -61,6 +61,7 @@ const ListsViewWidget: React.FC = () => {
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
         icon={{ name: 'add', color: 'white' }}
+        color="#aa00ff"
         size="small"
         placement="right"
         onPress={() => {

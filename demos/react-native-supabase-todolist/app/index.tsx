@@ -5,6 +5,12 @@ import { useSystem } from '../library/powersync/system';
 import { router } from 'expo-router';
 import Logger from 'js-logger';
 
+import { ThemeProvider, createTheme } from '@rneui/themed';
+
+const theme = createTheme({
+  mode: 'light'
+});
+
 /**
  * This is the entry point when the app loads.
  * Checks for a Supabase session.
@@ -32,9 +38,11 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <View key={`loader`} style={{ flex: 1, flexGrow: 1, alignContent: 'center', justifyContent: 'center' }}>
-      <ActivityIndicator />
-    </View>
+    <ThemeProvider theme={theme}>
+      <View key={`loader`} style={{ flex: 1, flexGrow: 1, alignContent: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    </ThemeProvider>
   );
 };
 
