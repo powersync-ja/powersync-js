@@ -24812,7 +24812,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
       expo-constants: 16.0.2(expo@51.0.27)
       invariant: 2.2.4
       md5-file: 3.2.3
@@ -24839,7 +24839,7 @@ packages:
       expo: '*'
     dependencies:
       ajv: 8.17.1
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
       semver: 7.6.3
     dev: false
 
@@ -24878,7 +24878,7 @@ packages:
     dependencies:
       '@expo/config': 9.0.3
       '@expo/env': 0.3.0
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -24966,7 +24966,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
     dev: false
 
   /expo-file-system@17.0.1(expo@51.0.37):
@@ -24982,7 +24982,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
       fontfaceobserver: 2.3.0
     dev: false
 
@@ -25004,7 +25004,7 @@ packages:
     peerDependencies:
       expo: '*'
     dependencies:
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.4)
     dev: false
 
   /expo-keep-awake@13.0.2(expo@51.0.37):
