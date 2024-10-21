@@ -791,9 +791,15 @@ importers:
       '@react-navigation/native':
         specifier: ^6.0.0
         version: 6.1.18(react-native@0.74.5)(react@18.2.0)
+      '@rneui/base':
+        specifier: 4.0.0-rc.8
+        version: 4.0.0-rc.8(react-native-safe-area-context@4.10.5)(react-native-vector-icons@10.2.0)(react-native@0.74.5)(react@18.2.0)
+      '@rneui/themed':
+        specifier: 4.0.0-rc.8
+        version: 4.0.0-rc.8(@rneui/base@4.0.0-rc.8)
       '@supabase/supabase-js':
-        specifier: ^2.33.1
-        version: 2.45.4
+        specifier: ~2.33.1
+        version: 2.33.2
       base64-arraybuffer:
         specifier: ^1.0.2
         version: 1.0.2
@@ -845,9 +851,6 @@ importers:
       react-native:
         specifier: 0.74.5
         version: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
-      react-native-elements:
-        specifier: ^3.4.2
-        version: 3.4.3(react-native-safe-area-context@4.10.5)(react-native-vector-icons@10.2.0)(react-native@0.74.5)(react@18.2.0)
       react-native-encrypted-storage:
         specifier: ^4.0.3
         version: 4.0.3(react-native@0.74.5)(react@18.2.0)
@@ -869,9 +872,6 @@ importers:
       react-native-screens:
         specifier: ~3.31.1
         version: 3.31.1(react-native@0.74.5)(react@18.2.0)
-      react-native-vector-icons:
-        specifier: ^10.0.0
-        version: 10.2.0
       react-navigation-stack:
         specifier: ^2.10.4
         version: 2.10.4(@react-native-community/masked-view@0.1.11)(react-native-gesture-handler@2.16.2)(react-native-safe-area-context@4.10.5)(react-native-screens@3.31.1)(react-native@0.74.5)(react-navigation@4.4.4)(react@18.2.0)
@@ -889,7 +889,7 @@ importers:
         specifier: ^4.14.202
         version: 4.17.10
       '@types/react':
-        specifier: ~18.2.57
+        specifier: ~18.2.79
         version: 18.2.79
       babel-preset-expo:
         specifier: ^11.0.5
@@ -14106,6 +14106,33 @@ packages:
       web-streams-polyfill: 3.2.1
     dev: false
 
+  /@rneui/base@4.0.0-rc.8(react-native-safe-area-context@4.10.5)(react-native-vector-icons@10.2.0)(react-native@0.74.5)(react@18.2.0):
+    resolution: {integrity: sha512-teJ6bUki+TQ+r+abefEWYb2wRUaMgRhp1oxtKa84UfDqTiCF0ItyJ0L8FhMb6AAkTOkWC34301T7j3H4df6ueA==}
+    peerDependencies:
+      react-native-safe-area-context: '>= 3.0.0'
+      react-native-vector-icons: '>7.0.0'
+    dependencies:
+      '@types/react-native-vector-icons': 6.4.18
+      color: 3.2.1
+      deepmerge: 4.3.1
+      hoist-non-react-statics: 3.3.2
+      react-native-ratings: 8.1.0(react-native@0.74.5)(react@18.2.0)
+      react-native-safe-area-context: 4.10.5(react-native@0.74.5)(react@18.2.0)
+      react-native-size-matters: 0.4.2(react-native@0.74.5)
+      react-native-vector-icons: 10.2.0
+    transitivePeerDependencies:
+      - react
+      - react-native
+    dev: false
+
+  /@rneui/themed@4.0.0-rc.8(@rneui/base@4.0.0-rc.8):
+    resolution: {integrity: sha512-8L/XOrL9OK/r+/iBLvx63TbIdZOXF8SIjN9eArMYm6kRbMr8m4BitXllDN8nBhBsSPNYvL6EAgjk+i2MfY4sBA==}
+    peerDependencies:
+      '@rneui/base': 4.0.0-rc.7
+    dependencies:
+      '@rneui/base': 4.0.0-rc.8(react-native-safe-area-context@4.10.5)(react-native-vector-icons@10.2.0)(react-native@0.74.5)(react@18.2.0)
+    dev: false
+
   /@rnx-kit/chromium-edge-launcher@1.0.0:
     resolution: {integrity: sha512-lzD84av1ZQhYUS+jsGqJiCMaJO2dn9u+RTT9n9q6D3SaKVwWqv+7AoRKqBu19bkwyE+iFRl1ymr40QS90jVFYg==}
     engines: {node: '>=14.15'}
@@ -14927,6 +14954,20 @@ packages:
     resolution: {integrity: sha512-asYHcyDR1fKqrMpytAS1zjyEfvxuOIp1CIXX7ji4lHHcJKqyk+sLl/Vxgm4sN6u8zvuUtae9e4kDxQP2qrwWBA==}
     dependencies:
       '@supabase/node-fetch': 2.6.15
+    dev: false
+
+  /@supabase/supabase-js@2.33.2:
+    resolution: {integrity: sha512-r+xCaERasxI0fMqOTp4zwur200X6HCjif48WKIcWrZgtzdtyP6CsP6J3rwZWfR/mR5MN0qLdK0SGA0QCgxS3Nw==}
+    dependencies:
+      '@supabase/functions-js': 2.4.3
+      '@supabase/gotrue-js': 2.65.0
+      '@supabase/node-fetch': 2.6.15
+      '@supabase/postgrest-js': 1.16.2
+      '@supabase/realtime-js': 2.10.6
+      '@supabase/storage-js': 2.7.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
     dev: false
 
   /@supabase/supabase-js@2.39.0:
@@ -32253,6 +32294,17 @@ packages:
       react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
+  /react-native-ratings@8.1.0(react-native@0.74.5)(react@18.2.0):
+    resolution: {integrity: sha512-+QOJ4G3NjVkI1D+tk4EGx1dCvVfbD2nQdkrj9cXrcAoEiwmbep4z4bZbCKmWMpQ5h2dqbxABU8/eBnbDmvAc3g==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      lodash: 4.17.21
+      react: 18.2.0
+      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
+    dev: false
+
   /react-native-reanimated-table@0.0.2(react-native@0.74.5)(react@18.2.0):
     resolution: {integrity: sha512-OeuqfU1AFEmHNTJlEOLWrV78JgAXnM0/ZrCm0Ab+9e5nwYJ+xab/UFXkNKz3Gyf08ZfLSNzwMQRjt3eZWPWoGA==}
     peerDependencies:
@@ -32379,6 +32431,14 @@ packages:
 
   /react-native-size-matters@0.3.1(react-native@0.74.5):
     resolution: {integrity: sha512-mKOfBLIBFBcs9br1rlZDvxD5+mAl8Gfr5CounwJtxI6Z82rGrMO+Kgl9EIg3RMVf3G855a85YVqHJL2f5EDRlw==}
+    peerDependencies:
+      react-native: '*'
+    dependencies:
+      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
+    dev: false
+
+  /react-native-size-matters@0.4.2(react-native@0.74.5):
+    resolution: {integrity: sha512-DKE3f/sdcozd24oASgkP1iGg+YU3HoajRa5k3a4wkRzpiqREq8SGX12Y5zBgAt/8IivLQoTMYkyQu1/Giuy+zQ==}
     peerDependencies:
       react-native: '*'
     dependencies:
