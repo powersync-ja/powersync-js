@@ -4,12 +4,15 @@ import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import { PowerSyncDatabase } from '@powersync/web';
 import Logger from 'js-logger';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 import { getSyncEnabled } from '@/library/powersync/SyncMode';
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
+
+const ResetContext = React.createContext<(() => void) | null>(null);
+export const useReset = () => React.useContext(ResetContext);
 
 const dbName = 'example.db';
 const syncEnabled = getSyncEnabled(dbName);
@@ -23,7 +26,7 @@ const db = new PowerSyncDatabase({
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [connector] = React.useState(new SupabaseConnector());
-  const [powerSync] = React.useState(db);
+  const [powerSync, setPowersync] = React.useState(db);
 
   React.useEffect(() => {
     // Linting thinks this is a hook due to it's name
@@ -53,11 +56,16 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <Suspense fallback={<CircularProgress />}>
-      <PowerSyncContext.Provider value={powerSync}>
-        <SupabaseContext.Provider value={connector}>
-          <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
-        </SupabaseContext.Provider>
-      </PowerSyncContext.Provider>
+      <ResetContext.Provider
+        value={() => {
+          setPowersync(new PowerSyncDatabase({ schema: makeSchema(syncEnabled), database: { dbFilename: dbName } }));
+        }}>
+        <PowerSyncContext.Provider value={powerSync}>
+          <SupabaseContext.Provider value={connector}>
+            <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
+          </SupabaseContext.Provider>
+        </PowerSyncContext.Provider>
+      </ResetContext.Provider>
     </Suspense>
   );
 };
