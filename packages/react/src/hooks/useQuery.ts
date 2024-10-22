@@ -66,20 +66,33 @@ export const useQuery = <T = any>(
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
+  const previousQueryRef = React.useRef({ sqlStatement, memoizedParams });
+
+  // Indicates that the query will be re-fetched due to a change in the query.
+  // Used when `isFetching` hasn't been set to true yet due to React execution.
+  const shouldFetch = React.useMemo(
+    () =>
+      previousQueryRef.current.sqlStatement !== sqlStatement ||
+      JSON.stringify(previousQueryRef.current.memoizedParams) != JSON.stringify(memoizedParams),
+    [powerSync, sqlStatement, memoizedParams, isFetching]
+  );
+
   const handleResult = (result: T[]) => {
+    setData(result);
     setIsLoading(false);
     setIsFetching(false);
-    setData(result);
     setError(undefined);
+    previousQueryRef.current = { sqlStatement, memoizedParams };
   };
 
   const handleError = (e: Error) => {
+    setData([]);
     setIsLoading(false);
     setIsFetching(false);
-    setData([]);
     const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
     wrappedError.cause = e;
     setError(wrappedError);
+    previousQueryRef.current = { sqlStatement, memoizedParams };
   };
 
   const fetchData = async () => {
@@ -139,5 +152,5 @@ export const useQuery = <T = any>(
     };
   }, [powerSync, sqlStatement, memoizedParams, memoizedOptions, tables]);
 
-  return { isLoading, isFetching, data, error, refresh: fetchData };
+  return { isLoading, isFetching: isFetching || shouldFetch, data, error, refresh: fetchData };
 };

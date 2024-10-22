@@ -1,7 +1,7 @@
 import '@azure/core-asynciterator-polyfill';
 import { PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 import Logger from 'js-logger';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
 import { Connector } from '../lib/connector';
@@ -20,9 +20,11 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
       database: { dbFilename: 'test.sqlite' }
       //location: 'optional location directory to DB file'
     });
-
     powerSync.init();
+    return powerSync;
+  }, []);
 
+  useEffect(() => {
     if (isSyncEnabled) {
       powerSync
         .connect(connector)
@@ -34,9 +36,7 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
         .then(() => console.log('not connected'))
         .catch(console.error);
     }
-
-    return powerSync;
-  }, [isSyncEnabled]);
+  }, [isSyncEnabled, powerSync]);
 
   return <PowerSyncContext.Provider value={powerSync}>{children}</PowerSyncContext.Provider>;
 };

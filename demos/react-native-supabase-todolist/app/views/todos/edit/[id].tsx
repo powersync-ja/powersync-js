@@ -4,8 +4,8 @@ import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, View, Text } from 'react-native';
-import { FAB } from 'react-native-elements';
+import { ScrollView, View } from 'react-native';
+import { FAB, Text } from '@rneui/themed';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import prompt from 'react-native-prompt-android';
 import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersync/AppSchema';
@@ -77,10 +77,12 @@ const TodoView: React.FC = () => {
   };
 
   const savePhoto = async (id: string, data: CameraCapturedPicture) => {
-    // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
-    const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
+    if (system.attachmentQueue) {
+      // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
+      const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
 
-    await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+      await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+    }
   };
 
   const createNewTodo = async (description: string) => {
@@ -98,7 +100,7 @@ const TodoView: React.FC = () => {
 
   const deleteTodo = async (id: string, photoRecord?: AttachmentRecord) => {
     await system.powersync.writeTransaction(async (tx) => {
-      if (photoRecord != null) {
+      if (system.attachmentQueue && photoRecord != null) {
         await system.attachmentQueue.delete(photoRecord, tx);
       }
       await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
@@ -134,6 +136,7 @@ const TodoView: React.FC = () => {
       <FAB
         style={{ zIndex: 99, bottom: 0 }}
         icon={{ name: 'add', color: 'white' }}
+        color="#aa00ff"
         size="small"
         placement="right"
         onPress={() => {

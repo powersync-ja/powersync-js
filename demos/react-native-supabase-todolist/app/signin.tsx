@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useSystem } from '../library/powersync/system';
 import { Button } from 'react-native';
 import { TextInputWidget } from '../library/widgets/TextInputWidget';
-import { Icon } from 'react-native-elements';
+import { Icon } from '@rneui/themed';
 
 export default function Signin() {
   const { supabaseConnector } = useSystem();
