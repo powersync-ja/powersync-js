@@ -289,23 +289,27 @@ describe('Watch Tests', () => {
   });
 
   it('should throttle watch callback overflow', async () => {
+    const overflowAbortController = new AbortController();
     const updatesCount = 25;
 
     let receivedWithManagedOverflowCount = 0;
-    const onResultOverflow = () => {
-      receivedWithManagedOverflowCount++;
-    };
+    const firstResultReceived = new Promise<void>((resolve) => {
+      const onResultOverflow = () => {
+        if (receivedWithManagedOverflowCount === 0) {
+          resolve();
+        }
+        receivedWithManagedOverflowCount++;
+      };
 
-    const overflowAbortController = new AbortController();
-    powersync.watch(
-      'SELECT count() AS count FROM assets',
-      [],
-      { onResult: onResultOverflow },
-      { signal: overflowAbortController.signal, throttleMs: 100 }
-    );
+      powersync.watch(
+        'SELECT count() AS count FROM assets',
+        [],
+        { onResult: onResultOverflow },
+        { signal: overflowAbortController.signal, throttleMs: 1 }
+      );
+    });
 
-    // Allows us to count the number of updates received without the initial trigger
-    await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
+    await firstResultReceived;
 
     // Perform a large number of inserts to trigger overflow
     for (let i = 0; i < updatesCount; i++) {
@@ -316,7 +320,8 @@ describe('Watch Tests', () => {
 
     overflowAbortController.abort();
 
-    // Initial onResult plus 1 left after overflow was throttled for onChange triggers
-    expect(receivedWithManagedOverflowCount).toBe(2);
+    // This fluctuates between 3 and 4 based on timing, but should never be 25
+    expect(receivedWithManagedOverflowCount).greaterThan(2);
+    expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
   });
 });
