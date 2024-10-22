@@ -103,6 +103,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
+  schemaChanged: (schema: Schema) => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -359,6 +360,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
     this._schema = schema;
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    this.iterateListeners((cb) => cb.schemaChanged?.(schema));
   }
 
   /**
@@ -756,7 +758,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    (async () => {
+    const watchQuery = async (abortSignal: AbortSignal) => {
       try {
         const resolvedTables = await this.resolveTables(sql, parameters, options);
 
@@ -778,13 +780,43 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           },
           {
             ...(options ?? {}),
-            tables: resolvedTables
+            tables: resolvedTables,
+            // Override the abort signal since we intercept it
+            signal: abortSignal
           }
         );
       } catch (error) {
         onError?.(error);
       }
-    })();
+    };
+
+    const triggerWatchedQuery = () => {
+      const abortController = new AbortController();
+
+      let disposeSchemaListener: (() => void) | null = null;
+
+      const stopWatching = () => {
+        abortController.abort('Abort triggered');
+        disposeSchemaListener?.();
+        disposeSchemaListener = null;
+        // Stop listening to upstream abort for this watch
+        options?.signal?.removeEventListener('abort', stopWatching);
+      };
+
+      options?.signal?.addEventListener('abort', stopWatching);
+
+      disposeSchemaListener = this.registerListener({
+        schemaChanged: () => {
+          stopWatching();
+          // Re trigger the watched query (recursively)
+          triggerWatchedQuery();
+        }
+      });
+
+      return watchQuery(abortController.signal);
+    };
+
+    triggerWatchedQuery();
   }
 
   /**
