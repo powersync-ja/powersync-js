@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { v4 as uuid } from 'uuid';
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { testSchema } from './utils/testDb';
+import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
 vi.useRealTimers();
 
 /**
@@ -26,6 +27,7 @@ describe('Watch Tests', () => {
         enableMultiTabs: false
       }
     });
+    await powersync.init();
   });
 
   afterEach(async () => {
@@ -83,6 +85,7 @@ describe('Watch Tests', () => {
     const receivedUpdates = new Promise<void>((resolve) => {
       const onUpdate = () => {
         receivedUpdatesCount++;
+
         if (receivedUpdatesCount == updatesCount) {
           abortController.abort();
           resolve();
@@ -286,8 +289,6 @@ describe('Watch Tests', () => {
   });
 
   it('should throttle watch callback overflow', async () => {
-    const abortController = new AbortController();
-
     const updatesCount = 25;
 
     let receivedWithManagedOverflowCount = 0;
@@ -300,7 +301,7 @@ describe('Watch Tests', () => {
       'SELECT count() AS count FROM assets',
       [],
       { onResult: onResultOverflow },
-      { signal: overflowAbortController.signal, throttleMs: 1 }
+      { signal: overflowAbortController.signal, throttleMs: 100 }
     );
 
     // Allows us to count the number of updates received without the initial trigger
@@ -313,10 +314,9 @@ describe('Watch Tests', () => {
 
     await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
 
-    abortController.abort();
     overflowAbortController.abort();
 
-    // Initial onResult plus two left after overflow was throttled for onChange triggers
-    expect(receivedWithManagedOverflowCount).toBe(3);
+    // Initial onResult plus 1 left after overflow was throttled for onChange triggers
+    expect(receivedWithManagedOverflowCount).toBe(2);
   });
 });

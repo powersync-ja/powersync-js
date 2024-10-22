@@ -103,7 +103,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
-  schemaChanged: (schema: Schema) => void;
+  schemaChanged: (schema: Schema) => Promise<void>;
 }
 
 export interface PowerSyncCloseOptions {
@@ -359,8 +359,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
+
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
-    this.iterateListeners((cb) => cb.schemaChanged?.(schema));
+    await this.iterateAsyncListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 
   /**
@@ -761,7 +762,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const watchQuery = async (abortSignal: AbortSignal) => {
       try {
         const resolvedTables = await this.resolveTables(sql, parameters, options);
-
         // Fetch initial data
         const result = await this.executeReadOnly(sql, parameters);
         onResult(result);
@@ -790,11 +790,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     };
 
-    const triggerWatchedQuery = () => {
+    const triggerWatchedQuery = async () => {
       const abortController = new AbortController();
-
       let disposeSchemaListener: (() => void) | null = null;
-
       const stopWatching = () => {
         abortController.abort('Abort triggered');
         disposeSchemaListener?.();
@@ -804,16 +802,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       };
 
       options?.signal?.addEventListener('abort', stopWatching);
-
       disposeSchemaListener = this.registerListener({
-        schemaChanged: () => {
+        schemaChanged: async () => {
           stopWatching();
           // Re trigger the watched query (recursively)
-          triggerWatchedQuery();
+          await triggerWatchedQuery();
         }
       });
 
-      return watchQuery(abortController.signal);
+      await watchQuery(abortController.signal);
     };
 
     triggerWatchedQuery();
