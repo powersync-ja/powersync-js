@@ -60,11 +60,11 @@ describe('Watch With Schema Change Tests', () => {
 
     expect(lastResult).toBe(3);
 
+    // changes the underlying table that the `assets` and `customers` views are based on
     await powersync.updateSchema(makeOptionalSyncSchema(true));
 
     await powersync.writeTransaction(async (tx) => {
       // Copy local data to the "online" views.
-
       await tx.execute(
         'INSERT INTO assets(id, description, customer_id, user_id) SELECT id, description, customer_id, ? FROM inactive_local_assets',
         [userId]

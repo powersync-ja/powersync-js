@@ -103,7 +103,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
-  schemaChanged: (schema: Schema) => Promise<void>;
+  schemaChanged: (schema: Schema) => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -361,7 +361,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._schema = schema;
 
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
-    await this.iterateAsyncListeners(async (cb) => cb.schemaChanged?.(schema));
+    this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 
   /**
@@ -790,7 +790,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     };
 
-    const triggerWatchedQuery = async () => {
+    const triggerWatchedQuery = () => {
       const abortController = new AbortController();
       let disposeSchemaListener: (() => void) | null = null;
       const stopWatching = () => {
@@ -805,12 +805,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       disposeSchemaListener = this.registerListener({
         schemaChanged: async () => {
           stopWatching();
-          // Re trigger the watched query (recursively)
-          await triggerWatchedQuery();
+          // Re trigger the watched query (recursively), setTimeout ensures that we don't modify the list of listeners while iterating through them
+          setTimeout(() => triggerWatchedQuery(), 0);
         }
       });
 
-      await watchQuery(abortController.signal);
+      return watchQuery(abortController.signal);
     };
 
     triggerWatchedQuery();
