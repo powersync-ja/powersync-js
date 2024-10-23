@@ -828,19 +828,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     return new EventIterator<QueryResult>((eventOptions) => {
-      (async () => {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-
-        // Fetch initial data
-        eventOptions.push(await this.executeReadOnly(sql, parameters));
-
-        for await (const event of this.onChangeWithAsyncGenerator({
-          ...(options ?? {}),
-          tables: resolvedTables
-        })) {
-          eventOptions.push(await this.executeReadOnly(sql, parameters));
+      const handler: WatchHandler = {
+        onResult: (result) => {
+          eventOptions.push(result);
+        },
+        onError: (error) => {
+          eventOptions.fail(error);
         }
-      })();
+      };
+
+      this.watchWithCallback(sql, parameters, handler, options);
+
+      options?.signal?.addEventListener('abort', () => {
+        eventOptions.stop();
+      });
     });
   }
 

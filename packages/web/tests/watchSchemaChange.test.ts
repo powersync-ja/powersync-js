@@ -86,6 +86,7 @@ describe('Watch With Schema Change Tests', () => {
       await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
     }
     await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    abortController.abort();
 
     expect(lastResult).toBe(6);
   });
@@ -141,6 +142,7 @@ describe('Watch With Schema Change Tests', () => {
       await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
     }
     await new Promise<void>((resolve) => setTimeout(resolve, throttleDuration * 2));
+    abortController.abort();
 
     expect(lastResult).toBe(6);
   });
