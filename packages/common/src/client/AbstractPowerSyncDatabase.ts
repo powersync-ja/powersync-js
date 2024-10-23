@@ -790,6 +790,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     };
 
+    this.rerunOnSchemaChange(watchQuery, options);
+  }
+
+  private rerunOnSchemaChange(callback: (signal: AbortSignal) => void, options?: SQLWatchOptions) {
     const triggerWatchedQuery = () => {
       const abortController = new AbortController();
       let disposeSchemaListener: (() => void) | null = null;
@@ -810,7 +814,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         }
       });
 
-      return watchQuery(abortController.signal);
+      // return watchQuery(abortController.signal);
+      callback(abortController.signal);
     };
 
     triggerWatchedQuery();
