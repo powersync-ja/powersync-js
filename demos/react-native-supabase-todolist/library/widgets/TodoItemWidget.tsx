@@ -51,8 +51,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               );
             }}
           />
-        }
-      >
+        }>
         {loading ? (
           <ActivityIndicator />
         ) : (
@@ -76,7 +75,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
           ) : photoAttachment?.local_uri != null ? (
             <Image
-              source={{ uri: system.attachmentQueue.getLocalUri(photoAttachment.local_uri) }}
+              source={{ uri: system.attachmentQueue?.getLocalUri(photoAttachment.local_uri) }}
               containerStyle={styles.item}
               PlaceholderContent={<ActivityIndicator />}
             />

@@ -1,5 +1,18 @@
 # @powersync/react-native
 
+## 1.13.0
+
+### Minor Changes
+
+- 9c140b5: Make `react-native-quick-sqlite` an optional dependency so that it can be used conditionally.
+
+## 1.12.4
+
+### Patch Changes
+
+- Updated dependencies [f8ac369]
+  - @powersync/react@1.4.5
+
 ## 1.12.3
 
 ### Patch Changes

@@ -1,12 +1,13 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.12.3",
+  "version": "1.13.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "PowerSync - sync Postgres with SQLite in your React Native app for offline-first and real-time data",
   "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
@@ -29,10 +30,15 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^1.3.0",
+    "@journeyapps/react-native-quick-sqlite": "^1.4.0",
     "@powersync/common": "workspace:^1.19.0",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@journeyapps/react-native-quick-sqlite": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
@@ -40,7 +46,7 @@
   },
   "devDependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@journeyapps/react-native-quick-sqlite": "^1.3.0",
+    "@journeyapps/react-native-quick-sqlite": "^1.4.0",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-inject": "^5.0.5",

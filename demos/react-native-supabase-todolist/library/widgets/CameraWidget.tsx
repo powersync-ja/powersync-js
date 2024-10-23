@@ -1,5 +1,5 @@
-import { Camera, CameraCapturedPicture, CameraType } from 'expo-camera';
-import React, { useRef } from 'react';
+import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
+import React from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,8 +19,8 @@ export interface Props {
 const isAndroid = Platform.OS === 'android';
 
 export const CameraWidget: React.FC<Props> = (props) => {
-  const cameraRef = useRef<Camera>(null);
-  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const cameraRef = React.useRef<CameraView>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
@@ -41,7 +41,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
       };
       const photo = await cameraRef.current.takePictureAsync(options);
       setLoading(false);
-      props.onCaptured(photo);
+      if (photo) props.onCaptured(photo);
       props.onClose();
     }
   };
@@ -71,13 +71,12 @@ export const CameraWidget: React.FC<Props> = (props) => {
 
   return (
     <View style={styles.container}>
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={{ ...styles.camera, height: height, width: '100%' }}
-        type={CameraType.back}
+        facing="back"
         onCameraReady={onReady}
-        ratio={isAndroid ? '16:9' : undefined}
-      >
+        ratio={isAndroid ? '16:9' : undefined}>
         <TouchableOpacity onPress={props.onClose} style={styles.backButton}>
           <Icon name={'chevron-left'} type={'font-awesome'} color={'white'} />
         </TouchableOpacity>
@@ -86,7 +85,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
             <ActivityIndicator animating={loading} />
           </TouchableOpacity>
         </View>
-      </Camera>
+      </CameraView>
     </View>
   );
 };
