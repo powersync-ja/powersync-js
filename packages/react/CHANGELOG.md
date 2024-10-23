@@ -1,5 +1,15 @@
 # @powersync/react
 
+## 1.5.0
+
+### Minor Changes
+
+- 2b0466f: Added `useSuspenseQuery` hook, allowing queries to suspend instead of returning `isLoading`/`isFetching` state.
+
+### Patch Changes
+
+- c8658ca: Fixed `useQuery()`'s' `isFetching` value staying true when used in react-native environment.
+
 ## 1.4.5
 
 ### Patch Changes

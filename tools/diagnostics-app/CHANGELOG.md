@@ -1,5 +1,24 @@
 # diagnostics-app
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
+## 0.6.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
+### Patch Changes
+
+- Updated dependencies [77e196d]
+  - @powersync/web@1.9.0
+
 ## 0.5.0
 
 ### Minor Changes

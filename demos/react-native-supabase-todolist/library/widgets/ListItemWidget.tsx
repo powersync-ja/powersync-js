@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, View } from 'react-native';
-import { ListItem, Icon, Button } from 'react-native-elements';
+import { ListItem, Icon, Button } from '@rneui/themed';
 
 export interface ListItemWidgetProps {
   title: string;
@@ -17,13 +17,23 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, descripti
         onPress={() => onPress?.()}
         rightContent={
           <Button
+            buttonStyle={{
+              flexDirection: 'column',
+              alignContent: 'center',
+              borderColor: 'transparent',
+              minHeight: '100%'
+            }}
             containerStyle={{
               flex: 1,
+              flexGrow: 1,
+              height: '100%',
               justifyContent: 'center',
-              backgroundColor: '#d3d3d3'
+              backgroundColor: 'rgba(240, 15, 15, 0.9)'
             }}
+            title="Delete"
+            titleStyle={{ color: 'white' }}
             type="clear"
-            icon={{ name: 'delete', color: 'red' }}
+            icon={{ name: 'trash', type: 'font-awesome', color: 'white' }}
             onPress={() => {
               Alert.alert(
                 'Confirm',

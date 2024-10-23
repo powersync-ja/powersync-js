@@ -1,5 +1,30 @@
 # @powersync/react-native
 
+## 1.14.2
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
+## 1.14.1
+
+### Patch Changes
+
+- a3f625e: Fix inline require for react-native-quick-sqlite
+
+## 1.14.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
+### Patch Changes
+
+- Updated dependencies [77e196d]
+  - @powersync/common@1.20.0
+
 ## 1.13.0
 
 ### Minor Changes
