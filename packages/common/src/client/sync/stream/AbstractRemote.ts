@@ -111,7 +111,7 @@ export abstract class AbstractRemote {
     this.credentials = await this.connector.fetchCredentials();
     if (this.credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
-        'A trailing forward slash "/" was entered after the POWERSYNC_URL environment variable. Remove the trailing "/" from the variable to fix this error.'
+        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${this.credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
       );
     }
     return this.credentials;
