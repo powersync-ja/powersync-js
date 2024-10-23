@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { v4 as uuid } from 'uuid';
 import { TestDatabase, generateTestDb } from './utils/testDb';
@@ -62,6 +62,20 @@ describe('Basic', () => {
       expect(result[0].name).equals(testName);
       expect(result[1].name).equals('Steven');
       expect(result[2].name).equals('Chris');
+    });
+  });
+
+  describe('navigator.locks fallback', () => {
+    itWithDBs('should work with PowerSync when navigator.locks is not available', async (db) => {
+      // This test assumes that PowerSync uses getNavigationLocks internally
+      // You may need to modify PowerSync to use getNavigationLocks if it doesn't already
+      //@ts-ignore
+      vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined);
+      const testName = 'LockTest';
+      await db.execute('INSERT INTO customers (id, name) VALUES(?, ?)', [uuid(), testName]);
+      const result = await db.get<TestDatabase['customers']>('SELECT * FROM customers');
+
+      expect(result.name).equals(testName);
     });
   });
 });
