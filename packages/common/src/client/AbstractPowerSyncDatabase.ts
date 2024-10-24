@@ -28,6 +28,7 @@ import {
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { runOnSchemaChange } from './runOnSchemaChange.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -790,35 +791,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     };
 
-    this.rerunOnSchemaChange(watchQuery, options);
-  }
-
-  private rerunOnSchemaChange(callback: (signal: AbortSignal) => void, options?: SQLWatchOptions) {
-    const triggerWatchedQuery = () => {
-      const abortController = new AbortController();
-      let disposeSchemaListener: (() => void) | null = null;
-      const stopWatching = () => {
-        abortController.abort('Abort triggered');
-        disposeSchemaListener?.();
-        disposeSchemaListener = null;
-        // Stop listening to upstream abort for this watch
-        options?.signal?.removeEventListener('abort', stopWatching);
-      };
-
-      options?.signal?.addEventListener('abort', stopWatching);
-      disposeSchemaListener = this.registerListener({
-        schemaChanged: async () => {
-          stopWatching();
-          // Re trigger the watched query (recursively), setTimeout ensures that we don't modify the list of listeners while iterating through them
-          setTimeout(() => triggerWatchedQuery(), 0);
-        }
-      });
-
-      // return watchQuery(abortController.signal);
-      callback(abortController.signal);
-    };
-
-    triggerWatchedQuery();
+    runOnSchemaChange(watchQuery, this, options);
   }
 
   /**
