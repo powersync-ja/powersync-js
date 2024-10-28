@@ -7,9 +7,7 @@ import { withSetup } from './utils';
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
-  registerListener: vi.fn(() => ({
-    statusChanged: vi.fn(() => 'updated')
-  })),
+  registerListener: vi.fn(() => {}),
   resolveTables: vi.fn(),
   watch: vi.fn(),
   onChangeWithCallback: vi.fn(),
@@ -33,13 +31,11 @@ describe('useQuery', () => {
   });
 
   it('should handle error in watchEffect', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref({}) as any);
+    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(undefined);
 
     const [{ data, isLoading, isFetching, error }] = withSetup(() => useQuery('SELECT * from lists'));
 
-    expect(error.value).toEqual(
-      Error('PowerSync failed to fetch data: powerSync.value.resolveTables is not a function')
-    );
+    expect(error.value).toEqual(Error('PowerSync not configured.'));
     expect(isFetching.value).toEqual(false);
     expect(isLoading.value).toEqual(false);
     expect(data.value).toEqual([]);
