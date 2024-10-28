@@ -1,5 +1,11 @@
 # @powersync/tanstack-react-query
 
+## 0.0.5
+
+### Patch Changes
+
+- 6408783: Fixed issue with queries not reacting to local data changes or causing an infinite loop on certain sql parameters.
+
 ## 0.0.4
 
 ### Patch Changes
