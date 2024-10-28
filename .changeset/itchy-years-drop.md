@@ -2,4 +2,4 @@
 '@powersync/common': minor
 ---
 
-Update watched queries when schema has been updated.
+Updated watch functions to recalculate depedendent tables if schema is updated.
