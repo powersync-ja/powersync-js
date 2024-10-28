@@ -89,6 +89,9 @@ function useQueryCore<
     }
   }
 
+  const memoizedParams = React.useMemo(() => queryParameters, [JSON.stringify(queryParameters)]);
+  const memoizedKey = React.useMemo(() => options.queryKey, [JSON.stringify(options.queryKey)]);
+
   const fetchTables = async () => {
     try {
       const tables = await powerSync.resolveTables(sqlStatement, queryParameters);
@@ -104,7 +107,7 @@ function useQueryCore<
     (async () => {
       await fetchTables();
     })();
-  }, [powerSync, sqlStatement, queryParameters]);
+  }, [powerSync, sqlStatement, memoizedParams]);
 
   const queryFn = React.useCallback(async () => {
     if (error) {
@@ -116,7 +119,7 @@ function useQueryCore<
     } catch (e) {
       return Promise.reject(e);
     }
-  }, [powerSync, query, parameters, options.queryKey, error]);
+  }, [powerSync, query, parameters, memoizedKey, error]);
 
   React.useEffect(() => {
     if (error || !query) return () => {};
@@ -126,7 +129,7 @@ function useQueryCore<
       {
         onChange: () => {
           queryClient.invalidateQueries({
-            queryKey: options.queryKey
+            queryKey: memoizedKey
           });
         },
         onError: (e) => {
@@ -139,7 +142,7 @@ function useQueryCore<
       }
     );
     return () => abort.abort();
-  }, [powerSync, options.queryKey, queryClient, tables, error]);
+  }, [powerSync, memoizedKey, queryClient, tables, error]);
 
   return useQueryFn(
     {
