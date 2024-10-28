@@ -118,10 +118,18 @@ export const useQuery = <T = any>(
   };
 
   React.useEffect(() => {
-    (async () => {
+    const updateData = async () => {
       await fetchTables();
       await fetchData();
-    })();
+    };
+
+    updateData();
+
+    const l = powerSync.registerListener({
+      schemaChanged: updateData
+    });
+
+    return () => l?.();
   }, [powerSync, memoizedParams, sqlStatement]);
 
   React.useEffect(() => {
