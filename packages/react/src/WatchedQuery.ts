@@ -1,4 +1,11 @@
-import { AbstractPowerSyncDatabase, BaseListener, BaseObserver, CompilableQuery, Disposable } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  BaseListener,
+  BaseObserver,
+  CompilableQuery,
+  Disposable,
+  runOnSchemaChange
+} from '@powersync/common';
 import { AdditionalOptions } from './hooks/useQuery';
 
 export class Query<T> {
@@ -117,7 +124,7 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
       this.setError(error);
     };
 
-    (async () => {
+    const watchQuery = async (abortSignal: AbortSignal) => {
       await this.fetchTables();
       await this.fetchData();
 
@@ -131,12 +138,13 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
           },
           {
             ...this.options,
-            signal: this.controller.signal,
+            signal: abortSignal,
             tables: this.tables
           }
         );
       }
-    })();
+    };
+    runOnSchemaChange(watchQuery, this.db, { signal: this.controller.signal });
   }
 
   private setData(results: any[]) {
