@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.6.2
+
+### Patch Changes
+
+- Updated dependencies [79d4211]
+- Updated dependencies [8554526]
+  - @powersync/web@1.9.1
+
 ## 0.6.1
 
 ### Patch Changes

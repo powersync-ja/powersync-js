@@ -1,5 +1,14 @@
 # @powersync/web
 
+## 1.9.1
+
+### Patch Changes
+
+- 79d4211: Handle additional forward slash in the POWERSYNC_URL environment variable
+- 8554526: chore: Updated minimum WA-SQLite peer dependnency version.
+- Updated dependencies [79d4211]
+  - @powersync/common@1.20.1
+
 ## 1.9.0
 
 ### Minor Changes
