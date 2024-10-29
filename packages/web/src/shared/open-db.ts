@@ -15,6 +15,14 @@ export async function _openDB(
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
+  const extScope: any = {};
+  // This needs improvements in production with Vite
+  await module.loadDynamicLibrary('libpowersync-async.wasm', { loadAsync: true }, extScope);
+
+  // This calls sqlite3_auto_extension(sqlite3_powersync_init).
+  // For generic extensions, we'd need to call sqlite3_auto_extension directly.
+  extScope.powersync_init_static();
+
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
   // @ts-ignore TODO update types
   const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'shared+hint' });

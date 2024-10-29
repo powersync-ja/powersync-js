@@ -15,6 +15,9 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'example.db'
+  },
+  flags: {
+    useWebWorker: false
   }
 });
 
