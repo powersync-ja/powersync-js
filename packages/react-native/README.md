@@ -4,7 +4,7 @@
 
 # PowerSync SDK for React Native
 
-_[PowerSync](https://www.powersync.com) is a Postgres-SQLite sync engine, which helps developers to create local-first real-time reactive apps that work seamlessly both online and offline._
+*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
 
 This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
 
@@ -20,7 +20,7 @@ npx expo install @powersync/react-native
 
 ## Install Peer Dependency: SQLite
 
-This SDK currently requires `@journeyapps/react-native-quick-sqlite` as a peer dependency.
+By default, this SDK requires `@journeyapps/react-native-quick-sqlite` as a peer dependency. Alternatively, you can install OP-SQLite from the [PowerSync OP-SQLite package](../powersync-op-sqlite/README.md) (currently in alpha).
 
 Install it in your app with:
 
@@ -68,6 +68,35 @@ module.exports = function (api) {
      '@babel/plugin-transform-async-generator-functions'
    ]
  };
+};
+```
+
+## Metro config (optional)
+
+When using a bare React Native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
+
+If you see the following error message
+
+
+```bash
+Super expression must either be null or a function
+```
+
+then you will need to add this to your `metro.config.js`:
+
+```js
+const config = {
+    transformer: {
+        getTransformOptions: async () => ({
+            transform: {
+                inlineRequires: {
+                  blockList: {
+                    [require.resolve("@powersync/react-native")]: true,
+                  },
+                },
+              },
+        })
+    }
 };
 ```
 

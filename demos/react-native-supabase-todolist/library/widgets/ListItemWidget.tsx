@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert, View } from 'react-native';
-import { ListItem, Icon, Button } from 'react-native-elements';
+import { ListItem, Icon, Button } from '@rneui/themed';
 
 export interface ListItemWidgetProps {
   title: string;
@@ -9,9 +9,7 @@ export interface ListItemWidgetProps {
   onDelete?: () => void;
 }
 
-export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
-  const { title, description, onDelete, onPress } = props;
-
+export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, description, onPress, onDelete }) => {
   return (
     <View style={{ padding: 10 }}>
       <ListItem.Swipeable
@@ -19,13 +17,23 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
         onPress={() => onPress?.()}
         rightContent={
           <Button
+            buttonStyle={{
+              flexDirection: 'column',
+              alignContent: 'center',
+              borderColor: 'transparent',
+              minHeight: '100%'
+            }}
             containerStyle={{
               flex: 1,
+              flexGrow: 1,
+              height: '100%',
               justifyContent: 'center',
-              backgroundColor: '#d3d3d3'
+              backgroundColor: 'rgba(240, 15, 15, 0.9)'
             }}
+            title="Delete"
+            titleStyle={{ color: 'white' }}
             type="clear"
-            icon={{ name: 'delete', color: 'red' }}
+            icon={{ name: 'trash', type: 'font-awesome', color: 'white' }}
             onPress={() => {
               Alert.alert(
                 'Confirm',
@@ -35,11 +43,10 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               );
             }}
           />
-        }
-      >
+        }>
         <Icon name="format-list-checks" type="material-community" color="grey" />
         <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title>{title}</ListItem.Title>
+          <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
           <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
         </ListItem.Content>
 

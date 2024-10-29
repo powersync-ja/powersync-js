@@ -1,5 +1,65 @@
 # @powersync/react
 
+## 1.5.0
+
+### Minor Changes
+
+- 2b0466f: Added `useSuspenseQuery` hook, allowing queries to suspend instead of returning `isLoading`/`isFetching` state.
+
+### Patch Changes
+
+- c8658ca: Fixed `useQuery()`'s' `isFetching` value staying true when used in react-native environment.
+
+## 1.4.5
+
+### Patch Changes
+
+- f8ac369: Ensuring that `useQuery`'s `isFetching` becomes true immediately after the query changes.
+
+## 1.4.4
+
+### Patch Changes
+
+- 70a70d5: Fixed issue with `useQuery` not supporting dynamic query parameters.
+- Updated dependencies [9dea1b9]
+  - @powersync/common@1.19.0
+
+## 1.4.3
+
+### Patch Changes
+
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+
+## 1.4.2
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+
+## 1.4.1
+
+### Patch Changes
+
+- a65cd8c: chore: Added `isLoading` example to README
+- c04ecfc: React and Vue helpers should execute queries from compatible query executor methods. This should allow Kysely queries with plugins to function correctly.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+
 ## 1.4.0
 
 ### Minor Changes

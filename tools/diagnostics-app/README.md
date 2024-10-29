@@ -32,7 +32,7 @@ The app is now available on [http://localhost:5173/](http://localhost:5173/).
 
 Signing in as a user requires a PowerSync Token (JWT) and Endpoint.
 
-**PowerSync Token**: 
+**PowerSync Token**:
 
 Generate a [development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens) for the user.
 

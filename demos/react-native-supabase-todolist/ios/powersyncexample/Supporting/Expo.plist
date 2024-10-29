@@ -9,6 +9,6 @@
     <key>EXUpdatesLaunchWaitMs</key>
     <integer>0</integer>
     <key>EXUpdatesURL</key>
-    <string>https://u.expo.dev/foo</string>
+    <string>https://u.expo.dev/</string>
   </dict>
 </plist>

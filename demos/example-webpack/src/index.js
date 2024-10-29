@@ -1,4 +1,4 @@
-import { Column, ColumnType, Schema, Table, PowerSyncDatabase } from '@powersync/web';
+import { Schema, Table, PowerSyncDatabase, column } from '@powersync/web';
 import Logger from 'js-logger';
 
 Logger.useDefaults();
@@ -19,9 +19,9 @@ class DummyConnector {
   async uploadData(database) {}
 }
 
-export const AppSchema = new Schema([
-  new Table({ name: 'customers', columns: [new Column({ name: 'name', type: ColumnType.TEXT })] })
-]);
+const customers = new Table({ name: column.text })
+
+export const AppSchema = new Schema({ customers });
 
 let PowerSync;
 

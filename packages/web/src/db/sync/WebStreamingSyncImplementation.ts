@@ -4,10 +4,18 @@ import {
   LockOptions,
   LockType
 } from '@powersync/common';
+import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
-  flags?: {
-    broadcastLogs?: boolean;
+  flags?: WebSQLFlags;
+
+  database?: {
+    options: {
+      worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+    };
+  };
+  sync?: {
+    worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
   };
 }
 

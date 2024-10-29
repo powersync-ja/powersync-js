@@ -1,5 +1,98 @@
 # @powersync/react-native
 
+## 1.14.2
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
+## 1.14.1
+
+### Patch Changes
+
+- a3f625e: Fix inline require for react-native-quick-sqlite
+
+## 1.14.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
+### Patch Changes
+
+- Updated dependencies [77e196d]
+  - @powersync/common@1.20.0
+
+## 1.13.0
+
+### Minor Changes
+
+- 9c140b5: Make `react-native-quick-sqlite` an optional dependency so that it can be used conditionally.
+
+## 1.12.4
+
+### Patch Changes
+
+- Updated dependencies [f8ac369]
+  - @powersync/react@1.4.5
+
+## 1.12.3
+
+### Patch Changes
+
+- Updated dependencies [9dea1b9]
+- Updated dependencies [70a70d5]
+  - @powersync/common@1.19.0
+  - @powersync/react@1.4.4
+
+## 1.12.2
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+- Updated dependencies [944ee93]
+- Updated dependencies [245bef5]
+  - @powersync/common@1.18.1
+  - @powersync/react@1.4.3
+
+## 1.12.1
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+- Updated dependencies [02f0ce7]
+- Updated dependencies [7428f39]
+- Updated dependencies [367d65d]
+  - @powersync/common@1.18.0
+  - @powersync/react@1.4.2
+
+## 1.12.0
+
+### Minor Changes
+
+- 447f979: Use react-native-quick-sqlite 1.3.0 / powersync-sqlite-core 0.2.1.
+
+### Patch Changes
+
+- b4d64f0: Updated crypto.js vendor file to include fast-base64-decode dependency instead of bundling it.
+- 892e172: fixed Flipper warning still showing if an HTTP request rejected due to an error.
+- Updated dependencies [447f979]
+- Updated dependencies [b1a76b3]
+- Updated dependencies [e77b1ab]
+- Updated dependencies [a65cd8c]
+- Updated dependencies [c04ecfc]
+- Updated dependencies [447f979]
+- Updated dependencies [f202944]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+- Updated dependencies [447f979]
+  - @powersync/common@1.17.0
+  - @powersync/react@1.4.1
+
 ## 1.11.0
 
 ### Minor Changes

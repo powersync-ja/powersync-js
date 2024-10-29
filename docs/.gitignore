@@ -23,5 +23,6 @@ docs/react-native-sdk/
 docs/react-sdk/
 docs/vue-sdk/
 docs/web-sdk/
+docs/tanstack-react-query-sdk
 
 .env

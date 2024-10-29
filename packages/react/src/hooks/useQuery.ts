@@ -1,4 +1,4 @@
-import { type SQLWatchOptions, parseQuery, type CompilableQuery, type ParsedQuery } from '@powersync/common';
+import { parseQuery, type CompilableQuery, type ParsedQuery, type SQLWatchOptions } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
 
@@ -62,21 +62,34 @@ export const useQuery = <T = any>(
   const [isFetching, setIsFetching] = React.useState(true);
   const [tables, setTables] = React.useState([]);
 
-  const memoizedParams = React.useMemo(() => queryParameters, [...queryParameters]);
+  const memoizedParams = React.useMemo(() => queryParameters, [JSON.stringify(queryParameters)]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
   const abortController = React.useRef(new AbortController());
 
+  const previousQueryRef = React.useRef({ sqlStatement, memoizedParams });
+
+  // Indicates that the query will be re-fetched due to a change in the query.
+  // Used when `isFetching` hasn't been set to true yet due to React execution.
+  const shouldFetch = React.useMemo(
+    () =>
+      previousQueryRef.current.sqlStatement !== sqlStatement ||
+      JSON.stringify(previousQueryRef.current.memoizedParams) != JSON.stringify(memoizedParams),
+    [powerSync, sqlStatement, memoizedParams, isFetching]
+  );
+
   const handleResult = (result: T[]) => {
+    previousQueryRef.current = { sqlStatement, memoizedParams };
+    setData(result);
     setIsLoading(false);
     setIsFetching(false);
-    setData(result);
     setError(undefined);
   };
 
   const handleError = (e: Error) => {
+    previousQueryRef.current = { sqlStatement, memoizedParams };
+    setData([]);
     setIsLoading(false);
     setIsFetching(false);
-    setData([]);
     const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
     wrappedError.cause = e;
     setError(wrappedError);
@@ -85,7 +98,8 @@ export const useQuery = <T = any>(
   const fetchData = async () => {
     setIsFetching(true);
     try {
-      const result = await powerSync.getAll<T>(sqlStatement, queryParameters);
+      const result =
+        typeof query == 'string' ? await powerSync.getAll<T>(sqlStatement, queryParameters) : await query.execute();
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
@@ -138,5 +152,5 @@ export const useQuery = <T = any>(
     };
   }, [powerSync, sqlStatement, memoizedParams, memoizedOptions, tables]);
 
-  return { isLoading, isFetching, data, error, refresh: fetchData };
+  return { isLoading, isFetching: isFetching || shouldFetch, data, error, refresh: fetchData };
 };

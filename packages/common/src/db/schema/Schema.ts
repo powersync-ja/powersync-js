@@ -1,7 +1,6 @@
-import { Table as ClassicTable } from './Table';
-import { RowType, TableV2 } from './TableV2';
+import { RowType, Table } from './Table.js';
 
-type SchemaType = Record<string, TableV2<any>>;
+type SchemaType = Record<string, Table<any>>;
 
 type SchemaTableType<S extends SchemaType> = {
   [K in keyof S]: RowType<S[K]>;
@@ -16,9 +15,9 @@ export class Schema<S extends SchemaType = SchemaType> {
   */
   readonly types: SchemaTableType<S>;
   readonly props: S;
-  readonly tables: ClassicTable[];
+  readonly tables: Table[];
 
-  constructor(tables: ClassicTable[] | S) {
+  constructor(tables: Table[] | S) {
     if (Array.isArray(tables)) {
       this.tables = tables;
     } else {
@@ -28,20 +27,29 @@ export class Schema<S extends SchemaType = SchemaType> {
   }
 
   validate() {
-    for (const table of this.tables as ClassicTable[]) {
+    for (const table of this.tables) {
       table.validate();
     }
   }
 
   toJSON() {
     return {
-      tables: (this.tables as ClassicTable[]).map((t) => t.toJSON())
+      // This is required because "name" field is not present in TableV2
+      tables: this.tables.map((t) => t.toJSON())
     };
   }
 
   private convertToClassicTables(props: S) {
     return Object.entries(props).map(([name, table]) => {
-      return ClassicTable.createTable(name, table);
+      const convertedTable = new Table({
+        name,
+        columns: table.columns,
+        indexes: table.indexes,
+        localOnly: table.localOnly,
+        insertOnly: table.insertOnly,
+        viewName: table.viewNameOverride || name
+      });
+      return convertedTable;
     });
   }
 }

@@ -1,5 +1,52 @@
 # @powersync/common
 
+## 1.20.0
+
+### Minor Changes
+
+- 77e196d: Use powersync-sqlite-core 0.3.0 - faster incremental sync
+
+## 1.19.0
+
+### Minor Changes
+
+- 9dea1b9: Deprecated `rawTableNames` field in `SQLWatchOptions`. All tables specified in `tables` will now be watched, including PowerSync tables with prefixes.
+
+## 1.18.1
+
+### Patch Changes
+
+- 944ee93: Fixed issue where sequentially mutating the same row multiple times could cause the CRUD upload queue monitoring to think CRUD operations have not been processed correctly by the `BackendConnector` `uploadData` method.
+- 245bef5: Ensuring sourcemaps are not included for packages.
+
+## 1.18.0
+
+### Minor Changes
+
+- 7428f39: Remove lodash dependency.
+- 367d65d: Correctly identify @powersync/common as an ES module
+
+### Patch Changes
+
+- 02f0ce7: Updated dependencies.
+
+## 1.17.0
+
+### Minor Changes
+
+- 447f979: Improve performance of MOVE and REMOVE operations.
+- b1a76b3: Fixed SSR Mode detection for DB adapters. Removed the potential for SSR Web Streamining implementations from to perform syncing operations.
+- f202944: Merge `Table` and `TableV2` but kept `TableV2` to avoid making this a breaking change.
+- 447f979: Add custom x-user-agent header and client_id parameter to requests.
+- 447f979: Emit update notifications on `disconnectAndClear()`.
+- 447f979: Persist lastSyncedAt timestamp.
+
+### Patch Changes
+
+- e77b1ab: Add a check for maximum number of columns allowed
+- 447f979: Always cast `target_op` (write checkpoint) to ensure it's an integer.
+- 447f979: Validate that the powersync-sqlite-core version number is in a compatible range of ^0.2.0.
+
 ## 1.16.2
 
 ### Patch Changes

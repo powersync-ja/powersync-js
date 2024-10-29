@@ -6,8 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build:packages": "pnpm run --filter './packages/**' -r build",
+    "build:packages:prod": "pnpm run --filter './packages/**' -r build:prod",
     "clean:packages": "pnpm run --filter './packages/**' -r clean",
-    "build:packages:prod": "pnpm build:packages --sourceMap false",
     "watch:packages": "pnpm run --parallel --filter './packages/**' -r build -w",
     "changeset:version": "pnpm changeset version && pnpm install --lockfile-only --frozen-lockfile=false",
     "build": "pnpm run -r build",

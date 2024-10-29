@@ -1,9 +1,9 @@
-import React from 'react';
-import { renderHook, waitFor } from '@testing-library/react';
-import { vi, describe, expect, it, afterEach } from 'vitest';
-import { useQuery } from '../src/hooks/useQuery';
-import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import * as commonSdk from '@powersync/common';
+import { cleanup, renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
+import { useQuery } from '../src/hooks/useQuery';
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
@@ -12,7 +12,7 @@ const mockPowerSync = {
   })),
   resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
-  getAll: vi.fn(() => ['list1', 'list2'])
+  getAll: vi.fn(() => Promise.resolve(['list1', 'list2']))
 };
 
 vi.mock('./PowerSyncContext', () => ({
@@ -20,8 +20,9 @@ vi.mock('./PowerSyncContext', () => ({
 }));
 
 describe('useQuery', () => {
-  afterEach(() => {
-    vi.resetAllMocks();
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup(); // Cleanup the DOM after each test
   });
 
   it('should error when PowerSync is not set', async () => {
@@ -48,14 +49,14 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    const currentResult = result.current;
-    expect(currentResult.isLoading).toEqual(true);
+    expect(result.current.isLoading).toEqual(true);
 
-    waitFor(
+    await waitFor(
       async () => {
-        expect(currentResult.isLoading).toEqual(false);
+        const currentResult = result.current;
         expect(currentResult.data).toEqual(['list1', 'list2']);
         expect(currentResult.isLoading).toEqual(false);
+        expect(currentResult.isFetching).toEqual(false);
         expect(mockPowerSync.onChangeWithCallback).not.toHaveBeenCalled();
         expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
       },
@@ -69,13 +70,14 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    const currentResult = result.current;
-    expect(currentResult.isLoading).toEqual(true);
+
+    expect(result.current.isLoading).toEqual(true);
 
     let refresh;
 
-    waitFor(
+    await waitFor(
       async () => {
+        const currentResult = result.current;
         refresh = currentResult.refresh;
         expect(currentResult.isLoading).toEqual(false);
         expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
@@ -105,11 +107,10 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }), { wrapper });
-    const currentResult = result.current;
 
-    waitFor(
+    await waitFor(
       async () => {
-        expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+        expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
       },
       { timeout: 100 }
     );
@@ -133,11 +134,10 @@ describe('useQuery', () => {
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists', []), { wrapper });
-    const currentResult = result.current;
 
-    waitFor(
+    await waitFor(
       async () => {
-        expect(currentResult.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+        expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
       },
       { timeout: 100 }
     );
@@ -156,13 +156,30 @@ describe('useQuery', () => {
     expect(currentResult.isLoading).toEqual(true);
   });
 
-  // The test returns unhandled errors when run with all the others.
-  // TODO: Fix the test so that there are no unhandled errors (this may be a vitest or @testing-library/react issue)
-  it.skip('should show an error if parsing the query results in an error', async () => {
+  it('should execute compatible queries', async () => {
     const wrapper = ({ children }) => (
       <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
     );
-    vi.spyOn(commonSdk, 'parseQuery').mockReturnValue(Error('error') as any);
+
+    const query = () =>
+      useQuery({
+        execute: () => [{ test: 'custom' }] as any,
+        compile: () => ({ sql: 'SELECT * from lists', parameters: [] })
+      });
+    const { result } = renderHook(query, { wrapper });
+
+    await vi.waitFor(() => {
+      expect(result.current.data[0]?.test).toEqual('custom');
+    });
+  });
+
+  it('should show an error if parsing the query results in an error', async () => {
+    const wrapper = ({ children }) => (
+      <PowerSyncContext.Provider value={mockPowerSync as any}>{children}</PowerSyncContext.Provider>
+    );
+    vi.spyOn(commonSdk, 'parseQuery').mockImplementation(() => {
+      throw new Error('error');
+    });
 
     const { result } = renderHook(
       () =>
@@ -172,10 +189,10 @@ describe('useQuery', () => {
         }),
       { wrapper }
     );
-    const currentResult = result.current;
 
-    waitFor(
+    await waitFor(
       async () => {
+        const currentResult = result.current;
         expect(currentResult.isLoading).toEqual(false);
         expect(currentResult.isFetching).toEqual(false);
         expect(currentResult.data).toEqual([]);

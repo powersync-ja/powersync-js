@@ -1,13 +1,22 @@
 {
   "name": "@powersync/common",
-  "version": "1.16.2",
+  "version": "1.20.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "API definitions for JourneyApps PowerSync",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "dist/bundle.mjs",
+  "module": "dist/bundle.mjs",
   "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/bundle.mjs",
+      "default": "./dist/bundle.mjs",
+      "types": "./lib/index.d.ts"
+    }
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
@@ -24,7 +33,8 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo dist",
+    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest"
   },
   "dependencies": {
@@ -36,7 +46,6 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/lodash": "^4.14.197",
     "@types/node": "^20.5.9",
     "@types/uuid": "^9.0.1",
     "async-mutex": "^0.4.0",
@@ -45,7 +54,6 @@
     "can-ndjson-stream": "^1.0.2",
     "cross-fetch": "^4.0.0",
     "event-iterator": "^2.0.0",
-    "lodash": "^4.17.21",
     "rollup": "4.14.3",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
