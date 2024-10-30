@@ -19,4 +19,4 @@ jobs:
           version: 9
           run_install: false
       - name: Audit for vulnerabilities
-        run: npx audit-ci@^6 --config ./audit-ci.jsonc
+        run: npx audit-ci@^7 --config ./audit-ci.jsonc
