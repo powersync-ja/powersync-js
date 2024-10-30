@@ -105,8 +105,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB,
-      name: dbFilename
+      baseDB: DB
     });
   }
 
@@ -187,7 +186,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  private async processQueue() {
+  private async processQueue(): Promise<void> {
     if (this.readQueue.length > 0) {
       const next = this.readQueue.shift();
       if (next) {
