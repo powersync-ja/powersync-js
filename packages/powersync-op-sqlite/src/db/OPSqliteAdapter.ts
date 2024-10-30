@@ -167,7 +167,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
             availableConnection.lockKey,
             async () => {
               try {
-                console.log('Executing read query on connection', availableConnection.connection.name);
                 resolve(await fn(availableConnection.connection));
               } catch (error) {
                 reject(error);
