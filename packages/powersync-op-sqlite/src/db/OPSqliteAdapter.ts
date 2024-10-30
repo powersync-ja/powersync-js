@@ -35,9 +35,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected initialized: Promise<void>;
 
-  protected readConnections: OPSQLiteConnection[] | null;
+  protected readConnections: Array<{ lockKey: string; connection: OPSQLiteConnection }> | null;
 
   protected writeConnection: OPSQLiteConnection | null;
+
+  private readQueue: Array<() => void> = [];
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
@@ -88,7 +90,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       let dbName = './'.repeat(i + 1) + dbFilename;
       const conn = await this.openConnection(dbName);
       await conn.execute('PRAGMA query_only = true');
-      this.readConnections.push(conn);
+      // this.readConnections.push(conn);
+      this.readConnections.push({ lockKey: `${LockType.READ}-${i}`, connection: conn });
     }
   }
 
@@ -102,7 +105,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB
+      baseDB: DB,
+      name: dbFilename
     });
   }
 
@@ -145,36 +149,52 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   close() {
     this.initialized.then(() => {
       this.writeConnection!.close();
-      this.readConnections!.forEach((c) => c.close());
+      this.readConnections!.forEach((c) => c.connection.close());
     });
   }
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-    // TODO: Use async queues to handle multiple read connections
-    const sortedConnections = this.readConnections!.map((connection, index) => ({
-      lockKey: `${LockType.READ}-${index}`,
-      connection
-    })).sort((a, b) => {
-      const aBusy = this.locks.isBusy(a.lockKey);
-      const bBusy = this.locks.isBusy(b.lockKey);
-      // Sort by ones which are not busy
-      return aBusy > bBusy ? 1 : 0;
-    });
 
     return new Promise(async (resolve, reject) => {
-      try {
-        await this.locks.acquire(
-          sortedConnections[0].lockKey,
-          async () => {
-            resolve(await fn(sortedConnections[0].connection));
-          },
-          { timeout: options?.timeoutMs }
-        );
-      } catch (ex) {
-        reject(ex);
-      }
+      const execute = async () => {
+        // Find an available connection that is not locked
+        const availableConnection = this.readConnections!.find((conn) => !this.locks.isBusy(conn.lockKey));
+
+        // If we have an available connection, use it
+        if (availableConnection) {
+          await this.locks.acquire(
+            availableConnection.lockKey,
+            async () => {
+              try {
+                console.log('Executing read query on connection', availableConnection.connection.name);
+                resolve(await fn(availableConnection.connection));
+              } catch (error) {
+                reject(error);
+              } finally {
+                // After query execution, process any queued tasks
+                this.processQueue();
+              }
+            },
+            { timeout: options?.timeoutMs }
+          );
+        } else {
+          // If no available connections, add to the queue
+          this.readQueue.push(execute);
+        }
+      };
+
+      execute();
     });
+  }
+
+  private async processQueue() {
+    if (this.readQueue.length > 0) {
+      const next = this.readQueue.shift();
+      if (next) {
+        next();
+      }
+    }
   }
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
