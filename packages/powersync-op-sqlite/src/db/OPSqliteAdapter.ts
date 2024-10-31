@@ -90,7 +90,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       let dbName = './'.repeat(i + 1) + dbFilename;
       const conn = await this.openConnection(dbName);
       await conn.execute('PRAGMA query_only = true');
-      // this.readConnections.push(conn);
       this.readConnections.push({ lockKey: `${LockType.READ}-${i}`, connection: conn });
     }
   }
