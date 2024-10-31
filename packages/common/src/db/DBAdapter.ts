@@ -101,6 +101,7 @@ export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBG
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  refreshSchema: () => Promise<void>;
 }
 
 export function isBatchedUpdateNotification(
