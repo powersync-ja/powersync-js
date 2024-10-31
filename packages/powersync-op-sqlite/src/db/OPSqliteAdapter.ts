@@ -166,6 +166,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
           } catch (error) {
             reject(error);
           } finally {
+            availableConnection.busy = false;
             // After query execution, process any queued tasks
             this.processQueue();
           }
