@@ -2,7 +2,9 @@
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase.
+Demo app demonstrating the use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase for authentication and two attachment storage options:
+- Supabase (*default*), or
+- [Amazon S3](https://docs.aws.amazon.com/s3/)
 
 A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
 Follow all the steps until, but not including, [Test Everything (Using Our Demo App)](https://docs.powersync.com/integration-guides/supabase-+-powersync#test-everything-using-our-demo-app).
@@ -29,6 +31,41 @@ cp .env .env.local
 ```
 
 And then edit `.env.local` to insert your credentials for Supabase.
+
+## Attachment storage options
+
+To configure attachment storage, you can choose between Supabase and AWS S3. 
+In the `.env.local` file, set `EXPO_PUBLIC_ATTACHMENT_STORAGE_OPTION` to either `supabase` or `s3` to configure the attachment storage option.
+
+### AWS S3 Setup
+
+> **_NOTE:_** This guide assumes that you have an AWS account.
+
+To enable attachment storage using AWS S3, set up an S3 bucket by following these steps:
+#### Create an S3 Bucket:
+
+- Go to the [S3 Console](https://s3.console.aws.amazon.com/s3) and click `Create bucket`.
+- Enter a unique bucket name and select your preferred region.
+- Under Object Ownership, set ACLs disabled and ensure the bucket is private.
+- Enable Bucket Versioning if you need to track changes to files (optional).
+
+#### Configure Permissions:
+
+Go to the Permissions tab and set up the following:
+- A **bucket policy** for access control:
+    - Click Bucket policy and enter a policy allowing the necessary actions
+      (e.g., s3:PutObject, s3:GetObject) for the specific users or roles.
+- _**(Optional)**_ Configure CORS (Cross-Origin Resource Sharing) if your app requires it
+
+#### Create IAM User for Access
+
+- Go to the [IAM Console](https://console.aws.amazon.com/iam) and create a new user with programmatic access.
+- Attach an AmazonS3FullAccess policy to this user, or create a custom policy with specific permissions for the bucket.
+- Save the Access Key ID and Secret Access Key.
+
+In your `.env.local` file, add your AWS credentials and S3 bucket name.
+
+## Run app
 
 Run on iOS
 
