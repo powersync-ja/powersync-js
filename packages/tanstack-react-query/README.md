@@ -1,14 +1,14 @@
 # TanStack Query Integration for PowerSync
 
-`@powersync/tanstack-react-query` provides seamless integration between PowerSync's Web SDK and [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) for React. It wraps TanStack's `useQuery` and `useSuspenseQuery` hooks to work easily with PowerSync's SQL queries. This combines PowerSync's existing watched queries with TanStack's features like the [paginated queries](https://tanstack.com/query/latest/docs/framework/react/guides/paginated-queries), [caching](https://tanstack.com/query/latest/docs/framework/react/guides/caching), and [Suspense](https://tanstack.com/query/latest/docs/framework/react/guides/suspense).
+`@powersync/tanstack-react-query` provides seamless integration between PowerSync's Web SDK and [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) for React. It wraps TanStack's `useQuery` and `useSuspenseQuery` hooks to work easily with PowerSync's SQL queries. This combines PowerSync's existing watched queries with TanStack Query's features like the [paginated queries](https://tanstack.com/query/latest/docs/framework/react/guides/paginated-queries), [caching](https://tanstack.com/query/latest/docs/framework/react/guides/caching), and [Suspense](https://tanstack.com/query/latest/docs/framework/react/guides/suspense).
 
 ## Note: Alpha Release
 
 This package is currently in an alpha release.
 
-## Getting started
+## Getting Started
 
-To use `@powersync/tanstack-react-query`, you need to set up both the `PowerSync context` and the `TanStack React Query client` in your application.
+To use `@powersync/tanstack-react-query`, you need to set up both the `PowerSyncContext` and the TanStack `QueryClientProvider` in your application.
 
 ```JSX
 // App.jsx
@@ -22,7 +22,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export const App = () => {
     const powerSync = React.useMemo(() => {
-        // Setup PowerSync client
+        // Set up PowerSync client
     }, [])
     const queryClient = React.useMemo(() => new QueryClient(), [])
 
@@ -40,7 +40,7 @@ export const App = () => {
 
 ### useQuery
 
-The `useQuery` hook from `@powersync/tanstack-react-query` works similarly to the standard `TanStack React Query` `useQuery` hook but integrates with PowerSync for watched query functionality. Queries automatically update when dependent tables change.
+The `useQuery` hook from `@powersync/tanstack-react-query` works similarly to the standard TanStack React Query `useQuery` hook but integrates with PowerSync for watched query functionality. Queries automatically update when dependent tables change.
 
 ```JSX
 // TodoListDisplay.jsx
@@ -127,7 +127,7 @@ return <></>
 }
 ```
 
-### Kysley Support
+### Kysely Support
 
 You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
