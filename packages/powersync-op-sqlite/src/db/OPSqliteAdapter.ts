@@ -35,7 +35,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected initialized: Promise<void>;
 
-  protected readConnections: Array<{ lockKey: string; connection: OPSQLiteConnection }> | null;
+  protected readConnections: Array<{ busy: boolean; connection: OPSQLiteConnection }> | null;
 
   protected writeConnection: OPSQLiteConnection | null;
 
@@ -90,7 +90,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       let dbName = './'.repeat(i + 1) + dbFilename;
       const conn = await this.openConnection(dbName);
       await conn.execute('PRAGMA query_only = true');
-      this.readConnections.push({ lockKey: `${LockType.READ}-${i}`, connection: conn });
+      this.readConnections.push({ busy: false, connection: conn });
     }
   }
 
@@ -153,28 +153,22 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-
     return new Promise(async (resolve, reject) => {
       const execute = async () => {
-        // Find an available connection that is not locked
-        const availableConnection = this.readConnections!.find((conn) => !this.locks.isBusy(conn.lockKey));
+        // Find an available connection that is not busy
+        const availableConnection = this.readConnections!.find((conn) => !conn.busy);
 
         // If we have an available connection, use it
         if (availableConnection) {
-          await this.locks.acquire(
-            availableConnection.lockKey,
-            async () => {
-              try {
-                resolve(await fn(availableConnection.connection));
-              } catch (error) {
-                reject(error);
-              } finally {
-                // After query execution, process any queued tasks
-                this.processQueue();
-              }
-            },
-            { timeout: options?.timeoutMs }
-          );
+          availableConnection.busy = true;
+          try {
+            resolve(await fn(availableConnection.connection));
+          } catch (error) {
+            reject(error);
+          } finally {
+            // After query execution, process any queued tasks
+            this.processQueue();
+          }
         } else {
           // If no available connections, add to the queue
           this.readQueue.push(execute);
