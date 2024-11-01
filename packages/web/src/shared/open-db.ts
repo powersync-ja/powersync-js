@@ -12,7 +12,16 @@ export async function _openDB(
   options: { useWebWorker: boolean } = { useWebWorker: true }
 ): Promise<DBFunctionsInterface> {
   const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
-  const module = await moduleFactory();
+  const module = await moduleFactory({
+    locateFile(path: string) {
+      if (path.includes('wa-sqlite-async')) {
+        return new URL('@journeyapps/wa-sqlite/dist/wa-sqlite-async.wasm', import.meta.url).href;
+      } else if (path.includes('libpowersync')) {
+        return new URL('@journeyapps/wa-sqlite/dist/libpowersync-async.wasm', import.meta.url).href;
+      }
+      return path;
+    }
+  });
   const sqlite3 = SQLite.Factory(module);
 
   const extScope: any = {};
