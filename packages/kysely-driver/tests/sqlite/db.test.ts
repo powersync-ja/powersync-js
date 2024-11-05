@@ -57,6 +57,7 @@ describe('CRUD operations', () => {
       await sql`INSERT INTO users (id, name) VALUES ('4', 'James');`.execute(transaction)
       await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
     });
+    console.log(await db.selectFrom('users').selectAll().execute())
     const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
 
     expect(result.name).toEqual('James Smith');
