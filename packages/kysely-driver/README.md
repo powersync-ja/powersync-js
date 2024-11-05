@@ -147,21 +147,7 @@ const result = await db.selectFrom('users').select('name').executeTakeFirstOrThr
 // 'James Smith'
 ```
 
-- In PowerSync
-
-```js
-  await powerSyncDb.writeTransaction((transaction) => {
-    await transaction.execute('INSERT INTO users (id, name) VALUES(4, ?)', ['James']);
-    await transaction.execute("UPDATE users SET name = ? WHERE name = ?", ['James Smith', 'James']);
-  })
-  const result = await powerSyncDb.get('SELECT name FROM users WHERE name = ?', ['James Smith'])
-
-  // 'James Smith'
-```
-
-### Transaction with raw SQL
-
-- In Kysely
+- In Kysely also using raw SQL
 
 ```js
 await db.transaction().execute(async (transaction) => {
@@ -177,7 +163,7 @@ const result = await db.selectFrom('users').select('name').executeTakeFirstOrThr
 
 ```js
   await powerSyncDb.writeTransaction((transaction) => {
-    await sql`INSERT INTO users (id, name) VALUES ('4', 'James');`.execute(transaction)
+    await transaction.execute('INSERT INTO users (id, name) VALUES(4, ?)', ['James']);
     await transaction.execute("UPDATE users SET name = ? WHERE name = ?", ['James Smith', 'James']);
   })
   const result = await powerSyncDb.get('SELECT name FROM users WHERE name = ?', ['James Smith'])
