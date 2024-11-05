@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.0.6
+
+### Patch Changes
+
+- 2b614bc: Improved queueing for read connections
+
 ## 0.0.5
 
 ### Patch Changes
