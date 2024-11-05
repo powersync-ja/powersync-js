@@ -273,7 +273,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   async refreshSchema(): Promise<void> {
-    await this.writeConnection?.refreshSchema();
+    await this.initialized;
+    await this.writeConnection!.refreshSchema();
 
     for (let readConnection of this.readConnections) {
       await readConnection.connection.refreshSchema();
