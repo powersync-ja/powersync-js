@@ -26,14 +26,14 @@
     "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.20.0"
+    "@powersync/common": "workspace:^1.20.1"
   },
   "dependencies": {
     "kysely": "^0.27.2"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "^0.4.0",
+    "@journeyapps/wa-sqlite": "^0.4.1",
     "@types/node": "^20.11.17",
     "@vitest/browser": "^1.3.1",
     "ts-loader": "^9.5.1",
