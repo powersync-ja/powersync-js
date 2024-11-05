@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { v4 as uuid } from 'uuid';
-import { generateTestDb } from './utils/testDb';
 import pDefer from 'p-defer';
+import { v4 as uuid } from 'uuid';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { generateTestDb } from './utils/testDb';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -310,5 +310,36 @@ describe('CRUD Tests', () => {
 
     await txPromise;
     expect(await r).toEqual(null);
+  });
+
+  it('CRUD Batch Limits', async () => {
+    const initialBatch = await powersync.getCrudBatch();
+    expect(initialBatch, 'Initial CRUD batch should be null').null;
+
+    /**
+     * Create some items. Use Multiple transactions to demonstrate getCrudBatch does not
+     * group by transaction.
+     */
+    for (let i = 0; i < 2; i++) {
+      await powersync.writeTransaction(async (tx) => {
+        for (let j = 0; j < 51; j++) {
+          await tx.execute(`INSERT INTO assets(id, description) VALUES(uuid(), ?)`, [`test-${i}-${j}`]);
+        }
+      });
+    }
+
+    // This should contain CRUD entries for the first and second transaction
+    const smallBatch = await powersync.getCrudBatch(55);
+    expect(smallBatch, 'CRUD items should be present').exist;
+    expect(smallBatch?.crud.length, 'Should only be 55 CRUD items').eq(55);
+    expect(smallBatch?.haveMore, 'There should be more CRUD items pending').true;
+
+    const defaultBatch = await powersync.getCrudBatch();
+    expect(defaultBatch?.crud.length, 'Should use default limit').eq(100);
+    expect(defaultBatch?.haveMore, 'There should be more CRUD items pending').true;
+
+    const maxBatch = await powersync.getCrudBatch(1000);
+    expect(maxBatch?.crud.length, 'Should contain all created CRUD items').eq(102);
+    expect(maxBatch?.haveMore, 'There should not be any more pending CRUD items').false;
   });
 });
