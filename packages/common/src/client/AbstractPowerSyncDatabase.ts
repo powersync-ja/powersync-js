@@ -134,6 +134,8 @@ export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
+export const DEFAULT_CRUD_BATCH_LIMIT = 100;
+
 /**
  * Requesting nested or recursive locks can block the application in some circumstances.
  * This default lock timeout will act as a failsafe to throw an error if a lock cannot
@@ -497,7 +499,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * data by transaction. One batch may contain data from multiple transactions,
    * and a single transaction may be split over multiple batches.
    */
-  async getCrudBatch(limit: number): Promise<CrudBatch | null> {
+  async getCrudBatch(limit: number = DEFAULT_CRUD_BATCH_LIMIT): Promise<CrudBatch | null> {
     const result = await this.getAll<CrudEntryJSON>(
       `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
       [limit + 1]
