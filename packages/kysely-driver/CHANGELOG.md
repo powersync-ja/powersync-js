@@ -1,5 +1,17 @@
 # @powersync/kysely-driver
 
+## 1.0.0
+
+### Major Changes
+
+- 16291ae: Move kysely out of Beta
+
+### Patch Changes
+
+- 7589720: Update kysely to 0.27.4
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
 ## 0.4.2
 
 ### Patch Changes
