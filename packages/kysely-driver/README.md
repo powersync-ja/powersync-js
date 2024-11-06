@@ -21,6 +21,10 @@ export const powerSyncDb = new PowerSyncDatabase({
 });
 
 export const db = wrapPowerSyncWithKysely(powerSyncDb);
+
+const result = await db.selectFrom('users').selectAll().execute();
+
+// [{ id: '1', name: 'user1' }, { id: '2', name: 'user2' }]
 ```
 
 With typing for TypeScript:
@@ -41,6 +45,10 @@ export const powerSyncDb = new PowerSyncDatabase({
 
 // `db` now automatically contains types for defined tables
 export const db = wrapPowerSyncWithKysely<Database>(powerSyncDb)
+
+const result = await db.selectFrom('users').selectAll().execute();
+
+// [{ id: '1', name: 'user1' }, { id: '2', name: 'user2' }]
 ```
 
 For more information on Kysely typing, see [here](https://kysely.dev/docs/getting-started#types).
