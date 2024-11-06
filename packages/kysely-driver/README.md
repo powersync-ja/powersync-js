@@ -2,10 +2,6 @@
 
 This package (`packages/kysely-driver`) brings the benefits of an ORM through our maintained [Kysely](https://kysely.dev/) driver to [PowerSync](https://powersync.com).
 
-## Beta Release
-
-The `kysely-driver` package is currently in a beta release.
-
 ## Getting started
 
 Set up the PowerSync Database and wrap it with Kysely.
@@ -34,7 +30,7 @@ import { wrapPowerSyncWithKysely } from '@powersync/kysely-driver';
 import { PowerSyncDatabase } from "@powersync/web";
 
 // Define schema as in: https://docs.powersync.com/usage/installation/client-side-setup/define-your-schema
-import { appSchema } from "./schema";
+import { appSchema, Database } from "./schema";
 
 export const powerSyncDb = new PowerSyncDatabase({
   database: {
