@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.20.2
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+
 ## 1.20.1
 
 ### Patch Changes
