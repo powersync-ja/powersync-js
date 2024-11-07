@@ -124,4 +124,8 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       }
     };
   }
+
+  async refreshSchema() {
+    await this.baseDB.refreshSchema();
+  }
 }

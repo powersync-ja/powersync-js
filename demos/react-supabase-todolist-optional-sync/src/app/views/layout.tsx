@@ -58,7 +58,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         beforeNavigate: async () => {
           // If user is logged in, sign out and stay on the current page
           if (supabase?.currentSession) {
-            await supabase?.client.auth.signOut();
+            await supabase?.logout();
             await powerSync.disconnectAndClear();
             setSyncEnabled(powerSync.database.name, false);
 

@@ -93,6 +93,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.updateSession(session);
   }
 
+  async logout() {
+    await this.client.auth.signOut();
+    this.updateSession(null);
+  }
+
   async fetchCredentials() {
     const {
       data: { session },

@@ -28,6 +28,7 @@ import {
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { runOnSchemaChange } from './runOnSchemaChange.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -103,6 +104,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
+  schemaChanged: (schema: Schema) => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -360,7 +362,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
+
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    await this.database.refreshSchema();
+    this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 
   /**
@@ -758,10 +763,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    (async () => {
+    const watchQuery = async (abortSignal: AbortSignal) => {
       try {
         const resolvedTables = await this.resolveTables(sql, parameters, options);
-
         // Fetch initial data
         const result = await this.executeReadOnly(sql, parameters);
         onResult(result);
@@ -780,13 +784,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           },
           {
             ...(options ?? {}),
-            tables: resolvedTables
+            tables: resolvedTables,
+            // Override the abort signal since we intercept it
+            signal: abortSignal
           }
         );
       } catch (error) {
         onError?.(error);
       }
-    })();
+    };
+
+    runOnSchemaChange(watchQuery, this, options);
   }
 
   /**
@@ -796,19 +804,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     return new EventIterator<QueryResult>((eventOptions) => {
-      (async () => {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-
-        // Fetch initial data
-        eventOptions.push(await this.executeReadOnly(sql, parameters));
-
-        for await (const event of this.onChangeWithAsyncGenerator({
-          ...(options ?? {}),
-          tables: resolvedTables
-        })) {
-          eventOptions.push(await this.executeReadOnly(sql, parameters));
+      const handler: WatchHandler = {
+        onResult: (result) => {
+          eventOptions.push(result);
+        },
+        onError: (error) => {
+          eventOptions.fail(error);
         }
-      })();
+      };
+
+      this.watchWithCallback(sql, parameters, handler, options);
+
+      options?.signal?.addEventListener('abort', () => {
+        eventOptions.stop();
+      });
     });
   }
 

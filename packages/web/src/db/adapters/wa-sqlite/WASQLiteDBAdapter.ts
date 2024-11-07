@@ -275,4 +275,6 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       }
     };
   }
+
+  async refreshSchema(): Promise<void> {}
 }
