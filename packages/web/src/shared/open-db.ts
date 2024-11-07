@@ -12,25 +12,13 @@ export async function _openDB(
   options: { useWebWorker: boolean } = { useWebWorker: true }
 ): Promise<DBFunctionsInterface> {
   const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
-  const module = await moduleFactory({
-    locateFile(path: string) {
-      if (path.includes('wa-sqlite-async')) {
-        return new URL('@journeyapps/wa-sqlite/dist/wa-sqlite-async.wasm', import.meta.url).href;
-      } else if (path.includes('libpowersync')) {
-        return new URL('@journeyapps/wa-sqlite/dist/libpowersync-async.wasm', import.meta.url).href;
-      }
-      return path;
-    }
-  });
+  const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
-  const extScope: any = {};
-  // This needs improvements in production with Vite
-  await module.loadDynamicLibrary('libpowersync-async.wasm', { loadAsync: true }, extScope);
-
-  // This calls sqlite3_auto_extension(sqlite3_powersync_init).
-  // For generic extensions, we'd need to call sqlite3_auto_extension directly.
-  extScope.powersync_init_static();
+  /**
+   * Register the PowerSync core SQLite extension
+   */
+  module.ccall('setup_powersync', 'int', []);
 
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
   // @ts-ignore TODO update types
@@ -55,7 +43,10 @@ export async function _openDB(
     Array.from(listeners.values()).forEach((l) => l(event));
   }
 
-  sqlite3.register_table_onchange_hook(db, (opType: number, tableName: string, rowId: number) => {
+  sqlite3.update_hook(db, (updateType: number, dbName: string | null, tableName: string | null) => {
+    if (!tableName) {
+      return;
+    }
     updatedTables.add(tableName);
     if (updateTimer == null) {
       updateTimer = setTimeout(fireUpdates, 0);
