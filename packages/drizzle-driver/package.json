@@ -1,0 +1,33 @@
+{
+  "name": "@powersync/drizzle-driver",
+  "version": "0.0.0",
+  "description": "Drizzle driver for PowerSync",
+  "main": "lib/src/index.js",
+  "types": "lib/src/index.d.ts",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "files": [
+    "lib"
+  ],
+  "repository": "https://github.com/powersync-ja/powersync-js",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc --build",
+    "build:prod": "tsc --build --sourceMap false",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "watch": "tsc --build -w"
+  },
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.19.0"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.35.2"
+  }
+}
