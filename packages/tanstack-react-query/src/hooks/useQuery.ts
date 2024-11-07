@@ -102,11 +102,20 @@ function useQueryCore<
   };
 
   React.useEffect(() => {
-    if (!query) return;
+    if (!query) return () => {};
 
     (async () => {
       await fetchTables();
     })();
+
+    const l = powerSync.registerListener({
+      schemaChanged: async () => {
+        await fetchTables();
+        queryClient.invalidateQueries({ queryKey: options.queryKey });
+      }
+    });
+
+    return () => l?.();
   }, [powerSync, sqlStatement, stringifiedParams]);
 
   const queryFn = React.useCallback(async () => {

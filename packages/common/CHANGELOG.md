@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.20.2
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+
+## 1.20.1
+
+### Patch Changes
+
+- 79d4211: Handle additional forward slash in the POWERSYNC_URL environment variable
+
 ## 1.20.0
 
 ### Minor Changes

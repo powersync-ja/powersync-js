@@ -4,7 +4,7 @@
 
 # PowerSync SDK for React Native
 
-*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
+*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side.*
 
 This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
 
@@ -20,7 +20,7 @@ npx expo install @powersync/react-native
 
 ## Install Peer Dependency: SQLite
 
-By default, this SDK requires `@journeyapps/react-native-quick-sqlite` as a peer dependency. Alternatively, you can install OP-SQLite from the [PowerSync OP-SQLite package](../powersync-op-sqlite/README.md) (currently in alpha).
+By default, this SDK requires `@journeyapps/react-native-quick-sqlite` as a peer dependency. Alternatively, you can install OP-SQLite from the [PowerSync OP-SQLite package](https://github.com/powersync-ja/powersync-js/tree/main/packages/powersync-op-sqlite) (currently in alpha).
 
 Install it in your app with:
 

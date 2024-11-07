@@ -11,9 +11,7 @@ const defaultQueryResult = ['list1', 'list2'];
 const createMockPowerSync = () => {
   return {
     currentStatus: { status: 'initial' },
-    registerListener: vi.fn(() => ({
-      statusChanged: vi.fn(() => 'updated')
-    })),
+    registerListener: vi.fn(() => {}),
     resolveTables: vi.fn(() => ['table1', 'table2']),
     onChangeWithCallback: vi.fn(),
     getAll: vi.fn(() => Promise.resolve(defaultQueryResult)) as Mock<any, any>

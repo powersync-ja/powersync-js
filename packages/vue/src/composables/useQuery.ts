@@ -1,4 +1,10 @@
-import { type CompilableQuery, ParsedQuery, type SQLWatchOptions, parseQuery } from '@powersync/common';
+import {
+  type CompilableQuery,
+  ParsedQuery,
+  type SQLWatchOptions,
+  parseQuery,
+  runOnSchemaChange
+} from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
@@ -114,38 +120,41 @@ export const useQuery = <T = any>(
     }
 
     const { sqlStatement: sql, parameters } = parsedQuery;
-
-    let resolvedTables = [];
-    try {
-      resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
-    } catch (e) {
-      console.error('Failed to fetch tables:', e);
-      handleError(e);
-      return;
-    }
-    // Fetch initial data
-    const executor =
-      typeof queryValue == 'string' ? () => powerSync.value.getAll<T>(sql, parameters) : () => queryValue.execute();
-    fetchData = () => _fetchData(executor);
-    await fetchData();
-
-    if (options.runQueryOnce) {
-      return;
-    }
-
-    powerSync.value.onChangeWithCallback(
-      {
-        onChange: async () => {
-          await fetchData();
-        },
-        onError: handleError
-      },
-      {
-        ...options,
-        signal: abortController.signal,
-        tables: resolvedTables
+    const watchQuery = async (abortSignal: AbortSignal) => {
+      let resolvedTables = [];
+      try {
+        resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
+      } catch (e) {
+        console.error('Failed to fetch tables:', e);
+        handleError(e);
+        return;
       }
-    );
+      // Fetch initial data
+      const executor =
+        typeof queryValue == 'string' ? () => powerSync.value.getAll<T>(sql, parameters) : () => queryValue.execute();
+      fetchData = () => _fetchData(executor);
+      await fetchData();
+
+      if (options.runQueryOnce) {
+        return;
+      }
+
+      powerSync.value.onChangeWithCallback(
+        {
+          onChange: async () => {
+            await fetchData();
+          },
+          onError: handleError
+        },
+        {
+          ...options,
+          signal: abortSignal,
+          tables: resolvedTables
+        }
+      );
+    };
+
+    runOnSchemaChange(watchQuery, powerSync.value, { signal: abortController.signal });
   });
 
   return {
