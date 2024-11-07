@@ -10,8 +10,6 @@ The `drizzle-driver` package is currently in an Alpha release.
 
 Set up the PowerSync Database and wrap it with Drizzle.
 
-Currently, you need to create the Drizzle schema manually, and it should match the table definitions of your PowerSync AppSchema.
-
 ```js
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { PowerSyncDatabase } from '@powersync/web';
@@ -62,9 +60,14 @@ export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
 });
 ```
 
-## Compilable queries
+## Known limitations
 
-To use Drizzle queries in your hooks and composables, they currently need to be converted using `toCompilableQuery`.
+- The integration does not currently support nested transations (also known as `savepoints`).
+- The Drizzle schema needs to be created manually, and it should match the table definitions of your PowerSync schema.
+
+### Compilable queries
+
+To use Drizzle queries in your hooks and composables, queries need to be converted using `toCompilableQuery`.
 
 ```js
 import { toCompilableQuery } from '@powersync/drizzle-driver';
