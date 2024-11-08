@@ -17,6 +17,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
 const typeForValue = (value: unknown) => {
+  //when using typeof arrays are "object" so we have to have this specific case
   if (Array.isArray(value)) return 'array';
   return typeof value;
 };
@@ -27,12 +28,14 @@ const jsonToObjectArray = (json: Object) => {
     const type = typeForValue(value);
     return {
       key,
+      // Only arrays and objects need special cases here since JS will take care of the rest.
       value: type === 'array' || type === 'object' ? JSON.stringify(value) : value,
       type
     };
   });
 };
 
+// A simple set of mappers for converting a string to the correct value for saving
 const CONVERTERS = {
   string: (v: string) => v,
   number: (v: string) => Number(v),
@@ -95,6 +98,7 @@ function ClientParamsPage() {
                   sx={{ margin: '10px' }}
                   onChange={(v: { target: { value: string } }) => changeKey(idx, v.target.value, value, type)}
                 />
+                {/* TODO: Potentially add an explanation here about how users should write values for a given piece of text? */}
                 <TextField
                   label="Value"
                   value={value}
