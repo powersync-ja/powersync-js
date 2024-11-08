@@ -34,36 +34,40 @@ const jsonToObjectArray = (json: Object) => {
 };
 
 const CONVERTERS = {
-  string: (v) => v,
-  number: (v) => Number(v),
-  boolean: (v) => v === 'true',
-  array: (v) => JSON.parse(v),
-  object: (v) => JSON.parse(v)
+  string: (v: string) => v,
+  number: (v: string) => Number(v),
+  boolean: (v: string) => v === 'true',
+  array: (v: string) => JSON.parse(v),
+  object: (v: string) => JSON.parse(v)
 };
 
 function ClientParamsPage() {
   const [params, setParams] = useState(jsonToObjectArray(getParams()));
 
-  const convertValueForSave = (t, stringValue: string) => CONVERTERS[t](stringValue);
+  const convertValueForSave = (t: 'string' | 'number' | 'boolean' | 'array' | 'object', stringValue: string) =>
+    CONVERTERS[t](stringValue);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
     const newParams = params.reduce(
-      (curr, item) => ({ ...curr, [`${item.key}`]: convertValueForSave(item.type, item.value) }),
+      (curr: any, item: { key: any; type: 'string' | 'number' | 'boolean' | 'array' | 'object'; value: string }) => ({
+        ...curr,
+        [`${item.key}`]: convertValueForSave(item.type, item.value)
+      }),
       {}
     );
     setParamsGlobal(newParams);
   };
 
-  const replace = (idx: number, val: any) => setParams((a) => a.map((entity, i) => (i === idx ? val : entity)));
+  const replace = (idx: number, val: any) => setParams((a: any[]) => a.map((entity, i) => (i === idx ? val : entity)));
 
   const removeIdx = (idx: number) =>
-    setParams((a) => a.map((entity, i) => i !== idx && entity).filter((entity) => entity !== false));
+    setParams((a: any[]) => a.map((entity, i) => i !== idx && entity).filter((entity) => entity !== false));
 
   const addRow = () => {
-    setParams((a) => [...a, { key: '', value: '' }]);
+    setParams((a: any[]) => [...a, { key: '', value: '' }]);
   };
 
   const changeValue = (idx: number, value: string, currKey: string, type: string) => {
@@ -108,7 +112,7 @@ function ClientParamsPage() {
                     <MenuItem value={'number'}>Number</MenuItem>
                     <MenuItem value={'array'}>Array</MenuItem>
                     <MenuItem value={'object'}>Object</MenuItem>
-                    <MenuItem value={'boolean'}>boolean</MenuItem>
+                    <MenuItem value={'boolean'}>Boolean</MenuItem>
                   </Select>
                 </FormControl>
                 <IconButton sx={{ margin: '10px' }} color="error" onClick={() => removeIdx(idx)}>
