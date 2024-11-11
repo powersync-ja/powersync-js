@@ -1,5 +1,22 @@
 # @powersync/tanstack-react-query
 
+## 0.0.8
+
+### Patch Changes
+
+- 7b49661: Queries will recalculate dependent tables if schema is updated.
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+  - @powersync/react@1.5.1
+
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
 ## 0.0.6
 
 ### Patch Changes

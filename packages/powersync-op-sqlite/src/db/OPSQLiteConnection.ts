@@ -79,4 +79,8 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
     }
     return result as T;
   }
+
+  async refreshSchema() {
+    await this.get("PRAGMA table_info('sqlite_master')");
+  }
 }

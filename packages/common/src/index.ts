@@ -4,6 +4,7 @@ export * from './client/SQLOpenFactory.js';
 export * from './client/connection/PowerSyncBackendConnector.js';
 export * from './client/connection/PowerSyncCredentials.js';
 export * from './client/sync/bucket/BucketStorageAdapter.js';
+export { runOnSchemaChange } from './client/runOnSchemaChange.js';
 export { UpdateType, CrudEntry, OpId } from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/SqliteBucketStorage.js';
 export * from './client/sync/bucket/CrudBatch.js';

@@ -1,8 +1,6 @@
-import { Schema, TableV2, PowerSyncDatabase, column } from '@powersync/web';
-import { wrapPowerSyncWithKysely } from '../../src/sqlite/db';
-import { Database } from './types';
+import { Schema, PowerSyncDatabase, column, Table } from '@powersync/web';
 
-const users = new TableV2({
+const users = new Table({
   name: column.text
 });
 

@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.21.0
+
+### Minor Changes
+
+- 7b49661: Updated watch functions to recalculate depedendent tables if schema is updated.
+
+## 1.20.2
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+
 ## 1.20.1
 
 ### Patch Changes
