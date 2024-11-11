@@ -1,5 +1,13 @@
 # @powersync/react
 
+## 1.5.1
+
+### Patch Changes
+
+- 7b49661: Queries will recalculate dependent tables if schema is updated.
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+
 ## 1.5.0
 
 ### Minor Changes
