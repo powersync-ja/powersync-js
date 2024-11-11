@@ -3,6 +3,7 @@ import { Column, DriverValueDecoder, getTableName, SQL } from 'drizzle-orm';
 import { entityKind, is } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { fillPlaceholders, type Query } from 'drizzle-orm/sql/sql';
+import { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
   type PreparedQueryConfig as PreparedQueryConfigBase,
@@ -98,6 +99,11 @@ export class PowerSyncSQLitePreparedQuery<
   }
 }
 
+/**
+ * Maps a flat array of database row values to a result object based on the provided column definitions.
+ * It reconstructs the hierarchical structure of the result by following the specified paths for each field.
+ * It also handles nullification of nested objects when joined tables are nullable.
+ */
 export function mapResultRow<TResult>(
   columns: SelectedFieldsOrdered,
   row: unknown[],
@@ -107,14 +113,7 @@ export function mapResultRow<TResult>(
   const nullifyMap: Record<string, string | false> = {};
 
   const result = columns.reduce<Record<string, any>>((result, { path, field }, columnIndex) => {
-    let decoder: DriverValueDecoder<unknown, unknown>;
-    if (is(field, Column)) {
-      decoder = field;
-    } else if (is(field, SQL)) {
-      decoder = (field as any).decoder;
-    } else {
-      decoder = (field.sql as any).decoder;
-    }
+    const decoder = getDecoder(field);
     let node = result;
     for (const [pathChunkIndex, pathChunk] of path.entries()) {
       if (pathChunkIndex < path.length - 1) {
@@ -126,30 +125,64 @@ export function mapResultRow<TResult>(
         const rawValue = row[columnIndex]!;
         const value = (node[pathChunk] = rawValue === null ? null : decoder.mapFromDriverValue(rawValue));
 
-        if (joinsNotNullableMap && is(field, Column) && path.length === 2) {
-          const objectName = path[0]!;
-          if (!(objectName in nullifyMap)) {
-            nullifyMap[objectName] = value === null ? getTableName(field.table) : false;
-          } else if (
-            typeof nullifyMap[objectName] === 'string' &&
-            nullifyMap[objectName] !== getTableName(field.table)
-          ) {
-            nullifyMap[objectName] = false;
-          }
-        }
+        updateNullifyMap(nullifyMap, field, path, value, joinsNotNullableMap);
       }
     }
     return result;
   }, {});
 
-  // Nullify all nested objects from nullifyMap that are nullable
-  if (joinsNotNullableMap && Object.keys(nullifyMap).length > 0) {
-    for (const [objectName, tableName] of Object.entries(nullifyMap)) {
-      if (typeof tableName === 'string' && !joinsNotNullableMap[tableName]) {
-        result[objectName] = null;
-      }
-    }
-  }
+  applyNullifyMap(result, nullifyMap, joinsNotNullableMap);
 
   return result as TResult;
+}
+
+/**
+ * Determines the appropriate decoder for a given field.
+ */
+function getDecoder(field: SQLiteColumn | SQL<unknown> | SQL.Aliased): DriverValueDecoder<unknown, unknown> {
+  if (is(field, Column)) {
+    return field;
+  } else if (is(field, SQL)) {
+    return (field as any).decoder;
+  } else {
+    return (field.sql as any).decoder;
+  }
+}
+
+function updateNullifyMap(
+  nullifyMap: Record<string, string | false>,
+  field: any,
+  path: string[],
+  value: any,
+  joinsNotNullableMap: Record<string, boolean> | undefined
+): void {
+  if (!joinsNotNullableMap || !is(field, Column) || path.length !== 2) {
+    return;
+  }
+
+  const objectName = path[0]!;
+  if (!(objectName in nullifyMap)) {
+    nullifyMap[objectName] = value === null ? getTableName(field.table) : false;
+  } else if (typeof nullifyMap[objectName] === 'string' && nullifyMap[objectName] !== getTableName(field.table)) {
+    nullifyMap[objectName] = false;
+  }
+}
+
+/**
+ * Nullify all nested objects from nullifyMap that are nullable
+ */
+function applyNullifyMap(
+  result: Record<string, any>,
+  nullifyMap: Record<string, string | false>,
+  joinsNotNullableMap: Record<string, boolean> | undefined
+): void {
+  if (!joinsNotNullableMap || Object.keys(nullifyMap).length === 0) {
+    return;
+  }
+
+  for (const [objectName, tableName] of Object.entries(nullifyMap)) {
+    if (typeof tableName === 'string' && !joinsNotNullableMap[tableName]) {
+      result[objectName] = null;
+    }
+  }
 }

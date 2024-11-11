@@ -26,7 +26,7 @@ export const getPowerSyncDb = () => {
 };
 
 export const getDrizzleDb = (db: AbstractPowerSyncDatabase) => {
-  const database = wrapPowerSyncWithDrizzle(db, { schema: DrizzleSchema });
+  const database = wrapPowerSyncWithDrizzle(db, { schema: DrizzleSchema, logger: { logQuery: () => {} } });
 
   return database;
 };

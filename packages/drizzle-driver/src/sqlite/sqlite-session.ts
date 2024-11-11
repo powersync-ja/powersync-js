@@ -72,7 +72,7 @@ export class PowerSyncSQLiteSession<
   ): T {
     const { accessMode = 'read write' } = config;
 
-    if (accessMode == 'read only') {
+    if (accessMode === 'read only') {
       return this.db.readLock(async () => this.internalTransaction(transaction, config)) as T;
     }
 
