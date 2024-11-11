@@ -112,6 +112,7 @@ export async function disconnect() {
 export async function signOut() {
   connector.clearCredentials();
   await db.disconnectAndClear();
+  await schemaManager.clear();
 }
 
 export const setParams = (p: object) => {
