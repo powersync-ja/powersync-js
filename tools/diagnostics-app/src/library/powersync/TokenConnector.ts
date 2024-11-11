@@ -22,6 +22,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
   }
 
   async signIn(credentials: Credentials) {
+    validateSecureContext(credentials.endpoint);
     try {
       localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
       await connect();
@@ -37,5 +38,21 @@ export class TokenConnector implements PowerSyncBackendConnector {
 
   clearCredentials() {
     localStorage.removeItem('powersync_credentials');
+  }
+}
+
+function validateSecureContext(url: string) {
+  if (!location.href.startsWith('https:')) {
+    return;
+  }
+  const parsedUrl = new URL(url);
+  const secure =
+    parsedUrl.protocol === 'https:' ||
+    parsedUrl.hostname === 'localhost' ||
+    parsedUrl.hostname === '127.0.0.1' ||
+    parsedUrl.hostname === '::1';
+  if (!secure) {
+    throw new Error(`Cannot connect to http endpoints from the hosted diagnostics app.
+Run either the PowerSync endpoint on http://localhost, or the diagnostics app on http://localhost.`);
   }
 }
