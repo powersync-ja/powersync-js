@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { v4 as uuid } from 'uuid';
 import { TestDatabase, generateTestDb } from './utils/testDb';

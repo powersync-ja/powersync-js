@@ -28,6 +28,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
+import { getNavigatorLocks } from '../shared/navigator';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -160,7 +161,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     if (this.resolvedFlags.ssrMode) {
       return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }
-    return navigator.locks.request(`lock-${this.database.name}`, cb);
+    return getNavigatorLocks().request(`lock-${this.database.name}`, cb);
   }
 
   protected generateSyncStreamImplementation(connector: PowerSyncBackendConnector): StreamingSyncImplementation {
