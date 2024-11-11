@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.10.1
+
+### Patch Changes
+
+- e9773d9: Add error check for insecure context
+
 ## 1.10.0
 
 ### Minor Changes
