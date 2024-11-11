@@ -1,4 +1,3 @@
-// import { PowerSyncSQLitePreparedQuery, mapResultRow } from './PowerSyncSQLitePreparedQuery';
 import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { Query } from 'drizzle-orm/sql/sql';
 import { PowerSyncSQLiteDatabase } from '../../src/sqlite/db';
