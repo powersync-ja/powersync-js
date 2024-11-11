@@ -1,5 +1,12 @@
 # diagnostics-app
 
+## 0.7.0
+
+### Minor Changes
+
+- 677d782: Improved error messages for some token or endpoint issues
+- db84a30: Support specifying client parameter types
+
 ## 0.6.5
 
 ### Patch Changes
