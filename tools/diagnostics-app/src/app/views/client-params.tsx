@@ -22,18 +22,27 @@ const typeForValue = (value: unknown) => {
   return typeof value;
 };
 
-const jsonToObjectArray = (json: Object) => {
+const jsonToObjectArray = (json: Object): ParameterEntry[] => {
   const entrySet = Object.entries(json);
   return entrySet.map(([key, value]) => {
-    const type = typeForValue(value);
+    const type = typeForValue(value) as ParameterType;
     return {
       key,
       // Only arrays and objects need special cases here since JS will take care of the rest.
-      value: type === 'array' || type === 'object' ? JSON.stringify(value) : value,
+      value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
       type
     };
   });
 };
+
+type ParameterType = 'string' | 'number' | 'boolean' | 'array' | 'object';
+
+interface ParameterEntry {
+  key: string;
+  type: ParameterType;
+  value: string;
+  error?: string;
+}
 
 // A simple set of mappers for converting a string to the correct value for saving
 const CONVERTERS = {
@@ -47,41 +56,60 @@ const CONVERTERS = {
 function ClientParamsPage() {
   const [params, setParams] = useState(jsonToObjectArray(getParams()));
 
-  const convertValueForSave = (t: 'string' | 'number' | 'boolean' | 'array' | 'object', stringValue: string) =>
-    CONVERTERS[t](stringValue);
+  const convertValueForSave = (t: ParameterType, stringValue: string) => CONVERTERS[t](stringValue);
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const newParams = params.reduce(
-      (curr: any, item: { key: any; type: 'string' | 'number' | 'boolean' | 'array' | 'object'; value: string }) => ({
-        ...curr,
-        [`${item.key}`]: convertValueForSave(item.type, item.value)
-      }),
-      {}
-    );
-    setParamsGlobal(newParams);
+    try {
+      const newParams = params.reduce<Record<string, any>>(
+        (curr: any, item: { key: string; type: string; value: string }) => ({
+          ...curr,
+          [`${item.key}`]: convertValueForSave(item.type as ParameterType, item.value)
+        }),
+        {}
+      );
+      setParamsGlobal(newParams);
+    } catch (e) {}
   };
 
-  const replace = (idx: number, val: any) => setParams((a: any[]) => a.map((entity, i) => (i === idx ? val : entity)));
+  const validate = (val: ParameterEntry) => {
+    if (val.type == 'object' || val.type == 'array') {
+      try {
+        JSON.parse(val.value);
+        return val;
+      } catch (e: any) {
+        return {
+          ...val,
+          error: e.message
+        };
+      }
+    } else {
+      return val;
+    }
+  };
+
+  const replace = (idx: number, val: ParameterEntry) => {
+    setParams((a: any[]) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
+  };
 
   const removeIdx = (idx: number) =>
     setParams((a: any[]) => a.map((entity, i) => i !== idx && entity).filter((entity) => entity !== false));
 
   const addRow = () => {
-    setParams((a: any[]) => [...a, { key: '', value: '' }]);
+    setParams((a: any[]) => [...a, { key: '', value: '', type: 'string' }]);
   };
 
-  const changeValue = (idx: number, value: string, currKey: string, type: string) => {
+  const changeValue = (idx: number, value: string, currKey: string, type: ParameterType) => {
     replace(idx, { key: currKey, value, type });
   };
 
-  const changeKey = (idx: number, key: string, currValue: unknown, type: string) => {
+  const changeKey = (idx: number, key: string, currValue: string, type: ParameterType) => {
     replace(idx, { key, value: currValue, type });
   };
 
-  const changeType = (idx: number, key: string, value: unknown, newType: string) => {
+  const changeType = (idx: number, key: string, value: string, newType: ParameterType) => {
     replace(idx, { key, value, type: newType });
   };
 
@@ -89,8 +117,8 @@ function ClientParamsPage() {
     <NavigationPage title="Client Parameters">
       <S.MainContainer>
         <form onSubmit={onSubmit}>
-          {params.map(({ key, value, type }: { key: string; value: string; type: string }, idx: number) => (
-            <S.CenteredGrid container>
+          {params.map(({ key, value, type, error }, idx: number) => (
+            <S.CenteredGrid container key={idx}>
               <S.CenteredGrid item xs={12} md={10}>
                 <TextField
                   label="Key"
@@ -103,6 +131,8 @@ function ClientParamsPage() {
                   label="Value"
                   value={value}
                   sx={{ margin: '10px' }}
+                  error={!!error}
+                  title={error}
                   onChange={(v: { target: { value: string } }) => changeValue(idx, v.target.value, key, type)}
                 />
                 <FormControl sx={{ margin: '10px', width: '125px', minWidth: '95px' }}>
@@ -111,7 +141,9 @@ function ClientParamsPage() {
                     labelId="demo-simple-select-label"
                     value={type}
                     label="Type"
-                    onChange={(v: { target: { value: string } }) => changeType(idx, key, value, v.target.value)}>
+                    onChange={(v: { target: { value: string } }) =>
+                      changeType(idx, key, value, v.target.value as ParameterType)
+                    }>
                     <MenuItem value={'string'}>String</MenuItem>
                     <MenuItem value={'number'}>Number</MenuItem>
                     <MenuItem value={'array'}>Array</MenuItem>
@@ -131,7 +163,7 @@ function ClientParamsPage() {
             </IconButton>
           </S.CenteredGrid>
           <Button type="submit" sx={{ margin: '10px' }} variant="contained">
-            Submit
+            Save
           </Button>
         </form>
       </S.MainContainer>
