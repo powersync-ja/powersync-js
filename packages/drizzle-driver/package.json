@@ -22,12 +22,27 @@
     "build": "tsc --build",
     "build:prod": "tsc --build --sourceMap false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
-    "watch": "tsc --build -w"
+    "watch": "tsc --build -w",
+    "test": "vitest"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.19.0"
   },
   "dependencies": {
     "drizzle-orm": "0.35.2"
+  },
+  "devDependencies": {
+    "@powersync/web": "workspace:*",
+    "@journeyapps/wa-sqlite": "^0.4.1",
+    "@types/node": "^20.17.6",
+    "@vitest/browser": "^2.1.4",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.3.0",
+    "vitest": "^2.1.4",
+    "webdriverio": "^9.2.8"
   }
 }
