@@ -10,7 +10,7 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/vector-icons": "^14.0.0",
-    "@journeyapps/react-native-quick-sqlite": "^2.1.0",
+    "@journeyapps/react-native-quick-sqlite": "^2.1.1",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",
