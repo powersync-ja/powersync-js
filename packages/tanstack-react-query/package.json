@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tanstack-react-query",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -28,7 +28,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.20.2",
+    "@powersync/common": "workspace:^1.21.0",
     "react": "*"
   },
   "dependencies": {

@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.2.3
+
+### Patch Changes
+
+- 7b49661: Queries will recalculate dependent tables if schema is updated.
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+
 ## 0.2.2
 
 ### Patch Changes

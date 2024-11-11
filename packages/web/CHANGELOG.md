@@ -1,5 +1,22 @@
 # @powersync/web
 
+## 1.10.1
+
+### Patch Changes
+
+- e9773d9: Add error check for insecure context
+
+## 1.10.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+
 ## 1.9.2
 
 ### Patch Changes
