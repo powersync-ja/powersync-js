@@ -21,7 +21,7 @@ export const getParams = () => {
   const stringifiedParams = localStorage.getItem(PARAMS_STORE);
   const params = safeParse(stringifiedParams);
   return params;
-}
+};
 
 export const schemaManager = new DynamicSchemaManager();
 
@@ -88,7 +88,7 @@ export async function connect() {
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
     sync.disconnect();
-    throw syncErrorTracker.lastSyncError ?? new Error('Failed to conncet');
+    throw syncErrorTracker.lastSyncError ?? new Error('Failed to connect');
   } else {
     syncErrorTracker.lastSyncError = null;
   }
