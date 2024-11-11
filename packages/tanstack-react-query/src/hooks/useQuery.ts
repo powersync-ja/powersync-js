@@ -89,6 +89,9 @@ function useQueryCore<
     }
   }
 
+  const stringifiedParams = JSON.stringify(queryParameters);
+  const stringifiedKey = JSON.stringify(options.queryKey);
+
   const fetchTables = async () => {
     try {
       const tables = await powerSync.resolveTables(sqlStatement, queryParameters);
@@ -99,12 +102,21 @@ function useQueryCore<
   };
 
   React.useEffect(() => {
-    if (!query) return;
+    if (!query) return () => {};
 
     (async () => {
       await fetchTables();
     })();
-  }, [powerSync, sqlStatement, queryParameters]);
+
+    const l = powerSync.registerListener({
+      schemaChanged: async () => {
+        await fetchTables();
+        queryClient.invalidateQueries({ queryKey: options.queryKey });
+      }
+    });
+
+    return () => l?.();
+  }, [powerSync, sqlStatement, stringifiedParams]);
 
   const queryFn = React.useCallback(async () => {
     if (error) {
@@ -116,7 +128,7 @@ function useQueryCore<
     } catch (e) {
       return Promise.reject(e);
     }
-  }, [powerSync, query, parameters, options.queryKey, error]);
+  }, [powerSync, query, parameters, stringifiedKey, error]);
 
   React.useEffect(() => {
     if (error || !query) return () => {};
@@ -139,7 +151,7 @@ function useQueryCore<
       }
     );
     return () => abort.abort();
-  }, [powerSync, options.queryKey, queryClient, tables, error]);
+  }, [powerSync, queryClient, stringifiedKey, tables, error]);
 
   return useQueryFn(
     {

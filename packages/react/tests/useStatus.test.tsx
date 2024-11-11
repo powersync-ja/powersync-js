@@ -33,9 +33,7 @@ describe('useStatus', () => {
   it.skip('should update the status when the listener is called', () => {
     const mockPowerSyncInTest = {
       currentStatus: { status: 'initial' },
-      registerListener: () => ({
-        statusChanged: () => 'updated'
-      })
+      registerListener: vi.fn(() => {})
     };
 
     const wrapper = ({ children }) => (

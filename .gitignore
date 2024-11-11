@@ -8,3 +8,4 @@ dist
 .fleet
 # Useful if running repository in VSCode dev container
 .pnpm-store
+__screenshots__

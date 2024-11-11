@@ -59,14 +59,14 @@ const config: ExpoConfig = {
       {
         ios: {
           deploymentTarget: '13.4',
-          newArchEnabled: false
+          newArchEnabled: true
         },
         android: {
           minSdkVersion: 23,
           compileSdkVersion: 34,
           targetSdkVersion: 34,
           buildToolsVersion: '34.0.0',
-          newArchEnabled: false
+          newArchEnabled: true
         }
       }
     ],

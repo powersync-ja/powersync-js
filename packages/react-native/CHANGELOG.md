@@ -1,5 +1,47 @@
 # @powersync/react-native
 
+## 1.15.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+  - @powersync/react@1.5.1
+
+## 1.14.4
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
+## 1.14.3
+
+### Patch Changes
+
+- Updated dependencies [79d4211]
+  - @powersync/common@1.20.1
+
+## 1.14.2
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
+## 1.14.1
+
+### Patch Changes
+
+- a3f625e: Fix inline require for react-native-quick-sqlite
+
 ## 1.14.0
 
 ### Minor Changes

@@ -85,4 +85,6 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
       }
     };
   }
+
+  async refreshSchema(): Promise<void> {}
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package (`packages/powersync-op-sqlite`) enables using [OP-SQLite](https://github.com/op-engineering/op-sqlite) with PowerSync alongside the [React Native SDK](https://docs.powersync.com/client-sdk-references/react-native-and-expo). 
+This package (`packages/powersync-op-sqlite`) enables using [OP-SQLite](https://github.com/op-engineering/op-sqlite) with PowerSync alongside the [React Native SDK](https://docs.powersync.com/client-sdk-references/react-native-and-expo).
 
 If you are not yet familiar with PowerSync, please see the [PowerSync React Native SDK README](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native) for more information.
 
@@ -41,6 +41,31 @@ const factory = new OPSqliteOpenFactory({
 });
 
 this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
+```
+
+### Encryption with SQLCipher
+
+To enable SQLCipher you need to add the following configuration option to your application's `package.json`
+
+```json
+{
+  // your normal package.json
+  // ...
+  "op-sqlite": {
+    "sqlcipher": true
+  }
+}
+```
+
+Additionally you will need to add an [encryption key](https://www.zetetic.net/sqlcipher/sqlcipher-api/#key) to the OPSQLite factory constructor
+
+```typescript
+const factory = new OPSqliteOpenFactory({
+  dbFilename: 'sqlite.db',
+  sqliteOptions: {
+    encryptionKey: 'your-encryption-key'
+  }
+});
 ```
 
 ## Native Projects

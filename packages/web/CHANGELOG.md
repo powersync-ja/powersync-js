@@ -1,5 +1,33 @@
 # @powersync/web
 
+## 1.10.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+
+## 1.9.2
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
+## 1.9.1
+
+### Patch Changes
+
+- 79d4211: Handle additional forward slash in the POWERSYNC_URL environment variable
+- 8554526: chore: Updated minimum WA-SQLite peer dependnency version.
+- Updated dependencies [79d4211]
+  - @powersync/common@1.20.1
+
 ## 1.9.0
 
 ### Minor Changes

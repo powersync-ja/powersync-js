@@ -1,66 +1,11 @@
 import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
 
 const assetId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 const userId = '3390de4f-0488-4e50-abed-f8e8eb1d0b42';
 const customerId = '4490de4f-0488-4e50-abed-f8e8eb1d0b42';
-
-const assetsDef = {
-  name: 'assets',
-  columns: {
-    created_at: column.text,
-    make: column.text,
-    model: column.text,
-    serial_number: column.text,
-    quantity: column.integer,
-    user_id: column.text,
-    customer_id: column.text,
-    description: column.text
-  },
-  options: { indexes: { makemodel: ['make, model'] } }
-};
-
-const customersDef = {
-  name: 'customers',
-  columns: {
-    name: column.text,
-    email: column.text
-  },
-  options: {}
-};
-
-function makeSchema(synced: boolean) {
-  const syncedName = (table: string): string => {
-    if (synced) {
-      return table;
-    } else {
-      return `inactive_synced_${table}`;
-    }
-  };
-
-  const localName = (table: string): string => {
-    if (synced) {
-      return `inactive_local_${table}`;
-    } else {
-      return table;
-    }
-  };
-  return new Schema({
-    assets: new Table(assetsDef.columns, { ...assetsDef.options, viewName: syncedName(assetsDef.name) }),
-    local_assets: new Table(assetsDef.columns, {
-      ...assetsDef.options,
-      localOnly: true,
-      viewName: localName(assetsDef.name)
-    }),
-    customers: new Table(customersDef.columns, { ...customersDef.options, viewName: syncedName(customersDef.name) }),
-    local_customers: new Table(customersDef.columns, {
-      ...customersDef.options,
-      localOnly: true,
-      viewName: localName(customersDef.name)
-    })
-  });
-}
 
 describe('Schema Tests', () => {
   let db: AbstractPowerSyncDatabase;
@@ -73,7 +18,7 @@ describe('Schema Tests', () => {
        * consistent
        */
       database: { dbFilename: 'test.db' },
-      schema: makeSchema(false),
+      schema: makeOptionalSyncSchema(false),
       flags: {
         enableMultiTabs: false
       }
@@ -98,7 +43,7 @@ describe('Schema Tests', () => {
     expect(await db.getAll('SELECT data FROM ps_crud ORDER BY id')).toEqual([]);
 
     // Now switch to the "online" schema
-    await db.updateSchema(makeSchema(true));
+    await db.updateSchema(makeOptionalSyncSchema(true));
 
     // Note that updateSchema cannot be called inside a transaction, and there
     // is a possibility of crash between updating the schema, and when the data
@@ -148,7 +93,7 @@ describe('Schema Tests', () => {
     const customerWatchTables = await getSourceTables(db, 'SELECT * FROM customers');
     expect(customerWatchTables.includes('ps_data_local__local_customers')).toBeTruthy();
 
-    await db.updateSchema(makeSchema(true));
+    await db.updateSchema(makeOptionalSyncSchema(true));
 
     const onlineCustomerWatchTables = await getSourceTables(db, 'SELECT * FROM customers');
     expect(onlineCustomerWatchTables.includes('ps_data__customers')).toBeTruthy();

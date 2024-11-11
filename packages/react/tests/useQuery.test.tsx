@@ -1,15 +1,13 @@
 import * as commonSdk from '@powersync/common';
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/useQuery';
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
-  registerListener: vi.fn(() => ({
-    statusChanged: vi.fn(() => 'updated')
-  })),
+  registerListener: vi.fn(() => {}),
   resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
   getAll: vi.fn(() => Promise.resolve(['list1', 'list2']))
@@ -92,9 +90,7 @@ describe('useQuery', () => {
   it('should set error when error occurs and runQueryOnce flag is set', async () => {
     const mockPowerSyncError = {
       currentStatus: { status: 'initial' },
-      registerListener: vi.fn(() => ({
-        statusChanged: vi.fn(() => 'updated')
-      })),
+      registerListener: vi.fn(() => {}),
       onChangeWithCallback: vi.fn(),
       resolveTables: vi.fn(() => ['table1', 'table2']),
       getAll: vi.fn(() => {
@@ -119,9 +115,7 @@ describe('useQuery', () => {
   it('should set error when error occurs', async () => {
     const mockPowerSyncError = {
       currentStatus: { status: 'initial' },
-      registerListener: vi.fn(() => ({
-        statusChanged: vi.fn(() => 'updated')
-      })),
+      registerListener: vi.fn(() => {}),
       onChangeWithCallback: vi.fn(),
       resolveTables: vi.fn(() => ['table1', 'table2']),
       getAll: vi.fn(() => {
