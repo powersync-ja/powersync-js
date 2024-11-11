@@ -23,7 +23,7 @@ import {
 import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
-import { getNavigationLocks } from '../../shared/navigator';
+import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * Manual message events for shared sync clients
@@ -166,7 +166,7 @@ export class SharedSyncImplementation
   async connect(options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return getNavigationLocks().request('shared-sync-connect', async () => {
+    return getNavigatorLocks().request('shared-sync-connect', async () => {
       this.syncStreamClient = this.generateStreamingImplementation();
 
       this.syncStreamClient.registerListener({
@@ -182,7 +182,7 @@ export class SharedSyncImplementation
   async disconnect() {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return getNavigationLocks().request('shared-sync-connect', async () => {
+    return getNavigatorLocks().request('shared-sync-connect', async () => {
       await this.syncStreamClient?.disconnect();
       await this.syncStreamClient?.dispose();
       this.syncStreamClient = null;
