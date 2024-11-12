@@ -54,12 +54,12 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     const rows = (await this.values(placeholderValues)) as unknown[][];
-    const plain = rows.map((row) => Object.values(row));
+    const valueRows = rows.map((row) => Object.values(row));
     if (customResultMapper) {
-      const mapped = customResultMapper(plain) as T['all'];
+      const mapped = customResultMapper(valueRows) as T['all'];
       return mapped;
     }
-    return plain.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
+    return valueRows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
   }
 
   async get(placeholderValues?: Record<string, unknown>): Promise<T['get']> {
@@ -80,8 +80,8 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     if (customResultMapper) {
-      const plain = rows.map((row) => Object.values(row));
-      return customResultMapper(plain) as T['get'];
+      const valueRows = rows.map((row) => Object.values(row));
+      return customResultMapper(valueRows) as T['get'];
     }
 
     return mapResultRow(fields!, Object.values(row), joinsNotNullableMap);
