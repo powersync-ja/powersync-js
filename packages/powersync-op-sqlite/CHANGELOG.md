@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.1.1
+
+### Patch Changes
+
+- c146e3d: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
 ## 0.1.0
 
 ### Minor Changes
