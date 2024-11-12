@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.10.2
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
 ## 1.10.1
 
 ### Patch Changes

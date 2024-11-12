@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.15.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
 ## 1.15.0
 
 ### Minor Changes
