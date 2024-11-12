@@ -53,7 +53,7 @@ describe('Database operations', () => {
   it('should insert a user and update that user within a transaction when raw sql is used', async () => {
     await db.transaction(async (transaction) => {
       await transaction.run(sql`INSERT INTO users (id, name) VALUES ('4', 'James');`);
-      await db.update(drizzleUsers).set({ name: 'James Smith' }).where(eq(drizzleUsers.name, 'James'));
+      await transaction.update(drizzleUsers).set({ name: 'James Smith' }).where(eq(drizzleUsers.name, 'James'));
     });
 
     const result = await db.select().from(drizzleUsers).get();
