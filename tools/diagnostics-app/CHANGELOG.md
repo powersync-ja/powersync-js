@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.7.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+- Updated dependencies [fa26eb4]
+  - @powersync/web@1.10.2
+
 ## 0.7.0
 
 ### Minor Changes
