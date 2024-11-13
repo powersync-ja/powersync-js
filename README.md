@@ -17,7 +17,7 @@
 - [packages/web](./packages/web/README.md)
 
   - JS Web SDK implementation (extension of `packages/common`)
-  
+
 - [packages/react](./packages/react/README.md)
 
   - React integration for PowerSync.
@@ -38,9 +38,13 @@
 
   - Kysely integration (ORM) for React Native and JavaScript/TypeScript projects.
 
+- [packages/drizzle-driver](./packages/drizzle-driver/README.md)
+
+  - Drizzle integration (ORM) for React Native and JavaScript/TypeScript projects.
+
 - [packages/powersync-op-sqlite](./packages/powersync-op-sqlite/README.md)
 
-  - OP-SQLite integration for React Native projects.  
+  - OP-SQLite integration for React Native projects.
 
 - [packages/common](./packages/common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
