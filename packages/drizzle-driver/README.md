@@ -17,8 +17,6 @@ import { relations } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { appSchema } from './schema';
 
-import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
-
 export const lists = sqliteTable('lists', {
   id: text('id'),
   name: text('name')
@@ -63,7 +61,7 @@ export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
 
 ## Known limitations
 
-- The integration does not currently support nested transations (also known as `savepoints`).
+- The integration does not currently support nested transactions (also known as `savepoints`).
 - The Drizzle schema needs to be created manually, and it should match the table definitions of your PowerSync schema.
 
 ### Compilable queries
