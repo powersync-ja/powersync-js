@@ -27,7 +27,7 @@ export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown>
   db: AbstractPowerSyncDatabase,
   config: DrizzleConfig<TSchema> = {}
 ): PowerSyncSQLiteDatabase<TSchema> {
-  const dialect = new SQLiteAsyncDialect();
+  const dialect = new SQLiteAsyncDialect({casing: config.casing});
   let logger;
   if (config.logger === true) {
     logger = new DefaultLogger();
