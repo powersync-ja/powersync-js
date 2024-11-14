@@ -27,7 +27,7 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.19.0",
-    "drizzle-orm": "*"
+    "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
