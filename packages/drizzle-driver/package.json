@@ -26,16 +26,15 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.19.0"
-  },
-  "dependencies": {
-    "drizzle-orm": "0.35.2"
+    "@powersync/common": "workspace:^1.19.0",
+    "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "^0.4.1",
     "@types/node": "^20.17.6",
     "@vitest/browser": "^2.1.4",
+    "drizzle-orm": "^0.35.2",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
