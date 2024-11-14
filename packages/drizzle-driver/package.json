@@ -26,10 +26,8 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.19.0"
-  },
-  "dependencies": {
-    "drizzle-orm": "0.35.2"
+    "@powersync/common": "workspace:^1.19.0",
+    "drizzle-orm": "^0.35.2"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
