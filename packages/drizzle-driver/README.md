@@ -59,10 +59,36 @@ export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
 });
 ```
 
+## Converting Drizzle Tables to PowerSync Tables
+
+The `toPowerSyncTable` function simplifies the process of integrating Drizzle with PowerSync. Define your Drizzle tables, convert each using `toPowerSyncTable`, and supply the converted table definitions into your PowerSync schema for a unified development experience.
+
+As the PowerSync table only supports `text`, `integer`, and `real`, the same limitation extends to the Drizzle table definitions.
+
+```js
+import { toPowerSyncTable } from '@powersync/drizzle-driver';
+import { Schema } from '@powersync/web';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+// Define a Drizzle table
+const lists = sqliteTable('lists', {
+  id: text('id').primaryKey().notNull(),
+  created_at: text('created_at'),
+  name: text('name').notNull(),
+  owner_id: text('owner_id')
+});
+
+const psLists = toPowerSyncTable(lists); // converts the Drizzle table to a PowerSync table
+// toPowerSyncTable(lists, { localOnly: true }); - th allows for PowerSync table configuration
+
+export const AppSchema = new Schema({
+  lists: psLists // names the table `lists` in the PowerSync schema
+});
+```
+
 ## Known limitations
 
 - The integration does not currently support nested transactions (also known as `savepoints`).
-- The Drizzle schema needs to be created manually, and it should match the table definitions of your PowerSync schema.
 
 ### Compilable queries
 
