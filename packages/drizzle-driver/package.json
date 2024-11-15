@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Drizzle driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
