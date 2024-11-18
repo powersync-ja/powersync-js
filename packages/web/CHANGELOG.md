@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.11.0
+
+### Minor Changes
+
+- bacc1c5: Updated WA-SQLite to `@journeyapps/wa-sqlite@1.0.0`. Note that WA-SQLite performed some changes to the virtual filesystem structure in this update. An automatic migration will be executed when upgrading, however no down-migration is available. Downgrading to `@journeyapps/wa-sqlite < 1.0.0` will require the IndexDB storage to be erased.
+
 ## 1.10.2
 
 ### Patch Changes
