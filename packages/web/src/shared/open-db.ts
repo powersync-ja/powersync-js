@@ -21,8 +21,8 @@ export async function _openDB(
   module.ccall('powersync_init_static', 'int', []);
 
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
-  // @ts-ignore TODO update types
-  const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'shared+hint' });
+  // @ts-expect-error The types for this static method are missing upstream
+  const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'exclusive' });
   sqlite3.vfs_register(vfs, true);
 
   const db = await sqlite3.open_v2(dbFileName);
