@@ -11,7 +11,7 @@
   "dependencies": {
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20241107153934",
+    "@journeyapps/wa-sqlite": "0.0.0-dev-20241118114831",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "js-logger": "^1.6.1",

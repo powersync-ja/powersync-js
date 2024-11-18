@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20241107153934",
+    "@journeyapps/wa-sqlite": "0.0.0-dev-20241118114831",
     "@types/node": "^20.17.6",
     "@vitest/browser": "^2.1.4",
     "ts-loader": "^9.5.1",

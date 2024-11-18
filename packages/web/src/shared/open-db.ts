@@ -18,7 +18,7 @@ export async function _openDB(
   /**
    * Register the PowerSync core SQLite extension
    */
-  module.ccall('setup_powersync', 'int', []);
+  module.ccall('powersync_init_static', 'int', []);
 
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
   // @ts-ignore TODO update types
