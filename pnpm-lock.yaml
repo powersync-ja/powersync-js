@@ -106,8 +106,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.0
-        version: 2.1.0(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.1.2
+        version: 2.1.2(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -632,8 +632,8 @@ importers:
         specifier: 8.3.1
         version: 8.3.1
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.0
-        version: 2.1.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.1.2
+        version: 2.1.2(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -768,8 +768,8 @@ importers:
         specifier: ^14.0.3
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.0
-        version: 2.1.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.1.2
+        version: 2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -913,8 +913,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.0
-        version: 2.1.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.1.2
+        version: 2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -1155,8 +1155,8 @@ importers:
         specifier: 11.11.5
         version: 11.11.5(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
       '@mui/icons-material':
         specifier: ^5.15.12
         version: 5.16.7(@mui/material@5.16.7(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
@@ -1595,10 +1595,56 @@ importers:
         specifier: 3.2.1
         version: 3.2.1
 
+  packages/drizzle-driver:
+    dependencies:
+      '@powersync/common':
+        specifier: workspace:^1.19.0
+        version: link:../common
+    devDependencies:
+      '@journeyapps/wa-sqlite':
+        specifier: ^0.4.1
+        version: 0.4.1
+      '@powersync/web':
+        specifier: workspace:*
+        version: link:../web
+      '@types/node':
+        specifier: ^20.17.6
+        version: 20.17.6
+      '@vitest/browser':
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.8)
+      drizzle-orm:
+        specifier: ^0.35.2
+        version: 0.35.2(@op-engineering/op-sqlite@9.2.1(react@18.3.1))(@types/react@18.3.11)(kysely@0.27.4)(react@18.3.1)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.6.3)(webpack@5.95.0(@swc/core@1.7.26(@swc/helpers@0.5.5)))
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@20.17.6)(typescript@5.6.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
+      vite:
+        specifier: ^5.4.10
+        version: 5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.4
+        version: 1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      vite-plugin-wasm:
+        specifier: ^3.3.0
+        version: 3.3.0(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@20.17.6)(@vitest/browser@2.1.4)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.0(@types/node@20.17.6)(typescript@5.6.3))(sass@1.79.4)(terser@5.34.1)
+      webdriverio:
+        specifier: ^9.2.8
+        version: 9.2.8
+
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.20.2
+        specifier: workspace:^1.21.0
         version: link:../common
       kysely:
         specifier: ^0.27.4
@@ -1696,7 +1742,7 @@ importers:
   packages/react:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.19.0
+        specifier: workspace:^1.21.0
         version: link:../common
     devDependencies:
       '@testing-library/react':
@@ -1731,8 +1777,8 @@ importers:
         specifier: ^6.0.5
         version: 6.0.5(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.0
-        version: 2.1.0(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.1.2
+        version: 2.1.2(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@rollup/plugin-alias':
         specifier: ^5.1.0
         version: 5.1.1(rollup@4.14.3)
@@ -1813,7 +1859,7 @@ importers:
   packages/vue:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.18.1
+        specifier: workspace:^1.21.0
         version: link:../common
     devDependencies:
       flush-promises:
@@ -1857,8 +1903,8 @@ importers:
         specifier: ^9.0.6
         version: 9.0.8
       '@vitest/browser':
-        specifier: ^1.3.1
-        version: 1.6.0(vitest@1.6.0)(webdriverio@8.40.6)
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@22.7.4)(typescript@5.5.4)(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@8.40.6)
       crypto-browserify:
         specifier: ^3.12.0
         version: 3.12.0
@@ -1881,22 +1927,22 @@ importers:
         specifier: ^9.0.1
         version: 9.0.1
       vite:
-        specifier: ^5.1.1
-        version: 5.4.8(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+        specifier: ^5.4.10
+        version: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       vite-plugin-top-level-await:
         specifier: ^1.4.1
-        version: 1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.8(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+        version: 1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
       vite-plugin-wasm:
         specifier: ^3.3.0
-        version: 3.3.0(vite@5.4.8(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+        version: 3.3.0(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
       vitest:
-        specifier: ^1.3.1
-        version: 1.6.0(@types/node@22.7.4)(@vitest/browser@1.6.0)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@22.7.4)(@vitest/browser@2.1.4)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(sass@1.79.4)(terser@5.34.1)
       vm-browserify:
         specifier: ^1.1.2
         version: 1.1.2
       webdriverio:
-        specifier: ^8.32.3
+        specifier: ^8.40.6
         version: 8.40.6
       webpack:
         specifier: ^5.90.1
@@ -4511,8 +4557,8 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/react-native-quick-sqlite@2.1.0':
-    resolution: {integrity: sha512-cZHjL6fw91KtcnAfgSutqrKd1dRaAVZKrel3btdC9xBAWpcEyu2t+6f18zZVqiAwkCe+XP1bKTtemm6p5gRP/g==}
+  '@journeyapps/react-native-quick-sqlite@2.1.2':
+    resolution: {integrity: sha512-pID4cnAmLPvhzHt0fWsvpjr1y0X8Y2mKpuSV6/7rzJ0FB0MYxYJXYMYln1dkLyU60kfDFLFT2E422CkqDpLpbA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -4522,6 +4568,9 @@ packages:
 
   '@journeyapps/wa-sqlite@0.4.1':
     resolution: {integrity: sha512-a964h8f+6PSVfg3kxhLF2FwAqPdlY4gaWYIV6nnwJbdUhfjUcHDdL5njkw7egwmjEIG9rbIuxRsEqANcQ/bTwQ==}
+
+  '@journeyapps/wa-sqlite@0.4.2':
+    resolution: {integrity: sha512-xdpDLbyC/DHkNcnXCfgBXUgfy+ff1w/sxVY6mjdGP8F4bgxnSQfUyN8+PNE2nTgYUx4y5ar57MEnSty4zjIm7Q==}
 
   '@jridgewell/gen-mapping@0.3.5':
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -10090,6 +10139,95 @@ packages:
   dotenv@16.4.5:
     resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
     engines: {node: '>=12'}
+
+  drizzle-orm@0.35.2:
+    resolution: {integrity: sha512-bLQtRchl8QvRo2MyG6kcZC90UDzR7Ubir4YwOHV3cZPdJbF+4jU/Yt0QOczsoXe25wLRt6CtCWLXtSDQKft3yg==}
+    peerDependencies:
+      '@aws-sdk/client-rds-data': '>=3'
+      '@cloudflare/workers-types': '>=3'
+      '@electric-sql/pglite': '>=0.1.1'
+      '@libsql/client': '>=0.10.0'
+      '@neondatabase/serverless': '>=0.1'
+      '@op-engineering/op-sqlite': '>=2'
+      '@opentelemetry/api': ^1.4.1
+      '@planetscale/database': '>=1'
+      '@prisma/client': '*'
+      '@tidbcloud/serverless': '*'
+      '@types/better-sqlite3': '*'
+      '@types/pg': '*'
+      '@types/react': '>=18'
+      '@types/sql.js': '*'
+      '@vercel/postgres': '>=0.8.0'
+      '@xata.io/client': '*'
+      better-sqlite3: '>=7'
+      bun-types: '*'
+      expo-sqlite: '>=13.2.0'
+      knex: '*'
+      kysely: '*'
+      mysql2: '>=2'
+      pg: '>=8'
+      postgres: '>=3'
+      prisma: '*'
+      react: '>=18'
+      sql.js: '>=1'
+      sqlite3: '>=5'
+    peerDependenciesMeta:
+      '@aws-sdk/client-rds-data':
+        optional: true
+      '@cloudflare/workers-types':
+        optional: true
+      '@electric-sql/pglite':
+        optional: true
+      '@libsql/client':
+        optional: true
+      '@neondatabase/serverless':
+        optional: true
+      '@op-engineering/op-sqlite':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+      '@planetscale/database':
+        optional: true
+      '@prisma/client':
+        optional: true
+      '@tidbcloud/serverless':
+        optional: true
+      '@types/better-sqlite3':
+        optional: true
+      '@types/pg':
+        optional: true
+      '@types/react':
+        optional: true
+      '@types/sql.js':
+        optional: true
+      '@vercel/postgres':
+        optional: true
+      '@xata.io/client':
+        optional: true
+      better-sqlite3:
+        optional: true
+      bun-types:
+        optional: true
+      expo-sqlite:
+        optional: true
+      knex:
+        optional: true
+      kysely:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      postgres:
+        optional: true
+      prisma:
+        optional: true
+      react:
+        optional: true
+      sql.js:
+        optional: true
+      sqlite3:
+        optional: true
 
   dtrace-provider@0.8.8:
     resolution: {integrity: sha512-b7Z7cNtHPhH9EJhNNbbeqTcXB8LGFFZhq1PGgEvpeHlzd36bhbdTWoE/Ba/YguqpBSlAPKnARWhVlhunCMwfxg==}
@@ -18935,9 +19073,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.8(@babel/core@7.25.7)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.25.7
+      '@babel/core': 7.24.5
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -24024,6 +24162,12 @@ snapshots:
       '@inquirer/type': 3.0.0(@types/node@20.17.6)
       '@types/node': 20.17.6
 
+  '@inquirer/confirm@5.0.1(@types/node@22.7.4)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.7.4)
+      '@inquirer/type': 3.0.0(@types/node@22.7.4)
+      '@types/node': 22.7.4
+
   '@inquirer/core@10.0.1(@types/node@20.16.10)':
     dependencies:
       '@inquirer/figures': 1.0.7
@@ -24043,6 +24187,20 @@ snapshots:
     dependencies:
       '@inquirer/figures': 1.0.7
       '@inquirer/type': 3.0.0(@types/node@20.17.6)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      strip-ansi: 6.0.1
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@inquirer/core@10.0.1(@types/node@22.7.4)':
+    dependencies:
+      '@inquirer/figures': 1.0.7
+      '@inquirer/type': 3.0.0(@types/node@22.7.4)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -24148,6 +24306,10 @@ snapshots:
   '@inquirer/type@3.0.0(@types/node@20.17.6)':
     dependencies:
       '@types/node': 20.17.6
+
+  '@inquirer/type@3.0.0(@types/node@22.7.4)':
+    dependencies:
+      '@types/node': 22.7.4
 
   '@ionic/cli-framework-output@2.2.8':
     dependencies:
@@ -24338,22 +24500,22 @@ snapshots:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  '@journeyapps/react-native-quick-sqlite@2.1.0(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@2.1.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@2.1.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
-  '@journeyapps/react-native-quick-sqlite@2.1.0(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
@@ -24361,6 +24523,8 @@ snapshots:
   '@journeyapps/wa-sqlite@0.0.0-dev-20241118114831': {}
 
   '@journeyapps/wa-sqlite@0.4.1': {}
+
+  '@journeyapps/wa-sqlite@0.4.2': {}
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
@@ -26648,7 +26812,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -27876,7 +28040,7 @@ snapshots:
       fs-extra: 11.2.0
       get-tsconfig: 4.8.1
       lodash.debounce: 4.0.8
-      typescript: 5.5.4
+      typescript: 5.6.3
 
   '@tamagui/button@1.79.6(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
@@ -29526,14 +29690,13 @@ snapshots:
       vite: 5.4.8(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       vue: 3.4.21(typescript@5.5.4)
 
-  '@vitest/browser@1.6.0(vitest@1.6.0)(webdriverio@8.40.6)':
+  '@vitest/browser@1.6.0(vitest@1.6.0)':
     dependencies:
       '@vitest/utils': 1.6.0
-      magic-string: 0.30.11
+      magic-string: 0.30.12
       sirv: 2.0.4
       vitest: 1.6.0(@types/node@22.7.4)(@vitest/browser@1.6.0)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
-    optionalDependencies:
-      webdriverio: 8.40.6
+    optional: true
 
   '@vitest/browser@2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.8)':
     dependencies:
@@ -29549,6 +29712,27 @@ snapshots:
       ws: 8.18.0
     optionalDependencies:
       webdriverio: 9.2.8
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - vite
+
+  '@vitest/browser@2.1.4(@types/node@22.7.4)(typescript@5.5.4)(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@8.40.6)':
+    dependencies:
+      '@testing-library/dom': 10.4.0
+      '@testing-library/user-event': 14.5.2(@testing-library/dom@10.4.0)
+      '@vitest/mocker': 2.1.4(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      '@vitest/utils': 2.1.4
+      magic-string: 0.30.12
+      msw: 2.6.0(@types/node@22.7.4)(typescript@5.5.4)
+      sirv: 3.0.0
+      tinyrainbow: 1.2.0
+      vitest: 2.1.4(@types/node@22.7.4)(@vitest/browser@2.1.4)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(sass@1.79.4)(terser@5.34.1)
+      ws: 8.18.0
+    optionalDependencies:
+      webdriverio: 8.40.6
     transitivePeerDependencies:
       - '@types/node'
       - bufferutil
@@ -29593,6 +29777,15 @@ snapshots:
     optionalDependencies:
       msw: 2.6.0(@types/node@20.17.6)(typescript@5.6.3)
       vite: 5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+
+  '@vitest/mocker@2.1.4(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))':
+    dependencies:
+      '@vitest/spy': 2.1.4
+      estree-walker: 3.0.3
+      magic-string: 0.30.12
+    optionalDependencies:
+      msw: 2.6.0(@types/node@22.7.4)(typescript@5.5.4)
+      vite: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
 
   '@vitest/pretty-format@2.1.2':
     dependencies:
@@ -32423,6 +32616,13 @@ snapshots:
 
   dotenv@16.4.5: {}
 
+  drizzle-orm@0.35.2(@op-engineering/op-sqlite@9.2.1(react@18.3.1))(@types/react@18.3.11)(kysely@0.27.4)(react@18.3.1):
+    optionalDependencies:
+      '@op-engineering/op-sqlite': 9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)
+      '@types/react': 18.3.11
+      kysely: 0.27.4
+      react: 18.3.1
+
   dtrace-provider@0.8.8:
     dependencies:
       nan: 2.20.0
@@ -33038,7 +33238,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1
@@ -37713,6 +37913,31 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4):
+    dependencies:
+      '@bundled-es-modules/cookie': 2.0.0
+      '@bundled-es-modules/statuses': 1.0.1
+      '@bundled-es-modules/tough-cookie': 0.1.6
+      '@inquirer/confirm': 5.0.1(@types/node@22.7.4)
+      '@mswjs/interceptors': 0.36.9
+      '@open-draft/deferred-promise': 2.2.0
+      '@open-draft/until': 2.1.0
+      '@types/cookie': 0.6.0
+      '@types/statuses': 2.0.5
+      chalk: 4.1.2
+      graphql: 16.8.1
+      headers-polyfill: 4.0.3
+      is-node-process: 1.2.0
+      outvariant: 1.4.3
+      path-to-regexp: 6.3.0
+      strict-event-emitter: 0.5.1
+      type-fest: 4.26.1
+      yargs: 17.7.2
+    optionalDependencies:
+      typescript: 5.5.4
+    transitivePeerDependencies:
+      - '@types/node'
+
   muggle-string@0.4.1: {}
 
   multicast-dns@7.2.5:
@@ -39356,10 +39581,8 @@ snapshots:
       which: 2.0.2
       yargs: 17.7.2
     transitivePeerDependencies:
-      - bufferutil
       - supports-color
       - typescript
-      - utf-8-validate
 
   react-native-elements@3.4.3(react-native-safe-area-context@4.10.5(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0))(react-native-vector-icons@10.2.0)(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0):
     dependencies:
@@ -42613,6 +42836,23 @@ snapshots:
       - supports-color
       - terser
 
+  vite-node@2.1.4(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1):
+    dependencies:
+      cac: 6.7.14
+      debug: 4.3.7(supports-color@8.1.1)
+      pathe: 1.1.2
+      vite: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+    transitivePeerDependencies:
+      - '@types/node'
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
   vite-plugin-pwa@0.19.8(vite@5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(workbox-build@7.1.1(@types/babel__core@7.20.5))(workbox-window@7.1.0):
     dependencies:
       debug: 4.3.7(supports-color@8.1.1)
@@ -42673,6 +42913,16 @@ snapshots:
       - '@swc/helpers'
       - rollup
 
+  vite-plugin-top-level-await@1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)):
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.24.0)
+      '@swc/core': 1.7.26(@swc/helpers@0.5.5)
+      uuid: 10.0.0
+      vite: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+
   vite-plugin-top-level-await@1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
       '@rollup/plugin-virtual': 3.0.2(rollup@4.24.0)
@@ -42707,6 +42957,10 @@ snapshots:
   vite-plugin-wasm@3.3.0(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
       vite: 5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+
+  vite-plugin-wasm@3.3.0(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)):
+    dependencies:
+      vite: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
 
   vite-plugin-wasm@3.3.0(vite@5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)):
     dependencies:
@@ -42812,7 +43066,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.7.4
-      '@vitest/browser': 1.6.0(vitest@1.6.0)(webdriverio@8.40.6)
+      '@vitest/browser': 1.6.0(vitest@1.6.0)
       jsdom: 24.1.3
     transitivePeerDependencies:
       - less
@@ -42884,6 +43138,43 @@ snapshots:
     optionalDependencies:
       '@types/node': 20.17.6
       '@vitest/browser': 2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.10(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.8)
+      jsdom: 24.1.3
+    transitivePeerDependencies:
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+
+  vitest@2.1.4(@types/node@22.7.4)(@vitest/browser@2.1.4)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(sass@1.79.4)(terser@5.34.1):
+    dependencies:
+      '@vitest/expect': 2.1.4
+      '@vitest/mocker': 2.1.4(msw@2.6.0(@types/node@22.7.4)(typescript@5.5.4))(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      '@vitest/pretty-format': 2.1.4
+      '@vitest/runner': 2.1.4
+      '@vitest/snapshot': 2.1.4
+      '@vitest/spy': 2.1.4
+      '@vitest/utils': 2.1.4
+      chai: 5.1.2
+      debug: 4.3.7(supports-color@8.1.1)
+      expect-type: 1.1.0
+      magic-string: 0.30.12
+      pathe: 1.1.2
+      std-env: 3.7.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.1
+      tinypool: 1.0.1
+      tinyrainbow: 1.2.0
+      vite: 5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      vite-node: 2.1.4(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 22.7.4
+      '@vitest/browser': 2.1.4(@types/node@22.7.4)(typescript@5.5.4)(vite@5.4.10(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@8.40.6)
       jsdom: 24.1.3
     transitivePeerDependencies:
       - less

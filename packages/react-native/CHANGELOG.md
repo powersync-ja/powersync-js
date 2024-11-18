@@ -1,5 +1,24 @@
 # @powersync/react-native
 
+## 1.15.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
+## 1.15.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+  - @powersync/react@1.5.1
+
 ## 1.14.4
 
 ### Patch Changes

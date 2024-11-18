@@ -1,7 +1,7 @@
 {
-  "name": "@powersync/kysely-driver",
-  "version": "1.0.0",
-  "description": "Kysely driver for PowerSync",
+  "name": "@powersync/drizzle-driver",
+  "version": "0.1.0",
+  "description": "Drizzle driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "author": "JOURNEYAPPS",
@@ -23,19 +23,18 @@
     "build:prod": "tsc --build --sourceMap false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest"
+    "test": "vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.21.0"
-  },
-  "dependencies": {
-    "kysely": "^0.27.4"
+    "@powersync/common": "workspace:^1.19.0",
+    "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20241118114831",
+    "@journeyapps/wa-sqlite": "^0.4.1",
     "@types/node": "^20.17.6",
     "@vitest/browser": "^2.1.4",
+    "drizzle-orm": "^0.35.2",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",

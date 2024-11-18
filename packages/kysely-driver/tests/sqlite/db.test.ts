@@ -51,13 +51,11 @@ describe('CRUD operations', () => {
     expect(result.name).toEqual('James Smith');
   });
 
-
   it('should insert a user and update that user within a transaction when raw sql is used', async () => {
     await db.transaction().execute(async (transaction) => {
-      await sql`INSERT INTO users (id, name) VALUES ('4', 'James');`.execute(transaction)
+      await sql`INSERT INTO users (id, name) VALUES ('4', 'James');`.execute(transaction);
       await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
     });
-    console.log(await db.selectFrom('users').selectAll().execute())
     const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();
 
     expect(result.name).toEqual('James Smith');

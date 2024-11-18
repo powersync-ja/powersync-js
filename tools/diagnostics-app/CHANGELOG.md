@@ -1,5 +1,36 @@
 # diagnostics-app
 
+## 0.7.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+- Updated dependencies [fa26eb4]
+  - @powersync/web@1.10.2
+
+## 0.7.0
+
+### Minor Changes
+
+- 677d782: Improved error messages for some token or endpoint issues
+- db84a30: Support specifying client parameter types
+
+## 0.6.5
+
+### Patch Changes
+
+- Updated dependencies [e9773d9]
+  - @powersync/web@1.10.1
+
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/web@1.10.0
+  - @powersync/react@1.5.1
+
 ## 0.6.3
 
 ### Patch Changes

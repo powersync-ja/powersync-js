@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.21.0
+
+### Minor Changes
+
+- 7b49661: Updated watch functions to recalculate depedendent tables if schema is updated.
+
 ## 1.20.2
 
 ### Patch Changes
