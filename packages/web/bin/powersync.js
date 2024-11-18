@@ -36,6 +36,6 @@ async function copyDirectory(source, destination) {
     await fsPromise.cp(source, destination, { recursive: true });
     console.log(`Assets copied from ${source} to ${destination}`);
   } catch (err) {
-    console.error(`Error copying directory: ${err.message}`);
+    console.error(`Error copying assets: ${err.message}`);
   }
 }
