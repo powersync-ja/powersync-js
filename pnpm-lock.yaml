@@ -690,10 +690,10 @@ importers:
         version: 6.3.1(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-router:
         specifier: ^3.5.15
-        version: 3.5.21(4zj2oqn5mqa2u4b4ptcn2bpgaq)
+        version: 3.5.21(jkwxlpmfbfhcgszmypnf2vq7pa)
       expo-splash-screen:
         specifier: ~0.27.4
-        version: 0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
+        version: 0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-status-bar:
         specifier: ~1.12.1
         version: 1.12.1
@@ -745,7 +745,7 @@ importers:
         version: 18.3.11
       eas-cli:
         specifier: ^7.2.0
-        version: 7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(typescript@5.3.3)
+        version: 7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(typescript@5.3.3)
       eslint:
         specifier: 8.55.0
         version: 8.55.0
@@ -1892,6 +1892,9 @@ importers:
       comlink:
         specifier: ^4.4.1
         version: 4.4.1
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
       js-logger:
         specifier: ^1.6.1
         version: 1.6.1
@@ -23874,7 +23877,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@expo/prebuild-config@6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.1)':
+  '@expo/prebuild-config@6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.3)':
     dependencies:
       '@expo/config': 8.5.4
       '@expo/config-plugins': 7.8.4
@@ -23882,28 +23885,10 @@ snapshots:
       '@expo/image-utils': 0.4.2(encoding@0.1.13)
       '@expo/json-file': 8.2.37
       debug: 4.3.7(supports-color@8.1.1)
-      expo-modules-autolinking: 1.11.1
+      expo-modules-autolinking: 1.11.3
       fs-extra: 9.1.0
       resolve-from: 5.0.0
       semver: 7.5.3
-      xml2js: 0.6.0
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
-  '@expo/prebuild-config@7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)':
-    dependencies:
-      '@expo/config': 9.0.4
-      '@expo/config-plugins': 8.0.10
-      '@expo/config-types': 51.0.3
-      '@expo/image-utils': 0.5.1(encoding@0.1.13)
-      '@expo/json-file': 8.3.3
-      '@react-native/normalize-colors': 0.74.84
-      debug: 4.3.7(supports-color@8.1.1)
-      expo-modules-autolinking: 1.11.1
-      fs-extra: 9.1.0
-      resolve-from: 5.0.0
-      semver: 7.6.3
       xml2js: 0.6.0
     transitivePeerDependencies:
       - encoding
@@ -32725,7 +32710,7 @@ snapshots:
 
   duplexer@0.1.2: {}
 
-  eas-cli@7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(typescript@5.3.3):
+  eas-cli@7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(typescript@5.3.3):
     dependencies:
       '@expo/apple-utils': 1.7.0
       '@expo/code-signing-certificates': 0.0.5
@@ -32743,7 +32728,7 @@ snapshots:
       '@expo/plist': 0.0.20
       '@expo/plugin-help': 5.1.23(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(typescript@5.3.3)
       '@expo/plugin-warn-if-update-available': 2.5.1(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(typescript@5.3.3)
-      '@expo/prebuild-config': 6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
+      '@expo/prebuild-config': 6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
       '@expo/results': 1.0.0
       '@expo/rudder-sdk-node': 1.1.1(encoding@0.1.13)
       '@expo/spawn-async': 1.7.0
@@ -33983,7 +33968,7 @@ snapshots:
     dependencies:
       invariant: 2.2.4
 
-  expo-router@3.5.21(4zj2oqn5mqa2u4b4ptcn2bpgaq):
+  expo-router@3.5.21(jkwxlpmfbfhcgszmypnf2vq7pa):
     dependencies:
       '@expo/metro-runtime': 3.2.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))
       '@expo/server': 0.4.4(typescript@5.3.3)
@@ -33994,7 +33979,7 @@ snapshots:
       expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
       expo-constants: 16.0.2(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-linking: 6.3.1(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
-      expo-splash-screen: 0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
+      expo-splash-screen: 0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-status-bar: 1.12.1
       react-native-helmet-async: 2.0.4(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
@@ -34103,15 +34088,6 @@ snapshots:
     dependencies:
       expo: 51.0.37(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
 
-  expo-splash-screen@0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
-    dependencies:
-      '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
-    transitivePeerDependencies:
-      - encoding
-      - expo-modules-autolinking
-      - supports-color
-
   expo-splash-screen@0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
     dependencies:
       '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
@@ -34134,15 +34110,6 @@ snapshots:
     dependencies:
       '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
       expo: 51.0.37(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
-    transitivePeerDependencies:
-      - encoding
-      - expo-modules-autolinking
-      - supports-color
-
-  expo-splash-screen@0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
-    dependencies:
-      '@expo/prebuild-config': 7.0.8(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
-      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - expo-modules-autolinking
