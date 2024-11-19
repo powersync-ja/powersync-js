@@ -57,8 +57,8 @@ importers:
         specifier: ^18.1.1
         version: 18.2.7(@angular/common@18.2.7(@angular/core@18.2.7(rxjs@7.8.1)(zone.js@0.14.10))(rxjs@7.8.1))(@angular/core@18.2.7(rxjs@7.8.1)(zone.js@0.14.10))
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
@@ -245,8 +245,8 @@ importers:
         specifier: latest
         version: 6.0.2(@capacitor/core@6.1.2)
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -303,8 +303,8 @@ importers:
         specifier: ^11.13.0
         version: 11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@mui/icons-material':
         specifier: ^5.15.16
         version: 5.16.7(@mui/material@5.16.7(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.2.0))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
@@ -424,8 +424,8 @@ importers:
         specifier: ^5.0.13
         version: 5.1.0
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@lexical/react':
         specifier: ^0.15.0
         version: 0.15.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.19)
@@ -544,8 +544,8 @@ importers:
   demos/react-multi-client:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -690,10 +690,10 @@ importers:
         version: 6.3.1(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-router:
         specifier: ^3.5.15
-        version: 3.5.21(jkwxlpmfbfhcgszmypnf2vq7pa)
+        version: 3.5.21(4zj2oqn5mqa2u4b4ptcn2bpgaq)
       expo-splash-screen:
         specifier: ~0.27.4
-        version: 0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
+        version: 0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-status-bar:
         specifier: ~1.12.1
         version: 1.12.1
@@ -745,7 +745,7 @@ importers:
         version: 18.3.11
       eas-cli:
         specifier: ^7.2.0
-        version: 7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(typescript@5.3.3)
+        version: 7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(typescript@5.3.3)
       eslint:
         specifier: 8.55.0
         version: 8.55.0
@@ -1067,8 +1067,8 @@ importers:
         specifier: 11.11.5
         version: 11.11.5(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@mui/icons-material':
         specifier: ^5.15.12
         version: 5.16.7(@mui/material@5.16.7(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@types/react@18.3.11)(react@18.2.0)
@@ -1319,8 +1319,8 @@ importers:
         specifier: ^5.0.12
         version: 5.1.0
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@lexical/react':
         specifier: ^0.11.3
         version: 0.11.3(lexical@0.11.3)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(yjs@13.6.19)
@@ -1651,8 +1651,8 @@ importers:
         version: 0.27.4
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -1900,8 +1900,8 @@ importers:
         version: 1.6.1
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@types/uuid':
         specifier: ^9.0.6
         version: 9.0.8
@@ -1960,8 +1960,8 @@ importers:
   tools/diagnostics-app:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^0.4.2
-        version: 0.4.2
+        specifier: ^1.0.0
+        version: 1.0.0
       '@mui/material':
         specifier: ^5.15.12
         version: 5.16.7(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.2.0))(@emotion/styled@11.13.0(@emotion/react@11.13.3(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react@18.2.0))(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4571,6 +4571,9 @@ packages:
 
   '@journeyapps/wa-sqlite@0.4.2':
     resolution: {integrity: sha512-xdpDLbyC/DHkNcnXCfgBXUgfy+ff1w/sxVY6mjdGP8F4bgxnSQfUyN8+PNE2nTgYUx4y5ar57MEnSty4zjIm7Q==}
+
+  '@journeyapps/wa-sqlite@1.0.0':
+    resolution: {integrity: sha512-Quz3LhWHqTXK061RBx7Txq0JzIm0+jgtRV+94qoddw/mLbZDZQmi1dZvPu7IqO+1mpBqce3LbDrytWhp1GhGcA==}
 
   '@jridgewell/gen-mapping@0.3.5':
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -19073,9 +19076,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.8(@babel/core@7.25.7)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.24.5
+      '@babel/core': 7.25.7
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -23711,7 +23714,7 @@ snapshots:
       fs-extra: 9.0.0
       getenv: 1.0.0
       jimp-compact: 0.16.1
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.7.0(encoding@0.1.13)
       parse-png: 2.1.0
       resolve-from: 5.0.0
       semver: 7.3.2
@@ -23877,18 +23880,36 @@ snapshots:
       - supports-color
       - typescript
 
-  '@expo/prebuild-config@6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.3)':
+  '@expo/prebuild-config@6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.1)':
     dependencies:
       '@expo/config': 8.5.4
       '@expo/config-plugins': 7.8.4
       '@expo/config-types': 50.0.0
       '@expo/image-utils': 0.4.2(encoding@0.1.13)
-      '@expo/json-file': 8.2.37
+      '@expo/json-file': 8.3.3
       debug: 4.3.7(supports-color@8.1.1)
-      expo-modules-autolinking: 1.11.3
+      expo-modules-autolinking: 1.11.1
       fs-extra: 9.1.0
       resolve-from: 5.0.0
       semver: 7.5.3
+      xml2js: 0.6.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@expo/prebuild-config@7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)':
+    dependencies:
+      '@expo/config': 9.0.4
+      '@expo/config-plugins': 8.0.10
+      '@expo/config-types': 51.0.3
+      '@expo/image-utils': 0.5.1(encoding@0.1.13)
+      '@expo/json-file': 8.3.3
+      '@react-native/normalize-colors': 0.74.84
+      debug: 4.3.7(supports-color@8.1.1)
+      expo-modules-autolinking: 1.11.1
+      fs-extra: 9.1.0
+      resolve-from: 5.0.0
+      semver: 7.6.3
       xml2js: 0.6.0
     transitivePeerDependencies:
       - encoding
@@ -24505,6 +24526,8 @@ snapshots:
   '@journeyapps/wa-sqlite@0.4.1': {}
 
   '@journeyapps/wa-sqlite@0.4.2': {}
+
+  '@journeyapps/wa-sqlite@1.0.0': {}
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
@@ -26857,7 +26880,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -32710,7 +32733,7 @@ snapshots:
 
   duplexer@0.1.2: {}
 
-  eas-cli@7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(typescript@5.3.3):
+  eas-cli@7.8.5(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(typescript@5.3.3):
     dependencies:
       '@expo/apple-utils': 1.7.0
       '@expo/code-signing-certificates': 0.0.5
@@ -32728,7 +32751,7 @@ snapshots:
       '@expo/plist': 0.0.20
       '@expo/plugin-help': 5.1.23(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(typescript@5.3.3)
       '@expo/plugin-warn-if-update-available': 2.5.1(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@22.7.4)(typescript@5.3.3)
-      '@expo/prebuild-config': 6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
+      '@expo/prebuild-config': 6.7.3(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
       '@expo/results': 1.0.0
       '@expo/rudder-sdk-node': 1.1.1(encoding@0.1.13)
       '@expo/spawn-async': 1.7.0
@@ -33318,7 +33341,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1
@@ -33968,7 +33991,7 @@ snapshots:
     dependencies:
       invariant: 2.2.4
 
-  expo-router@3.5.21(jkwxlpmfbfhcgszmypnf2vq7pa):
+  expo-router@3.5.21(4zj2oqn5mqa2u4b4ptcn2bpgaq):
     dependencies:
       '@expo/metro-runtime': 3.2.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))
       '@expo/server': 0.4.4(typescript@5.3.3)
@@ -33979,7 +34002,7 @@ snapshots:
       expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
       expo-constants: 16.0.2(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-linking: 6.3.1(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
-      expo-splash-screen: 0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
+      expo-splash-screen: 0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13))
       expo-status-bar: 1.12.1
       react-native-helmet-async: 2.0.4(react@18.2.0)
       react-native-safe-area-context: 4.10.1(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
@@ -34088,6 +34111,15 @@ snapshots:
     dependencies:
       expo: 51.0.37(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
 
+  expo-splash-screen@0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
+    dependencies:
+      '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
+      - expo-modules-autolinking
+      - supports-color
+
   expo-splash-screen@0.27.5(encoding@0.1.13)(expo-modules-autolinking@1.11.3)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
     dependencies:
       '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
@@ -34110,6 +34142,15 @@ snapshots:
     dependencies:
       '@expo/prebuild-config': 7.0.6(encoding@0.1.13)(expo-modules-autolinking@1.11.3)
       expo: 51.0.37(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
+      - expo-modules-autolinking
+      - supports-color
+
+  expo-splash-screen@0.27.6(encoding@0.1.13)(expo-modules-autolinking@1.11.1)(expo@51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)):
+    dependencies:
+      '@expo/prebuild-config': 7.0.8(encoding@0.1.13)(expo-modules-autolinking@1.11.1)
+      expo: 51.0.27(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - expo-modules-autolinking
