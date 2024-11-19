@@ -50,7 +50,7 @@ bucket_definitions:
 
 ### Configure the app
 
-#### 1. Set up environment variables: 
+#### 1. Set up environment variables:
 
 Copy the `.env.local.template` file:
 
@@ -65,7 +65,7 @@ Then edit `.env.local` to insert your Supabase and PowerSync project credentials
 This is required for the React Native Web implementation. Learn more in [our docs](https://docs.powersync.com/client-sdk-references/react-native-and-expo/react-native-web-support).
 
 ```bash
-mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
+pnpm powersync-web copy-assets
 ```
 
 ### Run the app
