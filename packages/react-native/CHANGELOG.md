@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.16.0
+
+### Minor Changes
+
+- d1d740d: Update RNQS to v 2.2.0 for Expo 52 and RN 0.76 support
+
 ## 1.15.1
 
 ### Patch Changes
