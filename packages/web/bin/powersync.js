@@ -4,11 +4,12 @@ const { Command } = require('commander');
 const program = new Command();
 const path = require('path');
 const fsPromise = require('fs/promises');
-
+const { version } = require('../package.json');
+  
 program
   .name('powersync-web')
   .description('CLI for PowerSync Web SDK utilities')
-  .version('0.0.1');
+  .version(version);
 
 program
   .command('copy-assets')
@@ -37,5 +38,6 @@ async function copyDirectory(source, destination) {
     console.log(`Assets copied from ${source} to ${destination}`);
   } catch (err) {
     console.error(`Error copying assets: ${err.message}`);
+    process.exit(1);
   }
 }
