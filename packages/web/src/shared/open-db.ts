@@ -1,9 +1,9 @@
-import * as SQLite from '@journeyapps/wa-sqlite';
 import '@journeyapps/wa-sqlite';
+import * as SQLite from '@journeyapps/wa-sqlite';
+import { BatchedUpdateNotification } from '@powersync/common';
+import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
 import type { DBFunctionsInterface, OnTableChangeCallback, WASQLExecuteResult } from './types';
-import { Mutex } from 'async-mutex';
-import { BatchedUpdateNotification } from '@powersync/common';
 
 let nextId = 1;
 
@@ -15,8 +15,14 @@ export async function _openDB(
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
+  /**
+   * Register the PowerSync core SQLite extension
+   */
+  module.ccall('powersync_init_static', 'int', []);
+
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
-  const vfs = new IDBBatchAtomicVFS(dbFileName);
+  // @ts-expect-error The types for this static method are missing upstream
+  const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'exclusive' });
   sqlite3.vfs_register(vfs, true);
 
   const db = await sqlite3.open_v2(dbFileName);
@@ -37,7 +43,10 @@ export async function _openDB(
     Array.from(listeners.values()).forEach((l) => l(event));
   }
 
-  sqlite3.register_table_onchange_hook(db, (opType: number, tableName: string, rowId: number) => {
+  sqlite3.update_hook(db, (updateType: number, dbName: string | null, tableName: string | null) => {
+    if (!tableName) {
+      return;
+    }
     updatedTables.add(tableName);
     if (updateTimer == null) {
       updateTimer = setTimeout(fireUpdates, 0);
@@ -134,43 +143,41 @@ export async function _openDB(
     return _acquireExecuteLock(async (): Promise<WASQLExecuteResult> => {
       let affectedRows = 0;
 
-      const str = sqlite3.str_new(db, sql);
-      const query = sqlite3.str_value(str);
       try {
         await executeSingleStatement('BEGIN TRANSACTION');
 
-        //Prepare statement once
-        const prepared = await sqlite3.prepare_v2(db, query);
-        if (prepared === null) {
-          return {
-            rowsAffected: 0,
-            rows: { _array: [], length: 0 }
-          };
-        }
         const wrappedBindings = bindings ? bindings : [];
-        for (const binding of wrappedBindings) {
-          // TODO not sure why this is needed currently, but booleans break
-          for (let i = 0; i < binding.length; i++) {
-            const b = binding[i];
-            if (typeof b == 'boolean') {
-              binding[i] = b ? 1 : 0;
+        for await (const stmt of sqlite3.statements(db, sql)) {
+          if (stmt === null) {
+            return {
+              rowsAffected: 0,
+              rows: { _array: [], length: 0 }
+            };
+          }
+
+          //Prepare statement once
+          for (const binding of wrappedBindings) {
+            // TODO not sure why this is needed currently, but booleans break
+            for (let i = 0; i < binding.length; i++) {
+              const b = binding[i];
+              if (typeof b == 'boolean') {
+                binding[i] = b ? 1 : 0;
+              }
             }
-          }
 
-          //Reset bindings
-          sqlite3.reset(prepared.stmt);
-          if (bindings) {
-            sqlite3.bind_collection(prepared.stmt, binding);
-          }
+            if (bindings) {
+              sqlite3.bind_collection(stmt, binding);
+            }
+            const result = await sqlite3.step(stmt);
+            if (result === SQLite.SQLITE_DONE) {
+              //The value returned by sqlite3_changes() immediately after an INSERT, UPDATE or DELETE statement run on a view is always zero.
+              affectedRows += sqlite3.changes(db);
+            }
 
-          const result = await sqlite3.step(prepared.stmt);
-          if (result === SQLite.SQLITE_DONE) {
-            //The value returned by sqlite3_changes() immediately after an INSERT, UPDATE or DELETE statement run on a view is always zero.
-            affectedRows += sqlite3.changes(db);
+            sqlite3.reset(stmt);
           }
         }
-        //Finalize prepared statement
-        await sqlite3.finalize(prepared.stmt);
+
         await executeSingleStatement('COMMIT');
       } catch (err) {
         await executeSingleStatement('ROLLBACK');
@@ -178,8 +185,6 @@ export async function _openDB(
           rowsAffected: 0,
           rows: { _array: [], length: 0 }
         };
-      } finally {
-        sqlite3.str_finish(str);
       }
       const result = {
         rowsAffected: affectedRows,
