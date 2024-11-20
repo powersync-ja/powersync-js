@@ -59,11 +59,53 @@ export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
 });
 ```
 
-## Converting Drizzle Tables to PowerSync Tables
+## Schema Conversion
 
-The `toPowerSyncTable` function simplifies the process of integrating Drizzle with PowerSync. Define your Drizzle tables, convert each using `toPowerSyncTable`, and supply the converted table definitions into your PowerSync schema for a unified development experience.
+The `toPowerSyncSchema` schema function simplifies the process of integrating Drizzle with PowerSync. Define your Drizzle tables and supply the schema to the `toPowerSyncSchema` function for a unified development experience.
 
 As the PowerSync table only supports `text`, `integer`, and `real`, the same limitation extends to the Drizzle table definitions.
+
+```js
+import { toPowerSyncSchema } from '@powersync/drizzle-driver';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+// Define a Drizzle table
+const lists = sqliteTable('lists', {
+  id: text('id').primaryKey().notNull(),
+  created_at: text('created_at'),
+  name: text('name').notNull(),
+  owner_id: text('owner_id')
+});
+
+export const drizzleSchema = {
+  lists
+};
+
+export const AppSchema = toPowerSyncSchema(drizzleSchema);
+```
+
+### Defining PowerSync Options
+
+The PowerSync table definition allows additional options supported by PowerSync's app schema beyond that which are supported by Drizzle.
+They can be specified as follows. Note that these options exclude indexes as they can be specified in a Drizzle table.
+
+```js
+import { toPowerSyncSchema } from '@powersync/drizzle-driver';
+// import { toPowerSyncSchema, type DrizzleTableWithPowerSyncOptions} from '@powersync/drizzle-driver'; for TypeScript
+
+const listsWithOptions = { tableDefinition: logs, options: { localOnly: true } };
+// const listsWithOptions: DrizzleTableWithPowerSyncOptions = { tableDefinition: logs, options: { localOnly: true } }; for TypeScript
+
+export const drizzleSchemaWithOptions = {
+  lists: listsWithOptions
+};
+
+export const AppSchema = toPowerSyncSchema(drizzleSchemaWithOptions);
+```
+
+### Converting a Single Table From Drizzle to Powersync
+
+Drizzle tables can also be converted on a table-by-table basis with `toPowerSyncTable`.
 
 ```js
 import { toPowerSyncTable } from '@powersync/drizzle-driver';
@@ -79,7 +121,7 @@ const lists = sqliteTable('lists', {
 });
 
 const psLists = toPowerSyncTable(lists); // converts the Drizzle table to a PowerSync table
-// toPowerSyncTable(lists, { localOnly: true }); - th allows for PowerSync table configuration
+// toPowerSyncTable(lists, { localOnly: true }); - allows for PowerSync table configuration
 
 export const AppSchema = new Schema({
   lists: psLists // names the table `lists` in the PowerSync schema
