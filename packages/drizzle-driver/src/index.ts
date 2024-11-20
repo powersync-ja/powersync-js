@@ -1,18 +1,26 @@
 import { wrapPowerSyncWithDrizzle, type PowerSyncSQLiteDatabase } from './sqlite/db';
 import { toCompilableQuery } from './utils/compilableQuery';
 import {
-  toPowerSyncTable,
   toPowerSyncSchema,
-  DrizzleTablePowerSyncOptions,
-  DrizzleTableWithPowerSyncOptions
+  toPowerSyncTable,
+  type DrizzleTablePowerSyncOptions,
+  type DrizzleTableWithPowerSyncOptions,
+  type Expand,
+  type ExtractPowerSyncColumns,
+  type TableName,
+  type TablesFromSchemaEntries
 } from './utils/schema';
 
 export {
-  wrapPowerSyncWithDrizzle,
-  toCompilableQuery,
-  toPowerSyncTable,
-  toPowerSyncSchema,
   DrizzleTablePowerSyncOptions,
   DrizzleTableWithPowerSyncOptions,
-  PowerSyncSQLiteDatabase
+  Expand,
+  ExtractPowerSyncColumns,
+  PowerSyncSQLiteDatabase,
+  TableName,
+  TablesFromSchemaEntries,
+  toCompilableQuery,
+  toPowerSyncSchema,
+  toPowerSyncTable,
+  wrapPowerSyncWithDrizzle
 };

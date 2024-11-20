@@ -1,5 +1,5 @@
 import { column, IndexShorthand, Schema, Table, type BaseColumnType, type TableV2Options } from '@powersync/common';
-import { isTable, Relations } from 'drizzle-orm';
+import { InferSelectModel, isTable, Relations } from 'drizzle-orm';
 import {
   getTableConfig,
   SQLiteInteger,
@@ -9,10 +9,16 @@ import {
   type TableConfig
 } from 'drizzle-orm/sqlite-core';
 
-export function toPowerSyncTable<T extends TableConfig>(
-  table: SQLiteTableWithColumns<T>,
+export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
+  [K in keyof InferSelectModel<T> as K extends 'id' ? never : K]: BaseColumnType<InferSelectModel<T>[K]>;
+};
+
+export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
+
+export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
+  table: T,
   options?: Omit<TableV2Options, 'indexes'>
-) {
+): Table<Expand<ExtractPowerSyncColumns<T>>> {
   const { columns: drizzleColumns, indexes: drizzleIndexes } = getTableConfig(table);
 
   const columns: { [key: string]: BaseColumnType<number | string | null> } = {};
@@ -52,7 +58,7 @@ export function toPowerSyncTable<T extends TableConfig>(
 
     indexes[index.config.name] = columns;
   }
-  return new Table(columns, { ...options, indexes });
+  return new Table(columns, { ...options, indexes }) as Table<Expand<ExtractPowerSyncColumns<T>>>;
 }
 
 export type DrizzleTablePowerSyncOptions = Omit<TableV2Options, 'indexes'>;
@@ -62,9 +68,28 @@ export type DrizzleTableWithPowerSyncOptions = {
   options?: DrizzleTablePowerSyncOptions | undefined;
 };
 
-export function toPowerSyncSchema(
-  schemaEntries: Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
-) {
+export type TableName<T> =
+  T extends SQLiteTableWithColumns<any>
+    ? T['_']['name']
+    : T extends DrizzleTableWithPowerSyncOptions
+      ? T['tableDefinition']['_']['name']
+      : never;
+
+export type TablesFromSchemaEntries<T> = {
+  [K in keyof T as T[K] extends Relations
+    ? never
+    : T[K] extends SQLiteTableWithColumns<any> | DrizzleTableWithPowerSyncOptions
+      ? TableName<T[K]>
+      : never]: T[K] extends SQLiteTableWithColumns<any>
+    ? Table<Expand<ExtractPowerSyncColumns<T[K]>>>
+    : T[K] extends DrizzleTableWithPowerSyncOptions
+      ? Table<Expand<ExtractPowerSyncColumns<T[K]['tableDefinition']>>>
+      : never;
+};
+
+export function toPowerSyncSchema<
+  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
+>(schemaEntries: T): Schema<Expand<TablesFromSchemaEntries<T>>> {
   const tables: Record<string, Table> = {};
   for (const schemaEntry of Object.values(schemaEntries)) {
     let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
@@ -84,5 +109,5 @@ export function toPowerSyncSchema(
     }
   }
 
-  return new Schema(tables);
+  return new Schema(tables) as Schema<Expand<TablesFromSchemaEntries<T>>>;
 }
