@@ -1,4 +1,5 @@
-import { column, IndexShorthand, Table, type BaseColumnType, type TableV2Options } from '@powersync/common';
+import { column, IndexShorthand, Schema, Table, type BaseColumnType, type TableV2Options } from '@powersync/common';
+import { isTable, Relations } from 'drizzle-orm';
 import {
   getTableConfig,
   SQLiteInteger,
@@ -52,4 +53,36 @@ export function toPowerSyncTable<T extends TableConfig>(
     indexes[index.config.name] = columns;
   }
   return new Table(columns, { ...options, indexes });
+}
+
+export type DrizzleTablePowerSyncOptions = Omit<TableV2Options, 'indexes'>;
+
+export type DrizzleTableWithPowerSyncOptions = {
+  tableDefinition: SQLiteTableWithColumns<any>;
+  options?: DrizzleTablePowerSyncOptions | undefined;
+};
+
+export function toPowerSyncSchema(
+  schemaEntries: Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
+) {
+  const tables: Record<string, Table> = {};
+  for (const schemaEntry of Object.values(schemaEntries)) {
+    let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
+    let maybeOptions: DrizzleTablePowerSyncOptions | undefined = undefined;
+
+    if (typeof schemaEntry === 'object' && 'tableDefinition' in schemaEntry) {
+      const tableWithOptions = schemaEntry as DrizzleTableWithPowerSyncOptions;
+      maybeTable = tableWithOptions.tableDefinition;
+      maybeOptions = tableWithOptions.options;
+    } else {
+      maybeTable = schemaEntry;
+    }
+
+    if (isTable(maybeTable)) {
+      const { name } = getTableConfig(maybeTable);
+      tables[name] = toPowerSyncTable(maybeTable as SQLiteTableWithColumns<TableConfig>, maybeOptions);
+    }
+  }
+
+  return new Schema(tables);
 }
