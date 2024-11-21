@@ -1,4 +1,4 @@
-import { wrapPowerSyncWithDrizzle, type PowerSyncSQLiteDatabase } from './sqlite/db';
+import { wrapPowerSyncWithDrizzle, type DrizzleQuery, type PowerSyncSQLiteDatabase } from './sqlite/db';
 import { toCompilableQuery } from './utils/compilableQuery';
 
-export { wrapPowerSyncWithDrizzle, toCompilableQuery, PowerSyncSQLiteDatabase };
+export { wrapPowerSyncWithDrizzle, toCompilableQuery, DrizzleQuery, PowerSyncSQLiteDatabase };

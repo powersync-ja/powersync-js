@@ -21,7 +21,7 @@ import type { DrizzleConfig } from 'drizzle-orm/utils';
 import { toCompilableQuery } from './../utils/compilableQuery';
 import { PowerSyncSQLiteSession, PowerSyncSQLiteTransactionConfig } from './sqlite-session';
 
-type WatchQuery<T> = { toSQL(): Query; execute(): Promise<T> };
+export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T> };
 
 export interface PowerSyncSQLiteDatabase<TSchema extends Record<string, unknown> = Record<string, never>>
   extends BaseSQLiteDatabase<'async', QueryResult, TSchema> {
@@ -32,7 +32,7 @@ export interface PowerSyncSQLiteDatabase<TSchema extends Record<string, unknown>
     config?: PowerSyncSQLiteTransactionConfig
   ): Promise<T>;
 
-  watch<T>(query: WatchQuery<T>, handler?: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void;
+  watch<T>(query: DrizzleQuery<T>, handler?: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void;
 }
 
 export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown> = Record<string, never>>(
@@ -63,7 +63,7 @@ export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown>
 
   const baseDatabase = new BaseSQLiteDatabase('async', dialect, session, schema) as PowerSyncSQLiteDatabase<TSchema>;
   return Object.assign(baseDatabase, {
-    watch: <T>(query: WatchQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions) => {
+    watch: <T>(query: DrizzleQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions) => {
       compilableQueryWatch(db, toCompilableQuery(query), handler, options);
     }
   });
