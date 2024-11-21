@@ -1,9 +1,9 @@
 import {
   AbstractPowerSyncDatabase,
+  compilableQueryWatch,
+  CompilableQueryWatchHandler,
   QueryResult,
-  runOnSchemaChange,
-  SQLWatchOptions,
-  WatchHandler
+  SQLWatchOptions
 } from '@powersync/common';
 import { Query } from 'drizzle-orm';
 import { DefaultLogger } from 'drizzle-orm/logger';
@@ -18,9 +18,10 @@ import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
+import { toCompilableQuery } from './../utils/compilableQuery';
 import { PowerSyncSQLiteSession, PowerSyncSQLiteTransactionConfig } from './sqlite-session';
 
-type WatchQuery = { toSQL(): Query; execute(): Promise<any> };
+type WatchQuery<T> = { toSQL(): Query; execute(): Promise<T> };
 
 export interface PowerSyncSQLiteDatabase<TSchema extends Record<string, unknown> = Record<string, never>>
   extends BaseSQLiteDatabase<'async', QueryResult, TSchema> {
@@ -31,7 +32,7 @@ export interface PowerSyncSQLiteDatabase<TSchema extends Record<string, unknown>
     config?: PowerSyncSQLiteTransactionConfig
   ): Promise<T>;
 
-  watch(query: WatchQuery, handler?: WatchHandler, options?: SQLWatchOptions): void;
+  watch<T>(query: WatchQuery<T>, handler?: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void;
 }
 
 export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown> = Record<string, never>>(
@@ -60,50 +61,10 @@ export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown>
     logger
   });
 
-  const watch = (query: WatchQuery, handler?: WatchHandler, options?: SQLWatchOptions): void => {
-    const { onResult, onError = (e: Error) => {} } = handler ?? {};
-    if (!onResult) {
-      throw new Error('onResult is required');
-    }
-
-    const watchQuery = async (abortSignal: AbortSignal) => {
-      try {
-        const toSql = query.toSQL();
-        const resolvedTables = await db.resolveTables(toSql.sql, toSql.params, options);
-
-        // Fetch initial data
-        const result = await query.execute();
-        onResult(result);
-
-        db.onChangeWithCallback(
-          {
-            onChange: async () => {
-              try {
-                const result = await query.execute();
-                onResult(result);
-              } catch (error: any) {
-                onError(error);
-              }
-            },
-            onError
-          },
-          {
-            ...(options ?? {}),
-            tables: resolvedTables,
-            // Override the abort signal since we intercept it
-            signal: abortSignal
-          }
-        );
-      } catch (error: any) {
-        onError(error);
-      }
-    };
-
-    runOnSchemaChange(watchQuery, db, options);
-  };
-
   const baseDatabase = new BaseSQLiteDatabase('async', dialect, session, schema) as PowerSyncSQLiteDatabase<TSchema>;
   return Object.assign(baseDatabase, {
-    watch: (query: WatchQuery, handler?: WatchHandler, options?: SQLWatchOptions) => watch(query, handler, options)
+    watch: <T>(query: WatchQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions) => {
+      compilableQueryWatch(db, toCompilableQuery(query), handler, options);
+    }
   });
 }
