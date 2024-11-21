@@ -22,6 +22,10 @@ export interface AttachmentQueueOptions {
    */
   performInitialSync?: boolean;
   /**
+   * Should attachments be downloaded
+   */
+  downloadAttachments?: boolean;
+  /**
    * How to handle download errors, return { retry: false } to ignore the download
    */
   onDownloadError?: (attachment: AttachmentRecord, exception: any) => Promise<{ retry?: boolean }>;
@@ -35,7 +39,8 @@ export const DEFAULT_ATTACHMENT_QUEUE_OPTIONS: Partial<AttachmentQueueOptions> =
   attachmentDirectoryName: 'attachments',
   syncInterval: 30_000,
   cacheLimit: 100,
-  performInitialSync: true
+  performInitialSync: true,
+  downloadAttachments: true
 };
 
 export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions = AttachmentQueueOptions> {
@@ -426,6 +431,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   watchDownloads() {
+    if (this.options.downloadAttachments) {
+      return;
+    }
     this.idsToDownload(async (ids) => {
       ids.map((id) => this.downloadQueue.add(id));
       // No need to await this, the lock will ensure only one loop is running at a time
@@ -434,6 +442,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   private async downloadRecords() {
+    if (this.options.downloadAttachments) {
+      return;
+    }
     if (this.downloading) {
       return;
     }
