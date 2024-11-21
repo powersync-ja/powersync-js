@@ -15,7 +15,7 @@ import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { PowerSyncDatabase } from '@powersync/web';
 import { relations } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { appSchema } from './schema';
+import { AppSchema } from './schema';
 
 export const lists = sqliteTable('lists', {
   id: text('id'),
@@ -47,22 +47,24 @@ export const drizzleSchema = {
   todosRelations
 };
 
+// As an alternative to manually defining a PowerSync schema, generate the local PowerSync schema from the Drizzle schema with `toPowerSyncSchema`:
+// import { toPowerSyncSchema } from '@powersync/drizzle-driver';
+// export const AppSchema = toPowerSyncSchema(drizzleSchema);
+//
+// This is optional, but recommended, since you will only need to maintain one schema on the client-side
+// Read on to learn more.
+
 export const powerSyncDb = new PowerSyncDatabase({
   database: {
     dbFilename: 'test.sqlite'
   },
-  schema: appSchema
+  schema: AppSchema
 });
 
 // This is the DB you will use in queries
 export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
   schema: drizzleSchema
 });
-
-// Generate the local PowerSync schema from the Drizzle schema with `toPowerSyncSchema`
-// Optional, but recommended, since you will only need to maintain one schema on the client-side
-// Read on to learn more.
-export const AppSchema = toPowerSyncSchema(drizzleSchema);
 ```
 
 ## Schema Conversion
