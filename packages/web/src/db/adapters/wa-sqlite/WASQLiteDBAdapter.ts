@@ -11,11 +11,11 @@ import {
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import Logger, { type ILogger } from 'js-logger';
+import { getNavigatorLocks } from '../../../shared/navigator';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
-import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
-import { getNavigatorLocks } from '../../../shared/navigator';
+import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
@@ -32,6 +32,8 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
   workerPort?: MessagePort;
 
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  vfs?: WASQLiteVFS;
 }
 
 /**
@@ -102,7 +104,10 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
             )
           : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, optionsDbWorker);
 
-      this.methods = await dbOpener(this.options.dbFilename);
+      this.methods = await dbOpener({
+        dbFileName: this.options.dbFilename,
+        vfs: this.options.vfs
+      });
       this.methods.registerOnTableChange(
         Comlink.proxy((event) => {
           this.iterateListeners((cb) => cb.tablesUpdated?.(event));
@@ -111,7 +116,14 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
       return;
     }
-    this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
+
+    // Not using a worker
+    const connection = new WASqliteConnection({
+      dbFileName: this.options.dbFilename
+    });
+    await connection.init();
+
+    this.methods = connection;
     this.methods.registerOnTableChange((event) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });

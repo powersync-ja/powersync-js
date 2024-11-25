@@ -4,9 +4,9 @@
 
 import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
-import { _openDB } from '../../shared/open-db';
-import type { DBFunctionsInterface } from '../../shared/types';
+import { WASQLiteOpenOptions, WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
+import type { DBFunctionsInterface } from '../../shared/types';
 
 /**
  * Keeps track of open DB connections and the clients which
@@ -22,14 +22,43 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 let nextClientId = 1;
 
-const openDBShared = async (dbFileName: string): Promise<DBFunctionsInterface> => {
+const openWorkerConnection = async (options: WASQLiteOpenOptions): Promise<DBFunctionsInterface> => {
+  const connection = new WASqliteConnection(options);
+  await connection.init();
+  return {
+    execute: async (sql: string, params?: any[]) => {
+      const result = await connection.execute(sql, params);
+      // Remove array index accessor functions
+      return {
+        rows: result.rows,
+        rowsAffected: result.rowsAffected,
+        insertId: result.insertId
+      };
+    },
+    executeBatch: async (sql: string, params?: any[]) => {
+      const result = await connection.executeBatch(sql, params);
+      // Remove array index accessor functions
+      return {
+        rows: result.rows,
+        rowsAffected: result.rowsAffected,
+        insertId: result.insertId
+      };
+    },
+    registerOnTableChange: (callback) => {
+      // Proxy the callback remove function
+      return Comlink.proxy(connection.registerOnTableChange(callback));
+    }
+  };
+};
+
+const openDBShared = async (options: WASQLiteOpenOptions): Promise<DBFunctionsInterface> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;
-
+    const { dbFileName } = options;
     if (!DBMap.has(dbFileName)) {
       const clientIds = new Set<number>();
-      const connection = await _openDB(dbFileName);
+      const connection = await openWorkerConnection(options);
       DBMap.set(dbFileName, {
         clientIds,
         db: connection
@@ -58,8 +87,8 @@ const openDBShared = async (dbFileName: string): Promise<DBFunctionsInterface> =
   });
 };
 
-const openDBDedicated = async (dbFileName: string): Promise<DBFunctionsInterface> => {
-  const connection = await _openDB(dbFileName);
+const openDBDedicated = async (options: WASQLiteOpenOptions): Promise<DBFunctionsInterface> => {
+  const connection = await openWorkerConnection(options);
   return Comlink.proxy(connection);
 };
 

@@ -3,7 +3,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase } from '@powersync/web';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
@@ -13,8 +13,14 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  database: {
-    dbFilename: 'example.db'
+  database: new WASQLiteOpenFactory({
+    dbFilename: 'examplse.db',
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    // Can't use a shared worker for OPFS
+    flags: { enableMultiTabs: false }
+  }),
+  flags: {
+    enableMultiTabs: false
   }
 });
 
