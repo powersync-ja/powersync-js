@@ -11,21 +11,45 @@ export async function _openDB(
   dbFileName: string,
   options: { useWebWorker: boolean } = { useWebWorker: true }
 ): Promise<DBFunctionsInterface> {
-  const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
+  const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs');
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
+  console.log('sqlite3', sqlite3);
 
   /**
    * Register the PowerSync core SQLite extension
    */
   module.ccall('powersync_init_static', 'int', []);
 
+  console.log('powerync init');
+
   const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
+  console.log('DbFileName', dbFileName);
   // @ts-expect-error The types for this static method are missing upstream
-  const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, { lockPolicy: 'exclusive' });
-  sqlite3.vfs_register(vfs, true);
+  const vfs = await IDBBatchAtomicVFS.create(dbFileName, module, {
+    lockPolicy: 'exclusive'
+  });
+
+  console.log('vfs before', vfs);
+  vfs.name = `multipleciphers-${dbFileName}`;
+  sqlite3.vfs_register(vfs, false);
+
+  const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [dbFileName, 1]);
+  console.log('result from creation', createResult);
+  if (createResult !== 0) {
+    throw new Error('Failed to create multiple cipher vfs');
+  }
+  console.log('vfs after', vfs);
 
   const db = await sqlite3.open_v2(dbFileName);
+  console.log('db', db);
+
+  // const pragma = await sqlite3.exec(db, 'PRAGMA key = "key"');
+  // console.log('pragma', pragma);
+  // if (pragma !== SQLite.SQLITE_OK) {
+  //   throw new Error('Failed to set key');
+  // }
+
   const statementMutex = new Mutex();
 
   /**
