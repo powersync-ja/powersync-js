@@ -26,6 +26,7 @@ const openWorkerConnection = async (options: WASQLiteOpenOptions): Promise<DBFun
   const connection = new WASqliteConnection(options);
   await connection.init();
   return {
+    close: () => connection.close(),
     execute: async (sql: string, params?: any[]) => {
       const result = await connection.execute(sql, params);
       // Remove array index accessor functions
