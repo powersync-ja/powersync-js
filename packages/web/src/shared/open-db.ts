@@ -31,8 +31,7 @@ export async function _openDB(
   });
 
   console.log('vfs before', vfs);
-  vfs.name = `multipleciphers-${dbFileName}`;
-  sqlite3.vfs_register(vfs, false);
+  sqlite3.vfs_register(vfs, true);
 
   const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [dbFileName, 1]);
   console.log('result from creation', createResult);
