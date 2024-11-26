@@ -43,8 +43,8 @@ export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
 }
 
 export enum TemporaryStorageOption {
-  MEMORY = 'PRAGMA temp_store = memory;',
-  FILESYSTEM = 'PRAGMA temp_store = file;'
+  MEMORY = 'memory;',
+  FILESYSTEM = 'file;'
 }
 
 /**

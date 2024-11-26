@@ -88,7 +88,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
-    const tempStorePragma = this.options.temporaryStorage ?? TemporaryStorageOption.MEMORY;
+    const tempStoreQuery = `PRAGMA temp_store = ${this.options.temporaryStorage ?? TemporaryStorageOption.MEMORY};`;
 
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
@@ -107,7 +107,8 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
           : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, optionsDbWorker);
 
       this.methods = await dbOpener(this.options.dbFilename);
-      await this.methods?.execute(tempStorePragma);
+
+      await this.methods?.execute(tempStoreQuery);
       this.methods.registerOnTableChange(
         Comlink.proxy((event) => {
           this.iterateListeners((cb) => cb.tablesUpdated?.(event));
@@ -117,7 +118,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       return;
     }
     this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
-    await this.methods?.execute(tempStorePragma);
+    await this.methods?.execute(tempStoreQuery);
     this.methods.registerOnTableChange((event) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });
