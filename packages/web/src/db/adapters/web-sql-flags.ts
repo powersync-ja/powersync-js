@@ -42,6 +42,11 @@ export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
   flags: ResolvedWebSQLFlags;
 }
 
+export enum TemporaryStorageOption {
+  MEMORY = 'MEMORY',
+  FILESYSTEM = 'FILESYSTEM'
+}
+
 /**
  * Options for opening a Web SQL connection
  */
@@ -55,6 +60,11 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * or a factory method that returns a worker.
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   */
+  temporaryStorage?: TemporaryStorageOption;
 }
 
 export function isServerSide() {
