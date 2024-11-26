@@ -43,8 +43,8 @@ export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
 }
 
 export enum TemporaryStorageOption {
-  MEMORY = 'memory;',
-  FILESYSTEM = 'file;'
+  MEMORY = 'memory',
+  FILESYSTEM = 'file'
 }
 
 /**
@@ -63,6 +63,7 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
 
   /**
    * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
    */
   temporaryStorage?: TemporaryStorageOption;
 }
