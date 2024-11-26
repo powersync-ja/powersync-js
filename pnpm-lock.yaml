@@ -1067,8 +1067,8 @@ importers:
         specifier: 11.11.5
         version: 11.11.5(@emotion/react@11.11.4)(@types/react@18.3.11)(react@18.2.0)
       '@journeyapps/wa-sqlite':
-        specifier: 0.0.0-dev-20241125133337
-        version: 0.0.0-dev-20241125133337
+        specifier: 0.0.0-dev-20241126093237
+        version: 0.0.0-dev-20241126093237
       '@mui/icons-material':
         specifier: ^5.15.12
         version: 5.16.7(@mui/material@5.16.7)(@types/react@18.3.11)(react@18.2.0)
@@ -1900,8 +1900,8 @@ importers:
         version: 1.6.1
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: 0.0.0-dev-20241125133337
-        version: 0.0.0-dev-20241125133337
+        specifier: 0.0.0-dev-20241126093237
+        version: 0.0.0-dev-20241126093237
       '@types/uuid':
         specifier: ^9.0.6
         version: 9.0.8
@@ -10697,8 +10697,8 @@ packages:
       react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
     dev: false
 
-  /@journeyapps/wa-sqlite@0.0.0-dev-20241125133337:
-    resolution: {integrity: sha512-/zUi+kFzsyCBnoNf5P9FcfmgFia4xdlm0Ly3a4177XPLZNOL/ziEj2t8aTk5C86+y9tkCQvaQK+NZsN6uosnbA==}
+  /@journeyapps/wa-sqlite@0.0.0-dev-20241126093237:
+    resolution: {integrity: sha512-hLAEGlzXmfapXxnWUDTT0ClHuz+oxmAoR5pBESplB4EEAUMnyNeV595/IufvFQq3WqNZ+P/RXsaJYZqY0Ji2HA==}
     requiresBuild: true
 
   /@journeyapps/wa-sqlite@0.4.2:
