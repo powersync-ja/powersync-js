@@ -55,6 +55,12 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * or a factory method that returns a worker.
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using Multiple Ciphers.
+   */
+  encryptionKey?: string;
 }
 
 export function isServerSide() {

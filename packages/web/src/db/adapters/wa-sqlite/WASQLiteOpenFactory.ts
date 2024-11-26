@@ -9,7 +9,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
   protected openAdapter(): DBAdapter {
     return new WASQLiteDBAdapter({
       ...this.options,
-      flags: this.resolvedFlags
+      flags: this.resolvedFlags,
+      encryptionKey: this.options.encryptionKey
     });
   }
 }

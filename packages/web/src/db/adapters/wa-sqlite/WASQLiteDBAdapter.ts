@@ -32,6 +32,12 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
   workerPort?: MessagePort;
 
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using SQLCipher.
+   */
+  encryptionKey?: string;
 }
 
 /**
@@ -111,7 +117,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
       return;
     }
-    this.methods = await _openDB(this.options.dbFilename, { useWebWorker: false });
+    this.methods = await _openDB(this.options.dbFilename, this.options.encryptionKey, { useWebWorker: false });
     this.methods.registerOnTableChange((event) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });
