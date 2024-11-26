@@ -88,11 +88,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
-    let tempStorePragma = 'PRAGMA temp_store = memory;';
-
-    if (this.options.temporaryStorage === TemporaryStorageOption.FILESYSTEM) {
-      tempStorePragma = 'PRAGMA temp_store = file;';
-    }
+    const tempStorePragma = this.options.temporaryStorage ?? TemporaryStorageOption.MEMORY;
 
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
