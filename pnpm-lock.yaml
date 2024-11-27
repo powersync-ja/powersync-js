@@ -1843,6 +1843,9 @@ importers:
         specifier: ^5.55.4
         version: 5.59.14(react@18.2.0)
     devDependencies:
+      '@testing-library/react':
+        specifier: ^15.0.2
+        version: 15.0.7(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/react':
         specifier: ^18.2.34
         version: 18.3.11
