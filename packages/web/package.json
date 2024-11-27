@@ -4,7 +4,11 @@
   "description": "A Web SDK for JourneyApps PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
+  "bin": {
+    "powersync-web": "bin/powersync.js"
+  },
   "files": [
+    "bin",
     "lib",
     "!lib/tests",
     "dist"
@@ -64,6 +68,7 @@
     "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
     "comlink": "^4.4.1",
+    "commander": "^12.1.0",
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
