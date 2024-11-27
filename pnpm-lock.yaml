@@ -234,16 +234,16 @@ importers:
     dependencies:
       '@capacitor/android':
         specifier: ^6.0.0
-        version: 6.1.2(@capacitor/core@6.1.2)
+        version: 6.1.2(@capacitor/core@6.2.0)
       '@capacitor/core':
         specifier: latest
-        version: 6.1.2
+        version: 6.2.0
       '@capacitor/ios':
         specifier: ^6.0.0
-        version: 6.1.2(@capacitor/core@6.1.2)
+        version: 6.1.2(@capacitor/core@6.2.0)
       '@capacitor/splash-screen':
         specifier: latest
-        version: 6.0.2(@capacitor/core@6.1.2)
+        version: 6.0.3(@capacitor/core@6.2.0)
       '@journeyapps/wa-sqlite':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1843,6 +1843,9 @@ importers:
         specifier: ^5.55.4
         version: 5.59.14(react@18.2.0)
     devDependencies:
+      '@testing-library/react':
+        specifier: ^15.0.2
+        version: 15.0.7(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/react':
         specifier: ^18.2.34
         version: 18.3.11
@@ -3199,16 +3202,16 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@capacitor/core@6.1.2':
-    resolution: {integrity: sha512-xFy1/4qLFLp5WCIzIhtwUuVNNoz36+V7/BzHmLqgVJcvotc4MMjswW/TshnPQaLLujEOaLkA4h8ZJ0uoK3ImGg==}
+  '@capacitor/core@6.2.0':
+    resolution: {integrity: sha512-B9IlJtDpUqhhYb+T8+cp2Db/3RETX36STgjeU2kQZBs/SLAcFiMama227o+msRjLeo3DO+7HJjWVA1+XlyyPEg==}
 
   '@capacitor/ios@6.1.2':
     resolution: {integrity: sha512-HaeW68KisBd/7TmavzPDlL2bpoDK5AjR2ZYrqU4TlGwM88GtQfvduBCAlSCj20X0w/4+rWMkseD9dAAkacjiyQ==}
     peerDependencies:
       '@capacitor/core': ^6.1.0
 
-  '@capacitor/splash-screen@6.0.2':
-    resolution: {integrity: sha512-WC0KYZ+ev15up03xs4fTnoTKwBVUSxXsKKQr/8XAncvi/nAG8qrpanW8OlavSC5zF5e1IZZDLsI2GSv0SkZ7VQ==}
+  '@capacitor/splash-screen@6.0.3':
+    resolution: {integrity: sha512-tpVljeNGSwVCIc8lMQkyiCQFokk2PwgYPdDtPnGjFthqmXW/WhIxW8QYl4MUqyLwwgwTEbp4u3Kcv2zqQu2L6Q==}
     peerDependencies:
       '@capacitor/core': ^6.0.0
 
@@ -19100,9 +19103,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.8(@babel/core@7.25.7)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.24.5
+      '@babel/core': 7.25.7
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -21542,9 +21545,9 @@ snapshots:
       '@types/tough-cookie': 4.0.5
       tough-cookie: 4.1.4
 
-  '@capacitor/android@6.1.2(@capacitor/core@6.1.2)':
+  '@capacitor/android@6.1.2(@capacitor/core@6.2.0)':
     dependencies:
-      '@capacitor/core': 6.1.2
+      '@capacitor/core': 6.2.0
 
   '@capacitor/cli@6.1.2':
     dependencies:
@@ -21569,17 +21572,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@6.1.2':
+  '@capacitor/core@6.2.0':
     dependencies:
       tslib: 2.7.0
 
-  '@capacitor/ios@6.1.2(@capacitor/core@6.1.2)':
+  '@capacitor/ios@6.1.2(@capacitor/core@6.2.0)':
     dependencies:
-      '@capacitor/core': 6.1.2
+      '@capacitor/core': 6.2.0
 
-  '@capacitor/splash-screen@6.0.2(@capacitor/core@6.1.2)':
+  '@capacitor/splash-screen@6.0.3(@capacitor/core@6.2.0)':
     dependencies:
-      '@capacitor/core': 6.1.2
+      '@capacitor/core': 6.2.0
 
   '@changesets/apply-release-plan@7.0.5':
     dependencies:
@@ -26897,7 +26900,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -33377,7 +33380,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1
