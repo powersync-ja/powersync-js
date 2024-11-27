@@ -7,11 +7,11 @@ import {
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
+import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
-import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -20,9 +20,14 @@ import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
-    public statusChanged: (status: SyncStatusOptions) => void
+    public statusChanged: (status: SyncStatusOptions) => void,
+    protected dbWorkerPort: MessagePort
   ) {
     super();
+  }
+
+  async getDBWorkerPort(): Promise<MessagePort> {
+    return Comlink.transfer(this.dbWorkerPort, [this.dbWorkerPort]);
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
@@ -142,7 +147,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
     const flags = { ...this.webOptions.flags, workers: undefined };
 
-    this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
+    this.isInitialized = this.syncManager.setParams({
       dbName: this.options.identifier!,
       streamOptions: {
         crudUploadThrottleMs,
@@ -155,9 +160,13 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     /**
      * Pass along any sync status updates to this listener
      */
-    this.clientProvider = new SharedSyncClientProvider(this.webOptions, (status) => {
-      this.iterateListeners((l) => this.updateSyncStatus(status));
-    });
+    this.clientProvider = new SharedSyncClientProvider(
+      this.webOptions,
+      (status) => {
+        this.iterateListeners((l) => this.updateSyncStatus(status));
+      },
+      dbOpenerPort
+    );
 
     /**
      * The sync worker will call this client provider when it needs

@@ -12,33 +12,57 @@ export enum WASQLiteVFS {
   AccessHandlePoolVFS = 'AccessHandlePoolVFS'
 }
 
+/**
+ * @internal
+ */
 export type WASQLiteConnectionListener = {
   tablesUpdated: (event: BatchedUpdateNotification) => void;
 };
 
-//   FIXME there are no types for Module
+/**
+ * @internal
+ */
 export type SQLiteModule = Parameters<typeof SQLite.Factory>[0];
+
+/**
+ * @internal
+ */
 export type WASQLiteModuleFactoryOptions = { dbFileName: string };
 
+/**
+ * @internal
+ */
 export type WASQLiteModuleFactory = (
   options: WASQLiteModuleFactoryOptions
 ) => Promise<{ module: SQLiteModule; vfs: SQLiteVFS }>;
 
+/**
+ * @internal
+ */
 export type WASQLiteOpenOptions = {
   dbFileName: string;
   vfs?: WASQLiteVFS;
 };
 
+/**
+ * @internal
+ */
 export const AsyncWASQLiteModuleFactory = async () => {
   const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
   return factory();
 };
 
+/**
+ * @internal
+ */
 export const SyncWASQLiteModuleFactory = async () => {
   const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite.mjs');
   return factory();
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_MODULE_FACTORIES = {
   [WASQLiteVFS.IDBBatchAtomicVFS]: async (options: WASQLiteModuleFactoryOptions) => {
     const module = await AsyncWASQLiteModuleFactory();
@@ -69,6 +93,9 @@ export const DEFAULT_MODULE_FACTORIES = {
   }
 };
 
+/**
+ * @internal
+ */
 export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener> {
   private _sqliteAPI: SQLiteAPI | null = null;
   private _dbP: number | null = null;
