@@ -65,6 +65,36 @@ describe('useQuery', () => {
     }, { timeout: 500 });
   });
 
+  it('should set error during query execution', async () => {
+    const mockPowerSyncError = {
+      currentStatus: { status: 'initial' },
+      registerListener: vi.fn(() => { }),
+      onChangeWithCallback: vi.fn(),
+      resolveTables: vi.fn(() => ['table1', 'table2']),
+      getAll: vi.fn(() => {
+        throw new Error('some error');
+      })
+    };
+
+    const wrapper = ({ children }) => (
+      <QueryClientProvider client={queryClient}>
+        <PowerSyncContext.Provider value={mockPowerSyncError as any}>{children}</PowerSyncContext.Provider>
+      </QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useQuery({
+      queryKey: ['lists'],
+      query: 'SELECT * from lists'
+    }), { wrapper });
+
+    await waitFor(
+      async () => {
+        expect(result.current.error).toEqual(Error('some error'));
+      },
+      { timeout: 100 }
+    );
+  });
+
   it('should execute compatible queries', async () => {
     const compilableQuery = {
       execute: () => [{ test: 'custom' }] as any,
