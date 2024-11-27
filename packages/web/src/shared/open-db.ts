@@ -14,13 +14,10 @@ export async function _openDB(
 ): Promise<DBFunctionsInterface> {
   let moduleFactory;
   if (encryptionKey) {
-    console.log('Using encrypted database');
     moduleFactory = (await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs')).default;
   } else {
-    console.log('Using unencrypted database');
     moduleFactory = (await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs')).default;
   }
-  // const { default: moduleFactory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs');
   const module = await moduleFactory();
   const sqlite3 = SQLite.Factory(module);
 
