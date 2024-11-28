@@ -1,8 +1,8 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
 import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { OnTableChangeCallback, WASQLExecuteResult } from '../../../shared/types';
-import { AsyncDatabaseConnection } from '../AsyncDatabaseConnection';
+import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
+import { ResolvedWebSQLOpenOptions } from '../web-sql-flags';
 
 /**
  * List of currently tested virtual filesystems
@@ -40,10 +40,9 @@ export type WASQLiteModuleFactory = (
 /**
  * @internal
  */
-export type WASQLiteOpenOptions = {
-  dbFileName: string;
+export interface WASQLiteOpenOptions extends ResolvedWebSQLOpenOptions {
   vfs?: WASQLiteVFS;
-};
+}
 
 /**
  * @internal
@@ -131,12 +130,12 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
   }
 
   protected async openDB() {
-    this._dbP = await this.sqliteAPI.open_v2(this.options.dbFileName);
+    this._dbP = await this.sqliteAPI.open_v2(this.options.dbFilename);
     return this._dbP;
   }
 
   protected async openSQLiteAPI(): Promise<SQLiteAPI> {
-    const { module, vfs } = await this._moduleFactory({ dbFileName: this.options.dbFileName });
+    const { module, vfs } = await this._moduleFactory({ dbFileName: this.options.dbFilename });
     const sqlite3 = SQLite.Factory(module);
     sqlite3.vfs_register(vfs, true);
     /**
@@ -172,8 +171,8 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
   /**
    * This executes SQL statements in a batch.
    */
-  async executeBatch(sql: string, bindings?: any[][]): Promise<WASQLExecuteResult> {
-    return this.acquireExecuteLock(async (): Promise<WASQLExecuteResult> => {
+  async executeBatch(sql: string, bindings?: any[][]): Promise<ProxiedQueryResult> {
+    return this.acquireExecuteLock(async (): Promise<ProxiedQueryResult> => {
       let affectedRows = 0;
 
       try {
@@ -231,7 +230,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
   /**
    * This executes single SQL statements inside a requested lock.
    */
-  async execute(sql: string | TemplateStringsArray, bindings?: any[]): Promise<WASQLExecuteResult> {
+  async execute(sql: string | TemplateStringsArray, bindings?: any[]): Promise<ProxiedQueryResult> {
     // Running multiple statements on the same connection concurrently should not be allowed
     return this.acquireExecuteLock(async () => {
       return this.executeSingleStatement(sql, bindings);
@@ -242,7 +241,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
     await this.sqliteAPI.close(this.dbP);
   }
 
-  registerOnTableChange(callback: OnTableChangeCallback) {
+  async registerOnTableChange(callback: OnTableChangeCallback) {
     return this.registerListener({
       tablesUpdated: (event) => callback(event)
     });
@@ -262,7 +261,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
   protected async executeSingleStatement(
     sql: string | TemplateStringsArray,
     bindings?: any[]
-  ): Promise<WASQLExecuteResult> {
+  ): Promise<ProxiedQueryResult> {
     const results = [];
     for await (const stmt of this.sqliteAPI.statements(this.dbP, sql as string)) {
       let columns;

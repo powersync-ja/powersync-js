@@ -1,4 +1,5 @@
 import { SQLOpenOptions } from '@powersync/common';
+import { ILogger } from 'js-logger';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -55,6 +56,8 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * or a factory method that returns a worker.
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  logger?: ILogger;
 }
 
 export function isServerSide() {

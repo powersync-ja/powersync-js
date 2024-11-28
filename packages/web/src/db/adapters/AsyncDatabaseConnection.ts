@@ -1,4 +1,4 @@
-import { BatchedUpdateNotification, QueryResult } from '@powersync/common';
+import { BatchedUpdateNotification, QueryResult, SQLOpenOptions } from '@powersync/common';
 
 /**
  * Proxied query result does not contain a function for accessing row values
@@ -21,5 +21,9 @@ export interface AsyncDatabaseConnection {
   close(): Promise<void>;
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
-  registerOnTableChange(callback: OnTableChangeCallback): () => void;
+  registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void>;
 }
+
+export type OpenAsyncDatabaseConnection<Options extends SQLOpenOptions = SQLOpenOptions> = (
+  options: Options
+) => AsyncDatabaseConnection;

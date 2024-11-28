@@ -1,6 +1,5 @@
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../worker/db/open-worker-database';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
@@ -8,6 +7,7 @@ import {
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
 import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
+import { WorkerDBAdapter } from '../adapters/WorkerDBAdapter';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -21,13 +21,17 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
     public statusChanged: (status: SyncStatusOptions) => void,
-    protected dbWorkerPort: MessagePort
+    protected dbWorkerPort: MessagePort | Worker
   ) {
     super();
   }
 
-  async getDBWorkerPort(): Promise<MessagePort> {
-    return Comlink.transfer(this.dbWorkerPort, [this.dbWorkerPort]);
+  async getDBWorkerPort(): Promise<MessagePort | Worker> {
+    // FIXME type error
+    const port = this.dbWorkerPort as MessagePort;
+
+    // TODO this can only be done once. Throw an error if multiple attempts are made
+    return Comlink.transfer(port, [port]);
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
@@ -86,6 +90,10 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   }
 }
 
+export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
+  workerDatabase: WorkerDBAdapter;
+}
+
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
   protected syncManager: Comlink.Remote<SharedSyncImplementation>;
   protected clientProvider: SharedSyncClientProvider;
@@ -93,7 +101,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   protected isInitialized: Promise<void>;
 
-  constructor(options: WebStreamingSyncImplementationOptions) {
+  constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
 
     /**
@@ -137,14 +145,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-
-    const dbWorker = options.database?.options?.worker;
-
-    const dbOpenerPort =
-      typeof dbWorker === 'function'
-        ? (resolveWorkerDatabasePortFactory(() => dbWorker(resolvedWorkerOptions)) as MessagePort)
-        : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
-
     const flags = { ...this.webOptions.flags, workers: undefined };
 
     this.isInitialized = this.syncManager.setParams({
@@ -165,7 +165,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       (status) => {
         this.iterateListeners((l) => this.updateSyncStatus(status));
       },
-      dbOpenerPort
+      options.workerDatabase.getMessagePort()
     );
 
     /**

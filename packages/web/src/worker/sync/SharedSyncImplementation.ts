@@ -20,7 +20,10 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation';
 
-import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
+import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
+import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
+import { ProxiedAsyncDatabaseConnection } from '../../db/adapters/ProxiedAsyncDatabaseConnection';
+import { WASQLiteOpenOptions } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
@@ -156,12 +159,28 @@ export class SharedSyncImplementation
     // TODO share logic here
     const lastClient = this.ports[this.ports.length - 1];
     const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-    this.dbAdapter = lastClient.db = new WASQLiteDBAdapter({
-      dbFilename: this.syncParams?.dbName!,
-      workerPort,
-      flags: { enableMultiTabs: true, useWebWorker: true },
+    const locked = new LockedAsyncDatabaseAdapter({
+      name: this.syncParams?.dbName!,
+      openConnection: async () => {
+        const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
+        return ProxiedAsyncDatabaseConnection(
+          await remote({
+            dbFilename: this.syncParams!.dbName,
+            // TODO improve
+            flags: {
+              enableMultiTabs: true,
+              useWebWorker: true,
+              broadcastLogs: true,
+              disableSSRWarning: true,
+              ssrMode: false
+            }
+          })
+        );
+      },
       logger: this.logger
     });
+    await locked.init();
+    this.dbAdapter = lastClient.db = locked;
 
     this.iterateListeners((l) => l.initialized?.());
   }
@@ -261,12 +280,28 @@ export class SharedSyncImplementation
       const lastClient = this.ports[this.ports.length - 1];
       const workerPort = await lastClient.clientProvider.getDBWorkerPort();
 
-      this.dbAdapter = lastClient.db = new WASQLiteDBAdapter({
-        dbFilename: this.syncParams?.dbName!,
-        workerPort,
-        flags: { enableMultiTabs: true, useWebWorker: true },
+      const locked = new LockedAsyncDatabaseAdapter({
+        name: this.syncParams?.dbName!,
+        openConnection: async () => {
+          const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
+          return ProxiedAsyncDatabaseConnection(
+            await remote({
+              dbFilename: this.syncParams!.dbName,
+              // TODO improve
+              flags: {
+                enableMultiTabs: true,
+                useWebWorker: true,
+                broadcastLogs: true,
+                disableSSRWarning: true,
+                ssrMode: false
+              }
+            })
+          );
+        },
         logger: this.logger
       });
+      await locked.init();
+      this.dbAdapter = lastClient.db = locked;
       await this.connect(this.lastConnectOptions);
     }
   }

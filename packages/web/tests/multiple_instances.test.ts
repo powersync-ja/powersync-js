@@ -2,12 +2,13 @@ import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@pow
 import {
   PowerSyncDatabase,
   SharedWebStreamingSyncImplementation,
-  WebRemote,
-  WebStreamingSyncImplementationOptions
+  SharedWebStreamingSyncImplementationOptions,
+  WebRemote
 } from '@powersync/web';
 import { Mutex } from 'async-mutex';
 import Logger from 'js-logger';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { WorkerDBAdapter } from '../src/db/adapters/WorkerDBAdapter';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { testSchema } from './utils/testDb';
 
@@ -126,26 +127,28 @@ describe('Multiple Instances', () => {
 
     // They need to use the same identifier to use the same shared worker.
     const identifier = 'streaming-sync-shared';
-    const syncOptions1: WebStreamingSyncImplementationOptions = {
+    const syncOptions1: SharedWebStreamingSyncImplementationOptions = {
       adapter: new SqliteBucketStorage(db.database, new Mutex()),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector1.uploadData(db);
       },
-      identifier
+      identifier,
+      workerDatabase: db.database as WorkerDBAdapter
     };
 
     const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
 
     // Generate the second streaming sync implementation
     const connector2 = new TestConnector();
-    const syncOptions2: WebStreamingSyncImplementationOptions = {
+    const syncOptions2: SharedWebStreamingSyncImplementationOptions = {
       adapter: new SqliteBucketStorage(db.database, new Mutex()),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector2.uploadData(db);
       },
-      identifier
+      identifier,
+      workerDatabase: db.database as WorkerDBAdapter
     };
 
     const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
@@ -193,6 +196,7 @@ describe('Multiple Instances', () => {
         triggerUpload1();
         connector1.uploadData(db);
       },
+      workerDatabase: db.database as WorkerDBAdapter,
       identifier,
       retryDelayMs: 100,
       flags: {
@@ -222,7 +226,8 @@ describe('Multiple Instances', () => {
       retryDelayMs: 100,
       flags: {
         broadcastLogs: true
-      }
+      },
+      workerDatabase: db.database as WorkerDBAdapter
     });
 
     // Waits for the stream to be marked as connected
