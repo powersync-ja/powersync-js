@@ -2,6 +2,7 @@ import * as SQLite from '@journeyapps/wa-sqlite';
 import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { OnTableChangeCallback, WASQLExecuteResult } from '../../../shared/types';
+import { AsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 
 /**
  * List of currently tested virtual filesystems
@@ -95,8 +96,10 @@ export const DEFAULT_MODULE_FACTORIES = {
 
 /**
  * @internal
+ * WA-SQLite connection which directly interfaces with WA-SQLite.
+ * This is usually instantiated inside a worker.
  */
-export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener> {
+export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener> implements AsyncDatabaseConnection {
   private _sqliteAPI: SQLiteAPI | null = null;
   private _dbP: number | null = null;
   private _moduleFactory: WASQLiteModuleFactory;
@@ -236,7 +239,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
   }
 
   async close() {
-    return this.sqliteAPI.close(this.dbP);
+    await this.sqliteAPI.close(this.dbP);
   }
 
   registerOnTableChange(callback: OnTableChangeCallback) {
