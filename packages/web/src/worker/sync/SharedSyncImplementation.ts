@@ -279,7 +279,6 @@ export class SharedSyncImplementation
       // Ask for a new DB worker port handler
       const lastClient = this.ports[this.ports.length - 1];
       const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-
       const locked = new LockedAsyncDatabaseAdapter({
         name: this.syncParams?.dbName!,
         openConnection: async () => {

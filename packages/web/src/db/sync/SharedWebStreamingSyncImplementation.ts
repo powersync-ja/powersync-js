@@ -21,14 +21,14 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
     public statusChanged: (status: SyncStatusOptions) => void,
-    protected dbWorkerPort: MessagePort | Worker
+    protected dbWorkerPort: Promise<MessagePort>
   ) {
     super();
   }
 
-  async getDBWorkerPort(): Promise<MessagePort | Worker> {
+  async getDBWorkerPort(): Promise<MessagePort> {
     // FIXME type error
-    const port = this.dbWorkerPort as MessagePort;
+    const port = (await this.dbWorkerPort) as MessagePort;
 
     // TODO this can only be done once. Throw an error if multiple attempts are made
     return Comlink.transfer(port, [port]);
