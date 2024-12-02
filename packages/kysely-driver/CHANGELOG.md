@@ -1,5 +1,16 @@
 # @powersync/kysely-driver
 
+## 1.1.0
+
+### Minor Changes
+
+- 77a9ed2: Added `watch()` function to Kysely wrapper to support watched queries. This function invokes `execute()` on the Kysely query which improves support for complex queries and Kysely plugins.
+
+### Patch Changes
+
+- Updated dependencies [77a9ed2]
+  - @powersync/common@1.22.0
+
 ## 1.0.0
 
 ### Major Changes

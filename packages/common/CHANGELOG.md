@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.22.0
+
+### Minor Changes
+
+- 77a9ed2: Added `compilableQueryWatch()` utility function which allows any compilable query to be watched.
+
 ## 1.21.0
 
 ### Minor Changes
