@@ -1598,7 +1598,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:*
+        specifier: workspace:^1.19.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
