@@ -1,5 +1,11 @@
 # diagnostics-app
 
+## 0.7.4
+
+### Patch Changes
+
+- @powersync/web@1.12.1
+
 ## 0.7.3
 
 ### Patch Changes
