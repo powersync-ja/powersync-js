@@ -29,9 +29,6 @@
     "@powersync/common": "workspace:^1.19.0",
     "drizzle-orm": "<1.0.0"
   },
-  "dependencies": {
-    "@powersync/common": "workspace:*"
-  },
   "devDependencies": {
     "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "^0.4.1",
