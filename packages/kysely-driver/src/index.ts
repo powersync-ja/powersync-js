@@ -1,4 +1,4 @@
-import { wrapPowerSyncWithKysely } from './sqlite/db';
+import { wrapPowerSyncWithKysely, type PowerSyncKyselyDatabase } from './sqlite/db';
 import {
   type ColumnType,
   type Insertable,
@@ -19,5 +19,6 @@ export {
   KyselyConfig,
   sql,
   Kysely,
+  PowerSyncKyselyDatabase,
   wrapPowerSyncWithKysely
 };

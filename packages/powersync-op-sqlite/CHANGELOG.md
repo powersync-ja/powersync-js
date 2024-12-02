@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.1.2
+
+### Patch Changes
+
+- 7c9c41d: Update op-sqlite to v10.1.0 for compatibility with React Native >0.76
+
 ## 0.1.1
 
 ### Patch Changes

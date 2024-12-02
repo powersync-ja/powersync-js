@@ -62,7 +62,7 @@ const config: ExpoConfig = {
           newArchEnabled: true
         },
         android: {
-          minSdkVersion: 23,
+          minSdkVersion: 24,
           compileSdkVersion: 34,
           targetSdkVersion: 34,
           buildToolsVersion: '34.0.0',

@@ -14,7 +14,7 @@ import Logger, { type ILogger } from 'js-logger';
 import type { DBFunctionsInterface, OpenDB } from '../../../shared/types';
 import { _openDB } from '../../../shared/open-db';
 import { getWorkerDatabaseOpener, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
-import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, WebSQLFlags } from '../web-sql-flags';
+import { ResolvedWebSQLOpenOptions, resolveWebSQLFlags, TemporaryStorageOption, WebSQLFlags } from '../web-sql-flags';
 import { getNavigatorLocks } from '../../../shared/navigator';
 
 /**
@@ -32,6 +32,8 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
   workerPort?: MessagePort;
 
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  temporaryStorage?: TemporaryStorageOption;
 
   /**
    * Encryption key for the database.
@@ -92,6 +94,8 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
+    const tempStoreQuery = `PRAGMA temp_store = ${this.options.temporaryStorage ?? TemporaryStorageOption.MEMORY};`;
+
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
 
@@ -109,6 +113,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
           : getWorkerDatabaseOpener(this.options.dbFilename, enableMultiTabs, optionsDbWorker);
 
       this.methods = await dbOpener(this.options.dbFilename);
+      await this.methods!.execute(tempStoreQuery);
       this.methods.registerOnTableChange(
         Comlink.proxy((event) => {
           this.iterateListeners((cb) => cb.tablesUpdated?.(event));
@@ -118,6 +123,7 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       return;
     }
     this.methods = await _openDB(this.options.dbFilename, this.options.encryptionKey, { useWebWorker: false });
+    await this.methods!.execute(tempStoreQuery);
     this.methods.registerOnTableChange((event) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });

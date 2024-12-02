@@ -1,5 +1,15 @@
 # @powersync/web
 
+## 1.12.0
+
+### Minor Changes
+
+- 36af0c8: Added `temporaryStorage` option to `WebSQLOpenFactoryOptions`. The `temp_store` value will now defaults to "MEMORY".
+
+### Patch Changes
+
+- 7e23d65: Added a bin/cli utilty that can be invoked with `npx powersync-web copy-assets` or `pnpm powersync-web copy-assets`.
+
 ## 1.11.0
 
 ### Minor Changes

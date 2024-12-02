@@ -1,5 +1,11 @@
 # @powersync/tanstack-react-query
 
+## 0.0.9
+
+### Patch Changes
+
+- 3f9df96: Fixed issue with compilable queries needing a parameter value specified and fixed issue related to compilable query errors causing infinite rendering.
+
 ## 0.0.8
 
 ### Patch Changes

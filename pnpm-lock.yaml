@@ -106,8 +106,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.5)(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.5)(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -632,8 +632,8 @@ importers:
         specifier: 8.3.1
         version: 8.3.1
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.1)(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.1)(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -913,8 +913,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.5)(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.5)(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -1304,8 +1304,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0(vite@5.4.8)
       vue-tsc:
-        specifier: ^2.0.6
-        version: 2.1.6(typescript@5.5.4)
+        specifier: 2.0.6
+        version: 2.0.6(typescript@5.5.4)
 
   demos/yjs-react-supabase-text-collab:
     dependencies:
@@ -1697,8 +1697,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@op-engineering/op-sqlite':
-        specifier: ^9.2.1
-        version: 9.2.1(react-native@0.75.3)(react@18.3.1)
+        specifier: ^10.1.0
+        version: 10.1.0(react-native@0.75.3)(react@18.3.1)
       '@react-native/eslint-config':
         specifier: ^0.73.1
         version: 0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)
@@ -1843,6 +1843,9 @@ importers:
         specifier: ^5.55.4
         version: 5.59.14(react@18.2.0)
     devDependencies:
+      '@testing-library/react':
+        specifier: ^15.0.2
+        version: 15.0.7(@types/react@18.3.11)(react-dom@18.2.0)(react@18.2.0)
       '@types/react':
         specifier: ^18.2.34
         version: 18.3.11
@@ -10657,26 +10660,6 @@ packages:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  /@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.1)(react@18.2.0):
-    resolution: {integrity: sha512-pID4cnAmLPvhzHt0fWsvpjr1y0X8Y2mKpuSV6/7rzJ0FB0MYxYJXYMYln1dkLyU60kfDFLFT2E422CkqDpLpbA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.3.11)(react@18.2.0)
-    dev: false
-
-  /@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.5)(react@18.2.0):
-    resolution: {integrity: sha512-pID4cnAmLPvhzHt0fWsvpjr1y0X8Y2mKpuSV6/7rzJ0FB0MYxYJXYMYln1dkLyU60kfDFLFT2E422CkqDpLpbA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.2.79)(react@18.2.0)
-    dev: false
-
   /@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.72.4)(react@18.2.0):
     resolution: {integrity: sha512-9abJ5YCgQ2Jie9B3mGtopfx8LhUB9S9I+DSd9ux1CA6DxnJMZagYlIE/x8nOghRCvtQF3jaF5DvrNoSkadkLVw==}
     peerDependencies:
@@ -10686,6 +10669,16 @@ packages:
       react: 18.2.0
       react-native: 0.72.4(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(react@18.2.0)
     dev: true
+
+  /@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.74.1)(react@18.2.0):
+    resolution: {integrity: sha512-9abJ5YCgQ2Jie9B3mGtopfx8LhUB9S9I+DSd9ux1CA6DxnJMZagYlIE/x8nOghRCvtQF3jaF5DvrNoSkadkLVw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7)(@types/react@18.3.11)(react@18.2.0)
+    dev: false
 
   /@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.74.5)(react@18.2.0):
     resolution: {integrity: sha512-9abJ5YCgQ2Jie9B3mGtopfx8LhUB9S9I+DSd9ux1CA6DxnJMZagYlIE/x8nOghRCvtQF3jaF5DvrNoSkadkLVw==}
@@ -12050,8 +12043,8 @@ packages:
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     dev: true
 
-  /@op-engineering/op-sqlite@9.2.1(react-native@0.75.3)(react@18.3.1):
-    resolution: {integrity: sha512-n1SwLWk08KDcFViX2adfbBv8hGcvUUpWO7FZ3KmUIPNDDH9XQxZM4sCHWo6wFFTK0CY38JQ9qoKlJQAWF8la5g==}
+  /@op-engineering/op-sqlite@10.1.0(react-native@0.75.3)(react@18.3.1):
+    resolution: {integrity: sha512-h72JQ8zK3ULiEp3Tngnl2LNsfMuxpxddhRrt3XYyeoQGeh7vj5B6nQwkpKXR02Hl/EKPmbRsmxue8V7bhXr7ug==}
     peerDependencies:
       react: '*'
       react-native: '>0.73.0'
@@ -15367,7 +15360,6 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-darwin-arm64@1.7.26:
@@ -15385,7 +15377,6 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-darwin-x64@1.7.26:
@@ -15403,7 +15394,6 @@ packages:
     cpu: [arm]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-linux-arm-gnueabihf@1.7.26:
@@ -15421,7 +15411,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-linux-arm64-gnu@1.7.26:
@@ -15439,7 +15428,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-linux-arm64-musl@1.7.26:
@@ -15457,7 +15445,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-linux-x64-gnu@1.7.26:
@@ -15475,7 +15462,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-linux-x64-musl@1.7.26:
@@ -15493,7 +15479,6 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-win32-arm64-msvc@1.7.26:
@@ -15511,7 +15496,6 @@ packages:
     cpu: [ia32]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-win32-ia32-msvc@1.7.26:
@@ -15529,7 +15513,6 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@swc/core-win32-x64-msvc@1.7.26:
@@ -15564,7 +15547,6 @@ packages:
       '@swc/core-win32-arm64-msvc': 1.6.13
       '@swc/core-win32-ia32-msvc': 1.6.13
       '@swc/core-win32-x64-msvc': 1.6.13
-    dev: true
 
   /@swc/core@1.7.26:
     resolution: {integrity: sha512-f5uYFf+TmMQyYIoxkn/evWhNGuUzC730dFwAKGwBVHHVoPyak1/GvJUm6i1SKl+2Hrj9oN0i3WSoWWZ4pgI8lw==}
@@ -15605,7 +15587,6 @@ packages:
     resolution: {integrity: sha512-wBJA+SdtkbFhHjTMYH+dEH1y4VpfGdAc2Kw/LK09i9bXd/K6j6PkDcFCEzb6iVfZMkPRrl/q0e3toqTAJdkIVA==}
     dependencies:
       '@swc/counter': 0.1.3
-    dev: true
 
   /@szmarczak/http-timer@4.0.6:
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
@@ -18501,22 +18482,23 @@ packages:
       tinyrainbow: 1.2.0
     dev: true
 
-  /@volar/language-core@2.4.6:
-    resolution: {integrity: sha512-FxUfxaB8sCqvY46YjyAAV6c3mMIq/NWQMVvJ+uS4yxr1KzOvyg61gAuOnNvgCvO4TZ7HcLExBEsWcDu4+K4E8A==}
+  /@volar/language-core@2.1.6:
+    resolution: {integrity: sha512-pAlMCGX/HatBSiDFMdMyqUshkbwWbLxpN/RL7HCQDOo2gYBE+uS+nanosLc1qR6pTQ/U8q00xt8bdrrAFPSC0A==}
     dependencies:
-      '@volar/source-map': 2.4.6
+      '@volar/source-map': 2.1.6
     dev: true
 
-  /@volar/source-map@2.4.6:
-    resolution: {integrity: sha512-Nsh7UW2ruK+uURIPzjJgF0YRGP5CX9nQHypA2OMqdM2FKy7rh+uv3XgPnWPw30JADbKvZ5HuBzG4gSbVDYVtiw==}
+  /@volar/source-map@2.1.6:
+    resolution: {integrity: sha512-TeyH8pHHonRCHYI91J7fWUoxi0zWV8whZTVRlsWHSYfjm58Blalkf9LrZ+pj6OiverPTmrHRkBsG17ScQyWECw==}
+    dependencies:
+      muggle-string: 0.4.1
     dev: true
 
-  /@volar/typescript@2.4.6:
-    resolution: {integrity: sha512-NMIrA7y5OOqddL9VtngPWYmdQU03htNKFtAYidbYfWA0TOhyGVd9tfcP4TsLWQ+RBWDZCbBqsr8xzU0ZOxYTCQ==}
+  /@volar/typescript@2.1.6:
+    resolution: {integrity: sha512-JgPGhORHqXuyC3r6skPmPHIZj4LoMmGlYErFTuPNBq9Nhc9VTv7ctHY7A3jMN3ngKEfRrfnUcwXHztvdSQqNfw==}
     dependencies:
-      '@volar/language-core': 2.4.6
+      '@volar/language-core': 2.1.6
       path-browserify: 1.0.1
-      vscode-uri: 3.0.8
     dev: true
 
   /@vue/compiler-core@3.4.21:
@@ -18601,34 +18583,26 @@ packages:
       '@vue/shared': 3.5.11
     dev: true
 
-  /@vue/compiler-vue2@2.7.16:
-    resolution: {integrity: sha512-qYC3Psj9S/mfu9uVi5WvNZIzq+xnXMhOwbTFKKDD7b1lhpnn71jXSFdTQ+WsIEk0ONCd7VV2IMm7ONl6tbQ86A==}
-    dependencies:
-      de-indent: 1.0.2
-      he: 1.2.0
-    dev: true
-
   /@vue/devtools-api@6.6.4:
     resolution: {integrity: sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==}
     dev: false
 
-  /@vue/language-core@2.1.6(typescript@5.5.4):
-    resolution: {integrity: sha512-MW569cSky9R/ooKMh6xa2g1D0AtRKbL56k83dzus/bx//RDJk24RHWkMzbAlXjMdDNyxAaagKPRquBIxkxlCkg==}
+  /@vue/language-core@2.0.6(typescript@5.5.4):
+    resolution: {integrity: sha512-UzqU12tzf9XLqRO3TiWPwRNpP4fyUzE6MAfOQWQNZ4jy6a30ARRUpmODDKq6O8C4goMc2AlPqTmjOHPjHkilSg==}
     peerDependencies:
       typescript: '*'
     peerDependenciesMeta:
       typescript:
         optional: true
     dependencies:
-      '@volar/language-core': 2.4.6
+      '@volar/language-core': 2.1.6
       '@vue/compiler-dom': 3.5.11
-      '@vue/compiler-vue2': 2.7.16
       '@vue/shared': 3.5.11
       computeds: 0.0.1
       minimatch: 9.0.5
-      muggle-string: 0.4.1
       path-browserify: 1.0.1
       typescript: 5.5.4
+      vue-template-compiler: 2.7.16
     dev: true
 
   /@vue/reactivity@3.4.21:
@@ -19757,7 +19731,7 @@ packages:
       '@babel/core': 7.24.5
       find-cache-dir: 4.0.0
       schema-utils: 4.2.0
-      webpack: 5.95.0(webpack-cli@5.1.4)
+      webpack: 5.95.0(@swc/core@1.6.13)
 
   /babel-plugin-dynamic-import-node@2.3.3:
     resolution: {integrity: sha512-jZVI+s9Zg3IqA/kdi0i6UDCybUI3aSBLnglhYbSSjKlV7yF1F/5LWv8MakQmvYpnbJDS6fcBL2KzHSxNCMtWSQ==}
@@ -36178,7 +36152,6 @@ packages:
       serialize-javascript: 6.0.2
       terser: 5.34.1
       webpack: 5.95.0(@swc/core@1.6.13)
-    dev: true
 
   /terser-webpack-plugin@5.3.10(esbuild@0.23.0)(webpack@5.94.0):
     resolution: {integrity: sha512-BKFPWlPDndPs+NGGCr1U59t0XScL5317Y0UReNrHaw9/FwhPENlq6bfgs+4yPfyP51vqC1bQ4rp1EfXW5ZSH9w==}
@@ -38085,10 +38058,6 @@ packages:
     resolution: {integrity: sha512-AFbieoL7a5LMqcnOF04ji+rpXadgOXnZsxQr//r83kLPr7biP7am3g9zbaZIaBGwBRWeSvoMD4mgPdX3e4NWBg==}
     dev: true
 
-  /vscode-uri@3.0.8:
-    resolution: {integrity: sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw==}
-    dev: true
-
   /vue-demi@0.13.11(vue@3.4.21):
     resolution: {integrity: sha512-IR8HoEEGM65YY3ZJYAjMlKygDQn25D5ajNFNoKh9RSDMQtlzCxtfQjdQgv9jjK+m3377SsJXY8ysq8kLCZL25A==}
     engines: {node: '>=12'}
@@ -38132,14 +38101,21 @@ packages:
       vue: 3.4.21(typescript@5.5.4)
     dev: false
 
-  /vue-tsc@2.1.6(typescript@5.5.4):
-    resolution: {integrity: sha512-f98dyZp5FOukcYmbFpuSCJ4Z0vHSOSmxGttZJCsFeX0M4w/Rsq0s4uKXjcSRsZqsRgQa6z7SfuO+y0HVICE57Q==}
+  /vue-template-compiler@2.7.16:
+    resolution: {integrity: sha512-AYbUWAJHLGGQM7+cNTELw+KsOG9nl2CnSv467WobS5Cv9uk3wFcnr1Etsz2sEIHEZvw1U+o9mRlEO6QbZvUPGQ==}
+    dependencies:
+      de-indent: 1.0.2
+      he: 1.2.0
+    dev: true
+
+  /vue-tsc@2.0.6(typescript@5.5.4):
+    resolution: {integrity: sha512-kK50W4XqQL34vHRkxlRWLicrT6+F9xfgCgJ4KSmCHcytKzc1u3c94XXgI+CjmhOSxyw0krpExF7Obo7y4+0dVQ==}
     hasBin: true
     peerDependencies:
-      typescript: '>=5.0.0'
+      typescript: '*'
     dependencies:
-      '@volar/typescript': 2.4.6
-      '@vue/language-core': 2.1.6(typescript@5.5.4)
+      '@volar/typescript': 2.1.6
+      '@vue/language-core': 2.0.6(typescript@5.5.4)
       semver: 7.6.3
       typescript: 5.5.4
     dev: true
@@ -38750,7 +38726,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack@5.95.0(webpack-cli@5.1.4):
     resolution: {integrity: sha512-2t3XstrKULz41MNMBF+cJ97TyHdyQ8HCt//pqErqDvNjU9YQBnZxIHa11VXsi7F3mb5/aO2tuDxdeTPdU7xu9Q==}

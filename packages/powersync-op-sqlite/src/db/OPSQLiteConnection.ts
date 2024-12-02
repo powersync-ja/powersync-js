@@ -64,12 +64,12 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     const result = await this.DB.execute(sql, parameters);
-    return result.rows ?? [];
+    return (result.rows ?? []) as T[];
   }
 
   async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
     const result = await this.DB.execute(sql, parameters);
-    return result.rows?.[0] ?? null;
+    return (result.rows?.[0] as T) ?? null;
   }
 
   async get<T>(sql: string, parameters?: any[]): Promise<T> {
