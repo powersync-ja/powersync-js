@@ -7,6 +7,11 @@ import { AsyncDatabaseConnection, OnTableChangeCallback } from './AsyncDatabaseC
  * callbacks over a worker channel
  */
 export function ProxiedAsyncDatabaseConnection(base: AsyncDatabaseConnection) {
+  // return Object.assign(base, {
+  //   registerOnTableChange: function (callback: OnTableChangeCallback) {
+  //     return base.registerOnTableChange(Comlink.proxy(callback));
+  //   }
+  // });
   return new Proxy(base, {
     get(target, prop: keyof AsyncDatabaseConnection, receiver) {
       const original = Reflect.get(target, prop, receiver);
