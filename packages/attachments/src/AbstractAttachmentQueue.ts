@@ -431,7 +431,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   watchDownloads() {
-    if (this.options.downloadAttachments) {
+    if (!this.options.downloadAttachments) {
       return;
     }
     this.idsToDownload(async (ids) => {
