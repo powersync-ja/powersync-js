@@ -106,8 +106,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -632,8 +632,8 @@ importers:
         specifier: 8.3.1
         version: 8.3.1
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/common':
         specifier: workspace:*
         version: link:../../packages/common
@@ -768,8 +768,8 @@ importers:
         specifier: ^14.0.3
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -913,8 +913,8 @@ importers:
         specifier: ^14.0.0
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.1.2
-        version: 2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.2.0
+        version: 2.2.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -1615,7 +1615,7 @@ importers:
         version: 2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.12)
       drizzle-orm:
         specifier: ^0.35.2
-        version: 0.35.2(@op-engineering/op-sqlite@9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1))(@types/react@18.3.12)(kysely@0.27.4)(react@18.3.1)
+        version: 0.35.2(@op-engineering/op-sqlite@10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1))(@types/react@18.3.12)(kysely@0.27.4)(react@18.3.1)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.6.3)(webpack@5.95.0(@swc/core@1.7.26(@swc/helpers@0.5.5)))
@@ -1697,8 +1697,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@op-engineering/op-sqlite':
-        specifier: ^9.2.1
-        version: 9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)
+        specifier: ^10.1.0
+        version: 10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)
       '@react-native/eslint-config':
         specifier: ^0.73.1
         version: 0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)
@@ -1843,6 +1843,9 @@ importers:
         specifier: ^5.55.4
         version: 5.59.14(react@18.2.0)
     devDependencies:
+      '@testing-library/react':
+        specifier: ^15.0.2
+        version: 15.0.7(@types/react@18.3.11)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/react':
         specifier: ^18.2.34
         version: 18.3.11
@@ -1873,7 +1876,7 @@ importers:
         version: 5.5.4
       vitest:
         specifier: ^1.5.1
-        version: 1.6.0(@types/node@22.7.4)(@vitest/browser@1.6.0)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+        version: 1.6.0(@types/node@22.7.4)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       vue:
         specifier: 3.4.21
         version: 3.4.21(typescript@5.5.4)
@@ -4564,12 +4567,6 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/react-native-quick-sqlite@2.1.2':
-    resolution: {integrity: sha512-pID4cnAmLPvhzHt0fWsvpjr1y0X8Y2mKpuSV6/7rzJ0FB0MYxYJXYMYln1dkLyU60kfDFLFT2E422CkqDpLpbA==}
-    peerDependencies:
-      react: '*'
-      react-native: '*'
-
   '@journeyapps/react-native-quick-sqlite@2.2.0':
     resolution: {integrity: sha512-9abJ5YCgQ2Jie9B3mGtopfx8LhUB9S9I+DSd9ux1CA6DxnJMZagYlIE/x8nOghRCvtQF3jaF5DvrNoSkadkLVw==}
     peerDependencies:
@@ -5171,8 +5168,8 @@ packages:
     engines: {node: '>=12.0.0'}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
-  '@op-engineering/op-sqlite@9.2.1':
-    resolution: {integrity: sha512-n1SwLWk08KDcFViX2adfbBv8hGcvUUpWO7FZ3KmUIPNDDH9XQxZM4sCHWo6wFFTK0CY38JQ9qoKlJQAWF8la5g==}
+  '@op-engineering/op-sqlite@10.1.0':
+    resolution: {integrity: sha512-h72JQ8zK3ULiEp3Tngnl2LNsfMuxpxddhRrt3XYyeoQGeh7vj5B6nQwkpKXR02Hl/EKPmbRsmxue8V7bhXr7ug==}
     peerDependencies:
       react: '*'
       react-native: '>0.73.0'
@@ -7806,21 +7803,6 @@ packages:
       vite: ^5.0.0
       vue: ^3.2.25
 
-  '@vitest/browser@1.6.0':
-    resolution: {integrity: sha512-3Wpp9h1hf++rRVPvoXevkdHybLhJVn7MwIMKMIh08tVaoDMmT6fnNhbP222Z48V9PptpYeA5zvH9Ct/ZcaAzmQ==}
-    peerDependencies:
-      playwright: '*'
-      safaridriver: '*'
-      vitest: 1.6.0
-      webdriverio: '*'
-    peerDependenciesMeta:
-      playwright:
-        optional: true
-      safaridriver:
-        optional: true
-      webdriverio:
-        optional: true
-
   '@vitest/browser@2.1.4':
     resolution: {integrity: sha512-89SrvShW6kWzmEYtBj5k1gBq88emoC2qrngw5hE1vNpRFteQ5/1URbKIVww391rIALTpzhhCt5yJt5tjLPZxYw==}
     peerDependencies:
@@ -9456,7 +9438,6 @@ packages:
 
   critters@0.0.24:
     resolution: {integrity: sha512-Oyqew0FGM0wYUSNqR0L6AteO5MpMoUU0rhKRieXeiKs+PmRTxiJMyaunYB2KF6fQ3dzChXKCpbFOEJx3OQ1v/Q==}
-    deprecated: Ownership of Critters has moved to the Nuxt team, who will be maintaining the project going forward. If you'd like to keep using Critters, please switch to the actively-maintained fork at https://github.com/danielroe/beasties
 
   cross-dirname@0.1.0:
     resolution: {integrity: sha512-+R08/oI0nl3vfPcqftZRpytksBXDzOUveBq/NBVx0sUp1axwzPQrKinNx5yd5sxPu8j1wIy8AfnVQ+5eFdha6Q==}
@@ -19097,9 +19078,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.8(@babel/core@7.25.7)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.25.7
+      '@babel/core': 7.24.5
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -23728,7 +23709,7 @@ snapshots:
       fs-extra: 9.0.0
       getenv: 1.0.0
       jimp-compact: 0.16.1
-      node-fetch: 2.7.0(encoding@0.1.13)
+      node-fetch: 2.6.7(encoding@0.1.13)
       parse-png: 2.1.0
       resolve-from: 5.0.0
       semver: 7.3.2
@@ -23900,7 +23881,7 @@ snapshots:
       '@expo/config-plugins': 7.8.4
       '@expo/config-types': 50.0.0
       '@expo/image-utils': 0.4.2(encoding@0.1.13)
-      '@expo/json-file': 8.3.3
+      '@expo/json-file': 8.2.37
       debug: 4.3.7(supports-color@8.1.1)
       expo-modules-autolinking: 1.11.1
       fs-extra: 9.1.0
@@ -24519,25 +24500,25 @@ snapshots:
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
-  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0)
-
-  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
-
-  '@journeyapps/react-native-quick-sqlite@2.1.2(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-      react-native: 0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
-
   '@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.72.4(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
     dependencies:
       react: 18.2.0
       react-native: 0.72.4(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(encoding@0.1.13)(react@18.2.0)
+
+  '@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.1(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.3.11)(encoding@0.1.13)(react@18.2.0)
+
+  '@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
+
+  '@journeyapps/react-native-quick-sqlite@2.2.0(react-native@0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
   '@journeyapps/wa-sqlite@0.4.2': {}
 
@@ -25396,12 +25377,12 @@ snapshots:
 
   '@oclif/screen@3.0.8': {}
 
-  '@op-engineering/op-sqlite@9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)':
+  '@op-engineering/op-sqlite@10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-native: 0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)(typescript@5.5.4)
 
-  '@op-engineering/op-sqlite@9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1)':
+  '@op-engineering/op-sqlite@10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1)':
     dependencies:
       react: 18.3.1
       react-native: 0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3)
@@ -26894,7 +26875,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -29793,16 +29774,6 @@ snapshots:
     dependencies:
       vite: 5.4.8(@types/node@22.7.4)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       vue: 3.4.21(typescript@5.5.4)
-
-  '@vitest/browser@1.6.0(vitest@1.6.0)(webdriverio@9.2.12)':
-    dependencies:
-      '@vitest/utils': 1.6.0
-      magic-string: 0.30.12
-      sirv: 2.0.4
-      vitest: 1.6.0(@types/node@22.7.4)(@vitest/browser@1.6.0)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
-    optionalDependencies:
-      webdriverio: 9.2.12
-    optional: true
 
   '@vitest/browser@2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.12)':
     dependencies:
@@ -32747,9 +32718,9 @@ snapshots:
 
   dotenv@16.4.5: {}
 
-  drizzle-orm@0.35.2(@op-engineering/op-sqlite@9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1))(@types/react@18.3.12)(kysely@0.27.4)(react@18.3.1):
+  drizzle-orm@0.35.2(@op-engineering/op-sqlite@10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1))(@types/react@18.3.12)(kysely@0.27.4)(react@18.3.1):
     optionalDependencies:
-      '@op-engineering/op-sqlite': 9.2.1(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1)
+      '@op-engineering/op-sqlite': 10.1.0(react-native@0.75.3(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.3.12)(encoding@0.1.13)(react@18.3.1)(typescript@5.6.3))(react@18.3.1)
       '@types/react': 18.3.12
       kysely: 0.27.4
       react: 18.3.1
@@ -33369,7 +33340,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1
@@ -43251,7 +43222,7 @@ snapshots:
       sass: 1.79.4
       terser: 5.34.1
 
-  vitest@1.6.0(@types/node@22.7.4)(@vitest/browser@1.6.0)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1):
+  vitest@1.6.0(@types/node@22.7.4)(jsdom@24.1.3)(less@4.2.0)(sass@1.79.4)(terser@5.34.1):
     dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
@@ -43275,7 +43246,6 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.7.4
-      '@vitest/browser': 1.6.0(vitest@1.6.0)(webdriverio@9.2.12)
       jsdom: 24.1.3
     transitivePeerDependencies:
       - less

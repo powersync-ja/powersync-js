@@ -1,4 +1,4 @@
-import { wrapPowerSyncWithDrizzle, type PowerSyncSQLiteDatabase } from './sqlite/db';
+import { wrapPowerSyncWithDrizzle, type DrizzleQuery, type PowerSyncSQLiteDatabase } from './sqlite/db';
 import { toCompilableQuery } from './utils/compilableQuery';
 import {
   DrizzleAppSchema,
@@ -15,6 +15,7 @@ export {
   DrizzleAppSchema,
   DrizzleTablePowerSyncOptions,
   DrizzleTableWithPowerSyncOptions,
+  DrizzleQuery,
   Expand,
   ExtractPowerSyncColumns,
   PowerSyncSQLiteDatabase,
