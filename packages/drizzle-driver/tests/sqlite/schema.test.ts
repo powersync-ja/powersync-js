@@ -1,12 +1,7 @@
 import { column, Schema, Table } from '@powersync/common';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { describe, expect, it } from 'vitest';
-import {
-  DrizzleAppSchema,
-  DrizzleTableWithPowerSyncOptions,
-  toPowerSyncSchema,
-  toPowerSyncTable
-} from '../../src/utils/schema';
+import { DrizzleAppSchema, DrizzleTableWithPowerSyncOptions, toPowerSyncTable } from '../../src/utils/schema';
 
 describe('toPowerSyncTable', () => {
   it('basic conversion', () => {
@@ -27,36 +22,6 @@ describe('toPowerSyncTable', () => {
     });
 
     expect(convertedList).toEqual(expectedLists);
-  });
-
-  it('basic conversion class', () => {
-    const lists = sqliteTable('lists', {
-      id: text('id').primaryKey(),
-      name: text('name').notNull(),
-      owner_id: text('owner_id'),
-      counter: integer('counter'),
-      completion: real('completion')
-    });
-    const convertedList = new DrizzleAppSchema({ lists });
-
-    const a: (typeof convertedList)['types']['lists'] = {
-      name: 'd',
-      completion: 1,
-      counter: 0,
-      id: '1',
-      owner_id: null
-    };
-  });
-
-  it('classed based types', () => {
-    const lists = sqliteTable('lists', {
-      id: text('id').primaryKey(),
-      name: text('name').notNull(),
-      owner_id: text('owner_id'),
-      counter: integer('counter'),
-      completion: real('completion')
-    });
-    const drizzle = new DrizzleAppSchema({ lists });
   });
 
   it('conversion with index', () => {
@@ -103,7 +68,7 @@ describe('toPowerSyncTable', () => {
   });
 });
 
-describe('toPowerSyncSchema', () => {
+describe('DrizzleAppSchema constructor', () => {
   it('basic conversion', () => {
     const lists = sqliteTable('lists', {
       id: text('id').primaryKey(),
@@ -123,7 +88,8 @@ describe('toPowerSyncSchema', () => {
       lists,
       todos
     };
-    const convertedSchema = toPowerSyncSchema(drizzleSchema);
+
+    const convertedSchema = new DrizzleAppSchema(drizzleSchema);
 
     const expectedSchema = new Schema({
       lists: new Table({
@@ -138,7 +104,7 @@ describe('toPowerSyncSchema', () => {
       })
     });
 
-    expect(convertedSchema).toEqual(expectedSchema);
+    expect(convertedSchema.tables).toEqual(expectedSchema.tables);
   });
 
   it('conversion with options', () => {
@@ -164,7 +130,7 @@ describe('toPowerSyncSchema', () => {
       todos
     };
 
-    const convertedSchema = toPowerSyncSchema(drizzleSchemaWithOptions);
+    const convertedSchema = new DrizzleAppSchema(drizzleSchemaWithOptions);
 
     const expectedSchema = new Schema({
       lists: new Table(
@@ -182,7 +148,7 @@ describe('toPowerSyncSchema', () => {
       })
     });
 
-    expect(convertedSchema).toEqual(expectedSchema);
+    expect(convertedSchema.tables).toEqual(expectedSchema.tables);
   });
 
   it('conversion with index', () => {
@@ -211,7 +177,7 @@ describe('toPowerSyncSchema', () => {
       todos
     };
 
-    const convertedSchema = toPowerSyncSchema(drizzleSchemaWithOptions);
+    const convertedSchema = new DrizzleAppSchema(drizzleSchemaWithOptions);
 
     const expectedSchema = new Schema({
       lists: new Table({
@@ -229,6 +195,6 @@ describe('toPowerSyncSchema', () => {
       )
     });
 
-    expect(convertedSchema).toEqual(expectedSchema);
+    expect(convertedSchema.tables).toEqual(expectedSchema.tables);
   });
 });

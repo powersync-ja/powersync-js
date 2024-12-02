@@ -47,9 +47,9 @@ export const drizzleSchema = {
   todosRelations
 };
 
-// As an alternative to manually defining a PowerSync schema, generate the local PowerSync schema from the Drizzle schema with `toPowerSyncSchema`:
-// import { toPowerSyncSchema } from '@powersync/drizzle-driver';
-// export const AppSchema = toPowerSyncSchema(drizzleSchema);
+// As an alternative to manually defining a PowerSync schema, generate the local PowerSync schema from the Drizzle schema with the `DrizzleAppSchema` constructor:
+// import { DrizzleAppSchema } from '@powersync/drizzle-driver';
+// export const AppSchema = new DrizzleAppSchema(drizzleSchema);
 //
 // This is optional, but recommended, since you will only need to maintain one schema on the client-side
 // Read on to learn more.
@@ -69,14 +69,14 @@ export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
 
 ## Schema Conversion
 
-The `toPowerSyncSchema` function simplifies the process of integrating Drizzle with PowerSync. It infers the local [PowerSync schema](https://docs.powersync.com/installation/client-side-setup/define-your-schema) from your Drizzle schema definition, providing a unified development experience.
+The `DrizzleAppSchema` constructor simplifies the process of integrating Drizzle with PowerSync. It infers the local [PowerSync schema](https://docs.powersync.com/installation/client-side-setup/define-your-schema) from your Drizzle schema definition, providing a unified development experience.
 
 As the PowerSync schema only supports SQLite types (`text`, `integer`, and `real`), the same limitation extends to the Drizzle table definitions.
 
-To use it, define your Drizzle tables and supply the schema to the `toPowerSyncSchema` function:
+To use it, define your Drizzle tables and supply the schema to the `DrizzleAppSchema` function:
 
 ```js
-import { toPowerSyncSchema } from '@powersync/drizzle-driver';
+import { DrizzleAppSchema } from '@powersync/drizzle-driver';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // Define a Drizzle table
@@ -92,7 +92,7 @@ export const drizzleSchema = {
 };
 
 // Infer the PowerSync schema from your Drizzle schema
-export const AppSchema = toPowerSyncSchema(drizzleSchema);
+export const AppSchema = new DrizzleAppSchema(drizzleSchema);
 ```
 
 ### Defining PowerSync Options
@@ -101,8 +101,8 @@ The PowerSync table definition allows additional options supported by PowerSync'
 They can be specified as follows. Note that these options exclude indexes as they can be specified in a Drizzle table.
 
 ```js
-import { toPowerSyncSchema } from '@powersync/drizzle-driver';
-// import { toPowerSyncSchema, type DrizzleTableWithPowerSyncOptions} from '@powersync/drizzle-driver'; for TypeScript
+import { DrizzleAppSchema } from '@powersync/drizzle-driver';
+// import { DrizzleAppSchema, type DrizzleTableWithPowerSyncOptions} from '@powersync/drizzle-driver'; for TypeScript
 
 const listsWithOptions = { tableDefinition: logs, options: { localOnly: true } };
 // const listsWithOptions: DrizzleTableWithPowerSyncOptions = { tableDefinition: logs, options: { localOnly: true } }; for TypeScript
@@ -111,7 +111,7 @@ export const drizzleSchemaWithOptions = {
   lists: listsWithOptions
 };
 
-export const AppSchema = toPowerSyncSchema(drizzleSchemaWithOptions);
+export const AppSchema = new DrizzleAppSchema(drizzleSchemaWithOptions);
 ```
 
 ### Converting a Single Table From Drizzle to PowerSync

@@ -95,32 +95,7 @@ export type TablesFromSchemaEntries<T> = {
       : never;
 };
 
-export function toPowerSyncSchema<
-  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
->(schemaEntries: T): Schema<Expand<TablesFromSchemaEntries<T>>> {
-  const tables: Record<string, Table> = {};
-  for (const schemaEntry of Object.values(schemaEntries)) {
-    let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
-    let maybeOptions: DrizzleTablePowerSyncOptions | undefined = undefined;
-
-    if (typeof schemaEntry === 'object' && 'tableDefinition' in schemaEntry) {
-      const tableWithOptions = schemaEntry as DrizzleTableWithPowerSyncOptions;
-      maybeTable = tableWithOptions.tableDefinition;
-      maybeOptions = tableWithOptions.options;
-    } else {
-      maybeTable = schemaEntry;
-    }
-
-    if (isTable(maybeTable)) {
-      const { name } = getTableConfig(maybeTable);
-      tables[name] = toPowerSyncTable(maybeTable as SQLiteTableWithColumns<TableConfig>, maybeOptions);
-    }
-  }
-
-  return new Schema(tables) as Schema<Expand<TablesFromSchemaEntries<T>>>;
-}
-
-export function toPowerSyncTables<
+function toPowerSyncTables<
   T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
 >(schemaEntries: T) {
   const tables: Record<string, Table> = {};

@@ -1,7 +1,7 @@
 import { wrapPowerSyncWithDrizzle, type PowerSyncSQLiteDatabase } from './sqlite/db';
 import { toCompilableQuery } from './utils/compilableQuery';
 import {
-  toPowerSyncSchema,
+  DrizzleAppSchema,
   toPowerSyncTable,
   type DrizzleTablePowerSyncOptions,
   type DrizzleTableWithPowerSyncOptions,
@@ -12,6 +12,7 @@ import {
 } from './utils/schema';
 
 export {
+  DrizzleAppSchema,
   DrizzleTablePowerSyncOptions,
   DrizzleTableWithPowerSyncOptions,
   Expand,
@@ -20,7 +21,6 @@ export {
   TableName,
   TablesFromSchemaEntries,
   toCompilableQuery,
-  toPowerSyncSchema,
   toPowerSyncTable,
   wrapPowerSyncWithDrizzle
 };
