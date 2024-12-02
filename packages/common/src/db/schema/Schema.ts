@@ -2,7 +2,7 @@ import { RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
 
-type SchemaTableType<S extends SchemaType> = {
+export type SchemaTableType<S extends SchemaType> = {
   [K in keyof S]: RowType<S[K]>;
 };
 

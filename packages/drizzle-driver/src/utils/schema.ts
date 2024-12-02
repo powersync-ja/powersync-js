@@ -1,4 +1,12 @@
-import { column, IndexShorthand, Schema, Table, type BaseColumnType, type TableV2Options } from '@powersync/common';
+import {
+  column,
+  IndexShorthand,
+  Schema,
+  SchemaTableType,
+  Table,
+  type BaseColumnType,
+  type TableV2Options
+} from '@powersync/common';
 import { InferSelectModel, isTable, Relations } from 'drizzle-orm';
 import {
   getTableConfig,
@@ -110,4 +118,41 @@ export function toPowerSyncSchema<
   }
 
   return new Schema(tables) as Schema<Expand<TablesFromSchemaEntries<T>>>;
+}
+
+export function toPowerSyncTables<
+  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
+>(schemaEntries: T) {
+  const tables: Record<string, Table> = {};
+  for (const schemaEntry of Object.values(schemaEntries)) {
+    let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
+    let maybeOptions: DrizzleTablePowerSyncOptions | undefined = undefined;
+
+    if (typeof schemaEntry === 'object' && 'tableDefinition' in schemaEntry) {
+      const tableWithOptions = schemaEntry as DrizzleTableWithPowerSyncOptions;
+      maybeTable = tableWithOptions.tableDefinition;
+      maybeOptions = tableWithOptions.options;
+    } else {
+      maybeTable = schemaEntry;
+    }
+
+    if (isTable(maybeTable)) {
+      const { name } = getTableConfig(maybeTable);
+      tables[name] = toPowerSyncTable(maybeTable as SQLiteTableWithColumns<TableConfig>, maybeOptions);
+    }
+  }
+
+  return tables;
+}
+
+export class DrizzleAppSchema<
+  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
+> extends Schema {
+  constructor(drizzleSchema: T) {
+    super(toPowerSyncTables(drizzleSchema));
+    // This is just used for typing
+    this.types = {} as SchemaTableType<Expand<TablesFromSchemaEntries<T>>>;
+  }
+
+  readonly types: SchemaTableType<Expand<TablesFromSchemaEntries<T>>>;
 }
