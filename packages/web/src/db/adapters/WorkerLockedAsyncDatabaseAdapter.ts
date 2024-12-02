@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
+import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter, LockedAsyncDatabaseAdapterOptions } from './LockedAsyncDatabaseAdapter';
-import { ProxiedAsyncDatabaseConnection } from './ProxiedAsyncDatabaseConnection';
 import { WorkerDBAdapter } from './WorkerDBAdapter';
 /**
  * @internal
@@ -16,14 +16,20 @@ export class WorkerLockedAsyncDatabaseAdapter extends LockedAsyncDatabaseAdapter
   private _messagePort: Worker | MessagePort;
 
   constructor(options: WorkerLockedAsyncDatabaseAdapterOptions) {
-    super({
-      ...options,
-      openConnection: async () => {
-        // Proxy any worker functions
-        return ProxiedAsyncDatabaseConnection(await options.openConnection());
-      }
-    });
+    super(options);
     this._messagePort = options.messagePort;
+  }
+
+  /**
+   * Registers a table change notification callback with the base database.
+   * This can be extended by custom implementations in order to handle proxy events.
+   */
+  protected async registerOnChangeListener(db: AsyncDatabaseConnection) {
+    this._disposeTableChangeListener = await db.registerOnTableChange(
+      Comlink.proxy((event) => {
+        this.iterateListeners((cb) => cb.tablesUpdated?.(event));
+      })
+    );
   }
 
   async getMessagePort(): Promise<MessagePort> {

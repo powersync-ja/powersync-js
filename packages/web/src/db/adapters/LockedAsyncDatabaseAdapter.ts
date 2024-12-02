@@ -22,7 +22,7 @@ export interface LockedAsyncDatabaseAdapterOptions {
   logger?: ILogger;
 }
 
-type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
+export type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
   initialized?: () => void;
 };
 
@@ -38,7 +38,7 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
   private _dbIdentifier: string;
   private _isInitialized = false;
   private _db: AsyncDatabaseConnection | null = null;
-  private _disposeTableChangeListener: (() => void) | null = null;
+  protected _disposeTableChangeListener: (() => void) | null = null;
 
   constructor(protected options: LockedAsyncDatabaseAdapterOptions) {
     super();
@@ -77,12 +77,21 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
     return this._dbIdentifier;
   }
 
+  /**
+   * Registers a table change notification callback with the base database.
+   * This can be extended by custom implementations in order to handle proxy events.
+   */
+  protected async registerOnChangeListener(db: AsyncDatabaseConnection) {
+    this._disposeTableChangeListener = await db.registerOnTableChange((event) => {
+      this.iterateListeners((cb) => cb.tablesUpdated?.(event));
+    });
+  }
+
   async init() {
     this._db = await this.options.openConnection();
     await this._db.init();
-    this._disposeTableChangeListener = await this._db.registerOnTableChange((event) => {
-      this.iterateListeners((cb) => cb.tablesUpdated?.(event));
-    });
+    await this.registerOnChangeListener(this._db);
+
     this._isInitialized = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }

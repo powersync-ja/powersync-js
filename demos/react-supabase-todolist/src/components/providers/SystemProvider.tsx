@@ -17,8 +17,8 @@ export const db = new PowerSyncDatabase({
   //   dbFilename: 's.sqlite'
   // }
   database: new WASQLiteOpenFactory({
-    dbFilename: 'examplse.db',
-    vfs: WASQLiteVFS.AccessHandlePoolVFS
+    dbFilename: 'examplswse.db',
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS
     // vfs: WASQLiteVFS.OPFSCoopSyncVFS //Out of memory errors on iOS Safari
   })
 });
