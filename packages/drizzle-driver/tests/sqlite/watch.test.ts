@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { count, eq, sql } from 'drizzle-orm';
+import { count, eq, relations, sql } from 'drizzle-orm';
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as SUT from '../../src/sqlite/db';
@@ -52,7 +52,18 @@ const customers = sqliteTable('customers', {
   email: text('email')
 });
 
-const DrizzleSchema = { assets, customers };
+export const customersRelations = relations(customers, ({ many }) => ({
+  assets: many(assets)
+}));
+
+export const assetsRelations = relations(assets, ({ one }) => ({
+  customer: one(customers, {
+    fields: [assets.customer_id],
+    references: [customers.id]
+  })
+}));
+
+const DrizzleSchema = { assets, customers, assetsRelations, customersRelations };
 
 /**
  * There seems to be an issue with Vitest browser mode's setTimeout and
@@ -279,5 +290,86 @@ describe('Watch Tests', () => {
     // This fluctuates between 3 and 4 based on timing, but should never be 25
     expect(receivedWithManagedOverflowCount).greaterThan(2);
     expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
+  });
+
+  it('should contain relational data (one to many)', async () => {
+    const abortController = new AbortController();
+
+    const query = db.query.customers.findMany({ with: { assets: true } });
+
+    let receivedResult: any = undefined;
+
+    const receivedUpdates = new Promise<void>((resolve) => {
+      const onUpdate = (update) => {
+        receivedResult = update;
+        resolve();
+      };
+
+      db.watch(query, { onResult: onUpdate }, { signal: abortController.signal });
+    });
+
+    const customerId = '39281cf9-9989-4b31-bb21-8f45ce3b3e60';
+    const assetId = '00000000-9989-4b31-bb21-8f45ce3b3e61';
+    await db
+      .insert(customers)
+      .values({
+        id: customerId,
+        name: 'Alice'
+      })
+      .execute();
+
+    await db
+      .insert(assets)
+      .values({
+        id: assetId,
+        customer_id: customerId
+      })
+      .execute();
+
+    await receivedUpdates;
+    abortController.abort();
+
+    expect(receivedResult[0].assets[0]['id']).toEqual(assetId);
+    expect(receivedResult[0].assets[0]['customer_id']).toEqual(customerId);
+  });
+
+  it('should contain relational data (many to one)', async () => {
+    const abortController = new AbortController();
+
+    const query = db.query.assets.findFirst({ with: { customer: true } });
+
+    let receivedResult: any = undefined;
+
+    const receivedUpdates = new Promise<void>((resolve) => {
+      const onUpdate = (update) => {
+        receivedResult = update;
+        resolve();
+      };
+
+      db.watch(query, { onResult: onUpdate }, { signal: abortController.signal });
+    });
+
+    const customerId = '39281cf9-9989-4b31-bb21-8f45ce3b3e60';
+    const assetId = '00000000-9989-4b31-bb21-8f45ce3b3e61';
+    await db
+      .insert(customers)
+      .values({
+        id: customerId,
+        name: 'Alice'
+      })
+      .execute();
+
+    await db
+      .insert(assets)
+      .values({
+        id: assetId,
+        customer_id: customerId
+      })
+      .execute();
+
+    await receivedUpdates;
+    abortController.abort();
+
+    expect(receivedResult[0].customer['id']).toEqual(customerId);
   });
 });
