@@ -4,7 +4,7 @@ import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
 import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { ResolvedWebSQLOpenOptions, WebSQLOpenFactoryOptions } from '../web-sql-flags';
+import { ResolvedWebSQLOpenOptions, TemporaryStorageOption, WebSQLOpenFactoryOptions } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
 
@@ -39,7 +39,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
   async openConnection(): Promise<AsyncDatabaseConnection> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
-    const { vfs = WASQLiteVFS.IDBBatchAtomicVFS } = this.waOptions;
+    const { vfs = WASQLiteVFS.IDBBatchAtomicVFS, temporaryStorage = TemporaryStorageOption.MEMORY } = this.waOptions;
 
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
@@ -53,6 +53,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           ? resolveWorkerDatabasePortFactory(() =>
               optionsDbWorker({
                 ...this.options,
+                temporaryStorage,
                 flags: this.resolvedFlags
               })
             )
@@ -65,6 +66,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         baseConnection: await workerDBOpener({
           dbFilename: this.options.dbFilename,
           vfs,
+          temporaryStorage,
           flags: this.resolvedFlags
         }),
         identifier: this.options.dbFilename
@@ -76,6 +78,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         dbLocation: this.options.dbLocation,
         debugMode: this.options.debugMode,
         vfs,
+        temporaryStorage,
         flags: this.resolvedFlags
       });
     }

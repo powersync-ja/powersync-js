@@ -6,7 +6,7 @@ import {
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
-import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
+import { resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
 import { WebDBAdapter } from '../adapters/WebDBAdapter';
 import {
   WebStreamingSyncImplementation,
@@ -108,6 +108,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const resolvedWorkerOptions = {
       ...options,
       dbFilename: this.options.identifier!,
+      // TODO
+      temporaryStorage: TemporaryStorageOption.MEMORY,
       flags: resolveWebSQLFlags(options.flags)
     };
 

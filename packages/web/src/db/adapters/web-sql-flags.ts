@@ -41,6 +41,16 @@ export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
   flags: ResolvedWebSQLFlags;
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   */
+  temporaryStorage: TemporaryStorageOption;
+}
+
+export enum TemporaryStorageOption {
+  MEMORY = 'memory',
+  FILESYSTEM = 'file'
 }
 
 /**
@@ -58,6 +68,11 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 
   logger?: ILogger;
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   */
+  temporaryStorage?: TemporaryStorageOption;
 }
 
 export function isServerSide() {

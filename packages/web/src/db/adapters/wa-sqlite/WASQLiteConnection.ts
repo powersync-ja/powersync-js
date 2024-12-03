@@ -13,6 +13,9 @@ export enum WASQLiteVFS {
   AccessHandlePoolVFS = 'AccessHandlePoolVFS'
 }
 
+/**
+ * @internal
+ */
 export type WASQLiteBroadCastTableUpdateEvent = {
   changedTables: Set<string>;
   connectionId: number;

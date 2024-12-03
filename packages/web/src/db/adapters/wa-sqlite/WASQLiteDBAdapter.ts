@@ -3,7 +3,7 @@ import * as Comlink from 'comlink';
 import { resolveWebPowerSyncFlags } from '../../PowerSyncDatabase';
 import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../web-sql-flags';
+import { ResolvedWebSQLOpenOptions, TemporaryStorageOption, WebSQLFlags } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './WASQLiteConnection';
 import { WASQLiteOpenFactory } from './WASQLiteOpenFactory';
@@ -26,6 +26,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 
   vfs?: WASQLiteVFS;
+  temporaryStorage?: TemporaryStorageOption;
 }
 
 /**
@@ -36,13 +37,17 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
     super({
       name: options.dbFilename,
       openConnection: async () => {
-        const { workerPort } = options;
+        const { workerPort, temporaryStorage } = options;
         if (workerPort) {
           const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
           return new WorkerWrappedAsyncDatabaseConnection({
             remote,
             identifier: options.dbFilename,
-            baseConnection: await remote({ ...options, flags: resolveWebPowerSyncFlags(options.flags) })
+            baseConnection: await remote({
+              ...options,
+              temporaryStorage: temporaryStorage ?? TemporaryStorageOption.MEMORY,
+              flags: resolveWebPowerSyncFlags(options.flags)
+            })
           });
         }
         const openFactory = new WASQLiteOpenFactory({
@@ -50,6 +55,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
           dbLocation: options.dbLocation,
           debugMode: options.debugMode,
           flags: options.flags,
+          temporaryStorage,
           logger: options.logger,
           vfs: options.vfs,
           worker: options.worker

@@ -23,6 +23,7 @@ import {
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
 import { WASQLiteOpenOptions } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
+import { TemporaryStorageOption } from '../../db/adapters/web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
@@ -168,6 +169,7 @@ export class SharedSyncImplementation
           baseConnection: await remote({
             dbFilename: this.syncParams!.dbName,
             // TODO improve
+            temporaryStorage: TemporaryStorageOption.MEMORY,
             flags: {
               enableMultiTabs: true,
               useWebWorker: true,
@@ -281,6 +283,7 @@ export class SharedSyncImplementation
       const db = await remote({
         dbFilename: this.syncParams!.dbName,
         // TODO improve
+        temporaryStorage: TemporaryStorageOption.MEMORY,
         flags: {
           enableMultiTabs: true,
           useWebWorker: true,
