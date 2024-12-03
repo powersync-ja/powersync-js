@@ -1,5 +1,17 @@
 # @powersync/drizzle-driver
 
+## 0.2.0
+
+### Minor Changes
+
+- 77a9ed2: Added `watch()` function to Drizzle wrapper to support watched queries. This function invokes `execute()` on the Drizzle query which improves support for complex queries such as those which are relational.
+- 4a70624: Added helper `toPowersyncTable` function and `DrizzleAppSchema` constructor to convert a Drizzle schema into a PowerSync app schema.
+
+### Patch Changes
+
+- Updated dependencies [77a9ed2]
+  - @powersync/common@1.22.0
+
 ## 0.1.0
 
 ### Minor Changes
