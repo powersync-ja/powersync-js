@@ -17,7 +17,7 @@ export const db = new PowerSyncDatabase({
     dbFilename: 's.sqlite'
   },
   flags: {
-    enableMultiTabs: true
+    enableMultiTabs: typeof SharedWorker !== 'undefined'
   }
   // database: new WASQLiteOpenFactory({
   //   dbFilename: 'examplsw1se112.db'
