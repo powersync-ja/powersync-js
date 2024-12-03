@@ -1,12 +1,20 @@
 import * as Comlink from 'comlink';
-import type { OpenDB } from '../../shared/types';
+import { OpenAsyncDatabaseConnection } from '../..//db/adapters/AsyncDatabaseConnection';
+import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
  */
-export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
+export function openWorkerDatabasePort(
+  workerIdentifier: string,
+  multipleTabs = true,
+  worker: string | URL = '',
+  vfs?: WASQLiteVFS
+) {
+  const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
+
   if (worker) {
-    return multipleTabs
+    return !needsDedicated && multipleTabs
       ? new SharedWorker(`${worker}`, {
           /* @vite-ignore */
           name: `shared-DB-worker-${workerIdentifier}`
@@ -22,7 +30,7 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
      *  This enables multi tab support by default, but falls back if SharedWorker is not available
      *  (in the case of Android)
      */
-    return multipleTabs
+    return !needsDedicated && multipleTabs
       ? new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
           /* @vite-ignore */
           name: `shared-DB-worker-${workerIdentifier}`,
@@ -41,7 +49,7 @@ export function openWorkerDatabasePort(workerIdentifier: string, multipleTabs = 
  * a worker.
  */
 export function getWorkerDatabaseOpener(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
-  return Comlink.wrap<OpenDB>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
+  return Comlink.wrap<OpenAsyncDatabaseConnection>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
 }
 
 export function resolveWorkerDatabasePortFactory(worker: () => Worker | SharedWorker) {

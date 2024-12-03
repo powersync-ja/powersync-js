@@ -14,6 +14,7 @@ import {
   StreamingSyncImplementation
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
+import { getNavigatorLocks } from '../shared/navigator';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
@@ -21,6 +22,7 @@ import {
   resolveWebSQLFlags,
   WebSQLFlags
 } from './adapters/web-sql-flags';
+import { WebDBAdapter } from './adapters/WebDBAdapter';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -28,7 +30,6 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { getNavigatorLocks } from '../shared/navigator';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -72,7 +73,7 @@ export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   externallyUnload: false
 };
 
-export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): WebPowerSyncFlags => {
+export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<WebPowerSyncFlags> => {
   return {
     ...DEFAULT_POWERSYNC_FLAGS,
     ...flags,
@@ -191,7 +192,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
           const logger = this.options.logger;
           logger ? logger.warn(warning) : console.warn(warning);
         }
-        return new SharedWebStreamingSyncImplementation(syncOptions);
+        return new SharedWebStreamingSyncImplementation({
+          ...syncOptions,
+          db: this.database as WebDBAdapter // This should always be the case
+        });
       default:
         return new WebStreamingSyncImplementation(syncOptions);
     }
