@@ -22,7 +22,7 @@ import {
   resolveWebSQLFlags,
   WebSQLFlags
 } from './adapters/web-sql-flags';
-import { WorkerDBAdapter } from './adapters/WorkerDBAdapter';
+import { WebDBAdapter } from './adapters/WebDBAdapter';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -194,7 +194,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         }
         return new SharedWebStreamingSyncImplementation({
           ...syncOptions,
-          workerDatabase: this.database as WorkerDBAdapter // This should always be the case
+          db: this.database as WebDBAdapter // This should always be the case
         });
       default:
         return new WebStreamingSyncImplementation(syncOptions);

@@ -8,7 +8,7 @@ import {
 import { Mutex } from 'async-mutex';
 import Logger from 'js-logger';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkerDBAdapter } from '../src/db/adapters/WorkerDBAdapter';
+import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { testSchema } from './utils/testDb';
 
@@ -134,7 +134,7 @@ describe('Multiple Instances', () => {
         await connector1.uploadData(db);
       },
       identifier,
-      workerDatabase: db.database as WorkerDBAdapter
+      db: db.database as WebDBAdapter
     };
 
     const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
@@ -148,7 +148,7 @@ describe('Multiple Instances', () => {
         await connector2.uploadData(db);
       },
       identifier,
-      workerDatabase: db.database as WorkerDBAdapter
+      db: db.database as WebDBAdapter
     };
 
     const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
@@ -196,7 +196,7 @@ describe('Multiple Instances', () => {
         triggerUpload1();
         connector1.uploadData(db);
       },
-      workerDatabase: db.database as WorkerDBAdapter,
+      db: db.database as WebDBAdapter,
       identifier,
       retryDelayMs: 100,
       flags: {
@@ -227,7 +227,7 @@ describe('Multiple Instances', () => {
       flags: {
         broadcastLogs: true
       },
-      workerDatabase: db.database as WorkerDBAdapter
+      db: db.database as WebDBAdapter
     });
 
     // Waits for the stream to be marked as connected

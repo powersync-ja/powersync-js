@@ -11,6 +11,8 @@ import {
 import Logger, { ILogger } from 'js-logger';
 import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
+import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
+import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
 
 /**
  * @internal
@@ -31,12 +33,14 @@ export type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
  * Wraps a {@link AsyncDatabaseConnection} and provides exclusive locking functions in
  * order to implement {@link DBAdapter}.
  */
-export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabaseAdapterListener> implements DBAdapter {
+export class LockedAsyncDatabaseAdapter
+  extends BaseObserver<LockedAsyncDatabaseAdapterListener>
+  implements WebDBAdapter
+{
   private logger: ILogger;
   private dbGetHelpers: DBGetUtils | null;
   private debugMode: boolean;
   private _dbIdentifier: string;
-  private _isInitialized = false;
   protected initPromise: Promise<void>;
   private _db: AsyncDatabaseConnection | null = null;
   protected _disposeTableChangeListener: (() => void) | null = null;
@@ -79,6 +83,13 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
     return this._dbIdentifier;
   }
 
+  async shareConnection(): Promise<SharedConnectionWorker> {
+    if (false == this._db instanceof WorkerWrappedAsyncDatabaseConnection) {
+      throw new Error(`Only worker connections can be shared`);
+    }
+    return this._db.shareConnection();
+  }
+
   /**
    * Registers a table change notification callback with the base database.
    * This can be extended by custom implementations in order to handle proxy events.
@@ -100,8 +111,6 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
     this._db = await this.options.openConnection();
     await this._db.init();
     await this.registerOnChangeListener(this._db);
-
-    this._isInitialized = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
 

@@ -7,7 +7,7 @@ import {
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
 import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
-import { WorkerDBAdapter } from '../adapters/WorkerDBAdapter';
+import { WebDBAdapter } from '../adapters/WebDBAdapter';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -21,14 +21,13 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
     public statusChanged: (status: SyncStatusOptions) => void,
-    protected dbWorkerPort: Promise<MessagePort>
+    protected webDB: WebDBAdapter
   ) {
     super();
   }
 
   async getDBWorkerPort(): Promise<MessagePort> {
-    // This is provided asynchronously for an easier initialization
-    const port = await this.dbWorkerPort;
+    const { port } = await this.webDB.shareConnection();
     return Comlink.transfer(port, [port]);
   }
 
@@ -89,7 +88,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
 }
 
 export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
-  workerDatabase: WorkerDBAdapter;
+  db: WebDBAdapter;
 }
 
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
@@ -163,7 +162,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       (status) => {
         this.iterateListeners((l) => this.updateSyncStatus(status));
       },
-      options.workerDatabase.getMessagePort()
+      options.db
     );
 
     /**

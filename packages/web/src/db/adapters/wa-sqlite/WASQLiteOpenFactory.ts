@@ -2,10 +2,10 @@ import { DBAdapter } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
-import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
+import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
 import { WebSQLOpenFactoryOptions } from '../web-sql-flags';
-import { WorkerLockedAsyncDatabaseAdapter } from '../WorkerLockedAsyncDatabaseAdapter';
+import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASqliteConnection, WASQLiteOpenOptions, WASQLiteVFS } from './WASQLiteConnection';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
@@ -26,17 +26,24 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
   }
 
   protected openAdapter(): DBAdapter {
+    return new LockedAsyncDatabaseAdapter({
+      name: this.options.dbFilename,
+      openConnection: () => this.openConnection(),
+      debugMode: this.options.debugMode,
+      logger: this.logger
+    });
+  }
+
+  async openConnection(): Promise<AsyncDatabaseConnection> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
-    let adapter: DBAdapter;
-
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
 
-      const messagePort =
+      const workerPort =
         typeof optionsDbWorker == 'function'
           ? resolveWorkerDatabasePortFactory(() =>
               optionsDbWorker({
@@ -46,37 +53,26 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(messagePort);
+      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
 
-      adapter = new WorkerLockedAsyncDatabaseAdapter({
-        messagePort,
-        openConnection: () =>
-          workerDBOpener({
-            dbFilename: this.options.dbFilename,
-            vfs: this.waOptions.vfs,
-            flags: this.resolvedFlags
-          }),
-        name: this.options.dbFilename,
-        debugMode: this.options.debugMode,
-        logger: this.logger
+      return new WorkerWrappedAsyncDatabaseConnection({
+        baseConnection: await workerDBOpener({
+          dbFilename: this.options.dbFilename,
+          vfs: this.waOptions.vfs,
+          flags: this.resolvedFlags
+        }),
+        identifier: this.options.dbFilename,
+        worker: workerPort
       });
     } else {
       // Don't use a web worker
-      adapter = new LockedAsyncDatabaseAdapter({
-        openConnection: async () =>
-          new WASqliteConnection({
-            dbFilename: this.options.dbFilename,
-            dbLocation: this.options.dbLocation,
-            debugMode: this.options.debugMode,
-            vfs: this.waOptions.vfs,
-            flags: this.resolvedFlags
-          }),
-        name: this.options.dbFilename,
+      return new WASqliteConnection({
+        dbFilename: this.options.dbFilename,
+        dbLocation: this.options.dbLocation,
         debugMode: this.options.debugMode,
-        logger: this.logger
+        vfs: this.waOptions.vfs,
+        flags: this.resolvedFlags
       });
     }
-
-    return adapter;
   }
 }

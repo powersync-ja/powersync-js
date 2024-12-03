@@ -21,8 +21,9 @@ import {
 } from '../../db/sync/WebStreamingSyncImplementation';
 
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
+import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
 import { WASQLiteOpenOptions } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
-import { WorkerLockedAsyncDatabaseAdapter } from '../../db/adapters/WorkerLockedAsyncDatabaseAdapter';
+import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
@@ -158,21 +159,24 @@ export class SharedSyncImplementation
     // TODO share logic here
     const lastClient = this.ports[this.ports.length - 1];
     const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-    const locked = new WorkerLockedAsyncDatabaseAdapter({
-      name: this.syncParams?.dbName!,
-      messagePort: workerPort,
+    const locked = new LockedAsyncDatabaseAdapter({
+      name: this.syncParams!.dbName,
       openConnection: async () => {
         const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
-        return remote({
-          dbFilename: this.syncParams!.dbName,
-          // TODO improve
-          flags: {
-            enableMultiTabs: true,
-            useWebWorker: true,
-            broadcastLogs: true,
-            disableSSRWarning: true,
-            ssrMode: false
-          }
+        return new WorkerWrappedAsyncDatabaseConnection({
+          baseConnection: await remote({
+            dbFilename: this.syncParams!.dbName,
+            // TODO improve
+            flags: {
+              enableMultiTabs: true,
+              useWebWorker: true,
+              broadcastLogs: true,
+              disableSSRWarning: true,
+              ssrMode: false
+            }
+          }),
+          identifier: this.syncParams!.dbName,
+          worker: workerPort
         });
       },
       logger: this.logger
@@ -269,29 +273,30 @@ export class SharedSyncImplementation
     });
 
     if (this.dbAdapter == trackedPort.db && this.syncStreamClient) {
-      // The db adapter belonged to a client which has closed. We need to reconnect
-      // FIXME better closing
-      // this.dbAdapter!.close();
+      this.dbAdapter!.close();
 
       await this.disconnect();
       // Ask for a new DB worker port handler
       const lastClient = this.ports[this.ports.length - 1];
       const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-      const locked = new WorkerLockedAsyncDatabaseAdapter({
-        name: this.syncParams?.dbName!,
-        messagePort: workerPort,
+      const locked = new LockedAsyncDatabaseAdapter({
+        name: this.syncParams!.dbName,
         openConnection: async () => {
           const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
-          return remote({
-            dbFilename: this.syncParams!.dbName,
-            // TODO improve
-            flags: {
-              enableMultiTabs: true,
-              useWebWorker: true,
-              broadcastLogs: true,
-              disableSSRWarning: true,
-              ssrMode: false
-            }
+          return new WorkerWrappedAsyncDatabaseConnection({
+            baseConnection: await remote({
+              dbFilename: this.syncParams!.dbName,
+              // TODO improve
+              flags: {
+                enableMultiTabs: true,
+                useWebWorker: true,
+                broadcastLogs: true,
+                disableSSRWarning: true,
+                ssrMode: false
+              }
+            }),
+            identifier: this.syncParams!.dbName,
+            worker: workerPort
           });
         },
         logger: this.logger
