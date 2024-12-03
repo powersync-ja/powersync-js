@@ -48,7 +48,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
       const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(messagePort);
 
-      const workerAdapter = new WorkerLockedAsyncDatabaseAdapter({
+      adapter = new WorkerLockedAsyncDatabaseAdapter({
         messagePort,
         openConnection: () =>
           workerDBOpener({
@@ -60,11 +60,9 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         debugMode: this.options.debugMode,
         logger: this.logger
       });
-      workerAdapter.init();
-      adapter = workerAdapter;
     } else {
       // Don't use a web worker
-      const contextAdapter = new LockedAsyncDatabaseAdapter({
+      adapter = new LockedAsyncDatabaseAdapter({
         openConnection: async () =>
           new WASqliteConnection({
             dbFilename: this.options.dbFilename,
@@ -77,8 +75,6 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         debugMode: this.options.debugMode,
         logger: this.logger
       });
-      contextAdapter.init();
-      adapter = contextAdapter;
     }
 
     return adapter;

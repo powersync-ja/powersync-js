@@ -37,6 +37,7 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
   private debugMode: boolean;
   private _dbIdentifier: string;
   private _isInitialized = false;
+  protected initPromise: Promise<void>;
   private _db: AsyncDatabaseConnection | null = null;
   protected _disposeTableChangeListener: (() => void) | null = null;
 
@@ -64,6 +65,7 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
     this.dbGetHelpers = this.generateDBHelpers({
       execute: (query, params) => this.acquireLock(() => this._execute(query, params))
     });
+    this.initPromise = this._init();
   }
 
   protected get baseDB() {
@@ -87,7 +89,14 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
     });
   }
 
+  /**
+   * Init is automatic, this helps catch errors or explicitly await initialization
+   */
   async init() {
+    return this.initPromise;
+  }
+
+  protected async _init() {
     this._db = await this.options.openConnection();
     await this._db.init();
     await this.registerOnChangeListener(this._db);
@@ -97,17 +106,8 @@ export class LockedAsyncDatabaseAdapter extends BaseObserver<LockedAsyncDatabase
   }
 
   protected async waitForInitialized() {
-    if (this._isInitialized) {
-      return;
-    }
-    return new Promise<void>((resolve) => {
-      const l = this.registerListener({
-        initialized: () => {
-          resolve();
-          l();
-        }
-      });
-    });
+    // Awaiting this will expose errors on function calls like .execute etc
+    await this.initPromise;
   }
 
   /**

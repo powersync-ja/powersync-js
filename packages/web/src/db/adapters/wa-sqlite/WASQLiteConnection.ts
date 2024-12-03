@@ -123,7 +123,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
     this.updatedTables = new Set();
     this.updateTimer = null;
     this.broadcastChannel = null;
-    this.connectionId = new Date().valueOf() + Math.random() * 1000;
+    this.connectionId = new Date().valueOf() + Math.random();
     this.statementMutex = new Mutex();
     this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs ?? WASQLiteVFS.IDBBatchAtomicVFS];
   }

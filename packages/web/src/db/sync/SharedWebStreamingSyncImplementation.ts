@@ -27,10 +27,8 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   }
 
   async getDBWorkerPort(): Promise<MessagePort> {
-    // FIXME type error
-    const port = (await this.dbWorkerPort) as MessagePort;
-
-    // TODO this can only be done once. Throw an error if multiple attempts are made
+    // This is provided asynchronously for an easier initialization
+    const port = await this.dbWorkerPort;
     return Comlink.transfer(port, [port]);
   }
 
