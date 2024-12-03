@@ -26,8 +26,9 @@ describe('Multiple Instances', () => {
 
   beforeAll(() => Logger.useDefaults());
 
-  beforeEach(() => {
+  beforeEach(async () => {
     db = openDatabase();
+    await db.init();
   });
 
   afterEach(async () => {
