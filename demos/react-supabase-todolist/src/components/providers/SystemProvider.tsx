@@ -3,7 +3,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { PowerSyncDatabase } from '@powersync/web';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
@@ -13,14 +13,17 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  // database: {
-  //   dbFilename: 's.sqlite'
-  // }
-  database: new WASQLiteOpenFactory({
-    dbFilename: 'examplsw1se112.db',
-    // vfs: WASQLiteVFS.OPFSCoopSyncVFS
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS //Out of memory errors on iOS Safari
-  })
+  database: {
+    dbFilename: 's.sqlite'
+  },
+  flags: {
+    enableMultiTabs: true
+  }
+  // database: new WASQLiteOpenFactory({
+  //   dbFilename: 'examplsw1se112.db'
+  //   // vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  //   // vfs: WASQLiteVFS.OPFSCoopSyncVFS //Out of memory errors on iOS Safari
+  // })
 });
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {

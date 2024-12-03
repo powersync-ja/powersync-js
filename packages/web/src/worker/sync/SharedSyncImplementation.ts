@@ -159,11 +159,12 @@ export class SharedSyncImplementation
     // TODO share logic here
     const lastClient = this.ports[this.ports.length - 1];
     const workerPort = await lastClient.clientProvider.getDBWorkerPort();
+    const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
     const locked = new LockedAsyncDatabaseAdapter({
       name: this.syncParams!.dbName,
       openConnection: async () => {
-        const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
         return new WorkerWrappedAsyncDatabaseConnection({
+          remote,
           baseConnection: await remote({
             dbFilename: this.syncParams!.dbName,
             // TODO improve
@@ -175,8 +176,7 @@ export class SharedSyncImplementation
               ssrMode: false
             }
           }),
-          identifier: this.syncParams!.dbName,
-          worker: workerPort
+          identifier: this.syncParams!.dbName
         });
       },
       logger: this.logger
@@ -273,30 +273,29 @@ export class SharedSyncImplementation
     });
 
     if (this.dbAdapter == trackedPort.db && this.syncStreamClient) {
-      this.dbAdapter!.close();
-
       await this.disconnect();
       // Ask for a new DB worker port handler
       const lastClient = this.ports[this.ports.length - 1];
       const workerPort = await lastClient.clientProvider.getDBWorkerPort();
+      const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
+      const db = await remote({
+        dbFilename: this.syncParams!.dbName,
+        // TODO improve
+        flags: {
+          enableMultiTabs: true,
+          useWebWorker: true,
+          broadcastLogs: true,
+          disableSSRWarning: true,
+          ssrMode: false
+        }
+      });
       const locked = new LockedAsyncDatabaseAdapter({
         name: this.syncParams!.dbName,
         openConnection: async () => {
-          const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
           return new WorkerWrappedAsyncDatabaseConnection({
-            baseConnection: await remote({
-              dbFilename: this.syncParams!.dbName,
-              // TODO improve
-              flags: {
-                enableMultiTabs: true,
-                useWebWorker: true,
-                broadcastLogs: true,
-                disableSSRWarning: true,
-                ssrMode: false
-              }
-            }),
-            identifier: this.syncParams!.dbName,
-            worker: workerPort
+            remote,
+            baseConnection: db,
+            identifier: this.syncParams!.dbName
           });
         },
         logger: this.logger

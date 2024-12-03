@@ -1,4 +1,5 @@
-import { BatchedUpdateNotification, QueryResult, SQLOpenOptions } from '@powersync/common';
+import { BatchedUpdateNotification, QueryResult } from '@powersync/common';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 
 /**
  * Proxied query result does not contain a function for accessing row values
@@ -24,6 +25,6 @@ export interface AsyncDatabaseConnection {
   registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void>;
 }
 
-export type OpenAsyncDatabaseConnection<Options extends SQLOpenOptions = SQLOpenOptions> = (
+export type OpenAsyncDatabaseConnection<Options extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = (
   options: Options
 ) => AsyncDatabaseConnection;

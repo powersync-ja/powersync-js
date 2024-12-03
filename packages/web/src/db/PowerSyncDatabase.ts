@@ -73,7 +73,7 @@ export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   externallyUnload: false
 };
 
-export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): WebPowerSyncFlags => {
+export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<WebPowerSyncFlags> => {
   return {
     ...DEFAULT_POWERSYNC_FLAGS,
     ...flags,

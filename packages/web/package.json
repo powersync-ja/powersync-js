@@ -67,7 +67,7 @@
     "@powersync/common": "workspace:*",
     "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
-    "comlink": "^4.4.1",
+    "comlink": "^4.4.2",
     "commander": "^12.1.0",
     "js-logger": "^1.6.1"
   },

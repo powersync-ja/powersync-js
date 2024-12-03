@@ -25,14 +25,14 @@ let nextClientId = 1;
 const openWorkerConnection = async (options: WASQLiteOpenOptions): Promise<AsyncDatabaseConnection> => {
   const connection = new WASqliteConnection(options);
   return {
-    init: () => connection.init(),
-    close: () => connection.close(),
-    execute: async (sql: string, params?: any[]) => connection.execute(sql, params),
-    executeBatch: async (sql: string, params?: any[]) => connection.executeBatch(sql, params),
-    registerOnTableChange: async (callback) => {
+    init: Comlink.proxy(() => connection.init()),
+    close: Comlink.proxy(() => connection.close()),
+    execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
+    executeBatch: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeBatch(sql, params)),
+    registerOnTableChange: Comlink.proxy(async (callback) => {
       // Proxy the callback remove function
       return Comlink.proxy(await connection.registerOnTableChange(callback));
-    }
+    })
   };
 };
 
@@ -57,8 +57,12 @@ const openDBShared = async (options: WASQLiteOpenOptions): Promise<AsyncDatabase
 
     const wrappedConnection = {
       ...db,
+      init: Comlink.proxy(() => {
+        // the init has been done automatically
+      }),
       close: Comlink.proxy(() => {
         const { clientIds } = dbEntry;
+        console.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
         clientIds.delete(clientId);
         if (clientIds.size == 0) {
           console.debug(`Closing connection to ${dbFilename}.`);
@@ -82,14 +86,14 @@ if (typeof SharedWorkerGlobalScope !== 'undefined') {
     console.debug('Exposing shared db on port', port);
     Comlink.expose(openDBShared, port);
   };
-
-  addEventListener('unload', () => {
-    Array.from(DBMap.values()).forEach(async (dbConnection) => {
-      const db = await dbConnection.db;
-      db.close?.();
-    });
-  });
 } else {
   // A dedicated worker can be shared externally
   Comlink.expose(openDBShared);
 }
+
+addEventListener('unload', () => {
+  Array.from(DBMap.values()).forEach(async (dbConnection) => {
+    const { db } = dbConnection;
+    db.close?.();
+  });
+});

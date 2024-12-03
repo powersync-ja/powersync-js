@@ -1,23 +1,34 @@
 import * as Comlink from 'comlink';
-import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from './AsyncDatabaseConnection';
+import {
+  AsyncDatabaseConnection,
+  OnTableChangeCallback,
+  OpenAsyncDatabaseConnection,
+  ProxiedQueryResult
+} from './AsyncDatabaseConnection';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 
 export type SharedConnectionWorker = {
   identifier: string;
   port: MessagePort;
 };
 
-export type WrappedWorkerConnectionOptions = {
+export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = {
   baseConnection: AsyncDatabaseConnection;
   identifier: string;
-  worker: Worker | MessagePort;
+  /**
+   * Need a remote in order to keep a reference to the Proxied worker
+   */
+  remote: Comlink.Remote<OpenAsyncDatabaseConnection<Config>>;
 };
 
 /**
  * Wraps a provided instance of {@link AsyncDatabaseConnection}, providing necessary proxy
  * functions for worker listeners.
  */
-export class WorkerWrappedAsyncDatabaseConnection implements AsyncDatabaseConnection {
-  constructor(protected options: WrappedWorkerConnectionOptions) {}
+export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
+  implements AsyncDatabaseConnection
+{
+  constructor(protected options: WrappedWorkerConnectionOptions<Config>) {}
 
   protected get baseConnection() {
     return this.options.baseConnection;
@@ -31,20 +42,10 @@ export class WorkerWrappedAsyncDatabaseConnection implements AsyncDatabaseConnec
    * Get a MessagePort which can be used to share the internals of this connection.
    */
   async shareConnection(): Promise<SharedConnectionWorker> {
-    const { identifier, worker } = this.options;
-    if (worker instanceof Worker) {
-      // We can't transfer a Worker instance, need a MessagePort
-      // Comlink provides a nice utility for exposing a MessagePort
-      // from a Worker
-      const temp = Comlink.wrap(worker);
-      const newPort = await temp[Comlink.createEndpoint]();
-      return { port: newPort, identifier };
-    }
+    const { identifier, remote } = this.options;
 
-    return {
-      identifier: identifier,
-      port: worker
-    };
+    const newPort = await remote[Comlink.createEndpoint]();
+    return { port: newPort, identifier };
   }
 
   /**
@@ -55,8 +56,9 @@ export class WorkerWrappedAsyncDatabaseConnection implements AsyncDatabaseConnec
     return this.baseConnection.registerOnTableChange(Comlink.proxy(callback));
   }
 
-  close(): Promise<void> {
-    return this.baseConnection.close();
+  async close(): Promise<void> {
+    await this.baseConnection.close();
+    this.options.remote[Comlink.releaseProxy]();
   }
 
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult> {

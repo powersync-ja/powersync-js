@@ -4,14 +4,17 @@ import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
 import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { WebSQLOpenFactoryOptions } from '../web-sql-flags';
+import { ResolvedWebSQLOpenOptions, WebSQLOpenFactoryOptions } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
-import { WASqliteConnection, WASQLiteOpenOptions, WASQLiteVFS } from './WASQLiteConnection';
+import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
 }
 
+export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
+  vfs: WASQLiteVFS;
+}
 /**
  * Opens a SQLite connection using WA-SQLite.
  */
@@ -36,6 +39,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
   async openConnection(): Promise<AsyncDatabaseConnection> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
+    const { vfs = WASQLiteVFS.IDBBatchAtomicVFS } = this.waOptions;
+
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
@@ -53,16 +58,16 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
+      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<ResolvedWASQLiteOpenFactoryOptions>>(workerPort);
 
       return new WorkerWrappedAsyncDatabaseConnection({
+        remote: workerDBOpener,
         baseConnection: await workerDBOpener({
           dbFilename: this.options.dbFilename,
-          vfs: this.waOptions.vfs,
+          vfs,
           flags: this.resolvedFlags
         }),
-        identifier: this.options.dbFilename,
-        worker: workerPort
+        identifier: this.options.dbFilename
       });
     } else {
       // Don't use a web worker
@@ -70,7 +75,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         dbFilename: this.options.dbFilename,
         dbLocation: this.options.dbLocation,
         debugMode: this.options.debugMode,
-        vfs: this.waOptions.vfs,
+        vfs,
         flags: this.resolvedFlags
       });
     }
