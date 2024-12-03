@@ -300,6 +300,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   async downloadRecord(record: AttachmentRecord) {
+    if (!this.options.downloadAttachments) {
+      return false;
+    }
     if (!record.local_uri) {
       record.local_uri = this.getLocalFilePathSuffix(record.filename);
     }
@@ -442,7 +445,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   private async downloadRecords() {
-    if (this.options.downloadAttachments) {
+    if (!this.options.downloadAttachments) {
       return;
     }
     if (this.downloading) {
