@@ -22,8 +22,7 @@ import {
 
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
-import { WASQLiteOpenOptions } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
-import { TemporaryStorageOption } from '../../db/adapters/web-sql-flags';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
@@ -45,33 +44,40 @@ export type ManualSharedSyncPayload = {
   data: any; // TODO update in future
 };
 
+/**
+ * @internal
+ */
 export type SharedSyncInitOptions = {
-  dbName: string;
   streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
+  dbParams: ResolvedWebSQLOpenOptions;
 };
 
-type TrackedClientDB = {
-  client: AbstractSharedSyncClientProvider;
-  db: DBAdapter;
-  port: MessagePort;
-};
-
+/**
+ * @internal
+ */
 export interface SharedSyncImplementationListener extends StreamingSyncImplementationListener {
   initialized: () => void;
 }
 
+/**
+ * @internal
+ */
 export type WrappedSyncPort = {
   port: MessagePort;
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
   db?: DBAdapter;
 };
 
+/**
+ * @internal
+ */
 export type RemoteOperationAbortController = {
   controller: AbortController;
   activePort: WrappedSyncPort;
 };
 
 /**
+ * @internal
  * Shared sync implementation which runs inside a shared webworker
  */
 export class SharedSyncImplementation
@@ -154,38 +160,7 @@ export class SharedSyncImplementation
       this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
     };
 
-    // Ask for a new DB worker port handler
-    // We can only ask once per client provider since the port
-    // can only be transferred once
-    // TODO share logic here
-    const lastClient = this.ports[this.ports.length - 1];
-    const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-    const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
-    const locked = new LockedAsyncDatabaseAdapter({
-      name: this.syncParams!.dbName,
-      openConnection: async () => {
-        return new WorkerWrappedAsyncDatabaseConnection({
-          remote,
-          baseConnection: await remote({
-            dbFilename: this.syncParams!.dbName,
-            // TODO improve
-            temporaryStorage: TemporaryStorageOption.MEMORY,
-            flags: {
-              enableMultiTabs: true,
-              useWebWorker: true,
-              broadcastLogs: true,
-              disableSSRWarning: true,
-              ssrMode: false
-            }
-          }),
-          identifier: this.syncParams!.dbName
-        });
-      },
-      logger: this.logger
-    });
-    await locked.init();
-    this.dbAdapter = lastClient.db = locked;
-
+    await this.openInternalDB();
     this.iterateListeners((l) => l.initialized?.());
   }
 
@@ -277,34 +252,7 @@ export class SharedSyncImplementation
     if (this.dbAdapter == trackedPort.db && this.syncStreamClient) {
       await this.disconnect();
       // Ask for a new DB worker port handler
-      const lastClient = this.ports[this.ports.length - 1];
-      const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-      const remote = Comlink.wrap<OpenAsyncDatabaseConnection<WASQLiteOpenOptions>>(workerPort);
-      const db = await remote({
-        dbFilename: this.syncParams!.dbName,
-        // TODO improve
-        temporaryStorage: TemporaryStorageOption.MEMORY,
-        flags: {
-          enableMultiTabs: true,
-          useWebWorker: true,
-          broadcastLogs: true,
-          disableSSRWarning: true,
-          ssrMode: false
-        }
-      });
-      const locked = new LockedAsyncDatabaseAdapter({
-        name: this.syncParams!.dbName,
-        openConnection: async () => {
-          return new WorkerWrappedAsyncDatabaseConnection({
-            remote,
-            baseConnection: db,
-            identifier: this.syncParams!.dbName
-          });
-        },
-        logger: this.logger
-      });
-      await locked.init();
-      this.dbAdapter = lastClient.db = locked;
+      await this.openInternalDB();
       await this.connect(this.lastConnectOptions);
     }
   }
@@ -382,6 +330,27 @@ export class SharedSyncImplementation
       // Logger cannot be transferred just yet
       logger: this.logger
     });
+  }
+
+  protected async openInternalDB() {
+    const lastClient = this.ports[this.ports.length - 1];
+    const workerPort = await lastClient.clientProvider.getDBWorkerPort();
+    const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
+    const identifier = this.syncParams!.dbParams.dbFilename;
+    const db = await remote(this.syncParams!.dbParams);
+    const locked = new LockedAsyncDatabaseAdapter({
+      name: identifier,
+      openConnection: async () => {
+        return new WorkerWrappedAsyncDatabaseConnection({
+          remote,
+          baseConnection: db,
+          identifier
+        });
+      },
+      logger: this.logger
+    });
+    await locked.init();
+    this.dbAdapter = lastClient.db = locked;
   }
 
   /**

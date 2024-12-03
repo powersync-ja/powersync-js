@@ -13,6 +13,7 @@ import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 
 /**
  * @internal
@@ -44,6 +45,7 @@ export class LockedAsyncDatabaseAdapter
   protected initPromise: Promise<void>;
   private _db: AsyncDatabaseConnection | null = null;
   protected _disposeTableChangeListener: (() => void) | null = null;
+  private _config: ResolvedWebSQLOpenOptions | null = null;
 
   constructor(protected options: LockedAsyncDatabaseAdapterOptions) {
     super();
@@ -83,6 +85,33 @@ export class LockedAsyncDatabaseAdapter
     return this._dbIdentifier;
   }
 
+  /**
+   * Init is automatic, this helps catch errors or explicitly await initialization
+   */
+  async init() {
+    return this.initPromise;
+  }
+
+  protected async _init() {
+    this._db = await this.options.openConnection();
+    await this._db.init();
+    this._config = await this._db.getConfig();
+    await this.registerOnChangeListener(this._db);
+    this.iterateListeners((cb) => cb.initialized?.());
+  }
+
+  getConfiguration(): ResolvedWebSQLOpenOptions {
+    if (!this._config) {
+      throw new Error(`Cannot get config before initialization is completed`);
+    }
+    return this._config;
+  }
+
+  protected async waitForInitialized() {
+    // Awaiting this will expose errors on function calls like .execute etc
+    await this.initPromise;
+  }
+
   async shareConnection(): Promise<SharedConnectionWorker> {
     if (false == this._db instanceof WorkerWrappedAsyncDatabaseConnection) {
       throw new Error(`Only worker connections can be shared`);
@@ -98,25 +127,6 @@ export class LockedAsyncDatabaseAdapter
     this._disposeTableChangeListener = await db.registerOnTableChange((event) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(event));
     });
-  }
-
-  /**
-   * Init is automatic, this helps catch errors or explicitly await initialization
-   */
-  async init() {
-    return this.initPromise;
-  }
-
-  protected async _init() {
-    this._db = await this.options.openConnection();
-    await this._db.init();
-    await this.registerOnChangeListener(this._db);
-    this.iterateListeners((cb) => cb.initialized?.());
-  }
-
-  protected async waitForInitialized() {
-    // Awaiting this will expose errors on function calls like .execute etc
-    await this.initPromise;
   }
 
   /**

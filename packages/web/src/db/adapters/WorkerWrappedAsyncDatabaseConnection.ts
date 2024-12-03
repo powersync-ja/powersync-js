@@ -68,4 +68,8 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult> {
     return this.baseConnection.executeBatch(sql, params);
   }
+
+  getConfig(): Promise<ResolvedWebSQLOpenOptions> {
+    return this.baseConnection.getConfig();
+  }
 }

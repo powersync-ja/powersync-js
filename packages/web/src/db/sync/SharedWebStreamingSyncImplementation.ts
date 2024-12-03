@@ -97,10 +97,11 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected messagePort: MessagePort;
 
   protected isInitialized: Promise<void>;
+  protected dbAdapter: WebDBAdapter;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
-
+    this.dbAdapter = options.db;
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
@@ -147,7 +148,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const flags = { ...this.webOptions.flags, workers: undefined };
 
     this.isInitialized = this.syncManager.setParams({
-      dbName: this.options.identifier!,
+      dbParams: this.dbAdapter.getConfiguration(),
       streamOptions: {
         crudUploadThrottleMs,
         identifier,

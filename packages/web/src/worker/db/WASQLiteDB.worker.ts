@@ -5,7 +5,8 @@
 import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
 import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
-import { WASQLiteOpenOptions, WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
+import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
+import { ResolvedWASQLiteOpenFactoryOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
@@ -22,10 +23,11 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 let nextClientId = 1;
 
-const openWorkerConnection = async (options: WASQLiteOpenOptions): Promise<AsyncDatabaseConnection> => {
+const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions): Promise<AsyncDatabaseConnection> => {
   const connection = new WASqliteConnection(options);
   return {
     init: Comlink.proxy(() => connection.init()),
+    getConfig: Comlink.proxy(() => connection.getConfig()),
     close: Comlink.proxy(() => connection.close()),
     execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
     executeBatch: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeBatch(sql, params)),
@@ -36,7 +38,7 @@ const openWorkerConnection = async (options: WASQLiteOpenOptions): Promise<Async
   };
 };
 
-const openDBShared = async (options: WASQLiteOpenOptions): Promise<AsyncDatabaseConnection> => {
+const openDBShared = async (options: ResolvedWASQLiteOpenFactoryOptions): Promise<AsyncDatabaseConnection> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;

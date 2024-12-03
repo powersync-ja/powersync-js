@@ -2,7 +2,7 @@ import * as SQLite from '@journeyapps/wa-sqlite';
 import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
-import { ResolvedWebSQLOpenOptions } from '../web-sql-flags';
+import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory';
 
 /**
  * List of currently tested virtual filesystems
@@ -44,13 +44,6 @@ export type WASQLiteModuleFactoryOptions = { dbFileName: string };
 export type WASQLiteModuleFactory = (
   options: WASQLiteModuleFactoryOptions
 ) => Promise<{ module: SQLiteModule; vfs: SQLiteVFS }>;
-
-/**
- * @internal
- */
-export interface WASQLiteOpenOptions extends ResolvedWebSQLOpenOptions {
-  vfs?: WASQLiteVFS;
-}
 
 /**
  * @internal
@@ -106,7 +99,10 @@ export const DEFAULT_MODULE_FACTORIES = {
  * WA-SQLite connection which directly interfaces with WA-SQLite.
  * This is usually instantiated inside a worker.
  */
-export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener> implements AsyncDatabaseConnection {
+export class WASqliteConnection
+  extends BaseObserver<WASQLiteConnectionListener>
+  implements AsyncDatabaseConnection<ResolvedWASQLiteOpenFactoryOptions>
+{
   private _sqliteAPI: SQLiteAPI | null = null;
   private _dbP: number | null = null;
   private _moduleFactory: WASQLiteModuleFactory;
@@ -121,14 +117,14 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
    */
   protected connectionId: number;
 
-  constructor(protected options: WASQLiteOpenOptions) {
+  constructor(protected options: ResolvedWASQLiteOpenFactoryOptions) {
     super();
     this.updatedTables = new Set();
     this.updateTimer = null;
     this.broadcastChannel = null;
     this.connectionId = new Date().valueOf() + Math.random();
     this.statementMutex = new Mutex();
-    this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs ?? WASQLiteVFS.IDBBatchAtomicVFS];
+    this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs];
   }
 
   protected get sqliteAPI() {
@@ -185,6 +181,7 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
     this._sqliteAPI = await this.openSQLiteAPI();
     await this.openDB();
     this.registerBroadcastListeners();
+    await this.executeSingleStatement(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
 
     this.sqliteAPI.update_hook(this.dbP, (updateType: number, dbName: string | null, tableName: string | null) => {
       if (!tableName) {
@@ -193,6 +190,10 @@ export class WASqliteConnection extends BaseObserver<WASQLiteConnectionListener>
       const changedTables = new Set([tableName]);
       this.queueTableUpdate(changedTables);
     });
+  }
+
+  async getConfig(): Promise<ResolvedWASQLiteOpenFactoryOptions> {
+    return this.options;
   }
 
   fireUpdates() {

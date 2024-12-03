@@ -17,14 +17,15 @@ export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
  * An async Database connection which provides basic async SQL methods.
  * This is usually a proxied through a web worker.
  */
-export interface AsyncDatabaseConnection {
+export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> {
   init(): Promise<void>;
   close(): Promise<void>;
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void>;
+  getConfig(): Promise<Config>;
 }
 
-export type OpenAsyncDatabaseConnection<Options extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = (
-  options: Options
+export type OpenAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = (
+  config: Config
 ) => AsyncDatabaseConnection;
