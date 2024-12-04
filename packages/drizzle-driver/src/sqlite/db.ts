@@ -21,7 +21,7 @@ import type { DrizzleConfig } from 'drizzle-orm/utils';
 import { toCompilableQuery } from './../utils/compilableQuery';
 import { PowerSyncSQLiteSession, PowerSyncSQLiteTransactionConfig } from './sqlite-session';
 
-export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T> };
+export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
 
 export class PowerSyncSQLiteDatabase<
   TSchema extends Record<string, unknown> = Record<string, never>
