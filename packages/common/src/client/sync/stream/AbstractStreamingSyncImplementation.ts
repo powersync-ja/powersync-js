@@ -325,7 +325,7 @@ The next upload iteration will be delayed.`);
     this.streamingSyncPromise = undefined;
 
     this.abortController = null;
-    this.updateSyncStatus({ connected: false });
+    this.updateSyncStatus({ connected: false, connecting: false });
   }
 
   /**
@@ -403,6 +403,8 @@ The next upload iteration will be delayed.`);
         } else {
           this.logger.error(ex);
         }
+
+        // On error, wait a little before retrying
         await this.delayRetry();
       } finally {
         if (!signal.aborted) {
@@ -410,13 +412,10 @@ The next upload iteration will be delayed.`);
           nestedAbortController = new AbortController();
         }
 
-        // Still trying to connect, so don't change connecting here
         this.updateSyncStatus({
           connected: false,
-          connecting: true,
+          connecting: true // May be unnecessary
         });
-
-        // On error, wait a little before retrying
       }
     }
 
