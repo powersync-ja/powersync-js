@@ -237,6 +237,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.currentStatus?.connected || false;
   }
 
+  get connecting() {
+    return this.currentStatus?.connecting || false;
+  }
+
   /**
    * Opens the DBAdapter given open options using a default open factory
    */
