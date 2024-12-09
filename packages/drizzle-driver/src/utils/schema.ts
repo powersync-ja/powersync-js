@@ -8,7 +8,7 @@ import {
   type TableV2Options
 } from '@powersync/common';
 import { InferSelectModel, isTable, Relations } from 'drizzle-orm';
-import { Casing } from 'drizzle-orm';
+import type { Casing } from 'drizzle-orm';
 import { CasingCache } from 'drizzle-orm/casing';
 import {
   getTableConfig,
@@ -17,7 +17,7 @@ import {
   SQLiteText,
   type SQLiteTableWithColumns,
   type TableConfig,
-  SQLiteColumn
+  type SQLiteColumn
 } from 'drizzle-orm/sqlite-core';
 
 export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
@@ -131,7 +131,7 @@ function toPowerSyncTables<
 
 export type DrizzleAppSchemaOptions = {
   casing?: Casing;
-}
+};
 export class DrizzleAppSchema<
   T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
 > extends Schema {

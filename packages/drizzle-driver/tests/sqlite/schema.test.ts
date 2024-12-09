@@ -56,7 +56,11 @@ describe('toPowerSyncTable', () => {
       name: text('name').notNull()
     });
 
-    const convertedList = toPowerSyncTable(lists, new CasingCache(), { localOnly: true, insertOnly: true, viewName: 'listsView' });
+    const convertedList = toPowerSyncTable(lists, new CasingCache(), {
+      localOnly: true,
+      insertOnly: true,
+      viewName: 'listsView'
+    });
 
     const expectedLists = new Table(
       {
@@ -68,13 +72,13 @@ describe('toPowerSyncTable', () => {
     expect(convertedList).toEqual(expectedLists);
   });
 
-
   it('conversation with casing', () => {
-    const lists = sqliteTable('lists', 
+    const lists = sqliteTable(
+      'lists',
       {
         id: text('id').primaryKey(),
         myName: text().notNull(),
-        yourName: text('yourName').notNull(),
+        yourName: text('yourName').notNull()
       },
       (lists) => ({
         names: index('names').on(lists.myName, lists.yourName)
@@ -86,13 +90,13 @@ describe('toPowerSyncTable', () => {
     const expectedLists = new Table(
       {
         my_name: column.text,
-        yourName: column.text,
+        yourName: column.text
       },
       { indexes: { names: ['my_name', 'yourName'] } }
     );
 
     expect(convertedList).toEqual(expectedLists);
-  })
+  });
 });
 
 describe('DrizzleAppSchema constructor', () => {
