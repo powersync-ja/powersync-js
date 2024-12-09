@@ -3,6 +3,7 @@ import { toCompilableQuery } from './utils/compilableQuery';
 import {
   DrizzleAppSchema,
   toPowerSyncTable,
+  type DrizzleAppSchemaOptions,
   type DrizzleTablePowerSyncOptions,
   type DrizzleTableWithPowerSyncOptions,
   type Expand,
@@ -13,6 +14,7 @@ import {
 
 export {
   DrizzleAppSchema,
+  DrizzleAppSchemaOptions,
   DrizzleTablePowerSyncOptions,
   DrizzleTableWithPowerSyncOptions,
   DrizzleQuery,
