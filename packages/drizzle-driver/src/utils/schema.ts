@@ -8,13 +8,16 @@ import {
   type TableV2Options
 } from '@powersync/common';
 import { InferSelectModel, isTable, Relations } from 'drizzle-orm';
+import type { Casing } from 'drizzle-orm';
+import { CasingCache } from 'drizzle-orm/casing';
 import {
   getTableConfig,
   SQLiteInteger,
   SQLiteReal,
   SQLiteText,
   type SQLiteTableWithColumns,
-  type TableConfig
+  type TableConfig,
+  type SQLiteColumn
 } from 'drizzle-orm/sqlite-core';
 
 export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
@@ -25,14 +28,17 @@ export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
 
 export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
   table: T,
-  options?: Omit<TableV2Options, 'indexes'>
+  options?: Omit<TableV2Options, 'indexes'> & { casingCache?: CasingCache }
 ): Table<Expand<ExtractPowerSyncColumns<T>>> {
   const { columns: drizzleColumns, indexes: drizzleIndexes } = getTableConfig(table);
+  const { casingCache } = options ?? {};
 
   const columns: { [key: string]: BaseColumnType<number | string | null> } = {};
   for (const drizzleColumn of drizzleColumns) {
+    const name = casingCache?.getColumnCasing(drizzleColumn) ?? drizzleColumn.name;
+
     // Skip the id column
-    if (drizzleColumn.name === 'id') {
+    if (name === 'id') {
       continue;
     }
 
@@ -50,7 +56,7 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
       default:
         throw new Error(`Unsupported column type: ${drizzleColumn.columnType}`);
     }
-    columns[drizzleColumn.name] = mappedType;
+    columns[name] = mappedType;
   }
   const indexes: IndexShorthand = {};
 
@@ -61,7 +67,9 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
     }
     const columns: string[] = [];
     for (const indexColumn of index.config.columns) {
-      columns.push((indexColumn as { name: string }).name);
+      const name = casingCache?.getColumnCasing(indexColumn as SQLiteColumn) ?? (indexColumn as { name: string }).name;
+
+      columns.push(name);
     }
 
     indexes[index.config.name] = columns;
@@ -73,7 +81,7 @@ export type DrizzleTablePowerSyncOptions = Omit<TableV2Options, 'indexes'>;
 
 export type DrizzleTableWithPowerSyncOptions = {
   tableDefinition: SQLiteTableWithColumns<any>;
-  options?: DrizzleTablePowerSyncOptions | undefined;
+  options?: DrizzleTablePowerSyncOptions;
 };
 
 export type TableName<T> =
@@ -97,7 +105,9 @@ export type TablesFromSchemaEntries<T> = {
 
 function toPowerSyncTables<
   T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
->(schemaEntries: T) {
+>(schemaEntries: T, options?: DrizzleAppSchemaOptions) {
+  const casingCache = options?.casing ? new CasingCache(options?.casing) : undefined;
+
   const tables: Record<string, Table> = {};
   for (const schemaEntry of Object.values(schemaEntries)) {
     let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
@@ -113,18 +123,24 @@ function toPowerSyncTables<
 
     if (isTable(maybeTable)) {
       const { name } = getTableConfig(maybeTable);
-      tables[name] = toPowerSyncTable(maybeTable as SQLiteTableWithColumns<TableConfig>, maybeOptions);
+      tables[name] = toPowerSyncTable(maybeTable as SQLiteTableWithColumns<TableConfig>, {
+        ...maybeOptions,
+        casingCache
+      });
     }
   }
 
   return tables;
 }
 
+export type DrizzleAppSchemaOptions = {
+  casing?: Casing;
+};
 export class DrizzleAppSchema<
   T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
 > extends Schema {
-  constructor(drizzleSchema: T) {
-    super(toPowerSyncTables(drizzleSchema));
+  constructor(drizzleSchema: T, options?: DrizzleAppSchemaOptions) {
+    super(toPowerSyncTables(drizzleSchema, options));
     // This is just used for typing
     this.types = {} as SchemaTableType<Expand<TablesFromSchemaEntries<T>>>;
   }
