@@ -13,6 +13,9 @@ import {
   SQLiteInteger,
   SQLiteReal,
   SQLiteText,
+  SQLiteTextJson,
+  SQLiteTimestamp,
+  SQLiteBoolean,
   type SQLiteTableWithColumns,
   type TableConfig
 } from 'drizzle-orm/sqlite-core';
@@ -39,9 +42,12 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
     let mappedType: BaseColumnType<number | string | null>;
     switch (drizzleColumn.columnType) {
       case SQLiteText.name:
+      case SQLiteTextJson.name:
         mappedType = column.text;
         break;
       case SQLiteInteger.name:
+      case SQLiteTimestamp.name:
+      case SQLiteBoolean.name:
         mappedType = column.integer;
         break;
       case SQLiteReal.name:
