@@ -1,5 +1,12 @@
 # @powersync/drizzle-driver
 
+## 0.3.0
+
+### Minor Changes
+
+- a547fc6: Added support for column "mode" option. This allows the ORM to expose values as complex types such as JSON and Timestamp, but store them as primitives such as text and integer.
+- 53fd64e: Added support for casing option in the Drizzle schema helper functions.
+
 ## 0.2.0
 
 ### Minor Changes
