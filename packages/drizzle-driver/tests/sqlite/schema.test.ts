@@ -8,23 +8,23 @@ describe('toPowerSyncTable', () => {
     const lists = sqliteTable('lists', {
       id: text('id').primaryKey(),
       name: text('name').notNull(),
-      verified: integer('verified', { mode: 'boolean' }),
+      info: text('info', { mode: 'json' }),
       owner_id: text('owner_id'),
       counter: integer('counter'),
       completion: real('completion'),
-      info: text('info', { mode: 'json' }),
+      verified: integer('verified', { mode: 'boolean' }),
       created_at: integer('created_at', { mode: 'timestamp' }),
-      updated_at: integer('updated_at', { mode: 'timestamp' })
+      updated_at: integer('updated_at', { mode: 'timestamp_ms' })
     });
     const convertedList = toPowerSyncTable(lists);
 
     const expectedLists = new Table({
       name: column.text,
-      verified: column.integer,
+      info: column.text,
       owner_id: column.text,
       counter: column.integer,
       completion: column.real,
-      info: column.text,
+      verified: column.integer,
       created_at: column.integer,
       updated_at: column.integer
     });
