@@ -628,7 +628,7 @@ The next upload iteration will be delayed.`);
   protected updateSyncStatus(options: SyncStatusOptions) {
     const updatedStatus = new SyncStatus({
       connected: options.connected ?? this.syncStatus.connected,
-      connecting: options.connecting ?? this.syncStatus.connecting,
+      connecting: !options.connected && (options.connecting ?? this.syncStatus.connecting),
       lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
       dataFlow: {
         ...this.syncStatus.dataFlowStatus,
