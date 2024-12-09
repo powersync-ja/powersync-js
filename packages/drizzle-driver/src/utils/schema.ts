@@ -7,17 +7,19 @@ import {
   type BaseColumnType,
   type TableV2Options
 } from '@powersync/common';
-import { InferSelectModel, isTable, Relations } from 'drizzle-orm';
-import type { Casing } from 'drizzle-orm';
+import { entityKind, InferSelectModel, isTable, Relations, type Casing } from 'drizzle-orm';
 import { CasingCache } from 'drizzle-orm/casing';
 import {
   getTableConfig,
+  SQLiteBoolean,
   SQLiteInteger,
   SQLiteReal,
   SQLiteText,
+  SQLiteTextJson,
+  SQLiteTimestamp,
+  type SQLiteColumn,
   type SQLiteTableWithColumns,
-  type TableConfig,
-  type SQLiteColumn
+  type TableConfig
 } from 'drizzle-orm/sqlite-core';
 
 export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
@@ -44,13 +46,16 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
 
     let mappedType: BaseColumnType<number | string | null>;
     switch (drizzleColumn.columnType) {
-      case SQLiteText.name:
+      case SQLiteText[entityKind]:
+      case SQLiteTextJson[entityKind]:
         mappedType = column.text;
         break;
-      case SQLiteInteger.name:
+      case SQLiteInteger[entityKind]:
+      case SQLiteTimestamp[entityKind]:
+      case SQLiteBoolean[entityKind]:
         mappedType = column.integer;
         break;
-      case SQLiteReal.name:
+      case SQLiteReal[entityKind]:
         mappedType = column.real;
         break;
       default:
