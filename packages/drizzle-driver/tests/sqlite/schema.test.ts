@@ -73,18 +73,27 @@ describe('toPowerSyncTable', () => {
   });
 
   it('conversion with casing', () => {
-    const lists = sqliteTable('lists', {
-      id: text('id').primaryKey(),
-      myName: text().notNull(),
-      yourName: text('yourName').notNull() // explicitly set casing
-    });
+    const lists = sqliteTable(
+      'lists',
+      {
+        id: text('id').primaryKey(),
+        myName: text().notNull(),
+        yourName: text('yourName').notNull() // explicitly set casing
+      },
+      (lists) => ({
+        names: index('names').on(lists.myName, lists.yourName)
+      })
+    );
 
     const convertedList = toPowerSyncTable(lists, { casingCache: new CasingCache('snake_case') });
 
-    const expectedLists = new Table({
-      my_name: column.text,
-      yourName: column.text
-    });
+    const expectedLists = new Table(
+      {
+        my_name: column.text,
+        yourName: column.text
+      },
+      { indexes: { names: ['my_name', 'yourName'] } }
+    );
 
     expect(convertedList).toEqual(expectedLists);
   });
@@ -221,11 +230,17 @@ describe('DrizzleAppSchema constructor', () => {
   });
 
   it('conversion with casing', () => {
-    const lists = sqliteTable('lists', {
-      id: text('id').primaryKey(),
-      myName: text().notNull(),
-      yourName: text('yourName').notNull() // explicitly set casing
-    });
+    const lists = sqliteTable(
+      'lists',
+      {
+        id: text('id').primaryKey(),
+        myName: text().notNull(),
+        yourName: text('yourName').notNull() // explicitly set casing
+      },
+      (lists) => ({
+        names: index('names').on(lists.myName, lists.yourName)
+      })
+    );
 
     const drizzleSchemaWithOptions = {
       lists
@@ -234,10 +249,13 @@ describe('DrizzleAppSchema constructor', () => {
     const convertedSchema = new DrizzleAppSchema(drizzleSchemaWithOptions, { casing: 'snake_case' });
 
     const expectedSchema = new Schema({
-      lists: new Table({
-        my_name: column.text,
-        yourName: column.text
-      })
+      lists: new Table(
+        {
+          my_name: column.text,
+          yourName: column.text
+        },
+        { indexes: { names: ['my_name', 'yourName'] } }
+      )
     });
 
     expect(convertedSchema.tables).toEqual(expectedSchema.tables);
