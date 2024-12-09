@@ -16,7 +16,8 @@ import {
   SQLiteReal,
   SQLiteText,
   type SQLiteTableWithColumns,
-  type TableConfig
+  type TableConfig,
+  SQLiteColumn
 } from 'drizzle-orm/sqlite-core';
 
 export type ExtractPowerSyncColumns<T extends SQLiteTableWithColumns<any>> = {
@@ -66,7 +67,9 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
     }
     const columns: string[] = [];
     for (const indexColumn of index.config.columns) {
-      columns.push((indexColumn as { name: string }).name);
+      const name = casingCache.getColumnCasing(indexColumn as SQLiteColumn);
+
+      columns.push(name);
     }
 
     indexes[index.config.name] = columns;

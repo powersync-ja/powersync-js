@@ -70,11 +70,16 @@ describe('toPowerSyncTable', () => {
 
 
   it('conversation with casing', () => {
-    const lists = sqliteTable('lists', {
-      id: text('id').primaryKey(),
-      myName: text().notNull(),
-      yourName: text('yourName').notNull(),
-    });
+    const lists = sqliteTable('lists', 
+      {
+        id: text('id').primaryKey(),
+        myName: text().notNull(),
+        yourName: text('yourName').notNull(),
+      },
+      (lists) => ({
+        names: index('names').on(lists.myName, lists.yourName)
+      })
+    );
 
     const convertedList = toPowerSyncTable(lists, new CasingCache('snake_case'));
 
@@ -82,7 +87,8 @@ describe('toPowerSyncTable', () => {
       {
         my_name: column.text,
         yourName: column.text,
-      }
+      },
+      { indexes: { names: ['my_name', 'yourName'] } }
     );
 
     expect(convertedList).toEqual(expectedLists);
