@@ -13,7 +13,7 @@ describe('toPowerSyncTable', () => {
       counter: integer('counter'),
       completion: real('completion')
     });
-    const convertedList = toPowerSyncTable(lists, new CasingCache());
+    const convertedList = toPowerSyncTable(lists);
 
     const expectedLists = new Table({
       name: column.text,
@@ -37,7 +37,7 @@ describe('toPowerSyncTable', () => {
         owner: index('owner').on(lists.owner_id)
       })
     );
-    const convertedList = toPowerSyncTable(lists, new CasingCache());
+    const convertedList = toPowerSyncTable(lists);
 
     const expectedLists = new Table(
       {
@@ -56,7 +56,7 @@ describe('toPowerSyncTable', () => {
       name: text('name').notNull()
     });
 
-    const convertedList = toPowerSyncTable(lists, new CasingCache(), {
+    const convertedList = toPowerSyncTable(lists, {
       localOnly: true,
       insertOnly: true,
       viewName: 'listsView'
@@ -72,28 +72,19 @@ describe('toPowerSyncTable', () => {
     expect(convertedList).toEqual(expectedLists);
   });
 
-  it('conversation with casing', () => {
-    const lists = sqliteTable(
-      'lists',
-      {
-        id: text('id').primaryKey(),
-        myName: text().notNull(),
-        yourName: text('yourName').notNull()
-      },
-      (lists) => ({
-        names: index('names').on(lists.myName, lists.yourName)
-      })
-    );
+  it('conversion with casing', () => {
+    const lists = sqliteTable('lists', {
+      id: text('id').primaryKey(),
+      myName: text().notNull(),
+      yourName: text('yourName').notNull() // explicitly set casing
+    });
 
-    const convertedList = toPowerSyncTable(lists, new CasingCache('snake_case'));
+    const convertedList = toPowerSyncTable(lists, { casingCache: new CasingCache('snake_case') });
 
-    const expectedLists = new Table(
-      {
-        my_name: column.text,
-        yourName: column.text
-      },
-      { indexes: { names: ['my_name', 'yourName'] } }
-    );
+    const expectedLists = new Table({
+      my_name: column.text,
+      yourName: column.text
+    });
 
     expect(convertedList).toEqual(expectedLists);
   });
@@ -224,6 +215,29 @@ describe('DrizzleAppSchema constructor', () => {
         },
         { indexes: { list: ['list_id'] } }
       )
+    });
+
+    expect(convertedSchema.tables).toEqual(expectedSchema.tables);
+  });
+
+  it('conversion with casing', () => {
+    const lists = sqliteTable('lists', {
+      id: text('id').primaryKey(),
+      myName: text().notNull(),
+      yourName: text('yourName').notNull() // explicitly set casing
+    });
+
+    const drizzleSchemaWithOptions = {
+      lists
+    };
+
+    const convertedSchema = new DrizzleAppSchema(drizzleSchemaWithOptions, { casing: 'snake_case' });
+
+    const expectedSchema = new Schema({
+      lists: new Table({
+        my_name: column.text,
+        yourName: column.text
+      })
     });
 
     expect(convertedSchema.tables).toEqual(expectedSchema.tables);
