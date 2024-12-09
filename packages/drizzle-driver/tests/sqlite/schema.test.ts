@@ -8,13 +8,13 @@ describe('toPowerSyncTable', () => {
     const lists = sqliteTable('lists', {
       id: text('id').primaryKey(),
       name: text('name').notNull(),
-      verified: integer('verified', {mode: 'boolean'}),
+      verified: integer('verified', { mode: 'boolean' }),
       owner_id: text('owner_id'),
       counter: integer('counter'),
       completion: real('completion'),
-      info: text('info', {mode: 'json'}),
-      created_at: integer('created_at', {mode: 'timestamp'}),
-      updated_at: integer('updated_at', {mode: 'timestamp'}),
+      info: text('info', { mode: 'json' }),
+      created_at: integer('created_at', { mode: 'timestamp' }),
+      updated_at: integer('updated_at', { mode: 'timestamp' })
     });
     const convertedList = toPowerSyncTable(lists);
 
@@ -26,7 +26,7 @@ describe('toPowerSyncTable', () => {
       completion: column.real,
       info: column.text,
       created_at: column.integer,
-      updated_at: column.integer,
+      updated_at: column.integer
     });
 
     expect(convertedList).toEqual(expectedLists);
