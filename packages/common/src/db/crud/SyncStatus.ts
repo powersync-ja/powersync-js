@@ -5,6 +5,7 @@ export type SyncDataFlowStatus = Partial<{
 
 export type SyncStatusOptions = {
   connected?: boolean;
+  connecting?: boolean;
   dataFlow?: SyncDataFlowStatus;
   lastSyncedAt?: Date;
   hasSynced?: boolean;
@@ -18,6 +19,10 @@ export class SyncStatus {
    */
   get connected() {
     return this.options.connected ?? false;
+  }
+
+  get connecting() {
+    return this.options.connecting ?? false;
   }
 
   /**
@@ -61,12 +66,13 @@ export class SyncStatus {
 
   getMessage() {
     const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
+    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
   }
 
   toJSON(): SyncStatusOptions {
     return {
       connected: this.connected,
+      connecting: this.connecting,
       dataFlow: this.dataFlowStatus,
       lastSyncedAt: this.lastSyncedAt,
       hasSynced: this.hasSynced
