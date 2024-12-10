@@ -11,7 +11,7 @@ export type SyncStatusOptions = {
 };
 
 export class SyncStatus {
-  constructor(protected options: SyncStatusOptions) {}
+  constructor(protected options: SyncStatusOptions) { }
 
   /**
    * true if currently connected.
@@ -56,7 +56,18 @@ export class SyncStatus {
   }
 
   isEqual(status: SyncStatus) {
-    return JSON.stringify(this.options) == JSON.stringify(status.options);
+    if (!status) return false;
+
+    const thisOpts = this.options;
+    const otherOpts = status.options;
+
+    return (
+      thisOpts.connected === otherOpts.connected &&
+      thisOpts.hasSynced === otherOpts.hasSynced &&
+      (thisOpts.lastSyncedAt?.getTime() === otherOpts.lastSyncedAt?.getTime()) &&
+      thisOpts.dataFlow?.downloading === otherOpts.dataFlow?.downloading &&
+      thisOpts.dataFlow?.uploading === otherOpts.dataFlow?.uploading
+    );
   }
 
   getMessage() {
