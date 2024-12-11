@@ -36,7 +36,7 @@ export type SQLiteModule = Parameters<typeof SQLite.Factory>[0];
 /**
  * @internal
  */
-export type WASQLiteModuleFactoryOptions = { dbFileName: string };
+export type WASQLiteModuleFactoryOptions = { dbFileName: string; encryptionKey?: string };
 
 /**
  * @internal
@@ -56,6 +56,14 @@ export const AsyncWASQLiteModuleFactory = async () => {
 /**
  * @internal
  */
+export const MultiCipherAsyncWASQLiteModuleFactory = async () => {
+  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs');
+  return factory();
+};
+
+/**
+ * @internal
+ */
 export const SyncWASQLiteModuleFactory = async () => {
   const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite.mjs');
   return factory();
@@ -64,9 +72,22 @@ export const SyncWASQLiteModuleFactory = async () => {
 /**
  * @internal
  */
+export const MultiCipherSyncWASQLiteModuleFactory = async () => {
+  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite.mjs');
+  return factory();
+};
+
+/**
+ * @internal
+ */
 export const DEFAULT_MODULE_FACTORIES = {
   [WASQLiteVFS.IDBBatchAtomicVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    const module = await AsyncWASQLiteModuleFactory();
+    let module;
+    if (options.encryptionKey) {
+      module = await MultiCipherAsyncWASQLiteModuleFactory();
+    } else {
+      module = await AsyncWASQLiteModuleFactory();
+    }
     const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
     return {
       module,
@@ -75,7 +96,12 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.AccessHandlePoolVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    const module = await SyncWASQLiteModuleFactory();
+    let module;
+    if (options.encryptionKey) {
+      module = await MultiCipherSyncWASQLiteModuleFactory();
+    } else {
+      module = await SyncWASQLiteModuleFactory();
+    }
     // @ts-expect-error The types for this static method are missing upstream
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
     return {
@@ -84,7 +110,12 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.OPFSCoopSyncVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    const module = await SyncWASQLiteModuleFactory();
+    let module;
+    if (options.encryptionKey) {
+      module = await MultiCipherSyncWASQLiteModuleFactory();
+    } else {
+      module = await SyncWASQLiteModuleFactory();
+    }
     // @ts-expect-error The types for this static method are missing upstream
     const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
     return {
@@ -146,14 +177,34 @@ export class WASqliteConnection
     return this._dbP;
   }
 
+  protected async executeEncryptionPragma(): Promise<void> {
+    if (this.options.encryptionKey && this._dbP) {
+      await this.executeSingleStatement(`PRAGMA key = "${this.options.encryptionKey}"`);
+    }
+    return;
+  }
+
   protected async openSQLiteAPI(): Promise<SQLiteAPI> {
-    const { module, vfs } = await this._moduleFactory({ dbFileName: this.options.dbFilename });
+    const { module, vfs } = await this._moduleFactory({
+      dbFileName: this.options.dbFilename,
+      encryptionKey: this.options.encryptionKey
+    });
     const sqlite3 = SQLite.Factory(module);
     sqlite3.vfs_register(vfs, true);
     /**
      * Register the PowerSync core SQLite extension
      */
     module.ccall('powersync_init_static', 'int', []);
+
+    /**
+     * Create the multiple cipher vfs if an encryption key is provided
+     */
+    if (this.options.encryptionKey) {
+      const createResult = module.ccall('sqlite3mc_vfs_create', 'int', ['string', 'int'], [this.options.dbFilename, 1]);
+      if (createResult !== 0) {
+        throw new Error('Failed to create multiple cipher vfs, Database encryption will not work');
+      }
+    }
 
     return sqlite3;
   }
@@ -182,6 +233,7 @@ export class WASqliteConnection
     await this.openDB();
     this.registerBroadcastListeners();
     await this.executeSingleStatement(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
+    await this.executeEncryptionPragma();
 
     this.sqliteAPI.update_hook(this.dbP, (updateType: number, dbName: string | null, tableName: string | null) => {
       if (!tableName) {

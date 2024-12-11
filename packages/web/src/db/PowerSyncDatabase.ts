@@ -56,17 +56,35 @@ type WithWebSyncOptions<Base> = Base & {
   sync?: WebSyncOptions;
 };
 
+export interface WebEncryptionOptions {
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using Multiple Ciphers.
+   */
+  encryptionKey?: string;
+}
+
+type WithWebEncryptionOptions<Base> = Base & {
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using Multiple Ciphers.
+   */
+  encryptionKey?: string;
+};
+
 export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
+  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithDBAdapter>>
 >;
 export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
+  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithOpenFactory>>
 >;
 export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithSettings>
+  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
-export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
+export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<
+  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptions>>
+>;
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,
@@ -121,7 +139,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
       ...options.database,
-      flags: resolveWebPowerSyncFlags(options.flags)
+      flags: resolveWebPowerSyncFlags(options.flags),
+      encryptionKey: options.encryptionKey
     });
     return defaultFactory.openDB();
   }

@@ -27,6 +27,12 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
 
   vfs?: WASQLiteVFS;
   temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using multiple-ciphers.
+   */
+  encryptionKey?: string;
 }
 
 /**
