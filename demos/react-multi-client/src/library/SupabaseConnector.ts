@@ -70,8 +70,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
     return {
       token: token,
-      endpoint: import.meta.env.VITE_POWERSYNC_URL,
-      expiresAt: expires_at ? new Date(expires_at) : undefined
+      endpoint: import.meta.env.VITE_POWERSYNC_URL
     };
   }
 
