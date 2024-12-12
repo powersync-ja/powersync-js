@@ -8,7 +8,8 @@
     "build": "ng build",
     "format": "prettier --write .",
     "test:build": "pnpm build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "postinstall": "pnpm powersync-web copy-assets -o src/assets"
   },
   "private": true,
   "dependencies": {

@@ -13,17 +13,16 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 ## Quick Start
 
 1. Run `pnpm install`
-2. Run `pnpm powersync-web copy-assets -o src/assets` to copy the worker assets into the project.
-3. Create a `.env` file by copying the template `cp .env.template .env`
-4. Populate the `.env` file with PowerSync and Supabase details
-5. Run `pnpm watch` to build application and check for code changes
-6. In a new terminal run `pnpm start` to start the server
-7. Go to <http://localhost:8080>
+2. Create a `.env` file by copying the template `cp .env.template .env`
+3. Populate the `.env` file with PowerSync and Supabase details
+4. Run `pnpm watch` to build application and check for code changes
+5. In a new terminal run `pnpm start` to start the server
+6. Go to <http://localhost:8080>
 
 ### Notes
 
 - The Angular development server (`pnpm serve`) doesn't support service worker applications
-- For Angular, workers need to be configured when instantiating `PowerSyncDatabase`. To do this, copy the worker assets (`step 2`) and ensure the worker paths are specified ([example here](./src/app/powersync.service.ts)).
+- For Angular, workers need to be configured when instantiating `PowerSyncDatabase`. To do this, copy the worker assets (`pnpm powersync-web copy-assets -o src/assets` - done automatically as a `postinstall` step in this demo) and ensure the worker paths are specified ([example here](./src/app/powersync.service.ts)).
 
 ## Development Server
 
