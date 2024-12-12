@@ -9,7 +9,7 @@
     "format": "prettier --write .",
     "test:build": "pnpm build",
     "watch": "ng build --watch --configuration development",
-    "postinstall": "pnpm powersync-web copy-assets -o src/assets"
+    "postinstall": "[ \"$GITHUB_ACTIONS\" = \"true\" ] || pnpm powersync-web copy-assets -o src/assets"
   },
   "private": true,
   "dependencies": {
