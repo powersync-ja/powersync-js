@@ -22,7 +22,7 @@ A step-by-step guide on Supabase<>PowerSync integration is available [here](http
 ### Notes
 
 - The Angular development server (`pnpm serve`) doesn't support service worker applications
-- For Angular, workers need to be configured when instantiating `PowerSyncDatabase`. To do this, copy the worker assets (`pnpm powersync-web copy-assets -o src/assets` - done automatically as `pre-` steps in this demo for serving and building) and ensure the worker paths are specified ([example here](./src/app/powersync.service.ts)).
+- For Angular, workers need to be configured when instantiating `PowerSyncDatabase`. To do this, copy the worker assets (`pnpm powersync-web copy-assets -o src/assets` - done automatically in this demo for serving and building) and ensure the worker paths are specified ([example here](./src/app/powersync.service.ts)).
 
 ## Development Server
 

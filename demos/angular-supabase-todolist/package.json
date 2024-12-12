@@ -4,11 +4,9 @@
   "scripts": {
     "copy-assets": "pnpm powersync-web copy-assets -o src/assets",
     "ng": "ng",
-    "preserve": "pnpm copy-assets",
-    "serve": "ng serve",
+    "serve": "pnpm copy-assets && ng serve",
     "start": "http-server -p 8080 -c-1 dist/",
-    "prebuild": "pnpm copy-assets",
-    "build": "ng build",
+    "build": "pnpm copy-assets && ng build",
     "format": "prettier --write .",
     "test:build": "pnpm build",
     "prewatch": "pnpm copy-assets",
