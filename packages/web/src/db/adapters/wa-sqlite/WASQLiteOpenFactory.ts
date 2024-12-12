@@ -10,12 +10,10 @@ import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
-  encryptionKey?: string;
 }
 
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
   vfs: WASQLiteVFS;
-  encryptionKey?: string;
 }
 /**
  * Opens a SQLite connection using WA-SQLite.
@@ -60,7 +58,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
               optionsDbWorker({
                 ...this.options,
                 temporaryStorage,
-                flags: this.resolvedFlags
+                flags: this.resolvedFlags,
+                encryptionKey
               })
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);

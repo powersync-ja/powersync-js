@@ -178,7 +178,7 @@ export class WASqliteConnection
   }
 
   protected async executeEncryptionPragma(): Promise<void> {
-    if (this.options.encryptionKey && this._dbP) {
+    if (this.options.encryptionKey) {
       await this.executeSingleStatement(`PRAGMA key = "${this.options.encryptionKey}"`);
     }
     return;

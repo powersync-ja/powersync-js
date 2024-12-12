@@ -52,7 +52,8 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
             baseConnection: await remote({
               ...options,
               temporaryStorage: temporaryStorage ?? TemporaryStorageOption.MEMORY,
-              flags: resolveWebPowerSyncFlags(options.flags)
+              flags: resolveWebPowerSyncFlags(options.flags),
+              encryptionKey: options.encryptionKey
             })
           });
         }
@@ -64,6 +65,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
           temporaryStorage,
           logger: options.logger,
           vfs: options.vfs,
+          encryptionKey: options.encryptionKey,
           worker: options.worker
         });
         return openFactory.openConnection();
