@@ -1,6 +1,6 @@
-import { column, Schema, TableV2 } from '@powersync/web';
+import { column, Schema, Table } from '@powersync/web';
 
-const customers = new TableV2({
+const customers = new Table({
   name: column.text,
   created_at: column.text
 });

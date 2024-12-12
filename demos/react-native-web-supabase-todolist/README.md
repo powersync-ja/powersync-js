@@ -21,7 +21,7 @@ pnpm build:packages
 
 ### Set up Supabase Project
 
-Detailed instructions for integrating PowerSync with Supabase can be found in the [integration guide](https://docs.powersync.com/integration-guides/supabase). Below are the main steps required to get this demo running.
+Detailed instructions for integrating PowerSync with Supabase can be found in the [integration guide](https://docs.powersync.com/integration-guides/supabase-+-powersync). Below are the main steps required to get this demo running.
 
 Create a new Supabase project, and paste and run the contents of [database.sql](./database.sql) in the Supabase SQL editor.
 

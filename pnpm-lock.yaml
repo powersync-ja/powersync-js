@@ -1527,6 +1527,34 @@ importers:
       '@powersync/common':
         specifier: workspace:^1.18.1
         version: link:../common
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.6
+        version: 20.17.6
+      '@vitest/browser':
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@20.17.6)(typescript@5.6.3)(vite@5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))(vitest@2.1.4)(webdriverio@9.2.12)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.6.3)(webpack@5.95.0(@swc/core@1.7.26(@swc/helpers@0.5.5)))
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.5))(@types/node@20.17.6)(typescript@5.6.3)
+      typescript:
+        specifier: ^5.6.3
+        version: 5.6.3
+      vite:
+        specifier: ^5.4.10
+        version: 5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.4
+        version: 1.4.4(@swc/helpers@0.5.5)(rollup@4.24.0)(vite@5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.4(@types/node@20.17.6)(@vitest/browser@2.1.4)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.4(@types/node@20.17.6)(typescript@5.6.3))(sass@1.79.4)(terser@5.34.1)
+      webdriverio:
+        specifier: ^9.2.8
+        version: 9.2.12
 
   packages/common:
     dependencies:
@@ -1598,7 +1626,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.19.0
+        specifier: workspace:^1.22.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1644,7 +1672,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.21.0
+        specifier: workspace:^1.22.0
         version: link:../common
       kysely:
         specifier: ^0.27.4
@@ -9438,6 +9466,7 @@ packages:
 
   critters@0.0.24:
     resolution: {integrity: sha512-Oyqew0FGM0wYUSNqR0L6AteO5MpMoUU0rhKRieXeiKs+PmRTxiJMyaunYB2KF6fQ3dzChXKCpbFOEJx3OQ1v/Q==}
+    deprecated: Ownership of Critters has moved to the Nuxt team, who will be maintaining the project going forward. If you'd like to keep using Critters, please switch to the actively-maintained fork at https://github.com/danielroe/beasties
 
   cross-dirname@0.1.0:
     resolution: {integrity: sha512-+R08/oI0nl3vfPcqftZRpytksBXDzOUveBq/NBVx0sUp1axwzPQrKinNx5yd5sxPu8j1wIy8AfnVQ+5eFdha6Q==}
@@ -24453,14 +24482,14 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       jest-mock: 29.7.0
 
   '@jest/fake-timers@29.7.0':
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -24496,7 +24525,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -29315,7 +29344,7 @@ snapshots:
 
   '@types/node-forge@1.3.11':
     dependencies:
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
 
   '@types/node@12.20.55': {}
 
@@ -29837,14 +29866,14 @@ snapshots:
       chai: 5.1.2
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(msw@2.6.4(@types/node@20.16.10)(typescript@5.5.4))(vite@5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))':
+  '@vitest/mocker@2.1.2(@vitest/spy@2.1.2)(msw@2.6.4(@types/node@20.16.10)(typescript@5.5.4))(vite@5.4.11(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))':
     dependencies:
       '@vitest/spy': 2.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.11
     optionalDependencies:
       msw: 2.6.4(@types/node@20.16.10)(typescript@5.5.4)
-      vite: 5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      vite: 5.4.11(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
 
   '@vitest/mocker@2.1.4(msw@2.6.4(@types/node@20.17.6)(typescript@5.6.3))(vite@5.4.11(@types/node@20.17.6)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))':
     dependencies:
@@ -31519,7 +31548,7 @@ snapshots:
 
   chrome-launcher@0.15.2:
     dependencies:
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -35951,7 +35980,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
@@ -35972,7 +36001,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       jest-util: 29.7.0
 
   jest-regex-util@27.5.1: {}
@@ -35989,7 +36018,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -36006,13 +36035,13 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 22.7.4
+      '@types/node': 20.17.6
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
@@ -43260,7 +43289,7 @@ snapshots:
   vitest@2.1.2(@types/node@20.16.10)(jsdom@24.1.3)(less@4.2.0)(msw@2.6.4(@types/node@20.16.10)(typescript@5.5.4))(sass@1.79.4)(terser@5.34.1):
     dependencies:
       '@vitest/expect': 2.1.2
-      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(msw@2.6.4(@types/node@20.16.10)(typescript@5.5.4))(vite@5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
+      '@vitest/mocker': 2.1.2(@vitest/spy@2.1.2)(msw@2.6.4(@types/node@20.16.10)(typescript@5.5.4))(vite@5.4.11(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1))
       '@vitest/pretty-format': 2.1.2
       '@vitest/runner': 2.1.2
       '@vitest/snapshot': 2.1.2
@@ -43275,7 +43304,7 @@ snapshots:
       tinyexec: 0.3.0
       tinypool: 1.0.1
       tinyrainbow: 1.2.0
-      vite: 5.4.8(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
+      vite: 5.4.11(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       vite-node: 2.1.2(@types/node@20.16.10)(less@4.2.0)(sass@1.79.4)(terser@5.34.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
