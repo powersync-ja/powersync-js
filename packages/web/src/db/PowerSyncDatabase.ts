@@ -6,6 +6,8 @@ import {
   AbstractPowerSyncDatabase,
   DBAdapter,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
+  isDBAdapter,
+  isSQLOpenFactory,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
@@ -82,9 +84,7 @@ export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
   WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
-export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<
-  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptions>>
->;
+export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,
@@ -98,6 +98,20 @@ export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<We
     ...resolveWebSQLFlags(flags)
   };
 };
+
+/**
+ * Asserts that the database options are valid for custom database constructors.
+ */
+function assertValidDatabaseOptions(options: WebPowerSyncDatabaseOptions): void {
+  if ('database' in options && 'encryptionKey' in options) {
+    const { database } = options;
+    if (isSQLOpenFactory(database) || isDBAdapter(database)) {
+      throw new Error(
+        `Invalid configuration: 'encryptionKey' should only be included inside the database object when using a custom ${isSQLOpenFactory(database) ? 'WASQLiteOpenFactory' : 'WASQLiteDBAdapter'} constructor.`
+      );
+    }
+  }
+}
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -125,6 +139,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   constructor(options: WebPowerSyncDatabaseOptions);
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
+
+    assertValidDatabaseOptions(options);
 
     this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
 
