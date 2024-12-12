@@ -73,10 +73,10 @@ type WithWebEncryptionOptions<Base> = Base & {
 };
 
 export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
-  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithDBAdapter>>
+  WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
 >;
 export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
-  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithOpenFactory>>
+  WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
 >;
 export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
   WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
