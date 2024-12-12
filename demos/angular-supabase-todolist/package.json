@@ -2,14 +2,17 @@
   "name": "angular-supabase-todolist",
   "version": "0.0.25",
   "scripts": {
+    "copy-assets": "pnpm powersync-web copy-assets -o src/assets",
     "ng": "ng",
+    "preserve": "pnpm copy-assets",
     "serve": "ng serve",
     "start": "http-server -p 8080 -c-1 dist/",
+    "prebuild": "pnpm copy-assets",
     "build": "ng build",
     "format": "prettier --write .",
     "test:build": "pnpm build",
-    "watch": "ng build --watch --configuration development",
-    "postinstall": "[ \"$GITHUB_ACTIONS\" = \"true\" ] || pnpm powersync-web copy-assets -o src/assets"
+    "prewatch": "pnpm copy-assets",
+    "watch": "ng build --watch --configuration development"
   },
   "private": true,
   "dependencies": {
