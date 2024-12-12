@@ -66,13 +66,7 @@ export interface WebEncryptionOptions {
   encryptionKey?: string;
 }
 
-type WithWebEncryptionOptions<Base> = Base & {
-  /**
-   * Encryption key for the database.
-   * If set, the database will be encrypted using Multiple Ciphers.
-   */
-  encryptionKey?: string;
-};
+type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
 
 export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
   WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
