@@ -21,6 +21,8 @@ export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOp
 export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
   constructor(options: WASQLiteOpenFactoryOptions) {
     super(options);
+
+    assertValidWASQLiteOpenFactoryOptions(options);
   }
 
   get waOptions(): WASQLiteOpenFactoryOptions {
@@ -81,6 +83,21 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         temporaryStorage,
         flags: this.resolvedFlags
       });
+    }
+  }
+}
+
+/**
+ * Asserts that the factory options are valid.
+ */
+function assertValidWASQLiteOpenFactoryOptions(options: WASQLiteOpenFactoryOptions): void {
+  // The OPFS VFS only works in dedicated web workers.
+  if ('vfs' in options && 'flags' in options) {
+    const { vfs, flags = {} } = options;
+    if (vfs !== WASQLiteVFS.IDBBatchAtomicVFS && 'useWebWorker' in flags && !flags.useWebWorker) {
+      throw new Error(
+        `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${vfs}).`
+      );
     }
   }
 }

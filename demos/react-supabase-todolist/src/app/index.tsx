@@ -9,13 +9,10 @@ root.render(<App />);
 
 export function App() {
   return (
-    <>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0"></meta>
-      <ThemeProviderContainer>
-        <SystemProvider>
-          <RouterProvider router={router} />
-        </SystemProvider>
-      </ThemeProviderContainer>
-    </>
+    <ThemeProviderContainer>
+      <SystemProvider>
+        <RouterProvider router={router} />
+      </SystemProvider>
+    </ThemeProviderContainer>
   );
 }
