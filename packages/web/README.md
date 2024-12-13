@@ -40,7 +40,7 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     // Filename for the SQLite database — it's important to only instantiate one instance per file.
-    dbFilename: 'powersync.db'
+    dbFilename: 'example.db'
     // Optional. Directory where the database file is located.'
     // dbLocation: 'path/to/directory'
   },
@@ -48,30 +48,15 @@ export const db = new PowerSyncDatabase({
   encryptionKey: 'your-encryption-key'
 });
 
-// If you are using a custom WASQLiteOpenFactory, you need specify the encryption key inside the factory construtor
+// If you are using a custom WASQLiteOpenFactory or WASQLiteDBAdapter, you need specify the encryption key inside the construtor
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: new WASQLiteOpenFactory({
-    dbFilename: 'examplsw1se112.db',
+    //new WASQLiteDBAdapter
+    dbFilename: 'example.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS,
     // Encryption key for the database.
     encryptionKey: 'your-encryption-key'
-    flags: {
-      enableMultiTabs: typeof SharedWorker !== 'undefined'
-    }
-  })
-});
-// If you are using a custom WASQLiteDBAdapter, you need specify the encryption key inside the factory construtor
-export const db = new PowerSyncDatabase({
-  schema: AppSchema,
-  database: new WASQLiteDBAdapter({
-    dbFilename: 'examplsw1se112.db',
-    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-    // Encryption key for the database.
-    encryptionKey: 'your-encryption-key'
-    flags: {
-      enableMultiTabs: typeof SharedWorker !== 'undefined'
-    }
   })
 });
 ```
