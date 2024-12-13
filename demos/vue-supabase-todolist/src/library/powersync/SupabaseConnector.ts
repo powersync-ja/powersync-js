@@ -98,8 +98,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
     return {
       endpoint: this.config.powersyncUrl,
-      token: session.access_token ?? '',
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined
+      token: session.access_token ?? ''
     };
   }
 

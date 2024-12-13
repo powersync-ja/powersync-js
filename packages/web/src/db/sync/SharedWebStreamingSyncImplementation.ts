@@ -38,8 +38,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
      */
     return {
       endpoint: credentials.endpoint,
-      token: credentials.token,
-      expiresAt: credentials.expiresAt
+      token: credentials.token
     };
   }
 
