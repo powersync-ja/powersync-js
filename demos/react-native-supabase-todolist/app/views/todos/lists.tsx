@@ -29,7 +29,7 @@ const ListsViewWidget: React.FC = () => {
       `);
 
   const createNewList = async (name: string) => {
-    const { userID } = await system.supabaseConnector.fetchCredentials();
+    const userID = await system.supabaseConnector.userId();
 
     const res = await system.powersync.execute(
       `INSERT INTO ${LIST_TABLE} (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?) RETURNING *`,

@@ -42,6 +42,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     }
   }
 
+  async userId() {
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+
+    return session?.user.id;
+  }
+
   async fetchCredentials() {
     const {
       data: { session },
