@@ -11,6 +11,7 @@ import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
+import { configureFts } from '../fts/fts_setup';
 
 Logger.useDefaults();
 
@@ -68,6 +69,10 @@ export class System {
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
     }
+
+    // Demo using SQLite Full-Text Search with PowerSync.
+    // See https://docs.powersync.com/usage-examples/full-text-search for more details
+    configureFts();
   }
 }
 

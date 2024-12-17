@@ -30,6 +30,12 @@ const HomeLayout = () => {
 
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="views" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="search_modal"
+          options={{
+            presentation: 'fullScreenModal'
+          }}
+        />
       </Stack>
     </PowerSyncContext.Provider>
   );
