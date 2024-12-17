@@ -86,7 +86,7 @@ const TodoView: React.FC = () => {
   };
 
   const createNewTodo = async (description: string) => {
-    const { userID } = await system.supabaseConnector.fetchCredentials();
+    const userID = await system.supabaseConnector.userId();
 
     await powerSync.execute(
       `INSERT INTO
