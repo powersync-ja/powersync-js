@@ -3,14 +3,13 @@ import React from 'react';
 import { usePowerSync } from '@powersync/react';
 import { Autocomplete } from './AutoCompleteWidget';
 import { SearchResult, searchTable } from '../fts/fts_helpers';
-import { LIST_TABLE, TODO_TABLE, ListRecord } from '../powersync/AppSchema';
+import { LIST_TABLE, ListRecord } from '../powersync/AppSchema';
+import { router } from 'expo-router';
 
 // This is a simple search bar widget that allows users to search for lists and todo items
 export const SearchBarWidget: React.FC<any> = () => {
   const [searchResults, setSearchResults] = React.useState<SearchResult[]>([]);
-  const [value, setValue] = React.useState<SearchResult | null>(null);
 
-  // const navigate = useNavigate();
   const powersync = usePowerSync();
 
   const handleInputChange = async (value: string) => {
@@ -36,5 +35,19 @@ export const SearchBarWidget: React.FC<any> = () => {
     }
   };
 
-  return <Autocomplete origValue="" data={searchResults} onChange={handleInputChange} />;
+  return (
+    <Autocomplete
+      data={searchResults}
+      onChange={handleInputChange}
+      placeholder="Search"
+      leftIcon={{ type: 'material-community', name: 'magnify' }}
+      onPress={(id) => {
+        router.back();
+        router.push({
+          pathname: 'views/todos/edit/[id]',
+          params: { id: id }
+        });
+      }}
+    />
+  );
 };

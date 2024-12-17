@@ -1,13 +1,11 @@
-import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SearchBarWidget } from '../library/widgets/SearchBarWidget';
 
 export default function Modal() {
   return (
     <View style={styles.container}>
       <SearchBarWidget />
-
       <StatusBar style={'light'} />
     </View>
   );

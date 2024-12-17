@@ -5,6 +5,7 @@ import { Icon, Header } from '@rneui/themed';
 import { useStatus } from '@powersync/react';
 import { DrawerActions } from '@react-navigation/native';
 import { useSystem } from '../powersync/system';
+import { usePathname } from 'expo-router';
 
 export const HeaderWidget: React.FC<{
   title?: string;
@@ -15,6 +16,8 @@ export const HeaderWidget: React.FC<{
   const status = useStatus();
 
   const { title } = props;
+
+  const pathName = usePathname();
   return (
     <Header
       leftComponent={
@@ -30,15 +33,17 @@ export const HeaderWidget: React.FC<{
       }
       rightComponent={
         <View style={styles.headerRight}>
-          <Icon
-            name="search"
-            type="material"
-            color="white"
-            size={24}
-            onPress={() => {
-              router.push('search_modal');
-            }}
-          />
+          {pathName.includes('lists') && (
+            <Icon
+              name="search"
+              type="material"
+              color="white"
+              size={24}
+              onPress={() => {
+                router.push('search_modal');
+              }}
+            />
+          )}
           <Icon
             name={status.connected ? 'wifi' : 'wifi-off'}
             type="material-community"

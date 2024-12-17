@@ -1,107 +1,71 @@
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Input, ListItem, Text } from '@rneui/themed';
+import { View, StyleSheet } from 'react-native';
+import { Input, ListItem } from '@rneui/themed';
 import React, { useState } from 'react';
-import { router } from 'expo-router';
+import { IconNode } from '@rneui/base';
 
 export interface AutocompleteWidgetProps {
-  origValue: string;
-  label?: string;
   data: any[];
   onChange: (value: string) => void;
-  //   origOnChange: (value: string) => void;
-  icon?: string;
-  style?: object;
-  menuStyle?: object;
-  right?: object;
-  left?: object;
+  placeholder?: string;
+  onPress: (id: string) => void;
+  leftIcon?: IconNode;
 }
 
-export const Autocomplete: React.FC<AutocompleteWidgetProps> = ({
-  origValue,
-  label,
-  data,
-  onChange,
-  //   origOnChange,
-  icon,
-  style,
-  menuStyle,
-  right,
-  left
-}) => {
-  const [value, setValue] = useState(origValue);
+export const Autocomplete: React.FC<AutocompleteWidgetProps> = ({ data, onChange, placeholder, onPress, leftIcon }) => {
+  const [value, setValue] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
-  const [filteredData, setFilteredData] = useState<any[]>([]);
 
-  const filterData = (text: string) => {
-    return data.filter((val: any) => val?.toLowerCase()?.indexOf(text?.toLowerCase()) > -1);
-  };
   return (
-    <View style={{ flexDirection: 'column', flex: 1, flexGrow: 1 }}>
-      <View style={{ flexDirection: 'row', flex: 0 }}>
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
         <Input
           onFocus={() => {
-            if (value.length === 0) {
+            if (value?.length === 0) {
               setMenuVisible(true);
             }
           }}
+          leftIcon={leftIcon}
+          placeholder={placeholder}
           onBlur={() => setMenuVisible(false)}
-          label={label}
-          // right={right}
-          // left={left}
-          //   style={styles.input}
+          underlineColorAndroid={'transparent'}
+          inputContainerStyle={{ borderBottomWidth: 0 }}
           onChangeText={(text) => {
-            //   origOnChange(text);
             onChange(text);
-            //   if (text && text.length > 0) {
-            //     setFilteredData(filterData(text));
-            //   } else if (text && text.length === 0) {
-            //     setFilteredData(data);
-            //   }
             setMenuVisible(true);
             setValue(text);
           }}
-          // value={value}
+          containerStyle={{
+            borderColor: 'black',
+            borderWidth: 1,
+            borderRadius: 4,
+            height: 48,
+            backgroundColor: 'white'
+          }}
         />
       </View>
       {menuVisible && (
-        <View
-          style={{
-            flex: 2,
-            flexGrow: 1,
-            flexDirection: 'column'
-          }}>
+        <View style={styles.menuContainer}>
           {data.map((val, index) => (
-            <TouchableOpacity
+            <ListItem
+              bottomDivider
               key={index}
               onPress={() => {
-                router.push({
-                  pathname: 'views/todos/edit/[id]',
-                  params: { id: val.id }
-                });
-              }}>
-              <Card style={{ display: 'flex', width: '100%' }}>
-                {val.listName && <Text style={{ fontSize: 18 }}>{val.listName}</Text>}
-                {val.todoName && (
-                  <Text style={{ fontSize: 14 }}>
-                    {'\u2022'} {val.todoName}
-                  </Text>
+                setMenuVisible(false);
+                onPress(val.id);
+              }}
+              style={{ paddingBottom: 8 }}>
+              <ListItem.Content>
+                {val.listName && (
+                  <ListItem.Title style={{ fontSize: 18, color: 'black' }}>{val.listName}</ListItem.Title>
                 )}
-              </Card>
-            </TouchableOpacity>
-            // <ListItem
-            //   //   key={i}
-            //   style={[{ width: '100%' }]}
-            //   //   icon={icon}
-            //   onPress={() => {
-            //     setValue(val);
-            //     setMenuVisible(false);
-            //   }}
-            //   // title={datum}
-            // >
-            //   <ListItem.Content>
-            //     <ListItem.Title>{val}</ListItem.Title>
-            //   </ListItem.Content>
-            // </ListItem>
+                {val.todoName && (
+                  <ListItem.Subtitle style={{ fontSize: 14, color: 'grey' }}>
+                    {'\u2022'} {val.todoName}
+                  </ListItem.Subtitle>
+                )}
+              </ListItem.Content>
+              <ListItem.Chevron />
+            </ListItem>
           ))}
         </View>
       )}
@@ -110,12 +74,20 @@ export const Autocomplete: React.FC<AutocompleteWidgetProps> = ({
 };
 
 const styles = StyleSheet.create({
-  input: {
-    flexDirection: 'row',
+  container: {
+    flexDirection: 'column',
     flex: 1,
     flexGrow: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'flex-start'
+    marginHorizontal: 8
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    flex: 0,
+    marginVertical: 8
+  },
+  menuContainer: {
+    flex: 2,
+    flexGrow: 1,
+    flexDirection: 'column'
   }
 });
