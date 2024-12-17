@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/react-native';
 
-import { SupabaseClient, createClient } from '@supabase/supabase-js';
+import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
 import { AppConfig } from './AppConfig';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 import { System } from '../powersync/system';
@@ -40,6 +40,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     if (error) {
       throw error;
     }
+  }
+
+  async userId() {
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+
+    return session?.user.id;
   }
 
   async fetchCredentials() {

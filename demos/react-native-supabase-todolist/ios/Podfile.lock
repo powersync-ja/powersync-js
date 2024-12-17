@@ -74,7 +74,7 @@ PODS:
   - hermes-engine (0.74.5):
     - hermes-engine/Pre-built (= 0.74.5)
   - hermes-engine/Pre-built (0.74.5)
-  - powersync-sqlite-core (0.3.0)
+  - powersync-sqlite-core (0.3.6)
   - RCT-Folly (2024.01.01.00):
     - boost
     - DoubleConversion
@@ -1005,11 +1005,11 @@ PODS:
     - React-debug
   - react-native-encrypted-storage (4.0.3):
     - React-Core
-  - react-native-quick-sqlite (2.0.0):
+  - react-native-quick-sqlite (2.2.0):
     - DoubleConversion
     - glog
     - hermes-engine
-    - powersync-sqlite-core (~> 0.3.0)
+    - powersync-sqlite-core (~> 0.3.6)
     - RCT-Folly (= 2024.01.01.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1435,7 +1435,7 @@ DEPENDENCIES:
   - ExpoKeepAwake (from `../../../node_modules/expo-keep-awake/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoSecureStore (from `../../../node_modules/expo-secure-store/ios`)
-  - EXSplashScreen (from `../node_modules/expo-splash-screen/ios`)
+  - EXSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
@@ -1532,7 +1532,7 @@ EXTERNAL SOURCES:
   ExpoSecureStore:
     :path: "../../../node_modules/expo-secure-store/ios"
   EXSplashScreen:
-    :path: "../node_modules/expo-splash-screen/ios"
+    :path: "../../../node_modules/expo-splash-screen/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   fmt:
@@ -1672,7 +1672,7 @@ SPEC CHECKSUMS:
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: fdfdfe5479092de0c4bdbebedd9056951f092c4f
   hermes-engine: 8c1577f3fdb849cbe7729c2e7b5abc4b845e88f8
-  powersync-sqlite-core: ad0e70e23bacd858fe2e79032dc4aabdf972d1bd
+  powersync-sqlite-core: e6217cc9e89e8803550f1b5bb7fd5b00becc903a
   RCT-Folly: 02617c592a293bd6d418e0a88ff4ee1f88329b47
   RCTDeprecation: 3afceddffa65aee666dafd6f0116f1d975db1584
   RCTRequired: ec1239bc9d8bf63e10fb92bd8b26171a9258e0c1
@@ -1698,7 +1698,7 @@ SPEC CHECKSUMS:
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
-  react-native-quick-sqlite: 32a5687a042a40f9c820605fe4dc06dfa3bd31e9
+  react-native-quick-sqlite: b4b34028dbe2d532beb2575f4b90ae58bec42260
   react-native-safe-area-context: afa5d614d6b1b73b743c9261985876606560d128
   React-nativeconfig: ba9a2e54e2f0882cf7882698825052793ed4c851
   React-NativeModulesApple: 8d11ff8955181540585c944cf48e9e7236952697

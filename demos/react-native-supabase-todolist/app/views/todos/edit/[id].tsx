@@ -59,7 +59,7 @@ const TodoView: React.FC = () => {
   const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
     const updatedRecord = { ...record, completed: completed };
     if (completed) {
-      const { userID } = await system.supabaseConnector.fetchCredentials();
+      const userID = await system.supabaseConnector.userId();
       updatedRecord.completed_at = new Date().toISOString();
       updatedRecord.completed_by = userID;
     } else {
