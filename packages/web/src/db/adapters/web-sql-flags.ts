@@ -46,6 +46,12 @@ export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
    * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
    */
   temporaryStorage: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
 
 export enum TemporaryStorageOption {
@@ -73,6 +79,12 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
    */
   temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
 
 export function isServerSide() {

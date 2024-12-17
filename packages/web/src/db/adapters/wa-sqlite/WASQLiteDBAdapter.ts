@@ -27,6 +27,12 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
 
   vfs?: WASQLiteVFS;
   temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using multiple-ciphers.
+   */
+  encryptionKey?: string;
 }
 
 /**
@@ -46,7 +52,8 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
             baseConnection: await remote({
               ...options,
               temporaryStorage: temporaryStorage ?? TemporaryStorageOption.MEMORY,
-              flags: resolveWebPowerSyncFlags(options.flags)
+              flags: resolveWebPowerSyncFlags(options.flags),
+              encryptionKey: options.encryptionKey
             })
           });
         }
@@ -58,6 +65,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
           temporaryStorage,
           logger: options.logger,
           vfs: options.vfs,
+          encryptionKey: options.encryptionKey,
           worker: options.worker
         });
         return openFactory.openConnection();

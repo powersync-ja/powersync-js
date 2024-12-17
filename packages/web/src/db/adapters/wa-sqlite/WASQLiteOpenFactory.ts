@@ -41,7 +41,11 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
   async openConnection(): Promise<AsyncDatabaseConnection> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
-    const { vfs = WASQLiteVFS.IDBBatchAtomicVFS, temporaryStorage = TemporaryStorageOption.MEMORY } = this.waOptions;
+    const {
+      vfs = WASQLiteVFS.IDBBatchAtomicVFS,
+      temporaryStorage = TemporaryStorageOption.MEMORY,
+      encryptionKey
+    } = this.waOptions;
 
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
@@ -56,7 +60,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
               optionsDbWorker({
                 ...this.options,
                 temporaryStorage,
-                flags: this.resolvedFlags
+                flags: this.resolvedFlags,
+                encryptionKey
               })
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
@@ -69,7 +74,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           dbFilename: this.options.dbFilename,
           vfs,
           temporaryStorage,
-          flags: this.resolvedFlags
+          flags: this.resolvedFlags,
+          encryptionKey: encryptionKey
         }),
         identifier: this.options.dbFilename
       });
@@ -81,7 +87,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         debugMode: this.options.debugMode,
         vfs,
         temporaryStorage,
-        flags: this.resolvedFlags
+        flags: this.resolvedFlags,
+        encryptionKey: encryptionKey
       });
     }
   }
