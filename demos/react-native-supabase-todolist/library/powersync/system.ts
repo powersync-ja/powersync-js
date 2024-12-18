@@ -72,7 +72,7 @@ export class System {
 
     // Demo using SQLite Full-Text Search with PowerSync.
     // See https://docs.powersync.com/usage-examples/full-text-search for more details
-    configureFts(this.powersync);
+    await configureFts(this.powersync);
   }
 }
 

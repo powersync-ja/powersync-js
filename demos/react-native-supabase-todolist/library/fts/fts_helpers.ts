@@ -26,14 +26,8 @@ export async function searchTable(searchTerm: string, tableName: string): Promis
 }
 
 //Used to display the search results in the autocomplete text field
-export class SearchResult {
+export interface SearchResult {
   id: string;
-  todoName: string | null;
   listName: string;
-
-  constructor(id: string, listName: string, todoName: string | null = null) {
-    this.id = id;
-    this.listName = listName;
-    this.todoName = todoName;
-  }
+  todoName: string | null;
 }

@@ -24,11 +24,11 @@ export const SearchBarWidget: React.FC<any> = () => {
       if (!todoItemsSearchResults.length) {
         listsSearchResults = await searchTable(value, 'lists');
       }
-      const formattedListResults: SearchResult[] = listsSearchResults.map(
-        (result) => new SearchResult(result['id'], result['name'])
-      );
-      const formattedTodoItemsResults: SearchResult[] = todoItemsSearchResults.map((result) => {
-        return new SearchResult(result['list_id'], result['list_name'] ?? '', result['description']);
+      const formattedListResults: SearchResult[] = listsSearchResults.map((result): SearchResult => {
+        return { id: result['id'], listName: result['name'], todoName: null };
+      });
+      const formattedTodoItemsResults: SearchResult[] = todoItemsSearchResults.map((result): SearchResult => {
+        return { id: result['list_id'], listName: result['list_name'] ?? '', todoName: result['description'] };
       });
       setSearchResults([...formattedTodoItemsResults, ...formattedListResults]);
     }
