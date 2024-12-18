@@ -768,8 +768,8 @@ importers:
         specifier: ^14.0.3
         version: 14.0.4
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.2.0
-        version: 2.2.0(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
+        specifier: ^2.2.1
+        version: 2.2.1(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
@@ -4597,6 +4597,12 @@ packages:
 
   '@journeyapps/react-native-quick-sqlite@2.2.0':
     resolution: {integrity: sha512-9abJ5YCgQ2Jie9B3mGtopfx8LhUB9S9I+DSd9ux1CA6DxnJMZagYlIE/x8nOghRCvtQF3jaF5DvrNoSkadkLVw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
+  '@journeyapps/react-native-quick-sqlite@2.2.1':
+    resolution: {integrity: sha512-imvd5P9ii5SmtPJed+R4Yn26QDV3ED/jx/3OuKMDcdjCFi/m5yCCrLz0ewgRwubHGkltNYy5d3tCYodmy4+1KA==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -19107,9 +19113,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1)':
+  '@babel/eslint-parser@7.25.8(@babel/core@7.25.7)(eslint@8.57.1)':
     dependencies:
-      '@babel/core': 7.24.5
+      '@babel/core': 7.25.7
       '@nicolo-ribaudo/eslint-scope-5-internals': 5.1.1-v1
       eslint: 8.57.1
       eslint-visitor-keys: 2.1.0
@@ -24549,6 +24555,11 @@ snapshots:
       react: 18.2.0
       react-native: 0.74.5(@babel/core@7.25.7)(@babel/preset-env@7.25.7(@babel/core@7.25.7))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
 
+  '@journeyapps/react-native-quick-sqlite@2.2.1(react-native@0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      react: 18.2.0
+      react-native: 0.74.5(@babel/core@7.24.5)(@babel/preset-env@7.25.7(@babel/core@7.24.5))(@types/react@18.2.79)(encoding@0.1.13)(react@18.2.0)
+
   '@journeyapps/wa-sqlite@0.4.2': {}
 
   '@journeyapps/wa-sqlite@1.0.0': {}
@@ -26904,7 +26915,7 @@ snapshots:
   '@react-native/eslint-config@0.73.2(eslint@8.57.1)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       '@react-native/eslint-plugin': 0.73.1
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.57.1)(typescript@5.5.4)
@@ -33369,7 +33380,7 @@ snapshots:
 
   eslint-plugin-ft-flow@2.0.3(@babel/eslint-parser@7.25.8(@babel/core@7.24.5)(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
-      '@babel/eslint-parser': 7.25.8(@babel/core@7.24.5)(eslint@8.57.1)
+      '@babel/eslint-parser': 7.25.8(@babel/core@7.25.7)(eslint@8.57.1)
       eslint: 8.57.1
       lodash: 4.17.21
       string-natural-compare: 3.0.1

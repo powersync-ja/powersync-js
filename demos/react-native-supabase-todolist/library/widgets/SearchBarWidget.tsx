@@ -1,4 +1,3 @@
-// import { Autocomplete, Box, Card, CardContent, FormControl, TextField, Typography } from '@mui/material';
 import React from 'react';
 import { usePowerSync } from '@powersync/react';
 import { Autocomplete } from './AutoCompleteWidget';

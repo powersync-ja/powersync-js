@@ -1,6 +1,6 @@
 import { AppSchema } from '../powersync/AppSchema';
 import { ExtractType, generateJsonExtracts } from './helpers';
-import { system } from '../powersync/system';
+import { PowerSyncDatabase } from '@powersync/react-native';
 
 /**
  * Create a Full Text Search table for the given table and columns
@@ -11,11 +11,16 @@ import { system } from '../powersync/system';
  * @param columns
  * @param tokenizationMethod
  */
-async function createFtsTable(tableName: string, columns: string[], tokenizationMethod = 'unicode61'): Promise<void> {
+async function createFtsTable(
+  db: PowerSyncDatabase,
+  tableName: string,
+  columns: string[],
+  tokenizationMethod = 'unicode61'
+): Promise<void> {
   const internalName = AppSchema.tables.find((table) => table.name === tableName)?.internalName;
   const stringColumns = columns.join(', ');
 
-  return await system.powersync.writeTransaction(async (tx) => {
+  return await db.writeTransaction(async (tx) => {
     // Add FTS table
     await tx.execute(`
       CREATE VIRTUAL TABLE IF NOT EXISTS fts_${tableName}
@@ -58,7 +63,7 @@ async function createFtsTable(tableName: string, columns: string[], tokenization
  * that correspond to the tables in your schema and populate them
  * with the data you would like to search on
  */
-export async function configureFts(): Promise<void> {
-  await createFtsTable('lists', ['name'], 'porter unicode61');
-  await createFtsTable('todos', ['description', 'list_id']);
+export async function configureFts(db: PowerSyncDatabase): Promise<void> {
+  await createFtsTable(db, 'lists', ['name'], 'porter unicode61');
+  await createFtsTable(db, 'todos', ['description', 'list_id']);
 }
