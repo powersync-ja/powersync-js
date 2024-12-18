@@ -1005,7 +1005,7 @@ PODS:
     - React-debug
   - react-native-encrypted-storage (4.0.3):
     - React-Core
-  - react-native-quick-sqlite (2.2.0):
+  - react-native-quick-sqlite (2.2.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1467,7 +1467,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-encrypted-storage (from `../../../node_modules/react-native-encrypted-storage`)
-  - "react-native-quick-sqlite (from `../../../node_modules/@journeyapps/react-native-quick-sqlite`)"
+  - "react-native-quick-sqlite (from `../node_modules/@journeyapps/react-native-quick-sqlite`)"
   - react-native-safe-area-context (from `../../../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1593,7 +1593,7 @@ EXTERNAL SOURCES:
   react-native-encrypted-storage:
     :path: "../../../node_modules/react-native-encrypted-storage"
   react-native-quick-sqlite:
-    :path: "../../../node_modules/@journeyapps/react-native-quick-sqlite"
+    :path: "../node_modules/@journeyapps/react-native-quick-sqlite"
   react-native-safe-area-context:
     :path: "../../../node_modules/react-native-safe-area-context"
   React-nativeconfig:
@@ -1698,7 +1698,7 @@ SPEC CHECKSUMS:
   React-logger: 257858bd55f3a4e1bc0cf07ddc8fb9faba6f8c7c
   React-Mapbuffer: 6c1cacdbf40b531f549eba249e531a7d0bfd8e7f
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
-  react-native-quick-sqlite: b4b34028dbe2d532beb2575f4b90ae58bec42260
+  react-native-quick-sqlite: fa617eb5224e530a0cafe21f35dbff9d98b1a557
   react-native-safe-area-context: afa5d614d6b1b73b743c9261985876606560d128
   React-nativeconfig: ba9a2e54e2f0882cf7882698825052793ed4c851
   React-NativeModulesApple: 8d11ff8955181540585c944cf48e9e7236952697
@@ -1733,4 +1733,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: ad989b4e43152979093488e5c8b7457e401bf191
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
