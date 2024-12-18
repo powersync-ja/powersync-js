@@ -5,13 +5,13 @@ import { column, ColumnType } from '../../../src/db/schema/Column';
 import { Column } from '../../../lib';
 
 describe('Schema', () => {
-  it('should fail if array is passed and not a table object', () => {
+  it('should fail if an array of tables using the new syntax is passed to schema', () => {
     const table1 = new Table({ name: column.text });
     const table2 = new Table({ age: { type: ColumnType.INTEGER } });
     expect(() => new Schema([table1, table2])).toThrow();
   });
 
-  it('should create a schema with an array of tables', () => {
+  it('should create a schema with an array of tables using the old syntax', () => {
     const table1 = new Table({
       name: 'table1',
       columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
