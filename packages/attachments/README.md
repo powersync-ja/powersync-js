@@ -33,24 +33,20 @@ In this example, the user captures photos when checklist items are completed as 
 The schema for the `checklist` table:
 
 ```javascript
-const AppSchema = new Schema([
-  new Table({
-    name: 'checklists',
-    columns: [
-      new Column({ name: 'photo_id', type: ColumnType.TEXT }),
-      new Column({ name: 'description', type: ColumnType.TEXT }),
-      new Column({ name: 'completed', type: ColumnType.INTEGER }),
-      new Column({ name: 'completed_at', type: ColumnType.TEXT }),
-      new Column({ name: 'completed_by', type: ColumnType.TEXT })
-    ],
-    indexes: [
-      new Index({
-        name: 'inspections',
-        columns: [new IndexedColumn({ name: 'checklist_id' })]
-      })
-    ]
-  })
-]);
+const checklists = new Table(
+  {
+    photo_id: column.text,
+    description: column.text,
+    completed: column.integer,
+    completed_at: column.text,
+    completed_by: column.text
+  },
+  { indexes: { inspections: ['checklist_id'] } }
+);
+
+const AppSchema = new Schema({
+  checklists
+});
 ```
 
 ### Steps to implement
@@ -107,10 +103,12 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 ```javascript
 import { AttachmentTable } from '@powersync/attachments';
 
-const AppSchema = new Schema([
+const attachmentTable = new AttachmentTable();
+
+const AppSchema = new Schema({
   // ... other tables
-  new AttachmentTable()
-]);
+  attachmentTable
+});
 ```
 
 In addition to `Table` options, the `AttachmentTable` can optionally be configured with the following options:
@@ -132,7 +130,7 @@ The default columns in `AttachmentTable`:
 | `size`       | `INTEGER` | The size of the attachment in bytes                               |
 
 5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`.
-   See the `StorageAdapter` interface definition [here](./src/StorageAdapter.ts).
+   See the `StorageAdapter` interface definition [here](https://github.com/powersync-ja/powersync-js/blob/main/packages/attachments/src/StorageAdapter.ts).
 
 6. Instantiate a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage.
 
