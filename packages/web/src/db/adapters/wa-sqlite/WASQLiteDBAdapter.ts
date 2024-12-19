@@ -58,7 +58,32 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
         const start = performance.now();
         try {
           const r = await originalExecute(sql, bindings);
-          performance.measure(`[SQL] ${sql}`, { start });
+          const end = performance.now();
+          performance.measure(`[SQL] ${sql}`, { start, end });
+          const duration = end - start;
+          if (duration >= 10) {
+            const rw = await originalExecute(`EXPLAIN QUERY PLAN ${sql}`, bindings);
+            const explain = rw.rows?._array ?? [];
+            const sqlMessage = sql.trim();
+            const newline = sqlMessage.indexOf('\n');
+            const firstLine = newline >= 0 ? sqlMessage.substring(0, newline) + '...' : sqlMessage;
+            console.groupCollapsed(
+              '%c[SQL] %c%s %c%s',
+              'color: grey; font-weight: normal',
+              durationStyle(duration),
+              `[${duration.toFixed(1)}ms]`,
+              'color: grey; font-weight: normal',
+              firstLine
+            );
+            if (newline >= 0) {
+              console.log('%c%s', 'color: grey', sqlMessage);
+            }
+            if (explain.length > 0) {
+              const emessage = explain.map((r) => `  ${r.detail}`).join('\n');
+              console.log('%c%s\n%c%s', 'color: blue', '[EXPLAIN QUERY PLAN]', 'color: grey', emessage);
+            }
+            console.groupEnd();
+          }
           return r;
         } catch (e: any) {
           performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
@@ -284,4 +309,14 @@ export class WASQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   async refreshSchema(): Promise<void> {}
+}
+
+function durationStyle(duration: number) {
+  if (duration < 30) {
+    return 'color: grey; font-weight: normal';
+  } else if (duration < 300) {
+    return 'color: blue; font-weight: normal';
+  } else {
+    return 'color: red; font-weight: normal';
+  }
 }
