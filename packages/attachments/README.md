@@ -103,11 +103,11 @@ export class AttachmentQueue extends AbstractAttachmentQueue {
 ```javascript
 import { AttachmentTable } from '@powersync/attachments';
 
-const attachmentTable = new AttachmentTable();
-
 const AppSchema = new Schema({
   // ... other tables
-  attachmentTable
+  attachments: new AttachmentTable({
+    name: 'attachments',
+  }),
 });
 ```
 
@@ -123,7 +123,7 @@ The default columns in `AttachmentTable`:
 | Column Name  | Type      | Description                                                       |
 | ------------ | --------- | ----------------------------------------------------------------- |
 | `id`         | `TEXT`    | The ID of the attachment record                                   |
-| `filename`   | `TEXT`    | The filename of the attachment                                    |
+| `filename`    | `TEXT`    | The filename of the attachment                                     |
 | `media_type` | `TEXT`    | The media type of the attachment                                  |
 | `state`      | `INTEGER` | The state of the attachment, one of `AttachmentState` enum values |
 | `timestamp`  | `INTEGER` | The timestamp of last update to the attachment record             |
@@ -136,7 +136,12 @@ The default columns in `AttachmentTable`:
 
 ```javascript
 this.storage = this.supabaseConnector.storage;
-this.powersync = factory.getInstance();
+this.powersync = new PowerSyncDatabase({
+  schema: AppSchema,
+  database: {
+    dbFilename: 'sqlite.db'
+  }
+});
 
 this.attachmentQueue = new AttachmentQueue({
   powersync: this.powersync,
