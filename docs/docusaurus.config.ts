@@ -153,7 +153,10 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula
-    }
+    },
+    future: {
+      experimental_faster: true,
+    },
   } satisfies Preset.ThemeConfig
 };
 
