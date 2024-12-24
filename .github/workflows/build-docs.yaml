@@ -3,6 +3,8 @@ name: Build docs
 on:
   push:
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -4,6 +4,8 @@ name: Test Packages
 on:
   push:
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   test:
     name: Test Packages

@@ -4,6 +4,8 @@ name: Test Isolated Demos
 on:
   push:
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   test:
     name: Test Isolated Demos
