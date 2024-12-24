@@ -3,7 +3,9 @@ name: Diagnostics Image Build
 on:
   push:
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-docker-image:

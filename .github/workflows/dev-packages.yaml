@@ -4,7 +4,9 @@ name: Create Dev Release
 
 on: workflow_dispatch
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   publish:
