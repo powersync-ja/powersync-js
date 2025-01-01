@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.22.1
+
+### Patch Changes
+
+- 4a262cd: Add schema validation
+
 ## 1.22.0
 
 ### Minor Changes
