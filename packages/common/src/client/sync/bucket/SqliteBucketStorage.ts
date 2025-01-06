@@ -85,7 +85,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async getBucketStates(): Promise<BucketState[]> {
     const result = await this.db.getAll<BucketState>(
-      'SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0'
+      "SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0 AND name != '$local'"
     );
     return result;
   }
