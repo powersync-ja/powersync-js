@@ -582,12 +582,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       if (writeCheckpoint) {
         const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
         if (!check.rows?.length) {
-          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
             writeCheckpoint
           ]);
         }
       } else {
-        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
           this.bucketStorageAdapter.getMaxOpId()
         ]);
       }
