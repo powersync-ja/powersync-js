@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.22.1
+
+### Patch Changes
+
+- 7a47778: Fix issue where local changes could be reverted when a replication delay is present.
+- 4a262cd: Add schema validation
+
 ## 1.22.0
 
 ### Minor Changes
