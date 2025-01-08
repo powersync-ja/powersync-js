@@ -1,38 +1,83 @@
-import { DB, SQLBatchTuple } from '@op-engineering/op-sqlite';
-import { BaseObserver, DBAdapterListener, QueryResult, RowUpdateType } from '@powersync/common';
+import { DB, SQLBatchTuple, UpdateHookOperation } from '@op-engineering/op-sqlite';
+import {
+  BaseObserver,
+  BatchedUpdateNotification,
+  DBAdapterListener,
+  QueryResult,
+  RowUpdateType,
+  UpdateNotification
+} from '@powersync/common';
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;
 };
 
+export type OPSQLiteUpdateNotification = {
+  table: string;
+  operation: UpdateHookOperation;
+  row?: any;
+  rowId: number;
+};
+
 export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
   protected DB: DB;
+  private updateBuffer: UpdateNotification[];
+
   constructor(protected options: OPSQLiteConnectionOptions) {
     super();
     this.DB = options.baseDB;
+    this.updateBuffer = [];
 
-    // link table update commands
-    this.DB.updateHook((update) => {
-      this.iterateListeners((cb) => {
-        let opType: RowUpdateType;
-        switch (update.operation) {
-          case 'INSERT':
-            opType = RowUpdateType.SQLITE_INSERT;
-            break;
-          case 'DELETE':
-            opType = RowUpdateType.SQLITE_DELETE;
-            break;
-          case 'UPDATE':
-            opType = RowUpdateType.SQLITE_UPDATE;
-            break;
-        }
-        cb.tablesUpdated?.({
-          table: update.table,
-          opType,
-          rowId: update.rowId
-        });
-      });
+    this.DB.rollbackHook(() => {
+      this.updateBuffer = [];
     });
+
+    this.DB.updateHook((update) => {
+      this.addTableUpdate(update);
+    });
+  }
+
+  addTableUpdate(update: OPSQLiteUpdateNotification) {
+    let opType: RowUpdateType;
+    switch (update.operation) {
+      case 'INSERT':
+        opType = RowUpdateType.SQLITE_INSERT;
+        break;
+      case 'DELETE':
+        opType = RowUpdateType.SQLITE_DELETE;
+        break;
+      case 'UPDATE':
+        opType = RowUpdateType.SQLITE_UPDATE;
+        break;
+    }
+
+    this.updateBuffer.push({
+      table: update.table,
+      opType,
+      rowId: update.rowId
+    });
+  }
+
+  flushUpdates() {
+    if (!this.updateBuffer.length) {
+      return;
+    }
+
+    const groupedUpdates = this.updateBuffer.reduce((grouping: Record<string, UpdateNotification[]>, update) => {
+      const { table } = update;
+      const updateGroup = grouping[table] || (grouping[table] = []);
+      updateGroup.push(update);
+      return grouping;
+    }, {});
+
+    const batchedUpdate: BatchedUpdateNotification = {
+      groupedUpdates,
+      rawUpdates: this.updateBuffer,
+      tables: Object.keys(groupedUpdates)
+    };
+
+    this.updateBuffer = [];
+    this.iterateListeners((l) => l.tablesUpdated?.(batchedUpdate));
   }
 
   close() {
