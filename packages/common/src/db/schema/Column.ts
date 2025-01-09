@@ -30,9 +30,9 @@ const real: BaseColumnType<number | null> = {
   type: ColumnType.REAL
 };
 
-// There is maximum of 127 arguments for any function in SQLite. Currently we use json_object which uses 1 arg per key (column name)
-// and one per value, which limits it to 63 arguments.
-export const MAX_AMOUNT_OF_COLUMNS = 63;
+// powersync-sqlite-core limits the number of column per table to 1999, due to internal SQLite limits.
+// In earlier versions this was limited to 63.
+export const MAX_AMOUNT_OF_COLUMNS = 1999;
 
 export const column = {
   text,
