@@ -78,9 +78,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      // Workaround to create read-only connections
-      let dbName = './'.repeat(i + 1) + dbFilename;
-      const conn = await this.openConnection(dbName);
+      const conn = await this.openConnection(dbFilename);
       await conn.execute('PRAGMA query_only = true');
       this.readConnections.push({ busy: false, connection: conn });
     }
