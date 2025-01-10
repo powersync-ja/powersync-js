@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.22.2
+
+### Patch Changes
+
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+
 ## 1.22.1
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @powersync/op-sqlite
 
+## 0.2.1
+
+### Patch Changes
+
+- b38bcdb: Update op-sqlite to v11.2.13.
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/common@1.22.2
+
 ## 0.2.0
 
 ### Minor Changes
