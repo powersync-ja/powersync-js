@@ -65,7 +65,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@op-engineering/op-sqlite": "^10.1.0",
+    "@op-engineering/op-sqlite": "^11.2.13",
     "@powersync/common": "workspace:^1.22.1",
     "react": "*",
     "react-native": "*"
@@ -75,7 +75,7 @@
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
-    "@op-engineering/op-sqlite": "^10.1.0",
+    "@op-engineering/op-sqlite": "^11.2.13",
     "@react-native/eslint-config": "^0.73.1",
     "@types/async-lock": "^1.4.0",
     "@types/react": "^18.2.44",
