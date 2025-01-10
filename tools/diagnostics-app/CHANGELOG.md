@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.7.6
+
+### Patch Changes
+
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/web@1.12.3
+
 ## 0.7.5
 
 ### Patch Changes
