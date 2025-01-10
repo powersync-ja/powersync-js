@@ -31,7 +31,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
 
     connector.client.auth.onAuthStateChange(async (event, _session) => {
       if (event === 'SIGNED_OUT') {
-        console.log("here");
         navigate(LOGIN_ROUTE);
       }
     });
