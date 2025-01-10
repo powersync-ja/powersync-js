@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
     "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
     "test": "vitest"
   },
   "dependencies": {

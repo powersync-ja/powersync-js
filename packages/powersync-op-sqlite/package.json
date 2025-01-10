@@ -41,7 +41,7 @@
     "build:prod": "bob build",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib"
+    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib node_modules"
   },
   "keywords": [
     "data sync",
