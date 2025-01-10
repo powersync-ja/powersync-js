@@ -28,6 +28,14 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       console.error(`No Supabase connector has been created yet.`);
       return;
     }
+
+    connector.client.auth.onAuthStateChange(async (event, _session) => {
+      if (event === 'SIGNED_OUT') {
+        console.log("here");
+        navigate(LOGIN_ROUTE);
+      }
+    });
+
     const loginGuard = () => {
       if (!connector.currentSession) {
         navigate(LOGIN_ROUTE);
