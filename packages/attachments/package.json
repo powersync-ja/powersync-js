@@ -24,7 +24,7 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest"
   },

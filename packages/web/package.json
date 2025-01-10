@@ -46,7 +46,7 @@
     "build:webpack-workers": "webpack --config webpack.workers.config.js",
     "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
@@ -60,7 +60,7 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.0.0",
+    "@journeyapps/wa-sqlite": "^1.2.0",
     "@powersync/common": "workspace:^1.22.1"
   },
   "dependencies": {
@@ -72,7 +72,7 @@
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.0.0",
+    "@journeyapps/wa-sqlite": "^1.2.0",
     "@types/uuid": "^9.0.6",
     "@vitest/browser": "^2.1.4",
     "crypto-browserify": "^3.12.0",

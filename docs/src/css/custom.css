@@ -76,3 +76,7 @@ th {
 table th {
   color: #767676;
 }
+
+.typedoc-sidebar-item-deprecated {
+  text-decoration: line-through;
+}
