@@ -10,7 +10,7 @@ import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
 
-import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
+const { version: POWERSYNC_JS_VERSION } = require('../../../../package.json');
 
 export type BSONImplementation = typeof BSON;
 
