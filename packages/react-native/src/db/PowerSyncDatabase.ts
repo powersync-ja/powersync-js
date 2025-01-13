@@ -58,4 +58,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       identifier: this.database.name
     });
   }
+
+  async readLock<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
+    await this.waitForReady();
+    return this.database.readLock(callback);
+  }
+
+  async writeLock<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
+    await this.waitForReady();
+    return this.database.writeLock(callback);
+  }
 }

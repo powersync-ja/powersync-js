@@ -34,7 +34,7 @@ const App = () => {
                 return;
               }
 
-              const { userID } = await system.djangoConnector.fetchCredentials();
+              const userID = await system.djangoConnector.userId();
 
               await system.powersync.execute(
                 `INSERT INTO ${LIST_TABLE} (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?)`,

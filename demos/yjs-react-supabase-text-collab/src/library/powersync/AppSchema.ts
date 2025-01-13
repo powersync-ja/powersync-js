@@ -1,11 +1,11 @@
-import { column, Schema, TableV2 } from '@powersync/web';
+import { column, Schema, Table } from '@powersync/web';
 
-const documents = new TableV2({
+const documents = new Table({
   title: column.text,
   created_at: column.text
 });
 
-const document_updates = new TableV2(
+const document_updates = new Table(
   {
     document_id: column.text,
     created_at: column.text,

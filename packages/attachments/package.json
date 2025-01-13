@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -24,10 +24,22 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
-    "watch": "tsc -b -w"
+    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "watch": "tsc -b -w",
+    "test": "pnpm build && vitest"
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.18.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.6",
+    "@vitest/browser": "^2.1.8",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vitest": "^2.1.8",
+    "webdriverio": "^9.4.5"
   }
 }

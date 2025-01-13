@@ -8,7 +8,7 @@ The `powersync/vue` package is currently in a beta release.
 
 Demo app demonstrating use of the [PowerSync Vue](https://www.npmjs.com/package/@powersync/vue) together with Supabase.
 
-A step-by-step guide through the Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase).
+A step-by-step guide through the Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase-+-powersync).
 
 ## Recommended Setup
 

@@ -83,7 +83,7 @@ describe('TableV2', () => {
         { name: 'name', type: 'TEXT' },
         { name: 'age', type: 'INTEGER' }
       ],
-      indexes: [{ name: 'nameIndex', columns: [{ ascending: true, name: 'name', type: 'TEXT' },] }]
+      indexes: [{ name: 'nameIndex', columns: [{ ascending: true, name: 'name', type: 'TEXT' }] }]
     });
   });
 
@@ -102,7 +102,7 @@ describe('TableV2', () => {
     expect(table.indexes[0].columns[0].ascending).toBe(false);
   });
 
-  describe("validate", () => {
+  describe('validate', () => {
     it('should throw an error for invalid view names', () => {
       expect(() => {
         new TableV2(
@@ -122,31 +122,31 @@ describe('TableV2', () => {
       }).toThrow('id column is automatically added, custom id columns are not supported');
     });
 
-    it('should throw an error if more than 63 columns are provided', () => {
+    it('should throw an error if more than 1999 columns are provided', () => {
       const columns = {};
-      for (let i = 0; i < 64; i++) {
+      for (let i = 0; i < 2000; i++) {
         columns[`column${i}`] = column.text;
       }
 
-      expect(() => new TableV2(columns).validate()).toThrowError('Table has too many columns. The maximum number of columns is 63.');
+      expect(() => new TableV2(columns).validate()).toThrowError(
+        'Table has too many columns. The maximum number of columns is 1999.'
+      );
     });
 
     it('should throw an error if an id column is provided', () => {
-      expect(
-        () =>
-          new TableV2({
-            id: column.text,
-            name: column.text
-          }).validate()
+      expect(() =>
+        new TableV2({
+          id: column.text,
+          name: column.text
+        }).validate()
       ).toThrowError('An id column is automatically added, custom id columns are not supported');
     });
 
     it('should throw an error if a column name contains invalid SQL characters', () => {
-      expect(
-        () =>
-          new TableV2({
-            '#invalid-name': column.text
-          }).validate()
+      expect(() =>
+        new TableV2({
+          '#invalid-name': column.text
+        }).validate()
       ).toThrowError('Invalid characters in column name: #invalid-name');
     });
   });

@@ -85,7 +85,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async getBucketStates(): Promise<BucketState[]> {
     const result = await this.db.getAll<BucketState>(
-      'SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0'
+      "SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0 AND name != '$local'"
     );
     return result;
   }
@@ -249,9 +249,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
-    const rs1 = await this.db.getAll("SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = ?", [
-      MAX_OP_ID
-    ]);
+    const rs1 = await this.db.getAll(
+      "SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = CAST(? as INTEGER)",
+      [MAX_OP_ID]
+    );
     if (!rs1.length) {
       // Nothing to update
       return false;

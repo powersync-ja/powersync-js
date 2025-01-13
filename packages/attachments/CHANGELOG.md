@@ -1,5 +1,11 @@
 # @powersync/attachments
 
+## 2.2.0
+
+### Minor Changes
+
+- 0094e52: Added option to download attachments
+
 ## 2.1.2
 
 ### Patch Changes

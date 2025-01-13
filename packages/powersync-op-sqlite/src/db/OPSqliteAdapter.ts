@@ -1,12 +1,4 @@
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  SQLOpenOptions,
-  Transaction
-} from '@powersync/common';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
 import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -86,9 +78,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      // Workaround to create read-only connections
-      let dbName = './'.repeat(i + 1) + dbFilename;
-      const conn = await this.openConnection(dbName);
+      const conn = await this.openConnection(dbFilename);
       await conn.execute('PRAGMA query_only = true');
       this.readConnections.push({ busy: false, connection: conn });
     }
@@ -194,13 +184,18 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     return new Promise(async (resolve, reject) => {
       try {
-        await this.locks.acquire(
-          LockType.WRITE,
-          async () => {
-            resolve(await fn(this.writeConnection!));
-          },
-          { timeout: options?.timeoutMs }
-        );
+        await this.locks
+          .acquire(
+            LockType.WRITE,
+            async () => {
+              resolve(await fn(this.writeConnection!));
+            },
+            { timeout: options?.timeoutMs }
+          )
+          .then(() => {
+            // flush updates once a write lock has been released
+            this.writeConnection!.flushUpdates();
+          });
       } catch (ex) {
         reject(ex);
       }

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tanstack-react-query",
-  "version": "0.0.10",
+  "version": "0.0.12",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
     "test": "vitest",
     "watch": "tsc -b -w"
   },
@@ -29,7 +29,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.22.0",
+    "@powersync/common": "workspace:^1.22.2",
     "react": "*"
   },
   "dependencies": {

@@ -19,6 +19,18 @@ export class Schema<S extends SchemaType = SchemaType> {
 
   constructor(tables: Table[] | S) {
     if (Array.isArray(tables)) {
+      /*
+        We need to validate that the tables have a name here because a user could pass in an array
+        of Tables that don't have a name because they are using the V2 syntax.
+        Therefore, 'convertToClassicTables' won't be called on the tables resulting in a runtime error.
+      */
+      for (const table of tables) {
+        if (table.name === '') {
+          throw new Error(
+            "It appears you are trying to create a new Schema with an array instead of an object. Passing in an object instead of an array into 'new Schema()' may resolve your issue."
+          );
+        }
+      }
       this.tables = tables;
     } else {
       this.props = tables as S;
