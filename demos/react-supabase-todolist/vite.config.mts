@@ -1,9 +1,9 @@
-import { fileURLToPath, URL } from 'url';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import { fileURLToPath, URL } from 'url';
 
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
@@ -27,12 +27,6 @@ export default defineConfig({
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
     include: []
     // include: ['@powersync/web > js-logger'], // <-- Include `js-logger` when it isn't installed and imported.
-  },
-  server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
   },
   plugins: [
     wasm(),

@@ -14,16 +14,8 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
-    dbFilename: 's.sqlite'
-  },
-  flags: {
-    enableMultiTabs: typeof SharedWorker !== 'undefined'
+    dbFilename: 'example.db'
   }
-  // database: new WASQLiteOpenFactory({
-  //   dbFilename: 'examplsw1se112.db'
-  //   // vfs: WASQLiteVFS.OPFSCoopSyncVFS
-  //   // vfs: WASQLiteVFS.OPFSCoopSyncVFS //Out of memory errors on iOS Safari
-  // })
 });
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
