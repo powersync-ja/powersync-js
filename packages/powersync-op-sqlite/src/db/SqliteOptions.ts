@@ -29,6 +29,15 @@ export interface SqliteOptions {
    * If set, the database will be encrypted using SQLCipher.
    */
   encryptionKey?: string;
+
+  /**
+   * Load extensions using the path and entryPoint.
+   * More info can be found here https://op-engineering.github.io/op-sqlite/docs/api#loading-extensions.
+   */
+  extensions?: Array<{
+    path: string;
+    entryPoint?: string;
+  }>;
 }
 
 // SQLite journal mode. Set on the primary connection.
@@ -57,5 +66,6 @@ export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
   synchronous: SqliteSynchronous.normal,
   journalSizeLimit: 6 * 1024 * 1024,
   lockTimeoutMs: 30000,
-  encryptionKey: null
+  encryptionKey: null,
+  extensions: []
 };

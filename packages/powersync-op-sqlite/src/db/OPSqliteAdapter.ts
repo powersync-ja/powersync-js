@@ -88,8 +88,9 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     const dbFilename = filenameOverride ?? this.options.name;
     const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions.encryptionKey);
 
-    //Load extension for all connections
-    this.loadExtension(DB);
+    //Load extensions for all connections
+    this.loadAdditionalExtensions(DB);
+    this.loadPowerSyncExtension(DB);
 
     await DB.execute('SELECT powersync_init()');
 
@@ -124,7 +125,15 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  private loadExtension(DB: DB) {
+  private loadAdditionalExtensions(DB: DB) {
+    if (this.options.sqliteOptions.extensions.length > 0) {
+      for (const extension of this.options.sqliteOptions.extensions) {
+        DB.loadExtension(extension.path, extension.entryPoint);
+      }
+    }
+  }
+
+  private loadPowerSyncExtension(DB: DB) {
     if (Platform.OS === 'ios') {
       const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
       const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
