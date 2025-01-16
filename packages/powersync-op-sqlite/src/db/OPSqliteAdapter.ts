@@ -1,8 +1,21 @@
-import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
-import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import {
+  BaseObserver,
+  DBAdapter,
+  DBAdapterListener,
+  DBLockOptions,
+  QueryResult,
+  Transaction
+} from '@powersync/common';
+import {
+  ANDROID_DATABASE_PATH,
+  getDylibPath,
+  IOS_LIBRARY_PATH,
+  open,
+  type DB
+} from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
 
 /**
@@ -135,8 +148,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   private loadPowerSyncExtension(DB: DB) {
     if (Platform.OS === 'ios') {
-      const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
-      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      const libPath = getDylibPath('powersync-sqlite-core', 'powersync-sqlite-core')
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {
       DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
