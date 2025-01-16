@@ -56,7 +56,7 @@ export class PowerSyncSQLiteDatabase<
     this.db = db;
   }
 
-  override transaction<T>(
+  transaction<T>(
     transaction: (
       tx: SQLiteTransaction<'async', QueryResult, TSchema, ExtractTablesWithRelations<TSchema>>
     ) => Promise<T>,

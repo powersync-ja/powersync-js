@@ -32,25 +32,7 @@ export class PowerSyncSQLiteSession<
     this.client = db;
   }
 
-  prepareQuery<T extends PreparedQueryConfigBase & { type: 'async' }>(
-    query: Query,
-    fields: SelectedFieldsOrdered | undefined,
-    executeMethod: SQLiteExecuteMethod,
-    isResponseInArrayMode: boolean,
-    customResultMapper?: (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown
-  ): PowerSyncSQLitePreparedQuery<T> {
-    return new PowerSyncSQLitePreparedQuery(
-      this.client,
-      query,
-      this.logger,
-      fields,
-      executeMethod,
-      isResponseInArrayMode,
-      customResultMapper
-    );
-  }
-
-  override transaction<T>(
+  transaction<T>(
     transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
     config: PowerSyncSQLiteTransactionConfig = {}
   ): T {

@@ -39,7 +39,7 @@ export class PowerSyncSQLiteBaseSession<
   protected logger: Logger;
 
   constructor(
-    private db: LockContext,
+    protected db: LockContext,
     protected dialect: SQLiteAsyncDialect,
     protected schema: RelationalSchemaConfig<TSchema> | undefined,
     protected options: PowerSyncSQLiteSessionOptions = {}
@@ -66,7 +66,7 @@ export class PowerSyncSQLiteBaseSession<
     );
   }
 
-  override transaction<T>(
+  transaction<T>(
     _transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
     _config: PowerSyncSQLiteTransactionConfig = {}
   ): T {
