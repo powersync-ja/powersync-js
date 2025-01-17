@@ -19,7 +19,8 @@ import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
 import { toCompilableQuery } from './../utils/compilableQuery';
-import { PowerSyncSQLiteSession, PowerSyncSQLiteTransactionConfig } from './sqlite-session';
+import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession';
+import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession';
 
 export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
 
@@ -55,7 +56,7 @@ export class PowerSyncSQLiteDatabase<
     this.db = db;
   }
 
-  override transaction<T>(
+  transaction<T>(
     transaction: (
       tx: SQLiteTransaction<'async', QueryResult, TSchema, ExtractTablesWithRelations<TSchema>>
     ) => Promise<T>,
