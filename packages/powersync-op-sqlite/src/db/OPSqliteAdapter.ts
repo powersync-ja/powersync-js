@@ -15,7 +15,7 @@ import {
 } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
 import { getBundlePath } from '..';
 

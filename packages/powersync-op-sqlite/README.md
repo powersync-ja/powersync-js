@@ -85,10 +85,11 @@ More info can be found in the [OP-SQLite docs](https://op-engineering.github.io/
 Example usage:
 
 ```ts
+import { getDylibPath } from '@op-engineering/op-sqlite';
+
 let libPath: string
 if (Platform.OS === 'ios') {
-  const bundlePath: string = getBundlePath();
-  libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+  libPath = get_the_path_to_your_library
 } else {
   libPath = 'libpowersync';
 }
