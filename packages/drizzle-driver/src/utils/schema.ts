@@ -12,6 +12,7 @@ import { CasingCache } from 'drizzle-orm/casing';
 import {
   getTableConfig,
   SQLiteBoolean,
+  SQLiteCustomColumn,
   SQLiteInteger,
   SQLiteReal,
   SQLiteText,
@@ -44,24 +45,7 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
       continue;
     }
 
-    let mappedType: BaseColumnType<number | string | null>;
-    switch (drizzleColumn.columnType) {
-      case SQLiteText[entityKind]:
-      case SQLiteTextJson[entityKind]:
-        mappedType = column.text;
-        break;
-      case SQLiteInteger[entityKind]:
-      case SQLiteTimestamp[entityKind]:
-      case SQLiteBoolean[entityKind]:
-        mappedType = column.integer;
-        break;
-      case SQLiteReal[entityKind]:
-        mappedType = column.real;
-        break;
-      default:
-        throw new Error(`Unsupported column type: ${drizzleColumn.columnType}`);
-    }
-    columns[name] = mappedType;
+    columns[name] = mapDrizzleColumnToType(drizzleColumn);
   }
   const indexes: IndexShorthand = {};
 
@@ -80,6 +64,34 @@ export function toPowerSyncTable<T extends SQLiteTableWithColumns<any>>(
     indexes[index.config.name] = columns;
   }
   return new Table(columns, { ...options, indexes }) as Table<Expand<ExtractPowerSyncColumns<T>>>;
+}
+
+function mapDrizzleColumnToType(drizzleColumn: SQLiteColumn<any, object>): BaseColumnType<number | string | null> {
+  switch (drizzleColumn.columnType) {
+    case SQLiteText[entityKind]:
+    case SQLiteTextJson[entityKind]:
+      return column.text;
+    case SQLiteInteger[entityKind]:
+    case SQLiteTimestamp[entityKind]:
+    case SQLiteBoolean[entityKind]:
+      return column.integer;
+    case SQLiteReal[entityKind]:
+      return column.real;
+    case SQLiteCustomColumn[entityKind]:
+      const sqlName = (drizzleColumn as any).sqlName; // Not exposed in the public API
+      switch (sqlName) {
+        case 'text':
+          return column.text;
+        case 'integer':
+          return column.integer;
+        case 'real':
+          return column.real;
+        default:
+          throw new Error(`Unsupported custom column type: ${drizzleColumn.columnType}: ${sqlName}`);
+      }
+    default:
+      throw new Error(`Unsupported column type: ${drizzleColumn.columnType}`);
+  }
 }
 
 export type DrizzleTablePowerSyncOptions = Omit<TableV2Options, 'indexes'>;

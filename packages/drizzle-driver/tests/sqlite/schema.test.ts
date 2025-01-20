@@ -1,5 +1,5 @@
 import { column, Schema, Table } from '@powersync/common';
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { customType, index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { describe, expect, it } from 'vitest';
 import { DrizzleAppSchema, DrizzleTableWithPowerSyncOptions, toPowerSyncTable } from '../../src/utils/schema';
 import { CasingCache } from 'drizzle-orm/casing';
@@ -102,6 +102,61 @@ describe('toPowerSyncTable', () => {
       },
       { indexes: { names: ['my_name', 'yourName'] } }
     );
+
+    expect(convertedList).toEqual(expectedLists);
+  });
+
+  it('custom column conversion', () => {
+    const customSqliteText = customType<{ data: string; driverData: string }>({
+      dataType() {
+        return 'text';
+      },
+      fromDriver(value) {
+        return value;
+      },
+      toDriver(value) {
+        return value;
+      }
+    });
+
+    const customSqliteInteger = customType<{ data: number; driverData: number }>({
+      dataType() {
+        return 'integer';
+      },
+      fromDriver(value) {
+        return Number(value);
+      },
+      toDriver(value) {
+        return value;
+      }
+    });
+
+    const customSqliteReal = customType<{ data: number; driverData: number }>({
+      dataType() {
+        return 'real';
+      },
+      fromDriver(value) {
+        return Number(value);
+      },
+      toDriver(value) {
+        return value;
+      }
+    });
+
+    const lists = sqliteTable('lists', {
+      id: text('id').primaryKey(),
+      text_col: customSqliteText('text_col'),
+      int_col: customSqliteInteger('int_col'),
+      real_col: customSqliteReal('real_col')
+    });
+
+    const convertedList = toPowerSyncTable(lists);
+
+    const expectedLists = new Table({
+      text_col: column.text,
+      int_col: column.integer,
+      real_col: column.real
+    });
 
     expect(convertedList).toEqual(expectedLists);
   });
