@@ -3,7 +3,7 @@ import { PowerSyncDatabase } from '@powersync/web';
 import { count, eq, relations, sql } from 'drizzle-orm';
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as SUT from '../../src/sqlite/db';
+import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase';
 
 vi.useRealTimers();
 

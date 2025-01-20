@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { eq, sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as SUT from '../../src/sqlite/db';
+import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase';
 import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db';
 
 describe('Database operations', () => {

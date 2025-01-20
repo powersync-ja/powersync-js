@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
+import { LockContext, QueryResult } from '@powersync/common';
 import { Column, DriverValueDecoder, getTableName, SQL } from 'drizzle-orm';
 import { entityKind, is } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
@@ -26,7 +26,7 @@ export class PowerSyncSQLitePreparedQuery<
   static readonly [entityKind]: string = 'PowerSyncSQLitePreparedQuery';
 
   constructor(
-    private db: AbstractPowerSyncDatabase,
+    private db: LockContext,
     query: Query,
     private logger: Logger,
     private fields: SelectedFieldsOrdered | undefined,
