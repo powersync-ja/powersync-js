@@ -87,7 +87,8 @@ Example usage:
 ```ts
 let libPath: string
 if (Platform.OS === 'ios') {
-  libPath = getDylibPath('powersync-sqlite-core', 'powersync-sqlite-core')
+  const bundlePath: string = getBundlePath();
+  libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
 } else {
   libPath = 'libpowersync';
 }
