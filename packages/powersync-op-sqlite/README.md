@@ -89,7 +89,7 @@ import { getDylibPath } from '@op-engineering/op-sqlite';
 
 let libPath: string
 if (Platform.OS === 'ios') {
-  libPath = get_the_path_to_your_library
+  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core')
 } else {
   libPath = 'libpowersync';
 }
