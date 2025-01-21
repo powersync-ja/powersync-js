@@ -78,7 +78,7 @@ function mapDrizzleColumnToType(drizzleColumn: SQLiteColumn<any, object>): BaseC
     case SQLiteReal[entityKind]:
       return column.real;
     case SQLiteCustomColumn[entityKind]:
-      const sqlName = (drizzleColumn as any).sqlName; // Not exposed in the public API
+      const sqlName = (drizzleColumn as SQLiteCustomColumn<any>).getSQLType();
       switch (sqlName) {
         case 'text':
           return column.text;
