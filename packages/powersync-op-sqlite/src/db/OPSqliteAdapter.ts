@@ -17,7 +17,6 @@ import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
-import { getBundlePath } from '..';
 
 /**
  * Adapter for React Native Quick SQLite
@@ -149,8 +148,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   private async loadPowerSyncExtension(DB: DB) {
     if (Platform.OS === 'ios') {
-      const bundlePath: string = getBundlePath();
-      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      const libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {
       DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
