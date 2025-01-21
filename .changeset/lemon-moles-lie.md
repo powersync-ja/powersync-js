@@ -2,4 +2,4 @@
 '@powersync/drizzle-driver': patch
 ---
 
-Added support for custom column types in schema definition.
+Added support for custom column types when converting a Drizzle schema to a PowerSync app schema.
