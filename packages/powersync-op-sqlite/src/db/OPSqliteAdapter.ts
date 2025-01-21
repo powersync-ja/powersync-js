@@ -57,7 +57,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected async init() {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, encryptionKey } = this.options.sqliteOptions;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
     this.writeConnection = await this.openConnection(dbFilename);
@@ -99,7 +99,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
-    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions.encryptionKey);
+    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
     //Load extensions for all connections
     this.loadAdditionalExtensions(DB);
@@ -139,7 +139,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   private loadAdditionalExtensions(DB: DB) {
-    if (this.options.sqliteOptions.extensions.length > 0) {
+    if (this.options.sqliteOptions?.extensions && this.options.sqliteOptions.extensions.length > 0) {
       for (const extension of this.options.sqliteOptions.extensions) {
         DB.loadExtension(extension.path, extension.entryPoint);
       }
@@ -292,8 +292,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
     await this.writeConnection!.refreshSchema();
 
-    for (let readConnection of this.readConnections) {
-      await readConnection.connection.refreshSchema();
+    if(this.readConnections) {
+      for (let readConnection of this.readConnections) {
+        await readConnection.connection.refreshSchema();
+      }
     }
   }
 }

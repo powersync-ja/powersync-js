@@ -28,7 +28,7 @@ export interface SqliteOptions {
    * Encryption key for the database.
    * If set, the database will be encrypted using SQLCipher.
    */
-  encryptionKey?: string;
+  encryptionKey?: string | null;
 
   /**
    * Load extensions using the path and entryPoint.
