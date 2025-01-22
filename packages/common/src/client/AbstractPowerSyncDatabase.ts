@@ -394,7 +394,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
       crudUploadThrottleMs: options?.crudUploadThrottleMs,
-      retryDelay: options?.retryDelayMs
+      retryDelayMs: options?.retryDelayMs
     });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
