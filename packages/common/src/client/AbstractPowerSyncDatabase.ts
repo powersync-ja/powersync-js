@@ -243,7 +243,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options?: {
+      retryDelayMs?: number;
+      crudUploadThrottleMs?: number;
+    }
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -388,7 +392,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
+    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
+      crudUploadThrottleMs: options?.crudUploadThrottleMs,
+      retryDelay: options?.retryDelayMs
+    });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
         this.currentStatus = new SyncStatus({

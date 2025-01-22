@@ -79,6 +79,17 @@ export interface PowerSyncConnectionOptions {
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
+  /**
+   * Delay for retrying sync streaming operations
+   * from the PowerSync backend after an error occurs.
+   */
+  retryDelayMs?: number;
+  /**
+   * Backend Connector CRUD operations are throttled
+   * to occur at most every `crudUploadThrottleMs`
+   * milliseconds.
+   */
+  crudUploadThrottleMs?: number;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
@@ -102,14 +113,15 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
+export const DEFAULT_RETRY_DELAY_MS = 5000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
-  retryDelayMs: 5000,
+  retryDelayMs: DEFAULT_RETRY_DELAY_MS,
   logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
+export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' |  'crudUploadThrottleMs'>> = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
@@ -427,7 +439,7 @@ The next upload iteration will be delayed.`);
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: Required<PowerSyncConnectionOptions> = {
+        const resolvedOptions: Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' |  'crudUploadThrottleMs'>> = {
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
