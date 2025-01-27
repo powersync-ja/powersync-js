@@ -173,11 +173,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     }
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
+    // Use the options passed in during connect, or fallback to the options set during database creation
+    const retryDelayMs = options?.retryDelayMs || this.options.retryDelay;
+    const crudUploadThrottleMs = options?.crudUploadThrottleMs || this.options.crudUploadThrottleMs;
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
-      retryDelayMs: options?.retryDelayMs || this.options.retryDelay,
-      crudUploadThrottleMs: options?.crudUploadThrottleMs || this.options.crudUploadThrottleMs,
+      retryDelayMs,
+      crudUploadThrottleMs,
       flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,
