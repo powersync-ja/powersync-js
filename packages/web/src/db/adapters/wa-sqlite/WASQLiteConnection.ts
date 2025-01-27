@@ -217,14 +217,16 @@ export class WASqliteConnection
         // Ignore messages from the same connection
         return;
       }
-      this.queueTableUpdate(data.changedTables);
+
+      // Ensuring that we don't rebroadcast the same message
+      this.queueTableUpdate(data.changedTables, false);
     });
   }
 
-  protected queueTableUpdate(tableNames: Set<string>) {
+  protected queueTableUpdate(tableNames: Set<string>, shouldBroadcast = true) {
     tableNames.forEach((tableName) => this.updatedTables.add(tableName));
     if (this.updateTimer == null) {
-      this.updateTimer = setTimeout(() => this.fireUpdates(), 0);
+      this.updateTimer = setTimeout(() => this.fireUpdates(shouldBroadcast), 0);
     }
   }
 
@@ -248,14 +250,16 @@ export class WASqliteConnection
     return this.options;
   }
 
-  fireUpdates() {
+  fireUpdates(shouldBroadcast = true) {
     this.updateTimer = null;
     const event: BatchedUpdateNotification = { tables: [...this.updatedTables], groupedUpdates: {}, rawUpdates: [] };
     // Share to other connections
-    this.broadcastChannel!.postMessage({
-      changedTables: this.updatedTables,
-      connectionId: this.connectionId
-    } satisfies WASQLiteBroadCastTableUpdateEvent);
+    if (shouldBroadcast) {
+      this.broadcastChannel!.postMessage({
+        changedTables: this.updatedTables,
+        connectionId: this.connectionId
+      } satisfies WASQLiteBroadCastTableUpdateEvent);
+    }
     this.updatedTables.clear();
     this.iterateListeners((cb) => cb.tablesUpdated?.(event));
   }
