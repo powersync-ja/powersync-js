@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.13.0
+
+### Minor Changes
+
+- 065aba6: Added support for OPFS virtual filesystem.
+
 ## 1.12.3
 
 ### Patch Changes
