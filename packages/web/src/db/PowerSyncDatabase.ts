@@ -164,11 +164,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return getNavigatorLocks().request(`lock-${this.database.name}`, cb);
   }
 
-  protected generateSyncStreamImplementation(connector: PowerSyncBackendConnector): StreamingSyncImplementation {
+  protected generateSyncStreamImplementation(
+    connector: PowerSyncBackendConnector,
+    // This is used to pass in options on connection instead of only during db creation
+    options?: {
+      retryDelayMs?: number;
+      crudUploadThrottleMs?: number;
+    }
+  ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
+      retryDelayMs: options?.retryDelayMs || this.options.retryDelay,
+      crudUploadThrottleMs: options?.crudUploadThrottleMs || this.options.crudUploadThrottleMs,
       flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,

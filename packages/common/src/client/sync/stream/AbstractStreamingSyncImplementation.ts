@@ -91,6 +91,7 @@ export interface PowerSyncConnectionOptions {
    */
   crudUploadThrottleMs?: number;
 }
+export type PowerSyncConnectionRequiredOptions = Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' | 'crudUploadThrottleMs'>>;
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -439,7 +440,7 @@ The next upload iteration will be delayed.`);
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' |  'crudUploadThrottleMs'>> = {
+        const resolvedOptions: Required<PowerSyncConnectionRequiredOptions> = {
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
