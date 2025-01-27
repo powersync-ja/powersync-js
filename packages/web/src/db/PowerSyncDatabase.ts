@@ -6,6 +6,8 @@ import {
   AbstractPowerSyncDatabase,
   DBAdapter,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
+  isDBAdapter,
+  isSQLOpenFactory,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
@@ -14,6 +16,7 @@ import {
   StreamingSyncImplementation
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
+import { getNavigatorLocks } from '../shared/navigator';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
@@ -21,6 +24,7 @@ import {
   resolveWebSQLFlags,
   WebSQLFlags
 } from './adapters/web-sql-flags';
+import { WebDBAdapter } from './adapters/WebDBAdapter';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -28,7 +32,6 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { getNavigatorLocks } from '../shared/navigator';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -55,6 +58,16 @@ type WithWebSyncOptions<Base> = Base & {
   sync?: WebSyncOptions;
 };
 
+export interface WebEncryptionOptions {
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using Multiple Ciphers.
+   */
+  encryptionKey?: string;
+}
+
+type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
+
 export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
   WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
 >;
@@ -62,7 +75,7 @@ export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
   WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
 >;
 export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithSettings>
+  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
 export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
@@ -72,13 +85,27 @@ export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   externallyUnload: false
 };
 
-export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): WebPowerSyncFlags => {
+export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<WebPowerSyncFlags> => {
   return {
     ...DEFAULT_POWERSYNC_FLAGS,
     ...flags,
     ...resolveWebSQLFlags(flags)
   };
 };
+
+/**
+ * Asserts that the database options are valid for custom database constructors.
+ */
+function assertValidDatabaseOptions(options: WebPowerSyncDatabaseOptions): void {
+  if ('database' in options && 'encryptionKey' in options) {
+    const { database } = options;
+    if (isSQLOpenFactory(database) || isDBAdapter(database)) {
+      throw new Error(
+        `Invalid configuration: 'encryptionKey' should only be included inside the database object when using a custom ${isSQLOpenFactory(database) ? 'WASQLiteOpenFactory' : 'WASQLiteDBAdapter'} constructor.`
+      );
+    }
+  }
+}
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -107,6 +134,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   constructor(protected options: WebPowerSyncDatabaseOptions) {
     super(options);
 
+    assertValidDatabaseOptions(options);
+
     this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
 
     if (this.resolvedFlags.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
@@ -120,7 +149,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
       ...options.database,
-      flags: resolveWebPowerSyncFlags(options.flags)
+      flags: resolveWebPowerSyncFlags(options.flags),
+      encryptionKey: options.encryptionKey
     });
     return defaultFactory.openDB();
   }
@@ -191,7 +221,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
           const logger = this.options.logger;
           logger ? logger.warn(warning) : console.warn(warning);
         }
-        return new SharedWebStreamingSyncImplementation(syncOptions);
+        return new SharedWebStreamingSyncImplementation({
+          ...syncOptions,
+          db: this.database as WebDBAdapter // This should always be the case
+        });
       default:
         return new WebStreamingSyncImplementation(syncOptions);
     }

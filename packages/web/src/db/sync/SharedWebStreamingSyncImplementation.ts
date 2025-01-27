@@ -1,17 +1,17 @@
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../worker/db/open-worker-database';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
+import { resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
+import { WebDBAdapter } from '../adapters/WebDBAdapter';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
-import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -20,9 +20,15 @@ import { resolveWebSQLFlags } from '../adapters/web-sql-flags';
 class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
-    public statusChanged: (status: SyncStatusOptions) => void
+    public statusChanged: (status: SyncStatusOptions) => void,
+    protected webDB: WebDBAdapter
   ) {
     super();
+  }
+
+  async getDBWorkerPort(): Promise<MessagePort> {
+    const { port } = await this.webDB.shareConnection();
+    return Comlink.transfer(port, [port]);
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
@@ -80,16 +86,21 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   }
 }
 
+export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
+  db: WebDBAdapter;
+}
+
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
   protected syncManager: Comlink.Remote<SharedSyncImplementation>;
   protected clientProvider: SharedSyncClientProvider;
   protected messagePort: MessagePort;
 
   protected isInitialized: Promise<void>;
+  protected dbAdapter: WebDBAdapter;
 
-  constructor(options: WebStreamingSyncImplementationOptions) {
+  constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
-
+    this.dbAdapter = options.db;
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
@@ -97,6 +108,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const resolvedWorkerOptions = {
       ...options,
       dbFilename: this.options.identifier!,
+      // TODO
+      temporaryStorage: TemporaryStorageOption.MEMORY,
       flags: resolveWebSQLFlags(options.flags)
     };
 
@@ -131,18 +144,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * sync worker.
      */
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-
-    const dbWorker = options.database?.options?.worker;
-
-    const dbOpenerPort =
-      typeof dbWorker === 'function'
-        ? (resolveWorkerDatabasePortFactory(() => dbWorker(resolvedWorkerOptions)) as MessagePort)
-        : (openWorkerDatabasePort(this.options.identifier!, true, dbWorker) as MessagePort);
-
     const flags = { ...this.webOptions.flags, workers: undefined };
 
-    this.isInitialized = this.syncManager.init(Comlink.transfer(dbOpenerPort, [dbOpenerPort]), {
-      dbName: this.options.identifier!,
+    this.isInitialized = this.syncManager.setParams({
+      dbParams: this.dbAdapter.getConfiguration(),
       streamOptions: {
         crudUploadThrottleMs,
         identifier,
@@ -154,9 +159,13 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     /**
      * Pass along any sync status updates to this listener
      */
-    this.clientProvider = new SharedSyncClientProvider(this.webOptions, (status) => {
-      this.iterateListeners((l) => this.updateSyncStatus(status));
-    });
+    this.clientProvider = new SharedSyncClientProvider(
+      this.webOptions,
+      (status) => {
+        this.iterateListeners((l) => this.updateSyncStatus(status));
+      },
+      options.db
+    );
 
     /**
      * The sync worker will call this client provider when it needs
@@ -214,6 +223,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Used in tests to force a connection states
    */
   private async _testUpdateStatus(status: SyncStatus) {
+    await this.isInitialized;
     return (this.syncManager as any)['_testUpdateAllStatuses'](status.toJSON());
   }
 }
