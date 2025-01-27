@@ -24,7 +24,7 @@ import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  type PowerSyncConnectionOptionalOptions,
+  type AdditionalConnectionOptions,
   type PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
@@ -36,7 +36,7 @@ export interface DisconnectAndClearOptions {
   clearLocal?: boolean;
 }
 
-export interface BasePowerSyncDatabaseOptions extends PowerSyncConnectionOptionalOptions {
+export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
   /** Schema used for the local database. */
   schema: Schema;
   logger?: ILogger;
@@ -233,7 +233,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options?: PowerSyncConnectionOptionalOptions
+    options?: AdditionalConnectionOptions
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;

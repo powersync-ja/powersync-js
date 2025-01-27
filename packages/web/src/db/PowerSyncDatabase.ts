@@ -3,7 +3,7 @@ import {
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type PowerSyncConnectionOptions,
-  type PowerSyncConnectionOptionalOptions,
+  type AdditionalConnectionOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
@@ -168,7 +168,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     // This is used to pass in options on connection instead of only during db creation
-    options?: PowerSyncConnectionOptionalOptions
+    options?: AdditionalConnectionOptions
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
     // Use the options passed in during connect, or fallback to the options set during database creation

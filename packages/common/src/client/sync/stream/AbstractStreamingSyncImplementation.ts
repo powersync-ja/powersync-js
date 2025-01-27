@@ -37,10 +37,9 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
-export interface AbstractStreamingSyncImplementationOptions {
+export interface AbstractStreamingSyncImplementationOptions extends AdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
   uploadCrud: () => Promise<void>;
-  crudUploadThrottleMs?: number;
   /**
    * An identifier for which PowerSync DB this sync implementation is
    * linked to. Most commonly DB name, but not restricted to DB name.
@@ -48,7 +47,6 @@ export interface AbstractStreamingSyncImplementationOptions {
   identifier?: string;
   logger?: ILogger;
   remote: AbstractRemote;
-  retryDelayMs?: number;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
@@ -67,34 +65,36 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions extends PowerSyncConnectionOptionalOptions, PowerSyncConnectionRequiredOptions {}
+export interface PowerSyncConnectionOptions extends DefaultConnectionOptions, AdditionalConnectionOptions {}
 
-export interface PowerSyncConnectionRequiredOptions {
+ /** @internal */
+export interface DefaultConnectionOptions {
   /**
    * The connection method to use when streaming updates from
    * the PowerSync backend instance.
    * Defaults to a HTTP streaming connection.
    */
-  connectionMethod: SyncStreamConnectionMethod;
+  connectionMethod?: SyncStreamConnectionMethod;
 
   /**
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
-  params: Record<string, StreamingSyncRequestParameterType>;
+  params?: Record<string, StreamingSyncRequestParameterType>;
 }
 
-export interface PowerSyncConnectionOptionalOptions {
-    /**
+ /** @internal */
+export interface AdditionalConnectionOptions {
+  /**
    * Delay for retrying sync streaming operations
    * from the PowerSync backend after an error occurs.
    */
-    retryDelayMs?: number;
-    /**
-     * Backend Connector CRUD operations are throttled
-     * to occur at most every `crudUploadThrottleMs`
-     * milliseconds.
-     */
-    crudUploadThrottleMs?: number;
+  retryDelayMs?: number;
+  /**
+   * Backend Connector CRUD operations are throttled
+   * to occur at most every `crudUploadThrottleMs`
+   * milliseconds.
+   */
+  crudUploadThrottleMs?: number;
 }
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
@@ -126,7 +126,9 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: PowerSyncConnectionRequiredOptions = {
+export type RequiredPowerSyncConnectionOptions = Required<DefaultConnectionOptions>;
+
+export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
@@ -444,7 +446,7 @@ The next upload iteration will be delayed.`);
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: PowerSyncConnectionRequiredOptions = {
+        const resolvedOptions: RequiredPowerSyncConnectionOptions = {
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
