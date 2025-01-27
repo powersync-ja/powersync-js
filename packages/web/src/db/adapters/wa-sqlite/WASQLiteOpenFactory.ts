@@ -77,7 +77,14 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           flags: this.resolvedFlags,
           encryptionKey: encryptionKey
         }),
-        identifier: this.options.dbFilename
+        identifier: this.options.dbFilename,
+        onClose: () => {
+          if (workerPort instanceof Worker) {
+            workerPort.terminate();
+          } else {
+            workerPort.close();
+          }
+        }
       });
     } else {
       // Don't use a web worker

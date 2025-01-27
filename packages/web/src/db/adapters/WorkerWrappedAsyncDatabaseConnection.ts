@@ -19,6 +19,7 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
    * Need a remote in order to keep a reference to the Proxied worker
    */
   remote: Comlink.Remote<OpenAsyncDatabaseConnection<Config>>;
+  onClose?: () => void;
 };
 
 /**
@@ -59,6 +60,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   async close(): Promise<void> {
     await this.baseConnection.close();
     this.options.remote[Comlink.releaseProxy]();
+    this.options.onClose?.();
   }
 
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult> {
