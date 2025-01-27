@@ -34,7 +34,7 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
       flags: {
         ssrMode: true,
       },
-      retryDelay: 1000,
+      retryDelayMs: 1000,
       crudUploadThrottleMs: 2000
     })
 
@@ -86,7 +86,7 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
         ssrMode: false,
         enableMultiTabs: false,
       },
-      retryDelay: 1000,
+      retryDelayMs: 1000,
       crudUploadThrottleMs: 2000
     })
 

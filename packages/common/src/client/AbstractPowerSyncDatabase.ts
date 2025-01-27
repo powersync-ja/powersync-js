@@ -24,7 +24,8 @@ import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  PowerSyncConnectionOptions,
+  type PowerSyncConnectionOptionalOptions,
+  type PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
@@ -35,21 +36,9 @@ export interface DisconnectAndClearOptions {
   clearLocal?: boolean;
 }
 
-export interface BasePowerSyncDatabaseOptions {
+export interface BasePowerSyncDatabaseOptions extends PowerSyncConnectionOptionalOptions {
   /** Schema used for the local database. */
   schema: Schema;
-
-  /**
-   * Delay for retrying sync streaming operations
-   * from the PowerSync backend after an error occurs.
-   */
-  retryDelay?: number;
-  /**
-   * Backend Connector CRUD operations are throttled
-   * to occur at most every `crudUploadThrottleMs`
-   * milliseconds.
-   */
-  crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
 
@@ -129,7 +118,7 @@ export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
-  retryDelay: 5000,
+  retryDelayMs: 5000,
   logger: Logger.get('PowerSyncDatabase'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
@@ -244,10 +233,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options?: {
-      retryDelayMs?: number;
-      crudUploadThrottleMs?: number;
-    }
+    options?: PowerSyncConnectionOptionalOptions
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;

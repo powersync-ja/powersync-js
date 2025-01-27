@@ -67,7 +67,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions {
+export interface PowerSyncConnectionOptions extends PowerSyncConnectionOptionalOptions, PowerSyncConnectionRequiredOptions {}
+
+export interface PowerSyncConnectionRequiredOptions {
   /**
    * The connection method to use when streaming updates from
    * the PowerSync backend instance.
@@ -79,19 +81,21 @@ export interface PowerSyncConnectionOptions {
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
-  /**
+}
+
+export interface PowerSyncConnectionOptionalOptions {
+    /**
    * Delay for retrying sync streaming operations
    * from the PowerSync backend after an error occurs.
    */
-  retryDelayMs?: number;
-  /**
-   * Backend Connector CRUD operations are throttled
-   * to occur at most every `crudUploadThrottleMs`
-   * milliseconds.
-   */
-  crudUploadThrottleMs?: number;
+    retryDelayMs?: number;
+    /**
+     * Backend Connector CRUD operations are throttled
+     * to occur at most every `crudUploadThrottleMs`
+     * milliseconds.
+     */
+    crudUploadThrottleMs?: number;
 }
-export type PowerSyncConnectionRequiredOptions = Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' | 'crudUploadThrottleMs'>>;
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**

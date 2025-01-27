@@ -3,6 +3,7 @@ import {
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type PowerSyncConnectionOptions,
+  type PowerSyncConnectionOptionalOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
@@ -167,15 +168,12 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     // This is used to pass in options on connection instead of only during db creation
-    options?: {
-      retryDelayMs?: number;
-      crudUploadThrottleMs?: number;
-    }
+    options?: PowerSyncConnectionOptionalOptions
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
     // Use the options passed in during connect, or fallback to the options set during database creation
-    const retryDelayMs = options?.retryDelayMs || this.options.retryDelay;
-    const crudUploadThrottleMs = options?.crudUploadThrottleMs || this.options.crudUploadThrottleMs;
+    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs;
+    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs;
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
