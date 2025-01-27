@@ -1,5 +1,12 @@
 # @powersync/op-sqlite
 
+## 0.3.0
+
+### Minor Changes
+
+- 3a37054: \* Allow users to load additional sqlite extensions
+  - Remove `getBundledPath` function as `getDylibPath` can now be used instead
+
 ## 0.2.1
 
 ### Patch Changes

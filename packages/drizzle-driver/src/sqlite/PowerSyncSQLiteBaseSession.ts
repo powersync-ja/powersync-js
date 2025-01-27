@@ -1,9 +1,9 @@
-import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
+import { LockContext, QueryResult } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { NoopLogger } from 'drizzle-orm/logger';
 import type { RelationalSchemaConfig, TablesRelationalConfig } from 'drizzle-orm/relations';
-import { type Query, sql } from 'drizzle-orm/sql/sql';
+import { type Query } from 'drizzle-orm/sql/sql';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
@@ -13,7 +13,7 @@ import {
   SQLiteTransaction,
   type SQLiteTransactionConfig
 } from 'drizzle-orm/sqlite-core/session';
-import { PowerSyncSQLitePreparedQuery } from './sqlite-query';
+import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery';
 
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;
@@ -30,19 +30,19 @@ export class PowerSyncSQLiteTransaction<
   static readonly [entityKind]: string = 'PowerSyncSQLiteTransaction';
 }
 
-export class PowerSyncSQLiteSession<
+export class PowerSyncSQLiteBaseSession<
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig
 > extends SQLiteSession<'async', QueryResult, TFullSchema, TSchema> {
-  static readonly [entityKind]: string = 'PowerSyncSQLiteSession';
+  static readonly [entityKind]: string = 'PowerSyncSQLiteBaseSession';
 
-  private logger: Logger;
+  protected logger: Logger;
 
   constructor(
-    private db: AbstractPowerSyncDatabase,
-    dialect: SQLiteAsyncDialect,
-    private schema: RelationalSchemaConfig<TSchema> | undefined,
-    options: PowerSyncSQLiteSessionOptions = {}
+    protected db: LockContext,
+    protected dialect: SQLiteAsyncDialect,
+    protected schema: RelationalSchemaConfig<TSchema> | undefined,
+    protected options: PowerSyncSQLiteSessionOptions = {}
   ) {
     super(dialect);
     this.logger = options.logger ?? new NoopLogger();
@@ -66,33 +66,10 @@ export class PowerSyncSQLiteSession<
     );
   }
 
-  override transaction<T>(
-    transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
-    config: PowerSyncSQLiteTransactionConfig = {}
+  transaction<T>(
+    _transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
+    _config: PowerSyncSQLiteTransactionConfig = {}
   ): T {
-    const { accessMode = 'read write' } = config;
-
-    if (accessMode === 'read only') {
-      return this.db.readLock(async () => this.internalTransaction(transaction, config)) as T;
-    }
-
-    return this.db.writeLock(async () => this.internalTransaction(transaction, config)) as T;
-  }
-
-  async internalTransaction<T>(
-    transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
-    config: PowerSyncSQLiteTransactionConfig = {}
-  ): Promise<T> {
-    const tx = new PowerSyncSQLiteTransaction('async', (this as any).dialect, this, this.schema);
-
-    await this.run(sql.raw(`begin${config?.behavior ? ' ' + config.behavior : ''}`));
-    try {
-      const result = await transaction(tx);
-      await this.run(sql`commit`);
-      return result;
-    } catch (err) {
-      await this.run(sql`rollback`);
-      throw err;
-    }
+    throw new Error('Nested transactions are not supported');
   }
 }

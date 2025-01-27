@@ -9,20 +9,16 @@ import java.util.HashMap
 
 class PowerSyncOpSqlitePackage : TurboReactPackage() {
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
-    return if (name == PowerSyncOpSqliteModule.NAME) {
-      PowerSyncOpSqliteModule(reactContext)
-    } else {
-      null
-    }
+    return null
   }
 
   override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
     return ReactModuleInfoProvider {
       val moduleInfos: MutableMap<String, ReactModuleInfo> = HashMap()
       val isTurboModule: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED
-      moduleInfos[PowerSyncOpSqliteModule.NAME] = ReactModuleInfo(
-        PowerSyncOpSqliteModule.NAME,
-        PowerSyncOpSqliteModule.NAME,
+      moduleInfos["PowerSyncOpSqlite"] = ReactModuleInfo(
+        "PowerSyncOpSqlite",
+        "PowerSyncOpSqlite",
         false,  // canOverrideExistingModule
         false,  // needsEagerInit
         true,  // hasConstants
