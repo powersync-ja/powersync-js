@@ -75,12 +75,12 @@ export interface PowerSyncConnectionRequiredOptions {
    * the PowerSync backend instance.
    * Defaults to a HTTP streaming connection.
    */
-  connectionMethod?: SyncStreamConnectionMethod;
+  connectionMethod: SyncStreamConnectionMethod;
 
   /**
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
-  params?: Record<string, StreamingSyncRequestParameterType>;
+  params: Record<string, StreamingSyncRequestParameterType>;
 }
 
 export interface PowerSyncConnectionOptionalOptions {
@@ -126,7 +126,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<Omit<PowerSyncConnectionOptions, 'retryDelayMs' |  'crudUploadThrottleMs'>> = {
+export const DEFAULT_STREAM_CONNECTION_OPTIONS: PowerSyncConnectionRequiredOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
@@ -444,7 +444,7 @@ The next upload iteration will be delayed.`);
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: Required<PowerSyncConnectionRequiredOptions> = {
+        const resolvedOptions: PowerSyncConnectionRequiredOptions = {
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
