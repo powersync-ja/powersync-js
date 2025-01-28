@@ -29,20 +29,18 @@ const drizzlePosts = sqliteTable('posts', {
     .references(() => drizzleUsers.id)
 });
 
-// Define relationships
 const usersRelations = relations(drizzleUsers, ({ one, many }) => ({
-  posts: many(drizzlePosts) // One user has many posts
+  posts: many(drizzlePosts)
 }));
 
 const postsRelations = relations(drizzlePosts, ({ one }) => ({
   user: one(drizzleUsers, {
-    fields: [drizzlePosts.user_id], // Foreign key in posts
-    references: [drizzleUsers.id] // Primary key in users
+    fields: [drizzlePosts.user_id],
+    references: [drizzleUsers.id]
   })
 }));
 
 const PsSchema = new Schema({ users, posts });
-// const DrizzleSchema = { users: drizzleUsers, posts: drizzlePosts };
 const DrizzleSchema = { users: drizzleUsers, posts: drizzlePosts, usersRelations, postsRelations };
 
 describe('Relationship tests', () => {
