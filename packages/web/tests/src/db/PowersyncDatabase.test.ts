@@ -3,7 +3,6 @@ import { PowerSyncDatabase, SharedWebStreamingSyncImplementation, WebStreamingSy
 import { SSRStreamingSyncImplementation } from '../../../src/db/sync/SSRWebStreamingSyncImplementation'
 import { testSchema } from '../../utils/testDb'
 
-
 vi.mock('../../../src/db/sync/WebStreamingSyncImplementation')
 vi.mock('../../../src/db/sync/SharedWebStreamingSyncImplementation')
 vi.mock('../../../src/db/sync/SSRWebStreamingSyncImplementation')
@@ -38,7 +37,7 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
       crudUploadThrottleMs: 2000
     })
 
-    db['generateSyncStreamImplementation'](mockConnector)
+    db['generateSyncStreamImplementation'](mockConnector, { retryDelayMs: 1000, crudUploadThrottleMs: 2000 })
     expect(SSRStreamingSyncImplementation).toHaveBeenCalled()
 
     await setTimeout(() => window.removeEventListener('unhandledrejection', handler), 1)
@@ -50,7 +49,7 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
       database: { dbFilename: 'test.db' },
       flags: { enableMultiTabs: true }
     })
-    db['generateSyncStreamImplementation'](mockConnector)
+    db['generateSyncStreamImplementation'](mockConnector, { retryDelayMs: 1000, crudUploadThrottleMs: 2000 })
     expect(SharedWebStreamingSyncImplementation).toHaveBeenCalled()
   })
 
@@ -64,6 +63,7 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
         ssrMode: false,
         enableMultiTabs: false,
       },
+      retryDelayMs: 1000,
       crudUploadThrottleMs: 1000
     })
 
@@ -76,30 +76,8 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
     )
   })
 
-  it('handles partial option overrides', () => {
-    const db = new PowerSyncDatabase({
-      schema: testSchema,
-      database: {
-        dbFilename: 'test.db'
-      },
-      flags: {
-        ssrMode: false,
-        enableMultiTabs: false,
-      },
-      retryDelayMs: 1000,
-      crudUploadThrottleMs: 2000
-    })
-
-    db['generateSyncStreamImplementation'](mockConnector, { retryDelayMs: 50000 })
-    expect(WebStreamingSyncImplementation).toHaveBeenCalledWith(
-      expect.objectContaining({
-        retryDelayMs: 50000,
-      })
-    )
-  })
-
   // This test can be removed once retryDelay is removed and entirely replaced with retryDelayMs
-  it('works when using deprecated retryDelay instead of retryDelayMs', () => {
+  it('works when using deprecated retryDelay instead of retryDelayMs', async () => {
     const db = new PowerSyncDatabase({
       schema: testSchema,
       database: {
@@ -112,10 +90,10 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
       retryDelay: 11100,
     })
 
-    db['generateSyncStreamImplementation'](mockConnector)
+    db['generateSyncStreamImplementation'](mockConnector, { crudUploadThrottleMs: 2000, retryDelayMs: 50000 })
     expect(WebStreamingSyncImplementation).toHaveBeenCalledWith(
       expect.objectContaining({
-        retryDelayMs: 11100,
+        retryDelay: 11100,
       })
     )
   })

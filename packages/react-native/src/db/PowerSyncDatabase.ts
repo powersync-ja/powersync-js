@@ -45,12 +45,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     // This is used to pass in options on connection instead of only during database creation
-    options?: AdditionalConnectionOptions
+    options: Required<AdditionalConnectionOptions>
   ): AbstractStreamingSyncImplementation {
     const remote = new ReactNativeRemote(connector);
-    // Use the options passed in during connect, or fallback to the options set during database creation
-    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay;
-    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs;
 
     return new ReactNativeStreamingSyncImplementation({
       adapter: this.bucketStorageAdapter,
@@ -59,8 +56,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs,
-      crudUploadThrottleMs,
+      retryDelayMs: options.retryDelayMs,
+      crudUploadThrottleMs: options.crudUploadThrottleMs,
       identifier: this.database.name
     });
   }

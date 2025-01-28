@@ -27,7 +27,8 @@ import {
   type AdditionalConnectionOptions,
   type PowerSyncConnectionOptions,
   StreamingSyncImplementation,
-  StreamingSyncImplementationListener
+  StreamingSyncImplementationListener,
+  DEFAULT_RETRY_DELAY_MS
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
 
@@ -237,7 +238,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options?: AdditionalConnectionOptions
+    options: Required<AdditionalConnectionOptions>
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -382,9 +383,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
+    // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
+    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS;
+    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS;
+
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
-      crudUploadThrottleMs: options?.crudUploadThrottleMs,
-      retryDelayMs: options?.retryDelayMs
+      retryDelayMs,
+      crudUploadThrottleMs,
     });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
