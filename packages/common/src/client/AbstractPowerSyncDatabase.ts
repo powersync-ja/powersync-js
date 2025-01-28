@@ -18,18 +18,18 @@ import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/throttle.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  type AdditionalConnectionOptions,
-  type PowerSyncConnectionOptions,
   StreamingSyncImplementation,
-  StreamingSyncImplementationListener
+  StreamingSyncImplementationListener,
+  type AdditionalConnectionOptions,
+  type PowerSyncConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { runOnSchemaChange } from './runOnSchemaChange.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -237,7 +237,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options?: AdditionalConnectionOptions
+    // TODO be better
+    options: Required<AdditionalConnectionOptions>
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -382,9 +383,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
+    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay;
+    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs;
+
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
-      crudUploadThrottleMs: options?.crudUploadThrottleMs,
-      retryDelayMs: options?.retryDelayMs
+      // These should be resolved already,  want better typing here
+      crudUploadThrottleMs: crudUploadThrottleMs!,
+      retryDelayMs: retryDelayMs!
     });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {

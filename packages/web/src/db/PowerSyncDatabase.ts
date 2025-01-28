@@ -1,9 +1,9 @@
 import {
+  type AdditionalConnectionOptions,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type PowerSyncConnectionOptions,
-  type AdditionalConnectionOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
   DEFAULT_POWERSYNC_CLOSE_OPTIONS,
@@ -15,6 +15,7 @@ import {
   StreamingSyncImplementation
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
+import { getNavigatorLocks } from '../shared/navigator';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
@@ -29,7 +30,6 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation';
-import { getNavigatorLocks } from '../shared/navigator';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -168,17 +168,15 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     // This is used to pass in options on connection instead of only during db creation
-    options?: AdditionalConnectionOptions
+    // TODO be better
+    options: Required<AdditionalConnectionOptions>
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
-    // Use the options passed in during connect, or fallback to the options set during database creation
-    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay;
-    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs;
 
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
-      retryDelayMs,
-      crudUploadThrottleMs,
+      retryDelayMs: options.retryDelayMs,
+      crudUploadThrottleMs: options.crudUploadThrottleMs,
       flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,
