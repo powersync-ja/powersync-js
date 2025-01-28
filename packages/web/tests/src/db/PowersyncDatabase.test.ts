@@ -97,4 +97,26 @@ describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
       })
     )
   })
+
+  // This test can be removed once retryDelay is removed and entirely replaced with retryDelayMs
+  it('works when using deprecated retryDelay instead of retryDelayMs', () => {
+    const db = new PowerSyncDatabase({
+      schema: testSchema,
+      database: {
+        dbFilename: 'test.db'
+      },
+      flags: {
+        ssrMode: false,
+        enableMultiTabs: false,
+      },
+      retryDelay: 11100,
+    })
+
+    db['generateSyncStreamImplementation'](mockConnector)
+    expect(WebStreamingSyncImplementation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        retryDelayMs: 11100,
+      })
+    )
+  })
 })

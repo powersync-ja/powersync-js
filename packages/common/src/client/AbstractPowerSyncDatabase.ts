@@ -39,6 +39,10 @@ export interface DisconnectAndClearOptions {
 export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
   /** Schema used for the local database. */
   schema: Schema;
+  /**
+   * @deprecated Use {@link retryDelayMs} instead as this will be removed in future releases.
+   */
+  retryDelay?: number;
   logger?: ILogger;
 }
 
