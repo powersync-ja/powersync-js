@@ -44,7 +44,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    // This is used to pass in options on connection instead of only during database creation
     options: Required<AdditionalConnectionOptions>
   ): AbstractStreamingSyncImplementation {
     const remote = new ReactNativeRemote(connector);

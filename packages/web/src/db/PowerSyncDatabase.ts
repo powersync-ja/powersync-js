@@ -167,7 +167,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    // This is used to pass in options on connection instead of only during db creation
     options: Required<AdditionalConnectionOptions>
   ): StreamingSyncImplementation {
     const remote = new WebRemote(connector);
