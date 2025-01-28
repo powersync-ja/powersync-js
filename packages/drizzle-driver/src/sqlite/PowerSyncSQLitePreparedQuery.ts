@@ -90,8 +90,8 @@ export class PowerSyncSQLitePreparedQuery<
   async values(placeholderValues?: Record<string, unknown>): Promise<T['values']> {
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
-    const rs = await this.db.execute(this.query.sql, params);
-    return rs.rows?._array ?? [];
+
+    return await this.db.executeRaw(this.query.sql, params);
   }
 
   isResponseInArrayMode(): boolean {

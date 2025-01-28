@@ -1,18 +1,5 @@
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  Transaction
-} from '@powersync/common';
-import {
-  ANDROID_DATABASE_PATH,
-  getDylibPath,
-  IOS_LIBRARY_PATH,
-  open,
-  type DB
-} from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { Platform } from 'react-native';
@@ -247,6 +234,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
+  executeRaw(query: string, params?: any[]) {
+    return this.writeLock((ctx) => ctx.executeRaw(query, params));
+  }
+
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     return this.writeLock((ctx) => ctx.executeBatch(query, params));
   }
@@ -274,6 +265,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
+        executeRaw: (query, params) => connection.executeRaw(query, params),
         get: (query, params) => connection.get(query, params),
         getAll: (query, params) => connection.getAll(query, params),
         getOptional: (query, params) => connection.getOptional(query, params),
@@ -292,7 +284,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
     await this.writeConnection!.refreshSchema();
 
-    if(this.readConnections) {
+    if (this.readConnections) {
       for (let readConnection of this.readConnections) {
         await readConnection.connection.refreshSchema();
       }

@@ -138,6 +138,10 @@ export class LockedAsyncDatabaseAdapter
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
+  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return this.writeLock((ctx) => ctx.executeRaw(query, params));
+  }
+
   async executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
     return this.writeLock((ctx) => this._executeBatch(query, params));
   }
@@ -169,12 +173,16 @@ export class LockedAsyncDatabaseAdapter
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.waitForInitialized();
-    return this.acquireLock(async () => fn(this.generateDBHelpers({ execute: this._execute })));
+    return this.acquireLock(async () =>
+      fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw }))
+    );
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.waitForInitialized();
-    return this.acquireLock(async () => fn(this.generateDBHelpers({ execute: this._execute })));
+    return this.acquireLock(async () =>
+      fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw }))
+    );
   }
 
   protected acquireLock(callback: () => Promise<any>): Promise<any> {
@@ -281,6 +289,14 @@ export class LockedAsyncDatabaseAdapter
         item: (idx: number) => result.rows._array[idx]
       }
     };
+  };
+
+  /**
+   * Wraps the worker executeRaw function, awaiting for it to be available
+   */
+  private _executeRaw = async (sql: string, bindings?: any[]): Promise<any[][]> => {
+    await this.waitForInitialized();
+    return await this.baseDB.executeRaw(sql, bindings);
   };
 
   /**
