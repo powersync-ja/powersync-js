@@ -65,10 +65,10 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions extends DefaultConnectionOptions, AdditionalConnectionOptions {}
+export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
  /** @internal */
-export interface DefaultConnectionOptions {
+export interface BaseConnectionOptions {
   /**
    * The connection method to use when streaming updates from
    * the PowerSync backend instance.
@@ -96,6 +96,10 @@ export interface AdditionalConnectionOptions {
    */
   crudUploadThrottleMs?: number;
 }
+
+
+/** @internal */
+export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -126,7 +130,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export type RequiredPowerSyncConnectionOptions = Required<DefaultConnectionOptions>;
+export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,

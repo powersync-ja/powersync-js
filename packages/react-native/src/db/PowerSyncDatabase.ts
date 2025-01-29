@@ -1,11 +1,11 @@
 import {
   AbstractPowerSyncDatabase,
   AbstractStreamingSyncImplementation,
-  AdditionalConnectionOptions,
   BucketStorageAdapter,
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseOptionsWithSettings,
+  type RequiredAdditionalConnectionOptions,
   SqliteBucketStorage
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
@@ -44,7 +44,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: Required<AdditionalConnectionOptions>
+    options: RequiredAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
     const remote = new ReactNativeRemote(connector);
 

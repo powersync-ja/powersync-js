@@ -28,7 +28,8 @@ import {
   type PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener,
-  DEFAULT_RETRY_DELAY_MS
+  DEFAULT_RETRY_DELAY_MS,
+  type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
 
@@ -238,7 +239,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: Required<AdditionalConnectionOptions>
+    options: RequiredAdditionalConnectionOptions
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -371,6 +372,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.waitForReady();
   }
 
+  // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
+  resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
+    return {
+      retryDelayMs: options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
+      crudUploadThrottleMs:
+        options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS
+    };
+  }
+
   /**
    * Connects to stream of events from the PowerSync instance.
    */
@@ -383,9 +393,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
-    // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
-    const retryDelayMs = options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS;
-    const crudUploadThrottleMs = options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS;
+    const { retryDelayMs, crudUploadThrottleMs } = this.resolvedConnectionOptions(options);
 
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
       retryDelayMs,
