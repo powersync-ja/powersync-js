@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.23.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
 ## 1.22.2
 
 ### Patch Changes
