@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 1.17.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
+### Patch Changes
+
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
 ## 1.16.3
 
 ### Patch Changes
