@@ -1,100 +1,65 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { PowerSyncDatabase, SharedWebStreamingSyncImplementation, WebStreamingSyncImplementation } from '../../../src'
-import { SSRStreamingSyncImplementation } from '../../../src/db/sync/SSRWebStreamingSyncImplementation'
-import { testSchema } from '../../utils/testDb'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { AbstractPowerSyncDatabase, PowerSyncDatabase, SyncStreamConnectionMethod } from '../../../src';
+import { testSchema } from '../../utils/testDb';
 
-vi.mock('../../../src/db/sync/WebStreamingSyncImplementation')
-vi.mock('../../../src/db/sync/SharedWebStreamingSyncImplementation')
-vi.mock('../../../src/db/sync/SSRWebStreamingSyncImplementation')
-
-describe('PowerSyncDatabase - generateSyncStreamImplementation', () => {
-  const mockConnector = {
-    uploadData: vi.fn(),
-    fetchCredentials: vi.fn()
-  }
+describe('PowerSyncDatabase', () => {
+  let db: PowerSyncDatabase;
+  let mockConnector: any;
+  let mockLogger: any;
+  let mockSyncImplementation: any;
 
   beforeEach(() => {
-    vi.resetAllMocks()
-  })
+    mockLogger = {
+      debug: vi.fn(),
+    };
 
-  it('uses SSRStreamingSyncImplementation when ssrMode is true', async () => {
-    // This is to prevent a false positive from the unhandled rejection
-    // of using SSR in this test.
-    const handler = (event: PromiseRejectionEvent) => {
-      event.preventDefault()
-    }
-    window.addEventListener('unhandledrejection', handler)
-
-    const db = new PowerSyncDatabase({
+    // Initialize with minimal required options
+    db = new PowerSyncDatabase({
       schema: testSchema,
       database: {
         dbFilename: 'test.db'
       },
-      flags: {
-        ssrMode: true,
-      },
-      retryDelayMs: 1000,
-      crudUploadThrottleMs: 2000
-    })
+      logger: mockLogger
+    });
 
-    db['generateSyncStreamImplementation'](mockConnector, { retryDelayMs: 1000, crudUploadThrottleMs: 2000 })
-    expect(SSRStreamingSyncImplementation).toHaveBeenCalled()
+    vi.spyOn(db as any, 'runExclusive').mockImplementation((cb: any) => cb());
 
-    await setTimeout(() => window.removeEventListener('unhandledrejection', handler), 1)
-  })
+    vi.spyOn(AbstractPowerSyncDatabase.prototype, 'connect')
+      .mockResolvedValue(undefined);
+  });
 
-  it('uses SharedWebStreamingSyncImplementation when enableMultiTabs is true', () => {
-    const db = new PowerSyncDatabase({
-      schema: testSchema,
-      database: { dbFilename: 'test.db' },
-      flags: { enableMultiTabs: true }
-    })
-    db['generateSyncStreamImplementation'](mockConnector, { retryDelayMs: 1000, crudUploadThrottleMs: 2000 })
-    expect(SharedWebStreamingSyncImplementation).toHaveBeenCalled()
-  })
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
-  it('handles option overrides', () => {
-    const db = new PowerSyncDatabase({
-      schema: testSchema,
-      database: {
-        dbFilename: 'test.db'
-      },
-      flags: {
-        ssrMode: false,
-        enableMultiTabs: false,
-      },
-      retryDelayMs: 1000,
-      crudUploadThrottleMs: 1000
-    })
+  describe('connect', () => {
+    it('should log debug message when attempting to connect', async () => {
+      await db.connect(mockConnector);
+      expect(mockLogger.debug).toHaveBeenCalledWith('Attempting to connect to PowerSync instance');
+      expect(db['runExclusive']).toHaveBeenCalled();
+    });
 
-    db['generateSyncStreamImplementation'](mockConnector, { crudUploadThrottleMs: 20000, retryDelayMs: 50000 })
-    expect(WebStreamingSyncImplementation).toHaveBeenCalledWith(
-      expect.objectContaining({
-        retryDelayMs: 50000,
-        crudUploadThrottleMs: 20000
-      })
-    )
-  })
+    it('should use connect with correct options', async () => {
+      await db.connect(mockConnector, {
+        retryDelayMs: 1000,
+        crudUploadThrottleMs: 2000,
+        params: {
+          param1: 1
+        },
+        connectionMethod: SyncStreamConnectionMethod.HTTP
+      });
 
-  // This test can be removed once retryDelay is removed and entirely replaced with retryDelayMs
-  it('works when using deprecated retryDelay instead of retryDelayMs', async () => {
-    const db = new PowerSyncDatabase({
-      schema: testSchema,
-      database: {
-        dbFilename: 'test.db'
-      },
-      flags: {
-        ssrMode: false,
-        enableMultiTabs: false,
-      },
-      retryDelay: 11100,
-    })
-
-    db['generateSyncStreamImplementation'](mockConnector, { crudUploadThrottleMs: 2000, retryDelayMs: 50000 })
-    expect(WebStreamingSyncImplementation).toHaveBeenCalledWith(
-      expect.objectContaining({
-        retryDelay: 11100,
-      })
-    )
-  })
-})
+      expect(AbstractPowerSyncDatabase.prototype.connect).toHaveBeenCalledWith(
+        mockConnector,
+        {
+          retryDelayMs: 1000,
+          crudUploadThrottleMs: 2000,
+          connectionMethod: "http",
+          params: {
+            param1: 1,
+          },
+        }
+      );
+    });
+  });
+});
