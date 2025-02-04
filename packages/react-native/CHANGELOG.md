@@ -1,5 +1,33 @@
 # @powersync/react-native
 
+## 1.17.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
+### Patch Changes
+
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
+## 1.16.3
+
+### Patch Changes
+
+- b38bcdb: Fixed an issue where the read and write locks were executing mutually exclusively. A read conccurent with a write or another read should correctly proceed instead of being blocked until the other lock has released.
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/common@1.22.2
+
+## 1.16.2
+
+### Patch Changes
+
+- Updated dependencies [7a47778]
+- Updated dependencies [4a262cd]
+  - @powersync/common@1.22.1
+
 ## 1.16.1
 
 ### Patch Changes

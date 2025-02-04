@@ -1,5 +1,24 @@
 # @powersync/common
 
+## 1.23.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
+## 1.22.2
+
+### Patch Changes
+
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+
+## 1.22.1
+
+### Patch Changes
+
+- 7a47778: Fix issue where local changes could be reverted when a replication delay is present.
+- 4a262cd: Add schema validation
+
 ## 1.22.0
 
 ### Minor Changes

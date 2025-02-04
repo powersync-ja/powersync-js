@@ -36,11 +36,8 @@ export class Connector implements PowerSyncBackendConnector {
     console.debug('session expires at', session.expires_at);
 
     return {
-      client: this.supabaseClient,
       endpoint: config.powerSyncUrl,
-      token: session.access_token ?? '',
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
-      userID: session.user.id
+      token: session.access_token ?? ''
     };
   }
 

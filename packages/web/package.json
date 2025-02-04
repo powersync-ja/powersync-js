@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.12.1",
+  "version": "1.13.1",
   "description": "A Web SDK for JourneyApps PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -46,7 +46,7 @@
     "build:webpack-workers": "webpack --config webpack.workers.config.js",
     "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
@@ -60,19 +60,19 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.0.0",
-    "@powersync/common": "workspace:^1.22.0"
+    "@journeyapps/wa-sqlite": "^1.2.0",
+    "@powersync/common": "workspace:^1.23.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
     "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
-    "comlink": "^4.4.1",
+    "comlink": "^4.4.2",
     "commander": "^12.1.0",
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.0.0",
+    "@journeyapps/wa-sqlite": "^1.2.0",
     "@types/uuid": "^9.0.6",
     "@vitest/browser": "^2.1.4",
     "crypto-browserify": "^3.12.0",

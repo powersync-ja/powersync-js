@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { Query } from 'drizzle-orm/sql/sql';
-import { PowerSyncSQLiteDatabase } from '../../src/sqlite/db';
-import { PowerSyncSQLitePreparedQuery } from '../../src/sqlite/sqlite-query';
+import { PowerSyncSQLiteDatabase } from '../../src/sqlite/PowerSyncSQLiteDatabase';
+import { PowerSyncSQLitePreparedQuery } from '../../src/sqlite/PowerSyncSQLitePreparedQuery';
 import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 

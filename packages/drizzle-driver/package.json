@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "description": "Drizzle driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -26,12 +26,12 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.22.0",
+    "@powersync/common": "workspace:^1.23.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "^0.4.1",
+    "@journeyapps/wa-sqlite": "^1.2.0",
     "@types/node": "^20.17.6",
     "@vitest/browser": "^2.1.4",
     "drizzle-orm": "^0.35.2",

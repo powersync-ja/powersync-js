@@ -1,5 +1,44 @@
 # @powersync/op-sqlite
 
+## 0.3.1
+
+### Patch Changes
+
+- a4895cc: Silencing transactions that are reporting on failed rollback exceptions when they are safe to ignore.
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
+## 0.3.0
+
+### Minor Changes
+
+- 3a37054: \* Allow users to load additional sqlite extensions
+  - Remove `getBundledPath` function as `getDylibPath` can now be used instead
+
+## 0.2.1
+
+### Patch Changes
+
+- b38bcdb: Update op-sqlite to v11.2.13.
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/common@1.22.2
+
+## 0.2.0
+
+### Minor Changes
+
+- 181a9db: Fixed single write transaction operations in `ps_crud` not being processed. Batching update notifications per write lock.
+  This will also fix downstream features such as watched queries and reactive query hooks in cases where the query is fired before the data was committed, and batching will improve performance specifically in cases where a lot of data changes occur.
+
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [7a47778]
+- Updated dependencies [4a262cd]
+  - @powersync/common@1.22.1
+
 ## 0.1.3
 
 ### Patch Changes

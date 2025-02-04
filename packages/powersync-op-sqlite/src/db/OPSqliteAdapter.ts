@@ -1,16 +1,8 @@
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  SQLOpenOptions,
-  Transaction
-} from '@powersync/common';
-import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
 
 /**
@@ -52,7 +44,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected async init() {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, encryptionKey } = this.options.sqliteOptions;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
     this.writeConnection = await this.openConnection(dbFilename);
@@ -86,9 +78,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      // Workaround to create read-only connections
-      let dbName = './'.repeat(i + 1) + dbFilename;
-      const conn = await this.openConnection(dbName);
+      const conn = await this.openConnection(dbFilename);
       await conn.execute('PRAGMA query_only = true');
       this.readConnections.push({ busy: false, connection: conn });
     }
@@ -96,10 +86,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
-    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions.encryptionKey);
+    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
-    //Load extension for all connections
-    this.loadExtension(DB);
+    //Load extensions for all connections
+    this.loadAdditionalExtensions(DB);
+    this.loadPowerSyncExtension(DB);
 
     await DB.execute('SELECT powersync_init()');
 
@@ -134,10 +125,17 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  private loadExtension(DB: DB) {
+  private loadAdditionalExtensions(DB: DB) {
+    if (this.options.sqliteOptions?.extensions && this.options.sqliteOptions.extensions.length > 0) {
+      for (const extension of this.options.sqliteOptions.extensions) {
+        DB.loadExtension(extension.path, extension.entryPoint);
+      }
+    }
+  }
+
+  private async loadPowerSyncExtension(DB: DB) {
     if (Platform.OS === 'ios') {
-      const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
-      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      const libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {
       DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
@@ -194,13 +192,18 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     return new Promise(async (resolve, reject) => {
       try {
-        await this.locks.acquire(
-          LockType.WRITE,
-          async () => {
-            resolve(await fn(this.writeConnection!));
-          },
-          { timeout: options?.timeoutMs }
-        );
+        await this.locks
+          .acquire(
+            LockType.WRITE,
+            async () => {
+              resolve(await fn(this.writeConnection!));
+            },
+            { timeout: options?.timeoutMs }
+          )
+          .then(() => {
+            // flush updates once a write lock has been released
+            this.writeConnection!.flushUpdates();
+          });
       } catch (ex) {
         reject(ex);
       }
@@ -267,7 +270,12 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await commit();
       return result;
     } catch (ex) {
-      await rollback();
+      try {
+        await rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
       throw ex;
     }
   }
@@ -276,8 +284,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
     await this.writeConnection!.refreshSchema();
 
-    for (let readConnection of this.readConnections) {
-      await readConnection.connection.refreshSchema();
+    if (this.readConnections) {
+      for (let readConnection of this.readConnections) {
+        await readConnection.connection.refreshSchema();
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, ColumnsType, Schema, Table, TableV2Options } from '@powersync/web';
+import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/web';
 import { setSyncEnabled } from './SyncMode';
 
 /**

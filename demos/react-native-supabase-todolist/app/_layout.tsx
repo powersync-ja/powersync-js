@@ -1,7 +1,9 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import React, { useMemo } from 'react';
 import { useSystem } from '../library/powersync/system';
 import { PowerSyncContext } from '@powersync/react-native';
+import { Pressable } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 /**
  * This App uses a nested navigation stack.
@@ -30,6 +32,21 @@ const HomeLayout = () => {
 
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="views" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="search_modal"
+          options={{
+            headerTitle: 'Search',
+            headerRight: () => (
+              <Pressable
+                onPress={() => {
+                  router.back();
+                }}>
+                <MaterialIcons name="close" color="#fff" size={24} />
+              </Pressable>
+            ),
+            presentation: 'fullScreenModal'
+          }}
+        />
       </Stack>
     </PowerSyncContext.Provider>
   );

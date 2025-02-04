@@ -4,7 +4,7 @@
 
 # PowerSync SDK for React Native
 
-*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side.*
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
 
 This package (`packages/react-native`) is the PowerSync SDK for React Native clients. It is an extension of `packages/common`.
 
@@ -71,12 +71,23 @@ module.exports = function (api) {
 };
 ```
 
-## Metro config (optional)
+### Expo EAS config (optional)
+
+If you are using this library in an Expo project and encounter issues with multiple versions of SQLite3, the conflict might be due to `expo-updates` also depending on SQLite. To resolve this, you can configure Expo to use the third-party SQLite pod.
+
+Update your `ios/Podfile.properties.json` to include the following configuration:
+
+```json
+{
+  "expo.updates.useThirdPartySQLitePod": "true"
+}
+```
+
+### Metro config (optional)
 
 When using a bare React Native app without a framework like Expo, the `@powersync/react-native` package does not work well with inline requires.
 
 If you see the following error message
-
 
 ```bash
 Super expression must either be null or a function
@@ -86,17 +97,17 @@ then you will need to add this to your `metro.config.js`:
 
 ```js
 const config = {
-    transformer: {
-        getTransformOptions: async () => ({
-            transform: {
-                inlineRequires: {
-                  blockList: {
-                    [require.resolve("@powersync/react-native")]: true,
-                  },
-                },
-              },
-        })
-    }
+  transformer: {
+    getTransformOptions: async () => ({
+      transform: {
+        inlineRequires: {
+          blockList: {
+            [require.resolve('@powersync/react-native')]: true
+          }
+        }
+      }
+    })
+  }
 };
 ```
 

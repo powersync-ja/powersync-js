@@ -1,15 +1,26 @@
 import { describe, it, expect } from 'vitest';
 import { Schema } from '../../../src/db/schema/Schema';
 import { Table } from '../../../src/db/schema/Table';
-import { column, ColumnType } from '../../../src/db/schema/Column';
+import { column, ColumnType, Column } from '../../../src/db/schema/Column';
 
 describe('Schema', () => {
-  it('should create a schema with an array of tables', () => {
-    const tables = [
-      new Table({ name: column.text, }),
-      new Table({ age: { type: ColumnType.INTEGER } })
-    ];
-    const schema = new Schema(tables);
+  it('should fail if an array of tables using the new syntax is passed to schema', () => {
+    const table1 = new Table({ name: column.text });
+    const table2 = new Table({ age: { type: ColumnType.INTEGER } });
+    expect(() => new Schema([table1, table2])).toThrow();
+  });
+
+  it('should create a schema with an array of tables using the old syntax', () => {
+    const table1 = new Table({
+      name: 'table1',
+      columns: [new Column({ name: 'name', type: ColumnType.TEXT })]
+    });
+    const table2 = new Table({
+      name: 'table2',
+      columns: [new Column({ name: 'age', type: ColumnType.INTEGER })]
+    });
+    const schema = new Schema([table1, table2]);
+    expect(() => schema.validate()).not.toThrow();
 
     expect(schema.tables).toHaveLength(2);
     expect(schema.tables[0].columns[0].name).toBe('name');

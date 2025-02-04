@@ -6,9 +6,11 @@ import {
   Index,
   IndexedColumn,
   PowerSyncBackendConnector,
+  PowerSyncDatabase,
   Schema,
   Table,
-  WASQLitePowerSyncDatabaseOpenFactory
+  WASQLiteOpenFactory,
+  WASQLiteVFS
 } from '@powersync/web';
 
 export interface ListRecord {
@@ -63,11 +65,22 @@ export class PowerSyncService {
   db: AbstractPowerSyncDatabase;
 
   constructor() {
-    const PowerSyncFactory = new WASQLitePowerSyncDatabaseOpenFactory({
-      schema: AppSchema,
-      dbFilename: 'test.db'
+    const factory = new WASQLiteOpenFactory({
+      dbFilename: 'test.db',
+      vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+      // Specify the path to the worker script
+      worker: 'assets/@powersync/worker/WASQLiteDB.umd.js'
     });
-    this.db = PowerSyncFactory.getInstance();
+
+    this.db = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: factory,
+
+      sync: {
+        // Specify the path to the worker script
+        worker: 'assets/@powersync/worker/SharedSyncImplementation.umd.js'
+      }
+    });
   }
 
   setupPowerSync = async (connector: PowerSyncBackendConnector) => {
