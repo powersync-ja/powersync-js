@@ -1,18 +1,5 @@
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  Transaction
-} from '@powersync/common';
-import {
-  ANDROID_DATABASE_PATH,
-  getDylibPath,
-  IOS_LIBRARY_PATH,
-  open,
-  type DB
-} from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { Platform } from 'react-native';
@@ -283,7 +270,12 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await commit();
       return result;
     } catch (ex) {
-      await rollback();
+      try {
+        await rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
       throw ex;
     }
   }
@@ -292,7 +284,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
     await this.writeConnection!.refreshSchema();
 
-    if(this.readConnections) {
+    if (this.readConnections) {
       for (let readConnection of this.readConnections) {
         await readConnection.connection.refreshSchema();
       }

@@ -104,6 +104,21 @@ const factory = new OPSqliteOpenFactory({
 });
 ```
 
+## Using the Memory Temporary Store
+
+For some targets like Android 12/API 31, syncing of large datasets may cause disk IO errors due to the default temporary store option (file) used.
+To resolve this you can use the `memory` option, by adding the following configuration option to your application's `package.json`
+
+```json
+{
+  // your normal package.json
+  // ...
+  "op-sqlite": {
+    "sqliteFlags": "-DSQLITE_TEMP_STORE=2"
+  }
+}
+```
+
 ## Native Projects
 
 This package uses native libraries. Create native Android and iOS projects (if not created already) by running:

@@ -1,5 +1,13 @@
 # @powersync/op-sqlite
 
+## 0.3.1
+
+### Patch Changes
+
+- a4895cc: Silencing transactions that are reporting on failed rollback exceptions when they are safe to ignore.
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
 ## 0.3.0
 
 ### Minor Changes

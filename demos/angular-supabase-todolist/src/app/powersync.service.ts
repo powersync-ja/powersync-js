@@ -9,7 +9,8 @@ import {
   PowerSyncDatabase,
   Schema,
   Table,
-  WASQLiteOpenFactory
+  WASQLiteOpenFactory,
+  WASQLiteVFS
 } from '@powersync/web';
 
 export interface ListRecord {
@@ -66,7 +67,7 @@ export class PowerSyncService {
   constructor() {
     const factory = new WASQLiteOpenFactory({
       dbFilename: 'test.db',
-
+      vfs: WASQLiteVFS.OPFSCoopSyncVFS,
       // Specify the path to the worker script
       worker: 'assets/@powersync/worker/WASQLiteDB.umd.js'
     });
@@ -74,6 +75,7 @@ export class PowerSyncService {
     this.db = new PowerSyncDatabase({
       schema: AppSchema,
       database: factory,
+
       sync: {
         // Specify the path to the worker script
         worker: 'assets/@powersync/worker/SharedSyncImplementation.umd.js'

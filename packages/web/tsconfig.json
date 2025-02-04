@@ -3,9 +3,8 @@
   "compilerOptions": {
     "types": ["vite/client"],
     "paths": {
-      "@powersync/web": ["src/index.ts"]
+      "@powersync/web": ["./src/index.ts"]
     },
-    "baseUrl": "./",
     "declaration": true /* Generates corresponding '.d.ts' file. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
     "lib": ["DOM", "ESNext", "WebWorker"] /* Specify library files to be included in the compilation. */,

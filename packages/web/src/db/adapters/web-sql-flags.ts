@@ -1,4 +1,5 @@
 import { SQLOpenOptions } from '@powersync/common';
+import { ILogger } from 'js-logger';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -40,6 +41,17 @@ export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
   flags: ResolvedWebSQLFlags;
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   */
+  temporaryStorage: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
 
 export enum TemporaryStorageOption {
@@ -61,11 +73,18 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 
+  logger?: ILogger;
   /**
    * Where to store SQLite temporary files. Defaults to 'MEMORY'.
    * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
    */
   temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
 
 export function isServerSide() {

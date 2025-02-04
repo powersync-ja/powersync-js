@@ -37,10 +37,9 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
-export interface AbstractStreamingSyncImplementationOptions {
+export interface AbstractStreamingSyncImplementationOptions extends AdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
   uploadCrud: () => Promise<void>;
-  crudUploadThrottleMs?: number;
   /**
    * An identifier for which PowerSync DB this sync implementation is
    * linked to. Most commonly DB name, but not restricted to DB name.
@@ -48,7 +47,6 @@ export interface AbstractStreamingSyncImplementationOptions {
   identifier?: string;
   logger?: ILogger;
   remote: AbstractRemote;
-  retryDelayMs?: number;
 }
 
 export interface StreamingSyncImplementationListener extends BaseListener {
@@ -67,7 +65,10 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions {
+export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
+
+ /** @internal */
+export interface BaseConnectionOptions {
   /**
    * The connection method to use when streaming updates from
    * the PowerSync backend instance.
@@ -80,6 +81,25 @@ export interface PowerSyncConnectionOptions {
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
 }
+
+ /** @internal */
+export interface AdditionalConnectionOptions {
+  /**
+   * Delay for retrying sync streaming operations
+   * from the PowerSync backend after an error occurs.
+   */
+  retryDelayMs?: number;
+  /**
+   * Backend Connector CRUD operations are throttled
+   * to occur at most every `crudUploadThrottleMs`
+   * milliseconds.
+   */
+  crudUploadThrottleMs?: number;
+}
+
+
+/** @internal */
+export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -102,14 +122,17 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
+export const DEFAULT_RETRY_DELAY_MS = 5000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
-  retryDelayMs: 5000,
+  retryDelayMs: DEFAULT_RETRY_DELAY_MS,
   logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: Required<PowerSyncConnectionOptions> = {
+export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
+
+export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   params: {}
 };
@@ -133,6 +156,7 @@ export abstract class AbstractStreamingSyncImplementation
 
     this.syncStatus = new SyncStatus({
       connected: false,
+      connecting: false,
       lastSyncedAt: undefined,
       dataFlow: {
         uploading: false,
@@ -324,7 +348,7 @@ The next upload iteration will be delayed.`);
     this.streamingSyncPromise = undefined;
 
     this.abortController = null;
-    this.updateSyncStatus({ connected: false });
+    this.updateSyncStatus({ connected: false, connecting: false });
   }
 
   /**
@@ -359,6 +383,7 @@ The next upload iteration will be delayed.`);
       this.crudUpdateListener = undefined;
       this.updateSyncStatus({
         connected: false,
+        connecting: false,
         dataFlow: {
           downloading: false
         }
@@ -372,6 +397,7 @@ The next upload iteration will be delayed.`);
      *  - Close any sync stream ReadableStreams (which will also close any established network requests)
      */
     while (true) {
+      this.updateSyncStatus({ connecting: true });
       try {
         if (signal?.aborted) {
           break;
@@ -400,6 +426,8 @@ The next upload iteration will be delayed.`);
         } else {
           this.logger.error(ex);
         }
+
+        // On error, wait a little before retrying
         await this.delayRetry();
       } finally {
         if (!signal.aborted) {
@@ -408,15 +436,14 @@ The next upload iteration will be delayed.`);
         }
 
         this.updateSyncStatus({
-          connected: false
+          connected: false,
+          connecting: true // May be unnecessary
         });
-
-        // On error, wait a little before retrying
       }
     }
 
     // Mark as disconnected if here
-    this.updateSyncStatus({ connected: false });
+    this.updateSyncStatus({ connected: false, connecting: false });
   }
 
   protected async streamingSyncIteration(
@@ -427,7 +454,7 @@ The next upload iteration will be delayed.`);
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: Required<PowerSyncConnectionOptions> = {
+        const resolvedOptions: RequiredPowerSyncConnectionOptions = {
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
@@ -624,6 +651,7 @@ The next upload iteration will be delayed.`);
   protected updateSyncStatus(options: SyncStatusOptions) {
     const updatedStatus = new SyncStatus({
       connected: options.connected ?? this.syncStatus.connected,
+      connecting: !options.connected && (options.connecting ?? this.syncStatus.connecting),
       lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
       dataFlow: {
         ...this.syncStatus.dataFlowStatus,
