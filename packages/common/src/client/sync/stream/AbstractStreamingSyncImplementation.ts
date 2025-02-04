@@ -156,6 +156,7 @@ export abstract class AbstractStreamingSyncImplementation
 
     this.syncStatus = new SyncStatus({
       connected: false,
+      connecting: false,
       lastSyncedAt: undefined,
       dataFlow: {
         uploading: false,
@@ -347,7 +348,7 @@ The next upload iteration will be delayed.`);
     this.streamingSyncPromise = undefined;
 
     this.abortController = null;
-    this.updateSyncStatus({ connected: false });
+    this.updateSyncStatus({ connected: false, connecting: false });
   }
 
   /**
@@ -382,6 +383,7 @@ The next upload iteration will be delayed.`);
       this.crudUpdateListener = undefined;
       this.updateSyncStatus({
         connected: false,
+        connecting: false,
         dataFlow: {
           downloading: false
         }
@@ -395,6 +397,7 @@ The next upload iteration will be delayed.`);
      *  - Close any sync stream ReadableStreams (which will also close any established network requests)
      */
     while (true) {
+      this.updateSyncStatus({ connecting: true });
       try {
         if (signal?.aborted) {
           break;
@@ -423,6 +426,8 @@ The next upload iteration will be delayed.`);
         } else {
           this.logger.error(ex);
         }
+
+        // On error, wait a little before retrying
         await this.delayRetry();
       } finally {
         if (!signal.aborted) {
@@ -431,15 +436,14 @@ The next upload iteration will be delayed.`);
         }
 
         this.updateSyncStatus({
-          connected: false
+          connected: false,
+          connecting: true // May be unnecessary
         });
-
-        // On error, wait a little before retrying
       }
     }
 
     // Mark as disconnected if here
-    this.updateSyncStatus({ connected: false });
+    this.updateSyncStatus({ connected: false, connecting: false });
   }
 
   protected async streamingSyncIteration(
@@ -647,6 +651,7 @@ The next upload iteration will be delayed.`);
   protected updateSyncStatus(options: SyncStatusOptions) {
     const updatedStatus = new SyncStatus({
       connected: options.connected ?? this.syncStatus.connected,
+      connecting: !options.connected && (options.connecting ?? this.syncStatus.connecting),
       lastSyncedAt: options.lastSyncedAt ?? this.syncStatus.lastSyncedAt,
       dataFlow: {
         ...this.syncStatus.dataFlowStatus,
