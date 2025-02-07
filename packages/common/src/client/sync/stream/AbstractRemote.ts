@@ -21,13 +21,13 @@ export type RemoteConnector = {
 
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
-const SYNC_QUEUE_REQUEST_N = 10;
+const SYNC_QUEUE_REQUEST_N = 1;
 const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
-const KEEP_ALIVE_MS = 20_000;
+const KEEP_ALIVE_MS = 60_000;
 // The ACK must be received in this period
-const KEEP_ALIVE_LIFETIME_MS = 30_000;
+const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
