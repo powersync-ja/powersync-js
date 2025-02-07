@@ -33,13 +33,13 @@
   },
   "devDependencies": {
     "@types/node": "^20.17.6",
-    "@vitest/browser": "^2.1.8",
+    "@vitest/browser": "^3.0.5",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vite-plugin-top-level-await": "^1.4.4",
-    "vitest": "^2.1.8",
+    "vitest": "^3.0.5",
     "webdriverio": "^9.4.5"
   }
 }
