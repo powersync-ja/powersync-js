@@ -1,5 +1,5 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { clearData, db, syncErrorTracker } from '@/library/powersync/ConnectionManager';
+import { clearData, db, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
 import {
   Box,
   Button,
@@ -81,14 +81,23 @@ export default function SyncDiagnosticsPage() {
     // Similar to db.currentState.hasSynced, but synchronized to the onChange events
     const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
     setlastSyncedAt(synced_at ? new Date(synced_at + 'Z') : null);
-    if (synced_at != null) {
+    if (synced_at != null && !sync.syncStatus.dataFlowStatus.downloading) {
       // These are potentially expensive queries - do not run during initial sync
       const bucketRows = await db.getAll(BUCKETS_QUERY);
       const tableRows = await db.getAll(TABLES_QUERY);
       setBucketRows(bucketRows);
       setTableRows(tableRows);
+    } else if (synced_at != null) {
+      // Busy downloading, but have already synced once
+      const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
+      setBucketRows(bucketRows);
+      // Load tables if we haven't yet
+      if (tableRows == null) {
+        const tableRows = await db.getAll(TABLES_QUERY);
+        setTableRows(tableRows);
+      }
     } else {
-      // Fast query to show progress during initial sync
+      // Fast query to show progress during initial sync / while downloading bulk data
       const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
       setBucketRows(bucketRows);
       setTableRows(null);
