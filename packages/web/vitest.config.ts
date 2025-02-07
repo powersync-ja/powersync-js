@@ -42,7 +42,11 @@ const config: UserConfigExport = {
       enabled: true,
       provider: 'webdriverio',
       headless: true,
-      name: 'chrome' // browser name is required
+      instances: [
+        {
+          browser: 'chrome'
+        }
+      ]
     }
   }
 };
