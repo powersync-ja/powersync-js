@@ -4,7 +4,10 @@ import {
   PowerSyncDatabase,
   WebRemote,
   WebStreamingSyncImplementation,
-  WebStreamingSyncImplementationOptions
+  WebStreamingSyncImplementationOptions,
+  WASQLiteOpenFactory,
+  TemporaryStorageOption,
+  WASQLiteVFS
 } from '@powersync/web';
 import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
@@ -25,12 +28,16 @@ export const getParams = () => {
 
 export const schemaManager = new DynamicSchemaManager();
 
+const openFactory = new WASQLiteOpenFactory({
+  dbFilename: 'diagnostics.db',
+  debugMode: true,
+  cacheSizeKb: 500 * 1024,
+  temporaryStorage: TemporaryStorageOption.MEMORY,
+  vfs: WASQLiteVFS.OPFSCoopSyncVFS
+});
+
 export const db = new PowerSyncDatabase({
-  database: {
-    dbFilename: 'example.db',
-    debugMode: true,
-    cacheSizeKb: 500000
-  },
+  database: openFactory,
   schema: schemaManager.buildSchema()
 });
 
