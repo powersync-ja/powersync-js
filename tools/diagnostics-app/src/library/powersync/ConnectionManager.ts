@@ -28,11 +28,11 @@ export const schemaManager = new DynamicSchemaManager();
 export const db = new PowerSyncDatabase({
   database: {
     dbFilename: 'example.db',
-    debugMode: true
+    debugMode: true,
+    cacheSizeKb: 500000
   },
   schema: schemaManager.buildSchema()
 });
-db.execute('PRAGMA cache_size=-500000');
 
 export const connector = new TokenConnector();
 
