@@ -46,6 +46,7 @@ SELECT
   stats.metadata_size,
   IFNULL(stats.row_count, 0) as row_count,
   local.download_size,
+  local.downloaded_operations,
   local.total_operations,
   local.downloading
 FROM local_bucket_data local
@@ -64,6 +65,7 @@ SELECT
   0 as metadata_size,
   0 as row_count,
   local.download_size,
+  local.downloaded_operations,
   local.total_operations,
   local.downloading
 FROM local_bucket_data local`;
@@ -136,6 +138,7 @@ export default function SyncDiagnosticsPage() {
     { field: 'name', headerName: 'Name', flex: 2 },
     { field: 'tables', headerName: 'Table(s)', flex: 1, type: 'text' },
     { field: 'row_count', headerName: 'Row Count', flex: 1, type: 'number' },
+    { field: 'downloaded_operations', headerName: 'Downloaded Operations', flex: 1, type: 'number' },
     { field: 'total_operations', headerName: 'Total Operations', flex: 1, type: 'number' },
     {
       field: 'data_size',
@@ -172,6 +175,7 @@ export default function SyncDiagnosticsPage() {
       name: r.name,
       tables: JSON.parse(r.tables ?? '[]').join(', '),
       row_count: r.row_count,
+      downloaded_operations: r.downloaded_operations,
       total_operations: r.total_operations,
       data_size: r.data_size,
       metadata_size: r.metadata_size,
@@ -183,6 +187,7 @@ export default function SyncDiagnosticsPage() {
   const totals = {
     buckets: rows.length,
     row_count: rows.reduce((total, row) => total + row.row_count, 0),
+    downloaded_operations: rows.reduce((total, row) => total + row.downloaded_operations, 0),
     total_operations: rows.reduce((total, row) => total + row.total_operations, 0),
     data_size: rows.reduce((total, row) => total + row.data_size, 0),
     metadata_size: rows.reduce((total, row) => total + row.metadata_size, 0),
@@ -217,6 +222,7 @@ export default function SyncDiagnosticsPage() {
               Number of buckets
             </TableCell>
             <TableCell component="th">Total Rows</TableCell>
+            <TableCell component="th">Downloaded Operations</TableCell>
             <TableCell component="th">Total Operations</TableCell>
             <TableCell component="th">Total Data Size</TableCell>
             <TableCell component="th">Total Metadata Size</TableCell>
@@ -226,6 +232,7 @@ export default function SyncDiagnosticsPage() {
           <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
             <TableCell align="right">{totals.buckets}</TableCell>
             <TableCell align="right">{totals.row_count}</TableCell>
+            <TableCell align="right">{totals.downloaded_operations}</TableCell>
             <TableCell align="right">{totals.total_operations}</TableCell>
             <TableCell align="right">{formatBytes(totals.data_size)}</TableCell>
             <TableCell align="right">{formatBytes(totals.metadata_size)}</TableCell>

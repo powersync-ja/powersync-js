@@ -26,15 +26,16 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
     await this.rdb.writeTransaction(async (tx) => {
       for (const bucket of checkpoint.buckets) {
         await tx.execute(
-          `INSERT OR REPLACE INTO local_bucket_data(id, total_operations, last_op, download_size, downloading)
+          `INSERT OR REPLACE INTO local_bucket_data(id, total_operations, last_op, download_size, downloading, downloaded_operations)
            VALUES (
             ?,
             ?,
             IFNULL((SELECT last_op FROM local_bucket_data WHERE id = ?), '0'),
             IFNULL((SELECT download_size FROM local_bucket_data WHERE id = ?), 0),
-            IFNULL((SELECT downloading FROM local_bucket_data WHERE id = ?), TRUE)
+            IFNULL((SELECT downloading FROM local_bucket_data WHERE id = ?), TRUE),
+            IFNULL((SELECT downloaded_operations FROM local_bucket_data WHERE id = ?), TRUE)
             )`,
-          [bucket.bucket, bucket.count, bucket.bucket, bucket.bucket, bucket.bucket]
+          [bucket.bucket, bucket.count, bucket.bucket, bucket.bucket, bucket.bucket, bucket.bucket]
         );
       }
     });
@@ -61,8 +62,13 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
         // Record metrics
         const size = JSON.stringify(bucket.data).length;
         await tx.execute(
-          'UPDATE local_bucket_data SET download_size = IFNULL(download_size, 0) + ?, last_op = ?, downloading = ? WHERE id = ?',
-          [size, bucket.next_after, bucket.has_more, bucket.bucket]
+          `UPDATE local_bucket_data SET
+              download_size = IFNULL(download_size, 0) + ?,
+              last_op = ?,
+              downloading = ?,
+              downloaded_operations = IFNULL(downloaded_operations, 0) + ?
+            WHERE id = ?`,
+          [size, bucket.next_after, bucket.has_more, bucket.data.length, bucket.bucket]
         );
       }
     });
