@@ -61,7 +61,7 @@ export enum TemporaryStorageOption {
   FILESYSTEM = 'file'
 }
 
-export const DEFAULT_CACHE_SIZE_KB = 100 * 1024;
+export const DEFAULT_CACHE_SIZE_KB = 50 * 1024;
 
 /**
  * Options for opening a Web SQL connection
