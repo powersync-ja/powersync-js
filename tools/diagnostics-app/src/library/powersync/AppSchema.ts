@@ -5,6 +5,7 @@ export const local_bucket_data = new Table(
     total_operations: column.integer,
     last_op: column.text,
     download_size: column.integer,
+    downloaded_operations: column.integer,
     downloading: column.integer
   },
   { localOnly: true }
