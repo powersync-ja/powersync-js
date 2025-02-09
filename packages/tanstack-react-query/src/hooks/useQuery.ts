@@ -32,7 +32,7 @@ export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData, TError>> & { query?: undefined },
   queryClient?: Tanstack.QueryClient
-): Tanstack.UseSuspenseQueryResult<TData, TError>;
+): Tanstack.UseSuspenseQueryResult<NonNullable<TData>, TError>;
 
 // Overload when 'query' is present
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
@@ -40,7 +40,7 @@ export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError
     query: string | CompilableQuery<TData>;
   },
   queryClient?: Tanstack.QueryClient
-): Tanstack.UseSuspenseQueryResult<TData[], TError>;
+): Tanstack.UseSuspenseQueryResult<NonNullable<TData>[], TError>;
 
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData, TError>>,
