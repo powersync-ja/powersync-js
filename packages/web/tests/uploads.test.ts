@@ -25,9 +25,9 @@ describe('CRUD Uploads', () => {
   });
 
   afterEach(async () => {
-    connectedUtils.remote.streamController?.close();
-    await connectedUtils.powersync.disconnectAndClear();
-    await connectedUtils.powersync.close();
+    connectedUtils?.remote.streamController?.close();
+    await connectedUtils?.powersync.disconnectAndClear();
+    await connectedUtils?.powersync.close();
   });
 
   it('should warn for missing upload operations in uploadData', async () => {
