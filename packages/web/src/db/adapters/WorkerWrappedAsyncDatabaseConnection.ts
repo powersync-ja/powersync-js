@@ -29,7 +29,11 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
 export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
   implements AsyncDatabaseConnection
 {
-  constructor(protected options: WrappedWorkerConnectionOptions<Config>) {}
+  protected releaseSharedConnectionLock: (() => void) | null;
+
+  constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
+    this.releaseSharedConnectionLock = null;
+  }
 
   protected get baseConnection() {
     return this.options.baseConnection;
@@ -44,7 +48,21 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
    */
   async shareConnection(): Promise<SharedConnectionWorker> {
     const { identifier, remote } = this.options;
+    /**
+     * Hold a navigator lock in order to avoid features such as Chrome's frozen tabs
+     * from pausing the thread for this connection.
+     */
+    await new Promise<void>((resolve) => {
+      navigator.locks.request(`shared-connection-${this.options.identifier}`, async (lock) => {
+        resolve(); // We have a lock now
 
+        // Hold the lock while the shared connection is in use.
+        await new Promise<void>((freeLock) => {
+          // We can use the resolver to free the lock
+          this.releaseSharedConnectionLock = freeLock;
+        });
+      });
+    });
     const newPort = await remote[Comlink.createEndpoint]();
     return { port: newPort, identifier };
   }
@@ -58,6 +76,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   }
 
   async close(): Promise<void> {
+    this.releaseSharedConnectionLock?.();
     await this.baseConnection.close();
     this.options.remote[Comlink.releaseProxy]();
     this.options.onClose?.();
