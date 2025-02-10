@@ -30,9 +30,11 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   implements AsyncDatabaseConnection
 {
   protected releaseSharedConnectionLock: (() => void) | null;
+  protected lockAbortController: AbortController;
 
   constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
     this.releaseSharedConnectionLock = null;
+    this.lockAbortController = new AbortController();
   }
 
   protected get baseConnection() {
@@ -49,20 +51,38 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   async shareConnection(): Promise<SharedConnectionWorker> {
     const { identifier, remote } = this.options;
     /**
-     * Hold a navigator lock in order to avoid features such as Chrome's frozen tabs
-     * from pausing the thread for this connection.
+     * Hold a navigator lock in order to avoid features such as Chrome's frozen tabs,
+     * or Edge's sleeping tabs from pausing the thread for this connection.
+     * This promise resolves once a lock is obtained.
+     * This lock will be held as long as this connection is open.
+     * The `shareConnection` method should not be called on multiple tabs concurrently.
      */
-    await new Promise<void>((resolve) => {
-      navigator.locks.request(`shared-connection-${this.options.identifier}`, async (lock) => {
-        resolve(); // We have a lock now
+    await new Promise<void>((lockObtained) =>
+      navigator.locks
+        .request(
+          `shared-connection-${this.options.identifier}`,
+          {
+            signal: this.lockAbortController.signal
+          },
+          async () => {
+            lockObtained();
 
-        // Hold the lock while the shared connection is in use.
-        await new Promise<void>((freeLock) => {
-          // We can use the resolver to free the lock
-          this.releaseSharedConnectionLock = freeLock;
-        });
-      });
-    });
+            // Free the lock when the connection is already closed.
+            if (this.lockAbortController.signal.aborted) {
+              return;
+            }
+
+            // Hold the lock while the shared connection is in use.
+            await new Promise<void>((releaseLock) => {
+              // We can use the resolver to free the lock
+              this.releaseSharedConnectionLock = releaseLock;
+            });
+          }
+        )
+        // We aren't concerned with errors here
+        .catch(() => {})
+    );
+
     const newPort = await remote[Comlink.createEndpoint]();
     return { port: newPort, identifier };
   }
@@ -76,6 +96,8 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   }
 
   async close(): Promise<void> {
+    // Abort any pending lock requests.
+    this.lockAbortController.abort();
     this.releaseSharedConnectionLock?.();
     await this.baseConnection.close();
     this.options.remote[Comlink.releaseProxy]();
