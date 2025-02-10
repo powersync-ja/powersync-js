@@ -32,6 +32,7 @@
     "@powersync/common": "workspace:^1.18.1"
   },
   "devDependencies": {
+    "@powersync/common": "workspace:*",
     "@types/node": "^20.17.6",
     "@vitest/browser": "^3.0.5",
     "ts-loader": "^9.5.1",

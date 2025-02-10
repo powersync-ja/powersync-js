@@ -33,6 +33,7 @@
     "@powersync/common": "workspace:^1.21.0"
   },
   "devDependencies": {
+    "@powersync/common": "workspace:*",
     "flush-promises": "^1.0.2",
     "jsdom": "^24.0.0",
     "typescript": "^5.5.3",
