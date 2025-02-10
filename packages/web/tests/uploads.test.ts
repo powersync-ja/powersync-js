@@ -22,7 +22,7 @@ describe('CRUD Uploads', () => {
         }
       }
     });
-  });
+  }, 5_000);
 
   afterEach(async () => {
     connectedUtils?.remote.streamController?.close();
