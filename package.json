@@ -35,6 +35,10 @@
     "@pnpm/workspace.find-packages": "^4.0.2",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5",
+    "@vitest/browser": "^3.0.5",
+    "webdriverio": "^9.8.0"
   }
 }

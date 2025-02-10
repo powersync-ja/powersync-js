@@ -58,8 +58,6 @@
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
     "text-encoding": "^0.7.0",
-    "typescript": "^5.5.3",
-    "vitest": "3.0.5",
     "web-streams-polyfill": "3.2.1"
   }
 }
