@@ -16,6 +16,7 @@ describe('CRUD Uploads', () => {
     connectedUtils = await generateConnectedDatabase({
       powerSyncOptions: {
         logger,
+        retryDelayMs: 100,
         crudUploadThrottleMs: 1_000,
         flags: {
           enableMultiTabs: false
