@@ -134,8 +134,6 @@ export abstract class AbstractRemote {
 
     const userAgent = this.getUserAgent();
 
-    console.log('user agent is', userAgent);
-
     return {
       url: credentials.endpoint + path,
       headers: {
