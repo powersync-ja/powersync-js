@@ -2,7 +2,7 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side.*
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
 
 # PowerSync JavaScript SDKs
 
@@ -98,6 +98,15 @@ Build packages
 
 ```bash
 pnpm build:packages
+```
+
+## Tests
+
+Some packages use [Playwright](https://www.npmjs.com/package/playwright) for testing. Install Playwright dependencies with:
+
+```bash
+pnpm exec playwright install-deps
+pnpm exec playwright install
 ```
 
 ## Versioning
