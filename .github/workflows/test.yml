@@ -37,6 +37,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Configure Playwright
+        run: |
+            pnpm exec playwright install-deps
+            pnpm exec playwright install 
+
       - name: Install dependencies
         run: pnpm install
 

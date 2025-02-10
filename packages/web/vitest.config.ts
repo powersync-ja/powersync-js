@@ -40,11 +40,11 @@ const config: UserConfigExport = {
     include: ['tests/**/*.test.ts'],
     browser: {
       enabled: true,
-      provider: 'webdriverio',
+      provider: 'playwright',
       headless: true,
       instances: [
         {
-          browser: 'chrome'
+          browser: 'chromium'
         }
       ]
     }

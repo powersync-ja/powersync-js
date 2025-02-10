@@ -10,10 +10,10 @@ const config: UserConfigExport = {
     browser: {
       enabled: true,
       headless: true,
-      provider: 'webdriverio',
+      provider: 'playwright',
       instances: [
         {
-          browser: 'chrome'
+          browser: 'chromium'
         }
       ]
     }
