@@ -147,24 +147,32 @@ describe('Streaming', () => {
   });
 
   itWithGenerators('Should trigger upload connector when connected', async (createConnectedDatabase) => {
+    console.log('connecting');
     const { powersync, uploadSpy } = await createConnectedDatabase();
+    console.log('connected')
     expect(powersync.connected).toBe(true);
 
     // do something which should trigger an upload
     await powersync.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
+    console.log('executed a statement');
     // It should try and upload
     await vi.waitFor(
       () => {
         // to-have-been-called seems to not work after failing the first check
+        console.log('number of calls, ', uploadSpy.mock.calls.length)
         expect(uploadSpy.mock.calls.length).equals(1);
       },
       {
-        timeout: UPLOAD_TIMEOUT_MS
+        timeout: UPLOAD_TIMEOUT_MS,
+        interval: 500
       }
     );
 
+    console.log('disconnecting');
     await powersync.disconnectAndClear();
+    console.log('disconnected');
     await powersync.close();
+    console.log('closed');
   });
 
   itWithGenerators('Should retry failed uploads when connected', async (createConnectedDatabase) => {
@@ -193,7 +201,8 @@ describe('Streaming', () => {
         expect(uploadSpy.mock.calls.length).equals(throwCounter + 1);
       },
       {
-        timeout: UPLOAD_TIMEOUT_MS
+        timeout: UPLOAD_TIMEOUT_MS,
+        interval: 500
       }
     );
 
@@ -202,29 +211,41 @@ describe('Streaming', () => {
   });
 
   itWithGenerators('Should upload after reconnecting', async (createConnectedDatabase) => {
+    console.log('connecting');
     const { connect, powersync, uploadSpy } = await createConnectedDatabase();
+    console.log('connected');
     expect(powersync.connected).toBe(true);
 
+    console.log('disconnecting');
     await powersync.disconnect();
+    console.log('disconnected');
 
     // do something (offline) which should trigger an upload
     await powersync.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
 
+    console.log('connecting again');
     await connect();
+    console.log('done connecting');
 
     // It should try and upload
     await vi.waitFor(
       () => {
         // to-have-been-called seems to not work after failing a check
+        console.log('upload has been called times: ', uploadSpy.mock.calls.length)
         expect(uploadSpy.mock.calls.length).equals(1);
       },
       {
-        timeout: UPLOAD_TIMEOUT_MS
+        timeout: UPLOAD_TIMEOUT_MS,
+        interval: 500
       }
     );
 
+    console.log('cleanup');
+
     await powersync.disconnectAndClear();
     await powersync.close();
+    console.log('cleanup done');
+
   });
 
   itWithGenerators('Should update status when uploading', async (createConnectedDatabase) => {
@@ -253,7 +274,8 @@ describe('Streaming', () => {
         expect(powersync.currentStatus.dataFlowStatus.uploading).false;
       },
       {
-        timeout: UPLOAD_TIMEOUT_MS
+        timeout: UPLOAD_TIMEOUT_MS,
+        interval: 500
       }
     );
 
