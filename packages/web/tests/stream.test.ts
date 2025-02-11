@@ -12,7 +12,8 @@ export type GenerateConnectedDatabaseOptions = {
   powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
 };
 
-const UPLOAD_TIMEOUT_MS = 3000;
+// const UPLOAD_TIMEOUT_MS = 3000;
+const UPLOAD_TIMEOUT_MS = 30_000;
 
 export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = {
   powerSyncOptions: {
