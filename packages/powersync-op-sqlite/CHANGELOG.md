@@ -1,5 +1,17 @@
 # @powersync/op-sqlite
 
+## 0.4.0
+
+### Minor Changes
+
+- 56185bb: Default to using memory for temp store, and 50MB cache size.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
 ## 0.3.1
 
 ### Patch Changes
