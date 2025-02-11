@@ -218,7 +218,7 @@ describe(
       await vi.waitFor(
         () => {
           // to-have-been-called seems to not work after failing a check
-          console.log('the number of calls is ',uploadSpy.mock.calls.length);
+          console.log('the number of calls is ', uploadSpy.mock.calls.length);
           expect(uploadSpy.mock.calls.length).equals(throwCounter + 1);
         },
         {

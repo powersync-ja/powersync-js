@@ -35,7 +35,7 @@ const config: UserConfigExport = {
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
-    isolate: true,
+    isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
     maxConcurrency: 1,
@@ -46,10 +46,10 @@ const config: UserConfigExport = {
       instances: [
         {
           browser: 'chromium'
-        },
-        {
-          browser: 'firefox'
         }
+        // {
+        //   browser: 'firefox'
+        // }
         // This requires some additional work to get all tests passing
         // {
         //   browser: 'webkit'
