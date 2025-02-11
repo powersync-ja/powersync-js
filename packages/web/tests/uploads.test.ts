@@ -6,7 +6,7 @@ import { ConnectedDatabaseUtils, generateConnectedDatabase } from './stream.test
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
 
-describe('CRUD Uploads', () => {
+describe('CRUD Uploads', {sequential: true}, () => {
   let connectedUtils: ConnectedDatabaseUtils;
   const logger = Logger.get('crud-logger');
 
@@ -15,6 +15,7 @@ describe('CRUD Uploads', () => {
   beforeEach(async () => {
     connectedUtils = await generateConnectedDatabase({
       powerSyncOptions: {
+        dbFilename: 'crud-uploads-test.db',
         logger,
         retryDelayMs: 100,
         crudUploadThrottleMs: 1_000,
@@ -55,7 +56,8 @@ describe('CRUD Uploads', () => {
         expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).exist;
       },
       {
-        timeout: 500
+        timeout: 500,
+        interval: 100
       }
     );
   });
@@ -104,7 +106,8 @@ describe('CRUD Uploads', () => {
         expect(uploadSpy.mock.calls.length).eq(3);
       },
       {
-        timeout: 5_000
+        timeout: 5_000,
+        interval: 300
       }
     );
 

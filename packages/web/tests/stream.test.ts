@@ -91,7 +91,9 @@ export async function generateConnectedDatabase(
   };
 }
 
-describe('Streaming', () => {
+describe('Streaming', {
+  sequential: true
+}, () => {
   /**
    * Declares a test to be executed with different generated db functions
    */
@@ -111,7 +113,7 @@ describe('Streaming', () => {
       });
 
     it(`${name} - with web worker`, () => test(funcWithWebWorker));
-    it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+    it(`${name} - without web worker`,() => test(funcWithoutWebWorker));
   };
 
   beforeAll(() => Logger.useDefaults());
