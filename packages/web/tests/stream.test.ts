@@ -15,7 +15,7 @@ describe(
     /**
      * Declares a test to be executed with different generated db functions
      */
-    const itWithGenerators = async (
+    const itWithGenerators = (
       name: string,
       test: (createConnectedDatabase: () => ReturnType<typeof generateConnectedDatabase>) => Promise<void>
     ) => {
