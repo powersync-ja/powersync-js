@@ -187,7 +187,9 @@ describe(
     });
 
     itWithGenerators('Should retry failed uploads when connected', async (createConnectedDatabase) => {
+      console.log('connecting');
       connectionUtilities = await createConnectedDatabase();
+      console.log('connected');
       const { powersync, uploadSpy } = connectionUtilities;
 
       expect(powersync.connected).toBe(true);
@@ -199,18 +201,23 @@ describe(
         if (uploadCounter++ < throwCounter) {
           throw new Error('No uploads yet');
         }
+        console.log('allowing the upload');
         // Now actually do the upload
         const tx = await db.getNextCrudTransaction();
         await tx?.complete();
       });
 
+      console.log('creating an item');
       // do something which should trigger an upload
       await powersync.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
+
+      console.log('done creating an item');
 
       // It should try and upload
       await vi.waitFor(
         () => {
           // to-have-been-called seems to not work after failing a check
+          console.log('the number of calls is ',uploadSpy.mock.calls.length);
           expect(uploadSpy.mock.calls.length).equals(throwCounter + 1);
         },
         {
