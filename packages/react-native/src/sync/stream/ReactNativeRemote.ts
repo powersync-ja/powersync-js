@@ -9,6 +9,7 @@ import {
   FetchImplementation,
   FetchImplementationProvider,
   RemoteConnector,
+  SocketSyncStreamOptions,
   StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
@@ -56,7 +57,7 @@ export class ReactNativeRemote extends AbstractRemote {
     return BSON;
   }
 
-  async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     return super.socketStream(options);
   }
 

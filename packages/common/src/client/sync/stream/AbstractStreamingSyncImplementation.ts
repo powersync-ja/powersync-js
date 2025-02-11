@@ -7,9 +7,10 @@ import { throttleLeadingTrailing } from '../../../utils/throttle.js';
 import { BucketChecksum, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
-import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
+import { AbstractRemote, SyncStreamOptions, FetchStrategy } from './AbstractRemote.js';
 import {
   BucketRequest,
+  StreamingSyncLine,
   StreamingSyncRequestParameterType,
   isStreamingKeepalive,
   isStreamingSyncCheckpoint,
@@ -17,6 +18,7 @@ import {
   isStreamingSyncCheckpointDiff,
   isStreamingSyncData
 } from './streaming-sync-types.js';
+import { DataStream } from 'src/utils/DataStream.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -67,7 +69,7 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  */
 export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
- /** @internal */
+/** @internal */
 export interface BaseConnectionOptions {
   /**
    * The connection method to use when streaming updates from
@@ -77,12 +79,17 @@ export interface BaseConnectionOptions {
   connectionMethod?: SyncStreamConnectionMethod;
 
   /**
+   * The fetch strategy to use when streaming updates from the PowerSync backend instance.
+   */
+  fetchStrategy?: FetchStrategy;
+
+  /**
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
 }
 
- /** @internal */
+/** @internal */
 export interface AdditionalConnectionOptions {
   /**
    * Delay for retrying sync streaming operations
@@ -97,9 +104,8 @@ export interface AdditionalConnectionOptions {
   crudUploadThrottleMs?: number;
 }
 
-
 /** @internal */
-export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>
+export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>;
 
 export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
   /**
@@ -134,6 +140,7 @@ export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+  fetchStrategy: FetchStrategy.Buffered,
   params: {}
 };
 
@@ -496,10 +503,15 @@ The next upload iteration will be delayed.`);
           }
         };
 
-        const stream =
-          resolvedOptions?.connectionMethod == SyncStreamConnectionMethod.HTTP
-            ? await this.options.remote.postStream(syncOptions)
-            : await this.options.remote.socketStream(syncOptions);
+        let stream: DataStream<StreamingSyncLine>;
+        if (resolvedOptions?.connectionMethod == SyncStreamConnectionMethod.HTTP) {
+          stream = await this.options.remote.postStream(syncOptions);
+        } else {
+          stream = await this.options.remote.socketStream({
+            ...syncOptions,
+            ...{ fetchStrategy: resolvedOptions.fetchStrategy }
+          });
+        }
 
         this.logger.debug('Stream established. Processing events');
 
