@@ -1,12 +1,12 @@
 import Logger from 'js-logger';
 import p from 'p-defer';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConnectedDatabaseUtils, generateConnectedDatabase } from './stream.test';
+import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
 
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
 
-describe('CRUD Uploads', {sequential: true}, () => {
+describe('CRUD Uploads', { sequential: true }, () => {
   let connectedUtils: ConnectedDatabaseUtils;
   const logger = Logger.get('crud-logger');
 
