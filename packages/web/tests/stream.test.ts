@@ -103,6 +103,7 @@ describe('Streaming', () => {
     const funcWithoutWebWorker = () =>
       generateConnectedDatabase({
         powerSyncOptions: {
+          dbFilename: 'test-stream-connection-no-worker.db',
           flags: {
             useWebWorker: false
           }
