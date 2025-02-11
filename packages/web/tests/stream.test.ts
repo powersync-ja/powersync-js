@@ -30,8 +30,8 @@ describe(
           }
         });
 
-      it(`${name} - with web worker`, () => test(funcWithWebWorker));
-      it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+      it.sequential(`${name} - with web worker`, () => test(funcWithWebWorker));
+      it.sequential(`${name} - without web worker`, () => test(funcWithoutWebWorker));
     };
 
     beforeAll(() => Logger.useDefaults());
