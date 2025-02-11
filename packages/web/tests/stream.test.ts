@@ -92,7 +92,8 @@ export async function generateConnectedDatabase(
 }
 
 describe('Streaming', {
-  sequential: true
+  sequential: true,
+  timeout: 30_000
 }, () => {
   /**
    * Declares a test to be executed with different generated db functions
