@@ -3,7 +3,12 @@ import * as Comlink from 'comlink';
 import { resolveWebPowerSyncFlags } from '../../PowerSyncDatabase';
 import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { ResolvedWebSQLOpenOptions, TemporaryStorageOption, WebSQLFlags } from '../web-sql-flags';
+import {
+  DEFAULT_CACHE_SIZE_KB,
+  ResolvedWebSQLOpenOptions,
+  TemporaryStorageOption,
+  WebSQLFlags
+} from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './WASQLiteConnection';
 import { WASQLiteOpenFactory } from './WASQLiteOpenFactory';
@@ -27,6 +32,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
 
   vfs?: WASQLiteVFS;
   temporaryStorage?: TemporaryStorageOption;
+  cacheSizeKb?: number;
 
   /**
    * Encryption key for the database.
@@ -43,7 +49,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
     super({
       name: options.dbFilename,
       openConnection: async () => {
-        const { workerPort, temporaryStorage } = options;
+        const { workerPort, temporaryStorage, cacheSizeKb } = options;
         if (workerPort) {
           const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
           return new WorkerWrappedAsyncDatabaseConnection({
@@ -52,6 +58,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
             baseConnection: await remote({
               ...options,
               temporaryStorage: temporaryStorage ?? TemporaryStorageOption.MEMORY,
+              cacheSizeKb: cacheSizeKb ?? DEFAULT_CACHE_SIZE_KB,
               flags: resolveWebPowerSyncFlags(options.flags),
               encryptionKey: options.encryptionKey
             })
@@ -63,6 +70,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
           debugMode: options.debugMode,
           flags: options.flags,
           temporaryStorage,
+          cacheSizeKb,
           logger: options.logger,
           vfs: options.vfs,
           encryptionKey: options.encryptionKey,
