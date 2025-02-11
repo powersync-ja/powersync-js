@@ -256,6 +256,8 @@ describe('Streaming', {
     const { powersync, uploadSpy } = await createConnectedDatabase();
     expect(powersync.connected).toBe(true);
 
+    console.log('database connected');
+
     let uploadStartedPromise = new Promise<void>((resolve) => {
       uploadSpy.mockImplementation(async (db) => {
         resolve();
@@ -268,13 +270,17 @@ describe('Streaming', {
     // do something which should trigger an upload
     await powersync.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
 
+    console.log('created item');
     await uploadStartedPromise;
+    console.log('upload started');
+
     expect(powersync.currentStatus.dataFlowStatus.uploading).true;
 
     // Status should update after uploads are completed
     await vi.waitFor(
       () => {
         // to-have-been-called seems to not work after failing a check
+        console.log('upload status is', powersync.currentStatus.dataFlowStatus.uploading)
         expect(powersync.currentStatus.dataFlowStatus.uploading).false;
       },
       {
