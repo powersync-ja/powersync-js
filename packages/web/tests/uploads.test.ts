@@ -6,7 +6,7 @@ import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/gener
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
 
-describe('CRUD Uploads', { sequential: true }, () => {
+describe('CRUD Uploads', () => {
   let connectedUtils: ConnectedDatabaseUtils;
   const logger = Logger.get('crud-logger');
 
@@ -17,14 +17,13 @@ describe('CRUD Uploads', { sequential: true }, () => {
       powerSyncOptions: {
         dbFilename: 'crud-uploads-test.db',
         logger,
-        retryDelayMs: 100,
         crudUploadThrottleMs: 1_000,
         flags: {
           enableMultiTabs: false
         }
       }
     });
-  }, 5_000);
+  });
 
   afterEach(async () => {
     connectedUtils?.remote.streamController?.close();
