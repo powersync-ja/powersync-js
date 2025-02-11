@@ -35,9 +35,10 @@ const config: UserConfigExport = {
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
-    isolate: false,
+    isolate: true,
     globals: true,
     include: ['tests/**/*.test.ts'],
+    maxConcurrency: 1,
     browser: {
       enabled: true,
       provider: 'playwright',
