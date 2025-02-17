@@ -135,8 +135,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return completed;
   }
 
-  async syncLocalDatabase(checkpoint: Checkpoint): Promise<SyncLocalDatabaseResult> {
-    const r = await this.validateChecksums(checkpoint);
+  async syncLocalDatabase(checkpoint: Checkpoint, priority?: number): Promise<SyncLocalDatabaseResult> {
+    const r = await this.validateChecksums(checkpoint, priority);
     if (!r.checkpointValid) {
       this.logger.error('Checksums failed for', r.checkpointFailures);
       for (const b of r.checkpointFailures ?? []) {
@@ -157,7 +157,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       }
     });
 
-    const valid = await this.updateObjectsFromBuckets(checkpoint);
+    const valid = await this.updateObjectsFromBuckets(checkpoint, priority);
     if (!valid) {
       this.logger.debug('Not at a consistent checkpoint - cannot update local db');
       return { ready: false, checkpointValid: true };
@@ -176,18 +176,30 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
    *
    * This includes creating new tables, dropping old tables, and copying data over from the oplog.
    */
-  private async updateObjectsFromBuckets(checkpoint: Checkpoint) {
+  private async updateObjectsFromBuckets(checkpoint: Checkpoint, priority: number | undefined) {
+    let arg = '';
+    if (priority !== undefined) {
+      const affectedBuckets: string[] = [];
+      for (const desc of checkpoint.buckets) {
+        if (desc.priority <= priority) {
+          affectedBuckets.push(desc.bucket);
+        }
+      }
+
+      arg = JSON.stringify({priority, buckets: affectedBuckets});
+    }
+
     return this.writeTransaction(async (tx) => {
       const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
         'sync_local',
-        ''
+        arg,
       ]);
       return result == 1;
     });
   }
 
-  async validateChecksums(checkpoint: Checkpoint): Promise<SyncLocalDatabaseResult> {
-    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [JSON.stringify(checkpoint)]);
+  async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
+    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [JSON.stringify({...checkpoint, priority})]);
 
     const resultItem = rs.rows?.item(0);
     this.logger.debug('validateChecksums result item', resultItem);

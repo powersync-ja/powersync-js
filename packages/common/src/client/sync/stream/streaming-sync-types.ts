@@ -116,6 +116,13 @@ export interface StreamingSyncCheckpointComplete {
   };
 }
 
+export interface StreamingSyncCheckpointPartiallyComplete {
+  partial_checkpoint_complete: {
+    priority: number;
+    last_op_id: OpId;
+  };
+}
+
 export interface StreamingSyncKeepalive {
   /** If specified, token expires in this many seconds. */
   token_expires_in: number;
@@ -126,6 +133,7 @@ export type StreamingSyncLine =
   | StreamingSyncCheckpoint
   | StreamingSyncCheckpointDiff
   | StreamingSyncCheckpointComplete
+  | StreamingSyncCheckpointPartiallyComplete
   | StreamingSyncKeepalive;
 
 export interface BucketRequest {
@@ -151,6 +159,10 @@ export function isStreamingSyncCheckpoint(line: StreamingSyncLine): line is Stre
 
 export function isStreamingSyncCheckpointComplete(line: StreamingSyncLine): line is StreamingSyncCheckpointComplete {
   return (line as StreamingSyncCheckpointComplete).checkpoint_complete != null;
+}
+
+export function isStreamingSyncCheckpointPartiallyComplete(line: StreamingSyncLine): line is StreamingSyncCheckpointPartiallyComplete {
+  return (line as StreamingSyncCheckpointPartiallyComplete).partial_checkpoint_complete != null;
 }
 
 export function isStreamingSyncCheckpointDiff(line: StreamingSyncLine): line is StreamingSyncCheckpointDiff {
