@@ -1,8 +1,8 @@
-import { Schema, Table, column } from '@powersync/common';
+import { BucketChecksum, BucketDescription, Schema, Table, column } from '@powersync/common';
 import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import Logger from 'js-logger';
 import { v4 as uuid } from 'uuid';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './utils/MockStreamOpenFactory';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
@@ -72,13 +72,18 @@ export async function generateConnectedDatabase(
 
     await streamOpened;
 
-    remote.streamController?.enqueue(new TextEncoder().encode('{"token_expires_in":3426}\n'));
+    remote.enqueueLine({token_expires_in: 3426});
 
     // Wait for connected to be true
     await connectedPromise;
   };
 
   await connect();
+
+  onTestFinished(async () => {
+    await powersync.disconnectAndClear();
+    await powersync.close();
+  });
 
   return {
     connector,
@@ -113,7 +118,7 @@ describe('Streaming', () => {
     it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
   };
 
-  beforeAll(() => Logger.useDefaults());
+  beforeAll(() => Logger.useDefaults({defaultLevel: Logger.TRACE}));
 
   itWithGenerators('PowerSync reconnect on closed stream', async (createConnectedDatabase) => {
     const { powersync, waitForStream, remote } = await createConnectedDatabase();
@@ -125,9 +130,6 @@ describe('Streaming', () => {
 
     // A new stream should be requested
     await newStream;
-
-    await powersync.disconnectAndClear();
-    await powersync.close();
   });
 
   itWithGenerators('PowerSync reconnect multiple connect calls', async (createConnectedDatabase) => {
@@ -141,9 +143,6 @@ describe('Streaming', () => {
 
     // A new stream should be requested
     await newStream;
-
-    await powersync.disconnectAndClear();
-    await powersync.close();
   });
 
   itWithGenerators('Should trigger upload connector when connected', async (createConnectedDatabase) => {
@@ -162,9 +161,6 @@ describe('Streaming', () => {
         timeout: UPLOAD_TIMEOUT_MS
       }
     );
-
-    await powersync.disconnectAndClear();
-    await powersync.close();
   });
 
   itWithGenerators('Should retry failed uploads when connected', async (createConnectedDatabase) => {
@@ -196,9 +192,6 @@ describe('Streaming', () => {
         timeout: UPLOAD_TIMEOUT_MS
       }
     );
-
-    await powersync.disconnectAndClear();
-    await powersync.close();
   });
 
   itWithGenerators('Should upload after reconnecting', async (createConnectedDatabase) => {
@@ -222,9 +215,6 @@ describe('Streaming', () => {
         timeout: UPLOAD_TIMEOUT_MS
       }
     );
-
-    await powersync.disconnectAndClear();
-    await powersync.close();
   });
 
   itWithGenerators('Should update status when uploading', async (createConnectedDatabase) => {
@@ -256,8 +246,43 @@ describe('Streaming', () => {
         timeout: UPLOAD_TIMEOUT_MS
       }
     );
+  });
 
-    await powersync.disconnectAndClear();
-    await powersync.close();
+  describe('Partial', () => {
+    itWithGenerators('Should update sync state incrementally', async (createConnectedDatabase) => {
+      const { powersync, remote } = await createConnectedDatabase();
+      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
+
+      const buckets: BucketChecksum[] = [];
+      for (let prio = 0; prio <= 3; prio++) {
+        buckets.push({bucket: `prio${prio}`, priority: prio, checksum: 0});
+      }
+      remote.enqueueLine({
+        checkpoint: {
+          last_op_id: '0',
+          buckets,
+        },
+      });
+
+      // Emit partial sync complete for each priority but the last.
+      for (var prio = 0; prio < 3; prio++) {
+        expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
+
+        remote.enqueueLine({
+          partial_checkpoint_complete: {
+            last_op_id: '0',
+            priority: prio,
+          }
+        });
+
+        await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+          return status.statusForPriority(prio).hasSynced === true;
+        });
+      }
+
+      // Then, complete the sync.
+      remote.enqueueLine({checkpoint_complete: {last_op_id: '0'}});
+      await powersync.waitForFirstSync();
+    });
   });
 });

@@ -128,6 +128,11 @@ export class SharedSyncImplementation
     return this.syncStreamClient!.waitForStatus(status);
   }
 
+  async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
+    await this.waitForReady();
+    return this.syncStreamClient!.waitUntilStatusMatches(predicate);
+  }
+
   get lastSyncedAt(): Date | undefined {
     return this.syncStreamClient?.lastSyncedAt;
   }

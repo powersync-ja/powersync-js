@@ -66,7 +66,10 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   getBucketStates(): Promise<BucketState[]>;
 
-  syncLocalDatabase(checkpoint: Checkpoint, priority?: number): Promise<{ checkpointValid: boolean; ready: boolean; failures?: any[] }>;
+  syncLocalDatabase(
+    checkpoint: Checkpoint,
+    priority?: number
+  ): Promise<{ checkpointValid: boolean; ready: boolean; failures?: any[] }>;
 
   nextCrudItem(): Promise<CrudEntry | undefined>;
   hasCrud(): Promise<boolean>;

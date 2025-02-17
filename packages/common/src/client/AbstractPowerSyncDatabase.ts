@@ -260,16 +260,30 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Wait for the first sync operation to complete.
+   *
+   * @argument request Either an abort signal (after which the promise will complete regardless of
+   * whether a full sync was completed) or an object providing an abort signal and a priority target.
+   * When a priority target is set, the promise may complete when all buckets with the given (or higher)
+   * priorities have been synchronized. This can be earlier than a complete sync.
    * @returns A promise which will resolve once the first full sync has completed.
    */
-  async waitForFirstSync(signal?: AbortSignal): Promise<void> {
-    if (this.currentStatus.hasSynced) {
+  async waitForFirstSync(request?: AbortSignal | { signal?: AbortSignal; priority?: number }): Promise<void> {
+    const signal = request instanceof AbortSignal ? request : request?.signal;
+    const priority = request && 'priority' in request ? request.priority : undefined;
+
+    const statusMatches =
+      priority === undefined
+        ? (status: SyncStatus) => status.hasSynced
+        : (status: SyncStatus) => status.statusForPriority(priority).hasSynced;
+
+    if (statusMatches(this.currentStatus)) {
       return;
     }
     return new Promise((resolve) => {
       const dispose = this.registerListener({
         statusChanged: (status) => {
-          if (status.hasSynced) {
+          if (statusMatches(status)) {
             dispose();
             resolve();
           }
@@ -379,7 +393,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
   resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
     return {
-      retryDelayMs: options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
+      retryDelayMs:
+        options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
       crudUploadThrottleMs:
         options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS
     };
@@ -401,7 +416,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
       retryDelayMs,
-      crudUploadThrottleMs,
+      crudUploadThrottleMs
     });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {

@@ -126,6 +126,7 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
   waitForStatus(status: SyncStatusOptions): Promise<void>;
+  waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
@@ -184,24 +185,35 @@ export abstract class AbstractStreamingSyncImplementation
   async waitForReady() {}
 
   waitForStatus(status: SyncStatusOptions): Promise<void> {
+    return this.waitUntilStatusMatches((currentStatus) => {
+      /**
+       * Match only the partial status options provided in the
+       * matching status
+       */
+      const matchPartialObject = (compA: object, compB: object) => {
+        return Object.entries(compA).every(([key, value]) => {
+          const comparisonBValue = compB[key];
+          if (typeof value == 'object' && typeof comparisonBValue == 'object') {
+            return matchPartialObject(value, comparisonBValue);
+          }
+          return value == comparisonBValue;
+        });
+      };
+
+      return matchPartialObject(status, currentStatus);
+    });
+  }
+
+  waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
     return new Promise((resolve) => {
+      if (predicate(this.syncStatus)) {
+        resolve();
+        return;
+      }
+
       const l = this.registerListener({
         statusChanged: (updatedStatus) => {
-          /**
-           * Match only the partial status options provided in the
-           * matching status
-           */
-          const matchPartialObject = (compA: object, compB: object) => {
-            return Object.entries(compA).every(([key, value]) => {
-              const comparisonBValue = compB[key];
-              if (typeof value == 'object' && typeof comparisonBValue == 'object') {
-                return matchPartialObject(value, comparisonBValue);
-              }
-              return value == comparisonBValue;
-            });
-          };
-
-          if (matchPartialObject(status, updatedStatus.toJSON())) {
+          if (predicate(updatedStatus)) {
             resolve();
             l?.();
           }
@@ -524,6 +536,7 @@ The next upload iteration will be delayed.`);
             // The stream has closed while waiting
             return { retry: true };
           }
+
           // A connection is active and messages are being received
           if (!this.syncStatus.connected) {
             // There is a connection now
@@ -538,7 +551,7 @@ The next upload iteration will be delayed.`);
             const bucketsToDelete = new Set<string>(bucketMap.keys());
             const newBuckets = new Map<string, BucketDescription>();
             for (const checksum of line.checkpoint.buckets) {
-              newBuckets.set(checksum.bucket, { name: checksum.bucket, priority: checksum.priority })
+              newBuckets.set(checksum.bucket, { name: checksum.bucket, priority: checksum.priority });
               bucketsToDelete.delete(checksum.bucket);
             }
             if (bucketsToDelete.size > 0) {
@@ -567,14 +580,14 @@ The next upload iteration will be delayed.`);
                 lastSyncedAt: new Date(),
                 dataFlow: {
                   downloading: false
-                },
+                }
               });
             }
 
             validatedCheckpoint = targetCheckpoint;
           } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
-            this.logger.debug('Partial checkpoint complete', targetCheckpoint);
             const priority = line.partial_checkpoint_complete.priority;
+            this.logger.debug('Partial checkpoint complete', priority);
             const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!, priority);
             if (!result.checkpointValid) {
               // This means checksums failed. Start again with a new checkpoint.
@@ -592,16 +605,12 @@ The next upload iteration will be delayed.`);
               priorityStates.push({
                 priority,
                 lastSyncedAt: new Date(),
-                hasSynced: true,
+                hasSynced: true
               });
 
               this.updateSyncStatus({
                 connected: true,
-                lastSyncedAt: new Date(),
-                statusInPriority: priorityStates,
-                dataFlow: {
-                  downloading: false
-                },
+                statusInPriority: priorityStates
               });
             }
           } else if (isStreamingSyncCheckpointDiff(line)) {
@@ -628,10 +637,13 @@ The next upload iteration will be delayed.`);
             };
             targetCheckpoint = newCheckpoint;
 
-            bucketMap = new Map(newBuckets.entries().map(([name, checksum]) => [name, {
-              name: checksum.bucket,
-              priority: checksum.priority,
-            }]));
+            bucketMap = new Map();
+            newBuckets.forEach((checksum, name) =>
+              bucketMap.set(name, {
+                name: checksum.bucket,
+                priority: checksum.priority
+              })
+            );
 
             const bucketsToDelete = diff.removed_buckets;
             if (bucketsToDelete.length > 0) {
@@ -667,7 +679,7 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                statusInPriority: [],
+                statusInPriority: []
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -709,7 +721,7 @@ The next upload iteration will be delayed.`);
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      statusInPriority: options.statusInPriority,
+      statusInPriority: options.statusInPriority ?? this.syncStatus.statusInPriority
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {

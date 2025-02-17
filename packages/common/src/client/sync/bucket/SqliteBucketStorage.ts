@@ -186,20 +186,22 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         }
       }
 
-      arg = JSON.stringify({priority, buckets: affectedBuckets});
+      arg = JSON.stringify({ priority, buckets: affectedBuckets });
     }
 
     return this.writeTransaction(async (tx) => {
       const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
         'sync_local',
-        arg,
+        arg
       ]);
       return result == 1;
     });
   }
 
   async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
-    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [JSON.stringify({...checkpoint, priority})]);
+    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [
+      JSON.stringify({ ...checkpoint, priority })
+    ]);
 
     const resultItem = rs.rows?.item(0);
     this.logger.debug('validateChecksums result item', resultItem);

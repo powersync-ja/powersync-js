@@ -161,7 +161,9 @@ export function isStreamingSyncCheckpointComplete(line: StreamingSyncLine): line
   return (line as StreamingSyncCheckpointComplete).checkpoint_complete != null;
 }
 
-export function isStreamingSyncCheckpointPartiallyComplete(line: StreamingSyncLine): line is StreamingSyncCheckpointPartiallyComplete {
+export function isStreamingSyncCheckpointPartiallyComplete(
+  line: StreamingSyncLine
+): line is StreamingSyncCheckpointPartiallyComplete {
   return (line as StreamingSyncCheckpointPartiallyComplete).partial_checkpoint_complete != null;
 }
 
