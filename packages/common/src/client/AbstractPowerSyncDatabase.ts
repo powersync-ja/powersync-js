@@ -9,7 +9,7 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
-import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
@@ -343,14 +343,31 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected async updateHasSynced() {
-    const result = await this.database.get<{ synced_at: string | null }>(
-      'SELECT powersync_last_synced_at() as synced_at'
+    const result = await this.database.getAll<{ priority: number; last_synced_at: string }>(
+      'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
-    const hasSynced = result.synced_at != null;
-    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
+    let lastCompleteSync: Date | undefined;
+    const priorityStatus: SyncPriorityStatus[] = [];
 
-    if (hasSynced != this.currentStatus.hasSynced) {
-      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
+    for (const { priority, last_synced_at } of result) {
+      const parsedDate = new Date(last_synced_at + 'Z');
+
+      if (priority === 2147483647) {
+        // This lowest-possible priority represents a complete sync.
+        lastCompleteSync = parsedDate;
+      } else {
+        priorityStatus.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+      }
+    }
+
+    const hasSynced = lastCompleteSync != null;
+    if (hasSynced != this.currentStatus.hasSynced || priorityStatus != this.currentStatus.statusInPriority) {
+      this.currentStatus = new SyncStatus({
+        ...this.currentStatus.toJSON(),
+        hasSynced,
+        lastSyncedAt: lastCompleteSync,
+        statusInPriority: priorityStatus
+      });
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }
