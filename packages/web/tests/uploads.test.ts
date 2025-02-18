@@ -18,7 +18,7 @@ describe('CRUD Uploads', () => {
         logger,
         crudUploadThrottleMs: 1_000,
         flags: {
-          enableMultiTabs: false
+          enableMultiTabs: false,
         }
       }
     });
@@ -26,8 +26,6 @@ describe('CRUD Uploads', () => {
 
   afterEach(async () => {
     connectedUtils.remote.streamController?.close();
-    await connectedUtils.powersync.disconnectAndClear();
-    await connectedUtils.powersync.close();
   });
 
   it('should warn for missing upload operations in uploadData', async () => {
