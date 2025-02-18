@@ -199,8 +199,15 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
+    if (priority !== undefined) {
+      // Only validate the buckets within the priority we care about
+      const newBuckets = [...checkpoint.buckets];
+      newBuckets.filter((cs) => cs.priority <= priority);
+      checkpoint = {...checkpoint, buckets: newBuckets};
+    }
+
     const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [
-      JSON.stringify({ ...checkpoint, priority })
+      JSON.stringify({ ...checkpoint })
     ]);
 
     const resultItem = rs.rows?.item(0);
