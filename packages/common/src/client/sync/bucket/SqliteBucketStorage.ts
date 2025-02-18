@@ -145,14 +145,18 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       return { ready: false, checkpointValid: false, checkpointFailures: r.checkpointFailures };
     }
 
-    const bucketNames = checkpoint.buckets.map((b) => b.bucket);
+    const buckets = checkpoint.buckets;
+    if (priority !== undefined) {
+      buckets.filter((b) => b.priority <= priority);
+    }
+    const bucketNames = buckets.map((b) => b.bucket);
     await this.writeTransaction(async (tx) => {
       await tx.execute(`UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`, [
         checkpoint.last_op_id,
         JSON.stringify(bucketNames)
       ]);
 
-      if (checkpoint.write_checkpoint) {
+      if (priority == null && checkpoint.write_checkpoint) {
         await tx.execute("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
       }
     });
