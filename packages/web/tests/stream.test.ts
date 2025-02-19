@@ -165,6 +165,73 @@ describe('Streaming', () => {
 
       const buckets: BucketChecksum[] = [];
       for (let prio = 0; prio <= 3; prio++) {
+        buckets.push({bucket: `prio${prio}`, priority: prio, checksum: 10 + prio});
+      }
+      remote.enqueueLine({
+        checkpoint: {
+          last_op_id: '4',
+          buckets,
+        },
+      });
+
+      let operationId = 1;
+      const addRow = (prio: number) => {
+        remote.enqueueLine({
+          data: {
+            bucket: `prio${prio}`,
+            data: [{
+              checksum: prio + 10,
+              data: JSON.stringify({'name': 'row'}),
+              op: 'PUT',
+              op_id: (operationId++).toString(),
+              object_id: `prio${prio}`,
+              object_type: 'users'
+            }]
+          },
+        });
+      }
+
+      const syncCompleted = vi.fn();
+      powersync.waitForFirstSync().then(syncCompleted);
+
+      // Emit partial sync complete for each priority but the last.
+      for (var prio = 0; prio < 3; prio++) {
+        const partialSyncCompleted = vi.fn();
+        powersync.waitForFirstSync({priority: prio}).then(partialSyncCompleted);
+        expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
+        expect(partialSyncCompleted).not.toHaveBeenCalled();
+        expect(syncCompleted).not.toHaveBeenCalled();
+
+        addRow(prio);
+        remote.enqueueLine({
+          partial_checkpoint_complete: {
+            last_op_id: operationId.toString(),
+            priority: prio,
+          }
+        });
+
+        await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+          return status.statusForPriority(prio).hasSynced === true;
+        });
+        await new Promise(r => setTimeout(r));
+        expect(partialSyncCompleted).toHaveBeenCalledOnce();
+
+        expect(await powersync.getAll('select * from users')).toHaveLength(prio + 1);
+      }
+
+      // Then, complete the sync.
+      addRow(3);
+      remote.enqueueLine({checkpoint_complete: {last_op_id: operationId.toString()}});
+      await vi.waitFor(() => expect(syncCompleted).toHaveBeenCalledOnce(), 500);
+      expect(await powersync.getAll('select * from users')).toHaveLength(4);
+    });
+
+    itWithGenerators('Should remember sync state', async (createConnectedDatabase) => {
+      const { powersync, remote, openAnother } = await createConnectedDatabase();
+      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
+
+      const buckets: BucketChecksum[] = [];
+      for (let prio = 0; prio <= 3; prio++) {
         buckets.push({bucket: `prio${prio}`, priority: prio, checksum: 0});
       }
       remote.enqueueLine({
@@ -173,26 +240,25 @@ describe('Streaming', () => {
           buckets,
         },
       });
+      remote.enqueueLine({
+        partial_checkpoint_complete: {
+          last_op_id: '0',
+          priority: 0,
+        }
+      });
 
-      // Emit partial sync complete for each priority but the last.
-      for (var prio = 0; prio < 3; prio++) {
-        expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
+      await powersync.waitForFirstSync({priority: 0});
 
-        remote.enqueueLine({
-          partial_checkpoint_complete: {
-            last_op_id: '0',
-            priority: prio,
-          }
-        });
+      // Open another database instance.
+      const another = openAnother();
+      onTestFinished(async () => {
+        await another.close();
+      });
+      await another.init();
 
-        await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
-          return status.statusForPriority(prio).hasSynced === true;
-        });
-      }
-
-      // Then, complete the sync.
-      remote.enqueueLine({checkpoint_complete: {last_op_id: '0'}});
-      await powersync.waitForFirstSync();
+      expect(another.currentStatus.statusInPriority).toHaveLength(1);
+      expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
+      await another.waitForFirstSync({priority: 0});
     });
   });
 });

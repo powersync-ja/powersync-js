@@ -51,7 +51,9 @@ export async function generateConnectedDatabase(
     },
     remote
   );
-  const powersync = factory.getInstance();
+
+  const openAnother = factory.getInstance.bind(factory);
+  const powersync = openAnother();
 
   const waitForStream = () =>
     new Promise<void>((resolve) => {
@@ -75,6 +77,7 @@ export async function generateConnectedDatabase(
     await connectedPromise;
   };
 
+
   await connect();
 
   onTestFinished(async () => {
@@ -89,6 +92,7 @@ export async function generateConnectedDatabase(
     powersync,
     remote,
     uploadSpy,
-    waitForStream
+    waitForStream,
+    openAnother,
   };
 }

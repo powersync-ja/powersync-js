@@ -205,8 +205,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
     if (priority !== undefined) {
       // Only validate the buckets within the priority we care about
-      const newBuckets = [...checkpoint.buckets];
-      newBuckets.filter((cs) => cs.priority <= priority);
+      const newBuckets = checkpoint.buckets.filter((cs) => cs.priority <= priority);
       checkpoint = {...checkpoint, buckets: newBuckets};
     }
 
@@ -215,7 +214,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     ]);
 
     const resultItem = rs.rows?.item(0);
-    this.logger.debug('validateChecksums result item', resultItem);
+    this.logger.debug('validateChecksums priority, checkpoint, result item', priority, checkpoint, resultItem);
     if (!resultItem) {
       return {
         checkpointValid: false,
