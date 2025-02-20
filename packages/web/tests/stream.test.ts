@@ -119,7 +119,7 @@ describe(
       const throwCounter = 2;
       uploadSpy.mockImplementation(async (db) => {
         if (uploadCounter++ < throwCounter) {
-          throw new Error(`${new Date()} No uploads yet`);
+          throw new Error(`No uploads yet`);
         }
         // Now actually do the upload
         const tx = await db.getNextCrudTransaction();
