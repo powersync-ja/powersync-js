@@ -1,8 +1,8 @@
+import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
-import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -30,14 +30,20 @@ describe(
           }
         });
 
-      it(`${name} - with web worker`, () => test(funcWithWebWorker));
-      it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
-      it(`${name} - with OPFS`, () => test(() => generateConnectedDatabase({ powerSyncOptions: {
-        database: new WASQLiteOpenFactory({
-          dbFilename: 'test-stream-connection-opfs.db',
-          vfs: WASQLiteVFS.OPFSCoopSyncVFS
-        })
-      }})));
+      it.sequential(`${name} - with web worker`, () => test(funcWithWebWorker));
+      it.sequential(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+      it.sequential(`${name} - with OPFS`, () =>
+        test(() =>
+          generateConnectedDatabase({
+            powerSyncOptions: {
+              database: new WASQLiteOpenFactory({
+                dbFilename: 'test-stream-connection-opfs.db',
+                vfs: WASQLiteVFS.OPFSCoopSyncVFS
+              })
+            }
+          })
+        )
+      );
     };
 
     beforeAll(() => Logger.useDefaults());
