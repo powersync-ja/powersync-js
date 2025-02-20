@@ -71,7 +71,10 @@ export type WrappedSyncPort = {
 /**
  * @internal
  */
-export type RemoteOperationAbortController = { controller: AbortController; activePort: WrappedSyncPort };
+export type RemoteOperationAbortController = {
+  controller: AbortController;
+  activePort: WrappedSyncPort;
+};
 
 /**
  * @internal
