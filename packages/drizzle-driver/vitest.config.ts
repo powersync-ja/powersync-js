@@ -1,5 +1,5 @@
-import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
@@ -20,8 +20,12 @@ const config: UserConfigExport = {
     browser: {
       enabled: true,
       headless: true,
-      provider: 'webdriverio',
-      name: 'chrome' // browser name is required
+      provider: 'playwright',
+      instances: [
+        {
+          browser: 'chromium'
+        }
+      ]
     }
   }
 };
