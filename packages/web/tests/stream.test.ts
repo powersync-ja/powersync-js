@@ -1,3 +1,4 @@
+import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
@@ -21,6 +22,17 @@ describe('Streaming', { sequential: true }, () => {
 
     it(`${name} - with web worker`, () => test(funcWithWebWorker));
     it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+    it(`${name} - with OPFS`, () =>
+      test(() =>
+        generateConnectedDatabase({
+          powerSyncOptions: {
+            database: new WASQLiteOpenFactory({
+              dbFilename: 'test-stream-connection-opfs.db',
+              vfs: WASQLiteVFS.OPFSCoopSyncVFS
+            })
+          }
+        })
+      ));
   };
 
   beforeAll(() => Logger.useDefaults());
