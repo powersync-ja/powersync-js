@@ -209,7 +209,10 @@ export class SharedSyncImplementation
    * Adds a new client tab's message port to the list of connected ports
    */
   addPort(port: MessagePort) {
-    const portProvider = { port, clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port) };
+    const portProvider = {
+      port,
+      clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
+    };
     this.ports.push(portProvider);
 
     // Give the newly connected client the latest status
@@ -296,7 +299,10 @@ export class SharedSyncImplementation
           const lastPort = this.ports[this.ports.length - 1];
           return new Promise(async (resolve, reject) => {
             const abortController = new AbortController();
-            this.fetchCredentialsController = { controller: abortController, activePort: lastPort };
+            this.fetchCredentialsController = {
+              controller: abortController,
+              activePort: lastPort
+            };
 
             abortController.signal.onabort = reject;
             try {
@@ -315,7 +321,10 @@ export class SharedSyncImplementation
 
         return new Promise(async (resolve, reject) => {
           const abortController = new AbortController();
-          this.uploadDataController = { controller: abortController, activePort: lastPort };
+          this.uploadDataController = {
+            controller: abortController,
+            activePort: lastPort
+          };
 
           // Resolving will make it retry
           abortController.signal.onabort = () => resolve();
@@ -347,7 +356,11 @@ export class SharedSyncImplementation
     const locked = new LockedAsyncDatabaseAdapter({
       name: identifier,
       openConnection: async () => {
-        return new WorkerWrappedAsyncDatabaseConnection({ remote, baseConnection: db, identifier });
+        return new WorkerWrappedAsyncDatabaseConnection({
+          remote,
+          baseConnection: db,
+          identifier
+        });
       },
       logger: this.logger
     });
