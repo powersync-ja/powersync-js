@@ -1,5 +1,6 @@
 import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
+import { v4 as uuid } from 'uuid';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
@@ -19,11 +20,16 @@ describe(
       name: string,
       test: (createConnectedDatabase: () => ReturnType<typeof generateConnectedDatabase>) => Promise<void>
     ) => {
-      const funcWithWebWorker = generateConnectedDatabase;
+      const funcWithWebWorker = () =>
+        generateConnectedDatabase({
+          powerSyncOptions: {
+            dbFilename: `test-stream-connection-worker-${uuid()}.db`
+          }
+        });
       const funcWithoutWebWorker = () =>
         generateConnectedDatabase({
           powerSyncOptions: {
-            dbFilename: 'test-stream-connection-no-worker.db',
+            dbFilename: `test-stream-connection-no-worker-${uuid()}.db`,
             flags: {
               useWebWorker: false
             }
@@ -37,7 +43,7 @@ describe(
           generateConnectedDatabase({
             powerSyncOptions: {
               database: new WASQLiteOpenFactory({
-                dbFilename: 'test-stream-connection-opfs.db',
+                dbFilename: `test-stream-connection-opfs-${uuid()}.db`,
                 vfs: WASQLiteVFS.OPFSCoopSyncVFS
               })
             }
