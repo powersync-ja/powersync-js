@@ -1,5 +1,5 @@
 import { Schema, Table, column } from '@powersync/common';
-import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
+import { WASQLiteOpenFactory, WASQLiteVFS, WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import Logger from 'js-logger';
 import { v4 as uuid } from 'uuid';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -8,24 +8,17 @@ import { MockRemote, MockStreamOpenFactory, TestConnector } from './utils/MockSt
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 export type ConnectedDatabaseUtils = UnwrapPromise<ReturnType<typeof generateConnectedDatabase>>;
-export type GenerateConnectedDatabaseOptions = {
-  powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
-};
+export type GenerateConnectedDatabaseOptions = { powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions> };
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
 export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = {
   powerSyncOptions: {
     dbFilename: 'test-stream-connection.db',
-    flags: {
-      enableMultiTabs: false,
-      useWebWorker: true
-    },
+    flags: { enableMultiTabs: false, useWebWorker: true },
     // Makes tests faster
     crudUploadThrottleMs: 0,
-    schema: new Schema({
-      users: new Table({ name: column.text })
-    })
+    schema: new Schema({ users: new Table({ name: column.text }) })
   }
 };
 
@@ -47,10 +40,7 @@ export async function generateConnectedDatabase(
     {
       ...defaultPowerSyncOptions,
       ...powerSyncOptions,
-      flags: {
-        ...(defaultPowerSyncOptions.flags ?? {}),
-        ...(powerSyncOptions.flags ?? {})
-      }
+      flags: { ...(defaultPowerSyncOptions.flags ?? {}), ...(powerSyncOptions.flags ?? {}) }
     },
     remote
   );
@@ -80,15 +70,7 @@ export async function generateConnectedDatabase(
 
   await connect();
 
-  return {
-    connector,
-    connect,
-    factory,
-    powersync,
-    remote,
-    uploadSpy,
-    waitForStream
-  };
+  return { connector, connect, factory, powersync, remote, uploadSpy, waitForStream };
 }
 
 describe('Streaming', () => {
@@ -101,16 +83,21 @@ describe('Streaming', () => {
   ) => {
     const funcWithWebWorker = generateConnectedDatabase;
     const funcWithoutWebWorker = () =>
-      generateConnectedDatabase({
-        powerSyncOptions: {
-          flags: {
-            useWebWorker: false
-          }
-        }
-      });
+      generateConnectedDatabase({ powerSyncOptions: { flags: { useWebWorker: false } } });
 
-    it(`${name} - with web worker`, () => test(funcWithWebWorker));
-    it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+    it(`${name} - with web worker (IndexDB)`, () => test(funcWithWebWorker));
+    it(`${name} - with OPFS`, () =>
+      test(() =>
+        generateConnectedDatabase({
+          powerSyncOptions: {
+            database: new WASQLiteOpenFactory({
+              dbFilename: 'test-stream-connection.db',
+              vfs: WASQLiteVFS.OPFSCoopSyncVFS
+            })
+          }
+        })
+      ));
+    it(`${name} - without web worker (IndexDB)`, () => test(funcWithoutWebWorker));
   };
 
   beforeAll(() => Logger.useDefaults());
@@ -158,9 +145,7 @@ describe('Streaming', () => {
         // to-have-been-called seems to not work after failing the first check
         expect(uploadSpy.mock.calls.length).equals(1);
       },
-      {
-        timeout: UPLOAD_TIMEOUT_MS
-      }
+      { timeout: UPLOAD_TIMEOUT_MS }
     );
 
     await powersync.disconnectAndClear();
@@ -192,9 +177,7 @@ describe('Streaming', () => {
         // to-have-been-called seems to not work after failing a check
         expect(uploadSpy.mock.calls.length).equals(throwCounter + 1);
       },
-      {
-        timeout: UPLOAD_TIMEOUT_MS
-      }
+      { timeout: UPLOAD_TIMEOUT_MS }
     );
 
     await powersync.disconnectAndClear();
@@ -218,9 +201,7 @@ describe('Streaming', () => {
         // to-have-been-called seems to not work after failing a check
         expect(uploadSpy.mock.calls.length).equals(1);
       },
-      {
-        timeout: UPLOAD_TIMEOUT_MS
-      }
+      { timeout: UPLOAD_TIMEOUT_MS }
     );
 
     await powersync.disconnectAndClear();
@@ -252,9 +233,7 @@ describe('Streaming', () => {
         // to-have-been-called seems to not work after failing a check
         expect(powersync.currentStatus.dataFlowStatus.uploading).false;
       },
-      {
-        timeout: UPLOAD_TIMEOUT_MS
-      }
+      { timeout: UPLOAD_TIMEOUT_MS }
     );
 
     await powersync.disconnectAndClear();
