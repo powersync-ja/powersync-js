@@ -1,6 +1,5 @@
 import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
-import { v4 as uuid } from 'uuid';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
@@ -23,13 +22,13 @@ describe(
       const funcWithWebWorker = () =>
         generateConnectedDatabase({
           powerSyncOptions: {
-            dbFilename: `test-stream-connection-worker-${uuid()}.db`
+            dbFilename: `test-stream-connection-worker.db`
           }
         });
       const funcWithoutWebWorker = () =>
         generateConnectedDatabase({
           powerSyncOptions: {
-            dbFilename: `test-stream-connection-no-worker-${uuid()}.db`,
+            dbFilename: `test-stream-connection-no-worker.db`,
             flags: {
               useWebWorker: false
             }
@@ -43,7 +42,7 @@ describe(
           generateConnectedDatabase({
             powerSyncOptions: {
               database: new WASQLiteOpenFactory({
-                dbFilename: `test-stream-connection-opfs-${uuid()}.db`,
+                dbFilename: `test-stream-connection-opfs.db`,
                 vfs: WASQLiteVFS.OPFSCoopSyncVFS
               })
             }
@@ -120,7 +119,7 @@ describe(
       const throwCounter = 2;
       uploadSpy.mockImplementation(async (db) => {
         if (uploadCounter++ < throwCounter) {
-          throw new Error('No uploads yet');
+          throw new Error(`${new Date()} No uploads yet`);
         }
         // Now actually do the upload
         const tx = await db.getNextCrudTransaction();
