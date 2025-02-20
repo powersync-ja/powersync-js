@@ -24,7 +24,7 @@ describe('useQuery', () => {
 
     const [{ data, isLoading, isFetching, error }] = withSetup(() => useQuery('SELECT * from lists'));
 
-    expect(error.value).toEqual(Error('PowerSync not configured.'));
+    expect(error.value?.message).toEqual('PowerSync not configured.');
     expect(isFetching.value).toEqual(false);
     expect(isLoading.value).toEqual(false);
     expect(data.value).toEqual([]);
@@ -110,7 +110,7 @@ describe('useQuery', () => {
     const [{ error }] = withSetup(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }));
     await flushPromises();
 
-    expect(error.value).toEqual(Error('PowerSync failed to fetch data: some error'));
+    expect(error.value?.message).toEqual('PowerSync failed to fetch data: some error');
   });
 
   it('should set error when error occurs', async () => {
@@ -125,7 +125,7 @@ describe('useQuery', () => {
     const [{ error }] = withSetup(() => useQuery('SELECT * from lists', []));
     await flushPromises();
 
-    expect(error.value).toEqual(Error('PowerSync failed to fetch data: some error'));
+    expect(error.value?.message).toEqual('PowerSync failed to fetch data: some error');
   });
 
   it('should accept compilable queries', async () => {
@@ -163,8 +163,8 @@ describe('useQuery', () => {
       useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }, ['x'])
     );
 
-    expect(error.value).toEqual(
-      Error('PowerSync failed to fetch data: You cannot pass parameters to a compiled query.')
+    expect(error.value?.message).toEqual(
+      'PowerSync failed to fetch data: You cannot pass parameters to a compiled query.'
     );
   });
 });

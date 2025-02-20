@@ -62,7 +62,6 @@
     "react-native-fetch-api": "^3.0.0",
     "rollup": "4.14.3",
     "text-encoding": "^0.7.0",
-    "typescript": "^5.5.3",
     "web-streams-polyfill": "3.2.1"
   },
   "keywords": [

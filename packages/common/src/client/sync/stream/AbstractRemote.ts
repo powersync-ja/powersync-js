@@ -5,19 +5,20 @@ import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
+import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
 
-import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
-
 export type BSONImplementation = typeof BSON;
 
-const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
+
+const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
+const POWERSYNC_JS_VERSION = PACKAGE.version;
 
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;

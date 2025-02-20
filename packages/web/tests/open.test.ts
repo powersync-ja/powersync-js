@@ -5,7 +5,7 @@ import {
   WASQLiteOpenFactory,
   WASQLitePowerSyncDatabaseOpenFactory
 } from '@powersync/web';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { testSchema } from './utils/testDb';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
@@ -17,9 +17,9 @@ export const basicTest = async (db: AbstractPowerSyncDatabase) => {
   await db.close();
 };
 
-describe('Open Methods', () => {
-  let originalSharedWorker: typeof SharedWorker;
-  let originalWorker: typeof Worker;
+const proxyWorkers = () => {
+  const originalSharedWorker = SharedWorker;
+  const originalWorker = Worker;
 
   const sharedWorkerProxyHandler = {
     construct(target: typeof SharedWorker, args: any[]) {
@@ -40,22 +40,29 @@ describe('Open Methods', () => {
     }
   };
 
-  beforeAll(() => {
-    // Store the original SharedWorker constructor
-    originalSharedWorker = SharedWorker;
-    originalWorker = Worker;
+  window.SharedWorker = new Proxy(SharedWorker, sharedWorkerProxyHandler);
+  window.Worker = new Proxy(Worker, workerProxyHandler);
 
-    // Create a proxy to intercept the worker constructors
-    // The vi.SpyOn does not work well with constructors
-    window.SharedWorker = new Proxy(SharedWorker, sharedWorkerProxyHandler);
-    window.Worker = new Proxy(Worker, workerProxyHandler);
+  return {
+    proxies: {
+      sharedWorkerProxyHandler,
+      workerProxyHandler
+    },
+    dispose: () => {
+      window.SharedWorker = originalSharedWorker;
+      window.Worker = originalWorker;
+    }
+  };
+};
+
+describe('Open Methods', () => {
+  let mocks: ReturnType<typeof proxyWorkers>;
+
+  beforeEach(() => {
+    mocks = proxyWorkers();
   });
 
-  afterAll(() => {
-    // Restore Worker
-    window.SharedWorker = originalSharedWorker;
-    window.Worker = originalWorker;
-  });
+  afterEach(() => mocks?.dispose());
 
   it('Should open PowerSync clients from old factory methods', async () => {
     const db = new WASQLitePowerSyncDatabaseOpenFactory({
@@ -87,7 +94,7 @@ describe('Open Methods', () => {
   });
 
   it('Should use shared worker for multiple tabs', async () => {
-    const sharedSpy = vi.spyOn(sharedWorkerProxyHandler, 'construct');
+    const sharedSpy = vi.spyOn(mocks.proxies.sharedWorkerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({ database: { dbFilename: 'options-test.db' }, schema: testSchema });
 
@@ -97,8 +104,8 @@ describe('Open Methods', () => {
   });
 
   it('Should use dedicated worker when multiple tabs disabled', async () => {
-    const sharedSpy = vi.spyOn(sharedWorkerProxyHandler, 'construct');
-    const dedicatedSpy = vi.spyOn(workerProxyHandler, 'construct');
+    const sharedSpy = vi.spyOn(mocks.proxies.sharedWorkerProxyHandler, 'construct');
+    const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
       database: { dbFilename: 'options-test.db' },
@@ -113,8 +120,8 @@ describe('Open Methods', () => {
   });
 
   it('Should not use workers when specified', async () => {
-    const sharedSpy = vi.spyOn(sharedWorkerProxyHandler, 'construct');
-    const dedicatedSpy = vi.spyOn(workerProxyHandler, 'construct');
+    const sharedSpy = vi.spyOn(mocks.proxies.sharedWorkerProxyHandler, 'construct');
+    const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
       database: { dbFilename: 'options-test.db' },

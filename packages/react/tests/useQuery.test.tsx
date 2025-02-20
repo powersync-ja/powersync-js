@@ -106,7 +106,7 @@ describe('useQuery', () => {
 
     await waitFor(
       async () => {
-        expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+        expect(result.current.error?.message).equal('PowerSync failed to fetch data: some error');
       },
       { timeout: 100 }
     );
@@ -131,7 +131,7 @@ describe('useQuery', () => {
 
     await waitFor(
       async () => {
-        expect(result.current.error).toEqual(Error('PowerSync failed to fetch data: some error'));
+        expect(result.current.error?.message).equals('PowerSync failed to fetch data: some error');
       },
       { timeout: 100 }
     );
