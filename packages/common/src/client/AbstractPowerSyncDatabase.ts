@@ -146,6 +146,11 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
   return typeof test == 'object' && isSQLOpenOptions(test.database);
 };
 
+/**
+ * The priority used by the core extension to indicate that a full sync was completed.
+ */
+const fullSyncPriority = 2147483647;
+
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
    * Transactions should be queued in the DBAdapter, but we also want to prevent
@@ -347,27 +352,30 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
     let lastCompleteSync: Date | undefined;
-    const priorityStatus: SyncPriorityStatus[] = [];
+    const prioritStatuses: SyncPriorityStatus[] = [];
 
     for (const { priority, last_synced_at } of result) {
       const parsedDate = new Date(last_synced_at + 'Z');
 
-      if (priority === 2147483647) {
+      if (priority == fullSyncPriority) {
         // This lowest-possible priority represents a complete sync.
         lastCompleteSync = parsedDate;
       } else {
-        priorityStatus.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+        prioritStatuses.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
       }
     }
+    
 
     const hasSynced = lastCompleteSync != null;
-    if (hasSynced != this.currentStatus.hasSynced || priorityStatus != this.currentStatus.statusInPriority) {
-      this.currentStatus = new SyncStatus({
-        ...this.currentStatus.toJSON(),
-        hasSynced,
-        lastSyncedAt: lastCompleteSync,
-        statusInPriority: priorityStatus
-      });
+    const updatedStatus = new SyncStatus({
+      ...this.currentStatus.toJSON(),
+      hasSynced,
+      prioritStatuses,
+      lastSyncedAt: lastCompleteSync,
+    });
+
+    if (!updatedStatus.isEqual(this.currentStatus)) {
+      this.currentStatus = updatedStatus;
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }

@@ -468,7 +468,7 @@ The next upload iteration will be delayed.`);
 
   private async collectLocalBucketState(): Promise<[BucketRequest[], Map<string, BucketDescription | null>]> {
     const bucketEntries = await this.options.adapter.getBucketStates();
-    const req: BucketRequest[] = Array.from(bucketEntries).map((entry) => ({
+    const req: BucketRequest[] = bucketEntries.map((entry) => ({
       name: entry.bucket,
       after: entry.op_id
     }));
@@ -601,7 +601,7 @@ The next upload iteration will be delayed.`);
               this.logger.debug('partial checkpoint validation succeeded');
 
               // All states with a higher priority can be deleted since this partial sync includes them.
-              const priorityStates = this.syncStatus.statusInPriority.filter((s) => s.priority <= priority);
+              const priorityStates = this.syncStatus.prioritStatuses.filter((s) => s.priority <= priority);
               priorityStates.push({
                 priority,
                 lastSyncedAt: new Date(),
@@ -610,7 +610,7 @@ The next upload iteration will be delayed.`);
 
               this.updateSyncStatus({
                 connected: true,
-                statusInPriority: priorityStates
+                prioritStatuses: priorityStates
               });
             }
           } else if (isStreamingSyncCheckpointDiff(line)) {
@@ -679,7 +679,7 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                statusInPriority: []
+                prioritStatuses: []
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -696,7 +696,7 @@ The next upload iteration will be delayed.`);
                 this.updateSyncStatus({
                   connected: true,
                   lastSyncedAt: new Date(),
-                  statusInPriority: [],
+                  prioritStatuses: [],
                   dataFlow: {
                     downloading: false
                   }
@@ -721,7 +721,7 @@ The next upload iteration will be delayed.`);
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      statusInPriority: options.statusInPriority ?? this.syncStatus.statusInPriority
+      prioritStatuses: options.prioritStatuses ?? this.syncStatus.prioritStatuses
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {

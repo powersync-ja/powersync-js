@@ -247,7 +247,7 @@ describe(
       });
       await another.init();
 
-      expect(another.currentStatus.statusInPriority).toHaveLength(1);
+      expect(another.currentStatus.prioritStatuses).toHaveLength(1);
       expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
       await another.waitForFirstSync({priority: 0});
     });
