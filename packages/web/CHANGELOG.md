@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.14.1
+
+### Patch Changes
+
+- 44582ef: Fixed bug where using OPFS and reconnecting would cause upload triggers to fail.
+
 ## 1.14.0
 
 ### Minor Changes
