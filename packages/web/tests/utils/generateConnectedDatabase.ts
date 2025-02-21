@@ -1,4 +1,4 @@
-import { BucketChecksum, BucketDescription, Schema, Table, column } from '@powersync/common';
+import { Schema, Table, column } from '@powersync/common';
 import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { onTestFinished, vi } from 'vitest';

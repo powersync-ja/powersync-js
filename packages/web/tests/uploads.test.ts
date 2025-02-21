@@ -15,6 +15,7 @@ describe('CRUD Uploads', () => {
   beforeEach(async () => {
     connectedUtils = await generateConnectedDatabase({
       powerSyncOptions: {
+        dbFilename: 'crud-uploads-test.db',
         logger,
         crudUploadThrottleMs: 1_000,
         flags: {
@@ -52,7 +53,8 @@ describe('CRUD Uploads', () => {
         expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).exist;
       },
       {
-        timeout: 500
+        timeout: 500,
+        interval: 100
       }
     );
   });
@@ -101,7 +103,8 @@ describe('CRUD Uploads', () => {
         expect(uploadSpy.mock.calls.length).eq(3);
       },
       {
-        timeout: 5_000
+        timeout: 5_000,
+        interval: 300
       }
     );
 

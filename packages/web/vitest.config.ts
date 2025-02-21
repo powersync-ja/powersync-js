@@ -38,11 +38,23 @@ const config: UserConfigExport = {
     isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
+    maxConcurrency: 1,
     browser: {
       enabled: true,
-      provider: 'webdriverio',
+      provider: 'playwright',
       headless: true,
-      name: 'chrome' // browser name is required
+      instances: [
+        {
+          browser: 'chromium'
+        }
+        // {
+        //   browser: 'firefox'
+        // }
+        // This requires some additional work to get all tests passing
+        // {
+        //   browser: 'webkit'
+        // }
+      ]
     }
   }
 };

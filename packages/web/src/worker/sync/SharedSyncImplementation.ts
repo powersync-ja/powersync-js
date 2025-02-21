@@ -185,6 +185,9 @@ export class SharedSyncImplementation
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
     return getNavigatorLocks().request('shared-sync-connect', async () => {
+      if (!this.dbAdapter) {
+        await this.openInternalDB();
+      }
       this.syncStreamClient = this.generateStreamingImplementation();
       this.lastConnectOptions = options;
       this.syncStreamClient.registerListener({
@@ -236,12 +239,7 @@ export class SharedSyncImplementation
     }
 
     const trackedPort = this.ports[index];
-    if (trackedPort.db) {
-      trackedPort.db.close();
-    }
-
-    // Release proxy
-    trackedPort.clientProvider[Comlink.releaseProxy]();
+    // Remove from the list of active ports
     this.ports.splice(index, 1);
 
     /**
@@ -254,12 +252,25 @@ export class SharedSyncImplementation
       }
     });
 
-    if (this.dbAdapter == trackedPort.db && this.syncStreamClient) {
-      await this.disconnect();
-      // Ask for a new DB worker port handler
-      await this.openInternalDB();
-      await this.connect(this.lastConnectOptions);
+    const shouldReconnect = !!this.syncStreamClient;
+    if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
+      if (shouldReconnect) {
+        await this.disconnect();
+      }
+
+      // Clearing the adapter will result in a new one being opened in connect
+      this.dbAdapter = null;
+
+      if (shouldReconnect) {
+        await this.connect(this.lastConnectOptions);
+      }
     }
+
+    if (trackedPort.db) {
+      trackedPort.db.close();
+    }
+    // Release proxy
+    trackedPort.clientProvider[Comlink.releaseProxy]();
   }
 
   triggerCrudUpload() {
@@ -339,6 +350,10 @@ export class SharedSyncImplementation
 
   protected async openInternalDB() {
     const lastClient = this.ports[this.ports.length - 1];
+    if (!lastClient) {
+      // Should not really happen in practice
+      throw new Error(`Could not open DB connection since no client is connected.`);
+    }
     const workerPort = await lastClient.clientProvider.getDBWorkerPort();
     const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
     const identifier = this.syncParams!.dbParams.dbFilename;
