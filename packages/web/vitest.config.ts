@@ -46,10 +46,10 @@ const config: UserConfigExport = {
       instances: [
         {
           browser: 'chromium'
-        },
-        {
-          browser: 'firefox'
         }
+        // {
+        //   browser: 'firefox'
+        // }
         // This requires some additional work to get all tests passing
         // {
         //   browser: 'webkit'

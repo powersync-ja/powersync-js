@@ -1,3 +1,4 @@
+import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import Logger from 'js-logger';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
@@ -18,19 +19,36 @@ describe(
       name: string,
       test: (createConnectedDatabase: () => ReturnType<typeof generateConnectedDatabase>) => Promise<void>
     ) => {
-      const funcWithWebWorker = generateConnectedDatabase;
+      const funcWithWebWorker = () =>
+        generateConnectedDatabase({
+          powerSyncOptions: {
+            dbFilename: `test-stream-connection-worker.db`
+          }
+        });
       const funcWithoutWebWorker = () =>
         generateConnectedDatabase({
           powerSyncOptions: {
-            dbFilename: 'test-stream-connection-no-worker.db',
+            dbFilename: `test-stream-connection-no-worker.db`,
             flags: {
               useWebWorker: false
             }
           }
         });
 
-      it(`${name} - with web worker`, () => test(funcWithWebWorker));
-      it(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+      it.sequential(`${name} - with web worker`, () => test(funcWithWebWorker));
+      it.sequential(`${name} - without web worker`, () => test(funcWithoutWebWorker));
+      it.sequential(`${name} - with OPFS`, () =>
+        test(() =>
+          generateConnectedDatabase({
+            powerSyncOptions: {
+              database: new WASQLiteOpenFactory({
+                dbFilename: `test-stream-connection-opfs.db`,
+                vfs: WASQLiteVFS.OPFSCoopSyncVFS
+              })
+            }
+          })
+        )
+      );
     };
 
     beforeAll(() => Logger.useDefaults());
@@ -101,7 +119,7 @@ describe(
       const throwCounter = 2;
       uploadSpy.mockImplementation(async (db) => {
         if (uploadCounter++ < throwCounter) {
-          throw new Error('No uploads yet');
+          throw new Error(`No uploads yet`);
         }
         // Now actually do the upload
         const tx = await db.getNextCrudTransaction();

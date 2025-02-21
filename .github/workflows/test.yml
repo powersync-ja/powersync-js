@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     name: Test Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-xl
     steps:
       - uses: actions/checkout@v4
         with:
