@@ -4,6 +4,7 @@ import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapt
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
 import {
+  BucketChecksum,
   BucketState,
   BucketStorageAdapter,
   BucketStorageListener,
@@ -147,7 +148,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
     const buckets = checkpoint.buckets;
     if (priority !== undefined) {
-      buckets.filter((b) => b.priority <= priority);
+      buckets.filter((b) => hasMatchingPriority(priority, b));
     }
     const bucketNames = buckets.map((b) => b.bucket);
     await this.writeTransaction(async (tx) => {
@@ -185,7 +186,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     if (priority !== undefined) {
       const affectedBuckets: string[] = [];
       for (const desc of checkpoint.buckets) {
-        if (desc.priority <= priority) {
+        if (hasMatchingPriority(priority, desc)) {
           affectedBuckets.push(desc.bucket);
         }
       }
@@ -205,7 +206,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
     if (priority !== undefined) {
       // Only validate the buckets within the priority we care about
-      const newBuckets = checkpoint.buckets.filter((cs) => cs.priority <= priority);
+      const newBuckets = checkpoint.buckets.filter((cs) => hasMatchingPriority(priority, cs));
       checkpoint = {...checkpoint, buckets: newBuckets};
     }
 
@@ -390,4 +391,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async setTargetCheckpoint(checkpoint: Checkpoint) {
     // No-op for now
   }
+}
+
+function hasMatchingPriority(priority: number, bucket: BucketChecksum) {
+  return bucket.priority != null && bucket.priority <= priority;
 }

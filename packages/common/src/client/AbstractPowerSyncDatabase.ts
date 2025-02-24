@@ -149,7 +149,7 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
 /**
  * The priority used by the core extension to indicate that a full sync was completed.
  */
-const fullSyncPriority = 2147483647;
+const FULL_SYNC_PRIORITY = 2147483647;
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
@@ -357,7 +357,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     for (const { priority, last_synced_at } of result) {
       const parsedDate = new Date(last_synced_at + 'Z');
 
-      if (priority == fullSyncPriority) {
+      if (priority == FULL_SYNC_PRIORITY) {
         // This lowest-possible priority represents a complete sync.
         lastCompleteSync = parsedDate;
       } else {

@@ -146,6 +146,12 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   params: {}
 };
 
+// The priority we assume when we receive checkpoint lines where no priority is set.
+// This is the default priority used by the sync service, but can be set to an arbitrary
+// value since sync services without priorities also won't send partial sync completion
+// messages.
+const FALLBACK_PRIORITY = 3;
+
 export abstract class AbstractStreamingSyncImplementation
   extends BaseObserver<StreamingSyncImplementationListener>
   implements StreamingSyncImplementation
@@ -551,7 +557,7 @@ The next upload iteration will be delayed.`);
             const bucketsToDelete = new Set<string>(bucketMap.keys());
             const newBuckets = new Map<string, BucketDescription>();
             for (const checksum of line.checkpoint.buckets) {
-              newBuckets.set(checksum.bucket, { name: checksum.bucket, priority: checksum.priority });
+              newBuckets.set(checksum.bucket, { name: checksum.bucket, priority: checksum.priority ?? FALLBACK_PRIORITY });
               bucketsToDelete.delete(checksum.bucket);
             }
             if (bucketsToDelete.size > 0) {
@@ -641,7 +647,7 @@ The next upload iteration will be delayed.`);
             newBuckets.forEach((checksum, name) =>
               bucketMap.set(name, {
                 name: checksum.bucket,
-                priority: checksum.priority
+                priority: checksum.priority ?? FALLBACK_PRIORITY
               })
             );
 

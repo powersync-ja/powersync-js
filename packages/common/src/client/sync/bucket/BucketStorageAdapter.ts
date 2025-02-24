@@ -32,7 +32,7 @@ export interface SyncLocalDatabaseResult {
 
 export interface BucketChecksum {
   bucket: string;
-  priority: number;
+  priority?: number;
   /**
    * 32-bit unsigned hash.
    */
