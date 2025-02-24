@@ -601,7 +601,7 @@ The next upload iteration will be delayed.`);
               this.logger.debug('partial checkpoint validation succeeded');
 
               // All states with a higher priority can be deleted since this partial sync includes them.
-              const priorityStates = this.syncStatus.prioritStatuses.filter((s) => s.priority <= priority);
+              const priorityStates = this.syncStatus.priorityStatuses.filter((s) => s.priority <= priority);
               priorityStates.push({
                 priority,
                 lastSyncedAt: new Date(),
@@ -610,7 +610,7 @@ The next upload iteration will be delayed.`);
 
               this.updateSyncStatus({
                 connected: true,
-                prioritStatuses: priorityStates
+                priorityStatuses: priorityStates
               });
             }
           } else if (isStreamingSyncCheckpointDiff(line)) {
@@ -679,7 +679,7 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                prioritStatuses: []
+                priorityStatuses: []
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -696,7 +696,7 @@ The next upload iteration will be delayed.`);
                 this.updateSyncStatus({
                   connected: true,
                   lastSyncedAt: new Date(),
-                  prioritStatuses: [],
+                  priorityStatuses: [],
                   dataFlow: {
                     downloading: false
                   }
@@ -721,7 +721,7 @@ The next upload iteration will be delayed.`);
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      prioritStatuses: options.prioritStatuses ?? this.syncStatus.prioritStatuses
+      priorityStatuses: options.priorityStatuses ?? this.syncStatus.priorityStatuses
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
