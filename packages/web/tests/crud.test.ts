@@ -79,9 +79,9 @@ describe('CRUD Tests', () => {
     expect(await powersync.get('SELECT count(*) AS count FROM assets')).deep.equals({ count: 1 });
 
     // Make sure uniqueness is enforced
-    await expect(powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])).rejects.toThrow(
-      /UNIQUE constraint failed/
-    );
+    await expect(
+      powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])
+    ).rejects.toThrow(/UNIQUE constraint failed/);
   });
 
   it('UPDATE', async () => {

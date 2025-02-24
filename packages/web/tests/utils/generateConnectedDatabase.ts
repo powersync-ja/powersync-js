@@ -1,12 +1,12 @@
-import { column, Schema, Table, WebPowerSyncOpenFactoryOptions } from '@powersync/web';
+import { Schema, Table, column } from '@powersync/common';
+import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { vi } from 'vitest';
+import { onTestFinished, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 export type ConnectedDatabaseUtils = UnwrapPromise<ReturnType<typeof generateConnectedDatabase>>;
-
 export type GenerateConnectedDatabaseOptions = {
   powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
 };
@@ -51,7 +51,9 @@ export async function generateConnectedDatabase(
     },
     remote
   );
-  const powersync = factory.getInstance();
+
+  const openAnother = factory.getInstance.bind(factory);
+  const powersync = openAnother();
 
   const waitForStream = () =>
     new Promise<void>((resolve) => {
@@ -69,13 +71,18 @@ export async function generateConnectedDatabase(
 
     await streamOpened;
 
-    remote.streamController?.enqueue(new TextEncoder().encode('{"token_expires_in":3426}\n'));
+    remote.enqueueLine({ token_expires_in: 3426 });
 
     // Wait for connected to be true
     await connectedPromise;
   };
 
   await connect();
+
+  onTestFinished(async () => {
+    await powersync.disconnectAndClear();
+    await powersync.close();
+  });
 
   return {
     connector,
@@ -85,10 +92,6 @@ export async function generateConnectedDatabase(
     remote,
     uploadSpy,
     waitForStream,
-    dispose: async () => {
-      remote.streamController?.close();
-      await powersync.disconnectAndClear();
-      await powersync.close();
-    }
+    openAnother
   };
 }

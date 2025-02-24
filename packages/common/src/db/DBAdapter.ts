@@ -103,7 +103,7 @@ export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBG
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   /**
    * This method refreshes the schema information across all connections. This is for advanced use cases, and should generally not be needed.
-   */ 
+   */
   refreshSchema: () => Promise<void>;
 }
 

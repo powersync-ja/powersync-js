@@ -10,7 +10,7 @@ describe('PowerSyncDatabase', () => {
 
   beforeEach(() => {
     mockLogger = {
-      debug: vi.fn(),
+      debug: vi.fn()
     };
 
     // Initialize with minimal required options
@@ -24,8 +24,7 @@ describe('PowerSyncDatabase', () => {
 
     vi.spyOn(db as any, 'runExclusive').mockImplementation((cb: any) => cb());
 
-    vi.spyOn(AbstractPowerSyncDatabase.prototype, 'connect')
-      .mockResolvedValue(undefined);
+    vi.spyOn(AbstractPowerSyncDatabase.prototype, 'connect').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -49,17 +48,14 @@ describe('PowerSyncDatabase', () => {
         connectionMethod: SyncStreamConnectionMethod.HTTP
       });
 
-      expect(AbstractPowerSyncDatabase.prototype.connect).toHaveBeenCalledWith(
-        mockConnector,
-        {
-          retryDelayMs: 1000,
-          crudUploadThrottleMs: 2000,
-          connectionMethod: "http",
-          params: {
-            param1: 1,
-          },
+      expect(AbstractPowerSyncDatabase.prototype.connect).toHaveBeenCalledWith(mockConnector, {
+        retryDelayMs: 1000,
+        crudUploadThrottleMs: 2000,
+        connectionMethod: 'http',
+        params: {
+          param1: 1
         }
-      );
+      });
     });
   });
 });

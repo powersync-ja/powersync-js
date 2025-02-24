@@ -14,7 +14,7 @@ import {
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
-  StreamingSyncImplementation,
+  StreamingSyncImplementation
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator';

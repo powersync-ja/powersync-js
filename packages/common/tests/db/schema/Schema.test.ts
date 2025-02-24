@@ -35,7 +35,7 @@ describe('Schema', () => {
       }),
       posts: new Table({
         title: column.text,
-        content: column.text,
+        content: column.text
       })
     };
     const schema = new Schema(schemaDefinition);
@@ -62,7 +62,7 @@ describe('Schema', () => {
 
     const invalidSchema = new Schema({
       invalidTable: new Table({
-        'invalid name': column.text,
+        'invalid name': column.text
       })
     });
 
@@ -77,7 +77,7 @@ describe('Schema', () => {
       }),
       posts: new Table({
         title: column.text,
-        content: column.text,
+        content: column.text
       })
     });
 
