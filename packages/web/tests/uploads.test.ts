@@ -19,7 +19,7 @@ describe('CRUD Uploads', () => {
         logger,
         crudUploadThrottleMs: 1_000,
         flags: {
-          enableMultiTabs: false,
+          enableMultiTabs: false
         }
       }
     });

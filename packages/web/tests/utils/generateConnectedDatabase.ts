@@ -71,12 +71,11 @@ export async function generateConnectedDatabase(
 
     await streamOpened;
 
-    remote.enqueueLine({token_expires_in: 3426});
+    remote.enqueueLine({ token_expires_in: 3426 });
 
     // Wait for connected to be true
     await connectedPromise;
   };
-
 
   await connect();
 
@@ -93,6 +92,6 @@ export async function generateConnectedDatabase(
     remote,
     uploadSpy,
     waitForStream,
-    openAnother,
+    openAnother
   };
 }

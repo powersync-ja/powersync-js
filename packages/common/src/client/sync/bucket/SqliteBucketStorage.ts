@@ -207,7 +207,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     if (priority !== undefined) {
       // Only validate the buckets within the priority we care about
       const newBuckets = checkpoint.buckets.filter((cs) => hasMatchingPriority(priority, cs));
-      checkpoint = {...checkpoint, buckets: newBuckets};
+      checkpoint = { ...checkpoint, buckets: newBuckets };
     }
 
     const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [

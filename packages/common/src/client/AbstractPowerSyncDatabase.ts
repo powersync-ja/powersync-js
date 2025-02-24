@@ -364,14 +364,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         priorityStatuses.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
       }
     }
-    
 
     const hasSynced = lastCompleteSync != null;
     const updatedStatus = new SyncStatus({
       ...this.currentStatus.toJSON(),
       hasSynced,
       priorityStatuses,
-      lastSyncedAt: lastCompleteSync,
+      lastSyncedAt: lastCompleteSync
     });
 
     if (!updatedStatus.isEqual(this.currentStatus)) {

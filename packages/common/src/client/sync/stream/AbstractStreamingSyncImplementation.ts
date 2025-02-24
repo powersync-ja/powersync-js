@@ -557,7 +557,10 @@ The next upload iteration will be delayed.`);
             const bucketsToDelete = new Set<string>(bucketMap.keys());
             const newBuckets = new Map<string, BucketDescription>();
             for (const checksum of line.checkpoint.buckets) {
-              newBuckets.set(checksum.bucket, { name: checksum.bucket, priority: checksum.priority ?? FALLBACK_PRIORITY });
+              newBuckets.set(checksum.bucket, {
+                name: checksum.bucket,
+                priority: checksum.priority ?? FALLBACK_PRIORITY
+              });
               bucketsToDelete.delete(checksum.bucket);
             }
             if (bucketsToDelete.size > 0) {

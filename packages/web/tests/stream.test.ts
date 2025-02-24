@@ -137,119 +137,122 @@ describe(
 
       await powersync.disconnect();
 
-    // Status should update after uploads are completed
-    await vi.waitFor(
-      () => {
-        // to-have-been-called seems to not work after failing a check
-        expect(powersync.currentStatus.dataFlowStatus.uploading).false;
-      },
-      {
-        timeout: UPLOAD_TIMEOUT_MS
-      }
-    );
-  });
-
-  describe('Partial', () => {
-    itWithGenerators('Should update sync state incrementally', async (createConnectedDatabase) => {
-      const { powersync, remote } = await createConnectedDatabase();
-      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
-
-      const buckets: BucketChecksum[] = [];
-      for (let prio = 0; prio <= 3; prio++) {
-        buckets.push({bucket: `prio${prio}`, priority: prio, checksum: 10 + prio});
-      }
-      remote.enqueueLine({
-        checkpoint: {
-          last_op_id: '4',
-          buckets,
+      // Status should update after uploads are completed
+      await vi.waitFor(
+        () => {
+          // to-have-been-called seems to not work after failing a check
+          expect(powersync.currentStatus.dataFlowStatus.uploading).false;
         },
-      });
+        {
+          timeout: UPLOAD_TIMEOUT_MS
+        }
+      );
+    });
 
-      let operationId = 1;
-      const addRow = (prio: number) => {
+    describe('Partial', () => {
+      itWithGenerators('Should update sync state incrementally', async (createConnectedDatabase) => {
+        const { powersync, remote } = await createConnectedDatabase();
+        expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
+
+        const buckets: BucketChecksum[] = [];
+        for (let prio = 0; prio <= 3; prio++) {
+          buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 10 + prio });
+        }
         remote.enqueueLine({
-          data: {
-            bucket: `prio${prio}`,
-            data: [{
-              checksum: prio + 10,
-              data: JSON.stringify({'name': 'row'}),
-              op: 'PUT',
-              op_id: (operationId++).toString(),
-              object_id: `prio${prio}`,
-              object_type: 'users'
-            }]
-          },
-        });
-      }
-
-      const syncCompleted = vi.fn();
-      powersync.waitForFirstSync().then(syncCompleted);
-
-      // Emit partial sync complete for each priority but the last.
-      for (var prio = 0; prio < 3; prio++) {
-        const partialSyncCompleted = vi.fn();
-        powersync.waitForFirstSync({priority: prio}).then(partialSyncCompleted);
-        expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
-        expect(partialSyncCompleted).not.toHaveBeenCalled();
-        expect(syncCompleted).not.toHaveBeenCalled();
-
-        addRow(prio);
-        remote.enqueueLine({
-          partial_checkpoint_complete: {
-            last_op_id: operationId.toString(),
-            priority: prio,
+          checkpoint: {
+            last_op_id: '4',
+            buckets
           }
         });
 
-        await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
-          return status.statusForPriority(prio).hasSynced === true;
-        });
-        await new Promise(r => setTimeout(r));
-        expect(partialSyncCompleted).toHaveBeenCalledOnce();
+        let operationId = 1;
+        const addRow = (prio: number) => {
+          remote.enqueueLine({
+            data: {
+              bucket: `prio${prio}`,
+              data: [
+                {
+                  checksum: prio + 10,
+                  data: JSON.stringify({ name: 'row' }),
+                  op: 'PUT',
+                  op_id: (operationId++).toString(),
+                  object_id: `prio${prio}`,
+                  object_type: 'users'
+                }
+              ]
+            }
+          });
+        };
 
-        expect(await powersync.getAll('select * from users')).toHaveLength(prio + 1);
-      }
+        const syncCompleted = vi.fn();
+        powersync.waitForFirstSync().then(syncCompleted);
 
-      // Then, complete the sync.
-      addRow(3);
-      remote.enqueueLine({checkpoint_complete: {last_op_id: operationId.toString()}});
-      await vi.waitFor(() => expect(syncCompleted).toHaveBeenCalledOnce(), 500);
-      expect(await powersync.getAll('select * from users')).toHaveLength(4);
-    });
+        // Emit partial sync complete for each priority but the last.
+        for (var prio = 0; prio < 3; prio++) {
+          const partialSyncCompleted = vi.fn();
+          powersync.waitForFirstSync({ priority: prio }).then(partialSyncCompleted);
+          expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
+          expect(partialSyncCompleted).not.toHaveBeenCalled();
+          expect(syncCompleted).not.toHaveBeenCalled();
 
-    itWithGenerators('Should remember sync state', async (createConnectedDatabase) => {
-      const { powersync, remote, openAnother } = await createConnectedDatabase();
-      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
+          addRow(prio);
+          remote.enqueueLine({
+            partial_checkpoint_complete: {
+              last_op_id: operationId.toString(),
+              priority: prio
+            }
+          });
 
-      const buckets: BucketChecksum[] = [];
-      for (let prio = 0; prio <= 3; prio++) {
-        buckets.push({bucket: `prio${prio}`, priority: prio, checksum: 0});
-      }
-      remote.enqueueLine({
-        checkpoint: {
-          last_op_id: '0',
-          buckets,
-        },
-      });
-      remote.enqueueLine({
-        partial_checkpoint_complete: {
-          last_op_id: '0',
-          priority: 0,
+          await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+            return status.statusForPriority(prio).hasSynced === true;
+          });
+          await new Promise((r) => setTimeout(r));
+          expect(partialSyncCompleted).toHaveBeenCalledOnce();
+
+          expect(await powersync.getAll('select * from users')).toHaveLength(prio + 1);
         }
+
+        // Then, complete the sync.
+        addRow(3);
+        remote.enqueueLine({ checkpoint_complete: { last_op_id: operationId.toString() } });
+        await vi.waitFor(() => expect(syncCompleted).toHaveBeenCalledOnce(), 500);
+        expect(await powersync.getAll('select * from users')).toHaveLength(4);
       });
 
-      await powersync.waitForFirstSync({priority: 0});
+      itWithGenerators('Should remember sync state', async (createConnectedDatabase) => {
+        const { powersync, remote, openAnother } = await createConnectedDatabase();
+        expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
 
-      // Open another database instance.
-      const another = openAnother();
-      onTestFinished(async () => {
-        await another.close();
+        const buckets: BucketChecksum[] = [];
+        for (let prio = 0; prio <= 3; prio++) {
+          buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 0 });
+        }
+        remote.enqueueLine({
+          checkpoint: {
+            last_op_id: '0',
+            buckets
+          }
+        });
+        remote.enqueueLine({
+          partial_checkpoint_complete: {
+            last_op_id: '0',
+            priority: 0
+          }
+        });
+
+        await powersync.waitForFirstSync({ priority: 0 });
+
+        // Open another database instance.
+        const another = openAnother();
+        onTestFinished(async () => {
+          await another.close();
+        });
+        await another.init();
+
+        expect(another.currentStatus.priorityStatuses).toHaveLength(1);
+        expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
+        await another.waitForFirstSync({ priority: 0 });
       });
-      await another.init();
-
-      expect(another.currentStatus.priorityStatuses).toHaveLength(1);
-      expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
-      await another.waitForFirstSync({priority: 0});
     });
-  });
-});
+  }
+);
