@@ -487,8 +487,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
       await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
-      // TODO: Remove after updating core extension to include https://github.com/powersync-ja/powersync-sqlite-core/pull/61
-      await tx.execute('DELETE FROM ps_sync_state;');
     });
 
     // The data has been deleted - reset the sync status
