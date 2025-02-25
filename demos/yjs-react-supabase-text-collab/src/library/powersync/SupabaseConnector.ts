@@ -40,6 +40,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
   readonly client: SupabaseClient;
   readonly config: SupabaseConfig;
 
+  enableUploads: boolean = true;
+
   constructor() {
     super();
     this.config = {
@@ -74,6 +76,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+    if (!this.enableUploads) {
+      console.log('Skipping uploadData because uploads were disabled manually');
+      return;
+    }
+
     const batch = await database.getCrudBatch(200);
 
     if (!batch) {
