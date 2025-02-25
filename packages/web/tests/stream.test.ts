@@ -68,7 +68,7 @@ describe(
 
     itWithGenerators('PowerSync reconnect multiple connect calls', async (createConnectedDatabase) => {
       // This initially performs a connect call
-      const { powersync, waitForStream, remote } = await createConnectedDatabase();
+      const { powersync, waitForStream } = await createConnectedDatabase();
       expect(powersync.connected).toBe(true);
 
       // Call connect again, a new stream should be requested

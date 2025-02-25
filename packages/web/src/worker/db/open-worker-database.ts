@@ -13,16 +13,36 @@ export function openWorkerDatabasePort(
 ) {
   const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
 
+  const handleError = (event: ErrorEvent) => {
+    // We don't expect worker errors, so turn errors on workers into unhandled errors in this context
+    // to fail tests.
+    throw `Unexpected worker error: ${event.error}`;
+  }
+
+  const openWorker = (resolvedUri: string | URL, options: WorkerOptions = {}) => {
+    const useShared = !needsDedicated && multipleTabs;
+    if (useShared) {
+      const sharedWorker = new SharedWorker(`${worker}`, {
+        ...options,
+        /* @vite-ignore */
+        name: `shared-DB-worker-${workerIdentifier}`
+      });
+      sharedWorker.onerror = handleError;
+      return sharedWorker.port;
+    } else {
+      const dedicatedWorker = new Worker(`${worker}`, {
+        ...options,
+        /* @vite-ignore */
+        name: `DB-worker-${workerIdentifier}`
+      });
+      dedicatedWorker.onerror = handleError;
+
+      return dedicatedWorker;
+    }
+  };
+
   if (worker) {
-    return !needsDedicated && multipleTabs
-      ? new SharedWorker(`${worker}`, {
-          /* @vite-ignore */
-          name: `shared-DB-worker-${workerIdentifier}`
-        }).port
-      : new Worker(`${worker}`, {
-          /* @vite-ignore */
-          name: `DB-worker-${workerIdentifier}`
-        });
+    return openWorker(worker);
   } else {
     /**
      *  Webpack V5 can bundle the worker automatically if the full Worker constructor syntax is used
@@ -30,17 +50,7 @@ export function openWorkerDatabasePort(
      *  This enables multi tab support by default, but falls back if SharedWorker is not available
      *  (in the case of Android)
      */
-    return !needsDedicated && multipleTabs
-      ? new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
-          /* @vite-ignore */
-          name: `shared-DB-worker-${workerIdentifier}`,
-          type: 'module'
-        }).port
-      : new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
-          /* @vite-ignore */
-          name: `DB-worker-${workerIdentifier}`,
-          type: 'module'
-        });
+    return openWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), { type: 'module' });
   }
 }
 
