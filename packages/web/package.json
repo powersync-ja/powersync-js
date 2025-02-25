@@ -60,7 +60,7 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.2.0",
+    "@journeyapps/wa-sqlite": "^1.2.1",
     "@powersync/common": "workspace:^1.24.0"
   },
   "dependencies": {
@@ -72,7 +72,7 @@
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.2.0",
+    "@journeyapps/wa-sqlite": "^1.2.1",
     "@types/uuid": "^9.0.6",
     "crypto-browserify": "^3.12.0",
     "p-defer": "^4.0.1",
