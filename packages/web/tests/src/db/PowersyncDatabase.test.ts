@@ -10,7 +10,8 @@ describe('PowerSyncDatabase', () => {
 
   beforeEach(() => {
     mockLogger = {
-      debug: vi.fn()
+      debug: vi.fn(),
+      warn: vi.fn()
     };
 
     // Initialize with minimal required options
