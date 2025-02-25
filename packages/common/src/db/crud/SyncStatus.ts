@@ -3,12 +3,19 @@ export type SyncDataFlowStatus = Partial<{
   uploading: boolean;
 }>;
 
+export interface SyncPriorityStatus {
+  priority: number;
+  lastSyncedAt?: Date;
+  hasSynced?: boolean;
+}
+
 export type SyncStatusOptions = {
   connected?: boolean;
   connecting?: boolean;
   dataFlow?: SyncDataFlowStatus;
   lastSyncedAt?: Date;
   hasSynced?: boolean;
+  priorityStatuses?: SyncPriorityStatus[];
 };
 
 export class SyncStatus {
@@ -60,6 +67,45 @@ export class SyncStatus {
     );
   }
 
+  /**
+   * Partial sync status for involved bucket priorities.
+   */
+  get priorityStatuses() {
+    return (this.options.priorityStatuses ?? []).toSorted(SyncStatus.comparePriorities);
+  }
+
+  /**
+   * Reports a pair of {@link SyncStatus#hasSynced} and {@link SyncStatus#lastSyncedAt} fields that apply
+   * to a specific bucket priority instead of the entire sync operation.
+   *
+   * When buckets with different priorities are declared, PowerSync may choose to synchronize higher-priority
+   * buckets first. When a consistent view over all buckets for all priorities up until the given priority is
+   * reached, PowerSync makes data from those buckets available before lower-priority buckets have finished
+   * synchronizing.
+   * When PowerSync makes data for a given priority available, all buckets in higher-priorities are guaranteed to
+   * be consistent with that checkpoint. For this reason, this method may also return the status for lower priorities.
+   * In a state where the PowerSync just finished synchronizing buckets in priority level 3, calling this method
+   * with a priority of 1 may return information for priority level 3.
+   *
+   * @param priority The bucket priority for which the status should be reported.
+   */
+  statusForPriority(priority: number): SyncPriorityStatus {
+    // priorityStatuses are sorted by ascending priorities (so higher numbers to lower numbers).
+    for (const known of this.priorityStatuses) {
+      // We look for the first entry that doesn't have a higher priority.
+      if (known.priority >= priority) {
+        return known;
+      }
+    }
+
+    // If we have a complete sync, that necessarily includes all priorities.
+    return {
+      priority,
+      lastSyncedAt: this.lastSyncedAt,
+      hasSynced: this.hasSynced
+    };
+  }
+
   isEqual(status: SyncStatus) {
     return JSON.stringify(this.options) == JSON.stringify(status.options);
   }
@@ -75,7 +121,12 @@ export class SyncStatus {
       connecting: this.connecting,
       dataFlow: this.dataFlowStatus,
       lastSyncedAt: this.lastSyncedAt,
-      hasSynced: this.hasSynced
+      hasSynced: this.hasSynced,
+      priorityStatuses: this.priorityStatuses
     };
+  }
+
+  private static comparePriorities(a: SyncPriorityStatus, b: SyncPriorityStatus) {
+    return b.priority - a.priority; // Reverse because higher priorities have lower numbers
   }
 }

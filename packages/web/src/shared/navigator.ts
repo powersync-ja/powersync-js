@@ -3,5 +3,7 @@ export const getNavigatorLocks = (): LockManager => {
     return navigator.locks;
   }
 
-  throw new Error('Navigator locks are not available in an insecure context. Use a secure context such as HTTPS or http://localhost.');
-}
+  throw new Error(
+    'Navigator locks are not available in an insecure context. Use a secure context such as HTTPS or http://localhost.'
+  );
+};

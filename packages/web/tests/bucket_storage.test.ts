@@ -119,7 +119,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     await expectAsset1_3();
@@ -136,8 +136,8 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       buckets: [
-        { bucket: 'bucket1', checksum: 3 },
-        { bucket: 'bucket2', checksum: 3 }
+        { bucket: 'bucket1', checksum: 3, priority: 3 },
+        { bucket: 'bucket2', checksum: 3, priority: 3 }
       ]
     });
     await expectAsset1_3();
@@ -158,8 +158,8 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       buckets: [
-        { bucket: 'bucket1', checksum: 3 },
-        { bucket: 'bucket2', checksum: 1 }
+        { bucket: 'bucket1', checksum: 3, priority: 3 },
+        { bucket: 'bucket2', checksum: 1, priority: 3 }
       ]
     });
     await expectAsset1_3();
@@ -177,8 +177,8 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '4',
       buckets: [
-        { bucket: 'bucket1', checksum: 3 },
-        { bucket: 'bucket2', checksum: 7 }
+        { bucket: 'bucket1', checksum: 3, priority: 3 },
+        { bucket: 'bucket2', checksum: 7, priority: 3 }
       ]
     });
     await expectAsset1_3();
@@ -196,8 +196,8 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '5',
       buckets: [
-        { bucket: 'bucket1', checksum: 8 },
-        { bucket: 'bucket2', checksum: 7 }
+        { bucket: 'bucket1', checksum: 8, priority: 3 },
+        { bucket: 'bucket2', checksum: 7, priority: 3 }
       ]
     });
 
@@ -232,7 +232,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 8 }]
+      buckets: [{ bucket: 'bucket1', checksum: 8, priority: 3 }]
     });
 
     expect(await db.getAll("SELECT id, description, make FROM assets WHERE id = 'O1'")).deep.equals([
@@ -243,7 +243,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '5',
-      buckets: [{ bucket: 'bucket1', checksum: 13 }]
+      buckets: [{ bucket: 'bucket1', checksum: 13, priority: 3 }]
     });
 
     await expectAsset1_3();
@@ -258,8 +258,8 @@ describe('Bucket Storage', () => {
     const result = await bucketStorage.syncLocalDatabase({
       last_op_id: '3',
       buckets: [
-        { bucket: 'bucket1', checksum: 10 },
-        { bucket: 'bucket2', checksum: 1 }
+        { bucket: 'bucket1', checksum: 10, priority: 3 },
+        { bucket: 'bucket2', checksum: 1, priority: 3 }
       ]
     });
 
@@ -285,7 +285,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 3 }]
+      buckets: [{ bucket: 'bucket1', checksum: 3, priority: 3 }]
     });
 
     // Bucket is deleted, but object is still present in other buckets.
@@ -319,7 +319,7 @@ describe('Bucket Storage', () => {
     // Check that the data is there
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 4 }]
+      buckets: [{ bucket: 'bucket1', checksum: 4, priority: 3 }]
     });
     await expectAsset1_3();
 
@@ -350,7 +350,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 4 }]
+      buckets: [{ bucket: 'bucket1', checksum: 4, priority: 3 }]
     });
 
     await expectAsset1_3();
@@ -362,7 +362,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '1',
-      buckets: [{ bucket: 'bucket1', checksum: 1 }]
+      buckets: [{ bucket: 'bucket1', checksum: 1, priority: 3 }]
     });
 
     // CLEAR, then save new data
@@ -393,7 +393,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       // 2 + 3. 1 is replaced with 2.
-      buckets: [{ bucket: 'bucket1', checksum: 5 }]
+      buckets: [{ bucket: 'bucket1', checksum: 5, priority: 3 }]
     });
 
     await expectNoAsset1();
@@ -425,7 +425,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     await expect(powersync.getAll('SELECT * FROM assets')).rejects.toThrow('no such table');
@@ -469,7 +469,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     await expectAsset1_3(powersync);
@@ -510,7 +510,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '4',
       write_checkpoint: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 7 }]
+      buckets: [{ bucket: 'bucket1', checksum: 7, priority: 3 }]
     });
 
     await bucketStorage.forceCompact();
@@ -518,7 +518,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '4',
       write_checkpoint: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 7 }]
+      buckets: [{ bucket: 'bucket1', checksum: 7, priority: 3 }]
     });
 
     const stats = await db.getAll(
@@ -534,7 +534,7 @@ describe('Bucket Storage', () => {
 
     await syncLocalChecked({
       last_op_id: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local save
@@ -545,7 +545,7 @@ describe('Bucket Storage', () => {
     const result = await bucketStorage.syncLocalDatabase({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     expect(result).deep.equals({ ready: false, checkpointValid: true });
@@ -560,7 +560,7 @@ describe('Bucket Storage', () => {
     const result3 = await bucketStorage.syncLocalDatabase({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
     expect(result3).deep.equals({ ready: false, checkpointValid: true });
 
@@ -574,7 +574,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '5',
       write_checkpoint: '5',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Since the object was not in the sync response, it is deleted.
@@ -589,7 +589,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local save
@@ -604,7 +604,7 @@ describe('Bucket Storage', () => {
     const result3 = await bucketStorage.syncLocalDatabase({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
     expect(result3).deep.equals({ ready: false, checkpointValid: true });
 
@@ -616,7 +616,7 @@ describe('Bucket Storage', () => {
     const result4 = await bucketStorage.syncLocalDatabase({
       last_op_id: '5',
       write_checkpoint: '5',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
     expect(result4).deep.equals({ ready: false, checkpointValid: true });
   });
@@ -629,7 +629,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local save
@@ -648,7 +648,7 @@ describe('Bucket Storage', () => {
     const result4 = await bucketStorage.syncLocalDatabase({
       last_op_id: '5',
       write_checkpoint: '5',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
     expect(result4).deep.equals({ ready: false, checkpointValid: true });
   });
@@ -661,7 +661,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local save
@@ -694,7 +694,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '5',
       write_checkpoint: '5',
-      buckets: [{ bucket: 'bucket1', checksum: 11 }]
+      buckets: [{ bucket: 'bucket1', checksum: 11, priority: 3 }]
     });
 
     expect(await db.getAll("SELECT description FROM assets WHERE id = 'O3'")).deep.equals([
@@ -710,7 +710,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local insert, later rejected by server
@@ -728,7 +728,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     expect(await db.getAll("SELECT description FROM assets WHERE id = 'O3'")).empty;
@@ -742,7 +742,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local delete, later rejected by server
@@ -760,7 +760,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     expect(await db.getAll("SELECT description FROM assets WHERE id = 'O2'")).deep.equals([{ description: 'bar' }]);
@@ -774,7 +774,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '3',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     // Local update, later rejected by server
@@ -792,7 +792,7 @@ describe('Bucket Storage', () => {
     await syncLocalChecked({
       last_op_id: '3',
       write_checkpoint: '4',
-      buckets: [{ bucket: 'bucket1', checksum: 6 }]
+      buckets: [{ bucket: 'bucket1', checksum: 6, priority: 3 }]
     });
 
     expect(await db.getAll("SELECT description FROM assets WHERE id = 'O2'")).deep.equals([{ description: 'bar' }]);
