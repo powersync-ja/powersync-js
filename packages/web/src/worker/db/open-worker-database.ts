@@ -13,36 +13,28 @@ export function openWorkerDatabasePort(
 ) {
   const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
 
-  const handleError = (event: ErrorEvent) => {
-    // We don't expect worker errors, so turn errors on workers into unhandled errors in this context
-    // to fail tests.
-    throw `Unexpected worker error: ${event.error}`;
-  }
+  const handleErrors = <T extends AbstractWorker>(worker: T) => {
+    worker.onerror = (event) => {
+      throw `Unhandled worker error: ${event.message}: ${event.error}`;
+    };
 
-  const openWorker = (resolvedUri: string | URL, options: WorkerOptions = {}) => {
-    const useShared = !needsDedicated && multipleTabs;
-    if (useShared) {
-      const sharedWorker = new SharedWorker(`${worker}`, {
-        ...options,
-        /* @vite-ignore */
-        name: `shared-DB-worker-${workerIdentifier}`
-      });
-      sharedWorker.onerror = handleError;
-      return sharedWorker.port;
-    } else {
-      const dedicatedWorker = new Worker(`${worker}`, {
-        ...options,
-        /* @vite-ignore */
-        name: `DB-worker-${workerIdentifier}`
-      });
-      dedicatedWorker.onerror = handleError;
-
-      return dedicatedWorker;
-    }
+    return worker;
   };
 
   if (worker) {
-    return openWorker(worker);
+    return !needsDedicated && multipleTabs
+      ? handleErrors(
+          new SharedWorker(`${worker}`, {
+            /* @vite-ignore */
+            name: `shared-DB-worker-${workerIdentifier}`
+          })
+        ).port
+      : handleErrors(
+          new Worker(`${worker}`, {
+            /* @vite-ignore */
+            name: `DB-worker-${workerIdentifier}`
+          })
+        );
   } else {
     /**
      *  Webpack V5 can bundle the worker automatically if the full Worker constructor syntax is used
@@ -50,7 +42,21 @@ export function openWorkerDatabasePort(
      *  This enables multi tab support by default, but falls back if SharedWorker is not available
      *  (in the case of Android)
      */
-    return openWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), { type: 'module' });
+    return !needsDedicated && multipleTabs
+      ? handleErrors(
+          new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+            /* @vite-ignore */
+            name: `shared-DB-worker-${workerIdentifier}`,
+            type: 'module'
+          })
+        ).port
+      : handleErrors(
+          new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
+            /* @vite-ignore */
+            name: `DB-worker-${workerIdentifier}`,
+            type: 'module'
+          })
+        );
   }
 }
 
