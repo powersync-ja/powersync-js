@@ -13,12 +13,12 @@ export function openWorkerDatabasePort(
 ) {
   const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
 
-  const handleErrors = <T extends AbstractWorker>(worker: T) => {
-    worker.onerror = (event) => {
-      throw `Unhandled worker error: ${event.message}: ${event.error}`;
+  const handleErrors = <T extends AbstractWorker>(instance: T, url: string | URL): T => {
+    instance.onerror = (event) => {
+      throw `Unhandled worker error for ${workerIdentifier} at ${url}: ${event.message}: ${event.error}`;
     };
 
-    return worker;
+    return instance;
   };
 
   if (worker) {
@@ -27,13 +27,15 @@ export function openWorkerDatabasePort(
           new SharedWorker(`${worker}`, {
             /* @vite-ignore */
             name: `shared-DB-worker-${workerIdentifier}`
-          })
+          }),
+          worker
         ).port
       : handleErrors(
           new Worker(`${worker}`, {
             /* @vite-ignore */
             name: `DB-worker-${workerIdentifier}`
-          })
+          }),
+          worker
         );
   } else {
     /**
@@ -42,20 +44,23 @@ export function openWorkerDatabasePort(
      *  This enables multi tab support by default, but falls back if SharedWorker is not available
      *  (in the case of Android)
      */
+    const debugUrl = new URL('./WASQLiteDB.worker.js', import.meta.url);
     return !needsDedicated && multipleTabs
       ? handleErrors(
           new SharedWorker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
             /* @vite-ignore */
             name: `shared-DB-worker-${workerIdentifier}`,
             type: 'module'
-          })
+          }),
+          debugUrl
         ).port
       : handleErrors(
           new Worker(new URL('./WASQLiteDB.worker.js', import.meta.url), {
             /* @vite-ignore */
             name: `DB-worker-${workerIdentifier}`,
             type: 'module'
-          })
+          }),
+          debugUrl
         );
   }
 }
