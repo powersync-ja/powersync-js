@@ -249,7 +249,7 @@ describe(
         });
         await another.init();
 
-        expect(another.currentStatus.priorityStatuses).toHaveLength(1);
+        expect(another.currentStatus.priorityStatusEntries).toHaveLength(1);
         expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
         await another.waitForFirstSync({ priority: 0 });
       });

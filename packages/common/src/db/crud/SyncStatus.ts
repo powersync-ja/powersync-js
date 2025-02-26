@@ -15,7 +15,7 @@ export type SyncStatusOptions = {
   dataFlow?: SyncDataFlowStatus;
   lastSyncedAt?: Date;
   hasSynced?: boolean;
-  priorityStatuses?: SyncPriorityStatus[];
+  priorityStatusEntries?: SyncPriorityStatus[];
 };
 
 export class SyncStatus {
@@ -70,8 +70,8 @@ export class SyncStatus {
   /**
    * Partial sync status for involved bucket priorities.
    */
-  get priorityStatuses() {
-    return (this.options.priorityStatuses ?? []).toSorted(SyncStatus.comparePriorities);
+  get priorityStatusEntries() {
+    return (this.options.priorityStatusEntries ?? []).toSorted(SyncStatus.comparePriorities);
   }
 
   /**
@@ -90,8 +90,8 @@ export class SyncStatus {
    * @param priority The bucket priority for which the status should be reported.
    */
   statusForPriority(priority: number): SyncPriorityStatus {
-    // priorityStatuses are sorted by ascending priorities (so higher numbers to lower numbers).
-    for (const known of this.priorityStatuses) {
+    // priorityStatusEntries are sorted by ascending priorities (so higher numbers to lower numbers).
+    for (const known of this.priorityStatusEntries) {
       // We look for the first entry that doesn't have a higher priority.
       if (known.priority >= priority) {
         return known;
@@ -122,7 +122,7 @@ export class SyncStatus {
       dataFlow: this.dataFlowStatus,
       lastSyncedAt: this.lastSyncedAt,
       hasSynced: this.hasSynced,
-      priorityStatuses: this.priorityStatuses
+      priorityStatusEntries: this.priorityStatusEntries
     };
   }
 
