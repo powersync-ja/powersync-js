@@ -95,8 +95,9 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
         if (op.op == UpdateType.PUT && op.table == 'document_updates') {
           updateBatch.push({
-            ...record,
-            id: op.id
+            id: op.id,
+            document_id: op.opData!.document_id,
+            update_data: op.opData!.update_b64
           });
           continue;
         }
@@ -123,7 +124,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
       if (updateBatch.length > 0) {
         console.log('inserting batch of size', updateBatch.length);
-        const result = await this.client.rpc('insert_document_updates', { batch: JSON.stringify(updateBatch) });
+        const result = await this.client.from('document_updates').upsert(updateBatch);
         if (result.error) {
           console.error(result.error);
           result.error.message = `Could not update Supabase. Received error: ${result.error.message}`;

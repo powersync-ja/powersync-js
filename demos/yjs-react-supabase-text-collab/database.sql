@@ -1,5 +1,24 @@
 
 -- tables
+
+-- custom app_base64 type, to allow querying and updating binary data as base64
+-- via postgrest/supabase-js
+create domain app_base64 as bytea;
+
+-- For query responses
+CREATE OR REPLACE FUNCTION json(app_base64) RETURNS json AS $$
+  select to_json(encode($1, 'base64'));
+$$ LANGUAGE SQL IMMUTABLE;
+CREATE CAST (app_base64 AS json) WITH FUNCTION json(app_base64) AS IMPLICIT;
+
+-- For uploading
+CREATE OR REPLACE FUNCTION app_base64(json) RETURNS public.app_base64 AS $$
+  -- here we reuse the previous app_uuid(text) function
+  select decode($1 #>> '{}', 'base64');
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE CAST (json AS public.app_base64) WITH FUNCTION app_base64(json) AS IMPLICIT;
+
 CREATE TABLE documents(
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
   title VARCHAR(255),
@@ -10,7 +29,7 @@ CREATE TABLE document_updates(
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
   created_at timestamptz DEFAULT now(),
   document_id UUID, 
-  update_data BYTEA
+  update_data app_base64
 );
 
 
