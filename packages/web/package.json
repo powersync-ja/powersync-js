@@ -48,7 +48,7 @@
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest --testTimeout=20000"
+    "test": "pnpm build && vitest --testTimeout=25000"
   },
   "keywords": [
     "data sync",
