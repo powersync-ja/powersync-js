@@ -610,7 +610,7 @@ The next upload iteration will be delayed.`);
               this.logger.debug('partial checkpoint validation succeeded');
 
               // All states with a higher priority can be deleted since this partial sync includes them.
-              const priorityStates = this.syncStatus.priorityStatuses.filter((s) => s.priority <= priority);
+              const priorityStates = this.syncStatus.priorityStatusEntries.filter((s) => s.priority <= priority);
               priorityStates.push({
                 priority,
                 lastSyncedAt: new Date(),
@@ -619,7 +619,7 @@ The next upload iteration will be delayed.`);
 
               this.updateSyncStatus({
                 connected: true,
-                priorityStatuses: priorityStates
+                priorityStatusEntries: priorityStates
               });
             }
           } else if (isStreamingSyncCheckpointDiff(line)) {
@@ -688,7 +688,7 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                priorityStatuses: []
+                priorityStatusEntries: []
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -705,7 +705,7 @@ The next upload iteration will be delayed.`);
                 this.updateSyncStatus({
                   connected: true,
                   lastSyncedAt: new Date(),
-                  priorityStatuses: [],
+                  priorityStatusEntries: [],
                   dataFlow: {
                     downloading: false
                   }
@@ -730,7 +730,7 @@ The next upload iteration will be delayed.`);
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      priorityStatuses: options.priorityStatuses ?? this.syncStatus.priorityStatuses
+      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
