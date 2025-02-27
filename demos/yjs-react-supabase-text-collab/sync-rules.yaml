@@ -1,6 +1,10 @@
 # Sync-rule docs: https://docs.powersync.com/usage/sync-rules
 bucket_definitions:
-  global:
+  documents:
     data:
       - SELECT * FROM documents
+  updates:
+    # Allow remote changes to be synchronized even while there are local changes
+    priority: 0
+    data:
       - SELECT id, document_id, base64(update_data) as update_b64 FROM document_updates

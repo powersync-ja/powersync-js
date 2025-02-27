@@ -6,13 +6,7 @@ import {
   UpdateType
 } from '@powersync/web';
 
-import {
-  SupabaseClient,
-  createClient,
-  FunctionsHttpError,
-  FunctionsRelayError,
-  FunctionsFetchError
-} from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export type SupabaseConfig = {
   supabaseUrl: string;
@@ -40,6 +34,8 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
   readonly client: SupabaseClient;
   readonly config: SupabaseConfig;
 
+  enableUploads: boolean = true;
+
   constructor() {
     super();
     this.config = {
@@ -51,29 +47,31 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
   }
 
   async fetchCredentials() {
-    const { data, error } = await this.client.functions.invoke('powersync-auth-anonymous', {
-      method: 'GET'
-    });
-
-    if (error instanceof FunctionsHttpError) {
-      const errorMessage = await error.context.json();
-      console.log('Supabase edge function returned an error', errorMessage);
-    } else if (error instanceof FunctionsRelayError) {
-      console.log('Supabase edge function: Relay error:', error.message);
-    } else if (error instanceof FunctionsFetchError) {
-      console.log('Supabase edge function: Fetch error:', error.message);
+    let {
+      data: { session }
+    } = await this.client.auth.getSession();
+    if (session == null) {
+      const { data, error } = await this.client.auth.signInAnonymously();
+      if (error) {
+        throw error;
+      }
+      session = data.session;
     }
-    if (error) {
-      throw error;
+    if (session == null) {
+      throw new Error(`Failed to get Supabase session`);
     }
-
     return {
-      endpoint: data.powersync_url,
-      token: data.token
+      endpoint: this.config.powersyncUrl,
+      token: session.access_token
     };
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+    if (!this.enableUploads) {
+      console.log('Skipping uploadData because uploads were disabled manually');
+      return;
+    }
+
     const batch = await database.getCrudBatch(200);
 
     if (!batch) {
