@@ -21,6 +21,7 @@ export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOption
   init(): Promise<void>;
   close(): Promise<void>;
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
+  executeRaw(sql: string, params?: any[]): Promise<any[][]>;
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void>;
   getConfig(): Promise<Config>;
