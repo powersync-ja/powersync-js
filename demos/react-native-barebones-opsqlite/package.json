@@ -13,7 +13,9 @@
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@op-engineering/op-sqlite": "^11.4.4",
     "@powersync/op-sqlite": "workspace:*",
+    "@powersync/common": "workspace:*",
     "@powersync/react-native": "workspace:*",
+    "@powersync/react": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.77.0"
   },

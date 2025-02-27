@@ -45,4 +45,5 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
+/** @type {import('@react-native/metro-config').MetroConfig} */
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
