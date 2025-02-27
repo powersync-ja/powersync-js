@@ -352,7 +352,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
     let lastCompleteSync: Date | undefined;
-    const priorityStatuses: SyncPriorityStatus[] = [];
+    const priorityStatusEntries: SyncPriorityStatus[] = [];
 
     for (const { priority, last_synced_at } of result) {
       const parsedDate = new Date(last_synced_at + 'Z');
@@ -361,7 +361,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         // This lowest-possible priority represents a complete sync.
         lastCompleteSync = parsedDate;
       } else {
-        priorityStatuses.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+        priorityStatusEntries.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
       }
     }
 
@@ -369,7 +369,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const updatedStatus = new SyncStatus({
       ...this.currentStatus.toJSON(),
       hasSynced,
-      priorityStatuses,
+      priorityStatusEntries,
       lastSyncedAt: lastCompleteSync
     });
 
