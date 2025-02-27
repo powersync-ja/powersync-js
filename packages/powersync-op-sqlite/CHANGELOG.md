@@ -1,5 +1,13 @@
 # @powersync/op-sqlite
 
+## 0.4.1
+
+### Patch Changes
+
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.11
+- Updated dependencies [3c595af]
+  - @powersync/common@1.25.0
+
 ## 0.4.0
 
 ### Minor Changes

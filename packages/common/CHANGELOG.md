@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.25.0
+
+### Minor Changes
+
+- 3c595af: Support bucket priorities
+
 ## 1.24.0
 
 ### Minor Changes
