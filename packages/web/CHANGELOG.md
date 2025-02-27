@@ -1,5 +1,13 @@
 # @powersync/web
 
+## 1.14.2
+
+### Patch Changes
+
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.11
+- Updated dependencies [3c595af]
+  - @powersync/common@1.25.0
+
 ## 1.14.1
 
 ### Patch Changes
