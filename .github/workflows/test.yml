@@ -7,7 +7,7 @@ on:
 jobs:
   test:
     name: Test Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-xl
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +39,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Configure Playwright
+        run: |
+          pnpm exec playwright install-deps
+          pnpm exec playwright install
 
       - name: Build
         run: pnpm build:packages

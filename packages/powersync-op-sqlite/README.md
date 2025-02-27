@@ -74,9 +74,7 @@ To load additional SQLite extensions include the `extensions` option in `sqliteO
 
 ```js
 sqliteOptions: {
-  extensions: [
-      { path: libPath, entryPoint: 'sqlite3_powersync_init' }
-  ]
+  extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }];
 }
 ```
 
@@ -87,9 +85,9 @@ Example usage:
 ```ts
 import { getDylibPath } from '@op-engineering/op-sqlite';
 
-let libPath: string
+let libPath: string;
 if (Platform.OS === 'ios') {
-  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core')
+  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
 } else {
   libPath = 'libpowersync';
 }
@@ -97,26 +95,9 @@ if (Platform.OS === 'ios') {
 const factory = new OPSqliteOpenFactory({
   dbFilename: 'sqlite.db',
   sqliteOptions: {
-    extensions: [
-        { path: libPath, entryPoint: 'sqlite3_powersync_init' }
-    ]
+    extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }]
   }
 });
-```
-
-## Using the Memory Temporary Store
-
-For some targets like Android 12/API 31, syncing of large datasets may cause disk IO errors due to the default temporary store option (file) used.
-To resolve this you can use the `memory` option, by adding the following configuration option to your application's `package.json`
-
-```json
-{
-  // your normal package.json
-  // ...
-  "op-sqlite": {
-    "sqliteFlags": "-DSQLITE_TEMP_STORE=2"
-  }
-}
 ```
 
 ## Native Projects

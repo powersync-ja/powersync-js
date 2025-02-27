@@ -1,16 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { TestDatabase, generateTestDb } from './utils/testDb';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { TestDatabase, generateTestDb, testSchema } from './utils/testDb';
 // TODO import tests from a common package
 
 describe('Basic', () => {
   let dbWithoutWebWorker: AbstractPowerSyncDatabase;
   let dbWithWebWorker: AbstractPowerSyncDatabase;
+  let dbWithOPFS: AbstractPowerSyncDatabase;
 
   beforeEach(() => {
     dbWithoutWebWorker = generateTestDb({ useWebWorker: false });
     dbWithWebWorker = generateTestDb();
+    dbWithOPFS = new PowerSyncDatabase({
+      database: new WASQLiteOpenFactory({ dbFilename: 'basic.sqlite', vfs: WASQLiteVFS.OPFSCoopSyncVFS }),
+      schema: testSchema
+    });
   });
 
   /**
@@ -19,6 +25,7 @@ describe('Basic', () => {
   const itWithDBs = (name: string, test: (db: AbstractPowerSyncDatabase) => Promise<void>) => {
     it(`${name} - with web worker`, () => test(dbWithWebWorker));
     it(`${name} - without web worker`, () => test(dbWithoutWebWorker));
+    it(`${name} - with OPFS`, () => test(dbWithOPFS));
   };
 
   afterEach(async () => {
@@ -26,6 +33,8 @@ describe('Basic', () => {
     await dbWithWebWorker.close();
     await dbWithoutWebWorker.disconnectAndClear();
     await dbWithoutWebWorker.close();
+    await dbWithOPFS.disconnectAndClear();
+    await dbWithOPFS.close();
   });
 
   describe('executeQuery', () => {

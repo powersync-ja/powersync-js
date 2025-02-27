@@ -6,7 +6,7 @@ import {
   SharedSyncClientEvent,
   SharedSyncImplementation
 } from '../../worker/sync/SharedSyncImplementation';
-import { resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
+import { DEFAULT_CACHE_SIZE_KB, resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
 import { WebDBAdapter } from '../adapters/WebDBAdapter';
 import {
   WebStreamingSyncImplementation,
@@ -106,10 +106,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * This worker will manage all syncing operations remotely.
      */
     const resolvedWorkerOptions = {
-      ...options,
       dbFilename: this.options.identifier!,
-      // TODO
       temporaryStorage: TemporaryStorageOption.MEMORY,
+      cacheSizeKb: DEFAULT_CACHE_SIZE_KB,
+      ...options,
       flags: resolveWebSQLFlags(options.flags)
     };
 

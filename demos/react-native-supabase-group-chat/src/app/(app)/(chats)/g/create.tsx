@@ -26,14 +26,14 @@ export default function CreateGroup() {
 
     await powerSync.writeTransaction(async (tx) => {
       try {
-        await tx.executeAsync('INSERT INTO groups (id, owner_id, name, created_at) VALUES (?, ?, ?, datetime())', [
+        await tx.execute('INSERT INTO groups (id, owner_id, name, created_at) VALUES (?, ?, ?, datetime())', [
           groupId,
           user?.id,
           name
         ]);
         for (const profileId of selectedContacts) {
           const membershipId = uuid();
-          await tx.executeAsync(
+          await tx.execute(
             'INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())',
             [membershipId, groupId, profileId]
           );
