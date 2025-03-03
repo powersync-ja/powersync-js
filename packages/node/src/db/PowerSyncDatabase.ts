@@ -8,10 +8,10 @@ import {
   SqliteBucketStorage
 } from '@powersync/common';
 
-import { NodeRemote } from '../sync/stream/NodeRemote';
-import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation';
+import { NodeRemote } from '../sync/stream/NodeRemote.js';
+import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
-import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter';
+import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
 
 /**
  * A PowerSync database which provides SQLite functionality

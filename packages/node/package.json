@@ -14,11 +14,13 @@
     "dist"
   ],
   "scripts": {
+    "install": "node download_core.js",
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w"
   },
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"

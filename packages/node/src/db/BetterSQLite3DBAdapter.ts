@@ -1,4 +1,6 @@
-import path from 'node:path';
+import * as path from 'node:path';
+import * as OS from 'node:os';
+import * as url from 'node:url';
 
 import BetterSQLite3Database from 'better-sqlite3';
 
@@ -49,7 +51,24 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       dbFilePath = path.join(options.dbLocation, dbFilePath);
     }
 
+    const platform = OS.platform();
+    let extensionPath: string;
+    if (platform === "win32") {
+      extensionPath = 'powersync.dll';
+    } else if (platform === "linux") {
+      extensionPath = 'libpowersync.so';
+    } else if (platform === "darwin") {
+      extensionPath = 'libpowersync.dylib';
+    }
+
     const baseDB = new BetterSQLite3Database(dbFilePath);
+
+    const loadExtension = (db: BetterSQLite3Database) => {
+      const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
+      db.loadExtension(resolved, 'sqlite3_powersync_init');
+    }
+
+    loadExtension(baseDB);
     baseDB.pragma('journal_mode = WAL');
 
     baseDB.updateHook((_op, _dbName, tableName, _rowid) => {
@@ -71,6 +90,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const baseDB = new BetterSQLite3Database(dbFilePath);
+      loadExtension(baseDB);
       baseDB.pragma('query_only = true');
       this.readConnections.push(new Connection(baseDB));
     }
@@ -253,7 +273,7 @@ class Connection implements BetterSQLite3LockContext {
   async execute(query: string, params?: any[]): Promise<QueryResult> {
     const stmt = this.baseDB.prepare(query);
     if (stmt.reader) {
-      const rows = stmt.all(params);
+      const rows = stmt.all(params ?? []);
       return {
         rowsAffected: 0,
         rows: {
@@ -263,7 +283,7 @@ class Connection implements BetterSQLite3LockContext {
         },
       };
     } else {
-      const info = stmt.run(params);
+      const info = stmt.run(params ?? []);
       return {
         rowsAffected: info.changes,
         insertId: Number(info.lastInsertRowid),
