@@ -30,7 +30,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "better-sqlite3": "github:spinda/better-sqlite3#flexwash",
+    "better-sqlite3": "^11.8.1",
     "@powersync/common": "workspace:^1.22.0"
   },
   "peerDependenciesMeta": {
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@types/async-lock": "^1.4.0",
-    "@types/better-sqlite3": "github:spinda/DefinitelyTyped#flexwash&path:/types/better-sqlite3",
+    "@types/better-sqlite3": "^7.6.12",
     "typescript": "^5.5.3"
   },
   "keywords": [
