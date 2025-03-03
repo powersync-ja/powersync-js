@@ -53,7 +53,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs: this.options.retryDelay,
+      retryDelayMs: this.options.retryDelayMs,
       crudUploadThrottleMs: this.options.crudUploadThrottleMs,
       identifier: this.database.name
     });
