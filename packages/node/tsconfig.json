@@ -8,10 +8,10 @@
     "outDir": "./lib",
     "lib": ["esnext"],
     "declaration": true,
-    "module": "NodeNext",
+    "module": "nodenext",
     "moduleResolution": "nodenext",
     "preserveConstEnums": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "skipLibCheck": false,
     "strictNullChecks": true
   },

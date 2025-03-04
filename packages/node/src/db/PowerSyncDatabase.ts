@@ -28,7 +28,9 @@ import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  async _initialize(): Promise<void> {}
+  async _initialize(): Promise<void> {
+    await (this.database as BetterSQLite3DBAdapter).initialize();
+  }
 
   /**
    * Opens a DBAdapter using better-sqlite3 as the default SQLite open factory.

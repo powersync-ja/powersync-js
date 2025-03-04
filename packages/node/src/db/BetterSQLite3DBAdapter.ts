@@ -1,6 +1,8 @@
 import * as path from 'node:path';
 import * as OS from 'node:os';
 import * as url from 'node:url';
+import { Worker } from 'node:worker_threads';
+import * as Comlink from 'comlink';
 
 import BetterSQLite3Database from 'better-sqlite3';
 
@@ -15,8 +17,9 @@ import {
   QueryResult,
   SQLOpenOptions,
 } from '@powersync/common';
-
-type BetterSQLite3Database = BetterSQLite3Database.Database;
+import { releaseProxy, Remote } from 'comlink';
+import { AsyncDatabase, BetterSqliteWorker, ProxiedQueryResult } from './AsyncBetterSqlite.js';
+import { AsyncResource } from 'node:async_hooks';
 
 export type BetterSQLite3LockContext = LockContext & {
   executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
@@ -30,12 +33,13 @@ const READ_CONNECTIONS = 5;
  * Adapter for better-sqlite3
  */
 export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+  private readonly options: SQLOpenOptions;
   public readonly name: string;
 
-  private readonly readConnections: Array<Connection>;
-  private readonly writeConnection: Connection;
-
-  private readonly readQueue: Array<(connection: Connection) => void> = [];
+  private readConnections: RemoteConnection[];
+  private writeConnection: RemoteConnection;
+  
+  private readonly readQueue: Array<(connection: RemoteConnection) => void> = [];
   private readonly writeQueue: Array<() => void> = [];
 
   private readonly uncommittedUpdatedTables = new Set<string>();
@@ -44,33 +48,10 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   constructor(options: SQLOpenOptions) {
     super();
 
+    this.options = options;
     this.name = options.dbFilename;
 
-    let dbFilePath = options.dbFilename;
-    if (options.dbLocation !== undefined) {
-      dbFilePath = path.join(options.dbLocation, dbFilePath);
-    }
-
-    const platform = OS.platform();
-    let extensionPath: string;
-    if (platform === "win32") {
-      extensionPath = 'powersync.dll';
-    } else if (platform === "linux") {
-      extensionPath = 'libpowersync.so';
-    } else if (platform === "darwin") {
-      extensionPath = 'libpowersync.dylib';
-    }
-
-    const baseDB = new BetterSQLite3Database(dbFilePath);
-
-    const loadExtension = (db: BetterSQLite3Database) => {
-      const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
-      db.loadExtension(resolved, 'sqlite3_powersync_init');
-    }
-
-    loadExtension(baseDB);
-    baseDB.pragma('journal_mode = WAL');
-
+    /*
     baseDB.updateHook((_op, _dbName, tableName, _rowid) => {
       this.uncommittedUpdatedTables.add(tableName);
     });
@@ -84,19 +65,64 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     baseDB.rollbackHook(() => {
       this.uncommittedUpdatedTables.clear();
     });
-
-    this.writeConnection = new Connection(baseDB);
-
-    this.readConnections = [];
-    for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const baseDB = new BetterSQLite3Database(dbFilePath);
-      loadExtension(baseDB);
-      baseDB.pragma('query_only = true');
-      this.readConnections.push(new Connection(baseDB));
-    }
+    */
   }
 
-  close() {
+  async initialize() {
+    let dbFilePath = this.options.dbFilename;
+    if (this.options.dbLocation !== undefined) {
+      dbFilePath = path.join(this.options.dbLocation, dbFilePath);
+    }
+
+    const openWorker = async (isWriter: boolean) => {
+      const worker = new Worker(new URL('./AsyncBetterSqlite.js', import.meta.url));
+      const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
+
+      const comlink = Comlink.wrap<BetterSqliteWorker>({
+        postMessage: worker.postMessage.bind(worker),
+        addEventListener: (type, listener) => {
+          let resolved: (event: any) => void = 'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
+
+          // Comlink wants message events, but the message event on workers in Node returns the data only.
+          if (type === 'message') {
+            const original = resolved;
+
+            resolved = (data) => {
+              original({data});
+            };
+          }
+
+          listeners.set(listener, resolved);
+          worker.addListener(type, resolved);
+        },
+        removeEventListener: (type, listener) => {
+          const resolved = listeners.get(listener);
+          if (!resolved) {
+            return;
+          }
+          worker.removeListener(type, resolved);
+        },
+      });
+
+      worker.once('error', (e) => {
+        console.error('Unexpected PowerSync database worker error', e);
+      });
+
+      const database = await comlink.open(dbFilePath, isWriter) as Remote<AsyncDatabase>;
+      return new RemoteConnection(worker, comlink, database);
+    };
+
+    const createWorkers = [openWorker(true)];
+    for (let i = 0; i < READ_CONNECTIONS; i++) {
+      createWorkers.push(openWorker(false));
+    }
+
+    const [writer, ...readers] = await Promise.all(createWorkers);
+    this.writeConnection = writer;
+    this.readConnections = readers;
+  }
+
+  async close() {
     this.writeConnection.close();
     for (const connection of this.readConnections) {
       connection.close();
@@ -107,9 +133,9 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     fn: (tx: BetterSQLite3LockContext) => Promise<T>,
     _options?: DBLockOptions | undefined,
   ): Promise<T> {
-    let resolveConnectionPromise!: (connection: Connection) => void;
-    const connectionPromise = new Promise<Connection>((resolve, _reject) => {
-      resolveConnectionPromise = resolve;
+    let resolveConnectionPromise!: (connection: RemoteConnection) => void;
+    const connectionPromise = new Promise<RemoteConnection>((resolve, _reject) => {
+      resolveConnectionPromise = AsyncResource.bind(resolve);
     });
 
     const connection = this.readConnections.find((connection) => !connection.isBusy);
@@ -142,7 +168,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   ): Promise<T> {
     let resolveLockPromise!: () => void;
     const lockPromise = new Promise<void>((resolve, _reject) => {
-      resolveLockPromise = resolve;
+      resolveLockPromise = AsyncResource.bind(resolve);
     });
 
     if (!this.writeConnection.isBusy) {
@@ -184,37 +210,37 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     fn: (tx: BetterSQLite3Transaction) => Promise<T>,
     _options?: DBLockOptions | undefined,
   ): Promise<T> {
-    return this.readLock((ctx) => this.internalTransaction(ctx as Connection, fn));
+    return this.readLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
   }
 
   writeTransaction<T>(
     fn: (tx: BetterSQLite3Transaction) => Promise<T>,
     _options?: DBLockOptions | undefined,
   ): Promise<T> {
-    return this.writeLock((ctx) => this.internalTransaction(ctx as Connection, fn));
+    return this.writeLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
   }
 
   private async internalTransaction<T>(
-    connection: Connection,
+    connection: RemoteConnection,
     fn: (tx: BetterSQLite3Transaction) => Promise<T>,
   ): Promise<T> {
     let finalized = false;
     const commit = async (): Promise<QueryResult> => {
       if (!finalized) {
         finalized = true;
-        connection.baseDB.exec('COMMIT');
+        connection.execute("COMMIT");
       }
       return { rowsAffected: 0 };
     };
     const rollback = async (): Promise<QueryResult> => {
       if (!finalized) {
         finalized = true;
-        connection.baseDB.exec('ROLLBACK');
+        connection.execute('ROLLBACK');
       }
       return { rowsAffected: 0 };
     };
     try {
-      connection.baseDB.exec('BEGIN');
+      connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
         executeBatch: (query, params) => connection.executeBatch(query, params),
@@ -261,48 +287,27 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   }
 }
 
-class Connection implements BetterSQLite3LockContext {
-  isBusy = false;
+class RemoteConnection implements BetterSQLite3LockContext {
+  isBusy = false
 
-  constructor(readonly baseDB: BetterSQLite3Database) {}
+  private readonly worker: Worker;
+  private readonly comlink: Remote<BetterSqliteWorker>;
+  private readonly database: Remote<AsyncDatabase>;
 
-  close() {
-    this.baseDB.close();
-  }
-
-  async execute(query: string, params?: any[]): Promise<QueryResult> {
-    const stmt = this.baseDB.prepare(query);
-    if (stmt.reader) {
-      const rows = stmt.all(params ?? []);
-      return {
-        rowsAffected: 0,
-        rows: {
-          _array: rows,
-          length: rows.length,
-          item: (idx: number) => rows[idx],
-        },
-      };
-    } else {
-      const info = stmt.run(params ?? []);
-      return {
-        rowsAffected: info.changes,
-        insertId: Number(info.lastInsertRowid),
-      };
-    }
+  constructor(worker: Worker, comlink: Remote<BetterSqliteWorker>, database: Remote<AsyncDatabase>) {
+    this.worker = worker;
+    this.comlink = comlink;
+    this.database = database;
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    params = params ?? [];
+    const result = await this.database.executeBatch(query, params ?? []);
+    return RemoteConnection.wrapQueryResult(result);
+  }
 
-    let rowsAffected = 0;
-
-    const stmt = this.baseDB.prepare(query);
-    for (const paramSet of params) {
-      const info = stmt.run(paramSet);
-      rowsAffected += info.changes;
-    }
-
-    return { rowsAffected };
+  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
+    const result = await this.database.execute(query, params ?? []);
+    return RemoteConnection.wrapQueryResult(result);
   }
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
@@ -325,6 +330,28 @@ class Connection implements BetterSQLite3LockContext {
   }
 
   async refreshSchema() {
-    await this.baseDB.pragma("table_info('sqlite_master')");
+    await this.execute("pragma table_info('sqlite_master')");
+  }
+
+  async close() {
+    await this.database.close();
+    this.database[releaseProxy]();
+    this.comlink[releaseProxy]();
+    await this.worker.terminate();
+  }
+
+  static wrapQueryResult(result: ProxiedQueryResult): QueryResult {
+    let rows: QueryResult['rows'] | undefined = undefined;
+    if (result.rows) {
+      rows = {
+        ...result.rows,
+        item: (idx) => result.rows?._array[idx],
+      } satisfies QueryResult['rows'];
+    }
+
+    return {
+      ...result,
+      rows,
+    };
   }
 }

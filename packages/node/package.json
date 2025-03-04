@@ -18,7 +18,8 @@
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
-    "watch": "tsc -b -w"
+    "watch": "tsc -b -w",
+    "test": "vitest"
   },
   "type": "module",
   "repository": {
@@ -32,8 +33,8 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "better-sqlite3": "^11.8.1",
-    "@powersync/common": "workspace:^1.22.0"
+    "@powersync/common": "workspace:^1.22.0",
+    "better-sqlite3": "^11.8.1"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
@@ -43,12 +44,14 @@
   "dependencies": {
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
-    "bson": "^6.6.0"
+    "bson": "^6.6.0",
+    "comlink": "^4.4.2"
   },
   "devDependencies": {
     "@types/async-lock": "^1.4.0",
     "@types/better-sqlite3": "^7.6.12",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^3.0.5"
   },
   "keywords": [
     "data sync",
