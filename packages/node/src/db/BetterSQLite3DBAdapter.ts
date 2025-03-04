@@ -1,10 +1,6 @@
 import * as path from 'node:path';
-import * as OS from 'node:os';
-import * as url from 'node:url';
 import { Worker } from 'node:worker_threads';
 import * as Comlink from 'comlink';
-
-import BetterSQLite3Database from 'better-sqlite3';
 
 import {
   BaseObserver,
@@ -15,7 +11,7 @@ import {
   Transaction,
   DBLockOptions,
   QueryResult,
-  SQLOpenOptions,
+  SQLOpenOptions
 } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { AsyncDatabase, BetterSqliteWorker, ProxiedQueryResult } from './AsyncBetterSqlite.js';
@@ -38,34 +34,15 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 
   private readConnections: RemoteConnection[];
   private writeConnection: RemoteConnection;
-  
+
   private readonly readQueue: Array<(connection: RemoteConnection) => void> = [];
   private readonly writeQueue: Array<() => void> = [];
-
-  private readonly uncommittedUpdatedTables = new Set<string>();
-  private readonly committedUpdatedTables = new Set<string>();
 
   constructor(options: SQLOpenOptions) {
     super();
 
     this.options = options;
     this.name = options.dbFilename;
-
-    /*
-    baseDB.updateHook((_op, _dbName, tableName, _rowid) => {
-      this.uncommittedUpdatedTables.add(tableName);
-    });
-    baseDB.commitHook(() => {
-      for (const tableName of this.uncommittedUpdatedTables) {
-        this.committedUpdatedTables.add(tableName);
-      }
-      this.uncommittedUpdatedTables.clear();
-      return true;
-    });
-    baseDB.rollbackHook(() => {
-      this.uncommittedUpdatedTables.clear();
-    });
-    */
   }
 
   async initialize() {
@@ -81,14 +58,15 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       const comlink = Comlink.wrap<BetterSqliteWorker>({
         postMessage: worker.postMessage.bind(worker),
         addEventListener: (type, listener) => {
-          let resolved: (event: any) => void = 'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
+          let resolved: (event: any) => void =
+            'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
 
           // Comlink wants message events, but the message event on workers in Node returns the data only.
           if (type === 'message') {
             const original = resolved;
 
             resolved = (data) => {
-              original({data});
+              original({ data });
             };
           }
 
@@ -101,25 +79,24 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
             return;
           }
           worker.removeListener(type, resolved);
-        },
+        }
       });
 
       worker.once('error', (e) => {
         console.error('Unexpected PowerSync database worker error', e);
       });
 
-      const database = await comlink.open(dbFilePath, isWriter) as Remote<AsyncDatabase>;
+      const database = (await comlink.open(dbFilePath, isWriter)) as Remote<AsyncDatabase>;
       return new RemoteConnection(worker, comlink, database);
     };
 
-    const createWorkers = [openWorker(true)];
+    // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).
+    this.writeConnection = await openWorker(true);
+    const createWorkers: Promise<RemoteConnection>[] = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       createWorkers.push(openWorker(false));
     }
-
-    const [writer, ...readers] = await Promise.all(createWorkers);
-    this.writeConnection = writer;
-    this.readConnections = readers;
+    this.readConnections = await Promise.all(createWorkers);
   }
 
   async close() {
@@ -129,10 +106,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
   }
 
-  readLock<T>(
-    fn: (tx: BetterSQLite3LockContext) => Promise<T>,
-    _options?: DBLockOptions | undefined,
-  ): Promise<T> {
+  readLock<T>(fn: (tx: BetterSQLite3LockContext) => Promise<T>, _options?: DBLockOptions | undefined): Promise<T> {
     let resolveConnectionPromise!: (connection: RemoteConnection) => void;
     const connectionPromise = new Promise<RemoteConnection>((resolve, _reject) => {
       resolveConnectionPromise = AsyncResource.bind(resolve);
@@ -162,10 +136,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     })();
   }
 
-  writeLock<T>(
-    fn: (tx: BetterSQLite3LockContext) => Promise<T>,
-    _options?: DBLockOptions | undefined,
-  ): Promise<T> {
+  writeLock<T>(fn: (tx: BetterSQLite3LockContext) => Promise<T>, _options?: DBLockOptions | undefined): Promise<T> {
     let resolveLockPromise!: () => void;
     const lockPromise = new Promise<void>((resolve, _reject) => {
       resolveLockPromise = AsyncResource.bind(resolve);
@@ -185,13 +156,14 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         try {
           return await fn(this.writeConnection);
         } finally {
-          if (this.committedUpdatedTables.size > 0) {
+          const updates = await this.writeConnection.database.collectCommittedUpdates();
+
+          if (updates.length > 0) {
             const event: BatchedUpdateNotification = {
-              tables: [...this.committedUpdatedTables],
+              tables: updates,
               groupedUpdates: {},
-              rawUpdates: [],
+              rawUpdates: []
             };
-            this.committedUpdatedTables.clear();
             this.iterateListeners((cb) => cb.tablesUpdated?.(event));
           }
         }
@@ -208,39 +180,39 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 
   readTransaction<T>(
     fn: (tx: BetterSQLite3Transaction) => Promise<T>,
-    _options?: DBLockOptions | undefined,
+    _options?: DBLockOptions | undefined
   ): Promise<T> {
     return this.readLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
   }
 
   writeTransaction<T>(
     fn: (tx: BetterSQLite3Transaction) => Promise<T>,
-    _options?: DBLockOptions | undefined,
+    _options?: DBLockOptions | undefined
   ): Promise<T> {
     return this.writeLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
   }
 
   private async internalTransaction<T>(
     connection: RemoteConnection,
-    fn: (tx: BetterSQLite3Transaction) => Promise<T>,
+    fn: (tx: BetterSQLite3Transaction) => Promise<T>
   ): Promise<T> {
     let finalized = false;
     const commit = async (): Promise<QueryResult> => {
       if (!finalized) {
         finalized = true;
-        connection.execute("COMMIT");
+        await connection.execute('COMMIT');
       }
       return { rowsAffected: 0 };
     };
     const rollback = async (): Promise<QueryResult> => {
       if (!finalized) {
         finalized = true;
-        connection.execute('ROLLBACK');
+        await connection.execute('ROLLBACK');
       }
       return { rowsAffected: 0 };
     };
     try {
-      connection.execute('BEGIN');
+      await connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
         executeBatch: (query, params) => connection.executeBatch(query, params),
@@ -288,11 +260,11 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 }
 
 class RemoteConnection implements BetterSQLite3LockContext {
-  isBusy = false
+  isBusy = false;
 
   private readonly worker: Worker;
   private readonly comlink: Remote<BetterSqliteWorker>;
-  private readonly database: Remote<AsyncDatabase>;
+  readonly database: Remote<AsyncDatabase>;
 
   constructor(worker: Worker, comlink: Remote<BetterSqliteWorker>, database: Remote<AsyncDatabase>) {
     this.worker = worker;
@@ -345,13 +317,13 @@ class RemoteConnection implements BetterSQLite3LockContext {
     if (result.rows) {
       rows = {
         ...result.rows,
-        item: (idx) => result.rows?._array[idx],
+        item: (idx) => result.rows?._array[idx]
       } satisfies QueryResult['rows'];
     }
 
     return {
       ...result,
-      rows,
+      rows
     };
   }
 }

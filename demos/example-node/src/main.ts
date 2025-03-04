@@ -9,6 +9,11 @@ import {
 import Logger from 'js-logger';
 
 const main = async () => {
+  if (!('DEMO_ENDPOINT' in process.env) || !('DEMO_TOKEN' in process.env)) {
+    console.warn('Set the DEMO_ENDPOINT and DEMO_TOKEN environment variables to point at a sync service with a dev token to run this example.');
+    return;
+  }
+
   const db = new PowerSyncDatabase({
     schema: AppSchema,
     database: {
@@ -27,7 +32,7 @@ const main = async () => {
   await db.waitForFirstSync();
 
   let hasFirstRow: ((value: any) => void) | null = null;
-  const firstRow = new Promise((resolve) => hasFirstRow = resolve);
+  const firstRow = new Promise((resolve) => (hasFirstRow = resolve));
   const watchLists = async () => {
     for await (const rows of db.watch('SELECT * FROM lists')) {
       if (hasFirstRow) {
@@ -41,14 +46,14 @@ const main = async () => {
   watchLists();
   await firstRow;
 
-//  await db.execute("INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), 'test', 'test', 'test');");
+  //  await db.execute("INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), 'test', 'test', 'test');");
 };
 
 class DemoConnector implements PowerSyncBackendConnector {
   async fetchCredentials() {
     return {
-      endpoint: 'https://678775966cf706da85f4e447.powersync.journeyapps.com', // todo
-      token: 'eyJhbGciOiJSUzI1NiIsImtpZCI6InBvd2Vyc3luYy1kZXYtMzIyM2Q0ZTMifQ.eyJzdWIiOiI5MGQ5MzBhZi1iYmVkLTQ0NDgtOWM0NS1kYWQyZGYzMDAwNWYiLCJpYXQiOjE3NDEwMTU4NjUsImlzcyI6Imh0dHBzOi8vcG93ZXJzeW5jLWFwaS5qb3VybmV5YXBwcy5jb20iLCJhdWQiOiJodHRwczovLzY3ODc3NTk2NmNmNzA2ZGE4NWY0ZTQ0Ny5wb3dlcnN5bmMuam91cm5leWFwcHMuY29tIiwiZXhwIjoxNzQxMDU5MDY1fQ.aQqLOulvaOMKFtOUfbYuywLRjxmhs1J9hpdlkoSjw2m1_OTmnoVJkMRFKvO45k2I_ZD1GLg2sb6HoV2KNQHJPp2yMeL5eBENXt1HEy-WKU5ObrbwoQT0knkHnwZRmbGNwPYz3R21GibKDdD8chILVtNkSXoy3LjAUmywdzzhMBmmJwiIxP5Ew_K4XAxBU2pDyjX3FNvISHdB60IPgGBQUz3Ke_t-4ZD-k-EUHVLDufhxsDRSwhIKG26PPUqJdZ4YPlqwtjjZrVHy_B4XQBtRsAjqhf61ZLFEx6xeHcze-xZRNVsTw3qTmAFC4Vf9Ezka5jhMppM_HAtPn_wyzWUauA' // todo
+      endpoint: process.env.DEMO_ENDPOINT!,
+      token: process.env.DEMO_TOKEN!,
     };
   }
 

@@ -9,7 +9,7 @@ import {
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
-  RemoteConnector,
+  RemoteConnector
 } from '@powersync/common';
 import { BSON } from 'bson';
 
