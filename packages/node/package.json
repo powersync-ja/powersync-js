@@ -1,0 +1,63 @@
+{
+  "name": "@powersync/node",
+  "version": "1.16.1",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "PowerSync - sync Postgres with SQLite in your Node.js app for offline-first and real-time data",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "scripts": {
+    "install": "node download_core.js",
+    "build": "tsc -b",
+    "build:prod": "tsc -b --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
+    "watch": "tsc -b -w",
+    "test": "vitest"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com/",
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.22.0",
+    "better-sqlite3": "^11.8.1"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@powersync/common": "workspace:*",
+    "async-lock": "^1.4.0",
+    "bson": "^6.6.0",
+    "comlink": "^4.4.2"
+  },
+  "devDependencies": {
+    "@types/async-lock": "^1.4.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "typescript": "^5.5.3",
+    "vitest": "^3.0.5"
+  },
+  "keywords": [
+    "data sync",
+    "offline-first",
+    "sqlite",
+    "real-time data stream",
+    "live data"
+  ]
+}
