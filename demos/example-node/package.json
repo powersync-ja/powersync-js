@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "build": "tsc -b",
-    "run": "node --loader ts-node/esm src/main.ts"
+    "start": "node --loader ts-node/esm src/main.ts"
   },
   "dependencies": {
     "@powersync/node": "workspace:*"
