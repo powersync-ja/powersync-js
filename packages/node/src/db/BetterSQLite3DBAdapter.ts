@@ -53,7 +53,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
 
     const openWorker = async (isWriter: boolean) => {
-      const worker = new Worker(new URL('./AsyncBetterSqlite.js', import.meta.url));
+      const worker = new Worker(new URL('./SqliteWorker.js', import.meta.url));
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
       const comlink = Comlink.wrap<AsyncDatabaseOpener>({
