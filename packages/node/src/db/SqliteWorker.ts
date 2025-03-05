@@ -113,13 +113,4 @@ const loadExtension = (db: Database) => {
   db.loadExtension(resolved, 'sqlite3_powersync_init');
 };
 
-function toComlink(port: MessagePort): Comlink.Endpoint {
-  return {
-    postMessage: port.postMessage.bind(port),
-    start: port.start && port.start.bind(port),
-    addEventListener: port.addEventListener.bind(port),
-    removeEventListener: port.removeEventListener.bind(port)
-  };
-}
-
-Comlink.expose(new BetterSqliteWorker(), toComlink(parentPort!));
+Comlink.expose(new BetterSqliteWorker(), parentPort! as Comlink.Endpoint);
