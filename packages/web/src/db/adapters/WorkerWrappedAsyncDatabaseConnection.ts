@@ -29,11 +29,9 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
 export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
   implements AsyncDatabaseConnection
 {
-  protected releaseSharedConnectionLock: (() => void) | null;
   protected lockAbortController: AbortController;
 
   constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
-    this.releaseSharedConnectionLock = null;
     this.lockAbortController = new AbortController();
   }
 
@@ -74,8 +72,9 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
 
             // Hold the lock while the shared connection is in use.
             await new Promise<void>((releaseLock) => {
-              // We can use the resolver to free the lock
-              this.releaseSharedConnectionLock = releaseLock;
+              this.lockAbortController.signal.addEventListener('abort', () => {
+                releaseLock();
+              });
             });
           }
         )
@@ -98,7 +97,6 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   async close(): Promise<void> {
     // Abort any pending lock requests.
     this.lockAbortController.abort();
-    this.releaseSharedConnectionLock?.();
     await this.baseConnection.close();
     this.options.remote[Comlink.releaseProxy]();
     this.options.onClose?.();
