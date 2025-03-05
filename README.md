@@ -16,7 +16,11 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/web](./packages/web/README.md)
 
-  - JS Web SDK implementation (extension of `packages/common`)
+  - JS Web SDK implementation (extension of `packages/common`)<>
+
+- [packages/node](./packages/node/README.md)
+
+  - NodeJS client implementation (extension of `packages/common`)<>
 
 - [packages/react](./packages/react/README.md)
 
@@ -79,6 +83,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 ### Capacitor
 
 - [demos/example-capacitor](./demos/example-capacitor/README.md) A Capacitor example app using the PowerSync Web SDK.
+
+### Node
+
+- [demos/example-node](./demos/example-node/README.md) A small CLI example built using the PowerSync SDK for NodeJS.
 
 ## Tools
 

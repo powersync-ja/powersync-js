@@ -24,7 +24,7 @@ or download sqlite3 and PowerSync binaries.
 
 # Getting Started
 
-You can follow along our [web SDK reference](https://docs.powersync.com/client-sdk-references/js-web) for the web
+You can follow along our [web SDK reference](https://docs.powersync.com/client-sdk-references/js-web)
 which contains everything you need to know to get started implementing PowerSync in your project.
 Replace imports of `@powersync/web` with `@powersync/node` where necessary.
 
