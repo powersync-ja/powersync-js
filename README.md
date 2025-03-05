@@ -16,11 +16,11 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/web](./packages/web/README.md)
 
-  - JS Web SDK implementation (extension of `packages/common`)<>
+  - JS Web SDK implementation (extension of `packages/common`)
 
 - [packages/node](./packages/node/README.md)
 
-  - NodeJS client implementation (extension of `packages/common`)<>
+  - NodeJS client implementation (extension of `packages/common`)
 
 - [packages/react](./packages/react/README.md)
 
