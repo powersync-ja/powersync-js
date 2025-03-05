@@ -52,7 +52,14 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
    * This will never resolve in SSR Mode.
    */
   async waitForStatus(status: SyncStatusOptions) {
-    return new Promise<void>((r) => {});
+    return this.waitUntilStatusMatches(() => false);
+  }
+
+  /**
+   * This will never resolve in SSR Mode.
+   */
+  waitUntilStatusMatches(_predicate: (status: SyncStatus) => boolean): Promise<void> {
+    return new Promise<void>(() => {});
   }
 
   /**

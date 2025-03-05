@@ -38,6 +38,7 @@ const config: UserConfigExport = {
     isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
+    maxConcurrency: 1,
     browser: {
       enabled: true,
       provider: 'playwright',

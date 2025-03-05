@@ -1,5 +1,23 @@
 # @powersync/web
 
+## 1.14.1
+
+### Patch Changes
+
+- 44582ef: Fixed bug where using OPFS and reconnecting would cause upload triggers to fail.
+
+## 1.14.0
+
+### Minor Changes
+
+- 56185bb: Add cacheSizeKb option, defaulting to 50MB.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
 ## 1.13.1
 
 ### Patch Changes

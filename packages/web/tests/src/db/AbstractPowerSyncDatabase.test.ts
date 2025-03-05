@@ -1,18 +1,31 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AbstractPowerSyncDatabase, DEFAULT_RETRY_DELAY_MS, DEFAULT_CRUD_UPLOAD_THROTTLE_MS, BucketStorageAdapter, DBAdapter, PowerSyncBackendConnector, PowerSyncDatabaseOptionsWithSettings, RequiredAdditionalConnectionOptions, StreamingSyncImplementation } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  DEFAULT_RETRY_DELAY_MS,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  BucketStorageAdapter,
+  DBAdapter,
+  PowerSyncBackendConnector,
+  PowerSyncDatabaseOptionsWithSettings,
+  RequiredAdditionalConnectionOptions,
+  StreamingSyncImplementation
+} from '@powersync/common';
 import { testSchema } from '../../utils/testDb';
 
 class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
-    return {} as any
+    return {} as any;
   }
-  protected generateSyncStreamImplementation(connector: PowerSyncBackendConnector, options: RequiredAdditionalConnectionOptions): StreamingSyncImplementation {
+  protected generateSyncStreamImplementation(
+    connector: PowerSyncBackendConnector,
+    options: RequiredAdditionalConnectionOptions
+  ): StreamingSyncImplementation {
     return undefined as any;
   }
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return {
       init: vi.fn()
-    } as any
+    } as any;
   }
   _initialize(): Promise<void> {
     return Promise.resolve();
@@ -20,10 +33,11 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   get database() {
     return {
-      get: vi.fn().mockResolvedValue({ version: '0.3.0'}),
+      get: vi.fn().mockResolvedValue({ version: '0.3.0' }),
+      getAll: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
-      refreshSchema: vi.fn(),
-    } as any
+      refreshSchema: vi.fn()
+    } as any;
   }
   // Expose protected method for testing
   public testResolvedConnectionOptions(options?: any) {

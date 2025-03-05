@@ -1,7 +1,7 @@
 import Logger from 'js-logger';
 import p from 'p-defer';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConnectedDatabaseUtils, generateConnectedDatabase } from './stream.test';
+import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
 
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';
@@ -15,6 +15,7 @@ describe('CRUD Uploads', () => {
   beforeEach(async () => {
     connectedUtils = await generateConnectedDatabase({
       powerSyncOptions: {
+        dbFilename: 'crud-uploads-test.db',
         logger,
         crudUploadThrottleMs: 1_000,
         flags: {
@@ -26,8 +27,6 @@ describe('CRUD Uploads', () => {
 
   afterEach(async () => {
     connectedUtils.remote.streamController?.close();
-    await connectedUtils.powersync.disconnectAndClear();
-    await connectedUtils.powersync.close();
   });
 
   it('should warn for missing upload operations in uploadData', async () => {
@@ -54,7 +53,8 @@ describe('CRUD Uploads', () => {
         expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).exist;
       },
       {
-        timeout: 500
+        timeout: 500,
+        interval: 100
       }
     );
   });
@@ -103,7 +103,8 @@ describe('CRUD Uploads', () => {
         expect(uploadSpy.mock.calls.length).eq(3);
       },
       {
-        timeout: 5_000
+        timeout: 5_000,
+        interval: 300
       }
     );
 

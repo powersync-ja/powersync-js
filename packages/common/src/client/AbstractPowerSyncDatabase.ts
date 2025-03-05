@@ -9,7 +9,7 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
-import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
@@ -146,6 +146,11 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
   return typeof test == 'object' && isSQLOpenOptions(test.database);
 };
 
+/**
+ * The priority used by the core extension to indicate that a full sync was completed.
+ */
+const FULL_SYNC_PRIORITY = 2147483647;
+
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
    * Transactions should be queued in the DBAdapter, but we also want to prevent
@@ -260,16 +265,30 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Wait for the first sync operation to complete.
+   *
+   * @argument request Either an abort signal (after which the promise will complete regardless of
+   * whether a full sync was completed) or an object providing an abort signal and a priority target.
+   * When a priority target is set, the promise may complete when all buckets with the given (or higher)
+   * priorities have been synchronized. This can be earlier than a complete sync.
    * @returns A promise which will resolve once the first full sync has completed.
    */
-  async waitForFirstSync(signal?: AbortSignal): Promise<void> {
-    if (this.currentStatus.hasSynced) {
+  async waitForFirstSync(request?: AbortSignal | { signal?: AbortSignal; priority?: number }): Promise<void> {
+    const signal = request instanceof AbortSignal ? request : request?.signal;
+    const priority = request && 'priority' in request ? request.priority : undefined;
+
+    const statusMatches =
+      priority === undefined
+        ? (status: SyncStatus) => status.hasSynced
+        : (status: SyncStatus) => status.statusForPriority(priority).hasSynced;
+
+    if (statusMatches(this.currentStatus)) {
       return;
     }
     return new Promise((resolve) => {
       const dispose = this.registerListener({
         statusChanged: (status) => {
-          if (status.hasSynced) {
+          if (statusMatches(status)) {
             dispose();
             resolve();
           }
@@ -329,14 +348,33 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected async updateHasSynced() {
-    const result = await this.database.get<{ synced_at: string | null }>(
-      'SELECT powersync_last_synced_at() as synced_at'
+    const result = await this.database.getAll<{ priority: number; last_synced_at: string }>(
+      'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
-    const hasSynced = result.synced_at != null;
-    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
+    let lastCompleteSync: Date | undefined;
+    const priorityStatusEntries: SyncPriorityStatus[] = [];
 
-    if (hasSynced != this.currentStatus.hasSynced) {
-      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
+    for (const { priority, last_synced_at } of result) {
+      const parsedDate = new Date(last_synced_at + 'Z');
+
+      if (priority == FULL_SYNC_PRIORITY) {
+        // This lowest-possible priority represents a complete sync.
+        lastCompleteSync = parsedDate;
+      } else {
+        priorityStatusEntries.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+      }
+    }
+
+    const hasSynced = lastCompleteSync != null;
+    const updatedStatus = new SyncStatus({
+      ...this.currentStatus.toJSON(),
+      hasSynced,
+      priorityStatusEntries,
+      lastSyncedAt: lastCompleteSync
+    });
+
+    if (!updatedStatus.isEqual(this.currentStatus)) {
+      this.currentStatus = updatedStatus;
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }
@@ -379,7 +417,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
   resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
     return {
-      retryDelayMs: options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
+      retryDelayMs:
+        options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
       crudUploadThrottleMs:
         options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS
     };
@@ -401,7 +440,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
       retryDelayMs,
-      crudUploadThrottleMs,
+      crudUploadThrottleMs
     });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {

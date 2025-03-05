@@ -79,9 +79,9 @@ describe('CRUD Tests', () => {
     expect(await powersync.get('SELECT count(*) AS count FROM assets')).deep.equals({ count: 1 });
 
     // Make sure uniqueness is enforced
-    expect(powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])).rejects.toThrow(
-      /UNIQUE constraint failed/
-    );
+    await expect(
+      powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])
+    ).rejects.toThrow(/UNIQUE constraint failed/);
   });
 
   it('UPDATE', async () => {
@@ -154,7 +154,7 @@ describe('CRUD Tests', () => {
 
   it('UPSERT not supported', async () => {
     // Just shows that we cannot currently do this
-    expect(
+    await expect(
       powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?) ON CONFLICT DO UPDATE SET description = ?', [
         testId,
         'test2',
