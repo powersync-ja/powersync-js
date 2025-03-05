@@ -9,8 +9,7 @@
     "run": "node --loader ts-node/esm src/main.ts"
   },
   "dependencies": {
-    "@powersync/node": "workspace:*",
-    "better-sqlite3": "any"
+    "@powersync/node": "workspace:*"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
