@@ -11,7 +11,8 @@
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "download_core.js"
   ],
   "scripts": {
     "install": "node download_core.js",
@@ -19,7 +20,7 @@
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w",
-    "test": "vitest"
+    "_test": "vitest"
   },
   "type": "module",
   "repository": {
@@ -34,7 +35,7 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@powersync/common": "workspace:^1.22.0",
-    "better-sqlite3": "^11.8.1"
+    "better-sqlite3": "github:spinda/better-sqlite3#flexwash"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
