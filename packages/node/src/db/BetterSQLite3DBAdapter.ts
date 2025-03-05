@@ -226,7 +226,12 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       await commit();
       return result;
     } catch (ex) {
-      await rollback();
+      try {
+        await rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
       throw ex;
     }
   }
