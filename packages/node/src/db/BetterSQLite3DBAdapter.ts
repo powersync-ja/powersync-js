@@ -13,9 +13,10 @@ import {
   QueryResult,
   SQLOpenOptions
 } from '@powersync/common';
-import { releaseProxy, Remote } from 'comlink';
-import { AsyncDatabase, BetterSqliteWorker, ProxiedQueryResult } from './AsyncBetterSqlite.js';
+import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';
+import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
+import { RemoteConnection } from './RemoteConnection.js';
 
 export type BetterSQLite3LockContext = LockContext & {
   executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
@@ -55,7 +56,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       const worker = new Worker(new URL('./AsyncBetterSqlite.js', import.meta.url));
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
-      const comlink = Comlink.wrap<BetterSqliteWorker>({
+      const comlink = Comlink.wrap<AsyncDatabaseOpener>({
         postMessage: worker.postMessage.bind(worker),
         addEventListener: (type, listener) => {
           let resolved: (event: any) => void =
@@ -256,74 +257,5 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     for (const readConnection of this.readConnections) {
       await readConnection.refreshSchema();
     }
-  }
-}
-
-class RemoteConnection implements BetterSQLite3LockContext {
-  isBusy = false;
-
-  private readonly worker: Worker;
-  private readonly comlink: Remote<BetterSqliteWorker>;
-  readonly database: Remote<AsyncDatabase>;
-
-  constructor(worker: Worker, comlink: Remote<BetterSqliteWorker>, database: Remote<AsyncDatabase>) {
-    this.worker = worker;
-    this.comlink = comlink;
-    this.database = database;
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    const result = await this.database.executeBatch(query, params ?? []);
-    return RemoteConnection.wrapQueryResult(result);
-  }
-
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const result = await this.database.execute(query, params ?? []);
-    return RemoteConnection.wrapQueryResult(result);
-  }
-
-  async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    const res = await this.execute(sql, parameters);
-    return res.rows?._array ?? [];
-  }
-
-  async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    const res = await this.execute(sql, parameters);
-    return res.rows?.item(0) ?? null;
-  }
-
-  async get<T>(sql: string, parameters?: any[]): Promise<T> {
-    const res = await this.execute(sql, parameters);
-    const first = res.rows?.item(0);
-    if (!first) {
-      throw new Error('Result set is empty');
-    }
-    return first;
-  }
-
-  async refreshSchema() {
-    await this.execute("pragma table_info('sqlite_master')");
-  }
-
-  async close() {
-    await this.database.close();
-    this.database[releaseProxy]();
-    this.comlink[releaseProxy]();
-    await this.worker.terminate();
-  }
-
-  static wrapQueryResult(result: ProxiedQueryResult): QueryResult {
-    let rows: QueryResult['rows'] | undefined = undefined;
-    if (result.rows) {
-      rows = {
-        ...result.rows,
-        item: (idx) => result.rows?._array[idx]
-      } satisfies QueryResult['rows'];
-    }
-
-    return {
-      ...result,
-      rows
-    };
   }
 }

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "private": true,
   "scripts": {
     "build": "tsc -b",
     "run": "node --loader ts-node/esm src/main.ts"

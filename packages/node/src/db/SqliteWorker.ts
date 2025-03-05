@@ -1,27 +1,9 @@
-import { QueryResult } from '@powersync/common';
 import BetterSQLite3Database, { Database } from 'better-sqlite3';
 import * as Comlink from 'comlink';
 import { MessagePort, parentPort, threadId } from 'node:worker_threads';
 import OS from 'node:os';
 import url from 'node:url';
-
-export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
-  rows?: {
-    _array: any[];
-    length: number;
-  };
-};
-
-export interface AsyncDatabase {
-  execute: (query: string, params: any[]) => Promise<ProxiedQueryResult>;
-  executeBatch: (query: string, params: any[][]) => Promise<ProxiedQueryResult>;
-  close: () => Promise<void>;
-  // Collect table updates made since the last call to collectCommittedUpdates.
-  // This happens on the worker because we otherwise get race conditions when wrapping
-  // callbacks to invoke on the main thread (we need a guarantee that collectCommittedUpdates
-  // contains entries immediately after calling COMMIT).
-  collectCommittedUpdates: () => Promise<string[]>;
-}
+import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
@@ -98,8 +80,8 @@ class BlockingAsyncDatabase implements AsyncDatabase {
   }
 }
 
-export class BetterSqliteWorker {
-  open(path: string, isWriter: boolean): AsyncDatabase {
+class BetterSqliteWorker implements AsyncDatabaseOpener {
+  async open(path: string, isWriter: boolean): Promise<AsyncDatabase> {
     const baseDB = new BetterSQLite3Database(path);
     baseDB.pragma('journal_mode = WAL');
     loadExtension(baseDB);
@@ -114,17 +96,19 @@ export class BetterSqliteWorker {
   }
 }
 
-const platform = OS.platform();
-let extensionPath: string;
-if (platform === 'win32') {
-  extensionPath = 'powersync.dll';
-} else if (platform === 'linux') {
-  extensionPath = 'libpowersync.so';
-} else if (platform === 'darwin') {
-  extensionPath = 'libpowersync.dylib';
-}
-
 const loadExtension = (db: Database) => {
+  const platform = OS.platform();
+  let extensionPath: string;
+  if (platform === 'win32') {
+    extensionPath = 'powersync.dll';
+  } else if (platform === 'linux') {
+    extensionPath = 'libpowersync.so';
+  } else if (platform === 'darwin') {
+    extensionPath = 'libpowersync.dylib';
+  } else {
+    throw 'Unknown platform, PowerSync for Node.JS currently supports Windows, Linux and macOS.';
+  }
+
   const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
   db.loadExtension(resolved, 'sqlite3_powersync_init');
 };

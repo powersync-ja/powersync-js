@@ -12,35 +12,35 @@ const platform = OS.platform();
 let destination;
 let asset;
 
-if (platform === "win32") {
-    asset = "powersync_x64.dll";
-    destination = 'powersync.dll';
-} else if (platform === "linux") {
-    asset = OS.arch() === 'x64' ? 'libpowersync_x64.so' : 'libpowersync_aarch64.so';
-    destination = 'libpowersync.so';
-} else if (platform === "darwin") {
-    asset = OS.arch() === 'x64' ? 'libpowersync_x64.dylib' : 'libpowersync_aarch64.dylib';
-    destination = 'libpowersync.dylib';
+if (platform === 'win32') {
+  asset = 'powersync_x64.dll';
+  destination = 'powersync.dll';
+} else if (platform === 'linux') {
+  asset = OS.arch() === 'x64' ? 'libpowersync_x64.so' : 'libpowersync_aarch64.so';
+  destination = 'libpowersync.so';
+} else if (platform === 'darwin') {
+  asset = OS.arch() === 'x64' ? 'libpowersync_x64.dylib' : 'libpowersync_aarch64.dylib';
+  destination = 'libpowersync.dylib';
 }
 
-const destinationPath = path.resolve("lib", destination)
+const destinationPath = path.resolve('lib', destination);
 try {
-    await fs.access(destinationPath);
-    exit(0);
+  await fs.access(destinationPath);
+  exit(0);
 } catch {}
 
 const url = `https://github.com/powersync-ja/powersync-sqlite-core/releases/download/v${version}/${asset}`;
 const response = await fetch(url);
 if (response.status != 200) {
-    throw `Could not download ${url}`;
+  throw `Could not download ${url}`;
 }
 
 try {
-    await fs.access("lib")
+  await fs.access('lib');
 } catch {
-    await fs.mkdir("lib");
+  await fs.mkdir('lib');
 }
 
-const file = await fs.open(destinationPath, "w");
+const file = await fs.open(destinationPath, 'w');
 await finished(Readable.fromWeb(response.body).pipe(file.createWriteStream()));
 await file.close();
