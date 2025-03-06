@@ -13,7 +13,7 @@ describe(
   { sequential: true },
   describeCrudUploadTests(() => ({
     database: {
-      dbFilename: `crud-uploads-test-${v4()}.db`
+      dbFilename: `${v4()}.db`
     },
     schema: DEFAULT_CONNECTED_POWERSYNC_OPTIONS.powerSyncOptions.schema,
     crudUploadThrottleMs: 1_000,

@@ -5,46 +5,48 @@ import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/gener
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
-describe(
-  'Streaming - With Web Workers',
-  {
-    sequential: true
-  },
-  describeStreamingTests(() => generateConnectedDatabase())
-);
+describe('Streaming', { sequential: true }, () => {
+  describe(
+    'Streaming - With Web Workers',
+    {
+      sequential: true
+    },
+    describeStreamingTests(() => generateConnectedDatabase())
+  );
 
-describe(
-  'Streaming - Without Web Workers',
-  {
-    sequential: true
-  },
-  describeStreamingTests(() =>
-    generateConnectedDatabase({
-      powerSyncOptions: {
-        flags: {
-          useWebWorker: false
+  describe(
+    'Streaming - Without Web Workers',
+    {
+      sequential: true
+    },
+    describeStreamingTests(() =>
+      generateConnectedDatabase({
+        powerSyncOptions: {
+          flags: {
+            useWebWorker: false
+          }
         }
-      }
-    })
-  )
-);
+      })
+    )
+  );
 
-describe(
-  'Streaming - With OPFS',
-  {
-    sequential: true
-  },
-  describeStreamingTests(() =>
-    generateConnectedDatabase({
-      powerSyncOptions: {
-        database: new WASQLiteOpenFactory({
-          dbFilename: 'streaming-opfs.sqlite',
-          vfs: WASQLiteVFS.OPFSCoopSyncVFS
-        })
-      }
-    })
-  )
-);
+  describe(
+    'Streaming - With OPFS',
+    {
+      sequential: true
+    },
+    describeStreamingTests(() =>
+      generateConnectedDatabase({
+        powerSyncOptions: {
+          database: new WASQLiteOpenFactory({
+            dbFilename: 'streaming-opfs.sqlite',
+            vfs: WASQLiteVFS.OPFSCoopSyncVFS
+          })
+        }
+      })
+    )
+  );
+});
 
 function describeStreamingTests(createConnectedDatabase: () => Promise<ConnectedDatabaseUtils>) {
   return () => {
