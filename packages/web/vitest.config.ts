@@ -35,7 +35,6 @@ const config: UserConfigExport = {
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
-    isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
     maxConcurrency: 1,
@@ -45,6 +44,10 @@ const config: UserConfigExport = {
     },
     browser: {
       enabled: true,
+      /**
+       * Starts each test in a new iFrame
+       */
+      isolate: true,
       provider: 'playwright',
       headless: true,
       instances: [
