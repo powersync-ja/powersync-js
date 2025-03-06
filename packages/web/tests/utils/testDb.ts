@@ -26,7 +26,7 @@ export const testSchema = new Schema({ assets, customers });
 export const generateTestDb = (options?: WebPowerSyncDatabaseOptions) => {
   const resolvedOptions = options ?? {
     database: {
-      dbFilename: `test-${uuid()}.db`
+      dbFilename: `${uuid()}.db`
     },
     schema: testSchema,
     flags: {
