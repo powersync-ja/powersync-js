@@ -6,7 +6,7 @@ import { testSchema } from './utils/testDb';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
-describe('OnChange Tests', () => {
+describe('OnChange Tests', { sequential: true }, () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {

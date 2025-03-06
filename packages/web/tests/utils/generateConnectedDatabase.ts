@@ -11,6 +11,8 @@ export type GenerateConnectedDatabaseOptions = {
   powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
 };
 
+export type ConnectedDBGenerator = typeof generateConnectedDatabase;
+
 export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = {
   powerSyncOptions: {
     dbFilename: 'test-stream-connection.db',
@@ -80,6 +82,9 @@ export async function generateConnectedDatabase(
   await connect();
 
   onTestFinished(async () => {
+    if (powersync.closed) {
+      return;
+    }
     await powersync.disconnectAndClear();
     await powersync.close();
   });

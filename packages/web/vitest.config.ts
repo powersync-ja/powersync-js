@@ -39,6 +39,10 @@ const config: UserConfigExport = {
     globals: true,
     include: ['tests/**/*.test.ts'],
     maxConcurrency: 1,
+    sequence: {
+      shuffle: false, // Disable shuffling of test files
+      concurrent: false // Run test files sequentially
+    },
     browser: {
       enabled: true,
       provider: 'playwright',
