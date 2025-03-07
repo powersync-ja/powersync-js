@@ -4,4 +4,4 @@
 '@powersync/web': patch
 ---
 
-Update core PowerSync SQLite extensions to 0.3.11
+Update core PowerSync SQLite extensions to 0.3.12
