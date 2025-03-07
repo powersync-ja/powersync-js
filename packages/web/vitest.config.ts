@@ -54,7 +54,7 @@ const config: UserConfigExport = {
         {
           browser: 'chromium'
         }
-        // { test 1
+        // { test 2
         //   browser: 'firefox'
         // }
         // This requires some additional work to get all tests passing
