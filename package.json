@@ -20,8 +20,7 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "release": "pnpm build:packages:prod && pnpm changeset publish",
-    "test": "pnpm run -r test",
-    "test:web": "pnpm run --filter './packages/web' test stream.test.ts"
+    "test": "pnpm run -r test"
   },
   "keywords": [],
   "type": "module",

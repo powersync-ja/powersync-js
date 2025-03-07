@@ -38,6 +38,7 @@ const config: UserConfigExport = {
     globals: true,
     include: ['tests/**/*.test.ts'],
     maxConcurrency: 1,
+    // This doesn't currently seem to work in browser mode, but setting this for one day when it does
     sequence: {
       shuffle: false, // Disable shuffling of test files
       concurrent: false // Run test files sequentially
