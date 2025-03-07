@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Column, ColumnType, Index, IndexedColumn, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 type SchemaVersionResult = {
   schema_version: number;
@@ -74,7 +74,7 @@ const generateSchemaTables = (assetsTableGenerator: () => Table = generateAssets
  */
 const schema = new Schema(generateSchemaTables());
 
-describe('Schema Tests', () => {
+describe('Schema Tests', { sequential: true }, () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
