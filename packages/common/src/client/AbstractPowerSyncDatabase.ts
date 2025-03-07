@@ -515,7 +515,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
 
     await this.syncStreamImplementation?.dispose();
-    this.database.close();
+    await this.database.close();
     this.closed = true;
   }
 

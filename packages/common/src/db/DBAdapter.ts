@@ -93,7 +93,7 @@ export interface DBLockOptions {
 }
 
 export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
-  close: () => void;
+  close: () => void | Promise<void>;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
   executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
   name: string;
