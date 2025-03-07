@@ -1,6 +1,6 @@
 import { Schema, Table, column } from '@powersync/common';
 import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory';
 
@@ -11,24 +11,28 @@ export type GenerateConnectedDatabaseOptions = {
   powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
 };
 
-export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = {
-  powerSyncOptions: {
-    dbFilename: 'test-stream-connection.db',
-    flags: {
-      enableMultiTabs: false,
-      useWebWorker: true
-    },
-    // Makes tests faster
-    crudUploadThrottleMs: 0,
-    schema: new Schema({
-      users: new Table({ name: column.text })
-    })
-  }
-};
+export type ConnectedDBGenerator = typeof generateConnectedDatabase;
 
-export async function generateConnectedDatabase(
-  options: GenerateConnectedDatabaseOptions = DEFAULT_CONNECTED_POWERSYNC_OPTIONS
-) {
+export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = generateDefaultOptions();
+
+function generateDefaultOptions() {
+  return {
+    powerSyncOptions: {
+      dbFilename: `${v4()}.db`,
+      flags: {
+        enableMultiTabs: false,
+        useWebWorker: true
+      },
+      // Makes tests faster
+      crudUploadThrottleMs: 0,
+      schema: new Schema({
+        users: new Table({ name: column.text })
+      })
+    }
+  };
+}
+
+export async function generateConnectedDatabase(options: GenerateConnectedDatabaseOptions = generateDefaultOptions()) {
   const { powerSyncOptions } = options;
   const { powerSyncOptions: defaultPowerSyncOptions } = DEFAULT_CONNECTED_POWERSYNC_OPTIONS;
   /**
@@ -80,6 +84,9 @@ export async function generateConnectedDatabase(
   await connect();
 
   onTestFinished(async () => {
+    if (powersync.closed) {
+      return;
+    }
     await powersync.disconnectAndClear();
     await powersync.close();
   });
