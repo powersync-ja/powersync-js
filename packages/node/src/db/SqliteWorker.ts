@@ -24,11 +24,11 @@ class BlockingAsyncDatabase implements AsyncDatabase {
   }
 
   installUpdateHooks() {
-    (this.db as any).updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
+    this.db.updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
       this.uncommittedUpdatedTables.add(tableName);
     });
 
-    (this.db as any).commitHook(() => {
+    this.db.commitHook(() => {
       for (const tableName of this.uncommittedUpdatedTables) {
         this.committedUpdatedTables.add(tableName);
       }
@@ -36,7 +36,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
       return true;
     });
 
-    (this.db as any).rollbackHook(() => {
+    this.db.rollbackHook(() => {
       this.uncommittedUpdatedTables.clear();
     });
   }
@@ -110,7 +110,7 @@ const loadExtension = (db: Database) => {
   }
 
   const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
-  (db as any).loadExtension(resolved, 'sqlite3_powersync_init');
+  db.loadExtension(resolved, 'sqlite3_powersync_init');
 };
 
 Comlink.expose(new BetterSqliteWorker(), parentPort! as Comlink.Endpoint);
