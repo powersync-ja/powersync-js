@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "A Web SDK for JourneyApps PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -61,7 +61,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "^1.2.2",
-    "@powersync/common": "workspace:^1.24.0"
+    "@powersync/common": "workspace:^1.25.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",

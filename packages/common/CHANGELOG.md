@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.25.0
+
+### Minor Changes
+
+- 3c595af: Support bucket priorities
+
+### Patch Changes
+
+- 76dfb06: Changed priorityStatusEntries() to no longer depend on toSorted(), which isn't natively available in React-Native.
+- fe98172: Fixed race condition in async closing of databases
+- 85f0228: Raise minimum version of core extension to 0.3.11
+
 ## 1.24.0
 
 ### Minor Changes
