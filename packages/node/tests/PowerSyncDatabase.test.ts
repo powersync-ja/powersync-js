@@ -1,4 +1,4 @@
-import { vi, expect } from 'vitest';
+import { vi, expect, test } from 'vitest';
 import { databaseTest } from './utils';
 
 databaseTest('links powersync', async ({ database }) => {

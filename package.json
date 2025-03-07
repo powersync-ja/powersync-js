@@ -40,11 +40,5 @@
     "prettier": "^3.2.5",
     "typescript": "^5.7.2",
     "vitest": "^3.0.5"  
-  },
-  "pnpm": {
-    "overrides": {
-      "better-sqlite3": "github:spinda/better-sqlite3#flexwash",
-      "@types/better-sqlite3": "github:spinda/DefinitelyTyped#flexwash&path:/types/better-sqlite3"
-    }
   }
 }

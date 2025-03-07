@@ -20,7 +20,7 @@
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w",
-    "_test": "vitest"
+    "test": "vitest"
   },
   "type": "module",
   "repository": {
@@ -35,12 +35,7 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@powersync/common": "workspace:^1.22.0",
-    "better-sqlite3": "github:spinda/better-sqlite3#flexwash"
-  },
-  "peerDependenciesMeta": {
-    "better-sqlite3": {
-      "optional": true
-    }
+    "@powersync/better-sqlite3": "^0.1.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",

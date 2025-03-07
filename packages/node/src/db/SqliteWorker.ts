@@ -1,6 +1,6 @@
-import BetterSQLite3Database, { Database } from 'better-sqlite3';
+import BetterSQLite3Database, { Database } from '@powersync/better-sqlite3';
 import * as Comlink from 'comlink';
-import { MessagePort, parentPort, threadId } from 'node:worker_threads';
+import { parentPort, threadId } from 'node:worker_threads';
 import OS from 'node:os';
 import url from 'node:url';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
@@ -24,11 +24,11 @@ class BlockingAsyncDatabase implements AsyncDatabase {
   }
 
   installUpdateHooks() {
-    this.db.updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
+    (this.db as any).updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
       this.uncommittedUpdatedTables.add(tableName);
     });
 
-    this.db.commitHook(() => {
+    (this.db as any).commitHook(() => {
       for (const tableName of this.uncommittedUpdatedTables) {
         this.committedUpdatedTables.add(tableName);
       }
@@ -36,7 +36,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
       return true;
     });
 
-    this.db.rollbackHook(() => {
+    (this.db as any).rollbackHook(() => {
       this.uncommittedUpdatedTables.clear();
     });
   }
@@ -110,7 +110,7 @@ const loadExtension = (db: Database) => {
   }
 
   const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
-  db.loadExtension(resolved, 'sqlite3_powersync_init');
+  (db as any).loadExtension(resolved, 'sqlite3_powersync_init');
 };
 
 Comlink.expose(new BetterSqliteWorker(), parentPort! as Comlink.Endpoint);
