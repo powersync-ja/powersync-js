@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "lib",
+    "strictNullChecks": true
+  },
+  "references": [
+    {
+      "path": "../../packages/node"
+    }
+  ]
+}
