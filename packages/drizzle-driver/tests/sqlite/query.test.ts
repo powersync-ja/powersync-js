@@ -56,9 +56,10 @@ describe('PowerSyncSQLitePreparedQuery', () => {
     const preparedQuery = new PowerSyncSQLitePreparedQuery(powerSyncDb, query, loggerMock, undefined, 'all', false);
 
     const values = await preparedQuery.values();
+
     expect(values).toEqual([
-      { id: '1', name: 'Alice' },
-      { id: '2', name: 'Bob' }
+      ['1', 'Alice'],
+      ['2', 'Bob']
     ]);
   });
 });

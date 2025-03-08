@@ -44,6 +44,8 @@ export interface DBGetUtils {
 export interface LockContext extends DBGetUtils {
   /** Execute a single write statement. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
+  /** Execute a single write statement and return raw results. */
+  executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
 }
 
 export interface Transaction extends LockContext {
@@ -95,6 +97,7 @@ export interface DBLockOptions {
 export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
   close: () => void | Promise<void>;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeRaw: (query: string, params?: any[]) => Promise<any[][]>;
   executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
   name: string;
   readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
