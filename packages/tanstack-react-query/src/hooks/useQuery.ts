@@ -24,7 +24,7 @@ export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
 
 export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseQueryOptions<TData, TError>>,
-  queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
+  queryClient?: Tanstack.QueryClient
 ) {
   return useQueryCore(options, queryClient, Tanstack.useQuery);
 }
@@ -44,7 +44,7 @@ export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError
 
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData, TError>>,
-  queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
+  queryClient?: Tanstack.QueryClient
 ) {
   return useQueryCore(options, queryClient, Tanstack.useSuspenseQuery);
 }
@@ -56,14 +56,14 @@ function useQueryCore<
   TQueryResult extends Tanstack.UseQueryResult<TData, TError> | Tanstack.UseSuspenseQueryResult<TData, TError>
 >(
   options: UseBaseQueryOptions<TQueryOptions>,
-  queryClient: Tanstack.QueryClient,
+  queryClient: Tanstack.QueryClient | undefined,
   useQueryFn: (options: TQueryOptions, queryClient?: Tanstack.QueryClient) => TQueryResult
 ): TQueryResult {
   const powerSync = usePowerSync();
-
   if (!powerSync) {
     throw new Error('PowerSync is not available');
   }
+  const resolvedQueryClient = queryClient ?? Tanstack.useQueryClient();
 
   let error: Error | undefined = undefined;
 
@@ -106,7 +106,7 @@ function useQueryCore<
     const l = powerSync.registerListener({
       schemaChanged: async () => {
         await fetchTables();
-        queryClient.invalidateQueries({ queryKey: options.queryKey });
+        resolvedQueryClient.invalidateQueries({ queryKey: options.queryKey });
       }
     });
 
@@ -132,7 +132,7 @@ function useQueryCore<
     powerSync.onChangeWithCallback(
       {
         onChange: () => {
-          queryClient.invalidateQueries({
+          resolvedQueryClient.invalidateQueries({
             queryKey: options.queryKey
           });
         },
@@ -146,13 +146,13 @@ function useQueryCore<
       }
     );
     return () => abort.abort();
-  }, [powerSync, queryClient, stringifiedKey, tables]);
+  }, [powerSync, resolvedQueryClient, stringifiedKey, tables]);
 
   return useQueryFn(
     {
       ...(resolvedOptions as TQueryOptions),
       queryFn: query ? queryFn : resolvedOptions.queryFn
     } as TQueryOptions,
-    queryClient
+    resolvedQueryClient
   );
 }
