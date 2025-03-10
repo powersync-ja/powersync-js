@@ -4,6 +4,7 @@ import {
   PowerSyncBackendConnector,
   PowerSyncDatabase,
   Schema,
+  SyncStreamConnectionMethod,
   Table
 } from '@powersync/node';
 import Logger from 'js-logger';
@@ -28,8 +29,9 @@ const main = async () => {
     }
   });
 
-  await db.connect(new DemoConnector());
+  await db.connect(new DemoConnector(), {connectionMethod: SyncStreamConnectionMethod.HTTP});
   await db.waitForFirstSync();
+  console.log('First sync complete!');
 
   let hasFirstRow: ((value: any) => void) | null = null;
   const firstRow = new Promise((resolve) => (hasFirstRow = resolve));
@@ -51,6 +53,8 @@ const main = async () => {
 
 class DemoConnector implements PowerSyncBackendConnector {
   async fetchCredentials() {
+    console.log('fetchCredentials called');
+
     return {
       endpoint: process.env.DEMO_ENDPOINT!,
       token: process.env.DEMO_TOKEN!,
