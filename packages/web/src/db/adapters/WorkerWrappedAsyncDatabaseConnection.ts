@@ -55,7 +55,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
      * This lock will be held as long as this connection is open.
      * The `shareConnection` method should not be called on multiple tabs concurrently.
      */
-    await new Promise<void>((lockObtained) =>
+    await new Promise<void>((lockObtained, reject) =>
       navigator.locks
         .request(
           `shared-connection-${this.options.identifier}`,
@@ -78,8 +78,12 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
             });
           }
         )
-        // We aren't concerned with errors here
-        .catch(() => {})
+        // We aren't concerned with abort errors here
+        .catch((ex) => {
+          if (ex.name != 'AbortError') {
+            reject(ex);
+          }
+        })
     );
 
     const newPort = await remote[Comlink.createEndpoint]();
