@@ -55,7 +55,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
      * This lock will be held as long as this connection is open.
      * The `shareConnection` method should not be called on multiple tabs concurrently.
      */
-    await new Promise<void>((lockObtained, reject) =>
+    await new Promise<void>((resolve, reject) =>
       navigator.locks
         .request(
           `shared-connection-${this.options.identifier}`,
@@ -63,7 +63,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
             signal: this.lockAbortController.signal
           },
           async () => {
-            lockObtained();
+            resolve();
 
             // Free the lock when the connection is already closed.
             if (this.lockAbortController.signal.aborted) {
@@ -80,7 +80,9 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
         )
         // We aren't concerned with abort errors here
         .catch((ex) => {
-          if (ex.name != 'AbortError') {
+          if (ex.name == 'AbortError') {
+            resolve();
+          } else {
             reject(ex);
           }
         })
