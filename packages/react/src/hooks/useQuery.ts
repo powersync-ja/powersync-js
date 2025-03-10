@@ -95,11 +95,16 @@ export const useQuery = <T = any>(
     setError(wrappedError);
   };
 
-  const fetchData = async () => {
+  const fetchData = async (signal?: AbortSignal) => {
     setIsFetching(true);
     try {
       const result =
         typeof query == 'string' ? await powerSync.getAll<T>(sqlStatement, queryParameters) : await query.execute();
+
+      if (signal?.aborted) {
+        return;
+      }
+
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
@@ -118,9 +123,10 @@ export const useQuery = <T = any>(
   };
 
   React.useEffect(() => {
+    const abortController = new AbortController();
     const updateData = async () => {
       await fetchTables();
-      await fetchData();
+      await fetchData(abortController.signal);
     };
 
     updateData();
@@ -129,7 +135,10 @@ export const useQuery = <T = any>(
       schemaChanged: updateData
     });
 
-    return () => l?.();
+    return () => {
+      abortController.abort();
+      l?.();
+    };
   }, [powerSync, memoizedParams, sqlStatement]);
 
   React.useEffect(() => {
