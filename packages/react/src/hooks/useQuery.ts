@@ -20,7 +20,7 @@ export type QueryResult<T> = {
   /**
    * Function used to run the query again.
    */
-  refresh?: () => Promise<void>;
+  refresh?: (signal?: AbortSignal) => Promise<void>;
 };
 
 /**
@@ -112,9 +112,14 @@ export const useQuery = <T = any>(
     }
   };
 
-  const fetchTables = async () => {
+  const fetchTables = async (signal?: AbortSignal) => {
     try {
       const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+
+      if (signal?.aborted) {
+        return;
+      }
+
       setTables(tables);
     } catch (e) {
       console.error('Failed to fetch tables:', e);
@@ -125,7 +130,7 @@ export const useQuery = <T = any>(
   React.useEffect(() => {
     const abortController = new AbortController();
     const updateData = async () => {
-      await fetchTables();
+      await fetchTables(abortController.signal);
       await fetchData(abortController.signal);
     };
 
@@ -150,7 +155,7 @@ export const useQuery = <T = any>(
       powerSync.onChangeWithCallback(
         {
           onChange: async () => {
-            await fetchData();
+            await fetchData(abortController.current.signal);
           },
           onError(e) {
             handleError(e);
