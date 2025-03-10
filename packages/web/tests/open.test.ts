@@ -55,7 +55,7 @@ const proxyWorkers = () => {
   };
 };
 
-describe('Open Methods', () => {
+describe('Open Methods', { sequential: true }, () => {
   let mocks: ReturnType<typeof proxyWorkers>;
 
   beforeEach(() => {

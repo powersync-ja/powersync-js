@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
@@ -7,7 +7,7 @@ const assetId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 const userId = '3390de4f-0488-4e50-abed-f8e8eb1d0b42';
 const customerId = '4490de4f-0488-4e50-abed-f8e8eb1d0b42';
 
-describe('Schema Tests', () => {
+describe('Schema Tests', { sequential: true }, () => {
   let db: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {

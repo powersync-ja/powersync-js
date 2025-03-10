@@ -1,5 +1,6 @@
-import { column, PowerSyncDatabase, Schema, TableV2 } from '@powersync/web';
+import { column, PowerSyncDatabase, Schema, TableV2, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
+import { onTestFinished } from 'vitest';
 
 const assets = new TableV2(
   {
@@ -22,16 +23,25 @@ const customers = new TableV2({
 
 export const testSchema = new Schema({ assets, customers });
 
-export const generateTestDb = ({ useWebWorker } = { useWebWorker: true }) => {
-  const db = new PowerSyncDatabase({
+export const generateTestDb = (options?: WebPowerSyncDatabaseOptions) => {
+  const resolvedOptions = options ?? {
     database: {
-      dbFilename: `test-crud-${uuid()}.db`
+      dbFilename: `${uuid()}.db`
     },
     schema: testSchema,
     flags: {
-      enableMultiTabs: false,
-      useWebWorker
+      enableMultiTabs: false
     }
+  };
+
+  const db = new PowerSyncDatabase(resolvedOptions);
+
+  onTestFinished(async () => {
+    if (db.closed) {
+      return;
+    }
+    await db.disconnectAndClear();
+    await db.close();
   });
 
   return db;

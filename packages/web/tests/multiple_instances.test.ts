@@ -1,70 +1,57 @@
 import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@powersync/common';
 import {
-  PowerSyncDatabase,
   SharedWebStreamingSyncImplementation,
   SharedWebStreamingSyncImplementationOptions,
   WebRemote
 } from '@powersync/web';
 import { Mutex } from 'async-mutex';
 import Logger from 'js-logger';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { TestConnector } from './utils/MockStreamOpenFactory';
-import { testSchema } from './utils/testDb';
+import { generateTestDb, testSchema } from './utils/testDb';
 
-describe('Multiple Instances', () => {
-  const dbFilename = 'test-multiple-instances.db';
-  let db: AbstractPowerSyncDatabase;
-
+describe('Multiple Instances', { sequential: true }, () => {
   const openDatabase = () =>
-    new PowerSyncDatabase({
+    generateTestDb({
       database: {
-        dbFilename
+        dbFilename: `test-multiple-instances.db`
       },
       schema: testSchema
     });
 
   beforeAll(() => Logger.useDefaults());
 
-  beforeEach(async () => {
-    db = openDatabase();
-    await db.init();
-  });
-
-  afterEach(async () => {
-    await db.disconnectAndClear();
-    await db.close();
-  });
-
-  function createAsset(powersync: AbstractPowerSyncDatabase = db) {
+  function createAsset(powersync: AbstractPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
   }
 
   it('should share data between instances', async () => {
+    const powersync = openDatabase();
+
     // Create an asset on the first connection
-    await createAsset();
+    await createAsset(powersync);
 
     // Create a new connection and verify it can read existing assets
     const db2 = openDatabase();
     const assets = await db2.getAll('SELECT * FROM assets');
     expect(assets.length).equals(1);
-
-    await db2.close();
   });
 
   it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
     const logger = Logger.get('test-logger');
     const spiedErrorLogger = vi.spyOn(logger, 'error');
     const spiedDebugLogger = vi.spyOn(logger, 'debug');
-    const db = new PowerSyncDatabase({
-      schema: testSchema,
+
+    const powersync = generateTestDb({
+      logger,
       database: {
-        dbFilename: 'log-test.sqlite'
+        dbFilename: 'broadcast-logger-test.sqlite'
       },
-      logger
+      schema: testSchema
     });
 
-    db.connect({
+    powersync.connect({
       fetchCredentials: async () => {
         return {
           endpoint: 'http://localhost/does-not-exist',
@@ -89,8 +76,6 @@ describe('Multiple Instances', () => {
     // The connection should fail with an error
     await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
     // This test seems to take quite long while waiting for this disconnect call
-    await db.disconnectAndClear();
-    await db.close();
   });
 
   it('should maintain DB connections if instances call close', async () => {
@@ -99,32 +84,38 @@ describe('Multiple Instances', () => {
      * The shared connection should only be closed if all PowerSync clients
      * close themselves.
      */
-    const db2 = openDatabase();
-    await db2.close();
+    const powersync1 = openDatabase();
+    const powersync2 = openDatabase();
+    await powersync1.close();
 
     // Create an asset on the first connection
-    await createAsset();
+    await createAsset(powersync2);
   });
 
   it('should watch table changes between instances', async () => {
+    const db1 = openDatabase();
     const db2 = openDatabase();
 
     const watchedPromise = new Promise<void>(async (resolve) => {
       const controller = new AbortController();
-      for await (const result of db2.watch('SELECT * FROM assets')) {
-        resolve();
-        controller.abort();
+      for await (const result of db2.watch('SELECT * FROM assets', [], { signal: controller.signal })) {
+        if (result.rows?.length) {
+          resolve();
+          controller.abort();
+        }
       }
     });
 
-    await createAsset();
+    await createAsset(db1);
 
-    expect(watchedPromise).rejects;
+    await watchedPromise;
   });
 
   it('should share sync updates', async () => {
     // Generate the first streaming sync implementation
     const connector1 = new TestConnector();
+    const db = openDatabase();
+    await db.init();
 
     // They need to use the same identifier to use the same shared worker.
     const identifier = 'streaming-sync-shared';
@@ -180,8 +171,10 @@ describe('Multiple Instances', () => {
     const connector1 = new TestConnector();
     const spy1 = vi.spyOn(connector1, 'uploadData');
 
+    const db = openDatabase();
+    await db.init();
     // They need to use the same identifier to use the same shared worker.
-    const identifier = dbFilename;
+    const identifier = db.database.name;
 
     // Resolves once the first connector has been called to upload data
     let triggerUpload1: () => void;

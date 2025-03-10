@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.14.2
+
+### Patch Changes
+
+- fe98172: Fixed race condition in async closing of databases
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.12
+- Updated dependencies [76dfb06]
+- Updated dependencies [3c595af]
+- Updated dependencies [fe98172]
+- Updated dependencies [85f0228]
+  - @powersync/common@1.25.0
+
 ## 1.14.1
 
 ### Patch Changes

@@ -147,9 +147,9 @@ export class LockedAsyncDatabaseAdapter
    * Shared workers might not actually close the connection if other
    * tabs are still using it.
    */
-  close() {
+  async close() {
     this._disposeTableChangeListener?.();
-    this.baseDB?.close?.();
+    await this.baseDB?.close?.();
   }
 
   async getAll<T>(sql: string, parameters?: any[] | undefined): Promise<T[]> {
