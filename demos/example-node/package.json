@@ -6,10 +6,12 @@
   "private": true,
   "scripts": {
     "build": "tsc -b",
-    "start": "node --loader ts-node/esm src/main.ts"
+    "watch": "tsc -b -w",
+    "start": "node --loader ts-node/esm -r dotenv/config src/main.ts"
   },
   "dependencies": {
-    "@powersync/node": "workspace:*"
+    "@powersync/node": "workspace:*",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

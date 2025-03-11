@@ -101,9 +101,9 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   async close() {
-    this.writeConnection.close();
+    await this.writeConnection.close();
     for (const connection of this.readConnections) {
-      connection.close();
+      await connection.close();
     }
   }
 

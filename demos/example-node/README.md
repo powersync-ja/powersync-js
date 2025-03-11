@@ -2,18 +2,15 @@
 
 This demonstrates a small NodeJS client opening a database and connecting PowerSync.
 
-To get started with this example, you need a configured instance of the PowerSync Service. The easiest way to get started is to configure a PowerSync Cloud instance, docs [here](https://docs.powersync.com/installation/database-connection#create-a-powersync-cloud-instance).  
-This example expects the schema of our To-Do list example apps; ensure you deploy compatible Sync Rules to your instance which can be found [in our Supabase integration guide](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-sync-rules).
+This demo is configured to talk to an example backend [you can host yourself](https://github.com/powersync-ja/self-host-demo). To get started:
 
-Being a simple CLI program, this currently doesn't implement authentication. So, you'll need to
-create a [development token](https://docs.powersync.com/installation/authentication-setup/development-tokens#development-tokens) to run this example.
-This demo expects the URL of your PowerSync instance (this can be copied from the PowerSync Dashboard) in the `DEMO_ENDPOINT` environment variable,
-the development token is read from `DEMO_TOKEN`.
+1. Start one of the Node.js backend examples from [the self-host-demo repository](https://github.com/powersync-ja/self-host-demo).
+2. If necessary, change `.env` to point to the started backend and sync service.
+3. Run `pnpm install` and `pnpm build:packages` in the root of this repo.
+4. In this directory, run `pnpm run start`.
 
-Once you have these ready: 
-
-1. Make sure to run `pnpm install` and `pnpm build:packages` in the root of this repo.
-2. Then run the following, inserting your instance URL and developer token:
-```DEMO_ENDPOINT=https://yourinstance.powersync.journeyapps.com DEMO_TOKEN=YOURTOKEN pnpm run start
-```
 This opens the local database, connects to PowerSync, waits for a first sync and then runs a simple query.
+Results from the query are printed every time it changes. Try:
+
+1. Updating a row in the backend database and see changes reflected in the running client.
+2. Enter `add('my list')` and see the new list show up in the backend database.

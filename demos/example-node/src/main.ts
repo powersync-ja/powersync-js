@@ -1,17 +1,18 @@
-import {
-  AbstractPowerSyncDatabase,
-  column,
-  PowerSyncBackendConnector,
-  PowerSyncDatabase,
-  Schema,
-  SyncStreamConnectionMethod,
-  Table
-} from '@powersync/node';
+import repl_factory from 'node:repl';
+import { once } from 'node:events';
+
+import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import Logger from 'js-logger';
+import { AppSchema, DemoConnector } from './powersync.js';
+import { exit } from 'node:process';
 
 const main = async () => {
-  if (!('DEMO_ENDPOINT' in process.env) || !('DEMO_TOKEN' in process.env)) {
-    console.warn('Set the DEMO_ENDPOINT and DEMO_TOKEN environment variables to point at a sync service with a dev token to run this example.');
+  Logger.useDefaults({ defaultLevel: Logger.WARN });
+
+  if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
+    console.warn(
+      'Set the BACKEND and SYNC_SERVICE environment variables to point to a sync service and a running demo backend.'
+    );
     return;
   }
 
@@ -23,13 +24,8 @@ const main = async () => {
     logger: Logger
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
-  db.registerListener({
-    statusChanged: (status) => {
-      console.log('Sync status', status);
-    }
-  });
 
-  await db.connect(new DemoConnector(), {connectionMethod: SyncStreamConnectionMethod.HTTP});
+  await db.connect(new DemoConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
   await db.waitForFirstSync();
   console.log('First sync complete!');
 
@@ -41,62 +37,29 @@ const main = async () => {
         hasFirstRow(null);
         hasFirstRow = null;
       }
-      console.log('Has todo items', rows.rows?._array);
+      console.log('Has todo lists', rows.rows?._array);
     }
   };
 
   watchLists();
   await firstRow;
 
-  //  await db.execute("INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), 'test', 'test', 'test');");
+  console.log('Connected to PowerSync. Try updating the lists in the database and see it reflected here.');
+  console.log("To upload a list here, enter `await add('name of new list');`");
+
+  const repl = repl_factory.start();
+  repl.context.add = async (name: string) => {
+    await db.execute(
+      "INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), datetime('now'), ?, 'test');",
+      [name]
+    );
+  };
+
+  await once(repl, 'exit');
+  console.log('shutting down');
+  await db.disconnect();
+  await db.close();
+  exit(0);
 };
-
-class DemoConnector implements PowerSyncBackendConnector {
-  async fetchCredentials() {
-    console.log('fetchCredentials called');
-
-    return {
-      endpoint: process.env.DEMO_ENDPOINT!,
-      token: process.env.DEMO_TOKEN!,
-    };
-  }
-
-  async uploadData(database: AbstractPowerSyncDatabase) {
-    await new Promise((resolve) => setTimeout(resolve, 10_000));
-    throw 'not implemented: DemoConnector.uploadData';
-  }
-}
-
-export const LIST_TABLE = 'lists';
-export const TODO_TABLE = 'todos';
-
-const todos = new Table(
-  {
-    list_id: column.text,
-    created_at: column.text,
-    completed_at: column.text,
-    description: column.text,
-    created_by: column.text,
-    completed_by: column.text,
-    completed: column.integer,
-    photo_id: column.text
-  },
-  { indexes: { list: ['list_id'] } }
-);
-
-const lists = new Table({
-  created_at: column.text,
-  name: column.text,
-  owner_id: column.text
-});
-
-export const AppSchema = new Schema({
-  lists,
-  todos
-});
-
-export type Database = (typeof AppSchema)['types'];
-export type TodoRecord = Database['todos'];
-export type ListRecord = Database['lists'];
 
 await main();
