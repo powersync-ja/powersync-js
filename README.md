@@ -86,7 +86,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 ### Node
 
-- [demos/example-node](./demos/example-node/README.md) A small CLI example built using the PowerSync SDK for NodeJS.
+- [demos/example-node](./demos/example-node/README.md) A small CLI example built using the PowerSync SDK for Node.js.
 
 ## Tools
 
