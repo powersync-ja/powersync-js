@@ -50,7 +50,7 @@ const main = async () => {
   const repl = repl_factory.start();
   repl.context.add = async (name: string) => {
     await db.execute(
-      "INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), datetime('now'), ?, 'test');",
+      "INSERT INTO lists (id, created_at, name, owner_id) VALUEs (uuid(), datetime('now'), ?, uuid());",
       [name]
     );
   };
