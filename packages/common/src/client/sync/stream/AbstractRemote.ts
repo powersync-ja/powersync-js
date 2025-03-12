@@ -123,20 +123,20 @@ export abstract class AbstractRemote {
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
     const { expiresAt } = this.credentials ?? {};
-    const currentTime =  new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS)
+    const currentTime = new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS);
     if (expiresAt && expiresAt > currentTime) {
       return this.credentials!;
     }
 
     // Check if existing stored token is still valid
-    if(this.credentials?.token) {
-      const {exp} = this.parseToken(this.credentials?.token) ?? {};
-       
-      if(exp && new Date(Number(exp) * 1000) > currentTime) {
+    if (this.credentials?.token) {
+      const { exp } = this.parseToken(this.credentials?.token) ?? {};
+
+      if (exp && new Date(Number(exp) * 1000) > currentTime) {
         return this.credentials!;
       }
     }
-    
+
     this.credentials = await this.connector.fetchCredentials();
     if (this.credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
@@ -150,11 +150,10 @@ export abstract class AbstractRemote {
     return `powersync-js/${POWERSYNC_JS_VERSION}`;
   }
 
-  private parseToken(token: string){
-    try{
+  private parseToken(token: string) {
+    try {
       return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    }
-    catch(_){
+    } catch (_) {
       return null;
     }
   }
