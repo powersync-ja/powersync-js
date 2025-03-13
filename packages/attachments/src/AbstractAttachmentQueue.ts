@@ -90,7 +90,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   get table() {
-    return ATTACHMENT_TABLE;
+    return this.options.attachmentDirectoryName || ATTACHMENT_TABLE;
   }
 
   async init() {

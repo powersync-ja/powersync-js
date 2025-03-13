@@ -118,6 +118,8 @@ In addition to `Table` options, the `AttachmentTable` can optionally be configur
 | `name`              | The name of the table                                                           | `attachments`                 |
 | `additionalColumns` | An array of addition `Column` objects added to the default columns in the table | See below for default columns |
 
+If you decided to name the attachments table something other than `attachments` using the `AttachmentTable.name` property then you must also set `attachmentDirectoryName` to the same name when creating an instance of the `AttachmentQueue`
+
 The default columns in `AttachmentTable`:
 
 | Column Name  | Type      | Description                                                       |
