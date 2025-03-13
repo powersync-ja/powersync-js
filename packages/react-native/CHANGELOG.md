@@ -1,5 +1,11 @@
 # @powersync/react-native
 
+## 1.18.2
+
+### Patch Changes
+
+- 0c8ddda: Update package description
+
 ## 1.18.1
 
 ### Patch Changes

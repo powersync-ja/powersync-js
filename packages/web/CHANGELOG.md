@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.15.1
+
+### Patch Changes
+
+- 0c8ddda: Update package description
+
 ## 1.15.0
 
 ### Minor Changes
