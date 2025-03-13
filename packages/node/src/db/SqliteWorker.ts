@@ -114,7 +114,7 @@ const loadExtension = (db: Database) => {
 
   let resolved: string;
   if (isCommonJsModule) {
-    resolved = path.resolve(__dirname, '../lib/', extensionPath);    
+    resolved = path.resolve(__dirname, '../lib/', extensionPath);
   } else {
     resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
   }
