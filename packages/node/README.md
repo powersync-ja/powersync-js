@@ -6,7 +6,7 @@
 
 _[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
 
-This package (`packages/node`) is the PowerSync SDK for NodeJS clients. It is an extension of `packages/common`.
+This package (`packages/node`) is the PowerSync SDK for Node.js clients. It is an extension of `packages/common`.
 Using this package is not necessary for PowerSync on servers, see [our documentation](https://docs.powersync.com/installation/app-backend-setup) for more details on that.
 
 This package has an API similar to the PowerSync web SDK, for which a summary of features is available [here](https://docs.powersync.com/client-sdk-references/js-web).

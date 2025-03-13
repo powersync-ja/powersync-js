@@ -1,6 +1,6 @@
-## NodeJS Demo
+## Node.js Demo
 
-This demonstrates a small NodeJS client opening a database and connecting PowerSync.
+This demonstrates a small Node.js client opening a database and connecting PowerSync.
 
 This demo is configured to talk to an example backend [you can host yourself](https://github.com/powersync-ja/self-host-demo). To get started:
 

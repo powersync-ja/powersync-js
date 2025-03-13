@@ -20,7 +20,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/node](./packages/node/README.md)
 
-  - NodeJS client implementation (extension of `packages/common`)
+  - Node.js client implementation (extension of `packages/common`)
 
 - [packages/react](./packages/react/README.md)
 
