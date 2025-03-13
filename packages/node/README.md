@@ -11,6 +11,10 @@ Using this package is not necessary for PowerSync on servers, see [our documenta
 
 This package has an API similar to the PowerSync web SDK, for which a summary of features is available [here](https://docs.powersync.com/client-sdk-references/js-web).
 
+## Alpha Release
+
+The `@powersync/node` package is currently in an Alpha release.
+
 # Installation
 
 ## Install Package
