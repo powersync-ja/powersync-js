@@ -37,3 +37,8 @@ A simple example using `@powersync/node` is available in the [`demos/example-nod
 - Join our [Discord server](https://discord.gg/powersync) where you can browse topics from our community, ask questions, share feedback, or just say hello :)
 - Please open a [GitHub issue](https://github.com/powersync-ja/powersync-js/issues) when you come across a bug.
 - Have feedback or an idea? [Submit an idea](https://roadmap.powersync.com/tabs/5-roadmap/submit-idea) via our public roadmap or [schedule a chat](https://calendly.com/powersync-product/powersync-chat) with someone from our product team.
+
+# Thanks
+
+The PowerSync Node.js SDK relies on the work contributors and maintainers have put into the upstream better-sqlite3 package.
+In particular, we'd like to thank [@spinda](https://github.com/spinda) for contributing support for update, commit and rollback hooks!
