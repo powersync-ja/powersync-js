@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import BetterSQLite3Database, { Database } from '@powersync/better-sqlite3';
 import * as Comlink from 'comlink';
 import { parentPort, threadId } from 'node:worker_threads';
@@ -97,6 +98,8 @@ class BetterSqliteWorker implements AsyncDatabaseOpener {
 }
 
 const loadExtension = (db: Database) => {
+  const isCommonJsModule = false; // Replaced with true by rollup plugin
+
   const platform = OS.platform();
   let extensionPath: string;
   if (platform === 'win32') {
@@ -109,7 +112,13 @@ const loadExtension = (db: Database) => {
     throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
   }
 
-  const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
+  let resolved: string;
+  if (isCommonJsModule) {
+    resolved = path.resolve(__dirname, '../lib/', extensionPath);    
+  } else {
+    resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
+  }
+
   db.loadExtension(resolved, 'sqlite3_powersync_init');
 };
 
