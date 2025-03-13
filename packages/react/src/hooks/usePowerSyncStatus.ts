@@ -21,10 +21,13 @@ export const usePowerSyncStatus = () => {
 
   useEffect(() => {
     const listener = powerSync.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
+      statusChanged: (newStatus) => {
+        setSyncStatus(prev => {
+          // Only update if the status is actually different
+          return prev.isEqual(newStatus) ? prev : newStatus
+        })
       }
-    });
+    })
 
     return () => listener?.();
   }, [powerSync]);
