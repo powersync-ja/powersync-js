@@ -106,7 +106,7 @@ const loadExtension = (db: Database) => {
   } else if (platform === 'darwin') {
     extensionPath = 'libpowersync.dylib';
   } else {
-    throw 'Unknown platform, PowerSync for Node.JS currently supports Windows, Linux and macOS.';
+    throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
   }
 
   const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
