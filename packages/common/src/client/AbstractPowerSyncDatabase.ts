@@ -660,6 +660,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.database.execute(sql, parameters);
   }
 
+  async executeRaw(sql: string, parameters?: any[]) {
+    await this.waitForReady();
+    return this.database.executeRaw(sql, parameters);
+  }
+
   /**
    * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
    * and optionally return results.

@@ -62,6 +62,10 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     return this.baseDB.execute(query, params);
   }
 
+  executeRaw(query: string, params?: any[]): Promise<any[][]> {
+    throw new Error('Method not implemented.');
+  }
+
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const commands: any[] = [];
 
@@ -82,6 +86,10 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
    * and should use this method.
    */
   private readOnlyExecute(sql: string, params?: any[]) {
+    return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
+  }
+
+  private readOnlyExecuteRaw(sql: string, params?: any[]) {
     return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
   }
 
