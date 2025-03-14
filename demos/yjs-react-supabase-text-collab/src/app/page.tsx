@@ -2,10 +2,12 @@ import React from 'react';
 import { CircularProgress, Grid, styled } from '@mui/material';
 import { useSupabase } from '@/components/providers/SystemProvider';
 import { useNavigate } from 'react-router-dom';
+import { usePowerSync } from '@powersync/react';
 
 export default function EntryPage() {
   const navigate = useNavigate();
   const connector = useSupabase();
+  const powerSync = usePowerSync();
 
   React.useEffect(() => {
     if (!connector) {
@@ -21,17 +23,14 @@ export default function EntryPage() {
         return;
       }
       // otherwise, create a new document
-      const { data } = await connector.client
-        .from('documents')
-        .insert({
-          title: 'Test Document ' + (1000 + Math.floor(Math.random() * 8999))
-        })
-        .select()
-        .single();
+      const results = await powerSync.execute('INSERT INTO documents(id, title) VALUES(uuid(), ?) RETURNING id', [
+        'Test Document ' + (1000 + Math.floor(Math.random() * 8999))
+      ]);
+      const documentId = results.rows!.item(0).id;
 
       // redirect user to the document
-      lastDocumentId = data.id;
-      window.localStorage.setItem('lastDocumentId', lastDocumentId || '');
+      lastDocumentId = documentId;
+      window.localStorage.setItem('lastDocumentId', documentId);
       navigate('/editor/' + lastDocumentId);
     };
 

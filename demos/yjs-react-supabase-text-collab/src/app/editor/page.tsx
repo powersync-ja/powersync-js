@@ -1,5 +1,5 @@
 import { usePowerSync, useQuery, useStatus } from '@powersync/react';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, FormControlLabel, Switch, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import MenuBar from '@/components/widgets/MenuBar';
 import { PowerSyncYjsProvider } from '@/library/powersync/PowerSyncYjsProvider';
@@ -12,6 +12,7 @@ import StarterKit from '@tiptap/starter-kit';
 import * as Y from 'yjs';
 import './tiptap-styles.scss';
 import { useParams } from 'react-router-dom';
+import { connector } from '@/components/providers/SystemProvider';
 
 export default function EditorPage() {
   const powerSync = usePowerSync();
@@ -24,6 +25,7 @@ export default function EditorPage() {
   }
 
   const [totalDocUpdates, setTotalDocUpdates] = useState(0);
+  const [allowUploads, setAllowUploads] = useState(connector.enableUploads);
 
   const ydoc = useMemo(() => {
     return new Y.Doc();
@@ -35,6 +37,10 @@ export default function EditorPage() {
       provider.destroy();
     };
   }, [ydoc, powerSync]);
+
+  useEffect(() => {
+    connector.enableUploads = allowUploads;
+  }, [allowUploads]);
 
   // watch for total number of document updates changing to update the counter
   const { data: docUpdatesCount } = useQuery(
@@ -89,6 +95,10 @@ export default function EditorPage() {
             <Typography variant="caption" display="block" gutterBottom>
               {totalDocUpdates} total edit(s) in this document.
             </Typography>
+            <FormControlLabel
+              control={<Switch checked={allowUploads} onChange={(e) => setAllowUploads(e.target.checked)} />}
+              label="Enable uploads"
+            />
           </Box>
         </>
       )}
