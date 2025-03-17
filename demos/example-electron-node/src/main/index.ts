@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 
 import { PowerSyncDatabase } from '@powersync/node';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { AppSchema } from './powersync';
 import { default as Logger } from 'js-logger';
 
@@ -12,7 +12,7 @@ const database = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'test.db',
-    openWorker(filename, options) {
+    openWorker(_, options) {
       return new Worker(new URL('./worker.ts', import.meta.url), options);
     },
   },
@@ -50,7 +50,12 @@ const createWindow = (): void => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.whenReady().then(() => {
+  ipcMain.handle('get', async (_, sql: string, args: any[]) => {
+    return await database.get(sql, args);
+  });
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

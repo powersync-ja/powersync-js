@@ -88,7 +88,9 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    force: true,
+  },
   makers: [
     new MakerSquirrel(),
     new MakerZIP({}, ['darwin']),
@@ -105,7 +107,10 @@ const config: ForgeConfig = {
           {
             name: 'main_window',
             html: './src/render/index.html',
-            js: './src/render/main.ts'
+            js: './src/render/main.ts',
+            preload: {
+              js: './src/render/preload.ts',
+            }
           }
         ]
       }
