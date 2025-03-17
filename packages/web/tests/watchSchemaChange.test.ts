@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { v4 as uuid } from 'uuid';
 import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { v4 as uuid } from 'uuid';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
 vi.useRealTimers();
 
@@ -15,7 +15,7 @@ vi.useRealTimers();
  */
 const throttleDuration = 1000;
 
-describe('Watch With Schema Change Tests', () => {
+describe('Watch With Schema Change Tests', { sequential: true }, () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {

@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Schema, Table, column } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-describe('Basic', () => {
+describe('Basic', { sequential: true }, () => {
   const users = new Table({
     name: column.text,
     email: column.text

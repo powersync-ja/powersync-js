@@ -6,7 +6,8 @@ enum Packages {
   VueSdk = 'vue-sdk',
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk',
-  TanstackReactQuerySdk = 'tanstack-react-query-sdk'
+  TanstackReactQuerySdk = 'tanstack-react-query-sdk',
+  NodeSdk = 'node-sdk',
 }
 
 interface Package {
@@ -63,5 +64,12 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/attachments/src/index.ts'],
     tsconfig: '../packages/attachments/tsconfig.json',
     id: Packages.AttachmentsSdk
-  }
+  },
+  [Packages.NodeSdk]: {
+    name: 'Node SDK',
+    dirName: Packages.NodeSdk,
+    entryPoints: ['../packages/node/src/index.ts'],
+    tsconfig: '../packages/node/tsconfig.json',
+    id: Packages.NodeSdk
+  },
 };

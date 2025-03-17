@@ -2,7 +2,15 @@ storage: /tmp/storage
 auth:
   htpasswd:
     file: /tmp/htpasswd
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
 packages:
+  # Our better-sqlite3 fork is published under @powersync without being part of this repository.
+  '@powersync/better-sqlite3':
+    access: $all
+    publish: false
+    proxy: npmjs
   '@powersync/*':
     access: $all
     publish: $all

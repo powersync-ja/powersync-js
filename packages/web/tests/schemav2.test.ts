@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AbstractPowerSyncDatabase, Schema, TableV2, column } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 type SchemaVersionResult = {
   schema_version: number;
@@ -56,7 +56,7 @@ const aliased = new TableV2({ name: column.text }, { viewName: 'test1' });
  */
 const schema = new Schema({ assets, customers, logs, credentials, aliased });
 
-describe('Schema Tests', () => {
+describe('Schema Tests', { sequential: true }, () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {

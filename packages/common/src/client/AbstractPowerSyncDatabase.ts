@@ -18,20 +18,20 @@ import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/throttle.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  type AdditionalConnectionOptions,
-  type PowerSyncConnectionOptions,
+  DEFAULT_RETRY_DELAY_MS,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener,
-  DEFAULT_RETRY_DELAY_MS,
+  type AdditionalConnectionOptions,
+  type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { runOnSchemaChange } from './runOnSchemaChange.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -337,13 +337,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         .map((n) => parseInt(n));
     } catch (e) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.2.0 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
-    // Validate >=0.2.0 <1.0.0
-    if (versionInts[0] != 0 || versionInts[1] < 2 || versionInts[2] < 0) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.2.0 <1.0.0, got: ${this.sdkVersion}`);
+    // Validate >=0.3.11 <1.0.0
+    if (versionInts[0] != 0 || versionInts[1] < 3 || (versionInts[1] == 3 && versionInts[2] < 11)) {
+      throw new Error(`Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}`);
     }
   }
 
@@ -352,7 +352,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
     let lastCompleteSync: Date | undefined;
-    const priorityStatuses: SyncPriorityStatus[] = [];
+    const priorityStatusEntries: SyncPriorityStatus[] = [];
 
     for (const { priority, last_synced_at } of result) {
       const parsedDate = new Date(last_synced_at + 'Z');
@@ -361,7 +361,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         // This lowest-possible priority represents a complete sync.
         lastCompleteSync = parsedDate;
       } else {
-        priorityStatuses.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+        priorityStatusEntries.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
       }
     }
 
@@ -369,7 +369,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const updatedStatus = new SyncStatus({
       ...this.currentStatus.toJSON(),
       hasSynced,
-      priorityStatuses,
+      priorityStatusEntries,
       lastSyncedAt: lastCompleteSync
     });
 
@@ -505,13 +505,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
 
+    if (this.closed) {
+      return;
+    }
+
     const { disconnect } = options;
     if (disconnect) {
       await this.disconnect();
     }
 
     await this.syncStreamImplementation?.dispose();
-    this.database.close();
+    await this.database.close();
     this.closed = true;
   }
 
