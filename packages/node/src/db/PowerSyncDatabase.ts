@@ -4,14 +4,21 @@ import {
   BucketStorageAdapter,
   DBAdapter,
   PowerSyncBackendConnector,
+  PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
-  SqliteBucketStorage
+  SqliteBucketStorage,
+  SQLOpenFactory
 } from '@powersync/common';
 
 import { NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
 import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
+import { NodeSQLOpenOptions } from './options.js';
+
+export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
+  database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
+}
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -28,6 +35,10 @@ import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  constructor(options: NodePowerSyncDatabaseOptions) {
+    super(options);
+  }
+
   async _initialize(): Promise<void> {
     await (this.database as BetterSQLite3DBAdapter).initialize();
   }

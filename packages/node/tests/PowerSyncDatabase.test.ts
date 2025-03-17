@@ -1,5 +1,43 @@
-import { vi, expect, test } from 'vitest';
-import { databaseTest } from './utils';
+import { Worker } from 'node:worker_threads';
+import fs from 'node:fs/promises';
+
+import { vi, expect, test, onTestFinished } from 'vitest';
+import { AppSchema, createTempDir, databaseTest } from './utils';
+import { PowerSyncDatabase } from '../lib';
+
+test('validates options', async () => {
+  await expect(async () => {
+    const database = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: '/dev/null',
+        readWorkers: 0,
+      }
+    });
+    await database.init();
+  }).rejects.toThrowError('Needs at least one worker for reads');
+});
+
+test('can customize loading workers', async () => {
+    const directory = await createTempDir();
+    const openFunction = vi.fn((...args: ConstructorParameters<typeof Worker>) => new Worker(...args));
+
+    const database = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'test.db',
+        dbLocation: directory,
+        openWorker: openFunction as any,
+        readWorkers: 2,
+      }
+    });
+
+    await database.get('SELECT 1;'); // Make sure the database is ready and works
+    expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
+    await database.close();
+
+    onTestFinished(async () => fs.rm(directory, { recursive: true }));
+});
 
 databaseTest('links powersync', async ({ database }) => {
   await database.get('select powersync_rs_version();');

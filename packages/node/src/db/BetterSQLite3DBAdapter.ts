@@ -11,12 +11,12 @@ import {
   Transaction,
   DBLockOptions,
   QueryResult,
-  SQLOpenOptions
 } from '@powersync/common';
 import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';
+import { NodeSQLOpenOptions } from './options.js';
 
 export type BetterSQLite3LockContext = LockContext & {
   executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
@@ -30,7 +30,7 @@ const READ_CONNECTIONS = 5;
  * Adapter for better-sqlite3
  */
 export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
-  private readonly options: SQLOpenOptions;
+  private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
   private readConnections: RemoteConnection[];
@@ -39,8 +39,12 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   private readonly readQueue: Array<(connection: RemoteConnection) => void> = [];
   private readonly writeQueue: Array<() => void> = [];
 
-  constructor(options: SQLOpenOptions) {
+  constructor(options: NodeSQLOpenOptions) {
     super();
+
+    if (options.readWorkers != null && options.readWorkers < 1) {
+      throw `Needs at least one worker for reads, got ${options.readWorkers}`;
+    }
 
     this.options = options;
     this.name = options.dbFilename;
@@ -53,14 +57,16 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
 
     const openWorker = async (isWriter: boolean) => {
-      const isCommonJsModule = false; // Replaced with true by rollup plugin
+      // https://nodejs.org/api/esm.html#differences-between-es-modules-and-commonjs
+      const isCommonJsModule = '__filename' in global;
       let worker: Worker;
       const workerName = isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`;
 
+      const workerFactory = this.options.openWorker ?? ((...args) => new Worker(...args));
       if (isCommonJsModule) {
-        worker = new Worker(path.resolve(__dirname, 'worker.cjs'), { name: workerName });
+        worker = workerFactory(path.resolve(__dirname, 'worker.cjs'), { name: workerName });
       } else {
-        worker = new Worker(new URL('./SqliteWorker.js', import.meta.url), { name: workerName });
+        worker = workerFactory(new URL('./SqliteWorker.js', import.meta.url), { name: workerName });
       }
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
@@ -103,7 +109,8 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).
     this.writeConnection = await openWorker(true);
     const createWorkers: Promise<RemoteConnection>[] = [];
-    for (let i = 0; i < READ_CONNECTIONS; i++) {
+    const amountOfReaders = this.options.readWorkers ?? READ_CONNECTIONS;
+    for (let i = 0; i < amountOfReaders; i++) {
       createWorkers.push(openWorker(false));
     }
     this.readConnections = await Promise.all(createWorkers);
