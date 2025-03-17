@@ -71,7 +71,7 @@ export class SyncStatus {
    * Partial sync status for involved bucket priorities.
    */
   get priorityStatusEntries() {
-    return (this.options.priorityStatusEntries ?? []).toSorted(SyncStatus.comparePriorities);
+    return (this.options.priorityStatusEntries ?? []).slice().sort(SyncStatus.comparePriorities);
   }
 
   /**

@@ -1,5 +1,7 @@
 import {
+  AbstractPowerSyncDatabase,
   BucketStorageAdapter,
+  Checkpoint,
   OpType,
   OpTypeEnum,
   OplogEntry,
@@ -8,10 +10,9 @@ import {
   SyncDataBatch,
   SyncDataBucket
 } from '@powersync/common';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { AbstractPowerSyncDatabase, Checkpoint } from '@powersync/common';
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { Mutex } from 'async-mutex';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { testSchema } from './utils/testDb';
 
 const putAsset1_1 = OplogEntry.fromRow({
@@ -57,7 +58,7 @@ const removeAsset1_5 = OplogEntry.fromRow({
   checksum: 5
 });
 
-describe('Bucket Storage', () => {
+describe('Bucket Storage', { sequential: true }, () => {
   let db: AbstractPowerSyncDatabase;
   let bucketStorage: BucketStorageAdapter;
 
