@@ -2,7 +2,7 @@ import repl_factory from 'node:repl';
 import { once } from 'node:events';
 
 import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
-import { default as Logger } from "js-logger";
+import { default as Logger } from 'js-logger';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { exit } from 'node:process';
 
@@ -22,7 +22,7 @@ const main = async () => {
     database: {
       dbFilename: 'test.db'
     },
-    logger,
+    logger
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
