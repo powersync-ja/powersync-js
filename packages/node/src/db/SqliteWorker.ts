@@ -98,8 +98,7 @@ class BetterSqliteWorker implements AsyncDatabaseOpener {
 }
 
 const loadExtension = (db: Database) => {
-  // https://nodejs.org/api/esm.html#differences-between-es-modules-and-commonjs
-  const isCommonJsModule = '__filename' in global;
+  const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
 
   const platform = OS.platform();
   let extensionPath: string;

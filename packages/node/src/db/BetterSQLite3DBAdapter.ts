@@ -57,8 +57,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
 
     const openWorker = async (isWriter: boolean) => {
-      // https://nodejs.org/api/esm.html#differences-between-es-modules-and-commonjs
-      const isCommonJsModule = '__filename' in global;
+      const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
       let worker: Worker;
       const workerName = isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`;
 
