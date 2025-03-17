@@ -10,7 +10,7 @@ import {
   LockContext,
   Transaction,
   DBLockOptions,
-  QueryResult,
+  QueryResult
 } from '@powersync/common';
 import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';

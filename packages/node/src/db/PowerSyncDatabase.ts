@@ -18,7 +18,7 @@ import { NodeSQLOpenOptions } from './options.js';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
-}
+};
 
 /**
  * A PowerSync database which provides SQLite functionality

@@ -11,7 +11,7 @@ test('validates options', async () => {
       schema: AppSchema,
       database: {
         dbFilename: '/dev/null',
-        readWorkers: 0,
+        readWorkers: 0
       }
     });
     await database.init();
@@ -19,24 +19,24 @@ test('validates options', async () => {
 });
 
 test('can customize loading workers', async () => {
-    const directory = await createTempDir();
-    const openFunction = vi.fn((...args: ConstructorParameters<typeof Worker>) => new Worker(...args));
+  const directory = await createTempDir();
+  const openFunction = vi.fn((...args: ConstructorParameters<typeof Worker>) => new Worker(...args));
 
-    const database = new PowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: 'test.db',
-        dbLocation: directory,
-        openWorker: openFunction as any,
-        readWorkers: 2,
-      }
-    });
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: directory,
+      openWorker: openFunction as any,
+      readWorkers: 2
+    }
+  });
 
-    await database.get('SELECT 1;'); // Make sure the database is ready and works
-    expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
-    await database.close();
+  await database.get('SELECT 1;'); // Make sure the database is ready and works
+  expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
+  await database.close();
 
-    onTestFinished(async () => fs.rm(directory, { recursive: true }));
+  onTestFinished(async () => fs.rm(directory, { recursive: true }));
 });
 
 databaseTest('links powersync', async ({ database }) => {
