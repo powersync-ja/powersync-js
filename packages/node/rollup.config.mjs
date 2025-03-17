@@ -22,7 +22,16 @@ export default [
     }
   },
   {
-    input: 'lib/db/SqliteWorker.js',
+    input: 'lib/db/DefaultWorker.js',
+    plugins: [plugin()],
+    output: {
+      file: 'dist/DefaultWorker.cjs',
+      format: 'cjs',
+      sourcemap: true
+    }
+  },
+  {
+    input: 'lib/worker.js',
     plugins: [plugin()],
     output: {
       file: 'dist/worker.cjs',
