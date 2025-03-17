@@ -2,12 +2,13 @@ import repl_factory from 'node:repl';
 import { once } from 'node:events';
 
 import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
-import Logger from 'js-logger';
+import { default as Logger } from "js-logger";
 import { AppSchema, DemoConnector } from './powersync.js';
 import { exit } from 'node:process';
 
 const main = async () => {
-  Logger.useDefaults({ defaultLevel: Logger.WARN });
+  const logger = Logger.get('PowerSyncDemo');
+  Logger.useDefaults({ defaultLevel: logger.WARN });
 
   if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
     console.warn(
@@ -21,7 +22,7 @@ const main = async () => {
     database: {
       dbFilename: 'test.db'
     },
-    logger: Logger
+    logger,
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
