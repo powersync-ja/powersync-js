@@ -21,9 +21,16 @@
   },
   "type": "module",
   "exports": {
-    "import": "./lib/index.js",
-    "require": "./dist/bundle.cjs",
-    "types": "./lib/index.d.ts"
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./dist/bundle.cjs",
+      "types": "./lib/index.d.ts"
+    },
+    "./worker.js": {
+      "import": "./lib/worker.js",
+      "require": "./dist/worker.cjs",
+      "types": "./lib/worker.d.ts"
+    }
   },
   "repository": {
     "type": "git",

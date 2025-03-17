@@ -63,9 +63,9 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 
       const workerFactory = this.options.openWorker ?? ((...args) => new Worker(...args));
       if (isCommonJsModule) {
-        worker = workerFactory(path.resolve(__dirname, 'worker.cjs'), { name: workerName });
+        worker = workerFactory(path.resolve(__dirname, 'DefaultWorker.cjs'), { name: workerName });
       } else {
-        worker = workerFactory(new URL('./SqliteWorker.js', import.meta.url), { name: workerName });
+        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
       }
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
