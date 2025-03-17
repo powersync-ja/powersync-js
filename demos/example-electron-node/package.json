@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "keywords": [],
-  "author": "",
-  "license": "ISC",
   "packageManager": "pnpm@10.6.3",
   "main": ".webpack/main",
+  "private": true,
+  "author": {
+    "name": "PowerSync"
+  },
+  "license": "MIT",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
