@@ -1,48 +1,65 @@
 import { AbstractPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, Table } from '@powersync/node';
 
-export class DemoConnector implements PowerSyncBackendConnector {
+declare const POWERSYNC_URL: string|null;
+declare const POWERSYNC_TOKEN: string|null;
+
+export class BackendConnector implements PowerSyncBackendConnector {
+  private powersyncUrl: string | undefined;
+  private powersyncToken: string | undefined;
+
+  constructor() {
+    this.powersyncUrl = POWERSYNC_URL;
+    // This token is for development only.
+    // For production applications, integrate with an auth provider or custom auth.
+    this.powersyncToken = POWERSYNC_TOKEN;
+  }
+
   async fetchCredentials() {
-    const response = await fetch(`${process.env.BACKEND}/api/auth/token`);
-    if (response.status != 200) {
-      throw 'Could not fetch token';
+    // TODO: Use an authentication service or custom implementation here.
+    if (this.powersyncToken == null || this.powersyncUrl == null) {
+      return null;
     }
 
-    const { token } = await response.json();
-
     return {
-      endpoint: process.env.SYNC_SERVICE!,
-      token: token
+      endpoint: this.powersyncUrl,
+      token: this.powersyncToken
     };
   }
 
-  async uploadData(database: AbstractPowerSyncDatabase) {
-    const batch = await database.getCrudBatch();
-    if (batch == null) {
+  async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
+    const transaction = await database.getNextCrudTransaction();
+
+    if (!transaction) {
       return;
     }
 
-    const entries: any[] = [];
-    for (const op of batch.crud) {
-      entries.push({
-        table: op.table,
-        op: op.op,
-        id: op.id,
-        data: op.opData
-      });
-    }
+    try {
+      // TODO: Upload here
 
-    const response = await fetch(`${process.env.BACKEND}/api/data/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ batch: entries })
-    });
-    if (response.status !== 200) {
-      throw new Error(`Server returned HTTP ${response.status}: ${await response.text()}`);
+      await transaction.complete();
+    } catch (error: any) {
+      if (shouldDiscardDataOnError(error)) {
+        // Instead of blocking the queue with these errors, discard the (rest of the) transaction.
+        //
+        // Note that these errors typically indicate a bug in the application.
+        // If protecting against data loss is important, save the failing records
+        // elsewhere instead of discarding, and/or notify the user.
+        console.error(`Data upload error - discarding`, error);
+        await transaction.complete();
+      } else {
+        // Error may be retryable - e.g. network error or temporary server error.
+        // Throwing an error here causes this call to be retried after a delay.
+        throw error;
+      }
     }
-
-    await batch?.complete();
   }
 }
+
+function shouldDiscardDataOnError(error: any) {
+  // TODO: Ignore non-retryable errors here
+  return false;
+}
+
 
 export const LIST_TABLE = 'lists';
 export const TODO_TABLE = 'todos';

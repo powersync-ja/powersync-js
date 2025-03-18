@@ -9,14 +9,18 @@ import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
-import type { Configuration, ModuleOptions } from 'webpack';
+import { type Configuration, type ModuleOptions, type DefinePlugin } from 'webpack';
+import * as dotenv from 'dotenv';
 import type IForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import type ICopyPlugin from 'copy-webpack-plugin';
+
+dotenv.config({path: '.env.local'});
 
 const require = createRequire(import.meta.url);
 
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CopyPlugin: typeof ICopyPlugin = require('copy-webpack-plugin');
+const DefinePluginImpl: typeof DefinePlugin = require('webpack').DefinePlugin;
 
 const webpackPlugins = [
   new ForkTsCheckerWebpackPlugin({
@@ -85,6 +89,10 @@ const mainConfig: Configuration = {
         from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
         to: extensionPath,
       }],
+    }),
+    new DefinePluginImpl({
+      POWERSYNC_URL: JSON.stringify(process.env.POWERSYNC_URL),
+      POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN),
     }),
   ],
   resolve: {

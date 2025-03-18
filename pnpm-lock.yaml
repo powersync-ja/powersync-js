@@ -460,6 +460,9 @@ importers:
       css-loader:
         specifier: ^6.11.0
         version: 6.11.0(@rspack/core@1.1.8(@swc/helpers@0.5.5))(webpack@5.95.0(@swc/core@1.10.1(@swc/helpers@0.5.5)))
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       electron:
         specifier: 30.0.2
         version: 30.0.2
@@ -30665,9 +30668,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
