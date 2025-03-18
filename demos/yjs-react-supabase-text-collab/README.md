@@ -23,28 +23,9 @@ This demo app uses Supabase as its Postgres database and backend:
 
 1. [Create a new project on the Supabase dashboard](https://supabase.com/dashboard/projects).
 2. Go to the Supabase SQL Editor for your new project and execute the SQL statements in [`database.sql`](database.sql) to create the database schema, database functions, and publication needed for PowerSync.
+3. Enable "anonymous sign-ins" for the project [here](https://supabase.com/dashboard/project/_/auth/providers).
 
-### 3. Auth setup and Supabase edge functions
-
-For ease of demoing, this demo app uses anonymous authentication. The below instructions are derived from the [powersync-jwks-example README](https://github.com/powersync-ja/powersync-jwks-example):
-
-1. Install [Deno](https://deno.com/) and [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started) if you don't have them already.
-2. Clone the [powersync-jwks-example](https://github.com/powersync-ja/powersync-jwks-example) repo.
-3. In the [powersync-jwks-example](https://github.com/powersync-ja/powersync-jwks-example) repo directory, run the script to generate a keypair:
-
-```bash
-deno run generate-keys.ts
-```
-
-4. Then use `supabase secrets set` as shown in the terminal output to update the generated keys on Supabase (`POWERSYNC_PUBLIC_KEY` and `POWERSYNC_PRIVATE_KEY`). You will need the project ref of the Supabase project you created previously.
-5. Switch back to the `powersync-supabase-yjs-text-collab-demo` repo directory and deploy the `powersync-jwks` and `powersync-auth-anonymous` edge functions to Supabase: (Note that the Supabase CLI requires [Docker Desktop](https://docs.docker.com/desktop/) to be installed for this step)
-
-```bash
-supabase functions deploy --no-verify-jwt powersync-jwks
-supabase functions deploy powersync-auth-anonymous
-```
-
-### 4. Create new project on PowerSync and connect to Supabase/Postgres
+### 3. Create new project on PowerSync and connect to Supabase/Postgres
 
 If you don't have a PowerSync account yet, [sign up here](https://accounts.journeyapps.com/portal/free-trial?powersync=true).
 
@@ -57,24 +38,16 @@ Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a
 5. Input the credentials from the project you created in Supabase. In the Supabase dashboard, under your project you can go to "Project Settings" and then "Database" and choose "URI" under "Connection string", untick the "Use connection pooling" option, and then copy & paste the connection string into the PowerSync dashboard "URI" field, and then enter your database password at the "Password" field.
 6. Click the "Test connection" button and you should see "Connection success!"
 7. Click on the "Credentials" tab of the "Edit Instance" dialog.
-8. Tick the "Use Supabase Auth" checkbox
-9. Enter the URL of your `powersync-jwks` edge function at the "JWKS URI" field. It should be in the format `https://<supabase-project-ref>.supabase.co/functions/v1/powersync-jwks`. If needed, you can find the URL in the Supabase dashboard by going to your project and then to "Edge Functions".
-10. Click "Save" to save all the changes to your PowerSync instance. The instance will now be deployed — this may take a minute or two.
+8. Tick the "Use Supabase Auth" checkbox and configure the JWT secret.
+9. Click "Save" to save all the changes to your PowerSync instance. The instance will now be deployed — this may take a minute or two.
 
-### 5. Set `POWERSYNC_URL` secret on Supabase
-
-1. Now that your PowerSync instance is created, you should see a URL for it on the right side of the PowerSync dashboard in the "Deploy logs" panel. Click the button next to the URL to copy it.
-2. Use the copied value to set the `POWERSYNC_URL` secret to be used by your Supabase edge functions: (make sure there is no trailing slash at the end of the URL)
-
-`supabase secrets set POWERSYNC_URL=https://<powersync-instance-id>.powersync.journeyapps.com`
-
-### 6. Create Sync Rules on PowerSync
+### 4. Create Sync Rules on PowerSync
 
 1. Open the [`sync-rules.yaml`](sync-rules.yaml) in this repo and copy the contents.
 2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the 'sync-rules.yaml' editor panel.
 3. Click the "Deploy sync rules" button and select your PowerSync instance from the drop-down list.
 
-### 7. Set up local environment variables
+### 5. Set up local environment variables
 
 To set up the environment variables for the demo app:
 
@@ -87,9 +60,9 @@ cp .env.local.template .env.local
 2. Edit `.env.local` and populate the relevant values:
    - Set `VITE_SUPABASE_URL` to your Supabase project URL. You can find this by going to the main page for the project on the Supabase dashboard and then look for "Project URL" in the "Project API" panel.
    - Set `VITE_SUPABASE_ANON_KEY` to your Supabase API key. This can be found right below the Project URL on the Supabase dashboard.
-   - Set `VITE_POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 5)
+   - Set `VITE_POWERSYNC_URL` to your PowerSync instance URL (this is the same URL from step 3)
 
-### 8. Run the demo app
+### 6. Run the demo app
 
 In this directory, run the following to start the development server:
 

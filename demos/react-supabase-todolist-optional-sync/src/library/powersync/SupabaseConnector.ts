@@ -3,7 +3,8 @@ import {
   BaseObserver,
   CrudEntry,
   PowerSyncBackendConnector,
-  UpdateType
+  UpdateType,
+  type PowerSyncCredentials
 } from '@powersync/web';
 
 import { Session, SupabaseClient, createClient } from '@supabase/supabase-js';
@@ -113,7 +114,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     return {
       endpoint: this.config.powersyncUrl,
       token: session.access_token ?? ''
-    };
+    } satisfies PowerSyncCredentials;
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {

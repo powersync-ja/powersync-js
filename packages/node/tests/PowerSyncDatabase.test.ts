@@ -11,7 +11,7 @@ test('validates options', async () => {
       schema: AppSchema,
       database: {
         dbFilename: '/dev/null',
-        readWorkers: 0
+        readWorkerCount: 0,
       }
     });
     await database.init();
@@ -28,7 +28,7 @@ test('can customize loading workers', async () => {
       dbFilename: 'test.db',
       dbLocation: directory,
       openWorker: openFunction as any,
-      readWorkers: 2
+      readWorkerCount: 2
     }
   });
 
