@@ -114,7 +114,6 @@ export interface PowerSyncWorkerOptions {
 
 export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) {
   const resolvedOptions: PowerSyncWorkerOptions = {
-    ...options,
     extensionPath() {
       const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
 
@@ -138,7 +137,8 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
       }
 
       return resolved;
-    }
+    },
+    ...options,
   };
 
   Comlink.expose(new BetterSqliteWorker(resolvedOptions), parentPort! as Comlink.Endpoint);

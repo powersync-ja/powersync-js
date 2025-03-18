@@ -42,8 +42,8 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   constructor(options: NodeSQLOpenOptions) {
     super();
 
-    if (options.readWorkers != null && options.readWorkers < 1) {
-      throw `Needs at least one worker for reads, got ${options.readWorkers}`;
+    if (options.readWorkerCount != null && options.readWorkerCount < 1) {
+      throw `Needs at least one worker for reads, got ${options.readWorkerCount}`;
     }
 
     this.options = options;
@@ -65,7 +65,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       if (isCommonJsModule) {
         worker = workerFactory(path.resolve(__dirname, 'DefaultWorker.cjs'), { name: workerName });
       } else {
-        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
+        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName});
       }
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
@@ -108,7 +108,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).
     this.writeConnection = await openWorker(true);
     const createWorkers: Promise<RemoteConnection>[] = [];
-    const amountOfReaders = this.options.readWorkers ?? READ_CONNECTIONS;
+    const amountOfReaders = this.options.readWorkerCount ?? READ_CONNECTIONS;
     for (let i = 0; i < amountOfReaders; i++) {
       createWorkers.push(openWorker(false));
     }
