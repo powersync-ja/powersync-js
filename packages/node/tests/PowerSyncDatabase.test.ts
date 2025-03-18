@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import { vi, expect, test, onTestFinished } from 'vitest';
 import { AppSchema, createTempDir, databaseTest } from './utils';
 import { PowerSyncDatabase } from '../lib';
+import { OpenWorker } from '../lib/db/options';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -20,7 +21,9 @@ test('validates options', async () => {
 
 test('can customize loading workers', async () => {
   const directory = await createTempDir();
-  const openFunction = vi.fn((...args: ConstructorParameters<typeof Worker>) => new Worker(...args));
+  const defaultWorker: OpenWorker = (...args) => new Worker(...args);
+
+  const openFunction = vi.fn(defaultWorker); // Wrap in vi.fn to count invocations
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,
