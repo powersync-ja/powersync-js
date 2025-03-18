@@ -6,7 +6,8 @@ enum Packages {
   VueSdk = 'vue-sdk',
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk',
-  TanstackReactQuerySdk = 'tanstack-react-query-sdk'
+  TanstackReactQuerySdk = 'tanstack-react-query-sdk',
+  NodeSdk = 'node-sdk',
 }
 
 interface Package {
@@ -29,15 +30,29 @@ export const packageMap: PackageMap = {
     tsconfig: '../packages/react-native/tsconfig.json',
     id: Packages.ReactNativeSdk
   },
+  [Packages.WebSdk]: {
+    name: 'Web SDK',
+    dirName: Packages.WebSdk,
+    entryPoints: ['../packages/web/src/index.ts'],
+    tsconfig: '../packages/web/tsconfig.json',
+    id: Packages.WebSdk
+  },
   [Packages.ReactSdk]: {
-    name: 'React SDK',
+    name: 'React Hooks',
     dirName: Packages.ReactSdk,
     entryPoints: ['../packages/react/src/index.ts'],
     tsconfig: '../packages/react/tsconfig.json',
     id: Packages.ReactSdk
   },
+  [Packages.TanstackReactQuerySdk]: {
+    name: 'Tanstack React Query Hooks',
+    dirName: Packages.TanstackReactQuerySdk,
+    entryPoints: ['../packages/tanstack-react-query/src/index.ts'],
+    tsconfig: '../packages/tanstack-react-query/tsconfig.json',
+    id: Packages.TanstackReactQuerySdk
+  },
   [Packages.VueSdk]: {
-    name: 'Vue SDK',
+    name: 'Vue Composables',
     dirName: Packages.VueSdk,
     entryPoints: ['../packages/vue/src/index.ts'],
     tsconfig: '../packages/vue/tsconfig.json',
@@ -50,18 +65,11 @@ export const packageMap: PackageMap = {
     tsconfig: '../packages/attachments/tsconfig.json',
     id: Packages.AttachmentsSdk
   },
-  [Packages.WebSdk]: {
-    name: 'Web SDK',
-    dirName: Packages.WebSdk,
-    entryPoints: ['../packages/web/src/index.ts'],
-    tsconfig: '../packages/web/tsconfig.json',
-    id: Packages.WebSdk
+  [Packages.NodeSdk]: {
+    name: 'Node SDK',
+    dirName: Packages.NodeSdk,
+    entryPoints: ['../packages/node/src/index.ts'],
+    tsconfig: '../packages/node/tsconfig.json',
+    id: Packages.NodeSdk
   },
-  [Packages.TanstackReactQuerySdk]: {
-    name: 'Tanstack React Query SDK',
-    dirName: Packages.TanstackReactQuerySdk,
-    entryPoints: ['../packages/tanstack-react-query/src/index.ts'],
-    tsconfig: '../packages/tanstack-react-query/tsconfig.json',
-    id: Packages.TanstackReactQuerySdk
-  }
 };

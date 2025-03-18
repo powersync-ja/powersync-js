@@ -1,5 +1,142 @@
 # diagnostics-app
 
+## 0.8.3
+
+### Patch Changes
+
+- Updated dependencies [26025f0]
+  - @powersync/web@1.15.0
+
+## 0.8.2
+
+### Patch Changes
+
+- Updated dependencies [fe98172]
+- Updated dependencies [17fc01e]
+  - @powersync/web@1.14.2
+  - @powersync/react@1.5.1
+
+## 0.8.1
+
+### Patch Changes
+
+- Updated dependencies [44582ef]
+  - @powersync/web@1.14.1
+
+## 0.8.0
+
+### Minor Changes
+
+- e1c44ad: Improve diagnostics app performance for bulk downloads.
+- 56185bb: Switch diagnostics app to OPFS.
+
+### Patch Changes
+
+- Updated dependencies [56185bb]
+  - @powersync/web@1.14.0
+
+## 0.7.8
+
+### Patch Changes
+
+- @powersync/web@1.13.1
+
+## 0.7.7
+
+### Patch Changes
+
+- Updated dependencies [065aba6]
+  - @powersync/web@1.13.0
+
+## 0.7.6
+
+### Patch Changes
+
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/web@1.12.3
+
+## 0.7.5
+
+### Patch Changes
+
+- @powersync/web@1.12.2
+
+## 0.7.4
+
+### Patch Changes
+
+- @powersync/web@1.12.1
+
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [7e23d65]
+- Updated dependencies [36af0c8]
+  - @powersync/web@1.12.0
+
+## 0.7.2
+
+### Patch Changes
+
+- Updated dependencies [bacc1c5]
+  - @powersync/web@1.11.0
+
+## 0.7.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+- Updated dependencies [fa26eb4]
+  - @powersync/web@1.10.2
+
+## 0.7.0
+
+### Minor Changes
+
+- 677d782: Improved error messages for some token or endpoint issues
+- db84a30: Support specifying client parameter types
+
+## 0.6.5
+
+### Patch Changes
+
+- Updated dependencies [e9773d9]
+  - @powersync/web@1.10.1
+
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/web@1.10.0
+  - @powersync/react@1.5.1
+
+## 0.6.3
+
+### Patch Changes
+
+- Updated dependencies [96f1a87]
+  - @powersync/web@1.9.2
+
+## 0.6.2
+
+### Patch Changes
+
+- Updated dependencies [79d4211]
+- Updated dependencies [8554526]
+  - @powersync/web@1.9.1
+
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
 ## 0.6.0
 
 ### Minor Changes

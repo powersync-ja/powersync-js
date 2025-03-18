@@ -21,7 +21,7 @@ pnpm build:packages
 
 ### Set up Supabase Project
 
-Detailed instructions for integrating PowerSync with Supabase can be found in the [integration guide](https://docs.powersync.com/integration-guides/supabase). Below are the main steps required to get this demo running.
+Detailed instructions for integrating PowerSync with Supabase can be found in the [integration guide](https://docs.powersync.com/integration-guides/supabase-+-powersync). Below are the main steps required to get this demo running.
 
 Create a new Supabase project, and paste and run the contents of [database.sql](./database.sql) in the Supabase SQL editor.
 
@@ -50,7 +50,7 @@ bucket_definitions:
 
 ### Configure the app
 
-#### 1. Set up environment variables: 
+#### 1. Set up environment variables:
 
 Copy the `.env.local.template` file:
 
@@ -65,7 +65,7 @@ Then edit `.env.local` to insert your Supabase and PowerSync project credentials
 This is required for the React Native Web implementation. Learn more in [our docs](https://docs.powersync.com/client-sdk-references/react-native-and-expo/react-native-web-support).
 
 ```bash
-mkdir -p public/@powersync && cp -r node_modules/@powersync/web/dist/* public/@powersync/
+pnpm powersync-web copy-assets
 ```
 
 ### Run the app

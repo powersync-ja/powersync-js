@@ -1,6 +1,6 @@
 {
   "name": "@powersync/vue",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
     "watch": "tsc -b -w",
     "test": "vitest"
   },
@@ -30,13 +30,12 @@
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "vue": "*",
-    "@powersync/common": "workspace:^1.18.1"
+    "@powersync/common": "workspace:^1.25.0"
   },
   "devDependencies": {
+    "@powersync/common": "workspace:*",
     "flush-promises": "^1.0.2",
     "jsdom": "^24.0.0",
-    "typescript": "^5.5.3",
-    "vitest": "^1.5.1",
     "vue": "3.4.21"
   }
 }

@@ -4,7 +4,7 @@
 
 # PowerSync SDK for Web
 
-*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres or MongoDB on the server-side (MySQL coming soon).*
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
 
 This package (`packages/web`) is the PowerSync SDK for JavaScript Web clients. It is an extension of `packages/common`.
 
@@ -28,6 +28,39 @@ Install it in your app with:
 npm install @journeyapps/wa-sqlite
 ```
 
+### Encryption with Multiple Ciphers
+
+To enable encryption you need to specify an encryption key when instantiating the PowerSync database.
+
+> The PowerSync Web SDK uses the ChaCha20 cipher algorithm by [default](https://utelle.github.io/SQLite3MultipleCiphers/docs/ciphers/cipher_chacha20/).
+
+```typescript
+export const db = new PowerSyncDatabase({
+  // The schema you defined
+  schema: AppSchema,
+  database: {
+    // Filename for the SQLite database — it's important to only instantiate one instance per file.
+    dbFilename: 'example.db'
+    // Optional. Directory where the database file is located.'
+    // dbLocation: 'path/to/directory'
+  },
+  // Encryption key for the database.
+  encryptionKey: 'your-encryption-key'
+});
+
+// If you are using a custom WASQLiteOpenFactory or WASQLiteDBAdapter, you need specify the encryption key inside the construtor
+export const db = new PowerSyncDatabase({
+  schema: AppSchema,
+  database: new WASQLiteOpenFactory({
+    //new WASQLiteDBAdapter
+    dbFilename: 'example.db',
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    // Encryption key for the database.
+    encryptionKey: 'your-encryption-key'
+  })
+});
+```
+
 ## Webpack
 
 See the [example Webpack config](https://github.com/powersync-ja/powersync-js/blob/main/demos/example-webpack/webpack.config.js) for details on polyfills and requirements.
@@ -39,6 +72,15 @@ See the [example Vite config](https://github.com/powersync-ja/powersync-js/blob/
 # Getting Started
 
 Our [full SDK reference](https://docs.powersync.com/client-sdk-references/js-web) contains everything you need to know to get started implementing PowerSync in your project.
+
+# Public Workers
+
+For some frameworks, it may be required to configure the web workers ([see the docs](https://docs.powersync.com/client-sdk-references/react-native-and-expo/react-native-web-support)).
+The `@powersync/web` package includes a CLI utility which can copy the required assets to the `public` directory (configurable with the `--output` option).
+
+```bash
+pnpm powersync-web copy-assets
+```
 
 # Changelog
 

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.1.2",
+  "version": "2.2.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -24,10 +24,17 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
-    "watch": "tsc -b -w"
+    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "watch": "tsc -b -w",
+    "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.18.1"
+    "@powersync/common": "workspace:^1.25.0"
+  },
+  "devDependencies": {
+    "@powersync/common": "workspace:*",
+    "@types/node": "^20.17.6",
+    "vite": "^6.1.0",
+    "vite-plugin-top-level-await": "^1.4.4"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/op-sqlite",
-  "version": "0.0.4",
+  "version": "0.4.1",
   "description": "PowerSync - sync Postgres or MongoDB with SQLite in your React Native app for offline-first and real-time data",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
@@ -41,7 +41,7 @@
     "build:prod": "bob build",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib"
+    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib node_modules"
   },
   "keywords": [
     "data sync",
@@ -65,8 +65,8 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@op-engineering/op-sqlite": "^9.2.1",
-    "@powersync/common": "workspace:^1.20.0",
+    "@op-engineering/op-sqlite": "^11.2.13",
+    "@powersync/common": "workspace:^1.25.0",
     "react": "*",
     "react-native": "*"
   },
@@ -75,7 +75,7 @@
     "async-lock": "^1.4.0"
   },
   "devDependencies": {
-    "@op-engineering/op-sqlite": "^9.2.1",
+    "@op-engineering/op-sqlite": "^11.2.13",
     "@react-native/eslint-config": "^0.73.1",
     "@types/async-lock": "^1.4.0",
     "@types/react": "^18.2.44",
@@ -87,8 +87,7 @@
     "react": "18.3.1",
     "react-native": "0.75.3",
     "react-native-builder-bob": "^0.30.2",
-    "turbo": "^1.10.7",
-    "typescript": "^5.2.2"
+    "turbo": "^1.10.7"
   },
   "eslintIgnore": [
     "node_modules/",

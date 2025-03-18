@@ -20,7 +20,11 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation';
 
-import { WASQLiteDBAdapter } from '../../db/adapters/wa-sqlite/WASQLiteDBAdapter';
+import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
+import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
+import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
 
@@ -40,26 +44,40 @@ export type ManualSharedSyncPayload = {
   data: any; // TODO update in future
 };
 
+/**
+ * @internal
+ */
 export type SharedSyncInitOptions = {
-  dbName: string;
   streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
+  dbParams: ResolvedWebSQLOpenOptions;
 };
 
+/**
+ * @internal
+ */
 export interface SharedSyncImplementationListener extends StreamingSyncImplementationListener {
   initialized: () => void;
 }
 
+/**
+ * @internal
+ */
 export type WrappedSyncPort = {
   port: MessagePort;
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
+  db?: DBAdapter;
 };
 
+/**
+ * @internal
+ */
 export type RemoteOperationAbortController = {
   controller: AbortController;
   activePort: WrappedSyncPort;
 };
 
 /**
+ * @internal
  * Shared sync implementation which runs inside a shared webworker
  */
 export class SharedSyncImplementation
@@ -78,6 +96,7 @@ export class SharedSyncImplementation
   protected dbAdapter: DBAdapter | null;
   protected syncParams: SharedSyncInitOptions | null;
   protected logger: ILogger;
+  protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
 
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
@@ -89,6 +108,7 @@ export class SharedSyncImplementation
     this.syncParams = null;
     this.syncStreamClient = null;
     this.logger = Logger.get('shared-sync');
+    this.lastConnectOptions = undefined;
 
     this.isInitialized = new Promise((resolve) => {
       const callback = this.registerListener({
@@ -108,6 +128,11 @@ export class SharedSyncImplementation
     return this.syncStreamClient!.waitForStatus(status);
   }
 
+  async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
+    await this.waitForReady();
+    return this.syncStreamClient!.waitUntilStatusMatches(predicate);
+  }
+
   get lastSyncedAt(): Date | undefined {
     return this.syncStreamClient?.lastSyncedAt;
   }
@@ -123,18 +148,11 @@ export class SharedSyncImplementation
   /**
    * Configures the DBAdapter connection and a streaming sync client.
    */
-  async init(dbWorkerPort: MessagePort, params: SharedSyncInitOptions) {
-    if (this.dbAdapter) {
+  async setParams(params: SharedSyncInitOptions) {
+    if (this.syncParams) {
       // Cannot modify already existing sync implementation
       return;
     }
-
-    this.dbAdapter = new WASQLiteDBAdapter({
-      dbFilename: params.dbName,
-      workerPort: dbWorkerPort,
-      flags: { enableMultiTabs: true, useWebWorker: true },
-      logger: this.logger
-    });
 
     this.syncParams = params;
 
@@ -147,6 +165,7 @@ export class SharedSyncImplementation
       this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
     };
 
+    await this.openInternalDB();
     this.iterateListeners((l) => l.initialized?.());
   }
 
@@ -165,9 +184,12 @@ export class SharedSyncImplementation
   async connect(options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return navigator.locks.request('shared-sync-connect', async () => {
+    return getNavigatorLocks().request('shared-sync-connect', async () => {
+      if (!this.dbAdapter) {
+        await this.openInternalDB();
+      }
       this.syncStreamClient = this.generateStreamingImplementation();
-
+      this.lastConnectOptions = options;
       this.syncStreamClient.registerListener({
         statusChanged: (status) => {
           this.updateAllStatuses(status.toJSON());
@@ -181,7 +203,7 @@ export class SharedSyncImplementation
   async disconnect() {
     await this.waitForReady();
     // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return navigator.locks.request('shared-sync-connect', async () => {
+    return getNavigatorLocks().request('shared-sync-connect', async () => {
       await this.syncStreamClient?.disconnect();
       await this.syncStreamClient?.dispose();
       this.syncStreamClient = null;
@@ -209,7 +231,7 @@ export class SharedSyncImplementation
    * Removes a message port client from this manager's managed
    * clients.
    */
-  removePort(port: MessagePort) {
+  async removePort(port: MessagePort) {
     const index = this.ports.findIndex((p) => p.port == port);
     if (index < 0) {
       console.warn(`Could not remove port ${port} since it is not present in active ports.`);
@@ -217,8 +239,7 @@ export class SharedSyncImplementation
     }
 
     const trackedPort = this.ports[index];
-    // Release proxy
-    trackedPort.clientProvider[Comlink.releaseProxy]();
+    // Remove from the list of active ports
     this.ports.splice(index, 1);
 
     /**
@@ -230,6 +251,26 @@ export class SharedSyncImplementation
         abortController!.controller.abort(new AbortOperation('Closing pending requests after client port is removed'));
       }
     });
+
+    const shouldReconnect = !!this.syncStreamClient;
+    if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
+      if (shouldReconnect) {
+        await this.disconnect();
+      }
+
+      // Clearing the adapter will result in a new one being opened in connect
+      this.dbAdapter = null;
+
+      if (shouldReconnect) {
+        await this.connect(this.lastConnectOptions);
+      }
+    }
+
+    if (trackedPort.db) {
+      trackedPort.db.close();
+    }
+    // Release proxy
+    trackedPort.clientProvider[Comlink.releaseProxy]();
   }
 
   triggerCrudUpload() {
@@ -305,6 +346,31 @@ export class SharedSyncImplementation
       // Logger cannot be transferred just yet
       logger: this.logger
     });
+  }
+
+  protected async openInternalDB() {
+    const lastClient = this.ports[this.ports.length - 1];
+    if (!lastClient) {
+      // Should not really happen in practice
+      throw new Error(`Could not open DB connection since no client is connected.`);
+    }
+    const workerPort = await lastClient.clientProvider.getDBWorkerPort();
+    const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
+    const identifier = this.syncParams!.dbParams.dbFilename;
+    const db = await remote(this.syncParams!.dbParams);
+    const locked = new LockedAsyncDatabaseAdapter({
+      name: identifier,
+      openConnection: async () => {
+        return new WorkerWrappedAsyncDatabaseConnection({
+          remote,
+          baseConnection: db,
+          identifier
+        });
+      },
+      logger: this.logger
+    });
+    await locked.init();
+    this.dbAdapter = lastClient.db = locked;
   }
 
   /**

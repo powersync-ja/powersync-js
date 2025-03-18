@@ -1,4 +1,4 @@
-import { parseQuery, type CompilableQuery, type ParsedQuery, type SQLWatchOptions } from '@powersync/common';
+import { parseQuery, type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '@powersync/react';
 import React from 'react';
 
@@ -65,15 +65,10 @@ function useQueryCore<
     throw new Error('PowerSync is not available');
   }
 
-  const [error, setError] = React.useState<Error | null>(null);
-  const [tables, setTables] = React.useState<string[]>([]);
-  const { query, parameters, ...resolvedOptions } = options;
+  let error: Error | undefined = undefined;
 
-  React.useEffect(() => {
-    if (error) {
-      setError(null);
-    }
-  }, [powerSync, query, parameters, options.queryKey]);
+  const [tables, setTables] = React.useState<string[]>([]);
+  const { query, parameters = [], ...resolvedOptions } = options;
 
   let sqlStatement = '';
   let queryParameters = [];
@@ -85,26 +80,38 @@ function useQueryCore<
       sqlStatement = parsedQuery.sqlStatement;
       queryParameters = parsedQuery.parameters;
     } catch (e) {
-      setError(e);
+      error = e;
     }
   }
+
+  const stringifiedParams = JSON.stringify(queryParameters);
+  const stringifiedKey = JSON.stringify(options.queryKey);
 
   const fetchTables = async () => {
     try {
       const tables = await powerSync.resolveTables(sqlStatement, queryParameters);
       setTables(tables);
     } catch (e) {
-      setError(e);
+      error = e;
     }
   };
 
   React.useEffect(() => {
-    if (!query) return;
+    if (error || !query) return () => {};
 
     (async () => {
       await fetchTables();
     })();
-  }, [powerSync, sqlStatement, queryParameters]);
+
+    const l = powerSync.registerListener({
+      schemaChanged: async () => {
+        await fetchTables();
+        queryClient.invalidateQueries({ queryKey: options.queryKey });
+      }
+    });
+
+    return () => l?.();
+  }, [powerSync, sqlStatement, stringifiedParams]);
 
   const queryFn = React.useCallback(async () => {
     if (error) {
@@ -116,7 +123,7 @@ function useQueryCore<
     } catch (e) {
       return Promise.reject(e);
     }
-  }, [powerSync, query, parameters, options.queryKey, error]);
+  }, [powerSync, query, parameters, stringifiedKey]);
 
   React.useEffect(() => {
     if (error || !query) return () => {};
@@ -130,7 +137,7 @@ function useQueryCore<
           });
         },
         onError: (e) => {
-          setError(e);
+          error = e;
         }
       },
       {
@@ -139,7 +146,7 @@ function useQueryCore<
       }
     );
     return () => abort.abort();
-  }, [powerSync, options.queryKey, queryClient, tables, error]);
+  }, [powerSync, queryClient, stringifiedKey, tables]);
 
   return useQueryFn(
     {

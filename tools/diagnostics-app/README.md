@@ -11,6 +11,14 @@ The app is currently available at [https://diagnostics-app.powersync.com/](https
 
 It can also be run as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
 
+## Running the app with Docker
+
+```sh
+docker run --pull always -p 8082:80 journeyapps/powersync-diagnostics-app
+```
+
+The app will be available on http://localhost:8082.
+
 ## Running the app locally
 
 In the root of the repository, run:

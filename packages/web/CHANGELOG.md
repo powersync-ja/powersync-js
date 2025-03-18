@@ -1,5 +1,133 @@
 # @powersync/web
 
+## 1.15.0
+
+### Minor Changes
+
+- 26025f0: Ensured OPFS tabs are not frozen or put to sleep by browsers. This prevents potential deadlocks in the syncing process.
+
+## 1.14.2
+
+### Patch Changes
+
+- fe98172: Fixed race condition in async closing of databases
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.12
+- Updated dependencies [76dfb06]
+- Updated dependencies [3c595af]
+- Updated dependencies [fe98172]
+- Updated dependencies [85f0228]
+  - @powersync/common@1.25.0
+
+## 1.14.1
+
+### Patch Changes
+
+- 44582ef: Fixed bug where using OPFS and reconnecting would cause upload triggers to fail.
+
+## 1.14.0
+
+### Minor Changes
+
+- 56185bb: Add cacheSizeKb option, defaulting to 50MB.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
+## 1.13.1
+
+### Patch Changes
+
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
+## 1.13.0
+
+### Minor Changes
+
+- 065aba6: Added support for OPFS virtual filesystem.
+
+## 1.12.3
+
+### Patch Changes
+
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/common@1.22.2
+
+## 1.12.2
+
+### Patch Changes
+
+- Updated dependencies [7a47778]
+- Updated dependencies [4a262cd]
+  - @powersync/common@1.22.1
+
+## 1.12.1
+
+### Patch Changes
+
+- Updated dependencies [77a9ed2]
+  - @powersync/common@1.22.0
+
+## 1.12.0
+
+### Minor Changes
+
+- 36af0c8: Added `temporaryStorage` option to `WebSQLOpenFactoryOptions`. The `temp_store` value will now defaults to "MEMORY".
+
+### Patch Changes
+
+- 7e23d65: Added a bin/cli utilty that can be invoked with `npx powersync-web copy-assets` or `pnpm powersync-web copy-assets`.
+
+## 1.11.0
+
+### Minor Changes
+
+- bacc1c5: Updated WA-SQLite to `@journeyapps/wa-sqlite@1.0.0`. Note that WA-SQLite performed some changes to the virtual filesystem structure in this update. An automatic migration will be executed when upgrading, however no down-migration is available. Downgrading to `@journeyapps/wa-sqlite < 1.0.0` will require the IndexDB storage to be erased.
+
+## 1.10.2
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
+## 1.10.1
+
+### Patch Changes
+
+- e9773d9: Add error check for insecure context
+
+## 1.10.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+
+## 1.9.2
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
+## 1.9.1
+
+### Patch Changes
+
+- 79d4211: Handle additional forward slash in the POWERSYNC_URL environment variable
+- 8554526: chore: Updated minimum WA-SQLite peer dependnency version.
+- Updated dependencies [79d4211]
+  - @powersync/common@1.20.1
+
 ## 1.9.0
 
 ### Minor Changes

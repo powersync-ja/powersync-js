@@ -43,6 +43,14 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
     }
   }
 
+  async userId() {
+    const {
+      data: { session },
+    } = await this.client.auth.getSession();
+
+    return session?.user.id;
+  }
+
   async fetchCredentials() {
     const {
       data: { session },
@@ -57,8 +65,7 @@ export class SupabaseConnector implements PowerSyncBackendConnector {
 
     return {
       endpoint: AppConfig.powersyncUrl,
-      token: session.access_token ?? '',
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined,
+      token: session.access_token ?? ''
     } satisfies PowerSyncCredentials;
   }
 

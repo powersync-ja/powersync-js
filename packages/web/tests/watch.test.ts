@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { v4 as uuid } from 'uuid';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { v4 as uuid } from 'uuid';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { testSchema } from './utils/testDb';
 vi.useRealTimers();
 
@@ -15,7 +15,7 @@ vi.useRealTimers();
  */
 const throttleDuration = 1000;
 
-describe('Watch Tests', () => {
+describe('Watch Tests', { sequential: true }, () => {
   let powersync: AbstractPowerSyncDatabase;
 
   beforeEach(async () => {
@@ -26,6 +26,7 @@ describe('Watch Tests', () => {
         enableMultiTabs: false
       }
     });
+    await powersync.init();
   });
 
   afterEach(async () => {
@@ -83,6 +84,7 @@ describe('Watch Tests', () => {
     const receivedUpdates = new Promise<void>((resolve) => {
       const onUpdate = () => {
         receivedUpdatesCount++;
+
         if (receivedUpdatesCount == updatesCount) {
           abortController.abort();
           resolve();
@@ -286,25 +288,27 @@ describe('Watch Tests', () => {
   });
 
   it('should throttle watch callback overflow', async () => {
-    const abortController = new AbortController();
-
+    const overflowAbortController = new AbortController();
     const updatesCount = 25;
 
     let receivedWithManagedOverflowCount = 0;
-    const onResultOverflow = () => {
-      receivedWithManagedOverflowCount++;
-    };
+    const firstResultReceived = new Promise<void>((resolve) => {
+      const onResultOverflow = () => {
+        if (receivedWithManagedOverflowCount === 0) {
+          resolve();
+        }
+        receivedWithManagedOverflowCount++;
+      };
 
-    const overflowAbortController = new AbortController();
-    powersync.watch(
-      'SELECT count() AS count FROM assets',
-      [],
-      { onResult: onResultOverflow },
-      { signal: overflowAbortController.signal, throttleMs: 1 }
-    );
+      powersync.watch(
+        'SELECT count() AS count FROM assets',
+        [],
+        { onResult: onResultOverflow },
+        { signal: overflowAbortController.signal, throttleMs: 1 }
+      );
+    });
 
-    // Allows us to count the number of updates received without the initial trigger
-    await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
+    await firstResultReceived;
 
     // Perform a large number of inserts to trigger overflow
     for (let i = 0; i < updatesCount; i++) {
@@ -313,10 +317,10 @@ describe('Watch Tests', () => {
 
     await new Promise<void>((resolve) => setTimeout(resolve, 1 * throttleDuration));
 
-    abortController.abort();
     overflowAbortController.abort();
 
-    // Initial onResult plus two left after overflow was throttled for onChange triggers
-    expect(receivedWithManagedOverflowCount).toBe(3);
+    // This fluctuates between 3 and 4 based on timing, but should never be 25
+    expect(receivedWithManagedOverflowCount).greaterThan(2);
+    expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
   });
 });

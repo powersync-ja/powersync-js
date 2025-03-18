@@ -9,7 +9,7 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
-import { SyncStatus } from '../db/crud/SyncStatus.js';
+import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
@@ -18,15 +18,19 @@ import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/throttle.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
+import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
 import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  PowerSyncConnectionOptions,
+  DEFAULT_RETRY_DELAY_MS,
   StreamingSyncImplementation,
-  StreamingSyncImplementationListener
+  StreamingSyncImplementationListener,
+  type AdditionalConnectionOptions,
+  type PowerSyncConnectionOptions,
+  type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 
 export interface DisconnectAndClearOptions {
@@ -34,21 +38,13 @@ export interface DisconnectAndClearOptions {
   clearLocal?: boolean;
 }
 
-export interface BasePowerSyncDatabaseOptions {
+export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
   /** Schema used for the local database. */
   schema: Schema;
-
   /**
-   * Delay for retrying sync streaming operations
-   * from the PowerSync backend after an error occurs.
+   * @deprecated Use {@link retryDelayMs} instead as this will be removed in future releases.
    */
   retryDelay?: number;
-  /**
-   * Backend Connector CRUD operations are throttled
-   * to occur at most every `crudUploadThrottleMs`
-   * milliseconds.
-   */
-  crudUploadThrottleMs?: number;
   logger?: ILogger;
 }
 
@@ -103,6 +99,7 @@ export interface WatchOnChangeHandler {
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
+  schemaChanged: (schema: Schema) => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -127,10 +124,12 @@ export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
-  retryDelay: 5000,
+  retryDelayMs: 5000,
   logger: Logger.get('PowerSyncDatabase'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
+
+export const DEFAULT_CRUD_BATCH_LIMIT = 100;
 
 /**
  * Requesting nested or recursive locks can block the application in some circumstances.
@@ -146,6 +145,11 @@ export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is PowerSyncDatabaseOptionsWithSettings => {
   return typeof test == 'object' && isSQLOpenOptions(test.database);
 };
+
+/**
+ * The priority used by the core extension to indicate that a full sync was completed.
+ */
+const FULL_SYNC_PRIORITY = 2147483647;
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**
@@ -233,13 +237,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.currentStatus?.connected || false;
   }
 
+  get connecting() {
+    return this.currentStatus?.connecting || false;
+  }
+
   /**
    * Opens the DBAdapter given open options using a default open factory
    */
   protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   protected abstract generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: RequiredAdditionalConnectionOptions
   ): StreamingSyncImplementation;
 
   protected abstract generateBucketStorageAdapter(): BucketStorageAdapter;
@@ -256,16 +265,30 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Wait for the first sync operation to complete.
+   *
+   * @argument request Either an abort signal (after which the promise will complete regardless of
+   * whether a full sync was completed) or an object providing an abort signal and a priority target.
+   * When a priority target is set, the promise may complete when all buckets with the given (or higher)
+   * priorities have been synchronized. This can be earlier than a complete sync.
    * @returns A promise which will resolve once the first full sync has completed.
    */
-  async waitForFirstSync(signal?: AbortSignal): Promise<void> {
-    if (this.currentStatus.hasSynced) {
+  async waitForFirstSync(request?: AbortSignal | { signal?: AbortSignal; priority?: number }): Promise<void> {
+    const signal = request instanceof AbortSignal ? request : request?.signal;
+    const priority = request && 'priority' in request ? request.priority : undefined;
+
+    const statusMatches =
+      priority === undefined
+        ? (status: SyncStatus) => status.hasSynced
+        : (status: SyncStatus) => status.statusForPriority(priority).hasSynced;
+
+    if (statusMatches(this.currentStatus)) {
       return;
     }
     return new Promise((resolve) => {
       const dispose = this.registerListener({
         statusChanged: (status) => {
-          if (status.hasSynced) {
+          if (statusMatches(status)) {
             dispose();
             resolve();
           }
@@ -314,25 +337,44 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         .map((n) => parseInt(n));
     } catch (e) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.2.0 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
-    // Validate >=0.2.0 <1.0.0
-    if (versionInts[0] != 0 || versionInts[1] < 2 || versionInts[2] < 0) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.2.0 <1.0.0, got: ${this.sdkVersion}`);
+    // Validate >=0.3.11 <1.0.0
+    if (versionInts[0] != 0 || versionInts[1] < 3 || (versionInts[1] == 3 && versionInts[2] < 11)) {
+      throw new Error(`Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}`);
     }
   }
 
   protected async updateHasSynced() {
-    const result = await this.database.get<{ synced_at: string | null }>(
-      'SELECT powersync_last_synced_at() as synced_at'
+    const result = await this.database.getAll<{ priority: number; last_synced_at: string }>(
+      'SELECT priority, last_synced_at FROM ps_sync_state ORDER BY priority DESC'
     );
-    const hasSynced = result.synced_at != null;
-    const syncedAt = result.synced_at != null ? new Date(result.synced_at! + 'Z') : undefined;
+    let lastCompleteSync: Date | undefined;
+    const priorityStatusEntries: SyncPriorityStatus[] = [];
 
-    if (hasSynced != this.currentStatus.hasSynced) {
-      this.currentStatus = new SyncStatus({ ...this.currentStatus.toJSON(), hasSynced, lastSyncedAt: syncedAt });
+    for (const { priority, last_synced_at } of result) {
+      const parsedDate = new Date(last_synced_at + 'Z');
+
+      if (priority == FULL_SYNC_PRIORITY) {
+        // This lowest-possible priority represents a complete sync.
+        lastCompleteSync = parsedDate;
+      } else {
+        priorityStatusEntries.push({ priority, hasSynced: true, lastSyncedAt: parsedDate });
+      }
+    }
+
+    const hasSynced = lastCompleteSync != null;
+    const updatedStatus = new SyncStatus({
+      ...this.currentStatus.toJSON(),
+      hasSynced,
+      priorityStatusEntries,
+      lastSyncedAt: lastCompleteSync
+    });
+
+    if (!updatedStatus.isEqual(this.currentStatus)) {
+      this.currentStatus = updatedStatus;
       this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
     }
   }
@@ -358,7 +400,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
+
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    await this.database.refreshSchema();
+    this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 
   /**
@@ -367,6 +412,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async init() {
     return this.waitForReady();
+  }
+
+  // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
+  resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
+    return {
+      retryDelayMs:
+        options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
+      crudUploadThrottleMs:
+        options?.crudUploadThrottleMs ?? this.options.crudUploadThrottleMs ?? DEFAULT_CRUD_UPLOAD_THROTTLE_MS
+    };
   }
 
   /**
@@ -381,7 +436,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector);
+    const { retryDelayMs, crudUploadThrottleMs } = this.resolvedConnectionOptions(options);
+
+    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
+      retryDelayMs,
+      crudUploadThrottleMs
+    });
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
         this.currentStatus = new SyncStatus({
@@ -445,13 +505,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   async close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS) {
     await this.waitForReady();
 
+    if (this.closed) {
+      return;
+    }
+
     const { disconnect } = options;
     if (disconnect) {
       await this.disconnect();
     }
 
     await this.syncStreamImplementation?.dispose();
-    this.database.close();
+    await this.database.close();
     this.closed = true;
   }
 
@@ -492,7 +556,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * data by transaction. One batch may contain data from multiple transactions,
    * and a single transaction may be split over multiple batches.
    */
-  async getCrudBatch(limit: number): Promise<CrudBatch | null> {
+  async getCrudBatch(limit: number = DEFAULT_CRUD_BATCH_LIMIT): Promise<CrudBatch | null> {
     const result = await this.getAll<CrudEntryJSON>(
       `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT ?`,
       [limit + 1]
@@ -575,12 +639,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       if (writeCheckpoint) {
         const check = await tx.execute(`SELECT 1 FROM ${PSInternalTable.CRUD} LIMIT 1`);
         if (!check.rows?.length) {
-          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+          await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
             writeCheckpoint
           ]);
         }
       } else {
-        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = ? WHERE name='$local'`, [
+        await tx.execute(`UPDATE ${PSInternalTable.BUCKETS} SET target_op = CAST(? as INTEGER) WHERE name='$local'`, [
           this.bucketStorageAdapter.getMaxOpId()
         ]);
       }
@@ -756,10 +820,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    (async () => {
+    const watchQuery = async (abortSignal: AbortSignal) => {
       try {
         const resolvedTables = await this.resolveTables(sql, parameters, options);
-
         // Fetch initial data
         const result = await this.executeReadOnly(sql, parameters);
         onResult(result);
@@ -778,13 +841,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           },
           {
             ...(options ?? {}),
-            tables: resolvedTables
+            tables: resolvedTables,
+            // Override the abort signal since we intercept it
+            signal: abortSignal
           }
         );
       } catch (error) {
         onError?.(error);
       }
-    })();
+    };
+
+    runOnSchemaChange(watchQuery, this, options);
   }
 
   /**
@@ -794,19 +861,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   watchWithAsyncGenerator(sql: string, parameters?: any[], options?: SQLWatchOptions): AsyncIterable<QueryResult> {
     return new EventIterator<QueryResult>((eventOptions) => {
-      (async () => {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-
-        // Fetch initial data
-        eventOptions.push(await this.executeReadOnly(sql, parameters));
-
-        for await (const event of this.onChangeWithAsyncGenerator({
-          ...(options ?? {}),
-          tables: resolvedTables
-        })) {
-          eventOptions.push(await this.executeReadOnly(sql, parameters));
+      const handler: WatchHandler = {
+        onResult: (result) => {
+          eventOptions.push(result);
+        },
+        onError: (error) => {
+          eventOptions.fail(error);
         }
-      })();
+      };
+
+      this.watchWithCallback(sql, parameters, handler, options);
+
+      options?.signal?.addEventListener('abort', () => {
+        eventOptions.stop();
+      });
     });
   }
 

@@ -94,6 +94,11 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
     this.updateSession(session);
   }
 
+  async logout() {
+    await this.client.auth.signOut();
+    this.updateSession(null);
+  }
+
   async fetchCredentials() {
     const {
       data: { session },
@@ -108,8 +113,7 @@ export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> i
 
     return {
       endpoint: this.config.powersyncUrl,
-      token: session.access_token ?? '',
-      expiresAt: session.expires_at ? new Date(session.expires_at * 1000) : undefined
+      token: session.access_token ?? ''
     } satisfies PowerSyncCredentials;
   }
 

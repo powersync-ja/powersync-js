@@ -36,3 +36,5 @@ npm-debug.*
 .vscode
 .fleet
 .idea
+
+ios/

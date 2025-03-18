@@ -1,5 +1,17 @@
 # @powersync/attachments
 
+## 2.2.1
+
+### Patch Changes
+
+- 48f8632: Fix README link for StorageAdapter source file (https://github.com/powersync-ja/powersync-js/blob/main/packages/attachments/src/StorageAdapter.ts)
+
+## 2.2.0
+
+### Minor Changes
+
+- 0094e52: Added option to download attachments
+
 ## 2.1.2
 
 ### Patch Changes

@@ -1,16 +1,8 @@
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  SQLOpenOptions,
-  Transaction
-} from '@powersync/common';
-import { ANDROID_DATABASE_PATH, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
 import Lock from 'async-lock';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
-import { NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { SqliteOptions } from './SqliteOptions';
 
 /**
@@ -35,9 +27,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected initialized: Promise<void>;
 
-  protected readConnections: OPSQLiteConnection[] | null;
+  protected readConnections: Array<{ busy: boolean; connection: OPSQLiteConnection }> | null;
 
   protected writeConnection: OPSQLiteConnection | null;
+
+  private readQueue: Array<() => void> = [];
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
@@ -50,19 +44,28 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected async init() {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, encryptionKey } = this.options.sqliteOptions;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, cacheSizeKb, temporaryStorage } =
+      this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
     this.writeConnection = await this.openConnection(dbFilename);
 
-    const statements: string[] = [
+    const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
+      `PRAGMA cache_size = -${cacheSizeKb}`,
+      `PRAGMA temp_store = ${temporaryStorage}`
+    ];
+
+    const writeConnectionStatements = [
+      ...baseStatements,
       `PRAGMA journal_mode = ${journalMode}`,
       `PRAGMA journal_size_limit = ${journalSizeLimit}`,
       `PRAGMA synchronous = ${synchronous}`
     ];
 
-    for (const statement of statements) {
+    const readConnectionStatements = [...baseStatements, 'PRAGMA query_only = true'];
+
+    for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
           await this.writeConnection!.execute(statement);
@@ -84,20 +87,21 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      // Workaround to create read-only connections
-      let dbName = './'.repeat(i + 1) + dbFilename;
-      const conn = await this.openConnection(dbName);
-      await conn.execute('PRAGMA query_only = true');
-      this.readConnections.push(conn);
+      const conn = await this.openConnection(dbFilename);
+      for (let statement of readConnectionStatements) {
+        await conn.execute(statement);
+      }
+      this.readConnections.push({ busy: false, connection: conn });
     }
   }
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
-    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions.encryptionKey);
+    const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
-    //Load extension for all connections
-    this.loadExtension(DB);
+    //Load extensions for all connections
+    this.loadAdditionalExtensions(DB);
+    this.loadPowerSyncExtension(DB);
 
     await DB.execute('SELECT powersync_init()');
 
@@ -132,10 +136,17 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  private loadExtension(DB: DB) {
+  private loadAdditionalExtensions(DB: DB) {
+    if (this.options.sqliteOptions?.extensions && this.options.sqliteOptions.extensions.length > 0) {
+      for (const extension of this.options.sqliteOptions.extensions) {
+        DB.loadExtension(extension.path, extension.entryPoint);
+      }
+    }
+  }
+
+  private async loadPowerSyncExtension(DB: DB) {
     if (Platform.OS === 'ios') {
-      const bundlePath: string = NativeModules.PowerSyncOpSqlite.getBundlePath();
-      const libPath = `${bundlePath}/Frameworks/powersync-sqlite-core.framework/powersync-sqlite-core`;
+      const libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
       DB.loadExtension(libPath, 'sqlite3_powersync_init');
     } else {
       DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
@@ -145,36 +156,46 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   close() {
     this.initialized.then(() => {
       this.writeConnection!.close();
-      this.readConnections!.forEach((c) => c.close());
+      this.readConnections!.forEach((c) => c.connection.close());
     });
   }
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-    // TODO: Use async queues to handle multiple read connections
-    const sortedConnections = this.readConnections!.map((connection, index) => ({
-      lockKey: `${LockType.READ}-${index}`,
-      connection
-    })).sort((a, b) => {
-      const aBusy = this.locks.isBusy(a.lockKey);
-      const bBusy = this.locks.isBusy(b.lockKey);
-      // Sort by ones which are not busy
-      return aBusy > bBusy ? 1 : 0;
-    });
-
     return new Promise(async (resolve, reject) => {
-      try {
-        await this.locks.acquire(
-          sortedConnections[0].lockKey,
-          async () => {
-            resolve(await fn(sortedConnections[0].connection));
-          },
-          { timeout: options?.timeoutMs }
-        );
-      } catch (ex) {
-        reject(ex);
-      }
+      const execute = async () => {
+        // Find an available connection that is not busy
+        const availableConnection = this.readConnections!.find((conn) => !conn.busy);
+
+        // If we have an available connection, use it
+        if (availableConnection) {
+          availableConnection.busy = true;
+          try {
+            resolve(await fn(availableConnection.connection));
+          } catch (error) {
+            reject(error);
+          } finally {
+            availableConnection.busy = false;
+            // After query execution, process any queued tasks
+            this.processQueue();
+          }
+        } else {
+          // If no available connections, add to the queue
+          this.readQueue.push(execute);
+        }
+      };
+
+      execute();
     });
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.readQueue.length > 0) {
+      const next = this.readQueue.shift();
+      if (next) {
+        next();
+      }
+    }
   }
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -182,13 +203,18 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     return new Promise(async (resolve, reject) => {
       try {
-        await this.locks.acquire(
-          LockType.WRITE,
-          async () => {
-            resolve(await fn(this.writeConnection!));
-          },
-          { timeout: options?.timeoutMs }
-        );
+        await this.locks
+          .acquire(
+            LockType.WRITE,
+            async () => {
+              resolve(await fn(this.writeConnection!));
+            },
+            { timeout: options?.timeoutMs }
+          )
+          .then(() => {
+            // flush updates once a write lock has been released
+            this.writeConnection!.flushUpdates();
+          });
       } catch (ex) {
         reject(ex);
       }
@@ -255,8 +281,24 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await commit();
       return result;
     } catch (ex) {
-      await rollback();
+      try {
+        await rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
       throw ex;
+    }
+  }
+
+  async refreshSchema(): Promise<void> {
+    await this.initialized;
+    await this.writeConnection!.refreshSchema();
+
+    if (this.readConnections) {
+      for (let readConnection of this.readConnections) {
+        await readConnection.connection.refreshSchema();
+      }
     }
   }
 }

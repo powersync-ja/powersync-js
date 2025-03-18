@@ -20,7 +20,7 @@ export type QueryResult<T> = {
   /**
    * Function used to run the query again.
    */
-  refresh?: () => Promise<void>;
+  refresh?: (signal?: AbortSignal) => Promise<void>;
 };
 
 /**
@@ -78,28 +78,33 @@ export const useQuery = <T = any>(
   );
 
   const handleResult = (result: T[]) => {
+    previousQueryRef.current = { sqlStatement, memoizedParams };
     setData(result);
     setIsLoading(false);
     setIsFetching(false);
     setError(undefined);
-    previousQueryRef.current = { sqlStatement, memoizedParams };
   };
 
   const handleError = (e: Error) => {
+    previousQueryRef.current = { sqlStatement, memoizedParams };
     setData([]);
     setIsLoading(false);
     setIsFetching(false);
     const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
     wrappedError.cause = e;
     setError(wrappedError);
-    previousQueryRef.current = { sqlStatement, memoizedParams };
   };
 
-  const fetchData = async () => {
+  const fetchData = async (signal?: AbortSignal) => {
     setIsFetching(true);
     try {
       const result =
         typeof query == 'string' ? await powerSync.getAll<T>(sqlStatement, queryParameters) : await query.execute();
+
+      if (signal?.aborted) {
+        return;
+      }
+
       handleResult(result);
     } catch (e) {
       console.error('Failed to fetch data:', e);
@@ -107,9 +112,14 @@ export const useQuery = <T = any>(
     }
   };
 
-  const fetchTables = async () => {
+  const fetchTables = async (signal?: AbortSignal) => {
     try {
       const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
+
+      if (signal?.aborted) {
+        return;
+      }
+
       setTables(tables);
     } catch (e) {
       console.error('Failed to fetch tables:', e);
@@ -118,10 +128,22 @@ export const useQuery = <T = any>(
   };
 
   React.useEffect(() => {
-    (async () => {
-      await fetchTables();
-      await fetchData();
-    })();
+    const abortController = new AbortController();
+    const updateData = async () => {
+      await fetchTables(abortController.signal);
+      await fetchData(abortController.signal);
+    };
+
+    updateData();
+
+    const l = powerSync.registerListener({
+      schemaChanged: updateData
+    });
+
+    return () => {
+      abortController.abort();
+      l?.();
+    };
   }, [powerSync, memoizedParams, sqlStatement]);
 
   React.useEffect(() => {
@@ -133,7 +155,7 @@ export const useQuery = <T = any>(
       powerSync.onChangeWithCallback(
         {
           onChange: async () => {
-            await fetchData();
+            await fetchData(abortController.current.signal);
           },
           onError(e) {
             handleError(e);

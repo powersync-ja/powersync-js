@@ -4,16 +4,11 @@ import {
   LockOptions,
   LockType
 } from '@powersync/common';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   flags?: WebSQLFlags;
-
-  database?: {
-    options: {
-      worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
-    };
-  };
   sync?: {
     worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
   };
@@ -32,6 +27,6 @@ export class WebStreamingSyncImplementation extends AbstractStreamingSyncImpleme
   obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
     const identifier = `streaming-sync-${lockOptions.type}-${this.webOptions.identifier}`;
     lockOptions.type == LockType.SYNC && console.debug('requesting lock for ', identifier);
-    return navigator.locks.request(identifier, { signal: lockOptions.signal }, lockOptions.callback);
+    return getNavigatorLocks().request(identifier, { signal: lockOptions.signal }, lockOptions.callback);
   }
 }

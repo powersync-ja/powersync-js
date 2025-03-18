@@ -1,5 +1,112 @@
 # @powersync/react-native
 
+## 1.18.1
+
+### Patch Changes
+
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.12
+- Updated dependencies [76dfb06]
+- Updated dependencies [3c595af]
+- Updated dependencies [fe98172]
+- Updated dependencies [85f0228]
+  - @powersync/common@1.25.0
+  - @powersync/react@1.5.1
+
+## 1.18.0
+
+### Minor Changes
+
+- 893d42b: Introduced `fetchStrategy` option to connect, allowing you to choose either `buffered` or `sequential` for the Websocket connect option. Internally the functionality of `buffered` was used by default, but now it can be switched to the sequential mode. This changes the WebSocket sync queue to only process one sync event at a time, improving known keep-alive issues for lower-end hardware with minimal impact on sync performance.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
+## 1.17.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
+### Patch Changes
+
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
+## 1.16.3
+
+### Patch Changes
+
+- b38bcdb: Fixed an issue where the read and write locks were executing mutually exclusively. A read conccurent with a write or another read should correctly proceed instead of being blocked until the other lock has released.
+- 2c86114: Update powersync-sqlite-core to 0.3.8 - Increase limit on number of columns per table to 1999.
+- Updated dependencies [2c86114]
+  - @powersync/common@1.22.2
+
+## 1.16.2
+
+### Patch Changes
+
+- Updated dependencies [7a47778]
+- Updated dependencies [4a262cd]
+  - @powersync/common@1.22.1
+
+## 1.16.1
+
+### Patch Changes
+
+- Updated dependencies [77a9ed2]
+  - @powersync/common@1.22.0
+
+## 1.16.0
+
+### Minor Changes
+
+- d1d740d: Update RNQS to v 2.2.0 for Expo 52 and RN 0.76 support
+
+## 1.15.1
+
+### Patch Changes
+
+- fa26eb4: Update powersync-sqlite-core to 0.3.6 to fix issue with dangling rows
+
+## 1.15.0
+
+### Minor Changes
+
+- 7b49661: Added `refreshSchema()` which will cause all connections to be aware of a schema change.
+
+### Patch Changes
+
+- Updated dependencies [7b49661]
+- Updated dependencies [7b49661]
+  - @powersync/common@1.21.0
+  - @powersync/react@1.5.1
+
+## 1.14.4
+
+### Patch Changes
+
+- 96f1a87: Improved `getCrudBatch` to use a default limit of 100 CRUD entries.
+- Updated dependencies [96f1a87]
+  - @powersync/common@1.20.2
+
+## 1.14.3
+
+### Patch Changes
+
+- Updated dependencies [79d4211]
+  - @powersync/common@1.20.1
+
+## 1.14.2
+
+### Patch Changes
+
+- Updated dependencies [c8658ca]
+- Updated dependencies [2b0466f]
+  - @powersync/react@1.5.0
+
 ## 1.14.1
 
 ### Patch Changes

@@ -1,9 +1,15 @@
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import path from 'path';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
+  },
   // This is only needed for local tests to resolve the package name correctly
   resolve: {
     alias: {
@@ -29,14 +35,34 @@ const config: UserConfigExport = {
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
-    isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
+    maxConcurrency: 1,
+    // This doesn't currently seem to work in browser mode, but setting this for one day when it does
+    sequence: {
+      shuffle: false, // Disable shuffling of test files
+      concurrent: false // Run test files sequentially
+    },
     browser: {
       enabled: true,
-      provider: 'webdriverio',
+      /**
+       * Starts each test in a new iFrame
+       */
+      isolate: true,
+      provider: 'playwright',
       headless: true,
-      name: 'chrome' // browser name is required
+      instances: [
+        {
+          browser: 'chromium'
+        }
+        // {
+        //   browser: 'firefox'
+        // }
+        // This requires some additional work to get all tests passing
+        // {
+        //   browser: 'webkit'
+        // }
+      ]
     }
   }
 };

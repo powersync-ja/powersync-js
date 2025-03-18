@@ -68,6 +68,38 @@ const factory = new OPSqliteOpenFactory({
 });
 ```
 
+### Loading SQLite extensions
+
+To load additional SQLite extensions include the `extensions` option in `sqliteOptions` which expects an array of objects with a `path` and an `entryPoint`:
+
+```js
+sqliteOptions: {
+  extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }];
+}
+```
+
+More info can be found in the [OP-SQLite docs](https://op-engineering.github.io/op-sqlite/docs/api/#loading-extensions).
+
+Example usage:
+
+```ts
+import { getDylibPath } from '@op-engineering/op-sqlite';
+
+let libPath: string;
+if (Platform.OS === 'ios') {
+  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
+} else {
+  libPath = 'libpowersync';
+}
+
+const factory = new OPSqliteOpenFactory({
+  dbFilename: 'sqlite.db',
+  sqliteOptions: {
+    extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }]
+  }
+});
+```
+
 ## Native Projects
 
 This package uses native libraries. Create native Android and iOS projects (if not created already) by running:

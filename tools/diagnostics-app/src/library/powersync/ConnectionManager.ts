@@ -4,7 +4,10 @@ import {
   PowerSyncDatabase,
   WebRemote,
   WebStreamingSyncImplementation,
-  WebStreamingSyncImplementationOptions
+  WebStreamingSyncImplementationOptions,
+  WASQLiteOpenFactory,
+  TemporaryStorageOption,
+  WASQLiteVFS
 } from '@powersync/web';
 import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
@@ -21,18 +24,22 @@ export const getParams = () => {
   const stringifiedParams = localStorage.getItem(PARAMS_STORE);
   const params = safeParse(stringifiedParams);
   return params;
-}
+};
 
 export const schemaManager = new DynamicSchemaManager();
 
+const openFactory = new WASQLiteOpenFactory({
+  dbFilename: 'diagnostics.db',
+  debugMode: true,
+  cacheSizeKb: 500 * 1024,
+  temporaryStorage: TemporaryStorageOption.MEMORY,
+  vfs: WASQLiteVFS.OPFSCoopSyncVFS
+});
+
 export const db = new PowerSyncDatabase({
-  database: {
-    dbFilename: 'example.db',
-    debugMode: true
-  },
+  database: openFactory,
   schema: schemaManager.buildSchema()
 });
-db.execute('PRAGMA cache_size=-500000');
 
 export const connector = new TokenConnector();
 
@@ -88,7 +95,7 @@ export async function connect() {
   if (!sync.syncStatus.connected) {
     // Disconnect but don't wait for it
     sync.disconnect();
-    throw syncErrorTracker.lastSyncError ?? new Error('Failed to conncet');
+    throw syncErrorTracker.lastSyncError ?? new Error('Failed to connect');
   } else {
     syncErrorTracker.lastSyncError = null;
   }
@@ -112,6 +119,7 @@ export async function disconnect() {
 export async function signOut() {
   connector.clearCredentials();
   await db.disconnectAndClear();
+  await schemaManager.clear();
 }
 
 export const setParams = (p: object) => {

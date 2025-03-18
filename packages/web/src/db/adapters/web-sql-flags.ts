@@ -1,4 +1,5 @@
 import { SQLOpenOptions } from '@powersync/common';
+import { ILogger } from 'js-logger';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -40,7 +41,27 @@ export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
 
 export interface ResolvedWebSQLOpenOptions extends SQLOpenOptions {
   flags: ResolvedWebSQLFlags;
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   */
+  temporaryStorage: TemporaryStorageOption;
+
+  cacheSizeKb: number;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
+
+export enum TemporaryStorageOption {
+  MEMORY = 'memory',
+  FILESYSTEM = 'file'
+}
+
+export const DEFAULT_CACHE_SIZE_KB = 50 * 1024;
 
 /**
  * Options for opening a Web SQL connection
@@ -55,6 +76,29 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    * or a factory method that returns a worker.
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
+
+  logger?: ILogger;
+
+  /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   *
+   * For details, see: https://www.sqlite.org/pragma.html#pragma_temp_store
+   */
+  temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Maximum SQLite cache size. Defaults to 50MB.
+   *
+   * For details, see: https://www.sqlite.org/pragma.html#pragma_cache_size
+   */
+  cacheSizeKb?: number;
+
+  /**
+   * Encryption key for the database.
+   * If set, the database will be encrypted using ChaCha20.
+   */
+  encryptionKey?: string;
 }
 
 export function isServerSide() {
