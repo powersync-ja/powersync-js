@@ -30,7 +30,7 @@ test('can customize loading workers', async () => {
     database: {
       dbFilename: 'test.db',
       dbLocation: directory,
-      openWorker: openFunction as any,
+      openWorker: openFunction,
       readWorkerCount: 2
     }
   });
