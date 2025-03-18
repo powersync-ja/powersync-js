@@ -6,8 +6,7 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "start": "react-native start",
-    "test": "jest"
+    "start": "react-native start"
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
@@ -31,10 +30,8 @@
     "@react-native/eslint-config": "0.77.0",
     "@react-native/metro-config": "0.77.0",
     "@react-native/typescript-config": "0.77.0",
-    "@types/jest": "^29.5.14",
     "@types/react": "^18.3.18",
-    "@types/react-test-renderer": "^18.3.1",
-    "typescript": "^5.0.4"
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18"

@@ -31,11 +31,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - powersync-op-sqlite (0.4.0):
+  - powersync-op-sqlite (0.4.1):
     - DoubleConversion
     - glog
     - hermes-engine
-    - powersync-sqlite-core (~> 0.3.11)
+    - powersync-sqlite-core (~> 0.3.12)
     - RCT-Folly (= 2024.11.18.00)
     - RCTRequired
     - RCTTypeSafety
@@ -1775,7 +1775,7 @@ SPEC CHECKSUMS:
   glog: eb93e2f488219332457c3c4eafd2738ddc7e80b8
   hermes-engine: 1f783c3d53940aed0d2c84586f0b7a85ab7827ef
   op-sqlite: bd34d3b5e46b2d2ab132f9188dad981024f7e1db
-  powersync-op-sqlite: 9268e1d1660f83e96ff9f2cfe101f030eb3ca60c
+  powersync-op-sqlite: f540332fcc3d11fd04774e5a4245a8f4e0f5c9ed
   powersync-sqlite-core: fcc32da5528fca9d50b185fcd777705c034e255b
   RCT-Folly: 36fe2295e44b10d831836cc0d1daec5f8abcf809
   RCTDeprecation: f5c19ebdb8804b53ed029123eb69914356192fc8
