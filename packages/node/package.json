@@ -30,7 +30,8 @@
       "import": "./lib/worker.js",
       "require": "./dist/worker.cjs",
       "types": "./lib/worker.d.ts"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "repository": {
     "type": "git",

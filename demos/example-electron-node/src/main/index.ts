@@ -8,13 +8,18 @@ import { default as Logger } from 'js-logger';
 const logger = Logger.get('PowerSyncDemo');
 Logger.useDefaults({ defaultLevel: logger.WARN });
 
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
+
 const database = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'test.db',
     openWorker(_, options) {
       return new Worker(new URL('./worker.ts', import.meta.url), options);
-    },
+    }
   },
   logger
 });
@@ -24,11 +29,6 @@ const database = new PowerSyncDatabase({
 // whether you're running in development or production).
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
-}
 
 const createWindow = (): void => {
   // Create the browser window.
@@ -53,6 +53,9 @@ const createWindow = (): void => {
 app.whenReady().then(() => {
   ipcMain.handle('get', async (_, sql: string, args: any[]) => {
     return await database.get(sql, args);
+  });
+  ipcMain.handle('getAll', async (_, sql: string, args: any[]) => {
+    return await database.getAll(sql, args);
   });
   createWindow();
 });

@@ -24,6 +24,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.7.0",
     "@electron-forge/plugin-webpack": "^7.7.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
+    "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.11.0",
     "electron": "30.0.2",
     "electron-rebuild": "^3.2.9",

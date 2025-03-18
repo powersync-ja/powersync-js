@@ -1,3 +1,5 @@
+import OS from 'node:os';
+import path from 'node:path';
 import { createRequire } from 'node:module';
 
 import type { ForgeConfig } from '@electron-forge/shared-types';
@@ -9,10 +11,12 @@ import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-nati
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
 import type { Configuration, ModuleOptions } from 'webpack';
 import type IForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import type ICopyPlugin from 'copy-webpack-plugin';
 
 const require = createRequire(import.meta.url);
 
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const CopyPlugin: typeof ICopyPlugin = require('copy-webpack-plugin');
 
 const webpackPlugins = [
   new ForkTsCheckerWebpackPlugin({
@@ -52,6 +56,18 @@ const defaultWebpackRules: () => Required<ModuleOptions>['rules'] = () => {
   ];
 };
 
+const platform = OS.platform();
+let extensionPath: string;
+if (platform === 'win32') {
+  extensionPath = 'powersync.dll';
+} else if (platform === 'linux') {
+  extensionPath = 'libpowersync.so';
+} else if (platform === 'darwin') {
+  extensionPath = 'libpowersync.dylib';
+} else {
+  throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
+}
+
 const mainConfig: Configuration = {
   /**
    * This is the main entry point for your application, it's the first file
@@ -62,7 +78,15 @@ const mainConfig: Configuration = {
   module: {
     rules: defaultWebpackRules(),
   },
-  plugins: webpackPlugins,
+  plugins: [
+    ...webpackPlugins,
+    new CopyPlugin({
+      patterns: [{
+        from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
+        to: extensionPath,
+      }],
+    }),
+  ],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   }
