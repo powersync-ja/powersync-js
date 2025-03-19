@@ -1,5 +1,54 @@
 # @powersync/web
 
+## 1.15.1
+
+### Patch Changes
+
+- 0c8ddda: Update package description
+
+## 1.15.0
+
+### Minor Changes
+
+- 26025f0: Ensured OPFS tabs are not frozen or put to sleep by browsers. This prevents potential deadlocks in the syncing process.
+
+## 1.14.2
+
+### Patch Changes
+
+- fe98172: Fixed race condition in async closing of databases
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.12
+- Updated dependencies [76dfb06]
+- Updated dependencies [3c595af]
+- Updated dependencies [fe98172]
+- Updated dependencies [85f0228]
+  - @powersync/common@1.25.0
+
+## 1.14.1
+
+### Patch Changes
+
+- 44582ef: Fixed bug where using OPFS and reconnecting would cause upload triggers to fail.
+
+## 1.14.0
+
+### Minor Changes
+
+- 56185bb: Add cacheSizeKb option, defaulting to 50MB.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
+## 1.13.1
+
+### Patch Changes
+
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
 ## 1.13.0
 
 ### Minor Changes

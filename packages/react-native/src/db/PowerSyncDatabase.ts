@@ -5,6 +5,7 @@ import {
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseOptionsWithSettings,
+  type RequiredAdditionalConnectionOptions,
   SqliteBucketStorage
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
@@ -42,7 +43,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: RequiredAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
     const remote = new ReactNativeRemote(connector);
 
@@ -53,8 +55,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs: this.options.retryDelay,
-      crudUploadThrottleMs: this.options.crudUploadThrottleMs,
+      retryDelayMs: options.retryDelayMs,
+      crudUploadThrottleMs: options.crudUploadThrottleMs,
       identifier: this.database.name
     });
   }

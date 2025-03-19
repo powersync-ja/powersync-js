@@ -33,7 +33,7 @@ export class TestConnector implements PowerSyncBackendConnector {
 }
 
 export class MockRemote extends AbstractRemote {
-  streamController: ReadableStreamDefaultController | null;
+  streamController: ReadableStreamDefaultController<StreamingSyncLine> | null;
 
   constructor(
     connector: RemoteConnector,
@@ -118,6 +118,10 @@ export class MockRemote extends AbstractRemote {
     });
 
     return stream;
+  }
+
+  enqueueLine(line: StreamingSyncLine) {
+    this.streamController?.enqueue(line);
   }
 }
 

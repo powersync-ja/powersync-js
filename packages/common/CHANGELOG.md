@@ -1,5 +1,30 @@
 # @powersync/common
 
+## 1.25.0
+
+### Minor Changes
+
+- 3c595af: Support bucket priorities
+
+### Patch Changes
+
+- 76dfb06: Changed priorityStatusEntries() to no longer depend on toSorted(), which isn't natively available in React-Native.
+- fe98172: Fixed race condition in async closing of databases
+- 85f0228: Raise minimum version of core extension to 0.3.11
+
+## 1.24.0
+
+### Minor Changes
+
+- 893d42b: Introduced `fetchStrategy` option to connect, allowing you to choose either `buffered` or `sequential` for the Websocket connect option. Internally the functionality of `buffered` was used by default, but now it can be switched to the sequential mode. This changes the WebSocket sync queue to only process one sync event at a time, improving known keep-alive issues for lower-end hardware with minimal impact on sync performance.
+- 0606ac2: add 'connecting' flag to SyncStatus
+
+## 1.23.0
+
+### Minor Changes
+
+- 0f28fb3: Add `retryDelayMs` and `crudUploadThrottleMs` to `connect` so that the values can be dynamically changed upon reconnecting.
+
 ## 1.22.2
 
 ### Patch Changes

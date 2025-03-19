@@ -14,9 +14,14 @@ export interface AttachmentQueueOptions {
    */
   cacheLimit?: number;
   /**
-   * The name of the directory where attachments are stored on the device, not the full path
+   * The name of the directory where attachments are stored on the device, not the full path. Defaults to `attachments`.
    */
   attachmentDirectoryName?: string;
+
+  /**
+   * The name of the table where attachments are stored, defaults to `attachments` table.
+   */
+  attachmentTableName?: string;
   /**
    * Whether to mark the initial watched attachment IDs to be synced
    */
@@ -36,7 +41,8 @@ export interface AttachmentQueueOptions {
 }
 
 export const DEFAULT_ATTACHMENT_QUEUE_OPTIONS: Partial<AttachmentQueueOptions> = {
-  attachmentDirectoryName: 'attachments',
+  attachmentDirectoryName: ATTACHMENT_TABLE,
+  attachmentTableName: ATTACHMENT_TABLE,
   syncInterval: 30_000,
   cacheLimit: 100,
   performInitialSync: true,
@@ -90,7 +96,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   get table() {
-    return ATTACHMENT_TABLE;
+    return this.options.attachmentTableName!;
   }
 
   async init() {

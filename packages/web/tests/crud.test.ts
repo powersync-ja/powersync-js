@@ -1,25 +1,15 @@
-import { AbstractPowerSyncDatabase, Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
-import { PowerSyncDatabase } from '@powersync/web';
+import { Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@powersync/common';
 import pDefer from 'p-defer';
 import { v4 as uuid } from 'uuid';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateTestDb } from './utils/testDb';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
-describe('CRUD Tests', () => {
-  let powersync: AbstractPowerSyncDatabase;
-
-  beforeEach(async () => {
-    powersync = generateTestDb();
-  });
-
-  afterEach(async () => {
-    await powersync.disconnectAndClear();
-    await powersync.close();
-  });
-
+describe('CRUD Tests', { sequential: true }, () => {
   it('INSERT', async () => {
+    const powersync = generateTestDb();
+
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
 
     await powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test']);
@@ -37,6 +27,8 @@ describe('CRUD Tests', () => {
   });
 
   it('BATCH INSERT', async () => {
+    const powersync = generateTestDb();
+
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
 
     const query = `INSERT INTO assets(id, description) VALUES(?, ?)`;
@@ -63,6 +55,8 @@ describe('CRUD Tests', () => {
   });
 
   it('INSERT OR REPLACE', async () => {
+    const powersync = generateTestDb();
+
     await powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test']);
     await powersync.execute('DELETE FROM ps_crud WHERE 1');
 
@@ -79,12 +73,14 @@ describe('CRUD Tests', () => {
     expect(await powersync.get('SELECT count(*) AS count FROM assets')).deep.equals({ count: 1 });
 
     // Make sure uniqueness is enforced
-    expect(powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])).rejects.toThrow(
-      /UNIQUE constraint failed/
-    );
+    await expect(
+      powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test3'])
+    ).rejects.toThrow(/UNIQUE constraint failed/);
   });
 
   it('UPDATE', async () => {
+    const powersync = generateTestDb();
+
     await powersync.execute('INSERT INTO assets(id, description, make) VALUES(?, ?, ?)', [testId, 'test', 'test']);
     await powersync.execute('DELETE FROM ps_crud WHERE 1');
 
@@ -105,6 +101,8 @@ describe('CRUD Tests', () => {
   });
 
   it('BATCH UPDATE', async () => {
+    const powersync = generateTestDb();
+
     await powersync.executeBatch('INSERT INTO assets(id, description, make) VALUES(?, ?, ?)', [
       [testId, 'test', 'test'],
       ['mockId', 'test', 'test']
@@ -137,6 +135,8 @@ describe('CRUD Tests', () => {
   });
 
   it('DELETE', async () => {
+    const powersync = generateTestDb();
+
     await powersync.execute('INSERT INTO assets(id, description, make) VALUES(?, ?, ?)', [testId, 'test', 'test']);
     await powersync.execute('DELETE FROM ps_crud WHERE 1');
 
@@ -153,8 +153,10 @@ describe('CRUD Tests', () => {
   });
 
   it('UPSERT not supported', async () => {
+    const powersync = generateTestDb();
+
     // Just shows that we cannot currently do this
-    expect(
+    await expect(
       powersync.execute('INSERT INTO assets(id, description) VALUES(?, ?) ON CONFLICT DO UPDATE SET description = ?', [
         testId,
         'test2',
@@ -164,9 +166,7 @@ describe('CRUD Tests', () => {
   });
 
   it('INSERT-only tables', async () => {
-    await powersync.disconnectAndClear();
-
-    powersync = new PowerSyncDatabase({
+    const powersync = generateTestDb({
       /**
        * Deleting the IndexDB seems to freeze the test.
        * Use a new DB for each run to keep CRUD counters
@@ -212,6 +212,8 @@ describe('CRUD Tests', () => {
   });
 
   it('big numbers - integer', async () => {
+    const powersync = generateTestDb();
+
     const bigNumber = 1 << 62;
     await powersync.execute('INSERT INTO assets(id, quantity) VALUES(?, ?)', [testId, bigNumber]);
 
@@ -233,6 +235,8 @@ describe('CRUD Tests', () => {
   });
 
   it('big numbers - text', async () => {
+    const powersync = generateTestDb();
+
     const bigNumber = 1 << 62;
     await powersync.execute('INSERT INTO assets(id, quantity) VALUES(?, ?)', [testId, `${bigNumber}`]);
 
@@ -263,6 +267,8 @@ describe('CRUD Tests', () => {
   });
 
   it('Transaction grouping', async () => {
+    const powersync = generateTestDb();
+
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;
     await powersync.writeTransaction(async (tx) => {
       await tx.execute('INSERT INTO assets(id, description) VALUES(?, ?)', [testId, 'test1']);
@@ -292,6 +298,8 @@ describe('CRUD Tests', () => {
   });
 
   it('Transaction exclusivity', async () => {
+    const powersync = generateTestDb();
+
     const outside = pDefer();
     const inTx = pDefer();
 
@@ -313,6 +321,8 @@ describe('CRUD Tests', () => {
   });
 
   it('CRUD Batch Limits', async () => {
+    const powersync = generateTestDb();
+
     const initialBatch = await powersync.getCrudBatch();
     expect(initialBatch, 'Initial CRUD batch should be null').null;
 

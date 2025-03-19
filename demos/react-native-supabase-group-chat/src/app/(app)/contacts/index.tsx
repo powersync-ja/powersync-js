@@ -41,21 +41,6 @@ export default function ContactsIndex() {
       ownerId,
       profileId
     ]);
-
-    /* await powerSync.writeTransaction(async (tx) => {
-      try {
-        tx.executeAsync(
-          "INSERT INTO profiles (id, name, handle, demo) VALUES (?, ?, ?, ?)",
-          [profileId, name, handle, true],
-        );
-        tx.executeAsync(
-          "INSERT INTO contacts (id, owner_id, profile_id) VALUES (?, ?, ?)",
-          [contactId, ownerId, profileId],
-        );
-      } catch (error) {
-        console.error("Error", error);
-      }
-    }); */
   }
 
   async function handleAddContact(profileId: string, name: string, handle: string) {

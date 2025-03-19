@@ -74,9 +74,7 @@ To load additional SQLite extensions include the `extensions` option in `sqliteO
 
 ```js
 sqliteOptions: {
-  extensions: [
-      { path: libPath, entryPoint: 'sqlite3_powersync_init' }
-  ]
+  extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }];
 }
 ```
 
@@ -87,9 +85,9 @@ Example usage:
 ```ts
 import { getDylibPath } from '@op-engineering/op-sqlite';
 
-let libPath: string
+let libPath: string;
 if (Platform.OS === 'ios') {
-  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core')
+  libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
 } else {
   libPath = 'libpowersync';
 }
@@ -97,9 +95,7 @@ if (Platform.OS === 'ios') {
 const factory = new OPSqliteOpenFactory({
   dbFilename: 'sqlite.db',
   sqliteOptions: {
-    extensions: [
-        { path: libPath, entryPoint: 'sqlite3_powersync_init' }
-    ]
+    extensions: [{ path: libPath, entryPoint: 'sqlite3_powersync_init' }]
   }
 });
 ```

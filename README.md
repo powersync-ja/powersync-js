@@ -2,7 +2,7 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-*[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side.*
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
 
 # PowerSync JavaScript SDKs
 
@@ -17,6 +17,10 @@
 - [packages/web](./packages/web/README.md)
 
   - JS Web SDK implementation (extension of `packages/common`)
+
+- [packages/node](./packages/node/README.md)
+
+  - Node.js client implementation (extension of `packages/common`)
 
 - [packages/react](./packages/react/README.md)
 
@@ -80,6 +84,10 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/example-capacitor](./demos/example-capacitor/README.md) A Capacitor example app using the PowerSync Web SDK.
 
+### Node
+
+- [demos/example-node](./demos/example-node/README.md) A small CLI example built using the PowerSync SDK for Node.js.
+
 ## Tools
 
 - [tools/diagnostics-app](./tools/diagnostics-app): A standalone web app that presents stats about a user's local database (incl. tables and sync buckets).
@@ -98,6 +106,15 @@ Build packages
 
 ```bash
 pnpm build:packages
+```
+
+## Tests
+
+Some packages use [Playwright](https://www.npmjs.com/package/playwright) for testing. Install Playwright dependencies with:
+
+```bash
+pnpm exec playwright install-deps
+pnpm exec playwright install
 ```
 
 ## Versioning

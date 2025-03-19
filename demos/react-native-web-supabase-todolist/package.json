@@ -13,7 +13,7 @@
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@expo/metro-runtime": "^3.2.1",
     "@expo/vector-icons": "^14.0.0",
-    "@journeyapps/react-native-quick-sqlite": "^2.3.0",
+    "@journeyapps/react-native-quick-sqlite": "^2.4.2",
     "@powersync/attachments": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",

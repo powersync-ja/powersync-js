@@ -4,7 +4,12 @@ import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
 import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { ResolvedWebSQLOpenOptions, TemporaryStorageOption, WebSQLOpenFactoryOptions } from '../web-sql-flags';
+import {
+  DEFAULT_CACHE_SIZE_KB,
+  ResolvedWebSQLOpenOptions,
+  TemporaryStorageOption,
+  WebSQLOpenFactoryOptions
+} from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
 
@@ -44,6 +49,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
     const {
       vfs = WASQLiteVFS.IDBBatchAtomicVFS,
       temporaryStorage = TemporaryStorageOption.MEMORY,
+      cacheSizeKb = DEFAULT_CACHE_SIZE_KB,
       encryptionKey
     } = this.waOptions;
 
@@ -60,6 +66,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
               optionsDbWorker({
                 ...this.options,
                 temporaryStorage,
+                cacheSizeKb,
                 flags: this.resolvedFlags,
                 encryptionKey
               })
@@ -74,6 +81,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           dbFilename: this.options.dbFilename,
           vfs,
           temporaryStorage,
+          cacheSizeKb,
           flags: this.resolvedFlags,
           encryptionKey: encryptionKey
         }),
@@ -94,6 +102,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
         debugMode: this.options.debugMode,
         vfs,
         temporaryStorage,
+        cacheSizeKb,
         flags: this.resolvedFlags,
         encryptionKey: encryptionKey
       });

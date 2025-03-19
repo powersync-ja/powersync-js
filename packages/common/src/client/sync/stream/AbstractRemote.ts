@@ -5,23 +5,23 @@ import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
 import { WebsocketClientTransport } from 'rsocket-websocket-client';
+import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
 
-import { version as POWERSYNC_JS_VERSION } from '../../../../package.json';
-
 export type BSONImplementation = typeof BSON;
 
-const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
 
+const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
+const POWERSYNC_JS_VERSION = PACKAGE.version;
+
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
-const SYNC_QUEUE_REQUEST_N = 10;
 const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
@@ -37,6 +37,24 @@ export type SyncStreamOptions = {
   headers?: Record<string, string>;
   abortSignal?: AbortSignal;
   fetchOptions?: Request;
+};
+
+export enum FetchStrategy {
+  /**
+   * Queues multiple sync events before processing, reducing round-trips.
+   * This comes at the cost of more processing overhead, which may cause ACK timeouts on older/weaker devices for big enough datasets.
+   */
+  Buffered = 'buffered',
+
+  /**
+   * Processes each sync event immediately before requesting the next.
+   * This reduces processing overhead and improves real-time responsiveness.
+   */
+  Sequential = 'sequential'
+}
+
+export type SocketSyncStreamOptions = SyncStreamOptions & {
+  fetchStrategy: FetchStrategy;
 };
 
 export type FetchImplementation = typeof fetch;
@@ -216,8 +234,10 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream websocket endpoint
    */
-  async socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const { path } = options;
+  async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+    const { path, fetchStrategy = FetchStrategy.Buffered } = options;
+
+    const syncQueueRequestSize = fetchStrategy == FetchStrategy.Buffered ? 10 : 1;
     const request = await this.buildRequest(path);
 
     const bson = await this.getBSON();
@@ -277,7 +297,7 @@ export abstract class AbstractRemote {
     // Helps to prevent double close scenarios
     rsocket.onClose(() => (socketIsClosed = true));
     // We initially request this amount and expect these to arrive eventually
-    let pendingEventsCount = SYNC_QUEUE_REQUEST_N;
+    let pendingEventsCount = syncQueueRequestSize;
 
     const disposeClosedListener = stream.registerListener({
       closed: () => {
@@ -298,7 +318,7 @@ export abstract class AbstractRemote {
             })
           )
         },
-        SYNC_QUEUE_REQUEST_N, // The initial N amount
+        syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
             // Don't log closed as an error
@@ -340,10 +360,10 @@ export abstract class AbstractRemote {
     const l = stream.registerListener({
       lowWater: async () => {
         // Request to fill up the queue
-        const required = SYNC_QUEUE_REQUEST_N - pendingEventsCount;
+        const required = syncQueueRequestSize - pendingEventsCount;
         if (required > 0) {
-          socket.request(SYNC_QUEUE_REQUEST_N - pendingEventsCount);
-          pendingEventsCount = SYNC_QUEUE_REQUEST_N;
+          socket.request(syncQueueRequestSize - pendingEventsCount);
+          pendingEventsCount = syncQueueRequestSize;
         }
       },
       closed: () => {

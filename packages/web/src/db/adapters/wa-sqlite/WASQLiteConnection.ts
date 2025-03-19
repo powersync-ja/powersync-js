@@ -235,6 +235,7 @@ export class WASqliteConnection
     await this.openDB();
     this.registerBroadcastListeners();
     await this.executeSingleStatement(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
+    await this.executeSingleStatement(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
     await this.executeEncryptionPragma();
 
     this.sqliteAPI.update_hook(this.dbP, (updateType: number, dbName: string | null, tableName: string | null) => {

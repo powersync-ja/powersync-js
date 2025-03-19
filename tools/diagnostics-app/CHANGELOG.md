@@ -1,5 +1,55 @@
 # diagnostics-app
 
+## 0.8.4
+
+### Patch Changes
+
+- Updated dependencies [0c8ddda]
+- Updated dependencies [fcb9d58]
+  - @powersync/web@1.15.1
+  - @powersync/react@1.5.2
+
+## 0.8.3
+
+### Patch Changes
+
+- Updated dependencies [26025f0]
+  - @powersync/web@1.15.0
+
+## 0.8.2
+
+### Patch Changes
+
+- Updated dependencies [fe98172]
+- Updated dependencies [17fc01e]
+  - @powersync/web@1.14.2
+  - @powersync/react@1.5.1
+
+## 0.8.1
+
+### Patch Changes
+
+- Updated dependencies [44582ef]
+  - @powersync/web@1.14.1
+
+## 0.8.0
+
+### Minor Changes
+
+- e1c44ad: Improve diagnostics app performance for bulk downloads.
+- 56185bb: Switch diagnostics app to OPFS.
+
+### Patch Changes
+
+- Updated dependencies [56185bb]
+  - @powersync/web@1.14.0
+
+## 0.7.8
+
+### Patch Changes
+
+- @powersync/web@1.13.1
+
 ## 0.7.7
 
 ### Patch Changes

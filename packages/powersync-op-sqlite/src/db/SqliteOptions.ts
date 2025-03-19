@@ -31,6 +31,21 @@ export interface SqliteOptions {
   encryptionKey?: string | null;
 
   /**
+   * Where to store SQLite temporary files. Defaults to 'MEMORY'.
+   * Setting this to `FILESYSTEM` can cause issues with larger queries or datasets.
+   *
+   * For details, see: https://www.sqlite.org/pragma.html#pragma_temp_store
+   */
+  temporaryStorage?: TemporaryStorageOption;
+
+  /**
+   * Maximum SQLite cache size. Defaults to 50MB.
+   *
+   * For details, see: https://www.sqlite.org/pragma.html#pragma_cache_size
+   */
+  cacheSizeKb?: number;
+
+  /**
    * Load extensions using the path and entryPoint.
    * More info can be found here https://op-engineering.github.io/op-sqlite/docs/api#loading-extensions.
    */
@@ -38,6 +53,11 @@ export interface SqliteOptions {
     path: string;
     entryPoint?: string;
   }>;
+}
+
+export enum TemporaryStorageOption {
+  MEMORY = 'memory',
+  FILESYSTEM = 'file'
 }
 
 // SQLite journal mode. Set on the primary connection.
@@ -65,6 +85,8 @@ export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
   journalMode: SqliteJournalMode.wal,
   synchronous: SqliteSynchronous.normal,
   journalSizeLimit: 6 * 1024 * 1024,
+  cacheSizeKb: 50 * 1024,
+  temporaryStorage: TemporaryStorageOption.MEMORY,
   lockTimeoutMs: 30000,
   encryptionKey: null,
   extensions: []

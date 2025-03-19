@@ -1,5 +1,36 @@
 # @powersync/op-sqlite
 
+## 0.4.1
+
+### Patch Changes
+
+- 17fc01e: Update core PowerSync SQLite extensions to 0.3.12
+- Updated dependencies [76dfb06]
+- Updated dependencies [3c595af]
+- Updated dependencies [fe98172]
+- Updated dependencies [85f0228]
+  - @powersync/common@1.25.0
+
+## 0.4.0
+
+### Minor Changes
+
+- 56185bb: Default to using memory for temp store, and 50MB cache size.
+
+### Patch Changes
+
+- Updated dependencies [893d42b]
+- Updated dependencies [0606ac2]
+  - @powersync/common@1.24.0
+
+## 0.3.1
+
+### Patch Changes
+
+- a4895cc: Silencing transactions that are reporting on failed rollback exceptions when they are safe to ignore.
+- Updated dependencies [0f28fb3]
+  - @powersync/common@1.23.0
+
 ## 0.3.0
 
 ### Minor Changes

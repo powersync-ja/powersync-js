@@ -44,19 +44,28 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   protected async init() {
-    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous } = this.options.sqliteOptions!;
+    const { lockTimeoutMs, journalMode, journalSizeLimit, synchronous, cacheSizeKb, temporaryStorage } =
+      this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
     this.writeConnection = await this.openConnection(dbFilename);
 
-    const statements: string[] = [
+    const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
+      `PRAGMA cache_size = -${cacheSizeKb}`,
+      `PRAGMA temp_store = ${temporaryStorage}`
+    ];
+
+    const writeConnectionStatements = [
+      ...baseStatements,
       `PRAGMA journal_mode = ${journalMode}`,
       `PRAGMA journal_size_limit = ${journalSizeLimit}`,
       `PRAGMA synchronous = ${synchronous}`
     ];
 
-    for (const statement of statements) {
+    const readConnectionStatements = [...baseStatements, 'PRAGMA query_only = true'];
+
+    for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
           await this.writeConnection!.execute(statement);
@@ -79,7 +88,9 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = await this.openConnection(dbFilename);
-      await conn.execute('PRAGMA query_only = true');
+      for (let statement of readConnectionStatements) {
+        await conn.execute(statement);
+      }
       this.readConnections.push({ busy: false, connection: conn });
     }
   }
@@ -275,7 +286,12 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await commit();
       return result;
     } catch (ex) {
-      await rollback();
+      try {
+        await rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
       throw ex;
     }
   }

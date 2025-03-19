@@ -29,7 +29,11 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
 export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
   implements AsyncDatabaseConnection
 {
-  constructor(protected options: WrappedWorkerConnectionOptions<Config>) {}
+  protected lockAbortController: AbortController;
+
+  constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
+    this.lockAbortController = new AbortController();
+  }
 
   protected get baseConnection() {
     return this.options.baseConnection;
@@ -44,6 +48,45 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
    */
   async shareConnection(): Promise<SharedConnectionWorker> {
     const { identifier, remote } = this.options;
+    /**
+     * Hold a navigator lock in order to avoid features such as Chrome's frozen tabs,
+     * or Edge's sleeping tabs from pausing the thread for this connection.
+     * This promise resolves once a lock is obtained.
+     * This lock will be held as long as this connection is open.
+     * The `shareConnection` method should not be called on multiple tabs concurrently.
+     */
+    await new Promise<void>((resolve, reject) =>
+      navigator.locks
+        .request(
+          `shared-connection-${this.options.identifier}`,
+          {
+            signal: this.lockAbortController.signal
+          },
+          async () => {
+            resolve();
+
+            // Free the lock when the connection is already closed.
+            if (this.lockAbortController.signal.aborted) {
+              return;
+            }
+
+            // Hold the lock while the shared connection is in use.
+            await new Promise<void>((releaseLock) => {
+              this.lockAbortController.signal.addEventListener('abort', () => {
+                releaseLock();
+              });
+            });
+          }
+        )
+        // We aren't concerned with abort errors here
+        .catch((ex) => {
+          if (ex.name == 'AbortError') {
+            resolve();
+          } else {
+            reject(ex);
+          }
+        })
+    );
 
     const newPort = await remote[Comlink.createEndpoint]();
     return { port: newPort, identifier };
@@ -58,6 +101,8 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   }
 
   async close(): Promise<void> {
+    // Abort any pending lock requests.
+    this.lockAbortController.abort();
     await this.baseConnection.close();
     this.options.remote[Comlink.releaseProxy]();
     this.options.onClose?.();

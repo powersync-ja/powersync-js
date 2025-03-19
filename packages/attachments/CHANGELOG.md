@@ -1,5 +1,17 @@
 # @powersync/attachments
 
+## 2.3.0
+
+### Minor Changes
+
+- 420a083: Added `attachmentTableName` option to attachment queue which allows you to specify the table name it should work with.
+
+## 2.2.1
+
+### Patch Changes
+
+- 48f8632: Fix README link for StorageAdapter source file (https://github.com/powersync-ja/powersync-js/blob/main/packages/attachments/src/StorageAdapter.ts)
+
 ## 2.2.0
 
 ### Minor Changes
