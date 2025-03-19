@@ -33,8 +33,8 @@ export class DemoConnector implements PowerSyncBackendConnector {
 
     const response = await fetch(`${process.env.BACKEND}/api/data/`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({batch: entries}),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ batch: entries })
     });
     if (response.status !== 200) {
       throw new Error(`Server returned HTTP ${response.status}: ${await response.text()}`);

@@ -4,7 +4,9 @@
     "baseUrl": ".",
     "rootDir": "src",
     "outDir": "lib",
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "moduleResolution": "nodenext",
+    "module": "NodeNext"
   },
   "references": [
     {
