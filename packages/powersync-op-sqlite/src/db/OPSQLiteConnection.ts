@@ -98,7 +98,6 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
   }
 
   async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    // TODO CL: Test this
     return await this.DB.executeRaw(query, params);
   }
 

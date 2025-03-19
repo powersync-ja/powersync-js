@@ -8,7 +8,11 @@ import {
   DBGetUtils,
   QueryResult
 } from '@powersync/common';
-import type { QuickSQLiteConnection } from '@journeyapps/react-native-quick-sqlite';
+import type {
+  QuickSQLiteConnection,
+  LockContext as RNQSLockContext,
+  TransactionContext as RNQSTransactionContext
+} from '@journeyapps/react-native-quick-sqlite';
 
 /**
  * Adapter for React Native Quick SQLite
@@ -43,27 +47,37 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   }
 
   readLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readLock((dbTx) => fn(this.generateDBHelpers(dbTx)), options);
+    return this.baseDB.readLock((dbTx) => fn(this.generateDBHelpers(this.generateLockContext(dbTx))), options);
   }
 
   readTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readTransaction((dbTx) => fn(this.generateDBHelpers(dbTx)), options);
+    return this.baseDB.readTransaction(
+      (dbTx) => fn(this.generateDBHelpers(this.generateTransactionContext(dbTx))),
+      options
+    );
   }
 
   writeLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeLock((dbTx) => fn(this.generateDBHelpers(dbTx)), options);
+    return this.baseDB.writeLock((dbTx) => fn(this.generateDBHelpers(this.generateLockContext(dbTx))), options);
   }
 
   writeTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeTransaction((dbTx) => fn(this.generateDBHelpers(dbTx)), options);
+    return this.baseDB.writeTransaction(
+      (dbTx) => fn(this.generateDBHelpers(this.generateTransactionContext(dbTx))),
+      options
+    );
   }
 
   execute(query: string, params?: any[]) {
     return this.baseDB.execute(query, params);
   }
 
-  executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    throw new Error('Method not implemented.');
+  /**
+   * 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
+   */
+  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
+    const result = await this.baseDB.execute(query, params);
+    return result.rows?._array ?? [];
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
@@ -79,6 +93,28 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     };
   }
 
+  generateLockContext(ctx: RNQSLockContext) {
+    return {
+      ...ctx,
+      // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
+      executeRaw: async (sql: string, params?: any[]) => {
+        const result = await ctx.execute(sql, params);
+        return result.rows?._array ?? [];
+      }
+    };
+  }
+
+  generateTransactionContext(ctx: RNQSTransactionContext) {
+    return {
+      ...ctx,
+      // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
+      executeRaw: async (sql: string, params?: any[]) => {
+        const result = await ctx.execute(sql, params);
+        return result.rows?._array ?? [];
+      }
+    };
+  }
+
   /**
    * This provides a top-level read only execute method which is executed inside a read-lock.
    * This is necessary since the high level `execute` method uses a write-lock under
@@ -86,10 +122,6 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
    * and should use this method.
    */
   private readOnlyExecute(sql: string, params?: any[]) {
-    return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
-  }
-
-  private readOnlyExecuteRaw(sql: string, params?: any[]) {
     return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
   }
 

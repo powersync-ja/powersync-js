@@ -69,7 +69,8 @@ export class LockedAsyncDatabaseAdapter
     }
 
     this.dbGetHelpers = this.generateDBHelpers({
-      execute: (query, params) => this.acquireLock(() => this._execute(query, params))
+      execute: (query, params) => this.acquireLock(() => this._execute(query, params)),
+      executeRaw: (query, params) => this.acquireLock(() => this._executeRaw(query, params))
     });
     this.initPromise = this._init();
   }
@@ -197,9 +198,12 @@ export class LockedAsyncDatabaseAdapter
     return this.writeLock(this.wrapTransaction(fn));
   }
 
-  private generateDBHelpers<T extends { execute: (sql: string, params?: any[]) => Promise<QueryResult> }>(
-    tx: T
-  ): T & DBGetUtils {
+  private generateDBHelpers<
+    T extends {
+      execute: (sql: string, params?: any[]) => Promise<QueryResult>;
+      executeRaw: (sql: string, params?: any[]) => Promise<any[][]>;
+    }
+  >(tx: T): T & DBGetUtils {
     return {
       ...tx,
       /**
