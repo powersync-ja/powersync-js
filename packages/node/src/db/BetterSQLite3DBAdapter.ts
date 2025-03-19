@@ -53,7 +53,9 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
 
     const openWorker = async (isWriter: boolean) => {
-      const worker = new Worker(new URL('./SqliteWorker.js', import.meta.url), {name: isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`});
+      const worker = new Worker(new URL('./SqliteWorker.js', import.meta.url), {
+        name: isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`
+      });
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
       const comlink = Comlink.wrap<AsyncDatabaseOpener>({
@@ -216,6 +218,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       await connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
+        executeRaw: (query, params) => connection.executeRaw(query, params),
         executeBatch: (query, params) => connection.executeBatch(query, params),
         get: (query, params) => connection.get(query, params),
         getAll: (query, params) => connection.getAll(query, params),
@@ -250,6 +253,10 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 
   execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
     return this.writeLock((ctx) => ctx.execute(query, params));
+  }
+
+  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return this.writeLock((ctx) => ctx.executeRaw(query, params));
   }
 
   executeBatch(query: string, params?: any[][]): Promise<QueryResult> {

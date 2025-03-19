@@ -45,6 +45,8 @@
   },
   "devDependencies": {
     "@types/async-lock": "^1.4.0",
+    "drizzle-orm": "^0.35.2",
+    "@powersync/drizzle-driver": "workspace:*",
     "typescript": "^5.5.3",
     "vitest": "^3.0.5"
   },
