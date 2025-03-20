@@ -16,8 +16,6 @@ import type ICopyPlugin from 'copy-webpack-plugin';
 
 dotenv.config({path: '.env.local'});
 
-const require = createRequire(import.meta.url);
-
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CopyPlugin: typeof ICopyPlugin = require('copy-webpack-plugin');
 const DefinePluginImpl: typeof DefinePlugin = require('webpack').DefinePlugin;
