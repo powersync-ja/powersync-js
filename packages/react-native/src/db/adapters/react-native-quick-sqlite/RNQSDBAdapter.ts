@@ -47,25 +47,19 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   }
 
   readLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readLock((dbTx) => fn(this.generateDBHelpers(this.generateLockContext(dbTx))), options);
+    return this.baseDB.readLock((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
   }
 
   readTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readTransaction(
-      (dbTx) => fn(this.generateDBHelpers(this.generateTransactionContext(dbTx))),
-      options
-    );
+    return this.baseDB.readTransaction((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
   }
 
   writeLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeLock((dbTx) => fn(this.generateDBHelpers(this.generateLockContext(dbTx))), options);
+    return this.baseDB.writeLock((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
   }
 
   writeTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeTransaction(
-      (dbTx) => fn(this.generateDBHelpers(this.generateTransactionContext(dbTx))),
-      options
-    );
+    return this.baseDB.writeTransaction((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
   }
 
   execute(query: string, params?: any[]) {
@@ -93,18 +87,7 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     };
   }
 
-  generateLockContext(ctx: RNQSLockContext) {
-    return {
-      ...ctx,
-      // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
-      executeRaw: async (sql: string, params?: any[]) => {
-        const result = await ctx.execute(sql, params);
-        return result.rows?._array ?? [];
-      }
-    };
-  }
-
-  generateTransactionContext(ctx: RNQSTransactionContext) {
+  generateContext<T extends RNQSLockContext>(ctx: T) {
     return {
       ...ctx,
       // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
