@@ -71,7 +71,8 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
    */
   async executeRaw(query: string, params?: any[]): Promise<any[][]> {
     const result = await this.baseDB.execute(query, params);
-    return result.rows?._array ?? [];
+    const rows = result.rows?._array ?? [];
+    return rows.map((row) => Object.values(row));
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
@@ -93,7 +94,8 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
       // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
       executeRaw: async (sql: string, params?: any[]) => {
         const result = await ctx.execute(sql, params);
-        return result.rows?._array ?? [];
+        const rows = result.rows?._array ?? [];
+        return rows.map((row) => Object.values(row));
       }
     };
   }
