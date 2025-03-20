@@ -13,11 +13,17 @@ export async function createTempDir() {
 export const LIST_TABLE = 'lists';
 export const TODO_TABLE = 'todos';
 
+const lists = new Table({
+  name: column.text
+});
+
 const todos = new Table({
-  content: column.text
+  content: column.text,
+  list_id: column.text
 });
 
 export const AppSchema = new Schema({
+  lists,
   todos
 });
 

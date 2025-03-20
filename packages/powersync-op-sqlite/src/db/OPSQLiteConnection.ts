@@ -97,6 +97,10 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
     };
   }
 
+  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
+    return await this.DB.executeRaw(query, params);
+  }
+
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));

@@ -66,6 +66,17 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     }
   }
 
+  async executeRaw(query: string, params: any[]) {
+    const stmt = this.db.prepare(query);
+
+    if (stmt.reader) {
+      return stmt.raw().all(params);
+    } else {
+      stmt.raw().run(params);
+      return [];
+    }
+  }
+
   async executeBatch(query: string, params: any[][]) {
     params = params ?? [];
 

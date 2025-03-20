@@ -54,12 +54,12 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     const rows = (await this.values(placeholderValues)) as unknown[][];
-    const valueRows = rows.map((row) => Object.values(row));
+
     if (customResultMapper) {
-      const mapped = customResultMapper(valueRows) as T['all'];
+      const mapped = customResultMapper(rows) as T['all'];
       return mapped;
     }
-    return valueRows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
+    return rows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
   }
 
   async get(placeholderValues?: Record<string, unknown>): Promise<T['get']> {
@@ -80,18 +80,17 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     if (customResultMapper) {
-      const valueRows = rows.map((row) => Object.values(row));
-      return customResultMapper(valueRows) as T['get'];
+      return customResultMapper(rows) as T['get'];
     }
 
-    return mapResultRow(fields!, Object.values(row), joinsNotNullableMap);
+    return mapResultRow(fields!, row, joinsNotNullableMap);
   }
 
   async values(placeholderValues?: Record<string, unknown>): Promise<T['values']> {
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
-    const rs = await this.db.execute(this.query.sql, params);
-    return rs.rows?._array ?? [];
+
+    return await this.db.executeRaw(this.query.sql, params);
   }
 
   isResponseInArrayMode(): boolean {

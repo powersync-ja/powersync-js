@@ -65,7 +65,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       if (isCommonJsModule) {
         worker = workerFactory(path.resolve(__dirname, 'DefaultWorker.cjs'), { name: workerName });
       } else {
-        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName});
+        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
       }
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
@@ -231,6 +231,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       await connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
+        executeRaw: (query, params) => connection.executeRaw(query, params),
         executeBatch: (query, params) => connection.executeBatch(query, params),
         get: (query, params) => connection.get(query, params),
         getAll: (query, params) => connection.getAll(query, params),
@@ -265,6 +266,10 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
 
   execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
     return this.writeLock((ctx) => ctx.execute(query, params));
+  }
+
+  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return this.writeLock((ctx) => ctx.executeRaw(query, params));
   }
 
   executeBatch(query: string, params?: any[][]): Promise<QueryResult> {

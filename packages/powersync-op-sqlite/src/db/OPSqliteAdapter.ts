@@ -245,6 +245,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     return this.writeLock((ctx) => ctx.execute(query, params));
   }
 
+  executeRaw(query: string, params?: any[]) {
+    return this.writeLock((ctx) => ctx.executeRaw(query, params));
+  }
+
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     return this.writeLock((ctx) => ctx.executeBatch(query, params));
   }
@@ -272,6 +276,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       await connection.execute('BEGIN');
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
+        executeRaw: (query, params) => connection.executeRaw(query, params),
         get: (query, params) => connection.get(query, params),
         getAll: (query, params) => connection.getAll(query, params),
         getOptional: (query, params) => connection.getOptional(query, params),

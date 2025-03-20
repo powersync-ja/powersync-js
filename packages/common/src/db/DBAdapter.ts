@@ -44,6 +44,21 @@ export interface DBGetUtils {
 export interface LockContext extends DBGetUtils {
   /** Execute a single write statement. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
+  /**
+   * Execute a single write statement and return raw results.
+   * Unlike `execute`, which returns an object with structured key-value pairs,
+   * `executeRaw` returns a nested array of raw values, where each row is
+   * represented as an array of column values without field names.
+   *
+   * Example result:
+   *
+   * ```[ [ '1', 'list 1', '33', 'Post content', '1' ] ]```
+   *
+   * Where as `execute`'s `rows._array` would have been:
+   *
+   * ```[ { id: '33', name: 'list 1', content: 'Post content', list_id: '1' } ]```
+   */
+  executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
 }
 
 export interface Transaction extends LockContext {
@@ -95,6 +110,7 @@ export interface DBLockOptions {
 export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
   close: () => void | Promise<void>;
   execute: (query: string, params?: any[]) => Promise<QueryResult>;
+  executeRaw: (query: string, params?: any[]) => Promise<any[][]>;
   executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
   name: string;
   readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;

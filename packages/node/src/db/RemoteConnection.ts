@@ -29,6 +29,10 @@ export class RemoteConnection implements LockContext {
     return RemoteConnection.wrapQueryResult(result);
   }
 
+  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return await this.database.executeRaw(query, params ?? []);
+  }
+
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
     const res = await this.execute(sql, parameters);
     return res.rows?._array ?? [];
