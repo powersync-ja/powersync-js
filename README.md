@@ -78,7 +78,8 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 ### Electron
 
-- [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK.
+- [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK in the renderer process.
+- [demos/example-electron-node](./demos/example-electron-node/README.md) An Electron example using a PowerSync database in the main process.
 
 ### Capacitor
 

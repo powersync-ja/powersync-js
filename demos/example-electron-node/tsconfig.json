@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+      "target": "ES6",
+      "allowJs": true,
+      "module": "ESNext",
+      "skipLibCheck": true,
+      "noImplicitAny": true,
+      "sourceMap": true,
+      "baseUrl": ".",
+      "outDir": "dist",
+      "moduleResolution": "bundler",
+      "paths": {
+        "*": ["node_modules/*"]
+      }
+    },
+    "include": ["src/**/*"],
+    "references": [
+      {
+        "path": "../../packages/node"
+      }
+    ]
+  }
+  
