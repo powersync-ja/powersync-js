@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.15.2
+
+### Patch Changes
+
+- f0c49f9: Ensuring encryption pragma executes before setting cache size, fixes issue where encryption would throw an error during initialization.
+
 ## 1.15.1
 
 ### Patch Changes

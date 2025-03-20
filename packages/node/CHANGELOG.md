@@ -1,5 +1,11 @@
 # @powersync/node
 
+## 0.1.2
+
+### Patch Changes
+
+- 8c14e99: Include CommonJS distribution for this package.
+
 ## 0.1.1
 
 ### Patch Changes
