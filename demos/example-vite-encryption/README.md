@@ -1,6 +1,8 @@
-# PowerSync Vite bundling test
+# PowerSync Web Encryption example
 
-This is a minimal example demonstrating bundling with Vite. It attempts a connection to verify that web workers load correctly, but networks requests will fail since no credentials are configured. See [src/index.js](src/index.js) for details.
+This is a minimal example demonstrating web encryption. It prompts an encryption key, which is used for the database.
+If the database doesn't exist yet, it will apply the encryption key when creating the database for the specified database name.
+If the database does exist, it will use the encryption key to access the database - should the provided key be different to the one provided upon creation it fail to open the database.
 
 To see it in action:
 
