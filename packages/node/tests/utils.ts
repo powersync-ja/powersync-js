@@ -4,7 +4,7 @@ import path from 'node:path';
 import { test } from 'vitest';
 import { column, PowerSyncDatabase, Schema, Table } from '../lib';
 
-async function createTempDir() {
+export async function createTempDir() {
   const ostmpdir = os.tmpdir();
   const tmpdir = path.join(ostmpdir, 'powersync-node-test-');
   return await fs.mkdtemp(tmpdir);

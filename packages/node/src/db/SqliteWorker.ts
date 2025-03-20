@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import BetterSQLite3Database, { Database } from '@powersync/better-sqlite3';
 import * as Comlink from 'comlink';
 import { parentPort, threadId } from 'node:worker_threads';
@@ -92,10 +93,16 @@ class BlockingAsyncDatabase implements AsyncDatabase {
 }
 
 class BetterSqliteWorker implements AsyncDatabaseOpener {
+  options: PowerSyncWorkerOptions;
+
+  constructor(options: PowerSyncWorkerOptions) {
+    this.options = options;
+  }
+
   async open(path: string, isWriter: boolean): Promise<AsyncDatabase> {
     const baseDB = new BetterSQLite3Database(path);
     baseDB.pragma('journal_mode = WAL');
-    loadExtension(baseDB);
+    baseDB.loadExtension(this.options.extensionPath(), 'sqlite3_powersync_init');
     if (!isWriter) {
       baseDB.pragma('query_only = true');
     }
@@ -107,21 +114,43 @@ class BetterSqliteWorker implements AsyncDatabaseOpener {
   }
 }
 
-const loadExtension = (db: Database) => {
-  const platform = OS.platform();
-  let extensionPath: string;
-  if (platform === 'win32') {
-    extensionPath = 'powersync.dll';
-  } else if (platform === 'linux') {
-    extensionPath = 'libpowersync.so';
-  } else if (platform === 'darwin') {
-    extensionPath = 'libpowersync.dylib';
-  } else {
-    throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
-  }
+export interface PowerSyncWorkerOptions {
+  /**
+   * A function responsible for finding the powersync DLL/so/dylib file.
+   *
+   * @returns The absolute path of the PowerSync SQLite core extensions library.
+   */
+  extensionPath: () => string;
+}
 
-  const resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
-  db.loadExtension(resolved, 'sqlite3_powersync_init');
-};
+export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) {
+  const resolvedOptions: PowerSyncWorkerOptions = {
+    extensionPath() {
+      const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
 
-Comlink.expose(new BetterSqliteWorker(), parentPort! as Comlink.Endpoint);
+      const platform = OS.platform();
+      let extensionPath: string;
+      if (platform === 'win32') {
+        extensionPath = 'powersync.dll';
+      } else if (platform === 'linux') {
+        extensionPath = 'libpowersync.so';
+      } else if (platform === 'darwin') {
+        extensionPath = 'libpowersync.dylib';
+      } else {
+        throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
+      }
+
+      let resolved: string;
+      if (isCommonJsModule) {
+        resolved = path.resolve(__dirname, '../lib/', extensionPath);
+      } else {
+        resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
+      }
+
+      return resolved;
+    },
+    ...options,
+  };
+
+  Comlink.expose(new BetterSqliteWorker(resolvedOptions), parentPort! as Comlink.Endpoint);
+}
