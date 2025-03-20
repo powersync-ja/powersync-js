@@ -27,7 +27,7 @@ Apart from the build setup, this example is purposefully kept simple.
 To make sure PowerSync is working, you can run `await powersync.get('SELECT powersync_rs_version()');` in the DevTools
 console. A result from that query implies that the PowerSync was properly configured.
 
-For more details, see the documentation for [the PowerSync node package](https://docs.powersync.com/client-sdk-references/node#node-js-client-alpha) and check other examples:
+For more details, see the documentation for [the PowerSync node package](https://docs.powersync.com/client-sdk-references/node) and check other examples:
 
 - [example-node](../example-node/): A Node.js CLI example that connects to PowerSync to run auto-updating queries.
 - [example-electron](../example-electron/): An Electron example that runs PowerSync in the render process instead of in the main one.
