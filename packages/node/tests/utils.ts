@@ -23,17 +23,23 @@ export const AppSchema = new Schema({
 
 export type Database = (typeof AppSchema)['types'];
 
-export const databaseTest = test.extend<{ database: PowerSyncDatabase }>({
-  database: async ({}, use) => {
+export const tempDirectoryTest = test.extend<{ tmpdir: string }>({
+  tmpdir: async ({}, use) => {
     const directory = await createTempDir();
+    await use(directory);
+    await fs.rm(directory, { recursive: true });
+  },
+});
+
+export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
+  database: async ({tmpdir}, use) => {
     const database = new PowerSyncDatabase({
       schema: AppSchema,
       database: {
         dbFilename: 'test.db',
-        dbLocation: directory
+        dbLocation: tmpdir
       }
     });
     await use(database);
-    await fs.rm(directory, { recursive: true });
   }
 });

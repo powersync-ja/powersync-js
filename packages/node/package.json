@@ -46,7 +46,7 @@
     "@powersync/common": "workspace:^1.22.0"
   },
   "dependencies": {
-    "@powersync/better-sqlite3": "^0.1.0",
+    "@powersync/better-sqlite3": "^0.1.1",
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",

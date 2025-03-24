@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import * as Comlink from 'comlink';
@@ -53,6 +54,10 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   async initialize() {
     let dbFilePath = this.options.dbFilename;
     if (this.options.dbLocation !== undefined) {
+      // SQLite reports a misuse error when the target directory of the database doesn't exist,
+      // so create it now before we access the database.
+      await fs.mkdir(this.options.dbLocation, { recursive: true });
+
       dbFilePath = path.join(this.options.dbLocation, dbFilePath);
     }
 

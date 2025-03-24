@@ -1,8 +1,8 @@
+import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import fs from 'node:fs/promises';
 
-import { vi, expect, test, onTestFinished } from 'vitest';
-import { AppSchema, createTempDir, databaseTest } from './utils';
+import { vi, expect, test } from 'vitest';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
 import { PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
 
@@ -19,8 +19,7 @@ test('validates options', async () => {
   }).rejects.toThrowError('Needs at least one worker for reads');
 });
 
-test('can customize loading workers', async () => {
-  const directory = await createTempDir();
+tempDirectoryTest('can customize loading workers', async ({tmpdir}) => {
   const defaultWorker: WorkerOpener = (...args) => new Worker(...args);
 
   const openFunction = vi.fn(defaultWorker); // Wrap in vi.fn to count invocations
@@ -29,7 +28,7 @@ test('can customize loading workers', async () => {
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
-      dbLocation: directory,
+      dbLocation: tmpdir,
       openWorker: openFunction,
       readWorkerCount: 2
     }
@@ -38,8 +37,6 @@ test('can customize loading workers', async () => {
   await database.get('SELECT 1;'); // Make sure the database is ready and works
   expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
   await database.close();
-
-  onTestFinished(async () => fs.rm(directory, { recursive: true }));
 });
 
 databaseTest('links powersync', async ({ database }) => {
@@ -93,6 +90,19 @@ databaseTest('can watch tables', async ({ database }) => {
   disposeWatch();
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['fourth']);
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
+});
+
+tempDirectoryTest('automatically creates directory', async ({tmpdir}) => {
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist'),
+      readWorkerCount: 2
+    }
+  });
+
+  await database.get('SELECT 1;'); // Make sure the database is ready and works
 });
 
 databaseTest.skip('can watch queries', async ({ database }) => {
