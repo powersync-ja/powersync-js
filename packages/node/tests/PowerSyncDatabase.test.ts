@@ -93,26 +93,20 @@ databaseTest('can watch tables', async ({ database }) => {
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
 });
 
-tempDirectoryTest('automatically creates directory', async ({ tmpdir }) => {
+tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {
   const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
 
-  const database = new PowerSyncDatabase({
-    schema: AppSchema,
-    database: {
-      dbFilename: 'test.db',
-      dbLocation: directory,
-      readWorkerCount: 2
-    }
-  });
-
-  // Make sure there's a write to the file
-  await database.writeLock((conn) => conn.execute('pragma user_version = 2'));
-
-  // Make sure the file is actually created in the right location
-  await fs.access(
-    path.join(directory, 'test.db'),
-    fs.constants.F_OK | fs.constants.R_OK | fs.constants.W_OK
-  );
+  expect(async () => {
+    const database = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'test.db',
+        dbLocation: directory,
+        readWorkerCount: 2
+      }
+    });
+    await database.waitForReady();
+  }).rejects.toThrowError(/The dbLocation directory at ".+" does not exist/);
 });
 
 databaseTest.skip('can watch queries', async ({ database }) => {

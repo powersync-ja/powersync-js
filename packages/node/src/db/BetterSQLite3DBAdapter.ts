@@ -54,6 +54,19 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   async initialize() {
     let dbFilePath = this.options.dbFilename;
     if (this.options.dbLocation !== undefined) {
+      // Make sure the dbLocation exists, we get a TypeError from better-sqlite3 otherwise.
+      let directoryExists = false;
+      try {
+        const stat = await fs.stat(this.options.dbLocation);
+        directoryExists = stat.isDirectory();
+      } catch (_) {
+        // If we can't even stat, the directory won't be accessible to SQLite either.
+      }
+
+      if (!directoryExists) {
+        throw new Error(`The dbLocation directory at "${this.options.dbLocation}" does not exist. Please create it before opening the PowerSync database!`);
+      }
+
       // SQLite reports a misuse error when the target directory of the database doesn't exist,
       // so create it now before we access the database.
       await fs.mkdir(this.options.dbLocation, { recursive: true });
