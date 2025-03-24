@@ -67,10 +67,6 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         throw new Error(`The dbLocation directory at "${this.options.dbLocation}" does not exist. Please create it before opening the PowerSync database!`);
       }
 
-      // SQLite reports a misuse error when the target directory of the database doesn't exist,
-      // so create it now before we access the database.
-      await fs.mkdir(this.options.dbLocation, { recursive: true });
-
       dbFilePath = path.join(this.options.dbLocation, dbFilePath);
     }
 
