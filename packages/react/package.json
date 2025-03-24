@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

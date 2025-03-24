@@ -1,5 +1,11 @@
 # @powersync/attachments
 
+## 2.3.0
+
+### Minor Changes
+
+- 420a083: Added `attachmentTableName` option to attachment queue which allows you to specify the table name it should work with.
+
 ## 2.2.1
 
 ### Patch Changes

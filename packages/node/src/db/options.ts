@@ -1,7 +1,7 @@
 import { type Worker } from 'node:worker_threads';
 import { SQLOpenOptions } from '@powersync/common';
 
-export type OpenWorker = (...args: ConstructorParameters<typeof Worker>) => InstanceType<typeof Worker>;
+export type WorkerOpener = (...args: ConstructorParameters<typeof Worker>) => InstanceType<typeof Worker>;
 
 /**
  * The {@link SQLOpenOptions} available across all PowerSync SDKs for JavaScript extended with
@@ -20,5 +20,5 @@ export interface NodeSQLOpenOptions extends SQLOpenOptions {
    * @param args The arguments that would otherwise be passed to the {@link Worker} constructor.
    * @returns the resolved worker.
    */
-  openWorker?: OpenWorker;
+  openWorker?: WorkerOpener;
 }

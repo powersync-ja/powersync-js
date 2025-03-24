@@ -74,6 +74,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/example-webpack](./demos/example-webpack/README.md): A minimal example demonstrating bundling with Webpack.
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
+- [demos/example-vite-encryption](./demos/example-vite-encryption/README.md): A minimal example demonstrating web encryption.
 - [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.
 
 ### Electron
