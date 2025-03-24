@@ -12,14 +12,14 @@ test('validates options', async () => {
       schema: AppSchema,
       database: {
         dbFilename: '/dev/null',
-        readWorkerCount: 0,
+        readWorkerCount: 0
       }
     });
     await database.init();
   }).rejects.toThrowError('Needs at least one worker for reads');
 });
 
-tempDirectoryTest('can customize loading workers', async ({tmpdir}) => {
+tempDirectoryTest('can customize loading workers', async ({ tmpdir }) => {
   const defaultWorker: WorkerOpener = (...args) => new Worker(...args);
 
   const openFunction = vi.fn(defaultWorker); // Wrap in vi.fn to count invocations
@@ -92,7 +92,7 @@ databaseTest('can watch tables', async ({ database }) => {
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
 });
 
-tempDirectoryTest('automatically creates directory', async ({tmpdir}) => {
+tempDirectoryTest('automatically creates directory', async ({ tmpdir }) => {
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     database: {

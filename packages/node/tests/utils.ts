@@ -28,11 +28,11 @@ export const tempDirectoryTest = test.extend<{ tmpdir: string }>({
     const directory = await createTempDir();
     await use(directory);
     await fs.rm(directory, { recursive: true });
-  },
+  }
 });
 
 export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
-  database: async ({tmpdir}, use) => {
+  database: async ({ tmpdir }, use) => {
     const database = new PowerSyncDatabase({
       schema: AppSchema,
       database: {
