@@ -2,4 +2,4 @@
 '@powersync/node': patch
 ---
 
-Create `dbLocation` directory if it doesn't exist.
+Provide a more actionable error message when using the `dbLocation` option with a directory that doesn't exist.
