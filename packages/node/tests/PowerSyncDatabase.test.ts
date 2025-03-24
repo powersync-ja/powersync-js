@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
 import { Worker } from 'node:worker_threads';
 
 import { vi, expect, test } from 'vitest';
@@ -93,16 +94,25 @@ databaseTest('can watch tables', async ({ database }) => {
 });
 
 tempDirectoryTest('automatically creates directory', async ({ tmpdir }) => {
+  const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
+
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
-      dbLocation: path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist'),
+      dbLocation: directory,
       readWorkerCount: 2
     }
   });
 
-  await database.get('SELECT 1;'); // Make sure the database is ready and works
+  // Make sure there's a write to the file
+  await database.writeLock((conn) => conn.execute('pragma user_version = 2'));
+
+  // Make sure the file is actually created in the right location
+  await fs.access(
+    path.join(directory, 'test.db'),
+    fs.constants.F_OK | fs.constants.R_OK | fs.constants.W_OK
+  );
 });
 
 databaseTest.skip('can watch queries', async ({ database }) => {
