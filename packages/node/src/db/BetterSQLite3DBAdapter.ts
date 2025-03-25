@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import * as Comlink from 'comlink';
@@ -53,6 +54,19 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
   async initialize() {
     let dbFilePath = this.options.dbFilename;
     if (this.options.dbLocation !== undefined) {
+      // Make sure the dbLocation exists, we get a TypeError from better-sqlite3 otherwise.
+      let directoryExists = false;
+      try {
+        const stat = await fs.stat(this.options.dbLocation);
+        directoryExists = stat.isDirectory();
+      } catch (_) {
+        // If we can't even stat, the directory won't be accessible to SQLite either.
+      }
+
+      if (!directoryExists) {
+        throw new Error(`The dbLocation directory at "${this.options.dbLocation}" does not exist. Please create it before opening the PowerSync database!`);
+      }
+
       dbFilePath = path.join(this.options.dbLocation, dbFilePath);
     }
 
@@ -65,7 +79,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       if (isCommonJsModule) {
         worker = workerFactory(path.resolve(__dirname, 'DefaultWorker.cjs'), { name: workerName });
       } else {
-        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName});
+        worker = workerFactory(new URL('./DefaultWorker.js', import.meta.url), { name: workerName });
       }
 
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();

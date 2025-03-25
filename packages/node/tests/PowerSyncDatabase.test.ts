@@ -1,8 +1,9 @@
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
 import { Worker } from 'node:worker_threads';
-import fs from 'node:fs/promises';
 
-import { vi, expect, test, onTestFinished } from 'vitest';
-import { AppSchema, createTempDir, databaseTest } from './utils';
+import { vi, expect, test } from 'vitest';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
 import { PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
 
@@ -12,15 +13,14 @@ test('validates options', async () => {
       schema: AppSchema,
       database: {
         dbFilename: '/dev/null',
-        readWorkerCount: 0,
+        readWorkerCount: 0
       }
     });
     await database.init();
   }).rejects.toThrowError('Needs at least one worker for reads');
 });
 
-test('can customize loading workers', async () => {
-  const directory = await createTempDir();
+tempDirectoryTest('can customize loading workers', async ({ tmpdir }) => {
   const defaultWorker: WorkerOpener = (...args) => new Worker(...args);
 
   const openFunction = vi.fn(defaultWorker); // Wrap in vi.fn to count invocations
@@ -29,7 +29,7 @@ test('can customize loading workers', async () => {
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
-      dbLocation: directory,
+      dbLocation: tmpdir,
       openWorker: openFunction,
       readWorkerCount: 2
     }
@@ -38,8 +38,6 @@ test('can customize loading workers', async () => {
   await database.get('SELECT 1;'); // Make sure the database is ready and works
   expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
   await database.close();
-
-  onTestFinished(async () => fs.rm(directory, { recursive: true }));
 });
 
 databaseTest('links powersync', async ({ database }) => {
@@ -93,6 +91,22 @@ databaseTest('can watch tables', async ({ database }) => {
   disposeWatch();
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['fourth']);
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
+});
+
+tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {
+  const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
+
+  expect(async () => {
+    const database = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: 'test.db',
+        dbLocation: directory,
+        readWorkerCount: 2
+      }
+    });
+    await database.waitForReady();
+  }).rejects.toThrowError(/The dbLocation directory at ".+" does not exist/);
 });
 
 databaseTest.skip('can watch queries', async ({ database }) => {

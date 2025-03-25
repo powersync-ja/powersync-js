@@ -1793,8 +1793,8 @@ importers:
   packages/node:
     dependencies:
       '@powersync/better-sqlite3':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
@@ -6629,8 +6629,8 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@powersync/better-sqlite3@0.1.0':
-    resolution: {integrity: sha512-DKiLB8Fk5FrkjxknZYTAvWwLmXf40qlWJb6iQGXQOx4VAu3ZInhYHc0n/msTqPcrBLNHStteuOmiy7h7XvtbcQ==}
+  '@powersync/better-sqlite3@0.1.1':
+    resolution: {integrity: sha512-0mAaCyv1+vx6kP76YREGJ5rm7uZrryCNU4OtJzewf36CCEI28IpHcjCE9xoGn0TXnumLGDMUj9yb0XHrAZ0sPg==}
 
   '@promptbook/utils@0.70.0-1':
     resolution: {integrity: sha512-qd2lLRRN+sE6UuNMi2tEeUUeb4zmXnxY5EMdfHVXNE+bqBDpUC7/aEfXgA3jnUXEr+xFjQ8PTFQgWvBMaKvw0g==}
@@ -29278,7 +29278,7 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@powersync/better-sqlite3@0.1.0':
+  '@powersync/better-sqlite3@0.1.1':
     dependencies:
       bindings: 1.5.0
 

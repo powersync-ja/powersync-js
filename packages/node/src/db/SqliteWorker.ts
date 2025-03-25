@@ -138,7 +138,7 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
 
       return resolved;
     },
-    ...options,
+    ...options
   };
 
   Comlink.expose(new BetterSqliteWorker(resolvedOptions), parentPort! as Comlink.Endpoint);
