@@ -1,5 +1,14 @@
 # @powersync/react-native
 
+## 1.18.2
+
+### Patch Changes
+
+- 0c8ddda: Update package description
+- fcb9d58: Fixed an issue with `useQuery` where initial query/parameter changes could cause a race condition if the first query took long.
+- Updated dependencies [fcb9d58]
+  - @powersync/react@1.5.2
+
 ## 1.18.1
 
 ### Patch Changes

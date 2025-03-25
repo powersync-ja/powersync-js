@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.15.1
+
+### Patch Changes
+
+- 0c8ddda: Update package description
+
+## 1.15.0
+
+### Minor Changes
+
+- 26025f0: Ensured OPFS tabs are not frozen or put to sleep by browsers. This prevents potential deadlocks in the syncing process.
+
 ## 1.14.2
 
 ### Patch Changes

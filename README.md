@@ -18,6 +18,10 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
   - JS Web SDK implementation (extension of `packages/common`)
 
+- [packages/node](./packages/node/README.md)
+
+  - Node.js client implementation (extension of `packages/common`)
+
 - [packages/react](./packages/react/README.md)
 
   - React integration for PowerSync.
@@ -70,15 +74,21 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/example-webpack](./demos/example-webpack/README.md): A minimal example demonstrating bundling with Webpack.
 - [demos/example-vite](./demos/example-vite/README.md): A minimal example demonstrating bundling with Vite.
+- [demos/example-vite-encryption](./demos/example-vite-encryption/README.md): A minimal example demonstrating web encryption.
 - [demos/example-nextjs](./demos/example-nextjs/README.md): An example demonstrating setup with Next.js.
 
 ### Electron
 
-- [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK.
+- [demos/example-electron](./demos/example-electron/README.md) An Electron example web rendered app using the PowerSync Web SDK in the renderer process.
+- [demos/example-electron-node](./demos/example-electron-node/README.md) An Electron example using a PowerSync database in the main process.
 
 ### Capacitor
 
 - [demos/example-capacitor](./demos/example-capacitor/README.md) A Capacitor example app using the PowerSync Web SDK.
+
+### Node
+
+- [demos/example-node](./demos/example-node/README.md) A small CLI example built using the PowerSync SDK for Node.js.
 
 ## Tools
 

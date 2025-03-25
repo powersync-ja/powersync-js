@@ -1,0 +1,69 @@
+{
+  "name": "@powersync/node",
+  "version": "0.1.1",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "PowerSync Node.js SDK. Sync Postgres, MongoDB or MySQL with SQLite in your Node.js app",
+  "files": [
+    "lib",
+    "dist",
+    "download_core.js"
+  ],
+  "scripts": {
+    "install": "node download_core.js",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
+    "watch": "tsc -b -w",
+    "test": "vitest"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./dist/bundle.cjs",
+      "types": "./lib/index.d.ts"
+    },
+    "./worker.js": {
+      "import": "./lib/worker.js",
+      "require": "./dist/worker.cjs",
+      "types": "./lib/worker.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com/",
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.22.0"
+  },
+  "dependencies": {
+    "@powersync/better-sqlite3": "^0.1.1",
+    "@powersync/common": "workspace:*",
+    "async-lock": "^1.4.0",
+    "bson": "^6.6.0",
+    "comlink": "^4.4.2"
+  },
+  "devDependencies": {
+    "@types/async-lock": "^1.4.0",
+    "rollup": "4.14.3",
+    "typescript": "^5.5.3",
+    "vitest": "^3.0.5"
+  },
+  "keywords": [
+    "data sync",
+    "offline-first",
+    "sqlite",
+    "real-time data stream",
+    "live data"
+  ]
+}

@@ -7,6 +7,9 @@ export interface SQLOpenOptions {
   dbFilename: string;
   /**
    * Directory where the database file is located.
+   * 
+   * When set, the directory must exist when the database is opened, it will
+   * not be created automatically.
    */
   dbLocation?: string;
 

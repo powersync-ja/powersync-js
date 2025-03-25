@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 1.5.2
+
+### Patch Changes
+
+- fcb9d58: Fixed an issue with `useQuery` where initial query/parameter changes could cause a race condition if the first query took long.
+
 ## 1.5.1
 
 ### Patch Changes

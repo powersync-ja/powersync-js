@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>PowerSync Node demo!</title>
+  </head>
+  <body>
+    <h1>PowerSync demo</h1>
+    <p>
+      This electron app has a PowerSync database running in its main process.
+      This database is exposed to web content through an IPC channel. To try it out,
+      enter <code>await powersync.get('SELECT powersync_rs_version()');</code>
+      in the DevTools console.
+    </p>
+
+    <p>SyncStatus: <code id="sync-status"></code></p>
+    <p>
+      Results of running <code>SELECT * FROM lists</code> (updates automatically).
+
+      <li id="results"></li>
+    </p>
+  </body>
+</html>
