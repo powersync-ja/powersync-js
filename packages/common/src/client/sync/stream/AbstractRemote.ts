@@ -20,8 +20,6 @@ export type RemoteConnector = {
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 const POWERSYNC_JS_VERSION = PACKAGE.version;
 
-// Refresh at least 30 sec before it expires
-const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
 const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
@@ -122,19 +120,9 @@ export abstract class AbstractRemote {
   }
 
   async getCredentials(): Promise<PowerSyncCredentials | null> {
-    const { expiresAt } = this.credentials ?? {};
-    const currentTime = new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS);
-    if (expiresAt && expiresAt > currentTime) {
+    // If we have credentials stored, return them.
+    if (this.credentials) {
       return this.credentials!;
-    }
-
-    // Check if existing stored token is still valid
-    if (this.credentials?.token) {
-      const { exp } = this.parseToken(this.credentials?.token) ?? {};
-
-      if (exp && new Date(Number(exp) * 1000) > currentTime) {
-        return this.credentials!;
-      }
     }
 
     this.credentials = await this.connector.fetchCredentials();
@@ -148,14 +136,6 @@ export abstract class AbstractRemote {
 
   getUserAgent() {
     return `powersync-js/${POWERSYNC_JS_VERSION}`;
-  }
-
-  private parseToken(token: string) {
-    try {
-      return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-    } catch (_) {
-      return null;
-    }
   }
 
   protected async buildRequest(path: string) {
