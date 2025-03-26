@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.26.0
+
+### Minor Changes
+
+- f8fd814: Introduced `executeRaw`, which processes SQLite query results differently to preserve all columns, preventing duplicate column names from being overwritten.
+
 ## 1.25.0
 
 ### Minor Changes
