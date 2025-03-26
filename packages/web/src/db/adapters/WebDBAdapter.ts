@@ -4,6 +4,7 @@ import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 export type SharedConnectionWorker = {
   identifier: string;
   port: MessagePort;
+  release: () => void;
 };
 
 export interface WebDBAdapter extends DBAdapter {

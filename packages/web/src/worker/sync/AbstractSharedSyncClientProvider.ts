@@ -3,18 +3,19 @@ import type { PowerSyncCredentials, SyncStatusOptions } from '@powersync/common'
 /**
  * The client side port should provide these methods.
  */
-export abstract class AbstractSharedSyncClientProvider {
-  abstract fetchCredentials(): Promise<PowerSyncCredentials | null>;
-  abstract uploadCrud(): Promise<void>;
-  abstract statusChanged(status: SyncStatusOptions): void;
-  abstract getDBWorkerPort(): Promise<MessagePort>;
+export interface SharedSyncClientProvider {
+  fetchCredentials(): Promise<PowerSyncCredentials | null>;
+  uploadCrud(): Promise<void>;
+  statusChanged(status: SyncStatusOptions): void;
+  getDBWorkerPort(): Promise<MessagePort>;
+  releaseSharedConnection(): void;
 
-  abstract trace(...x: any[]): void;
-  abstract debug(...x: any[]): void;
-  abstract info(...x: any[]): void;
-  abstract log(...x: any[]): void;
-  abstract warn(...x: any[]): void;
-  abstract error(...x: any[]): void;
-  abstract time(label: string): void;
-  abstract timeEnd(label: string): void;
+  trace(...x: any[]): void;
+  debug(...x: any[]): void;
+  info(...x: any[]): void;
+  log(...x: any[]): void;
+  warn(...x: any[]): void;
+  error(...x: any[]): void;
+  time(label: string): void;
+  timeEnd(label: string): void;
 }
