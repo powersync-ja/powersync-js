@@ -30,6 +30,7 @@ const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions)
     getConfig: Comlink.proxy(() => connection.getConfig()),
     close: Comlink.proxy(() => connection.close()),
     execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
+    executeRaw: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeRaw(sql, params)),
     executeBatch: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeBatch(sql, params)),
     registerOnTableChange: Comlink.proxy(async (callback) => {
       // Proxy the callback remove function

@@ -13,6 +13,7 @@ export interface AsyncDatabaseOpener {
 
 export interface AsyncDatabase {
   execute: (query: string, params: any[]) => Promise<ProxiedQueryResult>;
+  executeRaw: (query: string, params: any[]) => Promise<any[][]>;
   executeBatch: (query: string, params: any[][]) => Promise<ProxiedQueryResult>;
   close: () => Promise<void>;
   // Collect table updates made since the last call to collectCommittedUpdates.

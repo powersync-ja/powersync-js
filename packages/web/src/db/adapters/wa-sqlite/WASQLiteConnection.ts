@@ -334,6 +334,12 @@ export class WASqliteConnection
     });
   }
 
+  async executeRaw(sql: string | TemplateStringsArray, bindings?: any[]): Promise<any[][]> {
+    return this.acquireExecuteLock(async () => {
+      return this.executeSingleStatementRaw(sql, bindings);
+    });
+  }
+
   async close() {
     this.broadcastChannel?.close();
     await this.sqliteAPI.close(this.dbP);
@@ -360,6 +366,44 @@ export class WASqliteConnection
     sql: string | TemplateStringsArray,
     bindings?: any[]
   ): Promise<ProxiedQueryResult> {
+    const results = await this._execute(sql, bindings);
+
+    const rows: Record<string, any>[] = [];
+    for (const resultSet of results) {
+      for (const row of resultSet.rows) {
+        const outRow: Record<string, any> = {};
+        resultSet.columns.forEach((key, index) => {
+          outRow[key] = row[index];
+        });
+        rows.push(outRow);
+      }
+    }
+
+    const result = {
+      insertId: this.sqliteAPI.last_insert_id(this.dbP),
+      rowsAffected: this.sqliteAPI.changes(this.dbP),
+      rows: {
+        _array: rows,
+        length: rows.length
+      }
+    };
+
+    return result;
+  }
+
+  /**
+   * This executes a single statement using SQLite3 and returns the results as an array of arrays.
+   */
+  protected async executeSingleStatementRaw(sql: string | TemplateStringsArray, bindings?: any[]): Promise<any[][]> {
+    const results = await this._execute(sql, bindings);
+
+    return results.flatMap((resultset) => resultset.rows.map((row) => resultset.columns.map((_, index) => row[index])));
+  }
+
+  private async _execute(
+    sql: string | TemplateStringsArray,
+    bindings?: any[]
+  ): Promise<{ columns: string[]; rows: SQLiteCompatibleType[][] }[]> {
     const results = [];
     for await (const stmt of this.sqliteAPI.statements(this.dbP, sql as string)) {
       let columns;
@@ -395,26 +439,6 @@ export class WASqliteConnection
       }
     }
 
-    const rows: Record<string, any>[] = [];
-    for (const resultSet of results) {
-      for (const row of resultSet.rows) {
-        const outRow: Record<string, any> = {};
-        resultSet.columns.forEach((key, index) => {
-          outRow[key] = row[index];
-        });
-        rows.push(outRow);
-      }
-    }
-
-    const result = {
-      insertId: this.sqliteAPI.last_insert_id(this.dbP),
-      rowsAffected: this.sqliteAPI.changes(this.dbP),
-      rows: {
-        _array: rows,
-        length: rows.length
-      }
-    };
-
-    return result;
+    return results;
   }
 }
