@@ -1,5 +1,14 @@
 # @powersync/web
 
+## 1.17.0
+
+### Minor Changes
+
+- fafd562: Navigator locks are now aquired with a random/unique key.
+
+  This resolves an issue related to sequential `connect()` calls breaking all syncing and never reaching a `connected` state.
+  Two typical scenarios that can cause this is switching client parameters and React's `StrictMode` which does multiple calls of hooks like `useEffect`.
+
 ## 1.16.0
 
 ### Minor Changes
