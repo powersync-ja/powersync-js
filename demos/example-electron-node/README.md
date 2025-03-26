@@ -1,6 +1,6 @@
 # PowerSync + Electron in main process
 
-This example shows how the [PowerSync Node.js client](https://docs.powersync.com/client-sdk-references/node) can be used in the main process of an Electron app.
+This example shows how the [PowerSync Node.js client SDK](https://docs.powersync.com/client-sdk-references/node) can be used in the main process of an Electron app.
 
 The purpose of this example is to highlight specific build configurations that enable this setup.
 In particular:

@@ -1,6 +1,6 @@
-## Node.js Demo
+## Node.js CLI Demo
 
-This demonstrates a small Node.js client opening a database and connecting PowerSync.
+This demonstrates a small Node.js CLI client opening a database, connecting PowerSync and running live queries.
 
 This demo is configured to talk to an example backend [you can host yourself](https://github.com/powersync-ja/self-host-demo). To get started:
 
@@ -14,3 +14,7 @@ Results from the query are printed every time it changes. Try:
 
 1. Updating a row in the backend database and see changes reflected in the running client.
 2. Enter `add('my list')` and see the new list show up in the backend database.
+
+For more details, see the documentation for [the PowerSync node package](https://docs.powersync.com/client-sdk-references/node) and check other examples:
+
+- [example-electron-node](../example-electron-node/): An Electron example that runs PowerSync in the main process using the Node.js SDK.
