@@ -58,7 +58,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     await new Promise<void>((resolve, reject) =>
       navigator.locks
         .request(
-          `shared-connection-${this.options.identifier}`,
+          `shared-connection-${this.options.identifier}-${Date.now()}-${Math.round(Math.random() * 10000)}`,
           {
             signal: this.lockAbortController.signal
           },
