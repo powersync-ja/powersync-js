@@ -1,5 +1,16 @@
 # @powersync/op-sqlite
 
+## 0.5.0
+
+### Minor Changes
+
+- f8fd814: Introduced `executeRaw`, which processes SQLite query results differently to preserve all columns, preventing duplicate column names from being overwritten.
+
+### Patch Changes
+
+- Updated dependencies [f8fd814]
+  - @powersync/common@1.26.0
+
 ## 0.4.1
 
 ### Patch Changes

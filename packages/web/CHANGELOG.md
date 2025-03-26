@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.16.0
+
+### Minor Changes
+
+- f8fd814: Introduced `executeRaw`, which processes SQLite query results differently to preserve all columns, preventing duplicate column names from being overwritten.
+
+### Patch Changes
+
+- f0c49f9: Ensuring encryption pragma executes before setting cache size, fixes issue where encryption would throw an error during initialization.
+- Updated dependencies [f8fd814]
+  - @powersync/common@1.26.0
+
 ## 1.15.1
 
 ### Patch Changes

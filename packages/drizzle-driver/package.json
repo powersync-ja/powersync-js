@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Drizzle driver for PowerSync",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -26,7 +26,7 @@
     "test": "vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.25.0",
+    "@powersync/common": "workspace:^1.26.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {

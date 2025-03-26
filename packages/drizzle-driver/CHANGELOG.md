@@ -1,5 +1,16 @@
 # @powersync/drizzle-driver
 
+## 0.4.0
+
+### Minor Changes
+
+- f8fd814: Using `executeRaw` internally for queries instead of `execute`. This function processes SQLite query results differently to preserve all columns, preventing duplicate column names from being overwritten.
+
+### Patch Changes
+
+- Updated dependencies [f8fd814]
+  - @powersync/common@1.26.0
+
 ## 0.3.2
 
 ### Patch Changes

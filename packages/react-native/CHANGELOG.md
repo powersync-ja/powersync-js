@@ -1,5 +1,20 @@
 # @powersync/react-native
 
+## 1.19.0
+
+### Minor Changes
+
+- f8fd814: Introduced `executeRaw` member to `RNQSDBAdapter` to match `DBAdapter` interface.
+  It handles SQLite query results differently to `execute` - to preserve all columns, preventing duplicate column names from being overwritten.
+
+  The implementation for RNQS will currently fall back to `execute`, preserving current behavior. Users requiring this functionality should migrate to `@powersync/op-sqlite`.
+
+### Patch Changes
+
+- Updated dependencies [f8fd814]
+  - @powersync/common@1.26.0
+  - @powersync/react@1.5.2
+
 ## 1.18.2
 
 ### Patch Changes
