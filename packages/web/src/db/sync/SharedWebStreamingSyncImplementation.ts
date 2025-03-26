@@ -1,6 +1,6 @@
 import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
+import { SharedSyncClientProvider } from '../../worker/sync/SharedSyncClientProvider';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
@@ -17,18 +17,26 @@ import {
  * The shared worker will trigger methods on this side of the message port
  * via this client provider.
  */
-class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
+class SharedSyncClientProviderImplementation implements SharedSyncClientProvider {
+  protected release: (() => void) | null;
+
   constructor(
     protected options: WebStreamingSyncImplementationOptions,
     public statusChanged: (status: SyncStatusOptions) => void,
     protected webDB: WebDBAdapter
   ) {
-    super();
+    this.release = null;
   }
 
   async getDBWorkerPort(): Promise<MessagePort> {
-    const { port } = await this.webDB.shareConnection();
+    const { port, release } = await this.webDB.shareConnection();
+    this.release = release;
     return Comlink.transfer(port, [port]);
+  }
+
+  async releaseSharedConnection() {
+    this.release?.();
+    this.release = null;
   }
 
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
@@ -159,7 +167,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     /**
      * Pass along any sync status updates to this listener
      */
-    this.clientProvider = new SharedSyncClientProvider(
+    this.clientProvider = new SharedSyncClientProviderImplementation(
       this.webOptions,
       (status) => {
         this.iterateListeners((l) => this.updateSyncStatus(status));

@@ -25,7 +25,7 @@ import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabas
 import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { getNavigatorLocks } from '../../shared/navigator';
-import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
+import { SharedSyncClientProvider } from './SharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
 
 /**
@@ -64,7 +64,7 @@ export interface SharedSyncImplementationListener extends StreamingSyncImplement
  */
 export type WrappedSyncPort = {
   port: MessagePort;
-  clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
+  clientProvider: Comlink.Remote<SharedSyncClientProvider>;
   db?: DBAdapter;
 };
 
@@ -216,7 +216,7 @@ export class SharedSyncImplementation
   addPort(port: MessagePort) {
     const portProvider = {
       port,
-      clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
+      clientProvider: Comlink.wrap<SharedSyncClientProvider>(port)
     };
     this.ports.push(portProvider);
 
@@ -259,6 +259,7 @@ export class SharedSyncImplementation
       }
 
       // Clearing the adapter will result in a new one being opened in connect
+      await trackedPort.clientProvider.releaseSharedConnection();
       this.dbAdapter = null;
 
       if (shouldReconnect) {

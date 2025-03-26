@@ -10,6 +10,7 @@ import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 export type SharedConnectionWorker = {
   identifier: string;
   port: MessagePort;
+  release: () => void;
 };
 
 export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = {
@@ -64,7 +65,6 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
           },
           async () => {
             resolve();
-
             // Free the lock when the connection is already closed.
             if (this.lockAbortController.signal.aborted) {
               return;
@@ -89,7 +89,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     );
 
     const newPort = await remote[Comlink.createEndpoint]();
-    return { port: newPort, identifier };
+    return { port: newPort, identifier, release: () => this.lockAbortController.abort() };
   }
 
   /**
