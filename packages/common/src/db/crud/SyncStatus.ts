@@ -19,7 +19,7 @@ export type SyncDataFlowStatus = Partial<{
    * 
    * Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
    */
-  downloadProgress: InternalProgressInformation,
+  downloadProgress: InternalProgressInformation | null,
 }>;
 
 export interface SyncPriorityStatus {

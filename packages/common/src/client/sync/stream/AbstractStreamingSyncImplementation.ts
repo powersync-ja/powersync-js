@@ -20,6 +20,7 @@ import {
   isStreamingSyncData
 } from './streaming-sync-types.js';
 import { DataStream } from 'src/utils/DataStream.js';
+import { InternalProgressInformation } from 'src/db/crud/SyncProgress.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -163,13 +164,14 @@ export abstract class AbstractStreamingSyncImplementation
   protected streamingSyncPromise?: Promise<void>;
 
   syncStatus: SyncStatus;
+  private syncStatusOptions: SyncStatusOptions;
   triggerCrudUpload: () => void;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
 
-    this.syncStatus = new SyncStatus({
+    this.syncStatusOptions = {
       connected: false,
       connecting: false,
       lastSyncedAt: undefined,
@@ -177,7 +179,8 @@ export abstract class AbstractStreamingSyncImplementation
         uploading: false,
         downloading: false
       }
-    });
+    };
+    this.syncStatus = new SyncStatus(this.syncStatusOptions);
     this.abortController = null;
 
     this.triggerCrudUpload = throttleLeadingTrailing(() => {
@@ -417,7 +420,8 @@ The next upload iteration will be delayed.`);
         connected: false,
         connecting: false,
         dataFlow: {
-          downloading: false
+          downloading: false,
+          downloadProgress: null,
         }
       });
     });
@@ -581,6 +585,7 @@ The next upload iteration will be delayed.`);
             bucketMap = newBuckets;
             await this.options.adapter.removeBuckets([...bucketsToDelete]);
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
+            await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncCheckpointComplete(line)) {
             this.logger.debug('Checkpoint complete', targetCheckpoint);
             const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -601,6 +606,7 @@ The next upload iteration will be delayed.`);
                 lastSyncedAt: new Date(),
                 dataFlow: {
                   downloading: false,
+                  downloadProgress: null,
                   downloadError: undefined
                 }
               });
@@ -658,6 +664,7 @@ The next upload iteration will be delayed.`);
               write_checkpoint: diff.write_checkpoint
             };
             targetCheckpoint = newCheckpoint;
+            await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
 
             bucketMap = new Map();
             newBuckets.forEach((checksum, name) =>
@@ -675,9 +682,23 @@ The next upload iteration will be delayed.`);
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncData(line)) {
             const { data } = line;
+            const previousProgress = this.syncStatusOptions.dataFlow?.downloadProgress;
+            let updatedProgress: InternalProgressInformation | null = null;
+            if (previousProgress) {
+              updatedProgress = {...previousProgress};
+              const progressForBucket = updatedProgress[data.bucket];
+              if (progressForBucket) {
+                updatedProgress[data.bucket] = {
+                  ...progressForBucket,
+                  sinceLast: progressForBucket.sinceLast + data.data.length,
+                };
+              }
+            }
+
             this.updateSyncStatus({
               dataFlow: {
-                downloading: true
+                downloading: true,
+                downloadProgress: updatedProgress,
               }
             });
             await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] });
@@ -724,6 +745,7 @@ The next upload iteration will be delayed.`);
                   priorityStatusEntries: [],
                   dataFlow: {
                     downloading: false,
+                    downloadProgress: null,
                     downloadError: undefined
                   }
                 });
@@ -734,6 +756,30 @@ The next upload iteration will be delayed.`);
         this.logger.debug('Stream input empty');
         // Connection closed. Likely due to auth issue.
         return { retry: true };
+      }
+    });
+  }
+
+  private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
+    const localProgress = await this.options.adapter.getBucketOperationProgress();
+    const progress: InternalProgressInformation = {};
+
+    for (const bucket of checkpoint.buckets) {
+      const savedProgress = localProgress[bucket.bucket];
+      progress[bucket.bucket] = {
+        // The fallback priority doesn't matter here, but 3 is the one newer versions of the sync service
+        // will use by default.
+        priority: bucket.priority ?? 3,
+        atLast: savedProgress?.atLast ?? 0,
+        sinceLast: savedProgress.sinceLast ?? 0,
+        targetCount: bucket.count ?? 0,
+      };
+    }
+
+    this.updateSyncStatus({
+      dataFlow: {
+        downloading: true,
+        downloadProgress: progress,
       }
     });
   }
@@ -751,6 +797,7 @@ The next upload iteration will be delayed.`);
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
+      this.syncStatusOptions = options;
       this.syncStatus = updatedStatus;
       // Only trigger this is there was a change
       this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));

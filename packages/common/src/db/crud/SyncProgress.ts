@@ -1,6 +1,7 @@
 import type { SyncStatus } from "./SyncStatus.js";
 
 // (bucket, progress) pairs
+/** @internal */
 export type InternalProgressInformation = Record<string, {
     priority: number, // Priority of the associated buckets
     atLast: number, // Total ops at last completed sync, or 0
@@ -9,7 +10,7 @@ export type InternalProgressInformation = Record<string, {
   }>;
 
 /**
- * The priority used by the core extension to indicate that a full sync was completed.
+ * @internal The priority used by the core extension to indicate that a full sync was completed.
  */
 export const FULL_SYNC_PRIORITY = 2147483647;
 
