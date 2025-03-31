@@ -673,7 +673,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Execute a SQL write (INSERT/UPDATE/DELETE) query directly on the database without any PowerSync processing.
-   * This bypasses certain PowerSync abstractions and is useful for direct database access.
+   * This bypasses certain PowerSync abstractions and is useful for accessing the raw database results.
    * 
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
