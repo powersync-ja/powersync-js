@@ -26,6 +26,28 @@ npm install @powersync/node
 Both `@powersync/node` and the `better-sqlite3` packages have install scripts that need to run to compile
 or download sqlite3 and PowerSync binaries.
 
+### Common Installation Issues
+
+The better-sqlite package requires native compilation, which depends on certain system tools. This compilation process is handled by node-gyp and may fail if required dependencies are missing or misconfigured.
+
+#### Node-gyp Version Conflicts
+
+better-sqlite depends on node-gyp@^11, but some project configurations may introduce multiple versions of node-gyp, potentially causing build issues.
+
+#### Python Dependency Issues
+
+node-gyp requires Python for compilation. If your project uses node-gyp below version 10 and your system has Python 3.12 or later, you may encounter the following error:
+
+```python
+ModuleNotFoundError: No module named 'distutils'
+```
+
+To resolve this, either:
+
+Upgrade `node-gyp` to version 10 or later.
+
+Install Python [setuptools](https://pypi.org/project/setuptools/), which includes `distutils`.
+
 # Getting Started
 
 The [Node.js SDK reference](https://docs.powersync.com/client-sdk-references/node)
