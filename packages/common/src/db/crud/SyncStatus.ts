@@ -153,7 +153,6 @@ export class SyncStatus {
 
   /**
    * Serializes the SyncStatus instance to a plain object.
-   * This can be used for persistence, logging, or transmission.
    * 
    * @returns {SyncStatusOptions} A plain object representation of the sync status
    */
