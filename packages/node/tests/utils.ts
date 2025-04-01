@@ -124,8 +124,8 @@ export interface MockSyncService {
 export class TestConnector implements PowerSyncBackendConnector {
   async fetchCredentials(): Promise<PowerSyncCredentials> {
     return {
-      endpoint: '',
-      token: ''
+      endpoint: 'https://powersync.example.org',
+      token: 'test'
     };
   }
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {

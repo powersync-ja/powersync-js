@@ -1,7 +1,10 @@
 import { describe, vi, expect, beforeEach } from 'vitest';
 
 import { connectedDatabaseTest, MockSyncService, TestConnector, waitForSyncStatus } from "./utils";
-import { AbstractPowerSyncDatabase, BucketChecksum, OplogEntryJSON } from '@powersync/common';
+import { AbstractPowerSyncDatabase, BucketChecksum, OplogEntryJSON, SyncStreamConnectionMethod } from '@powersync/common';
+import Logger from 'js-logger';
+
+Logger.useDefaults();
 
 describe('Sync', () => {
     describe('reports progress', () => {
@@ -48,8 +51,8 @@ describe('Sync', () => {
         }
 
         connectedDatabaseTest('without priorities', async ({database, syncService}) => {
-            await database.connect(new TestConnector());
-            await vi.waitFor(() => expect(syncService.connectedListeners).toBe(1));
+            database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+            await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
 
             syncService.pushLine({checkpoint: {
                 last_op_id: '10',
