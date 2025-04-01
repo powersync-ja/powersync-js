@@ -54,9 +54,10 @@
     "comlink": "^4.4.2"
   },
   "devDependencies": {
+    "@powersync/drizzle-driver": "workspace:*",
     "@types/async-lock": "^1.4.0",
     "drizzle-orm": "^0.35.2",
-    "@powersync/drizzle-driver": "workspace:*",
+    "fetch-mock": "^12.5.2",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",
     "vitest": "^3.0.5"

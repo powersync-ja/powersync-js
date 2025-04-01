@@ -32,7 +32,7 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { FULL_SYNC_PRIORITY } from 'src/db/crud/SyncProgress.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */

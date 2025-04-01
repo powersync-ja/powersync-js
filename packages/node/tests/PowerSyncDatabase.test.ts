@@ -1,5 +1,4 @@
 import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
 import { Worker } from 'node:worker_threads';
 
 import { vi, expect, test } from 'vitest';
