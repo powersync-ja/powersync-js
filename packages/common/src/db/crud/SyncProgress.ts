@@ -59,10 +59,22 @@ export interface ProgressWithOperations {
 export class SyncProgress {
   constructor(protected internal: InternalProgressInformation) {}
 
+  /**
+   * Returns donwload progress towards a complete checkpoint being received.
+   *
+   * The returned {@link ProgressWithOperations} tracks the target amount of operations that need
+   * to be downloaded in total and how many of them have already been received.
+   */
   get untilCompletion(): ProgressWithOperations {
     return this.untilPriority(FULL_SYNC_PRIORITY);
   }
 
+  /**
+   * Returns download progress towards all data up until the specified priority being received.
+   *
+   * The returned {@link ProgressWithOperations} tracks the target amount of operations that need
+   * to be downloaded in total and how many of them have already been received.
+   */
   untilPriority(priority: number): ProgressWithOperations {
     let total = 0;
     let downloaded = 0;
