@@ -421,7 +421,7 @@ The next upload iteration will be delayed.`);
         connecting: false,
         dataFlow: {
           downloading: false,
-          downloadProgress: null,
+          downloadProgress: null
         }
       });
     });
@@ -685,12 +685,12 @@ The next upload iteration will be delayed.`);
             const previousProgress = this.syncStatusOptions.dataFlow?.downloadProgress;
             let updatedProgress: InternalProgressInformation | null = null;
             if (previousProgress) {
-              updatedProgress = {...previousProgress};
+              updatedProgress = { ...previousProgress };
               const progressForBucket = updatedProgress[data.bucket];
               if (progressForBucket) {
                 updatedProgress[data.bucket] = {
                   ...progressForBucket,
-                  sinceLast: progressForBucket.sinceLast + data.data.length,
+                  sinceLast: progressForBucket.sinceLast + data.data.length
                 };
               }
             }
@@ -698,7 +698,7 @@ The next upload iteration will be delayed.`);
             this.updateSyncStatus({
               dataFlow: {
                 downloading: true,
-                downloadProgress: updatedProgress,
+                downloadProgress: updatedProgress
               }
             });
             await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] });
@@ -772,14 +772,14 @@ The next upload iteration will be delayed.`);
         priority: bucket.priority ?? 3,
         atLast: savedProgress?.atLast ?? 0,
         sinceLast: savedProgress?.sinceLast ?? 0,
-        targetCount: bucket.count ?? 0,
+        targetCount: bucket.count ?? 0
       };
     }
 
     this.updateSyncStatus({
       dataFlow: {
         downloading: true,
-        downloadProgress: progress,
+        downloadProgress: progress
       }
     });
   }

@@ -1,4 +1,4 @@
-import { InternalProgressInformation, SyncProgress } from "./SyncProgress.js";
+import { InternalProgressInformation, SyncProgress } from './SyncProgress.js';
 
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
@@ -16,10 +16,10 @@ export type SyncDataFlowStatus = Partial<{
   uploadError?: Error;
   /**
    * Internal information about how far we are downloading operations in buckets.
-   * 
+   *
    * Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
    */
-  downloadProgress: InternalProgressInformation | null,
+  downloadProgress: InternalProgressInformation | null;
 }>;
 
 export interface SyncPriorityStatus {
@@ -96,7 +96,7 @@ export class SyncStatus {
   /**
    * A realtime progress report on how many operations have been downloaded and
    * how many are necessary in total to complete the next sync iteration.
-   * 
+   *
    * This field is only set when {@link SyncDataFlowStatus#downloading} is also true.
    */
   get downloadProgress(): SyncProgress | null {

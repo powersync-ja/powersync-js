@@ -93,8 +93,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   async getBucketOperationProgress(): Promise<BucketOperationProgress> {
-    const rows = await this.db.getAll<{name: string, count_at_last: number, count_since_last: number}>("SELECT name, count_at_last, count_since_last FROM ps_buckets");
-    return Object.fromEntries(rows.map((r) => [r.name, {atLast: r.count_at_last, sinceLast: r.count_since_last}]));
+    const rows = await this.db.getAll<{ name: string; count_at_last: number; count_since_last: number }>(
+      'SELECT name, count_at_last, count_since_last FROM ps_buckets'
+    );
+    return Object.fromEntries(rows.map((r) => [r.name, { atLast: r.count_at_last, sinceLast: r.count_since_last }]));
   }
 
   async saveSyncData(batch: SyncDataBatch) {
@@ -210,7 +212,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
           const bucketToCount = Object.fromEntries(checkpoint.buckets.map((b) => [b.bucket, b.count]));
           // The two parameters could be replaced with one, but: https://github.com/powersync-ja/better-sqlite3/pull/6
           const jsonBucketCount = JSON.stringify(bucketToCount);
-          await tx.execute('UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE ?->name IS NOT NULL', [jsonBucketCount, jsonBucketCount]);
+          await tx.execute(
+            'UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE ?->name IS NOT NULL',
+            [jsonBucketCount, jsonBucketCount]
+          );
         }
 
         return true;
