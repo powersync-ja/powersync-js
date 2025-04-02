@@ -32,6 +32,7 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -145,11 +146,6 @@ export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is PowerSyncDatabaseOptionsWithSettings => {
   return typeof test == 'object' && isSQLOpenOptions(test.database);
 };
-
-/**
- * The priority used by the core extension to indicate that a full sync was completed.
- */
-const FULL_SYNC_PRIORITY = 2147483647;
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
   /**

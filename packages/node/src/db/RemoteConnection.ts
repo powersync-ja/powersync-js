@@ -19,18 +19,43 @@ export class RemoteConnection implements LockContext {
     this.database = database;
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    const result = await this.database.executeBatch(query, params ?? []);
-    return RemoteConnection.wrapQueryResult(result);
+  /**
+   * Runs the inner function, but appends the stack trace where this function was called. This is useful for workers
+   * because stack traces from worker errors are otherwise unrelated to the application issue that has caused them.
+   */
+  private async recoverTrace<T>(inner: () => Promise<T>): Promise<T> {
+    const trace = {};
+    Error.captureStackTrace(trace);
+
+    try {
+      return await inner();
+    } catch (e) {
+      if (e instanceof Error && e.stack) {
+        e.stack += (trace as any).stack;
+      }
+
+      throw e;
+    }
   }
 
-  async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const result = await this.database.execute(query, params ?? []);
-    return RemoteConnection.wrapQueryResult(result);
+  executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+    return this.recoverTrace(async () => {
+      const result = await this.database.executeBatch(query, params ?? []);
+      return RemoteConnection.wrapQueryResult(result);
+    });
   }
 
-  async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    return await this.database.executeRaw(query, params ?? []);
+  execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
+    return this.recoverTrace(async () => {
+      const result = await this.database.execute(query, params ?? []);
+      return RemoteConnection.wrapQueryResult(result);
+    });
+  }
+
+  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return this.recoverTrace(async () => {
+      return await this.database.executeRaw(query, params ?? []);
+    });
   }
 
   async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {

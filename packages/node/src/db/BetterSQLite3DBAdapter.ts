@@ -64,7 +64,9 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       }
 
       if (!directoryExists) {
-        throw new Error(`The dbLocation directory at "${this.options.dbLocation}" does not exist. Please create it before opening the PowerSync database!`);
+        throw new Error(
+          `The dbLocation directory at "${this.options.dbLocation}" does not exist. Please create it before opening the PowerSync database!`
+        );
       }
 
       dbFilePath = path.join(this.options.dbLocation, dbFilePath);

@@ -19,6 +19,7 @@ export * from './client/sync/stream/AbstractStreamingSyncImplementation.js';
 export * from './client/sync/stream/streaming-sync-types.js';
 export { MAX_OP_ID } from './client/constants.js';
 
+export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';
 export * from './db/schema/Schema.js';
