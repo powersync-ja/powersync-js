@@ -208,7 +208,9 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       if (result == 1) {
         if (priority == null) {
           const bucketToCount = Object.fromEntries(checkpoint.buckets.map((b) => [b.bucket, b.count]));
-          await tx.execute('UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?1->name WHERE ?1->name IS NOT NULL', [JSON.stringify(bucketToCount)]);
+          // The two parameters could be replaced with one, but: https://github.com/powersync-ja/better-sqlite3/pull/6
+          const jsonBucketCount = JSON.stringify(bucketToCount);
+          await tx.execute('UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE ?->name IS NOT NULL', [jsonBucketCount, jsonBucketCount]);
         }
 
         return true;

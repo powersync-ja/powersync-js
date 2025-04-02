@@ -95,7 +95,7 @@ databaseTest('can watch tables', async ({ database }) => {
 tempDirectoryTest('throws error if target directory does not exist', async ({ tmpdir }) => {
   const directory = path.join(tmpdir, 'some', 'nested', 'location', 'that', 'does', 'not', 'exist');
 
-  expect(async () => {
+  await expect(async () => {
     const database = new PowerSyncDatabase({
       schema: AppSchema,
       database: {

@@ -1,9 +1,20 @@
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { defaultFetchMockConfig, FetchMock } from 'fetch-mock';
-import { test } from 'vitest';
-import { AbstractPowerSyncDatabase, AbstractRemoteOptions, column, NodePowerSyncDatabaseOptions, PowerSyncBackendConnector, PowerSyncCredentials, PowerSyncDatabase, Schema, StreamingSyncLine, SyncStatus, Table } from '../lib';
+import { onTestFinished, test } from 'vitest';
+import {
+  AbstractPowerSyncDatabase,
+  AbstractRemoteOptions,
+  column,
+  NodePowerSyncDatabaseOptions,
+  PowerSyncBackendConnector,
+  PowerSyncCredentials,
+  PowerSyncDatabase,
+  Schema,
+  StreamingSyncLine,
+  SyncStatus,
+  Table
+} from '../lib';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -38,64 +49,76 @@ export const tempDirectoryTest = test.extend<{ tmpdir: string }>({
   }
 });
 
-function createDatabaseFixture(options: Partial<NodePowerSyncDatabaseOptions> = {}) {
-  return async ({ tmpdir }, use) => {
-    const database = new PowerSyncDatabase({
-      ...options,
-      schema: AppSchema,
-      database: {
-        dbFilename: 'test.db',
-        dbLocation: tmpdir
-      }
-    });
-    await use(database);
-    await database.close();
-  };
+async function createDatabase(
+  tmpdir: string,
+  options: Partial<NodePowerSyncDatabaseOptions> = {}
+): Promise<PowerSyncDatabase> {
+  const database = new PowerSyncDatabase({
+    ...options,
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: tmpdir
+    }
+  });
+  await database.init();
+  return database;
 }
 
 export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
-  database: async ({tmpdir}, use) => {
-    await createDatabaseFixture()({tmpdir}, use);
-  },
+  database: async ({ tmpdir }, use) => {
+    const db = await createDatabase(tmpdir);
+    await use(db);
+    await db.close();
+  }
 });
 
 // TODO: Unify this with the test setup for the web SDK.
-export const mockSyncServiceTest = tempDirectoryTest.extend<{syncService: MockSyncService}>({
-  syncService: async ({}, use) => {
-    // Don't install global fetch mocks, we want tests to be isolated!
-    const fetchMock = new FetchMock(defaultFetchMockConfig);
+export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockSyncService }>({
+  syncService: async ({ tmpdir }, use) => {
     const listeners: ReadableStreamDefaultController<StreamingSyncLine>[] = [];
 
-    fetchMock.route('path:/sync/stream', async () => {
-      let thisController: ReadableStreamDefaultController<StreamingSyncLine> | null = null;
+    const inMemoryFetch: typeof fetch = async (info, init?) => {
+      const request = new Request(info, init);
+      if (request.url.endsWith('/sync/stream')) {
+        let thisController: ReadableStreamDefaultController<StreamingSyncLine> | null = null;
 
-      const syncLines = new ReadableStream<StreamingSyncLine>({
-        start(controller) {
-          thisController = controller;
-          listeners.push(controller);
-        },
-        cancel() {
-          listeners.splice(listeners.indexOf(thisController!), 1);
-        },
+        const syncLines = new ReadableStream<StreamingSyncLine>({
+          start(controller) {
+            thisController = controller;
+            listeners.push(controller);
+          },
+          cancel() {
+            listeners.splice(listeners.indexOf(thisController!), 1);
+          }
+        });
+
+        const encoder = new TextEncoder();
+        const asLines = new TransformStream<StreamingSyncLine, Uint8Array>({
+          transform: (chunk, controller) => {
+            const line = `${JSON.stringify(chunk)}\n`;
+            controller.enqueue(encoder.encode(line));
+          }
+        });
+
+        return new Response(syncLines.pipeThrough(asLines), { status: 200 });
+      } else {
+        return new Response('Not found', { status: 404 });
+      }
+    };
+
+    const newConnection = async () => {
+      const db = await createDatabase(tmpdir, {
+        remoteOptions: {
+          fetchImplementation: inMemoryFetch
+        }
       });
 
-
-      const encoder = new TextEncoder();
-      const asLines = new TransformStream<StreamingSyncLine, Uint8Array>({
-        transform: (chunk, controller) => {
-          const line = `${JSON.stringify(chunk)}\n`;
-          controller.enqueue(encoder.encode(line));
-        },
-      });
-
-      return new Response(syncLines.pipeThrough(asLines), {status: 200});
-    });
-    fetchMock.catch(404);
+      onTestFinished(async () => await db.close());
+      return db;
+    };
 
     await use({
-      clientOptions: {
-        fetchImplementation: fetchMock.fetchHandler.bind(fetchMock),
-      },
       get connectedListeners() {
         return listeners.length;
       },
@@ -104,21 +127,15 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{syncService: MockSy
           listener.enqueue(line);
         }
       },
+      createDatabase: newConnection
     });
-  },
-});
-
-export const connectedDatabaseTest = mockSyncServiceTest.extend<{ database: PowerSyncDatabase }>({
-  database: async ({ tmpdir, syncService }, use) => {
-    const fixture = createDatabaseFixture({remoteOptions: syncService.clientOptions});
-    await fixture({ tmpdir }, use);
-  },
+  }
 });
 
 export interface MockSyncService {
-  clientOptions: Partial<AbstractRemoteOptions>,
-  pushLine: (line: StreamingSyncLine) => void,
-  connectedListeners: number,
+  pushLine: (line: StreamingSyncLine) => void;
+  connectedListeners: number;
+  createDatabase: () => Promise<PowerSyncDatabase>;
 }
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -134,7 +151,10 @@ export class TestConnector implements PowerSyncBackendConnector {
   }
 }
 
-export function waitForSyncStatus(database: AbstractPowerSyncDatabase, matcher: (status: SyncStatus) => boolean): Promise<void> {
+export function waitForSyncStatus(
+  database: AbstractPowerSyncDatabase,
+  matcher: (status: SyncStatus) => boolean
+): Promise<void> {
   return new Promise((resolve) => {
     if (matcher(database.currentStatus)) {
       return resolve();

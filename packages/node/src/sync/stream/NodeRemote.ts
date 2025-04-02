@@ -29,7 +29,7 @@ export class NodeRemote extends AbstractRemote {
   ) {
     super(connector, logger, {
       fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
-      ...(options ?? {}),
+      ...(options ?? {})
     });
   }
 

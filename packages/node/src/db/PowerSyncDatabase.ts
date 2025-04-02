@@ -22,10 +22,10 @@ export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
   /**
    * Options to override how the SDK will connect to the sync service.
-   * 
+   *
    * This option is intended to be used for internal tests.
    */
-  remoteOptions?: Partial<AbstractRemoteOptions>,
+  remoteOptions?: Partial<AbstractRemoteOptions>;
 };
 
 /**
@@ -68,7 +68,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     const remote = new NodeRemote(
       connector,
       DEFAULT_REMOTE_LOGGER,
-      (this.options as NodePowerSyncDatabaseOptions).remoteOptions,
+      (this.options as NodePowerSyncDatabaseOptions).remoteOptions
     );
 
     return new NodeStreamingSyncImplementation({

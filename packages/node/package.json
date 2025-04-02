@@ -57,7 +57,6 @@
     "@powersync/drizzle-driver": "workspace:*",
     "@types/async-lock": "^1.4.0",
     "drizzle-orm": "^0.35.2",
-    "fetch-mock": "^12.5.2",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",
     "vitest": "^3.0.5"

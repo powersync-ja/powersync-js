@@ -771,7 +771,7 @@ The next upload iteration will be delayed.`);
         // will use by default.
         priority: bucket.priority ?? 3,
         atLast: savedProgress?.atLast ?? 0,
-        sinceLast: savedProgress.sinceLast ?? 0,
+        sinceLast: savedProgress?.sinceLast ?? 0,
         targetCount: bucket.count ?? 0,
       };
     }
@@ -797,7 +797,7 @@ The next upload iteration will be delayed.`);
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
-      this.syncStatusOptions = options;
+      Object.assign(this.syncStatusOptions, options);
       this.syncStatus = updatedStatus;
       // Only trigger this is there was a change
       this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
