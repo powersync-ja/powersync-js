@@ -1,6 +1,17 @@
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
   uploading: boolean;
+  /**
+   * Error during downloading (including connecting).
+   *
+   * Cleared on the next successful data download.
+   */
+  downloadError?: Error;
+  /**
+   * Error during uploading.
+   * Cleared on the next successful upload.
+   */
+  uploadError?: Error;
 }>;
 
 export interface SyncPriorityStatus {
@@ -112,7 +123,7 @@ export class SyncStatus {
 
   getMessage() {
     const dataFlow = this.dataFlowStatus;
-    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}`;
+    return `SyncStatus<connected: ${this.connected} connecting: ${this.connecting} lastSyncedAt: ${this.lastSyncedAt} hasSynced: ${this.hasSynced}. Downloading: ${dataFlow.downloading}. Uploading: ${dataFlow.uploading}. UploadError: ${dataFlow.uploadError}, DownloadError?: ${dataFlow.downloadError}>`;
   }
 
   toJSON(): SyncStatusOptions {

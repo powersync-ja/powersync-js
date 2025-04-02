@@ -1,5 +1,13 @@
 # @powersync/node
 
+## 0.2.1
+
+### Patch Changes
+
+- 1c2ee86: Update README with common installation issues section
+- Updated dependencies [b722378]
+  - @powersync/common@1.27.0
+
 ## 0.2.0
 
 ### Minor Changes
