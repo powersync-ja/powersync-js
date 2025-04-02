@@ -34,7 +34,7 @@ export class TestConnector implements PowerSyncBackendConnector {
 
 export class MockRemote extends AbstractRemote {
   streamController: ReadableStreamDefaultController<StreamingSyncLine> | null;
-
+  errorOnStreamStart = false;
   constructor(
     connector: RemoteConnector,
     protected onStreamRequested: () => void
@@ -61,6 +61,7 @@ export class MockRemote extends AbstractRemote {
     }
     throw new Error('Not implemented');
   }
+
   async postStreaming(
     path: string,
     data: any,
@@ -71,6 +72,10 @@ export class MockRemote extends AbstractRemote {
       start: (controller) => {
         this.streamController = controller;
         this.onStreamRequested();
+        if (this.errorOnStreamStart) {
+          controller.error(new Error('Mock error on stream start'));
+        }
+
         signal?.addEventListener('abort', () => {
           try {
             controller.close();

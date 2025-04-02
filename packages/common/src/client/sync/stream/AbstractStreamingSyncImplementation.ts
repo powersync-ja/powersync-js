@@ -290,6 +290,11 @@ The next upload iteration will be delayed.`);
 
               checkedCrudItem = nextCrudItem;
               await this.options.uploadCrud();
+              this.updateSyncStatus({
+                dataFlow: {
+                  uploadError: undefined
+                }
+              });
             } else {
               // Uploading is completed
               await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
@@ -299,7 +304,8 @@ The next upload iteration will be delayed.`);
             checkedCrudItem = undefined;
             this.updateSyncStatus({
               dataFlow: {
-                uploading: false
+                uploading: false,
+                uploadError: ex
               }
             });
             await this.delayRetry();
@@ -453,6 +459,12 @@ The next upload iteration will be delayed.`);
           this.logger.error(ex);
         }
 
+        this.updateSyncStatus({
+          dataFlow: {
+            downloadError: ex
+          }
+        });
+
         // On error, wait a little before retrying
         await this.delayRetry();
       } finally {
@@ -588,7 +600,8 @@ The next upload iteration will be delayed.`);
                 connected: true,
                 lastSyncedAt: new Date(),
                 dataFlow: {
-                  downloading: false
+                  downloading: false,
+                  downloadError: undefined
                 }
               });
             }
@@ -688,7 +701,10 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                priorityStatusEntries: []
+                priorityStatusEntries: [],
+                dataFlow: {
+                  downloadError: undefined
+                }
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
@@ -707,7 +723,8 @@ The next upload iteration will be delayed.`);
                   lastSyncedAt: new Date(),
                   priorityStatusEntries: [],
                   dataFlow: {
-                    downloading: false
+                    downloading: false,
+                    downloadError: undefined
                   }
                 });
               }
