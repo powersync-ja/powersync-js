@@ -441,16 +441,8 @@ The next upload iteration will be delayed.`);
         if (signal?.aborted) {
           break;
         }
-        const { retry } = await this.streamingSyncIteration(nestedAbortController.signal, options);
-        if (!retry) {
-          /**
-           * A sync error ocurred that we cannot recover from here.
-           * This loop must terminate.
-           * The nestedAbortController will close any open network requests and streams below.
-           */
-          break;
-        }
-        // Continue immediately
+        await this.streamingSyncIteration(nestedAbortController.signal, options);
+        // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
         /**
          * Either:
@@ -508,8 +500,8 @@ The next upload iteration will be delayed.`);
   protected async streamingSyncIteration(
     signal: AbortSignal,
     options?: PowerSyncConnectionOptions
-  ): Promise<{ retry?: boolean }> {
-    return await this.obtainLock({
+  ): Promise<void> {
+    await this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
@@ -559,7 +551,7 @@ The next upload iteration will be delayed.`);
           const line = await stream.read();
           if (!line) {
             // The stream has closed while waiting
-            return { retry: true };
+            return;
           }
 
           // A connection is active and messages are being received
@@ -591,7 +583,7 @@ The next upload iteration will be delayed.`);
           } else if (isStreamingSyncCheckpointComplete(line)) {
             const result = await this.applyCheckpoint(targetCheckpoint!, signal);
             if (result.endIteration) {
-              return { retry: true };
+              return;
             } else if (result.applied) {
               appliedCheckpoint = targetCheckpoint;
             }
@@ -604,7 +596,7 @@ The next upload iteration will be delayed.`);
               // This means checksums failed. Start again with a new checkpoint.
               // TODO: better back-off
               await new Promise((resolve) => setTimeout(resolve, 50));
-              return { retry: true };
+              return;
             } else if (!result.ready) {
               // If we have pending uploads, we can't complete new checkpoints outside of priority 0.
               // We'll resolve this for a complete checkpoint.
@@ -681,7 +673,7 @@ The next upload iteration will be delayed.`);
                * (uses the same one), this should have some delay.
                */
               await this.delayRetry();
-              return { retry: true };
+              return ;
             }
             this.triggerCrudUpload();
           } else {
@@ -699,9 +691,7 @@ The next upload iteration will be delayed.`);
             } else if (validatedCheckpoint === targetCheckpoint) {
               const result = await this.applyCheckpoint(targetCheckpoint!, signal);
               if (result.endIteration) {
-                // TODO: Why is this one retry: false? That's the only change from when we receive
-                // the line above?
-                return { retry: false };
+                return;
               } else if (result.applied) {
                 appliedCheckpoint = targetCheckpoint;
               }
@@ -710,7 +700,7 @@ The next upload iteration will be delayed.`);
         }
         this.logger.debug('Stream input empty');
         // Connection closed. Likely due to auth issue.
-        return { retry: true };
+        return;
       }
     });
   }
