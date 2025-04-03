@@ -46,6 +46,101 @@ describe('Streaming', { sequential: true }, () => {
       })
     )
   );
+
+  it('Should handle checkpoints during the upload process', async () => {
+    const { powersync, remote, uploadSpy } = await generateConnectedDatabase();
+    expect(powersync.connected).toBe(true);
+
+    let resolveUploadPromise: () => void;
+    let resolveUploadStartedPromise: () => void;
+    const completeUploadPromise = new Promise<void>((resolve) => {
+      resolveUploadPromise = resolve
+    });
+    const uploadStartedPromise = new Promise<void>((resolve) => {
+      resolveUploadStartedPromise = resolve
+    });
+
+    async function expectUserRows(amount: number) {
+      const row = await powersync.get<{r: number}>('SELECT COUNT(*) AS r FROM users');
+      expect(row.r).toBe(amount);
+    }
+
+    uploadSpy.mockImplementation(async (db) => {
+      const batch = await db.getCrudBatch();
+      if (!batch) return;
+
+      resolveUploadStartedPromise();
+      await completeUploadPromise;
+      await batch?.complete();
+    });
+
+    // trigger an upload
+    await powersync.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['from local']);
+    await expectUserRows(1);
+    await uploadStartedPromise;
+
+    // A connector could have uploaded data (triggering a checkpoint) before finishing
+    remote.enqueueLine({
+      checkpoint: {
+        write_checkpoint: '1',
+        last_op_id: '2',
+        buckets: [{ bucket: 'a', priority: 3, checksum: 0 }]
+      }
+    });
+    remote.generateCheckpoint.mockImplementation(() => {
+      return {
+        data: {
+          write_checkpoint: '1',
+        }
+      };
+    });
+
+    remote.enqueueLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: '1',
+            object_type: 'users',
+            data: '{"id": "test1", "name": "from local"}'
+          },
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'PUT',
+            object_id: '2',
+            object_type: 'users',
+            data: '{"id": "test1", "name": "additional entry"}'
+          },
+        ]
+      }
+    });
+    remote.enqueueLine({
+      checkpoint_complete: {
+        last_op_id: '2'
+      }
+    });
+
+    // Give the sync client some time to process these
+    await new Promise<void>((resolve) => setTimeout(resolve, 500));
+
+    // Despite receiving a valid checkpoint with two rows, it should not be visible because we have local data.
+    await expectUserRows(1);
+
+    // Mark the upload as completed. This should trigger a write_checkpoint.json request
+    resolveUploadPromise!();
+    await vi.waitFor(() => {
+      expect(remote.generateCheckpoint.mock.calls.length).equals(1);
+    });
+
+    // Completing the upload should also make the checkpoint visible without it being sent again.
+    await vi.waitFor(async () => {
+      await expectUserRows(2);
+    });
+  });
 });
 
 function describeStreamingTests(createConnectedDatabase: () => Promise<ConnectedDatabaseUtils>) {
