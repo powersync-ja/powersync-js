@@ -15,7 +15,7 @@ import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { mutexRunExclusive } from '../utils/mutex.js';
-import { throttleTrailing } from '../utils/throttle.js';
+import { throttleTrailing } from '../utils/async.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
