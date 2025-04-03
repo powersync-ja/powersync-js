@@ -717,21 +717,24 @@ The next upload iteration will be delayed.`);
 
   private async applyCheckpoint(checkpoint: Checkpoint, abort: AbortSignal) {
     let result = await this.options.adapter.syncLocalDatabase(checkpoint);
+    const pending = this.pendingCrudUpload;
+
     if (!result.checkpointValid) {
       this.logger.debug('Checksum mismatch in checkpoint, will reconnect');
       // This means checksums failed. Start again with a new checkpoint.
       // TODO: better back-off
       await new Promise((resolve) => setTimeout(resolve, 50));
       return { applied: false, endIteration: true };
-    } else if (!result.ready) {
+    } else if (!result.ready && pending != null) {
       // We have pending entries in the local upload queue or are waiting to confirm a write
-      // checkpoint. See if that is happening right now.
-      const pending = this.pendingCrudUpload;
-      if (pending != null) {
-        await Promise.race([pending, onAbortPromise(abort)]);
-      }
+      // checkpoint, which prevented this checkpoint from applying. Wait for that to complete and
+      // try again.
+      this.logger.debug(
+        'Could not apply checkpoint due to local data. Waiting for in-progress upload before retrying.'
+      );
+      await Promise.race([pending, onAbortPromise(abort)]);
 
-      if (abort.aborted || pending == null) {
+      if (abort.aborted) {
         return { applied: false, endIteration: true };
       }
 
@@ -752,7 +755,7 @@ The next upload iteration will be delayed.`);
 
       return { applied: true, endIteration: false };
     } else {
-      this.logger.debug('Could not apply checkpoint even after waiting for uploads. Waiting for next sync complete line.');
+      this.logger.debug('Could not apply checkpoint. Waiting for next sync complete line.');
       return { applied: false, endIteration: false };
     }
   }

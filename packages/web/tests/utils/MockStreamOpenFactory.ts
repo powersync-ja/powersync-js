@@ -47,7 +47,7 @@ export class MockRemote extends AbstractRemote {
     this.generateCheckpoint = vi.fn(() => {
       return {
         data: {
-          write_checkpoint: '1000',
+          write_checkpoint: '1000'
         }
       };
     });

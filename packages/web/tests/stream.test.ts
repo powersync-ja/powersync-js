@@ -54,14 +54,14 @@ describe('Streaming', { sequential: true }, () => {
     let resolveUploadPromise: () => void;
     let resolveUploadStartedPromise: () => void;
     const completeUploadPromise = new Promise<void>((resolve) => {
-      resolveUploadPromise = resolve
+      resolveUploadPromise = resolve;
     });
     const uploadStartedPromise = new Promise<void>((resolve) => {
-      resolveUploadStartedPromise = resolve
+      resolveUploadStartedPromise = resolve;
     });
 
     async function expectUserRows(amount: number) {
-      const row = await powersync.get<{r: number}>('SELECT COUNT(*) AS r FROM users');
+      const row = await powersync.get<{ r: number }>('SELECT COUNT(*) AS r FROM users');
       expect(row.r).toBe(amount);
     }
 
@@ -90,7 +90,7 @@ describe('Streaming', { sequential: true }, () => {
     remote.generateCheckpoint.mockImplementation(() => {
       return {
         data: {
-          write_checkpoint: '1',
+          write_checkpoint: '1'
         }
       };
     });
@@ -114,7 +114,7 @@ describe('Streaming', { sequential: true }, () => {
             object_id: '2',
             object_type: 'users',
             data: '{"id": "test1", "name": "additional entry"}'
-          },
+          }
         ]
       }
     });

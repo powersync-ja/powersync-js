@@ -56,5 +56,5 @@ export function onAbortPromise(signal: AbortSignal): Promise<void> {
     } else {
       signal.onabort = () => resolve();
     }
-  })
+  });
 }
