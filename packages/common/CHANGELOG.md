@@ -1,5 +1,17 @@
 # @powersync/common
 
+## 1.27.1
+
+### Patch Changes
+
+- 720ad7a: Fix a race condition causing sync changes during uploads not to be applied.
+
+## 1.27.0
+
+### Minor Changes
+
+- b722378: Added `downloadError` and `uploadError` members to `SyncDataFlowStatus` of `SyncStatus`.
+
 ## 1.26.0
 
 ### Minor Changes

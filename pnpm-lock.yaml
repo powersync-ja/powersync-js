@@ -1101,16 +1101,16 @@ importers:
         version: 1.2.2
       '@powersync/attachments':
         specifier: latest
-        version: 2.3.0(@powersync/common@1.26.0)
+        version: 2.3.0(@powersync/common@1.27.1)
       '@powersync/react':
         specifier: ^1.5.1
-        version: 1.5.2(@powersync/common@1.26.0)(react@18.3.1)
+        version: 1.5.2(@powersync/common@1.27.1)(react@18.3.1)
       '@powersync/react-native':
         specifier: ^1.17.0
-        version: 1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.26.0)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        version: 1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.27.1)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@powersync/web':
         specifier: ^1.14.0
-        version: 1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.26.0)
+        version: 1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.27.1)
       '@react-native-async-storage/async-storage':
         specifier: 1.23.1
         version: 1.23.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))
@@ -1737,7 +1737,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.26.0
+        specifier: workspace:^1.27.1
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1765,7 +1765,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.26.0
+        specifier: workspace:^1.27.1
         version: link:../common
       kysely:
         specifier: ^0.27.4
@@ -6631,8 +6631,8 @@ packages:
   '@powersync/better-sqlite3@0.1.1':
     resolution: {integrity: sha512-0mAaCyv1+vx6kP76YREGJ5rm7uZrryCNU4OtJzewf36CCEI28IpHcjCE9xoGn0TXnumLGDMUj9yb0XHrAZ0sPg==}
 
-  '@powersync/common@1.26.0':
-    resolution: {integrity: sha512-inb9vUV1+QHkKViD6XsaEvjp42tBhJzvB8nHOHeROJcgMXEM2vSgnjz4iUn6LNkTbt0+hEkaNoc3dJMM8qy+5Q==}
+  '@powersync/common@1.27.1':
+    resolution: {integrity: sha512-8gBtELtD0fPwAlHqx1lEWlz5hJCeGSsh4gb8NwNUGedU798fHEY2T93xQ4FVpKqTA9uIXtrwD3Tz12ADr8l0vA==}
 
   '@powersync/react-native@1.19.1':
     resolution: {integrity: sha512-RLidOCwfK4+poigBdzv41RYmT2DZgYE8klXf3CNmeJUjPcbZ2Qx5WtgcTf14iWu3PGE9T4IpeZdF2Yrmg+JO0A==}
@@ -27349,36 +27349,36 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@powersync/attachments@2.3.0(@powersync/common@1.26.0)':
+  '@powersync/attachments@2.3.0(@powersync/common@1.27.1)':
     dependencies:
-      '@powersync/common': 1.26.0
+      '@powersync/common': 1.27.1
 
   '@powersync/better-sqlite3@0.1.1':
     dependencies:
       bindings: 1.5.0
 
-  '@powersync/common@1.26.0':
+  '@powersync/common@1.27.1':
     dependencies:
       js-logger: 1.6.1
 
-  '@powersync/react-native@1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.26.0)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
+  '@powersync/react-native@1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.27.1)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@powersync/common': 1.26.0
-      '@powersync/react': 1.5.2(@powersync/common@1.26.0)(react@18.3.1)
+      '@powersync/common': 1.27.1
+      '@powersync/react': 1.5.2(@powersync/common@1.27.1)(react@18.3.1)
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
     optionalDependencies:
       '@journeyapps/react-native-quick-sqlite': 2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
 
-  '@powersync/react@1.5.2(@powersync/common@1.26.0)(react@18.3.1)':
+  '@powersync/react@1.5.2(@powersync/common@1.27.1)(react@18.3.1)':
     dependencies:
-      '@powersync/common': 1.26.0
+      '@powersync/common': 1.27.1
       react: 18.3.1
 
-  '@powersync/web@1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.26.0)':
+  '@powersync/web@1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.27.1)':
     dependencies:
       '@journeyapps/wa-sqlite': 1.2.2
-      '@powersync/common': 1.26.0
+      '@powersync/common': 1.27.1
       async-mutex: 0.4.1
       bson: 6.8.0
       comlink: 4.4.2
@@ -46919,7 +46919,7 @@ snapshots:
       memfs: 3.5.3
       mime-types: 2.1.35
       range-parser: 1.2.1
-      schema-utils: 4.3.0
+      schema-utils: 4.2.0
       webpack: 5.95.0(@swc/core@1.10.1(@swc/helpers@0.5.5))
 
   webpack-dev-middleware@7.4.2(webpack@5.98.0(@swc/core@1.10.1(@swc/helpers@0.5.5))):
@@ -46958,7 +46958,7 @@ snapshots:
       open: 8.4.2
       p-retry: 4.6.2
       rimraf: 3.0.2
-      schema-utils: 4.3.0
+      schema-utils: 4.2.0
       selfsigned: 2.4.1
       serve-index: 1.9.1
       sockjs: 0.3.24

@@ -1,9 +1,9 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { SyncPriorityStatus, SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
-import { throttleLeadingTrailing } from '../../../utils/throttle.js';
+import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js';
 import { BucketChecksum, BucketDescription, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
@@ -161,6 +161,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
+  private pendingCrudUpload?: Promise<void>;
 
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
@@ -181,10 +182,16 @@ export abstract class AbstractStreamingSyncImplementation
     this.abortController = null;
 
     this.triggerCrudUpload = throttleLeadingTrailing(() => {
-      if (!this.syncStatus.connected || this.syncStatus.dataFlowStatus.uploading) {
+      if (!this.syncStatus.connected || this.pendingCrudUpload != null) {
         return;
       }
-      this._uploadAllCrud();
+
+      this.pendingCrudUpload = new Promise((resolve) => {
+        this._uploadAllCrud().finally(() => {
+          this.pendingCrudUpload = undefined;
+          resolve();
+        });
+      });
     }, this.options.crudUploadThrottleMs!);
   }
 
@@ -290,6 +297,11 @@ The next upload iteration will be delayed.`);
 
               checkedCrudItem = nextCrudItem;
               await this.options.uploadCrud();
+              this.updateSyncStatus({
+                dataFlow: {
+                  uploadError: undefined
+                }
+              });
             } else {
               // Uploading is completed
               await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
@@ -299,7 +311,8 @@ The next upload iteration will be delayed.`);
             checkedCrudItem = undefined;
             this.updateSyncStatus({
               dataFlow: {
-                uploading: false
+                uploading: false,
+                uploadError: ex
               }
             });
             await this.delayRetry();
@@ -428,16 +441,8 @@ The next upload iteration will be delayed.`);
         if (signal?.aborted) {
           break;
         }
-        const { retry } = await this.streamingSyncIteration(nestedAbortController.signal, options);
-        if (!retry) {
-          /**
-           * A sync error ocurred that we cannot recover from here.
-           * This loop must terminate.
-           * The nestedAbortController will close any open network requests and streams below.
-           */
-          break;
-        }
-        // Continue immediately
+        await this.streamingSyncIteration(nestedAbortController.signal, options);
+        // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
         /**
          * Either:
@@ -452,6 +457,12 @@ The next upload iteration will be delayed.`);
         } else {
           this.logger.error(ex);
         }
+
+        this.updateSyncStatus({
+          dataFlow: {
+            downloadError: ex
+          }
+        });
 
         // On error, wait a little before retrying
         await this.delayRetry();
@@ -489,8 +500,8 @@ The next upload iteration will be delayed.`);
   protected async streamingSyncIteration(
     signal: AbortSignal,
     options?: PowerSyncConnectionOptions
-  ): Promise<{ retry?: boolean }> {
-    return await this.obtainLock({
+  ): Promise<void> {
+    await this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
@@ -540,7 +551,7 @@ The next upload iteration will be delayed.`);
           const line = await stream.read();
           if (!line) {
             // The stream has closed while waiting
-            return { retry: true };
+            return;
           }
 
           // A connection is active and messages are being received
@@ -570,29 +581,12 @@ The next upload iteration will be delayed.`);
             await this.options.adapter.removeBuckets([...bucketsToDelete]);
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncCheckpointComplete(line)) {
-            this.logger.debug('Checkpoint complete', targetCheckpoint);
-            const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
-            if (!result.checkpointValid) {
-              // This means checksums failed. Start again with a new checkpoint.
-              // TODO: better back-off
-              await new Promise((resolve) => setTimeout(resolve, 50));
-              return { retry: true };
-            } else if (!result.ready) {
-              // Checksums valid, but need more data for a consistent checkpoint.
-              // Continue waiting.
-              // landing here the whole time
-            } else {
+            const result = await this.applyCheckpoint(targetCheckpoint!, signal);
+            if (result.endIteration) {
+              return;
+            } else if (result.applied) {
               appliedCheckpoint = targetCheckpoint;
-              this.logger.debug('validated checkpoint', appliedCheckpoint);
-              this.updateSyncStatus({
-                connected: true,
-                lastSyncedAt: new Date(),
-                dataFlow: {
-                  downloading: false
-                }
-              });
             }
-
             validatedCheckpoint = targetCheckpoint;
           } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
             const priority = line.partial_checkpoint_complete.priority;
@@ -602,9 +596,10 @@ The next upload iteration will be delayed.`);
               // This means checksums failed. Start again with a new checkpoint.
               // TODO: better back-off
               await new Promise((resolve) => setTimeout(resolve, 50));
-              return { retry: true };
+              return;
             } else if (!result.ready) {
-              // Need more data for a consistent partial sync within a priority - continue waiting.
+              // If we have pending uploads, we can't complete new checkpoints outside of priority 0.
+              // We'll resolve this for a complete checkpoint.
             } else {
               // We'll keep on downloading, but can report that this priority is synced now.
               this.logger.debug('partial checkpoint validation succeeded');
@@ -678,7 +673,7 @@ The next upload iteration will be delayed.`);
                * (uses the same one), this should have some delay.
                */
               await this.delayRetry();
-              return { retry: true };
+              return ;
             }
             this.triggerCrudUpload();
           } else {
@@ -688,37 +683,71 @@ The next upload iteration will be delayed.`);
               this.updateSyncStatus({
                 connected: true,
                 lastSyncedAt: new Date(),
-                priorityStatusEntries: []
+                priorityStatusEntries: [],
+                dataFlow: {
+                  downloadError: undefined
+                }
               });
             } else if (validatedCheckpoint === targetCheckpoint) {
-              const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!);
-              if (!result.checkpointValid) {
-                // This means checksums failed. Start again with a new checkpoint.
-                // TODO: better back-off
-                await new Promise((resolve) => setTimeout(resolve, 50));
-                return { retry: false };
-              } else if (!result.ready) {
-                // Checksums valid, but need more data for a consistent checkpoint.
-                // Continue waiting.
-              } else {
+              const result = await this.applyCheckpoint(targetCheckpoint!, signal);
+              if (result.endIteration) {
+                return;
+              } else if (result.applied) {
                 appliedCheckpoint = targetCheckpoint;
-                this.updateSyncStatus({
-                  connected: true,
-                  lastSyncedAt: new Date(),
-                  priorityStatusEntries: [],
-                  dataFlow: {
-                    downloading: false
-                  }
-                });
               }
             }
           }
         }
         this.logger.debug('Stream input empty');
         // Connection closed. Likely due to auth issue.
-        return { retry: true };
+        return;
       }
     });
+  }
+
+  private async applyCheckpoint(checkpoint: Checkpoint, abort: AbortSignal) {
+    let result = await this.options.adapter.syncLocalDatabase(checkpoint);
+    const pending = this.pendingCrudUpload;
+
+    if (!result.checkpointValid) {
+      this.logger.debug('Checksum mismatch in checkpoint, will reconnect');
+      // This means checksums failed. Start again with a new checkpoint.
+      // TODO: better back-off
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return { applied: false, endIteration: true };
+    } else if (!result.ready && pending != null) {
+      // We have pending entries in the local upload queue or are waiting to confirm a write
+      // checkpoint, which prevented this checkpoint from applying. Wait for that to complete and
+      // try again.
+      this.logger.debug(
+        'Could not apply checkpoint due to local data. Waiting for in-progress upload before retrying.'
+      );
+      await Promise.race([pending, onAbortPromise(abort)]);
+
+      if (abort.aborted) {
+        return { applied: false, endIteration: true };
+      }
+
+      // Try again now that uploads have completed.
+      result = await this.options.adapter.syncLocalDatabase(checkpoint);
+    }
+
+    if (result.checkpointValid && result.ready) {
+      this.logger.debug('validated checkpoint', checkpoint);
+      this.updateSyncStatus({
+        connected: true,
+        lastSyncedAt: new Date(),
+        dataFlow: {
+          downloading: false,
+          downloadError: undefined
+        }
+      });
+
+      return { applied: true, endIteration: false };
+    } else {
+      this.logger.debug('Could not apply checkpoint. Waiting for next sync complete line.');
+      return { applied: false, endIteration: false };
+    }
   }
 
   protected updateSyncStatus(options: SyncStatusOptions) {
