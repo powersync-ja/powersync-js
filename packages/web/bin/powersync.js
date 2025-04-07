@@ -11,17 +11,16 @@ program.name('powersync-web').description('CLI for PowerSync Web SDK utilities')
 program
   .command('copy-assets')
   .description('Copy assets to the specified output directory')
-  .option('-i, --input <directory>', 'node modules dependency directory', 'node_modules')
   .option('-o, --output <directory>', 'output directory for assets', 'public')
   .action(async (options) => {
-    const inputDir = options.input;
+    const resolvedPath = require.resolve('@powersync/web/umd');
     const outputDir = options.output;
 
-    console.log(`Input directory: ${inputDir}`);
+    console.log(`Resolved input path: ${resolvedPath}`);
     console.log(`Target directory: ${outputDir}`);
 
     const cwd = process.cwd();
-    const source = path.join(cwd, inputDir, '@powersync', 'web', 'dist');
+    const source = path.join(path.dirname(resolvedPath));
     const destination = path.join(cwd, outputDir, '@powersync');
 
     await fsPromise.rm(destination, { recursive: true, force: true }); // Clear old assets

@@ -2,4 +2,4 @@
 '@powersync/web': minor
 ---
 
-Added input flag option to copy assets command, allows you to specify a path to the node_modules directory - useful in cases like a monorepo.
+Determining `node_modules` location via `require.resolve` for the `copy-assets` command. Fixes use cases where `node_modules` location might differ such as in a monorepo.
