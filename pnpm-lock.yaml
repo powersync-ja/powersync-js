@@ -401,7 +401,7 @@ importers:
         version: 10.4.20(postcss@8.5.3)
       babel-loader:
         specifier: ^9.1.3
-        version: 9.2.1(@babel/core@7.26.10)(webpack@5.98.0(@swc/core@1.6.13(@swc/helpers@0.5.5)))
+        version: 9.2.1(@babel/core@7.26.10)(webpack@5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5)))
       electron:
         specifier: 30.0.2
         version: 30.0.2
@@ -1970,8 +1970,8 @@ importers:
         specifier: workspace:*
         version: link:../react
       '@tanstack/react-query':
-        specifier: ^5.55.4
-        version: 5.59.14(react@18.3.1)
+        specifier: ^5.70.0
+        version: 5.71.1(react@18.3.1)
     devDependencies:
       '@testing-library/react':
         specifier: ^15.0.2
@@ -8559,14 +8559,14 @@ packages:
     peerDependencies:
       react: '*'
 
-  '@tanstack/query-core@5.59.13':
-    resolution: {integrity: sha512-Oou0bBu/P8+oYjXsJQ11j+gcpLAMpqW42UlokQYEz4dE7+hOtVO9rVuolJKgEccqzvyFzqX4/zZWY+R/v1wVsQ==}
+  '@tanstack/query-core@5.71.1':
+    resolution: {integrity: sha512-4+ZswCHOfJX+ikhXNoocamTUmJcHtB+Ljjz/oJkC7/eKB5IrzEwR4vEwZUENiPi+wISucJHR5TUbuuJ26w3kdQ==}
 
   '@tanstack/query-core@5.71.5':
     resolution: {integrity: sha512-XOQ5SyjCdwhxyLksGKWSL5poqyEXYPDnsrZAzJm2LgrMm4Yh6VOrfC+IFosXreDw9HNqC11YAMY3HlfHjNzuaA==}
 
-  '@tanstack/react-query@5.59.14':
-    resolution: {integrity: sha512-2cM4x3Ka4Thl7/wnjf++EMGA2Is/RgPynn83D4kfGiJOGSjb5T2D3EEOlC8Nt6U2htLS3imOXjOSMEjC3K7JNg==}
+  '@tanstack/react-query@5.71.1':
+    resolution: {integrity: sha512-6BTkaSIGT58MroI4kIGXNdx/NhirXPU+75AJObLq+WBa39WmoxhzSk0YX+hqWJ/bvqZJFxslbEU4qIHaRZq+8Q==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -28837,7 +28837,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
@@ -30843,13 +30845,13 @@ snapshots:
       '@tamagui/use-force-update': 1.79.6(react@18.3.1)
       react: 18.3.1
 
-  '@tanstack/query-core@5.59.13': {}
+  '@tanstack/query-core@5.71.1': {}
 
   '@tanstack/query-core@5.71.5': {}
 
-  '@tanstack/react-query@5.59.14(react@18.3.1)':
+  '@tanstack/react-query@5.71.1(react@18.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.59.13
+      '@tanstack/query-core': 5.71.1
       react: 18.3.1
 
   '@tanstack/react-query@5.71.5(react@18.3.1)':
@@ -32842,6 +32844,13 @@ snapshots:
       find-cache-dir: 4.0.0
       schema-utils: 4.2.0
       webpack: 5.95.0(@swc/core@1.10.1(@swc/helpers@0.5.5))
+
+  babel-loader@9.2.1(@babel/core@7.26.10)(webpack@5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5))):
+    dependencies:
+      '@babel/core': 7.26.10
+      find-cache-dir: 4.0.0
+      schema-utils: 4.2.0
+      webpack: 5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5))
 
   babel-loader@9.2.1(@babel/core@7.26.10)(webpack@5.98.0(@swc/core@1.10.1(@swc/helpers@0.5.5))):
     dependencies:
