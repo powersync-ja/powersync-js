@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.27.1
+
+### Patch Changes
+
+- 720ad7a: Fix a race condition causing sync changes during uploads not to be applied.
+
 ## 1.27.0
 
 ### Minor Changes

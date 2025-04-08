@@ -255,7 +255,7 @@ importers:
         version: 6.1.2(@capacitor/core@7.2.0)
       '@capacitor/splash-screen':
         specifier: latest
-        version: 7.0.0(@capacitor/core@7.2.0)
+        version: 7.0.1(@capacitor/core@7.2.0)
       '@journeyapps/wa-sqlite':
         specifier: ^1.2.0
         version: 1.2.1
@@ -1737,7 +1737,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.27.0
+        specifier: workspace:^1.27.1
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1765,7 +1765,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.27.0
+        specifier: workspace:^1.27.1
         version: link:../common
       kysely:
         specifier: ^0.27.4
@@ -3837,8 +3837,8 @@ packages:
     peerDependencies:
       '@capacitor/core': ^6.1.0
 
-  '@capacitor/splash-screen@7.0.0':
-    resolution: {integrity: sha512-y25WNRcl+MY/ltb3OZPZPpNmhVFW9270QneJY8tjY7FJc78zWEszj1cX84LJS4LeTHfHi4NcNW4y0/oewWG88A==}
+  '@capacitor/splash-screen@7.0.1':
+    resolution: {integrity: sha512-Nbqw9bEIe7uHj/HOT81mf4jT6uK1YykozpQw/uIKQDueMg6RJYaJK2/TMajIOohLk8fJF4TYIc1i9nGjNLnfGg==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
@@ -24197,7 +24197,7 @@ snapshots:
     dependencies:
       '@capacitor/core': 7.2.0
 
-  '@capacitor/splash-screen@7.0.0(@capacitor/core@7.2.0)':
+  '@capacitor/splash-screen@7.0.1(@capacitor/core@7.2.0)':
     dependencies:
       '@capacitor/core': 7.2.0
 
