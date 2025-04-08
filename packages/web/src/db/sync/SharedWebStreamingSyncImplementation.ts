@@ -135,6 +135,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     }
 
     this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
+    this.syncManager.setLogLevel(this.logger.getLevel());
+
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 
     /**
