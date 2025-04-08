@@ -401,7 +401,7 @@ importers:
         version: 10.4.20(postcss@8.5.3)
       babel-loader:
         specifier: ^9.1.3
-        version: 9.2.1(@babel/core@7.26.10)(webpack@5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5)))
+        version: 9.2.1(@babel/core@7.26.10)(webpack@5.98.0(@swc/core@1.6.13(@swc/helpers@0.5.5)))
       electron:
         specifier: 30.0.2
         version: 30.0.2
@@ -1100,17 +1100,17 @@ importers:
         specifier: ^1.2.0
         version: 1.2.2
       '@powersync/attachments':
-        specifier: latest
-        version: 2.3.0(@powersync/common@1.27.1)
+        specifier: workspace:*
+        version: link:../../packages/attachments
       '@powersync/react':
-        specifier: ^1.5.1
-        version: 1.5.2(@powersync/common@1.27.1)(react@18.3.1)
+        specifier: workspace:*
+        version: link:../../packages/react
       '@powersync/react-native':
-        specifier: ^1.17.0
-        version: 1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.27.1)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        specifier: workspace:*
+        version: link:../../packages/react-native
       '@powersync/web':
-        specifier: ^1.14.0
-        version: 1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.27.1)
+        specifier: workspace:*
+        version: link:../../packages/web
       '@react-native-async-storage/async-storage':
         specifier: 1.23.1
         version: 1.23.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))
@@ -6623,40 +6623,8 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@powersync/attachments@2.3.0':
-    resolution: {integrity: sha512-90CnwrwoltWMVhdoQohQU/wkzxXXfiuyWDanEu0D1+EnlaaKtd0P5SYq7WfOMV84tJ7RXpGP3257dYbdrQ/ozw==}
-    peerDependencies:
-      '@powersync/common': ^1.25.0
-
   '@powersync/better-sqlite3@0.1.1':
     resolution: {integrity: sha512-0mAaCyv1+vx6kP76YREGJ5rm7uZrryCNU4OtJzewf36CCEI28IpHcjCE9xoGn0TXnumLGDMUj9yb0XHrAZ0sPg==}
-
-  '@powersync/common@1.27.1':
-    resolution: {integrity: sha512-8gBtELtD0fPwAlHqx1lEWlz5hJCeGSsh4gb8NwNUGedU798fHEY2T93xQ4FVpKqTA9uIXtrwD3Tz12ADr8l0vA==}
-
-  '@powersync/react-native@1.19.1':
-    resolution: {integrity: sha512-RLidOCwfK4+poigBdzv41RYmT2DZgYE8klXf3CNmeJUjPcbZ2Qx5WtgcTf14iWu3PGE9T4IpeZdF2Yrmg+JO0A==}
-    peerDependencies:
-      '@journeyapps/react-native-quick-sqlite': ^2.4.2
-      '@powersync/common': ^1.27.0
-      react: '*'
-      react-native: '*'
-    peerDependenciesMeta:
-      '@journeyapps/react-native-quick-sqlite':
-        optional: true
-
-  '@powersync/react@1.5.2':
-    resolution: {integrity: sha512-+9HwpCwZSv0PHG6kgI9OQgOwhebS5Pa1p9ezVIFWVIPx+qaVLH2L3db/KUX0Zym5voQrLzgGUf7j6tl5lMYp+Q==}
-    peerDependencies:
-      '@powersync/common': ^1.25.0
-      react: '*'
-
-  '@powersync/web@1.17.1':
-    resolution: {integrity: sha512-owSFwQQGPrlSnk94czqB9ZuX2bLdfvK/bUV9g/HYGVFa7mmNcFnnmuVIMRu6yLcvdYlDtSrkFBzgbYALOkXtwA==}
-    hasBin: true
-    peerDependencies:
-      '@journeyapps/wa-sqlite': ^1.2.2
-      '@powersync/common': ^1.27.0
 
   '@promptbook/utils@0.70.0-1':
     resolution: {integrity: sha512-qd2lLRRN+sE6UuNMi2tEeUUeb4zmXnxY5EMdfHVXNE+bqBDpUC7/aEfXgA3jnUXEr+xFjQ8PTFQgWvBMaKvw0g==}
@@ -27349,41 +27317,9 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@powersync/attachments@2.3.0(@powersync/common@1.27.1)':
-    dependencies:
-      '@powersync/common': 1.27.1
-
   '@powersync/better-sqlite3@0.1.1':
     dependencies:
       bindings: 1.5.0
-
-  '@powersync/common@1.27.1':
-    dependencies:
-      js-logger: 1.6.1
-
-  '@powersync/react-native@1.19.1(@journeyapps/react-native-quick-sqlite@2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(@powersync/common@1.27.1)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@powersync/common': 1.27.1
-      '@powersync/react': 1.5.2(@powersync/common@1.27.1)(react@18.3.1)
-      react: 18.3.1
-      react-native: 0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
-    optionalDependencies:
-      '@journeyapps/react-native-quick-sqlite': 2.4.2(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.5.4))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
-
-  '@powersync/react@1.5.2(@powersync/common@1.27.1)(react@18.3.1)':
-    dependencies:
-      '@powersync/common': 1.27.1
-      react: 18.3.1
-
-  '@powersync/web@1.17.1(@journeyapps/wa-sqlite@1.2.2)(@powersync/common@1.27.1)':
-    dependencies:
-      '@journeyapps/wa-sqlite': 1.2.2
-      '@powersync/common': 1.27.1
-      async-mutex: 0.4.1
-      bson: 6.8.0
-      comlink: 4.4.2
-      commander: 12.1.0
-      js-logger: 1.6.1
 
   '@promptbook/utils@0.70.0-1':
     dependencies:
@@ -28837,9 +28773,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
@@ -32844,13 +32778,6 @@ snapshots:
       find-cache-dir: 4.0.0
       schema-utils: 4.2.0
       webpack: 5.95.0(@swc/core@1.10.1(@swc/helpers@0.5.5))
-
-  babel-loader@9.2.1(@babel/core@7.26.10)(webpack@5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5))):
-    dependencies:
-      '@babel/core': 7.26.10
-      find-cache-dir: 4.0.0
-      schema-utils: 4.2.0
-      webpack: 5.95.0(@swc/core@1.6.13(@swc/helpers@0.5.5))
 
   babel-loader@9.2.1(@babel/core@7.26.10)(webpack@5.98.0(@swc/core@1.10.1(@swc/helpers@0.5.5))):
     dependencies:
