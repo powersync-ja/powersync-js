@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions, CameraCapturedPicture } from 'expo-camera';
+import { CameraView, useCameraPermissions, CameraCapturedPicture, CameraType } from 'expo-camera';
 import React, { useRef } from 'react';
 import {
   StyleSheet,
@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Button, Icon } from '@rneui/themed';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraType } from 'expo-camera/build/legacy/Camera.types';
 
 export interface Props {
   onCaptured: (photo: CameraCapturedPicture) => void;
@@ -25,7 +24,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [facing, setFacing] = React.useState(CameraType.back);
+  const [facing, setFacing] = React.useState<CameraType>('back');
 
   // Getting width and height of the screen
   const { width } = useWindowDimensions();
@@ -58,7 +57,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
   };
 
   const onFlipPress = () => {
-    setFacing(facing === CameraType.back ? CameraType.front : CameraType.back);
+    setFacing(facing === 'back' ? 'front' : 'back');
   };
 
   if (!permission) {
