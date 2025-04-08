@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tanstack-react-query",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
