@@ -92,7 +92,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   get logger() {
-    return this.powersync.logger;
+    return this.powersync.logger ?? console;
   }
 
   protected get storage() {

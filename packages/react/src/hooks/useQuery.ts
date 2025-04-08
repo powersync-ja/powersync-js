@@ -42,7 +42,7 @@ export const useQuery = <T = any>(
   options: AdditionalOptions = { runQueryOnce: false }
 ): QueryResult<T> => {
   const powerSync = usePowerSync();
-  const logger = powerSync.logger;
+  const logger = powerSync?.logger ?? console;
   if (!powerSync) {
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }

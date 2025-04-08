@@ -47,7 +47,7 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
   }
 
   get logger() {
-    return this.db.logger;
+    return this.db.logger ?? console;
   }
 
   addTemporaryHold() {

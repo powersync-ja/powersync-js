@@ -65,7 +65,7 @@ export const useQuery = <T = any>(
   let fetchData: () => Promise<void> | undefined;
 
   const powerSync = usePowerSync();
-  const logger = powerSync.value.logger;
+  const logger = powerSync?.value?.logger ?? console;
 
   const finishLoading = () => {
     isLoading.value = false;
