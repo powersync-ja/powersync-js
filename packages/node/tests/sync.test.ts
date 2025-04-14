@@ -245,10 +245,10 @@ async function waitForProgress(
     //console.log('checking', progress);
 
     const check = (expected: [number, number], actual: ProgressWithOperations): boolean => {
-      return actual.completed == expected[0] && actual.total == expected[1];
+      return actual.downloadedOperations == expected[0] && actual.totalOperations == expected[1];
     };
 
-    if (!check(total, progress.untilCompletion)) {
+    if (!check(total, progress)) {
       return false;
     }
 

@@ -28,21 +28,27 @@ export interface ProgressWithOperations {
    * The total amount of operations to download for the current sync iteration
    * to complete.
    */
-  total: number;
+  totalOperations: number;
   /**
    * The amount of operations that have already been downloaded.
    */
-  completed: number;
+  downloadedOperations: number;
 
   /**
-   * Relative progress, as {@link completed} of {@link total}. This will be a number
-   * between `0.0` and `1.0`.
+   * Relative progress, as {@link downloadedOperations} of {@link totalOperations}.
+   * 
+   * This will be a number between `0.0` and `1.0`.
    */
-  fraction: number;
+  downloadedFraction: number;
 }
 
 /**
  * Provides realtime progress on how PowerSync is downloading rows.
+ * 
+ * The progress until the next complete sync is available through the fields on {@link ProgressWithOperations},
+ * which this class implements.
+ * Additionally, the {@link SyncProgress.untilPriority} method can be used to otbain progress towards
+ * a specific priority (instead of the progress for the entire download).
  *
  * The reported progress always reflects the status towards th end of a sync iteration (after
  * which a consistent snapshot of all buckets is available locally).
@@ -56,17 +62,18 @@ export interface ProgressWithOperations {
  * Also note that data is downloaded in bulk, which means that individual counters are unlikely
  * to be updated one-by-one.
  */
-export class SyncProgress {
-  constructor(protected internal: InternalProgressInformation) {}
+export class SyncProgress implements ProgressWithOperations {
 
-  /**
-   * Returns donwload progress towards a complete checkpoint being received.
-   *
-   * The returned {@link ProgressWithOperations} tracks the target amount of operations that need
-   * to be downloaded in total and how many of them have already been received.
-   */
-  get untilCompletion(): ProgressWithOperations {
-    return this.untilPriority(FULL_SYNC_PRIORITY);
+  totalOperations: number;
+  downloadedOperations: number;
+  downloadedFraction: number;
+
+  constructor(protected internal: InternalProgressInformation) {
+    const untilCompletion = this.untilPriority(FULL_SYNC_PRIORITY);
+
+    this.totalOperations = untilCompletion.totalOperations;
+    this.downloadedOperations = untilCompletion.downloadedOperations;
+    this.downloadedFraction = untilCompletion.downloadedFraction;
   }
 
   /**
@@ -89,9 +96,9 @@ export class SyncProgress {
 
     let progress = total == 0 ? 0.0 : downloaded / total;
     return {
-      total,
-      completed: downloaded,
-      fraction: progress
+      totalOperations: total,
+      downloadedOperations: downloaded,
+      downloadedFraction: progress
     };
   }
 }
