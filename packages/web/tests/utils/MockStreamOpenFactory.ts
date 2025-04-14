@@ -18,6 +18,7 @@ import {
   WebPowerSyncOpenFactoryOptions,
   WebStreamingSyncImplementation
 } from '@powersync/web';
+import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
   async fetchCredentials(): Promise<PowerSyncCredentials> {
@@ -35,12 +36,21 @@ export class TestConnector implements PowerSyncBackendConnector {
 export class MockRemote extends AbstractRemote {
   streamController: ReadableStreamDefaultController<StreamingSyncLine> | null;
   errorOnStreamStart = false;
+  generateCheckpoint: MockedFunction<() => any>;
+
   constructor(
     connector: RemoteConnector,
     protected onStreamRequested: () => void
   ) {
     super(connector);
     this.streamController = null;
+    this.generateCheckpoint = vi.fn(() => {
+      return {
+        data: {
+          write_checkpoint: '1000'
+        }
+      };
+    });
   }
 
   async getBSON(): Promise<BSONImplementation> {
@@ -53,11 +63,7 @@ export class MockRemote extends AbstractRemote {
   async get(path: string, headers?: Record<string, string> | undefined): Promise<any> {
     // mock a response for write checkpoint API
     if (path.includes('checkpoint')) {
-      return {
-        data: {
-          write_checkpoint: '1000'
-        }
-      };
+      return this.generateCheckpoint();
     }
     throw new Error('Not implemented');
   }

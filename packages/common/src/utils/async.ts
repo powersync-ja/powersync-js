@@ -48,3 +48,13 @@ export function throttleLeadingTrailing(func: () => void, wait: number) {
     }
   };
 }
+
+export function onAbortPromise(signal: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+    } else {
+      signal.onabort = () => resolve();
+    }
+  });
+}
