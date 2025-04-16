@@ -1,13 +1,14 @@
 import '@azure/core-asynciterator-polyfill';
-import { PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
-import Logger from 'js-logger';
+import { createBaseLogger, LogLevels, PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
 import { Connector } from '../lib/connector';
 import { schema } from '../lib/schema';
 
-Logger.useDefaults();
+const defaultLogger = createBaseLogger();
+defaultLogger.useDefaults();
+defaultLogger.setLevel(LogLevels.DEBUG);
 
 const connector = new Connector();
 

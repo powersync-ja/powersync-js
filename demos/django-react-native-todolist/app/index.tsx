@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { router } from 'expo-router';
-import Logger from 'js-logger';
+import { createBaseLogger, LogLevels } from '@powersync/react-native';
 /**
  * This is the entry point when the app loads.
  * Checks for a Supabase session.
@@ -10,8 +10,9 @@ import Logger from 'js-logger';
  */
 const App = () => {
   React.useEffect(() => {
-    Logger.useDefaults();
-    Logger.setLevel(Logger.DEBUG);
+    const defaultLogger = createBaseLogger();
+    defaultLogger.useDefaults();
+    defaultLogger.setLevel(LogLevels.DEBUG);
 
     setImmediate(() => router.replace('signin'));
   }, []);

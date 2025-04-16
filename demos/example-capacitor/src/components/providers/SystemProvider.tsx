@@ -1,14 +1,14 @@
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase } from '@powersync/web';
+import { createBaseLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
-import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
 import { Capacitor } from '@capacitor/core';
 
-Logger.useDefaults();
-Logger.setLevel(Logger.DEBUG);
+const defaultLogger = createBaseLogger();
+defaultLogger.useDefaults();
+defaultLogger.setLevel(LogLevels.DEBUG);
 
 const platform = Capacitor.getPlatform();
 const isIOs = platform === 'ios';

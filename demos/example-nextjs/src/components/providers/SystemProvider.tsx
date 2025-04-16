@@ -3,14 +3,13 @@
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { BackendConnector } from '@/library/powersync/BackendConnector';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase } from '@powersync/web';
+import { createBaseLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
-import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
-// eslint-disable-next-line react-hooks/rules-of-hooks
-Logger.useDefaults();
-Logger.setLevel(Logger.DEBUG);
+const defaultLogger = createBaseLogger();
+defaultLogger.useDefaults();
+defaultLogger.setLevel(LogLevels.DEBUG);
 
 const powerSync = new PowerSyncDatabase({
   database: { dbFilename: 'powersync2.db' },

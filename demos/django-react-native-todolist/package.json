@@ -27,7 +27,6 @@
     "expo-router": "3.5.21",
     "expo-splash-screen": "~0.27.4",
     "expo-status-bar": "~1.12.1",
-    "js-logger": "^1.6.1",
     "lodash": "^4.17.21",
     "metro": "~0.80.8",
     "react": "18.2.0",

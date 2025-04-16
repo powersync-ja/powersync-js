@@ -1,7 +1,8 @@
-import { column, Schema, Table, PowerSyncDatabase } from '@powersync/web';
-import Logger from 'js-logger';
+import { column, Schema, Table, PowerSyncDatabase, createBaseLogger, LogLevels } from '@powersync/web';
 
-Logger.useDefaults();
+const defaultLogger = createBaseLogger();
+defaultLogger.useDefaults();
+defaultLogger.setLevel(LogLevels.DEBUG);
 
 const customers = new Table({ name: column.text });
 

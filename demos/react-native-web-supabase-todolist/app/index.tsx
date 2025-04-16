@@ -3,7 +3,6 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { useSystem } from '../library/powersync/system';
 import { router } from 'expo-router';
-import Logger from 'js-logger';
 
 /**
  * This is the entry point when the app loads.
@@ -13,10 +12,8 @@ import Logger from 'js-logger';
  */
 const App: React.FC = () => {
   const { supabaseConnector } = useSystem();
-
   React.useEffect(() => {
-    Logger.useDefaults();
-    Logger.setLevel(Logger.DEBUG);
+
     supabaseConnector.client.auth
       .getSession()
       .then(({ data }) => {

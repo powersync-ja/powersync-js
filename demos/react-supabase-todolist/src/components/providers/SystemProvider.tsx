@@ -3,10 +3,13 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase } from '@powersync/web';
-import Logger from 'js-logger';
+import { createBaseLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
+
+const baseLogger = createBaseLogger();
+baseLogger.useDefaults();
+baseLogger.setLevel(LogLevels.DEBUG);
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
@@ -14,7 +17,7 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
-    dbFilename: 'example.db'
+    dbFilename: 'example1.db'
   }
 });
 
@@ -23,15 +26,13 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [powerSync] = React.useState(db);
 
   React.useEffect(() => {
-    // Linting thinks this is a hook due to it's name
-    Logger.useDefaults(); // eslint-disable-line
-    Logger.setLevel(Logger.DEBUG);
+
     // For console testing purposes
     (window as any)._powersync = powerSync;
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {},
+      initialized: () => { },
       sessionStarted: () => {
         powerSync.connect(connector);
       }

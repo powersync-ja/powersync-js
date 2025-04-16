@@ -26,7 +26,6 @@
     "@journeyapps/wa-sqlite": "^1.2.0",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
-    "js-logger": "^1.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"
