@@ -20,7 +20,9 @@ export default (commandLineArgs) => {
     plugins: [
       json(),
       nodeResolve({ preferBuiltins: false, browser: true }),
-      commonjs({}),
+      commonjs({
+        requireReturnsDefault: 'auto'
+      }),
       inject({
         Buffer: ['buffer', 'Buffer'],
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
