@@ -38,7 +38,10 @@ const config: ExpoConfig = {
     },
     package: 'com.powersync.example'
   },
+
   web: {
+    bundler: 'metro',
+    output: 'single',
     favicon: './assets/favicon.png'
   },
   extra: {
@@ -58,15 +61,15 @@ const config: ExpoConfig = {
       'expo-build-properties',
       {
         ios: {
-          deploymentTarget: '13.4',
+          deploymentTarget: '15.1',
           // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
           newArchEnabled: false
         },
         android: {
-          minSdkVersion: 23,
-          compileSdkVersion: 34,
-          targetSdkVersion: 34,
-          buildToolsVersion: '34.0.0',
+          minSdkVersion: 24,
+          compileSdkVersion: 35,
+          targetSdkVersion: 35,
+          buildToolsVersion: '35.0.0',
           // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
           newArchEnabled: false
         }

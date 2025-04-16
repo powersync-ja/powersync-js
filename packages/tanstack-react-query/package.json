@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tanstack-react-query",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -35,12 +35,12 @@
   "dependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
-    "@tanstack/react-query": "^5.55.4"
+    "@tanstack/react-query": "^5.70.0"
   },
   "devDependencies": {
     "@testing-library/react": "^15.0.2",
-    "@types/react": "^18.2.34",
+    "@types/react": "18.3.1",
     "jsdom": "^24.0.0",
-    "react": "18.2.0"
+    "react": "18.3.1"
   }
 }

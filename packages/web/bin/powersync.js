@@ -13,12 +13,14 @@ program
   .description('Copy assets to the specified output directory')
   .option('-o, --output <directory>', 'output directory for assets', 'public')
   .action(async (options) => {
+    const resolvedPath = require.resolve('@powersync/web/umd');
     const outputDir = options.output;
 
+    console.log(`Resolved input path: ${resolvedPath}`);
     console.log(`Target directory: ${outputDir}`);
 
     const cwd = process.cwd();
-    const source = path.join(cwd, 'node_modules', '@powersync', 'web', 'dist');
+    const source = path.join(path.dirname(resolvedPath));
     const destination = path.join(cwd, outputDir, '@powersync');
 
     await fsPromise.rm(destination, { recursive: true, force: true }); // Clear old assets
