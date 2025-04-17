@@ -78,7 +78,7 @@ export const CameraWidget: React.FC<Props> = (props) => {
       <Camera
         ref={cameraRef}
         style={{ ...styles.camera, height: height, width: '100%' }}
-        type={CameraType.back}
+        type={'back'}
         onCameraReady={onReady}
         ratio={isAndroid ? '16:9' : undefined}>
         <TouchableOpacity onPress={props.onClose} style={styles.backButton}>

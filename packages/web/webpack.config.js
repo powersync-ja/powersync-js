@@ -41,6 +41,11 @@ module.exports = () => {
       '@journeyapps/wa-sqlite': '@journeyapps/wa-sqlite',
       '@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js':
         '@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js',
+      '@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js':
+        '@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js',
+      '@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js':
+        '@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js',
+
       '@powersync/common': '@powersync/common',
       'async-mutex': 'async-mutex',
       comlink: 'comlink',
