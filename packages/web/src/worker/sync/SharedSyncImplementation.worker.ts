@@ -4,10 +4,12 @@ import {
   SharedSyncClientEvent,
   type ManualSharedSyncPayload
 } from './SharedSyncImplementation';
-import Logger from 'js-logger';
+import { createBaseLogger } from '@powersync/common';
 
 const _self: SharedWorkerGlobalScope = self as any;
-Logger.useDefaults();
+const logger = createBaseLogger();
+logger.useDefaults();
+
 const sharedSyncImplementation = new SharedSyncImplementation();
 
 _self.onconnect = function (event: MessageEvent<string>) {
