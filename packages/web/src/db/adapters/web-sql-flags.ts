@@ -1,5 +1,4 @@
-import { SQLOpenOptions } from '@powersync/common';
-import { ILogger } from 'js-logger';
+import { type ILogger, SQLOpenOptions } from '@powersync/common';
 
 /**
  * Common settings used when creating SQL connections on web.

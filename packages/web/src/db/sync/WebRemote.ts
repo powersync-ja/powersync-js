@@ -1,5 +1,3 @@
-import { type ILogger } from 'js-logger';
-
 import {
   AbstractRemote,
   AbstractRemoteOptions,
@@ -7,6 +5,7 @@ import {
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
+  ILogger,
   RemoteConnector
 } from '@powersync/common';
 
