@@ -110,4 +110,14 @@ describe('Schema', () => {
       ]
     });
   });
+
+  it('should get the internal name of a table', () => {
+    const schema = new Schema({
+      users: new Table({ name: column.text }),
+      posts: new Table({ name: column.text })
+    });
+
+    expect(schema.getTableInternalName('users')).toBe('ps_data__users');
+    expect(schema.getTableInternalName('posts')).toBe('ps_data__posts');
+  });
 });
