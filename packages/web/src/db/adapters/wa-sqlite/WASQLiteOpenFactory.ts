@@ -12,6 +12,7 @@ import {
 } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
+import { ILogLevel } from 'js-logger';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -20,6 +21,11 @@ export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
   vfs: WASQLiteVFS;
 }
+
+export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
+  logLevel: ILogLevel;
+}
+
 /**
  * Opens a SQLite connection using WA-SQLite.
  */
@@ -73,7 +79,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<ResolvedWASQLiteOpenFactoryOptions>>(workerPort);
+      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WorkerDBOpenerOptions>>(workerPort);
 
       return new WorkerWrappedAsyncDatabaseConnection({
         remote: workerDBOpener,
@@ -83,7 +89,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           temporaryStorage,
           cacheSizeKb,
           flags: this.resolvedFlags,
-          encryptionKey: encryptionKey
+          encryptionKey: encryptionKey,
+          logLevel: this.logger.getLevel()
         }),
         identifier: this.options.dbFilename,
         onClose: () => {

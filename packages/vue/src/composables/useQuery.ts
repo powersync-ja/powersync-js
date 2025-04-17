@@ -65,6 +65,7 @@ export const useQuery = <T = any>(
   let fetchData: () => Promise<void> | undefined;
 
   const powerSync = usePowerSync();
+  const logger = powerSync?.value?.logger ?? console;
 
   const finishLoading = () => {
     isLoading.value = false;
@@ -99,7 +100,7 @@ export const useQuery = <T = any>(
       const result = await executor();
       handleResult(result);
     } catch (e) {
-      console.error('Failed to fetch data:', e);
+      logger.error('Failed to fetch data:', e);
       handleError(e);
     }
   };
@@ -114,7 +115,7 @@ export const useQuery = <T = any>(
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (e) {
-      console.error('Failed to parse query:', e);
+      logger.error('Failed to parse query:', e);
       handleError(e);
       return;
     }
@@ -125,7 +126,7 @@ export const useQuery = <T = any>(
       try {
         resolvedTables = await powerSync.value.resolveTables(sql, parameters, options);
       } catch (e) {
-        console.error('Failed to fetch tables:', e);
+        logger.error('Failed to fetch tables:', e);
         handleError(e);
         return;
       }

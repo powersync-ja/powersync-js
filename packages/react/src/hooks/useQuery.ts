@@ -42,6 +42,7 @@ export const useQuery = <T = any>(
   options: AdditionalOptions = { runQueryOnce: false }
 ): QueryResult<T> => {
   const powerSync = usePowerSync();
+  const logger = powerSync?.logger ?? console;
   if (!powerSync) {
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
@@ -50,7 +51,7 @@ export const useQuery = <T = any>(
   try {
     parsedQuery = parseQuery(query, parameters);
   } catch (error) {
-    console.error('Failed to parse query:', error);
+    logger.error('Failed to parse query:', error);
     return { isLoading: false, isFetching: false, data: [], error };
   }
 
@@ -107,7 +108,7 @@ export const useQuery = <T = any>(
 
       handleResult(result);
     } catch (e) {
-      console.error('Failed to fetch data:', e);
+      logger.error('Failed to fetch data:', e);
       handleError(e);
     }
   };
@@ -122,7 +123,7 @@ export const useQuery = <T = any>(
 
       setTables(tables);
     } catch (e) {
-      console.error('Failed to fetch tables:', e);
+      logger.error('Failed to fetch tables:', e);
       handleError(e);
     }
   };

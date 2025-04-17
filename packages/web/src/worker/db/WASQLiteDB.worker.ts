@@ -6,8 +6,15 @@ import '@journeyapps/wa-sqlite';
 import * as Comlink from 'comlink';
 import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
 import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
-import { ResolvedWASQLiteOpenFactoryOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
+import {
+  ResolvedWASQLiteOpenFactoryOptions,
+  WorkerDBOpenerOptions
+} from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
+import Logger from 'js-logger';
+
+Logger.useDefaults();
+const logger = Logger.get('db-worker');
 
 /**
  * Keeps track of open DB connections and the clients which
@@ -39,11 +46,14 @@ const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions)
   };
 };
 
-const openDBShared = async (options: ResolvedWASQLiteOpenFactoryOptions): Promise<AsyncDatabaseConnection> => {
+const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDatabaseConnection> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;
-    const { dbFilename } = options;
+    const { dbFilename, logLevel } = options;
+
+    logger.setLevel(logLevel);
+
     if (!DBMap.has(dbFilename)) {
       const clientIds = new Set<number>();
       const connection = await openWorkerConnection(options);
@@ -65,14 +75,14 @@ const openDBShared = async (options: ResolvedWASQLiteOpenFactoryOptions): Promis
       }),
       close: Comlink.proxy(() => {
         const { clientIds } = dbEntry;
-        console.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
+        logger.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
         clientIds.delete(clientId);
         if (clientIds.size == 0) {
-          console.debug(`Closing connection to ${dbFilename}.`);
+          logger.debug(`Closing connection to ${dbFilename}.`);
           DBMap.delete(dbFilename);
           return db.close?.();
         }
-        console.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
+        logger.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
         return;
       })
     };

@@ -13,7 +13,7 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
-import Logger, { type ILogger } from 'js-logger';
+import Logger, { ILogLevel, type ILogger } from 'js-logger';
 import { WebRemote } from '../../db/sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
@@ -145,6 +145,11 @@ export class SharedSyncImplementation
     return this.isInitialized;
   }
 
+  setLogLevel(level: ILogLevel) {
+    this.logger.setLevel(level);
+    this.broadCastLogger.setLevel(level);
+  }
+
   /**
    * Configures the DBAdapter connection and a streaming sync client.
    */
@@ -234,7 +239,7 @@ export class SharedSyncImplementation
   async removePort(port: MessagePort) {
     const index = this.ports.findIndex((p) => p.port == port);
     if (index < 0) {
-      console.warn(`Could not remove port ${port} since it is not present in active ports.`);
+      this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
       return;
     }
 
@@ -311,7 +316,7 @@ export class SharedSyncImplementation
 
             abortController.signal.onabort = reject;
             try {
-              console.log('calling the last port client provider for credentials');
+              this.logger.log('calling the last port client provider for credentials');
               resolve(await lastPort.clientProvider.fetchCredentials());
             } catch (ex) {
               reject(ex);
