@@ -51,12 +51,15 @@
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
-    "comlink": "^4.4.2"
+    "comlink": "^4.4.2",
+    "proxy-agent": "^6.5.0",
+    "undici": "^7.8.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
+    "@powersync/drizzle-driver": "workspace:*",
     "@types/async-lock": "^1.4.0",
     "drizzle-orm": "^0.35.2",
-    "@powersync/drizzle-driver": "workspace:*",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",
     "vitest": "^3.0.5"

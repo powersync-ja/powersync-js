@@ -56,6 +56,22 @@ contains everything you need to know to get started implementing PowerSync in yo
 
 A simple example using `@powersync/node` is available in the [`demos/example-node/`](../demos/example-node) directory.
 
+# Proxy Support
+
+This SDK supports HTTP, HTTPS, and WebSocket proxies via environment variables.
+
+## HTTP Connection Method
+
+Internally we probe the http environment variables and apply it to fetch requests ([undici](https://www.npmjs.com/package/undici/v/5.6.0))
+
+- Set the `HTTPS_PROXY` or `HTTP_PROXY` environment variable to automatically route HTTP requests through a proxy.
+
+## WEB Socket Connection Method
+
+Internally the [proxy-agent](https://www.npmjs.com/package/proxy-agent) dependency for WebSocket proxies, which has its own internal code for automatically picking up the appropriate environment variables:
+
+- Set the `WS_PROXY` or `WSS_PROXY` environment variable to route the webocket connections through a proxy.
+
 # Found a bug or need help?
 
 - Join our [Discord server](https://discord.gg/powersync) where you can browse topics from our community, ask questions, share feedback, or just say hello :)

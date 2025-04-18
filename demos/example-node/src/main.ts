@@ -1,10 +1,10 @@
-import repl_factory from 'node:repl';
 import { once } from 'node:events';
+import repl_factory from 'node:repl';
 
 import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { default as Logger } from 'js-logger';
-import { AppSchema, DemoConnector } from './powersync.js';
 import { exit } from 'node:process';
+import { AppSchema, DemoConnector } from './powersync.js';
 
 const main = async () => {
   const logger = Logger.get('PowerSyncDemo');
