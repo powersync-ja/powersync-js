@@ -12,7 +12,9 @@ import {
   RemoteConnector
 } from '@powersync/common';
 import { BSON } from 'bson';
+import Agent from 'proxy-agent';
 import { ProxyAgent } from 'undici';
+import { WebSocket } from 'ws';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -23,6 +25,8 @@ class NodeFetchProvider extends FetchImplementationProvider {
 }
 
 export class NodeRemote extends AbstractRemote {
+  protected agent: ProxyAgent | undefined;
+
   constructor(
     protected connector: RemoteConnector,
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
@@ -31,23 +35,28 @@ export class NodeRemote extends AbstractRemote {
     // Automatic env vars are not supported by undici
     // proxy-agent does not work directly with dispatcher
     const proxy = process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY;
+    const agent = proxy ? new ProxyAgent(proxy) : undefined;
+
     super(connector, logger, {
       ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
       fetchOptions: {
-        dispatcher: proxy ? new ProxyAgent(proxy) : undefined
+        dispatcher: agent
       }
     });
+
+    this.agent = agent;
   }
 
-  // protected createSocket(url: string): globalThis.WebSocket {
-  //   return new WebSocket(url, {
-  //     // agent: new ProxyAgent(),
-  //     headers: {
-  //       'User-Agent': this.getUserAgent()
-  //     }
-  //   }) as any as globalThis.WebSocket;
-  // }
+  protected createSocket(url: string): globalThis.WebSocket {
+    return new WebSocket(url, {
+      // Undici does not seem to be compatible with ws
+      agent: new Agent.ProxyAgent(),
+      headers: {
+        'User-Agent': this.getUserAgent()
+      }
+    }) as any as globalThis.WebSocket; // TODO
+  }
 
   getUserAgent(): string {
     return [
