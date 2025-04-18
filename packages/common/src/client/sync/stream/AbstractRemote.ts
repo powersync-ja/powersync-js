@@ -86,7 +86,12 @@ export type AbstractRemoteOptions = {
    */
   fetchImplementation: FetchImplementation | FetchImplementationProvider;
 
-  // TODO
+  /**
+   * Optional options to pass directly to all `fetch` calls.
+   *
+   * This can include fields such as `dispatcher` (e.g. for proxy support),
+   * `cache`, or any other fetch-compatible options.
+   */
   fetchOptions?: {};
 };
 

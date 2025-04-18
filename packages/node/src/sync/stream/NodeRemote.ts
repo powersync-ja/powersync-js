@@ -50,12 +50,13 @@ export class NodeRemote extends AbstractRemote {
 
   protected createSocket(url: string): globalThis.WebSocket {
     return new WebSocket(url, {
-      // Undici does not seem to be compatible with ws
+      // Undici does not seem to be compatible with ws, using `proxy-agent` instead.
+      // Automatically uses WS_PROXY or WSS_PROXY env vars
       agent: new Agent.ProxyAgent(),
       headers: {
         'User-Agent': this.getUserAgent()
       }
-    }) as any as globalThis.WebSocket; // TODO
+    }) as any as globalThis.WebSocket; // This is compatible in Node environments
   }
 
   getUserAgent(): string {
