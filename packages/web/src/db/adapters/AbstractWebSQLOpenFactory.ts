@@ -1,5 +1,4 @@
-import { DBAdapter, SQLOpenFactory } from '@powersync/common';
-import Logger, { ILogger } from 'js-logger';
+import { type ILogger, createLogger, DBAdapter, SQLOpenFactory } from '@powersync/common';
 import { SSRDBAdapter } from './SSRDBAdapter';
 import { ResolvedWebSQLFlags, WebSQLOpenFactoryOptions, isServerSide, resolveWebSQLFlags } from './web-sql-flags';
 
@@ -9,7 +8,7 @@ export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
 
   constructor(protected options: WebSQLOpenFactoryOptions) {
     this.resolvedFlags = resolveWebSQLFlags(options.flags);
-    this.logger = options.logger ?? Logger.get(`AbstractWebSQLOpenFactory - ${this.options.dbFilename}`);
+    this.logger = options.logger ?? createLogger(`AbstractWebSQLOpenFactory - ${this.options.dbFilename}`);
   }
 
   /**

@@ -2018,9 +2018,6 @@ importers:
       commander:
         specifier: ^12.1.0
         version: 12.1.0
-      js-logger:
-        specifier: ^1.6.1
-        version: 1.6.1
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: ^1.2.2

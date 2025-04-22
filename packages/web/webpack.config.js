@@ -49,7 +49,6 @@ module.exports = () => {
       '@powersync/common': '@powersync/common',
       'async-mutex': 'async-mutex',
       comlink: 'comlink',
-      'js-logger': 'js-logger',
       lodash: 'lodash'
     },
     devtool: production ? 'source-map' : 'cheap-module-source-map',

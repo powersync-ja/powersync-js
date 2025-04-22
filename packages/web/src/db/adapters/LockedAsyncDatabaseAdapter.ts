@@ -1,5 +1,7 @@
 import {
+  type ILogger,
   BaseObserver,
+  createLogger,
   DBAdapter,
   DBAdapterListener,
   DBGetUtils,
@@ -8,7 +10,6 @@ import {
   QueryResult,
   Transaction
 } from '@powersync/common';
-import Logger, { ILogger } from 'js-logger';
 import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
@@ -50,7 +51,7 @@ export class LockedAsyncDatabaseAdapter
   constructor(protected options: LockedAsyncDatabaseAdapterOptions) {
     super();
     this._dbIdentifier = options.name;
-    this.logger = options.logger ?? Logger.get(`LockedAsyncDatabaseAdapter - ${this._dbIdentifier}`);
+    this.logger = options.logger ?? createLogger(`LockedAsyncDatabaseAdapter - ${this._dbIdentifier}`);
     // Set the name if provided. We can query for the name if not available yet
     this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {
