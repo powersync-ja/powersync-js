@@ -85,7 +85,7 @@ const mainConfig: Configuration = {
     new CopyPlugin({
       patterns: [{
         from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
-        to: extensionPath,
+        to: path.join('powersync', extensionPath),
       }],
     }),
     new DefinePluginImpl({
@@ -95,7 +95,8 @@ const mainConfig: Configuration = {
   ],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
-  }
+  },
+  target: "electron-main",
 };
 
 const rendererConfig: Configuration = {
@@ -116,7 +117,9 @@ const rendererConfig: Configuration = {
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true
+    asar: {
+      unpack: '**/{.**,**}/**/powersync/*'
+    },
   },
   rebuildConfig: {
     force: true,

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { Worker } from 'node:worker_threads';
 
 import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
@@ -19,10 +20,22 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+const userDataDirectory = app.getPath('userData');
+try {
+  if (!fs.existsSync(userDataDirectory)) {
+    fs.mkdirSync(userDataDirectory);
+  }
+} catch (e) {
+  console.error('Could not create database directory', e);
+}
+
+console.log('Storing data in ', userDataDirectory);
+
 const database = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'test.db',
+    dbLocation: userDataDirectory,
     openWorker(_, options) {
       return new Worker(new URL('./worker.ts', import.meta.url), options);
     }
