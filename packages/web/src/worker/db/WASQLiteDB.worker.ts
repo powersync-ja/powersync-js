@@ -97,7 +97,6 @@ if (typeof SharedWorkerGlobalScope !== 'undefined') {
   const _self: SharedWorkerGlobalScope = self as any;
   _self.onconnect = function (event: MessageEvent<string>) {
     const port = event.ports[0];
-    console.debug('Exposing shared db on port', port);
     Comlink.expose(openDBShared, port);
   };
 } else {
