@@ -13,7 +13,7 @@ import {
 } from '@powersync/common';
 import { BSON } from 'bson';
 import Agent from 'proxy-agent';
-import { ProxyAgent } from 'undici';
+import { ProxyAgent, EnvHttpProxyAgent } from 'undici';
 import { WebSocket } from 'ws';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
@@ -32,10 +32,8 @@ export class NodeRemote extends AbstractRemote {
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
     options?: Partial<AbstractRemoteOptions>
   ) {
-    // Automatic env vars are not supported by undici
-    // proxy-agent does not work directly with dispatcher
-    const proxy = process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY;
-    const agent = proxy ? new ProxyAgent(proxy) : undefined;
+    // Automatically uses relevant env vars for HTTP
+    const agent = new EnvHttpProxyAgent();
 
     super(connector, logger, {
       ...(options ?? {}),
@@ -50,8 +48,7 @@ export class NodeRemote extends AbstractRemote {
 
   protected createSocket(url: string): globalThis.WebSocket {
     return new WebSocket(url, {
-      // Undici does not seem to be compatible with ws, using `proxy-agent` instead.
-      // Automatically uses WS_PROXY or WSS_PROXY env vars
+      // Automatically uses relevant env vars for web sockets
       agent: new Agent.ProxyAgent(),
       headers: {
         'User-Agent': this.getUserAgent()
