@@ -1,4 +1,4 @@
-import { DBAdapter } from '@powersync/common';
+import { type ILogLevel, DBAdapter } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
@@ -12,7 +12,6 @@ import {
 } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import { WASqliteConnection, WASQLiteVFS } from './WASQLiteConnection';
-import { ILogLevel } from 'js-logger';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;

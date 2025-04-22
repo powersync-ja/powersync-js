@@ -1,4 +1,4 @@
-import Logger, { type ILogLevel, type ILogger } from 'js-logger';
+import { type ILogger, type ILogLevel, LogLevel } from '@powersync/common';
 import { type WrappedSyncPort } from './SharedSyncImplementation';
 
 /**
@@ -16,13 +16,13 @@ export class BroadcastLogger implements ILogger {
   private currentLevel: ILogLevel = Logger.INFO;
 
   constructor(protected clients: WrappedSyncPort[]) {
-    this.TRACE = Logger.TRACE;
-    this.DEBUG = Logger.DEBUG;
-    this.INFO = Logger.INFO;
-    this.TIME = Logger.TIME;
-    this.WARN = Logger.WARN;
-    this.ERROR = Logger.ERROR;
-    this.OFF = Logger.OFF;
+    this.TRACE = LogLevel.TRACE;
+    this.DEBUG = LogLevel.DEBUG;
+    this.INFO = LogLevel.INFO;
+    this.TIME = LogLevel.TIME;
+    this.WARN = LogLevel.WARN;
+    this.ERROR = LogLevel.ERROR;
+    this.OFF = LogLevel.OFF;
   }
 
   trace(...x: any[]): void {

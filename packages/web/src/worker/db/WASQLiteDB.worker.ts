@@ -11,10 +11,11 @@ import {
   WorkerDBOpenerOptions
 } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
-import Logger from 'js-logger';
+import { createBaseLogger, createLogger } from '@powersync/common';
 
-Logger.useDefaults();
-const logger = Logger.get('db-worker');
+const baseLogger = createBaseLogger();
+baseLogger.useDefaults();
+const logger = createLogger('db-worker');
 
 /**
  * Keeps track of open DB connections and the clients which

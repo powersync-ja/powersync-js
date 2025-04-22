@@ -18,7 +18,14 @@ function resolvePowerSyncCoreExtension() {
 
   // This example uses copy-webpack-plugin to copy the prebuilt library over. This ensures that it is
   // available in packaged release builds.
-  return path.resolve(__dirname, extensionPath);
+  let libraryPath = path.resolve(__dirname, 'powersync', extensionPath);
+
+  if (__dirname.indexOf('app.asar') != -1) {
+    // Our build configuration ensures the extension is always available outside of the archive too.
+    libraryPath = libraryPath.replace('app.asar', 'app.asar.unpacked');
+  }
+
+  return libraryPath;
 }
 
 startPowerSyncWorker({ extensionPath: resolvePowerSyncCoreExtension });

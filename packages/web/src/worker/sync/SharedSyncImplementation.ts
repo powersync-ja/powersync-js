@@ -1,5 +1,7 @@
 import {
   type AbstractStreamingSyncImplementation,
+  type ILogger,
+  type ILogLevel,
   type LockOptions,
   type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
@@ -7,13 +9,13 @@ import {
   type SyncStatusOptions,
   AbortOperation,
   BaseObserver,
+  createLogger,
   DBAdapter,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
-import Logger, { ILogLevel, type ILogger } from 'js-logger';
 import { WebRemote } from '../../db/sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
@@ -107,7 +109,7 @@ export class SharedSyncImplementation
     this.dbAdapter = null;
     this.syncParams = null;
     this.syncStreamClient = null;
-    this.logger = Logger.get('shared-sync');
+    this.logger = createLogger('shared-sync');
     this.lastConnectOptions = undefined;
 
     this.isInitialized = new Promise((resolve) => {

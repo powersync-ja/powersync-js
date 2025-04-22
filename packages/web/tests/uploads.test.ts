@@ -1,5 +1,4 @@
-import { WebPowerSyncDatabaseOptions } from '@powersync/web';
-import Logger from 'js-logger';
+import { createBaseLogger, createLogger, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import p from 'p-defer';
 import { v4 } from 'uuid';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -40,10 +39,10 @@ describe(
 
 function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseOptions) {
   return () => {
-    beforeAll(() => Logger.useDefaults());
+    beforeAll(() => createBaseLogger().useDefaults());
 
     it('should warn for missing upload operations in uploadData', async () => {
-      const logger = Logger.get('crud-logger');
+      const logger = createLogger('crud-logger');
 
       const options = getDatabaseOptions();
 
@@ -83,7 +82,7 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
     });
 
     it('should immediately upload sequential transactions', async () => {
-      const logger = Logger.get('crud-logger');
+      const logger = createLogger('crud-logger');
 
       const options = getDatabaseOptions();
 
