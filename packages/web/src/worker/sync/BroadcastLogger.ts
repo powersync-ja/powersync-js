@@ -13,7 +13,7 @@ export class BroadcastLogger implements ILogger {
   ERROR: ILogLevel;
   OFF: ILogLevel;
 
-  private currentLevel: ILogLevel = Logger.INFO;
+  private currentLevel: ILogLevel = LogLevel.INFO;
 
   constructor(protected clients: WrappedSyncPort[]) {
     this.TRACE = LogLevel.TRACE;
