@@ -13,7 +13,7 @@ import {
 } from '@powersync/common';
 import { BSON } from 'bson';
 import Agent from 'proxy-agent';
-import { ProxyAgent, EnvHttpProxyAgent } from 'undici';
+import { EnvHttpProxyAgent, Dispatcher } from 'undici';
 import { WebSocket } from 'ws';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
@@ -24,26 +24,26 @@ class NodeFetchProvider extends FetchImplementationProvider {
   }
 }
 
-export class NodeRemote extends AbstractRemote {
-  protected agent: ProxyAgent | undefined;
+export type NodeRemoteOptions = AbstractRemoteOptions & {
+  dispatcher?: Dispatcher;
+};
 
+export class NodeRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
-    options?: Partial<AbstractRemoteOptions>
+    options?: Partial<NodeRemoteOptions>
   ) {
-    // Automatically uses relevant env vars for HTTP
-    const agent = new EnvHttpProxyAgent();
+    // EnvHttpProxyAgent automatically uses relevant env vars for HTTP
+    const dispatcher = options?.dispatcher ?? new EnvHttpProxyAgent();
 
     super(connector, logger, {
       ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
       fetchOptions: {
-        dispatcher: agent
+        dispatcher
       }
     });
-
-    this.agent = agent;
   }
 
   protected createSocket(url: string): globalThis.WebSocket {
