@@ -32,9 +32,7 @@ export default (commandLineArgs) => {
     // This makes life easier
     external: [
       // This has dynamic logic - makes bundling hard
-      'cross-fetch',
-      // TODO: make the useDefaults logic better. Currently need access to this package directly
-      'js-logger'
+      'cross-fetch'
     ]
   };
 };
