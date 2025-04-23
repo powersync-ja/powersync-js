@@ -25,6 +25,10 @@ export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
 };
 
 export type NodeAdditionalConnectionOptions = AdditionalConnectionOptions & {
+  /**
+   * Optional custom dispatcher for HTTP connections (e.g. using undici).
+   * Only used when the connection method is SyncStreamConnectionMethod.HTTP
+   */
   dispatcher?: Dispatcher;
 };
 
