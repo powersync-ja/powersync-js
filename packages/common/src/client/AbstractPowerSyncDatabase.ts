@@ -417,6 +417,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
   resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
     return {
+      ...options,
       retryDelayMs:
         options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
       crudUploadThrottleMs:
@@ -436,12 +437,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
-    const { retryDelayMs, crudUploadThrottleMs } = this.resolvedConnectionOptions(options);
+    const resolvedConnectOptions = this.resolvedConnectionOptions(options);
 
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
-      retryDelayMs,
-      crudUploadThrottleMs
-    });
+    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, resolvedConnectOptions);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
         this.currentStatus = new SyncStatus({
@@ -555,7 +553,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * This method does include transaction ids in the result, but does not group
    * data by transaction. One batch may contain data from multiple transactions,
    * and a single transaction may be split over multiple batches.
-   * 
+   *
    * @param limit Maximum number of CRUD entries to include in the batch
    * @returns A batch of CRUD operations to upload, or null if there are none
    */
@@ -594,7 +592,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Unlike {@link getCrudBatch}, this only returns data from a single transaction at a time.
    * All data for the transaction is loaded into memory.
-   * 
+   *
    * @returns A transaction of CRUD operations to upload, or null if there are none
    */
   async getNextCrudTransaction(): Promise<CrudTransaction | null> {
@@ -633,7 +631,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Get an unique client id for this database.
    *
    * The id is not reset when the database is cleared, only when the database is deleted.
-   * 
+   *
    * @returns A unique identifier for the database instance
    */
   async getClientId(): Promise<string> {
@@ -661,7 +659,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Execute a SQL write (INSERT/UPDATE/DELETE) query
    * and optionally return results.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The query result as an object with structured key-value pairs
@@ -674,7 +672,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Execute a SQL write (INSERT/UPDATE/DELETE) query directly on the database without any PowerSync processing.
    * This bypasses certain PowerSync abstractions and is useful for accessing the raw database results.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The raw query result from the underlying database as a nested array of raw values, where each row is
@@ -689,7 +687,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a write query (INSERT/UPDATE/DELETE) multiple times with each parameter set
    * and optionally return results.
    * This is faster than executing separately with each parameter set.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional 2D array of parameter sets, where each inner array is a set of parameters for one execution
    * @returns The query result
@@ -701,7 +699,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    *  Execute a read-only query and return results.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns An array of results
@@ -713,7 +711,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Execute a read-only query and return the first result, or null if the ResultSet is empty.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The first result if found, or null if no results are returned
@@ -725,7 +723,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Execute a read-only query and return the first result, error if the ResultSet is empty.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The first result matching the query
@@ -761,7 +759,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Open a read-only transaction.
    * Read transactions can run concurrently to a write transaction.
    * Changes from any write transaction are not visible to read transactions started before it.
-   * 
+   *
    * @param callback Function to execute within the transaction
    * @param lockTimeout Time in milliseconds to wait for a lock before throwing an error
    * @returns The result of the callback
@@ -786,7 +784,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Open a read-write transaction.
    * This takes a global lock - only one write transaction can execute against the database at a time.
    * Statements within the transaction must be done on the provided {@link Transaction} interface.
-   * 
+   *
    * @param callback Function to execute within the transaction
    * @param lockTimeout Time in milliseconds to wait for a lock before throwing an error
    * @returns The result of the callback
@@ -865,7 +863,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
    *
    * Note that the `onChange` callback member of the handler is required.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @param handler Callbacks for handling results and errors
@@ -915,7 +913,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
-   * 
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @param options Options for configuring watch behavior
@@ -944,7 +942,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Resolves the list of tables that are used in a SQL query.
    * If tables are specified in the options, those are used directly.
    * Otherwise, analyzes the query using EXPLAIN to determine which tables are accessed.
-   * 
+   *
    * @param sql The SQL query to analyze
    * @param parameters Optional parameters for the SQL query
    * @param options Optional watch options that may contain explicit table list
@@ -1077,7 +1075,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * This is preferred over {@link watchWithAsyncGenerator} when multiple queries need to be performed
    * together when data is changed.
-   * 
+   *
    * Note: do not declare this as `async *onChange` as it will not work in React Native.
    *
    * @param options Options for configuring watch behavior
