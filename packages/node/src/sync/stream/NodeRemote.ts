@@ -1,8 +1,7 @@
 import * as os from 'node:os';
 
-import { ILogger } from 'js-logger';
-
 import {
+  type ILogger,
   AbstractRemote,
   AbstractRemoteOptions,
   BSONImplementation,

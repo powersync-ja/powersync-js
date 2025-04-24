@@ -25,7 +25,7 @@ export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
       resolvedFlags: { disableSSRWarning, enableMultiTabs, ssrMode = isServerSide() }
     } = this;
     if (ssrMode && !disableSSRWarning) {
-      console.warn(
+      this.logger.warn(
         `
   Running PowerSync in SSR mode.
   Only empty query results will be returned.
@@ -34,7 +34,7 @@ export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
     }
 
     if (!enableMultiTabs) {
-      console.warn(
+      this.logger.warn(
         'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
       );
     }

@@ -1,4 +1,4 @@
-import { DBAdapter } from '@powersync/common';
+import { type ILogLevel, DBAdapter } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
@@ -20,6 +20,11 @@ export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
   vfs: WASQLiteVFS;
 }
+
+export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
+  logLevel: ILogLevel;
+}
+
 /**
  * Opens a SQLite connection using WA-SQLite.
  */
@@ -73,7 +78,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<ResolvedWASQLiteOpenFactoryOptions>>(workerPort);
+      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WorkerDBOpenerOptions>>(workerPort);
 
       return new WorkerWrappedAsyncDatabaseConnection({
         remote: workerDBOpener,
@@ -83,7 +88,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           temporaryStorage,
           cacheSizeKb,
           flags: this.resolvedFlags,
-          encryptionKey: encryptionKey
+          encryptionKey: encryptionKey,
+          logLevel: this.logger.getLevel()
         }),
         identifier: this.options.dbFilename,
         onClose: () => {

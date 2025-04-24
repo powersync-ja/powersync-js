@@ -91,6 +91,10 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     return this.options.powersync;
   }
 
+  get logger() {
+    return this.powersync.logger ?? console;
+  }
+
   protected get storage() {
     return this.options.storage;
   }
@@ -123,7 +127,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   async watchAttachmentIds() {
     this.onAttachmentIdsChange(async (ids) => {
       const _ids = `${ids.map((id) => `'${id}'`).join(',')}`;
-      console.debug(`Queuing for sync, attachment IDs: [${_ids}]`);
+      this.logger.debug(`Queuing for sync, attachment IDs: [${_ids}]`);
 
       if (this.initialSync) {
         this.initialSync = false;
@@ -151,11 +155,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
             id: id,
             state: AttachmentState.QUEUED_SYNC
           });
-          console.debug(`Attachment (${id}) not found in database, creating new record`);
+          this.logger.debug(`Attachment (${id}) not found in database, creating new record`);
           await this.saveToQueue(newRecord);
         } else if (record.local_uri == null || !(await this.storage.fileExists(this.getLocalUri(record.local_uri)))) {
           // 2. Attachment in database but no local file, mark as queued download
-          console.debug(`Attachment (${id}) found in database but no local file, marking as queued download`);
+          this.logger.debug(`Attachment (${id}) found in database but no local file, marking as queued download`);
           await this.update({
             ...record,
             state: AttachmentState.QUEUED_DOWNLOAD
@@ -241,7 +245,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         filename: record.filename
       });
     } catch (e) {
-      console.error(e);
+      this.logger.error(e);
     }
   }
 
@@ -267,7 +271,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     const localFilePathUri = this.getLocalUri(record.local_uri);
     try {
       if (!(await this.storage.fileExists(localFilePathUri))) {
-        console.warn(`File for ${record.id} does not exist, skipping upload`);
+        this.logger.warn(`File for ${record.id} does not exist, skipping upload`);
         await this.update({
           ...record,
           state: AttachmentState.QUEUED_DOWNLOAD
@@ -285,11 +289,11 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       });
       // Mark as uploaded
       await this.update({ ...record, state: AttachmentState.SYNCED });
-      console.debug(`Uploaded attachment "${record.id}" to Cloud Storage`);
+      this.logger.debug(`Uploaded attachment "${record.id}" to Cloud Storage`);
       return true;
     } catch (e: any) {
       if (e.error == 'Duplicate') {
-        console.debug(`File already uploaded, marking ${record.id} as synced`);
+        this.logger.debug(`File already uploaded, marking ${record.id} as synced`);
         await this.update({ ...record, state: AttachmentState.SYNCED });
         return false;
       }
@@ -300,7 +304,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
           return true;
         }
       }
-      console.error(`UploadAttachment error for record ${JSON.stringify(record, null, 2)}`);
+      this.logger.error(`UploadAttachment error for record ${JSON.stringify(record, null, 2)}`);
       return false;
     }
   }
@@ -314,7 +318,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     }
     const localFilePathUri = this.getLocalUri(record.local_uri);
     if (await this.storage.fileExists(localFilePathUri)) {
-      console.debug(`Local file already downloaded, marking "${record.id}" as synced`);
+      this.logger.debug(`Local file already downloaded, marking "${record.id}" as synced`);
       await this.update({ ...record, state: AttachmentState.SYNCED });
       return true;
     }
@@ -345,7 +349,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         media_type: fileBlob.type,
         state: AttachmentState.SYNCED
       });
-      console.debug(`Downloaded attachment "${record.id}"`);
+      this.logger.debug(`Downloaded attachment "${record.id}"`);
       return true;
     } catch (e) {
       if (this.options.onDownloadError) {
@@ -355,7 +359,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
           return true;
         }
       }
-      console.error(`Download attachment error for record ${JSON.stringify(record, null, 2)}`, e);
+      this.logger.error(`Download attachment error for record ${JSON.stringify(record, null, 2)}`, e);
     }
     return false;
   }
@@ -396,7 +400,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       if (!record) {
         return;
       }
-      console.debug(`Uploading attachments...`);
+      this.logger.debug(`Uploading attachments...`);
       while (record) {
         const uploaded = await this.uploadAttachment(record);
         if (!uploaded) {
@@ -405,9 +409,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         }
         record = await this.getNextUploadRecord();
       }
-      console.debug('Finished uploading attachments');
+      this.logger.debug('Finished uploading attachments');
     } catch (error) {
-      console.error('Upload failed:', error);
+      this.logger.error('Upload failed:', error);
     } finally {
       this.uploading = false;
     }
@@ -464,7 +468,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
 
     this.downloading = true;
     try {
-      console.debug(`Downloading ${this.downloadQueue.size} attachments...`);
+      this.logger.debug(`Downloading ${this.downloadQueue.size} attachments...`);
       while (this.downloadQueue.size > 0) {
         const id = this.downloadQueue.values().next().value;
         this.downloadQueue.delete(id);
@@ -474,9 +478,9 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
         }
         await this.downloadRecord(record);
       }
-      console.debug('Finished downloading attachments');
+      this.logger.debug('Finished downloading attachments');
     } catch (e) {
-      console.error('Downloads failed:', e);
+      this.logger.error('Downloads failed:', e);
     } finally {
       this.downloading = false;
     }
@@ -518,7 +522,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       return;
     }
 
-    console.debug(`Deleting ${res.length} attachments from cache...`);
+    this.logger.debug(`Deleting ${res.length} attachments from cache...`);
     await this.powersync.writeTransaction(async (tx) => {
       for (const record of res) {
         await this.delete(record, tx);
@@ -527,7 +531,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
   }
 
   async clearQueue(): Promise<void> {
-    console.debug(`Clearing attachment queue...`);
+    this.logger.debug(`Clearing attachment queue...`);
     await this.powersync.writeTransaction(async (tx) => {
       await tx.execute(`DELETE FROM ${this.table}`);
     });

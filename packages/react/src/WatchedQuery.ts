@@ -46,6 +46,10 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
     });
   }
 
+  get logger() {
+    return this.db.logger ?? console;
+  }
+
   addTemporaryHold() {
     const ref = new Object();
     this.temporaryHolds.add(ref);
@@ -88,7 +92,7 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
     try {
       this.tables = await this.db.resolveTables(this.query.sqlStatement, this.query.queryParameters, this.options);
     } catch (e) {
-      console.error('Failed to fetch tables:', e);
+      this.logger.error('Failed to fetch tables:', e);
       this.setError(e);
     }
   }
@@ -103,7 +107,7 @@ export class WatchedQuery extends BaseObserver<WatchedQueryListener> implements 
       const data = result ?? [];
       this.setData(data);
     } catch (e) {
-      console.error('Failed to fetch data:', e);
+      this.logger.error('Failed to fetch data:', e);
       this.setError(e);
     }
   }

@@ -22,7 +22,6 @@ _self.onconnect = function (event: MessageEvent<string>) {
   port.addEventListener('message', (event) => {
     const payload = event.data as ManualSharedSyncPayload;
     if (payload?.event == SharedSyncClientEvent.CLOSE_CLIENT) {
-      console.log('closing shared for port', port);
       sharedSyncImplementation.removePort(port);
     }
   });

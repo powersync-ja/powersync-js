@@ -406,6 +406,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 
+  get logger() {
+    return this.options.logger!;
+  }
+
   /**
    * Wait for initialization to complete.
    * While initializing is automatic, this helps to catch and report initialization errors.
