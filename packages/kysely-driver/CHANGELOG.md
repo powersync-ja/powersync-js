@@ -1,5 +1,18 @@
 # @powersync/kysely-driver
 
+## 1.2.0
+
+### Minor Changes
+
+- d0d0c02: Updated Kysely depedency to ^0.28.0. Introduces new features to the PowerSync Kysely wrapper. See https://github.com/kysely-org/kysely/releases/tag/0.28.0
+
+### Patch Changes
+
+- Updated dependencies [6807df6]
+- Updated dependencies [e71dc94]
+- Updated dependencies [f40ecf9]
+  - @powersync/common@1.28.0
+
 ## 1.1.0
 
 ### Minor Changes
