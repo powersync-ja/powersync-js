@@ -1,14 +1,14 @@
 import { once } from 'node:events';
 import repl_factory from 'node:repl';
 
-import { PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
-import { default as Logger } from 'js-logger';
+import { createBaseLogger, createLogger, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
 
 const main = async () => {
-  const logger = Logger.get('PowerSyncDemo');
-  Logger.useDefaults({ defaultLevel: logger.WARN });
+  const baseLogger = createBaseLogger();
+  const logger = createLogger('PowerSyncDemo');
+  baseLogger.useDefaults({ defaultLevel: logger.WARN });
 
   if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
     console.warn(

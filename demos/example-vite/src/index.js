@@ -1,7 +1,6 @@
-import { column, Schema, Table, PowerSyncDatabase } from '@powersync/web';
-import Logger from 'js-logger';
+import { column, Schema, Table, PowerSyncDatabase, createBaseLogger } from '@powersync/web';
 
-Logger.useDefaults();
+createBaseLogger().useDefaults();
 
 /**
  * A placeholder connector which doesn't do anything.
@@ -19,7 +18,7 @@ class DummyConnector {
   async uploadData(database) {}
 }
 
-const customers = new Table({ name: column.text })
+const customers = new Table({ name: column.text });
 
 export const AppSchema = new Schema({ customers });
 

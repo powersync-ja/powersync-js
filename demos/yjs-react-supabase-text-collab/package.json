@@ -22,7 +22,6 @@
     "@tiptap/extension-task-list": "2.2.2",
     "@tiptap/react": "2.2.2",
     "@tiptap/starter-kit": "2.2.2",
-    "js-logger": "^1.6.1",
     "lato-font": "^3.0.0",
     "lib0": "^0.2.91",
     "react": "^18.2.0",
