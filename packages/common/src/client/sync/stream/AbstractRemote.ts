@@ -85,6 +85,14 @@ export type AbstractRemoteOptions = {
    * Binding should be done before passing here.
    */
   fetchImplementation: FetchImplementation | FetchImplementationProvider;
+
+  /**
+   * Optional options to pass directly to all `fetch` calls.
+   *
+   * This can include fields such as `dispatcher` (e.g. for proxy support),
+   * `cache`, or any other fetch-compatible options.
+   */
+  fetchOptions?: {};
 };
 
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
@@ -92,7 +100,8 @@ export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
     url.replace(/^https?:\/\//, function (match) {
       return match === 'https://' ? 'wss://' : 'ws://';
     }),
-  fetchImplementation: new FetchImplementationProvider()
+  fetchImplementation: new FetchImplementationProvider(),
+  fetchOptions: {}
 };
 
 export abstract class AbstractRemote {
@@ -231,6 +240,10 @@ export abstract class AbstractRemote {
    */
   abstract getBSON(): Promise<BSONImplementation>;
 
+  protected createSocket(url: string): WebSocket {
+    return new WebSocket(url);
+  }
+
   /**
    * Connects to the sync/stream websocket endpoint
    */
@@ -249,7 +262,8 @@ export abstract class AbstractRemote {
 
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
-        url: this.options.socketUrlTransformer(request.url)
+        url: this.options.socketUrlTransformer(request.url),
+        wsCreator: (url) => this.createSocket(url)
       }),
       setup: {
         keepAlive: KEEP_ALIVE_MS,
@@ -421,6 +435,7 @@ export abstract class AbstractRemote {
       body: JSON.stringify(data),
       signal: controller.signal,
       cache: 'no-store',
+      ...(this.options.fetchOptions ?? {}),
       ...options.fetchOptions
     }).catch((ex) => {
       if (ex.name == 'AbortError') {

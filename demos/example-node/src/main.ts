@@ -1,9 +1,9 @@
-import repl_factory from 'node:repl';
 import { once } from 'node:events';
+import repl_factory from 'node:repl';
 
 import { createBaseLogger, createLogger, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
-import { AppSchema, DemoConnector } from './powersync.js';
 import { exit } from 'node:process';
+import { AppSchema, DemoConnector } from './powersync.js';
 
 const main = async () => {
   const baseLogger = createBaseLogger();

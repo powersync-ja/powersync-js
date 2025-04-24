@@ -1,11 +1,14 @@
 import {
   AbstractPowerSyncDatabase,
   AbstractStreamingSyncImplementation,
+  AdditionalConnectionOptions,
   BucketStorageAdapter,
   DBAdapter,
   PowerSyncBackendConnector,
+  PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
+  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -15,10 +18,21 @@ import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyn
 
 import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
 import { NodeSQLOpenOptions } from './options.js';
+import { Dispatcher } from 'undici';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
 };
+
+export type NodeAdditionalConnectionOptions = AdditionalConnectionOptions & {
+  /**
+   * Optional custom dispatcher for HTTP connections (e.g. using undici).
+   * Only used when the connection method is SyncStreamConnectionMethod.HTTP
+   */
+  dispatcher?: Dispatcher;
+};
+
+export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAdditionalConnectionOptions;
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -54,10 +68,18 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }
 
+  connect(
+    connector: PowerSyncBackendConnector,
+    options?: PowerSyncConnectionOptions & { dispatcher?: Dispatcher }
+  ): Promise<void> {
+    return super.connect(connector, options);
+  }
+
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new NodeRemote(connector);
+    const remote = new NodeRemote(connector, this.options.logger, { dispatcher: options.dispatcher });
 
     return new NodeStreamingSyncImplementation({
       adapter: this.bucketStorageAdapter,

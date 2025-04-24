@@ -421,6 +421,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   // Use the options passed in during connect, or fallback to the options set during database creation or fallback to the default options
   resolvedConnectionOptions(options?: PowerSyncConnectionOptions): RequiredAdditionalConnectionOptions {
     return {
+      ...options,
       retryDelayMs:
         options?.retryDelayMs ?? this.options.retryDelayMs ?? this.options.retryDelay ?? DEFAULT_RETRY_DELAY_MS,
       crudUploadThrottleMs:
@@ -440,12 +441,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('Cannot connect using a closed client');
     }
 
-    const { retryDelayMs, crudUploadThrottleMs } = this.resolvedConnectionOptions(options);
+    const resolvedConnectOptions = this.resolvedConnectionOptions(options);
 
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, {
-      retryDelayMs,
-      crudUploadThrottleMs
-    });
+    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, resolvedConnectOptions);
     this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
       statusChanged: (status) => {
         this.currentStatus = new SyncStatus({
