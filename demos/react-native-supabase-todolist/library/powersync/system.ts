@@ -1,6 +1,6 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, PowerSyncDatabase } from '@powersync/react-native';
+import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -12,7 +12,9 @@ import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { configureFts } from '../fts/fts_setup';
 
-createBaseLogger().useDefaults();
+const logger = createBaseLogger();
+logger.useDefaults();
+logger.setLevel(LogLevel.INFO);
 
 export class System {
   kvStorage: KVStorage;

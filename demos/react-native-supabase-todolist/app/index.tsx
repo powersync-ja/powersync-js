@@ -5,7 +5,6 @@ import { useSystem } from '../library/powersync/system';
 import { router } from 'expo-router';
 
 import { ThemeProvider, createTheme } from '@rneui/themed';
-import { createBaseLogger, LogLevel } from '@powersync/react-native';
 
 const theme = createTheme({
   mode: 'light'
@@ -21,10 +20,6 @@ const App: React.FC = () => {
   const { supabaseConnector } = useSystem();
 
   React.useEffect(() => {
-    const logger = createBaseLogger();
-    logger.useDefaults();
-    logger.setLevel(LogLevel.DEBUG);
-
     supabaseConnector.client.auth
       .getSession()
       .then(({ data }) => {
