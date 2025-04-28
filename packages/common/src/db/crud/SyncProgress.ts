@@ -36,15 +36,19 @@ export interface ProgressWithOperations {
 
   /**
    * Relative progress, as {@link downloadedOperations} of {@link totalOperations}.
+   *
+   * This will be a number between `0.0` and `1.0` (inclusive).
    * 
-   * This will be a number between `0.0` and `1.0`.
+   * When this number reaches `1.0`, all changes have been received from the sync service.
+   * Actually applying these changes happens before the `downloadProgress` field is cleared from
+   * {@link SyncStatus}, so progress can stay at `1.0` for a short while before completing.
    */
   downloadedFraction: number;
 }
 
 /**
  * Provides realtime progress on how PowerSync is downloading rows.
- * 
+ *
  * The progress until the next complete sync is available through the fields on {@link ProgressWithOperations},
  * which this class implements.
  * Additionally, the {@link SyncProgress.untilPriority} method can be used to otbain progress towards
@@ -63,7 +67,6 @@ export interface ProgressWithOperations {
  * to be updated one-by-one.
  */
 export class SyncProgress implements ProgressWithOperations {
-
   totalOperations: number;
   downloadedOperations: number;
   downloadedFraction: number;

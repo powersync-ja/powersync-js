@@ -42,7 +42,7 @@ export class SyncStatus {
 
   /**
    * Indicates if the client is currently connected to the PowerSync service.
-   * 
+   *
    * @returns {boolean} True if connected, false otherwise. Defaults to false if not specified.
    */
   get connected() {
@@ -51,7 +51,7 @@ export class SyncStatus {
 
   /**
    * Indicates if the client is in the process of establishing a connection to the PowerSync service.
-   * 
+   *
    * @returns {boolean} True if connecting, false otherwise. Defaults to false if not specified.
    */
   get connecting() {
@@ -61,7 +61,7 @@ export class SyncStatus {
   /**
    * Time that a last sync has fully completed, if any.
    * This timestamp is reset to null after a restart of the PowerSync service.
-   * 
+   *
    * @returns {Date | undefined} The timestamp of the last successful sync, or undefined if no sync has completed.
    */
   get lastSyncedAt() {
@@ -70,7 +70,7 @@ export class SyncStatus {
 
   /**
    * Indicates whether there has been at least one full sync completed since initialization.
-   * 
+   *
    * @returns {boolean | undefined} True if at least one sync has completed, false if no sync has completed,
    * or undefined when the state is still being loaded from the database.
    */
@@ -80,7 +80,7 @@ export class SyncStatus {
 
   /**
    * Provides the current data flow status regarding uploads and downloads.
-   * 
+   *
    * @returns {SyncDataFlowStatus} An object containing:
    * - downloading: True if actively downloading changes (only when connected is also true)
    * - uploading: True if actively uploading changes
@@ -104,7 +104,7 @@ export class SyncStatus {
 
   /**
    * Provides sync status information for all bucket priorities, sorted by priority (highest first).
-   * 
+   *
    * @returns {SyncPriorityStatus[]} An array of status entries for different sync priority levels,
    * sorted with highest priorities (lower numbers) first.
    */
@@ -128,18 +128,18 @@ export class SyncStatus {
   }
 
   /**
-   * Reports the sync status (a pair of {@link SyncStatus#hasSynced} and {@link SyncStatus#lastSyncedAt} fields) 
+   * Reports the sync status (a pair of {@link SyncStatus#hasSynced} and {@link SyncStatus#lastSyncedAt} fields)
    * for a specific bucket priority level.
-   * 
+   *
    * When buckets with different priorities are declared, PowerSync may choose to synchronize higher-priority
    * buckets first. When a consistent view over all buckets for all priorities up until the given priority is
    * reached, PowerSync makes data from those buckets available before lower-priority buckets have finished
    * syncing.
-   * 
-   * This method returns the status for the requested priority or the next higher priority level that has 
-   * status information available. This is because when PowerSync makes data for a given priority available, 
+   *
+   * This method returns the status for the requested priority or the next higher priority level that has
+   * status information available. This is because when PowerSync makes data for a given priority available,
    * all buckets in higher-priorities are guaranteed to be consistent with that checkpoint.
-   * 
+   *
    * For example, if PowerSync just finished synchronizing buckets in priority level 3, calling this method
    * with a priority of 1 may return information for priority level 3.
    *
@@ -166,7 +166,7 @@ export class SyncStatus {
   /**
    * Compares this SyncStatus instance with another to determine if they are equal.
    * Equality is determined by comparing the serialized JSON representation of both instances.
-   * 
+   *
    * @param {SyncStatus} status The SyncStatus instance to compare against
    * @returns {boolean} True if the instances are considered equal, false otherwise
    */
@@ -177,7 +177,7 @@ export class SyncStatus {
   /**
    * Creates a human-readable string representation of the current sync status.
    * Includes information about connection state, sync completion, and data flow.
-   * 
+   *
    * @returns {string} A string representation of the sync status
    */
   getMessage() {
@@ -187,7 +187,7 @@ export class SyncStatus {
 
   /**
    * Serializes the SyncStatus instance to a plain object.
-   * 
+   *
    * @returns {SyncStatusOptions} A plain object representation of the sync status
    */
   toJSON(): SyncStatusOptions {

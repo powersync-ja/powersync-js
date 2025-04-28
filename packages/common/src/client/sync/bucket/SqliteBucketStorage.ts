@@ -213,7 +213,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
           // The two parameters could be replaced with one, but: https://github.com/powersync-ja/better-sqlite3/pull/6
           const jsonBucketCount = JSON.stringify(bucketToCount);
           await tx.execute(
-            'UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE ?->name IS NOT NULL',
+            "UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE name != '$local' AND ?->name IS NOT NULL",
             [jsonBucketCount, jsonBucketCount]
           );
         }

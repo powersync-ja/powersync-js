@@ -501,10 +501,7 @@ The next upload iteration will be delayed.`);
     return [req, localDescriptions];
   }
 
-  protected async streamingSyncIteration(
-    signal: AbortSignal,
-    options?: PowerSyncConnectionOptions
-  ): Promise<void> {
+  protected async streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
     await this.obtainLock({
       type: LockType.SYNC,
       signal,
@@ -693,7 +690,7 @@ The next upload iteration will be delayed.`);
                * (uses the same one), this should have some delay.
                */
               await this.delayRetry();
-              return ;
+              return;
             }
             this.triggerCrudUpload();
           } else {
