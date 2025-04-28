@@ -1,4 +1,4 @@
-import Logger, { type ILogLevel, type ILogger } from 'js-logger';
+import { type ILogger, type ILogLevel, LogLevel } from '@powersync/common';
 import { type WrappedSyncPort } from './SharedSyncImplementation';
 
 /**
@@ -13,74 +13,99 @@ export class BroadcastLogger implements ILogger {
   ERROR: ILogLevel;
   OFF: ILogLevel;
 
+  private currentLevel: ILogLevel = LogLevel.INFO;
+
   constructor(protected clients: WrappedSyncPort[]) {
-    this.TRACE = Logger.TRACE;
-    this.DEBUG = Logger.DEBUG;
-    this.INFO = Logger.INFO;
-    this.TIME = Logger.TIME;
-    this.WARN = Logger.WARN;
-    this.ERROR = Logger.ERROR;
-    this.OFF = Logger.OFF;
+    this.TRACE = LogLevel.TRACE;
+    this.DEBUG = LogLevel.DEBUG;
+    this.INFO = LogLevel.INFO;
+    this.TIME = LogLevel.TIME;
+    this.WARN = LogLevel.WARN;
+    this.ERROR = LogLevel.ERROR;
+    this.OFF = LogLevel.OFF;
   }
 
   trace(...x: any[]): void {
+    if (!this.enabledFor(this.TRACE)) return;
+
     console.trace(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.trace(...sanitized));
   }
 
   debug(...x: any[]): void {
+    if (!this.enabledFor(this.DEBUG)) return;
+
     console.debug(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.debug(...sanitized));
   }
 
   info(...x: any[]): void {
+    if (!this.enabledFor(this.INFO)) return;
+
     console.info(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.info(...sanitized));
   }
 
   log(...x: any[]): void {
+    if (!this.enabledFor(this.INFO)) return;
+
     console.log(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.log(...sanitized));
   }
 
   warn(...x: any[]): void {
+    if (!this.enabledFor(this.WARN)) return;
+
     console.warn(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.warn(...sanitized));
   }
 
   error(...x: any[]): void {
+    if (!this.enabledFor(this.ERROR)) return;
+
     console.error(...x);
     const sanitized = this.sanitizeArgs(x);
     this.iterateClients((client) => client.clientProvider.error(...sanitized));
   }
 
   time(label: string): void {
+    if (!this.enabledFor(this.TIME)) return;
+
     console.time(label);
     this.iterateClients((client) => client.clientProvider.time(label));
   }
 
   timeEnd(label: string): void {
+    if (!this.enabledFor(this.TIME)) return;
+
     console.timeEnd(label);
     this.iterateClients((client) => client.clientProvider.timeEnd(label));
   }
 
+  /**
+   * Set the global log level.
+   */
   setLevel(level: ILogLevel): void {
-    // Levels are not adjustable on this level.
+    this.currentLevel = level;
   }
 
+  /**
+   * Get the current log level.
+   */
   getLevel(): ILogLevel {
-    // Levels are not adjustable on this level.
-    return Logger.INFO;
+    return this.currentLevel;
   }
 
+  /**
+   * Returns true if the given level is enabled.
+   */
   enabledFor(level: ILogLevel): boolean {
-    // Levels are not adjustable on this level.
-    return true;
+    return level.value >= this.currentLevel.value;
   }
 
   /**

@@ -1,5 +1,19 @@
 # @powersync/node
 
+## 0.3.0
+
+### Minor Changes
+
+- f40ecf9: Introduced support for specifying proxy environment variables for the connection methods. For HTTP it supports `HTTP_PROXY` or `HTTPS_PROXY`, and for WebSockets it supports `WS_PROXY` and `WSS_PROXY`.
+
+### Patch Changes
+
+- 6807df6: Using logger types from @powersync/common.
+- Updated dependencies [6807df6]
+- Updated dependencies [e71dc94]
+- Updated dependencies [f40ecf9]
+  - @powersync/common@1.28.0
+
 ## 0.2.2
 
 ### Patch Changes

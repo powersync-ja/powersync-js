@@ -1,11 +1,17 @@
-import { AbstractPowerSyncDatabase, SqliteBucketStorage, SyncStatus } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  createBaseLogger,
+  createLogger,
+  SqliteBucketStorage,
+  SyncStatus
+} from '@powersync/common';
 import {
   SharedWebStreamingSyncImplementation,
   SharedWebStreamingSyncImplementationOptions,
   WebRemote
 } from '@powersync/web';
 import { Mutex } from 'async-mutex';
-import Logger from 'js-logger';
+
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { TestConnector } from './utils/MockStreamOpenFactory';
@@ -20,7 +26,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       schema: testSchema
     });
 
-  beforeAll(() => Logger.useDefaults());
+  beforeAll(() => createBaseLogger().useDefaults());
 
   function createAsset(powersync: AbstractPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
@@ -39,7 +45,7 @@ describe('Multiple Instances', { sequential: true }, () => {
   });
 
   it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
-    const logger = Logger.get('test-logger');
+    const logger = createLogger('test-logger');
     const spiedErrorLogger = vi.spyOn(logger, 'error');
     const spiedDebugLogger = vi.spyOn(logger, 'debug');
 

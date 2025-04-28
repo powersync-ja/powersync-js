@@ -20,7 +20,7 @@
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
             },
-            "allowedCommonJsDependencies": ["js-logger", "ws"],
+            "allowedCommonJsDependencies": ["ws"],
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",

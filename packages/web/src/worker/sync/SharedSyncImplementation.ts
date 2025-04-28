@@ -1,5 +1,7 @@
 import {
   type AbstractStreamingSyncImplementation,
+  type ILogger,
+  type ILogLevel,
   type LockOptions,
   type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
@@ -7,13 +9,13 @@ import {
   type SyncStatusOptions,
   AbortOperation,
   BaseObserver,
+  createLogger,
   DBAdapter,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
-import Logger, { type ILogger } from 'js-logger';
 import { WebRemote } from '../../db/sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
@@ -107,7 +109,7 @@ export class SharedSyncImplementation
     this.dbAdapter = null;
     this.syncParams = null;
     this.syncStreamClient = null;
-    this.logger = Logger.get('shared-sync');
+    this.logger = createLogger('shared-sync');
     this.lastConnectOptions = undefined;
 
     this.isInitialized = new Promise((resolve) => {
@@ -143,6 +145,11 @@ export class SharedSyncImplementation
 
   async waitForReady() {
     return this.isInitialized;
+  }
+
+  setLogLevel(level: ILogLevel) {
+    this.logger.setLevel(level);
+    this.broadCastLogger.setLevel(level);
   }
 
   /**
@@ -234,7 +241,7 @@ export class SharedSyncImplementation
   async removePort(port: MessagePort) {
     const index = this.ports.findIndex((p) => p.port == port);
     if (index < 0) {
-      console.warn(`Could not remove port ${port} since it is not present in active ports.`);
+      this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
       return;
     }
 
@@ -311,7 +318,7 @@ export class SharedSyncImplementation
 
             abortController.signal.onabort = reject;
             try {
-              console.log('calling the last port client provider for credentials');
+              this.logger.log('calling the last port client provider for credentials');
               resolve(await lastPort.clientProvider.fetchCredentials());
             } catch (ex) {
               reject(ex);

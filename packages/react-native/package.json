@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.19.2",
+  "version": "1.19.3",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -31,7 +31,7 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^2.4.2",
-    "@powersync/common": "workspace:^1.27.1",
+    "@powersync/common": "workspace:^1.28.0",
     "react": "*",
     "react-native": "*"
   },
@@ -57,7 +57,7 @@
     "@types/async-lock": "^1.4.0",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
-    "react": "18.2.0",
+    "react": "18.3.1",
     "react-native": "0.72.4",
     "react-native-fetch-api": "^3.0.0",
     "rollup": "4.14.3",

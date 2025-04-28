@@ -35,6 +35,7 @@ export * from './db/DBAdapter.js';
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
 export * from './utils/DataStream.js';
+export * from './utils/Logger.js';
 export * from './utils/parseQuery.js';
 
 export * from './types/types.js';

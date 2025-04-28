@@ -1,5 +1,14 @@
 # @powersync/common
 
+## 1.28.0
+
+### Minor Changes
+
+- 6807df6: Exposing logger on AbstractPowerSyncDatabase.
+- e71dc94: Added logger helpers, which can be used instead of the `js-logger` dependency.
+- f40ecf9: Added `fetchOptions` to AbstractRemoteOptions. Allows consumers to include fields such as `dispatcher` (e.g. for proxy support) to the fetch invocations.
+  Also ensuring all options provided to `connect()` are passed onwards, allows packages to have their own option definitions for `connect()` and the abstract `generateSyncStreamImplementation()`.
+
 ## 1.27.1
 
 ### Patch Changes

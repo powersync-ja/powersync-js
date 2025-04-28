@@ -7,16 +7,18 @@ import {
   WebStreamingSyncImplementationOptions,
   WASQLiteOpenFactory,
   TemporaryStorageOption,
-  WASQLiteVFS
+  WASQLiteVFS,
+  createBaseLogger,
+  LogLevel
 } from '@powersync/web';
-import Logger from 'js-logger';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
 import { safeParse } from '../safeParse/safeParse';
 
-Logger.useDefaults();
-Logger.setLevel(Logger.DEBUG);
+const baseLogger = createBaseLogger();
+baseLogger.useDefaults();
+baseLogger.setLevel(LogLevel.DEBUG);
 
 export const PARAMS_STORE = 'currentParams';
 
@@ -66,8 +68,8 @@ class SyncErrorTracker extends BaseObserver<SyncErrorListener> {
   constructor() {
     super();
     // Big hack: Use the logger to get access to connection errors
-    const defaultHandler = Logger.createDefaultHandler();
-    Logger.setHandler((messages, context) => {
+    const defaultHandler = baseLogger.createDefaultHandler();
+    baseLogger.setHandler((messages, context) => {
       defaultHandler(messages, context);
       if (context.name == 'PowerSyncStream' && context.level.name == 'ERROR') {
         if (messages[0] instanceof Error) {

@@ -1,19 +1,20 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
+import { LogLevel, PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
 import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory } from '@powersync/web';
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createBaseLogger } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 import { type AttachmentRecord } from '@powersync/attachments';
-import Logger from 'js-logger';
 import { KVStorage } from '../storage/KVStorage';
 import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
-Logger.useDefaults();
+const logger = createBaseLogger();
+logger.useDefaults();
+logger.setLevel(LogLevel.DEBUG);
 
 export class System {
   kvStorage: KVStorage;

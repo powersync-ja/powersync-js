@@ -1,5 +1,22 @@
 # @powersync/tanstack-react-query
 
+## 0.0.21
+
+### Patch Changes
+
+- Updated dependencies [6807df6]
+- Updated dependencies [6807df6]
+- Updated dependencies [e71dc94]
+- Updated dependencies [f40ecf9]
+  - @powersync/react@1.5.3
+  - @powersync/common@1.28.0
+
+## 0.0.20
+
+### Patch Changes
+
+- 806d5ca: Bumping tanstack query peer dependency to `^5.70.0`.
+
 ## 0.0.19
 
 ### Patch Changes

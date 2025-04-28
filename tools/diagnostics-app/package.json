@@ -1,6 +1,6 @@
 {
   "name": "@powersync/diagnostics-app",
-  "version": "0.8.8",
+  "version": "0.8.10",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -14,7 +14,6 @@
     "@journeyapps/wa-sqlite": "^1.2.0",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
-    "js-logger": "^1.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"

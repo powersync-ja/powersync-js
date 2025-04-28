@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import Logger from 'js-logger';
 import { powerSync } from '@/plugins/powerSync';
 import { supabase } from '@/plugins/supabase';
+import { createBaseLogger, LogLevel } from '@powersync/web';
 
-Logger.useDefaults();
-Logger.setLevel(Logger.DEBUG);
+const logger = createBaseLogger();
+logger.useDefaults();
+logger.setLevel(LogLevel.DEBUG);
 
 // For console testing purposes
 (window as any)._powersync = powerSync;

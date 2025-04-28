@@ -1,5 +1,15 @@
 # @powersync/attachments
 
+## 2.3.1
+
+### Patch Changes
+
+- 6807df6: Using newly exposed logger from AbstractPowerSyncDatabase to have controlled logging instead of using console based logging.
+- Updated dependencies [6807df6]
+- Updated dependencies [e71dc94]
+- Updated dependencies [f40ecf9]
+  - @powersync/common@1.28.0
+
 ## 2.3.0
 
 ### Minor Changes
