@@ -79,6 +79,10 @@ describe('TableV2', () => {
       view_name: 'customView',
       local_only: false,
       insert_only: false,
+      ignore_empty_update: false,
+      include_metadata: false,
+      include_old: false,
+      include_old_only_when_changed: false,
       columns: [
         { name: 'name', type: 'TEXT' },
         { name: 'age', type: 'INTEGER' }

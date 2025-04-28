@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Table } from '../../../src/db/schema/Table';
+import { Table, TableV2Options } from '../../../src/db/schema/Table';
 import { column, Column, ColumnType } from '../../../src/db/schema/Column';
 import { Index } from '../../../src/db/schema/Index';
 import { IndexedColumn } from '../../../src/db/schema/IndexedColumn';
@@ -103,6 +103,10 @@ describe('Table', () => {
       view_name: 'customView',
       local_only: false,
       insert_only: false,
+      ignore_empty_update: false,
+      include_metadata: false,
+      include_old: false,
+      include_old_only_when_changed: false,
       columns: [
         { name: 'name', type: 'TEXT' },
         { name: 'age', type: 'INTEGER' }
@@ -124,6 +128,22 @@ describe('Table', () => {
 
     expect(table.indexes[0].columns[0].name).toBe('age');
     expect(table.indexes[0].columns[0].ascending).toBe(false);
+  });
+
+  it('should handle options', () => {
+    function createTable(options: TableV2Options) {
+      return new Table({name: column.text}, options);
+    }
+
+    expect(createTable({}).toJSON().include_metadata).toBe(false);
+    expect(createTable({includeMetadata: true}).toJSON().include_metadata).toBe(true);
+
+    expect(createTable({includeOld: true}).toJSON().include_old).toBe(true);
+    expect(createTable({includeOld: true}).toJSON().include_old_only_when_changed).toBe(false);
+    expect(createTable({includeOld: 'when-changed'}).toJSON().include_old).toBe(true);
+    expect(createTable({includeOld: 'when-changed'}).toJSON().include_old_only_when_changed).toBe(true);
+
+    expect(createTable({ignoreEmptyUpdate: true}).toJSON().ignore_empty_update).toBe(true);
   });
 
   describe('validate', () => {
@@ -172,6 +192,28 @@ describe('Table', () => {
           '#invalid-name': column.text
         }).validate()
       ).toThrowError('Invalid characters in column name: #invalid-name');
+    });
+
+    it('should throw an error for local-only tables with metadata', () => {
+      expect(() =>
+        new Table({
+          name: column.text,
+        }, { localOnly: true, includeMetadata: true }).validate()
+      ).toThrowError("Can't include metadata for local-only tables.");
+    });
+
+    it('should throw an error for local-only tables tracking old values', () => {
+      expect(() =>
+        new Table({
+          name: column.text,
+        }, { localOnly: true, includeOld: true }).validate()
+      ).toThrowError("Can't include old values for local-only tables.");
+
+      expect(() =>
+        new Table({
+          name: column.text,
+        }, { localOnly: true, includeOld: 'when-changed' }).validate()
+      ).toThrowError("Can't include old values for local-only tables.");
     });
   });
 });

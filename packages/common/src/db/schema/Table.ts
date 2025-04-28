@@ -10,16 +10,22 @@ import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { TableV2 } from './TableV2.js';
 
-export interface TableOptions {
+interface SharedTableOptions {
+  localOnly?: boolean;
+  insertOnly?: boolean;
+  viewName?: string;
+  includeOld?: boolean | 'when-changed';
+  includeMetadata?: boolean;
+  ignoreEmptyUpdate?: boolean;
+}
+
+export interface TableOptions extends SharedTableOptions {
   /**
    * The synced table name, matching sync rules
    */
   name: string;
   columns: Column[];
   indexes?: Index[];
-  localOnly?: boolean;
-  insertOnly?: boolean;
-  viewName?: string;
 }
 
 export type RowType<T extends TableV2<any>> = {
@@ -30,17 +36,17 @@ export type RowType<T extends TableV2<any>> = {
 
 export type IndexShorthand = Record<string, string[]>;
 
-export interface TableV2Options {
+export interface TableV2Options extends SharedTableOptions {
   indexes?: IndexShorthand;
-  localOnly?: boolean;
-  insertOnly?: boolean;
-  viewName?: string;
 }
 
 export const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
-  localOnly: false
+  localOnly: false,
+  includeOld: false,
+  includeMetadata: false,
+  ignoreEmptyUpdate: false,
 };
 
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
@@ -144,10 +150,9 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   private initTableV1(options: TableOptions) {
     this.options = {
       ...options,
-      indexes: options.indexes || [],
-      insertOnly: options.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
-      localOnly: options.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly
+      indexes: options.indexes || []
     };
+    this.applyDefaultOptions();
   }
 
   private initTableV2(columns: Columns, options?: TableV2Options) {
@@ -173,12 +178,24 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       name: '',
       columns: convertedColumns,
       indexes: convertedIndexes,
-      insertOnly: options?.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
-      localOnly: options?.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly,
-      viewName: options?.viewName
+      viewName: options?.viewName,
+      insertOnly: options?.insertOnly,
+      localOnly: options?.localOnly,
+      includeOld: options?.includeOld,
+      includeMetadata: options?.includeMetadata,
+      ignoreEmptyUpdate: options?.ignoreEmptyUpdate
     };
+    this.applyDefaultOptions();
 
     this._mappedColumns = columns;
+  }
+
+  private applyDefaultOptions() {
+    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
+    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
+    this.options.includeOld ??= DEFAULT_TABLE_OPTIONS.includeOld;
+    this.options.includeMetadata ??= DEFAULT_TABLE_OPTIONS.includeMetadata;
+    this.options.ignoreEmptyUpdate ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdate;
   }
 
   get name() {
@@ -212,11 +229,23 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   get localOnly() {
-    return this.options.localOnly ?? false;
+    return this.options.localOnly!;
   }
 
   get insertOnly() {
-    return this.options.insertOnly ?? false;
+    return this.options.insertOnly!;
+  }
+
+  get includeOld() {
+    return this.options.includeOld!;
+  }
+
+  get includeMetadata() {
+    return this.options.includeMetadata!;
+  }
+
+  get ignoreEmptyUpdate() {
+    return this.options.ignoreEmptyUpdate!;
   }
 
   get internalName() {
@@ -248,6 +277,13 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
     if (this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
       throw new Error(`Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
+    }
+
+    if (this.includeMetadata && this.localOnly) {
+      throw new Error(`Can't include metadata for local-only tables.`);
+    }
+    if (this.includeOld != false && this.localOnly) {
+      throw new Error(`Can't include old values for local-only tables.`);
     }
 
     const columnNames = new Set<string>();
@@ -291,6 +327,10 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       view_name: this.viewName,
       local_only: this.localOnly,
       insert_only: this.insertOnly,
+      include_old: this.includeOld != false,
+      include_old_only_when_changed: this.includeOld == 'when-changed',
+      include_metadata: this.includeMetadata,
+      ignore_empty_update: this.ignoreEmptyUpdate,
       columns: this.columns.map((c) => c.toJSON()),
       indexes: this.indexes.map((e) => e.toJSON(this))
     };
