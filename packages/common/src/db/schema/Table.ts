@@ -14,9 +14,21 @@ interface SharedTableOptions {
   localOnly?: boolean;
   insertOnly?: boolean;
   viewName?: string;
-  includeOld?: boolean | 'when-changed';
+  includeOld?: boolean | IncludeOldOptions;
   includeMetadata?: boolean;
   ignoreEmptyUpdate?: boolean;
+}
+
+/** Whether to include old columns when PowerSync tracks local changes.
+ *
+ * Including old columns may be helpful for some backend connector implementations, which is
+ * why it can be enabled on per-table or per-columm basis.
+ */
+export interface IncludeOldOptions {
+  /** When defined, a list of column names for which old values should be tracked. */
+  columns?: string[];
+  /** When enabled, only include values that have actually been changed by an update. */
+  onlyWhenChanged?: boolean;
 }
 
 export interface TableOptions extends SharedTableOptions {
@@ -329,13 +341,15 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   toJSON() {
+    const includeOld = this.includeOld;
+
     return {
       name: this.name,
       view_name: this.viewName,
       local_only: this.localOnly,
       insert_only: this.insertOnly,
-      include_old: this.includeOld != false,
-      include_old_only_when_changed: this.includeOld == 'when-changed',
+      include_old: includeOld && ((includeOld as any).columns ?? true),
+      include_old_only_when_changed: typeof includeOld == 'object' && includeOld.onlyWhenChanged == true,
       include_metadata: this.includeMetadata,
       ignore_empty_update: this.ignoreEmptyUpdate,
       columns: this.columns.map((c) => c.toJSON()),

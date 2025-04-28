@@ -38,6 +38,26 @@ databaseTest('include old values', async ({ database }) => {
   expect(batch?.crud[0].oldData).toStrictEqual({name: 'entry'});
 });
 
+databaseTest('include old values with column filter', async ({ database }) => {
+  await database.init();
+  const schema = new Schema({
+    lists: new Table(
+      {
+        name: column.text,
+        content: column.text
+      },
+      { includeOld: { columns: ['name'] } }
+    )
+  });
+  await database.updateSchema(schema);
+  await database.execute('INSERT INTO lists (id, name, content) VALUES (uuid(), ?, ?);', ['name', 'content']);
+  await database.execute('DELETE FROM ps_crud;');
+  await database.execute('UPDATE lists SET name = ?, content = ?', ['new name', 'new content']);
+ 
+  const batch = await database.getNextCrudTransaction();
+  expect(batch?.crud[0].oldData).toStrictEqual({name: 'name'});
+});
+
 databaseTest('include old values when changed', async ({ database }) => {
   await database.init();
   const schema = new Schema({
@@ -46,7 +66,7 @@ databaseTest('include old values when changed', async ({ database }) => {
         name: column.text,
         content: column.text
       },
-      { includeOld: 'when-changed' }
+      { includeOld: { onlyWhenChanged: true } }
     )
   });
   await database.updateSchema(schema);

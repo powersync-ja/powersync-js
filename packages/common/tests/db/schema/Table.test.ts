@@ -140,8 +140,13 @@ describe('Table', () => {
 
     expect(createTable({ includeOld: true }).toJSON().include_old).toBe(true);
     expect(createTable({ includeOld: true }).toJSON().include_old_only_when_changed).toBe(false);
-    expect(createTable({ includeOld: 'when-changed' }).toJSON().include_old).toBe(true);
-    expect(createTable({ includeOld: 'when-changed' }).toJSON().include_old_only_when_changed).toBe(true);
+
+    const complexIncldueOld = createTable({ includeOld: {
+      columns: ['foo', 'bar'],
+      onlyWhenChanged: true,
+    } });
+    expect(complexIncldueOld.toJSON().include_old).toStrictEqual(['foo', 'bar']);
+    expect(complexIncldueOld.toJSON().include_old_only_when_changed).toBe(true);
 
     expect(createTable({ ignoreEmptyUpdate: true }).toJSON().ignore_empty_update).toBe(true);
   });
@@ -220,7 +225,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, includeOld: 'when-changed' }
+          { localOnly: true, includeOld: { onlyWhenChanged: false } }
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
     });
