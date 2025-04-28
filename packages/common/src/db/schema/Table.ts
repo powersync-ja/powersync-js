@@ -46,7 +46,7 @@ export const DEFAULT_TABLE_OPTIONS = {
   localOnly: false,
   includeOld: false,
   includeMetadata: false,
-  ignoreEmptyUpdate: false,
+  ignoreEmptyUpdate: false
 };
 
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
@@ -141,6 +141,13 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     } else {
       this.initTableV2(optionsOrColumns, v2Options);
     }
+  }
+
+  copyWithName(name: string): Table {
+    return new Table({
+      ...this.options,
+      name
+    });
   }
 
   private isTableV1(arg: TableOptions | Columns): arg is TableOptions {
