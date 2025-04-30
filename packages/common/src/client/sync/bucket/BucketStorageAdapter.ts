@@ -30,13 +30,12 @@ export interface SyncLocalDatabaseResult {
   checkpointFailures?: string[];
 }
 
-export type BucketOperationProgress = Record<
-  string,
-  {
-    atLast: number;
-    sinceLast: number;
-  }
->;
+export type SavedProgress = {
+  atLast: number;
+  sinceLast: number;
+};
+
+export type BucketOperationProgress = Record<string, SavedProgress>;
 
 export interface BucketChecksum {
   bucket: string;
