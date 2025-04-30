@@ -27,7 +27,7 @@ export default (commandLineArgs) => {
         // Used by can-ndjson-stream
         TextDecoder: ['text-encoding', 'TextDecoder']
       }),
-      terser()
+//      terser()
     ],
     // This makes life easier
     external: [
