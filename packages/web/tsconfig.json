@@ -5,6 +5,7 @@
     "paths": {
       "@powersync/web": ["./src/index.ts"]
     },
+    "allowJs": true,
     "declaration": true /* Generates corresponding '.d.ts' file. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */,
     "lib": ["DOM", "ESNext", "WebWorker"] /* Specify library files to be included in the compilation. */,
