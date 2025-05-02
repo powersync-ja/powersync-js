@@ -165,14 +165,13 @@ export abstract class AbstractStreamingSyncImplementation
   private pendingCrudUpload?: Promise<void>;
 
   syncStatus: SyncStatus;
-  private syncStatusOptions: SyncStatusOptions;
   triggerCrudUpload: () => void;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
 
-    this.syncStatusOptions = {
+    this.syncStatus = new SyncStatus({
       connected: false,
       connecting: false,
       lastSyncedAt: undefined,
@@ -180,8 +179,7 @@ export abstract class AbstractStreamingSyncImplementation
         uploading: false,
         downloading: false
       }
-    };
-    this.syncStatus = new SyncStatus(this.syncStatusOptions);
+    });
     this.abortController = null;
 
     this.triggerCrudUpload = throttleLeadingTrailing(() => {
@@ -660,7 +658,7 @@ The next upload iteration will be delayed.`);
             await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
           } else if (isStreamingSyncData(line)) {
             const { data } = line;
-            const previousProgress = this.syncStatusOptions.dataFlow?.downloadProgress;
+            const previousProgress = this.syncStatus.dataFlowStatus.downloadProgress;
             let updatedProgress: InternalProgressInformation | null = null;
             if (previousProgress) {
               updatedProgress = { ...previousProgress };
@@ -805,7 +803,6 @@ The next upload iteration will be delayed.`);
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
-      Object.assign(this.syncStatusOptions, options);
       this.syncStatus = updatedStatus;
       // Only trigger this is there was a change
       this.iterateListeners((cb) => cb.statusChanged?.(updatedStatus));
