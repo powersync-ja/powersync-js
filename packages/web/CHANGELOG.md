@@ -1,5 +1,18 @@
 # @powersync/web
 
+## 1.20.0
+
+### Minor Changes
+
+- ed11438: Report progress information about downloaded rows. Sync progress is available through `SyncStatus.downloadProgress`.
+
+### Patch Changes
+
+- 4f68f6a: Update core extension version to 0.3.14
+- cbab03e: Fix an infinite loop when multiple tabs using `WASQLiteVFS.OPFSCoopSyncVFS` are using the database concurrently.
+- Updated dependencies [ed11438]
+  - @powersync/common@1.29.0
+
 ## 1.19.0
 
 ### Minor Changes

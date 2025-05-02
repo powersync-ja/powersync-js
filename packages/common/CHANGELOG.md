@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.29.0
+
+### Minor Changes
+
+- ed11438: Report progress information about downloaded rows. Sync progress is available through `SyncStatus.downloadProgress`.
+
 ## 1.28.0
 
 ### Minor Changes
