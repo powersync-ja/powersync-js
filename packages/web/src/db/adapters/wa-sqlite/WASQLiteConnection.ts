@@ -116,10 +116,11 @@ export const DEFAULT_MODULE_FACTORIES = {
     } else {
       module = await SyncWASQLiteModuleFactory();
     }
-    const { OPFSCoopSyncVFS } = await import('./FixedCoopSyncVFS.js');
+    // @ts-expect-error The types for this static method are missing upstream
+    const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
     return {
       module,
-      vfs: await OPFSCoopSyncVFS.create(options.dbFileName, module) as any
+      vfs: await OPFSCoopSyncVFS.create(options.dbFileName, module)
     };
   }
 };
