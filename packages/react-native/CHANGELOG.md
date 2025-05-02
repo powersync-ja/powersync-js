@@ -1,5 +1,18 @@
 # @powersync/react-native
 
+## 1.20.0
+
+### Minor Changes
+
+- ed11438: Report progress information about downloaded rows. Sync progress is available through `SyncStatus.downloadProgress`.
+
+### Patch Changes
+
+- 4f68f6a: Update core extension version to 0.3.14
+- Updated dependencies [ed11438]
+  - @powersync/common@1.29.0
+  - @powersync/react@1.5.3
+
 ## 1.19.3
 
 ### Patch Changes

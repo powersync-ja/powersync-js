@@ -1,5 +1,17 @@
 # @powersync/node
 
+## 0.4.0
+
+### Minor Changes
+
+- ed11438: Report progress information about downloaded rows. Sync progress is available through `SyncStatus.downloadProgress`.
+
+### Patch Changes
+
+- 4f68f6a: Update core extension version to 0.3.14
+- Updated dependencies [ed11438]
+  - @powersync/common@1.29.0
+
 ## 0.3.0
 
 ### Minor Changes
