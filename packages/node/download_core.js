@@ -6,7 +6,7 @@ import { Readable } from 'node:stream';
 import { finished } from 'node:stream/promises';
 import { exit } from 'node:process';
 
-const version = '0.3.11';
+const version = '0.3.14';
 
 const platform = OS.platform();
 let destination;
