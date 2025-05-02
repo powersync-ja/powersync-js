@@ -30,6 +30,13 @@ export interface SyncLocalDatabaseResult {
   checkpointFailures?: string[];
 }
 
+export type SavedProgress = {
+  atLast: number;
+  sinceLast: number;
+};
+
+export type BucketOperationProgress = Record<string, SavedProgress>;
+
 export interface BucketChecksum {
   bucket: string;
   priority?: number;
@@ -65,6 +72,7 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
   startSession(): void;
 
   getBucketStates(): Promise<BucketState[]>;
+  getBucketOperationProgress(): Promise<BucketOperationProgress>;
 
   syncLocalDatabase(
     checkpoint: Checkpoint,

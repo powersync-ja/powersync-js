@@ -37,11 +37,11 @@ export class NodeRemote extends AbstractRemote {
     const dispatcher = options?.dispatcher ?? new EnvHttpProxyAgent();
 
     super(connector, logger, {
-      ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
       fetchOptions: {
         dispatcher
-      }
+      },
+      ...(options ?? {})
     });
   }
 

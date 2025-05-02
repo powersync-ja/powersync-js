@@ -102,7 +102,7 @@ export interface StreamingSyncCheckpointDiff {
     last_op_id: OpId;
     updated_buckets: BucketChecksum[];
     removed_buckets: string[];
-    write_checkpoint: string;
+    write_checkpoint?: string;
   };
 }
 

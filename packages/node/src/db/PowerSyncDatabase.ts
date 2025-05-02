@@ -1,9 +1,11 @@
 import {
   AbstractPowerSyncDatabase,
+  AbstractRemoteOptions,
   AbstractStreamingSyncImplementation,
   AdditionalConnectionOptions,
   BucketStorageAdapter,
   DBAdapter,
+  DEFAULT_REMOTE_LOGGER,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
@@ -22,6 +24,12 @@ import { Dispatcher } from 'undici';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
+  /**
+   * Options to override how the SDK will connect to the sync service.
+   *
+   * This option is intended to be used for internal tests.
+   */
+  remoteOptions?: Partial<AbstractRemoteOptions>;
 };
 
 export type NodeAdditionalConnectionOptions = AdditionalConnectionOptions & {
@@ -79,7 +87,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     connector: PowerSyncBackendConnector,
     options: NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new NodeRemote(connector, this.options.logger, { dispatcher: options.dispatcher });
+    const remote = new NodeRemote(connector, this.options.logger, {
+      dispatcher: options.dispatcher,
+      ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
+    });
 
     return new NodeStreamingSyncImplementation({
       adapter: this.bucketStorageAdapter,

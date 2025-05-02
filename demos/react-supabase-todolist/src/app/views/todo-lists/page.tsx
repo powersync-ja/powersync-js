@@ -18,6 +18,7 @@ import { LISTS_TABLE } from '@/library/powersync/AppSchema';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
+import { GuardBySync } from '@/components/widgets/GuardBySync';
 
 export default function TodoListsPage() {
   const powerSync = usePowerSync();
@@ -53,7 +54,9 @@ export default function TodoListsPage() {
         </S.FloatingActionButton>
         <Box>
           <SearchBarWidget />
-          {!status.hasSynced ? <p>Busy with sync...</p> : <TodoListsWidget />}
+          <GuardBySync>
+            <TodoListsWidget />
+          </GuardBySync>
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
