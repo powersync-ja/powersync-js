@@ -136,19 +136,19 @@ describe('Table', () => {
     }
 
     expect(createTable({}).toJSON().include_metadata).toBe(false);
-    expect(createTable({ includeMetadata: true }).toJSON().include_metadata).toBe(true);
+    expect(createTable({ trackMetadata: true }).toJSON().include_metadata).toBe(true);
 
-    expect(createTable({ includeOld: true }).toJSON().include_old).toBe(true);
-    expect(createTable({ includeOld: true }).toJSON().include_old_only_when_changed).toBe(false);
+    expect(createTable({ trackOld: true }).toJSON().include_old).toBe(true);
+    expect(createTable({ trackOld: true }).toJSON().include_old_only_when_changed).toBe(false);
 
-    const complexIncldueOld = createTable({ includeOld: {
+    const complexIncldueOld = createTable({ trackOld: {
       columns: ['foo', 'bar'],
       onlyWhenChanged: true,
     } });
     expect(complexIncldueOld.toJSON().include_old).toStrictEqual(['foo', 'bar']);
     expect(complexIncldueOld.toJSON().include_old_only_when_changed).toBe(true);
 
-    expect(createTable({ ignoreEmptyUpdate: true }).toJSON().ignore_empty_update).toBe(true);
+    expect(createTable({ ignoreEmptyUpdates: true }).toJSON().ignore_empty_update).toBe(true);
   });
 
   describe('validate', () => {
@@ -205,7 +205,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, includeMetadata: true }
+          { localOnly: true, trackMetadata: true }
         ).validate()
       ).toThrowError("Can't include metadata for local-only tables.");
     });
@@ -216,7 +216,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, includeOld: true }
+          { localOnly: true, trackOld: true }
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
 
@@ -225,7 +225,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, includeOld: { onlyWhenChanged: false } }
+          { localOnly: true, trackOld: { onlyWhenChanged: false } }
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
     });

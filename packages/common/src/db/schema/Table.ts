@@ -14,9 +14,9 @@ interface SharedTableOptions {
   localOnly?: boolean;
   insertOnly?: boolean;
   viewName?: string;
-  includeOld?: boolean | IncludeOldOptions;
-  includeMetadata?: boolean;
-  ignoreEmptyUpdate?: boolean;
+  trackOld?: boolean | TrackOldOptions;
+  trackMetadata?: boolean;
+  ignoreEmptyUpdates?: boolean;
 }
 
 /** Whether to include old columns when PowerSync tracks local changes.
@@ -24,7 +24,7 @@ interface SharedTableOptions {
  * Including old columns may be helpful for some backend connector implementations, which is
  * why it can be enabled on per-table or per-columm basis.
  */
-export interface IncludeOldOptions {
+export interface TrackOldOptions {
   /** When defined, a list of column names for which old values should be tracked. */
   columns?: string[];
   /** When enabled, only include values that have actually been changed by an update. */
@@ -56,9 +56,9 @@ export const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
   localOnly: false,
-  includeOld: false,
-  includeMetadata: false,
-  ignoreEmptyUpdate: false
+  trackOld: false,
+  trackMetadata: false,
+  ignoreEmptyUpdates: false
 };
 
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
@@ -200,9 +200,9 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       viewName: options?.viewName,
       insertOnly: options?.insertOnly,
       localOnly: options?.localOnly,
-      includeOld: options?.includeOld,
-      includeMetadata: options?.includeMetadata,
-      ignoreEmptyUpdate: options?.ignoreEmptyUpdate
+      trackOld: options?.trackOld,
+      trackMetadata: options?.trackMetadata,
+      ignoreEmptyUpdates: options?.ignoreEmptyUpdates
     };
     this.applyDefaultOptions();
 
@@ -212,9 +212,9 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   private applyDefaultOptions() {
     this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
     this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
-    this.options.includeOld ??= DEFAULT_TABLE_OPTIONS.includeOld;
-    this.options.includeMetadata ??= DEFAULT_TABLE_OPTIONS.includeMetadata;
-    this.options.ignoreEmptyUpdate ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdate;
+    this.options.trackOld ??= DEFAULT_TABLE_OPTIONS.trackOld;
+    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
+    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
   }
 
   get name() {
@@ -255,16 +255,16 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     return this.options.insertOnly!;
   }
 
-  get includeOld() {
-    return this.options.includeOld!;
+  get trackOld() {
+    return this.options.trackOld!;
   }
 
-  get includeMetadata() {
-    return this.options.includeMetadata!;
+  get trackMetadata() {
+    return this.options.trackMetadata!;
   }
 
-  get ignoreEmptyUpdate() {
-    return this.options.ignoreEmptyUpdate!;
+  get ignoreEmptyUpdates() {
+    return this.options.ignoreEmptyUpdates!;
   }
 
   get internalName() {
@@ -298,10 +298,10 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       throw new Error(`Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
     }
 
-    if (this.includeMetadata && this.localOnly) {
+    if (this.trackMetadata && this.localOnly) {
       throw new Error(`Can't include metadata for local-only tables.`);
     }
-    if (this.includeOld != false && this.localOnly) {
+    if (this.trackOld != false && this.localOnly) {
       throw new Error(`Can't include old values for local-only tables.`);
     }
 
@@ -341,17 +341,17 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   toJSON() {
-    const includeOld = this.includeOld;
+    const trackOld = this.trackOld;
 
     return {
       name: this.name,
       view_name: this.viewName,
       local_only: this.localOnly,
       insert_only: this.insertOnly,
-      include_old: includeOld && ((includeOld as any).columns ?? true),
-      include_old_only_when_changed: typeof includeOld == 'object' && includeOld.onlyWhenChanged == true,
-      include_metadata: this.includeMetadata,
-      ignore_empty_update: this.ignoreEmptyUpdate,
+      include_old: trackOld && ((trackOld as any).columns ?? true),
+      include_old_only_when_changed: typeof trackOld == 'object' && trackOld.onlyWhenChanged == true,
+      include_metadata: this.trackMetadata,
+      ignore_empty_update: this.ignoreEmptyUpdates,
       columns: this.columns.map((c) => c.toJSON()),
       indexes: this.indexes.map((e) => e.toJSON(this))
     };

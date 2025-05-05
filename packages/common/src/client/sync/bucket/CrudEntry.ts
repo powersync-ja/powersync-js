@@ -66,7 +66,7 @@ export class CrudEntry {
   opData?: Record<string, any>;
 
   /**
-   * For tables where the `includeOld` option has been enabled, this tracks previous values for
+   * For tables where the `trackOld` option has been enabled, this tracks previous values for
    * `UPDATE` and `DELETE` statements.
    */
   oldData?: Record<string, any>;
@@ -83,7 +83,7 @@ export class CrudEntry {
   /**
    * Client-side metadata attached with this write.
    *
-   * This field is only available when the `includeMetadata` option was set to `true` when creating a table
+   * This field is only available when the `trackMetadata` option was set to `true` when creating a table
    * and the insert or update statement set the `_metadata` column.
    */
   metadata?: string;

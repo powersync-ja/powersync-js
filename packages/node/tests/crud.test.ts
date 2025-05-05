@@ -9,7 +9,7 @@ databaseTest('include metadata', async ({ database }) => {
       {
         name: column.text
       },
-      { includeMetadata: true }
+      { trackMetadata: true }
     )
   });
   await database.updateSchema(schema);
@@ -26,7 +26,7 @@ databaseTest('include old values', async ({ database }) => {
       {
         name: column.text
       },
-      { includeOld: true }
+      { trackOld: true }
     )
   });
   await database.updateSchema(schema);
@@ -46,7 +46,7 @@ databaseTest('include old values with column filter', async ({ database }) => {
         name: column.text,
         content: column.text
       },
-      { includeOld: { columns: ['name'] } }
+      { trackOld: { columns: ['name'] } }
     )
   });
   await database.updateSchema(schema);
@@ -66,7 +66,7 @@ databaseTest('include old values when changed', async ({ database }) => {
         name: column.text,
         content: column.text
       },
-      { includeOld: { onlyWhenChanged: true } }
+      { trackOld: { onlyWhenChanged: true } }
     )
   });
   await database.updateSchema(schema);
@@ -85,7 +85,7 @@ databaseTest('ignore empty update', async ({ database }) => {
       {
         name: column.text
       },
-      { ignoreEmptyUpdate: true }
+      { ignoreEmptyUpdates: true }
     )
   });
   await database.updateSchema(schema);
