@@ -54,7 +54,7 @@ export interface ProgressWithOperations {
  * Additionally, the {@link SyncProgress.untilPriority} method can be used to otbain progress towards
  * a specific priority (instead of the progress for the entire download).
  *
- * The reported progress always reflects the status towards th end of a sync iteration (after
+ * The reported progress always reflects the status towards the end of a sync iteration (after
  * which a consistent snapshot of all buckets is available locally).
  *
  * In rare cases (in particular, when a [compacting](https://docs.powersync.com/usage/lifecycle-maintenance/compacting-buckets)
