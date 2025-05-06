@@ -25,9 +25,11 @@ export type CrudEntryJSON = {
 
 type CrudEntryDataJSON = {
   data: Record<string, any>;
+  old?: Record<string, any>;
   op: UpdateType;
   type: string;
   id: string;
+  metadata?: string;
 };
 
 /**
@@ -62,6 +64,13 @@ export class CrudEntry {
    * Data associated with the change.
    */
   opData?: Record<string, any>;
+
+  /**
+   * For tables where the `trackPreviousValues` option has been enabled, this tracks previous values for
+   * `UPDATE` and `DELETE` statements.
+   */
+  previousValues?: Record<string, any>;
+
   /**
    * Table that contained the change.
    */
@@ -71,9 +80,26 @@ export class CrudEntry {
    */
   transactionId?: number;
 
+  /**
+   * Client-side metadata attached with this write.
+   *
+   * This field is only available when the `trackMetadata` option was set to `true` when creating a table
+   * and the insert or update statement set the `_metadata` column.
+   */
+  metadata?: string;
+
   static fromRow(dbRow: CrudEntryJSON) {
     const data: CrudEntryDataJSON = JSON.parse(dbRow.data);
-    return new CrudEntry(parseInt(dbRow.id), data.op, data.type, data.id, dbRow.tx_id, data.data);
+    return new CrudEntry(
+      parseInt(dbRow.id),
+      data.op,
+      data.type,
+      data.id,
+      dbRow.tx_id,
+      data.data,
+      data.old,
+      data.metadata
+    );
   }
 
   constructor(
@@ -82,7 +108,9 @@ export class CrudEntry {
     table: string,
     id: string,
     transactionId?: number,
-    opData?: Record<string, any>
+    opData?: Record<string, any>,
+    previousValues?: Record<string, any>,
+    metadata?: string
   ) {
     this.clientId = clientId;
     this.id = id;
@@ -90,6 +118,8 @@ export class CrudEntry {
     this.opData = opData;
     this.table = table;
     this.transactionId = transactionId;
+    this.previousValues = previousValues;
+    this.metadata = metadata;
   }
 
   /**
