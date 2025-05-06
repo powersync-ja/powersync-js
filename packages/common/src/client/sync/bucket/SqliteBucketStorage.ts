@@ -154,9 +154,9 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       return { ready: false, checkpointValid: false, checkpointFailures: r.checkpointFailures };
     }
 
-    const buckets = checkpoint.buckets;
+    let buckets = checkpoint.buckets;
     if (priority !== undefined) {
-      buckets.filter((b) => hasMatchingPriority(priority, b));
+      buckets = buckets.filter((b) => hasMatchingPriority(priority, b));
     }
     const bucketNames = buckets.map((b) => b.bucket);
     await this.writeTransaction(async (tx) => {
