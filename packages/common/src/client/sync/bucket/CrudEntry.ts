@@ -66,10 +66,10 @@ export class CrudEntry {
   opData?: Record<string, any>;
 
   /**
-   * For tables where the `trackOld` option has been enabled, this tracks previous values for
+   * For tables where the `trackPreviousValues` option has been enabled, this tracks previous values for
    * `UPDATE` and `DELETE` statements.
    */
-  oldData?: Record<string, any>;
+  previousValues?: Record<string, any>;
 
   /**
    * Table that contained the change.
@@ -109,7 +109,7 @@ export class CrudEntry {
     id: string,
     transactionId?: number,
     opData?: Record<string, any>,
-    oldData?: Record<string, any>,
+    previousValues?: Record<string, any>,
     metadata?: string
   ) {
     this.clientId = clientId;
@@ -118,7 +118,7 @@ export class CrudEntry {
     this.opData = opData;
     this.table = table;
     this.transactionId = transactionId;
-    this.oldData = oldData;
+    this.previousValues = previousValues;
     this.metadata = metadata;
   }
 

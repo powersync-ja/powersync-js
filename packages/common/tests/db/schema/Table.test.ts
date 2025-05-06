@@ -138,10 +138,10 @@ describe('Table', () => {
     expect(createTable({}).toJSON().include_metadata).toBe(false);
     expect(createTable({ trackMetadata: true }).toJSON().include_metadata).toBe(true);
 
-    expect(createTable({ trackOld: true }).toJSON().include_old).toBe(true);
-    expect(createTable({ trackOld: true }).toJSON().include_old_only_when_changed).toBe(false);
+    expect(createTable({ trackPrevious: true }).toJSON().include_old).toBe(true);
+    expect(createTable({ trackPrevious: true }).toJSON().include_old_only_when_changed).toBe(false);
 
-    const complexIncldueOld = createTable({ trackOld: {
+    const complexIncldueOld = createTable({ trackPrevious: {
       columns: ['foo', 'bar'],
       onlyWhenChanged: true,
     } });
@@ -216,7 +216,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, trackOld: true }
+          { localOnly: true, trackPrevious: true }
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
 
@@ -225,7 +225,7 @@ describe('Table', () => {
           {
             name: column.text
           },
-          { localOnly: true, trackOld: { onlyWhenChanged: false } }
+          { localOnly: true, trackPrevious: { onlyWhenChanged: false } }
         ).validate()
       ).toThrowError("Can't include old values for local-only tables.");
     });

@@ -26,7 +26,7 @@ databaseTest('include old values', async ({ database }) => {
       {
         name: column.text
       },
-      { trackOld: true }
+      { trackPrevious: true }
     )
   });
   await database.updateSchema(schema);
@@ -35,7 +35,7 @@ databaseTest('include old values', async ({ database }) => {
   await database.execute('UPDATE lists SET name = ?', ['new name']);
  
   const batch = await database.getNextCrudTransaction();
-  expect(batch?.crud[0].oldData).toStrictEqual({name: 'entry'});
+  expect(batch?.crud[0].previousValues).toStrictEqual({name: 'entry'});
 });
 
 databaseTest('include old values with column filter', async ({ database }) => {
@@ -46,7 +46,7 @@ databaseTest('include old values with column filter', async ({ database }) => {
         name: column.text,
         content: column.text
       },
-      { trackOld: { columns: ['name'] } }
+      { trackPrevious: { columns: ['name'] } }
     )
   });
   await database.updateSchema(schema);
@@ -55,7 +55,7 @@ databaseTest('include old values with column filter', async ({ database }) => {
   await database.execute('UPDATE lists SET name = ?, content = ?', ['new name', 'new content']);
  
   const batch = await database.getNextCrudTransaction();
-  expect(batch?.crud[0].oldData).toStrictEqual({name: 'name'});
+  expect(batch?.crud[0].previousValues).toStrictEqual({name: 'name'});
 });
 
 databaseTest('include old values when changed', async ({ database }) => {
@@ -66,7 +66,7 @@ databaseTest('include old values when changed', async ({ database }) => {
         name: column.text,
         content: column.text
       },
-      { trackOld: { onlyWhenChanged: true } }
+      { trackPrevious: { onlyWhenChanged: true } }
     )
   });
   await database.updateSchema(schema);
@@ -75,7 +75,7 @@ databaseTest('include old values when changed', async ({ database }) => {
   await database.execute('UPDATE lists SET name = ?', ['new name']);
  
   const batch = await database.getNextCrudTransaction();
-  expect(batch?.crud[0].oldData).toStrictEqual({name: 'name'});
+  expect(batch?.crud[0].previousValues).toStrictEqual({name: 'name'});
 });
 
 databaseTest('ignore empty update', async ({ database }) => {
