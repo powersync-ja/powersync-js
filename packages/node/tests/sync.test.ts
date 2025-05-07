@@ -61,7 +61,7 @@ describe('Sync', () => {
     mockSyncServiceTest('without priorities', async ({ syncService }) => {
       const database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
         checkpoint: {
@@ -96,7 +96,7 @@ describe('Sync', () => {
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
         checkpoint: {
@@ -111,12 +111,12 @@ describe('Sync', () => {
 
       // Close this database before sending the checkpoint...
       await database.close();
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(0));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
 
       // And open a new one
       database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       // Send same checkpoint again
       syncService.pushLine({
@@ -135,7 +135,7 @@ describe('Sync', () => {
     mockSyncServiceTest('interrupted sync with new checkpoint', async ({ syncService }) => {
       let database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
         checkpoint: {
@@ -150,10 +150,10 @@ describe('Sync', () => {
 
       // Re-open database
       await database.close();
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(0));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
       database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-      await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       // Send checkpoint with new data
       syncService.pushLine({
@@ -171,7 +171,7 @@ describe('Sync', () => {
     mockSyncServiceTest('different priorities', async ({ syncService }) => {
         let database = await syncService.createDatabase();
         database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-        await vi.waitFor(() => expect(syncService.connectedListeners).toEqual(1));
+        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
   
         syncService.pushLine({
           checkpoint: {
@@ -218,6 +218,39 @@ describe('Sync', () => {
 
         pushCheckpointComplete(syncService);
         await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+    });
+
+    mockSyncServiceTest('uses correct state when reconnecting', async ({syncService}) => {
+      let database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [
+              bucket('a', 5, {priority: 0}),
+              bucket('b', 5, {priority: 3}),
+          ]
+        }
+      });
+
+      // Sync priority 0 completely, start with rest
+      pushDataLine(syncService, 'a', 5);
+      pushDataLine(syncService, 'b', 1);
+      pushCheckpointComplete(syncService, 0);
+      await database.waitForFirstSync({priority: 0});
+
+      await database.close();
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
+      database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      expect(syncService.connectedListeners[0].buckets).toStrictEqual([
+        {"name": "a", "after": "10"},
+        {"name": "b", "after": "6"},
+      ]);
     });
   });
 });

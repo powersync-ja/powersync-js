@@ -4,7 +4,6 @@ import path from 'node:path';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
-  AbstractRemoteOptions,
   column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
@@ -76,20 +75,30 @@ export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDataba
 // TODO: Unify this with the test setup for the web SDK.
 export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockSyncService }>({
   syncService: async ({ tmpdir }, use) => {
-    const listeners: ReadableStreamDefaultController<StreamingSyncLine>[] = [];
+    interface Listener {
+      request: any,
+      stream: ReadableStreamDefaultController<StreamingSyncLine>,
+    }
+
+    const listeners: Listener[] = [];
 
     const inMemoryFetch: typeof fetch = async (info, init?) => {
       const request = new Request(info, init);
       if (request.url.endsWith('/sync/stream')) {
-        let thisController: ReadableStreamDefaultController<StreamingSyncLine> | null = null;
+        const body = await request.json();
+        let listener: Listener | null = null;
 
         const syncLines = new ReadableStream<StreamingSyncLine>({
           start(controller) {
-            thisController = controller;
-            listeners.push(controller);
+            listener = {
+              request: body,
+              stream: controller,
+            };
+
+            listeners.push(listener);
           },
           cancel() {
-            listeners.splice(listeners.indexOf(thisController!), 1);
+            listeners.splice(listeners.indexOf(listener!), 1);
           }
         });
 
@@ -120,11 +129,11 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockS
 
     await use({
       get connectedListeners() {
-        return listeners.length;
+        return listeners.map((e) => e.request);
       },
       pushLine(line) {
         for (const listener of listeners) {
-          listener.enqueue(line);
+          listener.stream.enqueue(line);
         }
       },
       createDatabase: newConnection
@@ -134,7 +143,7 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockS
 
 export interface MockSyncService {
   pushLine: (line: StreamingSyncLine) => void;
-  connectedListeners: number;
+  connectedListeners: any[];
   createDatabase: () => Promise<PowerSyncDatabase>;
 }
 

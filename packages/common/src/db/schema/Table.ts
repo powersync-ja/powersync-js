@@ -10,16 +10,34 @@ import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
 import { TableV2 } from './TableV2.js';
 
-export interface TableOptions {
+interface SharedTableOptions {
+  localOnly?: boolean;
+  insertOnly?: boolean;
+  viewName?: string;
+  trackPrevious?: boolean | TrackPreviousOptions;
+  trackMetadata?: boolean;
+  ignoreEmptyUpdates?: boolean;
+}
+
+/** Whether to include previous column values when PowerSync tracks local changes.
+ *
+ * Including old values may be helpful for some backend connector implementations, which is
+ * why it can be enabled on per-table or per-columm basis.
+ */
+export interface TrackPreviousOptions {
+  /** When defined, a list of column names for which old values should be tracked. */
+  columns?: string[];
+  /** When enabled, only include values that have actually been changed by an update. */
+  onlyWhenChanged?: boolean;
+}
+
+export interface TableOptions extends SharedTableOptions {
   /**
    * The synced table name, matching sync rules
    */
   name: string;
   columns: Column[];
   indexes?: Index[];
-  localOnly?: boolean;
-  insertOnly?: boolean;
-  viewName?: string;
 }
 
 export type RowType<T extends TableV2<any>> = {
@@ -30,17 +48,17 @@ export type RowType<T extends TableV2<any>> = {
 
 export type IndexShorthand = Record<string, string[]>;
 
-export interface TableV2Options {
+export interface TableV2Options extends SharedTableOptions {
   indexes?: IndexShorthand;
-  localOnly?: boolean;
-  insertOnly?: boolean;
-  viewName?: string;
 }
 
 export const DEFAULT_TABLE_OPTIONS = {
   indexes: [],
   insertOnly: false,
-  localOnly: false
+  localOnly: false,
+  trackPrevious: false,
+  trackMetadata: false,
+  ignoreEmptyUpdates: false
 };
 
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
@@ -137,6 +155,13 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
     }
   }
 
+  copyWithName(name: string): Table {
+    return new Table({
+      ...this.options,
+      name
+    });
+  }
+
   private isTableV1(arg: TableOptions | Columns): arg is TableOptions {
     return 'columns' in arg && Array.isArray(arg.columns);
   }
@@ -144,10 +169,9 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   private initTableV1(options: TableOptions) {
     this.options = {
       ...options,
-      indexes: options.indexes || [],
-      insertOnly: options.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
-      localOnly: options.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly
+      indexes: options.indexes || []
     };
+    this.applyDefaultOptions();
   }
 
   private initTableV2(columns: Columns, options?: TableV2Options) {
@@ -173,12 +197,24 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
       name: '',
       columns: convertedColumns,
       indexes: convertedIndexes,
-      insertOnly: options?.insertOnly ?? DEFAULT_TABLE_OPTIONS.insertOnly,
-      localOnly: options?.localOnly ?? DEFAULT_TABLE_OPTIONS.localOnly,
-      viewName: options?.viewName
+      viewName: options?.viewName,
+      insertOnly: options?.insertOnly,
+      localOnly: options?.localOnly,
+      trackPrevious: options?.trackPrevious,
+      trackMetadata: options?.trackMetadata,
+      ignoreEmptyUpdates: options?.ignoreEmptyUpdates
     };
+    this.applyDefaultOptions();
 
     this._mappedColumns = columns;
+  }
+
+  private applyDefaultOptions() {
+    this.options.insertOnly ??= DEFAULT_TABLE_OPTIONS.insertOnly;
+    this.options.localOnly ??= DEFAULT_TABLE_OPTIONS.localOnly;
+    this.options.trackPrevious ??= DEFAULT_TABLE_OPTIONS.trackPrevious;
+    this.options.trackMetadata ??= DEFAULT_TABLE_OPTIONS.trackMetadata;
+    this.options.ignoreEmptyUpdates ??= DEFAULT_TABLE_OPTIONS.ignoreEmptyUpdates;
   }
 
   get name() {
@@ -212,11 +248,23 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   get localOnly() {
-    return this.options.localOnly ?? false;
+    return this.options.localOnly!;
   }
 
   get insertOnly() {
-    return this.options.insertOnly ?? false;
+    return this.options.insertOnly!;
+  }
+
+  get trackPrevious() {
+    return this.options.trackPrevious!;
+  }
+
+  get trackMetadata() {
+    return this.options.trackMetadata!;
+  }
+
+  get ignoreEmptyUpdates() {
+    return this.options.ignoreEmptyUpdates!;
   }
 
   get internalName() {
@@ -248,6 +296,13 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
 
     if (this.columns.length > MAX_AMOUNT_OF_COLUMNS) {
       throw new Error(`Table has too many columns. The maximum number of columns is ${MAX_AMOUNT_OF_COLUMNS}.`);
+    }
+
+    if (this.trackMetadata && this.localOnly) {
+      throw new Error(`Can't include metadata for local-only tables.`);
+    }
+    if (this.trackPrevious != false && this.localOnly) {
+      throw new Error(`Can't include old values for local-only tables.`);
     }
 
     const columnNames = new Set<string>();
@@ -286,11 +341,17 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   toJSON() {
+    const trackPrevious = this.trackPrevious;
+
     return {
       name: this.name,
       view_name: this.viewName,
       local_only: this.localOnly,
       insert_only: this.insertOnly,
+      include_old: trackPrevious && ((trackPrevious as any).columns ?? true),
+      include_old_only_when_changed: typeof trackPrevious == 'object' && trackPrevious.onlyWhenChanged == true,
+      include_metadata: this.trackMetadata,
+      ignore_empty_update: this.ignoreEmptyUpdates,
       columns: this.columns.map((c) => c.toJSON()),
       indexes: this.indexes.map((e) => e.toJSON(this))
     };

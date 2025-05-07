@@ -41,8 +41,9 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
     });
   }
 
-  async syncLocalDatabase(checkpoint: Checkpoint) {
-    const r = await super.syncLocalDatabase(checkpoint);
+  async syncLocalDatabase(checkpoint: Checkpoint, priority?: number) {
+    const r = await super.syncLocalDatabase(checkpoint, priority);
+
     // Refresh schema asynchronously, to allow us to better measure
     // performance of initial sync.
     setTimeout(() => {
