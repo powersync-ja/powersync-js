@@ -14,9 +14,7 @@ describe('Raw queries', () => {
       .label;
     testCount = Number(testCounterLabel);
 
-    await waitFor(element(by.text('⏳')))
-      .not.toBeVisible()
-      .withTimeout(20000);
+    await waitForAllLoadingIndicatorsToDisappear(30000);
   });
 
   // Since tests need to be defined statically, we need to use a loop to evaluate the tests dynamically
@@ -90,4 +88,27 @@ describe('Raw queries', () => {
 
 async function getText(element: IndexableNativeElement): Promise<string> {
   return ((await element.getAttributes()) as any).label as string;
+}
+
+// Custom wait for function as Detox' waitFor() does not work with multiple elements
+async function waitForAllLoadingIndicatorsToDisappear(timeout = 20000) {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < timeout) {
+    try {
+      await expect(element(by.text('⏳'))).not.toExist();
+
+      // If we reach here, all indicators are gone
+      return true;
+    } catch (error) {
+      // If error, some indicators still exist
+      console.log('Loading indicators still present, waiting...');
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+
+  throw new Error(
+    `All loading indicators did not disappear within ${timeout}ms`,
+  );
 }
