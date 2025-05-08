@@ -309,6 +309,7 @@ The next upload iteration will be delayed.`);
               break;
             }
           } catch (ex) {
+            // TODO: Handle 401s to invalidate cached credentials
             checkedCrudItem = undefined;
             this.updateSyncStatus({
               dataFlow: {
