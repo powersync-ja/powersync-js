@@ -70,12 +70,9 @@ jobs:
       - name: Build
         run: pnpm build:packages
 
-      - name: Install Detox dependencies
+      - name: Setup Detox build framework cache
         run: |
-          brew tap wix/brew
-          brew install applesimutils
-          npm install -g detox-cli
-          detox clean-framework-cache && detox build-framework-cache
+          pnpmx detox clean-framework-cache && pnpx detox build-framework-cache
 
       - name: Initialize Android Folder
         run: mkdir -p ~/.android/avd
