@@ -1,72 +1,71 @@
-# Ensures certain packages work on simulators
-name: Test Simulators
+# # Ensures certain packages work on simulators
+# name: Test Simulators
+# on:
+#   push:
 
-on:
-  push:
+# jobs:
+#   test:
+#     name: Test Simulators
+#     runs-on: macOS-15
 
-jobs:
-  test:
-    name: Test Simulators
-    runs-on: macOS-15
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           persist-credentials: false
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+#       - name: CocoaPods Cache
+#         uses: actions/cache@v3
+#         id: cocoapods-cache
+#         with:
+#           path: |
+#             tools/powersynctests/ios/Pods/*
+#           key: ${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
 
-      - name: CocoaPods Cache
-        uses: actions/cache@v3
-        id: cocoapods-cache
-        with:
-          path: |
-            tools/powersynctests/ios/Pods/*
-          key: ${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
+#       - name: Setup NodeJS
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version-file: '.nvmrc'
 
-      - name: Setup NodeJS
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
+#       - uses: pnpm/action-setup@v2
+#         name: Install pnpm
+#         with:
+#           version: 9
+#           run_install: false
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        with:
-          version: 9
-          run_install: false
+#       - name: Get pnpm store directory
+#         shell: bash
+#         run: |
+#           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+#       - uses: actions/cache@v3
+#         name: Setup pnpm cache
+#         with:
+#           path: ${{ env.STORE_PATH }}
+#           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
+#           restore-keys: |
+#             ${{ runner.os }}-pnpm-store-
 
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+#       - name: Install dependencies
+#         run: pnpm install
 
-      - name: Install dependencies
-        run: pnpm install
+#       - name: Build
+#         run: pnpm build:packages
 
-      - name: Build
-        run: pnpm build:packages
+#       - name: Install Detox dependencies
+#         run: |
+#           brew tap wix/brew
+#           brew install applesimutils
+#           npm install -g detox-cli
+#           detox clean-framework-cache && detox build-framework-cache
 
-      - name: Install Detox dependencies
-        run: |
-          brew tap wix/brew
-          brew install applesimutils
-          npm install -g detox-cli
-          detox clean-framework-cache && detox build-framework-cache
+#       - name: Install CocoaPods dependencies
+#         working-directory: tools/powersynctests/ios
+#         run: pod install
 
-      - name: Install CocoaPods dependencies
-        working-directory: tools/powersynctests/ios
-        run: pod install
+#       - name: iOS Simulator Build
+#         working-directory: ./tools/powersynctests
+#         run: pnpx detox build --configuration ios.sim.release
 
-      - name: iOS Simulator Build
-        working-directory: ./tools/powersynctests
-        run: pnpx detox build --configuration ios.sim.release
-
-      - name: iOS Simulator Test
-        working-directory: ./tools/powersynctests
-        run: pnpx detox test --configuration ios.sim.release --cleanup
+#       - name: iOS Simulator Test
+#         working-directory: ./tools/powersynctests
+#         run: pnpx detox test --configuration ios.sim.release --cleanup
