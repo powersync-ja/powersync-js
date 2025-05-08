@@ -72,7 +72,7 @@ jobs:
 
       - name: Setup Detox build framework cache
         run: |
-          pnpmx detox clean-framework-cache && pnpx detox build-framework-cache
+          pnpx detox clean-framework-cache && pnpx detox build-framework-cache
 
       - name: Initialize Android Folder
         run: mkdir -p ~/.android/avd
