@@ -71,6 +71,7 @@ jobs:
         run: pnpm build:packages
 
       - name: Setup Detox build framework cache
+        working-directory: ./tools/powersynctests
         run: |
           pnpx detox clean-framework-cache && pnpx detox build-framework-cache
 
@@ -97,7 +98,7 @@ jobs:
           target: google_apis
           arch: x86_64
           avd-name: $AVD_NAME
-          script: pnpm android
+          script: cd tools/powersynctests && pnpm android
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
