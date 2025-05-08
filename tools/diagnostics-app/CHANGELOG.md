@@ -1,5 +1,13 @@
 # diagnostics-app
 
+## 0.8.12
+
+### Patch Changes
+
+- d3c8d7f: Fix handling of partial checkpoints
+  - @powersync/react@1.5.3
+  - @powersync/web@1.20.1
+
 ## 0.8.11
 
 ### Patch Changes

@@ -1707,7 +1707,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.29.0
+        specifier: workspace:^1.30.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1735,7 +1735,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.29.0
+        specifier: workspace:^1.30.0
         version: link:../common
       kysely:
         specifier: ^0.28.0
@@ -27060,7 +27060,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
