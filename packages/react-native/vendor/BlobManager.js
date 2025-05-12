@@ -16,4 +16,4 @@
 const BlobManager = require('react-native/Libraries/Blob/BlobManager');
 const interop = (mod) => (mod && mod.__esModule ? mod.default : mod);
 
-export default interop(BlobManager);
+module.exports = interop(BlobManager);
