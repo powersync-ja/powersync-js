@@ -142,5 +142,39 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
 
       expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).toBeUndefined;
     });
+
+    it('should returned batched transaction CRUD batches', async () => {
+      const logger = createLogger('crud-logger');
+
+      const options = getDatabaseOptions();
+
+      const { powersync } = await generateConnectedDatabase({
+        powerSyncOptions: {
+          ...options,
+          logger
+        }
+      });
+
+      // Create some test transactions
+      for (let i = 0; i < 10; i++) {
+        await powersync.execute('INSERT into users (id, name) VALUES (uuid(), ?)', [`user-${i}`]);
+      }
+
+      const firstBatch = await powersync.getNextCrudTransactionBatch({ transactionLimit: 3 });
+      expect(firstBatch?.crud.length).eq(3);
+      expect(firstBatch?.haveMore).true;
+
+      // completing the first batch should clear all the relevant crud items from the queue
+      await firstBatch?.complete();
+
+      // This batch should contain all the remaining crud items
+      const secondBatch = await powersync.getNextCrudTransactionBatch({ transactionLimit: 10 });
+      expect(secondBatch?.crud.length).eq(7);
+      expect(secondBatch?.haveMore).false;
+      await secondBatch?.complete();
+
+      const thirdBatch = await powersync.getNextCrudTransactionBatch({ transactionLimit: 10 });
+      expect(thirdBatch).toBeUndefined;
+    });
   };
 }

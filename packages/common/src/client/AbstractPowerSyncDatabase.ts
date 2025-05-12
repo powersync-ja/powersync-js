@@ -9,13 +9,14 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/async.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
@@ -32,7 +33,6 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -98,6 +98,10 @@ export interface WatchOnChangeHandler {
   onError?: (error: Error) => void;
 }
 
+export interface CrudTransactionBatchOptions {
+  transactionLimit: number;
+}
+
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
@@ -120,6 +124,11 @@ const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
 
 export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
+};
+
+export const DEFAULT_CRUD_TRANSACTION_BATCH_LIMIT = 10;
+export const DEFAULT_CRUD_TRANSACTION_BATCH_OPTIONS: CrudTransactionBatchOptions = {
+  transactionLimit: DEFAULT_CRUD_TRANSACTION_BATCH_LIMIT
 };
 
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
@@ -576,6 +585,69 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     const last = all[all.length - 1];
     return new CrudBatch(all, haveMore, async (writeCheckpoint?: string) =>
+      this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
+    );
+  }
+
+  /**
+   * Get a batch of CRUD data, grouped by transaction, to upload.
+   *
+   * Returns null if there is no data to upload.
+   *
+   * This allows for processing and completing multiple transactions at once.
+   *
+   * Use this from the {@link PowerSyncBackendConnector.uploadData} callback.
+   *
+   * Once the data have been successfully uploaded, call {@link CrudBatch.complete} before
+   * requesting the next batch.
+   *
+   * Use {@link limit} to specify the maximum number of transactions to return in the batch.
+   *
+   * @param limit Maximum number of transactions to include in the batch
+   * @returns A batch of CRUD operations to upload, or null if there are none
+   */
+  async getNextCrudTransactionBatch(
+    options: CrudTransactionBatchOptions = DEFAULT_CRUD_TRANSACTION_BATCH_OPTIONS
+  ): Promise<CrudBatch | null> {
+    const { transactionLimit } = options;
+
+    // Transaction IDs are always incrementing
+    // We can fetch the first transaction id and use that to limit the query
+    // to the next batch of transactions
+    const first = await this.getOptional<CrudEntryJSON>(`
+      SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`);
+
+    if (!first) {
+      return null;
+    }
+
+    const items = await this.getAll<CrudEntryJSON>(
+      `SELECT 
+        id, tx_id, data 
+      FROM ${PSInternalTable.CRUD}
+      WHERE 
+        tx_id < ?
+      ORDER BY 
+        id ASC
+      `,
+      [(first.tx_id ?? 0) + transactionLimit]
+    );
+
+    if (items.length == 0) {
+      return null;
+    }
+
+    // check if there are more items for haveMore
+    const nextItem = await this.getOptional<CrudEntryJSON>(
+      `
+        SELECT id FROM ${PSInternalTable.CRUD} WHERE id > ? LIMIT 1`,
+      [items[items.length - 1].id]
+    );
+
+    const crudEntries: CrudEntry[] = items.map((row) => CrudEntry.fromRow(row)) ?? [];
+    const last = crudEntries[items.length - 1];
+
+    return new CrudBatch(crudEntries, !!nextItem, async (writeCheckpoint?: string) =>
       this.handleCrudCheckpoint(last.clientId, writeCheckpoint)
     );
   }
