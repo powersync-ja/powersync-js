@@ -16,4 +16,12 @@
 const BlobManager = require('react-native/Libraries/Blob/BlobManager');
 const interop = (mod) => (mod && mod.__esModule ? mod.default : mod);
 
-module.exports = interop(BlobManager);
+/**
+ * Using an ESM export here is important. Rollup compiles this to
+ * ```javascript
+ *   const BlobManager = require('react-native/Libraries/Blob/BlobManager');
+ *   const interop = (mod) => (mod && mod.__esModule ? mod.default : mod);
+ *   var BlobManager$1 = interop(BlobManager);
+ * ```
+ */
+export default interop(BlobManager);
