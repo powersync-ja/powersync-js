@@ -1,5 +1,9 @@
 ---
-'@powersync/react-native': minor
+'@powersync/react-native': patch
 ---
 
-Added ability to use Expo's fetch API if available.
+Fixed issue where CRUD uploads could fail with the error
+
+```
+Exception: require(_dependencyMap[11], "rea(...)/BlobManager").createFromOptions is not a function (it is undefined)
+```

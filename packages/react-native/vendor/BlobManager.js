@@ -4,7 +4,7 @@
  * React native recently shifted to ESM exports.
  * https://github.com/facebook/react-native/pull/48761/files
  * This causes requiring this module to return an object
- * of the form
+ * of the form:
  * ```javascript
  * {
  *  _esModule: true,
