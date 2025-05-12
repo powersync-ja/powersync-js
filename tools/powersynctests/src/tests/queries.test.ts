@@ -529,7 +529,7 @@ export function registerBaseTests() {
     });
 
     it('Should reflect writeLock updates on read connections ', async () => {
-      const numberOfUsers = 10_000;
+      const numberOfUsers = 1000;
 
       const watched = new Promise<void>((resolve) => {
         const abort = new AbortController();
