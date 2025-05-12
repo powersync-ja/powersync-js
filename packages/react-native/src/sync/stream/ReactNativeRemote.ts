@@ -27,10 +27,6 @@ export const STREAMING_POST_TIMEOUT_MS = 30_000;
  * a polyfill.
  */
 class ReactNativeFetchProvider extends FetchImplementationProvider {
-  constructor(public logger: ILogger = DEFAULT_REMOTE_LOGGER) {
-    super();
-  }
-
   getFetch(): FetchImplementation {
     return fetch.bind(globalThis);
   }
@@ -44,7 +40,7 @@ export class ReactNativeRemote extends AbstractRemote {
   ) {
     super(connector, logger, {
       ...(options ?? {}),
-      fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider(logger)
+      fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider()
     });
   }
 
