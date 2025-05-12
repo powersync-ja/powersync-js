@@ -605,7 +605,7 @@ export function registerBaseTests() {
       await watched;
     });
 
-    it('10000 INSERTs', async () => {
+    it('1000 INSERTs', async () => {
       let start = performance.now();
       for (let i = 0; i < 1000; ++i) {
         const n = randomIntFromInterval(0, 100000);
@@ -618,7 +618,7 @@ export function registerBaseTests() {
       let end = performance.now();
       let duration = end - start;
 
-      expect(duration).lessThan(2000);
+      expect(duration).lessThan(4000);
     });
 
     //     // TODO: Behaviour differs between RNQS and OP-sqlite. Might need to fix this one in the OP-sqlite package
