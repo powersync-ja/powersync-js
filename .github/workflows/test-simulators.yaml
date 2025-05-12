@@ -1,10 +1,10 @@
 # Ensures certain packages work on simulators
 name: Test Simulators/Emulators
 on:
-  pull_request:  # triggered for any PR updates (including new pushes to PR branch)
+  pull_request: # triggered for any PR updates (including new pushes to PR branch)
 
 jobs:
- test-android:
+  test-android:
     name: Test Android
     runs-on: ubuntu-xl
     env:
