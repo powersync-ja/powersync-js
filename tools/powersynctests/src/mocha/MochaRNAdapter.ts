@@ -21,20 +21,14 @@ export const clearTests = () => {
   only = false;
 };
 
-export const it = (
-  name: string,
-  f: MochaTypes.Func | MochaTypes.AsyncFunc,
-): void => {
+export const it = (name: string, f: MochaTypes.Func | MochaTypes.AsyncFunc): void => {
   if (!only) {
     const test = new Mocha.Test(name, f);
     suite.addTest(test);
   }
 };
 
-export const itOnly = (
-  name: string,
-  f: MochaTypes.Func | MochaTypes.AsyncFunc,
-): void => {
+export const itOnly = (name: string, f: MochaTypes.Func | MochaTypes.AsyncFunc): void => {
   clearTests();
   const test = new Mocha.Test(name, f);
   suite.addTest(test);

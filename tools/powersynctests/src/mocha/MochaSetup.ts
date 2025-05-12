@@ -4,7 +4,7 @@
  */
 import 'mocha';
 import type * as MochaTypes from 'mocha';
-import {clearTests, rootSuite} from './MochaRNAdapter';
+import { clearTests, rootSuite } from './MochaRNAdapter';
 
 export type TestResult = {
   description: string;
@@ -14,13 +14,13 @@ export type TestResult = {
 };
 
 export async function runTests(...registrators: Array<() => void>) {
-  const promise = new Promise<TestResult[]>(resolve => {
+  const promise = new Promise<TestResult[]>((resolve) => {
     const {
       EVENT_RUN_BEGIN,
       EVENT_RUN_END,
       EVENT_TEST_FAIL,
       EVENT_TEST_PASS,
-      EVENT_SUITE_BEGIN,
+      EVENT_SUITE_BEGIN
       // EVENT_SUITE_END,
     } = Mocha.Runner.constants;
 
@@ -36,7 +36,7 @@ export async function runTests(...registrators: Array<() => void>) {
           results.push({
             description: name,
             key: Math.random().toString(),
-            type: 'grouping',
+            type: 'grouping'
           });
         }
       })
@@ -44,7 +44,7 @@ export async function runTests(...registrators: Array<() => void>) {
         results.push({
           description: test.title,
           key: Math.random().toString(),
-          type: 'correct',
+          type: 'correct'
         });
       })
       .on(EVENT_TEST_FAIL, (test: MochaTypes.Runnable, err: Error) => {
@@ -52,14 +52,14 @@ export async function runTests(...registrators: Array<() => void>) {
           description: test.title,
           key: Math.random().toString(),
           type: 'incorrect',
-          errorMsg: err.message,
+          errorMsg: err.message
         });
       })
       .once(EVENT_RUN_END, () => {
         resolve(results);
       });
 
-    registrators.forEach(register => {
+    registrators.forEach((register) => {
       register();
     });
 
@@ -85,17 +85,14 @@ function cloneSuite(suite: MochaTypes.Suite) {
 /**
  * Run a child of the root suite. This effectively runs a single test suite.
  */
-export async function runFiltered(
-  suite: MochaTypes.Suite,
-  test?: MochaTypes.Test,
-) {
-  const promise = new Promise<TestResult[]>(resolve => {
+export async function runFiltered(suite: MochaTypes.Suite, test?: MochaTypes.Test) {
+  const promise = new Promise<TestResult[]>((resolve) => {
     const {
       EVENT_RUN_BEGIN,
       EVENT_RUN_END,
       EVENT_TEST_FAIL,
       EVENT_TEST_PASS,
-      EVENT_SUITE_BEGIN,
+      EVENT_SUITE_BEGIN
       // EVENT_SUITE_END,
     } = Mocha.Runner.constants;
 
@@ -130,7 +127,7 @@ export async function runFiltered(
           results.push({
             description: name,
             key: Math.random().toString(),
-            type: 'grouping',
+            type: 'grouping'
           });
         }
       })
@@ -138,7 +135,7 @@ export async function runFiltered(
         results.push({
           description: test.title,
           key: Math.random().toString(),
-          type: 'correct',
+          type: 'correct'
         });
       })
       .on(EVENT_TEST_FAIL, (test: MochaTypes.Runnable, err: Error) => {
@@ -146,7 +143,7 @@ export async function runFiltered(
           description: test.title,
           key: Math.random().toString(),
           type: 'incorrect',
-          errorMsg: err.message,
+          errorMsg: err.message
         });
       })
       .once(EVENT_RUN_END, () => {

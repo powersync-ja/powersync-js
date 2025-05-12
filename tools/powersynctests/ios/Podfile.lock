@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.78.0):
     - hermes-engine/Pre-built (= 0.78.0)
   - hermes-engine/Pre-built (0.78.0)
-  - op-sqlite (11.4.8):
+  - op-sqlite (11.4.9):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1829,7 +1829,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: eb93e2f488219332457c3c4eafd2738ddc7e80b8
   hermes-engine: b417d2b2aee3b89b58e63e23a51e02be91dc876d
-  op-sqlite: 060f3d3902e6a49657051505a9c93f2688ef4943
+  op-sqlite: d07002ecca5c39575deb7c4abd9e5310da6aa07d
   powersync-op-sqlite: ce90a0e44924deea3901d06892d2d687e6eaf0c1
   powersync-sqlite-core: ef06642c8110680fcddce8a8c0dd2696daaf672d
   RCT-Folly: 36fe2295e44b10d831836cc0d1daec5f8abcf809

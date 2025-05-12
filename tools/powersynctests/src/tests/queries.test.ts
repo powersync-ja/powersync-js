@@ -1,18 +1,18 @@
-import {OPSqliteOpenFactory} from '@powersync/op-sqlite';
+import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 import {
   AbstractPowerSyncDatabase,
   column,
   LockContext,
   PowerSyncDatabase,
   Schema,
-  Table,
+  Table
 } from '@powersync/react-native';
-import {expect, use} from 'chai';
+import { expect, use } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import Chance from 'chance';
-import {v4} from 'uuid';
-import {beforeEach, describe, it} from '../mocha/MochaRNAdapter';
-import {numberName, randomIntFromInterval} from './utils';
+import { v4 } from 'uuid';
+import { beforeEach, describe, it } from '../mocha/MochaRNAdapter';
+import { numberName, randomIntFromInterval } from './utils';
 
 const chance = new Chance();
 use(chaiAsPromised);
@@ -21,38 +21,35 @@ function generateUserInfo() {
   return {
     id: v4(),
     name: chance.name(),
-    age: chance.integer({min: 0, max: 100}),
-    networth: chance.floating({min: 0, max: 1000000}),
+    age: chance.integer({ min: 0, max: 100 }),
+    networth: chance.floating({ min: 0, max: 1000000 })
   };
 }
 
 function createTestUser(context: LockContext) {
-  const {name, age, networth} = generateUserInfo();
-  return context.execute(
-    'INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-    [name, age, networth],
-  );
+  const { name, age, networth } = generateUserInfo();
+  return context.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
 }
 
 const AppSchema = new Schema({
   users: new Table({
     name: column.text,
     age: column.integer,
-    networth: column.real,
+    networth: column.real
   }),
   t1: new Table({
     a: column.integer,
     b: column.integer,
-    c: column.text,
-  }),
+    c: column.text
+  })
 });
 
 const createDatabase = () => {
   return new PowerSyncDatabase({
     database: new OPSqliteOpenFactory({
-      dbFilename: 'sqlitetest.db',
+      dbFilename: 'sqlitetest.db'
     }),
-    schema: AppSchema,
+    schema: AppSchema
   });
 };
 
@@ -77,11 +74,8 @@ export function registerBaseTests() {
     });
 
     it('Query without params', async () => {
-      const {name, age, networth} = generateUserInfo();
-      await db.execute(
-        'INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-        [name, age, networth],
-      );
+      const { name, age, networth } = generateUserInfo();
+      await db.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [name, age, networth]);
 
       const res = await db.execute('SELECT name, age, networth FROM users');
 
@@ -93,49 +87,44 @@ export function registerBaseTests() {
           {
             name,
             age,
-            networth,
-          },
-        ]),
+            networth
+          }
+        ])
       );
 
       expect(res.rows?._array).to.eql([
         {
           name,
           age,
-          networth,
-        },
+          networth
+        }
       ]);
     });
 
     it('Query with params', async () => {
-      const {id, name, age, networth} = generateUserInfo();
-      await db.execute(
-        'INSERT INTO users (id, name, age, networth) VALUES(?, ?, ?, ?)',
-        [id, name, age, networth],
-      );
+      const { id, name, age, networth } = generateUserInfo();
+      await db.execute('INSERT INTO users (id, name, age, networth) VALUES(?, ?, ?, ?)', [id, name, age, networth]);
 
-      const res = await db.execute(
-        'SELECT name, age, networth FROM users WHERE id = ?',
-        [id],
-      );
+      const res = await db.execute('SELECT name, age, networth FROM users WHERE id = ?', [id]);
 
       expect(res.rows?._array).to.eql([
         {
           name,
           age,
-          networth,
-        },
+          networth
+        }
       ]);
     });
 
     it('Failed insert', async () => {
-      const {name, networth} = generateUserInfo();
+      const { name, networth } = generateUserInfo();
       let errorThrown = false;
       try {
-        await db.execute(
-          'INSERT INTO usersfail (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-          [name, name, networth],
-        );
+        await db.execute('INSERT INTO usersfail (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          name,
+          networth
+        ]);
       } catch (e: any) {
         errorThrown = true;
         expect(typeof e).to.equal('object');
@@ -145,13 +134,14 @@ export function registerBaseTests() {
     });
 
     it('Transaction, auto commit', async () => {
-      const {name, age, networth} = generateUserInfo();
+      const { name, age, networth } = generateUserInfo();
 
-      await db.writeTransaction(async tx => {
-        const res = await tx.execute(
-          'INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-          [name, age, networth],
-        );
+      await db.writeTransaction(async (tx) => {
+        const res = await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          age,
+          networth
+        ]);
 
         expect(res.rows?._array).to.eql([]);
         expect(res.rows?.length).to.equal(0);
@@ -163,20 +153,21 @@ export function registerBaseTests() {
         {
           name,
           age,
-          networth,
-        },
+          networth
+        }
       ]);
     });
 
     it('Transaction, auto rollback', async () => {
-      const {name, age, networth} = generateUserInfo();
+      const { name, age, networth } = generateUserInfo();
 
       try {
-        await db.writeTransaction(async tx => {
-          await tx.execute(
-            'INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-            [name, age, networth],
-          );
+        await db.writeTransaction(async (tx) => {
+          await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+            name,
+            age,
+            networth
+          ]);
         });
       } catch (error) {
         expect(error).to.be.instanceOf(Error);
@@ -190,13 +181,14 @@ export function registerBaseTests() {
     });
 
     it('Transaction, manual commit', async () => {
-      const {name, age, networth} = generateUserInfo();
+      const { name, age, networth } = generateUserInfo();
 
-      await db.writeTransaction(async tx => {
-        await tx.execute(
-          'INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-          [name, age, networth],
-        );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          age,
+          networth
+        ]);
         await tx.commit();
       });
 
@@ -205,19 +197,20 @@ export function registerBaseTests() {
         {
           name,
           age,
-          networth,
-        },
+          networth
+        }
       ]);
     });
 
     it('Transaction, manual rollback', async () => {
-      const {name, age, networth} = generateUserInfo();
+      const { name, age, networth } = generateUserInfo();
 
-      await db.writeTransaction(async tx => {
-        await tx.execute(
-          'INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-          [name, age, networth],
-        );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          age,
+          networth
+        ]);
         await tx.rollback();
       });
 
@@ -231,13 +224,14 @@ export function registerBaseTests() {
      * correctly await any queued work such as tx.rollback();
      */
     it('Transaction, manual rollback, forgot await', async () => {
-      const {name, age, networth} = generateUserInfo();
+      const { name, age, networth } = generateUserInfo();
 
-      await db.writeTransaction(async tx => {
-        await tx.execute(
-          'INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-          [name, age, networth],
-        );
+      await db.writeTransaction(async (tx) => {
+        await tx.execute('INSERT INTO "users" (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', [
+          name,
+          age,
+          networth
+        ]);
         // Purposely forget await to this.
         tx.rollback();
       });
@@ -259,7 +253,7 @@ export function registerBaseTests() {
       // ACT: Start multiple async transactions to upsert and select the same record
       const promises = [];
       for (let iteration = 1; iteration <= iterations; iteration++) {
-        const promised = db.writeTransaction(async tx => {
+        const promised = db.writeTransaction(async (tx) => {
           // ACT: Upsert statement to create record / increment the value
           await tx.execute(
             `
@@ -271,14 +265,11 @@ export function registerBaseTests() {
                   WHERE [id] = ?
                 ), 0)
           `,
-            [id, name, age, id],
+            [id, name, age, id]
           );
 
           // ACT: Select statement to get incremented value and store it for checking later
-          const results = await tx.execute(
-            'SELECT [networth] FROM [users] WHERE [id] = ?',
-            [id],
-          );
+          const results = await tx.execute('SELECT [networth] FROM [users] WHERE [id] = ?', [id]);
 
           actual.push(results.rows?._array[0].networth);
         });
@@ -293,10 +284,7 @@ export function registerBaseTests() {
       const expected = Array(iterations)
         .fill(0)
         .map((_, index) => index * 1000);
-      expect(actual).to.eql(
-        expected,
-        'Each transaction should read a different value',
-      );
+      expect(actual).to.eql(expected, 'Each transaction should read a different value');
     });
 
     it('Write lock, rejects on callback error', async () => {
@@ -332,7 +320,7 @@ export function registerBaseTests() {
     });
 
     it('Transaction, rejects on invalid query', async () => {
-      const promised = db.writeTransaction(async tx => {
+      const promised = db.writeTransaction(async (tx) => {
         await tx.execute('SELECT * FROM [tableThatDoesNotExist];');
       });
 
@@ -343,59 +331,47 @@ export function registerBaseTests() {
         expect.fail('Should not resolve');
       } catch (e) {
         expect(e).to.be.a.instanceof(Error);
-        expect((e as Error)?.message).to.include(
-          'no such table: tableThatDoesNotExist',
-        );
+        expect((e as Error)?.message).to.include('no such table: tableThatDoesNotExist');
       }
     });
 
     it('Batch execute', async () => {
-      const {
-        id: id1,
-        name: name1,
-        age: age1,
-        networth: networth1,
-      } = generateUserInfo();
-      const {
-        id: id2,
-        name: name2,
-        age: age2,
-        networth: networth2,
-      } = generateUserInfo();
+      const { id: id1, name: name1, age: age1, networth: networth1 } = generateUserInfo();
+      const { id: id2, name: name2, age: age2, networth: networth2 } = generateUserInfo();
 
       const sql = `INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)`;
       const params = [
         [id1, name1, age1, networth1],
-        [id2, name2, age2, networth2],
+        [id2, name2, age2, networth2]
       ];
 
       await db.executeBatch(sql, params);
 
       const expected = [
-        {id: id1, name: name1, age: age1, networth: networth1},
+        { id: id1, name: name1, age: age1, networth: networth1 },
         {
           id: id2,
           name: name2,
           age: age2,
-          networth: networth2,
-        },
+          networth: networth2
+        }
       ].sort((a, b) => a.name.localeCompare(b.name));
 
-      const res = await db.execute(
-        'SELECT id, name, age, networth FROM users ORDER BY name',
-      );
+      const res = await db.execute('SELECT id, name, age, networth FROM users ORDER BY name');
       expect(res.rows?._array).to.eql(expected);
     });
 
     it('Read lock should be read only', async () => {
-      const {id, name, age, networth} = generateUserInfo();
+      const { id, name, age, networth } = generateUserInfo();
 
       try {
-        await db.readLock(async context => {
-          await context.execute(
-            'INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-            [id, name, age, networth],
-          );
+        await db.readLock(async (context) => {
+          await context.execute('INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)', [
+            id,
+            name,
+            age,
+            networth
+          ]);
         });
         throw new Error('Did not throw');
       } catch (ex: any) {
@@ -404,34 +380,25 @@ export function registerBaseTests() {
     });
 
     it('Read locks should queue if exceed number of connections', async () => {
-      const {id, name, age, networth} = generateUserInfo();
+      const { id, name, age, networth } = generateUserInfo();
 
-      await db.execute(
-        'INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-        [id, name, age, networth],
-      );
+      await db.execute('INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)', [id, name, age, networth]);
 
       const numberOfReads = 20;
       const lockResults = await Promise.all(
         new Array(numberOfReads)
           .fill(0)
-          .map(() =>
-            db.readLock(context =>
-              context.execute('SELECT * FROM users WHERE name = ?', [name]),
-            ),
-          ),
+          .map(() => db.readLock((context) => context.execute('SELECT * FROM users WHERE name = ?', [name])))
       );
 
-      expect(lockResults.map(r => r.rows?.item(0).name)).to.deep.equal(
-        new Array(numberOfReads).fill(name),
-      );
+      expect(lockResults.map((r) => r.rows?.item(0).name)).to.deep.equal(new Array(numberOfReads).fill(name));
     });
 
     it('Multiple reads should occur at the same time', async () => {
       const messages: string[] = [];
 
       let lock1Resolve: (() => void) | null = null;
-      const lock1Promise = new Promise<void>(resolve => {
+      const lock1Promise = new Promise<void>((resolve) => {
         lock1Resolve = resolve;
       });
 
@@ -442,7 +409,7 @@ export function registerBaseTests() {
       });
 
       let lock2Resolve: (() => void) | null = null;
-      const lock2Promise = new Promise<void>(resolve => {
+      const lock2Promise = new Promise<void>((resolve) => {
         lock2Resolve = resolve;
       });
       const p2 = db.readLock(async () => {
@@ -459,16 +426,12 @@ export function registerBaseTests() {
 
       await Promise.all([p1, p2, p3]);
 
-      expect(messages).deep.equal([
-        'At the end of 3',
-        'At the end of 2',
-        'At the end of 1',
-      ]);
+      expect(messages).deep.equal(['At the end of 3', 'At the end of 2', 'At the end of 1']);
     });
 
     it('Should be able to read while a write is running', async () => {
       let lock1Resolve: (() => void) | null = null;
-      const lock1Promise = new Promise<void>(resolve => {
+      const lock1Promise = new Promise<void>((resolve) => {
         lock1Resolve = resolve;
       });
 
@@ -491,7 +454,7 @@ export function registerBaseTests() {
 
       const operationCount = 5;
       // This wont resolve or free until another connection free's it
-      await db.writeLock(async context => {
+      await db.writeLock(async (context) => {
         await Promise.all(
           Array(operationCount)
             .fill(0)
@@ -502,65 +465,62 @@ export function registerBaseTests() {
               } catch (ex) {
                 console.error(ex);
               }
-            }),
+            })
         );
       });
 
       expect(order).to.deep.equal(
         Array(operationCount)
           .fill(0)
-          .map((x, index) => index),
+          .map((x, index) => index)
       );
     });
 
     it('Should call update hook on changes', async () => {
       const controller = new AbortController();
-      const result = new Promise<void>(resolve =>
+      const result = new Promise<void>((resolve) =>
         db.onChange(
           {
             onChange: () => {
               resolve();
               controller.abort();
-            },
+            }
           },
           {
             tables: ['users'],
-            signal: controller.signal,
-          },
-        ),
+            signal: controller.signal
+          }
+        )
       );
 
-      const {id, name, age, networth} = generateUserInfo();
+      const { id, name, age, networth } = generateUserInfo();
 
-      await db.execute(
-        'INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)',
-        [id, name, age, networth],
-      );
+      await db.execute('INSERT INTO "users" (id, name, age, networth) VALUES(?, ?, ?, ?)', [id, name, age, networth]);
 
       await result;
     });
 
     it('Should reflect writeTransaction updates on read connections', async () => {
-      const watched = new Promise<void>(resolve => {
+      const watched = new Promise<void>((resolve) => {
         const abort = new AbortController();
         db.watch(
           'SELECT COUNT(*) as count FROM users',
           [],
           {
-            onResult: results => {
+            onResult: (results) => {
               if (results.rows?.item(0).count == 1) {
                 resolve();
                 abort.abort();
               }
-            },
+            }
           },
           {
-            signal: abort.signal,
-          },
+            signal: abort.signal
+          }
         );
       });
 
-      await db.writeTransaction(async tx => {
+      await db.writeTransaction(async (tx) => {
         return createTestUser(tx);
       });
 
@@ -571,32 +531,29 @@ export function registerBaseTests() {
     it('Should reflect writeLock updates on read connections ', async () => {
       const numberOfUsers = 10_000;
 
-      const watched = new Promise<void>(resolve => {
+      const watched = new Promise<void>((resolve) => {
         const abort = new AbortController();
         db.watch(
           'SELECT COUNT(*) as count FROM users',
           [],
           {
-            onResult: results => {
+            onResult: (results) => {
               if (results.rows?.item(0).count == numberOfUsers) {
                 resolve();
                 abort.abort();
               }
-            },
+            }
           },
           {
-            signal: abort.signal,
-          },
+            signal: abort.signal
+          }
         );
       });
 
-      await db.writeLock(async tx => {
+      await db.writeLock(async (tx) => {
         await tx.execute('BEGIN');
         for (let i = 0; i < numberOfUsers; i++) {
-          await tx.execute(
-            'INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)',
-            ['steven', i, 0],
-          );
+          await tx.execute('INSERT INTO users (id, name, age, networth) VALUES(uuid(), ?, ?, ?)', ['steven', i, 0]);
         }
         await tx.execute('COMMIT');
       });
@@ -605,20 +562,17 @@ export function registerBaseTests() {
       await watched;
     });
 
-    it('1000 INSERTs', async () => {
+    it('500 INSERTs', async () => {
       let start = performance.now();
-      for (let i = 0; i < 1000; ++i) {
+      for (let i = 0; i < 500; ++i) {
         const n = randomIntFromInterval(0, 100000);
-        await db.execute(
-          `INSERT INTO t1(id, a, b, c) VALUES(uuid(), ?, ?, ?)`,
-          [i + 1, n, numberName(n)],
-        );
+        await db.execute(`INSERT INTO t1(id, a, b, c) VALUES(uuid(), ?, ?, ?)`, [i + 1, n, numberName(n)]);
       }
       await db.execute('PRAGMA wal_checkpoint(RESTART)');
       let end = performance.now();
       let duration = end - start;
 
-      expect(duration).lessThan(4000);
+      expect(duration).lessThan(2000);
     });
 
     //     // TODO: Behaviour differs between RNQS and OP-sqlite. Might need to fix this one in the OP-sqlite package
