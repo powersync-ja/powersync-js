@@ -30,25 +30,25 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
   - Vue composables for PowerSync.
 
-- [packages/tanstack-query](./packages/tanstack-query/README.md)
+- [packages/tanstack-query](./packages/tanstack-react-query/README.md)
 
-  - Tanstack Query integration for React.
+  - [TanStack Query](https://tanstack.com/query/) integration for React.
 
 - [packages/attachments](./packages/attachments/README.md)
 
-  - Attachments helper package for React Native and JavaScript/TypeScript projects.
+  - Attachments helper package for React Native and JavaScript/TypeScript projects. 
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
-  - Kysely integration (ORM) for React Native and JavaScript/TypeScript projects.
+  - [Kysely](https://kysely.dev/) integration (ORM) for React Native and JavaScript/TypeScript projects.
 
 - [packages/drizzle-driver](./packages/drizzle-driver/README.md)
 
-  - Drizzle integration (ORM) for React Native and JavaScript/TypeScript projects.
+  - [Drizzle](https://orm.drizzle.team/) integration (ORM) for React Native and JavaScript/TypeScript projects.
 
 - [packages/powersync-op-sqlite](./packages/powersync-op-sqlite/README.md)
 
-  - OP-SQLite integration for React Native projects.
+  - [OP-SQLite](https://github.com/OP-Engineering/op-sqlite) integration for React Native projects. Alternative to the default usage of [react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite).
 
 - [packages/common](./packages/common/README.md)
   - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
@@ -139,7 +139,7 @@ Merging a PR with Changesets will automatically create a PR with version bumps. 
 
 ## React Native Quick SQLite Development
 
-The PowerSync React Native SDK uses [a fork of react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite)
+By default, the PowerSync React Native SDK uses [a fork of react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite)
 
 Testing live development changes to `@journeyapps/react-native-quick-sqlite` will not work with standard `yarn link` commands. Metro does not work well with symlinks <https://github.com/facebook/metro/issues/286>.
 
