@@ -32,19 +32,6 @@ class ReactNativeFetchProvider extends FetchImplementationProvider {
   }
 
   getFetch(): FetchImplementation {
-    /**
-     * From Expo 52, Expo provides a fetch implementation which supports HTTP streams.
-     * https://docs.expo.dev/versions/latest/sdk/expo/#expofetch-api
-     */
-    try {
-      const f = require('expo/fetch').fetch;
-      if (f) {
-        this.logger.debug('Using Expo fetch implementation');
-        return f;
-      }
-    } catch (e) {
-      // If expo is not installed, fallback
-    }
     return fetch.bind(globalThis);
   }
 }
