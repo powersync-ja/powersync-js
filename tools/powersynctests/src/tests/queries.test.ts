@@ -575,42 +575,39 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
-    //     // TODO: Behaviour differs between RNQS and OP-sqlite. Might need to fix this one in the OP-sqlite package
-    // it('Should handle multiple closes', async () => {
-    //   // // Bulk insert 50000 rows without using a transaction
-    //   const bulkInsertCommands = [];
-    //   const statement = `INSERT INTO t1(id, c) VALUES(?, ?)`;
+    it('Should handle multiple closes', async () => {
+      // Bulk insert 10000 rows without using a transaction
+      const bulkInsertCommands = [];
+      const statement = `INSERT INTO t1(id, c) VALUES(uuid(), ?)`;
 
-    //   for (let i = 0; i < 50000; i++) {
-    //     bulkInsertCommands.push([[i + 1, `value${i + 1}`]]);
-    //   }
+      for (let i = 0; i < 10000; i++) {
+        bulkInsertCommands.push([[`value${i + 1}`]]);
+      }
 
-    //   await db.executeBatch(statement, bulkInsertCommands);
-    //   db.close();
+      await db.executeBatch(statement, bulkInsertCommands);
+      db.close();
 
-    //   for (let i = 1; i < 10; i++) {
-    //     db = createDatabase();
+      for (let i = 1; i < 10; i++) {
+        db = createDatabase();
 
-    //     // ensure a regular query works
-    //     const pExecute = await db.execute(`SELECT * FROM t1 `);
-    //     expect(pExecute.rows?.length).to.equal(50000);
+        // ensure a regular query works
+        const pExecute = await db.execute(`SELECT * FROM t1 `);
+        expect(pExecute.rows?.length).to.equal(10000);
 
-    //     // Queue a bunch of write locks, these will fail due to the db being closed
-    //     // before they are accepted.
-    //     const tests = [
-    //       db.execute(`SELECT * FROM t1 `),
-    //       db.execute(`SELECT * FROM t1 `),
-    //       db.execute(`SELECT * FROM t1 `),
-    //       db.execute(`SELECT * FROM t1 `),
-    //     ];
+        // Queue a bunch of write locks, these will fail due to the db being closed
+        // before they are accepted.
+        const tests = [
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `)
+        ];
 
-    //     await db.close();
+        db.close();
 
-    //     // const results = await Promise.allSettled(tests);
-    //     // expect(results.map(r => r.status)).deep.equal(
-    //     //   Array(tests.length).fill('rejected'),
-    //     // );
-    //   }
-    // });
+        const results = await Promise.allSettled(tests);
+        expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
+      }
+    });
   });
 }

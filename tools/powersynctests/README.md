@@ -46,7 +46,7 @@ pnpm android
 ### iOS
 
 ```sh
-detox test --configuration ios.sim.debug
+pnpm detox test --configuration ios.sim.debug
 ```
 
 ### Android
