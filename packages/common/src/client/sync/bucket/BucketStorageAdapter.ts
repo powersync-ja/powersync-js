@@ -101,4 +101,9 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
    * Get an unique client id.
    */
   getClientId(): Promise<string>;
+
+  /**
+   * Invokes the `powersync_control` function for the sync client.
+   */
+  control(op: string, payload: string | Uint8Array | null): Promise<string>;
 }

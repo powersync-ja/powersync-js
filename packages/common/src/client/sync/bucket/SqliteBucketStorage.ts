@@ -413,6 +413,13 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async setTargetCheckpoint(checkpoint: Checkpoint) {
     // No-op for now
   }
+
+  async control(op: string, payload: string | Uint8Array | null): Promise<string> {
+    return await this.writeTransaction(async (tx) => {
+      const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
+      return raw;
+    });
+  }
 }
 
 function hasMatchingPriority(priority: number, bucket: BucketChecksum) {
