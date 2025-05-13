@@ -191,7 +191,9 @@ export abstract class AbstractStreamingSyncImplementation
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
+
   private pendingCrudUpload?: Promise<void>;
+  private notifyCompletedUploads?: () => void;
 
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
@@ -217,6 +219,7 @@ export abstract class AbstractStreamingSyncImplementation
       }
 
       this.pendingCrudUpload = new Promise((resolve) => {
+        this.notifyCompletedUploads?.();
         this._uploadAllCrud().finally(() => {
           this.pendingCrudUpload = undefined;
           resolve();
@@ -798,7 +801,7 @@ The next upload iteration will be delayed.`);
     }
 
     async function stop() {
-      control('stop');
+      await control('stop');
     }
 
     async function control(op: string, payload?: ArrayBuffer | string) {
@@ -876,9 +879,14 @@ The next upload iteration will be delayed.`);
     }
 
     try {
+      this.notifyCompletedUploads = () => {
+        control('completed_upload');
+      };
+
       await control('start', JSON.stringify(resolvedOptions.params));
       await receivingLines;
     } finally {
+      this.notifyCompletedUploads = undefined;
       await stop();
     }
   }
