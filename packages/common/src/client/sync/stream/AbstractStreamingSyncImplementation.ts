@@ -764,11 +764,12 @@ The next upload iteration will be delayed.`);
     let receivingLines: Promise<void> | null = null;
 
     const abortController = new AbortController();
+    signal.addEventListener('abort', () => abortController.abort());
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
         path: '/sync/stream',
-        abortSignal: AbortSignal.any([signal, abortController.signal]),
+        abortSignal: abortController.signal,
         data: instr.request
       };
 
@@ -787,7 +788,8 @@ The next upload iteration will be delayed.`);
               return;
             }
 
-            await control('line_binary', line);
+            const copy = new Uint8Array(line);
+            await control('line_binary', copy.buffer);
           }
         } finally {
           await stream.close();
@@ -799,7 +801,7 @@ The next upload iteration will be delayed.`);
       control('stop');
     }
 
-    async function control(op: string, payload?: Uint8Array | string) {
+    async function control(op: string, payload?: ArrayBuffer | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
       await handleInstructions(JSON.parse(rawResponse));
     }

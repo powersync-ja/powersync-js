@@ -414,7 +414,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     // No-op for now
   }
 
-  async control(op: string, payload: string | Uint8Array | null): Promise<string> {
+  async control(op: string, payload: string | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
       const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
       return raw;

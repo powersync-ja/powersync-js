@@ -21,7 +21,6 @@ const POWERSYNC_JS_VERSION = PACKAGE.version;
 
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
-const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
 const KEEP_ALIVE_MS = 20_000;
@@ -229,7 +228,7 @@ export abstract class AbstractRemote {
   /**
    * Connects to the sync/stream websocket endpoint without decoding BSON in JavaScript.
    */
-  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<DataStream<Buffer>> {
+  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<DataStream<Buffer<ArrayBuffer>>> {
     return this.socketStreamInternal(options);
   }
 
@@ -244,7 +243,14 @@ export abstract class AbstractRemote {
     const mimeType = bson == null ? 'application/json' : 'application/bson';
 
     function toBuffer(js: any): Buffer {
-      return Buffer.from(bson?.serialize(js) ?? JSON.stringify(js));
+      let contents: any;
+      if (bson != null) {
+        contents = bson.serialize(js);
+      } else {
+        contents = JSON.stringify(js);
+      }
+
+      return Buffer.from(contents);
     }
 
     const syncQueueRequestSize = fetchStrategy == FetchStrategy.Buffered ? 10 : 1;
@@ -289,7 +295,7 @@ export abstract class AbstractRemote {
     const stream = new DataStream({
       logger: this.logger,
       pressure: {
-        lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
+        lowWaterMark: Math.max(1, Math.round(syncQueueRequestSize * 0.7))
       }
     });
 
@@ -318,7 +324,7 @@ export abstract class AbstractRemote {
 
       const res = rsocket.requestStream(
         {
-          data: Buffer.from(JSON.stringify(options.data)),
+          data: toBuffer(options.data),
           metadata: toBuffer({
             path
           })
@@ -504,30 +510,35 @@ export abstract class AbstractRemote {
 
     const outputStream = new ReadableStream<string>({
       pull: async (controller) => {
-        const { done, value } = await reader.read();
-        if (done) {
-          const remaining = buffer.trim();
-          if (remaining.length != 0) {
-            controller.enqueue(remaining);
+        let didCompleteLine = false;
+
+        while (!didCompleteLine) {
+          const { done, value } = await reader.read();
+          if (done) {
+            const remaining = buffer.trim();
+            if (remaining.length != 0) {
+              controller.enqueue(remaining);
+            }
+
+            controller.close();
+            await closeReader();
+            return;
           }
 
-          controller.close();
-          await closeReader();
-          return;
-        }
+          const data = decoder.decode(value, { stream: true });
+          buffer += data;
 
-        const data = decoder.decode(value, { stream: true });
-        buffer += data;
-
-        const lines = buffer.split('\n');
-        for (var i = 0; i < lines.length - 1; i++) {
-          var l = lines[i].trim();
-          if (l.length > 0) {
-            controller.enqueue(l);
+          const lines = buffer.split('\n');
+          for (var i = 0; i < lines.length - 1; i++) {
+            var l = lines[i].trim();
+            if (l.length > 0) {
+              controller.enqueue(l);
+              didCompleteLine = true;
+            }
           }
-        }
 
-        buffer = lines[lines.length - 1];
+          buffer = lines[lines.length - 1];
+        }
       }
     });
 
