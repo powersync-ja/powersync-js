@@ -130,18 +130,60 @@ export abstract class AbstractRemote {
       : fetchImplementation;
   }
 
+  /**
+   * Get credentials currently cached, or fetch new credentials if none are
+   * available.
+   *
+   * These credentials may have expired already.
+   */
   async getCredentials(): Promise<PowerSyncCredentials | null> {
-    const { expiresAt } = this.credentials ?? {};
-    if (expiresAt && expiresAt > new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS)) {
-      return this.credentials!;
+    if (this.credentials) {
+      return this.credentials;
     }
-    this.credentials = await this.connector.fetchCredentials();
-    if (this.credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
+
+    return this.prefetchCredentials();
+  }
+
+  /**
+   * Fetch a new set of credentials and cache it.
+   *
+   * Until this call succeeds, `getCredentials` will still return the
+   * old credentials.
+   *
+   * This may be called before the current credentials have expired.
+   */
+  async prefetchCredentials() {
+    this.credentials = await this.fetchCredentials();
+
+    return this.credentials;
+  }
+
+  /**
+   * Get credentials for PowerSync.
+   *
+   * This should always fetch a fresh set of credentials - don't use cached
+   * values.
+   *
+   *
+   */
+  async fetchCredentials() {
+    const credentials = await this.connector.fetchCredentials();
+    if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
       throw new Error(
-        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${this.credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
+        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
       );
     }
-    return this.credentials;
+
+    return credentials;
+  }
+
+  /***
+   * Immediately invalidate credentials.
+   *
+   * This may be called when the current credentials have expired.
+   */
+  invalidateCredentials() {
+    this.credentials = null;
   }
 
   getUserAgent() {
