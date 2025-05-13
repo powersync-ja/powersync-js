@@ -1,5 +1,15 @@
 # @powersync/react-native
 
+## 1.20.2
+
+### Patch Changes
+
+- 84cdd9d: Fixed issue where CRUD uploads could fail with the error
+
+  ```
+  Exception: require(_dependencyMap[11], "rea(...)/BlobManager").createFromOptions is not a function (it is undefined)
+  ```
+
 ## 1.20.1
 
 ### Patch Changes
