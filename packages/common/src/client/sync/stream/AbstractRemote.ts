@@ -163,8 +163,6 @@ export abstract class AbstractRemote {
    *
    * This should always fetch a fresh set of credentials - don't use cached
    * values.
-   *
-   *
    */
   async fetchCredentials() {
     const credentials = await this.connector.fetchCredentials();
@@ -223,6 +221,10 @@ export abstract class AbstractRemote {
       body: JSON.stringify(data)
     });
 
+    if (res.status === 401) {
+      this.invalidateCredentials();
+    }
+
     if (!res.ok) {
       throw new Error(`Received ${res.status} - ${res.statusText} when posting to ${path}: ${await res.text()}}`);
     }
@@ -239,6 +241,10 @@ export abstract class AbstractRemote {
         ...request.headers
       }
     });
+
+    if (res.status === 401) {
+      this.invalidateCredentials();
+    }
 
     if (!res.ok) {
       throw new Error(`Received ${res.status} - ${res.statusText} when getting from ${path}: ${await res.text()}}`);
@@ -265,6 +271,10 @@ export abstract class AbstractRemote {
       this.logger.error(`Caught ex when POST streaming to ${path}`, ex);
       throw ex;
     });
+
+    if (res.status === 401) {
+      this.invalidateCredentials();
+    }
 
     if (!res.ok) {
       const text = await res.text();
