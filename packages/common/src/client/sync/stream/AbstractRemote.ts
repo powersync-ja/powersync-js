@@ -312,10 +312,19 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    let socketCreationError: Error | undefined;
+
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url: this.options.socketUrlTransformer(request.url),
-        wsCreator: (url) => this.createSocket(url)
+        wsCreator: (url) => {
+          const s = this.createSocket(url);
+          s.addEventListener('error', (e: Event) => {
+            socketCreationError = new Error('Failed to create connection to websocket: ', (e.target as any).url ?? '');
+            this.logger.warn('Socket error', e);
+          });
+          return s;
+        }
       }),
       setup: {
         keepAlive: KEEP_ALIVE_MS,
@@ -342,7 +351,7 @@ export abstract class AbstractRemote {
        * On React native the connection exception can be `undefined` this causes issues
        * with detecting the exception inside async-mutex
        */
-      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex)}`);
+      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex ?? socketCreationError)}`);
     }
 
     const stream = new DataStream({
@@ -387,6 +396,10 @@ export abstract class AbstractRemote {
         syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
+            if (e.message.includes('PSYNC_S2101')) {
+              this.logger.error('PSYNC_S2101 - 401 Unauthorized');
+              this.invalidateCredentials();
+            }
             // Don't log closed as an error
             if (e.message !== 'Closed. ') {
               this.logger.error(e);

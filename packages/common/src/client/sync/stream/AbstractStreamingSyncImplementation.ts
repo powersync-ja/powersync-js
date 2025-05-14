@@ -683,12 +683,13 @@ The next upload iteration will be delayed.`);
             if (remaining_seconds == 0) {
               // Connection would be closed automatically right after this
               this.logger.debug('Token expiring; reconnect');
-              /**
-               * For a rare case where the backend connector does not update the token
-               * (uses the same one), this should have some delay.
-               */
+              this.options.remote.invalidateCredentials();
+
               await this.delayRetry();
               return;
+            } else if (remaining_seconds < 30) {
+              // Pre-emptively refresh the token
+              await this.options.remote.prefetchCredentials();
             }
             this.triggerCrudUpload();
           } else {
