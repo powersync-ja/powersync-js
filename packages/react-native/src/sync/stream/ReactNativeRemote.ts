@@ -27,7 +27,24 @@ export const STREAMING_POST_TIMEOUT_MS = 30_000;
  * a polyfill.
  */
 class ReactNativeFetchProvider extends FetchImplementationProvider {
+  constructor(public logger: ILogger = DEFAULT_REMOTE_LOGGER) {
+    super();
+  }
+
   getFetch(): FetchImplementation {
+    /**
+     * From Expo 52, Expo provides a fetch implementation which supports HTTP streams.
+     * https://docs.expo.dev/versions/latest/sdk/expo/#expofetch-api
+     */
+    try {
+      const f = require('expo/fetch').fetch;
+      if (f) {
+        this.logger.debug('Using Expo fetch implementation');
+        return f;
+      }
+    } catch (e) {
+      // If expo is not installed, fallback
+    }
     return fetch.bind(globalThis);
   }
 }
@@ -40,7 +57,7 @@ export class ReactNativeRemote extends AbstractRemote {
   ) {
     super(connector, logger, {
       ...(options ?? {}),
-      fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider()
+      fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider(logger)
     });
   }
 
