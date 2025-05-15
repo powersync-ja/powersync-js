@@ -32,6 +32,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   protected writeConnection: OPSQLiteConnection | null;
 
   private readQueue: Array<() => void> = [];
+  private abortController: AbortController;
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
@@ -40,6 +41,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     this.locks = new Lock();
     this.readConnections = null;
     this.writeConnection = null;
+    this.abortController = new AbortController();
     this.initialized = this.init();
   }
 
@@ -155,6 +157,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   close() {
     this.initialized.then(() => {
+      // Abort any pending operations
+      this.abortController.abort();
+      this.readQueue = [];
+
       this.writeConnection!.close();
       this.readConnections!.forEach((c) => c.connection.close());
     });
@@ -203,10 +209,20 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     return new Promise(async (resolve, reject) => {
       try {
+        // Set up abort signal listener
+        const abortListener = () => {
+          reject(new Error('Database connection was closed'));
+        };
+        this.abortController.signal.addEventListener('abort', abortListener);
+
         await this.locks
           .acquire(
             LockType.WRITE,
             async () => {
+              // Check if operation was aborted before executing
+              if (this.abortController.signal.aborted) {
+                reject(new Error('Database connection was closed'));
+              }
               resolve(await fn(this.writeConnection!));
             },
             { timeout: options?.timeoutMs }
@@ -214,6 +230,9 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
           .then(() => {
             // flush updates once a write lock has been released
             this.writeConnection!.flushUpdates();
+          })
+          .finally(() => {
+            this.abortController.signal.removeEventListener('abort', abortListener);
           });
       } catch (ex) {
         reject(ex);
