@@ -151,6 +151,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache Xcode Derived Data
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+          key: xcode-derived-${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock', 'tools/powersynctests/ios/Podfile') }}
+          restore-keys: |
+            xcode-derived-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install
 
