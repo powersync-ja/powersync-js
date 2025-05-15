@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.5.6
+
+### Patch Changes
+
+- d58b4fc: Promoting package to Beta release.
+
 ## 0.5.5
 
 ### Patch Changes

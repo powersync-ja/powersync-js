@@ -1,5 +1,12 @@
 # diagnostics-app
 
+## 0.8.13
+
+### Patch Changes
+
+- Updated dependencies [fccf11e]
+  - @powersync/web@1.20.2
+
 ## 0.8.12
 
 ### Patch Changes

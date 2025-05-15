@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.20.2
+
+### Patch Changes
+
+- fccf11e: Fixed issue where broadcast logger wasn't being passed to WebRemote, causing worker remote logs not to be broadcasted to the tab's logs.
+
 ## 1.20.1
 
 ### Patch Changes
