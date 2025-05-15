@@ -1,4 +1,5 @@
 import { parseQuery, type CompilableQuery, type ParsedQuery, type SQLWatchOptions } from '@powersync/common';
+import { WatchedQueryState } from '@powersync/common/src/client/watched/WatchedQuery';
 import React from 'react';
 import { usePowerSync } from './PowerSyncContext';
 
@@ -57,123 +58,58 @@ export const useQuery = <T = any>(
 
   const { sqlStatement, parameters: queryParameters } = parsedQuery;
 
-  const [data, setData] = React.useState<T[]>([]);
-  const [error, setError] = React.useState<Error | undefined>(undefined);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isFetching, setIsFetching] = React.useState(true);
-  const [tables, setTables] = React.useState([]);
-
   const memoizedParams = React.useMemo(() => queryParameters, [JSON.stringify(queryParameters)]);
   const memoizedOptions = React.useMemo(() => options, [JSON.stringify(options)]);
-  const abortController = React.useRef(new AbortController());
 
   const previousQueryRef = React.useRef({ sqlStatement, memoizedParams });
+  // TODO implement runQueryOnce
+  const [watchedQuery] = React.useState(() => {
+    return powerSync.watch2<T>({
+      sql: sqlStatement,
+      parameters: queryParameters,
+      throttleMs: options.throttleMs
+    });
+  });
 
-  // Indicates that the query will be re-fetched due to a change in the query.
-  // Used when `isFetching` hasn't been set to true yet due to React execution.
-  const shouldFetch = React.useMemo(
-    () =>
-      previousQueryRef.current.sqlStatement !== sqlStatement ||
-      JSON.stringify(previousQueryRef.current.memoizedParams) != JSON.stringify(memoizedParams),
-    [powerSync, sqlStatement, memoizedParams, isFetching]
+  const mapState = React.useCallback(
+    (state: WatchedQueryState<T>) => ({
+      isFetching: state.fetching,
+      isLoading: state.loading,
+      data: state.data.all,
+      error: state.error,
+      refresh: async () => {}
+    }),
+    []
   );
 
-  const handleResult = (result: T[]) => {
-    previousQueryRef.current = { sqlStatement, memoizedParams };
-    setData(result);
-    setIsLoading(false);
-    setIsFetching(false);
-    setError(undefined);
-  };
-
-  const handleError = (e: Error) => {
-    previousQueryRef.current = { sqlStatement, memoizedParams };
-    setData([]);
-    setIsLoading(false);
-    setIsFetching(false);
-    const wrappedError = new Error('PowerSync failed to fetch data: ' + e.message);
-    wrappedError.cause = e;
-    setError(wrappedError);
-  };
-
-  const fetchData = async (signal?: AbortSignal) => {
-    setIsFetching(true);
-    try {
-      const result =
-        typeof query == 'string' ? await powerSync.getAll<T>(sqlStatement, queryParameters) : await query.execute();
-
-      if (signal?.aborted) {
-        return;
-      }
-
-      handleResult(result);
-    } catch (e) {
-      logger.error('Failed to fetch data:', e);
-      handleError(e);
-    }
-  };
-
-  const fetchTables = async (signal?: AbortSignal) => {
-    try {
-      const tables = await powerSync.resolveTables(sqlStatement, memoizedParams, memoizedOptions);
-
-      if (signal?.aborted) {
-        return;
-      }
-
-      setTables(tables);
-    } catch (e) {
-      logger.error('Failed to fetch tables:', e);
-      handleError(e);
-    }
-  };
+  const [output, setOutputState] = React.useState(mapState(watchedQuery.state));
 
   React.useEffect(() => {
-    const abortController = new AbortController();
-    const updateData = async () => {
-      await fetchTables(abortController.signal);
-      await fetchData(abortController.signal);
-    };
-
-    updateData();
-
-    const l = powerSync.registerListener({
-      schemaChanged: updateData
+    watchedQuery.stream().forEach(async (val) => {
+      console.log('updating state');
+      setOutputState(mapState(val));
     });
 
     return () => {
-      abortController.abort();
-      l?.();
+      watchedQuery.close();
     };
-  }, [powerSync, memoizedParams, sqlStatement]);
+  }, []);
 
+  // Indicates that the query will be re-fetched due to a change in the query.
+  // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
-    // Abort any previous watches
-    abortController.current?.abort();
-    abortController.current = new AbortController();
-
-    if (!options.runQueryOnce) {
-      powerSync.onChangeWithCallback(
-        {
-          onChange: async () => {
-            await fetchData(abortController.current.signal);
-          },
-          onError(e) {
-            handleError(e);
-          }
-        },
-        {
-          ...options,
-          signal: abortController.current.signal,
-          tables
-        }
-      );
+    if (
+      previousQueryRef.current.sqlStatement !== sqlStatement ||
+      JSON.stringify(previousQueryRef.current.memoizedParams) != JSON.stringify(memoizedParams)
+    ) {
+      console.log('updating watched');
+      watchedQuery.updateQuery({
+        query: sqlStatement,
+        parameters: queryParameters,
+        throttleMs: options.throttleMs
+      });
     }
+  }, [powerSync, sqlStatement, memoizedParams]);
 
-    return () => {
-      abortController.current?.abort();
-    };
-  }, [powerSync, sqlStatement, memoizedParams, memoizedOptions, tables]);
-
-  return { isLoading, isFetching: isFetching || shouldFetch, data, error, refresh: fetchData };
+  return output;
 };

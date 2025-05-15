@@ -260,10 +260,24 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    let r: (value: Error | null) => void;
+    let socketError: Promise<Error | null> = new Promise((resolve) => {
+      r = resolve;
+    });
+
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url: this.options.socketUrlTransformer(request.url),
-        wsCreator: (url) => this.createSocket(url)
+        wsCreator: (url) => {
+          const s = this.createSocket(url);
+          s.addEventListener('error', (e) => {
+            // This is a workaround for the fact that the socket error event
+            // does not provide the error message
+            r(new Error(`WebSocket error: ${JSON.stringify(e)}`));
+          });
+          s.addEventListener('open', () => r(null));
+          return s;
+        }
       }),
       setup: {
         keepAlive: KEEP_ALIVE_MS,
@@ -290,7 +304,8 @@ export abstract class AbstractRemote {
        * On React native the connection exception can be `undefined` this causes issues
        * with detecting the exception inside async-mutex
        */
-      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex)}`);
+      const e = await socketError;
+      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex)} ${e?.message}`);
     }
 
     const stream = new DataStream({

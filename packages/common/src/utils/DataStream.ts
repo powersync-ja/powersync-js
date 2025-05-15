@@ -163,6 +163,9 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
       data: async (data) => {
         stream.enqueueData(callback(data));
       },
+      error: (ex) => {
+        stream.iterateListeners((l) => l.error?.(ex));
+      },
       closed: () => {
         stream.close();
         l?.();

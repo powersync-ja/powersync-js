@@ -9,13 +9,14 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/async.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
@@ -32,7 +33,10 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
+import { WatchedQuery } from './watched/WatchedQuery.js';
+import { WatchedQueryImpl } from './watched/WatchedQueryImpl.js';
+import { ComparisonQueryProcessor } from './watched/processors/comparison/ComparisonQueryProcessor.js';
+import { InlineWatchComparator } from './watched/processors/comparison/WatchComparator.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -82,6 +86,10 @@ export interface SQLWatchOptions {
    * by not removing PowerSync table name prefixes
    */
   rawTableNames?: boolean;
+  /**
+   * Emits an empty result set immediately
+   */
+  triggerImmediate?: boolean;
 }
 
 export interface WatchOnChangeEvent {
@@ -857,6 +865,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.watchWithAsyncGenerator(sql, parameters, options);
   }
 
+  // TODO names
+  watch2<T>(options: { sql: string; parameters?: any[]; throttleMs?: number }): WatchedQuery<T> {
+    return new WatchedQueryImpl({
+      processor: new ComparisonQueryProcessor({
+        db: this,
+        comparator: new InlineWatchComparator({
+          hash: (row) => JSON.stringify(row),
+          identify: (row) => (row as any).id ?? JSON.stringify(row) // TODO
+        }),
+        watchedQuery: {
+          query: options.sql,
+          parameters: options.parameters,
+          throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
+          // queryExecutor: todo
+        }
+      })
+    });
+  }
+
   /**
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
@@ -1050,6 +1077,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         }),
       throttleMs
     );
+
+    if (options?.triggerImmediate) {
+      executor.schedule({ changedTables: [] });
+    }
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {

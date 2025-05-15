@@ -1,8 +1,8 @@
-import React from 'react';
-import { useQuery } from '@powersync/react';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { useQuery } from '@powersync/react';
+import React from 'react';
 
 export type LoginFormParams = {
   email: string;
@@ -18,7 +18,7 @@ export default function SQLConsolePage() {
 
   const queryDataGridResult = React.useMemo(() => {
     const firstItem = querySQLResult?.[0];
-
+    console.log('running a query render');
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
@@ -57,8 +57,7 @@ export default function SQLConsolePage() {
                 if (queryInput) {
                   setQuery(queryInput);
                 }
-              }}
-            >
+              }}>
               Execute Query
             </Button>
           </S.CenteredGrid>
