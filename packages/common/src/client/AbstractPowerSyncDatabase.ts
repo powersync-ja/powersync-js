@@ -398,6 +398,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._schema = schema;
 
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    try {
+      for await (const sql of this.schema.getCustomSQL?.({
+        getInternalName: (tableName) => this.schema.getTableInternalName(tableName) ?? tableName
+      }) ?? []) {
+        await this.database.execute(sql);
+      }
+    } catch (ex) {
+      this.options.logger?.error('Error executing custom SQL', ex);
+    }
     await this.database.refreshSchema();
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
