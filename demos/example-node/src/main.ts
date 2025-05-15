@@ -1,7 +1,13 @@
 import { once } from 'node:events';
 import repl_factory from 'node:repl';
 
-import { createBaseLogger, createLogger, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
+import {
+  createBaseLogger,
+  createLogger,
+  PowerSyncDatabase,
+  SyncClientImplementation,
+  SyncStreamConnectionMethod
+} from '@powersync/node';
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
 
@@ -26,7 +32,16 @@ const main = async () => {
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
-  await db.connect(new DemoConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+  db.registerListener({
+    statusChanged(status) {
+      console.log('status changed', status);
+    }
+  });
+
+  await db.connect(new DemoConnector(), {
+    connectionMethod: SyncStreamConnectionMethod.HTTP,
+    clientImplementation: SyncClientImplementation.RUST
+  });
   await db.waitForFirstSync();
   console.log('First sync complete!');
 
