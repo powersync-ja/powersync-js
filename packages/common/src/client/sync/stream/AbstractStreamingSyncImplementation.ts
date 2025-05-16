@@ -687,9 +687,6 @@ The next upload iteration will be delayed.`);
 
               await this.delayRetry();
               return;
-            } else if (remaining_seconds < 30) {
-              // Pre-emptively refresh the token
-              await this.options.remote.prefetchCredentials();
             }
             this.triggerCrudUpload();
           } else {

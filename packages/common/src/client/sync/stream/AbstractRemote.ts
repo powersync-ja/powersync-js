@@ -15,6 +15,7 @@ export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
+  invalidateCredentials?: () => void;
 };
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
@@ -182,6 +183,7 @@ export abstract class AbstractRemote {
    */
   invalidateCredentials() {
     this.credentials = null;
+    this.connector.invalidateCredentials?.();
   }
 
   getUserAgent() {
@@ -396,8 +398,7 @@ export abstract class AbstractRemote {
         syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
-            if (e.message.includes('PSYNC_S2101')) {
-              this.logger.error('PSYNC_S2101 - 401 Unauthorized');
+            if (e.message.includes('Authorization failed') || e.message.includes('401')) {
               this.invalidateCredentials();
             }
             // Don't log closed as an error
