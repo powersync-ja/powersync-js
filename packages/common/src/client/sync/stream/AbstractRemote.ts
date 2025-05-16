@@ -21,8 +21,6 @@ export type RemoteConnector = {
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 const POWERSYNC_JS_VERSION = PACKAGE.version;
 
-// Refresh at least 30 sec before it expires
-const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
 const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period

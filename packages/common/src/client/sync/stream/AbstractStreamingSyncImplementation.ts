@@ -691,6 +691,11 @@ The next upload iteration will be delayed.`);
                */
               await this.delayRetry();
               return;
+            } else if (remaining_seconds < 30) {
+              this.logger.debug('Token will expire soon; reconnect');
+              // Pre-emptively refresh the token
+              this.options.remote.invalidateCredentials();
+              return;
             }
             this.triggerCrudUpload();
           } else {
