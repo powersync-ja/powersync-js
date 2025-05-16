@@ -49,9 +49,10 @@ export abstract class AbstractQueryProcessor<T>
    */
   updateQuery(query: WatchedQueryOptions<T>) {
     this.options.watchedQuery = query;
+
     if (this._stream) {
       this.iterateAsyncListeners(async (l) => l.queryUpdated?.(query)).catch((error) => {
-        this._stream!.iterateListeners((l) => l.error?.(error));
+        this.updateState({ error });
       });
     }
   }
@@ -64,6 +65,18 @@ export abstract class AbstractQueryProcessor<T>
    */
   protected abstract linkStream(options: LinkQueryStreamOptions<T>): Promise<void>;
 
+  protected updateState = (update: Partial<WatchedQueryState<T>>) => {
+    Object.assign(this.state, update);
+
+    if (this._stream?.closed) {
+      // Don't enqueue data in a closed stream.
+      // it should be safe to ignore this.
+      // This can be triggered if the stream is closed while data is being fetched.
+      return;
+    }
+    this._stream?.enqueueData({ ...this.state });
+  };
+
   async generateStream() {
     if (this._stream) {
       return this._stream;
@@ -74,6 +87,8 @@ export abstract class AbstractQueryProcessor<T>
     const stream = new DataStream<WatchedQueryState<T>>({
       logger: db.logger
     });
+
+    this._stream = stream;
 
     let abortController: AbortController | null = null;
 
@@ -87,21 +102,26 @@ export abstract class AbstractQueryProcessor<T>
       });
     };
 
-    await link(this.options.watchedQuery);
-
     db.registerListener({
       schemaChanged: async () => {
         try {
           await link(this.options.watchedQuery);
         } catch (error) {
-          stream.iterateListeners((l) => l.error?.(error));
+          this.updateState({ error });
         }
+      },
+      closing: () => {
+        stream.close().catch(() => {});
       }
     });
 
     this.registerListener({
       queryUpdated: async (query) => {
-        await link(query);
+        try {
+          await link(query);
+        } catch (error) {
+          this.updateState({ error });
+        }
       }
     });
 
@@ -110,7 +130,12 @@ export abstract class AbstractQueryProcessor<T>
       closed: () => abortController?.abort()
     });
 
-    this._stream = stream;
+    try {
+      await link(this.options.watchedQuery);
+    } catch (error) {
+      this.updateState({ error });
+    }
+
     return stream;
   }
 }

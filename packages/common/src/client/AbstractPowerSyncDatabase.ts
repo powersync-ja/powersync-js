@@ -109,6 +109,7 @@ export interface WatchOnChangeHandler {
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
+  closing: () => void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -514,6 +515,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (this.closed) {
       return;
     }
+
+    this.iterateListeners((cb) => cb.closing?.());
 
     const { disconnect } = options;
     if (disconnect) {

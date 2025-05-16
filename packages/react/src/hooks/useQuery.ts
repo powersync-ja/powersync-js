@@ -143,7 +143,6 @@ const useWatchedQuery = <T = any>(
 
   React.useEffect(() => {
     watchedQuery.stream().forEach(async (val) => {
-      console.log('Updating watched query state', val);
       setOutputState(mapState(val));
     });
 

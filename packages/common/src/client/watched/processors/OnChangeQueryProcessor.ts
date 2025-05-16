@@ -1,3 +1,4 @@
+import { WatchedQueryState } from '../WatchedQuery.js';
 import { WatchedQueryResult } from '../WatchedQueryResult.js';
 import { AbstractQueryProcessor, LinkQueryStreamOptions } from './AbstractQueryProcessor.js';
 
@@ -27,15 +28,13 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
     db.onChangeWithCallback(
       {
         onChange: async () => {
-          console.log('onChange trigger for', this);
           // This fires for each change of the relevant tables
           try {
             if (this.reportFetching) {
-              this.state.fetching = true;
-              stream.enqueueData(this.state);
+              this.updateState({ fetching: true });
             }
 
-            let dirty = false;
+            const partialStateUpdate: Partial<WatchedQueryState<T>> = {};
 
             // Always run the query if an underlaying table has changed
             const result = watchedQuery.queryExecutor
@@ -43,36 +42,30 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
               : await db.getAll<T>(watchedQuery.query, watchedQuery.parameters);
 
             if (this.reportFetching) {
-              this.state.fetching = false;
-              dirty = true;
+              partialStateUpdate.fetching = false;
             }
 
             if (this.state.loading) {
-              this.state.loading = false;
-              dirty = true;
+              partialStateUpdate.loading = false;
             }
 
             // Check if the result has changed
             const watchedQueryResult = this.processResultSet(result);
             if (watchedQueryResult) {
-              this.state.data = watchedQueryResult;
-              this.state.lastUpdated = new Date();
-              dirty = true;
+              partialStateUpdate.data = watchedQueryResult;
+              partialStateUpdate.lastUpdated = new Date();
             }
 
-            if (dirty) {
-              stream.enqueueData(this.state);
+            if (Object.keys(partialStateUpdate).length > 0) {
+              this.updateState(partialStateUpdate);
             }
           } catch (error) {
-            this.state.error = error;
-            stream.enqueueData(this.state);
-            // TODO?
-            //stream.iterateListeners((l) => l.error?.(error));
+            this.updateState({ error });
           }
         },
         onError: (error) => {
-          stream.close();
-          stream.iterateListeners((l) => l.error?.(error));
+          this.updateState({ error });
+          stream.close().catch(() => {});
         }
       },
       {

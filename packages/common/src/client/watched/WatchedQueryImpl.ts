@@ -49,10 +49,14 @@ export class WatchedQueryImpl<T> implements WatchedQuery<T> {
   }
 
   close(): void {
-    console.log('Closing WatchedQueryImpl for ', this.options.processor);
-    this.lazyStreamPromise.then((s) => {
-      console.log('Closing stream for ', this.options.processor);
-      s.close();
-    });
+    this.lazyStreamPromise
+      .then((s) => {
+        s.close();
+      })
+      .catch(() => {
+        // In rare cases where the DB might be closed before the stream is created
+        // this can throw an error.
+        // This should not affect closing
+      });
   }
 }

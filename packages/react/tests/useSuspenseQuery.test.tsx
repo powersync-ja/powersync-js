@@ -1,4 +1,3 @@
-import * as commonSdk from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React, { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -214,15 +213,13 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should show an error if parsing the query results in an error', async () => {
-    vi.spyOn(commonSdk, 'parseQuery').mockImplementation(() => {
-      throw new Error('error');
-    });
-
     const { result } = renderHook(
       () =>
         useSuspenseQuery({
           execute: () => [] as any,
-          compile: () => ({ sql: 'SELECT * from lists', parameters: ['param'] })
+          compile: () => {
+            throw Error('error');
+          }
         }),
       { wrapper }
     );
