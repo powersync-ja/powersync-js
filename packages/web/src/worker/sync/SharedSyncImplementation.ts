@@ -308,6 +308,15 @@ export class SharedSyncImplementation
       adapter: new SqliteBucketStorage(this.dbAdapter!, new Mutex(), this.logger),
       remote: new WebRemote(
         {
+          invalidateCredentials: async () => {
+            const lastPort = this.ports[this.ports.length - 1];
+            try {
+              this.logger.log('calling the last port client provider to invalidate credentials');
+              lastPort.clientProvider.invalidateCredentials();
+            } catch (ex) {
+              this.logger.error('error invalidating credentials', ex);
+            }
+          },
           fetchCredentials: async () => {
             const lastPort = this.ports[this.ports.length - 1];
             return new Promise(async (resolve, reject) => {

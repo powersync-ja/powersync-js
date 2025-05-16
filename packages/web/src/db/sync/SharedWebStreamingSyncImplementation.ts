@@ -31,6 +31,10 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return Comlink.transfer(port, [port]);
   }
 
+  invalidateCredentials() {
+    this.options.remote.invalidateCredentials();
+  }
+
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
     const credentials = await this.options.remote.getCredentials();
     if (credentials == null) {
