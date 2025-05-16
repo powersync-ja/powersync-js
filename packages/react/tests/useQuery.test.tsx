@@ -1,6 +1,7 @@
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import pDefer from 'p-defer';
 import React from 'react';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
@@ -189,8 +190,72 @@ describe('useQuery', () => {
         expect(currentResult.data).toEqual([]);
         expect(currentResult.error).toEqual(Error('error'));
       },
-      { timeout: 100 }
+      { timeout: 500, interval: 100 }
     );
+  });
+
+  it('should emit result data when query changes', async () => {
+    const db = openPowerSync();
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), { wrapper });
+
+    expect(result.current.isLoading).toEqual(true);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.isLoading).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // This should trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    const {
+      current: { data }
+    } = result;
+
+    const deferred = pDefer();
+
+    const baseGetAll = db.getAll;
+    const getSpy = vi.spyOn(db, 'getAll').mockImplementation(async (sql, params) => {
+      // Allow pausing this call
+      await deferred.promise;
+      return baseGetAll.call(db, sql, params);
+    });
+
+    // The number of calls should be incremented after we make a change
+    const numberOfCalls = getSpy.mock.calls.length + 1;
+    // This should not trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['anothername']);
+
+    await waitFor(
+      () => {
+        expect(result.current.isFetching).toEqual(true);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Allow the result to be returned
+    deferred.resolve();
+
+    // We should still read the data from the DB
+    await waitFor(() => {
+      expect(getSpy).toHaveBeenCalledTimes(numberOfCalls);
+      expect(result.current.isFetching).toEqual(false);
+    });
+
+    // The data reference should be the same as the previous time
+    expect(data == result.current.data).toEqual(true);
   });
 
   // TODO: Add tests for powersync.onChangeWithCallback path

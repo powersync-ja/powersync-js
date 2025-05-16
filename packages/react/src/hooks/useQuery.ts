@@ -155,7 +155,6 @@ const useWatchedQuery = <T = any>(
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
     if (queryChanged) {
-      console.log('Query changed, re-evaluating', query, parameters);
       watchedQuery.updateQuery({
         query,
         parameters: parameters,
