@@ -26,6 +26,13 @@ export interface WatchedQueryOptions<T> {
   /** The minimum interval between queries. */
   throttleMs?: number;
   queryExecutor?: () => Promise<T[]>;
+  /**
+   * If true (default) the watched query will update its state to report
+   * on the fetching state of the query.
+   * Setting to false reduces the number of state changes if the fetch status
+   * is not relevant to the consumer.
+   */
+  reportFetching?: boolean;
 }
 
 export interface WatchedQuery<T> {

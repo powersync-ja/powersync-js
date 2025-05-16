@@ -866,7 +866,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   // TODO names
-  watch2<T>(options: { sql: string; parameters?: any[]; throttleMs?: number }): WatchedQuery<T> {
+  incrementalWatch<T>(options: {
+    sql: string;
+    parameters?: any[];
+    throttleMs?: number;
+    queryExecutor?: () => Promise<T[]>;
+    reportFetching?: boolean;
+  }): WatchedQuery<T> {
     return new WatchedQueryImpl({
       processor: new ComparisonQueryProcessor({
         db: this,
@@ -877,8 +883,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         watchedQuery: {
           query: options.sql,
           parameters: options.parameters,
-          throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
-          // queryExecutor: todo
+          throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
+          queryExecutor: options.queryExecutor,
+          reportFetching: options.reportFetching
         }
       })
     });

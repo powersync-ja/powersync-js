@@ -38,6 +38,11 @@ export abstract class AbstractWatchComparator<T> implements WatchResultComparato
   ): void {
     const { validateEquality } = options;
 
+    if (state.currentItems.length == 0 && state.previousHashes.size == 0) {
+      state.isEqual = true;
+      return;
+    }
+
     if (state.resumeIndex >= state.currentItems.length) {
       // No more items to compare, we are done
       return;

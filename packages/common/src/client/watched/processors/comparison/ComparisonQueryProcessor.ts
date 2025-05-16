@@ -1,83 +1,34 @@
-import { WatchedQueryOptions, WatchedQueryState } from '../../WatchedQuery.js';
-import {
-  AbstractQueryProcessor,
-  AbstractQueryProcessorOptions,
-  LinkQueryStreamOptions
-} from '../AbstractQueryProcessor.js';
+import { WatchedQueryResult } from '../../WatchedQueryResult.js';
+import { AbstractQueryProcessorOptions } from '../AbstractQueryProcessor.js';
+import { OnChangeQueryProcessor } from '../OnChangeQueryProcessor.js';
 import { WatchResultComparator } from './WatchComparator.js';
 
 export interface ComparisonQueryProcessorOptions<T> extends AbstractQueryProcessorOptions<T> {
   comparator: WatchResultComparator<T>;
-  watchedQuery: WatchedQueryOptions<T>;
 }
-
-export class ComparisonQueryProcessor<T> extends AbstractQueryProcessor<T> {
-  readonly state: WatchedQueryState<T> = {
-    loading: true,
-    fetching: true,
-    error: null,
-    lastUpdated: null,
-    data: {
-      all: [],
-      delta: () => ({ added: [], removed: [], unchanged: [], updated: [] })
-    }
-  };
-
+/**
+ * TODO:
+ * This currently checks if the entire result set has changed.
+ * In some cases a deep comparison of the result might be required.
+ * For example if result[1] is unchanged, it might be useful to keep the same object reference.
+ */
+export class ComparisonQueryProcessor<T> extends OnChangeQueryProcessor<T> {
   constructor(protected options: ComparisonQueryProcessorOptions<T>) {
     super(options);
   }
 
-  protected async linkStream(options: LinkQueryStreamOptions<T>): Promise<void> {
-    const { db, watchedQuery } = this.options;
-    const { stream, abortSignal } = options;
+  protected processResultSet(result: T[]): WatchedQueryResult<T> | null {
+    const { comparator } = this.options;
+    const previous = this.state.data.all;
+    const delta = comparator.compare(previous, result);
 
-    const tables = await db.resolveTables(watchedQuery.query, watchedQuery.parameters);
+    if (delta.isEqual()) {
+      return null; // the stream will not emit a change of data
+    }
 
-    db.onChangeWithCallback(
-      {
-        onChange: async () => {
-          console.log('onChange trigger for', this);
-          // This fires for each change of the relevant tables
-          try {
-            this.state.fetching = true;
-            stream.enqueueData(this.state);
-
-            // Always run the query if an underlaying table has changed
-            const result = watchedQuery.queryExecutor
-              ? await watchedQuery.queryExecutor()
-              : await db.getAll<T>(watchedQuery.query, watchedQuery.parameters);
-            this.state.fetching = false;
-            this.state.loading = false;
-
-            // Check if the result has changed
-            const comparison = this.options.comparator.compare(this.state.data.all, result);
-            if (!comparison.isEqual()) {
-              this.state.data = {
-                all: result,
-                delta: () => comparison.delta() // lazy evaluation
-              };
-              this.state.lastUpdated = new Date();
-            }
-            // This is here to cancel any fetching state. Need to verify this does not cause excessive re-renders
-            stream.enqueueData(this.state);
-          } catch (error) {
-            this.state.error = error;
-            stream.enqueueData(this.state);
-            // TODO;
-            //stream.iterateListeners((l) => l.error?.(error));
-          }
-        },
-        onError: (error) => {
-          stream.close();
-          stream.iterateListeners((l) => l.error?.(error));
-        }
-      },
-      {
-        signal: abortSignal,
-        tables,
-        throttleMs: watchedQuery.throttleMs,
-        triggerImmediate: true
-      }
-    );
+    return {
+      all: result,
+      delta: () => delta.delta() // lazy evaluation
+    };
   }
 }

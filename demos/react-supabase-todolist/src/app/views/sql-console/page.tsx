@@ -11,14 +11,10 @@ export type LoginFormParams = {
 
 const DEFAULT_QUERY = 'SELECT * FROM lists';
 
-export default function SQLConsolePage() {
-  const inputRef = React.useRef<HTMLInputElement>();
-  const [query, setQuery] = React.useState(DEFAULT_QUERY);
-  const { data: querySQLResult } = useQuery(query);
-
+const TableDisplay = ({ data }: { data: any[] }) => {
+  console.log('Rendering table display', data);
   const queryDataGridResult = React.useMemo(() => {
-    const firstItem = querySQLResult?.[0];
-    console.log('running a query render');
+    const firstItem = data?.[0];
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
@@ -26,9 +22,37 @@ export default function SQLConsolePage() {
             flex: 1
           }))
         : [],
-      rows: querySQLResult
+      rows: data
     };
-  }, [querySQLResult]);
+  }, [data]);
+
+  return (
+    <S.QueryResultContainer>
+      <DataGrid
+        autoHeight={true}
+        rows={queryDataGridResult.rows.map((r, index) => ({ ...r, id: r.id ?? index })) ?? []}
+        columns={queryDataGridResult.columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 20
+            }
+          }
+        }}
+        pageSizeOptions={[20]}
+        disableRowSelectionOnClick
+      />
+    </S.QueryResultContainer>
+  );
+};
+export default function SQLConsolePage() {
+  const inputRef = React.useRef<HTMLInputElement>();
+  const [query, setQuery] = React.useState(DEFAULT_QUERY);
+  const { data } = useQuery(query, [], { reportFetching: false });
+
+  React.useEffect(() => {
+    console.log('Query result changed', data);
+  }, [data]);
 
   return (
     <NavigationPage title="SQL Console">
@@ -62,27 +86,7 @@ export default function SQLConsolePage() {
             </Button>
           </S.CenteredGrid>
         </S.CenteredGrid>
-
-        {queryDataGridResult ? (
-          <S.QueryResultContainer>
-            {queryDataGridResult.columns ? (
-              <DataGrid
-                autoHeight={true}
-                rows={queryDataGridResult.rows?.map((r, index) => ({ ...r, id: r.id ?? index })) ?? []}
-                columns={queryDataGridResult.columns}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 20
-                    }
-                  }
-                }}
-                pageSizeOptions={[20]}
-                disableRowSelectionOnClick
-              />
-            ) : null}
-          </S.QueryResultContainer>
-        ) : null}
+        <TableDisplay data={data} />
       </S.MainContainer>
     </NavigationPage>
   );

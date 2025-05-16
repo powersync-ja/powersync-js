@@ -40,6 +40,10 @@ export abstract class AbstractQueryProcessor<T>
     this._stream = null;
   }
 
+  protected get reportFetching() {
+    return this.options.watchedQuery.reportFetching ?? true;
+  }
+
   /**
    * Updates the underlaying query.
    */
