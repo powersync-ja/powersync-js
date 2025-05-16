@@ -685,6 +685,10 @@ The next upload iteration will be delayed.`);
               this.logger.debug('Token expiring; reconnect');
               this.options.remote.invalidateCredentials();
 
+              /**
+               * For a rare case where the backend connector does not update the token
+               * (uses the same one), this should have some delay.
+               */
               await this.delayRetry();
               return;
             }
