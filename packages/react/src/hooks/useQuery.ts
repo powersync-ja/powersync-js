@@ -133,8 +133,7 @@ const useWatchedQuery = <T = any>(
       isFetching: state.fetching,
       isLoading: state.loading,
       data: state.data.all,
-      error: state.error,
-      refresh: async () => {}
+      error: state.error
     }),
     []
   );

@@ -80,6 +80,7 @@ export abstract class AbstractWatchComparator<T> implements WatchResultComparato
         }
       }
 
+      // TODO, should maybe use previous objects here for reference equality
       state.delta.unchanged.push(item);
     }
 
