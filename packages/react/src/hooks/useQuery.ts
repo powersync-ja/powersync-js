@@ -34,6 +34,14 @@ export type QueryResult<T> = {
   refresh?: (signal?: AbortSignal) => Promise<void>;
 };
 
+type InternalHookOptions<T> = {
+  query: string;
+  parameters: any[];
+  powerSync: AbstractPowerSyncDatabase;
+  queryChanged: boolean;
+  queryExecutor?: () => Promise<T[]> | null;
+};
+
 const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], options: AdditionalOptions) => {
   const stringifiedParams = JSON.stringify(queryParameters);
   const stringifiedOptions = JSON.stringify(options);
@@ -55,13 +63,9 @@ const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], opti
   return false;
 };
 
-const useSingleQuery = <T = any>(
-  query: string,
-  parameters: any[] = [],
-  powerSync: AbstractPowerSyncDatabase,
-  queryExecutor?: () => Promise<T[]> | null,
-  queryChanged: boolean = false
-): QueryResult<T> => {
+const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T> => {
+  const { query, parameters, powerSync, queryExecutor, queryChanged } = options;
+
   const [output, setOutputState] = React.useState<QueryResult<T>>({
     isLoading: true,
     isFetching: true,
@@ -69,12 +73,14 @@ const useSingleQuery = <T = any>(
     error: undefined
   });
 
-  // TODO, how was this signal used?
   const runQuery = React.useCallback(
     async (signal?: AbortSignal) => {
       setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
       try {
         const result = queryExecutor ? await queryExecutor() : await powerSync.getAll<T>(query, parameters);
+        if (signal.aborted) {
+          return;
+        }
         setOutputState((prev) => ({
           ...prev,
           isLoading: false,
@@ -110,23 +116,19 @@ const useSingleQuery = <T = any>(
   };
 };
 
-const useWatchedQuery = <T = any>(
-  query: string,
-  parameters: any[] = [],
-  powerSync: AbstractPowerSyncDatabase,
-  queryExecutor?: () => Promise<T[]> | null,
-  queryChanged: boolean = false,
-  options: HookWatchOptions = {}
-): QueryResult<T> => {
-  const [watchedQuery] = React.useState(() => {
+const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: HookWatchOptions }): QueryResult<T> => {
+  const { query, parameters, powerSync, queryExecutor, queryChanged, options: hookOptions } = options;
+  const createWatchedQuery = React.useCallback(() => {
     return powerSync.incrementalWatch<T>({
       sql: query,
       parameters,
       queryExecutor,
-      throttleMs: options.throttleMs,
-      reportFetching: options.reportFetching
+      throttleMs: hookOptions.throttleMs,
+      reportFetching: hookOptions.reportFetching
     });
-  });
+  }, []);
+
+  const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
 
   const mapState = React.useCallback(
     (state: WatchedQueryState<T>) => ({
@@ -141,6 +143,11 @@ const useWatchedQuery = <T = any>(
   const [output, setOutputState] = React.useState(mapState(watchedQuery.state));
 
   React.useEffect(() => {
+    watchedQuery.close();
+    setWatchedQuery(createWatchedQuery);
+  }, [powerSync]);
+
+  React.useEffect(() => {
     watchedQuery.stream().forEach(async (val) => {
       setOutputState(mapState(val));
     });
@@ -148,7 +155,7 @@ const useWatchedQuery = <T = any>(
     return () => {
       watchedQuery.close();
     };
-  }, []);
+  }, [watchedQuery]);
 
   // Indicates that the query will be re-fetched due to a change in the query.
   // Used when `isFetching` hasn't been set to true yet due to React execution.
@@ -157,9 +164,9 @@ const useWatchedQuery = <T = any>(
       watchedQuery.updateQuery({
         query,
         parameters: parameters,
-        throttleMs: options.throttleMs,
+        throttleMs: hookOptions.throttleMs,
         queryExecutor,
-        reportFetching: options.reportFetching
+        reportFetching: hookOptions.reportFetching
       });
     }
   }, [queryChanged]);
@@ -206,9 +213,21 @@ export const useQuery = <T = any>(
 
   switch (options.runQueryOnce) {
     case true:
-      return useSingleQuery<T>(sqlStatement, queryParameters, powerSync, queryExecutor, queryChanged);
+      return useSingleQuery<T>({
+        query: sqlStatement,
+        parameters: queryParameters,
+        powerSync,
+        queryExecutor,
+        queryChanged
+      });
     default:
-      // TODO handle if powersync changed
-      return useWatchedQuery<T>(sqlStatement, queryParameters, powerSync, queryExecutor, queryChanged, options);
+      return useWatchedQuery<T>({
+        query: sqlStatement,
+        parameters: queryParameters,
+        powerSync,
+        queryExecutor,
+        queryChanged,
+        options
+      });
   }
 };
