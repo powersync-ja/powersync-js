@@ -18,6 +18,20 @@ export interface LinkQueryStreamOptions<T> {
   query: WatchedQueryOptions<T>;
 }
 
+/**
+ * Limits a stream on high water to only keep the latest event.
+ */
+export const limitStreamDepth = <T>(stream: DataStream<T>, limit: number) => {
+  const l = stream.registerListener({
+    closed: () => l(),
+    highWater: async () => {
+      // Splice the queue to only keep the latest event
+      stream.dataQueue.splice(0, stream.dataQueue.length - limit);
+    }
+  });
+  return stream;
+};
+
 export abstract class AbstractQueryProcessor<T>
   extends BaseObserver<AbstractQueryListener<T>>
   implements WatchedQueryProcessor<T>
@@ -60,12 +74,10 @@ export abstract class AbstractQueryProcessor<T>
   /**
    * This method is called when the stream is created or the PowerSync schema has updated.
    * It links the stream to the underlaying query.
-   * @param stream The stream to link to the underlaying query.
-   * @param abortSignal The signal to abort the underlaying query.
    */
   protected abstract linkStream(options: LinkQueryStreamOptions<T>): Promise<void>;
 
-  protected updateState = (update: Partial<WatchedQueryState<T>>) => {
+  protected updateState(update: Partial<WatchedQueryState<T>>) {
     Object.assign(this.state, update);
 
     if (this._stream?.closed) {
@@ -75,7 +87,7 @@ export abstract class AbstractQueryProcessor<T>
       return;
     }
     this._stream?.enqueueData({ ...this.state });
-  };
+  }
 
   async generateStream() {
     if (this._stream) {
@@ -85,8 +97,13 @@ export abstract class AbstractQueryProcessor<T>
     const { db } = this.options;
 
     const stream = new DataStream<WatchedQueryState<T>>({
-      logger: db.logger
+      logger: db.logger,
+      pressure: {
+        highWaterMark: 2 // Trigger event when 2 events are queued
+      }
     });
+
+    limitStreamDepth(stream, 1);
 
     this._stream = stream;
 

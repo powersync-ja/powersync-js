@@ -1,4 +1,5 @@
 import { DataStream } from '../../utils/DataStream.js';
+import { limitStreamDepth } from './processors/AbstractQueryProcessor.js';
 import { WatchedQuery, WatchedQueryOptions, WatchedQueryProcessor, WatchedQueryState } from './WatchedQuery.js';
 
 export interface WatchedQueryImplOptions<T> {
@@ -23,13 +24,24 @@ export class WatchedQueryImpl<T> implements WatchedQuery<T> {
   stream(): DataStream<WatchedQueryState<T>> {
     // Return a new stream which can independently be closed from the original
     const stream = new DataStream<WatchedQueryState<T>>({
-      closeOnError: true
+      closeOnError: true,
+      pressure: {
+        // limit the number of events queued in the event of slow consumers
+        highWaterMark: 2
+      }
     });
+
+    limitStreamDepth(stream, 1);
 
     // pipe the lazy stream to the new stream
     this.lazyStreamPromise
-      .then((s) => {
-        s.registerListener({
+      .then((upstreamSource) => {
+        // Edge case where the stream is closed before the upstream source is created
+        if (stream.closed) {
+          return;
+        }
+
+        const dispose = upstreamSource.registerListener({
           data: async (data) => {
             stream.enqueueData(data);
           },
@@ -38,6 +50,12 @@ export class WatchedQueryImpl<T> implements WatchedQuery<T> {
           },
           error: (error) => {
             stream.iterateListeners((l) => l.error?.(error));
+          }
+        });
+
+        stream.registerListener({
+          closed: () => {
+            dispose();
           }
         });
       })
