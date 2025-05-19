@@ -306,28 +306,31 @@ export class SharedSyncImplementation
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
     return new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(this.dbAdapter!, new Mutex(), this.logger),
-      remote: new WebRemote({
-        fetchCredentials: async () => {
-          const lastPort = this.ports[this.ports.length - 1];
-          return new Promise(async (resolve, reject) => {
-            const abortController = new AbortController();
-            this.fetchCredentialsController = {
-              controller: abortController,
-              activePort: lastPort
-            };
+      remote: new WebRemote(
+        {
+          fetchCredentials: async () => {
+            const lastPort = this.ports[this.ports.length - 1];
+            return new Promise(async (resolve, reject) => {
+              const abortController = new AbortController();
+              this.fetchCredentialsController = {
+                controller: abortController,
+                activePort: lastPort
+              };
 
-            abortController.signal.onabort = reject;
-            try {
-              this.logger.log('calling the last port client provider for credentials');
-              resolve(await lastPort.clientProvider.fetchCredentials());
-            } catch (ex) {
-              reject(ex);
-            } finally {
-              this.fetchCredentialsController = undefined;
-            }
-          });
-        }
-      }),
+              abortController.signal.onabort = reject;
+              try {
+                this.logger.log('calling the last port client provider for credentials');
+                resolve(await lastPort.clientProvider.fetchCredentials());
+              } catch (ex) {
+                reject(ex);
+              } finally {
+                this.fetchCredentialsController = undefined;
+              }
+            });
+          }
+        },
+        this.logger
+      ),
       uploadCrud: async () => {
         const lastPort = this.ports[this.ports.length - 1];
 

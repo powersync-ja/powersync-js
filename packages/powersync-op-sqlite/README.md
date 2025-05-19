@@ -6,9 +6,9 @@ This package (`packages/powersync-op-sqlite`) enables using [OP-SQLite](https://
 
 If you are not yet familiar with PowerSync, please see the [PowerSync React Native SDK README](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native) for more information.
 
-### Alpha release
+## Beta Release
 
-This package is currently in an alpha release. If you find a bug or issue, please open a [GitHub issue](https://github.com/powersync-ja/powersync-js/issues). Questions or feedback can be posted on our [community Discord](https://discord.gg/powersync) - we'd love to hear from you.
+This package is currently in a beta release.
 
 ## Installation
 
