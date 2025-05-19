@@ -396,7 +396,7 @@ export abstract class AbstractRemote {
         syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
-            if (e.message.includes('Authorization failed')) {
+            if (e.message.includes('Authorization failed') || e.message.includes('PSYNC_S21')) {
               this.invalidateCredentials();
             }
             // Don't log closed as an error
