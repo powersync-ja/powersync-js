@@ -1,8 +1,8 @@
-import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
 import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
 import Lock from 'async-lock';
-import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { Platform } from 'react-native';
+import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';
 
 /**
@@ -155,15 +155,14 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  close() {
-    this.initialized.then(() => {
-      // Abort any pending operations
-      this.abortController.abort();
-      this.readQueue = [];
+  async close() {
+    await this.initialized;
+    // Abort any pending operations
+    this.abortController.abort();
+    this.readQueue = [];
 
-      this.writeConnection!.close();
-      this.readConnections!.forEach((c) => c.connection.close());
-    });
+    this.writeConnection!.close();
+    this.readConnections!.forEach((c) => c.connection.close());
   }
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
