@@ -585,7 +585,7 @@ export function registerBaseTests() {
       }
 
       await db.executeBatch(statement, bulkInsertCommands);
-      db.close();
+      await db.close();
 
       for (let i = 1; i < 10; i++) {
         db = createDatabase();
@@ -603,7 +603,7 @@ export function registerBaseTests() {
           db.execute(`SELECT * FROM t1 `)
         ];
 
-        db.close();
+        await db.close();
 
         const results = await Promise.allSettled(tests);
         expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));

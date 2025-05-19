@@ -90,6 +90,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: echo "Generated AVD snapshot for caching."
 
+      - name: Android Emulator Build
+        working-directory: ./tools/powersynctests
+        run: pnpx detox build --configuration android.emu.release
+
       - name: Run connected Android tests
         uses: ReactiveCircus/android-emulator-runner@v2.28.0
         with:
@@ -97,18 +101,10 @@ jobs:
           target: google_apis
           arch: x86_64
           avd-name: $AVD_NAME
-          script: cd tools/powersynctests && pnpm android
+          script: cd tools/powersynctests && pnpx detox test --configuration android.emu.release --headless
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-
-      - name: Android Emulator Build
-        working-directory: ./tools/powersynctests
-        run: pnpx detox build --configuration android.emu.release
-
-      - name: Android Emultator Test
-        working-directory: ./tools/powersynctests
-        run: pnpx detox test --configuration android.emu.release --headless
 
   test-ios:
     name: Test iOS
