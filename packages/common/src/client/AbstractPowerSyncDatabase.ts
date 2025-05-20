@@ -35,8 +35,7 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { WatchedQuery } from './watched/WatchedQuery.js';
 import { WatchedQueryImpl } from './watched/WatchedQueryImpl.js';
-import { ComparisonQueryProcessor } from './watched/processors/comparison/ComparisonQueryProcessor.js';
-import { InlineWatchComparator } from './watched/processors/comparison/WatchComparator.js';
+import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -877,12 +876,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     reportFetching?: boolean;
   }): WatchedQuery<T> {
     return new WatchedQueryImpl({
-      processor: new ComparisonQueryProcessor({
+      processor: new OnChangeQueryProcessor({
         db: this,
-        comparator: new InlineWatchComparator({
-          hash: (row) => JSON.stringify(row),
-          identify: (row) => (row as any).id ?? JSON.stringify(row) // TODO
-        }),
+        compareBy: (item) => JSON.stringify(item), // TODO make configurable
         watchedQuery: {
           query: options.sql,
           parameters: options.parameters,

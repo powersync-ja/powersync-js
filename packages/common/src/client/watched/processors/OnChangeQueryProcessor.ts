@@ -1,22 +1,52 @@
 import { WatchedQueryState } from '../WatchedQuery.js';
-import { WatchedQueryResult } from '../WatchedQueryResult.js';
-import { AbstractQueryProcessor, LinkQueryStreamOptions } from './AbstractQueryProcessor.js';
+import {
+  AbstractQueryProcessor,
+  AbstractQueryProcessorOptions,
+  LinkQueryStreamOptions
+} from './AbstractQueryProcessor.js';
+
+export interface OnChangeQueryProcessorOptions<T> extends AbstractQueryProcessorOptions<T> {
+  compareBy?: (element: T) => string;
+}
 
 /**
  * Uses the PowerSync onChange event to trigger watched queries.
  * Results are emitted on every change of the relevant tables.
  */
 export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
-  /**
-   * Always returns the result set on every onChange event. Deltas are not supported by this processor.
+  constructor(protected options: OnChangeQueryProcessorOptions<T>) {
+    super(options);
+  }
+
+  /*
+   * @returns If the sets are equal
    */
-  protected processResultSet(result: T[]): WatchedQueryResult<T> | null {
-    return {
-      all: result,
-      delta: () => {
-        throw new Error('Delta not implemented for OnChangeQueryProcessor');
+  protected checkEquality(current: T[], previous: T[]): boolean {
+    if (current.length == 0 && previous.length == 0) {
+      return true;
+    }
+
+    if (current.length !== previous.length) {
+      return false;
+    }
+
+    const { compareBy } = this.options;
+    // Assume items are not equal if we can't compare them
+    if (!compareBy) {
+      return false;
+    }
+
+    // At this point the lengths are equal
+    for (let i = 0; i < current.length; i++) {
+      const currentItem = compareBy(current[i]);
+      const previousItem = compareBy(previous[i]);
+
+      if (currentItem !== previousItem) {
+        return false;
       }
-    };
+    }
+
+    return true;
   }
 
   protected async linkStream(options: LinkQueryStreamOptions<T>): Promise<void> {
@@ -31,7 +61,7 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
           // This fires for each change of the relevant tables
           try {
             if (this.reportFetching) {
-              this.updateState({ fetching: true });
+              this.updateState({ isFetching: true });
             }
 
             const partialStateUpdate: Partial<WatchedQueryState<T>> = {};
@@ -42,18 +72,16 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
               : await db.getAll<T>(watchedQuery.query, watchedQuery.parameters);
 
             if (this.reportFetching) {
-              partialStateUpdate.fetching = false;
+              partialStateUpdate.isFetching = false;
             }
 
-            if (this.state.loading) {
-              partialStateUpdate.loading = false;
+            if (this.state.isLoading) {
+              partialStateUpdate.isLoading = false;
             }
 
             // Check if the result has changed
-            const watchedQueryResult = this.processResultSet(result);
-            if (watchedQueryResult) {
-              partialStateUpdate.data = watchedQueryResult;
-              partialStateUpdate.lastUpdated = new Date();
+            if (!this.checkEquality(result, this.state.data)) {
+              partialStateUpdate.data = result;
             }
 
             if (Object.keys(partialStateUpdate).length > 0) {

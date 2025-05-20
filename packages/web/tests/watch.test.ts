@@ -323,4 +323,98 @@ describe('Watch Tests', { sequential: true }, () => {
     expect(receivedWithManagedOverflowCount).greaterThan(2);
     expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
   });
+
+  it('should stream watch results', async () => {
+    const watch = powersync.incrementalWatch({
+      sql: 'SELECT * FROM assets',
+      parameters: []
+    });
+
+    expect(watch.state.isLoading).true;
+    expect(watch.state.isFetching).true;
+
+    const next = await watch.stream().read();
+    expect(next).toBeDefined();
+    expect(next!.isFetching).false;
+    expect(next!.isLoading).false;
+
+    const nextFetchPromise = watch.stream().read();
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    const nextFetch = await nextFetchPromise;
+    expect(nextFetch).toBeDefined();
+    expect(nextFetch!.isFetching).true;
+
+    const dataNext = await watch.stream().read();
+    expect(dataNext).toBeDefined();
+    expect(dataNext!.isFetching).false;
+    expect(dataNext!.data).toHaveLength(1);
+  });
+
+  it('should limit queue depth', async () => {
+    const watch = powersync.incrementalWatch({
+      sql: 'SELECT * FROM assets',
+      parameters: []
+    });
+
+    expect(watch.state.isLoading).true;
+    expect(watch.state.isFetching).true;
+
+    // TODO limit interface
+    const stream = watch.stream();
+    const anotherStream = watch.stream();
+
+    const next = await stream.read();
+    expect(next).toBeDefined();
+    expect(next!.isFetching).false;
+    expect(next!.isLoading).false;
+
+    const nextFetchPromise = stream.read();
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    const nextFetch = await nextFetchPromise;
+    expect(nextFetch).toBeDefined();
+    expect(nextFetch!.isFetching).true;
+
+    const dataNext = await stream.read();
+    expect(dataNext).toBeDefined();
+    expect(dataNext!.isFetching).false;
+    expect(dataNext!.data).toHaveLength(1);
+
+    // This should only have the latest unprocessed event
+    expect(anotherStream.dataQueue).toHaveLength(1);
+    expect(anotherStream.dataQueue[0].data).toHaveLength(1);
+
+    watch.close();
+    // TODO
+    await new Promise((r) => setTimeout(r, 500));
+    expect(stream.closed).true;
+  });
+
+  it('should only report updates for relevant changes', async () => {
+    const watch = powersync.incrementalWatch({
+      sql: 'SELECT * FROM assets where make = ?',
+      parameters: ['test']
+    });
+
+    let notificationCount = 0;
+    const receivedRelevantData = new Promise<void>((resolve) => {
+      watch.stream().forEach(async (update) => {
+        notificationCount++;
+        console.log('Received update', update);
+        if (update.data.length > 0) {
+          resolve();
+        }
+      });
+    });
+
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make2', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make3', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make4', uuid()]);
+    // Should only trigger for this operation
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    await receivedRelevantData;
+    // Should get one notification for first loading then finished loading then received data
+    expect(notificationCount).equals(3);
+  });
 });

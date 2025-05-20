@@ -1,7 +1,6 @@
 import {
   AbstractPowerSyncDatabase,
   parseQuery,
-  WatchedQueryState,
   type CompilableQuery,
   type ParsedQuery,
   type SQLWatchOptions
@@ -118,6 +117,7 @@ const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T
 
 const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: HookWatchOptions }): QueryResult<T> => {
   const { query, parameters, powerSync, queryExecutor, queryChanged, options: hookOptions } = options;
+
   const createWatchedQuery = React.useCallback(() => {
     return powerSync.incrementalWatch<T>({
       sql: query,
@@ -130,17 +130,7 @@ const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: H
 
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
 
-  const mapState = React.useCallback(
-    (state: WatchedQueryState<T>) => ({
-      isFetching: state.fetching,
-      isLoading: state.loading,
-      data: state.data.all,
-      error: state.error
-    }),
-    []
-  );
-
-  const [output, setOutputState] = React.useState(mapState(watchedQuery.state));
+  const [output, setOutputState] = React.useState(watchedQuery.state);
 
   React.useEffect(() => {
     watchedQuery.close();
@@ -149,7 +139,7 @@ const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: H
 
   React.useEffect(() => {
     watchedQuery.stream().forEach(async (val) => {
-      setOutputState(mapState(val));
+      setOutputState(val);
     });
 
     return () => {

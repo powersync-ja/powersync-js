@@ -8,9 +8,14 @@ export interface WatchedQueryImplOptions<T> {
 
 export class WatchedQueryImpl<T> implements WatchedQuery<T> {
   protected lazyStreamPromise: Promise<DataStream<WatchedQueryState<T>>>;
+  protected _stream: DataStream<WatchedQueryState<T>> | null;
 
   constructor(protected options: WatchedQueryImplOptions<T>) {
-    this.lazyStreamPromise = this.options.processor.generateStream();
+    this._stream = null;
+    this.lazyStreamPromise = this.options.processor.generateStream().then((s) => {
+      this._stream = s;
+      return s;
+    });
   }
 
   get state() {
@@ -67,9 +72,13 @@ export class WatchedQueryImpl<T> implements WatchedQuery<T> {
   }
 
   close(): void {
+    if (this._stream) {
+      this._stream.close().catch(() => {});
+      return;
+    }
     this.lazyStreamPromise
-      .then((s) => {
-        s.close();
+      .then(async (s) => {
+        await s.close();
       })
       .catch(() => {
         // In rare cases where the DB might be closed before the stream is created

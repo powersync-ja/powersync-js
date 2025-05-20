@@ -1,16 +1,16 @@
 import { DataStream } from '../../utils/DataStream.js';
-import { WatchedQueryResult } from './WatchedQueryResult.js';
 
 export interface WatchedQueryState<T> {
-  loading: boolean;
-  fetching: boolean;
+  isLoading: boolean;
+  isFetching: boolean;
   error: Error | null;
   lastUpdated: Date | null;
-  data: WatchedQueryResult<T>;
+  data: T[];
 }
 
 /**
  * Performs underlaying watching and yields a stream of results.
+ * @internal
  */
 export interface WatchedQueryProcessor<T> {
   readonly state: WatchedQueryState<T>;
@@ -20,6 +20,9 @@ export interface WatchedQueryProcessor<T> {
   updateQuery(query: WatchedQueryOptions<T>): void;
 }
 
+/**
+ * @internal
+ */
 export interface WatchedQueryOptions<T> {
   query: string;
   parameters?: any[];

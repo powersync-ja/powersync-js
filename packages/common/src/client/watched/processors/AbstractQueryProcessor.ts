@@ -37,14 +37,11 @@ export abstract class AbstractQueryProcessor<T>
   implements WatchedQueryProcessor<T>
 {
   readonly state: WatchedQueryState<T> = {
-    loading: true,
-    fetching: true,
+    isLoading: true,
+    isFetching: true,
     error: null,
     lastUpdated: null,
-    data: {
-      all: [],
-      delta: () => ({ added: [], removed: [], unchanged: [], updated: [] })
-    }
+    data: []
   };
 
   protected _stream: DataStream<WatchedQueryState<T>> | null;
@@ -78,7 +75,7 @@ export abstract class AbstractQueryProcessor<T>
   protected abstract linkStream(options: LinkQueryStreamOptions<T>): Promise<void>;
 
   protected updateState(update: Partial<WatchedQueryState<T>>) {
-    Object.assign(this.state, update);
+    Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<T>>, update);
 
     if (this._stream?.closed) {
       // Don't enqueue data in a closed stream.
