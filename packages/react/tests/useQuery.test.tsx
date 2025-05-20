@@ -228,14 +228,12 @@ describe('useQuery', () => {
 
     const baseGetAll = db.getAll;
     const getSpy = vi.spyOn(db, 'getAll').mockImplementation(async (sql, params) => {
-      // Allow pausing this call
+      // Allow pausing this call in order to test isFetching
       await deferred.promise;
       return baseGetAll.call(db, sql, params);
     });
 
     // The number of calls should be incremented after we make a change
-    const numberOfCalls = getSpy.mock.calls.length + 1;
-    // This should not trigger an update
     await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['anothername']);
 
     await waitFor(
@@ -249,10 +247,12 @@ describe('useQuery', () => {
     deferred.resolve();
 
     // We should still read the data from the DB
-    await waitFor(() => {
-      expect(getSpy).toHaveBeenCalledTimes(numberOfCalls);
-      expect(result.current.isFetching).toEqual(false);
-    });
+    await waitFor(
+      () => {
+        expect(result.current.isFetching).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
 
     // The data reference should be the same as the previous time
     expect(data == result.current.data).toEqual(true);

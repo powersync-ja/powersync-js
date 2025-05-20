@@ -1,155 +1,149 @@
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
 import { BaseListener, BaseObserver } from '../../../utils/BaseObserver.js';
-import { DataStream } from '../../../utils/DataStream.js';
-import { WatchedQueryOptions, WatchedQueryProcessor, WatchedQueryState } from '../WatchedQuery.js';
+import { WatchedQuery, WatchedQueryOptions, WatchedQueryState, WatchedQuerySubscription } from '../WatchedQuery.js';
 
-export interface AbstractQueryProcessorOptions<T> {
+/**
+ * @internal
+ */
+export interface AbstractQueryProcessorOptions<Data> {
   db: AbstractPowerSyncDatabase;
-  watchedQuery: WatchedQueryOptions<T>;
-}
-
-export interface AbstractQueryListener<T> extends BaseListener {
-  queryUpdated: (query: WatchedQueryOptions<T>) => Promise<void>;
-}
-
-export interface LinkQueryStreamOptions<T> {
-  stream: DataStream<WatchedQueryState<T>>;
-  abortSignal: AbortSignal;
-  query: WatchedQueryOptions<T>;
+  query: WatchedQueryOptions<Data>;
 }
 
 /**
- * Limits a stream on high water to only keep the latest event.
+ * @internal
  */
-export const limitStreamDepth = <T>(stream: DataStream<T>, limit: number) => {
-  const l = stream.registerListener({
-    closed: () => l(),
-    highWater: async () => {
-      // Splice the queue to only keep the latest event
-      stream.dataQueue.splice(0, stream.dataQueue.length - limit);
-    }
-  });
-  return stream;
-};
+export interface LinkQueryOptions<Data> {
+  abortSignal: AbortSignal;
+  query: WatchedQueryOptions<Data>;
+}
 
-export abstract class AbstractQueryProcessor<T>
-  extends BaseObserver<AbstractQueryListener<T>>
-  implements WatchedQueryProcessor<T>
+type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & BaseListener;
+
+/**
+ * Performs underlaying watching and yields a stream of results.
+ * @internal
+ */
+export abstract class AbstractQueryProcessor<Data = unknown[]>
+  extends BaseObserver<WatchedQueryProcessorListener<Data>>
+  implements WatchedQuery<Data>
 {
-  readonly state: WatchedQueryState<T> = {
-    isLoading: true,
-    isFetching: true,
-    error: null,
-    lastUpdated: null,
-    data: []
-  };
+  readonly state: WatchedQueryState<Data>;
 
-  protected _stream: DataStream<WatchedQueryState<T>> | null;
+  protected abortController: AbortController;
+  protected initialized: Promise<void>;
 
-  constructor(protected options: AbstractQueryProcessorOptions<T>) {
+  constructor(protected options: AbstractQueryProcessorOptions<Data>) {
     super();
-    this._stream = null;
+    this.abortController = new AbortController();
+    this.state = {
+      isLoading: true,
+      isFetching: this.reportFetching, // Only set to true if we will report updates in future
+      error: null,
+      lastUpdated: null,
+      data: options.query.customExecutor?.initialData ?? ([] as Data)
+    };
+    this.initialized = this.init();
   }
 
   protected get reportFetching() {
-    return this.options.watchedQuery.reportFetching ?? true;
+    return this.options.query.reportFetching ?? true;
   }
 
   /**
    * Updates the underlaying query.
    */
-  updateQuery(query: WatchedQueryOptions<T>) {
-    this.options.watchedQuery = query;
+  async updateQuery(query: WatchedQueryOptions<Data>) {
+    await this.initialized;
 
-    if (this._stream) {
-      this.iterateAsyncListeners(async (l) => l.queryUpdated?.(query)).catch((error) => {
-        this.updateState({ error });
-      });
+    this.options.query = query;
+    this.abortController.abort();
+    this.abortController = new AbortController();
+    await this.linkQuery({
+      abortSignal: this.abortController.signal,
+      query
+    });
+  }
+
+  /**
+   * This method is used to link a query to the subscribers of this listener class.
+   * This method should perform actual query watching and report results via {@link updateState} method.
+   */
+  protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
+
+  protected async updateState(update: Partial<WatchedQueryState<Data>>) {
+    if (typeof update.error !== 'undefined') {
+      await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
+    }
+
+    if (typeof update.data !== 'undefined') {
+      await this.iterateAsyncListenersWithError(async (l) => l.onData?.(update!.data!));
+    }
+
+    Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<Data>>, update);
+    await this.iterateAsyncListenersWithError(async (l) => l.onStateChange?.(this.state));
+  }
+
+  /**
+   * Configures base DB listeners and links the query to listeners.
+   */
+  protected async init() {
+    const { db } = this.options;
+
+    db.registerListener({
+      schemaChanged: async () => {
+        await this.runWithReporting(async () => {
+          await this.updateQuery(this.options.query);
+        });
+      },
+      closing: () => {
+        this.close();
+      }
+    });
+
+    // Initial setup
+    await this.runWithReporting(async () => {
+      await this.updateQuery(this.options.query);
+    });
+  }
+
+  subscribe(subscription: WatchedQuerySubscription<Data>): () => void {
+    return this.registerListener({ ...subscription });
+  }
+
+  async close() {
+    await this.initialized;
+    this.abortController.abort();
+  }
+
+  /**
+   * Runs a callback and reports errors to the error listeners.
+   */
+  protected async runWithReporting<T>(callback: () => Promise<T>): Promise<void> {
+    try {
+      await callback();
+    } catch (error) {
+      // This will update the error on the state and iterate error listeners
+      await this.updateState({ error });
     }
   }
 
   /**
-   * This method is called when the stream is created or the PowerSync schema has updated.
-   * It links the stream to the underlaying query.
+   * Iterate listeners and reports errors to onError handlers.
    */
-  protected abstract linkStream(options: LinkQueryStreamOptions<T>): Promise<void>;
-
-  protected updateState(update: Partial<WatchedQueryState<T>>) {
-    Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<T>>, update);
-
-    if (this._stream?.closed) {
-      // Don't enqueue data in a closed stream.
-      // it should be safe to ignore this.
-      // This can be triggered if the stream is closed while data is being fetched.
-      return;
-    }
-    this._stream?.enqueueData({ ...this.state });
-  }
-
-  async generateStream() {
-    if (this._stream) {
-      return this._stream;
-    }
-
-    const { db } = this.options;
-
-    const stream = new DataStream<WatchedQueryState<T>>({
-      logger: db.logger,
-      pressure: {
-        highWaterMark: 2 // Trigger event when 2 events are queued
-      }
-    });
-
-    limitStreamDepth(stream, 1);
-
-    this._stream = stream;
-
-    let abortController: AbortController | null = null;
-
-    const link = async (query: WatchedQueryOptions<T>) => {
-      abortController?.abort();
-      abortController = new AbortController();
-      await this.linkStream({
-        stream,
-        abortSignal: abortController.signal,
-        query
-      });
-    };
-
-    db.registerListener({
-      schemaChanged: async () => {
-        try {
-          await link(this.options.watchedQuery);
-        } catch (error) {
-          this.updateState({ error });
-        }
-      },
-      closing: () => {
-        stream.close().catch(() => {});
-      }
-    });
-
-    this.registerListener({
-      queryUpdated: async (query) => {
-        try {
-          await link(query);
-        } catch (error) {
-          this.updateState({ error });
-        }
-      }
-    });
-
-    // Cancel the underlaying query if the stream is closed
-    stream.registerListener({
-      closed: () => abortController?.abort()
-    });
-
+  protected async iterateAsyncListenersWithError(
+    callback: (listener: Partial<WatchedQueryProcessorListener<Data>>) => Promise<void> | void
+  ) {
     try {
-      await link(this.options.watchedQuery);
+      await this.iterateAsyncListeners(async (l) => callback(l));
     } catch (error) {
-      this.updateState({ error });
+      try {
+        await this.iterateAsyncListeners(async (l) => l.onError?.(error));
+      } catch (error) {
+        // Errors here are ignored
+        // since we are already in an error state
+        this.options.db.logger.error('Watched query error handler threw an Error', error);
+      }
     }
-
-    return stream;
   }
 }

@@ -1,27 +1,24 @@
 import { WatchedQueryState } from '../WatchedQuery.js';
-import {
-  AbstractQueryProcessor,
-  AbstractQueryProcessorOptions,
-  LinkQueryStreamOptions
-} from './AbstractQueryProcessor.js';
+import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
 
-export interface OnChangeQueryProcessorOptions<T> extends AbstractQueryProcessorOptions<T> {
-  compareBy?: (element: T) => string;
+export interface WatchedQueryComparator<Data> {
+  checkEquality: (current: Data, previous: Data) => boolean;
 }
 
 /**
- * Uses the PowerSync onChange event to trigger watched queries.
- * Results are emitted on every change of the relevant tables.
+ * @internal
  */
-export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
-  constructor(protected options: OnChangeQueryProcessorOptions<T>) {
-    super(options);
-  }
+export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProcessorOptions<Data> {
+  comparator?: WatchedQueryComparator<Data>;
+}
 
-  /*
-   * @returns If the sets are equal
-   */
-  protected checkEquality(current: T[], previous: T[]): boolean {
+/**
+ * @internal
+ */
+export class ArrayComparator<Element> implements WatchedQueryComparator<Element[]> {
+  constructor(protected compareBy: (element: Element) => string) {}
+
+  checkEquality(current: Element[], previous: Element[]) {
     if (current.length == 0 && previous.length == 0) {
       return true;
     }
@@ -30,11 +27,7 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
       return false;
     }
 
-    const { compareBy } = this.options;
-    // Assume items are not equal if we can't compare them
-    if (!compareBy) {
-      return false;
-    }
+    const { compareBy } = this;
 
     // At this point the lengths are equal
     for (let i = 0; i < current.length; i++) {
@@ -48,12 +41,31 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
 
     return true;
   }
+}
 
-  protected async linkStream(options: LinkQueryStreamOptions<T>): Promise<void> {
-    const { db, watchedQuery } = this.options;
-    const { stream, abortSignal } = options;
+/**
+ * Uses the PowerSync onChange event to trigger watched queries.
+ * Results are emitted on every change of the relevant tables.
+ * @internal
+ */
+export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
+  constructor(protected options: OnChangeQueryProcessorOptions<Data>) {
+    super(options);
+  }
 
-    const tables = await db.resolveTables(watchedQuery.query, watchedQuery.parameters);
+  /*
+   * @returns If the sets are equal
+   */
+  protected checkEquality(current: Data, previous: Data): boolean {
+    // Use the provided comparator if available. Assume values are unique if not available.
+    return this.options.comparator?.checkEquality?.(current, previous) ?? false;
+  }
+
+  protected async linkQuery(options: LinkQueryOptions<Data>): Promise<void> {
+    const { db, query } = this.options;
+    const { abortSignal } = options;
+
+    const tables = await db.resolveTables(query.sql, query.parameters);
 
     db.onChangeWithCallback(
       {
@@ -61,15 +73,15 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
           // This fires for each change of the relevant tables
           try {
             if (this.reportFetching) {
-              this.updateState({ isFetching: true });
+              await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<WatchedQueryState<T>> = {};
+            const partialStateUpdate: Partial<WatchedQueryState<Data>> = {};
 
             // Always run the query if an underlaying table has changed
-            const result = watchedQuery.queryExecutor
-              ? await watchedQuery.queryExecutor()
-              : await db.getAll<T>(watchedQuery.query, watchedQuery.parameters);
+            const result = query.customExecutor
+              ? await query.customExecutor.execute()
+              : ((await db.getAll(query.sql, query.parameters)) as Data);
 
             if (this.reportFetching) {
               partialStateUpdate.isFetching = false;
@@ -85,21 +97,20 @@ export class OnChangeQueryProcessor<T> extends AbstractQueryProcessor<T> {
             }
 
             if (Object.keys(partialStateUpdate).length > 0) {
-              this.updateState(partialStateUpdate);
+              await this.updateState(partialStateUpdate);
             }
           } catch (error) {
-            this.updateState({ error });
+            await this.updateState({ error });
           }
         },
-        onError: (error) => {
-          this.updateState({ error });
-          stream.close().catch(() => {});
+        onError: async (error) => {
+          await this.updateState({ error });
         }
       },
       {
         signal: abortSignal,
         tables,
-        throttleMs: watchedQuery.throttleMs,
+        throttleMs: query.throttleMs,
         triggerImmediate: true // used to emit the initial state
       }
     );

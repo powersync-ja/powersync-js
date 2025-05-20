@@ -16,8 +16,8 @@ export interface AdditionalOptions extends HookWatchOptions {
   runQueryOnce?: boolean;
 }
 
-export type QueryResult<T> = {
-  data: T[];
+export type QueryResult<RowType> = {
+  data: RowType[];
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
@@ -33,12 +33,12 @@ export type QueryResult<T> = {
   refresh?: (signal?: AbortSignal) => Promise<void>;
 };
 
-type InternalHookOptions<T> = {
+type InternalHookOptions<RowType> = {
   query: string;
   parameters: any[];
   powerSync: AbstractPowerSyncDatabase;
   queryChanged: boolean;
-  queryExecutor?: () => Promise<T[]> | null;
+  queryExecutor?: () => Promise<RowType[]>;
 };
 
 const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], options: AdditionalOptions) => {
@@ -62,10 +62,10 @@ const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], opti
   return false;
 };
 
-const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T> => {
+const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType>): QueryResult<RowType> => {
   const { query, parameters, powerSync, queryExecutor, queryChanged } = options;
 
-  const [output, setOutputState] = React.useState<QueryResult<T>>({
+  const [output, setOutputState] = React.useState<QueryResult<RowType>>({
     isLoading: true,
     isFetching: true,
     data: [],
@@ -76,7 +76,7 @@ const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T
     async (signal?: AbortSignal) => {
       setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
       try {
-        const result = queryExecutor ? await queryExecutor() : await powerSync.getAll<T>(query, parameters);
+        const result = queryExecutor ? await queryExecutor() : await powerSync.getAll<RowType>(query, parameters);
         if (signal.aborted) {
           return;
         }
@@ -84,7 +84,7 @@ const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T
           ...prev,
           isLoading: false,
           isFetching: false,
-          data: result ?? [],
+          data: result,
           error: undefined
         }));
       } catch (error) {
@@ -115,14 +115,23 @@ const useSingleQuery = <T = any>(options: InternalHookOptions<T>): QueryResult<T
   };
 };
 
-const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: HookWatchOptions }): QueryResult<T> => {
+const useWatchedQuery = <RowType = unknown>(
+  options: InternalHookOptions<RowType> & { options: HookWatchOptions }
+): QueryResult<RowType> => {
   const { query, parameters, powerSync, queryExecutor, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
-    return powerSync.incrementalWatch<T>({
+    return powerSync.incrementalWatch<RowType[]>({
       sql: query,
       parameters,
-      queryExecutor,
+      customExecutor: queryExecutor
+        ? {
+            execute: queryExecutor,
+            // This assumes the custom query executor will return an array of data,
+            // which is the requirement of CompatibleQuery.
+            initialData: []
+          }
+        : undefined,
       throttleMs: hookOptions.throttleMs,
       reportFetching: hookOptions.reportFetching
     });
@@ -138,11 +147,14 @@ const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: H
   }, [powerSync]);
 
   React.useEffect(() => {
-    watchedQuery.stream().forEach(async (val) => {
-      setOutputState(val);
+    const dispose = watchedQuery.subscribe({
+      onStateChange: (state) => {
+        setOutputState({ ...state });
+      }
     });
 
     return () => {
+      dispose();
       watchedQuery.close();
     };
   }, [watchedQuery]);
@@ -151,11 +163,12 @@ const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: H
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
     if (queryChanged) {
+      console.log('Query changed, re-fetching...');
       watchedQuery.updateQuery({
-        query,
+        sql: query,
         parameters: parameters,
         throttleMs: hookOptions.throttleMs,
-        queryExecutor,
+        customExecutor: queryExecutor ? { execute: queryExecutor, initialData: [] } : undefined,
         reportFetching: hookOptions.reportFetching
       });
     }
@@ -177,11 +190,11 @@ const useWatchedQuery = <T = any>(options: InternalHookOptions<T> & { options: H
  * </View>
  * }
  */
-export const useQuery = <T = any>(
-  query: string | CompilableQuery<T>,
+export const useQuery = <RowType = any>(
+  query: string | CompilableQuery<RowType>,
   parameters: any[] = [],
   options: AdditionalOptions = { runQueryOnce: false }
-): QueryResult<T> => {
+): QueryResult<RowType> => {
   const powerSync = usePowerSync();
   const logger = powerSync?.logger ?? console;
   if (!powerSync) {
@@ -203,7 +216,7 @@ export const useQuery = <T = any>(
 
   switch (options.runQueryOnce) {
     case true:
-      return useSingleQuery<T>({
+      return useSingleQuery<RowType>({
         query: sqlStatement,
         parameters: queryParameters,
         powerSync,
@@ -211,7 +224,7 @@ export const useQuery = <T = any>(
         queryChanged
       });
     default:
-      return useWatchedQuery<T>({
+      return useWatchedQuery<RowType>({
         query: sqlStatement,
         parameters: queryParameters,
         powerSync,

@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { AbstractPowerSyncDatabase, WatchedQueryState } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { testSchema } from './utils/testDb';
 vi.useRealTimers();
 
@@ -281,9 +281,10 @@ describe('Watch Tests', { sequential: true }, () => {
         { signal: abortController.signal, throttleMs: throttleDuration }
       );
     });
-    abortController.abort();
 
     await receivedError;
+    abortController.abort();
+
     expect(receivedErrorCount).equals(1);
   });
 
@@ -330,63 +331,32 @@ describe('Watch Tests', { sequential: true }, () => {
       parameters: []
     });
 
-    expect(watch.state.isLoading).true;
-    expect(watch.state.isFetching).true;
+    const getNextState = () =>
+      new Promise<WatchedQueryState<any>>((resolve) => {
+        const dispose = watch.subscribe({
+          onStateChange: (state) => {
+            dispose();
+            resolve(state);
+          }
+        });
+      });
 
-    const next = await watch.stream().read();
-    expect(next).toBeDefined();
-    expect(next!.isFetching).false;
-    expect(next!.isLoading).false;
+    let state = await getNextState();
+    expect(state.isFetching).true;
+    expect(state.isLoading).true;
 
-    const nextFetchPromise = watch.stream().read();
+    state = await getNextState();
+    expect(state.isFetching).false;
+    expect(state.isLoading).false;
+
+    const nextStatePromise = getNextState();
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
-    const nextFetch = await nextFetchPromise;
-    expect(nextFetch).toBeDefined();
-    expect(nextFetch!.isFetching).true;
+    state = await nextStatePromise;
+    expect(state!.isFetching).true;
 
-    const dataNext = await watch.stream().read();
-    expect(dataNext).toBeDefined();
-    expect(dataNext!.isFetching).false;
-    expect(dataNext!.data).toHaveLength(1);
-  });
-
-  it('should limit queue depth', async () => {
-    const watch = powersync.incrementalWatch({
-      sql: 'SELECT * FROM assets',
-      parameters: []
-    });
-
-    expect(watch.state.isLoading).true;
-    expect(watch.state.isFetching).true;
-
-    // TODO limit interface
-    const stream = watch.stream();
-    const anotherStream = watch.stream();
-
-    const next = await stream.read();
-    expect(next).toBeDefined();
-    expect(next!.isFetching).false;
-    expect(next!.isLoading).false;
-
-    const nextFetchPromise = stream.read();
-    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
-    const nextFetch = await nextFetchPromise;
-    expect(nextFetch).toBeDefined();
-    expect(nextFetch!.isFetching).true;
-
-    const dataNext = await stream.read();
-    expect(dataNext).toBeDefined();
-    expect(dataNext!.isFetching).false;
-    expect(dataNext!.data).toHaveLength(1);
-
-    // This should only have the latest unprocessed event
-    expect(anotherStream.dataQueue).toHaveLength(1);
-    expect(anotherStream.dataQueue[0].data).toHaveLength(1);
-
-    watch.close();
-    // TODO
-    await new Promise((r) => setTimeout(r, 500));
-    expect(stream.closed).true;
+    state = await getNextState();
+    expect(state.isFetching).false;
+    expect(state.data).toHaveLength(1);
   });
 
   it('should only report updates for relevant changes', async () => {
@@ -396,25 +366,57 @@ describe('Watch Tests', { sequential: true }, () => {
     });
 
     let notificationCount = 0;
-    const receivedRelevantData = new Promise<void>((resolve) => {
-      watch.stream().forEach(async (update) => {
+    const dispose = watch.subscribe({
+      onData: () => {
         notificationCount++;
-        console.log('Received update', update);
-        if (update.data.length > 0) {
-          resolve();
-        }
-      });
+      }
     });
+    onTestFinished(dispose);
 
+    // Should only trigger for this operation
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    // Should not trigger for these operations
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make2', uuid()]);
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make3', uuid()]);
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make4', uuid()]);
-    // Should only trigger for this operation
+
+    // The initial result with no data is equal to the default state/
+    // We should only receive one notification when the data is updated
+    expect(notificationCount).equals(1);
+    expect(watch.state.data).toHaveLength(1);
+  });
+
+  it('should not report fetching status', async () => {
+    const watch = powersync.incrementalWatch({
+      sql: 'SELECT * FROM assets where make = ?',
+      parameters: ['test'],
+      reportFetching: false
+    });
+
+    expect(watch.state.isFetching).false;
+
+    let notificationCount = 0;
+    const dispose = watch.subscribe({
+      onStateChange: () => {
+        notificationCount++;
+      }
+    });
+    onTestFinished(dispose);
+
+    // Should only a state change trigger for this operation
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
 
-    await receivedRelevantData;
-    // Should get one notification for first loading then finished loading then received data
-    expect(notificationCount).equals(3);
+    // Should not trigger any state change for these operations
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make2', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make3', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make4', uuid()]);
+
+    // The initial result with no data is equal to the default state/
+    // We should only receive one notification when the data is updated
+    expect(notificationCount).equals(1);
+    expect(watch.state.data).toHaveLength(1);
   });
 });

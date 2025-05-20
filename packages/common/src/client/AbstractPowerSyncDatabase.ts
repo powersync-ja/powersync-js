@@ -19,7 +19,6 @@ import { throttleTrailing } from '../utils/async.js';
 import { mutexRunExclusive } from '../utils/mutex.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
@@ -34,8 +33,7 @@ import {
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { WatchedQuery } from './watched/WatchedQuery.js';
-import { WatchedQueryImpl } from './watched/WatchedQueryImpl.js';
-import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
+import { OnChangeQueryProcessor, WatchedQueryComparator } from './watched/processors/OnChangeQueryProcessor.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -89,6 +87,12 @@ export interface SQLWatchOptions {
    * Emits an empty result set immediately
    */
   triggerImmediate?: boolean;
+
+  /**
+   * Optional comparator which will be used to compare the results of the query.
+   * The watched query will only yield results if the comparator returns false.
+   */
+  comparator?: WatchedQueryComparator<QueryResult>;
 }
 
 export interface WatchOnChangeEvent {
@@ -868,25 +872,28 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   // TODO names
-  incrementalWatch<T>(options: {
+  incrementalWatch<DataType>(options: {
     sql: string;
     parameters?: any[];
     throttleMs?: number;
-    queryExecutor?: () => Promise<T[]>;
+    customExecutor?: {
+      initialData: DataType;
+      execute: () => Promise<DataType>;
+    };
     reportFetching?: boolean;
-  }): WatchedQuery<T> {
-    return new WatchedQueryImpl({
-      processor: new OnChangeQueryProcessor({
-        db: this,
-        compareBy: (item) => JSON.stringify(item), // TODO make configurable
-        watchedQuery: {
-          query: options.sql,
-          parameters: options.parameters,
-          throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
-          queryExecutor: options.queryExecutor,
-          reportFetching: options.reportFetching
-        }
-      })
+  }): WatchedQuery<DataType> {
+    return new OnChangeQueryProcessor({
+      db: this,
+      comparator: {
+        checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
+      },
+      query: {
+        sql: options.sql,
+        parameters: options.parameters,
+        throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
+        customExecutor: options.customExecutor,
+        reportFetching: options.reportFetching
+      }
     });
   }
 
@@ -908,38 +915,42 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    const watchQuery = async (abortSignal: AbortSignal) => {
-      try {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-        // Fetch initial data
-        const result = await this.executeReadOnly(sql, parameters);
-        onResult(result);
-
-        this.onChangeWithCallback(
-          {
-            onChange: async () => {
-              try {
-                const result = await this.executeReadOnly(sql, parameters);
-                onResult(result);
-              } catch (error) {
-                onError?.(error);
-              }
-            },
-            onError
+    const watch = new OnChangeQueryProcessor({
+      db: this,
+      // Comparisons are disabled if no comparator is provided
+      comparator: options?.comparator,
+      query: {
+        sql,
+        parameters,
+        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
+        reportFetching: false,
+        // The default watch implementation returns QueryResult as the Data type
+        customExecutor: {
+          execute: async () => {
+            return this.executeReadOnly(sql, parameters);
           },
-          {
-            ...(options ?? {}),
-            tables: resolvedTables,
-            // Override the abort signal since we intercept it
-            signal: abortSignal
-          }
-        );
-      } catch (error) {
-        onError?.(error);
+          initialData: null
+        }
       }
-    };
+    });
 
-    runOnSchemaChange(watchQuery, this, options);
+    const dispose = watch.subscribe({
+      onData: (data) => {
+        if (!data) {
+          // This should not happen. We only use null for the initial data.
+          return;
+        }
+        onResult(data);
+      },
+      onError: (error) => {
+        onError(error);
+      }
+    });
+
+    options?.signal?.addEventListener('abort', () => {
+      dispose();
+      watch.close();
+    });
   }
 
   /**
