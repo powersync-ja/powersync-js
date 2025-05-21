@@ -2,12 +2,11 @@ import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import pDefer from 'p-defer';
-import React from 'react';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/useQuery';
 
-const openPowerSync = () => {
+export const openPowerSync = () => {
   const db = new PowerSyncDatabase({
     database: { dbFilename: 'test.db' },
     schema: new commonSdk.Schema({

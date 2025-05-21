@@ -1,5 +1,5 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { Query, WatchedQuery } from './WatchedQuery';
+import { AbstractPowerSyncDatabase, WatchedQuery } from '@powersync/common';
+import { Query } from './WatchedQuery';
 import { AdditionalOptions } from './hooks/useQuery';
 
 export function generateQueryKey(sqlStatement: string, parameters: any[], options: AdditionalOptions): string {
@@ -7,7 +7,7 @@ export function generateQueryKey(sqlStatement: string, parameters: any[], option
 }
 
 export class QueryStore {
-  cache = new Map<string, WatchedQuery>();
+  cache = new Map<string, WatchedQuery<unknown[]>>();
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
@@ -16,17 +16,40 @@ export class QueryStore {
       return this.cache.get(key);
     }
 
-    const q = new WatchedQuery(this.db, query, options);
-    const disposer = q.registerListener({
-      disposed: () => {
+    const customExecutor = typeof query.rawQuery !== 'string' ? query.rawQuery : null;
+
+    const watchedQuery = this.db.incrementalWatch({
+      sql: query.sqlStatement,
+      parameters: query.queryParameters,
+      customExecutor: customExecutor
+        ? {
+            initialData: [],
+            execute: () => customExecutor.execute()
+          }
+        : undefined,
+      throttleMs: options.throttleMs
+    });
+
+    const disposer = watchedQuery.registerListener({
+      closed: () => {
         this.cache.delete(key);
         disposer?.();
       }
     });
 
-    this.cache.set(key, q);
+    watchedQuery.registerListener({
+      subscriptionsChanged: (counts) => {
+        // Dispose this query if there are no subscribers present
+        if (counts.total == 0) {
+          watchedQuery.close();
+          this.cache.delete(key);
+        }
+      }
+    });
 
-    return q;
+    this.cache.set(key, watchedQuery);
+
+    return watchedQuery;
   }
 }
 

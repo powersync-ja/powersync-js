@@ -1,6 +1,14 @@
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
-import { BaseListener, BaseObserver } from '../../../utils/BaseObserver.js';
-import { WatchedQuery, WatchedQueryOptions, WatchedQueryState, WatchedQuerySubscription } from '../WatchedQuery.js';
+import { BaseObserver } from '../../../utils/BaseObserver.js';
+import {
+  SubscriptionCounts,
+  WatchedQuery,
+  WatchedQueryListener,
+  WatchedQueryOptions,
+  WatchedQueryState,
+  WatchedQuerySubscription,
+  WatchedQuerySubscriptionEvent
+} from '../WatchedQuery.js';
 
 /**
  * @internal
@@ -18,7 +26,7 @@ export interface LinkQueryOptions<Data> {
   query: WatchedQueryOptions<Data>;
 }
 
-type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & BaseListener;
+type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & WatchedQueryListener;
 
 /**
  * Performs underlaying watching and yields a stream of results.
@@ -32,10 +40,25 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
 
   protected abortController: AbortController;
   protected initialized: Promise<void>;
+  protected _closed: boolean;
+
+  get closed() {
+    return this._closed;
+  }
+
+  get subscriptionCounts() {
+    const listenersArray = Array.from(this.listeners);
+    return Object.values(WatchedQuerySubscriptionEvent).reduce((totals: Partial<SubscriptionCounts>, key) => {
+      totals[key] = listenersArray.filter((l) => !!l[key]).length;
+      totals.total = (totals.total ?? 0) + totals[key];
+      return totals;
+    }, {}) as SubscriptionCounts;
+  }
 
   constructor(protected options: AbstractQueryProcessorOptions<Data>) {
     super();
     this.abortController = new AbortController();
+    this._closed = false;
     this.state = {
       isLoading: true,
       isFetching: this.reportFetching, // Only set to true if we will report updates in future
@@ -108,12 +131,23 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   }
 
   subscribe(subscription: WatchedQuerySubscription<Data>): () => void {
-    return this.registerListener({ ...subscription });
+    // hook in to subscription events in order to report changes
+    const baseDispose = this.registerListener({ ...subscription });
+
+    const counts = this.subscriptionCounts;
+    this.iterateListeners((l) => l.subscriptionsChanged?.(counts));
+
+    return () => {
+      baseDispose();
+      this.iterateListeners((l) => l.subscriptionsChanged?.(counts));
+    };
   }
 
   async close() {
     await this.initialized;
     this.abortController.abort();
+    this._closed = true;
+    this.iterateListeners((l) => l.closed?.());
   }
 
   /**

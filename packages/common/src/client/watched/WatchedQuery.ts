@@ -1,3 +1,5 @@
+import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
+
 export interface WatchedQueryState<Data> {
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
@@ -47,17 +49,36 @@ export interface WatchedQueryOptions<DataType> {
   reportFetching?: boolean;
 }
 
-export interface WatchedQuerySubscription<Data> {
-  onData?: (data: Data) => void | Promise<void>;
-  onError?: (error: Error) => void | Promise<void>;
-  onStateChange?: (state: WatchedQueryState<Data>) => void | Promise<void>;
+export enum WatchedQuerySubscriptionEvent {
+  ON_DATA = 'onData',
+  ON_ERROR = 'onError',
+  ON_STATE_CHANGE = 'onStateChange'
 }
 
-export interface WatchedQuery<Data> {
+export interface WatchedQuerySubscription<Data> {
+  [WatchedQuerySubscriptionEvent.ON_DATA]?: (data: Data) => void | Promise<void>;
+  [WatchedQuerySubscriptionEvent.ON_ERROR]?: (error: Error) => void | Promise<void>;
+  [WatchedQuerySubscriptionEvent.ON_STATE_CHANGE]?: (state: WatchedQueryState<Data>) => void | Promise<void>;
+}
+
+export type SubscriptionCounts = Record<WatchedQuerySubscriptionEvent, number> & {
+  total: number;
+};
+
+export interface WatchedQueryListener extends BaseListener {
+  closed: () => void;
+  subscriptionsChanged: (counts: SubscriptionCounts) => void;
+}
+
+export interface WatchedQuery<Data> extends BaseObserverInterface<WatchedQueryListener> {
   /**
    * Current state of the watched query.
    */
   readonly state: WatchedQueryState<Data>;
+
+  readonly closed: boolean;
+
+  readonly subscriptionCounts: SubscriptionCounts;
 
   /**
    * Subscribe to watched query events.
