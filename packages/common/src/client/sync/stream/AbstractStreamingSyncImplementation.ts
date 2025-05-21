@@ -558,6 +558,31 @@ The next upload iteration will be delayed.`);
     return [req, localDescriptions];
   }
 
+  /**
+   * Older versions of the JS SDK used to encode subkeys as JSON in {@link OplogEntry.toJSON}.
+   * Because subkeys are always strings, this leads to quotes being added around them in `ps_oplog`.
+   * While this is not a problem as long as it's done consistently, it causes issues when a database
+   * created by the JS SDK is used with other SDKs, or (more likely) when the new Rust sync client
+   * is enabled.
+   *
+   * So, we add a migration from the old key format (with quotes) to the new one (no quotes). The
+   * migration is only triggered when necessary (for now). The function returns whether the new format
+   * should be used, so that the JS SDK is able to write to updated databases.
+   *
+   * @param requireFixedKeyFormat Whether we require the new format or also support the old one.
+   *        The Rust client requires the new subkey format.
+   * @returns Whether the database is now using the new, fixed subkey format.
+   */
+  private async requireKeyFormat(requireFixedKeyFormat: boolean): Promise<boolean> {
+    const hasMigrated = await this.options.adapter.hasMigratedSubkeys();
+    if (requireFixedKeyFormat && !hasMigrated) {
+      await this.options.adapter.migrateToFixedSubkeys();
+      return true;
+    } else {
+      return hasMigrated;
+    }
+  }
+
   protected async streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
     await this.obtainLock({
       type: LockType.SYNC,
@@ -571,6 +596,7 @@ The next upload iteration will be delayed.`);
         if (resolvedOptions.clientImplementation == SyncClientImplementation.JAVASCRIPT) {
           await this.legacyStreamingSyncIteration(signal, resolvedOptions);
         } else {
+          await this.requireKeyFormat(true);
           await this.rustSyncIteration(signal, resolvedOptions);
         }
       }
@@ -588,6 +614,7 @@ The next upload iteration will be delayed.`);
     let appliedCheckpoint: Checkpoint | null = null;
 
     const clientId = await this.options.adapter.getClientId();
+    const usingFixedKeyFormat = await this.requireKeyFormat(false);
 
     this.logger.debug('Requesting stream from server');
 
@@ -746,7 +773,7 @@ The next upload iteration will be delayed.`);
             downloadProgress: updatedProgress
           }
         });
-        await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] });
+        await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] }, usingFixedKeyFormat);
       } else if (isStreamingKeepalive(line)) {
         const remaining_seconds = line.token_expires_in;
         if (remaining_seconds == 0) {

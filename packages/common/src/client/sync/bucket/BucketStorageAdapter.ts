@@ -65,7 +65,7 @@ export interface BucketStorageListener extends BaseListener {
 
 export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener>, Disposable {
   init(): Promise<void>;
-  saveSyncData(batch: SyncDataBatch): Promise<void>;
+  saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean): Promise<void>;
   removeBuckets(buckets: string[]): Promise<void>;
   setTargetCheckpoint(checkpoint: Checkpoint): Promise<void>;
 
@@ -73,6 +73,8 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   getBucketStates(): Promise<BucketState[]>;
   getBucketOperationProgress(): Promise<BucketOperationProgress>;
+  hasMigratedSubkeys(): Promise<boolean>;
+  migrateToFixedSubkeys(): Promise<void>;
 
   syncLocalDatabase(
     checkpoint: Checkpoint,

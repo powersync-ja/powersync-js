@@ -22,6 +22,88 @@ describe('Sync', () => {
   describe('rust client', () => {
     defineSyncTests(SyncClientImplementation.RUST);
   });
+
+  mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
+    function addData(id: string) {
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: id,
+              op: 'PUT',
+              object_id: id,
+              object_type: 'lists',
+              subkey: `subkey_${id}`,
+              data: '{}'
+            }
+          ]
+        }
+      });
+    }
+    const checkpoint = {
+      checkpoint: {
+        last_op_id: '3',
+        buckets: [bucket('a', 3)]
+      }
+    };
+
+    let database = await syncService.createDatabase();
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.JAVASCRIPT,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('1');
+
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(1);
+    });
+    await database.disconnect();
+    // The JavaScript client encodes subkeys to JSON when it shouldn't...
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      expect.objectContaining({ key: 'lists/1/"subkey_1"' })
+    ]);
+
+    // Connecting again with the new client should fix the format
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.RUST,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('2');
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(2);
+    });
+    await database.disconnect();
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      // Existing entry should be fixed too!
+      expect.objectContaining({ key: 'lists/1/subkey_1' }),
+      expect.objectContaining({ key: 'lists/2/subkey_2' })
+    ]);
+
+    // Finally, connecting with JS again should keep the fixed subkey format.
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.RUST,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('3');
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(3);
+    });
+    await database.disconnect();
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      // Existing entry should be fixed too!
+      expect.objectContaining({ key: 'lists/1/subkey_1' }),
+      expect.objectContaining({ key: 'lists/2/subkey_2' }),
+      expect.objectContaining({ key: 'lists/3/subkey_3' })
+    ]);
+  });
 });
 
 function defineSyncTests(impl: SyncClientImplementation) {
