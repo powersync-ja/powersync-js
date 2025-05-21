@@ -1,7 +1,7 @@
 import { StreamingSyncRequest } from './streaming-sync-types.js';
 
 /**
- * An internal instruction received by the sync client in the core extension in response to the JS
+ * An internal instruction emitted by the sync client in the core extension in response to the JS
  * SDK passing sync data into the extension.
  */
 export type Instruction =

@@ -39,17 +39,44 @@ export enum SyncClientImplementation {
    * Decodes and handles sync lines received from the sync service in JavaScript.
    *
    * This is the default option.
+   *
+   * @deprecated Don't use {@link SyncClientImplementation.JAVASCRIPT} directly. Instead, use
+   * {@link DEFAULT_SYNC_CLIENT_IMPLEMENTATION} or omit the option. The explicit choice to use
+   * the JavaScript-based sync implementation will be removed from a future version of the SDK.
    */
   JAVASCRIPT = 'js',
   /**
    * This implementation offloads the sync line decoding and handling into the PowerSync
    * core extension.
    *
+   * @experimental
    * While this implementation is more performant than {@link SyncClientImplementation.JAVASCRIPT},
    * it has seen less real-world testing and is marked as __experimental__ at the moment.
+   *
+   * ## Compatibility warning
+   *
+   * The Rust sync client stores sync data in a format that is slightly different than the one used
+   * by the old {@link JAVASCRIPT} implementation. When adopting the {@link RUST} client on existing
+   * databases, the PowerSync SDK will migrate the format automatically.
+   * Further, the {@link JAVASCRIPT} client in recent versions of the PowerSync JS SDK (starting from
+   * the version introducing {@link RUST} as an option) also supports the new format, so you can switch
+   * back to {@link JAVASCRIPT} later.
+   *
+   * __However__: Upgrading the SDK version, then adopting {@link RUST} as a sync client and later
+   * downgrading the SDK to an older version (necessarily using the JavaScript-based implementation then)
+   * can lead to sync issues.
    */
   RUST = 'rust'
 }
+
+/**
+ * The default {@link SyncClientImplementation} to use.
+ *
+ * Please use this field instead of {@link SyncClientImplementation.JAVASCRIPT} directly. A future version
+ * of the PowerSync SDK will enable {@link SyncClientImplementation.RUST} by default and remove the JavaScript
+ * option.
+ */
+export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.JAVASCRIPT;
 
 /**
  * Abstract Lock to be implemented by various JS environments
@@ -171,7 +198,7 @@ export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
-  clientImplementation: SyncClientImplementation.JAVASCRIPT,
+  clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
   params: {}
 };
