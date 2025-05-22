@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.21.0
+
+### Minor Changes
+
+- 0565a0a: To support the upstream credentials management changes from `@powersync/common`, the sync worker now communicates credentials invalidation to tabs.
+
+### Patch Changes
+
+- fccf11e: Fixed issue where broadcast logger wasn't being passed to WebRemote, causing worker remote logs not to be broadcasted to the tab's logs.
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+
 ## 1.20.1
 
 ### Patch Changes
