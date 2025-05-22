@@ -459,7 +459,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   /**
    * Locking mechagnism for exclusively running critical portions of connect/disconnect operations.
    */
-  protected abstract connectExclusive(callback: () => Promise<void>): Promise<void>;
+  protected abstract runExclusive<T>(callback: () => Promise<T>): Promise<T>;
 
   protected async connectInternal() {
     await this.disconnectInternal();
@@ -472,7 +472,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
      * This is protected in an exclusive lock.
      * The promise tracks the creation which is used to synchronize disconnect attempts.
      */
-    this.syncStreamInitPromise = this.connectExclusive(async () => {
+    this.syncStreamInitPromise = this.runExclusive(async () => {
       if (this.closed) {
         throw new Error('Cannot connect using a closed client');
       }

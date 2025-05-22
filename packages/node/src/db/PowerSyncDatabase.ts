@@ -56,11 +56,11 @@ export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAd
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  protected connectionLock: Lock;
+  protected lock: Lock;
 
   constructor(options: NodePowerSyncDatabaseOptions) {
     super(options);
-    this.connectionLock = new Lock();
+    this.lock = new Lock();
   }
 
   async _initialize(): Promise<void> {
@@ -85,8 +85,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return super.connect(connector, options);
   }
 
-  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
-    await this.connectionLock.acquire(`connection-lock-${this.database.name}`, callback);
+  protected async runExclusive<T>(callback: () => Promise<T>): Promise<T> {
+    return await this.lock.acquire(`lock-${this.database.name}`, callback);
   }
 
   protected generateSyncStreamImplementation(

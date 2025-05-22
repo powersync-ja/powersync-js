@@ -179,7 +179,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }
 
-  protected runExclusive<T>(cb: () => Promise<T>) {
+  protected async runExclusive<T>(cb: () => Promise<T>) {
     if (this.resolvedFlags.ssrMode) {
       return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }

@@ -28,7 +28,7 @@ import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  protected connectionLock = new Lock();
+  protected lock = new Lock();
 
   async _initialize(): Promise<void> {}
 
@@ -45,8 +45,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }
 
-  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
-    await this.connectionLock.acquire(`connection-lock-${this.database.name}`, callback);
+  protected async runExclusive<T>(callback: () => Promise<T>): Promise<T> {
+    return await this.lock.acquire(`lock-${this.database.name}`, callback);
   }
 
   protected generateSyncStreamImplementation(

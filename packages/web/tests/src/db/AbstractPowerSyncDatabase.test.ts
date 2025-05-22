@@ -31,8 +31,8 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
     return Promise.resolve();
   }
 
-  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
-    await callback();
+  protected async runExclusive<T>(callback: () => Promise<T>): Promise<T> {
+    return await callback();
   }
 
   get database() {
