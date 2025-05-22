@@ -396,9 +396,17 @@ export abstract class AbstractRemote {
         syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
-            if (e.message.includes('Authorization failed') || e.message.includes('PSYNC_S21')) {
-              this.invalidateCredentials();
+            if (e.message.includes('PSYNC_')) {
+              if (e.message.includes('PSYNC_S21')) {
+                this.invalidateCredentials();
+              }
+            } else {
+              // Possible that connection is with an older service, always invalidate to be safe
+              if (e.message !== 'Closed. ') {
+                this.invalidateCredentials();
+              }
             }
+
             // Don't log closed as an error
             if (e.message !== 'Closed. ') {
               this.logger.error(e);
