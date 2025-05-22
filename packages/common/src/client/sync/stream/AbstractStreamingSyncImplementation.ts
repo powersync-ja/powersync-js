@@ -1,5 +1,7 @@
 import Logger, { ILogger } from 'js-logger';
 
+import { InternalProgressInformation } from 'src/db/crud/SyncProgress.js';
+import { DataStream } from 'src/utils/DataStream.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
@@ -7,7 +9,7 @@ import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js
 import { BucketChecksum, BucketDescription, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
-import { AbstractRemote, SyncStreamOptions, FetchStrategy } from './AbstractRemote.js';
+import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
 import {
   BucketRequest,
   StreamingSyncLine,
@@ -19,8 +21,6 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { DataStream } from 'src/utils/DataStream.js';
-import { InternalProgressInformation } from 'src/db/crud/SyncProgress.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -341,12 +341,22 @@ The next upload iteration will be delayed.`);
       await this.disconnect();
     }
 
-    this.abortController = new AbortController();
+    const controller = new AbortController();
+    this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
     // Return a promise that resolves when the connection status is updated
     return new Promise<void>((resolve) => {
-      const l = this.registerListener({
+      let disposer: () => void;
+
+      const complete = () => {
+        disposer?.();
+        resolve();
+      };
+
+      controller.signal.addEventListener('abort', complete, { once: true });
+
+      disposer = this.registerListener({
         statusUpdated: (update) => {
           // This is triggered as soon as a connection is read from
           if (typeof update.connected == 'undefined') {
@@ -361,8 +371,8 @@ The next upload iteration will be delayed.`);
             this.logger.warn('Initial connect attempt did not successfully connect to server');
           }
 
-          resolve();
-          l();
+          controller.signal.removeEventListener('abort', complete);
+          complete();
         }
       });
     });

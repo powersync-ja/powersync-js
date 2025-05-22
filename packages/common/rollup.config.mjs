@@ -2,7 +2,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
 
 export default (commandLineArgs) => {
   const sourcemap = (commandLineArgs.sourceMap || 'true') == 'true';
@@ -26,8 +25,8 @@ export default (commandLineArgs) => {
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
         // Used by can-ndjson-stream
         TextDecoder: ['text-encoding', 'TextDecoder']
-      }),
-      terser()
+      })
+      // terser()
     ],
     // This makes life easier
     external: [
