@@ -1,33 +1,31 @@
-import { AbstractPowerSyncDatabase, WatchedQuery } from '@powersync/common';
-import { Query } from './WatchedQuery';
+import { AbstractPowerSyncDatabase, WatchCompatibleQuery, WatchedQuery } from '@powersync/common';
 import { AdditionalOptions } from './hooks/useQuery';
 
-export function generateQueryKey(sqlStatement: string, parameters: any[], options: AdditionalOptions): string {
+export function generateQueryKey(
+  sqlStatement: string,
+  parameters: ReadonlyArray<unknown>,
+  options: AdditionalOptions
+): string {
   return `${sqlStatement} -- ${JSON.stringify(parameters)} -- ${JSON.stringify(options)}`;
 }
 
 export class QueryStore {
-  cache = new Map<string, WatchedQuery<unknown[]>>();
+  cache = new Map<string, WatchedQuery<unknown>>();
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
-  getQuery(key: string, query: Query<unknown>, options: AdditionalOptions) {
+  getQuery(key: string, query: WatchCompatibleQuery<unknown>, options: AdditionalOptions) {
     if (this.cache.has(key)) {
       return this.cache.get(key);
     }
 
-    const customExecutor = typeof query.rawQuery !== 'string' ? query.rawQuery : null;
-
     const watchedQuery = this.db.incrementalWatch({
-      sql: query.sqlStatement,
-      parameters: query.queryParameters,
-      customExecutor: customExecutor
-        ? {
-            initialData: [],
-            execute: () => customExecutor.execute()
-          }
-        : undefined,
-      throttleMs: options.throttleMs
+      mode: 'comparison',
+      watchOptions: {
+        query,
+        placeholderData: [],
+        throttleMs: options.throttleMs
+      }
     });
 
     const disposer = watchedQuery.registerListener({

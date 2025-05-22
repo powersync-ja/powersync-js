@@ -15,7 +15,7 @@ import {
  */
 export interface AbstractQueryProcessorOptions<Data> {
   db: AbstractPowerSyncDatabase;
-  query: WatchedQueryOptions<Data>;
+  watchOptions: WatchedQueryOptions<Data>;
 }
 
 /**
@@ -64,22 +64,22 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
       isFetching: this.reportFetching, // Only set to true if we will report updates in future
       error: null,
       lastUpdated: null,
-      data: options.query.customExecutor?.initialData ?? ([] as Data)
+      data: options.watchOptions.placeholderData
     };
     this.initialized = this.init();
   }
 
   protected get reportFetching() {
-    return this.options.query.reportFetching ?? true;
+    return this.options.watchOptions.reportFetching ?? true;
   }
 
   /**
    * Updates the underlaying query.
    */
-  async updateQuery(query: WatchedQueryOptions<Data>) {
+  async updateSettings(query: WatchedQueryOptions<Data>) {
     await this.initialized;
 
-    this.options.query = query;
+    this.options.watchOptions = query;
     this.abortController.abort();
     this.abortController = new AbortController();
     await this.linkQuery({
@@ -116,7 +116,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
     db.registerListener({
       schemaChanged: async () => {
         await this.runWithReporting(async () => {
-          await this.updateQuery(this.options.query);
+          await this.updateSettings(this.options.watchOptions);
         });
       },
       closing: () => {
@@ -126,7 +126,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
 
     // Initial setup
     await this.runWithReporting(async () => {
-      await this.updateQuery(this.options.query);
+      await this.updateSettings(this.options.watchOptions);
     });
   }
 

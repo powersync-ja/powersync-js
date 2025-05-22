@@ -1,10 +1,8 @@
-import { CompilableQuery } from '@powersync/common';
-
-export class Query<T> {
-  rawQuery: string | CompilableQuery<T>;
-  sqlStatement: string;
-  queryParameters: any[];
-}
+// export class Query<T> {
+//   rawQuery: string | CompilableQuery<T>;
+//   sqlStatement: string;
+//   queryParameters: any[];
+// }
 
 // export interface WatchedQueryListener extends BaseListener {
 //onUpdate: () => void;

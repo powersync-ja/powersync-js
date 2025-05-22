@@ -1,8 +1,7 @@
 import {
   AbstractPowerSyncDatabase,
-  parseQuery,
+  WatchCompatibleQuery,
   type CompilableQuery,
-  type ParsedQuery,
   type SQLWatchOptions
 } from '@powersync/common';
 import React from 'react';
@@ -33,26 +32,25 @@ export type QueryResult<RowType> = {
   refresh?: (signal?: AbortSignal) => Promise<void>;
 };
 
-type InternalHookOptions<RowType> = {
-  query: string;
-  parameters: any[];
+type InternalHookOptions<DataType> = {
+  query: WatchCompatibleQuery<DataType>;
   powerSync: AbstractPowerSyncDatabase;
   queryChanged: boolean;
-  queryExecutor?: () => Promise<RowType[]>;
 };
 
-const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], options: AdditionalOptions) => {
-  const stringifiedParams = JSON.stringify(queryParameters);
+const checkQueryChanged = <T>(query: WatchCompatibleQuery<T>, options: AdditionalOptions) => {
+  const compiled = query.compile();
+  const stringifiedParams = JSON.stringify(compiled.parameters);
   const stringifiedOptions = JSON.stringify(options);
 
-  const previousQueryRef = React.useRef({ sqlStatement, stringifiedParams, stringifiedOptions });
+  const previousQueryRef = React.useRef({ sqlStatement: compiled.sql, stringifiedParams, stringifiedOptions });
 
   if (
-    previousQueryRef.current.sqlStatement !== sqlStatement ||
+    previousQueryRef.current.sqlStatement !== compiled.sql ||
     previousQueryRef.current.stringifiedParams != stringifiedParams ||
     previousQueryRef.current.stringifiedOptions != stringifiedOptions
   ) {
-    previousQueryRef.current.sqlStatement = sqlStatement;
+    previousQueryRef.current.sqlStatement = compiled.sql;
     previousQueryRef.current.stringifiedParams = stringifiedParams;
     previousQueryRef.current.stringifiedOptions = stringifiedOptions;
 
@@ -62,8 +60,8 @@ const checkQueryChanged = <T>(sqlStatement: string, queryParameters: any[], opti
   return false;
 };
 
-const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType>): QueryResult<RowType> => {
-  const { query, parameters, powerSync, queryExecutor, queryChanged } = options;
+const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType[]>): QueryResult<RowType> => {
+  const { query, powerSync, queryChanged } = options;
 
   const [output, setOutputState] = React.useState<QueryResult<RowType>>({
     isLoading: true,
@@ -76,7 +74,7 @@ const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType>): Q
     async (signal?: AbortSignal) => {
       setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
       try {
-        const result = queryExecutor ? await queryExecutor() : await powerSync.getAll<RowType>(query, parameters);
+        const result = await query.execute(query.compile());
         if (signal.aborted) {
           return;
         }
@@ -97,7 +95,7 @@ const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType>): Q
         }));
       }
     },
-    [queryChanged, queryExecutor]
+    [queryChanged, query]
   );
 
   // Trigger initial query execution
@@ -116,24 +114,20 @@ const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType>): Q
 };
 
 const useWatchedQuery = <RowType = unknown>(
-  options: InternalHookOptions<RowType> & { options: HookWatchOptions }
+  options: InternalHookOptions<RowType[]> & { options: HookWatchOptions }
 ): QueryResult<RowType> => {
-  const { query, parameters, powerSync, queryExecutor, queryChanged, options: hookOptions } = options;
+  const { query, powerSync, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
     return powerSync.incrementalWatch<RowType[]>({
-      sql: query,
-      parameters,
-      customExecutor: queryExecutor
-        ? {
-            execute: queryExecutor,
-            // This assumes the custom query executor will return an array of data,
-            // which is the requirement of CompatibleQuery.
-            initialData: []
-          }
-        : undefined,
-      throttleMs: hookOptions.throttleMs,
-      reportFetching: hookOptions.reportFetching
+      // This always enables comparison. Might want to be able to disable this??
+      mode: 'comparison',
+      watchOptions: {
+        placeholderData: [],
+        query,
+        throttleMs: hookOptions.throttleMs,
+        reportFetching: hookOptions.reportFetching
+      }
     });
   }, []);
 
@@ -164,17 +158,49 @@ const useWatchedQuery = <RowType = unknown>(
   React.useEffect(() => {
     if (queryChanged) {
       console.log('Query changed, re-fetching...');
-      watchedQuery.updateQuery({
-        sql: query,
-        parameters: parameters,
+      watchedQuery.updateSettings({
+        placeholderData: [],
+        query,
         throttleMs: hookOptions.throttleMs,
-        customExecutor: queryExecutor ? { execute: queryExecutor, initialData: [] } : undefined,
         reportFetching: hookOptions.reportFetching
       });
     }
   }, [queryChanged]);
 
   return output;
+};
+
+export const constructCompatibleQuery = <RowType>(
+  query: string | CompilableQuery<RowType>,
+  parameters: any[] = [],
+  options: AdditionalOptions
+) => {
+  const powerSync = usePowerSync();
+
+  const parsedQuery = React.useMemo<WatchCompatibleQuery<RowType[]>>(() => {
+    if (typeof query == 'string') {
+      return {
+        compile: () => ({
+          sql: query,
+          parameters: parameters
+        }),
+        execute: () => powerSync.getAll(query, parameters)
+      };
+    } else {
+      return {
+        // Generics differ a bit but holistically this is the same
+        compile: () => query.compile(),
+        execute: () => query.execute()
+      };
+    }
+  }, [query]);
+
+  const queryChanged = checkQueryChanged(parsedQuery, options);
+
+  return {
+    parsedQuery,
+    queryChanged
+  };
 };
 
 /**
@@ -196,39 +222,23 @@ export const useQuery = <RowType = any>(
   options: AdditionalOptions = { runQueryOnce: false }
 ): QueryResult<RowType> => {
   const powerSync = usePowerSync();
-  const logger = powerSync?.logger ?? console;
   if (!powerSync) {
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
 
-  let parsedQuery: ParsedQuery;
-  try {
-    parsedQuery = parseQuery(query, parameters);
-  } catch (error) {
-    logger.error('Failed to parse query:', error);
-    return { isLoading: false, isFetching: false, data: [], error };
-  }
-
-  const { sqlStatement, parameters: queryParameters } = parsedQuery;
-
-  const queryChanged = checkQueryChanged(sqlStatement, queryParameters, options);
-  const queryExecutor = typeof query == 'object' ? query.execute : undefined;
+  const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
 
   switch (options.runQueryOnce) {
     case true:
       return useSingleQuery<RowType>({
-        query: sqlStatement,
-        parameters: queryParameters,
+        query: parsedQuery,
         powerSync,
-        queryExecutor,
         queryChanged
       });
     default:
       return useWatchedQuery<RowType>({
-        query: sqlStatement,
-        parameters: queryParameters,
+        query: parsedQuery,
         powerSync,
-        queryExecutor,
         queryChanged,
         options
       });

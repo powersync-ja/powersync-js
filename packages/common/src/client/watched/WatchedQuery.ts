@@ -1,12 +1,15 @@
+import { CompiledQuery } from 'src/types/types.js';
 import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
 
 export interface WatchedQueryState<Data> {
   /**
-   * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
+   * Indicates the initial loading state (hard loading).
+   * Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
   isLoading: boolean;
   /**
-   * Indicates whether the query is currently fetching data, is true during the initial load and any time when the query is re-evaluating (useful for large queries).
+   * Indicates whether the query is currently fetching data, is true during the initial load
+   * and any time when the query is re-evaluating (useful for large queries).
    */
   isFetching: boolean;
   /**
@@ -25,21 +28,27 @@ export interface WatchedQueryState<Data> {
 
 /**
  * @internal
+ * Similar to {@link CompatibleQuery}, except the `execute` method
+ * does not enforce an Array result type.
+ */
+export interface WatchCompatibleQuery<ResultType> {
+  execute(compiled: CompiledQuery): Promise<ResultType>;
+  compile(): CompiledQuery;
+}
+
+/**
+ * @internal
  */
 export interface WatchedQueryOptions<DataType> {
-  sql: string;
-  parameters?: any[];
+  query: WatchCompatibleQuery<DataType>;
+
+  /**
+   * Initial result data which is presented while the initial loading is executing
+   */
+  placeholderData: DataType;
+
   /** The minimum interval between queries. */
   throttleMs?: number;
-  /**
-   * Optional query executor responsible for executing the query.
-   * This can be used to return query results which are mapped from the database.
-   * Often this is useful for ORM queries or other query builders.
-   */
-  customExecutor?: {
-    execute: () => Promise<DataType>;
-    initialData: DataType;
-  };
   /**
    * If true (default) the watched query will update its state to report
    * on the fetching state of the query.
@@ -87,10 +96,10 @@ export interface WatchedQuery<Data> extends BaseObserverInterface<WatchedQueryLi
   subscribe(subscription: WatchedQuerySubscription<Data>): () => void;
 
   /**
-   * Updates the underlaying query.
+   * Updates the underlaying query options.
    * This will trigger a re-evaluation of the query and update the state.
    */
-  updateQuery(query: WatchedQueryOptions<Data>): Promise<void>;
+  updateSettings(options: WatchedQueryOptions<Data>): Promise<void>;
 
   /**
    * Close the watched query and end all subscriptions.

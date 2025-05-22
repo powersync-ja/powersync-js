@@ -327,8 +327,16 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should stream watch results', async () => {
     const watch = powersync.incrementalWatch({
-      sql: 'SELECT * FROM assets',
-      parameters: []
+      mode: 'comparison',
+      watchOptions: {
+        query: {
+          compile: () => ({
+            sql: 'SELECT * FROM assets',
+            parameters: []
+          }),
+          execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
+        }
+      }
     });
 
     const getNextState = () =>

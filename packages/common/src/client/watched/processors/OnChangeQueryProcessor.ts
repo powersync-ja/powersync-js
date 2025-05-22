@@ -62,10 +62,11 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
   }
 
   protected async linkQuery(options: LinkQueryOptions<Data>): Promise<void> {
-    const { db, query } = this.options;
+    const { db, watchOptions } = this.options;
     const { abortSignal } = options;
 
-    const tables = await db.resolveTables(query.sql, query.parameters);
+    const compiledQuery = watchOptions.query.compile();
+    const tables = await db.resolveTables(compiledQuery.sql, compiledQuery.parameters as any[]);
 
     db.onChangeWithCallback(
       {
@@ -79,9 +80,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
             const partialStateUpdate: Partial<WatchedQueryState<Data>> = {};
 
             // Always run the query if an underlaying table has changed
-            const result = query.customExecutor
-              ? await query.customExecutor.execute()
-              : ((await db.getAll(query.sql, query.parameters)) as Data);
+            const result = await watchOptions.query.execute(compiledQuery);
 
             if (this.reportFetching) {
               partialStateUpdate.isFetching = false;
@@ -110,7 +109,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
       {
         signal: abortSignal,
         tables,
-        throttleMs: query.throttleMs,
+        throttleMs: watchOptions.throttleMs,
         triggerImmediate: true // used to emit the initial state
       }
     );

@@ -1,8 +1,8 @@
-import { CompilableQuery, ParsedQuery, parseQuery, WatchedQuery } from '@powersync/common';
+import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import React from 'react';
 import { generateQueryKey, getQueryStore } from '../QueryStore';
 import { usePowerSync } from './PowerSyncContext';
-import { AdditionalOptions, QueryResult } from './useQuery';
+import { AdditionalOptions, constructCompatibleQuery, QueryResult } from './useQuery';
 
 export type SuspenseQueryResult<T> = Pick<QueryResult<T>, 'data' | 'refresh'>;
 
@@ -37,24 +37,19 @@ export const useSuspenseQuery = <T = any>(
     throw new Error('PowerSync not configured.');
   }
 
-  let parsedQuery: ParsedQuery;
-  try {
-    parsedQuery = parseQuery(query, parameters);
-  } catch (error) {
-    throw new Error('Failed to parse query: ' + error.message);
-  }
-  const key = generateQueryKey(parsedQuery.sqlStatement, parsedQuery.parameters, options);
+  // Note, we don't need to check if the query changed since we fetch the WatchedQuery
+  // from the store given these query params
+  const { parsedQuery } = constructCompatibleQuery(query, parameters, options);
+  const { sql: parsedSql, parameters: parsedParameters } = parsedQuery.compile();
+
+  const key = generateQueryKey(parsedSql, parsedParameters, options);
 
   // When the component is suspended, all state is discarded. We don't get
   // any notification of that. So checkoutQuery reserves a temporary hold
   // on the query.
   // Once the component "commits", we exchange that for a permanent hold.
   const store = getQueryStore(powerSync);
-  const watchedQuery = store.getQuery(
-    key,
-    { rawQuery: query, sqlStatement: parsedQuery.sqlStatement, queryParameters: parsedQuery.parameters },
-    options
-  ) as WatchedQuery<T[]>;
+  const watchedQuery = store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>;
 
   const addedHoldTo = React.useRef<WatchedQuery<T[]> | undefined>(undefined);
   const releaseTemporaryHold = React.useRef<(() => void) | undefined>(undefined);

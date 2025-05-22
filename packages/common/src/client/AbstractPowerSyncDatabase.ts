@@ -32,7 +32,7 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { WatchedQuery } from './watched/WatchedQuery.js';
+import { WatchedQuery, WatchedQueryOptions } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor, WatchedQueryComparator } from './watched/processors/OnChangeQueryProcessor.js';
 
 export interface DisconnectAndClearOptions {
@@ -871,30 +871,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.watchWithAsyncGenerator(sql, parameters, options);
   }
 
-  // TODO names
-  incrementalWatch<DataType>(options: {
-    sql: string;
-    parameters?: any[];
-    throttleMs?: number;
-    customExecutor?: {
-      initialData: DataType;
-      execute: () => Promise<DataType>;
-    };
-    reportFetching?: boolean;
-  }): WatchedQuery<DataType> {
-    return new OnChangeQueryProcessor({
-      db: this,
-      comparator: {
-        checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
-      },
-      query: {
-        sql: options.sql,
-        parameters: options.parameters,
-        throttleMs: options.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
-        customExecutor: options.customExecutor,
-        reportFetching: options.reportFetching
-      }
-    });
+  // TODO names and types
+  incrementalWatch<DataType>(
+    options: { watchOptions: WatchedQueryOptions<DataType> } & {
+      mode: 'comparison';
+      comparator?: WatchedQueryComparator<DataType>;
+    }
+  ): WatchedQuery<DataType> {
+    switch (options.mode) {
+      case 'comparison':
+        return new OnChangeQueryProcessor({
+          db: this,
+          comparator: options.comparator ?? {
+            checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
+          },
+          watchOptions: options.watchOptions
+        });
+      default:
+        throw new Error(`Invalid mode specified ${options.mode}`);
+    }
   }
 
   /**
@@ -919,18 +914,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       db: this,
       // Comparisons are disabled if no comparator is provided
       comparator: options?.comparator,
-      query: {
-        sql,
-        parameters,
+      watchOptions: {
+        placeholderData: null,
+        query: {
+          compile: () => ({
+            sql: sql,
+            parameters: parameters ?? []
+          }),
+          execute: () => this.executeReadOnly(sql, parameters)
+        },
         throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
-        reportFetching: false,
-        // The default watch implementation returns QueryResult as the Data type
-        customExecutor: {
-          execute: async () => {
-            return this.executeReadOnly(sql, parameters);
-          },
-          initialData: null
-        }
+        reportFetching: false
       }
     });
 
