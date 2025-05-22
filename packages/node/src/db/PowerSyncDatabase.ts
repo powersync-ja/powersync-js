@@ -5,12 +5,10 @@ import {
   AdditionalConnectionOptions,
   BucketStorageAdapter,
   DBAdapter,
-  DEFAULT_REMOTE_LOGGER,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
-  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -18,9 +16,10 @@ import {
 import { NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
+import Lock from 'async-lock';
+import { Dispatcher } from 'undici';
 import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
 import { NodeSQLOpenOptions } from './options.js';
-import { Dispatcher } from 'undici';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;
@@ -57,8 +56,11 @@ export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAd
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  protected connectionLock: Lock;
+
   constructor(options: NodePowerSyncDatabaseOptions) {
     super(options);
+    this.connectionLock = new Lock();
   }
 
   async _initialize(): Promise<void> {
@@ -81,6 +83,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     options?: PowerSyncConnectionOptions & { dispatcher?: Dispatcher }
   ): Promise<void> {
     return super.connect(connector, options);
+  }
+
+  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
+    await this.connectionLock.acquire(`connection-lock-${this.database.name}`, callback);
   }
 
   protected generateSyncStreamImplementation(

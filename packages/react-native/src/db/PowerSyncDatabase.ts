@@ -8,6 +8,7 @@ import {
   type RequiredAdditionalConnectionOptions,
   SqliteBucketStorage
 } from '@powersync/common';
+import Lock from 'async-lock';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
@@ -27,6 +28,8 @@ import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+  protected connectionLock = new Lock();
+
   async _initialize(): Promise<void> {}
 
   /**
@@ -40,6 +43,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+  }
+
+  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
+    await this.connectionLock.acquire(`connection-lock-${this.database.name}`, callback);
   }
 
   protected generateSyncStreamImplementation(

@@ -1,4 +1,4 @@
-import { BucketChecksum, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { BucketChecksum, PowerSyncConnectionOptions, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
@@ -163,12 +163,25 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       const { powersync, waitForStream } = await createConnectedDatabase();
       expect(powersync.connected).toBe(true);
 
-      // Call connect again, a new stream should be requested
-      const newStream = waitForStream();
-      powersync.connect(new TestConnector());
+      const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
 
-      // A new stream should be requested
-      await newStream;
+      // connect many times
+      const connectionAttempts = 10;
+      for (let i = 1; i <= connectionAttempts; i++) {
+        powersync.connect(new TestConnector(), { params: { count: i } });
+      }
+
+      await vi.waitFor(
+        () => {
+          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
+          expect(call.params!['count']).eq(connectionAttempts);
+        },
+        { timeout: 2000, interval: 100 }
+      );
+
+      // In this case it should most likely be 1 attempt since all the calls
+      // are in the same for loop
+      expect(spy.mock.calls.length).lessThan(connectionAttempts);
     });
 
     it('Should trigger upload connector when connected', async () => {

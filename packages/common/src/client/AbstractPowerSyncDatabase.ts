@@ -9,13 +9,14 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/async.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { runOnSchemaChange } from './runOnSchemaChange.js';
@@ -32,7 +33,6 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -112,6 +112,11 @@ export interface PowerSyncCloseOptions {
   disconnect?: boolean;
 }
 
+type StoredConnectionOptions = {
+  connector: PowerSyncBackendConnector;
+  options: PowerSyncConnectionOptions;
+};
+
 const POWERSYNC_TABLE_MATCH = /(^ps_data__|^ps_data_local__)/;
 
 const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
@@ -176,6 +181,29 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private _database: DBAdapter;
 
+  /**
+   * Tracks active connection attempts
+   */
+  protected connectingPromise: Promise<void> | null;
+  /**
+   * Tracks actively instantiating a streaming sync implementation.
+   */
+  protected syncStreamInitPromise: Promise<void> | null;
+  /**
+   * Active disconnect operation. Call disconnect multiple times
+   * will resolve to the same operation.
+   */
+  protected disconnectingPromise: Promise<void> | null;
+  /**
+   * Tracks the last parameters supplied to `connect` calls.
+   * Calling `connect` multiple times in succession will result in:
+   * - 1 pending connection operation which will be aborted.
+   * - updating the last set of parameters while waiting for the pending
+   *   attempt to be aborted
+   * - internally connecting with the last set of parameters
+   */
+  protected pendingConnectionOptions: StoredConnectionOptions | null;
+
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
   constructor(options: PowerSyncDatabaseOptionsWithSettings);
@@ -206,6 +234,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
+    this.connectingPromise = null;
+    this.syncStreamInitPromise = null;
+    this.pendingConnectionOptions = null;
     // Start async init
     this._isReadyPromise = this.initialize();
   }
@@ -426,33 +457,132 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Locking mechagnism for exclusively running critical portions of connect/disconnect operations.
+   */
+  protected abstract connectExclusive(callback: () => Promise<void>): Promise<void>;
+
+  protected async connectInternal() {
+    await this.disconnectInternal();
+
+    let appliedOptions: PowerSyncConnectionOptions | null = null;
+
+    /**
+     * This portion creates a sync implementation which can be racy when disconnecting or
+     * if multiple tabs on web are in use.
+     * This is protected in an exclusive lock.
+     * The promise tracks the creation which is used to synchronize disconnect attempts.
+     */
+    this.syncStreamInitPromise = this.connectExclusive(async () => {
+      if (this.closed) {
+        throw new Error('Cannot connect using a closed client');
+      }
+      if (!this.pendingConnectionOptions) {
+        // A disconnect could have cleared this.
+        return;
+      }
+
+      // get pending options and clear it in order for other connect attempts to queue other options
+
+      const { connector, options } = this.pendingConnectionOptions;
+      appliedOptions = options;
+      this.pendingConnectionOptions = null;
+
+      this.syncStreamImplementation = this.generateSyncStreamImplementation(
+        connector,
+        this.resolvedConnectionOptions(options)
+      );
+      this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
+        statusChanged: (status) => {
+          this.currentStatus = new SyncStatus({
+            ...status.toJSON(),
+            hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
+          });
+          this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
+        }
+      });
+
+      await this.syncStreamImplementation.waitForReady();
+    });
+
+    await this.syncStreamInitPromise;
+    this.syncStreamInitPromise = null;
+
+    if (!appliedOptions) {
+      // A disconnect could have cleared the options which did not create a syncStreamImplementation
+      return;
+    }
+
+    this.syncStreamImplementation?.triggerCrudUpload();
+    this.options.logger?.debug('Attempting to connect to PowerSync instance');
+    await this.syncStreamImplementation?.connect(appliedOptions!);
+  }
+
+  /**
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
     await this.waitForReady();
 
-    // close connection if one is open
-    await this.disconnect();
-    if (this.closed) {
-      throw new Error('Cannot connect using a closed client');
+    // A pending connection should be present if this is true
+    // The options also have not been used yet if this is true.
+    // We can update this referrence in order to update the next connection attempt.
+    const hadPendingConnectionOptions = !!this.pendingConnectionOptions;
+
+    // This overrides options if present.
+    this.pendingConnectionOptions = {
+      connector,
+      options: options ?? {}
+    };
+
+    if (hadPendingConnectionOptions) {
+      // A connection attempt is already queued, but it hasn't used the options yet.
+      // The params have been updated and will be used when connecting.
+      if (!this.connectingPromise) {
+        throw new Error(`Pending connection options were found without a pending connect operation`);
+      }
+      return await this.connectingPromise;
+    } else if (this.connectingPromise) {
+      // If we didn't have pending options, we are busy with a connect.
+      // i.e. the pending connect used the options already and is busy proceeding.
+      // The call which creates the connectingPromise should check if there are pendingConnectionOptions and automatically
+      // schedule a connect. See below:
+    } else {
+      // No pending options or pending operation. Start one
+      this.connectingPromise = this.connectInternal().finally(() => {
+        if (this.pendingConnectionOptions) {
+          return this.connectInternal();
+        }
+        this.connectingPromise = null;
+        return;
+      });
+      return await this.connectingPromise;
+    }
+  }
+
+  /**
+   * Close the sync connection.
+   *
+   * Use {@link connect} to connect again.
+   */
+  protected async disconnectInternal() {
+    if (this.disconnectingPromise) {
+      // A disconnect is already in progress
+      return await this.disconnectingPromise;
     }
 
-    const resolvedConnectOptions = this.resolvedConnectionOptions(options);
+    // Wait if a sync stream implementation is being created before closing it
+    // (it must be assigned before we can properly dispose it)
+    await this.syncStreamInitPromise;
 
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, resolvedConnectOptions);
-    this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
-      statusChanged: (status) => {
-        this.currentStatus = new SyncStatus({
-          ...status.toJSON(),
-          hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
-        });
-        this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
-      }
-    });
+    this.disconnectingPromise = (async () => {
+      await this.syncStreamImplementation?.disconnect();
+      this.syncStatusListenerDisposer?.();
+      await this.syncStreamImplementation?.dispose();
+      this.syncStreamImplementation = undefined;
+    })();
 
-    await this.syncStreamImplementation.waitForReady();
-    this.syncStreamImplementation.triggerCrudUpload();
-    await this.syncStreamImplementation.connect(options);
+    await this.disconnectingPromise;
+    this.disconnectingPromise = null;
   }
 
   /**
@@ -462,10 +592,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async disconnect() {
     await this.waitForReady();
-    await this.syncStreamImplementation?.disconnect();
-    this.syncStatusListenerDisposer?.();
-    await this.syncStreamImplementation?.dispose();
-    this.syncStreamImplementation = undefined;
+    // This will help abort pending connects
+    this.pendingConnectionOptions = null;
+    await this.disconnectInternal();
   }
 
   /**
