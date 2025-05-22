@@ -182,6 +182,20 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // In this case it should most likely be 1 attempt since all the calls
       // are in the same for loop
       expect(spy.mock.calls.length).lessThan(connectionAttempts);
+
+      // Now with random delays
+      for (let i = connectionAttempts; i >= 0; i--) {
+        await new Promise((r) => setTimeout(r, Math.random() * 100));
+        powersync.connect(new TestConnector(), { params: { count: i } });
+      }
+
+      await vi.waitFor(
+        () => {
+          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
+          expect(call.params!['count']).eq(0);
+        },
+        { timeout: 2000, interval: 100 }
+      );
     });
 
     it('Should trigger upload connector when connected', async () => {

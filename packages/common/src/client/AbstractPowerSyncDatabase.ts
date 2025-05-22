@@ -462,8 +462,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected abstract runExclusive<T>(callback: () => Promise<T>): Promise<T>;
 
   protected async connectInternal() {
-    await this.disconnectInternal();
-
     let appliedOptions: PowerSyncConnectionOptions | null = null;
 
     /**
@@ -521,42 +519,25 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    await this.waitForReady();
-
-    // A pending connection should be present if this is true
-    // The options also have not been used yet if this is true.
-    // We can update this referrence in order to update the next connection attempt.
-    const hadPendingConnectionOptions = !!this.pendingConnectionOptions;
-
     // This overrides options if present.
     this.pendingConnectionOptions = {
       connector,
       options: options ?? {}
     };
 
-    if (hadPendingConnectionOptions) {
-      // A connection attempt is already queued, but it hasn't used the options yet.
-      // The params have been updated and will be used when connecting.
-      if (!this.connectingPromise) {
-        throw new Error(`Pending connection options were found without a pending connect operation`);
-      }
-      return await this.connectingPromise;
-    } else if (this.connectingPromise) {
-      // If we didn't have pending options, we are busy with a connect.
-      // i.e. the pending connect used the options already and is busy proceeding.
-      // The call which creates the connectingPromise should check if there are pendingConnectionOptions and automatically
-      // schedule a connect. See below:
-    } else {
-      // No pending options or pending operation. Start one
-      this.connectingPromise = this.connectInternal().finally(() => {
-        if (this.pendingConnectionOptions) {
-          return this.connectInternal();
-        }
+    await this.waitForReady();
+    await this.disconnectInternal();
+
+    const chain = (result) => {
+      if (this.pendingConnectionOptions) {
+        return this.connectInternal().then(chain);
+      } else {
         this.connectingPromise = null;
-        return;
-      });
-      return await this.connectingPromise;
-    }
+        return result;
+      }
+    };
+
+    return this.connectingPromise ?? this.connectInternal().then(chain);
   }
 
   /**
@@ -569,7 +550,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       // A disconnect is already in progress
       return await this.disconnectingPromise;
     }
-
     // Wait if a sync stream implementation is being created before closing it
     // (it must be assigned before we can properly dispose it)
     await this.syncStreamInitPromise;

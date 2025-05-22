@@ -81,7 +81,9 @@ export class MockRemote extends AbstractRemote {
         if (this.errorOnStreamStart) {
           controller.error(new Error('Mock error on stream start'));
         }
-
+        if (signal?.aborted) {
+          controller.close();
+        }
         signal?.addEventListener('abort', () => {
           try {
             controller.close();
