@@ -151,8 +151,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/Library/Developer/Xcode/DerivedData
-          key: xcode-derived-${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock', 'tools/powersynctests/ios/Podfile') }}
+            ${{ runner.tool_cache }}/Xcode/DerivedData
+          key: xcode-derived-${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
           restore-keys: |
             xcode-derived-${{ runner.os }}-
 
