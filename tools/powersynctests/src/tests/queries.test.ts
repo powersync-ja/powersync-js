@@ -589,6 +589,7 @@ export function registerBaseTests() {
 
       for (let i = 1; i < 10; i++) {
         db = createDatabase();
+        await db.init();
 
         // ensure a regular query works
         const pExecute = await db.execute(`SELECT * FROM t1 `);
