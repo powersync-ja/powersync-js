@@ -171,7 +171,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
 
-      // Keep track of all connection stream to check if they are correctly closed later
+      // Keep track of all connection streams to check if they are correctly closed later
       const generatedStreams: DataStream<any>[] = [];
 
       // This method is used for all mocked connections

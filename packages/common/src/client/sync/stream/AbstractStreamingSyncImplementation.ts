@@ -554,7 +554,6 @@ The next upload iteration will be delayed.`);
         this.logger.debug('Stream established. Processing events');
 
         while (!stream.closed) {
-          console.log('waiting for stream line');
           const line = await stream.read();
           if (!line) {
             // The stream has closed while waiting
