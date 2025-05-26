@@ -204,6 +204,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   protected pendingConnectionOptions: StoredConnectionOptions | null;
 
+  protected connectionMutex: Mutex;
+
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
   constructor(options: PowerSyncDatabaseOptionsWithSettings);
@@ -237,6 +239,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.connectingPromise = null;
     this.syncStreamInitPromise = null;
     this.pendingConnectionOptions = null;
+    this.connectionMutex = new Mutex();
     // Start async init
     this._isReadyPromise = this.initialize();
   }
@@ -460,7 +463,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Locking mechanism for exclusively running critical portions of connect/disconnect operations.
    * Locking here is mostly only important on web for multiple tab scenarios.
    */
-  protected abstract runExclusive<T>(callback: () => Promise<T>): Promise<T>;
+  protected runExclusive<T>(callback: () => Promise<T>): Promise<T> {
+    return this.connectionMutex.runExclusive(callback);
+  }
 
   protected async connectInternal() {
     let appliedOptions: PowerSyncConnectionOptions | null = null;

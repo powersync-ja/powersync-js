@@ -16,7 +16,6 @@ import {
 import { NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
-import Lock from 'async-lock';
 import { Dispatcher } from 'undici';
 import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
 import { NodeSQLOpenOptions } from './options.js';
@@ -56,11 +55,8 @@ export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAd
  * ```
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
-  protected lock: Lock;
-
   constructor(options: NodePowerSyncDatabaseOptions) {
     super(options);
-    this.lock = new Lock();
   }
 
   async _initialize(): Promise<void> {
@@ -83,10 +79,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     options?: PowerSyncConnectionOptions & { dispatcher?: Dispatcher }
   ): Promise<void> {
     return super.connect(connector, options);
-  }
-
-  protected async runExclusive<T>(callback: () => Promise<T>): Promise<T> {
-    return await this.lock.acquire(`lock-${this.database.name}`, callback);
   }
 
   protected generateSyncStreamImplementation(
