@@ -4,8 +4,29 @@ on:
   pull_request: # triggered for any PR updates (including new pushes to PR branch)
 
 jobs:
+  check-changes:
+    name: Check for relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for changes
+        id: check
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
   test-android:
     name: Test Android
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     runs-on: ubuntu-xl
     env:
       AVD_NAME: ubuntu-avd-x86_64-31
@@ -108,6 +129,8 @@ jobs:
 
   test-ios:
     name: Test iOS
+    needs: check-changes
+    if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     runs-on: macOS-15
 
     steps:
@@ -146,15 +169,6 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-
-      - name: Cache Xcode Derived Data
-        uses: actions/cache@v3
-        with:
-          path: |
-            DerivedData
-          key: xcode-derived-${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
-          restore-keys: |
-            xcode-derived-${{ runner.os }}-
 
       - name: Install dependencies
         run: pnpm install
