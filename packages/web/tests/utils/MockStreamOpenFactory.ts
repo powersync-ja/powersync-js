@@ -108,6 +108,11 @@ export class MockRemote extends AbstractRemote {
       logger: this.logger
     });
 
+    if (options.abortSignal?.aborted) {
+      stream.close();
+    }
+    options.abortSignal?.addEventListener('abort', () => stream.close());
+
     const l = stream.registerListener({
       lowWater: async () => {
         try {

@@ -1,4 +1,10 @@
-import { BucketChecksum, PowerSyncConnectionOptions, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import {
+  BucketChecksum,
+  DataStream,
+  PowerSyncConnectionOptions,
+  WASQLiteOpenFactory,
+  WASQLiteVFS
+} from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
@@ -160,12 +166,25 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
 
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
-      const { powersync, waitForStream } = await createConnectedDatabase();
+      const { powersync, remote } = await createConnectedDatabase();
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
 
-      // connect many times
+      // Keep track of all connection stream to check if they are correctly closed later
+      const generatedStreams: DataStream<any>[] = [];
+
+      // This method is used for all mocked connections
+      const basePostStream = remote.postStream;
+      const postSpy = vi.spyOn(remote, 'postStream').mockImplementation(async (...options) => {
+        // Simulate a connection delay
+        await new Promise((r) => setTimeout(r, 100));
+        const stream = await basePostStream.call(remote, ...options);
+        generatedStreams.push(stream);
+        return stream;
+      });
+
+      // Connect many times. The calls here are not awaited and have no async calls in between.
       const connectionAttempts = 10;
       for (let i = 1; i <= connectionAttempts; i++) {
         powersync.connect(new TestConnector(), { params: { count: i } });
@@ -183,9 +202,9 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // are in the same for loop
       expect(spy.mock.calls.length).lessThan(connectionAttempts);
 
-      // Now with random delays
+      // Now with random awaited delays between unawaited calls
       for (let i = connectionAttempts; i >= 0; i--) {
-        await new Promise((r) => setTimeout(r, Math.random() * 100));
+        await new Promise((r) => setTimeout(r, Math.random() * 10));
         powersync.connect(new TestConnector(), { params: { count: i } });
       }
 
@@ -196,6 +215,28 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
         },
         { timeout: 2000, interval: 100 }
       );
+
+      console.log(`Generated stream a total of ${spy.mock.calls.length} times`);
+      expect(spy.mock.calls.length).lessThanOrEqual(2 * connectionAttempts);
+
+      // The last request should make a network request with the client params
+      await vi.waitFor(
+        () => {
+          expect(postSpy.mock.lastCall?.[0].data.parameters!['count']).equals(0);
+          // The async postStream call's invocation is added to the count of calls
+          // before the generated stream is added (there is a delay)
+          // expect that the stream has been generated and tracked.
+          expect(postSpy.mock.calls.length).equals(generatedStreams.length);
+        },
+        { timeout: 1000, interval: 100 }
+      );
+
+      const lastConnectionStream = generatedStreams.pop();
+      expect(lastConnectionStream).toBeDefined();
+      expect(lastConnectionStream?.closed).false;
+
+      // All streams except the last one (which has been popped off already) should be closed
+      expect(generatedStreams.every((i) => i.closed)).true;
     });
 
     it('Should trigger upload connector when connected', async () => {

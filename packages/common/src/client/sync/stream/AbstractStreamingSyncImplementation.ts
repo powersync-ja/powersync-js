@@ -347,16 +347,7 @@ The next upload iteration will be delayed.`);
 
     // Return a promise that resolves when the connection status is updated
     return new Promise<void>((resolve) => {
-      let disposer: () => void;
-
-      const complete = () => {
-        disposer?.();
-        resolve();
-      };
-
-      controller.signal.addEventListener('abort', complete, { once: true });
-
-      disposer = this.registerListener({
+      const disposer = this.registerListener({
         statusUpdated: (update) => {
           // This is triggered as soon as a connection is read from
           if (typeof update.connected == 'undefined') {
@@ -366,13 +357,15 @@ The next upload iteration will be delayed.`);
 
           if (update.connected == false) {
             /**
-             * This function does not reject if initial connect attempt failed
+             * This function does not reject if initial connect attempt failed.
+             * Connected can be false if the connection attempt was aborted or if the initial connection
+             * attempt failed.
              */
             this.logger.warn('Initial connect attempt did not successfully connect to server');
           }
 
-          controller.signal.removeEventListener('abort', complete);
-          complete();
+          disposer();
+          resolve();
         }
       });
     });
@@ -530,6 +523,10 @@ The next upload iteration will be delayed.`);
 
         const clientId = await this.options.adapter.getClientId();
 
+        if (signal.aborted) {
+          return;
+        }
+
         this.logger.debug('Requesting stream from server');
 
         const syncOptions: SyncStreamOptions = {
@@ -557,6 +554,7 @@ The next upload iteration will be delayed.`);
         this.logger.debug('Stream established. Processing events');
 
         while (!stream.closed) {
+          console.log('waiting for stream line');
           const line = await stream.read();
           if (!line) {
             // The stream has closed while waiting

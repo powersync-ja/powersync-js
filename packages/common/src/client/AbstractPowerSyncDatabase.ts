@@ -464,6 +464,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async connectInternal() {
     let appliedOptions: PowerSyncConnectionOptions | null = null;
 
+    // This method ensures a disconnect before any connection attempt
+    await this.disconnectInternal();
+
     /**
      * This portion creates a sync implementation which can be racy when disconnecting or
      * if multiple tabs on web are in use.
@@ -474,13 +477,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       if (this.closed) {
         throw new Error('Cannot connect using a closed client');
       }
+
+      // Always await this if present since we will be populating a new sync implementation shortly
+      await this.disconnectingPromise;
+
       if (!this.pendingConnectionOptions) {
         // A disconnect could have cleared this.
         return;
       }
-
       // get pending options and clear it in order for other connect attempts to queue other options
-
       const { connector, options } = this.pendingConnectionOptions;
       appliedOptions = options;
       this.pendingConnectionOptions = null;
@@ -510,6 +515,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return;
     }
 
+    // It might be possible that a disconnect triggered between the last check
+    // and this point. Awaiting here allows the sync stream to be cleared if disconnected.
+    await this.disconnectingPromise;
+
     this.syncStreamImplementation?.triggerCrudUpload();
     this.options.logger?.debug('Attempting to connect to PowerSync instance');
     await this.syncStreamImplementation?.connect(appliedOptions!);
@@ -519,25 +528,44 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    // This overrides options if present.
+    // Keep track if there were pending operations before this call
+    const hadPendingOptions = !!this.pendingConnectionOptions;
+
+    // Update pending options to the latest values
     this.pendingConnectionOptions = {
       connector,
       options: options ?? {}
     };
 
     await this.waitForReady();
-    await this.disconnectInternal();
 
-    const chain = (result) => {
+    // Disconnecting here provides aborting in progress connection attempts.
+    // The connectInternal method will clear pending options once it starts connecting (with the options).
+    // We only need to trigger a disconnect here if we have already reached the point of connecting.
+    // If we do already have pending options, a disconnect has already been performed.
+    // The connectInternal method also does a sanity disconnect to prevent straggler connections.
+    if (!hadPendingOptions) {
+      await this.disconnectInternal();
+    }
+
+    // Triggers a connect which checks if pending options are available after the connect completes.
+    // The completion can be for a successful, unsuccessful or aborted connection attempt.
+    // If pending options are available another connection will be triggered.
+    const checkConnection = async (): Promise<void> => {
       if (this.pendingConnectionOptions) {
-        return this.connectInternal().then(chain);
+        // Pending options have been placed while connecting.
+        // Need to reconnect.
+        this.connectingPromise = this.connectInternal().finally(checkConnection);
+        return this.connectingPromise;
       } else {
+        // Clear the connecting promise, done.
         this.connectingPromise = null;
-        return result;
+        return;
       }
     };
 
-    return this.connectingPromise ?? this.connectInternal().then(chain);
+    this.connectingPromise ??= this.connectInternal().finally(checkConnection);
+    return this.connectingPromise;
   }
 
   /**
@@ -548,10 +576,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async disconnectInternal() {
     if (this.disconnectingPromise) {
       // A disconnect is already in progress
-      return await this.disconnectingPromise;
+      return this.disconnectingPromise;
     }
+
     // Wait if a sync stream implementation is being created before closing it
-    // (it must be assigned before we can properly dispose it)
+    // (syncStreamImplementation must be assigned before we can properly dispose it)
     await this.syncStreamInitPromise;
 
     this.disconnectingPromise = (async () => {
