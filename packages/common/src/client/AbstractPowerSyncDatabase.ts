@@ -190,7 +190,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   protected syncStreamInitPromise: Promise<void> | null;
   /**
-   * Active disconnect operation. Call disconnect multiple times
+   * Active disconnect operation. Calling disconnect multiple times
    * will resolve to the same operation.
    */
   protected disconnectingPromise: Promise<void> | null;
@@ -457,7 +457,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Locking mechagnism for exclusively running critical portions of connect/disconnect operations.
+   * Locking mechanism for exclusively running critical portions of connect/disconnect operations.
+   * Locking here is mostly only important on web for multiple tab scenarios.
    */
   protected abstract runExclusive<T>(callback: () => Promise<T>): Promise<T>;
 
@@ -573,6 +574,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Use {@link connect} to connect again.
    */
+  async disconnect() {
+    await this.waitForReady();
+    // This will help abort pending connects
+    this.pendingConnectionOptions = null;
+    await this.disconnectInternal();
+  }
+
   protected async disconnectInternal() {
     if (this.disconnectingPromise) {
       // A disconnect is already in progress
@@ -583,27 +591,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // (syncStreamImplementation must be assigned before we can properly dispose it)
     await this.syncStreamInitPromise;
 
-    this.disconnectingPromise = (async () => {
-      await this.syncStreamImplementation?.disconnect();
-      this.syncStatusListenerDisposer?.();
-      await this.syncStreamImplementation?.dispose();
-      this.syncStreamImplementation = undefined;
-    })();
+    this.disconnectingPromise = this.performDisconnect();
 
     await this.disconnectingPromise;
     this.disconnectingPromise = null;
   }
 
-  /**
-   * Close the sync connection.
-   *
-   * Use {@link connect} to connect again.
-   */
-  async disconnect() {
-    await this.waitForReady();
-    // This will help abort pending connects
-    this.pendingConnectionOptions = null;
-    await this.disconnectInternal();
+  protected async performDisconnect() {
+    await this.syncStreamImplementation?.disconnect();
+    this.syncStatusListenerDisposer?.();
+    await this.syncStreamImplementation?.dispose();
+    this.syncStreamImplementation = undefined;
   }
 
   /**
