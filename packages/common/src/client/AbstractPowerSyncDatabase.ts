@@ -109,6 +109,16 @@ export interface WatchOnChangeHandler {
   onError?: (error: Error) => void;
 }
 
+export interface ComparatorWatchOptions<DataType> {
+  mode: 'comparison';
+  comparator?: WatchedQueryComparator<DataType>;
+}
+
+export interface IncrementalWatchOptions<DataType> {
+  watch: WatchedQueryOptions<DataType>;
+  processor?: ComparatorWatchOptions<DataType>;
+}
+
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
@@ -872,23 +882,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   // TODO names and types
-  incrementalWatch<DataType>(
-    options: { watchOptions: WatchedQueryOptions<DataType> } & {
-      mode: 'comparison';
-      comparator?: WatchedQueryComparator<DataType>;
-    }
-  ): WatchedQuery<DataType> {
-    switch (options.mode) {
+  incrementalWatch<DataType>(options: IncrementalWatchOptions<DataType>): WatchedQuery<DataType> {
+    const { watch, processor } = options;
+
+    switch (options.processor?.mode) {
       case 'comparison':
+      default:
         return new OnChangeQueryProcessor({
           db: this,
-          comparator: options.comparator ?? {
+          comparator: processor?.comparator ?? {
             checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
           },
-          watchOptions: options.watchOptions
+          watchOptions: watch
         });
-      default:
-        throw new Error(`Invalid mode specified ${options.mode}`);
     }
   }
 

@@ -1,4 +1,3 @@
-import { CompiledQuery } from 'src/types/types.js';
 import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
 
 export interface WatchedQueryState<Data> {
@@ -26,14 +25,19 @@ export interface WatchedQueryState<Data> {
   data: Data;
 }
 
+export interface WatchCompiledQuery {
+  sql: string;
+  parameters: any[];
+}
 /**
+ *
  * @internal
  * Similar to {@link CompatibleQuery}, except the `execute` method
  * does not enforce an Array result type.
  */
 export interface WatchCompatibleQuery<ResultType> {
-  execute(compiled: CompiledQuery): Promise<ResultType>;
-  compile(): CompiledQuery;
+  execute(compiled: WatchCompiledQuery): Promise<ResultType>;
+  compile(): WatchCompiledQuery;
 }
 
 /**

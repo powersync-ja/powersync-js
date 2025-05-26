@@ -20,8 +20,7 @@ export class QueryStore {
     }
 
     const watchedQuery = this.db.incrementalWatch({
-      mode: 'comparison',
-      watchOptions: {
+      watch: {
         query,
         placeholderData: [],
         throttleMs: options.throttleMs

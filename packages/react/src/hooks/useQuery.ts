@@ -121,8 +121,7 @@ const useWatchedQuery = <RowType = unknown>(
   const createWatchedQuery = React.useCallback(() => {
     return powerSync.incrementalWatch<RowType[]>({
       // This always enables comparison. Might want to be able to disable this??
-      mode: 'comparison',
-      watchOptions: {
+      watch: {
         placeholderData: [],
         query,
         throttleMs: hookOptions.throttleMs,
@@ -182,14 +181,20 @@ export const constructCompatibleQuery = <RowType>(
       return {
         compile: () => ({
           sql: query,
-          parameters: parameters
+          parameters
         }),
         execute: () => powerSync.getAll(query, parameters)
       };
     } else {
       return {
         // Generics differ a bit but holistically this is the same
-        compile: () => query.compile(),
+        compile: () => {
+          const compiled = query.compile();
+          return {
+            sql: compiled.sql,
+            parameters: [...compiled.parameters]
+          };
+        },
         execute: () => query.execute()
       };
     }
