@@ -216,8 +216,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
         { timeout: 2000, interval: 100 }
       );
 
-      console.log(`Generated stream a total of ${spy.mock.calls.length} times`);
-      expect(spy.mock.calls.length).lessThanOrEqual(2 * connectionAttempts);
+      expect(spy.mock.calls.length, `Expected generated streams to be less than or equal to ${2 * connectionAttempts}, but got ${spy.mock.calls.length}`).lessThanOrEqual(2 * connectionAttempts);
 
       // The last request should make a network request with the client params
       await vi.waitFor(
