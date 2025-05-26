@@ -83,6 +83,7 @@ export class MockRemote extends AbstractRemote {
         }
         if (signal?.aborted) {
           controller.close();
+          return;
         }
         signal?.addEventListener('abort', () => {
           try {
