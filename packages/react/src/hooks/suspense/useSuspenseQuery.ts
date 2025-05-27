@@ -1,7 +1,7 @@
 import { CompilableQuery } from '@powersync/common';
-import { AdditionalOptions, QueryResult } from './useQuery';
-
-export type SuspenseQueryResult<T> = Pick<QueryResult<T>, 'data' | 'refresh'>;
+import { AdditionalOptions } from '../useQuery';
+import { SuspenseQueryResult, useSingleSuspenseQuery } from './useSingleSuspenseQuery';
+import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery';
 
 /**
  * A hook to access the results of a watched query that suspends until the initial result has loaded.
