@@ -60,9 +60,12 @@ export const useSingleSuspenseQuery = <T = any>(
     // Happy path data return
     return {
       data: data ?? watchedQuery?.state.data ?? [],
-      refresh: async () => {
+      refresh: async (signal) => {
         try {
           const result = await parsedQuery.execute(parsedQuery.compile());
+          if (signal.aborted) {
+            return; // Abort if the signal is already aborted
+          }
           setData(result);
           setError(null);
         } catch (e) {
