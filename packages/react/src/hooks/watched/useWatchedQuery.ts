@@ -45,7 +45,6 @@ export const useWatchedQuery = <RowType = unknown>(
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
     if (queryChanged) {
-      console.log('Query changed, re-fetching...');
       watchedQuery.updateSettings({
         placeholderData: [],
         query,

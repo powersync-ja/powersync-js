@@ -5,6 +5,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useSuspenseQuery } from '../src/hooks/suspense/useSuspenseQuery';
+import { useWatchedQuerySuspenseSubscription } from '../src/hooks/suspense/useWatchedQuerySuspenseSubscription';
 import { openPowerSync } from './useQuery.test';
 
 describe('useSuspenseQuery', () => {
@@ -241,5 +242,58 @@ describe('useSuspenseQuery', () => {
 
     await waitForCompletedSuspend();
     await waitForError();
+  });
+
+  it('should use an existing WatchedQuery instance', async () => {
+    const db = openPowerSync();
+
+    // This query can be instantiated once and reused.
+    // The query retains it's state and will not re-fetch the data unless the result changes.
+    // This is useful for queries that are used in multiple components.
+    const listsQuery = db.incrementalWatch({
+      watch: {
+        placeholderData: [],
+        query: {
+          compile: () => ({
+            sql: `SELECT * FROM lists`,
+            parameters: []
+          }),
+          execute: ({ sql, parameters }) => db.getAll(sql, parameters)
+        }
+      }
+    });
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {
+      wrapper
+    });
+
+    // Initially, the query should be loading/suspended
+    expect(result.current).toEqual(null);
+
+    await waitFor(
+      async () => {
+        expect(result.current).not.null;
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    expect(result.current.data.length).toEqual(0);
+
+    // This should trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // now use the same query again, the result should be available immediately
+    const { result: newResult } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), { wrapper });
+    expect(newResult.current).not.null;
+    expect(newResult.current.data.length).toEqual(1);
   });
 });

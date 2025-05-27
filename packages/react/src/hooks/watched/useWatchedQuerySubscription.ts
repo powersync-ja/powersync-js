@@ -1,0 +1,36 @@
+import { WatchedQuery, WatchedQueryState } from '@powersync/common';
+import React from 'react';
+
+/**
+ * A hook to access and subscribe to the results of an existing {@link WatchedQuery} instance.
+ * @example
+ * export const ContentComponent = () => {
+ * const { data: lists }  = useWatchedQuerySuspenseSubscription(listsQuery);
+ *
+ * return <View>
+ *   {lists.map((l) => (
+ *     <Text key={l.id}>{JSON.stringify(l)}</Text>
+ *   ))}
+ * </View>;
+ * }
+ *
+ */
+export const useWatchedQuerySubscription = <ResultType = unknown>(
+  query: WatchedQuery<ResultType>
+): WatchedQueryState<ResultType> => {
+  const [output, setOutputState] = React.useState(query.state);
+
+  React.useEffect(() => {
+    const dispose = query.subscribe({
+      onStateChange: (state) => {
+        setOutputState({ ...state });
+      }
+    });
+
+    return () => {
+      dispose();
+    };
+  }, [query]);
+
+  return output;
+};

@@ -7,4 +7,5 @@ export { useSuspenseQuery } from './hooks/suspense/useSuspenseQuery';
 export { useWatchedQuerySuspenseSubscription } from './hooks/suspense/useWatchedQuerySuspenseSubscription';
 export { useStatus } from './hooks/useStatus';
 export { useQuery } from './hooks/watched/useQuery';
+export { useWatchedQuerySubscription } from './hooks/watched/useWatchedQuerySubscription';
 export { AdditionalOptions } from './hooks/watched/watch-types';

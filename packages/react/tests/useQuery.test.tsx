@@ -6,6 +6,7 @@ import pDefer from 'p-defer';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
+import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
 export const openPowerSync = () => {
   const db = new PowerSyncDatabase({
     database: { dbFilename: 'test.db' },
@@ -224,7 +225,7 @@ describe('useQuery', () => {
     const deferred = pDefer();
 
     const baseGetAll = db.getAll;
-    const getSpy = vi.spyOn(db, 'getAll').mockImplementation(async (sql, params) => {
+    vi.spyOn(db, 'getAll').mockImplementation(async (sql, params) => {
       // Allow pausing this call in order to test isFetching
       await deferred.promise;
       return baseGetAll.call(db, sql, params);
@@ -253,6 +254,57 @@ describe('useQuery', () => {
 
     // The data reference should be the same as the previous time
     expect(data == result.current.data).toEqual(true);
+  });
+
+  it('should use an existing WatchedQuery instance', async () => {
+    const db = openPowerSync();
+
+    // This query can be instantiated once and reused.
+    // The query retains it's state and will not re-fetch the data unless the result changes.
+    // This is useful for queries that are used in multiple components.
+    const listsQuery = db.incrementalWatch({
+      watch: {
+        placeholderData: [],
+        query: {
+          compile: () => ({
+            sql: `SELECT * FROM lists`,
+            parameters: []
+          }),
+          execute: ({ sql, parameters }) => db.getAll(sql, parameters)
+        }
+      }
+    });
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const { result } = renderHook(() => useWatchedQuerySubscription(listsQuery), {
+      wrapper
+    });
+
+    expect(result.current.isLoading).toEqual(true);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.isLoading).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // This should trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // now use the same query again, the result should be available immediately
+    const { result: newResult } = renderHook(() => useWatchedQuerySubscription(listsQuery), { wrapper });
+    expect(newResult.current.isLoading).toEqual(false);
+    expect(newResult.current.data.length).toEqual(1);
   });
 
   // TODO: Add tests for powersync.onChangeWithCallback path
