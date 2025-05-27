@@ -1,5 +1,5 @@
 import { AbstractPowerSyncDatabase, WatchCompatibleQuery, WatchedQuery } from '@powersync/common';
-import { AdditionalOptions } from './hooks/useQuery';
+import { AdditionalOptions } from './hooks/watched/watch-types';
 
 export function generateQueryKey(
   sqlStatement: string,

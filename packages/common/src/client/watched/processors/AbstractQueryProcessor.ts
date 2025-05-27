@@ -41,6 +41,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   protected abortController: AbortController;
   protected initialized: Promise<void>;
   protected _closed: boolean;
+  protected disposeListeners: (() => void) | null;
 
   get closed() {
     return this._closed;
@@ -66,6 +67,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
       lastUpdated: null,
       data: options.watchOptions.placeholderData
     };
+    this.disposeListeners = null;
     this.initialized = this.init();
   }
 
@@ -97,6 +99,9 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   protected async updateState(update: Partial<WatchedQueryState<Data>>) {
     if (typeof update.error !== 'undefined') {
       await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
+      // An error always stops for the current fetching state
+      update.isFetching = false;
+      update.isLoading = false;
     }
 
     if (typeof update.data !== 'undefined') {
@@ -113,19 +118,29 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   protected async init() {
     const { db } = this.options;
 
-    db.registerListener({
-      schemaChanged: async () => {
-        await this.runWithReporting(async () => {
-          await this.updateSettings(this.options.watchOptions);
-        });
-      },
-      closing: () => {
+    const disposeCloseListener = db.registerListener({
+      closed: async () => {
         this.close();
       }
     });
 
+    // Wait for the schema to be set before listening to changes
+    await db.waitForReady();
+    const disposeSchemaListener = db.registerListener({
+      schemaChanged: async () => {
+        await this.runWithReporting(async () => {
+          await this.updateSettings(this.options.watchOptions);
+        });
+      }
+    });
+
+    this.disposeListeners = () => {
+      disposeCloseListener();
+      disposeSchemaListener();
+    };
+
     // Initial setup
-    await this.runWithReporting(async () => {
+    this.runWithReporting(async () => {
       await this.updateSettings(this.options.watchOptions);
     });
   }
@@ -134,18 +149,19 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
     // hook in to subscription events in order to report changes
     const baseDispose = this.registerListener({ ...subscription });
 
-    const counts = this.subscriptionCounts;
-    this.iterateListeners((l) => l.subscriptionsChanged?.(counts));
+    this.iterateListeners((l) => l.subscriptionsChanged?.(this.subscriptionCounts));
 
     return () => {
       baseDispose();
-      this.iterateListeners((l) => l.subscriptionsChanged?.(counts));
+      this.iterateListeners((l) => l.subscriptionsChanged?.(this.subscriptionCounts));
     };
   }
 
   async close() {
     await this.initialized;
     this.abortController.abort();
+    this.disposeListeners?.();
+    this.disposeListeners = null;
     this._closed = true;
     this.iterateListeners((l) => l.closed?.());
   }

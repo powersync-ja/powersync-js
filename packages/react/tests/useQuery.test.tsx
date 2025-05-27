@@ -1,11 +1,11 @@
+import React from 'react';
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import pDefer from 'p-defer';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
-import { useQuery } from '../src/hooks/useQuery';
-
+import { useQuery } from '../src/hooks/watched/useQuery';
 export const openPowerSync = () => {
   const db = new PowerSyncDatabase({
     database: { dbFilename: 'test.db' },
@@ -128,8 +128,6 @@ describe('useQuery', () => {
       },
       { timeout: 500, interval: 100 }
     );
-
-    console.log('got to this point');
   });
 
   it('should accept compilable queries', async () => {

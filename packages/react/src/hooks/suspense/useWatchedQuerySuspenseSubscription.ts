@@ -55,7 +55,7 @@ export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQu
     // Happy path data return
     return {
       data: query.state.data,
-      refresh: () => {
+      refresh: async () => {
         // no-op for watched queries
       }
     };

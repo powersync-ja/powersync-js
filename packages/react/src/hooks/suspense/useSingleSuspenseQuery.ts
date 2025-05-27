@@ -38,13 +38,13 @@ export const useSingleSuspenseQuery = <T = any>(
   // Only use a temporary watched query if we don't have data yet.
   const watchedQuery = data ? null : (store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>);
   const { releaseHold } = useTemporaryHold(watchedQuery);
-
+  console.log('single watched query', !!watchedQuery);
   React.useEffect(() => {
     // Set the initial yielded data
     // it should be available once we commit the component
     if (watchedQuery?.state.error) {
       setError(watchedQuery.state.error);
-    } else if (watchedQuery?.state.data) {
+    } else if (watchedQuery?.state.isLoading === false) {
       setData(watchedQuery.state.data);
       setError(null);
     }
@@ -57,16 +57,18 @@ export const useSingleSuspenseQuery = <T = any>(
   if (error != null) {
     // Report errors - this is caught by an error boundary
     throw error;
-  } else if (data || watchedQuery?.state.data) {
+  } else if (data || watchedQuery?.state.isLoading === false) {
     // Happy path data return
     return {
       data: data ?? watchedQuery?.state.data ?? [],
       refresh: async (signal) => {
         try {
+          console.log('calling refresh for single query', key);
           const result = await parsedQuery.execute(parsedQuery.compile());
           if (signal.aborted) {
             return; // Abort if the signal is already aborted
           }
+          console.log('done with query refresh');
           setData(result);
           setError(null);
         } catch (e) {

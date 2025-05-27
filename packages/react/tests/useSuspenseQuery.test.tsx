@@ -4,9 +4,8 @@ import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
-import { useSuspenseQuery } from '../src/hooks/useSuspenseQuery';
+import { useSuspenseQuery } from '../src/hooks/suspense/useSuspenseQuery';
 import { openPowerSync } from './useQuery.test';
-const defaultQueryResult = ['list1', 'list2'];
 
 describe('useSuspenseQuery', () => {
   const loadingFallback = 'Loading';
@@ -120,96 +119,84 @@ describe('useSuspenseQuery', () => {
     );
   });
 
-  // it('should run the query once if runQueryOnce flag is set', async () => {
-  //   let resolvePromise: (_: string[]) => void = () => {};
+  it('should run the query once if runQueryOnce flag is set', async () => {
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-  //   mockPowerSync.getAll = vi.fn(() => {
-  //     return new Promise<string[]>((resolve) => {
-  //       resolvePromise = resolve;
-  //     });
-  //   });
+    const { result } = renderHook(
+      () => useSuspenseQuery<{ name: string }>('SELECT * from lists', [], { runQueryOnce: true }),
+      {
+        wrapper
+      }
+    );
 
-  //   const { result } = renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
-  //     wrapper
-  //   });
+    // Wait for the data to be presented
+    let lastData;
+    await waitFor(
+      async () => {
+        const currentResult = result.current;
+        lastData = currentResult?.data;
+        expect(lastData?.[0]).toBeDefined();
+        expect(lastData?.[0].name).toBe('list1');
+      },
+      { timeout: 1000 }
+    );
 
-  //   await waitForSuspend();
+    await waitForCompletedSuspend();
 
-  //   resolvePromise(defaultQueryResult);
+    // Do another insert, this should not trigger a re-render
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list2')");
 
-  //   await waitForCompletedSuspend();
-  //   await waitFor(
-  //     async () => {
-  //       const currentResult = result.current;
-  //       expect(currentResult?.data).toEqual(['list1', 'list2']);
-  //       expect(mockPowerSync.onChangeWithCallback).not.toHaveBeenCalled();
-  //       expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
-  //     },
-  //     { timeout: 100 }
-  //   );
-  // });
+    // Wait a bit, it's difficult to test that something did not happen, so we just wait a bit
+    await new Promise((r) => setTimeout(r, 1000));
 
-  // it('should rerun the query when refresh is used', async () => {
-  //   const { result } = renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
-  //     wrapper
-  //   });
+    expect(result.current.data).toEqual(lastData);
+    // sanity
+    expect(result.current.data?.length).toBe(1);
+  });
 
-  //   await waitForSuspend();
-
-  //   let refresh;
-
-  //   await waitFor(
-  //     async () => {
-  //       const currentResult = result.current;
-  //       refresh = currentResult.refresh;
-  //       expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
-  //     },
-  //     { timeout: 100 }
-  //   );
-
-  //   await waitForCompletedSuspend();
-
-  //   await refresh();
-  //   expect(mockPowerSync.getAll).toHaveBeenCalledTimes(2);
-  // });
-
-  it('should set error when error occurs', async () => {
-    let rejectPromise: (err: string) => void = () => {};
-
-    vi.spyOn(powersync, 'getAll').mockImplementation(() => {
-      return new Promise<any>((_resolve, reject) => {
-        rejectPromise = reject;
-      });
+  it('should rerun the query when refresh is used', async () => {
+    const { result } = renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
+      wrapper
     });
 
-    renderHook(() => useSuspenseQuery('SELECT * from lists', []), { wrapper });
-
+    // First ensure we do suspend, then wait for suspending to complete
     await waitForSuspend();
 
-    rejectPromise('failure');
+    let refresh;
+    await waitFor(
+      async () => {
+        const currentResult = result.current;
+        console.log(currentResult);
+        refresh = currentResult?.refresh;
+        expect(refresh).toBeDefined();
+      },
+      { timeout: 1000 }
+    );
+
+    await waitForCompletedSuspend();
+    expect(refresh).toBeDefined();
+
+    const spy = vi.spyOn(powersync, 'getAll');
+    const callCount = spy.mock.calls.length;
+    await refresh();
+    expect(spy).toHaveBeenCalledTimes(callCount + 1);
+  });
+
+  it('should set error when error occurs', async () => {
+    renderHook(() => useSuspenseQuery('SELECT * from fakelists', []), { wrapper });
+
     await waitForCompletedSuspend();
     await waitForError();
   });
 
-  // it('should set error when error occurs and runQueryOnce flag is set', async () => {
-  //   let rejectPromise: (err: string) => void = () => {};
+  it('should set error when error occurs and runQueryOnce flag is set', async () => {
+    renderHook(() => useSuspenseQuery('SELECT * from fakelists', [], { runQueryOnce: true }), {
+      wrapper
+    });
 
-  //   mockPowerSync.getAll = vi.fn(() => {
-  //     return new Promise<void>((_resolve, reject) => {
-  //       rejectPromise = reject;
-  //     });
-  //   });
-
-  //   renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
-  //     wrapper
-  //   });
-
-  //   await waitForSuspend();
-
-  //   rejectPromise('failure');
-  //   await waitForCompletedSuspend();
-  //   await waitForError();
-  // });
+    await waitForCompletedSuspend();
+    await waitForError();
+  });
 
   it('should accept compilable queries', async () => {
     renderHook(
