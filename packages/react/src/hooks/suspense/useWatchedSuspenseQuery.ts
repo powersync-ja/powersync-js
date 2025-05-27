@@ -1,7 +1,8 @@
 import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
-import { AdditionalOptions, constructCompatibleQuery } from '../useQuery';
+import { AdditionalOptions } from '../watched/watch-types';
+import { constructCompatibleQuery } from '../watched/watch-utils';
 import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useWatchedQuerySuspenseSubscription } from './useWatchedQuerySuspenseSubscription';
 

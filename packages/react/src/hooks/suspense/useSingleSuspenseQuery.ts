@@ -2,7 +2,8 @@ import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import React from 'react';
 import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
-import { AdditionalOptions, constructCompatibleQuery } from '../useQuery';
+import { AdditionalOptions } from '../watched/watch-types';
+import { constructCompatibleQuery } from '../watched/watch-utils';
 import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
 import { SuspenseQueryResult } from './SuspenseQueryResult';
 

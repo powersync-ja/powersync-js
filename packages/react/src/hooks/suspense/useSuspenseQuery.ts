@@ -1,5 +1,5 @@
 import { CompilableQuery } from '@powersync/common';
-import { AdditionalOptions } from '../useQuery';
+import { AdditionalOptions } from '../watched/watch-types';
 import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useSingleSuspenseQuery } from './useSingleSuspenseQuery';
 import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery';

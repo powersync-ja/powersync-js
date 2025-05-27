@@ -53,7 +53,12 @@ export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQu
     throw query.state.error;
   } else if (!query.state.isLoading) {
     // Happy path data return
-    return { data: query.state.data };
+    return {
+      data: query.state.data,
+      refresh: () => {
+        // no-op for watched queries
+      }
+    };
   } else {
     // Notify suspense is required
     throw createSuspendingPromise(query);
