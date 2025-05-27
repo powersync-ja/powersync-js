@@ -2,7 +2,27 @@ import { WatchedQuery } from '@powersync/common';
 import React from 'react';
 import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
 
-// TODO naming
+/**
+ * A hook to access and subscribe to the results of an existing {@link WatchedQuery}.
+ * @example
+ * export const ContentComponent = () => {
+ * const { data: lists }  = useWatchedQuerySuspenseSubscription(listsQuery);
+ *
+ * return <View>
+ *   {lists.map((l) => (
+ *     <Text key={l.id}>{JSON.stringify(l)}</Text>
+ *   ))}
+ * </View>;
+ * }
+ *
+ * export const DisplayComponent = () => {
+ * return (
+ *    <Suspense fallback={<div>Loading content...</div>}>
+ *       <ContentComponent />
+ *    </Suspense>
+ * );
+ * }
+ */
 export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQuery<ResultType>) => {
   const { releaseHold } = useTemporaryHold(query);
 

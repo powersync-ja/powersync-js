@@ -2,7 +2,7 @@ import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
 import { AdditionalOptions, constructCompatibleQuery } from '../useQuery';
-import { SuspenseQueryResult } from './useSingleSuspenseQuery';
+import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useWatchedQuerySuspenseSubscription } from './useWatchedQuerySuspenseSubscription';
 
 export const useWatchedSuspenseQuery = <T = any>(

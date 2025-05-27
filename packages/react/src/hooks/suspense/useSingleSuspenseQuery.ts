@@ -2,10 +2,9 @@ import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import React from 'react';
 import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
-import { AdditionalOptions, constructCompatibleQuery, QueryResult } from '../useQuery';
+import { AdditionalOptions, constructCompatibleQuery } from '../useQuery';
 import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
-
-export type SuspenseQueryResult<T> = Pick<QueryResult<T>, 'data' | 'refresh'>;
+import { SuspenseQueryResult } from './SuspenseQueryResult';
 
 /**
  * Use a query which is not watched, but suspends until the initial result has loaded.
