@@ -101,7 +101,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // If we do already have pending options, a disconnect has already been performed.
     // The connectInternal method also does a sanity disconnect to prevent straggler connections.
     // We should also disconnect if we have already completed a connection attempt.
-    if (!hadPendingOptions || !this.connectingPromise) {
+    if (!hadPendingOptions) {
       await this.disconnectInternal();
     }
 
@@ -139,8 +139,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
      */
     this.syncStreamInitPromise = new Promise(async (resolve, reject) => {
       try {
-        await this.disconnectingPromise;
-
         if (!this.pendingConnectionOptions) {
           this.logger.debug('No pending connection options found, not creating sync stream implementation');
           // A disconnect could have cleared this.
@@ -175,9 +173,9 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // and this point. Awaiting here allows the sync stream to be cleared if disconnected.
     await this.disconnectingPromise;
 
-    this.syncStreamImplementation?.triggerCrudUpload();
     this.logger.debug('Attempting to connect to PowerSync instance');
     await this.syncStreamImplementation?.connect(appliedOptions!);
+    this.syncStreamImplementation?.triggerCrudUpload();
   }
 
   /**
@@ -208,10 +206,16 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   protected async performDisconnect() {
-    await this.syncStreamImplementation?.disconnect();
-    await this.syncStreamImplementation?.dispose();
-    await this.syncDisposer?.();
-    this.syncDisposer = null;
+    // Keep reference to the sync stream implementation and disposer
+    // The class members will be cleared before we trigger the disconnect
+    // to prevent any further calls to the sync stream implementation.
+    const sync = this.syncStreamImplementation;
     this.syncStreamImplementation = null;
+    const disposer = this.syncDisposer;
+    this.syncDisposer = null;
+
+    await sync?.disconnect();
+    await sync?.dispose();
+    await disposer?.();
   }
 }
