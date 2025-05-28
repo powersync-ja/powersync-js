@@ -30,7 +30,7 @@ describe('Streaming', { sequential: true }, () => {
     )
   );
 
-  describe.only(
+  describe(
     'Streaming - Without Web Workers',
     {
       sequential: true
