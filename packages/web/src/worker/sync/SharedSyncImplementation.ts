@@ -164,15 +164,15 @@ export class SharedSyncImplementation
   }
 
   async waitForStatus(status: SyncStatusOptions): Promise<void> {
-    await this.waitForReady();
-    // TODO
-    return this.connectionManager.syncStreamImplementation!.waitForStatus(status);
+    return this.withSyncImplementation(async (sync) => {
+      return sync.waitForStatus(status);
+    });
   }
 
   async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
-    await this.waitForReady();
-    // TODO
-    return this.connectionManager.syncStreamImplementation!.waitUntilStatusMatches(predicate);
+    return this.withSyncImplementation(async (sync) => {
+      return sync.waitUntilStatusMatches(predicate);
+    });
   }
 
   async waitForReady() {
@@ -455,6 +455,13 @@ export class SharedSyncImplementation
    * sync stream client and all tab client's sync status
    */
   private _testUpdateAllStatuses(status: SyncStatusOptions) {
+    if (!this.connectionManager.syncStreamImplementation) {
+      // This is just for testing purposes
+      this.connectionManager.syncStreamImplementation = this.generateStreamingImplementation();
+    }
+
+    // Only assigning, don't call listeners for this test
+    this.connectionManager.syncStreamImplementation!.syncStatus = new SyncStatus(status);
     this.updateAllStatuses(status);
   }
 }
