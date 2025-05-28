@@ -100,7 +100,8 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // We only need to trigger a disconnect here if we have already reached the point of connecting.
     // If we do already have pending options, a disconnect has already been performed.
     // The connectInternal method also does a sanity disconnect to prevent straggler connections.
-    if (!hadPendingOptions) {
+    // We should also disconnect if we have already completed a connection attempt.
+    if (!hadPendingOptions || !this.connectingPromise) {
       await this.disconnectInternal();
     }
 
@@ -136,46 +137,47 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
      * This is protected in an exclusive lock.
      * The promise tracks the creation which is used to synchronize disconnect attempts.
      */
-    this.syncStreamInitPromise = (async () => {
-      // Always await this if present since we will be populating a new sync implementation shortly
-      await this.disconnectingPromise;
+    this.syncStreamInitPromise = new Promise(async (resolve, reject) => {
+      try {
+        await this.disconnectingPromise;
 
-      if (!this.pendingConnectionOptions) {
-        // A disconnect could have cleared this.
-        return;
+        if (!this.pendingConnectionOptions) {
+          this.logger.debug('No pending connection options found, not creating sync stream implementation');
+          // A disconnect could have cleared this.
+          return;
+        }
+
+        const { connector, options } = this.pendingConnectionOptions;
+        appliedOptions = options;
+
+        this.pendingConnectionOptions = null;
+
+        const { sync, onDispose } = await this.options.createSyncImplementation(connector, options);
+        this.iterateListeners((l) => l.syncStreamCreated?.(sync));
+        this.syncStreamImplementation = sync;
+        this.syncDisposer = onDispose;
+        await this.syncStreamImplementation.waitForReady();
+        resolve();
+      } catch (error) {
+        reject(error);
       }
-
-      const { connector, options } = this.pendingConnectionOptions;
-      appliedOptions = options;
-
-      this.pendingConnectionOptions = null;
-
-      const { sync, onDispose } = await this.options.createSyncImplementation(connector, options);
-      this.iterateListeners((l) => l.syncStreamCreated?.(sync));
-      this.syncStreamImplementation = sync;
-      this.syncDisposer = onDispose;
-      await this.syncStreamImplementation.waitForReady();
-    })();
+    });
 
     await this.syncStreamInitPromise;
     this.syncStreamInitPromise = null;
 
     if (!appliedOptions) {
-      this.logger.debug('No pending connection options found, not connecting');
       // A disconnect could have cleared the options which did not create a syncStreamImplementation
       return;
     }
 
     // It might be possible that a disconnect triggered between the last check
     // and this point. Awaiting here allows the sync stream to be cleared if disconnected.
-    this.logger.debug('Waiting for disconnect to complete before connecting', this.disconnectingPromise);
     await this.disconnectingPromise;
-    this.logger.debug('Disconnect completed, proceeding to connect');
 
     this.syncStreamImplementation?.triggerCrudUpload();
     this.logger.debug('Attempting to connect to PowerSync instance');
     await this.syncStreamImplementation?.connect(appliedOptions!);
-    this.logger.debug('connected to sync stream implementation');
   }
 
   /**

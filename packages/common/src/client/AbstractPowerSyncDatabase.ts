@@ -478,7 +478,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
-    await this.waitForReady();
     return this.connectionManager.disconnect();
   }
 

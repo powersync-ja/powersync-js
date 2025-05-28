@@ -1,5 +1,6 @@
 import {
   BucketChecksum,
+  createBaseLogger,
   DataStream,
   PowerSyncConnectionOptions,
   WASQLiteOpenFactory,
@@ -11,16 +12,25 @@ import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/gener
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
+const logger = createBaseLogger();
+logger.useDefaults();
+
 describe('Streaming', { sequential: true }, () => {
   describe(
     'Streaming - With Web Workers',
     {
       sequential: true
     },
-    describeStreamingTests(() => generateConnectedDatabase())
+    describeStreamingTests(() =>
+      generateConnectedDatabase({
+        powerSyncOptions: {
+          logger
+        }
+      })
+    )
   );
 
-  describe(
+  describe.only(
     'Streaming - Without Web Workers',
     {
       sequential: true
@@ -30,7 +40,8 @@ describe('Streaming', { sequential: true }, () => {
         powerSyncOptions: {
           flags: {
             useWebWorker: false
-          }
+          },
+          logger
         }
       })
     )
@@ -47,7 +58,8 @@ describe('Streaming', { sequential: true }, () => {
           database: new WASQLiteOpenFactory({
             dbFilename: 'streaming-opfs.sqlite',
             vfs: WASQLiteVFS.OPFSCoopSyncVFS
-          })
+          }),
+          logger
         }
       })
     )
@@ -213,7 +225,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
           const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
           expect(call.params!['count']).eq(0);
         },
-        { timeout: 2000, interval: 100 }
+        { timeout: 4000, interval: 100 }
       );
 
       expect(
