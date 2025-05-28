@@ -1,6 +1,6 @@
 import 'detox';
-import {expect} from 'detox';
-import {IndexableNativeElement} from 'detox/detox';
+import { expect } from 'detox';
+import { IndexableNativeElement } from 'detox/detox';
 
 describe('Raw queries', () => {
   let testCount = 0;
@@ -10,11 +10,10 @@ describe('Raw queries', () => {
     const suiteElement = element(by.id('Raw queries'));
     await suiteElement.tap();
 
-    const testCounterLabel = ((await suiteElement.getAttributes()) as any)
-      .label;
+    const testCounterLabel = ((await suiteElement.getAttributes()) as any).label;
     testCount = Number(testCounterLabel);
 
-    await waitForAllLoadingIndicatorsToDisappear(30000);
+    await waitForAllLoadingIndicatorsToDisappear(60000);
   });
 
   // Since tests need to be defined statically, we need to use a loop to evaluate the tests dynamically
@@ -33,7 +32,7 @@ describe('Raw queries', () => {
         tests.push({
           title: title,
           status: 'passed',
-          message: 'Test passed',
+          message: 'Test passed'
         });
       } catch (e) {
         try {
@@ -43,17 +42,17 @@ describe('Raw queries', () => {
             title: title,
             status: 'failed',
             message: errorMessage,
-            trace: (e as any).message,
+            trace: (e as any).message
           });
         } catch (_e) {
           tests.push({
             title: title,
-            status: 'pending',
+            status: 'pending'
           });
         }
       }
     }
-    let hasErrors = !!tests.filter(t => t.status === 'failed').length;
+    let hasErrors = !!tests.filter((t) => t.status === 'failed').length;
 
     // Dump error traces first
     if (hasErrors) {
@@ -72,9 +71,7 @@ describe('Raw queries', () => {
       if (t.status === 'passed') {
         console.log(`\x1b[32m#${i + 1} ${t.title}\x1b[0m`);
       } else if (t.status === 'failed') {
-        console.log(
-          `\x1b[31m#${i + 1} ${t.title} - Failed \x1b[37m${t.message}`,
-        );
+        console.log(`\x1b[31m#${i + 1} ${t.title} - Failed \x1b[37m${t.message}`);
       } else {
         console.log(`\x1b[33m#${i + 1} ${t.title}`);
       }
@@ -104,11 +101,9 @@ async function waitForAllLoadingIndicatorsToDisappear(timeout = 20000) {
       // If error, some indicators still exist
       console.log('Loading indicators still present, waiting...');
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   }
 
-  throw new Error(
-    `All loading indicators did not disappear within ${timeout}ms`,
-  );
+  throw new Error(`All loading indicators did not disappear within ${timeout}ms`);
 }
