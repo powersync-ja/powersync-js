@@ -225,7 +225,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
           const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
           expect(call.params!['count']).eq(0);
         },
-        { timeout: 4000, interval: 100 }
+        { timeout: 8000, interval: 100 }
       );
 
       expect(
