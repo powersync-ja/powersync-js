@@ -15,7 +15,7 @@
   "scripts": {
     "install": "node download_core.js",
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w",
     "test": "vitest"
