@@ -1,5 +1,12 @@
 # @powersync/node
 
+## 0.4.3
+
+### Patch Changes
+
+- 2e03dd6: Add a `main` entry to `package.json`. It will be ignored because the package uses conditional exports, but is required for tools like `pkg`.
+- 2e03dd6: Support `@powersync/better-sqlite3` versions `0.2.x`.
+
 ## 0.4.2
 
 ### Patch Changes
