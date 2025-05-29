@@ -17,7 +17,10 @@ export class Schema<S extends SchemaType = SchemaType> {
   readonly props: S;
   readonly tables: Table[];
 
-  constructor(tables: Table[] | S) {
+  constructor(
+    tables: Table[] | S,
+    readonly getCustomSQL?: ({ getInternalName }: { getInternalName: (tableName: string) => string }) => string[]
+  ) {
     if (Array.isArray(tables)) {
       /*
         We need to validate that the tables have a name here because a user could pass in an array
@@ -55,5 +58,9 @@ export class Schema<S extends SchemaType = SchemaType> {
     return Object.entries(props).map(([name, table]) => {
       return table.copyWithName(name);
     });
+  }
+
+  getTableInternalName(tableName: string) {
+    return this.tables.find((t) => t.name === tableName)?.internalName;
   }
 }
