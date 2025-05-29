@@ -449,15 +449,16 @@ The next upload iteration will be delayed.`);
         await this.streamingSyncIteration(nestedAbortController.signal, options);
         // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
-        let delay = true;
         /**
          * Either:
          *  - A network request failed with a failed connection or not OKAY response code.
          *  - There was a sync processing error.
-         * This loop will retry.
+         *  - The connection was aborted.
+         * This loop will retry after a delay if the connection was not aborted.
          * The nested abort controller will cleanup any open network requests and streams.
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
+        let delay = true;
         if (ex instanceof AbortOperation) {
           this.logger.warn(ex);
           delay = false;

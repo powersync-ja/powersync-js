@@ -81,6 +81,9 @@ export class MockRemote extends AbstractRemote {
         if (this.errorOnStreamStart) {
           controller.error(new Error('Mock error on stream start'));
         }
+        // The request could be aborted at any time.
+        // This checks if the signal is already aborted and closes the stream if so.
+        // If not, it adds an event listener to close the stream when the signal is aborted.
         if (signal?.aborted) {
           controller.close();
           return;

@@ -145,7 +145,7 @@ export class SharedSyncImplementation
             await this.openInternalDB();
           }
 
-          const sync = await this.generateStreamingImplementation();
+          const sync = this.generateStreamingImplementation();
           const onDispose = sync.registerListener({
             statusChanged: (status) => {
               this.updateAllStatuses(status.toJSON());
@@ -270,6 +270,9 @@ export class SharedSyncImplementation
    * clients.
    */
   async removePort(port: MessagePort) {
+    // Remove the port within a mutex context.
+    // Warns if the port is not found. This should not happen in practice.
+    // We return early if the port is not found.
     const { trackedPort, shouldReconnect } = await this.portMutex.runExclusive(async () => {
       const index = this.ports.findIndex((p) => p.port == port);
       if (index < 0) {
