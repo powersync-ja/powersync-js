@@ -11,6 +11,10 @@ import {
  */
 export interface ConnectionManagerSyncImplementationResult {
   sync: StreamingSyncImplementation;
+  /**
+   * Additional cleanup function which is called after the sync stream implementation
+   * is disposed.
+   */
   onDispose: () => Promise<void> | void;
 }
 
@@ -65,7 +69,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   protected pendingConnectionOptions: StoredConnectionOptions | null;
 
   syncStreamImplementation: StreamingSyncImplementation | null;
-  syncDisposer: (() => Promise<void> | void) | null;
+
+  /**
+   * Additional cleanup function which is called after the sync stream implementation
+   * is disposed.
+   */
+  protected syncDisposer: (() => Promise<void> | void) | null;
 
   constructor(protected options: ConnectionManagerOptions) {
     super();
@@ -82,6 +91,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   async close() {
+    await this.syncStreamImplementation?.dispose();
     await this.syncDisposer?.();
   }
 
@@ -101,7 +111,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // If we do already have pending options, a disconnect has already been performed.
     // The connectInternal method also does a sanity disconnect to prevent straggler connections.
     // We should also disconnect if we have already completed a connection attempt.
-    if (!hadPendingOptions) {
+    if (!hadPendingOptions || this.syncStreamImplementation) {
       await this.disconnectInternal();
     }
 
@@ -145,11 +155,14 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
           return;
         }
 
+        if (this.disconnectingPromise) {
+          return;
+        }
+
         const { connector, options } = this.pendingConnectionOptions;
         appliedOptions = options;
 
         this.pendingConnectionOptions = null;
-
         const { sync, onDispose } = await this.options.createSyncImplementation(connector, options);
         this.iterateListeners((l) => l.syncStreamCreated?.(sync));
         this.syncStreamImplementation = sync;
@@ -195,10 +208,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       return this.disconnectingPromise;
     }
 
-    // Wait if a sync stream implementation is being created before closing it
-    // (syncStreamImplementation must be assigned before we can properly dispose it)
-    await this.syncStreamInitPromise;
-
     this.disconnectingPromise = this.performDisconnect();
 
     await this.disconnectingPromise;
@@ -206,6 +215,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   protected async performDisconnect() {
+    // Wait if a sync stream implementation is being created before closing it
+    // (syncStreamImplementation must be assigned before we can properly dispose it)
+    await this.syncStreamInitPromise;
+
     // Keep reference to the sync stream implementation and disposer
     // The class members will be cleared before we trigger the disconnect
     // to prevent any further calls to the sync stream implementation.

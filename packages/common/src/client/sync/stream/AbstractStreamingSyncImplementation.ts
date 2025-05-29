@@ -449,6 +449,7 @@ The next upload iteration will be delayed.`);
         await this.streamingSyncIteration(nestedAbortController.signal, options);
         // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
+        let delay = true;
         /**
          * Either:
          *  - A network request failed with a failed connection or not OKAY response code.
@@ -459,6 +460,8 @@ The next upload iteration will be delayed.`);
          */
         if (ex instanceof AbortOperation) {
           this.logger.warn(ex);
+          delay = false;
+          // A disconnect was requested, we should not delay since there is no explicit retry
         } else {
           this.logger.error(ex);
         }
@@ -470,7 +473,9 @@ The next upload iteration will be delayed.`);
         });
 
         // On error, wait a little before retrying
-        await this.delayRetry();
+        if (delay) {
+          await this.delayRetry();
+        }
       } finally {
         if (!signal.aborted) {
           nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));

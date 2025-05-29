@@ -30,6 +30,7 @@ import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProv
 import { BroadcastLogger } from './BroadcastLogger';
 
 /**
+ * @internal
  * Manual message events for shared sync clients
  */
 export enum SharedSyncClientEvent {
@@ -42,6 +43,9 @@ export enum SharedSyncClientEvent {
   CLOSE_ACK = 'close-ack'
 }
 
+/**
+ * @internal
+ */
 export type ManualSharedSyncPayload = {
   event: SharedSyncClientEvent;
   data: any; // TODO update in future
@@ -85,6 +89,7 @@ export type RemoteOperationAbortController = {
  * We provide this unused placeholder when connecting with the ConnectionManager.
  */
 const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
+
 /**
  * @internal
  * Shared sync implementation which runs inside a shared webworker
@@ -133,23 +138,25 @@ export class SharedSyncImplementation
     this.broadCastLogger = new BroadcastLogger(this.ports);
 
     this.connectionManager = new ConnectionManager({
-      createSyncImplementation: async (connector, options) => {
-        await this.waitForReady();
-        if (!this.dbAdapter) {
-          await this.openInternalDB();
-        }
-
-        const sync = this.generateStreamingImplementation();
-        const onDispose = sync.registerListener({
-          statusChanged: (status) => {
-            this.updateAllStatuses(status.toJSON());
+      createSyncImplementation: async () => {
+        return this.portMutex.runExclusive(async () => {
+          await this.waitForReady();
+          if (!this.dbAdapter) {
+            await this.openInternalDB();
           }
-        });
 
-        return {
-          sync,
-          onDispose
-        };
+          const sync = await this.generateStreamingImplementation();
+          const onDispose = sync.registerListener({
+            statusChanged: (status) => {
+              this.updateAllStatuses(status.toJSON());
+            }
+          });
+
+          return {
+            sync,
+            onDispose
+          };
+        });
       },
       logger: this.logger
     });
@@ -190,15 +197,17 @@ export class SharedSyncImplementation
   async setParams(params: SharedSyncInitOptions) {
     await this.portMutex.runExclusive(async () => {
       if (this.syncParams) {
+        // Cannot modify already existing sync implementation params
+        // But we can ask for a DB adapter, if required, at this point.
+
         if (!this.dbAdapter) {
           await this.openInternalDB();
         }
-        // Cannot modify already existing sync implementation
         return;
       }
 
+      // First time setting params
       this.syncParams = params;
-
       if (params.streamOptions?.flags?.broadcastLogs) {
         this.logger = this.broadCastLogger;
       }
@@ -229,17 +238,12 @@ export class SharedSyncImplementation
    * connects.
    */
   async connect(options?: PowerSyncConnectionOptions) {
-    await this.portMutex.runExclusive(async () => {
-      // Keep track of the last connect options if we need to reconnect due to a lost client
-      this.lastConnectOptions = options;
-      return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options);
-    });
+    this.lastConnectOptions = options;
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options);
   }
 
   async disconnect() {
-    await this.portMutex.runExclusive(async () => {
-      await this.connectionManager.disconnect();
-    });
+    return this.connectionManager.disconnect();
   }
 
   /**
@@ -266,11 +270,11 @@ export class SharedSyncImplementation
    * clients.
    */
   async removePort(port: MessagePort) {
-    return await this.portMutex.runExclusive(async () => {
+    const { trackedPort, shouldReconnect } = await this.portMutex.runExclusive(async () => {
       const index = this.ports.findIndex((p) => p.port == port);
       if (index < 0) {
         this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
-        return;
+        return {};
       }
 
       const trackedPort = this.ports[index];
@@ -291,26 +295,35 @@ export class SharedSyncImplementation
 
       const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
 
-      if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
-        if (shouldReconnect) {
-          await this.connectionManager.disconnect();
-        }
-
-        // Clearing the adapter will result in a new one being opened in connect
-        this.dbAdapter = null;
-
-        if (shouldReconnect) {
-          await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions);
-        }
-      }
-
-      if (trackedPort.db) {
-        await trackedPort.db.close();
-      }
-      this.logger.debug(`Port ${port} removed from shared sync implementation.`);
-      // Release proxy
-      return () => trackedPort.clientProvider[Comlink.releaseProxy]();
+      return {
+        shouldReconnect,
+        trackedPort
+      };
     });
+
+    if (!trackedPort) {
+      // We could not find the port to remove
+      return () => {};
+    }
+
+    if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
+      if (shouldReconnect) {
+        await this.connectionManager.disconnect();
+      }
+
+      // Clearing the adapter will result in a new one being opened in connect
+      this.dbAdapter = null;
+
+      if (shouldReconnect) {
+        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions);
+      }
+    }
+
+    if (trackedPort.db) {
+      await trackedPort.db.close();
+    }
+    // Release proxy
+    return () => trackedPort.clientProvider[Comlink.releaseProxy]();
   }
 
   triggerCrudUpload() {
@@ -351,7 +364,6 @@ export class SharedSyncImplementation
   protected generateStreamingImplementation() {
     // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
-
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
     return new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(this.dbAdapter!, new Mutex(), this.logger),
@@ -454,7 +466,7 @@ export class SharedSyncImplementation
    * A function only used for unit tests which updates the internal
    * sync stream client and all tab client's sync status
    */
-  private _testUpdateAllStatuses(status: SyncStatusOptions) {
+  private async _testUpdateAllStatuses(status: SyncStatusOptions) {
     if (!this.connectionManager.syncStreamImplementation) {
       // This is just for testing purposes
       this.connectionManager.syncStreamImplementation = this.generateStreamingImplementation();
