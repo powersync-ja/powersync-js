@@ -4,8 +4,11 @@ import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 
+/**
+ * @returns {import('rollup').RollupOptions}
+ */
 export default (commandLineArgs) => {
-  const sourcemap = (commandLineArgs.sourceMap || 'true') == 'true';
+  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
 
   // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
   delete commandLineArgs.sourceMap;
@@ -15,7 +18,7 @@ export default (commandLineArgs) => {
     output: {
       file: 'dist/bundle.mjs',
       format: 'esm',
-      sourcemap: sourcemap
+      sourcemap: sourceMap
     },
     plugins: [
       json(),
@@ -27,7 +30,7 @@ export default (commandLineArgs) => {
         // Used by can-ndjson-stream
         TextDecoder: ['text-encoding', 'TextDecoder']
       }),
-      terser()
+      terser({ sourceMap })
     ],
     // This makes life easier
     external: [

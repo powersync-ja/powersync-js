@@ -1,16 +1,16 @@
 import {
-  type AbstractStreamingSyncImplementation,
   type ILogger,
   type ILogLevel,
-  type LockOptions,
   type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   type SyncStatusOptions,
   AbortOperation,
   BaseObserver,
+  ConnectionManager,
   createLogger,
   DBAdapter,
+  PowerSyncBackendConnector,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
@@ -26,11 +26,11 @@ import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConn
 import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
 import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
 
 /**
+ * @internal
  * Manual message events for shared sync clients
  */
 export enum SharedSyncClientEvent {
@@ -38,9 +38,14 @@ export enum SharedSyncClientEvent {
    * This client requests the shared sync manager should
    * close it's connection to the client.
    */
-  CLOSE_CLIENT = 'close-client'
+  CLOSE_CLIENT = 'close-client',
+
+  CLOSE_ACK = 'close-ack'
 }
 
+/**
+ * @internal
+ */
 export type ManualSharedSyncPayload = {
   event: SharedSyncClientEvent;
   data: any; // TODO update in future
@@ -79,6 +84,13 @@ export type RemoteOperationAbortController = {
 };
 
 /**
+ * HACK: The shared implementation wraps and provides its own
+ * PowerSyncBackendConnector when generating the streaming sync implementation.
+ * We provide this unused placeholder when connecting with the ConnectionManager.
+ */
+const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
+
+/**
  * @internal
  * Shared sync implementation which runs inside a shared webworker
  */
@@ -87,7 +99,6 @@ export class SharedSyncImplementation
   implements StreamingSyncImplementation
 {
   protected ports: WrappedSyncPort[];
-  protected syncStreamClient: AbstractStreamingSyncImplementation | null;
 
   protected isInitialized: Promise<void>;
   protected statusListener?: () => void;
@@ -99,7 +110,9 @@ export class SharedSyncImplementation
   protected syncParams: SharedSyncInitOptions | null;
   protected logger: ILogger;
   protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
+  protected portMutex: Mutex;
 
+  protected connectionManager: ConnectionManager;
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
 
@@ -108,9 +121,9 @@ export class SharedSyncImplementation
     this.ports = [];
     this.dbAdapter = null;
     this.syncParams = null;
-    this.syncStreamClient = null;
     this.logger = createLogger('shared-sync');
     this.lastConnectOptions = undefined;
+    this.portMutex = new Mutex();
 
     this.isInitialized = new Promise((resolve) => {
       const callback = this.registerListener({
@@ -123,24 +136,50 @@ export class SharedSyncImplementation
 
     this.syncStatus = new SyncStatus({});
     this.broadCastLogger = new BroadcastLogger(this.ports);
-  }
 
-  async waitForStatus(status: SyncStatusOptions): Promise<void> {
-    await this.waitForReady();
-    return this.syncStreamClient!.waitForStatus(status);
-  }
+    this.connectionManager = new ConnectionManager({
+      createSyncImplementation: async () => {
+        return this.portMutex.runExclusive(async () => {
+          await this.waitForReady();
+          if (!this.dbAdapter) {
+            await this.openInternalDB();
+          }
 
-  async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
-    await this.waitForReady();
-    return this.syncStreamClient!.waitUntilStatusMatches(predicate);
+          const sync = this.generateStreamingImplementation();
+          const onDispose = sync.registerListener({
+            statusChanged: (status) => {
+              this.updateAllStatuses(status.toJSON());
+            }
+          });
+
+          return {
+            sync,
+            onDispose
+          };
+        });
+      },
+      logger: this.logger
+    });
   }
 
   get lastSyncedAt(): Date | undefined {
-    return this.syncStreamClient?.lastSyncedAt;
+    return this.connectionManager.syncStreamImplementation?.lastSyncedAt;
   }
 
   get isConnected(): boolean {
-    return this.syncStreamClient?.isConnected ?? false;
+    return this.connectionManager.syncStreamImplementation?.isConnected ?? false;
+  }
+
+  async waitForStatus(status: SyncStatusOptions): Promise<void> {
+    return this.withSyncImplementation(async (sync) => {
+      return sync.waitForStatus(status);
+    });
+  }
+
+  async waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void> {
+    return this.withSyncImplementation(async (sync) => {
+      return sync.waitUntilStatusMatches(predicate);
+    });
   }
 
   async waitForReady() {
@@ -156,30 +195,40 @@ export class SharedSyncImplementation
    * Configures the DBAdapter connection and a streaming sync client.
    */
   async setParams(params: SharedSyncInitOptions) {
-    if (this.syncParams) {
-      // Cannot modify already existing sync implementation
-      return;
-    }
+    await this.portMutex.runExclusive(async () => {
+      if (this.syncParams) {
+        // Cannot modify already existing sync implementation params
+        // But we can ask for a DB adapter, if required, at this point.
 
-    this.syncParams = params;
+        if (!this.dbAdapter) {
+          await this.openInternalDB();
+        }
+        return;
+      }
 
-    if (params.streamOptions?.flags?.broadcastLogs) {
-      this.logger = this.broadCastLogger;
-    }
+      // First time setting params
+      this.syncParams = params;
+      if (params.streamOptions?.flags?.broadcastLogs) {
+        this.logger = this.broadCastLogger;
+      }
 
-    self.onerror = (event) => {
-      // Share any uncaught events on the broadcast logger
-      this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
-    };
+      self.onerror = (event) => {
+        // Share any uncaught events on the broadcast logger
+        this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
+      };
 
-    await this.openInternalDB();
-    this.iterateListeners((l) => l.initialized?.());
+      if (!this.dbAdapter) {
+        await this.openInternalDB();
+      }
+
+      this.iterateListeners((l) => l.initialized?.());
+    });
   }
 
   async dispose() {
     await this.waitForReady();
     this.statusListener?.();
-    return this.syncStreamClient?.dispose();
+    return this.connectionManager.close();
   }
 
   /**
@@ -189,49 +238,31 @@ export class SharedSyncImplementation
    * connects.
    */
   async connect(options?: PowerSyncConnectionOptions) {
-    await this.waitForReady();
-    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return getNavigatorLocks().request('shared-sync-connect', async () => {
-      if (!this.dbAdapter) {
-        await this.openInternalDB();
-      }
-      this.syncStreamClient = this.generateStreamingImplementation();
-      this.lastConnectOptions = options;
-      this.syncStreamClient.registerListener({
-        statusChanged: (status) => {
-          this.updateAllStatuses(status.toJSON());
-        }
-      });
-
-      await this.syncStreamClient.connect(options);
-    });
+    this.lastConnectOptions = options;
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options);
   }
 
   async disconnect() {
-    await this.waitForReady();
-    // This effectively queues connect and disconnect calls. Ensuring multiple tabs' requests are synchronized
-    return getNavigatorLocks().request('shared-sync-connect', async () => {
-      await this.syncStreamClient?.disconnect();
-      await this.syncStreamClient?.dispose();
-      this.syncStreamClient = null;
-    });
+    return this.connectionManager.disconnect();
   }
 
   /**
    * Adds a new client tab's message port to the list of connected ports
    */
-  addPort(port: MessagePort) {
-    const portProvider = {
-      port,
-      clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
-    };
-    this.ports.push(portProvider);
+  async addPort(port: MessagePort) {
+    await this.portMutex.runExclusive(() => {
+      const portProvider = {
+        port,
+        clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
+      };
+      this.ports.push(portProvider);
 
-    // Give the newly connected client the latest status
-    const status = this.syncStreamClient?.syncStatus;
-    if (status) {
-      portProvider.clientProvider.statusChanged(status.toJSON());
-    }
+      // Give the newly connected client the latest status
+      const status = this.connectionManager.syncStreamImplementation?.syncStatus;
+      if (status) {
+        portProvider.clientProvider.statusChanged(status.toJSON());
+      }
+    });
   }
 
   /**
@@ -239,70 +270,105 @@ export class SharedSyncImplementation
    * clients.
    */
   async removePort(port: MessagePort) {
-    const index = this.ports.findIndex((p) => p.port == port);
-    if (index < 0) {
-      this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
-      return;
-    }
-
-    const trackedPort = this.ports[index];
-    // Remove from the list of active ports
-    this.ports.splice(index, 1);
-
-    /**
-     * The port might currently be in use. Any active functions might
-     * not resolve. Abort them here.
-     */
-    [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
-      if (abortController?.activePort.port == port) {
-        abortController!.controller.abort(new AbortOperation('Closing pending requests after client port is removed'));
+    // Remove the port within a mutex context.
+    // Warns if the port is not found. This should not happen in practice.
+    // We return early if the port is not found.
+    const { trackedPort, shouldReconnect } = await this.portMutex.runExclusive(async () => {
+      const index = this.ports.findIndex((p) => p.port == port);
+      if (index < 0) {
+        this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
+        return {};
       }
+
+      const trackedPort = this.ports[index];
+      // Remove from the list of active ports
+      this.ports.splice(index, 1);
+
+      /**
+       * The port might currently be in use. Any active functions might
+       * not resolve. Abort them here.
+       */
+      [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
+        if (abortController?.activePort.port == port) {
+          abortController!.controller.abort(
+            new AbortOperation('Closing pending requests after client port is removed')
+          );
+        }
+      });
+
+      const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
+
+      return {
+        shouldReconnect,
+        trackedPort
+      };
     });
 
-    const shouldReconnect = !!this.syncStreamClient;
+    if (!trackedPort) {
+      // We could not find the port to remove
+      return () => {};
+    }
+
     if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
       if (shouldReconnect) {
-        await this.disconnect();
+        await this.connectionManager.disconnect();
       }
 
       // Clearing the adapter will result in a new one being opened in connect
       this.dbAdapter = null;
 
       if (shouldReconnect) {
-        await this.connect(this.lastConnectOptions);
+        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions);
       }
     }
 
     if (trackedPort.db) {
-      trackedPort.db.close();
+      await trackedPort.db.close();
     }
     // Release proxy
-    trackedPort.clientProvider[Comlink.releaseProxy]();
+    return () => trackedPort.clientProvider[Comlink.releaseProxy]();
   }
 
   triggerCrudUpload() {
-    this.waitForReady().then(() => this.syncStreamClient?.triggerCrudUpload());
-  }
-
-  async obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
-    await this.waitForReady();
-    return this.syncStreamClient!.obtainLock(lockOptions);
+    this.withSyncImplementation(async (sync) => {
+      sync.triggerCrudUpload();
+    });
   }
 
   async hasCompletedSync(): Promise<boolean> {
-    await this.waitForReady();
-    return this.syncStreamClient!.hasCompletedSync();
+    return this.withSyncImplementation(async (sync) => {
+      return sync.hasCompletedSync();
+    });
   }
 
   async getWriteCheckpoint(): Promise<string> {
+    return this.withSyncImplementation(async (sync) => {
+      return sync.getWriteCheckpoint();
+    });
+  }
+
+  protected async withSyncImplementation<T>(callback: (sync: StreamingSyncImplementation) => Promise<T>): Promise<T> {
     await this.waitForReady();
-    return this.syncStreamClient!.getWriteCheckpoint();
+
+    if (this.connectionManager.syncStreamImplementation) {
+      return callback(this.connectionManager.syncStreamImplementation);
+    }
+
+    const sync = await new Promise<StreamingSyncImplementation>((resolve) => {
+      const dispose = this.connectionManager.registerListener({
+        syncStreamCreated: (sync) => {
+          resolve(sync);
+          dispose?.();
+        }
+      });
+    });
+
+    return callback(sync);
   }
 
   protected generateStreamingImplementation() {
     // This should only be called after initialization has completed
     const syncParams = this.syncParams!;
-
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
     return new WebStreamingSyncImplementation({
       adapter: new SqliteBucketStorage(this.dbAdapter!, new Mutex(), this.logger),
@@ -405,15 +471,14 @@ export class SharedSyncImplementation
    * A function only used for unit tests which updates the internal
    * sync stream client and all tab client's sync status
    */
-  private _testUpdateAllStatuses(status: SyncStatusOptions) {
-    if (!this.syncStreamClient) {
+  private async _testUpdateAllStatuses(status: SyncStatusOptions) {
+    if (!this.connectionManager.syncStreamImplementation) {
       // This is just for testing purposes
-      this.syncStreamClient = this.generateStreamingImplementation();
+      this.connectionManager.syncStreamImplementation = this.generateStreamingImplementation();
     }
 
     // Only assigning, don't call listeners for this test
-    this.syncStreamClient!.syncStatus = new SyncStatus(status);
-
+    this.connectionManager.syncStreamImplementation!.syncStatus = new SyncStatus(status);
     this.updateAllStatuses(status);
   }
 }

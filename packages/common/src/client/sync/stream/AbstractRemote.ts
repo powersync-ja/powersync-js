@@ -4,12 +4,12 @@ import ndjsonStream from 'can-ndjson-stream';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
-import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
+import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
 export type BSONImplementation = typeof BSON;
 

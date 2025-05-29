@@ -5,16 +5,16 @@ import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { type AttachmentRecord } from '@powersync/attachments';
+import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
 import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
-import { configureFts } from '../fts/fts_setup';
 
 const logger = createBaseLogger();
 logger.useDefaults();
-logger.setLevel(LogLevel.INFO);
+logger.setLevel(LogLevel.DEBUG);
 
 export class System {
   kvStorage: KVStorage;
@@ -31,19 +31,22 @@ export class System {
       schema: AppSchema,
       database: {
         dbFilename: 'sqlite.db'
-      }
+      },
+      logger
     });
     /**
      * The snippet below uses OP-SQLite as the default database adapter.
      * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
      * install both `@powersync/op-sqlite` and `@op-engineering/op-sqlite` to use this.
      *
+     * ```typescript
      * import { OPSqliteOpenFactory } from '@powersync/op-sqlite'; // Add this import
      *
      * const factory = new OPSqliteOpenFactory({
-     * dbFilename: 'sqlite.db'
+     *  dbFilename: 'sqlite.db'
      * });
      * this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
+     * ```
      */
 
     if (AppConfig.supabaseBucket) {
