@@ -5,4 +5,4 @@
 '@powersync/web': minor
 ---
 
-Improved behvaiour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
