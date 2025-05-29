@@ -180,7 +180,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   private _database: DBAdapter;
 
-  protected connectionMutex: Mutex;
+  protected runExclusiveMutex: Mutex;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
@@ -212,7 +212,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
-    this.connectionMutex = new Mutex();
+    this.runExclusiveMutex = new Mutex();
     // Start async init
     this.connectionManager = new ConnectionManager({
       createSyncImplementation: async (connector, options) => {
@@ -462,7 +462,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Locking here is mostly only important on web for multiple tab scenarios.
    */
   protected runExclusive<T>(callback: () => Promise<T>): Promise<T> {
-    return this.connectionMutex.runExclusive(callback);
+    return this.runExclusiveMutex.runExclusive(callback);
   }
 
   /**

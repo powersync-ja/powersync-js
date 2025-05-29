@@ -327,7 +327,9 @@ export class SharedSyncImplementation
   }
 
   triggerCrudUpload() {
-    this.waitForReady().then(() => this.connectionManager.syncStreamImplementation?.triggerCrudUpload());
+    this.withSyncImplementation(async (sync) => {
+      sync.triggerCrudUpload();
+    });
   }
 
   async hasCompletedSync(): Promise<boolean> {

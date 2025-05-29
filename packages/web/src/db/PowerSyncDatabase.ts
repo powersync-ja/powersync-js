@@ -171,10 +171,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     });
   }
 
-  protected async connectExclusive(callback: () => Promise<void>): Promise<void> {
-    await this.runExclusive(callback);
-  }
-
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }

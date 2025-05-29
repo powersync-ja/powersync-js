@@ -31,10 +31,6 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
     return Promise.resolve();
   }
 
-  protected async runExclusive<T>(callback: () => Promise<T>): Promise<T> {
-    return await callback();
-  }
-
   get database() {
     return {
       get: vi.fn().mockResolvedValue({ version: '0.3.11' }),
