@@ -152,10 +152,12 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         if (!this.pendingConnectionOptions) {
           this.logger.debug('No pending connection options found, not creating sync stream implementation');
           // A disconnect could have cleared this.
+          resolve();
           return;
         }
 
         if (this.disconnectingPromise) {
+          resolve();
           return;
         }
 
