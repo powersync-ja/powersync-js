@@ -4,7 +4,7 @@
  *
  * @format
  */
-
+import '@azure/core-asynciterator-polyfill';
 import React from 'react';
 import { SafeAreaView, ScrollView, StatusBar, useColorScheme } from 'react-native';
 
@@ -17,7 +17,7 @@ function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter
   };
 
   const [] = React.useState(registerBaseTests());
@@ -40,7 +40,7 @@ function App(): React.JSX.Element {
       />
       <ScrollView style={backgroundStyle}>
         {/* <PowerSyncIndicator /> */}
-        {rootSuite.suites.map(suite => (
+        {rootSuite.suites.map((suite) => (
           <SuitWidget key={suite.title} suit={suite} />
         ))}
       </ScrollView>

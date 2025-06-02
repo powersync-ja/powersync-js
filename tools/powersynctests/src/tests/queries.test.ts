@@ -528,6 +528,49 @@ export function registerBaseTests() {
       await watched;
     });
 
+    it('Should reflect writeTransaction updates on read connections (iterator)', async () => {
+      const watched = new Promise<void>(async (resolve) => {
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM users', [])) {
+          if (result.rows?.item(0).count == 1) {
+            resolve();
+          }
+        }
+      });
+
+      await db.writeTransaction(async (tx) => {
+        return createTestUser(tx);
+      });
+
+      // The watched query should have updated
+      await watched;
+    });
+
+    it('Should throw for async iterator watch errors', async () => {
+      let error: Error | undefined;
+      try {
+        // The table here does not exist, so it should throw an error
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM faketable', [])) {
+        }
+      } catch (ex) {
+        error = ex as Error;
+      }
+
+      expect(error!.message).to.include('no such table: faketable');
+    });
+
+    it('Should throw for async iterator invalid query errors', async () => {
+      let error: Error | undefined;
+      try {
+        // Invalid SQL
+        for await (const result of db.watch('invalidsyntax', [])) {
+        }
+      } catch (ex) {
+        error = ex as Error;
+      }
+
+      expect(error!.message).to.include('sqlite query error');
+    });
+
     it('Should reflect writeLock updates on read connections ', async () => {
       const numberOfUsers = 1000;
 

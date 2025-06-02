@@ -17,7 +17,7 @@ jobs:
         id: check
         run: |
           git fetch origin ${{ github.base_ref }}
-          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite; then
+          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite tools/powersynctests; then
             echo "should_run=false" >> $GITHUB_OUTPUT
           else
             echo "should_run=true" >> $GITHUB_OUTPUT
