@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.31.1
+
+### Patch Changes
+
+- b046ebe: Fix reported progress around compactions / defrags on the sync service.
+
 ## 1.31.0
 
 ### Minor Changes
