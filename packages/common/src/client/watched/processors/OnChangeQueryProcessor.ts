@@ -79,7 +79,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
 
             const partialStateUpdate: Partial<WatchedQueryState<Data>> = {};
 
-            // Always run the query if an underlaying table has changed
+            // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({
               sql: compiledQuery.sql,
               // Allows casting from ReadOnlyArray[unknown] to Array<unknown>

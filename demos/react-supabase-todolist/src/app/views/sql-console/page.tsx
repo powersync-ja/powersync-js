@@ -2,6 +2,7 @@ import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@powersync/react';
+import { ArrayComparator } from '@powersync/web';
 import React from 'react';
 
 export type LoginFormParams = {
@@ -9,10 +10,14 @@ export type LoginFormParams = {
   password: string;
 };
 
-const DEFAULT_QUERY = 'SELECT * FROM lists';
+const DEFAULT_QUERY = /* sql */ `
+  SELECT
+    *
+  FROM
+    lists
+`;
 
-const TableDisplay = ({ data }: { data: any[] }) => {
-  console.log('Rendering table display', data);
+const TableDisplay = React.memo(({ data }: { data: any[] }) => {
   const queryDataGridResult = React.useMemo(() => {
     const firstItem = data?.[0];
     return {
@@ -44,15 +49,28 @@ const TableDisplay = ({ data }: { data: any[] }) => {
       />
     </S.QueryResultContainer>
   );
-};
+});
+
 export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
-  const { data } = useQuery(query, [], { reportFetching: false });
 
-  React.useEffect(() => {
-    console.log('Query result changed', data);
-  }, [data]);
+  const { data } = useQuery(query, [], {
+    /**
+     * We don't use the isFetching status here, we can avoid re-renders if we don't report on it.
+     */
+    reportFetching: false,
+    /**
+     * The query here will only emit results when the query data set changes.
+     * Result sets are compared by serializing each item to JSON and comparing the strings.
+     */
+    processor: {
+      mode: 'comparison',
+      comparator: new ArrayComparator({
+        compareBy: (item) => JSON.stringify(item)
+      })
+    }
+  });
 
   return (
     <NavigationPage title="SQL Console">

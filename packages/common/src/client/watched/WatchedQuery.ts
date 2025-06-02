@@ -37,8 +37,6 @@ export interface WatchExecuteOptions {
 }
 
 /**
- *
- * @internal
  * Similar to {@link CompatibleQuery}, except the `execute` method
  * does not enforce an Array result type.
  */
@@ -47,9 +45,6 @@ export interface WatchCompatibleQuery<ResultType> {
   compile(): CompiledQuery;
 }
 
-/**
- * @internal
- */
 export interface WatchedQueryOptions<DataType> {
   query: WatchCompatibleQuery<DataType>;
 
@@ -107,7 +102,7 @@ export interface WatchedQuery<Data> extends BaseObserverInterface<WatchedQueryLi
   subscribe(subscription: WatchedQuerySubscription<Data>): () => void;
 
   /**
-   * Updates the underlaying query options.
+   * Updates the underlying query options.
    * This will trigger a re-evaluation of the query and update the state.
    */
   updateSettings(options: WatchedQueryOptions<Data>): Promise<void>;

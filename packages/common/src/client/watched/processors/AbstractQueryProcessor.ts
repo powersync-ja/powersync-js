@@ -29,7 +29,7 @@ export interface LinkQueryOptions<Data> {
 type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & WatchedQueryListener;
 
 /**
- * Performs underlaying watching and yields a stream of results.
+ * Performs underlying watching and yields a stream of results.
  * @internal
  */
 export abstract class AbstractQueryProcessor<Data = unknown[]>
@@ -76,7 +76,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   }
 
   /**
-   * Updates the underlaying query.
+   * Updates the underlying query.
    */
   async updateSettings(query: WatchedQueryOptions<Data>) {
     await this.initialized;

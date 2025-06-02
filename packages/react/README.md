@@ -311,7 +311,7 @@ The above example is incomplete, but is required for the optimizations below.
 
 ### Incremental Queries
 
-By default watched queries are queried whenever a change to the underlaying tables has been detected. These changes might not be relevant to the actual query, but will still trigger a query and `data` update.
+By default watched queries are queried whenever a change to the underlying tables has been detected. These changes might not be relevant to the actual query, but will still trigger a query and `data` update.
 
 ```tsx
 function MyWidget() {

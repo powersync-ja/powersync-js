@@ -296,7 +296,7 @@ describe('useQuery', () => {
       { timeout: 500, interval: 100 }
     );
 
-    // This should still trigger an update since the underlaying tables changed.
+    // This should still trigger an update since the underlying tables changed.
     await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['noname']);
 
     // It's difficult to assert no update happened, but we can wait a bit
