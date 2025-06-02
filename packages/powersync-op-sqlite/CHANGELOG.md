@@ -1,5 +1,23 @@
 # @powersync/op-sqlite
 
+## 0.6.0
+
+### Minor Changes
+
+- 1037e8a: `close()` is now async, which allows clients to use it with `await`.
+
+### Patch Changes
+
+- 1037e8a: Rejecting pending read/write operations when the database is closed.
+
+## 0.5.6
+
+### Patch Changes
+
+- d58b4fc: Promoting package to Beta release.
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+
 ## 0.5.5
 
 ### Patch Changes

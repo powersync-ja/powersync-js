@@ -1,5 +1,25 @@
 # @powersync/node
 
+## 0.4.4
+
+### Patch Changes
+
+- 5eae93c: Fix CJS distributables not being published.
+
+## 0.4.3
+
+### Patch Changes
+
+- 2e03dd6: Add a `main` entry to `package.json`. It will be ignored because the package uses conditional exports, but is required for tools like `pkg`.
+- 2e03dd6: Support `@powersync/better-sqlite3` versions `0.2.x`.
+
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+
 ## 0.4.1
 
 ### Patch Changes

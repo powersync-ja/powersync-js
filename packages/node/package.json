@@ -1,11 +1,12 @@
 {
   "name": "@powersync/node",
-  "version": "0.4.1",
+  "version": "0.4.4",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "PowerSync Node.js SDK. Sync Postgres, MongoDB or MySQL with SQLite in your Node.js app",
+  "main": "lib/index.js",
   "files": [
     "lib",
     "dist",
@@ -14,7 +15,7 @@
   "scripts": {
     "install": "node download_core.js",
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w",
     "test": "vitest"
@@ -44,10 +45,10 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.30.0"
+    "@powersync/common": "workspace:^1.31.0"
   },
   "dependencies": {
-    "@powersync/better-sqlite3": "^0.1.1",
+    "@powersync/better-sqlite3": "^0.2.0",
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
