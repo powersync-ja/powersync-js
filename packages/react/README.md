@@ -343,7 +343,12 @@ function MyWidget() {
   // Note that isFetching is set (by default) whenever the query is being fetched/checked.
   // This will result in `MyWidget` re-rendering for any change to the `cats` table.
   const { data, isLoading, isFetching } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
-    processor: WatchedQueryProcessor.COMPARISON // TODO
+    processor: {
+      mode: 'comparison',
+      comparator: new ArrayComparator({
+        compareBy: (cat) => JSON.stringify(cat)
+      })
+    },
   })
 
   // ... Widget code
@@ -368,7 +373,12 @@ function MyWidget() {
   // When reportFetching == false the object returned from useQuery will only be changed when the data, isLoading or error state changes.
   // This method performs a comparison in memory in order to determine changes.
   const { data, isLoading, isFetching } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
-    processor: WatchedQueryProcessor.COMPARISON // TODO
+    processor: {
+      mode: 'comparison',
+      comparator: new ArrayComparator({
+        compareBy: (cat) => JSON.stringify(cat)
+      })
+    },
     reportFetching: false
   })
 
