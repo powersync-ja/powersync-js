@@ -67,7 +67,8 @@ export const useSingleSuspenseQuery = <T = any>(
           const compiledQuery = parsedQuery.compile();
           const result = await parsedQuery.execute({
             sql: compiledQuery.sql,
-            parameters: [...compiledQuery.parameters]
+            parameters: [...compiledQuery.parameters],
+            db: powerSync
           });
           if (signal.aborted) {
             return; // Abort if the signal is already aborted

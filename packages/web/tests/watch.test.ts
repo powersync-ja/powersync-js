@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchedQueryState } from '@powersync/common';
+import { AbstractPowerSyncDatabase, GetAllQuery, WatchedQueryState } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -328,13 +328,10 @@ describe('Watch Tests', { sequential: true }, () => {
   it('should stream watch results', async () => {
     const watch = powersync.incrementalWatch({
       watch: {
-        query: {
-          compile: () => ({
-            sql: 'SELECT * FROM assets',
-            parameters: []
-          }),
-          execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
-        },
+        query: new GetAllQuery({
+          sql: 'SELECT * FROM assets',
+          parameters: []
+        }),
         placeholderData: []
       }
     });

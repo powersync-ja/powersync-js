@@ -1,5 +1,6 @@
 import { CompiledQuery } from '../../types/types.js';
 import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
+import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 
 export interface WatchedQueryState<Data> {
   /**
@@ -27,13 +28,12 @@ export interface WatchedQueryState<Data> {
 }
 
 /**
- * Similar to {@link CompiledQuery}, but used for watched queries.
- * The parameters are not read-only, as they can be modified. This is useful for compatibility with
- * PowerSync queries.
+ * Options provided to the `execute` method of a {@link WatchCompatibleQuery}.
  */
-export interface WatchCompiledQuery {
+export interface WatchExecuteOptions {
   sql: string;
   parameters: any[];
+  db: AbstractPowerSyncDatabase;
 }
 
 /**
@@ -43,7 +43,7 @@ export interface WatchCompiledQuery {
  * does not enforce an Array result type.
  */
 export interface WatchCompatibleQuery<ResultType> {
-  execute(compiled: WatchCompiledQuery): Promise<ResultType>;
+  execute(options: WatchExecuteOptions): Promise<ResultType>;
   compile(): CompiledQuery;
 }
 

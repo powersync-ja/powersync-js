@@ -84,7 +84,8 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
               sql: compiledQuery.sql,
               // Allows casting from ReadOnlyArray[unknown] to Array<unknown>
               // This allows simpler compatibility with PowerSync queries
-              parameters: [...compiledQuery.parameters]
+              parameters: [...compiledQuery.parameters],
+              db: this.options.db
             });
 
             if (this.reportFetching) {
