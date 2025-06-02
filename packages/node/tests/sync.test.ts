@@ -169,58 +169,6 @@ describe('Sync', () => {
     });
 
     mockSyncServiceTest('different priorities', async ({ syncService }) => {
-        let database = await syncService.createDatabase();
-        database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
-        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-  
-        syncService.pushLine({
-          checkpoint: {
-            last_op_id: '10',
-            buckets: [
-                bucket('a', 5, {priority: 0}),
-                bucket('b', 5, {priority: 2}),
-            ]
-          }
-        });
-
-        // Should be at 0/10 for total progress (which is the same as the progress for prio 2), and a 0/5 towards prio 0.
-        await waitForProgress(database, [0, 10], [[0, [0, 5]], [2, [0, 10]]]);
-
-        pushDataLine(syncService, 'a', 5);
-        await waitForProgress(database, [5, 10], [[0, [5, 5]], [2, [5, 10]]]);
-
-        pushCheckpointComplete(syncService, 0);
-        await waitForProgress(database, [5, 10], [[0, [5, 5]], [2, [5, 10]]]);
-
-        pushDataLine(syncService, 'b', 2);
-        await waitForProgress(database, [7, 10], [[0, [5, 5]], [2, [7, 10]]]);
-
-        // Before syncing b fully, send a new checkpoint
-        syncService.pushLine({
-            checkpoint: {
-              last_op_id: '14',
-              buckets: [
-                  bucket('a', 8, {priority: 0}),
-                  bucket('b', 6, {priority: 2}),
-              ]
-            }
-        });
-        await waitForProgress(database, [7, 14], [[0, [5, 8]], [2, [7, 14]]]);
-
-        pushDataLine(syncService, 'a', 3);
-        await waitForProgress(database, [10, 14], [[0, [8, 8]], [2, [10, 14]]]);
-
-        pushCheckpointComplete(syncService, 0);
-        await waitForProgress(database, [10, 14], [[0, [8, 8]], [2, [10, 14]]]);
-
-        pushDataLine(syncService, 'b', 4);
-        await waitForProgress(database, [14, 14], [[0, [8, 8]], [2, [14, 14]]]);
-
-        pushCheckpointComplete(syncService);
-        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
-    });
-
-    mockSyncServiceTest('uses correct state when reconnecting', async ({syncService}) => {
       let database = await syncService.createDatabase();
       database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
@@ -228,10 +176,109 @@ describe('Sync', () => {
       syncService.pushLine({
         checkpoint: {
           last_op_id: '10',
-          buckets: [
-              bucket('a', 5, {priority: 0}),
-              bucket('b', 5, {priority: 3}),
-          ]
+          buckets: [bucket('a', 5, { priority: 0 }), bucket('b', 5, { priority: 2 })]
+        }
+      });
+
+      // Should be at 0/10 for total progress (which is the same as the progress for prio 2), and a 0/5 towards prio 0.
+      await waitForProgress(
+        database,
+        [0, 10],
+        [
+          [0, [0, 5]],
+          [2, [0, 10]]
+        ]
+      );
+
+      pushDataLine(syncService, 'a', 5);
+      await waitForProgress(
+        database,
+        [5, 10],
+        [
+          [0, [5, 5]],
+          [2, [5, 10]]
+        ]
+      );
+
+      pushCheckpointComplete(syncService, 0);
+      await waitForProgress(
+        database,
+        [5, 10],
+        [
+          [0, [5, 5]],
+          [2, [5, 10]]
+        ]
+      );
+
+      pushDataLine(syncService, 'b', 2);
+      await waitForProgress(
+        database,
+        [7, 10],
+        [
+          [0, [5, 5]],
+          [2, [7, 10]]
+        ]
+      );
+
+      // Before syncing b fully, send a new checkpoint
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '14',
+          buckets: [bucket('a', 8, { priority: 0 }), bucket('b', 6, { priority: 2 })]
+        }
+      });
+      await waitForProgress(
+        database,
+        [7, 14],
+        [
+          [0, [5, 8]],
+          [2, [7, 14]]
+        ]
+      );
+
+      pushDataLine(syncService, 'a', 3);
+      await waitForProgress(
+        database,
+        [10, 14],
+        [
+          [0, [8, 8]],
+          [2, [10, 14]]
+        ]
+      );
+
+      pushCheckpointComplete(syncService, 0);
+      await waitForProgress(
+        database,
+        [10, 14],
+        [
+          [0, [8, 8]],
+          [2, [10, 14]]
+        ]
+      );
+
+      pushDataLine(syncService, 'b', 4);
+      await waitForProgress(
+        database,
+        [14, 14],
+        [
+          [0, [8, 8]],
+          [2, [14, 14]]
+        ]
+      );
+
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+    });
+
+    mockSyncServiceTest('uses correct state when reconnecting', async ({ syncService }) => {
+      let database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [bucket('a', 5, { priority: 0 }), bucket('b', 5, { priority: 3 })]
         }
       });
 
@@ -239,7 +286,7 @@ describe('Sync', () => {
       pushDataLine(syncService, 'a', 5);
       pushDataLine(syncService, 'b', 1);
       pushCheckpointComplete(syncService, 0);
-      await database.waitForFirstSync({priority: 0});
+      await database.waitForFirstSync({ priority: 0 });
 
       await database.close();
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
@@ -248,19 +295,56 @@ describe('Sync', () => {
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       expect(syncService.connectedListeners[0].buckets).toStrictEqual([
-        {"name": "a", "after": "10"},
-        {"name": "b", "after": "6"},
+        { name: 'a', after: '10' },
+        { name: 'b', after: '6' }
       ]);
+    });
+
+    mockSyncServiceTest('interrupt and defrag', async ({ syncService }) => {
+      let database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [bucket('a', 10)]
+        }
+      });
+
+      await waitForProgress(database, [0, 10]);
+      pushDataLine(syncService, 'a', 5);
+      await waitForProgress(database, [5, 10]);
+
+      // Re-open database
+      await database.close();
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
+      database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      // A sync rule deploy could reset buckets, making the new bucket smaller than the existing one.
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '14',
+          buckets: [bucket('a', 4)]
+        }
+      });
+
+      // In this special case, don't report 5/4 as progress.
+      await waitForProgress(database, [0, 4]);
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
     });
   });
 });
 
-function bucket(name: string, count: number, options: {priority: number} = {priority: 3}): BucketChecksum {
+function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {
   return {
     bucket: name,
     count,
     checksum: 0,
-    priority: options.priority,
+    priority: options.priority
   };
 }
 
