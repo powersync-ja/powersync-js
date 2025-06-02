@@ -1,3 +1,4 @@
+import { CompiledQuery } from '../../types/types.js';
 import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
 
 export interface WatchedQueryState<Data> {
@@ -25,10 +26,16 @@ export interface WatchedQueryState<Data> {
   data: Data;
 }
 
+/**
+ * Similar to {@link CompiledQuery}, but used for watched queries.
+ * The parameters are not read-only, as they can be modified. This is useful for compatibility with
+ * PowerSync queries.
+ */
 export interface WatchCompiledQuery {
   sql: string;
   parameters: any[];
 }
+
 /**
  *
  * @internal
@@ -37,7 +44,7 @@ export interface WatchCompiledQuery {
  */
 export interface WatchCompatibleQuery<ResultType> {
   execute(compiled: WatchCompiledQuery): Promise<ResultType>;
-  compile(): WatchCompiledQuery;
+  compile(): CompiledQuery;
 }
 
 /**

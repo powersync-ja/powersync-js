@@ -64,7 +64,11 @@ export const useSingleSuspenseQuery = <T = any>(
       refresh: async (signal) => {
         try {
           console.log('calling refresh for single query', key);
-          const result = await parsedQuery.execute(parsedQuery.compile());
+          const compiledQuery = parsedQuery.compile();
+          const result = await parsedQuery.execute({
+            sql: compiledQuery.sql,
+            parameters: [...compiledQuery.parameters]
+          });
           if (signal.aborted) {
             return; // Abort if the signal is already aborted
           }

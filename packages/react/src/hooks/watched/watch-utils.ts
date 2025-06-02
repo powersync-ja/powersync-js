@@ -1,9 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  CompilableQuery,
-  WatchCompatibleQuery,
-  WatchCompiledQuery
-} from '@powersync/common';
+import { AbstractPowerSyncDatabase, CompilableQuery, CompiledQuery, WatchCompatibleQuery } from '@powersync/common';
 import React from 'react';
 import { usePowerSync } from '../PowerSyncContext';
 import { AdditionalOptions } from './watch-types';
@@ -15,7 +10,7 @@ export type InternalHookOptions<DataType> = {
 };
 
 export const checkQueryChanged = <T>(query: WatchCompatibleQuery<T>, options: AdditionalOptions) => {
-  let _compiled: WatchCompiledQuery;
+  let _compiled: CompiledQuery;
   try {
     _compiled = query.compile();
   } catch (error) {

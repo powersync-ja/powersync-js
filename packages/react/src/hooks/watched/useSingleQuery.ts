@@ -16,7 +16,11 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
     async (signal?: AbortSignal) => {
       setOutputState((prev) => ({ ...prev, isLoading: true, isFetching: true, error: undefined }));
       try {
-        const result = await query.execute(query.compile());
+        const compiledQuery = query.compile();
+        const result = await query.execute({
+          sql: compiledQuery.sql,
+          parameters: [...compiledQuery.parameters]
+        });
         if (signal.aborted) {
           return;
         }

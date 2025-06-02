@@ -261,4 +261,38 @@ describe('Watch Tests', () => {
     expect(receivedWithManagedOverflowCount).greaterThan(2);
     expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
   });
+
+  it('incremental watch should accept queries', async () => {
+    const query = db.selectFrom('assets').select(db.fn.count('assets.id').as('count'));
+
+    const watch = powerSyncDb.incrementalWatch({
+      watch: {
+        query,
+        placeholderData: []
+      }
+    });
+
+    const latestDataPromise = new Promise<Awaited<ReturnType<typeof query.execute>>>((resolve) => {
+      const dispose = watch.subscribe({
+        onData: (data) => {
+          if (data.length > 0) {
+            resolve(data);
+            dispose();
+          }
+        }
+      });
+    });
+
+    await db
+      .insertInto('assets')
+      .values({
+        id: sql`uuid()`,
+        make: 'test',
+        customer_id: sql`uuid()`
+      })
+      .execute();
+
+    const data = await latestDataPromise;
+    expect(data.length).equals(1);
+  });
 });
