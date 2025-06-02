@@ -558,6 +558,19 @@ export function registerBaseTests() {
       expect(error!.message).to.include('no such table: faketable');
     });
 
+    it('Should throw for async iterator invalid query errors', async () => {
+      let error: Error | undefined;
+      try {
+        // The table here does not exist, so it should throw an error
+        for await (const result of db.watchWithAsyncGenerator('invalidsyntax', [])) {
+        }
+      } catch (ex) {
+        error = ex as Error;
+      }
+
+      expect(error!.message).to.include('sqlite query error');
+    });
+
     it('Should reflect writeLock updates on read connections ', async () => {
       const numberOfUsers = 1000;
 
