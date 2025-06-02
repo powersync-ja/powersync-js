@@ -561,7 +561,7 @@ export function registerBaseTests() {
     it('Should throw for async iterator invalid query errors', async () => {
       let error: Error | undefined;
       try {
-        // The table here does not exist, so it should throw an error
+        // Invalid SQL
         for await (const result of db.watchWithAsyncGenerator('invalidsyntax', [])) {
         }
       } catch (ex) {
