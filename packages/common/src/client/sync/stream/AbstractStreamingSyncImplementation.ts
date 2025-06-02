@@ -679,7 +679,10 @@ The next upload iteration will be delayed.`);
               if (progressForBucket) {
                 updatedProgress[data.bucket] = {
                   ...progressForBucket,
-                  sinceLast: progressForBucket.sinceLast + data.data.length
+                  sinceLast: Math.min(
+                    progressForBucket.sinceLast + data.data.length,
+                    progressForBucket.targetCount - progressForBucket.atLast
+                  )
                 };
               }
             }
@@ -743,17 +746,36 @@ The next upload iteration will be delayed.`);
   private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
     const localProgress = await this.options.adapter.getBucketOperationProgress();
     const progress: InternalProgressInformation = {};
+    let invalidated = false;
 
     for (const bucket of checkpoint.buckets) {
       const savedProgress = localProgress[bucket.bucket];
+      const atLast = savedProgress?.atLast ?? 0;
+      const sinceLast = savedProgress?.sinceLast ?? 0;
+
       progress[bucket.bucket] = {
         // The fallback priority doesn't matter here, but 3 is the one newer versions of the sync service
         // will use by default.
         priority: bucket.priority ?? 3,
-        atLast: savedProgress?.atLast ?? 0,
-        sinceLast: savedProgress?.sinceLast ?? 0,
+        atLast: atLast,
+        sinceLast: sinceLast,
         targetCount: bucket.count ?? 0
       };
+
+      if (bucket.count != null && bucket.count < atLast + sinceLast) {
+        // Either due to a defrag / sync rule deploy or a compaction operation, the size
+        // of the bucket shrank so much that the local ops exceed the ops in the updated
+        // bucket. We can't prossibly report progress in this case (it would overshoot 100%).
+        invalidated = true;
+      }
+    }
+
+    if (invalidated) {
+      for (const bucket in progress) {
+        const bucketProgress = progress[bucket];
+        bucketProgress.atLast = 0;
+        bucketProgress.sinceLast = 0;
+      }
     }
 
     this.updateSyncStatus({

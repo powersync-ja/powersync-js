@@ -1,5 +1,18 @@
 # @powersync/node
 
+## 0.4.5
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+
+## 0.4.4
+
+### Patch Changes
+
+- 5eae93c: Fix CJS distributables not being published.
+
 ## 0.4.3
 
 ### Patch Changes

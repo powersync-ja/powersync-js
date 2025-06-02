@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.4.3",
+  "version": "0.4.5",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -15,7 +15,7 @@
   "scripts": {
     "install": "node download_core.js",
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
     "watch": "tsc -b -w",
     "test": "vitest"
@@ -45,7 +45,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.31.0"
+    "@powersync/common": "workspace:^1.31.1"
   },
   "dependencies": {
     "@powersync/better-sqlite3": "^0.2.0",
