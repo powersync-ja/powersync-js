@@ -530,7 +530,7 @@ export function registerBaseTests() {
 
     it('Should reflect writeTransaction updates on read connections (iterator)', async () => {
       const watched = new Promise<void>(async (resolve) => {
-        for await (const result of db.watchWithAsyncGenerator('SELECT COUNT(*) as count FROM users', [])) {
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM users', [])) {
           if (result.rows?.item(0).count == 1) {
             resolve();
           }
@@ -549,7 +549,7 @@ export function registerBaseTests() {
       let error: Error | undefined;
       try {
         // The table here does not exist, so it should throw an error
-        for await (const result of db.watchWithAsyncGenerator('SELECT COUNT(*) as count FROM faketable', [])) {
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM faketable', [])) {
         }
       } catch (ex) {
         error = ex as Error;
@@ -562,7 +562,7 @@ export function registerBaseTests() {
       let error: Error | undefined;
       try {
         // Invalid SQL
-        for await (const result of db.watchWithAsyncGenerator('invalidsyntax', [])) {
+        for await (const result of db.watch('invalidsyntax', [])) {
         }
       } catch (ex) {
         error = ex as Error;
