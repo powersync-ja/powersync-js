@@ -1,4 +1,4 @@
-import { type CompilableQuery } from '@powersync/common';
+import { FalsyComparator, type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '../PowerSyncContext';
 import { useSingleQuery } from './useSingleQuery';
 import { useWatchedQuery } from './useWatchedQuery';
@@ -21,7 +21,7 @@ import { constructCompatibleQuery } from './watch-utils';
 export const useQuery = <RowType = any>(
   query: string | CompilableQuery<RowType>,
   parameters: any[] = [],
-  options: AdditionalOptions = { runQueryOnce: false }
+  options: AdditionalOptions<RowType> = { runQueryOnce: false }
 ): QueryResult<RowType> => {
   const powerSync = usePowerSync();
   if (!powerSync) {
@@ -42,7 +42,16 @@ export const useQuery = <RowType = any>(
         query: parsedQuery,
         powerSync,
         queryChanged,
-        options
+        options: {
+          ...options,
+          processor: options.processor ?? {
+            // Maintains backwards compatibility with previous versions
+            // Comparisons are opt-in by default
+            // We emit new data for each table change by default.
+            mode: 'comparison',
+            comparator: FalsyComparator
+          }
+        }
       });
   }
 };

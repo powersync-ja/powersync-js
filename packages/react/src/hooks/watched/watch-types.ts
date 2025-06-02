@@ -1,10 +1,11 @@
-import { type SQLWatchOptions } from '@powersync/common';
+import { WatchProcessorOptions, type SQLWatchOptions } from '@powersync/common';
 
-export interface HookWatchOptions extends Omit<SQLWatchOptions, 'signal'> {
+export interface HookWatchOptions<RowType = unknown> extends Omit<SQLWatchOptions, 'signal' | 'processor'> {
   reportFetching?: boolean;
+  processor?: WatchProcessorOptions<RowType[]>;
 }
 
-export interface AdditionalOptions extends HookWatchOptions {
+export interface AdditionalOptions<RowType = unknown> extends HookWatchOptions<RowType> {
   runQueryOnce?: boolean;
 }
 

@@ -15,7 +15,8 @@ export const useWatchedQuery = <RowType = unknown>(
         query,
         throttleMs: hookOptions.throttleMs,
         reportFetching: hookOptions.reportFetching
-      }
+      },
+      processor: hookOptions.processor
     });
   }, []);
 

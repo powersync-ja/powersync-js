@@ -34,6 +34,7 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { WatchedQuery, WatchedQueryOptions } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor, WatchedQueryComparator } from './watched/processors/OnChangeQueryProcessor.js';
+import { FalsyComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -71,6 +72,18 @@ export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatab
   database: SQLOpenOptions;
 }
 
+export interface WatchComparatorOptions<DataType> {
+  mode: 'comparison';
+  comparator?: WatchedQueryComparator<DataType>;
+}
+
+export type WatchProcessorOptions<DataType> = WatchComparatorOptions<DataType>;
+
+export interface IncrementalWatchOptions<DataType> {
+  watch: WatchedQueryOptions<DataType>;
+  processor?: WatchProcessorOptions<DataType>;
+}
+
 export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
@@ -92,7 +105,7 @@ export interface SQLWatchOptions {
    * Optional comparator which will be used to compare the results of the query.
    * The watched query will only yield results if the comparator returns false.
    */
-  comparator?: WatchedQueryComparator<QueryResult>;
+  processor?: WatchProcessorOptions<QueryResult>;
 }
 
 export interface WatchOnChangeEvent {
@@ -107,16 +120,6 @@ export interface WatchHandler {
 export interface WatchOnChangeHandler {
   onChange: (event: WatchOnChangeEvent) => Promise<void> | void;
   onError?: (error: Error) => void;
-}
-
-export interface ComparatorWatchOptions<DataType> {
-  mode: 'comparison';
-  comparator?: WatchedQueryComparator<DataType>;
-}
-
-export interface IncrementalWatchOptions<DataType> {
-  watch: WatchedQueryOptions<DataType>;
-  processor?: ComparatorWatchOptions<DataType>;
 }
 
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
@@ -916,12 +919,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    const watch = new OnChangeQueryProcessor({
-      db: this,
-      // Comparisons are disabled if no comparator is provided
-      comparator: options?.comparator,
-      watchOptions: {
-        placeholderData: null,
+    // Uses shared incremental watch logic under the hook, but maintains the same external API as the old watch method.
+    const watchedQuery = this.incrementalWatch({
+      watch: {
         query: {
           compile: () => ({
             sql: sql,
@@ -929,12 +929,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           }),
           execute: () => this.executeReadOnly(sql, parameters)
         },
-        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
-        reportFetching: false
+        placeholderData: null,
+        reportFetching: false,
+        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
+      },
+      processor: options?.processor ?? {
+        mode: 'comparison',
+        comparator: FalsyComparator
       }
     });
 
-    const dispose = watch.subscribe({
+    const dispose = watchedQuery.subscribe({
       onData: (data) => {
         if (!data) {
           // This should not happen. We only use null for the initial data.
@@ -949,7 +954,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     options?.signal?.addEventListener('abort', () => {
       dispose();
-      watch.close();
+      watchedQuery.close();
     });
   }
 

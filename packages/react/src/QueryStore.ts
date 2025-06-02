@@ -24,7 +24,8 @@ export class QueryStore {
         query,
         placeholderData: [],
         throttleMs: options.throttleMs
-      }
+      },
+      processor: options.processor
     });
 
     const disposer = watchedQuery.registerListener({

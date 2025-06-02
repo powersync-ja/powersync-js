@@ -30,7 +30,8 @@ export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
-// TODO other exports
+export * from './client/watched/processors/AbstractQueryProcessor.js';
+export * from './client/watched/processors/comparators.js';
 export * from './client/watched/WatchedQuery.js';
 
 export * from './utils/AbortOperation.js';

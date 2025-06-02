@@ -1,4 +1,3 @@
-import React from 'react';
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
@@ -195,7 +194,18 @@ describe('useQuery', () => {
   it('should emit result data when query changes', async () => {
     const db = openPowerSync();
     const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
-    const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), { wrapper });
+    const { result } = renderHook(
+      () =>
+        useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
+          processor: {
+            mode: 'comparison',
+            comparator: new commonSdk.ArrayComparator({
+              compareBy: (item) => JSON.stringify(item)
+            })
+          }
+        }),
+      { wrapper }
+    );
 
     expect(result.current.isLoading).toEqual(true);
 
@@ -254,6 +264,46 @@ describe('useQuery', () => {
 
     // The data reference should be the same as the previous time
     expect(data == result.current.data).toEqual(true);
+  });
+
+  // Verifies backwards compatibility with the previous implementation (no comparison)
+  it('should emit result data when data changes when not using comparator', async () => {
+    const db = openPowerSync();
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), { wrapper });
+
+    expect(result.current.isLoading).toEqual(true);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.isLoading).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // This should trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+
+    // Keep track of the previous data reference
+    let previousData = result.current.data;
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+        previousData = current.data;
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // This should still trigger an update since the underlaying tables changed.
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['noname']);
+
+    // It's difficult to assert no update happened, but we can wait a bit
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // It should be the same data array reference, no update should have happened
+    expect(result.current.data == previousData).false;
   });
 
   it('should use an existing WatchedQuery instance', async () => {
