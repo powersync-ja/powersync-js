@@ -34,7 +34,7 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { IncrementalWatchMode } from './watched/WatchedQueryBuilder.js';
 import { WatchedQueryBuilderMap } from './watched/WatchedQueryBuilderMap.js';
-import { WatchedQueryComparator } from './watched/processors/comparators.js';
+import { FalsyComparator, WatchedQueryComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -903,10 +903,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    const { comparator } = options ?? {};
+    const { comparator = FalsyComparator } = options ?? {};
     // This watch method which provides static SQL is currently only compatible with the comparison mode.
     // Uses shared incremental watch logic under the hood, but maintains the same external API as the old watch method.
-    const watchedQuery = this.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
+    const watchedQuery = this.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build<QueryResult | null>({
       comparator,
       watch: {
         query: {
