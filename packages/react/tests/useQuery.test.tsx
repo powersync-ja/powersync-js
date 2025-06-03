@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
+
 export const openPowerSync = () => {
   const db = new PowerSyncDatabase({
     database: { dbFilename: 'test.db' },

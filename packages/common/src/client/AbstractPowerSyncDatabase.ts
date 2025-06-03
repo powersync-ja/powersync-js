@@ -884,7 +884,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.watchWithAsyncGenerator(sql, parameters, options);
   }
 
-  // TODO names and types
+  // TODO names
   incrementalWatch<DataType>(options: IncrementalWatchOptions<DataType>): WatchedQuery<DataType> {
     const { watch, processor } = options;
 
