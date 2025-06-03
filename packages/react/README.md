@@ -346,7 +346,7 @@ function MyWidget() {
   // This will result in `MyWidget` re-rendering for any change to the `cats` table.
   const { data, isLoading, isFetching } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
     processor: {
-      mode: 'comparison',
+      mode: IncrementalWatchMode.COMPARISON,
       comparator: new ArrayComparator({
         compareBy: (cat) => JSON.stringify(cat)
       })

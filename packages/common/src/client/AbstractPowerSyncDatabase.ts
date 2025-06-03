@@ -72,8 +72,12 @@ export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatab
   database: SQLOpenOptions;
 }
 
+export enum IncrementalWatchMode {
+  COMPARISON = 'comparison'
+}
+
 export interface WatchComparatorOptions<DataType> {
-  mode: 'comparison';
+  mode: IncrementalWatchMode.COMPARISON;
   comparator?: WatchedQueryComparator<DataType>;
 }
 
@@ -891,7 +895,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const { watch, processor } = options;
 
     switch (options.processor?.mode) {
-      case 'comparison':
+      case IncrementalWatchMode.COMPARISON:
       default:
         return new OnChangeQueryProcessor({
           db: this,
@@ -936,7 +940,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
       },
       processor: options?.processor ?? {
-        mode: 'comparison',
+        mode: IncrementalWatchMode.COMPARISON,
         comparator: FalsyComparator
       }
     });

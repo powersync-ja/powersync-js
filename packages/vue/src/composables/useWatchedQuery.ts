@@ -1,4 +1,10 @@
-import { type CompilableQuery, FalsyComparator, ParsedQuery, parseQuery } from '@powersync/common';
+import {
+  type CompilableQuery,
+  FalsyComparator,
+  IncrementalWatchMode,
+  ParsedQuery,
+  parseQuery
+} from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery';
@@ -63,7 +69,7 @@ export const useWatchedQuery = <T = any>(
         }
       },
       processor: options.processor ?? {
-        mode: 'comparison',
+        mode: IncrementalWatchMode.COMPARISON, // Maintains backwards compatibility with previous versions
         // Defaults to no comparison if no processor is provided
         comparator: FalsyComparator
       }

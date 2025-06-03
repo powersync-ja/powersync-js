@@ -1,4 +1,4 @@
-import { CompilableQuery, FalsyComparator } from '@powersync/common';
+import { CompilableQuery, FalsyComparator, IncrementalWatchMode } from '@powersync/common';
 import { AdditionalOptions } from '../watched/watch-types';
 import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useSingleSuspenseQuery } from './useSingleSuspenseQuery';
@@ -37,7 +37,7 @@ export const useSuspenseQuery = <T = any>(
       return useWatchedSuspenseQuery<T>(query, parameters, {
         ...options,
         processor: options.processor ?? {
-          mode: 'comparison',
+          mode: IncrementalWatchMode.COMPARISON,
           comparator: FalsyComparator // Default comparator that always reports changed result sets
         }
       });
