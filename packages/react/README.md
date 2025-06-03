@@ -272,7 +272,7 @@ export const TodoListDisplaySuspense = () => {
 };
 ```
 
-## Preventing unecessary renders
+## Preventing Unnecessary Renders
 
 The `useQuery` hook returns a stateful object which contains query fetching/loading state values and the query result set data.
 
@@ -294,20 +294,22 @@ The returned object is a new JS object reference whenever the internal state cha
 function MyWidget() {
   // ... Widget code
   // result is an object which contains `isLoading`, `isFetching`, `data` members.
-  const result = useQuery(...)
+  const {data, error, isLoading} = useQuery(...)
 
   // ... Widget code
 
   return (
-    // Other components
-    // MyWatchedWidget will rerender whenever the watched query state changes
-    // (MyWatchedWidget will also rerender if the result object is unchanged if it is not memoized)
-    <MyWatchedWidget watchedResult={result}>
+    // ... Other components
+
+    // If MyWatchedWidget is not memoized
+    //   - It will rerender on any state change of the watched query. E.g. if isFetching alternates
+    // If MyWatchedWidget is memoized
+    //  - It will re-render if the data reference changes. By default the data reference changes after any
+    //    change to the query's dependant tables. This can be optimized by using Incremental queries.
+    <MyWatchedWidget watchedResult={data}>
   )
 }
 ```
-
-The above example is incomplete, but is required for the optimizations below.
 
 ### Incremental Queries
 
@@ -372,7 +374,7 @@ function MyWidget() {
   // The `data` reference will only be changed if there have been changes since the previous value.
   // When reportFetching == false the object returned from useQuery will only be changed when the data, isLoading or error state changes.
   // This method performs a comparison in memory in order to determine changes.
-  const { data, isLoading, isFetching } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
+  const { data, isLoading } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
     processor: {
       mode: 'comparison',
       comparator: new ArrayComparator({
@@ -388,7 +390,6 @@ function MyWidget() {
     // Other components
     // The data array is the same reference if no changes have occurred between fetches
     // Note: The array is a new reference is there are any changes in the result set (individual row object references are not preserved)
-    // Note: CatCollection requires memoization in order to prevent re-rendering (due to the parent re-rendering on fetch)
     <CatCollection cats={data}>
   )
 }

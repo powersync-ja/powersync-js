@@ -361,6 +361,4 @@ describe('useQuery', () => {
     expect(newResult.current.isLoading).toEqual(false);
     expect(newResult.current.data.length).toEqual(1);
   });
-
-  // TODO: Add tests for powersync.onChangeWithCallback path
 });
