@@ -9,7 +9,6 @@ export const useWatchedQuery = <RowType = unknown>(
 
   const createWatchedQuery = React.useCallback(() => {
     return powerSync.incrementalWatch<RowType[]>({
-      // This always enables comparison. Might want to be able to disable this??
       watch: {
         placeholderData: [],
         query,
