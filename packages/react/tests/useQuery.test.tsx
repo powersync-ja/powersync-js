@@ -2,6 +2,7 @@ import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import pDefer from 'p-defer';
+import React from 'react';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
@@ -41,7 +42,10 @@ describe('useQuery', () => {
 
   it('should set isLoading to true on initial load', async () => {
     const wrapper = ({ children }) => (
-      <PowerSyncContext.Provider value={openPowerSync()}>{children}</PowerSyncContext.Provider>
+      // Placeholder use for `React` to prevent import cleanup from removing the React import
+      <React.Fragment>
+        <PowerSyncContext.Provider value={openPowerSync()}>{children}</PowerSyncContext.Provider>
+      </React.Fragment>
     );
 
     const { result } = renderHook(() => useQuery('SELECT * from lists'), { wrapper });
