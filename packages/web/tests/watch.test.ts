@@ -346,7 +346,7 @@ describe('Watch Tests', { sequential: true }, () => {
         });
       });
 
-    let state = await getNextState();
+    let state = watch.state;
     expect(state.isFetching).true;
     expect(state.isLoading).true;
 

@@ -13,37 +13,6 @@ export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProces
 }
 
 /**
- * @internal
- */
-export class ArrayComparator<Element> implements WatchedQueryComparator<Element[]> {
-  constructor(protected compareBy: (element: Element) => string) {}
-
-  checkEquality(current: Element[], previous: Element[]) {
-    if (current.length == 0 && previous.length == 0) {
-      return true;
-    }
-
-    if (current.length !== previous.length) {
-      return false;
-    }
-
-    const { compareBy } = this;
-
-    // At this point the lengths are equal
-    for (let i = 0; i < current.length; i++) {
-      const currentItem = compareBy(current[i]);
-      const previousItem = compareBy(previous[i]);
-
-      if (currentItem !== previousItem) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-}
-
-/**
  * Uses the PowerSync onChange event to trigger watched queries.
  * Results are emitted on every change of the relevant tables.
  * @internal
@@ -71,9 +40,12 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
     db.onChangeWithCallback(
       {
         onChange: async () => {
+          if (this.closed) {
+            return;
+          }
           // This fires for each change of the relevant tables
           try {
-            if (this.reportFetching) {
+            if (this.reportFetching && !this.state.isFetching) {
               await this.updateState({ isFetching: true });
             }
 

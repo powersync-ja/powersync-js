@@ -119,8 +119,8 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
     const { db } = this.options;
 
     const disposeCloseListener = db.registerListener({
-      closed: async () => {
-        this.close();
+      closing: async () => {
+        await this.close();
       }
     });
 

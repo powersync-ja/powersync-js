@@ -125,7 +125,8 @@ export interface WatchOnChangeHandler {
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
-  closing: () => void;
+  closing: () => Promise<void> | void;
+  closed: () => Promise<void> | void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -532,7 +533,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return;
     }
 
-    this.iterateListeners((cb) => cb.closing?.());
+    await this.iterateAsyncListeners(async (cb) => cb.closing?.());
 
     const { disconnect } = options;
     if (disconnect) {
@@ -542,6 +543,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.syncStreamImplementation?.dispose();
     await this.database.close();
     this.closed = true;
+    await this.iterateAsyncListeners(async (cb) => cb.closed?.());
   }
 
   /**
