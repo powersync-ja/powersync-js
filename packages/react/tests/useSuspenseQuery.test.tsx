@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, IncrementalWatchMode, WatchedQuery } from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -64,10 +64,22 @@ describe('useSuspenseQuery', () => {
   it('should suspend on initial load', async () => {
     // spy on watched query generation
     const baseImplementation = powersync.incrementalWatch;
-    let watch: WatchedQuery<Array<any>> | null = null;
+    let watch: WatchedQuery<any> | null = null;
+
     const spy = vi.spyOn(powersync, 'incrementalWatch').mockImplementation((options) => {
-      watch = baseImplementation.call(powersync, options);
-      return watch!;
+      if (options.mode !== IncrementalWatchMode.COMPARISON) {
+        return baseImplementation.call(powersync, options);
+      }
+
+      const builder = baseImplementation.call(powersync, options);
+      const baseBuild = builder.build;
+
+      vi.spyOn(builder, 'build').mockImplementation((buildOptions) => {
+        watch = baseBuild.call(builder, buildOptions);
+        return watch!;
+      });
+
+      return builder!;
     });
 
     const wrapper = ({ children }) => (
@@ -250,7 +262,7 @@ describe('useSuspenseQuery', () => {
     // This query can be instantiated once and reused.
     // The query retains it's state and will not re-fetch the data unless the result changes.
     // This is useful for queries that are used in multiple components.
-    const listsQuery = db.incrementalWatch({
+    const listsQuery = db.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
       watch: {
         placeholderData: [],
         query: {

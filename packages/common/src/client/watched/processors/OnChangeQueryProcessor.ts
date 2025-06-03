@@ -1,9 +1,6 @@
 import { WatchedQueryState } from '../WatchedQuery.js';
 import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
-
-export interface WatchedQueryComparator<Data> {
-  checkEquality: (current: Data, previous: Data) => boolean;
-}
+import { WatchedQueryComparator } from './comparators.js';
 
 /**
  * @internal

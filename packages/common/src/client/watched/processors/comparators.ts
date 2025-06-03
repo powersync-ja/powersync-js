@@ -1,4 +1,6 @@
-import { WatchedQueryComparator } from './OnChangeQueryProcessor.js';
+export interface WatchedQueryComparator<Data> {
+  checkEquality: (current: Data, previous: Data) => boolean;
+}
 
 export type ArrayComparatorOptions<ItemType> = {
   compareBy: (item: ItemType) => string;

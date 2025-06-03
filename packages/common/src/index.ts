@@ -34,6 +34,7 @@ export * from './client/watched/GetAllQuery.js';
 export * from './client/watched/processors/AbstractQueryProcessor.js';
 export * from './client/watched/processors/comparators.js';
 export * from './client/watched/WatchedQuery.js';
+export * from './client/watched/WatchedQueryBuilder.js';
 
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';

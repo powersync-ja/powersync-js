@@ -55,25 +55,26 @@ export const useWatchedQuery = <T = any>(
 
     const { sqlStatement: sql, parameters } = parsedQuery;
 
-    const watchedQuery = powerSync.value.incrementalWatch({
-      watch: {
-        placeholderData: [],
-        query: {
-          compile: () => ({ sql, parameters }),
-          execute: async ({ db, sql, parameters }) => {
-            if (typeof queryValue === 'string') {
-              return db.getAll<T>(sql, parameters);
+    const watchedQuery = powerSync.value
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          placeholderData: [],
+          query: {
+            compile: () => ({ sql, parameters }),
+            execute: async ({ db, sql, parameters }) => {
+              if (typeof queryValue === 'string') {
+                return db.getAll<T>(sql, parameters);
+              }
+              return queryValue.execute();
             }
-            return queryValue.execute();
           }
-        }
-      },
-      processor: options.processor ?? {
-        mode: IncrementalWatchMode.COMPARISON, // Maintains backwards compatibility with previous versions
-        // Defaults to no comparison if no processor is provided
-        comparator: FalsyComparator
-      }
-    });
+        },
+        // Maintains backwards compatibility with previous versions
+        comparator: options.comparator ?? FalsyComparator
+      });
 
     const disposer = watchedQuery.subscribe({
       onStateChange: (state) => {

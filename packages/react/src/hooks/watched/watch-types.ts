@@ -1,8 +1,8 @@
-import { WatchProcessorOptions, type SQLWatchOptions } from '@powersync/common';
+import { WatchedQueryComparator, type SQLWatchOptions } from '@powersync/common';
 
-export interface HookWatchOptions<RowType = unknown> extends Omit<SQLWatchOptions, 'signal' | 'processor'> {
+export interface HookWatchOptions<RowType = unknown> extends Omit<SQLWatchOptions, 'signal' | 'comparator'> {
   reportFetching?: boolean;
-  processor?: WatchProcessorOptions<RowType[]>;
+  comparator?: WatchedQueryComparator<RowType[]>;
 }
 
 export interface AdditionalOptions<RowType = unknown> extends HookWatchOptions<RowType> {

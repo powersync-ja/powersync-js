@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchCompatibleQuery, WatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, IncrementalWatchMode, WatchCompatibleQuery, WatchedQuery } from '@powersync/common';
 import { AdditionalOptions } from './hooks/watched/watch-types';
 
 export function generateQueryKey(
@@ -19,14 +19,18 @@ export class QueryStore {
       return this.cache.get(key);
     }
 
-    const watchedQuery = this.db.incrementalWatch({
-      watch: {
-        query,
-        placeholderData: [],
-        throttleMs: options.throttleMs
-      },
-      processor: options.processor
-    });
+    const watchedQuery = this.db
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query,
+          placeholderData: [],
+          throttleMs: options.throttleMs
+        },
+        comparator: options.comparator
+      });
 
     const disposer = watchedQuery.registerListener({
       closed: () => {

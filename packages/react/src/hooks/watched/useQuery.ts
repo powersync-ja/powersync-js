@@ -1,4 +1,4 @@
-import { FalsyComparator, IncrementalWatchMode, type CompilableQuery } from '@powersync/common';
+import { FalsyComparator, type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '../PowerSyncContext';
 import { useSingleQuery } from './useSingleQuery';
 import { useWatchedQuery } from './useWatchedQuery';
@@ -43,14 +43,10 @@ export const useQuery = <RowType = any>(
         powerSync,
         queryChanged,
         options: {
-          ...options,
-          processor: options.processor ?? {
-            // Maintains backwards compatibility with previous versions
-            // Comparisons are opt-in by default
-            // We emit new data for each table change by default.
-            mode: IncrementalWatchMode.COMPARISON,
-            comparator: FalsyComparator
-          }
+          // Maintains backwards compatibility with previous versions
+          // Comparisons are opt-in by default
+          // We emit new data for each table change by default.
+          comparator: options.comparator ?? FalsyComparator
         }
       });
   }

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, GetAllQuery, WatchedQueryState } from '@powersync/common';
+import { AbstractPowerSyncDatabase, GetAllQuery, IncrementalWatchMode, WatchedQueryState } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -326,15 +326,19 @@ describe('Watch Tests', { sequential: true }, () => {
   });
 
   it('should stream watch results', async () => {
-    const watch = powersync.incrementalWatch({
-      watch: {
-        query: new GetAllQuery({
-          sql: 'SELECT * FROM assets',
-          parameters: []
-        }),
-        placeholderData: []
-      }
-    });
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: new GetAllQuery({
+            sql: 'SELECT * FROM assets',
+            parameters: []
+          }),
+          placeholderData: []
+        }
+      });
 
     const getNextState = () =>
       new Promise<WatchedQueryState<any>>((resolve) => {
@@ -365,18 +369,22 @@ describe('Watch Tests', { sequential: true }, () => {
   });
 
   it('should only report updates for relevant changes', async () => {
-    const watch = powersync.incrementalWatch({
-      watch: {
-        query: {
-          compile: () => ({
-            sql: 'SELECT * FROM assets where make = ?',
-            parameters: ['test']
-          }),
-          execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
-        },
-        placeholderData: []
-      }
-    });
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: {
+            compile: () => ({
+              sql: 'SELECT * FROM assets where make = ?',
+              parameters: ['test']
+            }),
+            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
+          },
+          placeholderData: []
+        }
+      });
 
     let notificationCount = 0;
     const dispose = watch.subscribe({
@@ -402,19 +410,23 @@ describe('Watch Tests', { sequential: true }, () => {
   });
 
   it('should not report fetching status', async () => {
-    const watch = powersync.incrementalWatch({
-      watch: {
-        query: {
-          compile: () => ({
-            sql: 'SELECT * FROM assets where make = ?',
-            parameters: ['test']
-          }),
-          execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
-        },
-        placeholderData: [],
-        reportFetching: false
-      }
-    });
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: {
+            compile: () => ({
+              sql: 'SELECT * FROM assets where make = ?',
+              parameters: ['test']
+            }),
+            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
+          },
+          placeholderData: [],
+          reportFetching: false
+        }
+      });
 
     expect(watch.state.isFetching).false;
 

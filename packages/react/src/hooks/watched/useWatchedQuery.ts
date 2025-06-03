@@ -1,3 +1,4 @@
+import { FalsyComparator, IncrementalWatchMode } from '@powersync/common';
 import React from 'react';
 import { HookWatchOptions, QueryResult } from './watch-types';
 import { InternalHookOptions } from './watch-utils';
@@ -8,14 +9,14 @@ export const useWatchedQuery = <RowType = unknown>(
   const { query, powerSync, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
-    return powerSync.incrementalWatch<RowType[]>({
+    return powerSync.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build<RowType[]>({
       watch: {
         placeholderData: [],
         query,
         throttleMs: hookOptions.throttleMs,
         reportFetching: hookOptions.reportFetching
       },
-      processor: hookOptions.processor
+      comparator: hookOptions.comparator ?? FalsyComparator
     });
   }, []);
 

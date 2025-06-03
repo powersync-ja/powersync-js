@@ -32,9 +32,9 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { WatchedQuery, WatchedQueryOptions } from './watched/WatchedQuery.js';
-import { OnChangeQueryProcessor, WatchedQueryComparator } from './watched/processors/OnChangeQueryProcessor.js';
-import { FalsyComparator } from './watched/processors/comparators.js';
+import { IncrementalWatchMode } from './watched/WatchedQueryBuilder.js';
+import { WatchedQueryBuilderMap } from './watched/WatchedQueryBuilderMap.js';
+import { WatchedQueryComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -72,22 +72,6 @@ export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatab
   database: SQLOpenOptions;
 }
 
-export enum IncrementalWatchMode {
-  COMPARISON = 'comparison'
-}
-
-export interface WatchComparatorOptions<DataType> {
-  mode: IncrementalWatchMode.COMPARISON;
-  comparator?: WatchedQueryComparator<DataType>;
-}
-
-export type WatchProcessorOptions<DataType> = WatchComparatorOptions<DataType>;
-
-export interface IncrementalWatchOptions<DataType> {
-  watch: WatchedQueryOptions<DataType>;
-  processor?: WatchProcessorOptions<DataType>;
-}
-
 export interface SQLWatchOptions {
   signal?: AbortSignal;
   tables?: string[];
@@ -109,7 +93,7 @@ export interface SQLWatchOptions {
    * Optional comparator which will be used to compare the results of the query.
    * The watched query will only yield results if the comparator returns false.
    */
-  processor?: WatchProcessorOptions<QueryResult>;
+  comparator?: WatchedQueryComparator<QueryResult>;
 }
 
 export interface WatchOnChangeEvent {
@@ -891,20 +875,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   // TODO names
-  incrementalWatch<DataType>(options: IncrementalWatchOptions<DataType>): WatchedQuery<DataType> {
-    const { watch, processor } = options;
-
-    switch (options.processor?.mode) {
-      case IncrementalWatchMode.COMPARISON:
-      default:
-        return new OnChangeQueryProcessor({
-          db: this,
-          comparator: processor?.comparator ?? {
-            checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
-          },
-          watchOptions: watch
-        });
+  incrementalWatch<Mode extends IncrementalWatchMode>(options: { mode: Mode }): WatchedQueryBuilderMap[Mode] {
+    const { mode } = options;
+    const builderFactory = WatchedQueryBuilderMap[mode];
+    if (!builderFactory) {
+      debugger;
+      throw new Error(`Unsupported watch mode: ${mode}`);
     }
+    return builderFactory(this);
   }
 
   /**
@@ -925,8 +903,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    // Uses shared incremental watch logic under the hook, but maintains the same external API as the old watch method.
-    const watchedQuery = this.incrementalWatch({
+    const { comparator } = options ?? {};
+    // This watch method which provides static SQL is currently only compatible with the comparison mode.
+    // Uses shared incremental watch logic under the hood, but maintains the same external API as the old watch method.
+    const watchedQuery = this.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
+      comparator,
       watch: {
         query: {
           compile: () => ({
@@ -938,10 +919,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         placeholderData: null,
         reportFetching: false,
         throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
-      },
-      processor: options?.processor ?? {
-        mode: IncrementalWatchMode.COMPARISON,
-        comparator: FalsyComparator
       }
     });
 
