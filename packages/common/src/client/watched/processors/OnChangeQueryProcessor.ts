@@ -1,11 +1,16 @@
-import { WatchedQueryState } from '../WatchedQuery.js';
+import { WatchCompatibleQuery, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
 import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
 import { WatchedQueryComparator } from './comparators.js';
+
+export interface ComparisonWatchedQuerySettings<DataType> extends WatchedQueryOptions<DataType> {
+  query: WatchCompatibleQuery<DataType>;
+}
 
 /**
  * @internal
  */
-export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProcessorOptions<Data> {
+export interface OnChangeQueryProcessorOptions<Data>
+  extends AbstractQueryProcessorOptions<Data, ComparisonWatchedQuerySettings<Data>> {
   comparator?: WatchedQueryComparator<Data>;
 }
 
@@ -14,7 +19,7 @@ export interface OnChangeQueryProcessorOptions<Data> extends AbstractQueryProces
  * Results are emitted on every change of the relevant tables.
  * @internal
  */
-export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data> {
+export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, ComparisonWatchedQuerySettings<Data>> {
   constructor(protected options: OnChangeQueryProcessorOptions<Data>) {
     super(options);
   }

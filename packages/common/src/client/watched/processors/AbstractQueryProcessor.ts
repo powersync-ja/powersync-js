@@ -13,17 +13,20 @@ import {
 /**
  * @internal
  */
-export interface AbstractQueryProcessorOptions<Data> {
+export interface AbstractQueryProcessorOptions<
+  Data,
+  Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>
+> {
   db: AbstractPowerSyncDatabase;
-  watchOptions: WatchedQueryOptions<Data>;
+  watchOptions: Settings;
 }
 
 /**
  * @internal
  */
-export interface LinkQueryOptions<Data> {
+export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>> {
   abortSignal: AbortSignal;
-  query: WatchedQueryOptions<Data>;
+  settings: Settings;
 }
 
 type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & WatchedQueryListener;
@@ -32,7 +35,10 @@ type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & Watc
  * Performs underlying watching and yields a stream of results.
  * @internal
  */
-export abstract class AbstractQueryProcessor<Data = unknown[]>
+export abstract class AbstractQueryProcessor<
+    Data = unknown[],
+    Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>
+  >
   extends BaseObserver<WatchedQueryProcessorListener<Data>>
   implements WatchedQuery<Data>
 {
@@ -56,7 +62,7 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
     }, {}) as SubscriptionCounts;
   }
 
-  constructor(protected options: AbstractQueryProcessorOptions<Data>) {
+  constructor(protected options: AbstractQueryProcessorOptions<Data, Settings>) {
     super();
     this.abortController = new AbortController();
     this._closed = false;
@@ -78,15 +84,23 @@ export abstract class AbstractQueryProcessor<Data = unknown[]>
   /**
    * Updates the underlying query.
    */
-  async updateSettings(query: WatchedQueryOptions<Data>) {
+  async updateSettings(settings: Settings) {
     await this.initialized;
 
-    this.options.watchOptions = query;
+    if (!this.state.isLoading) {
+      await this.updateState({
+        isLoading: true,
+        isFetching: this.reportFetching ? true : false,
+        data: settings.placeholderData
+      });
+    }
+
+    this.options.watchOptions = settings;
     this.abortController.abort();
     this.abortController = new AbortController();
     await this.linkQuery({
       abortSignal: this.abortController.signal,
-      query
+      settings
     });
   }
 

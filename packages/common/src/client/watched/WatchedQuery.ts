@@ -46,8 +46,6 @@ export interface WatchCompatibleQuery<ResultType> {
 }
 
 export interface WatchedQueryOptions<DataType> {
-  query: WatchCompatibleQuery<DataType>;
-
   /**
    * Initial result data which is presented while the initial loading is executing
    */
@@ -85,7 +83,8 @@ export interface WatchedQueryListener extends BaseListener {
   subscriptionsChanged: (counts: SubscriptionCounts) => void;
 }
 
-export interface WatchedQuery<Data> extends BaseObserverInterface<WatchedQueryListener> {
+export interface WatchedQuery<Data, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>>
+  extends BaseObserverInterface<WatchedQueryListener> {
   /**
    * Current state of the watched query.
    */
@@ -105,7 +104,7 @@ export interface WatchedQuery<Data> extends BaseObserverInterface<WatchedQueryLi
    * Updates the underlying query options.
    * This will trigger a re-evaluation of the query and update the state.
    */
-  updateSettings(options: WatchedQueryOptions<Data>): Promise<void>;
+  updateSettings(options: Settings): Promise<void>;
 
   /**
    * Close the watched query and end all subscriptions.

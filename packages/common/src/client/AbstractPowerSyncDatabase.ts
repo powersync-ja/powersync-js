@@ -879,10 +879,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const { mode } = options;
     const builderFactory = WatchedQueryBuilderMap[mode];
     if (!builderFactory) {
-      debugger;
       throw new Error(`Unsupported watch mode: ${mode}`);
     }
-    return builderFactory(this);
+    return builderFactory(this) as WatchedQueryBuilderMap[Mode];
   }
 
   /**

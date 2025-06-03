@@ -452,4 +452,57 @@ describe('Watch Tests', { sequential: true }, () => {
     expect(notificationCount).equals(1);
     expect(watch.state.data).toHaveLength(1);
   });
+
+  it('should allow updating queries', async () => {
+    // Create sample data
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: new GetAllQuery<{ make: string }>({
+            sql: 'SELECT * FROM assets where make = ?',
+            parameters: ['test']
+          }),
+          placeholderData: [],
+          reportFetching: false
+        }
+      });
+
+    expect(watch.state.isFetching).false;
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.isLoading).false;
+      },
+      { timeout: 1000 }
+    );
+
+    expect(watch.state.data).toHaveLength(1);
+    expect(watch.state.data[0].make).equals('test');
+
+    await watch.updateSettings({
+      placeholderData: [],
+      query: new GetAllQuery<{ make: string }>({
+        sql: 'SELECT * FROM assets where make = ?',
+        parameters: ['nottest']
+      })
+    });
+
+    expect(watch.state.isLoading).true;
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.isLoading).false;
+      },
+      { timeout: 1000 }
+    );
+
+    expect(watch.state.data).toHaveLength(1);
+    expect(watch.state.data[0].make).equals('nottest');
+  });
 });
