@@ -122,7 +122,9 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       if (this.pendingConnectionOptions) {
         // Pending options have been placed while connecting.
         // Need to reconnect.
-        this.connectingPromise = this.connectInternal().finally(checkConnection);
+        this.connectingPromise = this.connectInternal()
+          .catch(() => {})
+          .finally(checkConnection);
         return this.connectingPromise;
       } else {
         // Clear the connecting promise, done.
@@ -131,7 +133,9 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       }
     };
 
-    this.connectingPromise ??= this.connectInternal().finally(checkConnection);
+    this.connectingPromise ??= this.connectInternal()
+      .catch(() => {})
+      .finally(checkConnection);
     return this.connectingPromise;
   }
 

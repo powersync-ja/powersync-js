@@ -442,6 +442,7 @@ The next upload iteration will be delayed.`);
      */
     while (true) {
       this.updateSyncStatus({ connecting: true });
+      let shouldDelayRetry = true;
       try {
         if (signal?.aborted) {
           break;
@@ -458,10 +459,10 @@ The next upload iteration will be delayed.`);
          * The nested abort controller will cleanup any open network requests and streams.
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
-        let delay = true;
+
         if (ex instanceof AbortOperation) {
           this.logger.warn(ex);
-          delay = false;
+          shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
         } else {
           this.logger.error(ex);
@@ -472,11 +473,6 @@ The next upload iteration will be delayed.`);
             downloadError: ex
           }
         });
-
-        // On error, wait a little before retrying
-        if (delay) {
-          await this.delayRetry();
-        }
       } finally {
         if (!signal.aborted) {
           nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));
@@ -487,6 +483,11 @@ The next upload iteration will be delayed.`);
           connected: false,
           connecting: true // May be unnecessary
         });
+
+        // On error, wait a little before retrying
+        if (shouldDelayRetry) {
+          await this.delayRetry(nestedAbortController.signal);
+        }
       }
     }
 
@@ -854,7 +855,29 @@ The next upload iteration will be delayed.`);
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry() {
-    return new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));
+  private async delayRetry(signal?: AbortSignal): Promise<void> {
+    return new Promise((resolve) => {
+      if (signal?.aborted) {
+        // If the signal is already aborted, resolve immediately
+        resolve();
+        return;
+      }
+
+      const { retryDelayMs } = this.options;
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      const endDelay = () => {
+        resolve();
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        signal?.removeEventListener('abort', endDelay);
+      };
+
+      signal?.addEventListener('abort', endDelay, { once: true });
+      timeoutId = setTimeout(endDelay, retryDelayMs);
+    });
   }
 }

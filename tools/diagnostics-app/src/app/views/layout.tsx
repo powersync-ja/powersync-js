@@ -6,8 +6,8 @@ import SouthIcon from '@mui/icons-material/South';
 import StorageIcon from '@mui/icons-material/Storage';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import TerminalIcon from '@mui/icons-material/Terminal';
-import WifiIcon from '@mui/icons-material/Wifi';
 import UserIcon from '@mui/icons-material/VerifiedUser';
+import WifiIcon from '@mui/icons-material/Wifi';
 
 import {
   AppBar,
@@ -34,7 +34,7 @@ import {
   SYNC_DIAGNOSTICS_ROUTE
 } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
+import { signOut, sync } from '@/library/powersync/ConnectionManager';
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -103,19 +103,12 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     const l = sync.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
+        setSyncError(status.dataFlowStatus.downloadError ?? null);
       }
     });
     return () => l();
   }, []);
 
-  React.useEffect(() => {
-    const l = syncErrorTracker.registerListener({
-      lastErrorUpdated(error) {
-        setSyncError(error);
-      }
-    });
-    return () => l();
-  }, []);
   const drawerWidth = 320;
 
   const drawer = (
