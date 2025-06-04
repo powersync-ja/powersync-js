@@ -26,15 +26,6 @@ Install it in your app with:
 npx expo install @op-engineering/op-sqlite
 ```
 
-## Version Compatibility
-
-This package version reflects the supported OP-SQLite major version:
-
-- `@powersync/op-sqlite` version `0.14.x` supports `@op-engineering/op-sqlite` version `14.x.x`
-- `@powersync/op-sqlite` version `0.15.x` supports `@op-engineering/op-sqlite` version `15.x.x`
-
-Always ensure your OP-SQLite peer dependency matches the major version indicated by this package.
-
 ## Usage
 
 ```typescript
