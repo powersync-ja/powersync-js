@@ -64,12 +64,9 @@ export default function SQLConsolePage() {
      * The query here will only emit results when the query data set changes.
      * Result sets are compared by serializing each item to JSON and comparing the strings.
      */
-    processor: {
-      mode: 'comparison',
-      comparator: new ArrayComparator({
-        compareBy: (item) => JSON.stringify(item)
-      })
-    }
+    comparator: new ArrayComparator({
+      compareBy: (item) => JSON.stringify(item)
+    })
   });
 
   return (

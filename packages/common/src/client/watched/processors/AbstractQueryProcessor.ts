@@ -178,6 +178,7 @@ export abstract class AbstractQueryProcessor<
     this.disposeListeners = null;
     this._closed = true;
     this.iterateListeners((l) => l.closed?.());
+    this.listeners.clear();
   }
 
   /**
