@@ -40,7 +40,7 @@ export abstract class AbstractQueryProcessor<
     Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>
   >
   extends BaseObserver<WatchedQueryProcessorListener<Data>>
-  implements WatchedQuery<Data>
+  implements WatchedQuery<Data, Settings>
 {
   readonly state: WatchedQueryState<Data>;
 
