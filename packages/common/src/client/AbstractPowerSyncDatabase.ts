@@ -72,7 +72,7 @@ export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatab
   database: SQLOpenOptions;
 }
 
-export interface SQLWatchOptions {
+export interface SQLOnChangeOptions {
   signal?: AbortSignal;
   tables?: string[];
   /** The minimum interval between queries. */
@@ -88,7 +88,9 @@ export interface SQLWatchOptions {
    * Emits an empty result set immediately
    */
   triggerImmediate?: boolean;
+}
 
+export interface SQLWatchOptions extends SQLOnChangeOptions {
   /**
    * Optional comparator which will be used to compare the results of the query.
    * The watched query will only yield results if the comparator returns false.
@@ -1039,7 +1041,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * }
    * ```
    */
-  onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
+  onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
   /**
    * See {@link onChangeWithCallback}.
    *
@@ -1054,11 +1056,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * }
    * ```
    */
-  onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void;
+  onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
 
   onChange(
-    handlerOrOptions?: WatchOnChangeHandler | SQLWatchOptions,
-    maybeOptions?: SQLWatchOptions
+    handlerOrOptions?: WatchOnChangeHandler | SQLOnChangeOptions,
+    maybeOptions?: SQLOnChangeOptions
   ): (() => void) | AsyncIterable<WatchOnChangeEvent> {
     if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onChange' in handlerOrOptions) {
       const handler = handlerOrOptions as WatchOnChangeHandler;
@@ -1083,7 +1085,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @param options Options for configuring watch behavior
    * @returns A dispose function to stop watching for changes
    */
-  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
+  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
     const { onChange, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
