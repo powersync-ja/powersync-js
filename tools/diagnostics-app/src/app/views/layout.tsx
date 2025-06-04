@@ -10,6 +10,7 @@ import UserIcon from '@mui/icons-material/VerifiedUser';
 import WifiIcon from '@mui/icons-material/Wifi';
 
 import {
+  Alert,
   AppBar,
   Box,
   Divider,
@@ -192,6 +193,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         </Drawer>
       </Box>
       <S.MainBox sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, marginTop: '50px' }}>
+        {syncError ? <Alert severity="error">Sync error detected: {syncError.message}</Alert> : null}
         {children}
       </S.MainBox>
     </S.MainBox>
