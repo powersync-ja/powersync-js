@@ -1,15 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
-  DEFAULT_RETRY_DELAY_MS,
-  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   BucketStorageAdapter,
   DBAdapter,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  DEFAULT_RETRY_DELAY_MS,
   PowerSyncBackendConnector,
   PowerSyncDatabaseOptionsWithSettings,
   RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation
 } from '@powersync/common';
+import { describe, expect, it, vi } from 'vitest';
 import { testSchema } from '../../utils/testDb';
 
 class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {

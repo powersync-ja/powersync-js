@@ -5,12 +5,10 @@ import {
   AdditionalConnectionOptions,
   BucketStorageAdapter,
   DBAdapter,
-  DEFAULT_REMOTE_LOGGER,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
-  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -18,9 +16,9 @@ import {
 import { NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
+import { Dispatcher } from 'undici';
 import { BetterSQLite3DBAdapter } from './BetterSQLite3DBAdapter.js';
 import { NodeSQLOpenOptions } from './options.js';
-import { Dispatcher } from 'undici';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
   database: DBAdapter | SQLOpenFactory | NodeSQLOpenOptions;

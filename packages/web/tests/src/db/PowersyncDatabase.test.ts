@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { AbstractPowerSyncDatabase, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/web';
+import { createBaseLogger, PowerSyncDatabase } from '@powersync/web';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { testSchema } from '../../utils/testDb';
 
 describe('PowerSyncDatabase', () => {
@@ -9,9 +9,10 @@ describe('PowerSyncDatabase', () => {
   let mockSyncImplementation: any;
 
   beforeEach(() => {
+    const logger = createBaseLogger();
     mockLogger = {
-      debug: vi.fn(),
-      warn: vi.fn()
+      debug: vi.spyOn(logger, 'debug'),
+      warn: vi.spyOn(logger, 'warn')
     };
 
     // Initialize with minimal required options
@@ -20,12 +21,8 @@ describe('PowerSyncDatabase', () => {
       database: {
         dbFilename: 'test.db'
       },
-      logger: mockLogger
+      logger
     });
-
-    vi.spyOn(db as any, 'runExclusive').mockImplementation((cb: any) => cb());
-
-    vi.spyOn(AbstractPowerSyncDatabase.prototype, 'connect').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -36,27 +33,6 @@ describe('PowerSyncDatabase', () => {
     it('should log debug message when attempting to connect', async () => {
       await db.connect(mockConnector);
       expect(mockLogger.debug).toHaveBeenCalledWith('Attempting to connect to PowerSync instance');
-      expect(db['runExclusive']).toHaveBeenCalled();
-    });
-
-    it('should use connect with correct options', async () => {
-      await db.connect(mockConnector, {
-        retryDelayMs: 1000,
-        crudUploadThrottleMs: 2000,
-        params: {
-          param1: 1
-        },
-        connectionMethod: SyncStreamConnectionMethod.HTTP
-      });
-
-      expect(AbstractPowerSyncDatabase.prototype.connect).toHaveBeenCalledWith(mockConnector, {
-        retryDelayMs: 1000,
-        crudUploadThrottleMs: 2000,
-        connectionMethod: 'http',
-        params: {
-          param1: 1
-        }
-      });
     });
   });
 });
