@@ -38,6 +38,8 @@
     "lint-staged": "^15.2.2",
     "playwright": "^1.51.0",
     "prettier": "^3.2.5",
+    "prettier-plugin-embed": "^0.4.15",
+    "prettier-plugin-sql": "^0.18.1",
     "typescript": "^5.7.2",
     "vitest": "^3.0.8"
   }

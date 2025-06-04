@@ -1,4 +1,7 @@
-import { usePowerSync, useQuery } from '@powersync/react';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { useSupabase } from '@/components/providers/SystemProvider';
+import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
+import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -15,12 +18,9 @@ import {
   styled
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
+import { usePowerSync, useQuery } from '@powersync/react';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSupabase } from '@/components/providers/SystemProvider';
-import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
 
 /**
  * useSearchParams causes the entire element to fall back to client side rendering
@@ -34,38 +34,35 @@ const TodoEditSection = () => {
 
   const {
     data: [listRecord]
-  } = useQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ?`, [listID]);
+  } = useQuery<{ name: string }>(
+    /* sql */ `
+      SELECT
+        name
+      FROM
+        ${LISTS_TABLE}
+      WHERE
+        id = ?
+    `,
+    [listID]
+  );
 
   const { data: todos } = useQuery<TodoRecord>(
-    `SELECT * FROM ${TODOS_TABLE} WHERE list_id=? ORDER BY created_at DESC, id`,
+    /* sql */ `
+      SELECT
+        *
+      FROM
+        ${TODOS_TABLE}
+      WHERE
+        list_id = ?
+      ORDER BY
+        created_at DESC,
+        id
+    `,
     [listID]
   );
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
-
-  const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
-    const updatedRecord = { ...record, completed: completed };
-    if (completed) {
-      const userID = supabase?.currentSession?.user.id;
-      if (!userID) {
-        throw new Error(`Could not get user ID.`);
-      }
-      updatedRecord.completed_at = new Date().toISOString();
-      updatedRecord.completed_by = userID;
-    } else {
-      updatedRecord.completed_at = null;
-      updatedRecord.completed_by = null;
-    }
-    await powerSync.execute(
-      `UPDATE ${TODOS_TABLE}
-              SET completed = ?,
-                  completed_at = ?,
-                  completed_by = ?
-              WHERE id = ?`,
-      [completed, updatedRecord.completed_at, updatedRecord.completed_by, record.id]
-    );
-  };
 
   const createNewTodo = async (description: string) => {
     const userID = supabase?.currentSession?.user.id;
@@ -74,19 +71,14 @@ const TodoEditSection = () => {
     }
 
     await powerSync.execute(
-      `INSERT INTO
-                ${TODOS_TABLE}
-                    (id, created_at, created_by, description, list_id)
-                VALUES
-                    (uuid(), datetime(), ?, ?, ?)`,
+      /* sql */ `
+        INSERT INTO
+          ${TODOS_TABLE} (id, created_at, created_by, description, list_id)
+        VALUES
+          (uuid (), datetime (), ?, ?, ?)
+      `,
       [userID, description, listID!]
     );
-  };
-
-  const deleteTodo = async (id: string) => {
-    await powerSync.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${TODOS_TABLE} WHERE id = ?`, [id]);
-    });
   };
 
   if (!listRecord) {
@@ -106,13 +98,7 @@ const TodoEditSection = () => {
         <Box>
           <List dense={false}>
             {todos.map((r) => (
-              <TodoItemWidget
-                key={r.id}
-                description={r.description}
-                onDelete={() => deleteTodo(r.id)}
-                isComplete={r.completed == 1}
-                toggleCompletion={() => toggleCompletion(r, !r.completed)}
-              />
+              <TodoItemWidget key={r.id} id={r.id} description={r.description} isComplete={r.completed == 1} />
             ))}
           </List>
         </Box>
@@ -129,8 +115,7 @@ const TodoEditSection = () => {
               await createNewTodo(nameInputRef.current!.value);
               setShowPrompt(false);
             }
-          }}
-        >
+          }}>
           <DialogTitle id="alert-dialog-title">{'Create Todo Item'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a description for a new todo item</DialogContentText>

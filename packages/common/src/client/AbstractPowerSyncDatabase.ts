@@ -9,16 +9,16 @@ import {
   UpdateNotification,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
+import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
 import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { throttleTrailing } from '../utils/async.js';
+import { mutexRunExclusive } from '../utils/mutex.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
@@ -32,7 +32,9 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
+import { IncrementalWatchMode } from './watched/WatchedQueryBuilder.js';
+import { WatchedQueryBuilderMap } from './watched/WatchedQueryBuilderMap.js';
+import { FalsyComparator, WatchedQueryComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -82,6 +84,16 @@ export interface SQLWatchOptions {
    * by not removing PowerSync table name prefixes
    */
   rawTableNames?: boolean;
+  /**
+   * Emits an empty result set immediately
+   */
+  triggerImmediate?: boolean;
+
+  /**
+   * Optional comparator which will be used to compare the results of the query.
+   * The watched query will only yield results if the comparator returns false.
+   */
+  comparator?: WatchedQueryComparator<QueryResult>;
 }
 
 export interface WatchOnChangeEvent {
@@ -101,6 +113,8 @@ export interface WatchOnChangeHandler {
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
+  closing: () => Promise<void> | void;
+  closed: () => Promise<void> | void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -507,6 +521,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return;
     }
 
+    await this.iterateAsyncListeners(async (cb) => cb.closing?.());
+
     const { disconnect } = options;
     if (disconnect) {
       await this.disconnect();
@@ -515,6 +531,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.syncStreamImplementation?.dispose();
     await this.database.close();
     this.closed = true;
+    await this.iterateAsyncListeners(async (cb) => cb.closed?.());
   }
 
   /**
@@ -858,6 +875,44 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Watch a SQL query which incrementally emits updates for result sets.
+   * This is useful for only getting updates when the result set changes, or viewing the change in the result set over time.
+   * @returns A {@link WatchedQueryBuilder} for the specified watch mode.
+   * @example
+   * ```javascript
+   * const watchedQuery = powerSync
+   *  .incrementalWatch({ mode: IncrementalWatchMode.COMPARISON })
+   *  .build({
+   *    watch: {
+   *      placeholderData: [],
+   *      query: new GetAllQuery({
+   *        sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *        parameters: []
+   *      }),
+   *      throttleMs: 1000
+   *    },
+   *    comparator: new ArrayComparator({
+   *      // By default the entire result set is stringified and compared.
+   *      // Comparing the array items individual can be more efficient.
+   *      // Alternatively a unique field can be used to compare items.
+   *      // For example, if the items are objects with an `updated_at` field:
+   *      compareBy: (item) => JSON.stringify(item)
+   *    })
+   * });
+   * ```
+   */
+  incrementalWatch<Mode extends IncrementalWatchMode>(options: { mode: Mode }): WatchedQueryBuilderMap[Mode] {
+    const { mode } = options;
+    const builderFactory = WatchedQueryBuilderMap[mode];
+    if (!builderFactory) {
+      throw new Error(
+        `Unsupported watch mode: ${mode}. Please specify on of [${Object.values(IncrementalWatchMode).join(', ')}]`
+      );
+    }
+    return builderFactory(this) as WatchedQueryBuilderMap[Mode];
+  }
+
+  /**
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
@@ -875,38 +930,42 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error('onResult is required');
     }
 
-    const watchQuery = async (abortSignal: AbortSignal) => {
-      try {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-        // Fetch initial data
-        const result = await this.executeReadOnly(sql, parameters);
-        onResult(result);
-
-        this.onChangeWithCallback(
-          {
-            onChange: async () => {
-              try {
-                const result = await this.executeReadOnly(sql, parameters);
-                onResult(result);
-              } catch (error) {
-                onError?.(error);
-              }
-            },
-            onError
-          },
-          {
-            ...(options ?? {}),
-            tables: resolvedTables,
-            // Override the abort signal since we intercept it
-            signal: abortSignal
-          }
-        );
-      } catch (error) {
-        onError?.(error);
+    const { comparator = FalsyComparator } = options ?? {};
+    // This watch method which provides static SQL is currently only compatible with the comparison mode.
+    // Uses shared incremental watch logic under the hood, but maintains the same external API as the old watch method.
+    const watchedQuery = this.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build<QueryResult | null>({
+      comparator,
+      watch: {
+        query: {
+          compile: () => ({
+            sql: sql,
+            parameters: parameters ?? []
+          }),
+          execute: () => this.executeReadOnly(sql, parameters)
+        },
+        placeholderData: null,
+        reportFetching: false,
+        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
       }
-    };
+    });
 
-    runOnSchemaChange(watchQuery, this, options);
+    const dispose = watchedQuery.subscribe({
+      onData: (data) => {
+        if (!data) {
+          // This should not happen. We only use null for the initial data.
+          return;
+        }
+        onResult(data);
+      },
+      onError: (error) => {
+        onError(error);
+      }
+    });
+
+    options?.signal?.addEventListener('abort', () => {
+      dispose();
+      watchedQuery.close();
+    });
   }
 
   /**
@@ -1050,6 +1109,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         }),
       throttleMs
     );
+
+    if (options?.triggerImmediate) {
+      executor.schedule({ changedTables: [] });
+    }
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {

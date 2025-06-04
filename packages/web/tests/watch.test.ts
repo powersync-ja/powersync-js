@@ -1,7 +1,7 @@
-import { AbstractPowerSyncDatabase } from '@powersync/common';
+import { AbstractPowerSyncDatabase, GetAllQuery, IncrementalWatchMode, WatchedQueryState } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { testSchema } from './utils/testDb';
 vi.useRealTimers();
 
@@ -281,9 +281,10 @@ describe('Watch Tests', { sequential: true }, () => {
         { signal: abortController.signal, throttleMs: throttleDuration }
       );
     });
-    abortController.abort();
 
     await receivedError;
+    abortController.abort();
+
     expect(receivedErrorCount).equals(1);
   });
 
@@ -322,5 +323,186 @@ describe('Watch Tests', { sequential: true }, () => {
     // This fluctuates between 3 and 4 based on timing, but should never be 25
     expect(receivedWithManagedOverflowCount).greaterThan(2);
     expect(receivedWithManagedOverflowCount).toBeLessThanOrEqual(4);
+  });
+
+  it('should stream watch results', async () => {
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: new GetAllQuery({
+            sql: 'SELECT * FROM assets',
+            parameters: []
+          }),
+          placeholderData: []
+        }
+      });
+
+    const getNextState = () =>
+      new Promise<WatchedQueryState<any>>((resolve) => {
+        const dispose = watch.subscribe({
+          onStateChange: (state) => {
+            dispose();
+            resolve(state);
+          }
+        });
+      });
+
+    let state = watch.state;
+    expect(state.isFetching).true;
+    expect(state.isLoading).true;
+
+    state = await getNextState();
+    expect(state.isFetching).false;
+    expect(state.isLoading).false;
+
+    const nextStatePromise = getNextState();
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    state = await nextStatePromise;
+    expect(state!.isFetching).true;
+
+    state = await getNextState();
+    expect(state.isFetching).false;
+    expect(state.data).toHaveLength(1);
+  });
+
+  it('should only report updates for relevant changes', async () => {
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: {
+            compile: () => ({
+              sql: 'SELECT * FROM assets where make = ?',
+              parameters: ['test']
+            }),
+            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
+          },
+          placeholderData: []
+        }
+      });
+
+    let notificationCount = 0;
+    const dispose = watch.subscribe({
+      onData: () => {
+        notificationCount++;
+      }
+    });
+    onTestFinished(dispose);
+
+    // Should only trigger for this operation
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    // Should not trigger for these operations
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make2', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make3', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make4', uuid()]);
+
+    // The initial result with no data is equal to the default state/
+    // We should only receive one notification when the data is updated
+    expect(notificationCount).equals(1);
+    expect(watch.state.data).toHaveLength(1);
+  });
+
+  it('should not report fetching status', async () => {
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: {
+            compile: () => ({
+              sql: 'SELECT * FROM assets where make = ?',
+              parameters: ['test']
+            }),
+            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
+          },
+          placeholderData: [],
+          reportFetching: false
+        }
+      });
+
+    expect(watch.state.isFetching).false;
+
+    let notificationCount = 0;
+    const dispose = watch.subscribe({
+      onStateChange: () => {
+        notificationCount++;
+      }
+    });
+    onTestFinished(dispose);
+
+    // Should only a state change trigger for this operation
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    // Should not trigger any state change for these operations
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make2', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make3', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make4', uuid()]);
+
+    // The initial result with no data is equal to the default state/
+    // We should only receive one notification when the data is updated
+    expect(notificationCount).equals(1);
+    expect(watch.state.data).toHaveLength(1);
+  });
+
+  it('should allow updating queries', async () => {
+    // Create sample data
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.COMPARISON
+      })
+      .build({
+        watch: {
+          query: new GetAllQuery<{ make: string }>({
+            sql: 'SELECT * FROM assets where make = ?',
+            parameters: ['test']
+          }),
+          placeholderData: [],
+          reportFetching: false
+        }
+      });
+
+    expect(watch.state.isFetching).false;
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.isLoading).false;
+      },
+      { timeout: 1000 }
+    );
+
+    expect(watch.state.data).toHaveLength(1);
+    expect(watch.state.data[0].make).equals('test');
+
+    await watch.updateSettings({
+      placeholderData: [],
+      query: new GetAllQuery<{ make: string }>({
+        sql: 'SELECT * FROM assets where make = ?',
+        parameters: ['nottest']
+      })
+    });
+
+    expect(watch.state.isLoading).true;
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.isLoading).false;
+      },
+      { timeout: 1000 }
+    );
+
+    expect(watch.state.data).toHaveLength(1);
+    expect(watch.state.data[0].make).equals('nottest');
   });
 });
