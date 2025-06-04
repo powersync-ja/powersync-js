@@ -374,6 +374,7 @@ function MyWidget() {
   const { data, isLoading } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
     comparator: new ArrayComparator({
       compareBy: (cat) => JSON.stringify(cat)
+    },
     reportFetching: false
   })
 

@@ -2,7 +2,13 @@ export interface WatchedQueryComparator<Data> {
   checkEquality: (current: Data, previous: Data) => boolean;
 }
 
+/**
+ * Options for {@link ArrayComparator}
+ */
 export type ArrayComparatorOptions<ItemType> = {
+  /**
+   * Returns a string to uniquely identify an item in the array.
+   */
   compareBy: (item: ItemType) => string;
 };
 

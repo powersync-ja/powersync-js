@@ -83,7 +83,7 @@ export interface WatchedQueryListener extends BaseListener {
   subscriptionsChanged: (counts: SubscriptionCounts) => void;
 }
 
-export interface WatchedQuery<Data, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>>
+export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>>
   extends BaseObserverInterface<WatchedQueryListener> {
   /**
    * Current state of the watched query.
