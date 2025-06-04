@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
+import { AbstractPowerSyncDatabase, column, IncrementalWatchMode, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { sql } from 'kysely';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -90,9 +90,9 @@ describe('Watch Tests', () => {
       await db
         .insertInto('assets')
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
 
@@ -126,9 +126,9 @@ describe('Watch Tests', () => {
       await db
         .insertInto('assets')
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
     }
@@ -180,9 +180,9 @@ describe('Watch Tests', () => {
     await db
       .insertInto('assets')
       .values({
-        id: sql`uuid()`,
+        id: sql`uuid ()`,
         make: 'test',
-        customer_id: sql`uuid()`
+        customer_id: sql`uuid ()`
       })
       .execute();
 
@@ -210,7 +210,7 @@ describe('Watch Tests', () => {
 
       const query = db.selectFrom('assets').select([
         () => {
-          const fullName = sql<string>`fakeFunction()`; // Simulate an error with invalid function
+          const fullName = sql<string>`fakeFunction ()`; // Simulate an error with invalid function
           return fullName.as('full_name');
         }
       ]);
@@ -246,9 +246,9 @@ describe('Watch Tests', () => {
     for (let i = 0; i < updatesCount; i++) {
       db.insertInto('assets')
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
     }
@@ -265,7 +265,7 @@ describe('Watch Tests', () => {
   it('incremental watch should accept queries', async () => {
     const query = db.selectFrom('assets').select(db.fn.count('assets.id').as('count'));
 
-    const watch = powerSyncDb.incrementalWatch({
+    const watch = powerSyncDb.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
       watch: {
         query,
         placeholderData: []
@@ -286,9 +286,9 @@ describe('Watch Tests', () => {
     await db
       .insertInto('assets')
       .values({
-        id: sql`uuid()`,
+        id: sql`uuid ()`,
         make: 'test',
-        customer_id: sql`uuid()`
+        customer_id: sql`uuid ()`
       })
       .execute();
 
