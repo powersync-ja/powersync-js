@@ -17,7 +17,7 @@ const main = async () => {
     enableUncidiDiagnostics();
   }
 
-  if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
+  if (!('SYNC_SERVICE' in process.env)) {
     console.warn(
       'Set the BACKEND and SYNC_SERVICE environment variables to point to a sync service and a running demo backend.'
     );

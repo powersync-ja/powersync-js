@@ -2,6 +2,13 @@ import { AbstractPowerSyncDatabase, column, PowerSyncBackendConnector, Schema, T
 
 export class DemoConnector implements PowerSyncBackendConnector {
   async fetchCredentials() {
+    if (process.env.POWERSYNC_TOKEN) {
+      return {
+        endpoint: process.env.SYNC_SERVICE!,
+        token: process.env.POWERSYNC_TOKEN
+      };
+    }
+
     const response = await fetch(`${process.env.BACKEND}/api/auth/token`);
     if (response.status != 200) {
       throw 'Could not fetch token';
