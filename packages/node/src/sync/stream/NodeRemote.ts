@@ -11,7 +11,14 @@ import {
   RemoteConnector
 } from '@powersync/common';
 import { BSON } from 'bson';
-import { Dispatcher, EnvHttpProxyAgent, ErrorEvent, WebSocket as UndiciWebSocket } from 'undici';
+import {
+  Dispatcher,
+  EnvHttpProxyAgent,
+  ErrorEvent,
+  getGlobalDispatcher,
+  ProxyAgent,
+  WebSocket as UndiciWebSocket
+} from 'undici';
 import { ErrorRecordingDispatcher } from './ErrorRecordingDispatcher.js';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
@@ -35,51 +42,64 @@ export type NodeCustomConnectionOptions = {
 export type NodeRemoteOptions = AbstractRemoteOptions & NodeCustomConnectionOptions;
 
 export class NodeRemote extends AbstractRemote {
-  private dispatcher: Dispatcher;
+  private wsDispatcher: Dispatcher | undefined;
 
   constructor(
     protected connector: RemoteConnector,
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
     options?: Partial<NodeRemoteOptions>
   ) {
-    // EnvHttpProxyAgent automatically uses relevant env vars for HTTP
-    const dispatcher = options?.dispatcher ?? new EnvHttpProxyAgent();
+    const fetchDispatcher = options?.dispatcher ?? defaultFetchDispatcher();
 
     super(connector, logger, {
       fetchImplementation: options?.fetchImplementation ?? new NodeFetchProvider(),
       fetchOptions: {
-        dispatcher
+        dispatcher: fetchDispatcher
       },
       ...(options ?? {})
     });
 
-    this.dispatcher = dispatcher;
+    this.wsDispatcher = options?.dispatcher;
   }
 
   protected createSocket(url: string): globalThis.WebSocket {
     // Create dedicated dispatcher for this WebSocket
-    let ws: UndiciWebSocket | undefined;
-    const onError = (error: Error) => {
-      // When we receive an error from the Dispatcher, emit the event on the websocket.
-      // This will take precedence over the WebSocket's own error event, giving more details on what went wrong.
-      const event = new ErrorEvent('error', {
-        error,
-        message: error.message
-      });
-      ws?.dispatchEvent(event);
-    };
-
-    const errorRecordingDispatcher = new ErrorRecordingDispatcher(this.dispatcher, onError);
+    const baseDispatcher = this.getWebsocketDispatcher(url);
+    const errorRecordingDispatcher = new ErrorRecordingDispatcher(baseDispatcher);
 
     // Create WebSocket with dedicated dispatcher
-    ws = new UndiciWebSocket(url, {
+    const ws = new UndiciWebSocket(url, {
       dispatcher: errorRecordingDispatcher,
       headers: {
         'User-Agent': this.getUserAgent()
       }
     });
 
+    errorRecordingDispatcher.onError = (error: Error) => {
+      // When we receive an error from the Dispatcher, emit the event on the websocket.
+      // This will take precedence over the WebSocket's own error event, giving more details on what went wrong.
+      const event = new ErrorEvent('error', {
+        error,
+        message: error.message
+      });
+      ws.dispatchEvent(event);
+    };
+
     return ws as globalThis.WebSocket;
+  }
+
+  protected getWebsocketDispatcher(url: string) {
+    if (this.wsDispatcher != null) {
+      return this.wsDispatcher;
+    }
+
+    const protocol = new URL(url).protocol.replace(':', '');
+    const proxy = getProxyForProtocol(protocol);
+    if (proxy != null) {
+      return new ProxyAgent(proxy);
+    } else {
+      return getGlobalDispatcher();
+    }
   }
 
   getUserAgent(): string {
@@ -94,4 +114,22 @@ export class NodeRemote extends AbstractRemote {
   async getBSON(): Promise<BSONImplementation> {
     return BSON;
   }
+}
+
+function defaultFetchDispatcher(): Dispatcher {
+  // EnvHttpProxyAgent automatically uses HTTP_PROXY, HTTPS_PROXY and NO_PROXY env vars by default.
+  // We add ALL_PROXY support.
+  return new EnvHttpProxyAgent({
+    httpProxy: getProxyForProtocol('http'),
+    httpsProxy: getProxyForProtocol('https')
+  });
+}
+
+function getProxyForProtocol(protocol: string): string | undefined {
+  return (
+    process.env[`${protocol.toLowerCase()}_proxy`] ??
+    process.env[`${protocol.toUpperCase()}_PROXY`] ??
+    process.env[`all_proxy`] ??
+    process.env[`ALL_PROXY`]
+  );
 }

@@ -6,12 +6,11 @@ import { Dispatcher } from 'undici';
  */
 export class ErrorRecordingDispatcher extends Dispatcher {
   private targetDispatcher: Dispatcher;
-  private onError: (error: Error) => void;
+  public onError: ((error: Error) => void) | undefined;
 
-  constructor(targetDispatcher: Dispatcher, onError: (error: Error) => void) {
+  constructor(targetDispatcher: Dispatcher) {
     super();
     this.targetDispatcher = targetDispatcher;
-    this.onError = onError;
   }
 
   dispatch(opts: Dispatcher.DispatchOptions, handler: Dispatcher.DispatchHandler): boolean {
@@ -25,7 +24,7 @@ export class ErrorRecordingDispatcher extends Dispatcher {
       onResponseEnd: handler.onResponseEnd?.bind(handler),
 
       onResponseError: (controller: any, error: Error) => {
-        this.onError(error);
+        this.onError?.(error);
         // Pass through to original handler
         return handler.onResponseError?.(controller, error);
       },
@@ -38,7 +37,7 @@ export class ErrorRecordingDispatcher extends Dispatcher {
       onComplete: handler.onComplete?.bind(handler),
 
       onError: (error: Error) => {
-        this.onError(error);
+        this.onError?.(error);
 
         // Pass through to original handler
         return handler.onError?.(error);
