@@ -6,10 +6,6 @@ This package (`packages/powersync-op-sqlite`) enables using [OP-SQLite](https://
 
 If you are not yet familiar with PowerSync, please see the [PowerSync React Native SDK README](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native) for more information.
 
-## Beta Release
-
-This package is currently in a beta release.
-
 ## Installation
 
 Follow the installation instructions for the [React Native SDK](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native) if you haven't yet set up PowerSync in your project. However, note that this package cannot be installed alongside `@journeyapps/react-native-quick-sqlite`. Skip the step about installing it as a peer dependency, or uninstall it if it is already installed.
@@ -45,7 +41,7 @@ this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema })
 
 ### Encryption with SQLCipher
 
-To enable SQLCipher you need to add the following configuration option to your application's `package.json`
+To enable SQLCipher you need to add the following configuration option to your application's `package.json`. Note that for [monorepos](https://op-engineering.github.io/op-sqlite/docs/installation) you may have to add this configuration to the monorepo root `package.json` instead, this depends on where your package manager tool hoists modules.
 
 ```json
 {
