@@ -1,5 +1,17 @@
 # @powersync/node
 
+## 0.5.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+  - @powersync/common@1.32.0
+
 ## 0.4.5
 
 ### Patch Changes
