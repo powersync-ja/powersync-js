@@ -2,8 +2,6 @@
 '@powersync/op-sqlite': minor
 ---
 
-Initial stable version release.
-
 Updated op-sqlite upstream peer dependency from 11.x.x to support ^13.x.x and ^14.x.x,
 
 Noteworthy changes from version 11 to version 14 include:
