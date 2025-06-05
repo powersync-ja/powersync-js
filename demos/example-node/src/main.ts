@@ -4,11 +4,18 @@ import repl_factory from 'node:repl';
 import { createBaseLogger, createLogger, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
+import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
 
 const main = async () => {
   const baseLogger = createBaseLogger();
   const logger = createLogger('PowerSyncDemo');
-  baseLogger.useDefaults({ defaultLevel: logger.WARN });
+  const debug = process.env.POWERSYNC_DEBUG == '1';
+  baseLogger.useDefaults({ defaultLevel: debug ? logger.TRACE : logger.WARN });
+
+  // Enable detailed request/response logging for debugging purposes.
+  if (debug) {
+    enableUncidiDiagnostics();
+  }
 
   if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
     console.warn(
