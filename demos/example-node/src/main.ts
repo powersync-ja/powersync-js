@@ -33,7 +33,24 @@ const main = async () => {
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
-  await db.connect(new DemoConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+  await db.connect(new DemoConnector(), {
+    connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+  });
+  // Example using a proxy agent for more control over the connection:
+  // const proxyAgent = new (await import('undici')).ProxyAgent({
+  //   uri: 'http://localhost:8080',
+  //   requestTls: {
+  //     ca: '<CA for the service>'
+  //   },
+  //   proxyTls: {
+  //     ca: '<CA for the proxy>'
+  //   }
+  // });
+  // await db.connect(new DemoConnector(), {
+  //   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+  //   dispatcher: proxyAgent
+  // });
+
   await db.waitForFirstSync();
   console.log('First sync complete!');
 
