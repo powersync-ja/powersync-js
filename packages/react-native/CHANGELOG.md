@@ -1,5 +1,19 @@
 # @powersync/react-native
 
+## 1.21.0
+
+### Minor Changes
+
+- 96ddd5d: Fixed issue where iOS WebSockets could fail to reconnect after a connection issue.
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+  - @powersync/common@1.32.0
+  - @powersync/react@1.5.3
+
 ## 1.20.4
 
 ### Patch Changes

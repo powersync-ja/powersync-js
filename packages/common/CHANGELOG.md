@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.32.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+
+### Patch Changes
+
+- 96ddd5d: Fixed bug where changes in SyncStatus downloadError and uploadError might not be reported.
+
 ## 1.31.1
 
 ### Patch Changes
