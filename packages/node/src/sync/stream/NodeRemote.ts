@@ -11,9 +11,8 @@ import {
   RemoteConnector
 } from '@powersync/common';
 import { BSON } from 'bson';
-import Agent from 'proxy-agent';
-import { EnvHttpProxyAgent, Dispatcher } from 'undici';
-import { WebSocket } from 'ws';
+import { Dispatcher, EnvHttpProxyAgent, ErrorEvent, WebSocket as UndiciWebSocket } from 'undici';
+import { ErrorRecordingDispatcher } from './ErrorRecordingDispatcher.js';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -23,11 +22,21 @@ class NodeFetchProvider extends FetchImplementationProvider {
   }
 }
 
-export type NodeRemoteOptions = AbstractRemoteOptions & {
+export type NodeCustomConnectionOptions = {
+  /**
+   * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
+   *
+   * This can be used to customize proxy usage (using undici ProxyAgent),
+   * or other connection options.
+   */
   dispatcher?: Dispatcher;
 };
 
+export type NodeRemoteOptions = AbstractRemoteOptions & NodeCustomConnectionOptions;
+
 export class NodeRemote extends AbstractRemote {
+  private dispatcher: Dispatcher;
+
   constructor(
     protected connector: RemoteConnector,
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
@@ -43,16 +52,34 @@ export class NodeRemote extends AbstractRemote {
       },
       ...(options ?? {})
     });
+
+    this.dispatcher = dispatcher;
   }
 
   protected createSocket(url: string): globalThis.WebSocket {
-    return new WebSocket(url, {
-      // Automatically uses relevant env vars for web sockets
-      agent: new Agent.ProxyAgent(),
+    // Create dedicated dispatcher for this WebSocket
+    let ws: UndiciWebSocket | undefined;
+    const onError = (error: Error) => {
+      // When we receive an error from the Dispatcher, emit the event on the websocket.
+      // This will take precedence over the WebSocket's own error event, giving more details on what went wrong.
+      const event = new ErrorEvent('error', {
+        error,
+        message: error.message
+      });
+      ws?.dispatchEvent(event);
+    };
+
+    const errorRecordingDispatcher = new ErrorRecordingDispatcher(this.dispatcher, onError);
+
+    // Create WebSocket with dedicated dispatcher
+    ws = new UndiciWebSocket(url, {
+      dispatcher: errorRecordingDispatcher,
       headers: {
         'User-Agent': this.getUserAgent()
       }
-    }) as any as globalThis.WebSocket; // This is compatible in Node environments
+    });
+
+    return ws as globalThis.WebSocket;
   }
 
   getUserAgent(): string {
