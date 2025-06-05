@@ -53,8 +53,7 @@
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
     "comlink": "^4.4.2",
-    "undici": "^7.10.0",
-    "ws": "^8.18.1"
+    "undici": "^7.10.0"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",

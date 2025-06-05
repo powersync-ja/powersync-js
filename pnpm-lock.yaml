@@ -1783,9 +1783,6 @@ importers:
       undici:
         specifier: ^7.10.0
         version: 7.10.0
-      ws:
-        specifier: ^8.18.1
-        version: 8.18.1
     devDependencies:
       '@powersync/drizzle-driver':
         specifier: workspace:*
