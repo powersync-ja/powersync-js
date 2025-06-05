@@ -1,20 +1,19 @@
 import {
   BaseListener,
-  BaseObserver,
+  createBaseLogger,
+  LogLevel,
   PowerSyncDatabase,
+  TemporaryStorageOption,
+  WASQLiteOpenFactory,
+  WASQLiteVFS,
   WebRemote,
   WebStreamingSyncImplementation,
-  WebStreamingSyncImplementationOptions,
-  WASQLiteOpenFactory,
-  TemporaryStorageOption,
-  WASQLiteVFS,
-  createBaseLogger,
-  LogLevel
+  WebStreamingSyncImplementationOptions
 } from '@powersync/web';
+import { safeParse } from '../safeParse/safeParse';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
-import { safeParse } from '../safeParse/safeParse';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -62,31 +61,6 @@ export interface SyncErrorListener extends BaseListener {
   lastErrorUpdated?: ((error: Error) => void) | undefined;
 }
 
-class SyncErrorTracker extends BaseObserver<SyncErrorListener> {
-  public lastSyncError: Error | null = null;
-
-  constructor() {
-    super();
-    // Big hack: Use the logger to get access to connection errors
-    const defaultHandler = baseLogger.createDefaultHandler();
-    baseLogger.setHandler((messages, context) => {
-      defaultHandler(messages, context);
-      if (context.name == 'PowerSyncStream' && context.level.name == 'ERROR') {
-        if (messages[0] instanceof Error) {
-          this.lastSyncError = messages[0];
-        } else {
-          this.lastSyncError = new Error('' + messages[0]);
-        }
-        this.iterateListeners((listener) => {
-          listener.lastErrorUpdated?.(this.lastSyncError!);
-        });
-      }
-    });
-  }
-}
-
-export const syncErrorTracker = new SyncErrorTracker();
-
 if (connector.hasCredentials()) {
   connect();
 }
@@ -95,11 +69,10 @@ export async function connect() {
   const params = getParams();
   await sync.connect({ params });
   if (!sync.syncStatus.connected) {
+    const error = sync.syncStatus.dataFlowStatus.downloadError ?? new Error('Failed to connect');
     // Disconnect but don't wait for it
     sync.disconnect();
-    throw syncErrorTracker.lastSyncError ?? new Error('Failed to connect');
-  } else {
-    syncErrorTracker.lastSyncError = null;
+    throw error;
   }
 }
 
@@ -120,6 +93,7 @@ export async function disconnect() {
 
 export async function signOut() {
   connector.clearCredentials();
+  await disconnect();
   await db.disconnectAndClear();
   await schemaManager.clear();
 }

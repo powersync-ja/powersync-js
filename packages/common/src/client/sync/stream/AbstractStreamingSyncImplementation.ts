@@ -1,5 +1,7 @@
 import Logger, { ILogger } from 'js-logger';
 
+import { InternalProgressInformation } from 'src/db/crud/SyncProgress.js';
+import { DataStream } from 'src/utils/DataStream.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
@@ -7,7 +9,7 @@ import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js
 import { BucketChecksum, BucketDescription, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
-import { AbstractRemote, SyncStreamOptions, FetchStrategy } from './AbstractRemote.js';
+import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
 import {
   BucketRequest,
   StreamingSyncLine,
@@ -19,8 +21,6 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { DataStream } from 'src/utils/DataStream.js';
-import { InternalProgressInformation } from 'src/db/crud/SyncProgress.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -341,12 +341,13 @@ The next upload iteration will be delayed.`);
       await this.disconnect();
     }
 
-    this.abortController = new AbortController();
+    const controller = new AbortController();
+    this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
     // Return a promise that resolves when the connection status is updated
     return new Promise<void>((resolve) => {
-      const l = this.registerListener({
+      const disposer = this.registerListener({
         statusUpdated: (update) => {
           // This is triggered as soon as a connection is read from
           if (typeof update.connected == 'undefined') {
@@ -356,13 +357,15 @@ The next upload iteration will be delayed.`);
 
           if (update.connected == false) {
             /**
-             * This function does not reject if initial connect attempt failed
+             * This function does not reject if initial connect attempt failed.
+             * Connected can be false if the connection attempt was aborted or if the initial connection
+             * attempt failed.
              */
             this.logger.warn('Initial connect attempt did not successfully connect to server');
           }
 
+          disposer();
           resolve();
-          l();
         }
       });
     });
@@ -439,6 +442,7 @@ The next upload iteration will be delayed.`);
      */
     while (true) {
       this.updateSyncStatus({ connecting: true });
+      let shouldDelayRetry = true;
       try {
         if (signal?.aborted) {
           break;
@@ -450,12 +454,16 @@ The next upload iteration will be delayed.`);
          * Either:
          *  - A network request failed with a failed connection or not OKAY response code.
          *  - There was a sync processing error.
-         * This loop will retry.
+         *  - The connection was aborted.
+         * This loop will retry after a delay if the connection was not aborted.
          * The nested abort controller will cleanup any open network requests and streams.
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
+
         if (ex instanceof AbortOperation) {
           this.logger.warn(ex);
+          shouldDelayRetry = false;
+          // A disconnect was requested, we should not delay since there is no explicit retry
         } else {
           this.logger.error(ex);
         }
@@ -465,9 +473,6 @@ The next upload iteration will be delayed.`);
             downloadError: ex
           }
         });
-
-        // On error, wait a little before retrying
-        await this.delayRetry();
       } finally {
         if (!signal.aborted) {
           nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));
@@ -478,6 +483,11 @@ The next upload iteration will be delayed.`);
           connected: false,
           connecting: true // May be unnecessary
         });
+
+        // On error, wait a little before retrying
+        if (shouldDelayRetry) {
+          await this.delayRetry(nestedAbortController.signal);
+        }
       }
     }
 
@@ -519,6 +529,10 @@ The next upload iteration will be delayed.`);
         let appliedCheckpoint: Checkpoint | null = null;
 
         const clientId = await this.options.adapter.getClientId();
+
+        if (signal.aborted) {
+          return;
+        }
 
         this.logger.debug('Requesting stream from server');
 
@@ -841,7 +855,29 @@ The next upload iteration will be delayed.`);
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry() {
-    return new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));
+  private async delayRetry(signal?: AbortSignal): Promise<void> {
+    return new Promise((resolve) => {
+      if (signal?.aborted) {
+        // If the signal is already aborted, resolve immediately
+        resolve();
+        return;
+      }
+
+      const { retryDelayMs } = this.options;
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      const endDelay = () => {
+        resolve();
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        signal?.removeEventListener('abort', endDelay);
+      };
+
+      signal?.addEventListener('abort', endDelay, { once: true });
+      timeoutId = setTimeout(endDelay, retryDelayMs);
+    });
   }
 }
