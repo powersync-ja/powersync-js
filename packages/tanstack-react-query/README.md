@@ -158,3 +158,42 @@ export const TodoListDisplay = () => {
   );
 };
 ```
+
+### Drizzle Support
+
+[Drizzle queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/drizzle-driver) can be used with the `useQuery` and `useSuspenseQuery` hooks by converting them to a compilable query using the `toCompilableQuery` utility from `@powersync/drizzle-driver`.
+
+```TSX
+// TodoListDisplay.tsx
+import { useQuery } from '@powersync/tanstack-react-query';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+
+export const TodoListDisplay = () => {
+  const drizzleQuery = drizzleDb.select().from(lists);
+
+  const { data: todoLists, isLoading, error } = useQuery({
+    queryKey: ['todoLists'],
+    query: toCompilableQuery(drizzleQuery), // The type of the rows in `data` are inferred from the Drizzle query
+  });
+
+  if (isLoading) {
+    return <div>Loading todo lists...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading todo lists: {error.message}</div>;
+  }
+
+  return (
+    <ul>
+      {todoLists?.map((list) => (
+        <li key={list.id}>{list.name}</li>
+      ))}
+    </ul>
+  );
+};
+```
+
+The `toCompilableQuery` function wraps your Drizzle query to make it compatible with useQuery and useSuspenseQuery.
+
+For more information on using Drizzle with PowerSync, see the [Drizzle Driver documentation](https://github.com/powersync-ja/powersync-js/tree/main/packages/drizzle-driver).
