@@ -44,18 +44,9 @@ export const db = new PowerSyncDatabase({
 
 export const connector = new TokenConnector();
 
-const remote = new WebRemote(connector);
 const adapter = new RecordingStorageAdapter(db.database, schemaManager);
 
-const syncOptions: WebStreamingSyncImplementationOptions = {
-  adapter,
-  remote,
-  uploadCrud: async () => {
-    // No-op
-  },
-  identifier: 'diagnostics'
-};
-export const sync = new WebStreamingSyncImplementation(syncOptions);
+export let sync: WebStreamingSyncImplementation | undefined;
 
 export interface SyncErrorListener extends BaseListener {
   lastErrorUpdated?: ((error: Error) => void) | undefined;
@@ -67,28 +58,39 @@ if (connector.hasCredentials()) {
 
 export async function connect() {
   const params = getParams();
+  await sync?.disconnect();
+  const remote = new WebRemote(connector);
+  const syncOptions: WebStreamingSyncImplementationOptions = {
+    adapter,
+    remote,
+    uploadCrud: async () => {
+      // No-op
+    },
+    identifier: 'diagnostics'
+  };
+  sync = new WebStreamingSyncImplementation(syncOptions);
   await sync.connect({ params });
   if (!sync.syncStatus.connected) {
     const error = sync.syncStatus.dataFlowStatus.downloadError ?? new Error('Failed to connect');
     // Disconnect but don't wait for it
-    sync.disconnect();
+    await sync.disconnect();
     throw error;
   }
 }
 
 export async function clearData() {
-  await sync.disconnect();
+  await sync?.disconnect();
   await db.disconnectAndClear();
   await schemaManager.clear();
   await schemaManager.refreshSchema(db.database);
   if (connector.hasCredentials()) {
     const params = getParams();
-    await sync.connect({ params });
+    await sync?.connect({ params });
   }
 }
 
 export async function disconnect() {
-  await sync.disconnect();
+  await sync?.disconnect();
 }
 
 export async function signOut() {
