@@ -30,7 +30,7 @@
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "vue": "*",
-    "@powersync/common": "workspace:^1.31.1"
+    "@powersync/common": "workspace:^1.32.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
