@@ -43,7 +43,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
+  const [syncStatus, setSyncStatus] = React.useState(sync?.syncStatus);
   const [syncError, setSyncError] = React.useState<Error | null>(null);
   const { title } = useNavigationPanel();
 
@@ -101,13 +101,13 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
 
   // Cannot use `useStatus()`, since we're not using the default sync implementation.
   React.useEffect(() => {
-    const l = sync.registerListener({
+    const l = sync?.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
         setSyncError(status.dataFlowStatus.downloadError ?? null);
       }
     });
-    return () => l();
+    return () => l?.();
   }, []);
 
   const drawerWidth = 320;
