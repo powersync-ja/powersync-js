@@ -4,13 +4,20 @@ import repl_factory from 'node:repl';
 import { createBaseLogger, createLogger, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
+import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
 
 const main = async () => {
   const baseLogger = createBaseLogger();
   const logger = createLogger('PowerSyncDemo');
-  baseLogger.useDefaults({ defaultLevel: logger.WARN });
+  const debug = process.env.POWERSYNC_DEBUG == '1';
+  baseLogger.useDefaults({ defaultLevel: debug ? logger.TRACE : logger.WARN });
 
-  if (!('BACKEND' in process.env) || !('SYNC_SERVICE' in process.env)) {
+  // Enable detailed request/response logging for debugging purposes.
+  if (debug) {
+    enableUncidiDiagnostics();
+  }
+
+  if (!('SYNC_SERVICE' in process.env)) {
     console.warn(
       'Set the BACKEND and SYNC_SERVICE environment variables to point to a sync service and a running demo backend.'
     );
@@ -26,7 +33,24 @@ const main = async () => {
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
-  await db.connect(new DemoConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+  await db.connect(new DemoConnector(), {
+    connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET
+  });
+  // Example using a proxy agent for more control over the connection:
+  // const proxyAgent = new (await import('undici')).ProxyAgent({
+  //   uri: 'http://localhost:8080',
+  //   requestTls: {
+  //     ca: '<CA for the service>'
+  //   },
+  //   proxyTls: {
+  //     ca: '<CA for the proxy>'
+  //   }
+  // });
+  // await db.connect(new DemoConnector(), {
+  //   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
+  //   dispatcher: proxyAgent
+  // });
+
   await db.waitForFirstSync();
   console.log('First sync complete!');
 

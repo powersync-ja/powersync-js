@@ -44,7 +44,17 @@ export class WebsocketClientTransport implements ClientTransport {
 
       const errorListener = (ev: ErrorEvent) => {
         removeListeners();
-        reject(ev.error);
+        // We add a default error in that case.
+        if (ev.error != null) {
+          // undici typically provides an error object
+          reject(ev.error);
+        } else if (ev.message != null) {
+          // React Native typically does not provide an error object, but does provide a message
+          reject(new Error(`Failed to create websocket connection: ${ev.message}`));
+        } else {
+          // Browsers often provide no details at all
+          reject(new Error(`Failed to create websocket connection to ${this.url}`));
+        }
       };
 
       /**
