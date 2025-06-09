@@ -312,19 +312,12 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
-    let socketCreationError: Error | undefined;
-
     const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url,
         wsCreator: (url) => {
-          const s = this.createSocket(url);
-          s.addEventListener('error', (e: ErrorEvent) => {
-            socketCreationError = e.error ?? new Error(`Failed to create connection to websocket: ${url}`);
-            this.logger.warn('Socket error', socketCreationError);
-          });
-          return s;
+          return this.createSocket(url);
         }
       }),
       setup: {
@@ -348,11 +341,8 @@ export abstract class AbstractRemote {
     try {
       rsocket = await connector.connect();
     } catch (ex) {
-      /**
-       * On React native the connection exception can be `undefined` this causes issues
-       * with detecting the exception inside async-mutex
-       */
-      throw ex ?? socketCreationError;
+      this.logger.error(`Failed to connect WebSocket`, ex);
+      throw ex;
     }
 
     const stream = new DataStream({

@@ -44,7 +44,10 @@ export class WebsocketClientTransport implements ClientTransport {
 
       const errorListener = (ev: ErrorEvent) => {
         removeListeners();
-        reject(ev.error);
+        // ev.error is often undefined, especially on React Native and Web.
+        // We add a default error in that case.
+        const error = ev.error ?? new Error(`Failed to create connection to websocket: ${this.url}`);
+        reject(error);
       };
 
       /**
