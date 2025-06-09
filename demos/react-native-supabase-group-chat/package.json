@@ -36,7 +36,7 @@
     "@tamagui/lucide-icons": "1.79.6",
     "@tamagui/theme-base": "1.79.6",
     "date-fns": "^2.30.0",
-    "expo": "~52.0.42",
+    "expo": "52.0.46",
     "expo-build-properties": "~0.13.2",
     "expo-crypto": "~14.0.2",
     "expo-dev-client": "~5.0.20",

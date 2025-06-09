@@ -21,7 +21,7 @@
     "chance": "^1.1.9",
     "mocha": "^10.8.2",
     "react": "19.0.0",
-    "react-native": "0.78.0",
+    "react-native": "0.76.9",
     "react-native-get-random-values": "^1.11.0",
     "react-native-paper": "^5.13.1",
     "react-native-vector-icons": "^10.2.0",
