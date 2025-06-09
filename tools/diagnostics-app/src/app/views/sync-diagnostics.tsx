@@ -82,7 +82,7 @@ export default function SyncDiagnosticsPage() {
     // Similar to db.currentState.hasSynced, but synchronized to the onChange events
     const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
     setlastSyncedAt(synced_at ? new Date(synced_at + 'Z') : null);
-    if (synced_at != null && !sync.syncStatus.dataFlowStatus.downloading) {
+    if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
       // These are potentially expensive queries - do not run during initial sync
       const bucketRows = await db.getAll(BUCKETS_QUERY);
       const tableRows = await db.getAll(TABLES_QUERY);
