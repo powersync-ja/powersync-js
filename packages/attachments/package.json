@@ -29,7 +29,7 @@
     "test": "pnpm build && vitest"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.31.1"
+    "@powersync/common": "workspace:^1.32.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
