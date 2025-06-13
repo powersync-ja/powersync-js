@@ -837,6 +837,10 @@ The next upload iteration will be delayed.`);
 
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
+
+    // Pending sync lines received from the service, as well as local events that trigger a powersync_control
+    // invocation (local events include refreshed tokens and completed uploads).
+    // This is a single data stream so that we can handle all control calls from a single place.
     let controlInvocations: DataStream<[string, ArrayBuffer | string | undefined]> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
@@ -854,8 +858,7 @@ The next upload iteration will be delayed.`);
             ...syncOptions,
             fetchStrategy: resolvedOptions.fetchStrategy
           },
-          // TODO: Can we avoid the copy here?
-          (buffer) => ['line_binary', new Uint8Array(buffer).buffer]
+          (buffer) => ['line_binary', buffer]
         );
       }
 

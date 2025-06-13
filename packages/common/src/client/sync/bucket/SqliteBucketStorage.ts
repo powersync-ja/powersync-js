@@ -416,16 +416,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async control(op: string, payload: string | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
-      if (payload == null || typeof payload == 'string') {
-        console.log('starting op', op, payload);
-      } else {
-        console.log(
-          'starting binary op',
-          op,
-          Array.prototype.map.call(new Uint8Array(payload), (x) => x.toString(16).padStart(2, '0')).join('')
-        );
-      }
-
       const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
       return raw;
     });
