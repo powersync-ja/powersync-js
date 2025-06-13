@@ -837,6 +837,7 @@ The next upload iteration will be delayed.`);
 
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
+    let controlInvocations: DataStream<[string, ArrayBuffer | string | undefined]> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
@@ -846,26 +847,29 @@ The next upload iteration will be delayed.`);
       };
 
       if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        const lines = await remote.postStreamRaw(syncOptions);
-        for await (const syncLine of lines as any) {
-          await control('line_text', syncLine);
-        }
+        controlInvocations = await remote.postStreamRaw(syncOptions, (line) => ['line_text', line]);
       } else {
-        const stream = await remote.socketStreamRaw({ ...syncOptions, fetchStrategy: resolvedOptions.fetchStrategy });
+        controlInvocations = await remote.socketStreamRaw(
+          {
+            ...syncOptions,
+            fetchStrategy: resolvedOptions.fetchStrategy
+          },
+          // TODO: Can we avoid the copy here?
+          (buffer) => ['line_binary', new Uint8Array(buffer).buffer]
+        );
+      }
 
-        try {
-          while (!stream.closed) {
-            const line = await stream.read();
-            if (line == null) {
-              return;
-            }
-
-            const copy = new Uint8Array(line);
-            await control('line_binary', copy.buffer);
+      try {
+        while (!controlInvocations.closed) {
+          const line = await controlInvocations.read();
+          if (line == null) {
+            return;
           }
-        } finally {
-          await stream.close();
+
+          await control(line[0], line[1]);
         }
+      } finally {
+        await controlInvocations.close();
       }
     }
 
@@ -926,7 +930,17 @@ The next upload iteration will be delayed.`);
         if (instruction.FetchCredentials.did_expire) {
           remote.invalidateCredentials();
         } else {
-          // TODO: Async prefetch
+          remote.invalidateCredentials();
+
+          // Restart iteration after the credentials have been refreshed.
+          remote.fetchCredentials().then(
+            (_) => {
+              controlInvocations?.enqueueData(['refreshed_token', undefined]);
+            },
+            (err) => {
+              syncImplementation.logger.warn('Could not prefetch credentials', err);
+            }
+          );
         }
       } else if ('CloseSyncStream' in instruction) {
         abortController.abort();
@@ -949,7 +963,7 @@ The next upload iteration will be delayed.`);
 
     try {
       this.notifyCompletedUploads = () => {
-        control('completed_upload');
+        controlInvocations?.enqueueData(['completed_upload', undefined]);
       };
 
       await control('start', JSON.stringify(resolvedOptions.params));

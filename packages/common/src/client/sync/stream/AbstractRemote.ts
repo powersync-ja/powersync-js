@@ -269,23 +269,21 @@ export abstract class AbstractRemote {
    */
   async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const bson = await this.getBSON();
-    return await this.socketStreamInternal(options, bson);
-  }
-
-  /**
-   * Connects to the sync/stream websocket endpoint without decoding BSON in JavaScript.
-   */
-  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<DataStream<Buffer<ArrayBuffer>>> {
-    return this.socketStreamInternal(options);
+    return await this.socketStreamRaw(options, (data) => bson.deserialize(data), bson);
   }
 
   /**
    * Returns a data stream of sync line data.
    *
-   * @param bson A BSON encoder and decoder. When set, the data stream will emit parsed instances of
-   * {@link StreamingSyncLine}. Otherwise, unparsed buffers will be emitted instead.
+   * @param map Maps received payload frames to the typed event value.
+   * @param bson A BSON encoder and decoder. When set, the data stream will be requested with a BSON payload
+   * (required for compatibility with older sync services).
    */
-  private async socketStreamInternal(options: SocketSyncStreamOptions, bson?: typeof BSON): Promise<DataStream> {
+  async socketStreamRaw<T>(
+    options: SocketSyncStreamOptions,
+    map: (buffer: Buffer) => T,
+    bson?: typeof BSON
+  ): Promise<DataStream> {
     const { path, fetchStrategy = FetchStrategy.Buffered } = options;
     const mimeType = bson == null ? 'application/json' : 'application/bson';
 
@@ -415,7 +413,7 @@ export abstract class AbstractRemote {
               return;
             }
 
-            stream.enqueueData(bson != null ? bson.deserialize(data) : data);
+            stream.enqueueData(map(data));
           },
           onComplete: () => {
             stream.close();
@@ -455,43 +453,18 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Connects to the sync/stream http endpoint
+   * Connects to the sync/stream http endpoint, parsing lines as JSON.
    */
   async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const jsonS = await this.postStreamRaw(options);
-
-    const stream = new DataStream({
-      logger: this.logger
+    return await this.postStreamRaw(options, (line) => {
+      return JSON.parse(line) as StreamingSyncLine;
     });
-
-    const r = jsonS.getReader();
-
-    const l = stream.registerListener({
-      lowWater: async () => {
-        try {
-          const { done, value } = await r.read();
-          // Exit if we're done
-          if (done) {
-            stream.close();
-            l?.();
-            return;
-          }
-          stream.enqueueData(JSON.parse(value));
-        } catch (ex) {
-          stream.close();
-          throw ex;
-        }
-      },
-      closed: () => {
-        r.cancel();
-        l?.();
-      }
-    });
-
-    return stream;
   }
 
-  async postStreamRaw(options: SyncStreamOptions): Promise<ReadableStream<string>> {
+  /**
+   * Connects to the sync/stream http endpoint, mapping and emitting each received string line.
+   */
+  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
     const { data, path, headers, abortSignal } = options;
 
     const request = await this.buildRequest(path);
@@ -566,40 +539,52 @@ export abstract class AbstractRemote {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    const outputStream = new ReadableStream<string>({
-      pull: async (controller) => {
-        let didCompleteLine = false;
+    const stream = new DataStream<T>({
+      logger: this.logger
+    });
 
-        while (!didCompleteLine) {
-          const { done, value } = await reader.read();
-          if (done) {
-            const remaining = buffer.trim();
-            if (remaining.length != 0) {
-              controller.enqueue(remaining);
+    const l = stream.registerListener({
+      lowWater: async () => {
+        try {
+          let didCompleteLine = false;
+          while (!didCompleteLine) {
+            const { done, value } = await reader.read();
+            if (done) {
+              const remaining = buffer.trim();
+              if (remaining.length != 0) {
+                stream.enqueueData(mapLine(remaining));
+              }
+
+              stream.close();
+              await closeReader();
+              return;
             }
 
-            controller.close();
-            await closeReader();
-            return;
-          }
+            const data = decoder.decode(value, { stream: true });
+            buffer += data;
 
-          const data = decoder.decode(value, { stream: true });
-          buffer += data;
-
-          const lines = buffer.split('\n');
-          for (var i = 0; i < lines.length - 1; i++) {
-            var l = lines[i].trim();
-            if (l.length > 0) {
-              controller.enqueue(l);
-              didCompleteLine = true;
+            const lines = buffer.split('\n');
+            for (var i = 0; i < lines.length - 1; i++) {
+              var l = lines[i].trim();
+              if (l.length > 0) {
+                stream.enqueueData(mapLine(l));
+                didCompleteLine = true;
+              }
             }
-          }
 
-          buffer = lines[lines.length - 1];
+            buffer = lines[lines.length - 1];
+          }
+        } catch (ex) {
+          stream.close();
+          throw ex;
         }
+      },
+      closed: () => {
+        closeReader();
+        l?.();
       }
     });
 
-    return outputStream;
+    return stream;
   }
 }
