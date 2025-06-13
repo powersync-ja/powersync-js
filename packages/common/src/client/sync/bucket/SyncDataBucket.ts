@@ -37,13 +37,13 @@ export class SyncDataBucket {
     public next_after?: OpId
   ) {}
 
-  toJSON(): SyncDataBucketJSON {
+  toJSON(fixedKeyEncoding = false): SyncDataBucketJSON {
     return {
       bucket: this.bucket,
       has_more: this.has_more,
       after: this.after,
       next_after: this.next_after,
-      data: this.data.map((entry) => entry.toJSON())
+      data: this.data.map((entry) => entry.toJSON(fixedKeyEncoding))
     };
   }
 }
