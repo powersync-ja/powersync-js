@@ -1,5 +1,49 @@
 # @powersync/op-sqlite
 
+## 0.7.0
+
+### Minor Changes
+
+- ddc0bd1: Updated op-sqlite upstream peer dependency from 11.x.x to support ^13.x.x and ^14.x.x,
+
+  Noteworthy changes from version 11 to version 14 include:
+
+  1. SQLite updated to 3.49.1
+  2. SQLCipher updated to 4.8.0
+  3. Monorepo config resolution, you may need to move your `op-sqlite` config from your application's `package.json` to the monorepo root `package.json` depending on where your package manager tool hoists modules (see [1](https://op-engineering.github.io/op-sqlite/docs/installation) and [2](https://github.com/OP-Engineering/op-sqlite/issues/264)).
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+- Updated dependencies [efc8ba9]
+  - @powersync/common@1.32.0
+
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+
+## 0.6.0
+
+### Minor Changes
+
+- 1037e8a: `close()` is now async, which allows clients to use it with `await`.
+
+### Patch Changes
+
+- 1037e8a: Rejecting pending read/write operations when the database is closed.
+
+## 0.5.6
+
+### Patch Changes
+
+- d58b4fc: Promoting package to Beta release.
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+
 ## 0.5.5
 
 ### Patch Changes

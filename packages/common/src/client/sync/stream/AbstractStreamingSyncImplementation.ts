@@ -1,6 +1,8 @@
 import Logger, { ILogger } from 'js-logger';
 
+import { DataStream } from '../../../utils/DataStream.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
+import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import * as sync_status from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
@@ -8,7 +10,7 @@ import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js
 import { BucketChecksum, BucketDescription, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
-import { AbstractRemote, SyncStreamOptions, FetchStrategy } from './AbstractRemote.js';
+import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
 import {
   BucketRequest,
   StreamingSyncLine,
@@ -20,9 +22,7 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { DataStream } from 'src/utils/DataStream.js';
 import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
-import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -400,12 +400,13 @@ The next upload iteration will be delayed.`);
       await this.disconnect();
     }
 
-    this.abortController = new AbortController();
+    const controller = new AbortController();
+    this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
     // Return a promise that resolves when the connection status is updated
     return new Promise<void>((resolve) => {
-      const l = this.registerListener({
+      const disposer = this.registerListener({
         statusUpdated: (update) => {
           // This is triggered as soon as a connection is read from
           if (typeof update.connected == 'undefined') {
@@ -415,13 +416,15 @@ The next upload iteration will be delayed.`);
 
           if (update.connected == false) {
             /**
-             * This function does not reject if initial connect attempt failed
+             * This function does not reject if initial connect attempt failed.
+             * Connected can be false if the connection attempt was aborted or if the initial connection
+             * attempt failed.
              */
             this.logger.warn('Initial connect attempt did not successfully connect to server');
           }
 
+          disposer();
           resolve();
-          l();
         }
       });
     });
@@ -498,6 +501,7 @@ The next upload iteration will be delayed.`);
      */
     while (true) {
       this.updateSyncStatus({ connecting: true });
+      let shouldDelayRetry = true;
       try {
         if (signal?.aborted) {
           break;
@@ -509,12 +513,16 @@ The next upload iteration will be delayed.`);
          * Either:
          *  - A network request failed with a failed connection or not OKAY response code.
          *  - There was a sync processing error.
-         * This loop will retry.
+         *  - The connection was aborted.
+         * This loop will retry after a delay if the connection was not aborted.
          * The nested abort controller will cleanup any open network requests and streams.
          * The WebRemote should only abort pending fetch requests or close active Readable streams.
          */
+
         if (ex instanceof AbortOperation) {
           this.logger.warn(ex);
+          shouldDelayRetry = false;
+          // A disconnect was requested, we should not delay since there is no explicit retry
         } else {
           this.logger.error(ex);
         }
@@ -524,9 +532,6 @@ The next upload iteration will be delayed.`);
             downloadError: ex
           }
         });
-
-        // On error, wait a little before retrying
-        await this.delayRetry();
       } finally {
         if (!signal.aborted) {
           nestedAbortController.abort(new AbortOperation('Closing sync stream network requests before retry.'));
@@ -537,6 +542,11 @@ The next upload iteration will be delayed.`);
           connected: false,
           connecting: true // May be unnecessary
         });
+
+        // On error, wait a little before retrying
+        if (shouldDelayRetry) {
+          await this.delayRetry(nestedAbortController.signal);
+        }
       }
     }
 
@@ -785,6 +795,11 @@ The next upload iteration will be delayed.`);
            */
           await this.delayRetry();
           return;
+        } else if (remaining_seconds < 30) {
+          this.logger.debug('Token will expire soon; reconnect');
+          // Pre-emptively refresh the token
+          this.options.remote.invalidateCredentials();
+          return;
         }
         this.triggerCrudUpload();
       } else {
@@ -948,17 +963,36 @@ The next upload iteration will be delayed.`);
   private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
     const localProgress = await this.options.adapter.getBucketOperationProgress();
     const progress: InternalProgressInformation = {};
+    let invalidated = false;
 
     for (const bucket of checkpoint.buckets) {
       const savedProgress = localProgress[bucket.bucket];
+      const atLast = savedProgress?.atLast ?? 0;
+      const sinceLast = savedProgress?.sinceLast ?? 0;
+
       progress[bucket.bucket] = {
         // The fallback priority doesn't matter here, but 3 is the one newer versions of the sync service
         // will use by default.
         priority: bucket.priority ?? 3,
-        at_last: savedProgress?.atLast ?? 0,
-        since_last: savedProgress?.sinceLast ?? 0,
+        at_last: atLast,
+        since_last: sinceLast,
         target_count: bucket.count ?? 0
       };
+
+      if (bucket.count != null && bucket.count < atLast + sinceLast) {
+        // Either due to a defrag / sync rule deploy or a compaction operation, the size
+        // of the bucket shrank so much that the local ops exceed the ops in the updated
+        // bucket. We can't prossibly report progress in this case (it would overshoot 100%).
+        invalidated = true;
+      }
+    }
+
+    if (invalidated) {
+      for (const bucket in progress) {
+        const bucketProgress = progress[bucket];
+        bucketProgress.at_last = 0;
+        bucketProgress.since_last = 0;
+      }
     }
 
     this.updateSyncStatus({
@@ -1037,7 +1071,29 @@ The next upload iteration will be delayed.`);
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry() {
-    return new Promise((resolve) => setTimeout(resolve, this.options.retryDelayMs));
+  private async delayRetry(signal?: AbortSignal): Promise<void> {
+    return new Promise((resolve) => {
+      if (signal?.aborted) {
+        // If the signal is already aborted, resolve immediately
+        resolve();
+        return;
+      }
+
+      const { retryDelayMs } = this.options;
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+      const endDelay = () => {
+        resolve();
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        signal?.removeEventListener('abort', endDelay);
+      };
+
+      signal?.addEventListener('abort', endDelay, { once: true });
+      timeoutId = setTimeout(endDelay, retryDelayMs);
+    });
   }
 }

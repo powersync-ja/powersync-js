@@ -1,5 +1,28 @@
 # @powersync/common
 
+## 1.32.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+- efc8ba9: Preserve more details on websocket errors.
+
+### Patch Changes
+
+- 96ddd5d: Fixed bug where changes in SyncStatus downloadError and uploadError might not be reported.
+
+## 1.31.1
+
+### Patch Changes
+
+- b046ebe: Fix reported progress around compactions / defrags on the sync service.
+
+## 1.31.0
+
+### Minor Changes
+
+- 0565a0a: Improved credentials management and error handling. Credentials are invalidated when they expire or become invalid based on responses from the PowerSync service. The frequency of credential fetching has been reduced as a result of this work.
+
 ## 1.30.0
 
 ### Minor Changes

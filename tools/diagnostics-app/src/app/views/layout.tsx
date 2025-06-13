@@ -6,10 +6,11 @@ import SouthIcon from '@mui/icons-material/South';
 import StorageIcon from '@mui/icons-material/Storage';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import TerminalIcon from '@mui/icons-material/Terminal';
-import WifiIcon from '@mui/icons-material/Wifi';
 import UserIcon from '@mui/icons-material/VerifiedUser';
+import WifiIcon from '@mui/icons-material/Wifi';
 
 import {
+  Alert,
   AppBar,
   Box,
   Divider,
@@ -34,7 +35,7 @@ import {
   SYNC_DIAGNOSTICS_ROUTE
 } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { signOut, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
+import { signOut, sync } from '@/library/powersync/ConnectionManager';
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -42,7 +43,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(sync.syncStatus);
+  const [syncStatus, setSyncStatus] = React.useState(sync?.syncStatus);
   const [syncError, setSyncError] = React.useState<Error | null>(null);
   const { title } = useNavigationPanel();
 
@@ -100,22 +101,15 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
 
   // Cannot use `useStatus()`, since we're not using the default sync implementation.
   React.useEffect(() => {
-    const l = sync.registerListener({
+    const l = sync?.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
+        setSyncError(status.dataFlowStatus.downloadError ?? null);
       }
     });
-    return () => l();
+    return () => l?.();
   }, []);
 
-  React.useEffect(() => {
-    const l = syncErrorTracker.registerListener({
-      lastErrorUpdated(error) {
-        setSyncError(error);
-      }
-    });
-    return () => l();
-  }, []);
   const drawerWidth = 320;
 
   const drawer = (
@@ -199,6 +193,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         </Drawer>
       </Box>
       <S.MainBox sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, marginTop: '50px' }}>
+        {syncError ? <Alert severity="error">Sync error detected: {syncError.message}</Alert> : null}
         {children}
       </S.MainBox>
     </S.MainBox>

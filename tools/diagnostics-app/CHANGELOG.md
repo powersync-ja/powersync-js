@@ -1,5 +1,36 @@
 # diagnostics-app
 
+## 0.9.0
+
+### Minor Changes
+
+- 96ddd5d: - Added Sync error alert banner to all views.
+  - Fix bug where clicking signOut would not disconnect from the PowerSync service.
+  - Updated implementation to fetch sync errors from the SyncStatus.
+
+### Patch Changes
+
+- 6707966: Fix reconnecting after changing credentials.
+- Updated dependencies [96ddd5d]
+  - @powersync/web@1.22.0
+  - @powersync/react@1.5.3
+
+## 0.8.14
+
+### Patch Changes
+
+- @powersync/react@1.5.3
+- @powersync/web@1.21.1
+
+## 0.8.13
+
+### Patch Changes
+
+- Updated dependencies [0565a0a]
+- Updated dependencies [fccf11e]
+  - @powersync/web@1.21.0
+  - @powersync/react@1.5.3
+
 ## 0.8.12
 
 ### Patch Changes

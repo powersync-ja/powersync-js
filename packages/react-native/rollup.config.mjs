@@ -4,9 +4,9 @@ import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
+import terser from '@rollup/plugin-terser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import terser from '@rollup/plugin-terser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,7 +34,7 @@ export default (commandLineArgs) => {
       }),
       json(),
       nodeResolve({
-        preferBuiltins: false,
+        preferBuiltins: false
       }),
       commonjs({}),
       inject({
@@ -48,9 +48,13 @@ export default (commandLineArgs) => {
       alias({
         entries: [
           { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
+          {
+            find: 'react-native/Libraries/Blob/BlobManager',
+            replacement: path.resolve(__dirname, './vendor/BlobManager.js')
+          }
         ]
       }),
-      terser()
+      terser({ sourceMap: sourcemap })
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
@@ -59,7 +63,6 @@ export default (commandLineArgs) => {
       'node-fetch',
       'js-logger',
       'react-native',
-      'react-native/Libraries/Blob/BlobManager',
       'react'
     ]
   };

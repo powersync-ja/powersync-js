@@ -10,7 +10,8 @@ const config: UserConfigExport = {
   optimizeDeps: {
     // Don't optimise these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web']
+    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+    include: ['async-mutex', 'comlink', 'bson']
   },
   plugins: [wasm(), topLevelAwait()],
   test: {

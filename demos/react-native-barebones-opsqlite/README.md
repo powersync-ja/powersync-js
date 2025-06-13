@@ -1,8 +1,8 @@
-# PowerSync React Native Barebones OPSQlite
+# PowerSync React Native Barebones OP-SQlite
 
 ## Overview
 
-This is a minimal example demonstrating a barebones react native project using OPSQLite . It shows an update to the local SQLite DB on app launch.
+This is a minimal example demonstrating a barebones React Native project using OP-SQLite. It shows an update to the local SQLite DB on app launch.
 
 
 ## Getting Started

@@ -3,17 +3,18 @@ import { Buffer } from 'buffer';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
-import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
+import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
 export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
+  invalidateCredentials?: () => void;
 };
 
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
@@ -21,6 +22,7 @@ const POWERSYNC_JS_VERSION = PACKAGE.version;
 
 // Refresh at least 30 sec before it expires
 const REFRESH_CREDENTIALS_SAFETY_PERIOD_MS = 30_000;
+const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
 const KEEP_ALIVE_MS = 20_000;
@@ -128,22 +130,59 @@ export abstract class AbstractRemote {
       : fetchImplementation;
   }
 
+  /**
+   * Get credentials currently cached, or fetch new credentials if none are
+   * available.
+   *
+   * These credentials may have expired already.
+   */
   async getCredentials(): Promise<PowerSyncCredentials | null> {
-    const { expiresAt } = this.credentials ?? {};
-    if (expiresAt && expiresAt > new Date(new Date().valueOf() + REFRESH_CREDENTIALS_SAFETY_PERIOD_MS)) {
-      return this.credentials!;
+    if (this.credentials) {
+      return this.credentials;
     }
-    this.credentials = await this.connector.fetchCredentials();
-    if (this.credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
-      throw new Error(
-        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${this.credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
-      );
-    }
+
+    return this.prefetchCredentials();
+  }
+
+  /**
+   * Fetch a new set of credentials and cache it.
+   *
+   * Until this call succeeds, `getCredentials` will still return the
+   * old credentials.
+   *
+   * This may be called before the current credentials have expired.
+   */
+  async prefetchCredentials() {
+    this.credentials = await this.fetchCredentials();
+
     return this.credentials;
   }
 
+  /**
+   * Get credentials for PowerSync.
+   *
+   * This should always fetch a fresh set of credentials - don't use cached
+   * values.
+   */
+  async fetchCredentials() {
+    const credentials = await this.connector.fetchCredentials();
+    if (credentials?.endpoint.match(POWERSYNC_TRAILING_SLASH_MATCH)) {
+      throw new Error(
+        `A trailing forward slash "/" was found in the fetchCredentials endpoint: "${credentials.endpoint}". Remove the trailing forward slash "/" to fix this error.`
+      );
+    }
+
+    return credentials;
+  }
+
+  /***
+   * Immediately invalidate credentials.
+   *
+   * This may be called when the current credentials have expired.
+   */
   invalidateCredentials() {
     this.credentials = null;
+    this.connector.invalidateCredentials?.();
   }
 
   getUserAgent() {
@@ -183,6 +222,10 @@ export abstract class AbstractRemote {
       body: JSON.stringify(data)
     });
 
+    if (res.status === 401) {
+      this.invalidateCredentials();
+    }
+
     if (!res.ok) {
       throw new Error(`Received ${res.status} - ${res.statusText} when posting to ${path}: ${await res.text()}}`);
     }
@@ -199,6 +242,10 @@ export abstract class AbstractRemote {
         ...request.headers
       }
     });
+
+    if (res.status === 401) {
+      this.invalidateCredentials();
+    }
 
     if (!res.ok) {
       throw new Error(`Received ${res.status} - ${res.statusText} when getting from ${path}: ${await res.text()}}`);
@@ -261,10 +308,13 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
-        url: this.options.socketUrlTransformer(request.url),
-        wsCreator: (url) => this.createSocket(url)
+        url,
+        wsCreator: (url) => {
+          return this.createSocket(url);
+        }
       }),
       setup: {
         keepAlive: KEEP_ALIVE_MS,
@@ -285,11 +335,8 @@ export abstract class AbstractRemote {
     try {
       rsocket = await connector.connect();
     } catch (ex) {
-      /**
-       * On React native the connection exception can be `undefined` this causes issues
-       * with detecting the exception inside async-mutex
-       */
-      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex)}`);
+      this.logger.error(`Failed to connect WebSocket`, ex);
+      throw ex;
     }
 
     const stream = new DataStream({
@@ -332,6 +379,17 @@ export abstract class AbstractRemote {
         syncQueueRequestSize, // The initial N amount
         {
           onError: (e) => {
+            if (e.message.includes('PSYNC_')) {
+              if (e.message.includes('PSYNC_S21')) {
+                this.invalidateCredentials();
+              }
+            } else {
+              // Possible that connection is with an older service, always invalidate to be safe
+              if (e.message !== 'Closed. ') {
+                this.invalidateCredentials();
+              }
+            }
+
             // Don't log closed as an error
             if (e.message !== 'Closed. ') {
               this.logger.error(e);

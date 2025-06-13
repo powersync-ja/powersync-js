@@ -1,5 +1,5 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { clearData, db, sync, syncErrorTracker } from '@/library/powersync/ConnectionManager';
+import { clearData, db, sync } from '@/library/powersync/ConnectionManager';
 import {
   Box,
   Button,
@@ -73,7 +73,6 @@ FROM local_bucket_data local`;
 export default function SyncDiagnosticsPage() {
   const [bucketRows, setBucketRows] = React.useState<null | any[]>(null);
   const [tableRows, setTableRows] = React.useState<null | any[]>(null);
-  const [syncError, setSyncError] = React.useState<Error | null>(syncErrorTracker.lastSyncError);
   const [lastSyncedAt, setlastSyncedAt] = React.useState<Date | null>(null);
 
   const bucketRowsLoading = bucketRows == null;
@@ -83,7 +82,7 @@ export default function SyncDiagnosticsPage() {
     // Similar to db.currentState.hasSynced, but synchronized to the onChange events
     const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
     setlastSyncedAt(synced_at ? new Date(synced_at + 'Z') : null);
-    if (synced_at != null && !sync.syncStatus.dataFlowStatus.downloading) {
+    if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
       // These are potentially expensive queries - do not run during initial sync
       const bucketRows = await db.getAll(BUCKETS_QUERY);
       const tableRows = await db.getAll(TABLES_QUERY);
@@ -123,15 +122,6 @@ export default function SyncDiagnosticsPage() {
     return () => {
       controller.abort();
     };
-  }, []);
-
-  React.useEffect(() => {
-    const l = syncErrorTracker.registerListener({
-      lastErrorUpdated(error) {
-        setSyncError(error);
-      }
-    });
-    return () => l();
   }, []);
 
   const columns: GridColDef[] = [

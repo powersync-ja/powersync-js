@@ -1,5 +1,46 @@
 # @powersync/node
 
+## 0.5.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+- efc8ba9: Switch to undici WebSocket for Dispatcher and diagnostics_channel support. This now adds support for the `ALL_PROXY` environment variable by default, as well as `WSS_PROXY` for websocket connections.
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+- Updated dependencies [efc8ba9]
+  - @powersync/common@1.32.0
+
+## 0.4.5
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+
+## 0.4.4
+
+### Patch Changes
+
+- 5eae93c: Fix CJS distributables not being published.
+
+## 0.4.3
+
+### Patch Changes
+
+- 2e03dd6: Add a `main` entry to `package.json`. It will be ignored because the package uses conditional exports, but is required for tools like `pkg`.
+- 2e03dd6: Support `@powersync/better-sqlite3` versions `0.2.x`.
+
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+
 ## 0.4.1
 
 ### Patch Changes

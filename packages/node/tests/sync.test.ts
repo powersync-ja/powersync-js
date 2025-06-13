@@ -398,6 +398,43 @@ function defineSyncTests(impl: SyncClientImplementation) {
         { name: 'b', after: '6' }
       ]);
     });
+
+    mockSyncServiceTest('interrupt and defrag', async ({ syncService }) => {
+      let database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [bucket('a', 10)]
+        }
+      });
+
+      await waitForProgress(database, [0, 10]);
+      pushDataLine(syncService, 'a', 5);
+      await waitForProgress(database, [5, 10]);
+
+      // Re-open database
+      await database.close();
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
+      database = await syncService.createDatabase();
+      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      // A sync rule deploy could reset buckets, making the new bucket smaller than the existing one.
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '14',
+          buckets: [bucket('a', 4)]
+        }
+      });
+
+      // In this special case, don't report 5/4 as progress.
+      await waitForProgress(database, [0, 4]);
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+    });
   });
 }
 

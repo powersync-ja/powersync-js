@@ -1,5 +1,46 @@
 # @powersync/react-native
 
+## 1.21.0
+
+### Minor Changes
+
+- 96ddd5d: Fixed issue where iOS WebSockets could fail to reconnect after a connection issue.
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+- Updated dependencies [efc8ba9]
+  - @powersync/common@1.32.0
+  - @powersync/react@1.5.3
+
+## 1.20.4
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+  - @powersync/react@1.5.3
+
+## 1.20.3
+
+### Patch Changes
+
+- Updated dependencies [0565a0a]
+  - @powersync/common@1.31.0
+  - @powersync/react@1.5.3
+
+## 1.20.2
+
+### Patch Changes
+
+- 84cdd9d: Fixed issue where CRUD uploads could fail with the error
+
+  ```
+  Exception: require(_dependencyMap[11], "rea(...)/BlobManager").createFromOptions is not a function (it is undefined)
+  ```
+
 ## 1.20.1
 
 ### Patch Changes
