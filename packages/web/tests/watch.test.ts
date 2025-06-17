@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, GetAllQuery, IncrementalWatchMode, WatchedQueryState } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  EMPTY_DIFFERENTIAL,
+  GetAllQuery,
+  IncrementalWatchMode,
+  WatchedQueryState
+} from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -504,5 +510,94 @@ describe('Watch Tests', { sequential: true }, () => {
 
     expect(watch.state.data).toHaveLength(1);
     expect(watch.state.data[0].make).equals('nottest');
+  });
+
+  it('should report differential query results', async () => {
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.DIFFERENTIAL
+      })
+      .build({
+        watchOptions: {
+          query: new GetAllQuery({
+            sql: /* sql */ `
+              SELECT
+                *
+              FROM
+                assets
+            `,
+            transformer: (raw) => {
+              return {
+                id: raw.id as string,
+                make: raw.make as string
+              };
+            }
+          }),
+          // TODO make this optional
+          placeholderData: EMPTY_DIFFERENTIAL
+        }
+      });
+
+    // Create sample data
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          assets (id, make, customer_id)
+        VALUES
+          (uuid (), ?, ?)
+      `,
+      ['test1', uuid()]
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.added[0]?.make).equals('test1');
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          assets (id, make, customer_id)
+        VALUES
+          (uuid (), ?, ?)
+      `,
+      ['test2', uuid()]
+    );
+
+    await vi.waitFor(
+      () => {
+        // This should now reflect that we had one change since the last event
+        expect(watch.state.data.added).toHaveLength(1);
+        expect(watch.state.data.added[0]?.make).equals('test2');
+
+        expect(watch.state.data.removed).toHaveLength(0);
+        expect(watch.state.data.all).toHaveLength(2);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync.execute(
+      /* sql */ `
+        DELETE FROM assets
+        WHERE
+          make = ?
+      `,
+      ['test2']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.added).toHaveLength(0);
+        expect(watch.state.data.all).toHaveLength(1);
+        expect(watch.state.data.unchanged).toHaveLength(1);
+        expect(watch.state.data.unchanged[0]?.make).equals('test1');
+
+        expect(watch.state.data.removed).toHaveLength(1);
+        expect(watch.state.data.removed[0]?.make).equals('test2');
+      },
+      { timeout: 1000 }
+    );
   });
 });

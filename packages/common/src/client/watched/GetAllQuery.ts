@@ -4,16 +4,27 @@ import { WatchCompatibleQuery, WatchExecuteOptions } from './WatchedQuery.js';
 /**
  * Options for {@link GetAllQuery}.
  */
-export type GetAllQueryOptions = {
+export type GetAllQueryOptions<RowType = unknown> = {
   sql: string;
   parameters?: ReadonlyArray<unknown>;
+  /**
+   * Optional transformer function to convert raw rows into the desired RowType.
+   * @example
+   * ```typescript
+   * (rawRow: Record<string, unknown>) => ({
+   *   id: rawRow.id as string,
+   *   created_at: new Date(rawRow.created_at),
+   * })
+   * ```
+   */
+  transformer?: (rawRow: Record<string, unknown>) => RowType;
 };
 
 /**
  * Performs a {@link AbstractPowerSyncDatabase.getAll} operation for a watched query.
  */
 export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowType[]> {
-  constructor(protected options: GetAllQueryOptions) {}
+  constructor(protected options: GetAllQueryOptions<RowType>) {}
 
   compile(): CompiledQuery {
     return {
@@ -22,8 +33,12 @@ export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowT
     };
   }
 
-  execute(options: WatchExecuteOptions): Promise<RowType[]> {
+  async execute(options: WatchExecuteOptions): Promise<RowType[]> {
     const { db, sql, parameters } = options;
-    return db.getAll<RowType>(sql, parameters);
+    const rawResult = await db.getAll<unknown>(sql, parameters);
+    if (this.options.transformer) {
+      return rawResult.map(this.options.transformer);
+    }
+    return rawResult as RowType[];
   }
 }
