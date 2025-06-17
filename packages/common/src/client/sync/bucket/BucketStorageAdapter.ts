@@ -59,6 +59,15 @@ export enum PSInternalTable {
   UNTYPED = 'ps_untyped'
 }
 
+export enum PowerSyncControlCommand {
+  PROCESS_TEXT_LINE = 'line_text',
+  PROCESS_BSON_LINE = 'line_binary',
+  STOP = 'stop',
+  START = 'start',
+  NOTIFY_TOKEN_REFRESHED = 'refreshed_token',
+  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload'
+}
+
 export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
@@ -107,5 +116,5 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
   /**
    * Invokes the `powersync_control` function for the sync client.
    */
-  control(op: string, payload: string | ArrayBuffer | null): Promise<string>;
+  control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string>;
 }

@@ -7,7 +7,13 @@ import * as sync_status from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
 import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js';
-import { BucketChecksum, BucketDescription, BucketStorageAdapter, Checkpoint } from '../bucket/BucketStorageAdapter.js';
+import {
+  BucketChecksum,
+  BucketDescription,
+  BucketStorageAdapter,
+  Checkpoint,
+  PowerSyncControlCommand
+} from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
@@ -246,8 +252,8 @@ export abstract class AbstractStreamingSyncImplementation
       }
 
       this.pendingCrudUpload = new Promise((resolve) => {
-        this.notifyCompletedUploads?.();
         this._uploadAllCrud().finally(() => {
+          this.notifyCompletedUploads?.();
           this.pendingCrudUpload = undefined;
           resolve();
         });
@@ -841,7 +847,10 @@ The next upload iteration will be delayed.`);
     // Pending sync lines received from the service, as well as local events that trigger a powersync_control
     // invocation (local events include refreshed tokens and completed uploads).
     // This is a single data stream so that we can handle all control calls from a single place.
-    let controlInvocations: DataStream<[string, ArrayBuffer | string | undefined]> | null = null;
+    let controlInvocations: DataStream<{
+      command: PowerSyncControlCommand;
+      payload?: ArrayBuffer | string;
+    }> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
@@ -851,14 +860,20 @@ The next upload iteration will be delayed.`);
       };
 
       if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        controlInvocations = await remote.postStreamRaw(syncOptions, (line) => ['line_text', line]);
+        controlInvocations = await remote.postStreamRaw(syncOptions, (line) => ({
+          command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
+          payload: line
+        }));
       } else {
         controlInvocations = await remote.socketStreamRaw(
           {
             ...syncOptions,
             fetchStrategy: resolvedOptions.fetchStrategy
           },
-          (buffer) => ['line_binary', buffer]
+          (buffer) => ({
+            command: PowerSyncControlCommand.PROCESS_BSON_LINE,
+            payload: buffer
+          })
         );
       }
 
@@ -877,10 +892,10 @@ The next upload iteration will be delayed.`);
     }
 
     async function stop() {
-      await control('stop');
+      await control(PowerSyncControlCommand.STOP);
     }
 
-    async function control(op: string, payload?: ArrayBuffer | string) {
+    async function control(op: PowerSyncControlCommand, payload?: ArrayBuffer | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
       await handleInstructions(JSON.parse(rawResponse));
     }
@@ -938,7 +953,7 @@ The next upload iteration will be delayed.`);
           // Restart iteration after the credentials have been refreshed.
           remote.fetchCredentials().then(
             (_) => {
-              controlInvocations?.enqueueData(['refreshed_token', undefined]);
+              controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_TOKEN_REFRESHED });
             },
             (err) => {
               syncImplementation.logger.warn('Could not prefetch credentials', err);
@@ -966,10 +981,10 @@ The next upload iteration will be delayed.`);
 
     try {
       this.notifyCompletedUploads = () => {
-        controlInvocations?.enqueueData(['completed_upload', undefined]);
+        controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
       };
 
-      await control('start', JSON.stringify(resolvedOptions.params));
+      await control(PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED, JSON.stringify(resolvedOptions.params));
       await receivingLines;
     } finally {
       this.notifyCompletedUploads = undefined;
