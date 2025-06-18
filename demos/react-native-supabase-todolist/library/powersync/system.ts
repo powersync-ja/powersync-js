@@ -1,6 +1,6 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/react-native';
+import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
 import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -68,7 +68,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
