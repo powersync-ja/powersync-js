@@ -3,10 +3,10 @@
 # Sync-rule docs: https://docs.powersync.com/usage/sync-rules
 bucket_definitions:
   documents:
-    data:
-      - SELECT * FROM documents
-  updates:
     # Allow remote changes to be synchronized even while there are local changes
     priority: 0
+    parameters: SELECT (request.parameters() ->> 'document_id') as document_id
     data:
-      - SELECT id, document_id, base64(update_data) as update_b64 FROM document_updates
+      - SELECT * FROM documents WHERE id = bucket.document_id
+      - SELECT * FROM documents WHERE id = bucket.document_id
+      - SELECT id, document_id, base64(update_data) as update_b64, editor_id FROM document_updates WHERE document_id = bucket.document_id

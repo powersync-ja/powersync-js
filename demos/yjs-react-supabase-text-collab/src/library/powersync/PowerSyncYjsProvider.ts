@@ -1,9 +1,10 @@
 import * as Y from 'yjs';
 
 import { b64ToUint8Array, Uint8ArrayTob64 } from '@/library/binary-utils';
-import { v4 as uuidv4 } from 'uuid';
-import { AbstractPowerSyncDatabase } from '@powersync/web';
+import { AbstractPowerSyncDatabase, GetAllQuery, IncrementalWatchMode } from '@powersync/web';
 import { ObservableV2 } from 'lib0/observable';
+import { v4 as uuidv4 } from 'uuid';
+import { DocumentUpdates } from './AppSchema';
 
 export interface PowerSyncYjsEvents {
   /**
@@ -24,8 +25,9 @@ export interface PowerSyncYjsEvents {
  * @param documentId
  */
 export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
-  private seenDocUpdates = new Set<string>();
   private abortController = new AbortController();
+  // This ID is updated on every new instance of the provider.
+  private id = uuidv4();
 
   constructor(
     public readonly doc: Y.Doc,
@@ -34,57 +36,72 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
   ) {
     super();
 
-    const updates = db.watch('SELECT * FROM document_updates WHERE document_id = ?', [documentId], {
-      signal: this.abortController.signal
+    /**
+     * Watch for changes to the `document_updates` table for this document.
+     * This will be used to apply updates from other editors.
+     * When we received an added item we apply the update to the Yjs document.
+     */
+    const updateQuery = db.incrementalWatch({ mode: IncrementalWatchMode.DIFFERENTIAL }).build({
+      watch: {
+        query: new GetAllQuery<DocumentUpdates>({
+          sql: /* sql */ `
+            SELECT
+              *
+            FROM
+              document_updates
+            WHERE
+              document_id = ?
+              AND editor_id != ?
+          `,
+          parameters: [documentId, this.id]
+        })
+      }
     });
+
+    this.abortController.signal.addEventListener(
+      'abort',
+      () => {
+        // Stop the watch query when the abort signal is triggered
+        updateQuery.close();
+      },
+      { once: true }
+    );
 
     this._storeUpdate = this._storeUpdate.bind(this);
     this.destroy = this.destroy.bind(this);
 
     let synced = false;
 
-    const watchLoop = async () => {
-      for await (const results of updates) {
-        if (this.abortController.signal.aborted) {
-          break;
+    updateQuery.subscribe({
+      onData: async (diff) => {
+        for (const added of diff.added) {
+          Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64));
         }
-
-        // New data detected in the database
-        for (const update of results.rows!._array) {
-          // Ignore any updates we've already seen
-          if (!this.seenDocUpdates.has(update.id)) {
-            this.seenDocUpdates.add(update.id);
-            // apply the update from the database to the doc
-            const origin = this;
-            Y.applyUpdateV2(doc, b64ToUint8Array(update.update_b64), origin);
-          }
-        }
-
         if (!synced) {
           synced = true;
           this.emit('synced', []);
         }
+      },
+      onError: (error) => {
+        console.error('Error in PowerSyncYjsProvider update query:', error);
       }
-    };
-    watchLoop();
+    });
 
     doc.on('updateV2', this._storeUpdate);
     doc.on('destroy', this.destroy);
   }
 
   private async _storeUpdate(update: Uint8Array, origin: any) {
-    if (origin === this) {
-      // update originated from the database / PowerSync - ignore
-      return;
-    }
     // update originated from elsewhere - save to the database
-    const docUpdateId = uuidv4();
-    this.seenDocUpdates.add(docUpdateId);
-    await this.db.execute('INSERT INTO document_updates(id, document_id, update_b64) VALUES(?, ?, ?)', [
-      docUpdateId,
-      this.documentId,
-      Uint8ArrayTob64(update)
-    ]);
+    await this.db.execute(
+      /* sql */ `
+        INSERT INTO
+          document_updates (id, document_id, update_b64, editor_id)
+        VALUES
+          (uuid (), ?, ?, ?)
+      `,
+      [this.documentId, Uint8ArrayTob64(update), this.id]
+    );
   }
 
   /**
@@ -102,6 +119,13 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
    * Also call `destroy()` to remove any event listeners and prevent future updates to the database.
    */
   async deleteData() {
-    await this.db.execute('DELETE FROM document_updates WHERE document_id = ?', [this.documentId]);
+    await this.db.execute(
+      /* sql */ `
+        DELETE FROM document_updates
+        WHERE
+          document_id = ?
+      `,
+      [this.documentId]
+    );
   }
 }
