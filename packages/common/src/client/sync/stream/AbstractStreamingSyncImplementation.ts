@@ -887,7 +887,12 @@ The next upload iteration will be delayed.`);
           await control(line.command, line.payload);
         }
       } finally {
-        await controlInvocations.close();
+        const activeInstructions = controlInvocations;
+        // We concurrently add events to the active data stream when e.g. a CRUD upload is completed or a token is
+        // refreshed. That would throw after closing (and we can't handle those events either way), so set this back
+        // to null.
+        controlInvocations = null;
+        await activeInstructions.close();
       }
     }
 
