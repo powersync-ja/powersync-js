@@ -10,6 +10,7 @@ import {
   BucketStorageAdapter,
   BucketStorageListener,
   Checkpoint,
+  PowerSyncControlCommand,
   PSInternalTable,
   SyncLocalDatabaseResult
 } from './BucketStorageAdapter.js';
@@ -99,13 +100,13 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return Object.fromEntries(rows.map((r) => [r.name, { atLast: r.count_at_last, sinceLast: r.count_since_last }]));
   }
 
-  async saveSyncData(batch: SyncDataBatch) {
+  async saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean = false) {
     await this.writeTransaction(async (tx) => {
       let count = 0;
       for (const b of batch.buckets) {
         const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
-          JSON.stringify({ buckets: [b.toJSON()] })
+          JSON.stringify({ buckets: [b.toJSON(fixedKeyFormat)] })
         ]);
         this.logger.debug('saveSyncData', JSON.stringify(result));
         count += b.data.length;
@@ -413,6 +414,32 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async setTargetCheckpoint(checkpoint: Checkpoint) {
     // No-op for now
   }
+
+  async control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string> {
+    return await this.writeTransaction(async (tx) => {
+      const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
+      return raw;
+    });
+  }
+
+  async hasMigratedSubkeys(): Promise<boolean> {
+    const { r } = await this.db.get<{ r: number }>('SELECT EXISTS(SELECT * FROM ps_kv WHERE key = ?) as r', [
+      SqliteBucketStorage._subkeyMigrationKey
+    ]);
+    return r != 0;
+  }
+
+  async migrateToFixedSubkeys(): Promise<void> {
+    await this.writeTransaction(async (tx) => {
+      await tx.execute('UPDATE ps_oplog SET key = powersync_remove_duplicate_key_encoding(key);');
+      await tx.execute('INSERT OR REPLACE INTO ps_kv (key, value) VALUES (?, ?);', [
+        SqliteBucketStorage._subkeyMigrationKey,
+        '1'
+      ]);
+    });
+  }
+
+  static _subkeyMigrationKey = 'powersync_js_migrated_subkeys';
 }
 
 function hasMatchingPriority(priority: number, bucket: BucketChecksum) {

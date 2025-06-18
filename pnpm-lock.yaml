@@ -1682,9 +1682,6 @@ importers:
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
-      can-ndjson-stream:
-        specifier: ^1.0.2
-        version: 1.0.2
       cross-fetch:
         specifier: ^4.0.0
         version: 4.1.0(encoding@0.1.13)
@@ -10397,12 +10394,6 @@ packages:
   camelcase@7.0.1:
     resolution: {integrity: sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==}
     engines: {node: '>=14.16'}
-
-  can-namespace@1.0.0:
-    resolution: {integrity: sha512-1sBY/SLwwcmxz3NhyVhLjt2uD/dZ7V1mII82/MIXSDn5QXnslnosJnjlP8+yTx2uTCRvw1jlFDElRs4pX7AG5w==}
-
-  can-ndjson-stream@1.0.2:
-    resolution: {integrity: sha512-//tM8wcTV42SyD1JGua7WMVftZEeTwapcHJTTe3vJwuVywXD01CJbdEkgwRYjy2evIByVJV21ZKBdSv5ygIw1w==}
 
   can-write-to-dir@1.1.1:
     resolution: {integrity: sha512-eOgiEWqjppB+3DN/5E82EQ8dTINus8d9GXMCbEsUnp2hcUIcXmBvzWmD3tXMk3CuBK0v+ddK9qw0EAF+JVRMjQ==}
@@ -32898,12 +32889,6 @@ snapshots:
   camelcase@6.3.0: {}
 
   camelcase@7.0.1: {}
-
-  can-namespace@1.0.0: {}
-
-  can-ndjson-stream@1.0.2:
-    dependencies:
-      can-namespace: 1.0.0
 
   can-write-to-dir@1.1.1:
     dependencies:

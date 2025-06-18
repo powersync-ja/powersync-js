@@ -5,7 +5,9 @@ import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
   OplogEntryJSON,
+  PowerSyncConnectionOptions,
   ProgressWithOperations,
+  SyncClientImplementation,
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import Logger from 'js-logger';
@@ -13,6 +15,103 @@ import Logger from 'js-logger';
 Logger.useDefaults({ defaultLevel: Logger.WARN });
 
 describe('Sync', () => {
+  describe('js client', () => {
+    defineSyncTests(SyncClientImplementation.JAVASCRIPT);
+  });
+
+  describe('rust client', () => {
+    defineSyncTests(SyncClientImplementation.RUST);
+  });
+
+  mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
+    function addData(id: string) {
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: id,
+              op: 'PUT',
+              object_id: id,
+              object_type: 'lists',
+              subkey: `subkey_${id}`,
+              data: '{}'
+            }
+          ]
+        }
+      });
+    }
+    const checkpoint = {
+      checkpoint: {
+        last_op_id: '3',
+        buckets: [bucket('a', 3)]
+      }
+    };
+
+    let database = await syncService.createDatabase();
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.JAVASCRIPT,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('1');
+
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(1);
+    });
+    await database.disconnect();
+    // The JavaScript client encodes subkeys to JSON when it shouldn't...
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      expect.objectContaining({ key: 'lists/1/"subkey_1"' })
+    ]);
+
+    // Connecting again with the new client should fix the format
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.RUST,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('2');
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(2);
+    });
+    await database.disconnect();
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      // Existing entry should be fixed too!
+      expect.objectContaining({ key: 'lists/1/subkey_1' }),
+      expect.objectContaining({ key: 'lists/2/subkey_2' })
+    ]);
+
+    // Finally, connecting with JS again should keep the fixed subkey format.
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.RUST,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    syncService.pushLine(checkpoint);
+    addData('3');
+    await vi.waitFor(async () => {
+      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(3);
+    });
+    await database.disconnect();
+    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
+      // Existing entry should be fixed too!
+      expect.objectContaining({ key: 'lists/1/subkey_1' }),
+      expect.objectContaining({ key: 'lists/2/subkey_2' }),
+      expect.objectContaining({ key: 'lists/3/subkey_3' })
+    ]);
+  });
+});
+
+function defineSyncTests(impl: SyncClientImplementation) {
+  const options: PowerSyncConnectionOptions = {
+    clientImplementation: impl,
+    connectionMethod: SyncStreamConnectionMethod.HTTP
+  };
+
   describe('reports progress', () => {
     let lastOpId = 0;
 
@@ -60,7 +159,7 @@ describe('Sync', () => {
 
     mockSyncServiceTest('without priorities', async ({ syncService }) => {
       const database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -95,7 +194,7 @@ describe('Sync', () => {
 
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -115,7 +214,7 @@ describe('Sync', () => {
 
       // And open a new one
       database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       // Send same checkpoint again
@@ -134,7 +233,7 @@ describe('Sync', () => {
 
     mockSyncServiceTest('interrupted sync with new checkpoint', async ({ syncService }) => {
       let database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -152,7 +251,7 @@ describe('Sync', () => {
       await database.close();
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
       database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       // Send checkpoint with new data
@@ -170,7 +269,7 @@ describe('Sync', () => {
 
     mockSyncServiceTest('different priorities', async ({ syncService }) => {
       let database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -272,7 +371,7 @@ describe('Sync', () => {
 
     mockSyncServiceTest('uses correct state when reconnecting', async ({ syncService }) => {
       let database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -291,7 +390,7 @@ describe('Sync', () => {
       await database.close();
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
       database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       expect(syncService.connectedListeners[0].buckets).toStrictEqual([
@@ -337,7 +436,7 @@ describe('Sync', () => {
       await waitForSyncStatus(database, (s) => s.downloadProgress == null);
     });
   });
-});
+}
 
 function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {
   return {
@@ -354,6 +453,10 @@ async function waitForProgress(
   forPriorities: [number, [number, number]][] = []
 ) {
   await waitForSyncStatus(database, (status) => {
+    if (status.dataFlowStatus.downloadError != null) {
+      throw `Unexpected sync error: ${status.dataFlowStatus.downloadError}`;
+    }
+
     const progress = status.downloadProgress;
     if (!progress) {
       return false;
