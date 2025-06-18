@@ -4,12 +4,12 @@ import ndjsonStream from 'can-ndjson-stream';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
-import { WebsocketClientTransport } from 'rsocket-websocket-client';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
+import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
 export type BSONImplementation = typeof BSON;
 
@@ -312,18 +312,12 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
-    let socketCreationError: Error | undefined;
-
+    const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
-        url: this.options.socketUrlTransformer(request.url),
+        url,
         wsCreator: (url) => {
-          const s = this.createSocket(url);
-          s.addEventListener('error', (e: Event) => {
-            socketCreationError = new Error('Failed to create connection to websocket: ', (e.target as any).url ?? '');
-            this.logger.warn('Socket error', e);
-          });
-          return s;
+          return this.createSocket(url);
         }
       }),
       setup: {
@@ -347,11 +341,8 @@ export abstract class AbstractRemote {
     try {
       rsocket = await connector.connect();
     } catch (ex) {
-      /**
-       * On React native the connection exception can be `undefined` this causes issues
-       * with detecting the exception inside async-mutex
-       */
-      throw new Error(`Could not connect to PowerSync instance: ${JSON.stringify(ex ?? socketCreationError)}`);
+      this.logger.error(`Failed to connect WebSocket`, ex);
+      throw ex;
     }
 
     const stream = new DataStream({

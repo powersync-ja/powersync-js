@@ -2,7 +2,6 @@ import {
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
-  type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
@@ -172,23 +171,11 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     });
   }
 
-  connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
-    /**
-     * Using React strict mode might cause calls to connect to fire multiple times
-     * Connect is wrapped inside a lock in order to prevent race conditions internally between multiple
-     * connection attempts.
-     */
-    return this.runExclusive(() => {
-      this.options.logger?.debug('Attempting to connect to PowerSync instance');
-      return super.connect(connector, options);
-    });
-  }
-
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }
 
-  protected runExclusive<T>(cb: () => Promise<T>) {
+  protected async runExclusive<T>(cb: () => Promise<T>) {
     if (this.resolvedFlags.ssrMode) {
       return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }

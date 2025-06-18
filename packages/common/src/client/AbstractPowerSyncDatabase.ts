@@ -17,6 +17,7 @@ import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { throttleTrailing } from '../utils/async.js';
 import { mutexRunExclusive } from '../utils/mutex.js';
+import { ConnectionManager } from './ConnectionManager.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
@@ -181,16 +182,21 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   currentStatus: SyncStatus;
 
-  syncStreamImplementation?: StreamingSyncImplementation;
   sdkVersion: string;
 
   protected bucketStorageAdapter: BucketStorageAdapter;
-  private syncStatusListenerDisposer?: () => void;
   protected _isReadyPromise: Promise<void>;
+  protected connectionManager: ConnectionManager;
+
+  get syncStreamImplementation() {
+    return this.connectionManager.syncStreamImplementation;
+  }
 
   protected _schema: Schema;
 
   private _database: DBAdapter;
+
+  protected runExclusiveMutex: Mutex;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
@@ -222,7 +228,33 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._schema = schema;
     this.ready = false;
     this.sdkVersion = '';
+    this.runExclusiveMutex = new Mutex();
     // Start async init
+    this.connectionManager = new ConnectionManager({
+      createSyncImplementation: async (connector, options) => {
+        await this.waitForReady();
+
+        return this.runExclusive(async () => {
+          const sync = this.generateSyncStreamImplementation(connector, this.resolvedConnectionOptions(options));
+          const onDispose = sync.registerListener({
+            statusChanged: (status) => {
+              this.currentStatus = new SyncStatus({
+                ...status.toJSON(),
+                hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
+              });
+              this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
+            }
+          });
+          await sync.waitForReady();
+
+          return {
+            sync,
+            onDispose
+          };
+        });
+      },
+      logger: this.logger
+    });
     this._isReadyPromise = this.initialize();
   }
 
@@ -442,33 +474,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Locking mechanism for exclusively running critical portions of connect/disconnect operations.
+   * Locking here is mostly only important on web for multiple tab scenarios.
+   */
+  protected runExclusive<T>(callback: () => Promise<T>): Promise<T> {
+    return this.runExclusiveMutex.runExclusive(callback);
+  }
+
+  /**
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    await this.waitForReady();
-
-    // close connection if one is open
-    await this.disconnect();
-    if (this.closed) {
-      throw new Error('Cannot connect using a closed client');
-    }
-
-    const resolvedConnectOptions = this.resolvedConnectionOptions(options);
-
-    this.syncStreamImplementation = this.generateSyncStreamImplementation(connector, resolvedConnectOptions);
-    this.syncStatusListenerDisposer = this.syncStreamImplementation.registerListener({
-      statusChanged: (status) => {
-        this.currentStatus = new SyncStatus({
-          ...status.toJSON(),
-          hasSynced: this.currentStatus?.hasSynced || !!status.lastSyncedAt
-        });
-        this.iterateListeners((cb) => cb.statusChanged?.(this.currentStatus));
-      }
-    });
-
-    await this.syncStreamImplementation.waitForReady();
-    this.syncStreamImplementation.triggerCrudUpload();
-    await this.syncStreamImplementation.connect(options);
+    return this.connectionManager.connect(connector, options);
   }
 
   /**
@@ -477,11 +494,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Use {@link connect} to connect again.
    */
   async disconnect() {
-    await this.waitForReady();
-    await this.syncStreamImplementation?.disconnect();
-    this.syncStatusListenerDisposer?.();
-    await this.syncStreamImplementation?.dispose();
-    this.syncStreamImplementation = undefined;
+    return this.connectionManager.disconnect();
   }
 
   /**
@@ -530,7 +543,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       await this.disconnect();
     }
 
-    await this.syncStreamImplementation?.dispose();
+    await this.connectionManager.close();
     await this.database.close();
     this.closed = true;
     await this.iterateAsyncListeners(async (cb) => cb.closed?.());

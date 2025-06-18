@@ -54,7 +54,7 @@ export default (commandLineArgs) => {
           }
         ]
       }),
-      terser({ sourceMap })
+      terser({ sourceMap: sourcemap })
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',

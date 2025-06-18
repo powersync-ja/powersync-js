@@ -19,6 +19,7 @@ export * from './client/sync/stream/AbstractRemote.js';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation.js';
 export * from './client/sync/stream/streaming-sync-types.js';
 
+export * from './client/ConnectionManager.js';
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';

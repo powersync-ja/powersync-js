@@ -171,7 +171,22 @@ export class SyncStatus {
    * @returns {boolean} True if the instances are considered equal, false otherwise
    */
   isEqual(status: SyncStatus) {
-    return JSON.stringify(this.options) == JSON.stringify(status.options);
+    /**
+     * By default Error object are serialized to an empty object.
+     * This replaces Errors with more useful information before serialization.
+     */
+    const replacer = (_: string, value: any) => {
+      if (value instanceof Error) {
+        return {
+          name: value.name,
+          message: value.message,
+          stack: value.stack
+        };
+      }
+      return value;
+    };
+
+    return JSON.stringify(this.options, replacer) == JSON.stringify(status.options, replacer);
   }
 
   /**

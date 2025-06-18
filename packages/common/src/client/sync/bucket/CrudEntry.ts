@@ -42,6 +42,8 @@ type CrudEntryOutputJSON = {
   id: string;
   tx_id?: number;
   data?: Record<string, any>;
+  old?: Record<string, any>;
+  metadata?: string;
 };
 
 /**
@@ -132,7 +134,9 @@ export class CrudEntry {
       type: this.table,
       id: this.id,
       tx_id: this.transactionId,
-      data: this.opData
+      data: this.opData,
+      old: this.previousValues,
+      metadata: this.metadata
     };
   }
 
@@ -154,6 +158,15 @@ export class CrudEntry {
    * Generates an array for use in deep comparison operations
    */
   toComparisonArray() {
-    return [this.transactionId, this.clientId, this.op, this.table, this.id, this.opData];
+    return [
+      this.transactionId,
+      this.clientId,
+      this.op,
+      this.table,
+      this.id,
+      this.opData,
+      this.previousValues,
+      this.metadata
+    ];
   }
 }
