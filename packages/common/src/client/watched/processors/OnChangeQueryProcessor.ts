@@ -2,8 +2,13 @@ import { WatchCompatibleQuery, WatchedQueryOptions, WatchedQueryState } from '..
 import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
 import { WatchedQueryComparator } from './comparators.js';
 
-export interface ComparisonWatchedQuerySettings<DataType> extends WatchedQueryOptions<DataType> {
+export interface ComparisonWatchedQuerySettings<DataType> extends WatchedQueryOptions {
   query: WatchCompatibleQuery<DataType>;
+  /**
+   * Initial result data which is presented while the initial loading is executing.
+   * Defaults to an empty differential.
+   */
+  placeholderData: DataType;
 }
 
 /**

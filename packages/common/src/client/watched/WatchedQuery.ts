@@ -45,12 +45,7 @@ export interface WatchCompatibleQuery<ResultType> {
   compile(): CompiledQuery;
 }
 
-export interface WatchedQueryOptions<DataType> {
-  /**
-   * Initial result data which is presented while the initial loading is executing
-   */
-  placeholderData: DataType;
-
+export interface WatchedQueryOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
   /**
@@ -83,7 +78,7 @@ export interface WatchedQueryListener extends BaseListener {
   subscriptionsChanged: (counts: SubscriptionCounts) => void;
 }
 
-export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>>
+export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions>
   extends BaseObserverInterface<WatchedQueryListener> {
   /**
    * Current state of the watched query.

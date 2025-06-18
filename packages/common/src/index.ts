@@ -33,6 +33,10 @@ export * from './db/schema/TableV2.js';
 export * from './client/watched/GetAllQuery.js';
 export * from './client/watched/processors/AbstractQueryProcessor.js';
 export * from './client/watched/processors/comparators.js';
+export * from './client/watched/processors/ComparisonWatchedQueryBuilder.js';
+export * from './client/watched/processors/DifferentialQueryProcessor.js';
+export * from './client/watched/processors/DifferentialWatchedQueryBuilder.js';
+export * from './client/watched/processors/OnChangeQueryProcessor.js';
 export * from './client/watched/WatchedQuery.js';
 export * from './client/watched/WatchedQueryBuilder.js';
 

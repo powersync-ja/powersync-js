@@ -1,7 +1,8 @@
 import { WatchedQuery } from './WatchedQuery.js';
 
 export enum IncrementalWatchMode {
-  COMPARISON = 'comparison'
+  COMPARISON = 'comparison',
+  DIFFERENTIAL = 'differential'
 }
 
 /**
