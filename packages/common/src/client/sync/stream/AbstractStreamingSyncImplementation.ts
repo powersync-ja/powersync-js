@@ -884,7 +884,7 @@ The next upload iteration will be delayed.`);
             return;
           }
 
-          await control(line[0], line[1]);
+          await control(line.command, line.payload);
         }
       } finally {
         await controlInvocations.close();
@@ -980,11 +980,16 @@ The next upload iteration will be delayed.`);
     }
 
     try {
+      await control(
+        PowerSyncControlCommand.START,
+        JSON.stringify({
+          parameters: resolvedOptions.params
+        })
+      );
+
       this.notifyCompletedUploads = () => {
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
       };
-
-      await control(PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED, JSON.stringify(resolvedOptions.params));
       await receivingLines;
     } finally {
       this.notifyCompletedUploads = undefined;
