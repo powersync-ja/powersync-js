@@ -19,9 +19,17 @@ export interface Differentiator<RowType> {
   compareBy: (item: RowType) => string;
 }
 
-export interface DifferentialWatchedQuerySettings<RowType>
-  extends WatchedQueryOptions<WatchedQueryDifferential<RowType>> {
+export interface DifferentialWatchedQuerySettings<RowType> extends WatchedQueryOptions {
+  /**
+   * The query here must return an array of items that can be differentiated.
+   */
   query: WatchCompatibleQuery<RowType[]>;
+
+  /**
+   * Initial result data which is presented while the initial loading is executing.
+   * Defaults to an empty differential.
+   */
+  placeholderData?: WatchedQueryDifferential<RowType>;
 }
 
 /**

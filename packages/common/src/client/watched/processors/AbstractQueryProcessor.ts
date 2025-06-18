@@ -13,18 +13,16 @@ import {
 /**
  * @internal
  */
-export interface AbstractQueryProcessorOptions<
-  Data,
-  Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>
-> {
+export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
   db: AbstractPowerSyncDatabase;
   watchOptions: Settings;
+  placeholderData: Data;
 }
 
 /**
  * @internal
  */
-export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>> {
+export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions = WatchedQueryOptions> {
   abortSignal: AbortSignal;
   settings: Settings;
 }
@@ -37,7 +35,7 @@ type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & Watc
  */
 export abstract class AbstractQueryProcessor<
     Data = unknown[],
-    Settings extends WatchedQueryOptions<Data> = WatchedQueryOptions<Data>
+    Settings extends WatchedQueryOptions = WatchedQueryOptions
   >
   extends BaseObserver<WatchedQueryProcessorListener<Data>>
   implements WatchedQuery<Data, Settings>
@@ -71,7 +69,7 @@ export abstract class AbstractQueryProcessor<
       isFetching: this.reportFetching, // Only set to true if we will report updates in future
       error: null,
       lastUpdated: null,
-      data: options.watchOptions.placeholderData
+      data: options.placeholderData
     };
     this.disposeListeners = null;
     this.initialized = this.init();
@@ -90,8 +88,7 @@ export abstract class AbstractQueryProcessor<
     if (!this.state.isLoading) {
       await this.updateState({
         isLoading: true,
-        isFetching: this.reportFetching ? true : false,
-        data: settings.placeholderData
+        isFetching: this.reportFetching ? true : false
       });
     }
 

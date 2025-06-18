@@ -878,27 +878,27 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Watch a SQL query which incrementally emits updates for result sets.
    * This is useful for only getting updates when the result set changes, or viewing the change in the result set over time.
    * @returns A {@link WatchedQueryBuilder} for the specified watch mode.
+   *
+   * For a comparison based watch, use {@link IncrementalWatchMode.COMPARISON}.
+   * See {@link ComparisonWatchedQueryBuilder} for more details.
    * @example
    * ```javascript
    * const watchedQuery = powerSync
    *  .incrementalWatch({ mode: IncrementalWatchMode.COMPARISON })
    *  .build({
-   *    watch: {
-   *      placeholderData: [],
-   *      query: new GetAllQuery({
-   *        sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
-   *        parameters: []
-   *      }),
-   *      throttleMs: 1000
-   *    },
-   *    comparator: new ArrayComparator({
-   *      // By default the entire result set is stringified and compared.
-   *      // Comparing the array items individual can be more efficient.
-   *      // Alternatively a unique field can be used to compare items.
-   *      // For example, if the items are objects with an `updated_at` field:
-   *      compareBy: (item) => JSON.stringify(item)
-   *    })
-   * });
+   *    // ... Options
+   *  })
+   * ```
+   *
+   * For a differential based watch , use {@link IncrementalWatchMode.DIFFERENTIAL}.
+   * See {@link DifferentialWatchedQueryBuilder} for more details.
+   * @example
+   * ```javascript
+   * const watchedQuery = powerSync
+   *  .incrementalWatch({ mode: IncrementalWatchMode.DIFFERENTIAL })
+   *  .build({
+   *    // ... Options
+   *  })
    * ```
    */
   incrementalWatch<Mode extends IncrementalWatchMode>(options: { mode: Mode }): WatchedQueryBuilderMap[Mode] {
