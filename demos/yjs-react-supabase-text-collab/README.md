@@ -17,7 +17,7 @@ pnpm install
 pnpm build:packages
 ```
 
-### Quick Start: Local Development
+#### Quick Start: Local Development
 
 This demo can be started with local PowerSync and Supabase services.
 
@@ -140,8 +140,8 @@ To-do
 - [ ] Add button to the UI allowing the user to merge the Yjs edits i.e. `document_update` rows. Invoke `merge-document-updates` edge function in Supabase.
 - [ ] Prepopulate sample text into newly created documents.
 - [ ] Improve performance / rework inefficient parts of implementation:
-  - [ ] Optimize the 'seen updates' approach to filter the `SELECT` query for updates that have not yet been seen — perhaps based on `created_at` timestamp generated on the Postgres side. For the watch query — watch for certain tables instead of watching a query. This will allow querying `document_updates` with a dynamic parameter.
-  - [ ] Flush 'seen updates' when `document_updates` are merged.
+  - [] Optimize the 'seen updates' approach to filter the `SELECT` query for updates that have not yet been seen — perhaps based on `created_at` timestamp generated on the Postgres side. For the watch query — watch for certain tables instead of watching a query. This will allow querying `document_updates` with a dynamic parameter.
+  - [x] Flush 'seen updates' when `document_updates` are merged.
 
 Done
 
