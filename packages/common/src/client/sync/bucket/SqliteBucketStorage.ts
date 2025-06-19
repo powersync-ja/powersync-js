@@ -18,19 +18,11 @@ import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
 import { SyncDataBatch } from './SyncDataBatch.js';
 
-const COMPACT_OPERATION_INTERVAL = 1_000;
-
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
   public tableNames: Set<string>;
-  private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
   private updateListener: () => void;
   private _clientId?: Promise<string>;
-
-  /**
-   * Count up, and do a compact on startup.
-   */
-  private compactCounter = COMPACT_OPERATION_INTERVAL;
 
   constructor(
     private db: DBAdapter,
@@ -39,7 +31,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   ) {
     super();
     this._hasCompletedSync = false;
-    this.pendingBucketDeletes = true;
     this.tableNames = new Set();
     this.updateListener = db.registerListener({
       tablesUpdated: (update) => {
@@ -102,16 +93,13 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   async saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean = false) {
     await this.writeTransaction(async (tx) => {
-      let count = 0;
       for (const b of batch.buckets) {
         const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
           JSON.stringify({ buckets: [b.toJSON(fixedKeyFormat)] })
         ]);
         this.logger.debug('saveSyncData', JSON.stringify(result));
-        count += b.data.length;
       }
-      this.compactCounter += count;
     });
   }
 
@@ -130,7 +118,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     });
 
     this.logger.debug('done deleting bucket');
-    this.pendingBucketDeletes = true;
   }
 
   async hasCompletedSync() {
@@ -176,8 +163,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       this.logger.debug('Not at a consistent checkpoint - cannot update local db');
       return { ready: false, checkpointValid: true };
     }
-
-    await this.forceCompact();
 
     return {
       ready: true,
@@ -258,42 +243,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         checkpointFailures: result['failed_buckets']
       };
     }
-  }
-
-  /**
-   * Force a compact, for tests.
-   */
-  async forceCompact() {
-    this.compactCounter = COMPACT_OPERATION_INTERVAL;
-    this.pendingBucketDeletes = true;
-
-    await this.autoCompact();
-  }
-
-  async autoCompact() {
-    await this.deletePendingBuckets();
-    await this.clearRemoveOps();
-  }
-
-  private async deletePendingBuckets() {
-    if (this.pendingBucketDeletes !== false) {
-      await this.writeTransaction(async (tx) => {
-        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['delete_pending_buckets', '']);
-      });
-      // Executed once after start-up, and again when there are pending deletes.
-      this.pendingBucketDeletes = false;
-    }
-  }
-
-  private async clearRemoveOps() {
-    if (this.compactCounter < COMPACT_OPERATION_INTERVAL) {
-      return;
-    }
-
-    await this.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
-    });
-    this.compactCounter = 0;
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
