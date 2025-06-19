@@ -921,7 +921,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const builderFactory = WatchedQueryBuilderMap[mode];
     if (!builderFactory) {
       throw new Error(
-        `Unsupported watch mode: ${mode}. Please specify on of [${Object.values(IncrementalWatchMode).join(', ')}]`
+        `Unsupported watch mode: ${mode}. Please specify one of [${Object.values(IncrementalWatchMode).join(', ')}]`
       );
     }
     return builderFactory(this) as WatchedQueryBuilderMap[Mode];
@@ -964,7 +964,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       }
     });
 
-    const dispose = watchedQuery.subscribe({
+    const dispose = watchedQuery.registerListener({
       onData: (data) => {
         if (!data) {
           // This should not happen. We only use null for the initial data.

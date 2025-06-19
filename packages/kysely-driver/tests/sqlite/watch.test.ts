@@ -273,7 +273,7 @@ describe('Watch Tests', () => {
     });
 
     const latestDataPromise = new Promise<Awaited<ReturnType<typeof query.execute>>>((resolve) => {
-      const dispose = watch.subscribe({
+      const dispose = watch.registerListener({
         onData: (data) => {
           if (data.length > 0) {
             resolve(data);

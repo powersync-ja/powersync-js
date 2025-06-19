@@ -4,11 +4,28 @@ import { WatchedQueryBuilder } from '../WatchedQueryBuilder.js';
 import { WatchedQueryComparator } from './comparators.js';
 import { ComparisonWatchedQuerySettings, OnChangeQueryProcessor } from './OnChangeQueryProcessor.js';
 
+/**
+ * Options for building incrementally watched queries that compare the result set.
+ * It uses a comparator to determine if the result set has changed since the last update.
+ * If the result set has changed, it emits the new result set.
+ */
 export interface ComparisonWatchProcessorOptions<DataType> {
   comparator?: WatchedQueryComparator<DataType>;
   watch: ComparisonWatchedQuerySettings<DataType>;
 }
 
+/**
+ * Default implementation of the {@link WatchedQueryComparator} for watched queries.
+ * It uses JSON stringification to compare the entire result set.
+ * Array based results should use {@link ArrayComparator} for more efficient item comparison.
+ */
+export const DEFAULT_WATCHED_QUERY_COMPARATOR: WatchedQueryComparator<any> = {
+  checkEquality: (a, b) => JSON.stringify(a) === JSON.stringify(b)
+};
+
+/**
+ * Builds an incrementally watched query that emits results after comparing the result set for changes.
+ */
 export class ComparisonWatchedQueryBuilder implements WatchedQueryBuilder {
   constructor(protected db: AbstractPowerSyncDatabase) {}
 
@@ -41,9 +58,7 @@ export class ComparisonWatchedQueryBuilder implements WatchedQueryBuilder {
   ): WatchedQuery<DataType, ComparisonWatchedQuerySettings<DataType>> {
     return new OnChangeQueryProcessor({
       db: this.db,
-      comparator: options.comparator ?? {
-        checkEquality: (a, b) => JSON.stringify(a) == JSON.stringify(b)
-      },
+      comparator: options.comparator ?? DEFAULT_WATCHED_QUERY_COMPARATOR,
       watchOptions: options.watch,
       placeholderData: options.watch.placeholderData
     });

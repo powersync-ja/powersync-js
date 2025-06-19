@@ -1,14 +1,6 @@
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
-import { BaseObserver } from '../../../utils/BaseObserver.js';
-import {
-  SubscriptionCounts,
-  WatchedQuery,
-  WatchedQueryListener,
-  WatchedQueryOptions,
-  WatchedQueryState,
-  WatchedQuerySubscription,
-  WatchedQuerySubscriptionEvent
-} from '../WatchedQuery.js';
+import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
+import { WatchedQuery, WatchedQueryListener, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
 
 /**
  * @internal
@@ -27,7 +19,7 @@ export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions = W
   settings: Settings;
 }
 
-type WatchedQueryProcessorListener<Data> = WatchedQuerySubscription<Data> & WatchedQueryListener;
+type WatchedQueryProcessorListener<Data> = WatchedQueryListener<Data>;
 
 /**
  * Performs underlying watching and yields a stream of results.
@@ -37,7 +29,7 @@ export abstract class AbstractQueryProcessor<
     Data = unknown[],
     Settings extends WatchedQueryOptions = WatchedQueryOptions
   >
-  extends BaseObserver<WatchedQueryProcessorListener<Data>>
+  extends MetaBaseObserver<WatchedQueryProcessorListener<Data>>
   implements WatchedQuery<Data, Settings>
 {
   readonly state: WatchedQueryState<Data>;
@@ -49,15 +41,6 @@ export abstract class AbstractQueryProcessor<
 
   get closed() {
     return this._closed;
-  }
-
-  get subscriptionCounts() {
-    const listenersArray = Array.from(this.listeners);
-    return Object.values(WatchedQuerySubscriptionEvent).reduce((totals: Partial<SubscriptionCounts>, key) => {
-      totals[key] = listenersArray.filter((l) => !!l[key]).length;
-      totals.total = (totals.total ?? 0) + totals[key];
-      return totals;
-    }, {}) as SubscriptionCounts;
   }
 
   constructor(protected options: AbstractQueryProcessorOptions<Data, Settings>) {
@@ -154,18 +137,6 @@ export abstract class AbstractQueryProcessor<
     this.runWithReporting(async () => {
       await this.updateSettings(this.options.watchOptions);
     });
-  }
-
-  subscribe(subscription: WatchedQuerySubscription<Data>): () => void {
-    // hook in to subscription events in order to report changes
-    const baseDispose = this.registerListener({ ...subscription });
-
-    this.iterateListeners((l) => l.subscriptionsChanged?.(this.subscriptionCounts));
-
-    return () => {
-      baseDispose();
-      this.iterateListeners((l) => l.subscriptionsChanged?.(this.subscriptionCounts));
-    };
   }
 
   async close() {

@@ -1,7 +1,11 @@
 import { CompiledQuery } from '../../types/types.js';
-import { BaseListener, BaseObserverInterface } from '../../utils/BaseObserver.js';
+import { BaseListener } from '../../utils/BaseObserver.js';
+import { MetaBaseObserverInterface } from '../../utils/MetaBaseObserver.js';
 import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 
+/**
+ * State for {@link WatchedQuery} instances.
+ */
 export interface WatchedQueryState<Data> {
   /**
    * Indicates the initial loading state (hard loading).
@@ -57,29 +61,22 @@ export interface WatchedQueryOptions {
   reportFetching?: boolean;
 }
 
-export enum WatchedQuerySubscriptionEvent {
+export enum WatchedQueryListenerEvent {
   ON_DATA = 'onData',
   ON_ERROR = 'onError',
-  ON_STATE_CHANGE = 'onStateChange'
+  ON_STATE_CHANGE = 'onStateChange',
+  CLOSED = 'closed'
 }
 
-export interface WatchedQuerySubscription<Data> {
-  [WatchedQuerySubscriptionEvent.ON_DATA]?: (data: Data) => void | Promise<void>;
-  [WatchedQuerySubscriptionEvent.ON_ERROR]?: (error: Error) => void | Promise<void>;
-  [WatchedQuerySubscriptionEvent.ON_STATE_CHANGE]?: (state: WatchedQueryState<Data>) => void | Promise<void>;
-}
-
-export type SubscriptionCounts = Record<WatchedQuerySubscriptionEvent, number> & {
-  total: number;
-};
-
-export interface WatchedQueryListener extends BaseListener {
-  closed: () => void;
-  subscriptionsChanged: (counts: SubscriptionCounts) => void;
+export interface WatchedQueryListener<Data> extends BaseListener {
+  [WatchedQueryListenerEvent.ON_DATA]?: (data: Data) => void | Promise<void>;
+  [WatchedQueryListenerEvent.ON_ERROR]?: (error: Error) => void | Promise<void>;
+  [WatchedQueryListenerEvent.ON_STATE_CHANGE]?: (state: WatchedQueryState<Data>) => void | Promise<void>;
+  [WatchedQueryListenerEvent.CLOSED]?: () => void | Promise<void>;
 }
 
 export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions>
-  extends BaseObserverInterface<WatchedQueryListener> {
+  extends MetaBaseObserverInterface<WatchedQueryListener<Data>> {
   /**
    * Current state of the watched query.
    */
@@ -87,13 +84,11 @@ export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptio
 
   readonly closed: boolean;
 
-  readonly subscriptionCounts: SubscriptionCounts;
-
   /**
    * Subscribe to watched query events.
    * @returns A function to unsubscribe from the events.
    */
-  subscribe(subscription: WatchedQuerySubscription<Data>): () => void;
+  registerListener(listener: WatchedQueryListener<Data>): () => void;
 
   /**
    * Updates the underlying query options.

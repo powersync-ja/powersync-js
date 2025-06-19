@@ -21,7 +21,7 @@ export const useWatchedQuerySubscription = <ResultType = unknown>(
   const [output, setOutputState] = React.useState(query.state);
 
   React.useEffect(() => {
-    const dispose = query.subscribe({
+    const dispose = query.registerListener({
       onStateChange: (state) => {
         setOutputState({ ...state });
       }

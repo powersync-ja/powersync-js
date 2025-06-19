@@ -348,7 +348,7 @@ describe('Watch Tests', { sequential: true }, () => {
 
     const getNextState = () =>
       new Promise<WatchedQueryState<any>>((resolve) => {
-        const dispose = watch.subscribe({
+        const dispose = watch.registerListener({
           onStateChange: (state) => {
             dispose();
             resolve(state);
@@ -393,7 +393,7 @@ describe('Watch Tests', { sequential: true }, () => {
       });
 
     let notificationCount = 0;
-    const dispose = watch.subscribe({
+    const dispose = watch.registerListener({
       onData: () => {
         notificationCount++;
       }
@@ -437,7 +437,7 @@ describe('Watch Tests', { sequential: true }, () => {
     expect(watch.state.isFetching).false;
 
     let notificationCount = 0;
-    const dispose = watch.subscribe({
+    const dispose = watch.registerListener({
       onStateChange: () => {
         notificationCount++;
       }
@@ -526,7 +526,7 @@ describe('Watch Tests', { sequential: true }, () => {
               FROM
                 assets
             `,
-            transformer: (raw) => {
+            mapper: (raw) => {
               return {
                 id: raw.id as string,
                 make: raw.make as string
@@ -617,7 +617,7 @@ describe('Watch Tests', { sequential: true }, () => {
               FROM
                 assets
             `,
-            transformer: (raw) => {
+            mapper: (raw) => {
               return {
                 id: raw.id as string,
                 make: raw.make as string
@@ -687,7 +687,7 @@ describe('Watch Tests', { sequential: true }, () => {
         FROM
           assets
       `,
-      transformer: (raw) => {
+      mapper: (raw) => {
         return {
           id: raw.id as string,
           make: raw.make as string
@@ -795,7 +795,7 @@ describe('Watch Tests', { sequential: true }, () => {
               FROM
                 assets
             `,
-            transformer: (raw) => {
+            mapper: (raw) => {
               return {
                 id: raw.id as string,
                 make: raw.make as string

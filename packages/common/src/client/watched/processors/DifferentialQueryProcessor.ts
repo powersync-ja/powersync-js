@@ -1,24 +1,44 @@
 import { WatchCompatibleQuery, WatchedQuery, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
 import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
 
-export interface Differential<RowType> {
+/**
+ * Represents an updated row in a differential watched query.
+ * It contains both the current and previous state of the row.
+ */
+export interface WatchedQueryRowDifferential<RowType> {
   current: RowType;
   previous: RowType;
 }
 
+/**
+ * Represents the result of a watched query that has been differentiated.
+ * {@link WatchedQueryState.data} is of the {@link WatchedQueryDifferential} form when using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
+ */
 export interface WatchedQueryDifferential<RowType> {
   added: RowType[];
   all: RowType[];
   removed: RowType[];
-  updated: Differential<RowType>[];
+  updated: WatchedQueryRowDifferential<RowType>[];
   unchanged: RowType[];
 }
 
-export interface Differentiator<RowType> {
+/**
+ * Differentiator for incremental watched queries which allows to identify and compare items in the result set.
+ */
+export interface WatchedQueryDifferentiator<RowType> {
+  /**
+   * Unique identifier for the item.
+   */
   identify: (item: RowType) => string;
+  /**
+   * Generates a key for comparing items with matching identifiers.
+   */
   compareBy: (item: RowType) => string;
 }
 
+/**
+ * Settings for incremental watched queries using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
+ */
 export interface DifferentialWatchedQuerySettings<RowType> extends WatchedQueryOptions {
   /**
    * The query here must return an array of items that can be differentiated.
@@ -37,11 +57,15 @@ export interface DifferentialWatchedQuerySettings<RowType> extends WatchedQueryO
  */
 export interface DifferentialQueryProcessorOptions<RowType>
   extends AbstractQueryProcessorOptions<WatchedQueryDifferential<RowType>, DifferentialWatchedQuerySettings<RowType>> {
-  differentiator: Differentiator<RowType>;
+  differentiator: WatchedQueryDifferentiator<RowType>;
 }
 
 type DataHashMap<RowType> = Map<string, { hash: string; item: RowType }>;
 
+/**
+ * An empty differential result set.
+ * This is used as the initial state for differential incrementally watched queries.
+ */
 export const EMPTY_DIFFERENTIAL = {
   added: [],
   all: [],

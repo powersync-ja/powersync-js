@@ -72,7 +72,7 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
 
     let synced = false;
 
-    updateQuery.subscribe({
+    updateQuery.registerListener({
       onData: async (diff) => {
         for (const added of diff.added) {
           Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64));

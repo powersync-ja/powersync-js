@@ -13,7 +13,7 @@ export type ArrayComparatorOptions<ItemType> = {
 };
 
 /**
- * Compares array results of watched queries.
+ * Compares array results of watched queries for incrementally watched queries created in the {@link IncrementalWatchMode.COMPARISON} mode.
  */
 export class ArrayComparator<ItemType> implements WatchedQueryComparator<ItemType[]> {
   constructor(protected options: ArrayComparatorOptions<ItemType>) {}

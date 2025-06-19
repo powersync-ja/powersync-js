@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, IncrementalWatchMode, WatchCompatibleQuery, WatchedQuery } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  IncrementalWatchMode,
+  WatchCompatibleQuery,
+  WatchedQuery,
+  WatchedQueryListenerEvent
+} from '@powersync/common';
 import { AdditionalOptions } from './hooks/watched/watch-types';
 
 export function generateQueryKey(
@@ -39,10 +45,19 @@ export class QueryStore {
       }
     });
 
-    watchedQuery.registerListener({
-      subscriptionsChanged: (counts) => {
+    watchedQuery.listenerMeta.registerListener({
+      listenersChanged: (counts) => {
         // Dispose this query if there are no subscribers present
-        if (counts.total == 0) {
+        // We don't use the total here since we don't want to consider `onclose` listeners
+        const relevantCounts = [
+          WatchedQueryListenerEvent.ON_DATA,
+          WatchedQueryListenerEvent.ON_STATE_CHANGE,
+          WatchedQueryListenerEvent.ON_ERROR
+        ].reduce((sum, event) => {
+          return sum + (counts[event] || 0);
+        }, 0);
+
+        if (relevantCounts == 0) {
           watchedQuery.close();
           this.cache.delete(key);
         }

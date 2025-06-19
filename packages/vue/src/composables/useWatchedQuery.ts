@@ -76,7 +76,7 @@ export const useWatchedQuery = <T = any>(
         comparator: options.comparator ?? FalsyComparator
       });
 
-    const disposer = watchedQuery.subscribe({
+    const disposer = watchedQuery.registerListener({
       onStateChange: (state) => {
         isLoading.value = state.isLoading;
         isFetching.value = state.isFetching;

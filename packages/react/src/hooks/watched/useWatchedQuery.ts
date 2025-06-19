@@ -30,7 +30,7 @@ export const useWatchedQuery = <RowType = unknown>(
   }, [powerSync]);
 
   React.useEffect(() => {
-    const dispose = watchedQuery.subscribe({
+    const dispose = watchedQuery.registerListener({
       onStateChange: (state) => {
         setOutputState({ ...state });
       }

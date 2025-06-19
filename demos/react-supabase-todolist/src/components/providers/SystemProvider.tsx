@@ -72,7 +72,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // This updates a cache in order to display results instantly on page load.
-    listsQuery.subscribe({
+    listsQuery.registerListener({
       onData: (data) => {
         // Store the data in localStorage for instant caching
         localStorage.setItem('listscache', JSON.stringify(data));

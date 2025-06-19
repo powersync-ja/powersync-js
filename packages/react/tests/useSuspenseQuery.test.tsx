@@ -1,4 +1,9 @@
-import { AbstractPowerSyncDatabase, IncrementalWatchMode, WatchedQuery } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  IncrementalWatchMode,
+  WatchedQuery,
+  WatchedQueryListenerEvent
+} from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -109,12 +114,12 @@ describe('useSuspenseQuery', () => {
     expect(watch).toBeDefined();
     expect(watch!.closed).false;
     expect(watch!.state.data.length).eq(1);
-    expect(watch!.subscriptionCounts.onStateChange).greaterThanOrEqual(2); // should have a temporary hold and state listener
+    expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).greaterThanOrEqual(2); // should have a temporary hold and state listener
 
     // wait for the temporary hold to elapse
     await waitFor(
       async () => {
-        expect(watch!.subscriptionCounts.onStateChange).eq(1);
+        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).eq(1);
       },
       { timeout: 10_000, interval: 500 }
     );
@@ -125,7 +130,7 @@ describe('useSuspenseQuery', () => {
     // wait for the temporary hold to elapse
     await waitFor(
       async () => {
-        expect(watch!.subscriptionCounts.onStateChange).eq(0);
+        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).undefined;
         expect(watch?.closed).true;
       },
       { timeout: 10_000, interval: 500 }

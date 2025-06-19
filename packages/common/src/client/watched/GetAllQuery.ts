@@ -9,16 +9,16 @@ export type GetAllQueryOptions<RowType = unknown> = {
   sql: string;
   parameters?: ReadonlyArray<unknown>;
   /**
-   * Optional transformer function to convert raw rows into the desired RowType.
+   * Optional mapper function to convert raw rows into the desired RowType.
    * @example
-   * ```typescript
-   * (rawRow: Record<string, unknown>) => ({
-   *   id: rawRow.id as string,
+   * ```javascript
+   * (rawRow) => ({
+   *   id: rawRow.id,
    *   created_at: new Date(rawRow.created_at),
    * })
    * ```
    */
-  transformer?: (rawRow: Record<string, unknown>) => RowType;
+  mapper?: (rawRow: Record<string, unknown>) => RowType;
 };
 
 /**
@@ -38,8 +38,8 @@ export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowT
     const { db } = options;
     const { sql, parameters = [] } = this.compile();
     const rawResult = await db.getAll<unknown>(sql, [...parameters]);
-    if (this.options.transformer) {
-      return rawResult.map(this.options.transformer);
+    if (this.options.mapper) {
+      return rawResult.map(this.options.mapper);
     }
     return rawResult as RowType[];
   }

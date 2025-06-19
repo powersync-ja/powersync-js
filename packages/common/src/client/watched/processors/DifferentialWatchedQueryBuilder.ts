@@ -4,16 +4,38 @@ import { WatchedQueryBuilder } from '../WatchedQueryBuilder.js';
 import {
   DifferentialQueryProcessor,
   DifferentialWatchedQuerySettings,
-  Differentiator,
   EMPTY_DIFFERENTIAL,
-  WatchedQueryDifferential
+  WatchedQueryDifferential,
+  WatchedQueryDifferentiator
 } from './DifferentialQueryProcessor.js';
 
+/**
+ * Options for creating an incrementally watched query that emits differential results.
+ *
+ */
 export type DifferentialWatchedQueryBuilderOptions<RowType> = {
-  differentiator?: Differentiator<RowType>;
+  differentiator?: WatchedQueryDifferentiator<RowType>;
   watch: DifferentialWatchedQuerySettings<RowType>;
 };
 
+/**
+ * Default implementation of the {@link Differentiator} for watched queries.
+ * It identifies items by their `id` property if available, otherwise it uses JSON stringification
+ * of the entire item for identification and comparison.
+ */
+export const DEFAULT_WATCHED_QUERY_DIFFERENTIATOR: WatchedQueryDifferentiator<any> = {
+  identify: (item) => {
+    if (item && typeof item == 'object' && typeof item['id'] == 'string') {
+      return item['id'];
+    }
+    return JSON.stringify(item);
+  },
+  compareBy: (item) => JSON.stringify(item)
+};
+
+/**
+ * Builds a watched query which emits differential results based on the provided differentiator.
+ */
 export class DifferentialWatchedQueryBuilder implements WatchedQueryBuilder {
   constructor(protected db: AbstractPowerSyncDatabase) {}
 
@@ -39,7 +61,7 @@ export class DifferentialWatchedQueryBuilder implements WatchedQueryBuilder {
    *        FROM
    *          assets
    *      ',
-   *      transformer: (raw) => {
+   *      mapper: (raw) => {
    *        return {
    *          id: raw.id as string,
    *          make: raw.make as string
@@ -55,15 +77,7 @@ export class DifferentialWatchedQueryBuilder implements WatchedQueryBuilder {
   ): WatchedQuery<WatchedQueryDifferential<RowType>, DifferentialWatchedQuerySettings<RowType>> {
     return new DifferentialQueryProcessor({
       db: this.db,
-      differentiator: options.differentiator ?? {
-        identify: (item: RowType) => {
-          if (item && typeof item == 'object' && typeof item['id'] == 'string') {
-            return item['id'];
-          }
-          return JSON.stringify(item);
-        },
-        compareBy: (item: RowType) => JSON.stringify(item)
-      },
+      differentiator: options.differentiator ?? DEFAULT_WATCHED_QUERY_DIFFERENTIATOR,
       watchOptions: options.watch,
       placeholderData: options.watch.placeholderData ?? EMPTY_DIFFERENTIAL
     });

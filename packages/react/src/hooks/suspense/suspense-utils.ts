@@ -24,7 +24,7 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
       };
     }
 
-    const disposeSubscription = watchedQuery.subscribe({
+    const disposeSubscription = watchedQuery.registerListener({
       onStateChange: (state) => {}
     });
 
@@ -77,7 +77,7 @@ export const createSuspendingPromise = (query: WatchedQuery<unknown>) => {
     // The listener here will dispose itself once the loading is done
     // This decreases the number of listeners on the query
     // even if the component is unmounted
-    const dispose = query.subscribe({
+    const dispose = query.registerListener({
       onStateChange: (state) => {
         // Returns to the hook if loading is completed or if loading resulted in an error
         if (!state.isLoading || state.error) {

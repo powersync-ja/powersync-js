@@ -32,7 +32,7 @@ export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQu
   React.useEffect(() => {
     // This runs when the component came out of suspense
     // This add a permanent hold since a listener has been added to the query
-    const dispose = query.subscribe({
+    const dispose = query.registerListener({
       onStateChange() {
         // Trigger rerender
         setUpdateCounter((prev) => prev + 1);

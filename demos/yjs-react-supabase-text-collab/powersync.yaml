@@ -23,11 +23,6 @@ replication:
   # Multiple connection support is on the roadmap
   connections:
     - type: postgresql
-      # The PowerSync server container can access the Postgres DB via the DB's service name.
-      # In this case the hostname is pg-db
-
-      # The connection URI or individual parameters can be specified.
-      # Individual params take precedence over URI params
       uri: postgresql://postgres:postgres@supabase_db_yjs-react-supabase-text-collab:5432/postgres
 
       # SSL settings
