@@ -121,7 +121,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       openOptions.location = this.options.dbLocation;
     }
 
-    // Similarly if the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
+    // If the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
     if (encryptionKey) {
       openOptions.encryptionKey = encryptionKey;
     }
