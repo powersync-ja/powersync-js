@@ -10,6 +10,7 @@ import {
   BucketStorageAdapter,
   BucketStorageListener,
   Checkpoint,
+  PowerSyncControlCommand,
   PSInternalTable,
   SyncLocalDatabaseResult
 } from './BucketStorageAdapter.js';
@@ -17,19 +18,11 @@ import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
 import { SyncDataBatch } from './SyncDataBatch.js';
 
-const COMPACT_OPERATION_INTERVAL = 1_000;
-
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
   public tableNames: Set<string>;
-  private pendingBucketDeletes: boolean;
   private _hasCompletedSync: boolean;
   private updateListener: () => void;
   private _clientId?: Promise<string>;
-
-  /**
-   * Count up, and do a compact on startup.
-   */
-  private compactCounter = COMPACT_OPERATION_INTERVAL;
 
   constructor(
     private db: DBAdapter,
@@ -38,7 +31,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   ) {
     super();
     this._hasCompletedSync = false;
-    this.pendingBucketDeletes = true;
     this.tableNames = new Set();
     this.updateListener = db.registerListener({
       tablesUpdated: (update) => {
@@ -99,18 +91,15 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return Object.fromEntries(rows.map((r) => [r.name, { atLast: r.count_at_last, sinceLast: r.count_since_last }]));
   }
 
-  async saveSyncData(batch: SyncDataBatch) {
+  async saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean = false) {
     await this.writeTransaction(async (tx) => {
-      let count = 0;
       for (const b of batch.buckets) {
         const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
-          JSON.stringify({ buckets: [b.toJSON()] })
+          JSON.stringify({ buckets: [b.toJSON(fixedKeyFormat)] })
         ]);
         this.logger.debug('saveSyncData', JSON.stringify(result));
-        count += b.data.length;
       }
-      this.compactCounter += count;
     });
   }
 
@@ -129,7 +118,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     });
 
     this.logger.debug('done deleting bucket');
-    this.pendingBucketDeletes = true;
   }
 
   async hasCompletedSync() {
@@ -175,8 +163,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       this.logger.debug('Not at a consistent checkpoint - cannot update local db');
       return { ready: false, checkpointValid: true };
     }
-
-    await this.forceCompact();
 
     return {
       ready: true,
@@ -257,42 +243,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         checkpointFailures: result['failed_buckets']
       };
     }
-  }
-
-  /**
-   * Force a compact, for tests.
-   */
-  async forceCompact() {
-    this.compactCounter = COMPACT_OPERATION_INTERVAL;
-    this.pendingBucketDeletes = true;
-
-    await this.autoCompact();
-  }
-
-  async autoCompact() {
-    await this.deletePendingBuckets();
-    await this.clearRemoveOps();
-  }
-
-  private async deletePendingBuckets() {
-    if (this.pendingBucketDeletes !== false) {
-      await this.writeTransaction(async (tx) => {
-        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['delete_pending_buckets', '']);
-      });
-      // Executed once after start-up, and again when there are pending deletes.
-      this.pendingBucketDeletes = false;
-    }
-  }
-
-  private async clearRemoveOps() {
-    if (this.compactCounter < COMPACT_OPERATION_INTERVAL) {
-      return;
-    }
-
-    await this.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES (?, ?)', ['clear_remove_ops', '']);
-    });
-    this.compactCounter = 0;
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
@@ -413,6 +363,32 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async setTargetCheckpoint(checkpoint: Checkpoint) {
     // No-op for now
   }
+
+  async control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string> {
+    return await this.writeTransaction(async (tx) => {
+      const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
+      return raw;
+    });
+  }
+
+  async hasMigratedSubkeys(): Promise<boolean> {
+    const { r } = await this.db.get<{ r: number }>('SELECT EXISTS(SELECT * FROM ps_kv WHERE key = ?) as r', [
+      SqliteBucketStorage._subkeyMigrationKey
+    ]);
+    return r != 0;
+  }
+
+  async migrateToFixedSubkeys(): Promise<void> {
+    await this.writeTransaction(async (tx) => {
+      await tx.execute('UPDATE ps_oplog SET key = powersync_remove_duplicate_key_encoding(key);');
+      await tx.execute('INSERT OR REPLACE INTO ps_kv (key, value) VALUES (?, ?);', [
+        SqliteBucketStorage._subkeyMigrationKey,
+        '1'
+      ]);
+    });
+  }
+
+  static _subkeyMigrationKey = 'powersync_js_migrated_subkeys';
 }
 
 function hasMatchingPriority(priority: number, bucket: BucketChecksum) {

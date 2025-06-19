@@ -59,13 +59,22 @@ export enum PSInternalTable {
   UNTYPED = 'ps_untyped'
 }
 
+export enum PowerSyncControlCommand {
+  PROCESS_TEXT_LINE = 'line_text',
+  PROCESS_BSON_LINE = 'line_binary',
+  STOP = 'stop',
+  START = 'start',
+  NOTIFY_TOKEN_REFRESHED = 'refreshed_token',
+  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload'
+}
+
 export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
 
 export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener>, Disposable {
   init(): Promise<void>;
-  saveSyncData(batch: SyncDataBatch): Promise<void>;
+  saveSyncData(batch: SyncDataBatch, fixedKeyFormat?: boolean): Promise<void>;
   removeBuckets(buckets: string[]): Promise<void>;
   setTargetCheckpoint(checkpoint: Checkpoint): Promise<void>;
 
@@ -73,6 +82,8 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   getBucketStates(): Promise<BucketState[]>;
   getBucketOperationProgress(): Promise<BucketOperationProgress>;
+  hasMigratedSubkeys(): Promise<boolean>;
+  migrateToFixedSubkeys(): Promise<void>;
 
   syncLocalDatabase(
     checkpoint: Checkpoint,
@@ -85,20 +96,15 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   hasCompletedSync(): Promise<boolean>;
   updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
-  /**
-   * Exposed for tests only.
-   */
-  autoCompact(): Promise<void>;
-
-  /**
-   * Exposed for tests only.
-   */
-  forceCompact(): Promise<void>;
-
   getMaxOpId(): string;
 
   /**
    * Get an unique client id.
    */
   getClientId(): Promise<string>;
+
+  /**
+   * Invokes the `powersync_control` function for the sync client.
+   */
+  control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string>;
 }

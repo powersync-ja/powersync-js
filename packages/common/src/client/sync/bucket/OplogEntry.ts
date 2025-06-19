@@ -8,7 +8,7 @@ export interface OplogEntryJSON {
   object_type?: string;
   op_id: string;
   op: OpTypeJSON;
-  subkey?: string | object;
+  subkey?: string;
 }
 
 export class OplogEntry {
@@ -17,7 +17,7 @@ export class OplogEntry {
       row.op_id,
       OpType.fromJSON(row.op),
       row.checksum,
-      typeof row.subkey == 'string' ? row.subkey : JSON.stringify(row.subkey),
+      row.subkey,
       row.object_type,
       row.object_id,
       row.data
@@ -28,13 +28,13 @@ export class OplogEntry {
     public op_id: OpId,
     public op: OpType,
     public checksum: number,
-    public subkey: string,
+    public subkey?: string,
     public object_type?: string,
     public object_id?: string,
     public data?: string
   ) {}
 
-  toJSON(): OplogEntryJSON {
+  toJSON(fixedKeyEncoding = false): OplogEntryJSON {
     return {
       op_id: this.op_id,
       op: this.op.toJSON(),
@@ -42,7 +42,9 @@ export class OplogEntry {
       object_id: this.object_id,
       checksum: this.checksum,
       data: this.data,
-      subkey: JSON.stringify(this.subkey)
+      // Older versions of the JS SDK used to always JSON.stringify here. That has always been wrong,
+      // but we need to migrate gradually to not break existing databases.
+      subkey: fixedKeyEncoding ? this.subkey : JSON.stringify(this.subkey)
     };
   }
 }

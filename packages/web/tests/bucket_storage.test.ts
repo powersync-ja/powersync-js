@@ -514,8 +514,6 @@ describe('Bucket Storage', { sequential: true }, () => {
       buckets: [{ bucket: 'bucket1', checksum: 7, priority: 3 }]
     });
 
-    await bucketStorage.forceCompact();
-
     await syncLocalChecked({
       last_op_id: '4',
       write_checkpoint: '4',
