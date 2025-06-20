@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.33.1
+
+### Patch Changes
+
+- 36d8f28: Remove unused compaction logic.
+
 ## 1.33.0
 
 ### Minor Changes
