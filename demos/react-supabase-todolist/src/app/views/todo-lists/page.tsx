@@ -1,4 +1,9 @@
-import { usePowerSync, useStatus } from '@powersync/react';
+import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { useSupabase } from '@/components/providers/SystemProvider';
+import { GuardBySync } from '@/components/widgets/GuardBySync';
+import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
+import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
+import { LISTS_TABLE } from '@/library/powersync/AppSchema';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -12,18 +17,12 @@ import {
   styled
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
+import { usePowerSync } from '@powersync/react';
 import React from 'react';
-import { useSupabase } from '@/components/providers/SystemProvider';
-import { LISTS_TABLE } from '@/library/powersync/AppSchema';
-import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
-import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
-import { GuardBySync } from '@/components/widgets/GuardBySync';
 
 export default function TodoListsPage() {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
-  const status = useStatus();
 
   const [showPrompt, setShowPrompt] = React.useState(false);
   const nameInputRef = React.createRef<HTMLInputElement>();
@@ -36,7 +35,12 @@ export default function TodoListsPage() {
     }
 
     const res = await powerSync.execute(
-      `INSERT INTO ${LISTS_TABLE} (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?) RETURNING *`,
+      /* sql */ `
+        INSERT INTO
+          ${LISTS_TABLE} (id, created_at, name, owner_id)
+        VALUES
+          (uuid (), datetime (), ?, ?) RETURNING *
+      `,
       [name, userID]
     );
 
@@ -71,8 +75,7 @@ export default function TodoListsPage() {
             }
           }}
           aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
+          aria-describedby="alert-dialog-description">
           <DialogTitle id="alert-dialog-title">{'Create Todo List'}</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">Enter a name for a new todo list</DialogContentText>
