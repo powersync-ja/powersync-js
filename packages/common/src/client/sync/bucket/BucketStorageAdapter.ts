@@ -96,16 +96,6 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
 
   hasCompletedSync(): Promise<boolean>;
   updateLocalTarget(cb: () => Promise<string>): Promise<boolean>;
-  /**
-   * Exposed for tests only.
-   */
-  autoCompact(): Promise<void>;
-
-  /**
-   * Exposed for tests only.
-   */
-  forceCompact(): Promise<void>;
-
   getMaxOpId(): string;
 
   /**
