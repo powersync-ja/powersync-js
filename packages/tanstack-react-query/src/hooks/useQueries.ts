@@ -1,17 +1,11 @@
 import { type CompilableQuery, parseQuery } from '@powersync/common';
 import { usePowerSync } from '@powersync/react';
 import * as Tanstack from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 export type PowerSyncQueryOptions<T> = {
     query?: string | CompilableQuery<T>;
     parameters?: any[];
-};
-
-export type UseBaseQueryOptions<TQueryOptions> = TQueryOptions & PowerSyncQueryOptions<any>;
-
-export type PowerSyncQueriesOptions<T extends any[]> = {
-    [K in keyof T]: Tanstack.UseQueryOptions<T[K], any> & PowerSyncQueryOptions<T[K]>;
 };
 
 type PowerSyncQueryOption<T = any> = Tanstack.UseQueryOptions<T[], any> & PowerSyncQueryOptions<T>;
@@ -75,8 +69,10 @@ export function useQueries<TQueries extends readonly PowerSyncQueryOption[]>(
 // Implementation
 export function useQueries(
     options: {
-        queries: readonly (Tanstack.UseQueryOptions<any, any> & PowerSyncQueryOptions<any>)[];
-        combine?: (results: (Tanstack.UseQueryResult<any, any> & { queryKey: Tanstack.QueryKey })[]) => any;
+        queries: readonly (Tanstack.UseQueryOptions & PowerSyncQueryOptions<unknown>)[];
+        combine?: (
+            results: (Tanstack.UseQueryResult<unknown, Tanstack.DefaultError> & { queryKey: Tanstack.QueryKey })[]
+        ) => unknown;
     },
     queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
 ) {
@@ -85,24 +81,56 @@ export function useQueries(
     const [tablesArr, setTablesArr] = useState<string[][]>(() => queriesInput.map(() => []));
     const [errorsArr, setErrorsArr] = useState<(Error | undefined)[]>(() => queriesInput.map(() => undefined));
 
-    const parsedQueries = useMemo(() => {
-        return queriesInput.map((queryOptions: Tanstack.UseQueryOptions<any, any> & PowerSyncQueryOptions<any>) => {
-            const { query, parameters = [], ...rest } = queryOptions;
-            let sqlStatement = '';
-            let queryParameters: any[] = [];
-            let error: Error | undefined = undefined;
-            if (query) {
-                try {
-                    const parsedQuery = parseQuery(query, parameters);
-                    sqlStatement = parsedQuery.sqlStatement;
-                    queryParameters = parsedQuery.parameters;
-                } catch (e) {
-                    error = e as Error;
-                }
-            }
-            return { query, parameters, rest, sqlStatement, queryParameters, error };
+    const updateTablesArr = useCallback((tables: string[], idx: number) => {
+        setTablesArr((prev) => {
+            if (JSON.stringify(prev[idx]) === JSON.stringify(tables)) return prev;
+            const next = [...prev];
+            next[idx] = tables;
+            return next;
         });
-    }, [queriesInput]);
+    }, []);
+
+    const updateErrorsArr = useCallback((error: Error, idx: number) => {
+        setErrorsArr((prev) => {
+            if (prev[idx]?.message === error.message) return prev;
+            const next = [...prev];
+            next[idx] = error;
+            return next;
+        });
+    }, []);
+
+    const parsedQueries = useMemo(() => queriesInput.map((queryOptions: Tanstack.UseQueryOptions<any, any> & PowerSyncQueryOptions<any>) => {
+        const { query, parameters = [], ...rest } = queryOptions;
+        const parsed = (() => {
+            if (!query) {
+                return { sqlStatement: '', queryParameters: [], error: undefined };
+            }
+            
+            try {
+                const parsedQuery = parseQuery(query, parameters);
+                return {
+                    sqlStatement: parsedQuery.sqlStatement,
+                    queryParameters: parsedQuery.parameters,
+                    error: undefined
+                };
+            } catch (e) {
+                return {
+                    sqlStatement: '',
+                    queryParameters: [],
+                    error: e as Error
+                };
+            }
+        })();
+
+        return { query, parameters, rest, ...parsed };
+    }), [queriesInput]);
+
+    const stringifiedQueriesDeps = JSON.stringify(
+        parsedQueries.map(q => ({
+            sql: q.sqlStatement,
+            params: q.queryParameters,
+        }))
+    );
 
     useEffect(() => {
         const listeners: (undefined | (() => void))[] = [];
@@ -111,39 +139,19 @@ export function useQueries(
             (async () => {
                 try {
                     const t = await powerSync.resolveTables(q.sqlStatement, q.queryParameters);
-                    setTablesArr((prev) => {
-                        if (JSON.stringify(prev[idx]) === JSON.stringify(t)) return prev;
-                        const next = prev.slice();
-                        next[idx] = t;
-                        return next;
-                    });
+                    updateTablesArr(t, idx);
                 } catch (e) {
-                    setErrorsArr((prev) => {
-                        if (prev[idx]?.message === (e as Error).message) return prev;
-                        const next = prev.slice();
-                        next[idx] = e as Error;
-                        return next;
-                    });
+                    updateErrorsArr(e, idx);
                 }
             })();
             const l = powerSync.registerListener({
                 schemaChanged: async () => {
                     try {
                         const t = await powerSync.resolveTables(q.sqlStatement, q.queryParameters);
-                        setTablesArr((prev) => {
-                            if (JSON.stringify(prev[idx]) === JSON.stringify(t)) return prev;
-                            const next = prev.slice();
-                            next[idx] = t;
-                            return next;
-                        });
+                        updateTablesArr(t, idx);
                         queryClient.invalidateQueries({ queryKey: q.rest.queryKey });
                     } catch (e) {
-                        setErrorsArr((prev) => {
-                            if (prev[idx]?.message === (e as Error).message) return prev;
-                            const next = prev.slice();
-                            next[idx] = e as Error;
-                            return next;
-                        });
+                        updateErrorsArr(e, idx);
                     }
                 },
             });
@@ -153,7 +161,9 @@ export function useQueries(
         return () => {
             listeners.forEach((l) => l?.());
         };
-    }, [powerSync, parsedQueries, queryClient]);
+    }, [powerSync, queryClient, stringifiedQueriesDeps, updateErrorsArr, updateTablesArr]);
+
+    const stringifiedQueryKeys = JSON.stringify(parsedQueries.map((q) => q.rest.queryKey));
 
     useEffect(() => {
         const aborts: AbortController[] = [];
@@ -167,12 +177,7 @@ export function useQueries(
                         queryClient.invalidateQueries({ queryKey: q.rest.queryKey });
                     },
                     onError: (e) => {
-                        setErrorsArr((prev) => {
-                            if (prev[idx]?.message === (e as Error).message) return prev;
-                            const next = prev.slice();
-                            next[idx] = e as Error;
-                            return next;
-                        });
+                        updateErrorsArr(e, idx);
                     },
                 },
                 {
@@ -182,13 +187,14 @@ export function useQueries(
             );
         });
         return () => aborts.forEach((a) => a?.abort());
-    }, [powerSync, parsedQueries, queryClient, tablesArr]);
+    }, [powerSync, queryClient, tablesArr, updateErrorsArr, stringifiedQueryKeys]);
 
     const queries = useMemo(() => {
         return parsedQueries.map((q, idx) => {
             const error = q.error || errorsArr[idx];
             const queryFn = async () => {
                 if (error) throw error;
+
                 try {
                     return typeof q.query === 'string'
                         ? powerSync.getAll(q.sqlStatement, q.queryParameters)
@@ -203,19 +209,19 @@ export function useQueries(
                 queryKey: q.rest.queryKey,
             };
         });
-    }, [parsedQueries, errorsArr, powerSync]);
+    }, [stringifiedQueriesDeps, errorsArr]);
 
     return Tanstack.useQueries(
         {
             queries: queries as Tanstack.QueriesOptions<any>,
             combine: options.combine
                 ? (results) => {
-                      const enhancedResults = results.map((result, index) => ({
+                      const enhancedResultsWithQueryKey = results.map((result, index) => ({
                           ...result,
                           queryKey: queries[index].queryKey,
                       }));
 
-                      return options.combine?.(enhancedResults);
+                      return options.combine?.(enhancedResultsWithQueryKey as any);
                   }
                 : undefined,
         },
