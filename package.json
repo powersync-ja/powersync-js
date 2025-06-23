@@ -33,7 +33,7 @@
     "@actions/core": "^1.10.1",
     "@changesets/cli": "2.27.2",
     "@pnpm/workspace.find-packages": "^4.0.2",
-    "@vitest/browser": "^3.0.8",
+    "@vitest/browser": "^3.2.4",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.2",
     "playwright": "^1.51.0",
@@ -41,6 +41,6 @@
     "prettier-plugin-embed": "^0.4.15",
     "prettier-plugin-sql": "^0.18.1",
     "typescript": "^5.7.2",
-    "vitest": "^3.0.8"
+    "vitest": "^3.2.4"
   }
 }
