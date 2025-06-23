@@ -265,12 +265,6 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(spy2).toHaveBeenCalledOnce();
 
     // Close the second client, leaving only the first one
-    /**
-     * This test is a bit hacky. If we dispose the second client, the shared sync worker
-     * will try and reconnect, but we don't actually want it to do that since that connection attempt
-     * will fail and it will report as `connected:false`.
-     * We can hack as disconnected for now.
-     */
     await stream2.dispose();
 
     // Hack, set the status to connected in order to trigger the upload

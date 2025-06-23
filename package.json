@@ -20,7 +20,7 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "release": "pnpm build:packages:prod && pnpm changeset publish",
-    "test": "pnpm run -r test"
+    "test": "pnpm run -r --workspace-concurrency=0 test"
   },
   "keywords": [],
   "type": "module",
