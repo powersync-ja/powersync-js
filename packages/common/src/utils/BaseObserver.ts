@@ -1,5 +1,5 @@
 export interface Disposable {
-  dispose: () => Promise<void>;
+  dispose: () => Promise<void> | void;
 }
 
 export type BaseListener = Record<string, ((...event: any) => any) | undefined>;
@@ -12,6 +12,10 @@ export class BaseObserver<T extends BaseListener = BaseListener> implements Base
   protected listeners = new Set<Partial<T>>();
 
   constructor() {}
+
+  dispose(): void {
+    this.listeners.clear();
+  }
 
   /**
    * Register a listener for updates to the PowerSync client.
