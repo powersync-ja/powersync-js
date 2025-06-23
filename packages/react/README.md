@@ -69,7 +69,7 @@ const Component = () => {
 
 ## Reactive Queries
 
-The `useQuery` hook allows you to access the results of a watched query. Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
+The `useQuery` hook allows you to access the results of a watched query. Queries will automatically update when a dependent table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
 ```JSX
 // TodoListDisplay.jsx
@@ -305,7 +305,7 @@ function MyWidget() {
     //   - It will rerender on any state change of the watched query. E.g. if isFetching alternates
     // If MyWatchedWidget is memoized
     //  - It will re-render if the data reference changes. By default the data reference changes after any
-    //    change to the query's dependant tables. This can be optimized by using Incremental queries.
+    //    change to the query's dependent tables. This can be optimized by using Incremental queries.
     <MyWatchedWidget watchedResult={data}>
   )
 }
