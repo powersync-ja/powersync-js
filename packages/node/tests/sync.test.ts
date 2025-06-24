@@ -112,6 +112,27 @@ function defineSyncTests(impl: SyncClientImplementation) {
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
 
+  mockSyncServiceTest('connect() waits for connection', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    let connectCompleted = false;
+    database.connect(new TestConnector(), options).then(() => {
+      connectCompleted = true;
+    });
+    expect(connectCompleted).toBeFalsy();
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    // Opening the socket is not enough, we set connected: true when the first line is received.
+    expect(connectCompleted).toBeFalsy();
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '10',
+        buckets: [bucket('a', 10)]
+      }
+    });
+    await vi.waitFor(() => connectCompleted);
+  });
+
   describe('reports progress', () => {
     let lastOpId = 0;
 
