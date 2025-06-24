@@ -44,12 +44,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
         compareBy: (item) => JSON.stringify(item)
       }),
       watch: {
-        // This provides instant caching of the query results.
-        // SQLite calls are asynchronous - therefore on page refresh the placeholder data will be used until the query is resolved.
-        // This uses localStorage to synchronously display a cached version while loading.
-        // Note that the TodoListsWidget is wraped by a GuardBySync component, which will prevent rendering until the query is resolved.
-        // Disable GuardBySync to see the placeholder data in action.
-        placeholderData: JSON.parse(localStorage.getItem('listscache') ?? '[]') as EnhancedListRecord[],
+        placeholderData: [],
         query: new GetAllQuery<EnhancedListRecord>({
           sql: /* sql */ `
             SELECT
@@ -68,14 +63,6 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
               ${LISTS_TABLE}.id;
           `
         })
-      }
-    });
-
-    // This updates a cache in order to display results instantly on page load.
-    listsQuery.registerListener({
-      onData: (data) => {
-        // Store the data in localStorage for instant caching
-        localStorage.setItem('listscache', JSON.stringify(data));
       }
     });
 
