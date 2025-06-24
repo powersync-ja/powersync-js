@@ -945,11 +945,16 @@ The next upload iteration will be delayed.`);
         }
 
         const info = instruction.UpdateSyncStatus.status;
+        const lastStatus = syncImplementation.syncStatus;
         const coreCompleteSync = info.priority_status.find((s) => s.priority == FULL_SYNC_PRIORITY);
         const completeSync = coreCompleteSync != null ? coreStatusToJs(coreCompleteSync) : null;
 
         syncImplementation.updateSyncStatus({
-          connected: info.connected,
+          // The first update to the connected field should only happen when it has really changed - there's a
+          // statusUpdated listener in connect() that will only make the promise complete once connected has changed.
+          // We only want to apply that workaround while we're connecting because it's only relevant in the initial
+          // connect call. Afterwards, we want to forward the sync status unchanged.
+          connected: lastStatus.connected == info.connected && info.connecting ? undefined : info.connected,
           connecting: info.connecting,
           dataFlow: {
             downloading: info.downloading != null,
