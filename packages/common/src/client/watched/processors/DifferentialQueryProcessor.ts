@@ -6,8 +6,8 @@ import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions
  * It contains both the current and previous state of the row.
  */
 export interface WatchedQueryRowDifferential<RowType> {
-  current: RowType;
-  previous: RowType;
+  readonly current: RowType;
+  readonly previous: RowType;
 }
 
 /**
@@ -15,11 +15,25 @@ export interface WatchedQueryRowDifferential<RowType> {
  * {@link WatchedQueryState.data} is of the {@link WatchedQueryDifferential} form when using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
  */
 export interface WatchedQueryDifferential<RowType> {
-  added: RowType[];
-  all: RowType[];
-  removed: RowType[];
-  updated: WatchedQueryRowDifferential<RowType>[];
-  unchanged: RowType[];
+  added: ReadonlyArray<RowType>;
+  /**
+   * The entire current result set.
+   * Array item object references are preserved between updates if the item is unchanged.
+   *
+   * e.g. In the query
+   * ```sql
+   *  SELECT name, make FROM assets ORDER BY make ASC;
+   * ```
+   *
+   * If a previous result set contains an item (A) `{name: 'pc', make: 'Cool PC'}` and
+   * an update has been made which adds another item (B) to the result set (the item A is unchanged) - then
+   * the updated result set will be contain the same object reference,to item A, as the previous resultset.
+   * This is regardless of the item A's position in the updated result set.
+   */
+  all: ReadonlyArray<RowType>;
+  removed: ReadonlyArray<RowType>;
+  updated: ReadonlyArray<WatchedQueryRowDifferential<RowType>>;
+  unchanged: ReadonlyArray<RowType>;
 }
 
 /**
@@ -98,36 +112,44 @@ export class DifferentialQueryProcessor<RowType>
 
     let hasChanged = false;
     const currentMap = new Map<string, { hash: string; item: RowType }>();
-    current.forEach((item) => {
-      currentMap.set(identify(item), {
-        hash: compareBy(item),
-        item
-      });
-    });
-
     const removedTracker = new Set(previousMap.keys());
 
-    const diff: WatchedQueryDifferential<RowType> = {
-      all: current,
-      added: [],
-      removed: [],
-      updated: [],
-      unchanged: []
+    // Allow mutating to populate the data temporarily.
+    const diff = {
+      all: [] as RowType[],
+      added: [] as RowType[],
+      removed: [] as RowType[],
+      updated: [] as WatchedQueryRowDifferential<RowType>[],
+      unchanged: [] as RowType[]
     };
 
-    for (const [key, { hash, item }] of currentMap) {
+    /**
+     * Looping over the current result set array is important to preserve
+     * the ordering of the result set.
+     * We can replace items in the current array with previous object references if they are equal.
+     */
+    for (const item of current) {
+      const key = identify(item);
+      const hash = compareBy(item);
+      currentMap.set(key, { hash, item });
+
       const previousItem = previousMap.get(key);
       if (!previousItem) {
         // New item
         hasChanged = true;
         diff.added.push(item);
+        diff.all.push(item);
       } else {
         // Existing item
         if (hash == previousItem.hash) {
           diff.unchanged.push(item);
+          // Use the previous object reference
+          diff.all.push(previousItem.item);
         } else {
           hasChanged = true;
           diff.updated.push({ current: item, previous: previousItem.item });
+          // Use the new reference
+          diff.all.push(item);
         }
       }
       // The item is present, we don't consider it removed
@@ -175,7 +197,9 @@ export class DifferentialQueryProcessor<RowType>
               await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<WatchedQueryState<WatchedQueryDifferential<RowType>>> = {};
+            const partialStateUpdate: Partial<WatchedQueryState<WatchedQueryDifferential<RowType>>> & {
+              data?: WatchedQueryDifferential<RowType>;
+            } = {};
 
             // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({

@@ -668,6 +668,83 @@ describe('Watch Tests', { sequential: true }, () => {
     );
   });
 
+  it('should preserve object references in result set', async () => {
+    // Sort the results by the `make` column in ascending order
+    const watch = powersync
+      .incrementalWatch({
+        mode: IncrementalWatchMode.DIFFERENTIAL
+      })
+      .build({
+        differentiator: {
+          identify: (item) => item.id,
+          compareBy: (item) => JSON.stringify(item)
+        },
+        watch: {
+          query: new GetAllQuery({
+            sql: /* sql */ `
+              SELECT
+                *
+              FROM
+                assets
+              ORDER BY
+                make ASC;
+            `,
+            mapper: (raw) => {
+              return {
+                id: raw.id as string,
+                make: raw.make as string
+              };
+            }
+          })
+        }
+      });
+
+    // Create sample data
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          assets (id, make, customer_id)
+        VALUES
+          (uuid (), ?, uuid ()),
+          (uuid (), ?, uuid ()),
+          (uuid (), ?, uuid ())
+      `,
+      ['a', 'b', 'd']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.all.map((i) => i.make)).deep.equals(['a', 'b', 'd']);
+      },
+      { timeout: 1000 }
+    );
+
+    const initialData = watch.state.data.all;
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          assets (id, make, customer_id)
+        VALUES
+          (uuid (), ?, uuid ())
+      `,
+      ['c']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(watch.state.data.all).toHaveLength(4);
+      },
+      { timeout: 1000 }
+    );
+
+    console.log(JSON.stringify(watch.state.data.all));
+    expect(initialData[0] == watch.state.data.all[0]).true;
+    expect(initialData[1] == watch.state.data.all[1]).true;
+    // The index after the insert should also still be the same ref as the previous item
+    expect(initialData[2] == watch.state.data.all[3]).true;
+  });
+
   it('should report differential query results from initial state', async () => {
     /**
      * Differential queries start with a placeholder data. We run a watched query under the hood

@@ -28,7 +28,7 @@ export interface WatchedQueryState<Data> {
   /**
    * The last data returned by the query.
    */
-  data: Data;
+  readonly data: Data;
 }
 
 /**

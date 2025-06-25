@@ -56,7 +56,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, C
               await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<WatchedQueryState<Data>> = {};
+            const partialStateUpdate: Partial<WatchedQueryState<Data>> & { data?: Data } = {};
 
             // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({
