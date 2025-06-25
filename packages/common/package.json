@@ -13,8 +13,9 @@
   "exports": {
     ".": {
       "import": "./dist/bundle.mjs",
-      "default": "./dist/bundle.mjs",
-      "types": "./lib/index.d.ts"
+      "require": "./dist/bundle.cjs",
+      "types": "./lib/index.d.ts",
+      "default": "./dist/bundle.mjs"
     }
   },
   "author": "JOURNEYAPPS",
