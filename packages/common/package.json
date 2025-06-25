@@ -14,6 +14,7 @@
     ".": {
       "import": "./dist/bundle.mjs",
       "default": "./dist/bundle.mjs",
+      "require": "./dist/bundle.cjs",
       "types": "./lib/index.d.ts"
     }
   },
