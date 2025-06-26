@@ -10,7 +10,8 @@ CREATE TABLE document_updates(
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(), 
   created_at timestamptz DEFAULT now(),
   document_id UUID, 
-  update_data BYTEA
+  update_data BYTEA,
+  editor_id UUID
 );
 
 
@@ -27,11 +28,12 @@ $$ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION insert_document_updates(batch TEXT)
 RETURNS VOID AS $$
 BEGIN
-    INSERT INTO document_updates (id, document_id, update_data)
+    INSERT INTO document_updates (id, document_id, update_data, editor_id)
     SELECT
       (elem->>'id')::UUID,
       (elem->>'document_id')::UUID,
-      decode(elem->>'update_b64', 'base64')
+      decode(elem->>'update_b64', 'base64'),
+      (elem->>'editor_id')::UUID
     FROM json_array_elements(batch::json) AS elem
     ON CONFLICT (id) DO NOTHING;
 END;

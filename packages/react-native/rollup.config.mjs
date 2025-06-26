@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default (commandLineArgs) => {
-  const sourcemap = (commandLineArgs.sourceMap || 'true') == 'true';
+  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
 
   // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
   delete commandLineArgs.sourceMap;
@@ -22,7 +22,7 @@ export default (commandLineArgs) => {
     output: {
       file: 'dist/index.js',
       format: 'cjs',
-      sourcemap: sourcemap
+      sourcemap: sourceMap
     },
     plugins: [
       // We do this so that we can inject on BSON's crypto usage.
@@ -54,7 +54,7 @@ export default (commandLineArgs) => {
           }
         ]
       }),
-      terser({ sourceMap: sourcemap })
+      terser({ sourceMap })
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
