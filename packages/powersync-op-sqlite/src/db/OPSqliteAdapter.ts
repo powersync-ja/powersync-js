@@ -146,13 +146,14 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  private async loadPowerSyncExtension(DB: DB) {
-    if (Platform.OS === 'ios') {
-      const libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
-      DB.loadExtension(libPath, 'sqlite3_powersync_init');
-    } else {
-      DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
-    }
+  public async loadPowerSyncExtension(DB: DB) {
+    console.log('LOADING AN extension');
+    // if (Platform.OS === 'ios') {
+    //   const libPath = getDylibPath('co.powersync.sqlitecore', 'powersync-sqlite-core');
+    //   DB.loadExtension(libPath, 'sqlite3_powersync_init');
+    // } else {
+    //   DB.loadExtension('libpowersync', 'sqlite3_powersync_init');
+    // }
   }
 
   async close() {
