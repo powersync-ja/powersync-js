@@ -27,7 +27,7 @@ export interface WatchedQueryDifferential<RowType> {
    *
    * If a previous result set contains an item (A) `{name: 'pc', make: 'Cool PC'}` and
    * an update has been made which adds another item (B) to the result set (the item A is unchanged) - then
-   * the updated result set will be contain the same object reference,to item A, as the previous resultset.
+   * the updated result set will be contain the same object reference, to item A, as the previous result set.
    * This is regardless of the item A's position in the updated result set.
    */
   all: ReadonlyArray<RowType>;
@@ -145,6 +145,8 @@ export class DifferentialQueryProcessor<RowType>
           diff.unchanged.push(item);
           // Use the previous object reference
           diff.all.push(previousItem.item);
+          // update the map to preserve the reference
+          currentMap.set(key, previousItem);
         } else {
           hasChanged = true;
           diff.updated.push({ current: item, previous: previousItem.item });
