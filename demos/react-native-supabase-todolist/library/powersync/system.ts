@@ -12,6 +12,7 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
+import { ExpoFactory } from './factory';
 
 const logger = createBaseLogger();
 logger.useDefaults();
@@ -29,9 +30,10 @@ export class System {
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
 
-    const factory = new OPSqliteOpenFactory({
+    const factory = new ExpoFactory({
       dbFilename: 'sqlite.db'
     });
+
     this.powersync = new PowerSyncDatabase({ database: factory, schema: AppSchema });
     /**
      * The snippet below uses OP-SQLite as the default database adapter.

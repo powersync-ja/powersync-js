@@ -6,7 +6,7 @@ export interface OPSQLiteOpenFactoryOptions extends SQLOpenOptions {
   sqliteOptions?: SqliteOptions;
 }
 export class OPSqliteOpenFactory implements SQLOpenFactory {
-  private sqliteOptions: Required<SqliteOptions>;
+  protected sqliteOptions: Required<SqliteOptions>;
 
   constructor(protected options: OPSQLiteOpenFactoryOptions) {
     this.sqliteOptions = {
