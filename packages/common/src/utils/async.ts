@@ -54,7 +54,7 @@ export function onAbortPromise(signal: AbortSignal): Promise<void> {
     if (signal.aborted) {
       resolve();
     } else {
-      signal.onabort = () => resolve();
+      signal.addEventListener('abort', () => resolve(), { once: true });
     }
   });
 }
