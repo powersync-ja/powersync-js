@@ -5,6 +5,7 @@ import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { type AttachmentRecord } from '@powersync/attachments';
+import { SQLJSOpenFactory } from '@powersync/dev-adapter';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
 import { AppConfig } from '../supabase/AppConfig';
@@ -29,9 +30,14 @@ export class System {
     this.storage = this.supabaseConnector.storage;
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      database: {
-        dbFilename: 'sqlite.db'
-      },
+      database: new SQLJSOpenFactory({
+        dbFilename: 'powersync.db',
+        persister: {
+          // TODO
+          readFile: async () => null,
+          writeFile: async () => {}
+        }
+      }),
       logger
     });
     /**

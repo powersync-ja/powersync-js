@@ -1,0 +1,40 @@
+{
+  "name": "@powersync/dev-adapter",
+  "version": "0.0.0",
+  "private": "true",
+  "description": "API definitions for JourneyApps PowerSync",
+  "type": "module",
+  "main": "dist/bundle.mjs",
+  "module": "dist/bundle.mjs",
+  "types": "lib/index.d.ts",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build:prod": "tsc -b --sourceMap false && && rollup -c rollup.config.mjs --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "js-logger": "^1.6.1",
+    "async-mutex": "^0.4.0",
+    "@powersync/common": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.9",
+    "sql.js": "link:/private/tmp/sql.js",
+    "rollup": "4.14.3"
+  }
+}
