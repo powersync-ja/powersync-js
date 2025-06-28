@@ -1,7 +1,8 @@
-import { type CompilableQuery, parseQuery } from '@powersync/common';
+import { type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '@powersync/react';
 import * as Tanstack from '@tanstack/react-query';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMemo } from 'react';
+import { usePowerSyncQueries } from './usePowerSyncQueries';
 
 export type PowerSyncQueryOptions<T> = {
   query?: string | CompilableQuery<T>;
@@ -75,145 +76,37 @@ export function useQueries(
   queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
 ) {
   const powerSync = usePowerSync();
+
+  if (!powerSync) {
+    throw new Error('PowerSync is not available');
+  }
+
   const queriesInput = options.queries;
-  const [tablesArr, setTablesArr] = useState<string[][]>(() => queriesInput.map(() => []));
-  const [errorsArr, setErrorsArr] = useState<(Error | undefined)[]>(() => queriesInput.map(() => undefined));
 
-  const updateTablesArr = useCallback((tables: string[], idx: number) => {
-    setTablesArr((prev) => {
-      if (JSON.stringify(prev[idx]) === JSON.stringify(tables)) return prev;
-      const next = [...prev];
-      next[idx] = tables;
-      return next;
-    });
-  }, []);
-
-  const updateErrorsArr = useCallback((error: Error, idx: number) => {
-    setErrorsArr((prev) => {
-      if (prev[idx]?.message === error.message) return prev;
-      const next = [...prev];
-      next[idx] = error;
-      return next;
-    });
-  }, []);
-
-  const parsedQueries = useMemo(
+  const powerSyncQueriesInput = useMemo(
     () =>
-      queriesInput.map((queryOptions) => {
-        const { query, parameters = [], ...rest } = queryOptions;
-        const parsed = (() => {
-          if (!query) {
-            return { sqlStatement: '', queryParameters: [], error: undefined };
-          }
-
-          try {
-            const parsedQuery = parseQuery(query, parameters);
-            return {
-              sqlStatement: parsedQuery.sqlStatement,
-              queryParameters: parsedQuery.parameters,
-              error: undefined
-            };
-          } catch (e) {
-            return {
-              sqlStatement: '',
-              queryParameters: [],
-              error: e as Error
-            };
-          }
-        })();
-
-        return { query, parameters, rest, ...parsed };
-      }),
+      queriesInput.map((queryOptions) => ({
+        query: queryOptions.query,
+        parameters: queryOptions.parameters,
+        queryKey: queryOptions.queryKey
+      })),
     [queriesInput]
   );
 
-  const stringifiedQueriesDeps = JSON.stringify(
-    parsedQueries.map((q) => ({
-      sql: q.sqlStatement,
-      params: q.queryParameters
-    }))
-  );
-
-  useEffect(() => {
-    const listeners = parsedQueries.map((q, idx) => {
-      if (q.error || !q.query) {
-        return null;
-      }
-
-      (async () => {
-        try {
-          const t = await powerSync.resolveTables(q.sqlStatement, q.queryParameters);
-          updateTablesArr(t, idx);
-        } catch (e) {
-          updateErrorsArr(e, idx);
-        }
-      })();
-      return powerSync.registerListener({
-        schemaChanged: async () => {
-          try {
-            const t = await powerSync.resolveTables(q.sqlStatement, q.queryParameters);
-            updateTablesArr(t, idx);
-            queryClient.invalidateQueries({ queryKey: q.rest.queryKey });
-          } catch (e) {
-            updateErrorsArr(e, idx);
-          }
-        }
-      });
-    });
-
-    return () => {
-      listeners.forEach((l) => l?.());
-    };
-  }, [powerSync, queryClient, stringifiedQueriesDeps, updateErrorsArr, updateTablesArr]);
-
-  const stringifiedQueryKeys = JSON.stringify(parsedQueries.map((q) => q.rest.queryKey));
-
-  useEffect(() => {
-    const aborts = parsedQueries.map((q, idx) => {
-      if (q.error || !q.query) {
-        return null;
-      }
-
-      const abort = new AbortController();
-
-      powerSync.onChangeWithCallback(
-        {
-          onChange: () => {
-            queryClient.invalidateQueries({ queryKey: q.rest.queryKey });
-          },
-          onError: (e) => {
-            updateErrorsArr(e, idx);
-          }
-        },
-        {
-          tables: tablesArr[idx],
-          signal: abort.signal
-        }
-      );
-      return abort;
-    });
-    return () => aborts.forEach((a) => a?.abort());
-  }, [powerSync, queryClient, tablesArr, updateErrorsArr, stringifiedQueryKeys]);
+  const states = usePowerSyncQueries(powerSyncQueriesInput, queryClient);
 
   const queries = useMemo(() => {
-    return parsedQueries.map((q, idx) => {
-      const error = q.error || errorsArr[idx];
-      const queryFn = async () => {
-        if (error) throw error;
+    return queriesInput.map((queryOptions, idx) => {
+      const { query, parameters, ...rest } = queryOptions;
+      const state = states[idx];
 
-        try {
-          return typeof q.query === 'string' ? powerSync.getAll(q.sqlStatement, q.queryParameters) : q.query?.execute();
-        } catch (e) {
-          throw e;
-        }
-      };
       return {
-        ...q.rest,
-        queryFn: q.query ? queryFn : q.rest.queryFn,
-        queryKey: q.rest.queryKey
+        ...rest,
+        queryFn: query ? state.queryFn : rest.queryFn,
+        queryKey: rest.queryKey
       };
     });
-  }, [stringifiedQueriesDeps, errorsArr]);
+  }, [queriesInput, states]);
 
   return Tanstack.useQueries(
     {
