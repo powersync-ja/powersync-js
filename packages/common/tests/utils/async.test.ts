@@ -1,51 +1,74 @@
 import { describe, expect, it, vi } from 'vitest';
-import { onAbortPromise } from '../../src/utils/async';
+import { resolveEarlyOnAbort } from '../../src/utils/async';
 
-describe('onAbortPromise', () => {
-  it('should resolve when signal is aborted', async () => {
+describe('resolveEarlyOnAbort', () => {
+  it('should resolve early when signal is aborted', async () => {
     const controller = new AbortController();
-    const promise = onAbortPromise(controller.signal);
 
-    // Abort the signal after a short delay
+    const slowPromise = new Promise<string>((resolve) => {
+      setTimeout(() => resolve('completed'), 100);
+    });
+
+    const racePromise = resolveEarlyOnAbort(slowPromise, controller.signal);
+
+    // Abort after a short delay
     setTimeout(() => controller.abort(), 10);
 
-    // The promise should resolve
-    await expect(promise).resolves.toBeUndefined();
+    const result = await racePromise;
+    expect(result).toEqual({ aborted: true });
   });
 
   it('should resolve immediately if signal is already aborted', async () => {
     const controller = new AbortController();
-    controller.abort(); // Abort before creating promise
+    controller.abort(); // Abort before creating the race
 
-    const promise = onAbortPromise(controller.signal);
+    const slowPromise = new Promise<string>((resolve) => {
+      setTimeout(() => resolve('completed'), 100);
+    });
 
-    // Should resolve immediately
-    await expect(promise).resolves.toBeUndefined();
+    const result = await resolveEarlyOnAbort(slowPromise, controller.signal);
+    expect(result).toEqual({ aborted: true });
   });
 
-  it('should show that onAbortPromise does not interfere with onabort property or other event listeners', async () => {
+  it('should resolve with the result if the promise resolves before the signal is aborted', async () => {
     const controller = new AbortController();
-    const signal = controller.signal;
 
-    // Set up onabort property handler
-    const onabortHandler = vi.fn();
-    signal.onabort = onabortHandler;
+    const slowPromise = new Promise<string>((resolve) => {
+      setTimeout(() => resolve('completed'), 100);
+    });
 
-    // Set up another event listener
-    const eventListenerHandler = vi.fn();
-    signal.addEventListener('abort', eventListenerHandler);
+    const result = await resolveEarlyOnAbort(slowPromise, controller.signal);
+    expect(result).toEqual({ result: 'completed', aborted: false });
+  });
 
-    // Create onAbortPromise (which uses addEventListener internally)
-    const promise = onAbortPromise(signal);
+  it('should show that resolveEarlyOnAbort does not interfere with onabort property or other event listeners', async () => {
+    const controller = new AbortController();
+    let onabortCalled = false;
+    let eventListenerCalled = false;
 
-    // Abort the signal
-    controller.abort();
+    // Set onabort property
+    controller.signal.onabort = () => {
+      onabortCalled = true;
+    };
 
-    // All handlers should be called
-    expect(onabortHandler).toHaveBeenCalledTimes(1);
-    expect(eventListenerHandler).toHaveBeenCalledTimes(1);
+    // Add another event listener
+    controller.signal.addEventListener('abort', () => {
+      eventListenerCalled = true;
+    });
 
-    // The promise should also resolve
-    await expect(promise).resolves.toBeUndefined();
+    const slowPromise = new Promise<string>((resolve) => {
+      setTimeout(() => resolve('completed'), 100);
+    });
+
+    const racePromise = resolveEarlyOnAbort(slowPromise, controller.signal);
+
+    // Abort after a short delay
+    setTimeout(() => controller.abort(), 10);
+
+    const result = await racePromise;
+
+    expect(result).toEqual({ aborted: true });
+    expect(onabortCalled).toBe(true);
+    expect(eventListenerCalled).toBe(true);
   });
 });

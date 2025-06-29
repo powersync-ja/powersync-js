@@ -49,12 +49,38 @@ export function throttleLeadingTrailing(func: () => void, wait: number) {
   };
 }
 
-export function onAbortPromise(signal: AbortSignal): Promise<void> {
-  return new Promise<void>((resolve) => {
+/**
+ * Race a promise against an abort signal.
+ * Returns a promise that resolves early if the signal is aborted before the
+ * original promise resolves.
+ *
+ * Note: The signal does not cancel the promise. To cancel the promise then
+ * its logic needs to explicitly check the signal.
+ */
+export function resolveEarlyOnAbort<T>(
+  promise: Promise<T>,
+  signal: AbortSignal
+): Promise<{ result: T; aborted: false } | { aborted: true }> {
+  return new Promise((resolve, reject) => {
     if (signal.aborted) {
-      resolve();
-    } else {
-      signal.addEventListener('abort', () => resolve(), { once: true });
+      resolve({ aborted: true });
+      return;
     }
+
+    const abortHandler = () => {
+      resolve({ aborted: true });
+    };
+
+    // Use an event listener to avoid interfering with the onabort
+    // property where other code may have registered a handler.
+    signal.addEventListener('abort', abortHandler);
+
+    promise
+      .then((result) => resolve({ result, aborted: false }))
+      .catch((error) => reject(error))
+      .finally(() => {
+        // Remove the abort handler to avoid memory leaks.
+        signal.removeEventListener('abort', abortHandler);
+      });
   });
 }
