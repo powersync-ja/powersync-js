@@ -1,3 +1,5 @@
+import { abort } from 'process';
+
 /**
  * Throttle a function to be called at most once every "wait" milliseconds,
  * on the trailing edge.
@@ -90,7 +92,7 @@ export function resolveEarlyOnAbort<T>(
     addAbortHandler();
 
     if (signal.aborted) {
-      resolveWith({ aborted: true });
+      abortHandler();
       return;
     }
 
