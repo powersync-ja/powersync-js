@@ -1,4 +1,4 @@
-import { QueryResult } from '@powersync/common';
+import { BatchedUpdateNotification, QueryResult } from '@powersync/common';
 
 export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
   rows?: {
@@ -20,5 +20,5 @@ export interface AsyncDatabase {
   // This happens on the worker because we otherwise get race conditions when wrapping
   // callbacks to invoke on the main thread (we need a guarantee that collectCommittedUpdates
   // contains entries immediately after calling COMMIT).
-  collectCommittedUpdates: () => Promise<string[]>;
+  collectCommittedUpdates: () => Promise<BatchedUpdateNotification>;
 }

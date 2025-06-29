@@ -190,13 +190,8 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         } finally {
           const updates = await this.writeConnection.database.collectCommittedUpdates();
 
-          if (updates.length > 0) {
-            const event: BatchedUpdateNotification = {
-              tables: updates,
-              groupedUpdates: {},
-              rawUpdates: []
-            };
-            this.iterateListeners((cb) => cb.tablesUpdated?.(event));
+          if (updates.tables.length > 0) {
+            this.iterateListeners((cb) => cb.tablesUpdated?.(updates));
           }
         }
       } finally {

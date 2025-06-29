@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import BetterSQLite3Database, { Database } from '@powersync/better-sqlite3';
+import { BatchedUpdateNotification, RowUpdateType, TableUpdateOperation, UpdateNotification } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { parentPort, threadId } from 'node:worker_threads';
 import OS from 'node:os';
@@ -9,8 +10,8 @@ import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
 
-  private readonly uncommittedUpdatedTables = new Set<string>();
-  private readonly committedUpdatedTables = new Set<string>();
+  private readonly uncommittedUpdates = new Array<UpdateNotification>();
+  private readonly committedUpdates = new Array<UpdateNotification>();
 
   constructor(db: Database) {
     this.db = db;
@@ -18,27 +19,60 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     db.function('node_thread_id', () => threadId);
   }
 
-  collectCommittedUpdates() {
-    const resolved = Promise.resolve([...this.committedUpdatedTables]);
-    this.committedUpdatedTables.clear();
-    return resolved;
+  async collectCommittedUpdates() {
+    const rawUpdates: UpdateNotification[] = [];
+    const groupedUpdates: Record<string, TableUpdateOperation[]> = {};
+
+    for (const rawUpdate of this.committedUpdates) {
+      rawUpdates.push(rawUpdate);
+      groupedUpdates[rawUpdate.table] ??= [];
+      groupedUpdates[rawUpdate.table].push(rawUpdate);
+    }
+
+    const result: BatchedUpdateNotification = {
+      tables: Object.keys(groupedUpdates),
+      rawUpdates,
+      groupedUpdates
+    };
+
+    this.committedUpdates.length = 0;
+
+    return result;
   }
 
   installUpdateHooks() {
-    this.db.updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
-      this.uncommittedUpdatedTables.add(tableName);
-    });
+    this.db.updateHook(
+      (
+        operation: 'SQLITE_INSERT' | 'SQLITE_UPDATE' | 'SQLITE_DELETE',
+        _dbName: string,
+        table: string,
+        rowId: number
+      ) => {
+        let opType: RowUpdateType;
+        switch (operation) {
+          case 'SQLITE_INSERT':
+            opType = RowUpdateType.SQLITE_INSERT;
+            break;
+          case 'SQLITE_UPDATE':
+            opType = RowUpdateType.SQLITE_UPDATE;
+            break;
+          case 'SQLITE_DELETE':
+            opType = RowUpdateType.SQLITE_DELETE;
+            break;
+        }
+
+        this.uncommittedUpdates.push({ table, opType, rowId });
+      }
+    );
 
     this.db.commitHook(() => {
-      for (const tableName of this.uncommittedUpdatedTables) {
-        this.committedUpdatedTables.add(tableName);
-      }
-      this.uncommittedUpdatedTables.clear();
+      this.committedUpdates.push(...this.uncommittedUpdates);
+      this.uncommittedUpdates.length = 0;
       return true;
     });
 
     this.db.rollbackHook(() => {
-      this.uncommittedUpdatedTables.clear();
+      this.uncommittedUpdates.length = 0;
     });
   }
 

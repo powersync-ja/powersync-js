@@ -1,9 +1,8 @@
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
-
 import { vi, expect, test } from 'vitest';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
-import { PowerSyncDatabase } from '../lib';
+import { PowerSyncDatabase, RowUpdateType, WatchOnChangeEvent } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
 
 test('validates options', async () => {
@@ -65,28 +64,46 @@ databaseTest('runs queries on multiple threads', async ({ database }) => {
 databaseTest('can watch tables', async ({ database }) => {
   const fn = vi.fn();
   const disposeWatch = database.onChangeWithCallback(
-    {
-      onChange: () => {
-        fn();
-      }
-    },
+    { onChange: (event: WatchOnChangeEvent) => fn(event) },
     { tables: ['todos'], throttleMs: 0 }
   );
 
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['first']);
   await expect.poll(() => fn).toHaveBeenCalledOnce();
+  expect(fn).toHaveBeenNthCalledWith(1, {
+    changedTables: ['ps_data__todos'],
+    update: {
+      tables: ['ps_data__todos'],
+      rawUpdates: [{ table: 'ps_data__todos', opType: RowUpdateType.SQLITE_INSERT, rowId: 1n }],
+      groupedUpdates: {
+        ps_data__todos: [{ table: 'ps_data__todos', opType: RowUpdateType.SQLITE_INSERT, rowId: 1n }]
+      }
+    }
+  });
 
   await database.writeTransaction(async (tx) => {
     await tx.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['second']);
   });
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
+  expect(fn).toHaveBeenNthCalledWith(2, {
+    changedTables: ['ps_data__todos'],
+    update: {
+      tables: ['ps_data__todos'],
+      rawUpdates: [{ table: 'ps_data__todos', opType: RowUpdateType.SQLITE_INSERT, rowId: 2n }],
+      groupedUpdates: {
+        ps_data__todos: [{ table: 'ps_data__todos', opType: RowUpdateType.SQLITE_INSERT, rowId: 2n }]
+      }
+    }
+  });
 
+  // Assert that rolled back changes aren't emitted
   await database.writeTransaction(async (tx) => {
     await tx.execute('DELETE FROM todos;');
     await tx.rollback();
   });
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
 
+  // Assert that unwatched changes aren't emitted
   disposeWatch();
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['fourth']);
   await expect.poll(() => fn).toHaveBeenCalledTimes(2);
