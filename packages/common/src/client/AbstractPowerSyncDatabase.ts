@@ -7,6 +7,8 @@ import {
   QueryResult,
   Transaction,
   UpdateNotification,
+  convertToBatchedUpdateNotification,
+  convertToUpdateNotifications,
   isBatchedUpdateNotification
 } from '../db/DBAdapter.js';
 import { FULL_SYNC_PRIORITY } from '../db/crud/SyncProgress.js';
@@ -14,8 +16,7 @@ import { SyncPriorityStatus, SyncStatus } from '../db/crud/SyncStatus.js';
 import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
-import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { throttleTrailing } from '../utils/async.js';
+import { DisposeManager } from '../utils/DisposeManager.js';
 import { mutexRunExclusive } from '../utils/mutex.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
@@ -86,7 +87,8 @@ export interface SQLWatchOptions {
 }
 
 export interface WatchOnChangeEvent {
-  changedTables: string[];
+  changedTables: string[]; // kept for backwards compatibility
+  update: BatchedUpdateNotification;
 }
 
 export interface WatchHandler {
@@ -1038,7 +1040,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A dispose function to stop watching for changes
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
-    const { onChange, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
+    const { onChange, onError = (error: Error) => this.options.logger?.error(error) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }
@@ -1047,40 +1049,88 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const watchedTables = new Set<string>(
       (resolvedOptions?.tables ?? []).flatMap((table) => [table, `ps_data__${table}`, `ps_data_local__${table}`])
     );
-
-    const changedTables = new Set<string>();
+    const updatedTables = new Array<UpdateNotification>();
     const throttleMs = resolvedOptions.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS;
 
-    const executor = new ControlledExecutor(async (e: WatchOnChangeEvent) => {
-      await onChange(e);
-    });
+    const disposeManager = new DisposeManager();
 
-    const flushTableUpdates = throttleTrailing(
-      () =>
-        this.handleTableChanges(changedTables, watchedTables, (intersection) => {
-          if (resolvedOptions?.signal?.aborted) return;
-          executor.schedule({ changedTables: intersection });
-        }),
-      throttleMs
-    );
+    const dispose = () => disposeManager.dispose();
 
-    const dispose = this.database.registerListener({
-      tablesUpdated: async (update) => {
+    if (resolvedOptions.signal?.aborted || this.closed) {
+      return dispose;
+    }
+
+    // Periodically flush the accumulated updates from the db listener.
+    let isFlushing = false;
+    const flushIntervalId = setInterval(async () => {
+      // Skip if we're already flushing.
+      // Will retry in the next interval.
+      if (isFlushing) {
+        return;
+      }
+      try {
+        // Prevent concurrent flushes.
+        isFlushing = true;
+        await flushTableUpdates();
+      } catch (error) {
+        onError?.(error);
+      } finally {
+        // Allow future flush attempts.
+        isFlushing = false;
+      }
+    }, throttleMs);
+
+    const flushTableUpdates = async () => {
+      // Get snapshot of the updated tables to avoid race conditions
+      // between async operations here and the listener that adds updates.
+      const updatesToFlush = [...updatedTables];
+      // Reset the queue to begin collecting new updates by the listener.
+      updatedTables.length = 0;
+      // Skip if we're already disposed.
+      if (disposeManager.isDisposed()) {
+        return;
+      }
+      // Dispose then skip if we're closed.
+      if (this.closed) {
+        disposeManager.dispose();
+        return;
+      }
+      // Broadcast the updates.
+      const update = convertToBatchedUpdateNotification(updatesToFlush);
+      if (update.tables.length > 0) {
+        await onChange({ changedTables: update.tables, update });
+      }
+    };
+
+    const disposeListener = this.database.registerListener({
+      tablesUpdated: (update) => {
         try {
-          this.processTableUpdates(update, changedTables);
-          flushTableUpdates();
+          if (isBatchedUpdateNotification(update)) {
+            const rawUpdates = convertToUpdateNotifications(update);
+            for (const rawUpdate of rawUpdates) {
+              if (watchedTables.has(rawUpdate.table)) {
+                updatedTables.push(rawUpdate);
+              }
+            }
+          } else {
+            if (watchedTables.has(update.table)) {
+              updatedTables.push(update);
+            }
+          }
         } catch (error) {
           onError?.(error);
         }
       }
     });
 
-    resolvedOptions.signal?.addEventListener('abort', () => {
-      executor.dispose();
-      dispose();
-    });
+    disposeManager.add(() => disposeListener());
+    disposeManager.add(() => clearInterval(flushIntervalId));
 
-    return () => dispose();
+    if (resolvedOptions.signal) {
+      disposeManager.disposeOnAbort(resolvedOptions.signal);
+    }
+
+    return dispose;
   }
 
   /**
@@ -1117,33 +1167,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
       return () => dispose();
     });
-  }
-
-  private handleTableChanges(
-    changedTables: Set<string>,
-    watchedTables: Set<string>,
-    onDetectedChanges: (changedTables: string[]) => void
-  ): void {
-    if (changedTables.size > 0) {
-      const intersection = Array.from(changedTables.values()).filter((change) => watchedTables.has(change));
-      if (intersection.length) {
-        onDetectedChanges(intersection);
-      }
-    }
-    changedTables.clear();
-  }
-
-  private processTableUpdates(
-    updateNotification: BatchedUpdateNotification | UpdateNotification,
-    changedTables: Set<string>
-  ): void {
-    const tables = isBatchedUpdateNotification(updateNotification)
-      ? updateNotification.tables
-      : [updateNotification.table];
-
-    for (const table of tables) {
-      changedTables.add(table);
-    }
   }
 
   /**
