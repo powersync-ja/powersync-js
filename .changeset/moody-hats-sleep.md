@@ -2,4 +2,4 @@
 '@powersync/common': patch
 ---
 
-Use addEventListener instead of overwriting the onabort property, which can lead to bugs and race conditions.
+Use addEventListener instead of overwriting the onabort property, preventing interference with outside users also setting the property on the same signal.
