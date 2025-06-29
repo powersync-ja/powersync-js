@@ -6,7 +6,7 @@ import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/cru
 import * as sync_status from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
-import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js';
+import { resolveEarlyOnAbort, throttleLeadingTrailing } from '../../../utils/async.js';
 import {
   BucketChecksum,
   BucketDescription,
@@ -1045,7 +1045,7 @@ The next upload iteration will be delayed.`);
     });
   }
 
-  private async applyCheckpoint(checkpoint: Checkpoint, abort: AbortSignal) {
+  private async applyCheckpoint(checkpoint: Checkpoint, signal: AbortSignal) {
     let result = await this.options.adapter.syncLocalDatabase(checkpoint);
     const pending = this.pendingCrudUpload;
 
@@ -1062,9 +1062,9 @@ The next upload iteration will be delayed.`);
       this.logger.debug(
         'Could not apply checkpoint due to local data. Waiting for in-progress upload before retrying.'
       );
-      await Promise.race([pending, onAbortPromise(abort)]);
+      await resolveEarlyOnAbort(pending, signal);
 
-      if (abort.aborted) {
+      if (signal.aborted) {
         return { applied: false, endIteration: true };
       }
 
