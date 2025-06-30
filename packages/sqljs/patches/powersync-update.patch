@@ -1,31 +1,34 @@
 diff --git a/src/update.c b/src/update.c
 new file mode 100644
-index 0000000..a025f71
+index 0000000..c7e8a23
 --- /dev/null
 +++ b/src/update.c
-@@ -0,0 +1,24 @@
-+#include "sqlite3.h"
-+#include <emscripten.h>
+@@ -0,0 +1,28 @@
++#include "sqlite3ext.h"
++SQLITE_EXTENSION_INIT1
 +
-+// Declare a JS function to be callable from C
-+// JS hook only receives type, db name, and table name
-+EM_JS(void, call_js_update_hook, (int type, const char* db_name, const char* table_name), {
-+  console.log('update from sqlite hook');
++#include <emscripten.h>
++#include <stdio.h>
++#include <stdint.h>
++
++EM_JS(void, call_js_update_hook, (int db_p, int type, const char* db_name, const char* table_name), {
 +  if (typeof onSqliteUpdate === "function") {
-+    onSqliteUpdate(type, UTF8ToString(db_name), UTF8ToString(table_name));
++    onSqliteUpdate(db_p, type, UTF8ToString(db_name), UTF8ToString(table_name));
 +  } else {
 +    console.error("onSqliteUpdate is not defined");
 +  }
 +});
 +
-+void EMSCRIPTEN_KEEPALIVE sqlite_update_callback(void* pArg, int type, const char* db, const char* table, sqlite3_int64 rowid) {
-+  EM_ASM({ console.log("got an update"); });
-+  call_js_update_hook(type, db, table);
++static void sqlite_update_callback(void* pArg, int type, const char* db, const char* table, sqlite3_int64 rowid) {
++  call_js_update_hook((int)(intptr_t)pArg, type, db, table);
 +}
 +
-+// Attach this to a sqlite3* connection:
-+void EMSCRIPTEN_KEEPALIVE register_sqlite_update_hook(sqlite3* db) {
-+  EM_ASM({ console.log("register_sqlite_update_hook: OK"); });
-+  sqlite3_update_hook(db, sqlite_update_callback, NULL);
++static int register_update_hook_on_open(sqlite3* db, const char** pzErrMsg, const sqlite3_api_routines* pApi) {
++  SQLITE_EXTENSION_INIT2(pApi);
++  sqlite3_update_hook(db, sqlite_update_callback, db);
++  return SQLITE_OK;
 +}
-\ No newline at end of file
++
++void register_update_hook_extension(void) {
++  sqlite3_auto_extension((void(*)(void))register_update_hook_on_open);
++}

@@ -1,4 +1,5 @@
 import {
+  BaseListener,
   BaseObserver,
   BatchedUpdateNotification,
   DBAdapter,
@@ -30,10 +31,29 @@ export class SQLJSOpenFactory implements SQLOpenFactory {
   }
 }
 
+(globalThis as any).onSqliteUpdate = (
+  dbP: number,
+  operation: string,
+  database: string,
+  table: string,
+  rowId: number
+) => {
+  SQLJSDBAdapter.sharedObserver.iterateListeners((l) => l.tablesUpdated?.(dbP, operation, database, table, rowId));
+};
+
+interface TableObserverListener extends BaseListener {
+  tablesUpdated?: (dpP: number, operation: string, database: string, table: string, rowId: number) => void;
+}
+class TableObserver extends BaseObserver<TableObserverListener> {}
+
 export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   protected initPromise: Promise<SQLJs.Database>;
   protected _db: SQLJs.Database | null;
   protected tableUpdateCache: Set<string>;
+  protected dbP: number | null;
+
+  static sharedObserver = new TableObserver();
+  protected disposeListener: () => void;
 
   protected mutex: Mutex;
 
@@ -51,14 +71,33 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     this._db = null;
     this.tableUpdateCache = new Set<string>();
     this.mutex = new Mutex();
+    this.dbP = null;
+    this.disposeListener = SQLJSDBAdapter.sharedObserver.registerListener({
+      tablesUpdated: (dbP: number, operation: string, database: string, table: string, rowId: number) => {
+        if (this.dbP !== dbP) {
+          // Ignore updates from other databases.
+          return;
+        }
+        this.tableUpdateCache.add(table);
+      }
+    });
   }
 
   protected async init(): Promise<SQLJs.Database> {
     console.log('Initializing SQL.js database with options');
-    const SQL = await SQLJs({ locateFile: (filename: any) => `../dist/${filename}` });
+    const SQL = await SQLJs({
+      locateFile: (filename: any) => `../dist/${filename}`,
+      print: (text) => {
+        console.log('[stdout]', text);
+      },
+      printErr: (text) => {
+        console.warn('[stderr]', text);
+      }
+    });
     console.log('SQL.js loaded:');
     const existing = await this.options.persister.readFile();
     const db = new SQL.Database(existing);
+    this.dbP = db['db'];
     // debugger;
     // (db as any).updateHook(function (operation, database, table, rowId) {
     //   console.log(`Update Hook: ${operation} on ${table}`);
@@ -70,6 +109,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
 
   async close() {
     const db = await this.getDB();
+    this.disposeListener();
     db.close();
   }
 

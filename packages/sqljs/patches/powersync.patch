@@ -86,19 +86,21 @@ index 4530653..5ac01a0 100644
  clean:
  	rm -f out/* dist/* cache/*
 diff --git a/src/api.js b/src/api.js
-index c7f102b..df7e901 100644
+index c7f102b..4c20316 100644
 --- a/src/api.js
 +++ b/src/api.js
-@@ -72,6 +72,8 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+@@ -72,6 +72,10 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
      var SQLITE_UPDATE = 23;
      var SQLITE_DELETE = 9;
      // var - cwrap function
 +    Module['ccall']('powersync_init_static', 'int', []);
++    Module['ccall']('register_update_hook_extension', 'void', []);
++
 +
      var sqlite3_open = cwrap("sqlite3_open", "number", ["string", "number"]);
      var sqlite3_close_v2 = cwrap("sqlite3_close_v2", "number", ["number"]);
      var sqlite3_exec = cwrap(
-@@ -122,6 +124,7 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+@@ -122,6 +126,7 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
          "number",
          ["number", "string"]
      );
@@ -106,29 +108,7 @@ index c7f102b..df7e901 100644
      var sqlite3_step = cwrap("sqlite3_step", "number", ["number"]);
      var sqlite3_errmsg = cwrap("sqlite3_errmsg", "string", ["number"]);
      var sqlite3_column_count = cwrap(
-@@ -239,6 +242,12 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
-         ["number"]
-     );
- 
-+    var registerUpdateHook = cwrap(
-+        "register_sqlite_update_hook",
-+        "void",
-+        ["number"]
-+    );
-+
-     var sqlite3_update_hook = cwrap(
-         "sqlite3_update_hook",
-         "number",
-@@ -833,6 +842,8 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
-         }
-         this.handleError(sqlite3_open(this.filename, apiTemp));
-         this.db = getValue(apiTemp, "i32");
-+        registerUpdateHook(this.db)
-+        // Module['ccall']('register_sqlite_update_hook', 'void', ['number'], [apiTemp]);
-         registerExtensionFunctions(this.db);
-         // A list of all prepared statements of the database
-         this.statements = {};
-@@ -1155,6 +1166,13 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+@@ -1155,6 +1160,13 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
          return sqlite3_changes(this.db);
      };
  
@@ -143,7 +123,7 @@ index c7f102b..df7e901 100644
          var size = sqlite3_value_bytes(ptr);
          var blob_ptr = sqlite3_value_blob(ptr);
 diff --git a/src/exported_functions.json b/src/exported_functions.json
-index 3be2595..d1c0037 100644
+index 3be2595..709bc5c 100644
 --- a/src/exported_functions.json
 +++ b/src/exported_functions.json
 @@ -1,47 +1,50 @@
@@ -240,7 +220,7 @@ index 3be2595..d1c0037 100644
 +  "_sqlite3_last_insert_rowid",
 +  "_sqlite3_update_hook",
 +  "_powersync_init_static",
-+  "_register_sqlite_update_hook"
++  "_register_update_hook_extension"
  ]
 diff --git a/src/exported_runtime_methods.json b/src/exported_runtime_methods.json
 index f099056..b1712fc 100644
