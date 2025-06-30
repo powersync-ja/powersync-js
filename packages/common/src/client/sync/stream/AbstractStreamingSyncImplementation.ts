@@ -342,17 +342,18 @@ export abstract class AbstractStreamingSyncImplementation
         let checkedCrudItem: CrudEntry | undefined;
 
         while (true) {
-          this.updateSyncStatus({
-            dataFlow: {
-              uploading: true
-            }
-          });
           try {
             /**
              * This is the first item in the FIFO CRUD queue.
              */
             const nextCrudItem = await this.options.adapter.nextCrudItem();
             if (nextCrudItem) {
+              this.updateSyncStatus({
+                dataFlow: {
+                  uploading: true
+                }
+              });
+
               if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
                 this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
