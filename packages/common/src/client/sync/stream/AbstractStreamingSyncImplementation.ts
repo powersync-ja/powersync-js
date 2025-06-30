@@ -881,6 +881,10 @@ The next upload iteration will be delayed.`);
         );
       }
 
+      // The rust client will set connected: true after the first sync line because that's when it gets invoked, but
+      // we're already connected here and can report that.
+      syncImplementation.updateSyncStatus({ connected: true });
+
       try {
         while (!controlInvocations.closed) {
           const line = await controlInvocations.read();

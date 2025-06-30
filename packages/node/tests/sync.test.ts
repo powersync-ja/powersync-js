@@ -144,8 +144,9 @@ function defineSyncTests(impl: SyncClientImplementation) {
     expect(connectCompleted).toBeFalsy();
 
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-    // Opening the socket is not enough, we set connected: true when the first line is received.
-    expect(connectCompleted).toBeFalsy();
+    // We want connected: true once we have a connection
+    await vi.waitFor(() => connectCompleted);
+    expect(database.currentStatus.dataFlowStatus.downloading).toBeFalsy();
 
     syncService.pushLine({
       checkpoint: {
@@ -153,7 +154,8 @@ function defineSyncTests(impl: SyncClientImplementation) {
         buckets: [bucket('a', 10)]
       }
     });
-    await vi.waitFor(() => connectCompleted);
+
+    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
   });
 
   describe('reports progress', () => {
