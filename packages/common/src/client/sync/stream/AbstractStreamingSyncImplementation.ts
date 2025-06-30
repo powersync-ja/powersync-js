@@ -885,12 +885,12 @@ The next upload iteration will be delayed.`);
             return;
           }
 
+          await control(line.command, line.payload);
+
           if (!hadSyncLine) {
             syncImplementation.triggerCrudUpload();
             hadSyncLine = true;
           }
-
-          await control(line.command, line.payload);
         }
       } finally {
         const activeInstructions = controlInvocations;
@@ -999,6 +999,7 @@ The next upload iteration will be delayed.`);
       );
 
       this.notifyCompletedUploads = () => {
+        console.log('notify completed');
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
       };
       await receivingLines;
