@@ -35,7 +35,6 @@
     "expo-splash-screen": "~0.29.22",
     "expo-status-bar": "~2.0.1",
     "lodash": "^4.17.21",
-    "sql.js": "link:/private/tmp/sql.js",
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-encrypted-storage": "^4.0.3",

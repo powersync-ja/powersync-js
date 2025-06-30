@@ -13,32 +13,9 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
-// console.log(SQLJS);
-// const result = SQLJS({ locateFile: (filename: any) => `../dist/${filename}` });
-// result.then((SQL: any) => {
-//   console.log('SQL.js loaded:');
-//   const powersync = new PowerSyncDatabase({
-//     schema: AppSchema,
-//     // database: {
-//     //   dbFilename: 'ddd'
-//     // },
-//     database: new SQLJSOpenFactory({
-//       dbFilename: 'powersync.db',
-//       sql: SQL as any,
-//       persister: {
-//         // TODO
-//         readFile: async () => null,
-//         writeFile: async () => {}
-//       }
-//     }),
-//     logger
-//   });
-// });
 const logger = createBaseLogger();
 logger.useDefaults();
 logger.setLevel(LogLevel.DEBUG);
-
-logger.info('ssdaddas');
 
 export class System {
   kvStorage: KVStorage;

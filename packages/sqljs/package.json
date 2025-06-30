@@ -1,5 +1,5 @@
 {
-  "name": "@powersync/sql.js",
+  "name": "sql.js",
   "private": "true",
   "version": "0.0.0",
   "description": "API definitions for JourneyApps PowerSync",
