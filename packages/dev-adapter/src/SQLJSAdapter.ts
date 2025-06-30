@@ -12,7 +12,7 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
-import SQLJs from 'sql.js/dist/sql-asm.js';
+import SQLJs from 'sql.js/dist/sql-asm-debug.js';
 
 export interface SQLJSPersister {
   readFile: () => Promise<ArrayLike<number> | Buffer | null>;
@@ -59,9 +59,11 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     console.log('SQL.js loaded:');
     const existing = await this.options.persister.readFile();
     const db = new SQL.Database(existing);
-    (db as any).updateHook((operation, database, table) => {
-      this.tableUpdateCache.add(table);
-    });
+    // debugger;
+    // (db as any).updateHook(function (operation, database, table, rowId) {
+    //   console.log(`Update Hook: ${operation} on ${table}`);
+    //   this.tableUpdateCache.add(table);
+    // });
     this._db = db;
     return db;
   }
@@ -92,7 +94,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
           return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
         });
         return {
-          insertId: 0, // does not seem to be available in SQL.js??
+          insertId: (db as any).lastInsertId(), // does not seem to be available in SQL.js??
           rowsAffected: db.getRowsModified(),
           rows: {
             _array: rows,

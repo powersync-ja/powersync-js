@@ -429,11 +429,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
     this._schema = schema;
 
-    console.log('updating schema', JSON.stringify(this.schema.toJSON()));
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
-    console.log('schema updated', JSON.stringify(this.schema.toJSON()));
     await this.database.refreshSchema();
-    console.log('schema refreshed', JSON.stringify(this.schema.toJSON()));
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 

@@ -28,12 +28,13 @@
     "test": "vitest"
   },
   "dependencies": {
-    "async-mutex": "^0.4.0",
-    "@powersync/common": "workspace:^"
+    "@powersync/common": "workspace:^",
+    "async-mutex": "^0.4.0"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
     "@types/sql.js": "^1.4.9",
-    "sql.js": "link:/Users/stevenontong/Documents/sql.js",
-    "rollup": "4.14.3"
+    "rollup": "4.14.3",
+    "sql.js": "link:/Users/stevenontong/Documents/sql.js"
   }
 }
