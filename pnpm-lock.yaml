@@ -1718,9 +1718,6 @@ importers:
       async-mutex:
         specifier: ^0.4.0
         version: 0.4.1
-      js-logger:
-        specifier: ^1.6.1
-        version: 1.6.1
     devDependencies:
       '@types/sql.js':
         specifier: ^1.4.9
@@ -1729,8 +1726,8 @@ importers:
         specifier: 4.14.3
         version: 4.14.3
       sql.js:
-        specifier: link:/private/tmp/sql.js
-        version: link:../../../../../../../../private/tmp/sql.js
+        specifier: link:/Users/stevenontong/Documents/sql.js
+        version: link:../../../../../sql.js
 
   packages/drizzle-driver:
     dependencies:

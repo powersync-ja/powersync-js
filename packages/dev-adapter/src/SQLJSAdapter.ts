@@ -54,7 +54,9 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
   }
 
   protected async init(): Promise<SQLJs.Database> {
-    const SQL = await SQLJs();
+    console.log('Initializing SQL.js database with options');
+    const SQL = await SQLJs({ locateFile: (filename: any) => `../dist/${filename}` });
+    console.log('SQL.js loaded:');
     const existing = await this.options.persister.readFile();
     const db = new SQL.Database(existing);
     (db as any).updateHook((operation, database, table) => {
@@ -70,16 +72,42 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
   }
 
   protected generateLockContext(): LockContext {
-    const mapResults = <T>(results: SQLJs.QueryExecResult[]): T[] => {
-      return results.map((r) => Object.fromEntries((r as any).mc.map((c, index) => [c, r.values[index]])) as T);
+    const execute = async (query: string, params?: any[]): Promise<QueryResult> => {
+      const db = await this.getDB();
+      const statement = db.prepare(query);
+      const rawResults: any[][] = [];
+      let columnNames: string[] | null = null;
+      try {
+        if (params) {
+          statement.bind(params);
+        }
+        while (statement.step()) {
+          if (!columnNames) {
+            columnNames = statement.getColumnNames();
+          }
+          rawResults.push(statement.get());
+        }
+
+        const rows = rawResults.map((row) => {
+          return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
+        });
+        return {
+          insertId: 0, // does not seem to be available in SQL.js??
+          rowsAffected: db.getRowsModified(),
+          rows: {
+            _array: rows,
+            length: rows.length,
+            item: (idx: number) => rows[idx]
+          }
+        };
+      } finally {
+        statement.free();
+      }
     };
 
     const getAll = async <T>(query: string, params?: any[]): Promise<T[]> => {
-      const db = await this.getDB();
-      console.log('running query:', query, 'with params:', params);
-      const results = db.exec(query, params);
-      console.log(results);
-      return mapResults<T>(results);
+      const result = await execute(query, params);
+      return result.rows?._array ?? ([] as T[]);
     };
 
     const getOptional = async <T>(query: string, params?: any[]): Promise<T | null> => {
@@ -95,32 +123,29 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       return result;
     };
 
+    const executeRaw = async (query: string, params?: any[]): Promise<any[][]> => {
+      const db = await this.getDB();
+      const statement = db.prepare(query);
+      const rawResults: any[][] = [];
+      try {
+        if (params) {
+          statement.bind(params);
+        }
+        while (statement.step()) {
+          rawResults.push(statement.get());
+        }
+        return rawResults;
+      } finally {
+        statement.free();
+      }
+    };
+
     return {
       getAll,
       getOptional,
       get,
-      execute: async (query: string, params?: any[]): Promise<QueryResult> => {
-        const db = await this.getDB();
-        const results = db.exec(query, params);
-        if (!results.length) {
-          return { rowsAffected: 0 };
-        }
-        const mapped = mapResults(results);
-        return {
-          insertId: 0,
-          rowsAffected: 0,
-          rows: {
-            _array: mapped,
-            length: mapped.length,
-            item: (idx: number) => mapped[idx]
-          }
-        };
-      },
-      executeRaw: async (query: string, params?: any[]): Promise<any[][]> => {
-        const db = await this.getDB();
-        const result = db.exec(query, params);
-        return result.map((r) => r.values);
-      }
+      executeRaw,
+      execute
     };
   }
 
@@ -150,7 +175,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.mutex.runExclusive(async () => {
       const db = await this.getDB();
-      const result = fn(this.generateLockContext());
+      const result = await fn(this.generateLockContext());
 
       await this.options.persister.writeFile(db.export());
 

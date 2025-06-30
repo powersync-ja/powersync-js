@@ -1,6 +1,6 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
+import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/react-native';
 import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -13,9 +13,32 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema } from './AppSchema';
 import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
+// console.log(SQLJS);
+// const result = SQLJS({ locateFile: (filename: any) => `../dist/${filename}` });
+// result.then((SQL: any) => {
+//   console.log('SQL.js loaded:');
+//   const powersync = new PowerSyncDatabase({
+//     schema: AppSchema,
+//     // database: {
+//     //   dbFilename: 'ddd'
+//     // },
+//     database: new SQLJSOpenFactory({
+//       dbFilename: 'powersync.db',
+//       sql: SQL as any,
+//       persister: {
+//         // TODO
+//         readFile: async () => null,
+//         writeFile: async () => {}
+//       }
+//     }),
+//     logger
+//   });
+// });
 const logger = createBaseLogger();
 logger.useDefaults();
 logger.setLevel(LogLevel.DEBUG);
+
+logger.info('ssdaddas');
 
 export class System {
   kvStorage: KVStorage;
@@ -30,6 +53,9 @@ export class System {
     this.storage = this.supabaseConnector.storage;
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
+      // database: {
+      //   dbFilename: 'ddd'
+      // },
       database: new SQLJSOpenFactory({
         dbFilename: 'powersync.db',
         persister: {
@@ -74,7 +100,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
+    await this.powersync.connect(this.supabaseConnector);
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();

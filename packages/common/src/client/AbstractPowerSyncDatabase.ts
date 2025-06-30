@@ -359,20 +359,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
     }
     let versionInts: number[];
-    try {
-      versionInts = this.sdkVersion!.split(/[.\/]/)
-        .slice(0, 3)
-        .map((n) => parseInt(n));
-    } catch (e) {
-      throw new Error(
-        `Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
-      );
-    }
+    // try {
+    //   versionInts = this.sdkVersion!.split(/[.\/]/)
+    //     .slice(0, 3)
+    //     .map((n) => parseInt(n));
+    // } catch (e) {
+    //   throw new Error(
+    //     `Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
+    //   );
+    // }
 
-    // Validate >=0.3.11 <1.0.0
-    if (versionInts[0] != 0 || versionInts[1] < 3 || (versionInts[1] == 3 && versionInts[2] < 11)) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}`);
-    }
+    // // Validate >=0.3.11 <1.0.0
+    // if (versionInts[0] != 0 || versionInts[1] < 3 || (versionInts[1] == 3 && versionInts[2] < 11)) {
+    //   throw new Error(`Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}`);
+    // }
   }
 
   protected async updateHasSynced() {
@@ -429,8 +429,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
     this._schema = schema;
 
+    console.log('updating schema', JSON.stringify(this.schema.toJSON()));
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    console.log('schema updated', JSON.stringify(this.schema.toJSON()));
     await this.database.refreshSchema();
+    console.log('schema refreshed', JSON.stringify(this.schema.toJSON()));
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }
 

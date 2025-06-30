@@ -28,13 +28,12 @@
     "test": "vitest"
   },
   "dependencies": {
-    "js-logger": "^1.6.1",
     "async-mutex": "^0.4.0",
     "@powersync/common": "workspace:^"
   },
   "devDependencies": {
     "@types/sql.js": "^1.4.9",
-    "sql.js": "link:/private/tmp/sql.js",
+    "sql.js": "link:/Users/stevenontong/Documents/sql.js",
     "rollup": "4.14.3"
   }
 }

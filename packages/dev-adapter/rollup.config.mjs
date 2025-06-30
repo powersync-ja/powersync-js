@@ -17,6 +17,7 @@ export default (commandLineArgs) => {
       format: 'esm',
       sourcemap: sourceMap
     },
-    plugins: [nodeResolve({ preferBuiltins: false, browser: true }), commonjs({})]
+    plugins: [nodeResolve({ preferBuiltins: false, browser: true }), commonjs({})],
+    external: ['@powersync/common']
   };
 };
