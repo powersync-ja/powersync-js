@@ -1,0 +1,31 @@
+diff --git a/src/update.c b/src/update.c
+new file mode 100644
+index 0000000..a025f71
+--- /dev/null
++++ b/src/update.c
+@@ -0,0 +1,24 @@
++#include "sqlite3.h"
++#include <emscripten.h>
++
++// Declare a JS function to be callable from C
++// JS hook only receives type, db name, and table name
++EM_JS(void, call_js_update_hook, (int type, const char* db_name, const char* table_name), {
++  console.log('update from sqlite hook');
++  if (typeof onSqliteUpdate === "function") {
++    onSqliteUpdate(type, UTF8ToString(db_name), UTF8ToString(table_name));
++  } else {
++    console.error("onSqliteUpdate is not defined");
++  }
++});
++
++void EMSCRIPTEN_KEEPALIVE sqlite_update_callback(void* pArg, int type, const char* db, const char* table, sqlite3_int64 rowid) {
++  EM_ASM({ console.log("got an update"); });
++  call_js_update_hook(type, db, table);
++}
++
++// Attach this to a sqlite3* connection:
++void EMSCRIPTEN_KEEPALIVE register_sqlite_update_hook(sqlite3* db) {
++  EM_ASM({ console.log("register_sqlite_update_hook: OK"); });
++  sqlite3_update_hook(db, sqlite_update_callback, NULL);
++}
+\ No newline at end of file

@@ -1,0 +1,255 @@
+diff --git a/Makefile b/Makefile
+index 4530653..5ac01a0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -14,6 +14,8 @@ SQLITE_AMALGAMATION_ZIP_SHA3 = e7eb4cfb2d95626e782cfa748f534c74482f2c3c93f13ee82
+ EXTENSION_FUNCTIONS = extension-functions.c
+ EXTENSION_FUNCTIONS_URL = https://www.sqlite.org/contrib/download/extension-functions.c?get=25
+ EXTENSION_FUNCTIONS_SHA1 = c68fa706d6d9ff98608044c00212473f9c14892f
++POWERSYNC_STATIC_FILES = powersync-libs/libpowersync-wasm.a
++
+ 
+ EMCC=emcc
+ 
+@@ -59,7 +61,7 @@ EMFLAGS_DEBUG = \
+ 	-s ASSERTIONS=2 \
+ 	-O1
+ 
+-BITCODE_FILES = out/sqlite3.o out/extension-functions.o
++BITCODE_FILES = out/sqlite3.o out/extension-functions.o out/update.o
+ 
+ OUTPUT_WRAPPER_FILES = src/shell-pre.js src/shell-post.js
+ 
+@@ -76,13 +78,13 @@ all: optimized debug worker
+ debug: dist/sql-asm-debug.js dist/sql-wasm-debug.js
+ 
+ dist/sql-asm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
+-	$(EMCC) $(EMFLAGS) $(EMFLAGS_DEBUG) $(EMFLAGS_ASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) -o $@
++	$(EMCC) $(EMFLAGS) $(EMFLAGS_DEBUG) $(EMFLAGS_ASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) $(POWERSYNC_STATIC_FILES) -o $@
+ 	mv $@ out/tmp-raw.js
+ 	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
+ 	rm out/tmp-raw.js
+ 
+ dist/sql-wasm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
+-	$(EMCC) $(EMFLAGS) $(EMFLAGS_DEBUG) $(EMFLAGS_WASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) -o $@
++	$(EMCC) $(EMFLAGS) $(EMFLAGS_DEBUG) $(EMFLAGS_WASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) $(POWERSYNC_STATIC_FILES) -o $@
+ 	mv $@ out/tmp-raw.js
+ 	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
+ 	rm out/tmp-raw.js
+@@ -91,19 +93,19 @@ dist/sql-wasm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FI
+ optimized: dist/sql-asm.js dist/sql-wasm.js dist/sql-asm-memory-growth.js
+ 
+ dist/sql-asm.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
+-	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_ASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) -o $@
++	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_ASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) $(POWERSYNC_STATIC_FILES) -o $@
+ 	mv $@ out/tmp-raw.js
+ 	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
+ 	rm out/tmp-raw.js
+ 
+ dist/sql-wasm.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
+-	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_WASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) -o $@
++	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_WASM) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) $(POWERSYNC_STATIC_FILES) -o $@
+ 	mv $@ out/tmp-raw.js
+ 	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
+ 	rm out/tmp-raw.js
+ 
+ dist/sql-asm-memory-growth.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
+-	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_ASM_MEMORY_GROWTH) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) -o $@
++	$(EMCC) $(EMFLAGS) $(EMFLAGS_OPTIMIZED) $(EMFLAGS_ASM_MEMORY_GROWTH) $(BITCODE_FILES) $(EMFLAGS_PRE_JS_FILES) $(POWERSYNC_STATIC_FILES) -o $@
+ 	mv $@ out/tmp-raw.js
+ 	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
+ 	rm out/tmp-raw.js
+@@ -153,6 +155,9 @@ out/extension-functions.o: sqlite-src/$(SQLITE_AMALGAMATION)
+ 	# Generate llvm bitcode
+ 	$(EMCC) $(SQLITE_COMPILATION_FLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/extension-functions.c -o $@
+ 
++out/update.o: sqlite-src/$(SQLITE_AMALGAMATION)
++	$(EMCC) $(SQLITE_COMPILATION_FLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/update.c -o $@
++
+ # TODO: This target appears to be unused. If we re-instatate it, we'll need to add more files inside of the JS folder
+ # module.tar.gz: test package.json AUTHORS README.md dist/sql-asm.js
+ # 	tar --create --gzip $^ > $@
+@@ -182,11 +187,15 @@ sqlite-src/$(SQLITE_AMALGAMATION): cache/$(SQLITE_AMALGAMATION).zip sqlite-src/$
+ 
+ sqlite-src/$(SQLITE_AMALGAMATION)/$(EXTENSION_FUNCTIONS): cache/$(EXTENSION_FUNCTIONS)
+ 	mkdir -p sqlite-src/$(SQLITE_AMALGAMATION)
++	cp 'src/update.c' sqlite-src/$(SQLITE_AMALGAMATION)/update.c
+ 	echo '$(EXTENSION_FUNCTIONS_SHA1)  ./cache/$(EXTENSION_FUNCTIONS)' > cache/check.txt
+ 	sha1sum -c cache/check.txt
+ 	cp 'cache/$(EXTENSION_FUNCTIONS)' $@
+ 
+ 
++sqlite-src/$(SQLITE_AMALGAMATION)/update.c: sqlite-src
++	cp 'src/update.c' $@
++
+ .PHONY: clean
+ clean:
+ 	rm -f out/* dist/* cache/*
+diff --git a/src/api.js b/src/api.js
+index c7f102b..df7e901 100644
+--- a/src/api.js
++++ b/src/api.js
+@@ -72,6 +72,8 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+     var SQLITE_UPDATE = 23;
+     var SQLITE_DELETE = 9;
+     // var - cwrap function
++    Module['ccall']('powersync_init_static', 'int', []);
++
+     var sqlite3_open = cwrap("sqlite3_open", "number", ["string", "number"]);
+     var sqlite3_close_v2 = cwrap("sqlite3_close_v2", "number", ["number"]);
+     var sqlite3_exec = cwrap(
+@@ -122,6 +124,7 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+         "number",
+         ["number", "string"]
+     );
++    var sqlite3_last_insert_rowid = cwrap("sqlite3_last_insert_rowid", "number", ["number"]);
+     var sqlite3_step = cwrap("sqlite3_step", "number", ["number"]);
+     var sqlite3_errmsg = cwrap("sqlite3_errmsg", "string", ["number"]);
+     var sqlite3_column_count = cwrap(
+@@ -239,6 +242,12 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+         ["number"]
+     );
+ 
++    var registerUpdateHook = cwrap(
++        "register_sqlite_update_hook",
++        "void",
++        ["number"]
++    );
++
+     var sqlite3_update_hook = cwrap(
+         "sqlite3_update_hook",
+         "number",
+@@ -833,6 +842,8 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+         }
+         this.handleError(sqlite3_open(this.filename, apiTemp));
+         this.db = getValue(apiTemp, "i32");
++        registerUpdateHook(this.db)
++        // Module['ccall']('register_sqlite_update_hook', 'void', ['number'], [apiTemp]);
+         registerExtensionFunctions(this.db);
+         // A list of all prepared statements of the database
+         this.statements = {};
+@@ -1155,6 +1166,13 @@ Module["onRuntimeInitialized"] = function onRuntimeInitialized() {
+         return sqlite3_changes(this.db);
+     };
+ 
++    /** TODO
++    @return {number} the last insert id
++    */
++    Database.prototype["lastInsertId"] = function lastInsertId() {
++        return sqlite3_last_insert_rowid(this.db);
++    };
++
+     var extract_blob = function extract_blob(ptr) {
+         var size = sqlite3_value_bytes(ptr);
+         var blob_ptr = sqlite3_value_blob(ptr);
+diff --git a/src/exported_functions.json b/src/exported_functions.json
+index 3be2595..d1c0037 100644
+--- a/src/exported_functions.json
++++ b/src/exported_functions.json
+@@ -1,47 +1,50 @@
+ [
+-"_malloc",
+-"_free",
+-"_sqlite3_open",
+-"_sqlite3_exec",
+-"_sqlite3_free",
+-"_sqlite3_errmsg",
+-"_sqlite3_changes",
+-"_sqlite3_prepare_v2",
+-"_sqlite3_sql",
+-"_sqlite3_normalized_sql",
+-"_sqlite3_bind_text",
+-"_sqlite3_bind_blob",
+-"_sqlite3_bind_double",
+-"_sqlite3_bind_int",
+-"_sqlite3_bind_parameter_index",
+-"_sqlite3_step",
+-"_sqlite3_column_count",
+-"_sqlite3_data_count",
+-"_sqlite3_column_double",
+-"_sqlite3_column_text",
+-"_sqlite3_column_blob",
+-"_sqlite3_column_bytes",
+-"_sqlite3_column_type",
+-"_sqlite3_column_name",
+-"_sqlite3_reset",
+-"_sqlite3_clear_bindings",
+-"_sqlite3_finalize",
+-"_sqlite3_close_v2",
+-"_sqlite3_create_function_v2",
+-"_sqlite3_value_bytes",
+-"_sqlite3_value_type",
+-"_sqlite3_value_text",
+-"_sqlite3_value_int",
+-"_sqlite3_value_blob",
+-"_sqlite3_value_double",
+-"_sqlite3_result_double",
+-"_sqlite3_result_null",
+-"_sqlite3_result_text",
+-"_sqlite3_result_blob",
+-"_sqlite3_result_int",
+-"_sqlite3_result_int64",
+-"_sqlite3_result_error",
+-"_sqlite3_aggregate_context",
+-"_RegisterExtensionFunctions",
+-"_sqlite3_update_hook"
++  "_malloc",
++  "_free",
++  "_sqlite3_open",
++  "_sqlite3_exec",
++  "_sqlite3_free",
++  "_sqlite3_errmsg",
++  "_sqlite3_changes",
++  "_sqlite3_prepare_v2",
++  "_sqlite3_sql",
++  "_sqlite3_normalized_sql",
++  "_sqlite3_bind_text",
++  "_sqlite3_bind_blob",
++  "_sqlite3_bind_double",
++  "_sqlite3_bind_int",
++  "_sqlite3_bind_parameter_index",
++  "_sqlite3_step",
++  "_sqlite3_column_count",
++  "_sqlite3_data_count",
++  "_sqlite3_column_double",
++  "_sqlite3_column_text",
++  "_sqlite3_column_blob",
++  "_sqlite3_column_bytes",
++  "_sqlite3_column_type",
++  "_sqlite3_column_name",
++  "_sqlite3_reset",
++  "_sqlite3_clear_bindings",
++  "_sqlite3_finalize",
++  "_sqlite3_close_v2",
++  "_sqlite3_create_function_v2",
++  "_sqlite3_value_bytes",
++  "_sqlite3_value_type",
++  "_sqlite3_value_text",
++  "_sqlite3_value_int",
++  "_sqlite3_value_blob",
++  "_sqlite3_value_double",
++  "_sqlite3_result_double",
++  "_sqlite3_result_null",
++  "_sqlite3_result_text",
++  "_sqlite3_result_blob",
++  "_sqlite3_result_int",
++  "_sqlite3_result_int64",
++  "_sqlite3_result_error",
++  "_sqlite3_aggregate_context",
++  "_RegisterExtensionFunctions",
++  "_sqlite3_last_insert_rowid",
++  "_sqlite3_update_hook",
++  "_powersync_init_static",
++  "_register_sqlite_update_hook"
+ ]
+diff --git a/src/exported_runtime_methods.json b/src/exported_runtime_methods.json
+index f099056..b1712fc 100644
+--- a/src/exported_runtime_methods.json
++++ b/src/exported_runtime_methods.json
+@@ -1,5 +1,6 @@
+ [
+ "cwrap",
++"ccall",
+ "stackAlloc",
+ "stackSave",
+ "stackRestore",

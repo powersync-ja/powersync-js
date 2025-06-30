@@ -1,7 +1,7 @@
 {
-  "name": "@powersync/dev-adapter",
-  "version": "0.0.0",
+  "name": "@powersync/sql.js",
   "private": "true",
+  "version": "0.0.0",
   "description": "API definitions for JourneyApps PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
@@ -22,19 +22,10 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b --sourceMap false && && rollup -c rollup.config.mjs --sourceMap false",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
-    "test": "vitest"
+    "build": "sh build.sh",
+    "build:prod": "pnpm build",
+    "clean": "rm -rf dist sql.js"
   },
-  "dependencies": {
-    "@powersync/common": "workspace:^",
-    "async-mutex": "^0.4.0"
-  },
-  "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.0",
-    "@types/sql.js": "^1.4.9",
-    "rollup": "4.14.3",
-    "sql.js": "workspace:*"
-  }
+  "dependencies": {},
+  "devDependencies": {}
 }
