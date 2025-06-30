@@ -24,8 +24,14 @@ const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
 const KEEP_ALIVE_MS = 20_000;
-// The ACK must be received in this period
-const KEEP_ALIVE_LIFETIME_MS = 30_000;
+
+// One message of any type must be received in this period.
+const SOCKET_TIMEOUT_MS = 30_000;
+
+// One keepalive message must be received in this period.
+// If there is a backlog of messages (for example on slow connections), keepalive messages could be delayed
+// significantly. Therefore this is longer than the socket timeout.
+const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
@@ -304,12 +310,26 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    let keepAliveTimeout: any;
+    const resetTimeout = () => {
+      clearTimeout(keepAliveTimeout);
+      keepAliveTimeout = setTimeout(() => {
+        this.logger.error(`No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`);
+        stream.close();
+      }, SOCKET_TIMEOUT_MS);
+    };
+    resetTimeout();
+
     const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url,
         wsCreator: (url) => {
-          return this.createSocket(url);
+          const socket = this.createSocket(url);
+          socket.addEventListener('message', (event) => {
+            resetTimeout();
+          });
+          return socket;
         }
       }),
       setup: {
@@ -332,8 +352,11 @@ export abstract class AbstractRemote {
       rsocket = await connector.connect();
     } catch (ex) {
       this.logger.error(`Failed to connect WebSocket`, ex);
+      clearTimeout(keepAliveTimeout);
       throw ex;
     }
+
+    resetTimeout();
 
     const stream = new DataStream({
       logger: this.logger,
@@ -344,6 +367,7 @@ export abstract class AbstractRemote {
 
     let socketIsClosed = false;
     const closeSocket = () => {
+      clearTimeout(keepAliveTimeout);
       if (socketIsClosed) {
         return;
       }
