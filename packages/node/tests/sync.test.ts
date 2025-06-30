@@ -424,7 +424,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
 
     mockSyncServiceTest('interrupt and defrag', async ({ syncService }) => {
       let database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       syncService.pushLine({
@@ -442,7 +442,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
       await database.close();
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
       database = await syncService.createDatabase();
-      database.connect(new TestConnector(), { connectionMethod: SyncStreamConnectionMethod.HTTP });
+      database.connect(new TestConnector(), options);
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
       // A sync rule deploy could reset buckets, making the new bucket smaller than the existing one.
@@ -458,6 +458,39 @@ function defineSyncTests(impl: SyncClientImplementation) {
       pushCheckpointComplete(syncService);
       await waitForSyncStatus(database, (s) => s.downloadProgress == null);
     });
+  });
+
+  mockSyncServiceTest('should upload after connecting', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+
+    database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+    const query = database.watchWithAsyncGenerator('SELECT name FROM lists')[Symbol.asyncIterator]();
+    let rows = (await query.next()).value.rows._array;
+    expect(rows).toStrictEqual([{ name: 'local write' }]);
+
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({ checkpoint: { last_op_id: '1', write_checkpoint: '1', buckets: [bucket('a', 1)] } });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: '1',
+            object_type: 'lists',
+            data: '{"name": "from server"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+
+    rows = (await query.next()).value.rows._array;
+    expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
 }
 

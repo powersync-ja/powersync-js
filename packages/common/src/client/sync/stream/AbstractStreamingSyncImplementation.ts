@@ -840,6 +840,7 @@ The next upload iteration will be delayed.`);
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let receivingLines: Promise<void> | null = null;
+    let hadSyncLine = false;
 
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
@@ -882,6 +883,11 @@ The next upload iteration will be delayed.`);
           const line = await controlInvocations.read();
           if (line == null) {
             return;
+          }
+
+          if (!hadSyncLine) {
+            syncImplementation.triggerCrudUpload();
+            hadSyncLine = true;
           }
 
           await control(line.command, line.payload);
