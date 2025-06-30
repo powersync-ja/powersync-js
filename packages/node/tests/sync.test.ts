@@ -112,6 +112,29 @@ function defineSyncTests(impl: SyncClientImplementation) {
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
 
+  mockSyncServiceTest('sets last sync time', async ({ syncService }) => {
+    const db = await syncService.createDatabase();
+    db.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '0',
+        buckets: []
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+    const now = Date.now();
+
+    await db.waitForFirstSync();
+    const status = db.currentStatus;
+    const lastSyncedAt = status.lastSyncedAt!.getTime();
+
+    // The reported time of the last sync should be close to the current time (5s is very generous already, but we've
+    // had an issue where dates weren't parsed correctly and we were off by decades).
+    expect(Math.abs(lastSyncedAt - now)).toBeLessThan(5000);
+  });
+
   describe('reports progress', () => {
     let lastOpId = 0;
 
