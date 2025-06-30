@@ -410,23 +410,15 @@ The next upload iteration will be delayed.`);
     this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
-    // Return a promise that resolves when the connection status is updated
+    // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
       const disposer = this.registerListener({
-        statusUpdated: (update) => {
-          // This is triggered as soon as a connection is read from
-          if (typeof update.connected == 'undefined') {
-            // only concern with connection updates
-            return;
-          }
-
-          if (update.connected == false) {
-            /**
-             * This function does not reject if initial connect attempt failed.
-             * Connected can be false if the connection attempt was aborted or if the initial connection
-             * attempt failed.
-             */
+        statusChanged(status) {
+          if (status.dataFlowStatus.downloadError != null) {
             this.logger.warn('Initial connect attempt did not successfully connect to server');
+          } else if (status.connecting) {
+            // Still connecting.
+            return;
           }
 
           disposer();
@@ -945,16 +937,11 @@ The next upload iteration will be delayed.`);
         }
 
         const info = instruction.UpdateSyncStatus.status;
-        const lastStatus = syncImplementation.syncStatus;
         const coreCompleteSync = info.priority_status.find((s) => s.priority == FULL_SYNC_PRIORITY);
         const completeSync = coreCompleteSync != null ? coreStatusToJs(coreCompleteSync) : null;
 
         syncImplementation.updateSyncStatus({
-          // The first update to the connected field should only happen when it has really changed - there's a
-          // statusUpdated listener in connect() that will only make the promise complete once connected has changed.
-          // We only want to apply that workaround while we're connecting because it's only relevant in the initial
-          // connect call. Afterwards, we want to forward the sync status unchanged.
-          connected: lastStatus.connected == info.connected && info.connecting ? undefined : info.connected,
+          connected: info.connected,
           connecting: info.connecting,
           dataFlow: {
             downloading: info.downloading != null,
