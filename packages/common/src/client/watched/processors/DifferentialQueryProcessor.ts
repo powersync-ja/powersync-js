@@ -16,8 +16,8 @@ export interface WatchedQueryRowDifferential<RowType> {
 }
 
 /**
- * Represents the result of a watched query that has been differentiated.
- * {@link WatchedQueryState.data} is of the {@link WatchedQueryDifferential} form when using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
+ * Represents the result of a watched query that has been diffed.
+ * {@link DifferentialWatchedQueryState#diff} is of the {@link WatchedQueryDifferential} form.
  */
 export interface WatchedQueryDifferential<RowType> {
   readonly added: ReadonlyArray<Readonly<RowType>>;
@@ -74,7 +74,7 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
 }
 
 /**
- * Settings for incremental watched queries using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
+ * Settings for differential incremental watched queries using.
  */
 export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialWatchedQueryOptions<RowType> {
   /**

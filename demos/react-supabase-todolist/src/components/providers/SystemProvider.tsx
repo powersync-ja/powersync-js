@@ -3,15 +3,7 @@ import { AppSchema, ListRecord, LISTS_TABLE, TODOS_TABLE } from '@/library/power
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import {
-  ArrayComparator,
-  createBaseLogger,
-  GetAllQuery,
-  IncrementalWatchMode,
-  LogLevel,
-  PowerSyncDatabase,
-  WatchedQuery
-} from '@powersync/web';
+import { createBaseLogger, DifferentialWatchedQuery, LogLevel, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
@@ -28,7 +20,7 @@ export const db = new PowerSyncDatabase({
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
 
 export type QueryStore = {
-  lists: WatchedQuery<EnhancedListRecord[]>;
+  lists: DifferentialWatchedQuery<EnhancedListRecord>;
 };
 
 const QueryStore = React.createContext<QueryStore | null>(null);
@@ -39,32 +31,26 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [powerSync] = React.useState(db);
 
   const [queryStore] = React.useState<QueryStore>(() => {
-    const listsQuery = db.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
-      comparator: new ArrayComparator({
-        compareBy: (item) => JSON.stringify(item)
-      }),
-      watch: {
-        placeholderData: [],
-        query: new GetAllQuery<EnhancedListRecord>({
-          sql: /* sql */ `
-            SELECT
-              ${LISTS_TABLE}.*,
-              COUNT(${TODOS_TABLE}.id) AS total_tasks,
-              SUM(
-                CASE
-                  WHEN ${TODOS_TABLE}.completed = true THEN 1
-                  ELSE 0
-                END
-              ) as completed_tasks
-            FROM
-              ${LISTS_TABLE}
-              LEFT JOIN ${TODOS_TABLE} ON ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
-            GROUP BY
-              ${LISTS_TABLE}.id;
-          `
-        })
-      }
-    });
+    const listsQuery = db
+      .query<EnhancedListRecord>({
+        sql: /* sql */ `
+          SELECT
+            ${LISTS_TABLE}.*,
+            COUNT(${TODOS_TABLE}.id) AS total_tasks,
+            SUM(
+              CASE
+                WHEN ${TODOS_TABLE}.completed = true THEN 1
+                ELSE 0
+              END
+            ) as completed_tasks
+          FROM
+            ${LISTS_TABLE}
+            LEFT JOIN ${TODOS_TABLE} ON ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_id
+          GROUP BY
+            ${LISTS_TABLE}.id;
+        `
+      })
+      .differentialWatch();
 
     return {
       lists: listsQuery

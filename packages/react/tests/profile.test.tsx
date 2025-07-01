@@ -282,14 +282,13 @@ const testsInsertsCompare = async (options: {
   const notMemoizedDifferentialTest = async () => {
     await db.execute('DELETE FROM lists;');
 
-    const query = db.incrementalWatch({ mode: commonSdk.IncrementalWatchMode.DIFFERENTIAL }).build({
-      watch: {
-        query: new commonSdk.GetAllQuery<List>({
-          sql: 'SELECT * FROM lists ORDER BY name ASC;'
-        }),
+    const query = db
+      .query<List>({
+        sql: 'SELECT * FROM lists ORDER BY name ASC;'
+      })
+      .differentialWatch({
         reportFetching: false
-      }
-    });
+      });
 
     const times: number[] = [];
     diffSpy(query, times);
@@ -300,8 +299,8 @@ const testsInsertsCompare = async (options: {
       initialDataCount,
       useMemoize: false,
       getQueryData: () => {
-        const result = useWatchedQuerySubscription(query).data.all;
-        return result;
+        const { data } = useWatchedQuerySubscription(query);
+        return [...data];
       }
     });
 
@@ -322,14 +321,8 @@ const testsInsertsCompare = async (options: {
   // Testing Differential With Memoization
   await db.execute('DELETE FROM lists;');
 
-  // guardLog = true; // Prevents logging from TestItemWidget
-  const query = db.incrementalWatch({ mode: commonSdk.IncrementalWatchMode.DIFFERENTIAL }).build({
-    watch: {
-      query: new commonSdk.GetAllQuery<List>({
-        sql: 'SELECT * FROM lists ORDER BY name ASC;'
-      }),
-      reportFetching: false
-    }
+  const query = db.query<List>({ sql: 'SELECT * FROM lists ORDER BY name ASC;' }).differentialWatch({
+    reportFetching: false
   });
 
   const times: number[] = [];
@@ -341,8 +334,8 @@ const testsInsertsCompare = async (options: {
     initialDataCount,
     useMemoize: true,
     getQueryData: () => {
-      const result = useWatchedQuerySubscription(query).data.all;
-      return result;
+      const { data } = useWatchedQuerySubscription(query);
+      return [...data];
     }
   });
 

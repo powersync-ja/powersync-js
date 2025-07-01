@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, column, IncrementalWatchMode, Schema, Table } from '@powersync/common';
+import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { sql } from 'kysely';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -265,18 +265,13 @@ describe('Watch Tests', () => {
   it('incremental watch should accept queries', async () => {
     const query = db.selectFrom('assets').select(db.fn.count('assets.id').as('count'));
 
-    const watch = powerSyncDb.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
-      watch: {
-        query,
-        placeholderData: []
-      }
-    });
+    const watch = powerSyncDb.customQuery(query).watch();
 
     const latestDataPromise = new Promise<Awaited<ReturnType<typeof query.execute>>>((resolve) => {
       const dispose = watch.registerListener({
         onData: (data) => {
           if (data.length > 0) {
-            resolve(data);
+            resolve([...data]);
             dispose();
           }
         }
