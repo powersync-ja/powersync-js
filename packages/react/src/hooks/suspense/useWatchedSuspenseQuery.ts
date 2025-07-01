@@ -30,5 +30,10 @@ export const useWatchedSuspenseQuery = <T = any>(
   const store = getQueryStore(powerSync);
   const watchedQuery = store.getQuery(key, parsedQuery, options);
 
-  return useWatchedQuerySuspenseSubscription(watchedQuery);
+  const result = useWatchedQuerySuspenseSubscription(watchedQuery);
+  return {
+    ...result,
+    // The result above is readonly, but this API expects a mutable array
+    data: [...result.data]
+  };
 };

@@ -7,7 +7,7 @@ import { ComparisonWatchedQuery } from './watched/processors/OnChangeQueryProces
 import { WatchedQueryOptions } from './watched/WatchedQuery.js';
 
 /**
- * Query parameters for {@link ArrayQueryDefinition.parameters}
+ * Query parameters for {@link ArrayQueryDefinition#parameters}
  */
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
@@ -17,7 +17,7 @@ export type QueryParam = string | number | boolean | null | undefined | bigint |
  */
 export interface ArrayQueryDefinition<RowType = unknown> {
   sql: string;
-  parameters?: ReadonlyArray<QueryParam>;
+  parameters?: ReadonlyArray<Readonly<QueryParam>>;
   /**
    * Maps the raw SQLite row to a custom typed object.
    * @example
@@ -63,14 +63,14 @@ export interface Query<RowType> {
    * By default the returned watched query will emit changes whenever a change to the underlying SQLite tables is made.
    * These changes might not be relevant to the query, but the query will emit a new result set.
    *
-   * A {@link StandardWatchedQueryOptions.comparator} can be provided to limit the data emissions. The watched query will still
+   * A {@link StandardWatchedQueryOptions#comparator} can be provided to limit the data emissions. The watched query will still
    * query the underlying DB on a underlying table changes, but the result will only be emitted if the comparator detects a change in the results.
    *
    * The comparator in this method is optimized and returns early as soon as it detects a change. Each data emission will correlate to a change in the result set,
    * but note that the result set will not maintain internal object references to the previous result set. If internal object references are needed,
-   * consider using {@link Query.differentialWatch} instead.
+   * consider using {@link Query#differentialWatch} instead.
    */
-  watch(options?: StandardWatchedQueryOptions<RowType>): ComparisonWatchedQuery<RowType[]>;
+  watch(options?: StandardWatchedQueryOptions<RowType>): ComparisonWatchedQuery<ReadonlyArray<Readonly<RowType>>>;
 
   /**
    * Creates a {@link WatchedQuery} which watches and emits results of the linked query.
@@ -81,8 +81,8 @@ export interface Query<RowType> {
    * If the result set is different, the watched query will emit the new result set and provide a detailed diff of the changes.
    *
    * The deep differentiation allows maintaining result set object references between result emissions.
-   * The {@link DifferentialWatchedQuery.state.data} array will contain the previous row references for unchanged rows.
-   * A detailed diff of the changes can be accessed via {@link DifferentialWatchedQuery.state.diff}.
+   * The {@link DifferentialWatchedQuery#state} `data` array will contain the previous row references for unchanged rows.
+   * A detailed diff of the changes can be accessed via {@link DifferentialWatchedQuery#state} `diff`.
    */
   differentialWatch(options?: DifferentialWatchedQueryOptions<RowType>): DifferentialWatchedQuery<RowType>;
 }

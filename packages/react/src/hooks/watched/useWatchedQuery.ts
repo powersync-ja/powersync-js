@@ -41,5 +41,11 @@ export const useWatchedQuery = <RowType = unknown>(
     }
   }, [queryChanged]);
 
-  return useWatchedQuerySubscription(watchedQuery);
+  const result = useWatchedQuerySubscription(watchedQuery);
+  return {
+    ...result,
+    // The Watched Query API returns readonly arrays,
+    // This allows compatibility with the hook API.
+    data: [...result.data]
+  };
 };

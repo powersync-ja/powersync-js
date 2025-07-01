@@ -19,11 +19,7 @@ export class QueryStore {
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
-  getQuery<RowType>(
-    key: string,
-    query: WatchCompatibleQuery<RowType[]>,
-    options: AdditionalOptions
-  ): WatchedQuery<RowType[]> {
+  getQuery<RowType>(key: string, query: WatchCompatibleQuery<RowType[]>, options: AdditionalOptions) {
     if (this.cache.has(key)) {
       return this.cache.get(key) as WatchedQuery<RowType[]>;
     }

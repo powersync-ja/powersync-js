@@ -20,7 +20,7 @@ export interface WatchedQueryRowDifferential<RowType> {
  * {@link WatchedQueryState.data} is of the {@link WatchedQueryDifferential} form when using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
  */
 export interface WatchedQueryDifferential<RowType> {
-  readonly added: ReadonlyArray<RowType>;
+  readonly added: ReadonlyArray<Readonly<RowType>>;
   /**
    * The entire current result set.
    * Array item object references are preserved between updates if the item is unchanged.
@@ -35,10 +35,10 @@ export interface WatchedQueryDifferential<RowType> {
    * the updated result set will be contain the same object reference, to item A, as the previous result set.
    * This is regardless of the item A's position in the updated result set.
    */
-  readonly all: ReadonlyArray<RowType>;
-  readonly removed: ReadonlyArray<RowType>;
-  readonly updated: ReadonlyArray<WatchedQueryRowDifferential<RowType>>;
-  readonly unchanged: ReadonlyArray<RowType>;
+  readonly all: ReadonlyArray<Readonly<RowType>>;
+  readonly removed: ReadonlyArray<Readonly<RowType>>;
+  readonly updated: ReadonlyArray<WatchedQueryRowDifferential<Readonly<RowType>>>;
+  readonly unchanged: ReadonlyArray<Readonly<RowType>>;
 }
 
 /**
@@ -83,7 +83,7 @@ export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialW
   query: WatchCompatibleQuery<RowType[]>;
 }
 
-export interface DifferentialWatchedQueryState<RowType> extends WatchedQueryState<RowType[]> {
+export interface DifferentialWatchedQueryState<RowType> extends WatchedQueryState<ReadonlyArray<Readonly<RowType>>> {
   /**
    * The difference between the current and previous result set.
    */
@@ -96,7 +96,7 @@ type MutableDifferentialWatchedQueryState<RowType> = MutableWatchedQueryState<Ro
 };
 
 export interface DifferentialWatchedQuery<RowType>
-  extends WatchedQuery<RowType[], DifferentialWatchedQuerySettings<RowType>> {
+  extends WatchedQuery<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>> {
   readonly state: DifferentialWatchedQueryState<RowType>;
 }
 
@@ -143,7 +143,7 @@ export const DEFAULT_WATCHED_QUERY_DIFFERENTIATOR: WatchedQueryDifferentiator<an
  * @internal
  */
 export class DifferentialQueryProcessor<RowType>
-  extends AbstractQueryProcessor<RowType[], DifferentialWatchedQuerySettings<RowType>>
+  extends AbstractQueryProcessor<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>>
   implements DifferentialWatchedQuery<RowType>
 {
   readonly state: DifferentialWatchedQueryState<RowType>;

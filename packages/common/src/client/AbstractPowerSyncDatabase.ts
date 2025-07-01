@@ -891,18 +891,18 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * Allows defining a query which can be used to build a {@link WatchedQuery}.
-   * The defined query will be executed with {@link AbstractPowerSyncDatabase.getAll}.
+   * The defined query will be executed with {@link AbstractPowerSyncDatabase#getAll}.
    * An optional mapper function can be provided to transform the results.
    *
    * @example
    * ```javascript
    * const watchedTodos = powersync.query({
-   *    sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
-   *    parameters: [],
-   *    mapper: (row) => ({
-   *      ...row,
-   *      created_at: new Date(row.created_at as string)
-   *    })
+   *  sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *  parameters: [],
+   *  mapper: (row) => ({
+   *    ...row,
+   *    created_at: new Date(row.created_at as string)
+   *  })
    * })
    * .watch()
    * // OR use .differentialWatch() for fine-grained watches.
