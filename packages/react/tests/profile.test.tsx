@@ -7,7 +7,7 @@ import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
 
-let skipTests = false;
+let skipTests = true;
 /**
  * This does not run as part of all tests. Enable this suite manually to run performance tests.
  *
