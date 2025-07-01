@@ -999,7 +999,6 @@ The next upload iteration will be delayed.`);
       );
 
       this.notifyCompletedUploads = () => {
-        console.log('notify completed');
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
       };
       await receivingLines;

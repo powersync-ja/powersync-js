@@ -39,7 +39,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
   protected isClosed: boolean;
 
   protected processingPromise: Promise<void> | null;
-  protected notifyDataAdded: ((_: null) => void) | null;
+  protected notifyDataAdded: (() => void) | null;
 
   protected logger: ILogger;
 
@@ -91,7 +91,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
     }
 
     this.dataQueue.push(data);
-    this.notifyDataAdded?.(null);
+    this.notifyDataAdded?.();
 
     this.processQueue();
   }
@@ -194,7 +194,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
     }
 
     if (this.dataQueue.length <= this.lowWatermark) {
-      const dataAdded = new Promise((resolve) => {
+      const dataAdded = new Promise<void>((resolve) => {
         this.notifyDataAdded = resolve;
       });
 
