@@ -1,4 +1,4 @@
-import { CompilableQuery, FalsyComparator } from '@powersync/common';
+import { CompilableQuery } from '@powersync/common';
 import { AdditionalOptions } from '../watched/watch-types';
 import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useSingleSuspenseQuery } from './useSingleSuspenseQuery';
@@ -34,10 +34,6 @@ export const useSuspenseQuery = <T = any>(
     case true:
       return useSingleSuspenseQuery<T>(query, parameters, options);
     default:
-      return useWatchedSuspenseQuery<T>(query, parameters, {
-        ...options,
-        // Default comparator that always reports changed result sets
-        comparator: options.comparator ?? FalsyComparator
-      });
+      return useWatchedSuspenseQuery<T>(query, parameters, options);
   }
 };

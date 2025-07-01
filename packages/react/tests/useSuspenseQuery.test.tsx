@@ -1,9 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  IncrementalWatchMode,
-  WatchedQuery,
-  WatchedQueryListenerEvent
-} from '@powersync/common';
+import { AbstractPowerSyncDatabase, WatchedQuery, WatchedQueryListenerEvent } from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -68,18 +63,15 @@ describe('useSuspenseQuery', () => {
 
   it('should suspend on initial load', async () => {
     // spy on watched query generation
-    const baseImplementation = powersync.incrementalWatch;
+    const baseImplementation = powersync.customQuery;
     let watch: WatchedQuery<any> | null = null;
 
-    const spy = vi.spyOn(powersync, 'incrementalWatch').mockImplementation((options) => {
-      if (options.mode !== IncrementalWatchMode.COMPARISON) {
-        return baseImplementation.call(powersync, options);
-      }
-
+    const spy = vi.spyOn(powersync, 'customQuery').mockImplementation((options) => {
       const builder = baseImplementation.call(powersync, options);
-      const baseBuild = builder.build;
+      const baseBuild = builder.differentialWatch;
 
-      vi.spyOn(builder, 'build').mockImplementation((buildOptions) => {
+      // The hooks use the `watch` method if no differentiator is set
+      vi.spyOn(builder, 'watch').mockImplementation((buildOptions) => {
         watch = baseBuild.call(builder, buildOptions);
         return watch!;
       });
@@ -267,18 +259,12 @@ describe('useSuspenseQuery', () => {
     // This query can be instantiated once and reused.
     // The query retains it's state and will not re-fetch the data unless the result changes.
     // This is useful for queries that are used in multiple components.
-    const listsQuery = db.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build({
-      watch: {
-        placeholderData: [],
-        query: {
-          compile: () => ({
-            sql: `SELECT * FROM lists`,
-            parameters: []
-          }),
-          execute: ({ sql, parameters }) => db.getAll(sql, parameters)
-        }
-      }
-    });
+    const listsQuery = db
+      .query({
+        sql: `SELECT * FROM lists`,
+        parameters: []
+      })
+      .watch();
 
     const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
     const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {

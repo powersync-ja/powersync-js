@@ -1,10 +1,4 @@
-import {
-  type CompilableQuery,
-  FalsyComparator,
-  IncrementalWatchMode,
-  ParsedQuery,
-  parseQuery
-} from '@powersync/common';
+import { type CompilableQuery, ParsedQuery, parseQuery, WatchCompatibleQuery } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery';
@@ -55,28 +49,26 @@ export const useWatchedQuery = <T = any>(
 
     const { sqlStatement: sql, parameters } = parsedQuery;
 
-    const watchedQuery = powerSync.value
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
-      })
-      .build({
-        watch: {
-          placeholderData: [],
-          query: {
-            compile: () => ({ sql, parameters }),
-            execute: async ({ db, sql, parameters }) => {
-              if (typeof queryValue === 'string') {
-                return db.getAll<T>(sql, parameters);
-              }
-              return queryValue.execute();
-            }
-          }
-        },
-        // Maintains backwards compatibility with previous versions
-        comparator: options.comparator ?? FalsyComparator
-      });
+    const compatibleQuery: WatchCompatibleQuery<T[]> = {
+      compile: () => ({ sql, parameters }),
+      execute: async ({ db, sql, parameters }) => {
+        if (typeof queryValue === 'string') {
+          return db.getAll<T>(sql, parameters);
+        }
+        return queryValue.execute();
+      }
+    };
 
-    const disposer = watchedQuery.registerListener({
+    const watch = options.differentiator
+      ? powerSync.value.customQuery(compatibleQuery).differentialWatch({
+          differentiator: options.differentiator,
+          throttleMs: options.throttleMs
+        })
+      : powerSync.value.customQuery(compatibleQuery).watch({
+          throttleMs: options.throttleMs
+        });
+
+    const disposer = watch.registerListener({
       onStateChange: (state) => {
         isLoading.value = state.isLoading;
         isFetching.value = state.isFetching;
@@ -93,7 +85,7 @@ export const useWatchedQuery = <T = any>(
 
     onCleanup(() => {
       disposer();
-      watchedQuery.close();
+      watch.close();
     });
   });
 

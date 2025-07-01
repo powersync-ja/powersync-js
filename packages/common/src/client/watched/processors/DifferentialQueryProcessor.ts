@@ -1,5 +1,10 @@
 import { WatchCompatibleQuery, WatchedQuery, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
-import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
+import {
+  AbstractQueryProcessor,
+  AbstractQueryProcessorOptions,
+  LinkQueryOptions,
+  MutableWatchedQueryState
+} from './AbstractQueryProcessor.js';
 
 /**
  * Represents an updated row in a differential watched query.
@@ -15,7 +20,7 @@ export interface WatchedQueryRowDifferential<RowType> {
  * {@link WatchedQueryState.data} is of the {@link WatchedQueryDifferential} form when using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
  */
 export interface WatchedQueryDifferential<RowType> {
-  added: ReadonlyArray<RowType>;
+  readonly added: ReadonlyArray<RowType>;
   /**
    * The entire current result set.
    * Array item object references are preserved between updates if the item is unchanged.
@@ -30,10 +35,10 @@ export interface WatchedQueryDifferential<RowType> {
    * the updated result set will be contain the same object reference, to item A, as the previous result set.
    * This is regardless of the item A's position in the updated result set.
    */
-  all: ReadonlyArray<RowType>;
-  removed: ReadonlyArray<RowType>;
-  updated: ReadonlyArray<WatchedQueryRowDifferential<RowType>>;
-  unchanged: ReadonlyArray<RowType>;
+  readonly all: ReadonlyArray<RowType>;
+  readonly removed: ReadonlyArray<RowType>;
+  readonly updated: ReadonlyArray<WatchedQueryRowDifferential<RowType>>;
+  readonly unchanged: ReadonlyArray<RowType>;
 }
 
 /**
@@ -51,27 +56,56 @@ export interface WatchedQueryDifferentiator<RowType> {
 }
 
 /**
+ * Options for building a differential watched query with the {@link Query} builder.
+ */
+export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOptions {
+  /**
+   * Initial result data which is presented while the initial loading is executing.
+   */
+  placeholderData?: RowType[];
+
+  /**
+   * Differentiator used to identify and compare items in the result set.
+   * If not provided, the default differentiator will be used which identifies items by their `id` property if available,
+   * otherwise it uses JSON stringification of the entire item for identification and comparison.
+   * @defaultValue {@link DEFAULT_WATCHED_QUERY_DIFFERENTIATOR}
+   */
+  differentiator?: WatchedQueryDifferentiator<RowType>;
+}
+
+/**
  * Settings for incremental watched queries using the {@link IncrementalWatchMode.DIFFERENTIAL} mode.
  */
-export interface DifferentialWatchedQuerySettings<RowType> extends WatchedQueryOptions {
+export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialWatchedQueryOptions<RowType> {
   /**
    * The query here must return an array of items that can be differentiated.
    */
   query: WatchCompatibleQuery<RowType[]>;
+}
 
+export interface DifferentialWatchedQueryState<RowType> extends WatchedQueryState<RowType[]> {
   /**
-   * Initial result data which is presented while the initial loading is executing.
-   * Defaults to an empty differential.
+   * The difference between the current and previous result set.
    */
-  placeholderData?: WatchedQueryDifferential<RowType>;
+  readonly diff: WatchedQueryDifferential<RowType>;
+}
+
+type MutableDifferentialWatchedQueryState<RowType> = MutableWatchedQueryState<RowType[]> & {
+  data: RowType[];
+  diff: WatchedQueryDifferential<RowType>;
+};
+
+export interface DifferentialWatchedQuery<RowType>
+  extends WatchedQuery<RowType[], DifferentialWatchedQuerySettings<RowType>> {
+  readonly state: DifferentialWatchedQueryState<RowType>;
 }
 
 /**
  * @internal
  */
 export interface DifferentialQueryProcessorOptions<RowType>
-  extends AbstractQueryProcessorOptions<WatchedQueryDifferential<RowType>, DifferentialWatchedQuerySettings<RowType>> {
-  differentiator: WatchedQueryDifferentiator<RowType>;
+  extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
+  differentiator?: WatchedQueryDifferentiator<RowType>;
 }
 
 type DataHashMap<RowType> = Map<string, { hash: string; item: RowType }>;
@@ -89,16 +123,47 @@ export const EMPTY_DIFFERENTIAL = {
 };
 
 /**
+ * Default implementation of the {@link Differentiator} for watched queries.
+ * It identifies items by their `id` property if available, otherwise it uses JSON stringification
+ * of the entire item for identification and comparison.
+ */
+export const DEFAULT_WATCHED_QUERY_DIFFERENTIATOR: WatchedQueryDifferentiator<any> = {
+  identify: (item) => {
+    if (item && typeof item == 'object' && typeof item['id'] == 'string') {
+      return item['id'];
+    }
+    return JSON.stringify(item);
+  },
+  compareBy: (item) => JSON.stringify(item)
+};
+
+/**
  * Uses the PowerSync onChange event to trigger watched queries.
  * Results are emitted on every change of the relevant tables.
  * @internal
  */
 export class DifferentialQueryProcessor<RowType>
-  extends AbstractQueryProcessor<WatchedQueryDifferential<RowType>, DifferentialWatchedQuerySettings<RowType>>
-  implements WatchedQuery<WatchedQueryDifferential<RowType>, DifferentialWatchedQuerySettings<RowType>>
+  extends AbstractQueryProcessor<RowType[], DifferentialWatchedQuerySettings<RowType>>
+  implements DifferentialWatchedQuery<RowType>
 {
+  readonly state: DifferentialWatchedQueryState<RowType>;
+
+  protected differentiator: WatchedQueryDifferentiator<RowType>;
+
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
+    this.state = this.constructInitialState();
+    this.differentiator = options.differentiator ?? DEFAULT_WATCHED_QUERY_DIFFERENTIATOR;
+  }
+
+  protected constructInitialState(): DifferentialWatchedQueryState<RowType> {
+    return {
+      ...super.constructInitialState(),
+      diff: {
+        ...EMPTY_DIFFERENTIAL,
+        all: this.options.placeholderData
+      }
+    };
   }
 
   /*
@@ -108,7 +173,7 @@ export class DifferentialQueryProcessor<RowType>
     current: RowType[],
     previousMap: DataHashMap<RowType>
   ): { diff: WatchedQueryDifferential<RowType>; map: DataHashMap<RowType>; hasChanged: boolean } {
-    const { identify, compareBy } = this.options.differentiator;
+    const { identify, compareBy } = this.differentiator;
 
     let hasChanged = false;
     const currentMap = new Map<string, { hash: string; item: RowType }>();
@@ -178,14 +243,12 @@ export class DifferentialQueryProcessor<RowType>
     let currentMap: DataHashMap<RowType> = new Map();
 
     // populate the currentMap from the placeholder data
-    if (this.state.data) {
-      this.state.data.all.forEach((item) => {
-        currentMap.set(this.options.differentiator.identify(item), {
-          hash: this.options.differentiator.compareBy(item),
-          item
-        });
+    this.state.data.forEach((item) => {
+      currentMap.set(this.differentiator.identify(item), {
+        hash: this.differentiator.compareBy(item),
+        item
       });
-    }
+    });
 
     db.onChangeWithCallback(
       {
@@ -199,9 +262,7 @@ export class DifferentialQueryProcessor<RowType>
               await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<WatchedQueryState<WatchedQueryDifferential<RowType>>> & {
-              data?: WatchedQueryDifferential<RowType>;
-            } = {};
+            const partialStateUpdate: Partial<MutableDifferentialWatchedQueryState<RowType>> = {};
 
             // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({
@@ -225,7 +286,10 @@ export class DifferentialQueryProcessor<RowType>
             currentMap = map;
 
             if (hasChanged) {
-              partialStateUpdate.data = diff;
+              Object.assign(partialStateUpdate, {
+                data: diff.all,
+                diff
+              });
             }
 
             if (Object.keys(partialStateUpdate).length > 0) {

@@ -11,20 +11,20 @@ export interface WatchedQueryState<Data> {
    * Indicates the initial loading state (hard loading).
    * Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
-  isLoading: boolean;
+  readonly isLoading: boolean;
   /**
    * Indicates whether the query is currently fetching data, is true during the initial load
    * and any time when the query is re-evaluating (useful for large queries).
    */
-  isFetching: boolean;
+  readonly isFetching: boolean;
   /**
    * The last error that occurred while executing the query.
    */
-  error: Error | null;
+  readonly error: Error | null;
   /**
    * The last time the query was updated.
    */
-  lastUpdated: Date | null;
+  readonly lastUpdated: Date | null;
   /**
    * The last data returned by the query.
    */
@@ -74,6 +74,13 @@ export interface WatchedQueryListener<Data> extends BaseListener {
   [WatchedQueryListenerEvent.ON_STATE_CHANGE]?: (state: WatchedQueryState<Data>) => void | Promise<void>;
   [WatchedQueryListenerEvent.CLOSED]?: () => void | Promise<void>;
 }
+
+export const DEFAULT_WATCH_THROTTLE_MS = 30;
+
+export const DEFAULT_WATCH_QUERY_OPTIONS: WatchedQueryOptions = {
+  throttleMs: DEFAULT_WATCH_THROTTLE_MS,
+  reportFetching: true
+};
 
 export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions>
   extends MetaBaseObserverInterface<WatchedQueryListener<Data>> {

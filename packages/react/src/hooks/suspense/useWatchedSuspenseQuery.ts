@@ -1,4 +1,4 @@
-import { CompilableQuery, WatchedQuery } from '@powersync/common';
+import { CompilableQuery } from '@powersync/common';
 import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
 import { AdditionalOptions } from '../watched/watch-types';
@@ -28,7 +28,7 @@ export const useWatchedSuspenseQuery = <T = any>(
   // on the query.
   // Once the component "commits", we exchange that for a permanent hold.
   const store = getQueryStore(powerSync);
-  const watchedQuery = store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>;
+  const watchedQuery = store.getQuery(key, parsedQuery, options);
 
   return useWatchedQuerySuspenseSubscription(watchedQuery);
 };

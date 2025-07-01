@@ -1,4 +1,4 @@
-import { FalsyComparator, type CompilableQuery } from '@powersync/common';
+import { type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '../PowerSyncContext';
 import { useSingleQuery } from './useSingleQuery';
 import { useWatchedQuery } from './useWatchedQuery';
@@ -45,9 +45,9 @@ export const useQuery = <RowType = any>(
         options: {
           reportFetching: options.reportFetching,
           // Maintains backwards compatibility with previous versions
-          // Comparisons are opt-in by default
+          // Differentiation is opt-in by default
           // We emit new data for each table change by default.
-          comparator: options.comparator ?? FalsyComparator
+          differentiator: options.differentiator
         }
       });
   }

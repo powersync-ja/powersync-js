@@ -1,8 +1,8 @@
-import { WatchedQueryComparator, type SQLWatchOptions } from '@powersync/common';
+import { SQLOnChangeOptions, WatchedQueryDifferentiator } from '@powersync/common';
 
-export interface HookWatchOptions<RowType = unknown> extends Omit<SQLWatchOptions, 'signal' | 'comparator'> {
+export interface HookWatchOptions<RowType = unknown> extends Omit<SQLOnChangeOptions, 'signal'> {
   reportFetching?: boolean;
-  comparator?: WatchedQueryComparator<RowType[]>;
+  differentiator?: WatchedQueryDifferentiator<RowType>;
 }
 
 export interface AdditionalOptions<RowType = unknown> extends HookWatchOptions<RowType> {

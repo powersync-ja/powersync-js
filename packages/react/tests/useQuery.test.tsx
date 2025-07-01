@@ -202,9 +202,10 @@ describe('useQuery', () => {
     const { result } = renderHook(
       () =>
         useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
-          comparator: new commonSdk.ArrayComparator({
+          differentiator: {
+            identify: (item) => item.id,
             compareBy: (item) => JSON.stringify(item)
-          })
+          }
         }),
       { wrapper }
     );
@@ -314,18 +315,7 @@ describe('useQuery', () => {
     // This query can be instantiated once and reused.
     // The query retains it's state and will not re-fetch the data unless the result changes.
     // This is useful for queries that are used in multiple components.
-    const listsQuery = db.incrementalWatch({ mode: commonSdk.IncrementalWatchMode.COMPARISON }).build({
-      watch: {
-        placeholderData: [],
-        query: {
-          compile: () => ({
-            sql: `SELECT * FROM lists`,
-            parameters: []
-          }),
-          execute: ({ sql, parameters }) => db.getAll(sql, parameters)
-        }
-      }
-    });
+    const listsQuery = db.query({ sql: `SELECT * FROM lists`, parameters: [] }).differentialWatch();
 
     const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
     const { result } = renderHook(() => useWatchedQuerySubscription(listsQuery), {

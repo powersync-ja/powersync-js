@@ -18,6 +18,8 @@ import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { throttleTrailing } from '../utils/async.js';
 import { mutexRunExclusive } from '../utils/mutex.js';
 import { ConnectionManager } from './ConnectionManager.js';
+import { CustomQuery } from './CustomQuery.js';
+import { ArrayQueryDefinition, Query } from './Query.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
@@ -33,9 +35,9 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
-import { IncrementalWatchMode } from './watched/WatchedQueryBuilder.js';
-import { WatchedQueryBuilderMap } from './watched/WatchedQueryBuilderMap.js';
-import { FalsyComparator, WatchedQueryComparator } from './watched/processors/comparators.js';
+import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
+import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
+import { WatchedQueryComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -138,8 +140,6 @@ const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
 export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
 };
-
-export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelayMs: 5000,
@@ -890,41 +890,59 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * Watch a SQL query which incrementally emits updates for result sets.
-   * This is useful for only getting updates when the result set changes, or viewing the change in the result set over time.
-   * @returns A {@link WatchedQueryBuilder} for the specified watch mode.
+   * Allows defining a query which can be used to build a {@link WatchedQuery}.
+   * The defined query will be executed with {@link AbstractPowerSyncDatabase.getAll}.
+   * An optional mapper function can be provided to transform the results.
    *
-   * For a comparison based watch, use {@link IncrementalWatchMode.COMPARISON}.
-   * See {@link ComparisonWatchedQueryBuilder} for more details.
    * @example
    * ```javascript
-   * const watchedQuery = powerSync
-   *  .incrementalWatch({ mode: IncrementalWatchMode.COMPARISON })
-   *  .build({
-   *    // ... Options
-   *  })
-   * ```
-   *
-   * For a differential based watch , use {@link IncrementalWatchMode.DIFFERENTIAL}.
-   * See {@link DifferentialWatchedQueryBuilder} for more details.
-   * @example
-   * ```javascript
-   * const watchedQuery = powerSync
-   *  .incrementalWatch({ mode: IncrementalWatchMode.DIFFERENTIAL })
-   *  .build({
-   *    // ... Options
-   *  })
+   * const watchedTodos = powersync.query({
+   *    sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *    parameters: [],
+   *    mapper: (row) => ({
+   *      ...row,
+   *      created_at: new Date(row.created_at as string)
+   *    })
+   * })
+   * .watch()
+   * // OR use .differentialWatch() for fine-grained watches.
    * ```
    */
-  incrementalWatch<Mode extends IncrementalWatchMode>(options: { mode: Mode }): WatchedQueryBuilderMap[Mode] {
-    const { mode } = options;
-    const builderFactory = WatchedQueryBuilderMap[mode];
-    if (!builderFactory) {
-      throw new Error(
-        `Unsupported watch mode: ${mode}. Please specify one of [${Object.values(IncrementalWatchMode).join(', ')}]`
-      );
-    }
-    return builderFactory(this) as WatchedQueryBuilderMap[Mode];
+  query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType> {
+    const { sql, parameters = [], mapper } = query;
+    const compatibleQuery: WatchCompatibleQuery<RowType[]> = {
+      compile: () => ({
+        sql,
+        parameters
+      }),
+      execute: async ({ sql, parameters }) => {
+        const result = await this.getAll(sql, parameters);
+        return mapper ? result.map(mapper) : (result as RowType[]);
+      }
+    };
+    return this.customQuery(compatibleQuery);
+  }
+
+  /**
+   * Allows building a {@link WatchedQuery} using an existing {@link WatchCompatibleQuery}.
+   * The watched query will use the provided {@link WatchCompatibleQuery.execute} method to query results.
+   *
+   * @example
+   * ```javascript
+   *
+   * // Potentially a query from an ORM like Drizzle
+   * const query = db.select().from(lists);
+   *
+   * const watchedTodos = powersync.customQuery(query)
+   * .watch()
+   * // OR use .differentialWatch() for fine-grained watches.
+   * ```
+   */
+  customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType> {
+    return new CustomQuery({
+      db: this,
+      query
+    });
   }
 
   /**
@@ -944,13 +962,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (!onResult) {
       throw new Error('onResult is required');
     }
+    const { comparator } = options ?? {};
 
-    const { comparator = FalsyComparator } = options ?? {};
-    // This watch method which provides static SQL is currently only compatible with the comparison mode.
-    // Uses shared incremental watch logic under the hood, but maintains the same external API as the old watch method.
-    const watchedQuery = this.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build<QueryResult | null>({
+    // This API yields a QueryResult type.
+    // This is not a standard Array result, which makes it incompatible with the .query API.
+    const watchedQuery = new OnChangeQueryProcessor({
+      db: this,
       comparator,
-      watch: {
+      placeholderData: null,
+      watchOptions: {
         query: {
           compile: () => ({
             sql: sql,
@@ -958,7 +978,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           }),
           execute: () => this.executeReadOnly(sql, parameters)
         },
-        placeholderData: null,
         reportFetching: false,
         throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
       }

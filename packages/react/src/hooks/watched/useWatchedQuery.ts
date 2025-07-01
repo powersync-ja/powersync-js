@@ -1,5 +1,5 @@
-import { FalsyComparator, IncrementalWatchMode } from '@powersync/common';
 import React from 'react';
+import { useWatchedQuerySubscription } from './useWatchedQuerySubscription';
 import { HookWatchOptions, QueryResult } from './watch-types';
 import { InternalHookOptions } from './watch-utils';
 
@@ -9,45 +9,31 @@ export const useWatchedQuery = <RowType = unknown>(
   const { query, powerSync, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
-    return powerSync.incrementalWatch({ mode: IncrementalWatchMode.COMPARISON }).build<RowType[]>({
-      watch: {
-        placeholderData: [],
-        query,
-        throttleMs: hookOptions.throttleMs,
-        reportFetching: hookOptions.reportFetching
-      },
-      comparator: hookOptions.comparator ?? FalsyComparator
-    });
+    const watch = hookOptions.differentiator
+      ? powerSync.customQuery(query).differentialWatch({
+          differentiator: hookOptions.differentiator,
+          reportFetching: hookOptions.reportFetching,
+          throttleMs: hookOptions.throttleMs
+        })
+      : powerSync.customQuery(query).watch({
+          reportFetching: hookOptions.reportFetching,
+          throttleMs: hookOptions.throttleMs
+        });
+    return watch;
   }, []);
 
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
-
-  const [output, setOutputState] = React.useState(watchedQuery.state);
 
   React.useEffect(() => {
     watchedQuery.close();
     setWatchedQuery(createWatchedQuery);
   }, [powerSync]);
 
-  React.useEffect(() => {
-    const dispose = watchedQuery.registerListener({
-      onStateChange: (state) => {
-        setOutputState({ ...state });
-      }
-    });
-
-    return () => {
-      dispose();
-      watchedQuery.close();
-    };
-  }, [watchedQuery]);
-
   // Indicates that the query will be re-fetched due to a change in the query.
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
     if (queryChanged) {
       watchedQuery.updateSettings({
-        placeholderData: [],
         query,
         throttleMs: hookOptions.throttleMs,
         reportFetching: hookOptions.reportFetching
@@ -55,5 +41,5 @@ export const useWatchedQuery = <RowType = unknown>(
     }
   }, [queryChanged]);
 
-  return output;
+  return useWatchedQuerySubscription(watchedQuery);
 };

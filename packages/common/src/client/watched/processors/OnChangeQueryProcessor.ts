@@ -1,15 +1,17 @@
-import { WatchCompatibleQuery, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
-import { AbstractQueryProcessor, AbstractQueryProcessorOptions, LinkQueryOptions } from './AbstractQueryProcessor.js';
+import { WatchCompatibleQuery, WatchedQuery, WatchedQueryOptions } from '../WatchedQuery.js';
+import {
+  AbstractQueryProcessor,
+  AbstractQueryProcessorOptions,
+  LinkQueryOptions,
+  MutableWatchedQueryState
+} from './AbstractQueryProcessor.js';
 import { WatchedQueryComparator } from './comparators.js';
 
 export interface ComparisonWatchedQuerySettings<DataType> extends WatchedQueryOptions {
   query: WatchCompatibleQuery<DataType>;
-  /**
-   * Initial result data which is presented while the initial loading is executing.
-   * Defaults to an empty differential.
-   */
-  placeholderData: DataType;
 }
+
+export type ComparisonWatchedQuery<DataType> = WatchedQuery<DataType, ComparisonWatchedQuerySettings<DataType>>;
 
 /**
  * @internal
@@ -29,7 +31,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, C
     super(options);
   }
 
-  /*
+  /**
    * @returns If the sets are equal
    */
   protected checkEquality(current: Data, previous: Data): boolean {
@@ -56,7 +58,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, C
               await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<WatchedQueryState<Data>> & { data?: Data } = {};
+            const partialStateUpdate: Partial<MutableWatchedQueryState<Data>> & { data?: Data } = {};
 
             // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({
@@ -77,7 +79,9 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, C
 
             // Check if the result has changed
             if (!this.checkEquality(result, this.state.data)) {
-              partialStateUpdate.data = result;
+              Object.assign(partialStateUpdate, {
+                data: result
+              });
             }
 
             if (Object.keys(partialStateUpdate).length > 0) {

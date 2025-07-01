@@ -5,7 +5,7 @@ import React from 'react';
  * A hook to access and subscribe to the results of an existing {@link WatchedQuery} instance.
  * @example
  * export const ContentComponent = () => {
- * const { data: lists }  = useWatchedQuerySuspenseSubscription(listsQuery);
+ * const { data: lists }  = useWatchedQuerySubscription(listsQuery);
  *
  * return <View>
  *   {lists.map((l) => (

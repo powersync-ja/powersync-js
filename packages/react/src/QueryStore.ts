@@ -1,6 +1,5 @@
 import {
   AbstractPowerSyncDatabase,
-  IncrementalWatchMode,
   WatchCompatibleQuery,
   WatchedQuery,
   WatchedQueryListenerEvent
@@ -20,32 +19,36 @@ export class QueryStore {
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
-  getQuery(key: string, query: WatchCompatibleQuery<unknown>, options: AdditionalOptions) {
+  getQuery<RowType>(
+    key: string,
+    query: WatchCompatibleQuery<RowType[]>,
+    options: AdditionalOptions
+  ): WatchedQuery<RowType[]> {
     if (this.cache.has(key)) {
-      return this.cache.get(key);
+      return this.cache.get(key) as WatchedQuery<RowType[]>;
     }
 
-    const watchedQuery = this.db
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
-      })
-      .build({
-        watch: {
-          query,
-          placeholderData: [],
+    const watch = options.differentiator
+      ? this.db.customQuery(query).differentialWatch({
+          differentiator: options.differentiator,
+          reportFetching: options.reportFetching,
           throttleMs: options.throttleMs
-        },
-        comparator: options.comparator
-      });
+        })
+      : this.db.customQuery(query).watch({
+          reportFetching: options.reportFetching,
+          throttleMs: options.throttleMs
+        });
 
-    const disposer = watchedQuery.registerListener({
+    this.cache.set(key, watch);
+
+    const disposer = watch.registerListener({
       closed: () => {
         this.cache.delete(key);
         disposer?.();
       }
     });
 
-    watchedQuery.listenerMeta.registerListener({
+    watch.listenerMeta.registerListener({
       listenersChanged: (counts) => {
         // Dispose this query if there are no subscribers present
         // We don't use the total here since we don't want to consider `onclose` listeners
@@ -58,15 +61,13 @@ export class QueryStore {
         }, 0);
 
         if (relevantCounts == 0) {
-          watchedQuery.close();
+          watch.close();
           this.cache.delete(key);
         }
       }
     });
 
-    this.cache.set(key, watchedQuery);
-
-    return watchedQuery;
+    return watch;
   }
 }
 

@@ -1,7 +1,7 @@
 import * as Y from 'yjs';
 
 import { b64ToUint8Array, Uint8ArrayTob64 } from '@/library/binary-utils';
-import { AbstractPowerSyncDatabase, GetAllQuery, IncrementalWatchMode } from '@powersync/web';
+import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { ObservableV2 } from 'lib0/observable';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentUpdates } from './AppSchema';
@@ -41,22 +41,20 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
      * This will be used to apply updates from other editors.
      * When we received an added item we apply the update to the Yjs document.
      */
-    const updateQuery = db.incrementalWatch({ mode: IncrementalWatchMode.DIFFERENTIAL }).build({
-      watch: {
-        query: new GetAllQuery<DocumentUpdates>({
-          sql: /* sql */ `
-            SELECT
-              *
-            FROM
-              document_updates
-            WHERE
-              document_id = ?
-              AND editor_id != ?
-          `,
-          parameters: [documentId, this.id]
-        })
-      }
-    });
+    const updateQuery = db
+      .query<DocumentUpdates>({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            document_updates
+          WHERE
+            document_id = ?
+            AND editor_id != ?
+        `,
+        parameters: [documentId, this.id]
+      })
+      .differentialWatch();
 
     this.abortController.signal.addEventListener(
       'abort',
@@ -73,8 +71,8 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
     let synced = false;
 
     updateQuery.registerListener({
-      onData: async (diff) => {
-        for (const added of diff.added) {
+      onStateChange: async () => {
+        for (const added of updateQuery.state.diff.added) {
           Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64));
         }
         if (!synced) {

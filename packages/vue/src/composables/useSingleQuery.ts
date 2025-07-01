@@ -1,16 +1,16 @@
 import {
   type CompilableQuery,
   ParsedQuery,
-  type SQLWatchOptions,
-  WatchedQueryComparator,
+  SQLOnChangeOptions,
+  WatchedQueryDifferentiator,
   parseQuery
 } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync';
 
-export interface AdditionalOptions<RowType = unknown> extends Omit<SQLWatchOptions, 'signal' | 'comparator'> {
+export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOptions, 'signal'> {
   runQueryOnce?: boolean;
-  comparator?: WatchedQueryComparator<RowType[]>;
+  differentiator?: WatchedQueryDifferentiator<RowType>;
 }
 
 export type WatchedQueryResult<T> = {

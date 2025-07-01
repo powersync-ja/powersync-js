@@ -19,6 +19,19 @@ export interface LinkQueryOptions<Data, Settings extends WatchedQueryOptions = W
   settings: Settings;
 }
 
+type MutableDeep<T> =
+  T extends ReadonlyArray<infer U>
+    ? U[] // convert readonly arrays to mutable arrays
+    : T;
+
+/**
+ * @internal Mutable version of {@link WatchedQueryState}.
+ * This is used internally to allow updates to the state.
+ */
+export type MutableWatchedQueryState<Data> = {
+  -readonly [P in keyof WatchedQueryState<Data>]: MutableDeep<WatchedQueryState<Data>[P]>;
+};
+
 type WatchedQueryProcessorListener<Data> = WatchedQueryListener<Data>;
 
 /**
@@ -47,15 +60,19 @@ export abstract class AbstractQueryProcessor<
     super();
     this.abortController = new AbortController();
     this._closed = false;
-    this.state = {
+    this.state = this.constructInitialState();
+    this.disposeListeners = null;
+    this.initialized = this.init();
+  }
+
+  protected constructInitialState(): WatchedQueryState<Data> {
+    return {
       isLoading: true,
       isFetching: this.reportFetching, // Only set to true if we will report updates in future
       error: null,
       lastUpdated: null,
-      data: options.placeholderData
+      data: this.options.placeholderData
     };
-    this.disposeListeners = null;
-    this.initialized = this.init();
   }
 
   protected get reportFetching() {
@@ -90,7 +107,7 @@ export abstract class AbstractQueryProcessor<
    */
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
-  protected async updateState(update: Partial<WatchedQueryState<Data>>) {
+  protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
     if (typeof update.error !== 'undefined') {
       await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
       // An error always stops for the current fetching state
@@ -98,11 +115,12 @@ export abstract class AbstractQueryProcessor<
       update.isLoading = false;
     }
 
+    Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<Data>>, update);
+
     if (typeof update.data !== 'undefined') {
-      await this.iterateAsyncListenersWithError(async (l) => l.onData?.(update!.data!));
+      await this.iterateAsyncListenersWithError(async (l) => l.onData?.(this.state.data));
     }
 
-    Object.assign(this.state, { lastUpdated: new Date() } satisfies Partial<WatchedQueryState<Data>>, update);
     await this.iterateAsyncListenersWithError(async (l) => l.onStateChange?.(this.state));
   }
 

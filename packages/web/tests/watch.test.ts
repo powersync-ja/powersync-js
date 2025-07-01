@@ -1,10 +1,4 @@
-import {
-  AbstractPowerSyncDatabase,
-  EMPTY_DIFFERENTIAL,
-  GetAllQuery,
-  IncrementalWatchMode,
-  WatchedQueryState
-} from '@powersync/common';
+import { AbstractPowerSyncDatabase, ArrayComparator, GetAllQuery, WatchedQueryState } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -333,18 +327,11 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should stream watch results', async () => {
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
+      .query({
+        sql: 'SELECT * FROM assets',
+        parameters: []
       })
-      .build({
-        watch: {
-          query: new GetAllQuery({
-            sql: 'SELECT * FROM assets',
-            parameters: []
-          }),
-          placeholderData: []
-        }
-      });
+      .watch();
 
     const getNextState = () =>
       new Promise<WatchedQueryState<any>>((resolve) => {
@@ -376,20 +363,14 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should only report updates for relevant changes', async () => {
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
+      .query<{ make: string }>({
+        sql: 'SELECT * FROM assets where make = ?',
+        parameters: ['test']
       })
-      .build({
-        watch: {
-          query: {
-            compile: () => ({
-              sql: 'SELECT * FROM assets where make = ?',
-              parameters: ['test']
-            }),
-            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
-          },
-          placeholderData: []
-        }
+      .watch({
+        comparator: new ArrayComparator({
+          compareBy: (item) => JSON.stringify(item)
+        })
       });
 
     let notificationCount = 0;
@@ -417,21 +398,12 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should not report fetching status', async () => {
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
+      .query({
+        sql: 'SELECT * FROM assets where make = ?',
+        parameters: ['test']
       })
-      .build({
-        watch: {
-          query: {
-            compile: () => ({
-              sql: 'SELECT * FROM assets where make = ?',
-              parameters: ['test']
-            }),
-            execute: ({ sql, parameters }) => powersync.getAll(sql, parameters)
-          },
-          placeholderData: [],
-          reportFetching: false
-        }
+      .watch({
+        reportFetching: false
       });
 
     expect(watch.state.isFetching).false;
@@ -465,18 +437,12 @@ describe('Watch Tests', { sequential: true }, () => {
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
 
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.COMPARISON
+      .query<{ make: string }>({
+        sql: 'SELECT * FROM assets where make = ?',
+        parameters: ['test']
       })
-      .build({
-        watch: {
-          query: new GetAllQuery<{ make: string }>({
-            sql: 'SELECT * FROM assets where make = ?',
-            parameters: ['test']
-          }),
-          placeholderData: [],
-          reportFetching: false
-        }
+      .watch({
+        reportFetching: false
       });
 
     expect(watch.state.isFetching).false;
@@ -492,7 +458,6 @@ describe('Watch Tests', { sequential: true }, () => {
     expect(watch.state.data[0].make).equals('test');
 
     await watch.updateSettings({
-      placeholderData: [],
       query: new GetAllQuery<{ make: string }>({
         sql: 'SELECT * FROM assets where make = ?',
         parameters: ['nottest']
@@ -514,27 +479,21 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should report differential query results', async () => {
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.DIFFERENTIAL
-      })
-      .build({
-        watch: {
-          query: new GetAllQuery({
-            sql: /* sql */ `
-              SELECT
-                *
-              FROM
-                assets
-            `,
-            mapper: (raw) => {
-              return {
-                id: raw.id as string,
-                make: raw.make as string
-              };
-            }
-          })
+      .query({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            assets
+        `,
+        mapper: (raw) => {
+          return {
+            id: raw.id as string,
+            make: raw.make as string
+          };
         }
-      });
+      })
+      .differentialWatch();
 
     // Create sample data
     await powersync.execute(
@@ -549,7 +508,7 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.added[0]?.make).equals('test1');
+        expect(watch.state.diff.added[0]?.make).equals('test1');
       },
       { timeout: 1000 }
     );
@@ -567,11 +526,11 @@ describe('Watch Tests', { sequential: true }, () => {
     await vi.waitFor(
       () => {
         // This should now reflect that we had one change since the last event
-        expect(watch.state.data.added).toHaveLength(1);
-        expect(watch.state.data.added[0]?.make).equals('test2');
+        expect(watch.state.diff.added).toHaveLength(1);
+        expect(watch.state.diff.added[0]?.make).equals('test2');
 
-        expect(watch.state.data.removed).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(2);
+        expect(watch.state.diff.removed).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -587,13 +546,13 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.added).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(1);
-        expect(watch.state.data.unchanged).toHaveLength(1);
-        expect(watch.state.data.unchanged[0]?.make).equals('test1');
+        expect(watch.state.diff.added).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(1);
+        expect(watch.state.diff.unchanged).toHaveLength(1);
+        expect(watch.state.diff.unchanged[0]?.make).equals('test1');
 
-        expect(watch.state.data.removed).toHaveLength(1);
-        expect(watch.state.data.removed[0]?.make).equals('test2');
+        expect(watch.state.diff.removed).toHaveLength(1);
+        expect(watch.state.diff.removed[0]?.make).equals('test2');
       },
       { timeout: 1000 }
     );
@@ -601,29 +560,24 @@ describe('Watch Tests', { sequential: true }, () => {
 
   it('should report differential query results with a custom differentiator', async () => {
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.DIFFERENTIAL
+      .query({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            assets
+        `,
+        mapper: (raw) => {
+          return {
+            id: raw.id as string,
+            make: raw.make as string
+          };
+        }
       })
-      .build({
+      .differentialWatch({
         differentiator: {
           identify: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
-        },
-        watch: {
-          query: new GetAllQuery({
-            sql: /* sql */ `
-              SELECT
-                *
-              FROM
-                assets
-            `,
-            mapper: (raw) => {
-              return {
-                id: raw.id as string,
-                make: raw.make as string
-              };
-            }
-          })
         }
       });
 
@@ -640,7 +594,7 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.added[0]?.make).equals('test1');
+        expect(watch.state.diff.added[0]?.make).equals('test1');
       },
       { timeout: 1000 }
     );
@@ -658,11 +612,11 @@ describe('Watch Tests', { sequential: true }, () => {
     await vi.waitFor(
       () => {
         // This should now reflect that we had one change since the last event
-        expect(watch.state.data.added).toHaveLength(1);
-        expect(watch.state.data.added[0]?.make).equals('test2');
+        expect(watch.state.diff.added).toHaveLength(1);
+        expect(watch.state.diff.added[0]?.make).equals('test2');
 
-        expect(watch.state.data.removed).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(2);
+        expect(watch.state.diff.removed).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -671,31 +625,26 @@ describe('Watch Tests', { sequential: true }, () => {
   it('should preserve object references in result set', async () => {
     // Sort the results by the `make` column in ascending order
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.DIFFERENTIAL
+      .query({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            assets
+          ORDER BY
+            make ASC;
+        `,
+        mapper: (raw) => {
+          return {
+            id: raw.id as string,
+            make: raw.make as string
+          };
+        }
       })
-      .build({
+      .differentialWatch({
         differentiator: {
           identify: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
-        },
-        watch: {
-          query: new GetAllQuery({
-            sql: /* sql */ `
-              SELECT
-                *
-              FROM
-                assets
-              ORDER BY
-                make ASC;
-            `,
-            mapper: (raw) => {
-              return {
-                id: raw.id as string,
-                make: raw.make as string
-              };
-            }
-          })
         }
       });
 
@@ -714,12 +663,12 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.all.map((i) => i.make)).deep.equals(['a', 'b', 'd']);
+        expect(watch.state.data.map((i) => i.make)).deep.equals(['a', 'b', 'd']);
       },
       { timeout: 1000 }
     );
 
-    const initialData = watch.state.data.all;
+    const initialData = watch.state.data;
 
     await powersync.execute(
       /* sql */ `
@@ -733,16 +682,16 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.all).toHaveLength(4);
+        expect(watch.state.data).toHaveLength(4);
       },
       { timeout: 1000 }
     );
 
-    console.log(JSON.stringify(watch.state.data.all));
-    expect(initialData[0] == watch.state.data.all[0]).true;
-    expect(initialData[1] == watch.state.data.all[1]).true;
+    console.log(JSON.stringify(watch.state.data));
+    expect(initialData[0] == watch.state.data[0]).true;
+    expect(initialData[1] == watch.state.data[1]).true;
     // The index after the insert should also still be the same ref as the previous item
-    expect(initialData[2] == watch.state.data.all[3]).true;
+    expect(initialData[2] == watch.state.data[3]).true;
   });
 
   it('should report differential query results from initial state', async () => {
@@ -756,22 +705,6 @@ describe('Watch Tests', { sequential: true }, () => {
      * which is the initial state of the query.
      */
 
-    // Store the query for reuse
-    const query = new GetAllQuery({
-      sql: /* sql */ `
-        SELECT
-          *
-        FROM
-          assets
-      `,
-      mapper: (raw) => {
-        return {
-          id: raw.id as string,
-          make: raw.make as string
-        };
-      }
-    });
-
     // Create sample data
     await powersync.execute(
       /* sql */ `
@@ -784,23 +717,29 @@ describe('Watch Tests', { sequential: true }, () => {
     );
 
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.DIFFERENTIAL
-      })
-      .build({
-        watch: {
-          query,
-          placeholderData: {
-            ...EMPTY_DIFFERENTIAL,
-            // Fetch the initial state as a baseline before creating the watch.
-            // Any changes after this state will be reported as changes.
-            all: await query.execute({ db: powersync })
-          }
+      .query({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            assets
+        `,
+        mapper: (raw) => {
+          return {
+            id: raw.id as string,
+            make: raw.make as string
+          };
         }
+      })
+      .differentialWatch({
+        placeholderData:
+          // Fetch the initial state as a baseline before creating the watch.
+          // Any changes after this state will be reported as changes.
+          await powersync.getAll(`SELECT * FROM assets`)
       });
 
     // It should have the initial value
-    expect(watch.state.data.all).toHaveLength(1);
+    expect(watch.state.data).toHaveLength(1);
 
     await powersync.execute(
       /* sql */ `
@@ -815,11 +754,11 @@ describe('Watch Tests', { sequential: true }, () => {
     await vi.waitFor(
       () => {
         // This should now reflect that we had one change since the last event
-        expect(watch.state.data.added).toHaveLength(1);
-        expect(watch.state.data.added[0]?.make).equals('test2');
+        expect(watch.state.diff.added).toHaveLength(1);
+        expect(watch.state.diff.added[0]?.make).equals('test2');
 
-        expect(watch.state.data.removed).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(2);
+        expect(watch.state.diff.removed).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -835,13 +774,13 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.added).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(1);
-        expect(watch.state.data.unchanged).toHaveLength(1);
-        expect(watch.state.data.unchanged[0]?.make).equals('test1');
+        expect(watch.state.diff.added).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(1);
+        expect(watch.state.diff.unchanged).toHaveLength(1);
+        expect(watch.state.diff.unchanged[0]?.make).equals('test1');
 
-        expect(watch.state.data.removed).toHaveLength(1);
-        expect(watch.state.data.removed[0]?.make).equals('test2');
+        expect(watch.state.diff.removed).toHaveLength(1);
+        expect(watch.state.diff.removed[0]?.make).equals('test2');
       },
       { timeout: 1000 }
     );
@@ -860,32 +799,29 @@ describe('Watch Tests', { sequential: true }, () => {
     );
 
     const watch = powersync
-      .incrementalWatch({
-        mode: IncrementalWatchMode.DIFFERENTIAL
-      })
-      .build({
-        watch: {
-          query: new GetAllQuery({
-            sql: /* sql */ `
-              SELECT
-                *
-              FROM
-                assets
-            `,
-            mapper: (raw) => {
-              return {
-                id: raw.id as string,
-                make: raw.make as string
-              };
-            }
-          })
+      .query({
+        sql: /* sql */ `
+          SELECT
+            *
+          FROM
+            assets
+        `,
+        mapper: (raw) => {
+          return {
+            id: raw.id as string,
+            make: raw.make as string
+          };
         }
-      });
+      })
+      .differentialWatch();
 
-    await vi.waitFor(() => {
-      // Wait for the data to be loaded
-      expect(watch.state.data.all[0]?.make).equals('test1');
-    });
+    await vi.waitFor(
+      () => {
+        // Wait for the data to be loaded
+        expect(watch.state.data[0]?.make).equals('test1');
+      },
+      { timeout: 1000, interval: 100 }
+    );
 
     await powersync.execute(
       /* sql */ `
@@ -900,16 +836,16 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.data.added).toHaveLength(0);
-        const updated = watch.state.data.updated[0];
+        expect(watch.state.diff.added).toHaveLength(0);
+        const updated = watch.state.diff.updated[0];
 
         // The update should contain previous and current values of changed rows
         expect(updated).toBeDefined();
         expect(updated.previous.make).equals('test1');
         expect(updated.current.make).equals('test2');
 
-        expect(watch.state.data.removed).toHaveLength(0);
-        expect(watch.state.data.all).toHaveLength(1);
+        expect(watch.state.diff.removed).toHaveLength(0);
+        expect(watch.state.diff.all).toHaveLength(1);
       },
       { timeout: 1000 }
     );
