@@ -463,7 +463,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
   mockSyncServiceTest('should upload after connecting', async ({ syncService }) => {
     let database = await syncService.createDatabase();
 
-    database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
     const query = database.watchWithAsyncGenerator('SELECT name FROM lists')[Symbol.asyncIterator]();
     let rows = (await query.next()).value.rows._array;
     expect(rows).toStrictEqual([{ name: 'local write' }]);
