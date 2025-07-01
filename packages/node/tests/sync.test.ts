@@ -492,6 +492,109 @@ function defineSyncTests(impl: SyncClientImplementation) {
     rows = (await query.next()).value.rows._array;
     expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
+
+  mockSyncServiceTest('should update sync state incrementally', async ({ syncService }) => {
+    const powersync = await syncService.createDatabase();
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    const buckets: BucketChecksum[] = [];
+    for (let prio = 0; prio <= 3; prio++) {
+      buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 10 + prio });
+    }
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '4',
+        buckets
+      }
+    });
+
+    let operationId = 1;
+    const addRow = (prio: number) => {
+      syncService.pushLine({
+        data: {
+          bucket: `prio${prio}`,
+          data: [
+            {
+              checksum: prio + 10,
+              data: JSON.stringify({ name: 'row' }),
+              op: 'PUT',
+              op_id: (operationId++).toString(),
+              object_id: `prio${prio}`,
+              object_type: 'lists'
+            }
+          ]
+        }
+      });
+    };
+
+    const syncCompleted = vi.fn();
+    powersync.waitForFirstSync().then(syncCompleted);
+
+    // Emit partial sync complete for each priority but the last.
+    for (var prio = 0; prio < 3; prio++) {
+      const partialSyncCompleted = vi.fn();
+      powersync.waitForFirstSync({ priority: prio }).then(partialSyncCompleted);
+      expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
+      expect(partialSyncCompleted).not.toHaveBeenCalled();
+      expect(syncCompleted).not.toHaveBeenCalled();
+
+      addRow(prio);
+      syncService.pushLine({
+        partial_checkpoint_complete: {
+          last_op_id: operationId.toString(),
+          priority: prio
+        }
+      });
+
+      await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
+        return status.statusForPriority(prio).hasSynced === true;
+      });
+      await new Promise((r) => setTimeout(r));
+      expect(partialSyncCompleted).toHaveBeenCalledOnce();
+
+      expect(await powersync.getAll('select * from lists')).toHaveLength(prio + 1);
+    }
+
+    // Then, complete the sync.
+    addRow(3);
+    syncService.pushLine({ checkpoint_complete: { last_op_id: operationId.toString() } });
+    await vi.waitFor(() => expect(syncCompleted).toHaveBeenCalledOnce(), 500);
+    expect(await powersync.getAll('select * from lists')).toHaveLength(4);
+  });
+
+  mockSyncServiceTest('Should remember sync state', async ({ syncService }) => {
+    const powersync = await syncService.createDatabase();
+    powersync.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    const buckets: BucketChecksum[] = [];
+    for (let prio = 0; prio <= 3; prio++) {
+      buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 0 });
+    }
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '0',
+        buckets
+      }
+    });
+    syncService.pushLine({
+      partial_checkpoint_complete: {
+        last_op_id: '0',
+        priority: 0
+      }
+    });
+
+    await powersync.waitForFirstSync({ priority: 0 });
+
+    // Open another database instance.
+    const another = await syncService.createDatabase();
+    await another.init();
+
+    expect(another.currentStatus.priorityStatusEntries).toHaveLength(1);
+    expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
+    await another.waitForFirstSync({ priority: 0 });
+  });
 }
 
 function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {
