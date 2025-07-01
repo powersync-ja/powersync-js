@@ -73,7 +73,7 @@ export const useWatchedQuery = <T = any>(
         isLoading.value = state.isLoading;
         isFetching.value = state.isFetching;
         // The watched query state is readonly
-        data.value = [...state.data];
+        data.value = state.data as T[];
         if (state.error) {
           const wrappedError = new Error('PowerSync failed to fetch data: ' + state.error.message);
           wrappedError.cause = state.error;

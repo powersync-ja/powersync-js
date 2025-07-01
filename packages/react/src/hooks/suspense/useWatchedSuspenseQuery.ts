@@ -34,6 +34,7 @@ export const useWatchedSuspenseQuery = <T = any>(
   return {
     ...result,
     // The result above is readonly, but this API expects a mutable array
-    data: [...result.data]
+    // We need to keep the same reference also.
+    data: result.data as T[]
   };
 };
