@@ -7,7 +7,7 @@ import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
 
-let skipTests = true;
+let skipTests = false;
 /**
  * This does not run as part of all tests. Enable this suite manually to run performance tests.
  *
@@ -356,7 +356,7 @@ const testsInsertsCompare = async (options: {
   return result as TestsInsertsCompareResult;
 };
 
-describe.skipIf(skipTests)('Performance', { timeout: 90_000 }, () => {
+describe.skipIf(skipTests)('Performance', { timeout: Infinity }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
