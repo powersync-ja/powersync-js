@@ -4,12 +4,12 @@ import {
   WatchedQuery,
   WatchedQueryListenerEvent
 } from '@powersync/common';
-import { AdditionalOptions } from './hooks/watched/watch-types';
+import { DifferentialHookOptions } from './hooks/watched/watch-types';
 
 export function generateQueryKey(
   sqlStatement: string,
   parameters: ReadonlyArray<unknown>,
-  options: AdditionalOptions
+  options: DifferentialHookOptions<unknown>
 ): string {
   return `${sqlStatement} -- ${JSON.stringify(parameters)} -- ${JSON.stringify(options)}`;
 }
@@ -19,7 +19,7 @@ export class QueryStore {
 
   constructor(private db: AbstractPowerSyncDatabase) {}
 
-  getQuery<RowType>(key: string, query: WatchCompatibleQuery<RowType[]>, options: AdditionalOptions) {
+  getQuery<RowType>(key: string, query: WatchCompatibleQuery<RowType[]>, options: DifferentialHookOptions<RowType>) {
     if (this.cache.has(key)) {
       return this.cache.get(key) as WatchedQuery<RowType[]>;
     }

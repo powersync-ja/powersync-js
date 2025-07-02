@@ -3,14 +3,16 @@ import { generateQueryKey, getQueryStore } from '../../QueryStore';
 import { usePowerSync } from '../PowerSyncContext';
 import { AdditionalOptions } from '../watched/watch-types';
 import { constructCompatibleQuery } from '../watched/watch-utils';
-import { SuspenseQueryResult } from './SuspenseQueryResult';
 import { useWatchedQuerySuspenseSubscription } from './useWatchedQuerySuspenseSubscription';
 
+/**
+ * @internal This is not exported in the index.ts
+ */
 export const useWatchedSuspenseQuery = <T = any>(
   query: string | CompilableQuery<T>,
   parameters: any[] = [],
   options: AdditionalOptions = {}
-): SuspenseQueryResult<T> => {
+) => {
   const powerSync = usePowerSync();
   if (!powerSync) {
     throw new Error('PowerSync not configured.');

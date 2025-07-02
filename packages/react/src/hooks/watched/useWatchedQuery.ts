@@ -1,11 +1,19 @@
 import React from 'react';
 import { useWatchedQuerySubscription } from './useWatchedQuerySubscription';
-import { HookWatchOptions, QueryResult } from './watch-types';
+import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types';
 import { InternalHookOptions } from './watch-utils';
 
+/**
+ * @internal This is not exported from the index.ts
+ *
+ * When a differential query is used the return type is readonly. This is required
+ * since the implementation requires a stable ref.
+ * For legacy compatibility we allow mutating when a standard query is used. Mutations should
+ * not affect the internal implementation in this case.
+ */
 export const useWatchedQuery = <RowType = unknown>(
-  options: InternalHookOptions<RowType[]> & { options: HookWatchOptions }
-): QueryResult<RowType> => {
+  options: InternalHookOptions<RowType[]> & { options: DifferentialHookOptions<RowType> }
+): QueryResult<RowType> | ReadonlyQueryResult<RowType> => {
   const { query, powerSync, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
