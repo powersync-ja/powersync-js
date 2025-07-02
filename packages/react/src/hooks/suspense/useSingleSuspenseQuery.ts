@@ -62,7 +62,6 @@ export const useSingleSuspenseQuery = <T = any>(
       data: data ?? watchedQuery?.state.data ?? [],
       refresh: async (signal) => {
         try {
-          console.log('calling refresh for single query', key);
           const compiledQuery = parsedQuery.compile();
           const result = await parsedQuery.execute({
             sql: compiledQuery.sql,
@@ -72,7 +71,6 @@ export const useSingleSuspenseQuery = <T = any>(
           if (signal.aborted) {
             return; // Abort if the signal is already aborted
           }
-          console.log('done with query refresh');
           setData(result);
           setError(null);
         } catch (e) {
