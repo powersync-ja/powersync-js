@@ -8,7 +8,7 @@ export const useWatchedQuery = <T = any>(
   sqlParameters: MaybeRef<any[]> = [],
   options: AdditionalOptions<T> = {}
 ): WatchedQueryResult<T> => {
-  const data = ref<T[]>([]) as Ref<T[]>;
+  const data = ref<ReadonlyArray<Readonly<T>>>([]) as Ref<ReadonlyArray<Readonly<T>>>;
   const error = ref<Error | undefined>(undefined);
   const isLoading = ref(true);
   const isFetching = ref(true);
@@ -72,8 +72,7 @@ export const useWatchedQuery = <T = any>(
       onStateChange: (state) => {
         isLoading.value = state.isLoading;
         isFetching.value = state.isFetching;
-        // The watched query state is readonly
-        data.value = state.data as T[];
+        data.value = state.data;
         if (state.error) {
           const wrappedError = new Error('PowerSync failed to fetch data: ' + state.error.message);
           wrappedError.cause = state.error;

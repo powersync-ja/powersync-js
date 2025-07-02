@@ -4,16 +4,16 @@ import { AdditionalOptions, useSingleQuery } from './useSingleQuery';
 import { useWatchedQuery } from './useWatchedQuery';
 
 export type WatchedQueryResult<T> = {
-  data: Ref<T[]>;
+  readonly data: Ref<ReadonlyArray<Readonly<T>>>;
   /**
    * Indicates the initial loading state (hard loading). Loading becomes false once the first set of results from the watched query is available or an error occurs.
    */
-  isLoading: Ref<boolean>;
+  readonly isLoading: Ref<boolean>;
   /**
    * Indicates whether the query is currently fetching data, is true during the initial load and any time when the query is re-evaluating (useful for large queries).
    */
-  isFetching: Ref<boolean>;
-  error: Ref<Error | undefined>;
+  readonly isFetching: Ref<boolean>;
+  readonly error: Ref<Error | undefined>;
   /**
    * Function used to run the query again.
    */
