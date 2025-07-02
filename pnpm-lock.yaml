@@ -585,8 +585,8 @@ importers:
         specifier: ^16.4.7
         version: 16.5.0
       undici:
-        specifier: ^7.10.0
-        version: 7.10.0
+        specifier: ^7.11.0
+        version: 7.11.0
     devDependencies:
       ts-node:
         specifier: ^10.9.2
@@ -1784,8 +1784,8 @@ importers:
         specifier: ^4.4.2
         version: 4.4.2
       undici:
-        specifier: ^7.10.0
-        version: 7.10.0
+        specifier: ^7.11.0
+        version: 7.11.0
     devDependencies:
       '@powersync/drizzle-driver':
         specifier: workspace:*
@@ -19546,8 +19546,8 @@ packages:
     resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
     engines: {node: '>=18.17'}
 
-  undici@7.10.0:
-    resolution: {integrity: sha512-u5otvFBOBZvmdjWLVW+5DAc9Nkq8f24g0O9oY7qw2JVIF1VocIFoyz9JFkuVOS2j41AufeO0xnlweJ2RLT8nGw==}
+  undici@7.11.0:
+    resolution: {integrity: sha512-heTSIac3iLhsmZhUCjyS3JQEkZELateufzZuBaVM5RHXdSBMb1LPMQf5x+FH7qjsZYDP0ttAc3nnVpUB+wYbOg==}
     engines: {node: '>=20.18.1'}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
@@ -28436,9 +28436,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -28449,9 +28447,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
@@ -45622,7 +45618,7 @@ snapshots:
 
   undici@6.21.3: {}
 
-  undici@7.10.0: {}
+  undici@7.11.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 
