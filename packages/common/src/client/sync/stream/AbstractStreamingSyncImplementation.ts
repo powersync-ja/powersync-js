@@ -941,7 +941,7 @@ The next upload iteration will be delayed.`);
           return {
             priority: status.priority,
             hasSynced: status.has_synced ?? undefined,
-            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at!) : undefined
+            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at! * 1000) : undefined
           };
         }
 
