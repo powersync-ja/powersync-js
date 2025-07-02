@@ -1,7 +1,9 @@
 import Logger, { ILogger } from 'js-logger';
 import { BaseListener, BaseObserver } from './BaseObserver.js';
 
-export type DataStreamOptions = {
+export type DataStreamOptions<ParsedData, SourceData> = {
+  mapLine?: (line: SourceData) => ParsedData;
+
   /**
    * Close the stream if any consumer throws an error
    */
@@ -33,8 +35,8 @@ export const DEFAULT_PRESSURE_LIMITS = {
  * native JS streams or async iterators.
  * This is handy for environments such as React Native which need polyfills for the above.
  */
-export class DataStream<Data extends any = any> extends BaseObserver<DataStreamListener<Data>> {
-  dataQueue: Data[];
+export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataStreamListener<ParsedData>> {
+  dataQueue: SourceData[];
 
   protected isClosed: boolean;
 
@@ -43,11 +45,14 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
 
   protected logger: ILogger;
 
-  constructor(protected options?: DataStreamOptions) {
+  protected mapLine: (line: SourceData) => ParsedData;
+
+  constructor(protected options?: DataStreamOptions<ParsedData, SourceData>) {
     super();
     this.processingPromise = null;
     this.isClosed = false;
     this.dataQueue = [];
+    this.mapLine = options?.mapLine ?? ((line) => line as any);
 
     this.logger = options?.logger ?? Logger.get('DataStream');
 
@@ -85,7 +90,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
   /**
    * Enqueues data for the consumers to read
    */
-  enqueueData(data: Data) {
+  enqueueData(data: SourceData) {
     if (this.isClosed) {
       throw new Error('Cannot enqueue data into closed stream.');
     }
@@ -100,7 +105,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
    * Reads data once from the data stream
    * @returns a Data payload or Null if the stream closed.
    */
-  async read(): Promise<Data | null> {
+  async read(): Promise<ParsedData | null> {
     if (this.closed) {
       return null;
     }
@@ -129,7 +134,7 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
   /**
    * Executes a callback for each data item in the stream
    */
-  forEach(callback: DataStreamCallback<Data>) {
+  forEach(callback: DataStreamCallback<ParsedData>) {
     if (this.dataQueue.length <= this.lowWatermark) {
       this.iterateAsyncErrored(async (l) => l.lowWater?.());
     }
@@ -139,18 +144,9 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
     });
   }
 
-  protected async processQueue() {
+  protected processQueue() {
     if (this.processingPromise) {
       return;
-    }
-
-    /**
-     * Allow listeners to mutate the queue before processing.
-     * This allows for operations such as dropping or compressing data
-     * on high water or requesting more data on low water.
-     */
-    if (this.dataQueue.length >= this.highWatermark) {
-      await this.iterateAsyncErrored(async (l) => l.highWater?.());
     }
 
     const promise = (this.processingPromise = this._processQueue());
@@ -160,37 +156,28 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
     return promise;
   }
 
-  /**
-   * Creates a new data stream which is a map of the original
-   */
-  map<ReturnData>(callback: (data: Data) => ReturnData): DataStream<ReturnData> {
-    const stream = new DataStream(this.options);
-    const l = this.registerListener({
-      data: async (data) => {
-        stream.enqueueData(callback(data));
-      },
-      closed: () => {
-        stream.close();
-        l?.();
-      }
-    });
-
-    return stream;
-  }
-
   protected hasDataReader() {
     return Array.from(this.listeners.values()).some((l) => !!l.data);
   }
 
   protected async _processQueue() {
+    /**
+     * Allow listeners to mutate the queue before processing.
+     * This allows for operations such as dropping or compressing data
+     * on high water or requesting more data on low water.
+     */
+    if (this.dataQueue.length >= this.highWatermark) {
+      await this.iterateAsyncErrored(async (l) => l.highWater?.());
+    }
+
     if (this.isClosed || !this.hasDataReader()) {
-      await Promise.resolve();
       return;
     }
 
     if (this.dataQueue.length) {
       const data = this.dataQueue.shift()!;
-      await this.iterateAsyncErrored(async (l) => l.data?.(data));
+      const mapped = this.mapLine(data);
+      await this.iterateAsyncErrored(async (l) => l.data?.(mapped));
     }
 
     if (this.dataQueue.length <= this.lowWatermark) {
@@ -202,14 +189,17 @@ export class DataStream<Data extends any = any> extends BaseObserver<DataStreamL
       this.notifyDataAdded = null;
     }
 
-    if (this.dataQueue.length) {
+    if (this.dataQueue.length > 0) {
       // Next tick
       setTimeout(() => this.processQueue());
     }
   }
 
-  protected async iterateAsyncErrored(cb: (l: BaseListener) => Promise<void>) {
-    for (let i of Array.from(this.listeners.values())) {
+  protected async iterateAsyncErrored(cb: (l: Partial<DataStreamListener<ParsedData>>) => Promise<void>) {
+    // Important: We need to copy the listeners, as calling a listener could result in adding another
+    // listener, resulting in infinite loops.
+    const listeners = Array.from(this.listeners.values());
+    for (let i of listeners) {
       try {
         await cb(i);
       } catch (ex) {
