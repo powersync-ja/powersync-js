@@ -50,6 +50,13 @@ export function throttleLeadingTrailing(func: () => void, wait: number) {
 }
 
 /**
+ * Sleep for a given number of milliseconds.
+ */
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Race a promise against an abort signal.
  * Returns a promise that resolves early if the signal is aborted before the
  * original promise resolves.

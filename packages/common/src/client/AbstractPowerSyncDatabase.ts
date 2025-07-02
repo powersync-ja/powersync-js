@@ -35,6 +35,7 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { sleep } from '../utils/async.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -1060,27 +1061,41 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return dispose;
     }
 
-    // Periodically flush the accumulated updates from the db listener.
     let isFlushing = false;
-    const flushIntervalId = setInterval(async () => {
+    let lastFlushTime = 0;
+
+    // Don't flush more often than the throttle interval.
+    const throttleFlush = async () => {
+      const timeSinceLastFlush = Date.now() - lastFlushTime;
+      if (timeSinceLastFlush < throttleMs) {
+        await sleep(throttleMs - timeSinceLastFlush);
+      }
+      lastFlushTime = Date.now();
+    };
+
+    // Periodically flush the accumulated updates from the db listener.
+    const triggerFlush = async () => {
       // Skip if we're already flushing.
-      // Will retry in the next interval.
+      // Will retry when more updates arrive.
       if (isFlushing) {
         return;
       }
       try {
-        // Prevent concurrent flushes.
         isFlushing = true;
-        await flushTableUpdates();
+        // Keep flushing until no more changes are pending
+        while (updatedTables.length > 0) {
+          await throttleFlush();
+          await executeFlush();
+        }
       } catch (error) {
         onError?.(error);
       } finally {
         // Allow future flush attempts.
         isFlushing = false;
       }
-    }, throttleMs);
+    };
 
-    const flushTableUpdates = async () => {
+    const executeFlush = async () => {
       // Get snapshot of the updated tables to avoid race conditions
       // between async operations here and the listener that adds updates.
       const updatesToFlush = [...updatedTables];
@@ -1117,6 +1132,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
               updatedTables.push(update);
             }
           }
+          triggerFlush();
         } catch (error) {
           onError?.(error);
         }
@@ -1124,7 +1140,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     });
 
     disposeManager.add(() => disposeListener());
-    disposeManager.add(() => clearInterval(flushIntervalId));
 
     if (resolvedOptions.signal) {
       disposeManager.disposeOnAbort(resolvedOptions.signal);
