@@ -142,11 +142,23 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
     });
   }
 
-  protected async processQueue() {
+  protected processQueue() {
     if (this.processingPromise) {
       return;
     }
 
+    let promise = this._processQueue().finally(() => {
+      this.processingPromise = null;
+    });
+    this.processingPromise = promise;
+    return promise;
+  }
+
+  protected hasDataReader() {
+    return Array.from(this.listeners.values()).some((l) => !!l.data);
+  }
+
+  protected async _processQueue() {
     /**
      * Allow listeners to mutate the queue before processing.
      * This allows for operations such as dropping or compressing data
@@ -156,16 +168,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       await this.iterateAsyncErrored(async (l) => l.highWater?.());
     }
 
-    return (this.processingPromise = this._processQueue());
-  }
-
-  protected hasDataReader() {
-    return Array.from(this.listeners.values()).some((l) => !!l.data);
-  }
-
-  protected async _processQueue() {
     if (this.isClosed || !this.hasDataReader()) {
-      Promise.resolve().then(() => (this.processingPromise = null));
       return;
     }
 
@@ -179,16 +182,17 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       await this.iterateAsyncErrored(async (l) => l.lowWater?.());
     }
 
-    this.processingPromise = null;
-
-    if (this.dataQueue.length) {
+    if (this.dataQueue.length > 0) {
       // Next tick
       setTimeout(() => this.processQueue());
     }
   }
 
   protected async iterateAsyncErrored(cb: (l: Partial<DataStreamListener<ParsedData>>) => Promise<void>) {
-    for (let i of this.listeners.values()) {
+    // Important: We need to copy the listeners, as calling a listener could result in adding another
+    // listener, resulting in infinite loops.
+    const listeners = Array.from(this.listeners.values());
+    for (let i of listeners) {
       try {
         await cb(i);
       } catch (ex) {
