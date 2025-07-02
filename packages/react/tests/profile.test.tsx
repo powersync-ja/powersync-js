@@ -1,5 +1,6 @@
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
+import { Chart } from 'chart.js/auto';
 import React, { Profiler } from 'react';
 import ReactDOM from 'react-dom/client';
 import { beforeEach, describe, it, Mock, onTestFinished, vi } from 'vitest';
@@ -419,6 +420,79 @@ describe.skipIf(skipTests)('Performance', { timeout: Infinity }, () => {
     console.log(Object.keys(totalResults[0]).join(','));
     totalResults.forEach((r) => {
       console.log(Object.values(r).join(','));
+    });
+
+    // Make a nice chart, these are visible when running tests with a visible browser `headless: false`
+    const chartCanvas = document.createElement('canvas');
+    document.body.appendChild(chartCanvas);
+
+    // Chart the Average incremental render times
+    const testTypes = new Set(Object.keys(totalResults[0]));
+    // Don't show this on this chart
+    testTypes.delete('differentialMemoImprovementPercentage');
+    testTypes.delete('initialDataCount');
+    new Chart(chartCanvas, {
+      type: 'line',
+      data: {
+        labels: initialDataVolumeSteps,
+        datasets: Array.from(testTypes).map((resultType) => {
+          return {
+            label: resultType,
+            data: totalResults.map((r) => r[resultType])
+          };
+        })
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Average incremental render time (ms)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Initial count of items'
+            }
+          }
+        }
+      }
+    });
+
+    const percentCanvas = document.createElement('canvas');
+    document.body.appendChild(percentCanvas);
+
+    // Chart the Average incremental render times
+    new Chart(percentCanvas, {
+      type: 'line',
+      data: {
+        labels: initialDataVolumeSteps,
+        datasets: [
+          {
+            label: 'Percentage decrease of render time for Differential Memoized',
+            data: totalResults.map((r) => r.differentialMemoImprovementPercentage)
+          }
+        ]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Average incremental render time (ms)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Initial count of items'
+            }
+          }
+        }
+      }
     });
   });
 });
