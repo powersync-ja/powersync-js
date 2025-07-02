@@ -47,11 +47,18 @@ export class LockedAsyncDatabaseAdapter
   private _db: AsyncDatabaseConnection | null = null;
   protected _disposeTableChangeListener: (() => void) | null = null;
   private _config: ResolvedWebSQLOpenOptions | null = null;
+  protected pendingAbortControllers: Set<AbortController>;
+
+  closing: boolean;
+  closed: boolean;
 
   constructor(protected options: LockedAsyncDatabaseAdapterOptions) {
     super();
     this._dbIdentifier = options.name;
     this.logger = options.logger ?? createLogger(`LockedAsyncDatabaseAdapter - ${this._dbIdentifier}`);
+    this.pendingAbortControllers = new Set<AbortController>();
+    this.closed = false;
+    this.closing = false;
     // Set the name if provided. We can query for the name if not available yet
     this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {
@@ -154,8 +161,11 @@ export class LockedAsyncDatabaseAdapter
    * tabs are still using it.
    */
   async close() {
+    this.closing = true;
     this._disposeTableChangeListener?.();
+    this.pendingAbortControllers.forEach((controller) => controller.abort('Closed'));
     await this.baseDB?.close?.();
+    this.closed = true;
   }
 
   async getAll<T>(sql: string, parameters?: any[] | undefined): Promise<T[]> {
@@ -175,20 +185,49 @@ export class LockedAsyncDatabaseAdapter
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.waitForInitialized();
-    return this.acquireLock(async () =>
-      fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw }))
+    return this.acquireLock(
+      async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
+      {
+        timeoutMs: options?.timeoutMs
+      }
     );
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.waitForInitialized();
-    return this.acquireLock(async () =>
-      fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw }))
+    return this.acquireLock(
+      async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
+      {
+        timeoutMs: options?.timeoutMs
+      }
     );
   }
 
-  protected acquireLock(callback: () => Promise<any>): Promise<any> {
-    return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, callback);
+  protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
+    await this.waitForInitialized();
+
+    if (this.closing) {
+      throw new Error(`Cannot acquire lock, the database is closing`);
+    }
+
+    const abortController = new AbortController();
+    this.pendingAbortControllers.add(abortController);
+    const { timeoutMs } = options ?? {};
+
+    const timoutId = timeoutMs
+      ? setTimeout(() => {
+          abortController.abort(`Timeout after ${timeoutMs}ms`);
+          this.pendingAbortControllers.delete(abortController);
+        }, timeoutMs)
+      : null;
+
+    return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
+      this.pendingAbortControllers.delete(abortController);
+      if (timoutId) {
+        clearTimeout(timoutId);
+      }
+      return callback();
+    });
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
@@ -286,6 +325,7 @@ export class LockedAsyncDatabaseAdapter
    */
   private _execute = async (sql: string, bindings?: any[]): Promise<QueryResult> => {
     await this.waitForInitialized();
+
     const result = await this.baseDB.execute(sql, bindings);
     return {
       ...result,

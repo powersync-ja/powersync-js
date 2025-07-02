@@ -69,7 +69,7 @@ const Component = () => {
 
 ## Reactive Queries
 
-The `useQuery` hook allows you to access the results of a watched query. Queries will automatically update when a dependant table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
+The `useQuery` hook allows you to access the results of a watched query. Queries will automatically update when a dependent table is updated unless you set the `runQueryOnce` flag. You are also able to use a compilable query (e.g. [Kysely queries](https://github.com/powersync-ja/powersync-js/tree/main/packages/kysely-driver)) as a query argument in place of a SQL statement string.
 
 ```JSX
 // TodoListDisplay.jsx
@@ -270,4 +270,124 @@ export const TodoListDisplaySuspense = () => {
     </ErrorBoundary>
   );
 };
+```
+
+## Preventing Unnecessary Renders
+
+The `useQuery` hook returns a stateful object which contains query fetching/loading state values and the query result set data.
+
+```tsx
+function MyWidget() {
+  // ... Widget code
+  // result is an object which contains `isLoading`, `isFetching`, `data` members.
+  const result = useQuery(...)
+
+  // ... Widget code
+}
+```
+
+### High Order Components
+
+The returned object is a new JS object reference whenever the internal state changes e.g. if the query `isFetching` alternates in value. The parent component which calls `useQuery` will render each time the watched query state changes - this can result in other child widgets re-rendering if they are not memoized. Using the `result` object in child component props will cause those children to re-render on any state change of the watched query. The first step to avoid re-renders is to call `useQuery` in a Higher Order Component which passes query results to memoized children.
+
+```tsx
+function MyWidget() {
+  // ... Widget code
+  // result is an object which contains `isLoading`, `isFetching`, `data` members.
+  const {data, error, isLoading} = useQuery(...)
+
+  // ... Widget code
+
+  return (
+    // ... Other components
+
+    // If MyWatchedWidget is not memoized
+    //   - It will rerender on any state change of the watched query. E.g. if isFetching alternates
+    // If MyWatchedWidget is memoized
+    //  - It will re-render if the data reference changes. By default the data reference changes after any
+    //    change to the query's dependent tables. This can be optimized by using Incremental queries.
+    <MyWatchedWidget watchedResult={data}>
+  )
+}
+```
+
+### Incremental Queries
+
+By default watched queries are queried whenever a change to the underlying tables has been detected. These changes might not be relevant to the actual query, but will still trigger a query and `data` update.
+
+```tsx
+function MyWidget() {
+  // ... Widget code
+  // This query will update with a new data Array whenever any change is made to the `cats` table
+  // E.g. `INSERT INTO cats(name) VALUES ('silvester')` will return a new Array reference for `data`
+  const { data } = useQuery(`SELECT * FROM cats WHERE  name = 'bob'`)
+
+  // ... Widget code
+
+  return (
+    // Other components
+    // This will rerender for any change to the `cats` table
+    // Memoization cannot prevent this component from re-rendering since `data[0]` is always new object reference
+    // whenever a query has been triggered
+    <Cat details={data[0]}>
+  )
+}
+```
+
+Incremental watched queries ensure that the `data` member of the `useQuery` result maintains the same Array reference if the result set is unchanged.
+Additionally, the internal array items maintain object references when unchanged.
+
+```tsx
+function MyWidget() {
+  // ... Widget code
+  // This query will be fetched/queried whenever any change is made to the `cats` table.
+  // The `data` reference will only be changed if there have been changes since the previous value.
+  // This method performs a comparison in memory in order to determine changes.
+  // Note that isFetching is set (by default) whenever the query is being fetched/checked.
+  // This will result in `MyWidget` re-rendering for any change to the `cats` table.
+  const { data, isLoading, isFetching } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
+      differentiator: {
+            identify: (item) => item.id,
+            compareBy: (item) => JSON.stringify(item)
+      }
+  })
+
+  // ... Widget code
+
+  return (
+    // Other components
+    // The data array is the same reference if no changes have occurred between fetches
+    // Note: The array is a new reference is there are any changes in the result set (individual row object references are preserved for unchanged rows)
+    // Note: CatCollection requires memoization in order to prevent re-rendering (due to the parent re-rendering on fetch)
+    <CatCollection cats={data}>
+  )
+}
+```
+
+`useQuery` can be configured to disable reporting `isFetching` status. Disabling this setting reduces the number of events emitted from the hook, which can reduce renders in some circumstances.
+
+```tsx
+function MyWidget() {
+  // ... Widget code
+  // This query will be fetched/queried whenever any change is made to the `cats` table.
+  // The `data` reference will only be changed if there have been changes since the previous value.
+  // When reportFetching == false the object returned from useQuery will only be changed when the data, isLoading or error state changes.
+  // This method performs a comparison in memory in order to determine changes.
+  const { data, isLoading } = useQuery(`SELECT * FROM cats WHERE breed = 'tabby'`, [], {
+    differentiator: {
+      identify: (item) => item.id,
+      compareBy: (item) => JSON.stringify(item)
+      }
+    reportFetching: false
+  })
+
+  // ... Widget code
+
+  return (
+    // Other components
+    // The data array is the same reference if no changes have occurred between fetches
+    // Note: The array is a new reference is there are any changes in the result set (individual row object references are not preserved)
+    <CatCollection cats={data}>
+  )
+}
 ```

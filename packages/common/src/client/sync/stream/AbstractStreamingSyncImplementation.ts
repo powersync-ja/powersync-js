@@ -1,11 +1,11 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { DataStream } from '../../../utils/DataStream.js';
-import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import * as sync_status from '../../../db/crud/SyncStatus.js';
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
+import { DataStream } from '../../../utils/DataStream.js';
 import { onAbortPromise, throttleLeadingTrailing } from '../../../utils/async.js';
 import {
   BucketChecksum,
@@ -17,6 +17,7 @@ import {
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
+import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
 import {
   BucketRequest,
   StreamingSyncLine,
@@ -28,7 +29,6 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -170,7 +170,9 @@ export interface AdditionalConnectionOptions {
 /** @internal */
 export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>;
 
-export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncImplementationListener>, Disposable {
+export interface StreamingSyncImplementation
+  extends BaseObserverInterface<StreamingSyncImplementationListener>,
+    Disposable {
   /**
    * Connects to the sync service
    */
@@ -222,6 +224,9 @@ export abstract class AbstractStreamingSyncImplementation
   protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
+  // In rare cases, mostly for tests, uploads can be triggered without being properly connected.
+  // This allows ensuring that all upload processes can be aborted.
+  protected uploadAbortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
 
@@ -315,8 +320,10 @@ export abstract class AbstractStreamingSyncImplementation
   }
 
   async dispose() {
+    super.dispose();
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
+    this.uploadAbortController?.abort();
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -341,7 +348,17 @@ export abstract class AbstractStreamingSyncImplementation
          */
         let checkedCrudItem: CrudEntry | undefined;
 
-        while (true) {
+        const controller = new AbortController();
+        this.uploadAbortController = controller;
+        this.abortController?.signal.addEventListener(
+          'abort',
+          () => {
+            controller.abort();
+          },
+          { once: true }
+        );
+
+        while (!controller.signal.aborted) {
           this.updateSyncStatus({
             dataFlow: {
               uploading: true
@@ -381,7 +398,7 @@ The next upload iteration will be delayed.`);
                 uploadError: ex
               }
             });
-            await this.delayRetry();
+            await this.delayRetry(controller.signal);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
               break;
@@ -397,6 +414,7 @@ The next upload iteration will be delayed.`);
             });
           }
         }
+        this.uploadAbortController = null;
       }
     });
   }

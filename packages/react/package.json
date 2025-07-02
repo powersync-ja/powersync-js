@@ -34,10 +34,13 @@
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@testing-library/react": "^15.0.2",
     "@types/react": "^18.3.1",
+    "chart.js": "^4.5.0",
     "jsdom": "^24.0.0",
     "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-error-boundary": "^4.1.0"
   }
 }
