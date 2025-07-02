@@ -194,7 +194,6 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
 
     this.logger.debug('Attempting to connect to PowerSync instance');
     await this.syncStreamImplementation?.connect(appliedOptions!);
-    this.syncStreamImplementation?.triggerCrudUpload();
   }
 
   /**
