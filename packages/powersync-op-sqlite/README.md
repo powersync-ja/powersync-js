@@ -16,6 +16,10 @@ Follow the installation instructions for the [React Native SDK](https://github.c
 npx expo install @powersync/op-sqlite
 ```
 
+When using this package without a frameowrk like Expo, we recommend adding [this metro config](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native#metro-config-optional)
+to avoid issues related to bundling PowerSync.
+Without it, you may be getting `TypeError: Cannot read property 'PowerSyncDatabase' of undefined` or similar errors.
+
 ### Install Peer Dependency:
 
 This SDK currently requires `@op-engineering/op-sqlite` as a peer dependency.
