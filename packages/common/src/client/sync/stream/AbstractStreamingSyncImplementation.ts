@@ -840,6 +840,7 @@ The next upload iteration will be delayed.`);
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let receivingLines: Promise<void> | null = null;
+    let hadSyncLine = false;
 
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
@@ -847,10 +848,7 @@ The next upload iteration will be delayed.`);
     // Pending sync lines received from the service, as well as local events that trigger a powersync_control
     // invocation (local events include refreshed tokens and completed uploads).
     // This is a single data stream so that we can handle all control calls from a single place.
-    let controlInvocations: DataStream<{
-      command: PowerSyncControlCommand;
-      payload?: ArrayBuffer | string;
-    }> | null = null;
+    let controlInvocations: DataStream<EnqueuedCommand, Uint8Array | EnqueuedCommand> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
@@ -860,20 +858,34 @@ The next upload iteration will be delayed.`);
       };
 
       if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        controlInvocations = await remote.postStreamRaw(syncOptions, (line) => ({
-          command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
-          payload: line
-        }));
+        controlInvocations = await remote.postStreamRaw(syncOptions, (line: string | EnqueuedCommand) => {
+          if (typeof line == 'string') {
+            return {
+              command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
+              payload: line
+            };
+          } else {
+            // Directly enqueued by us
+            return line;
+          }
+        });
       } else {
         controlInvocations = await remote.socketStreamRaw(
           {
             ...syncOptions,
             fetchStrategy: resolvedOptions.fetchStrategy
           },
-          (buffer) => ({
-            command: PowerSyncControlCommand.PROCESS_BSON_LINE,
-            payload: buffer
-          })
+          (payload: Uint8Array | EnqueuedCommand) => {
+            if (payload instanceof Uint8Array) {
+              return {
+                command: PowerSyncControlCommand.PROCESS_BSON_LINE,
+                payload: payload
+              };
+            } else {
+              // Directly enqueued by us
+              return payload;
+            }
+          }
         );
       }
 
@@ -885,6 +897,11 @@ The next upload iteration will be delayed.`);
           }
 
           await control(line.command, line.payload);
+
+          if (!hadSyncLine) {
+            syncImplementation.triggerCrudUpload();
+            hadSyncLine = true;
+          }
         }
       } finally {
         const activeInstructions = controlInvocations;
@@ -900,7 +917,7 @@ The next upload iteration will be delayed.`);
       await control(PowerSyncControlCommand.STOP);
     }
 
-    async function control(op: PowerSyncControlCommand, payload?: ArrayBuffer | string) {
+    async function control(op: PowerSyncControlCommand, payload?: Uint8Array | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
       await handleInstructions(JSON.parse(rawResponse));
     }
@@ -923,7 +940,7 @@ The next upload iteration will be delayed.`);
           return {
             priority: status.priority,
             hasSynced: status.has_synced ?? undefined,
-            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at!) : undefined
+            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at! * 1000) : undefined
           };
         }
 
@@ -1138,4 +1155,9 @@ The next upload iteration will be delayed.`);
       timeoutId = setTimeout(endDelay, retryDelayMs);
     });
   }
+}
+
+interface EnqueuedCommand {
+  command: PowerSyncControlCommand;
+  payload?: Uint8Array | string;
 }

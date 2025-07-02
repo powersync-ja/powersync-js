@@ -106,5 +106,5 @@ export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener
   /**
    * Invokes the `powersync_control` function for the sync client.
    */
-  control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string>;
+  control(op: PowerSyncControlCommand, payload: string | Uint8Array | null): Promise<string>;
 }

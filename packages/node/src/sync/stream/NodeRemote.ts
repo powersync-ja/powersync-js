@@ -19,7 +19,6 @@ import {
   ProxyAgent,
   WebSocket as UndiciWebSocket
 } from 'undici';
-import { ErrorRecordingDispatcher } from './ErrorRecordingDispatcher.js';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -65,25 +64,14 @@ export class NodeRemote extends AbstractRemote {
   protected createSocket(url: string): globalThis.WebSocket {
     // Create dedicated dispatcher for this WebSocket
     const baseDispatcher = this.getWebsocketDispatcher(url);
-    const errorRecordingDispatcher = new ErrorRecordingDispatcher(baseDispatcher);
 
     // Create WebSocket with dedicated dispatcher
     const ws = new UndiciWebSocket(url, {
-      dispatcher: errorRecordingDispatcher,
+      dispatcher: baseDispatcher,
       headers: {
         'User-Agent': this.getUserAgent()
       }
     });
-
-    errorRecordingDispatcher.onError = (error: Error) => {
-      // When we receive an error from the Dispatcher, emit the event on the websocket.
-      // This will take precedence over the WebSocket's own error event, giving more details on what went wrong.
-      const event = new ErrorEvent('error', {
-        error,
-        message: error.message
-      });
-      ws.dispatchEvent(event);
-    };
 
     return ws as globalThis.WebSocket;
   }
