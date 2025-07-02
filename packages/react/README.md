@@ -357,7 +357,7 @@ function MyWidget() {
   return (
     // Other components
     // The data array is the same reference if no changes have occurred between fetches
-    // Note: The array is a new reference is there are any changes in the result set (individual row object references are not preserved)
+    // Note: The array is a new reference is there are any changes in the result set (individual row object references are preserved for unchanged rows)
     // Note: CatCollection requires memoization in order to prevent re-rendering (due to the parent re-rendering on fetch)
     <CatCollection cats={data}>
   )

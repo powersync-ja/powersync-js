@@ -1,4 +1,4 @@
-import { WatchedQuery, WatchedQueryState } from '@powersync/common';
+import { WatchedQuery } from '@powersync/common';
 import React from 'react';
 
 /**
@@ -15,9 +15,12 @@ import React from 'react';
  * }
  *
  */
-export const useWatchedQuerySubscription = <ResultType = unknown>(
-  query: WatchedQuery<ResultType>
-): WatchedQueryState<ResultType> => {
+export const useWatchedQuerySubscription = <
+  ResultType = unknown,
+  Query extends WatchedQuery<ResultType> = WatchedQuery<ResultType>
+>(
+  query: Query
+): Query['state'] => {
   const [output, setOutputState] = React.useState(query.state);
 
   React.useEffect(() => {

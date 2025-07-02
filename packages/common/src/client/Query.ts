@@ -12,8 +12,8 @@ import { WatchedQueryOptions } from './watched/WatchedQuery.js';
 export type QueryParam = string | number | boolean | null | undefined | bigint | Uint8Array;
 
 /**
- * Options for building a query with {@link AbstractPowerSyncDatabase.query}.
- * This query will be executed with {@link AbstractPowerSyncDatabase.getAll}.
+ * Options for building a query with {@link AbstractPowerSyncDatabase#query}.
+ * This query will be executed with {@link AbstractPowerSyncDatabase#getAll}.
  */
 export interface ArrayQueryDefinition<RowType = unknown> {
   sql: string;
@@ -37,7 +37,7 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
   /**
    * Optional comparator which processes the items of an array of rows.
-   * The comparator compares the result set rows by index using the {@link ArrayComparatorOptions.compareBy} function.
+   * The comparator compares the result set rows by index using the {@link ArrayComparatorOptions#compareBy} function.
    * The comparator reports a changed result set as soon as a row does not match the previous result set.
    *
    * @example
@@ -64,7 +64,7 @@ export interface Query<RowType> {
    * These changes might not be relevant to the query, but the query will emit a new result set.
    *
    * A {@link StandardWatchedQueryOptions#comparator} can be provided to limit the data emissions. The watched query will still
-   * query the underlying DB on a underlying table changes, but the result will only be emitted if the comparator detects a change in the results.
+   * query the underlying DB on underlying table changes, but the result will only be emitted if the comparator detects a change in the results.
    *
    * The comparator in this method is optimized and returns early as soon as it detects a change. Each data emission will correlate to a change in the result set,
    * but note that the result set will not maintain internal object references to the previous result set. If internal object references are needed,

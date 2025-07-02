@@ -23,7 +23,12 @@ import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
  * );
  * }
  */
-export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQuery<ResultType>) => {
+export const useWatchedQuerySuspenseSubscription = <
+  ResultType = unknown,
+  Query extends WatchedQuery<ResultType> = WatchedQuery<ResultType>
+>(
+  query: Query
+): Query['state'] => {
   const { releaseHold } = useTemporaryHold(query);
 
   // Force update state function
@@ -53,12 +58,7 @@ export const useWatchedQuerySuspenseSubscription = <ResultType>(query: WatchedQu
     throw query.state.error;
   } else if (!query.state.isLoading) {
     // Happy path data return
-    return {
-      data: query.state.data,
-      refresh: async () => {
-        // no-op for watched queries
-      }
-    };
+    return query.state;
   } else {
     // Notify suspense is required
     throw createSuspendingPromise(query);
