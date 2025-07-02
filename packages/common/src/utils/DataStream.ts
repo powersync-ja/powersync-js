@@ -41,6 +41,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
   protected isClosed: boolean;
 
   protected processingPromise: Promise<void> | null;
+  protected notifyDataAdded: (() => void) | null;
 
   protected logger: ILogger;
 
@@ -95,6 +96,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
     }
 
     this.dataQueue.push(data);
+    this.notifyDataAdded?.();
 
     this.processQueue();
   }
@@ -147,10 +149,10 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       return;
     }
 
-    let promise = this._processQueue().finally(() => {
-      this.processingPromise = null;
+    const promise = (this.processingPromise = this._processQueue());
+    promise.finally(() => {
+      return (this.processingPromise = null);
     });
-    this.processingPromise = promise;
     return promise;
   }
 
@@ -179,7 +181,12 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
     }
 
     if (this.dataQueue.length <= this.lowWatermark) {
-      await this.iterateAsyncErrored(async (l) => l.lowWater?.());
+      const dataAdded = new Promise<void>((resolve) => {
+        this.notifyDataAdded = resolve;
+      });
+
+      await Promise.race([this.iterateAsyncErrored(async (l) => l.lowWater?.()), dataAdded]);
+      this.notifyDataAdded = null;
     }
 
     if (this.dataQueue.length > 0) {
