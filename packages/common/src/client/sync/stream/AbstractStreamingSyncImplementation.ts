@@ -414,7 +414,7 @@ The next upload iteration will be delayed.`);
     // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
       const disposer = this.registerListener({
-        statusChanged(status) {
+        statusChanged: (status) => {
           if (status.dataFlowStatus.downloadError != null) {
             this.logger.warn('Initial connect attempt did not successfully connect to server');
           } else if (status.connecting) {
