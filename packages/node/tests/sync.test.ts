@@ -135,6 +135,49 @@ function defineSyncTests(impl: SyncClientImplementation) {
     expect(Math.abs(lastSyncedAt - now)).toBeLessThan(5000);
   });
 
+  mockSyncServiceTest('connect() waits for connection', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    let connectCompleted = false;
+    database.connect(new TestConnector(), options).then(() => {
+      connectCompleted = true;
+    });
+    expect(connectCompleted).toBeFalsy();
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    // We want connected: true once we have a connection
+    await vi.waitFor(() => connectCompleted);
+    expect(database.currentStatus.dataFlowStatus.downloading).toBeFalsy();
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '10',
+        buckets: [bucket('a', 10)]
+      }
+    });
+
+    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+  });
+
+  mockSyncServiceTest('does not set uploading status without local writes', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    database.registerListener({
+      statusChanged(status) {
+        expect(status.dataFlowStatus.uploading).toBeFalsy();
+      }
+    });
+
+    database.connect(new TestConnector(), options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({
+      checkpoint: {
+        last_op_id: '10',
+        buckets: [bucket('a', 10)]
+      }
+    });
+    await vi.waitFor(() => expect(database.currentStatus.dataFlowStatus.downloading).toBeTruthy());
+  });
+
   describe('reports progress', () => {
     let lastOpId = 0;
 

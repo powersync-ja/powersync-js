@@ -342,17 +342,18 @@ export abstract class AbstractStreamingSyncImplementation
         let checkedCrudItem: CrudEntry | undefined;
 
         while (true) {
-          this.updateSyncStatus({
-            dataFlow: {
-              uploading: true
-            }
-          });
           try {
             /**
              * This is the first item in the FIFO CRUD queue.
              */
             const nextCrudItem = await this.options.adapter.nextCrudItem();
             if (nextCrudItem) {
+              this.updateSyncStatus({
+                dataFlow: {
+                  uploading: true
+                }
+              });
+
               if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
                 this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
@@ -410,23 +411,15 @@ The next upload iteration will be delayed.`);
     this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
-    // Return a promise that resolves when the connection status is updated
+    // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
       const disposer = this.registerListener({
-        statusUpdated: (update) => {
-          // This is triggered as soon as a connection is read from
-          if (typeof update.connected == 'undefined') {
-            // only concern with connection updates
-            return;
-          }
-
-          if (update.connected == false) {
-            /**
-             * This function does not reject if initial connect attempt failed.
-             * Connected can be false if the connection attempt was aborted or if the initial connection
-             * attempt failed.
-             */
+        statusChanged: (status) => {
+          if (status.dataFlowStatus.downloadError != null) {
             this.logger.warn('Initial connect attempt did not successfully connect to server');
+          } else if (status.connecting) {
+            // Still connecting.
+            return;
           }
 
           disposer();
@@ -888,6 +881,10 @@ The next upload iteration will be delayed.`);
           }
         );
       }
+
+      // The rust client will set connected: true after the first sync line because that's when it gets invoked, but
+      // we're already connected here and can report that.
+      syncImplementation.updateSyncStatus({ connected: true });
 
       try {
         while (!controlInvocations.closed) {
