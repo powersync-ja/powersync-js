@@ -116,6 +116,13 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
         });
 
         return new Response(syncLines.pipeThrough(asLines) as any, { status: 200 });
+      } else if (request.url.indexOf('/write-checkpoint2.json') != -1) {
+        return new Response(
+          JSON.stringify({
+            data: { write_checkpoint: '1' }
+          }),
+          { status: 200 }
+        );
       } else {
         return new Response('Not found', { status: 404 });
       }

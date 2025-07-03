@@ -24,8 +24,14 @@ const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
 const KEEP_ALIVE_MS = 20_000;
-// The ACK must be received in this period
-const KEEP_ALIVE_LIFETIME_MS = 30_000;
+
+// One message of any type must be received in this period.
+const SOCKET_TIMEOUT_MS = 30_000;
+
+// One keepalive message must be received in this period.
+// If there is a backlog of messages (for example on slow connections), keepalive messages could be delayed
+// significantly. Therefore this is longer than the socket timeout.
+const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
@@ -267,7 +273,7 @@ export abstract class AbstractRemote {
    */
   async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
     const bson = await this.getBSON();
-    return await this.socketStreamRaw(options, (data) => bson.deserialize(data), bson);
+    return await this.socketStreamRaw(options, (data) => bson.deserialize(data) as StreamingSyncLine, bson);
   }
 
   /**
@@ -279,9 +285,9 @@ export abstract class AbstractRemote {
    */
   async socketStreamRaw<T>(
     options: SocketSyncStreamOptions,
-    map: (buffer: Buffer) => T,
+    map: (buffer: Uint8Array) => T,
     bson?: typeof BSON
-  ): Promise<DataStream> {
+  ): Promise<DataStream<T>> {
     const { path, fetchStrategy = FetchStrategy.Buffered } = options;
     const mimeType = bson == null ? 'application/json' : 'application/bson';
 
@@ -304,12 +310,26 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    let keepAliveTimeout: any;
+    const resetTimeout = () => {
+      clearTimeout(keepAliveTimeout);
+      keepAliveTimeout = setTimeout(() => {
+        this.logger.error(`No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`);
+        stream.close();
+      }, SOCKET_TIMEOUT_MS);
+    };
+    resetTimeout();
+
     const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url,
         wsCreator: (url) => {
-          return this.createSocket(url);
+          const socket = this.createSocket(url);
+          socket.addEventListener('message', (event) => {
+            resetTimeout();
+          });
+          return socket;
         }
       }),
       setup: {
@@ -332,18 +352,23 @@ export abstract class AbstractRemote {
       rsocket = await connector.connect();
     } catch (ex) {
       this.logger.error(`Failed to connect WebSocket`, ex);
+      clearTimeout(keepAliveTimeout);
       throw ex;
     }
 
-    const stream = new DataStream({
+    resetTimeout();
+
+    const stream = new DataStream<T, Uint8Array>({
       logger: this.logger,
       pressure: {
         lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
-      }
+      },
+      mapLine: map
     });
 
     let socketIsClosed = false;
     const closeSocket = () => {
+      clearTimeout(keepAliveTimeout);
       if (socketIsClosed) {
         return;
       }
@@ -411,7 +436,7 @@ export abstract class AbstractRemote {
               return;
             }
 
-            stream.enqueueData(map(data));
+            stream.enqueueData(data);
           },
           onComplete: () => {
             stream.close();
@@ -537,8 +562,9 @@ export abstract class AbstractRemote {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    const stream = new DataStream<T>({
-      logger: this.logger
+    const stream = new DataStream<T, string>({
+      logger: this.logger,
+      mapLine: mapLine
     });
 
     const l = stream.registerListener({
@@ -550,7 +576,7 @@ export abstract class AbstractRemote {
             if (done) {
               const remaining = buffer.trim();
               if (remaining.length != 0) {
-                stream.enqueueData(mapLine(remaining));
+                stream.enqueueData(remaining);
               }
 
               stream.close();
@@ -565,7 +591,7 @@ export abstract class AbstractRemote {
             for (var i = 0; i < lines.length - 1; i++) {
               var l = lines[i].trim();
               if (l.length > 0) {
-                stream.enqueueData(mapLine(l));
+                stream.enqueueData(l);
                 didCompleteLine = true;
               }
             }
