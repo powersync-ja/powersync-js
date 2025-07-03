@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.33.1
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 36d8f28: Remove unused compaction logic.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- b7255b7: Rust sync client: Fix `connect()` resolving before a connection is made.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+
 ## 1.33.0
 
 ### Minor Changes
