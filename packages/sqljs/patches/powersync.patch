@@ -11,7 +11,17 @@ index 4530653..5ac01a0 100644
  
  EMCC=emcc
  
-@@ -59,7 +61,7 @@ EMFLAGS_DEBUG = \
+@@ -24,7 +26,8 @@ SQLITE_COMPILATION_FLAGS = \
+ 	-DSQLITE_ENABLE_FTS3 \
+ 	-DSQLITE_ENABLE_FTS3_PARENTHESIS \
+ 	-DSQLITE_THREADSAFE=0 \
+-	-DSQLITE_ENABLE_NORMALIZE
++	-DSQLITE_ENABLE_NORMALIZE \
++	-DSQLITE_ENABLE_FTS5
+ 
+ # When compiling to WASM, enabling memory-growth is not expected to make much of an impact, so we enable it for all builds
+ # Since tihs is a library and not a standalone executable, we don't want to catch unhandled Node process exceptions
+@@ -59,7 +62,7 @@ EMFLAGS_DEBUG = \
  	-s ASSERTIONS=2 \
  	-O1
  
@@ -20,7 +30,7 @@ index 4530653..5ac01a0 100644
  
  OUTPUT_WRAPPER_FILES = src/shell-pre.js src/shell-post.js
  
-@@ -76,13 +78,13 @@ all: optimized debug worker
+@@ -76,13 +79,13 @@ all: optimized debug worker
  debug: dist/sql-asm-debug.js dist/sql-wasm-debug.js
  
  dist/sql-asm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
@@ -36,7 +46,7 @@ index 4530653..5ac01a0 100644
  	mv $@ out/tmp-raw.js
  	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
  	rm out/tmp-raw.js
-@@ -91,19 +93,19 @@ dist/sql-wasm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FI
+@@ -91,19 +94,19 @@ dist/sql-wasm-debug.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FI
  optimized: dist/sql-asm.js dist/sql-wasm.js dist/sql-asm-memory-growth.js
  
  dist/sql-asm.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $(EXPORTED_METHODS_JSON_FILES)
@@ -59,7 +69,7 @@ index 4530653..5ac01a0 100644
  	mv $@ out/tmp-raw.js
  	cat src/shell-pre.js out/tmp-raw.js src/shell-post.js > $@
  	rm out/tmp-raw.js
-@@ -153,6 +155,9 @@ out/extension-functions.o: sqlite-src/$(SQLITE_AMALGAMATION)
+@@ -153,6 +156,9 @@ out/extension-functions.o: sqlite-src/$(SQLITE_AMALGAMATION)
  	# Generate llvm bitcode
  	$(EMCC) $(SQLITE_COMPILATION_FLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/extension-functions.c -o $@
  
@@ -69,7 +79,7 @@ index 4530653..5ac01a0 100644
  # TODO: This target appears to be unused. If we re-instatate it, we'll need to add more files inside of the JS folder
  # module.tar.gz: test package.json AUTHORS README.md dist/sql-asm.js
  # 	tar --create --gzip $^ > $@
-@@ -182,11 +187,15 @@ sqlite-src/$(SQLITE_AMALGAMATION): cache/$(SQLITE_AMALGAMATION).zip sqlite-src/$
+@@ -182,11 +188,15 @@ sqlite-src/$(SQLITE_AMALGAMATION): cache/$(SQLITE_AMALGAMATION).zip sqlite-src/$
  
  sqlite-src/$(SQLITE_AMALGAMATION)/$(EXTENSION_FUNCTIONS): cache/$(EXTENSION_FUNCTIONS)
  	mkdir -p sqlite-src/$(SQLITE_AMALGAMATION)
@@ -85,6 +95,7 @@ index 4530653..5ac01a0 100644
  .PHONY: clean
  clean:
  	rm -f out/* dist/* cache/*
+
 diff --git a/src/api.js b/src/api.js
 index c7f102b..4c20316 100644
 --- a/src/api.js
