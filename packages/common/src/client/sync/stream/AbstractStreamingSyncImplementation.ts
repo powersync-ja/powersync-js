@@ -342,17 +342,18 @@ export abstract class AbstractStreamingSyncImplementation
         let checkedCrudItem: CrudEntry | undefined;
 
         while (true) {
-          this.updateSyncStatus({
-            dataFlow: {
-              uploading: true
-            }
-          });
           try {
             /**
              * This is the first item in the FIFO CRUD queue.
              */
             const nextCrudItem = await this.options.adapter.nextCrudItem();
             if (nextCrudItem) {
+              this.updateSyncStatus({
+                dataFlow: {
+                  uploading: true
+                }
+              });
+
               if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
                 this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
@@ -410,23 +411,15 @@ The next upload iteration will be delayed.`);
     this.abortController = controller;
     this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
 
-    // Return a promise that resolves when the connection status is updated
+    // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
       const disposer = this.registerListener({
-        statusUpdated: (update) => {
-          // This is triggered as soon as a connection is read from
-          if (typeof update.connected == 'undefined') {
-            // only concern with connection updates
-            return;
-          }
-
-          if (update.connected == false) {
-            /**
-             * This function does not reject if initial connect attempt failed.
-             * Connected can be false if the connection attempt was aborted or if the initial connection
-             * attempt failed.
-             */
+        statusChanged: (status) => {
+          if (status.dataFlowStatus.downloadError != null) {
             this.logger.warn('Initial connect attempt did not successfully connect to server');
+          } else if (status.connecting) {
+            // Still connecting.
+            return;
           }
 
           disposer();
@@ -840,6 +833,7 @@ The next upload iteration will be delayed.`);
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let receivingLines: Promise<void> | null = null;
+    let hadSyncLine = false;
 
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
@@ -847,10 +841,7 @@ The next upload iteration will be delayed.`);
     // Pending sync lines received from the service, as well as local events that trigger a powersync_control
     // invocation (local events include refreshed tokens and completed uploads).
     // This is a single data stream so that we can handle all control calls from a single place.
-    let controlInvocations: DataStream<{
-      command: PowerSyncControlCommand;
-      payload?: ArrayBuffer | string;
-    }> | null = null;
+    let controlInvocations: DataStream<EnqueuedCommand, Uint8Array | EnqueuedCommand> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
@@ -860,22 +851,40 @@ The next upload iteration will be delayed.`);
       };
 
       if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        controlInvocations = await remote.postStreamRaw(syncOptions, (line) => ({
-          command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
-          payload: line
-        }));
+        controlInvocations = await remote.postStreamRaw(syncOptions, (line: string | EnqueuedCommand) => {
+          if (typeof line == 'string') {
+            return {
+              command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
+              payload: line
+            };
+          } else {
+            // Directly enqueued by us
+            return line;
+          }
+        });
       } else {
         controlInvocations = await remote.socketStreamRaw(
           {
             ...syncOptions,
             fetchStrategy: resolvedOptions.fetchStrategy
           },
-          (buffer) => ({
-            command: PowerSyncControlCommand.PROCESS_BSON_LINE,
-            payload: buffer
-          })
+          (payload: Uint8Array | EnqueuedCommand) => {
+            if (payload instanceof Uint8Array) {
+              return {
+                command: PowerSyncControlCommand.PROCESS_BSON_LINE,
+                payload: payload
+              };
+            } else {
+              // Directly enqueued by us
+              return payload;
+            }
+          }
         );
       }
+
+      // The rust client will set connected: true after the first sync line because that's when it gets invoked, but
+      // we're already connected here and can report that.
+      syncImplementation.updateSyncStatus({ connected: true });
 
       try {
         while (!controlInvocations.closed) {
@@ -885,6 +894,11 @@ The next upload iteration will be delayed.`);
           }
 
           await control(line.command, line.payload);
+
+          if (!hadSyncLine) {
+            syncImplementation.triggerCrudUpload();
+            hadSyncLine = true;
+          }
         }
       } finally {
         const activeInstructions = controlInvocations;
@@ -900,7 +914,7 @@ The next upload iteration will be delayed.`);
       await control(PowerSyncControlCommand.STOP);
     }
 
-    async function control(op: PowerSyncControlCommand, payload?: ArrayBuffer | string) {
+    async function control(op: PowerSyncControlCommand, payload?: Uint8Array | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
       await handleInstructions(JSON.parse(rawResponse));
     }
@@ -923,7 +937,7 @@ The next upload iteration will be delayed.`);
           return {
             priority: status.priority,
             hasSynced: status.has_synced ?? undefined,
-            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at!) : undefined
+            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at! * 1000) : undefined
           };
         }
 
@@ -1138,4 +1152,9 @@ The next upload iteration will be delayed.`);
       timeoutId = setTimeout(endDelay, retryDelayMs);
     });
   }
+}
+
+interface EnqueuedCommand {
+  command: PowerSyncControlCommand;
+  payload?: Uint8Array | string;
 }
