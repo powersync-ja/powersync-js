@@ -76,10 +76,12 @@ export enum RowUpdateType {
   SQLITE_DELETE = 9,
   SQLITE_UPDATE = 23
 }
+
 export interface TableUpdateOperation {
   opType: RowUpdateType;
   rowId: number;
 }
+
 /**
  * Notification of an update to one or more tables, for the purpose of realtime change notifications.
  */
@@ -127,6 +129,40 @@ export function isBatchedUpdateNotification(
   update: BatchedUpdateNotification | UpdateNotification
 ): update is BatchedUpdateNotification {
   return 'tables' in update;
+}
+
+export function convertToBatchedUpdateNotification(updates: UpdateNotification[]): BatchedUpdateNotification {
+  const groupedUpdates: BatchedUpdateNotification['groupedUpdates'] = {};
+
+  for (const update of updates) {
+    groupedUpdates[update.table] ??= [];
+    groupedUpdates[update.table].push(update);
+  }
+
+  return {
+    tables: Object.keys(groupedUpdates),
+    rawUpdates: updates,
+    groupedUpdates
+  };
+}
+
+export function convertToUpdateNotifications(update: BatchedUpdateNotification): UpdateNotification[] {
+  // Not all implementations emit a complete batched update.
+  // Some only emit the table names, or not even that.
+  if (update.rawUpdates?.length) {
+    return update.rawUpdates;
+  }
+  if (Object.keys(update.groupedUpdates ?? {}).length) {
+    return Object.entries(update.groupedUpdates).flatMap(([table, updates]) =>
+      updates.map((update) => ({ ...update, table }))
+    );
+  }
+  if (update.tables?.length) {
+    return update.tables.map((table) => {
+      return { table } as unknown as UpdateNotification;
+    });
+  }
+  return [];
 }
 
 export function extractTableUpdates(update: BatchedUpdateNotification | UpdateNotification) {
