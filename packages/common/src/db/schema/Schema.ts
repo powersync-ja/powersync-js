@@ -1,3 +1,4 @@
+import { RawTable, RawTableType } from './RawTable.js';
 import { RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
@@ -16,6 +17,7 @@ export class Schema<S extends SchemaType = SchemaType> {
   readonly types: SchemaTableType<S>;
   readonly props: S;
   readonly tables: Table[];
+  readonly rawTables: RawTable[];
 
   constructor(tables: Table[] | S) {
     if (Array.isArray(tables)) {
@@ -36,6 +38,24 @@ export class Schema<S extends SchemaType = SchemaType> {
       this.props = tables as S;
       this.tables = this.convertToClassicTables(this.props);
     }
+
+    this.rawTables = [];
+  }
+
+  /**
+   * Adds raw tables to this schema. Raw tables are identified by their name, but entirely managed by the application
+   * developer instead of automatically by PowerSync.
+   * Since raw tables are not backed by JSON, running complex queries on them may be more efficient. Further, they allow
+   * using client-side table and column constraints.
+   * Note that raw tables are only supported when using the new `SyncClientImplementation.rust` sync client.
+   *
+   * @param tables An object of (table name, raw table definition) entries.
+   * @experimental Note that the raw tables API is still experimental and may change in the future.
+   */
+  withRawTables(tables: Record<string, RawTableType>) {
+    for (const [name, rawTableDefinition] of Object.entries(tables)) {
+      this.rawTables.push(new RawTable(name, rawTableDefinition));
+    }
   }
 
   validate() {
@@ -47,7 +67,8 @@ export class Schema<S extends SchemaType = SchemaType> {
   toJSON() {
     return {
       // This is required because "name" field is not present in TableV2
-      tables: this.tables.map((t) => t.toJSON())
+      tables: this.tables.map((t) => t.toJSON()),
+      raw_tables: this.rawTables
     };
   }
 
