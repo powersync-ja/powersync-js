@@ -12,7 +12,17 @@ const mockPowerSync = {
   registerListener: vi.fn(() => {}),
   resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
-  getAll: vi.fn((sql, params) => Promise.resolve([sql, ...(params || [])]))
+  getAll: vi.fn((sql) => {
+    if (sql.includes('users')) {
+      return Promise.resolve([{ id: 1, name: 'Test User' }]);
+    }
+
+    if (sql.includes('posts')) {
+      return Promise.resolve([{ id: 1, title: 'Test Post' }]);
+    }
+
+    return Promise.resolve([{ id: 1, result: 'mock data' }]);
+  })
 };
 
 describe('useQueries', () => {
@@ -58,19 +68,20 @@ describe('useQueries', () => {
       () =>
         useQueries({
           queries: [
-            { queryKey: ['q1'], query: 'SELECT 1', parameters: [42] },
-            { queryKey: ['q2'], query: 'SELECT 2', parameters: [99] }
+            { queryKey: ['users'], query: 'SELECT * FROM users WHERE active = ?', parameters: [true] },
+            { queryKey: ['posts'], query: 'SELECT * FROM posts WHERE published = ?', parameters: [true] }
           ]
         }),
       { wrapper }
     );
 
     await waitFor(() => {
-      const results = result.current as any[];
-      expect(results[0].data[0]).toEqual('SELECT 1');
-      expect(results[0].data[1]).toEqual(42);
-      expect(results[1].data[0]).toEqual('SELECT 2');
-      expect(results[1].data[1]).toEqual(99);
+      const results = result.current;
+
+      expect(results[0].data).toHaveLength(1);
+      expect(results[0].data?.[0]).toEqual({ id: 1, name: 'Test User' });
+      expect(results[1].data).toHaveLength(1);
+      expect(results[1].data?.[0]).toEqual({ id: 1, title: 'Test Post' });
     });
   });
 
@@ -85,7 +96,7 @@ describe('useQueries', () => {
         useQueries({
           queries: [
             { queryKey: ['q1'], query: compilableQuery },
-            { queryKey: ['q2'], query: 'SELECT 2' }
+            { queryKey: ['q2'], query: 'SELECT * FROM posts' }
           ]
         }),
       { wrapper }
@@ -94,7 +105,7 @@ describe('useQueries', () => {
     await waitFor(() => {
       const results = result.current as any[];
       expect(results[0].data[0].test).toEqual('custom');
-      expect(results[1].data[0]).toEqual('SELECT 2');
+      expect(results[1].data[0]).toEqual({ id: 1, title: 'Test Post' });
     });
   });
 
@@ -134,19 +145,27 @@ describe('useQueries', () => {
       () =>
         useQueries({
           queries: [
-            { queryKey: ['q1'], query: 'SELECT 1', parameters: [1] },
-            { queryKey: ['q2'], query: 'SELECT 2', parameters: [2] }
+            { queryKey: ['users'], query: 'SELECT * FROM users WHERE active = ?', parameters: [true] },
+            { queryKey: ['posts'], query: 'SELECT * FROM posts WHERE published = ?', parameters: [true] }
           ],
-          combine: (results) => results.map((r) => r.data).flat()
+          combine: (results) => {
+            const [usersResult, postsResult] = results;
+            return {
+              totalUsers: usersResult.data?.length ?? 0,
+              totalPosts: postsResult.data?.length ?? 0,
+              allData: [...(usersResult.data ?? []), ...(postsResult.data ?? [])]
+            };
+          }
         }),
       { wrapper }
     );
 
     await waitFor(() => {
-      expect(result.current).toContain('SELECT 1');
-      expect(result.current).toContain(1);
-      expect(result.current).toContain('SELECT 2');
-      expect(result.current).toContain(2);
+      expect(result.current.totalUsers).toBe(1);
+      expect(result.current.totalPosts).toBe(1);
+      expect(result.current.allData).toHaveLength(2);
+      expect(result.current.allData).toContainEqual({ id: 1, name: 'Test User' });
+      expect(result.current.allData).toContainEqual({ id: 1, title: 'Test Post' });
     });
   });
 
