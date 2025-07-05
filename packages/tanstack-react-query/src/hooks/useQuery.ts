@@ -1,8 +1,7 @@
-import { parseQuery, type CompilableQuery } from '@powersync/common';
+import { type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '@powersync/react';
-import React from 'react';
-
 import * as Tanstack from '@tanstack/react-query';
+import { usePowerSyncQueries } from './usePowerSyncQueries';
 
 export type PowerSyncQueryOptions<T> = {
   query?: string | CompilableQuery<T>;
@@ -65,92 +64,23 @@ function useQueryCore<
     throw new Error('PowerSync is not available');
   }
 
-  let error: Error | undefined = undefined;
+  const { query, parameters, queryKey, ...resolvedOptions } = options;
 
-  const [tables, setTables] = React.useState<string[]>([]);
-  const { query, parameters = [], ...resolvedOptions } = options;
-
-  let sqlStatement = '';
-  let queryParameters = [];
-
-  if (query) {
-    try {
-      const parsedQuery = parseQuery(query, parameters);
-
-      sqlStatement = parsedQuery.sqlStatement;
-      queryParameters = parsedQuery.parameters;
-    } catch (e) {
-      error = e;
-    }
-  }
-
-  const stringifiedParams = JSON.stringify(queryParameters);
-  const stringifiedKey = JSON.stringify(options.queryKey);
-
-  const fetchTables = async () => {
-    try {
-      const tables = await powerSync.resolveTables(sqlStatement, queryParameters);
-      setTables(tables);
-    } catch (e) {
-      error = e;
-    }
-  };
-
-  React.useEffect(() => {
-    if (error || !query) return () => {};
-
-    (async () => {
-      await fetchTables();
-    })();
-
-    const l = powerSync.registerListener({
-      schemaChanged: async () => {
-        await fetchTables();
-        queryClient.invalidateQueries({ queryKey: options.queryKey });
-      }
-    });
-
-    return () => l?.();
-  }, [powerSync, sqlStatement, stringifiedParams]);
-
-  const queryFn = React.useCallback(async () => {
-    if (error) {
-      return Promise.reject(error);
-    }
-
-    try {
-      return typeof query == 'string' ? powerSync.getAll<TData>(sqlStatement, queryParameters) : query.execute();
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }, [powerSync, query, parameters, stringifiedKey]);
-
-  React.useEffect(() => {
-    if (error || !query) return () => {};
-
-    const abort = new AbortController();
-    powerSync.onChangeWithCallback(
+  const [{ queryFn }] = usePowerSyncQueries(
+    [
       {
-        onChange: () => {
-          queryClient.invalidateQueries({
-            queryKey: options.queryKey
-          });
-        },
-        onError: (e) => {
-          error = e;
-        }
-      },
-      {
-        tables,
-        signal: abort.signal
+        query,
+        parameters,
+        queryKey
       }
-    );
-    return () => abort.abort();
-  }, [powerSync, queryClient, stringifiedKey, tables]);
+    ],
+    queryClient
+  );
 
   return useQueryFn(
     {
       ...(resolvedOptions as TQueryOptions),
+      queryKey,
       queryFn: query ? queryFn : resolvedOptions.queryFn
     } as TQueryOptions,
     queryClient
