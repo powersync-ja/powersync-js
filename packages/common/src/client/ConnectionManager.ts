@@ -95,7 +95,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await this.syncDisposer?.();
   }
 
-  async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
+  async connect(connector: PowerSyncBackendConnector, options: PowerSyncConnectionOptions) {
     // Keep track if there were pending operations before this call
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
