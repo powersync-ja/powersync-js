@@ -15,11 +15,18 @@ export default (commandLineArgs) => {
 
   return {
     input: 'lib/index.js',
-    output: {
-      file: 'dist/bundle.mjs',
-      format: 'esm',
-      sourcemap: sourceMap
-    },
+    output: [
+      {
+        file: 'dist/bundle.mjs',
+        format: 'esm',
+        sourcemap: sourceMap
+      },
+      {
+        file: 'dist/bundle.cjs',
+        format: 'cjs',
+        sourcemap: sourceMap
+      }
+    ],
     plugins: [
       json(),
       nodeResolve({ preferBuiltins: false, browser: true }),

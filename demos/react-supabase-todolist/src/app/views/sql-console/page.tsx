@@ -1,8 +1,7 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { Box, Button, Grid, TextField, styled } from '@mui/material';
+import { Alert, Box, Button, Grid, TextField, styled } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from '@powersync/react';
-import { ArrayComparator } from '@powersync/web';
 import React from 'react';
 
 export type LoginFormParams = {
@@ -17,7 +16,7 @@ const DEFAULT_QUERY = /* sql */ `
     lists
 `;
 
-const TableDisplay = React.memo(({ data }: { data: any[] }) => {
+const TableDisplay = React.memo(({ data }: { data: ReadonlyArray<any> }) => {
   const queryDataGridResult = React.useMemo(() => {
     const firstItem = data?.[0];
     return {
@@ -55,7 +54,7 @@ export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
 
-  const { data } = useQuery(query, [], {
+  const { data, error } = useQuery(query, [], {
     /**
      * We don't use the isFetching status here, we can avoid re-renders if we don't report on it.
      */
@@ -64,9 +63,10 @@ export default function SQLConsolePage() {
      * The query here will only emit results when the query data set changes.
      * Result sets are compared by serializing each item to JSON and comparing the strings.
      */
-    comparator: new ArrayComparator({
-      compareBy: (item) => JSON.stringify(item)
-    })
+    differentiator: {
+      identify: (item: any) => JSON.stringify(item),
+      compareBy: (item: any) => JSON.stringify(item)
+    }
   });
 
   return (
@@ -101,6 +101,7 @@ export default function SQLConsolePage() {
             </Button>
           </S.CenteredGrid>
         </S.CenteredGrid>
+        {error ? <Alert severity="error">{error.message}</Alert> : null}
         <TableDisplay data={data} />
       </S.MainContainer>
     </NavigationPage>

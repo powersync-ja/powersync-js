@@ -112,30 +112,21 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  private getDbLocation(dbLocation?: string): string {
-    if (Platform.OS === 'ios') {
-      return dbLocation ?? IOS_LIBRARY_PATH;
-    } else {
-      return dbLocation ?? ANDROID_DATABASE_PATH;
-    }
-  }
-
   private openDatabase(dbFilename: string, encryptionKey?: string): DB {
-    //This is needed because an undefined/null dbLocation will cause the open function to fail
-    const location = this.getDbLocation(this.options.dbLocation);
-    //Simarlily if the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
-    if (encryptionKey) {
-      return open({
-        name: dbFilename,
-        location: location,
-        encryptionKey: encryptionKey
-      });
-    } else {
-      return open({
-        name: dbFilename,
-        location: location
-      });
+    const openOptions: Parameters<typeof open>[0] = {
+      name: dbFilename
+    };
+
+    if (this.options.dbLocation) {
+      openOptions.location = this.options.dbLocation;
     }
+
+    // If the encryption key is undefined/null when using SQLCipher it will cause the open function to fail
+    if (encryptionKey) {
+      openOptions.encryptionKey = encryptionKey;
+    }
+
+    return open(openOptions);
   }
 
   private loadAdditionalExtensions(DB: DB) {
