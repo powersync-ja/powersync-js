@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.33.2
+
+### Patch Changes
+
+- 9b2bde3: Fix compilation error due to broken import in `SyncProgress.d.ts`
+
 ## 1.33.1
 
 ### Patch Changes
