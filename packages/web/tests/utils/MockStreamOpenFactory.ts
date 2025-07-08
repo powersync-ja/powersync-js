@@ -81,7 +81,13 @@ export class MockRemote extends AbstractRemote {
         if (this.errorOnStreamStart) {
           controller.error(new Error('Mock error on stream start'));
         }
-
+        // The request could be aborted at any time.
+        // This checks if the signal is already aborted and closes the stream if so.
+        // If not, it adds an event listener to close the stream when the signal is aborted.
+        if (signal?.aborted) {
+          controller.close();
+          return;
+        }
         signal?.addEventListener('abort', () => {
           try {
             controller.close();
@@ -105,6 +111,11 @@ export class MockRemote extends AbstractRemote {
     const stream = new DataStream<StreamingSyncLine>({
       logger: this.logger
     });
+
+    if (options.abortSignal?.aborted) {
+      stream.close();
+    }
+    options.abortSignal?.addEventListener('abort', () => stream.close());
 
     const l = stream.registerListener({
       lowWater: async () => {

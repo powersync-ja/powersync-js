@@ -196,7 +196,7 @@ export class LockedAsyncDatabaseAdapter
   }
 
   writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
-    return this.writeLock(this.wrapTransaction(fn));
+    return this.writeLock(this.wrapTransaction(fn, true));
   }
 
   private generateDBHelpers<
@@ -240,9 +240,9 @@ export class LockedAsyncDatabaseAdapter
   /**
    * Wraps a lock context into a transaction context
    */
-  private wrapTransaction<T>(cb: (tx: Transaction) => Promise<T>) {
+  private wrapTransaction<T>(cb: (tx: Transaction) => Promise<T>, write = false) {
     return async (tx: LockContext): Promise<T> => {
-      await this._execute('BEGIN TRANSACTION');
+      await this._execute(write ? 'BEGIN EXCLUSIVE' : 'BEGIN');
       let finalized = false;
       const commit = async (): Promise<QueryResult> => {
         if (finalized) {

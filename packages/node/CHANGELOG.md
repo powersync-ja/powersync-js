@@ -1,5 +1,81 @@
 # @powersync/node
 
+## 0.7.0
+
+### Minor Changes
+
+- 31e942f: Upgrade undici and use the default undici errors for WebSockets.
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+
+## 0.6.0
+
+### Minor Changes
+
+- cbb20c0: This adds a new (and currently experimental) sync client implementation
+  implemented natively in the PowerSync SQLite extension.
+
+  This implementation will eventually become the default, but we encourage
+  interested users to try it out. In particular, we expect that it can improve
+  sync performance (especially on platforms with challenging JS performance,
+  like React Native).
+
+  On all our JavaScript SDKs, the new implementation can be enabled with a
+  sync option entry when connecting:
+
+  ```JS
+  await db.connect(new MyConnector(), {
+    clientImplementation: SyncClientImplementation.RUST
+  });
+  ```
+
+  Since the new client implements the same protocol, you can also migrate back
+  to the JavaScript client later by removing the `clientImplementation` option.
+
+  **However**: After enabling the `RUST` client, you cannot downgrade your
+  PowerSync SDK below this version. When enabled for the first time, databases
+  will be migrated. The JavaScript sync client from this and later SDK versions
+  understands the new format, but the client from an older SDK version will not!
+
+### Patch Changes
+
+- 0446f15: Update PowerSync core extension to 0.4.0
+- Updated dependencies [cbb20c0]
+- Updated dependencies [7e8bb1a]
+  - @powersync/common@1.33.0
+
+## 0.5.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+- efc8ba9: Switch to undici WebSocket for Dispatcher and diagnostics_channel support. This now adds support for the `ALL_PROXY` environment variable by default, as well as `WSS_PROXY` for websocket connections.
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+- Updated dependencies [efc8ba9]
+  - @powersync/common@1.32.0
+
+## 0.4.5
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+
 ## 0.4.4
 
 ### Patch Changes

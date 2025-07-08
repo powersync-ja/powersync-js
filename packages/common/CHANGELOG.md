@@ -1,5 +1,66 @@
 # @powersync/common
 
+## 1.33.1
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 36d8f28: Remove unused compaction logic.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- b7255b7: Rust sync client: Fix `connect()` resolving before a connection is made.
+- 70a9cf5: Added CommonJs output for common package. Ensuring default export entry is last so that require statements don't use .mjs output instead of .cjs.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+
+## 1.33.0
+
+### Minor Changes
+
+- cbb20c0: This adds a new (and currently experimental) sync client implementation
+  implemented natively in the PowerSync SQLite extension.
+
+  This implementation will eventually become the default, but we encourage
+  interested users to try it out. In particular, we expect that it can improve
+  sync performance (especially on platforms with challenging JS performance,
+  like React Native).
+
+  On all our JavaScript SDKs, the new implementation can be enabled with a
+  sync option entry when connecting:
+
+  ```JS
+  await db.connect(new MyConnector(), {
+    clientImplementation: SyncClientImplementation.RUST
+  });
+  ```
+
+  Since the new client implements the same protocol, you can also migrate back
+  to the JavaScript client later by removing the `clientImplementation` option.
+
+  **However**: After enabling the `RUST` client, you cannot downgrade your
+  PowerSync SDK below this version. When enabled for the first time, databases
+  will be migrated. The JavaScript sync client from this and later SDK versions
+  understands the new format, but the client from an older SDK version will not!
+
+### Patch Changes
+
+- 7e8bb1a: Include metadata and previous values when serializing CRUD entries to JSON.
+
+## 1.32.0
+
+### Minor Changes
+
+- 96ddd5d: Improved behaviour when connect is called multiple times in quick succession. Updating client parameters should now be more responsive.
+- efc8ba9: Preserve more details on websocket errors.
+
+### Patch Changes
+
+- 96ddd5d: Fixed bug where changes in SyncStatus downloadError and uploadError might not be reported.
+
+## 1.31.1
+
+### Patch Changes
+
+- b046ebe: Fix reported progress around compactions / defrags on the sync service.
+
 ## 1.31.0
 
 ### Minor Changes

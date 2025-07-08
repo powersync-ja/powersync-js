@@ -187,9 +187,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    */
   async connect(options?: PowerSyncConnectionOptions): Promise<void> {
     await this.waitForReady();
-    // This is needed since a new tab won't have any reference to the
-    // shared worker sync implementation since that is only created on the first call to `connect`.
-    await this.disconnect();
     return this.syncManager.connect(options);
   }
 
@@ -209,13 +206,24 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   async dispose(): Promise<void> {
     await this.waitForReady();
-    // Signal the shared worker that this client is closing its connection to the worker
-    const closeMessagePayload: ManualSharedSyncPayload = {
-      event: SharedSyncClientEvent.CLOSE_CLIENT,
-      data: {}
-    };
 
-    this.messagePort.postMessage(closeMessagePayload);
+    await new Promise<void>((resolve) => {
+      // Listen for the close acknowledgment from the worker
+      this.messagePort.addEventListener('message', (event) => {
+        const payload = event.data as ManualSharedSyncPayload;
+        if (payload?.event === SharedSyncClientEvent.CLOSE_ACK) {
+          resolve();
+        }
+      });
+
+      // Signal the shared worker that this client is closing its connection to the worker
+      const closeMessagePayload: ManualSharedSyncPayload = {
+        event: SharedSyncClientEvent.CLOSE_CLIENT,
+        data: {}
+      };
+      this.messagePort.postMessage(closeMessagePayload);
+    });
+
     // Release the proxy
     this.syncManager[Comlink.releaseProxy]();
     this.messagePort.close();

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
-    "@op-engineering/op-sqlite": "^11.4.8",
+    "@op-engineering/op-sqlite": "^14.0.2",
     "@powersync/common": "workspace:*",
     "@powersync/op-sqlite": "workspace:*",
     "@powersync/react": "workspace:*",

@@ -7,11 +7,12 @@
   "scripts": {
     "build": "tsc -b",
     "watch": "tsc -b -w",
-    "start": "node --loader ts-node/esm -r dotenv/config src/main.ts"
+    "start": "node --import ./register.mjs src/main.ts"
   },
   "dependencies": {
     "@powersync/node": "workspace:*",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "undici": "^7.11.0"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

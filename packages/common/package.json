@@ -1,6 +1,6 @@
 {
   "name": "@powersync/common",
-  "version": "1.31.0",
+  "version": "1.33.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -13,8 +13,9 @@
   "exports": {
     ".": {
       "import": "./dist/bundle.mjs",
-      "default": "./dist/bundle.mjs",
-      "types": "./lib/index.d.ts"
+      "require": "./dist/bundle.cjs",
+      "types": "./lib/index.d.ts",
+      "default": "./dist/bundle.mjs"
     }
   },
   "author": "JOURNEYAPPS",
@@ -51,7 +52,6 @@
     "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
     "buffer": "^6.0.3",
-    "can-ndjson-stream": "^1.0.2",
     "cross-fetch": "^4.0.0",
     "event-iterator": "^2.0.0",
     "rollup": "4.14.3",

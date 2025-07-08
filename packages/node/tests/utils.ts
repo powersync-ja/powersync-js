@@ -1,12 +1,15 @@
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { ReadableStream, TransformStream } from 'node:stream/web';
+
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
   column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
+  PowerSyncConnectionOptions,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
@@ -73,11 +76,13 @@ export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDataba
 });
 
 // TODO: Unify this with the test setup for the web SDK.
-export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockSyncService }>({
+export const mockSyncServiceTest = tempDirectoryTest.extend<{
+  syncService: MockSyncService;
+}>({
   syncService: async ({ tmpdir }, use) => {
     interface Listener {
-      request: any,
-      stream: ReadableStreamDefaultController<StreamingSyncLine>,
+      request: any;
+      stream: ReadableStreamDefaultController<StreamingSyncLine>;
     }
 
     const listeners: Listener[] = [];
@@ -92,7 +97,7 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockS
           start(controller) {
             listener = {
               request: body,
-              stream: controller,
+              stream: controller
             };
 
             listeners.push(listener);
@@ -110,7 +115,14 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{ syncService: MockS
           }
         });
 
-        return new Response(syncLines.pipeThrough(asLines), { status: 200 });
+        return new Response(syncLines.pipeThrough(asLines) as any, { status: 200 });
+      } else if (request.url.indexOf('/write-checkpoint2.json') != -1) {
+        return new Response(
+          JSON.stringify({
+            data: { write_checkpoint: '1' }
+          }),
+          { status: 200 }
+        );
       } else {
         return new Response('Not found', { status: 404 });
       }
@@ -164,16 +176,21 @@ export function waitForSyncStatus(
   database: AbstractPowerSyncDatabase,
   matcher: (status: SyncStatus) => boolean
 ): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (matcher(database.currentStatus)) {
       return resolve();
     }
 
     const dispose = database.registerListener({
       statusChanged: (status) => {
-        if (matcher(status)) {
+        try {
+          if (matcher(status)) {
+            dispose();
+            resolve();
+          }
+        } catch (e) {
+          reject(e);
           dispose();
-          resolve();
         }
       }
     });

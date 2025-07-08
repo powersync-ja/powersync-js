@@ -5,12 +5,12 @@ import {
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncDatabaseOptionsWithSettings,
-  type RequiredAdditionalConnectionOptions,
-  SqliteBucketStorage
+  type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
 import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
+import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -39,7 +39,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new ReactNativeBucketStorageAdapter(this.database, AbstractPowerSyncDatabase.transactionMutex);
   }
 
   protected generateSyncStreamImplementation(

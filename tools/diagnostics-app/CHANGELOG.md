@@ -1,5 +1,48 @@
 # diagnostics-app
 
+## 0.9.2
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- Updated dependencies [b398483]
+- Updated dependencies [ffe3095]
+- Updated dependencies [53236a8]
+- Updated dependencies [d1b7fcb]
+  - @powersync/web@1.23.1
+  - @powersync/react@1.5.3
+
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies [cbb20c0]
+- Updated dependencies [0446f15]
+  - @powersync/web@1.23.0
+  - @powersync/react@1.5.3
+
+## 0.9.0
+
+### Minor Changes
+
+- 96ddd5d: - Added Sync error alert banner to all views.
+  - Fix bug where clicking signOut would not disconnect from the PowerSync service.
+  - Updated implementation to fetch sync errors from the SyncStatus.
+
+### Patch Changes
+
+- 6707966: Fix reconnecting after changing credentials.
+- Updated dependencies [96ddd5d]
+  - @powersync/web@1.22.0
+  - @powersync/react@1.5.3
+
+## 0.8.14
+
+### Patch Changes
+
+- @powersync/react@1.5.3
+- @powersync/web@1.21.1
+
 ## 0.8.13
 
 ### Patch Changes

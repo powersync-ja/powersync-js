@@ -1,5 +1,54 @@
 # @powersync/op-sqlite
 
+## 0.7.2
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 6ebaabe: Fixed an issue where the default `op-sqlite` database location determination logic was being overridden. The `dbLocation` is now only applied when explicitly provided, resolving issues with features like iOS App Groups.
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+
+## 0.7.1
+
+### Patch Changes
+
+- 0446f15: Update PowerSync core extension to 0.4.0
+- Updated dependencies [cbb20c0]
+- Updated dependencies [7e8bb1a]
+  - @powersync/common@1.33.0
+
+## 0.7.0
+
+### Minor Changes
+
+- ddc0bd1: Updated op-sqlite upstream peer dependency from 11.x.x to support ^13.x.x and ^14.x.x,
+
+  Noteworthy changes from version 11 to version 14 include:
+
+  1. SQLite updated to 3.49.1
+  2. SQLCipher updated to 4.8.0
+  3. Monorepo config resolution, you may need to move your `op-sqlite` config from your application's `package.json` to the monorepo root `package.json` depending on where your package manager tool hoists modules (see [1](https://op-engineering.github.io/op-sqlite/docs/installation) and [2](https://github.com/OP-Engineering/op-sqlite/issues/264)).
+
+### Patch Changes
+
+- Updated dependencies [96ddd5d]
+- Updated dependencies [96ddd5d]
+- Updated dependencies [efc8ba9]
+  - @powersync/common@1.32.0
+
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [b046ebe]
+  - @powersync/common@1.31.1
+
 ## 0.6.0
 
 ### Minor Changes

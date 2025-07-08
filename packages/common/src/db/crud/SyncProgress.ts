@@ -1,16 +1,9 @@
+import { BucketProgress } from 'src/client/sync/stream/core-instruction.js';
 import type { SyncStatus } from './SyncStatus.js';
 
 // (bucket, progress) pairs
 /** @internal */
-export type InternalProgressInformation = Record<
-  string,
-  {
-    priority: number; // Priority of the associated buckets
-    atLast: number; // Total ops at last completed sync, or 0
-    sinceLast: number; // Total ops _since_ the last completed sync.
-    targetCount: number; // Total opcount for next checkpoint as indicated by service.
-  }
->;
+export type InternalProgressInformation = Record<string, BucketProgress>;
 
 /**
  * @internal The priority used by the core extension to indicate that a full sync was completed.
@@ -38,7 +31,7 @@ export interface ProgressWithOperations {
    * Relative progress, as {@link downloadedOperations} of {@link totalOperations}.
    *
    * This will be a number between `0.0` and `1.0` (inclusive).
-   * 
+   *
    * When this number reaches `1.0`, all changes have been received from the sync service.
    * Actually applying these changes happens before the `downloadProgress` field is cleared from
    * {@link SyncStatus}, so progress can stay at `1.0` for a short while before completing.
@@ -92,8 +85,8 @@ export class SyncProgress implements ProgressWithOperations {
     for (const progress of Object.values(this.internal)) {
       // Include higher-priority buckets, which are represented by lower numbers.
       if (progress.priority <= priority) {
-        downloaded += progress.sinceLast;
-        total += progress.targetCount - progress.atLast;
+        downloaded += progress.since_last;
+        total += progress.target_count - progress.at_last;
       }
     }
 
