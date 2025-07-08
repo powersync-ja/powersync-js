@@ -95,10 +95,12 @@ export abstract class AbstractQueryProcessor<
     this.options.watchOptions = settings;
     this.abortController.abort();
     this.abortController = new AbortController();
-    await this.linkQuery({
-      abortSignal: this.abortController.signal,
-      settings
-    });
+    await this.runWithReporting(() =>
+      this.linkQuery({
+        abortSignal: this.abortController.signal,
+        settings
+      })
+    );
   }
 
   /**
