@@ -10,6 +10,24 @@ import { usePowerSync } from './powerSync';
 
 export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOptions, 'signal'> {
   runQueryOnce?: boolean;
+  /**
+   * Used to detect and report differences in query result sets.
+   *
+   * By default the hook will requery on any dependent table change. This will
+   * emit a new hook result even if the result set has not changed.
+   *
+   * Specifying a {@link WatchedQueryDifferentiator} will remove emissions for
+   * unchanged result sets and preserve Array object references between result set emissions.
+   * @example
+   * ```javascript
+   * {
+   *  differentiator: {
+   *    identify: (item) => item.id,
+   *    compareBy: (item) => JSON.stringify(item)
+   *  }
+   * }
+   * ```
+   */
   differentiator?: WatchedQueryDifferentiator<RowType>;
 }
 
