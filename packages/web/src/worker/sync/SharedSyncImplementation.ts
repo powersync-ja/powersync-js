@@ -297,7 +297,6 @@ export class SharedSyncImplementation
       });
 
       const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
-
       return {
         shouldReconnect,
         trackedPort
@@ -473,10 +472,8 @@ export class SharedSyncImplementation
    */
   private async _testUpdateAllStatuses(status: SyncStatusOptions) {
     if (!this.connectionManager.syncStreamImplementation) {
-      // This is just for testing purposes
-      this.connectionManager.syncStreamImplementation = this.generateStreamingImplementation();
+      throw new Error('Cannot update status without a sync stream implementation');
     }
-
     // Only assigning, don't call listeners for this test
     this.connectionManager.syncStreamImplementation!.syncStatus = new SyncStatus(status);
     this.updateAllStatuses(status);

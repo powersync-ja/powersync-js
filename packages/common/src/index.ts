@@ -31,6 +31,14 @@ export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
+export * from './client/Query.js';
+export * from './client/watched/GetAllQuery.js';
+export * from './client/watched/processors/AbstractQueryProcessor.js';
+export * from './client/watched/processors/comparators.js';
+export * from './client/watched/processors/DifferentialQueryProcessor.js';
+export * from './client/watched/processors/OnChangeQueryProcessor.js';
+export * from './client/watched/WatchedQuery.js';
+
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
 export * from './utils/DataStream.js';
