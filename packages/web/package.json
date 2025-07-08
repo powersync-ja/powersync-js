@@ -15,6 +15,10 @@
   ],
   "exports": {
     ".": "./lib/src/index.js",
+    "./dev": {
+      "import": "./lib/src/dev/index.js",
+      "types": "./lib/src/dev/index.d.ts"
+    },
     "./umd": {
       "import": "./dist/index.umd.js",
       "require": "./dist/index.umd.js",

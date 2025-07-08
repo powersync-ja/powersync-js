@@ -7,7 +7,7 @@ const plugin = () => {
       }
 
       return null;
-    },
+    }
   };
 };
 
@@ -17,6 +17,15 @@ export default [
     plugins: [plugin()],
     output: {
       file: 'dist/bundle.cjs',
+      format: 'cjs',
+      sourcemap: true
+    }
+  },
+  {
+    input: 'lib/dev/index.js',
+    plugins: [plugin()],
+    output: {
+      file: 'dist/dev/bundle.dev.cjs',
       format: 'cjs',
       sourcemap: true
     }

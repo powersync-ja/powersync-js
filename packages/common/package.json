@@ -15,6 +15,12 @@
       "import": "./dist/bundle.mjs",
       "default": "./dist/bundle.mjs",
       "types": "./lib/index.d.ts"
+    },
+    "./dev": {
+      "import": "./dist/dev/bundle.dev.mjs",
+      "require": "./dist/dev/bundle.dev.cjs",
+      "types": "./lib/dev/index.d.ts",
+      "default": "./dist/dev/bundle.dev.mjs"
     }
   },
   "author": "JOURNEYAPPS",
@@ -41,12 +47,14 @@
     "js-logger": "^1.6.1"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^20.5.9",
+    "@types/sql.js": "^1.4.9",
     "@types/uuid": "^9.0.1",
     "async-mutex": "^0.4.0",
     "bson": "^6.6.0",
@@ -56,6 +64,7 @@
     "rollup": "4.14.3",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
+    "sql.js": "workspace:*",
     "text-encoding": "^0.7.0",
     "web-streams-polyfill": "3.2.1"
   }

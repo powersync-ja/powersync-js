@@ -22,8 +22,8 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "sh build.sh",
-    "build:prod": "pnpm build",
+    "xuild": "sh build.sh",
+    "xuild:prod": "pnpm build",
     "clean": "rm -rf dist sql.js"
   },
   "dependencies": {},

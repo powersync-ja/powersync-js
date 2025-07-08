@@ -23,7 +23,32 @@ export interface SQLOpenOptions {
    *    debugMode: process.env.NODE_ENV !== 'production'
    */
   debugMode?: boolean;
+
+  /**
+   * Use a development database, requires no project setup.
+   */
+  developmentMode?: boolean;
+
+  /**
+   * Persister for the development database.
+   *
+   * @example
+   * ```javascript
+   * persister: {
+   *     readFile: async () => null,
+   *     writeFile: async () => {}
+   * }
+   * ```
+   */
+  developmentPersister?: Persister;
 }
+
+export interface Persister {
+  readFile: () => Promise<ArrayLike<number> | Buffer | null>;
+  writeFile: (data: ArrayLike<number> | Buffer) => Promise<void>;
+}
+
+export interface DevDBOptions {}
 
 export interface SQLOpenFactory {
   /**

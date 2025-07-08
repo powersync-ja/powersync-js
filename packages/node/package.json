@@ -27,6 +27,11 @@
       "require": "./dist/bundle.cjs",
       "types": "./lib/index.d.ts"
     },
+    "./dev": {
+      "import": "./lib/dev/index.js",
+      "require": "./dist/dev/bundle.dev.cjs",
+      "types": "./lib/dev/index.d.ts"
+    },
     "./worker.js": {
       "import": "./lib/worker.js",
       "require": "./dist/worker.cjs",
