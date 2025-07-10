@@ -35,6 +35,9 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { TriggerManager } from './triggers/TriggerManager.js';
+import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
+import { WhenReadyTriggerManager } from './triggers/WhenReadyTriggerManager.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -198,6 +201,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected runExclusiveMutex: Mutex;
 
+  protected triggerManager: WhenReadyTriggerManager;
+
+  get triggers(): TriggerManager {
+    return this.triggerManager;
+  }
+
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
   constructor(options: PowerSyncDatabaseOptionsWithSettings);
@@ -229,6 +238,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.ready = false;
     this.sdkVersion = '';
     this.runExclusiveMutex = new Mutex();
+
     // Start async init
     this.connectionManager = new ConnectionManager({
       createSyncImplementation: async (connector, options) => {
@@ -255,7 +265,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       },
       logger: this.logger
     });
+
     this._isReadyPromise = this.initialize();
+
+    this.triggerManager = new WhenReadyTriggerManager({
+      manager: new TriggerManagerImpl({
+        db: this._database
+      }),
+      readyPromise: this.waitForReady()
+    });
   }
 
   /**
