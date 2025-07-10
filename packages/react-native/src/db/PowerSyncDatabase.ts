@@ -39,7 +39,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new ReactNativeBucketStorageAdapter(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new ReactNativeBucketStorageAdapter(this.database, AbstractPowerSyncDatabase.transactionMutex, this.logger);
   }
 
   protected generateSyncStreamImplementation(
