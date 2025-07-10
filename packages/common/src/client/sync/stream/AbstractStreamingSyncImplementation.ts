@@ -327,9 +327,12 @@ export abstract class AbstractStreamingSyncImplementation
 
   async getWriteCheckpoint(): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
+    this.logger.debug(`Creating write checkpoint for ${clientId}`);
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
     const response = await this.options.remote.get(path);
-    return response['data']['write_checkpoint'] as string;
+    const checkpoint = response['data']['write_checkpoint'] as string;
+    this.logger.debug(`Got write checkpoint: ${checkpoint}`);
+    return checkpoint;
   }
 
   protected async _uploadAllCrud(): Promise<void> {
@@ -371,6 +374,7 @@ The next upload iteration will be delayed.`);
               });
             } else {
               // Uploading is completed
+              this.logger.debug('Upload complete, updating write checkpoint');
               await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
               break;
             }
