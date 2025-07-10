@@ -2,6 +2,7 @@ import {
   BaseListener,
   BaseObserver,
   BatchedUpdateNotification,
+  ControlledExecutor,
   DBAdapter,
   DBAdapterListener,
   DBLockOptions,
@@ -13,7 +14,7 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
-import SQLJs from 'sql.js/dist/sql-asm-debug.js';
+import SQLJs from 'sql.js/dist/sql-asm.js';
 
 export interface SQLJSPersister {
   readFile: () => Promise<ArrayLike<number> | Buffer | null>;
@@ -51,6 +52,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
   protected _db: SQLJs.Database | null;
   protected tableUpdateCache: Set<string>;
   protected dbP: number | null;
+  protected writeScheduler: ControlledExecutor<SQLJs.Database>;
 
   static sharedObserver = new TableObserver();
   protected disposeListener: () => void;
@@ -80,6 +82,10 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
         }
         this.tableUpdateCache.add(table);
       }
+    });
+
+    this.writeScheduler = new ControlledExecutor(async (db: SQLJs.Database) => {
+      await this.options.persister.writeFile(db.export());
     });
   }
 
@@ -219,7 +225,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       const db = await this.getDB();
       const result = await fn(this.generateLockContext());
 
-      await this.options.persister.writeFile(db.export());
+      this.writeScheduler.schedule(db);
 
       const notification: BatchedUpdateNotification = {
         rawUpdates: [],
