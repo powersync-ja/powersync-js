@@ -374,8 +374,11 @@ The next upload iteration will be delayed.`);
               });
             } else {
               // Uploading is completed
-              this.logger.debug('Upload complete, updating write checkpoint');
-              await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              this.logger.debug('Upload complete, creating write checkpoint');
+              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              if (neededUpdate == false) {
+                this.logger.debug('No write checkpoint needed');
+              }
               break;
             }
           } catch (ex) {
@@ -1078,9 +1081,10 @@ The next upload iteration will be delayed.`);
       // checkpoint, which prevented this checkpoint from applying. Wait for that to complete and
       // try again.
       this.logger.debug(
-        'Could not apply checkpoint due to local data. Waiting for in-progress upload before retrying.'
+        `Could not apply checkpoint ${checkpoint.last_op_id} due to local data. Waiting for in-progress upload before retrying.`
       );
       await Promise.race([pending, onAbortPromise(abort)]);
+      this.logger.debug(`Pending uploads complete, retrying local checkpoint at ${checkpoint.last_op_id}`);
 
       if (abort.aborted) {
         return { applied: false, endIteration: true };
