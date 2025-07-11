@@ -85,19 +85,8 @@ export interface TriggerDiffHandlerContext {
   /**
    * Allows querying the database with access to the table containing diff records.
    * The diff table is accessible via the `diff` accessor.
-   * The `DIFF` table is of the form:
    *
-   * ```sql
-   * CREATE TEMP TABLE ${destination} (
-   *       id TEXT,
-   *       operation TEXT,
-   *       change TEXT,
-   *       timestamp TEXT
-   *     );
-   * ```
-   * The `change` column contains the JSON representation of the change. This column is NULL for
-   * {@link DiffTriggerOperation#DELETE} operations.
-   * For {@link DiffTriggerOperation#UPDATE} operations the `change` column is a JSON object containing both the `new` and `old` values:
+   * The `DIFF` table is of the form described in {@link TriggerManager#createDiffTrigger}
    *
    * @example
    * ```sql
@@ -112,11 +101,30 @@ export interface TriggerDiffHandlerContext {
 }
 
 export interface TrackDiffOptions {
+  /**
+   * A source SQLite table to track changes for.
+   */
   source: string;
+  /**
+   * SQLite Trigger WHEN condition to filter when the trigger should fire.
+   */
   filter?: string;
+  /**
+   * Table columns to track changes for.
+   */
   columns?: string[];
+  /**
+   * SQLite operations to track changes for.
+   */
   operations: DiffTriggerOperation[];
+  /**
+   * Handler for processing diff operations.
+   * Automatically invoked once diff items are present.
+   */
   onChange: (context: TriggerDiffHandlerContext) => Promise<void>;
+  /**
+   * Hooks into the trigger creation process.
+   */
   hooks?: TriggerCreationHooks;
 }
 
@@ -125,6 +133,19 @@ export interface TriggerManager {
    * Creates a temporary trigger which tracks changes to a source table
    * and writes changes to a destination table.
    * The temporary destination table is created internally and will be dropped when the trigger is removed.
+   * The temporary destination table is created with the structure:
+   * ```sql
+   * CREATE TEMP TABLE ${destination} (
+   *       id TEXT,
+   *       operation TEXT,
+   *       change TEXT,
+   *       timestamp TEXT
+   *     );
+   * ```
+   * The `change` column contains the JSON representation of the change. This column is NULL for
+   * {@link DiffTriggerOperation#DELETE} operations.
+   * For {@link DiffTriggerOperation#UPDATE} operations the `change` column is a JSON object containing both the `new` and `old` values.
+   *
    * @returns A callback to remove the trigger and drop the destination table.
    */
   createDiffTrigger(options: CreateDiffTriggerOptions): Promise<TriggerRemoveCallback>;
@@ -139,9 +160,9 @@ export interface TriggerManager {
    *  database.triggers.trackTableDiff({
    *        source: 'ps_data__todos',
    *        columns: ['list_id'],
+   *        filter: "json_extract(NEW.data, '$.list_id') = '123'",
    *        operations: [DiffTriggerOperation.INSERT],
    *        onChange: async (context) => {
-   *          console.log('Change detected, fetching new todos');
    *          // Fetches the todo records that were inserted during this diff
    *          const newTodos = await context.getAll<Database['todos']>("
    *            SELECT
@@ -166,7 +187,7 @@ export interface TriggerManager {
    *                WHERE
    *                  list_id = ?
    *              ",
-   *              [firstList.id]
+   *              ['123']
    *            );
    *
    *            // Example code could process the current todos if necessary
