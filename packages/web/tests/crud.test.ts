@@ -16,7 +16,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"description":"test"}}`
+        data: `{"op":"PUT","id":"${testId}","type":"assets","data":{"description":"test"}}`
       }
     ]);
 
@@ -39,10 +39,10 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"description":"test"}}`
+        data: `{"op":"PUT","id":"${testId}","type":"assets","data":{"description":"test"}}`
       },
       {
-        data: `{"op":"PUT","type":"assets","id":"mockId","data":{"description":"test1"}}`
+        data: `{"op":"PUT","id":"mockId","type":"assets","data":{"description":"test1"}}`
       }
     ]);
 
@@ -66,7 +66,7 @@ describe('CRUD Tests', { sequential: true }, () => {
     // This generates another PUT
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"description":"test2"}}`
+        data: `{"op":"PUT","id":"${testId}","type":"assets","data":{"description":"test2"}}`
       }
     ]);
 
@@ -88,7 +88,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PATCH","type":"assets","id":"${testId}","data":{"description":"test2"}}`
+        data: `{"op":"PATCH","id":"${testId}","type":"assets","data":{"description":"test2"}}`
       }
     ]);
 
@@ -113,10 +113,10 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PATCH","type":"assets","id":"${testId}","data":{"description":"test2","make":"make2"}}`
+        data: `{"op":"PATCH","id":"${testId}","type":"assets","data":{"description":"test2","make":"make2"}}`
       },
       {
-        data: `{"op":"PATCH","type":"assets","id":"mockId","data":{"description":"test2","make":"make2"}}`
+        data: `{"op":"PATCH","id":"mockId","type":"assets","data":{"description":"test2","make":"make2"}}`
       }
     ]);
 
@@ -143,7 +143,7 @@ describe('CRUD Tests', { sequential: true }, () => {
     await powersync.execute('DELETE FROM assets WHERE id = ?', [testId]);
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
-      { data: `{"op":"DELETE","type":"assets","id":"${testId}"}` }
+      { data: `{"op":"DELETE","id":"${testId}","type":"assets"}` }
     ]);
 
     const tx = (await powersync.getNextCrudTransaction())!;
@@ -222,7 +222,7 @@ describe('CRUD Tests', { sequential: true }, () => {
     });
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"quantity":${bigNumber}}}`
+        data: `{"op":"PUT","id":"${testId}","type":"assets","data":{"quantity":${bigNumber}}}`
       }
     ]);
 
@@ -248,7 +248,7 @@ describe('CRUD Tests', { sequential: true }, () => {
     // Not cast as part of crud / persistance
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PUT","type":"assets","id":"${testId}","data":{"quantity":"${bigNumber}"}}`
+        data: `{"op":"PUT","id":"${testId}","type":"assets","data":{"quantity":"${bigNumber}"}}`
       }
     ]);
 
@@ -261,7 +261,7 @@ describe('CRUD Tests', { sequential: true }, () => {
 
     expect(await powersync.getAll('SELECT data FROM ps_crud ORDER BY id')).deep.equals([
       {
-        data: `{"op":"PATCH","type":"assets","id":"${testId}","data":{"description":"updated","quantity":${bigNumber + 1}}}`
+        data: `{"op":"PATCH","id":"${testId}","type":"assets","data":{"description":"updated","quantity":${bigNumber + 1}}}`
       }
     ]);
   });
