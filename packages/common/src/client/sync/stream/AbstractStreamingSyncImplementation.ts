@@ -687,7 +687,12 @@ The next upload iteration will be delayed.`);
 
       if ('crud_upload_completed' in line) {
         if (validatedCheckpoint != null) {
-          await this.applyCheckpoint(validatedCheckpoint);
+          const { applied, endIteration } = await this.applyCheckpoint(validatedCheckpoint);
+          if (applied) {
+            appliedCheckpoint = validatedCheckpoint;
+          } else if (endIteration) {
+            break;
+          }
         }
 
         continue;
