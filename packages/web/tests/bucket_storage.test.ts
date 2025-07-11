@@ -11,7 +11,6 @@ import {
   SyncDataBucket
 } from '@powersync/common';
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
-import { Mutex } from 'async-mutex';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { testSchema } from './utils/testDb';
 
@@ -73,7 +72,7 @@ describe('Bucket Storage', { sequential: true }, () => {
       schema: testSchema
     });
     await db.waitForReady();
-    bucketStorage = new SqliteBucketStorage(db.database, new Mutex());
+    bucketStorage = new SqliteBucketStorage(db.database);
   });
 
   afterEach(async () => {
@@ -418,7 +417,7 @@ describe('Bucket Storage', { sequential: true }, () => {
 
     let powersync = factory.getInstance();
     await powersync.waitForReady();
-    bucketStorage = new SqliteBucketStorage(powersync.database, new Mutex());
+    bucketStorage = new SqliteBucketStorage(powersync.database);
 
     await bucketStorage.saveSyncData(
       new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
@@ -462,7 +461,7 @@ describe('Bucket Storage', { sequential: true }, () => {
 
     let powersync = factory.getInstance();
     await powersync.waitForReady();
-    bucketStorage = new SqliteBucketStorage(powersync.database, new Mutex());
+    bucketStorage = new SqliteBucketStorage(powersync.database);
 
     await bucketStorage.saveSyncData(
       new SyncDataBatch([new SyncDataBucket('bucket1', [putAsset1_1, putAsset2_2, putAsset1_3], false)])
