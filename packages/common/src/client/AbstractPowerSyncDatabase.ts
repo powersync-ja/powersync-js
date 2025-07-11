@@ -37,7 +37,6 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { TriggerManager } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
-import { WhenReadyTriggerManager } from './triggers/WhenReadyTriggerManager.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -201,7 +200,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected runExclusiveMutex: Mutex;
 
-  protected triggerManager: WhenReadyTriggerManager;
+  protected triggerManager: TriggerManagerImpl;
 
   get triggers(): TriggerManager {
     return this.triggerManager;
@@ -268,11 +267,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this._isReadyPromise = this.initialize();
 
-    this.triggerManager = new WhenReadyTriggerManager({
-      manager: new TriggerManagerImpl({
-        db: this._database
-      }),
-      readyPromise: this.waitForReady()
+    this.triggerManager = new TriggerManagerImpl({
+      db: this
     });
   }
 

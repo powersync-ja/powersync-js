@@ -1,17 +1,17 @@
+import * as Comlink from 'comlink';
 import fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import * as Comlink from 'comlink';
 
 import {
   BaseObserver,
   BatchedUpdateNotification,
   DBAdapter,
   DBAdapterListener,
-  LockContext,
-  Transaction,
   DBLockOptions,
-  QueryResult
+  LockContext,
+  QueryResult,
+  Transaction
 } from '@powersync/common';
 import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';
@@ -189,7 +189,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
           return await fn(this.writeConnection);
         } finally {
           const updates = await this.writeConnection.database.collectCommittedUpdates();
-
+          console.log('Collected updates:', updates);
           if (updates.length > 0) {
             const event: BatchedUpdateNotification = {
               tables: updates,
