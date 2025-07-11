@@ -671,8 +671,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns The query result as an object with structured key-value pairs
    */
   async execute(sql: string, parameters?: any[]) {
-    await this.waitForReady();
-    return this.database.execute(sql, parameters);
+    return this.writeLock((tx) => tx.execute(sql, parameters));
   }
 
   /**
