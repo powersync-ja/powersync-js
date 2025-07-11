@@ -133,6 +133,48 @@ export interface TriggerManager {
    * Tracks changes for a table. Triggering a provided handler on changes.
    * Uses {@link createDiffTrigger} internally to create a temporary destination table.
    * @returns A callback to cleanup the trigger and stop tracking changes.
+   * 
+   * @example
+   * ```javascript
+   *  database.triggers.trackTableDiff({
+  *        source: 'ps_data__todos',
+  *        columns: ['list_id'],
+  *        operations: [DiffTriggerOperation.INSERT],
+  *        onChange: async (context) => {
+  *          console.log('Change detected, fetching new todos');
+  *          // Fetches the todo records that were inserted during this diff
+  *          const newTodos = await context.getAll<Database['todos']>("
+  *            SELECT
+  *              todos.*
+  *            FROM
+  *              DIFF
+  *              JOIN todos ON DIFF.id = todos.id
+  *          ");
+  *          todos.push(...newTodos);
+  *        },
+  *        hooks: {
+  *          beforeCreate: async (lockContext) => {
+  *            // This hook is executed inside the write lock before the trigger is created.
+  *            // It can be used to synchronize the current state and fetch all changes after the current state.
+  *            // Read the current state of the todos table
+  *            const currentTodos = await lockContext.getAll<Database['todos']>(
+  *              "
+  *                SELECT
+  *                  *
+  *                FROM
+  *                  todos
+  *                WHERE
+  *                  list_id = ?
+  *              ",
+  *              [firstList.id]
+  *            );
+  *
+  *            // Example code could process the current todos if necessary
+  *            todos.push(...currentTodos);
+  *          }
+  *        }
+  *      });
+   * ```
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
 }
