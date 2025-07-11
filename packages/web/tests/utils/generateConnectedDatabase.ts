@@ -1,4 +1,4 @@
-import { Schema, Table, column } from '@powersync/common';
+import { Schema, SyncStreamConnectionMethod, Table, column } from '@powersync/common';
 import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
@@ -71,7 +71,7 @@ export async function generateConnectedDatabase(options: GenerateConnectedDataba
   const connect = async () => {
     const streamOpened = waitForStream();
 
-    const connectedPromise = powersync.connect(connector);
+    const connectedPromise = powersync.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
 
     await streamOpened;
 

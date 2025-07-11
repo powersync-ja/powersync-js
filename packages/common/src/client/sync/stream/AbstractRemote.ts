@@ -7,7 +7,11 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
-import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
+import {
+  StreamingSyncLine,
+  StreamingSyncLineOrCrudUploadComplete,
+  StreamingSyncRequest
+} from './streaming-sync-types.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
 export type BSONImplementation = typeof BSON;
@@ -268,15 +272,6 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Connects to the sync/stream websocket endpoint and delivers sync lines by decoding the BSON events
-   * sent by the server.
-   */
-  async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const bson = await this.getBSON();
-    return await this.socketStreamRaw(options, (data) => bson.deserialize(data) as StreamingSyncLine, bson);
-  }
-
-  /**
    * Returns a data stream of sync line data.
    *
    * @param map Maps received payload frames to the typed event value.
@@ -473,15 +468,6 @@ export abstract class AbstractRemote {
     }
 
     return stream;
-  }
-
-  /**
-   * Connects to the sync/stream http endpoint, parsing lines as JSON.
-   */
-  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    return await this.postStreamRaw(options, (line) => {
-      return JSON.parse(line) as StreamingSyncLine;
-    });
   }
 
   /**
