@@ -73,10 +73,8 @@ export class TriggerManagerImpl implements TriggerManager {
       });
 
     const setup = async (tx: LockContext) => {
-      console.log(`Creating diff trigger for source table: ${source}`);
       // Allow user code to execute in this lock context before the trigger is created.
       await hooks?.beforeCreate?.(tx);
-      console.log(`Creating diff trigger for source table: ${source} with id: ${id}`);
       await tx.execute(/* sql */ `
         CREATE TEMP TABLE ${destination} (
           id TEXT,
@@ -156,7 +154,6 @@ export class TriggerManagerImpl implements TriggerManager {
 
     try {
       await this.db.writeLock(setup);
-      console.log(`Diff trigger created for source table: ${source} with id: ${id}`);
       return cleanup;
     } catch (error) {
       await cleanup();
@@ -169,7 +166,6 @@ export class TriggerManagerImpl implements TriggerManager {
 
     await this.db.waitForReady();
 
-    console.log(`creating diff trigger for source table: ${source}`);
     const id = await this.getUUID();
     const destination = `ps_temp_track_${source}_${id}`;
 
@@ -181,10 +177,7 @@ export class TriggerManagerImpl implements TriggerManager {
         // Note that the onChange events here have their execution scheduled.
         // Callbacks are throttled and are sequential.
         onChange: async () => {
-          console.log('Change detected, executing onChange handler before abort signal');
           if (abortController.signal.aborted) return;
-
-          console.log('Change detected, executing onChange handler');
 
           // Run the handler in a write lock to keep the state of the
           // destination table consistent.

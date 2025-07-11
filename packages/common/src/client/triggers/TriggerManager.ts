@@ -82,6 +82,32 @@ export interface CreateDiffTriggerOptions {
 export type TriggerRemoveCallback = () => Promise<void>;
 
 export interface TriggerDiffHandlerContext {
+  /**
+   * Allows querying the database with access to the table containing diff records.
+   * The diff table is accessible via the `diff` accessor.
+   * The `DIFF` table is of the form:
+   * 
+   * ```sql
+   * CREATE TEMP TABLE ${destination} (
+   *       id TEXT,
+   *       operation TEXT,
+   *       change TEXT,
+   *       timestamp TEXT
+   *     );
+   * ```
+   * The `change` column contains the JSON representation of the change. This column is NULL for 
+   * {@link DiffTriggerOperation#DELETE} operations. 
+   * For {@link DiffTriggerOperation#UPDATE} operations the `change` column is a JSON object containing both the `new` and `old` values:
+   * 
+   * @example
+   * ```sql
+   * SELECT
+   *  todos.*
+   * FROM
+  *    DIFF
+  *  JOIN todos ON DIFF.id = todos.id
+   * ```
+   */
   getAll: <T = any>(query: string, params?: any[]) => Promise<T[]>;
 }
 
