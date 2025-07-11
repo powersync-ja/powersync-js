@@ -64,7 +64,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex, this.logger);
   }
 
   connect(
@@ -92,7 +92,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       },
       retryDelayMs: this.options.retryDelayMs,
       crudUploadThrottleMs: this.options.crudUploadThrottleMs,
-      identifier: this.database.name
+      identifier: this.database.name,
+      logger: this.logger
     });
   }
 }
