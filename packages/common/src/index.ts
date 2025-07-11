@@ -31,6 +31,8 @@ export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
+export * from './client/triggers/TriggerManager.js';
+
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
 export * from './utils/DataStream.js';
