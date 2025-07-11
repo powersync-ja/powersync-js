@@ -17,8 +17,6 @@ powersync = new PowerSyncDatabase({
 });
 ```
 
-````
-
 ## Persister examples
 
 ### Expo
@@ -72,7 +70,7 @@ const createSQLJSPersister = (dbFilename: string): SQLJSPersister => {
     }
   };
 };
-````
+```
 
 Which can then be used here
 

@@ -1722,15 +1722,24 @@ importers:
       '@powersync/sql-js':
         specifier: 0.0.0-dev-20250711104904
         version: 0.0.0-dev-20250711104904
+      '@powersync/web':
+        specifier: workspace:*
+        version: link:../web
       '@rollup/plugin-alias':
         specifier: ^5.1.0
         version: 5.1.1(rollup@4.14.3)
       '@types/sql.js':
         specifier: ^1.4.9
         version: 1.4.9
+      chance:
+        specifier: ^1.1.9
+        version: 1.1.13
       rollup:
         specifier: 4.14.3
         version: 4.14.3
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
 
   packages/drizzle-driver:
     dependencies:
@@ -28377,9 +28386,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -28390,9 +28397,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
