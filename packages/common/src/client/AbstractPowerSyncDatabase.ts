@@ -462,7 +462,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    return this.connectionManager.connect(connector, options);
+    const resolvedOptions = options ?? {};
+    resolvedOptions.serializedSchema = this.schema.toJSON();
+
+    return this.connectionManager.connect(connector, resolvedOptions);
   }
 
   /**

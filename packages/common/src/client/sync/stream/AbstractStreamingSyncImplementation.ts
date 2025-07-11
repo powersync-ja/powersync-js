@@ -152,6 +152,11 @@ export interface BaseConnectionOptions {
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
+
+  /**
+   * The serialized schema - mainly used to forward information about raw tables to the sync client.
+   */
+  serializedSchema?: any;
 }
 
 /** @internal */
@@ -208,7 +213,8 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
-  params: {}
+  params: {},
+  serializedSchema: undefined
 };
 
 // The priority we assume when we receive checkpoint lines where no priority is set.
@@ -1019,12 +1025,12 @@ The next upload iteration will be delayed.`);
     }
 
     try {
-      await control(
-        PowerSyncControlCommand.START,
-        JSON.stringify({
-          parameters: resolvedOptions.params
-        })
-      );
+      const options: any = { parameters: resolvedOptions.params };
+      if (resolvedOptions.serializedSchema) {
+        options.schema = resolvedOptions.serializedSchema;
+      }
+
+      await control(PowerSyncControlCommand.START, JSON.stringify(options));
 
       this.notifyCompletedUploads = () => {
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });

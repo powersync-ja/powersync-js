@@ -80,6 +80,18 @@ describe('Schema', () => {
         content: column.text
       })
     });
+    schema.withRawTables({
+      lists: {
+        put: {
+          sql: 'SELECT 1',
+          params: [{ Column: 'foo' }]
+        },
+        delete: {
+          sql: 'SELECT 2',
+          params: ['Id']
+        }
+      }
+    });
 
     const json = schema.toJSON();
 
@@ -114,6 +126,19 @@ describe('Schema', () => {
             { name: 'content', type: 'TEXT' }
           ],
           indexes: []
+        }
+      ],
+      raw_tables: [
+        {
+          name: 'lists',
+          delete: {
+            sql: 'SELECT 2',
+            params: ['Id']
+          },
+          put: {
+            sql: 'SELECT 1',
+            params: [{ Column: 'foo' }]
+          }
         }
       ]
     });
