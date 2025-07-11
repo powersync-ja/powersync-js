@@ -1,5 +1,16 @@
 # @powersync/node
 
+## 0.7.2
+
+### Patch Changes
+
+- 9fb898d: Fixed an issue where `readLock` and `writeLock` calls were unnecessarily serialized due to a shared mutex. This did not affect individual calls to `get`, `getAll`, or `getOptional`.
+- a9f6eba: Update PowerSync core extension to 0.4.2
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.33.3
+
 ## 0.7.1
 
 ### Patch Changes

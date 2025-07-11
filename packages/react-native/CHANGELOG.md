@@ -1,5 +1,16 @@
 # @powersync/react-native
 
+## 1.22.3
+
+### Patch Changes
+
+- a9f6eba: Update PowerSync core extension to 0.4.2
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.33.3
+  - @powersync/react@1.5.3
+
 ## 1.22.2
 
 ### Patch Changes
