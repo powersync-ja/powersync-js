@@ -3,6 +3,7 @@ import {
   createBaseLogger,
   DataStream,
   PowerSyncConnectionOptions,
+  SyncStreamConnectionMethod,
   WASQLiteOpenFactory,
   WASQLiteVFS
 } from '@powersync/web';
@@ -179,6 +180,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, remote } = await createConnectedDatabase();
+      const connectionOptions: PowerSyncConnectionOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
@@ -188,10 +190,10 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
 
       // This method is used for all mocked connections
       const basePostStream = remote.postStreamRaw;
-      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...options) => {
+      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...args) => {
         // Simulate a connection delay
         await new Promise((r) => setTimeout(r, 100));
-        const stream = await basePostStream.call(remote, ...options);
+        const stream = await basePostStream.call(remote, ...args);
         generatedStreams.push(stream);
         return stream;
       });
@@ -199,7 +201,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Connect many times. The calls here are not awaited and have no async calls in between.
       const connectionAttempts = 10;
       for (let i = 1; i <= connectionAttempts; i++) {
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(
@@ -217,7 +219,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Now with random awaited delays between unawaited calls
       for (let i = connectionAttempts; i >= 0; i--) {
         await new Promise((r) => setTimeout(r, Math.random() * 10));
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(
