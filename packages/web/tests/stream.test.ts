@@ -187,8 +187,8 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       const generatedStreams: DataStream<any>[] = [];
 
       // This method is used for all mocked connections
-      const basePostStream = remote.postStream;
-      const postSpy = vi.spyOn(remote, 'postStream').mockImplementation(async (...options) => {
+      const basePostStream = remote.postStreamRaw;
+      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...options) => {
         // Simulate a connection delay
         await new Promise((r) => setTimeout(r, 100));
         const stream = await basePostStream.call(remote, ...options);
