@@ -36,8 +36,8 @@ export default (commandLineArgs) => {
         ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
         // Used by can-ndjson-stream
         TextDecoder: ['text-encoding', 'TextDecoder']
-      })
-      //terser({ sourceMap })
+      }),
+      terser({ sourceMap })
     ],
     // This makes life easier
     external: [
