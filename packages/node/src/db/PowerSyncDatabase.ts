@@ -64,7 +64,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new SqliteBucketStorage(this.database);
   }
 
   connect(

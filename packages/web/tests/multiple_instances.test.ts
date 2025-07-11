@@ -10,7 +10,6 @@ import {
   SharedWebStreamingSyncImplementationOptions,
   WebRemote
 } from '@powersync/web';
-import { Mutex } from 'async-mutex';
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
@@ -126,7 +125,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     // They need to use the same identifier to use the same shared worker.
     const identifier = 'streaming-sync-shared';
     const syncOptions1: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector1.uploadData(db);
@@ -140,7 +139,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Generate the second streaming sync implementation
     const connector2 = new TestConnector();
     const syncOptions2: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector2.uploadData(db);
@@ -190,7 +189,7 @@ describe('Multiple Instances', { sequential: true }, () => {
 
     // Create the first streaming client
     const stream1 = new SharedWebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         triggerUpload1();
@@ -216,7 +215,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     });
 
     const stream2 = new SharedWebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         triggerUpload2();

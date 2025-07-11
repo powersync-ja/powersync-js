@@ -1,6 +1,5 @@
-import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter.js';
+import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapter.js';
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
 import {
@@ -26,7 +25,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   constructor(
     private db: DBAdapter,
-    private mutex: Mutex,
     private logger: ILogger = Logger.get('SqliteBucketStorage')
   ) {
     super();
