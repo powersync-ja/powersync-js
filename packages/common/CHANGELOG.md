@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.33.3
+
+### Patch Changes
+
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- 9fb898d: [Internal] Removed shared mutex implementation of `readLock` and `writeLock`.
+
 ## 1.33.2
 
 ### Patch Changes

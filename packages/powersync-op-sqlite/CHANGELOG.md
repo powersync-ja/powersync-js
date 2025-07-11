@@ -1,5 +1,14 @@
 # @powersync/op-sqlite
 
+## 0.7.4
+
+### Patch Changes
+
+- a9f6eba: Update PowerSync core extension to 0.4.2
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.33.3
+
 ## 0.7.3
 
 ### Patch Changes
