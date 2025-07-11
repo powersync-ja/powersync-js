@@ -32,9 +32,12 @@
     "async-mutex": "^0.4.0"
   },
   "devDependencies": {
+    "@powersync/sql-js": "0.0.0-dev-20250711104904",
+    "@powersync/web": "workspace:*",
     "@rollup/plugin-alias": "^5.1.0",
     "@types/sql.js": "^1.4.9",
+    "chance": "^1.1.9",
     "rollup": "4.14.3",
-    "sql.js": "workspace:*"
+    "uuid": "^11.1.0"
   }
 }

@@ -14,13 +14,18 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
-import SQLJs from 'sql.js/dist/sql-asm.js';
+import SQLJs from '@powersync/sql-js/dist/sql-asm.js';
 
 export interface SQLJSPersister {
   readFile: () => Promise<ArrayLike<number> | Buffer | null>;
   writeFile: (data: ArrayLike<number> | Buffer) => Promise<void>;
 }
+
 export interface SQLJSOpenOptions extends SQLOpenOptions {
+  persister?: SQLJSPersister;
+}
+
+export interface ResolvedSQLJSOpenOptions extends SQLJSOpenOptions {
   persister: SQLJSPersister;
 }
 
@@ -53,6 +58,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
   protected tableUpdateCache: Set<string>;
   protected dbP: number | null;
   protected writeScheduler: ControlledExecutor<SQLJs.Database>;
+  protected options: ResolvedSQLJSOpenOptions;
 
   static sharedObserver = new TableObserver();
   protected disposeListener: () => void;
@@ -67,8 +73,9 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     return this.options.dbFilename;
   }
 
-  constructor(protected options: SQLJSOpenOptions) {
+  constructor(options: SQLJSOpenOptions) {
     super();
+    this.options = this.resolveOptions(options);
     this.initPromise = this.init();
     this._db = null;
     this.tableUpdateCache = new Set<string>();
@@ -89,18 +96,27 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     });
   }
 
+  protected resolveOptions(options: SQLJSOpenOptions): ResolvedSQLJSOpenOptions {
+    const persister = options.persister ?? {
+      readFile: async () => null,
+      writeFile: async () => {}
+    };
+    return {
+      ...options,
+      persister
+    };
+  }
+
   protected async init(): Promise<SQLJs.Database> {
-    console.log('Initializing SQL.js database with options');
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
       print: (text) => {
         console.log('[stdout]', text);
       },
       printErr: (text) => {
-        console.warn('[stderr]', text);
+        console.error('[stderr]', text);
       }
     });
-    console.log('SQL.js loaded:');
     const existing = await this.options.persister.readFile();
     const db = new SQL.Database(existing);
     this.dbP = db['db'];
@@ -205,9 +221,26 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     return this.writeLock((tx) => tx.executeRaw(query, params));
   }
 
-  executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
-    // TODO
-    throw new Error('Method not implemented.');
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+    let totalRowsAffected = 0;
+    const db = await this.getDB();
+
+    try {
+      const stmt = db.prepare(query);
+
+      for (const paramSet of params) {
+        stmt.run(paramSet);
+        totalRowsAffected += db.getRowsModified();
+      }
+
+      stmt.free();
+
+      return {
+        rowsAffected: totalRowsAffected
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
