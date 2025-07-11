@@ -619,10 +619,9 @@ The next upload iteration will be delayed.`);
     this.options.adapter.startSession();
     let [req, bucketMap] = await this.collectLocalBucketState();
 
-    // These are compared by reference
     let targetCheckpoint: Checkpoint | null = null;
-    let validatedCheckpoint: Checkpoint | null = null;
-    let appliedCheckpoint: Checkpoint | null = null;
+    // A checkpoint that has been validated but not applied (e.g. due to pending local writes)
+    let pendingValidatedCheckpoint: Checkpoint | null = null;
 
     const clientId = await this.options.adapter.getClientId();
     const usingFixedKeyFormat = await this.requireKeyFormat(false);
@@ -686,10 +685,10 @@ The next upload iteration will be delayed.`);
       }
 
       if ('crud_upload_completed' in line) {
-        if (validatedCheckpoint != null) {
-          const { applied, endIteration } = await this.applyCheckpoint(validatedCheckpoint);
+        if (pendingValidatedCheckpoint != null) {
+          const { applied, endIteration } = await this.applyCheckpoint(pendingValidatedCheckpoint);
           if (applied) {
-            appliedCheckpoint = validatedCheckpoint;
+            pendingValidatedCheckpoint = null;
           } else if (endIteration) {
             break;
           }
@@ -729,10 +728,9 @@ The next upload iteration will be delayed.`);
         const result = await this.applyCheckpoint(targetCheckpoint!);
         if (result.endIteration) {
           return;
-        } else if (result.applied) {
-          appliedCheckpoint = targetCheckpoint;
+        } else if (!result.applied) {
+          pendingValidatedCheckpoint = targetCheckpoint;
         }
-        validatedCheckpoint = targetCheckpoint;
       } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
         const priority = line.partial_checkpoint_complete.priority;
         this.logger.debug('Partial checkpoint complete', priority);
