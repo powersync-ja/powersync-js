@@ -94,7 +94,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       retryDelayMs: this.options.retryDelayMs,
       crudUploadThrottleMs: this.options.crudUploadThrottleMs,
       identifier: this.database.name,
-      logger: logger
+      logger
     });
   }
 }
