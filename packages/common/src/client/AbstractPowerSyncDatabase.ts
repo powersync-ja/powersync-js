@@ -252,7 +252,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this._isReadyPromise = this.initialize();
 
     this.triggerManager = new TriggerManagerImpl({
-      db: this
+      db: this,
+      schema: this.schema
     });
   }
 

@@ -1,4 +1,5 @@
 import { LockContext } from '../../db/DBAdapter.js';
+import { Schema } from '../../db/schema/Schema.js';
 import { type AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import {
   CreateDiffTriggerOptions,
@@ -10,10 +11,20 @@ import {
 
 export type TriggerManagerImplOptions = {
   db: AbstractPowerSyncDatabase;
+  schema: Schema;
 };
 
 export class TriggerManagerImpl implements TriggerManager {
-  constructor(protected options: TriggerManagerImplOptions) {}
+  protected schema: Schema;
+
+  constructor(protected options: TriggerManagerImplOptions) {
+    this.schema = options.schema;
+    options.db.registerListener({
+      schemaChanged: (schema) => {
+        this.schema = schema;
+      }
+    });
+  }
 
   protected get db() {
     return this.options.db;
@@ -48,6 +59,17 @@ export class TriggerManagerImpl implements TriggerManager {
     }
 
     /**
+     * Allow specifying the View name as the source.
+     * We can lookup the internal table name from the schema.
+     */
+    const sourceDefinition = this.schema.tables.find((table) => table.viewName == source);
+    if (!sourceDefinition) {
+      throw new Error(`Source table or view "${source}" not found in the schema.`);
+    }
+
+    const internalSource = sourceDefinition.internalName;
+
+    /**
      * When is a tuple of the query and the parameters.
      */
     const whenCondition = when ? `WHEN ${when}` : '';
@@ -79,8 +101,9 @@ export class TriggerManagerImpl implements TriggerManager {
         CREATE TEMP TABLE ${destination} (
           id TEXT,
           operation TEXT,
-          change TEXT,
-          timestamp TEXT
+          timestamp TEXT,
+          value TEXT,
+          previous_value TEXT
         );
       `);
 
@@ -89,15 +112,15 @@ export class TriggerManagerImpl implements TriggerManager {
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${source} ${whenCondition} BEGIN
+          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenCondition} BEGIN
           INSERT INTO
-            ${destination} (id, operation, change, timestamp)
+            ${destination} (id, operation, timestamp, value)
           VALUES
             (
               NEW.id,
               'INSERT',
-              ${jsonFragment('NEW')},
-              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now')
+              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now'),
+              ${jsonFragment('NEW')}
             );
 
           END;
@@ -110,21 +133,16 @@ export class TriggerManagerImpl implements TriggerManager {
 
         await tx.execute(/* sql */ `
           CREATE TEMP TRIGGER ${updateTriggerId} AFTER
-          UPDATE ON ${source} ${whenCondition} BEGIN
+          UPDATE ON ${internalSource} ${whenCondition} BEGIN
           INSERT INTO
-            ${destination} (id, operation, change, timestamp)
+            ${destination} (id, operation, timestamp, value, previous_value)
           VALUES
             (
               NEW.id,
               'UPDATE',
-              --- Reports both the new and old values in JSON format
-              json_object (
-                'new',
-                ${jsonFragment('NEW')},
-                'old',
-                ${jsonFragment('OLD')}
-              ),
-              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now')
+              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now'),
+              ${jsonFragment('NEW')},
+              ${jsonFragment('OLD')}
             );
 
           END;
@@ -137,7 +155,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
         // Create delete trigger for basic JSON
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${source} ${whenCondition} BEGIN
+          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenCondition} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp)
           VALUES

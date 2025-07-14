@@ -12,7 +12,7 @@ describe('Triggers', () => {
     const tempTable = 'temp_remote_lists';
 
     await database.triggers.createDiffTrigger({
-      source: 'ps_data__lists',
+      source: 'lists',
       destination: tempTable,
       columns: ['name'],
       operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE]
@@ -88,8 +88,7 @@ describe('Triggers', () => {
      * Watch the todos table for changes. Only track the diff for rows belonging to the first list.
      */
     await database.triggers.trackTableDiff({
-      // TODO investigate it this can be improved
-      source: 'ps_data__todos',
+      source: 'todos',
       columns: ['list_id'],
       // TODO, should/could we expose columns without json. Maybe with a temp view
       filter: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'`,
@@ -174,17 +173,6 @@ describe('Triggers', () => {
 
     const todos: Database['todos'][] = [];
 
-    // const createTodo = async () =>
-    //   database.execute(
-    //     /* sql */ `
-    //       INSERT INTO
-    //         todos (id, content, list_id)
-    //       VALUES
-    //         (uuid (), 'todo', ?)
-    //     `,
-    //     [firstList.id]
-    //   );
-
     const createTodo = async () => {
       // Create todos for both lists
       await database.writeLock(async (tx) => {
@@ -204,8 +192,7 @@ describe('Triggers', () => {
       // Configure the trigger to watch for changes.
       // The onChange handler is guaranteed to see any change after the state above.
       database.triggers.trackTableDiff({
-        // TODO investigate it this can be improved
-        source: 'ps_data__todos',
+        source: 'todos',
         columns: ['list_id'],
         // TODO, should/could we expose columns without json. Maybe with a temp view
         filter: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'`,

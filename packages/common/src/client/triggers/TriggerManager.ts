@@ -18,12 +18,13 @@ export interface BaseTriggerDiffRecord {
 
 export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.UPDATE;
-  change: string;
+  value: string;
+  previous_value?: string;
 }
 
 export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.INSERT;
-  change: string;
+  value: string;
 }
 
 export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
@@ -41,7 +42,8 @@ export interface TriggerCreationHooks {
 
 export interface CreateDiffTriggerOptions {
   /**
-   * Source table to trigger and track changes from.
+   * Source table/view to trigger and track changes from.
+   * This should be present in the PowerSync database's schema.
    */
   source: string;
 
@@ -102,7 +104,8 @@ export interface TriggerDiffHandlerContext {
 
 export interface TrackDiffOptions {
   /**
-   * A source SQLite table to track changes for.
+   * A source SQLite table/view to track changes for.
+   * This should be present in the PowerSync database's schema.
    */
   source: string;
   /**
@@ -138,13 +141,15 @@ export interface TriggerManager {
    * CREATE TEMP TABLE ${destination} (
    *       id TEXT,
    *       operation TEXT,
-   *       change TEXT,
    *       timestamp TEXT
+   *       value TEXT,
+   *       previous_value TEXT
    *     );
    * ```
-   * The `change` column contains the JSON representation of the change. This column is NULL for
+   * The `value` column contains the JSON representation of the change. This column is NULL for
    * {@link DiffTriggerOperation#DELETE} operations.
-   * For {@link DiffTriggerOperation#UPDATE} operations the `change` column is a JSON object containing both the `new` and `old` values.
+   * For {@link DiffTriggerOperation#UPDATE} operations the `previous_value` column contains the previous value of the changed row
+   * in a JSON format.
    *
    * @returns A callback to remove the trigger and drop the destination table.
    */
