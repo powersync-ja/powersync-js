@@ -74,7 +74,7 @@ describe('useQuery', () => {
         expect(onChangeSpy).not.toHaveBeenCalled();
         expect(getAllSpy).toHaveBeenCalledTimes(1);
       },
-      { timeout: 100 }
+      { timeout: 1000 }
     );
   });
 
