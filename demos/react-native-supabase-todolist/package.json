@@ -14,7 +14,6 @@
     "@powersync/attachments": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
-    "@powersync/dev-adapter": "workspace:*",
     "@powersync/react-native": "workspace:*",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^7.1.1",

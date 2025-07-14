@@ -4,7 +4,7 @@ A development DB Adapter for PowerSync which uses [SQL.js](https://sql.js.org/#/
 
 ## Usage
 
-By default the SQLJS adapter will be in-memory. Read further for persistor examples.
+By default the SQLJS adapter will be in-memory. Read further for persister examples.
 
 ```tsx
 import { SQLJSOpenFactory } from '@powersync/dev-adapter';

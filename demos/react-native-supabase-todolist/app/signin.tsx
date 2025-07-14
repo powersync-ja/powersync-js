@@ -13,17 +13,6 @@ export default function Signin() {
   const [credentials, setCredentials] = React.useState({ username: '', password: '' });
   const [error, setError] = React.useState('');
 
-  // Defensive check for HMR
-  React.useEffect(() => {
-    supabaseConnector.client.auth
-      .getSession()
-      .then(({ data }) => {
-        if (data.session) {
-          router.replace('views/todos/lists');
-        }
-      })
-
-  }, []);
   return (
     <View style={{ flexGrow: 1, alignContent: 'center', justifyContent: 'center' }}>
       {loading ? (

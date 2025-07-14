@@ -1,11 +1,10 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/react-native';
+import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
 import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
 import { type AttachmentRecord } from '@powersync/attachments';
-import { SQLJSOpenFactory } from '@powersync/dev-adapter';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
 import { AppConfig } from '../supabase/AppConfig';
@@ -30,17 +29,9 @@ export class System {
     this.storage = this.supabaseConnector.storage;
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      // database: {
-      //   dbFilename: 'ddd'
-      // },
-      database: new SQLJSOpenFactory({
-        dbFilename: 'powersync.db',
-        persister: {
-          // TODO
-          readFile: async () => null,
-          writeFile: async () => {}
-        }
-      }),
+      database: {
+        dbFilename: 'sqlite.db'
+      },
       logger
     });
     /**
@@ -77,7 +68,7 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector);
+    await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
