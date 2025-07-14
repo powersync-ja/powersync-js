@@ -78,7 +78,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     connector: PowerSyncBackendConnector,
     options: NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new NodeRemote(connector, this.options.logger, {
+    const logger = this.options.logger;
+    const remote = new NodeRemote(connector, logger, {
       dispatcher: options.dispatcher,
       ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
     });
@@ -92,7 +93,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       },
       retryDelayMs: this.options.retryDelayMs,
       crudUploadThrottleMs: this.options.crudUploadThrottleMs,
-      identifier: this.database.name
+      identifier: this.database.name,
+      logger: logger
     });
   }
 }
