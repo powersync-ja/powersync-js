@@ -8,6 +8,7 @@ import {
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
   RemoteConnector,
+  SocketSyncStreamOptions,
   StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
@@ -18,6 +19,7 @@ import {
   WebPowerSyncOpenFactoryOptions,
   WebStreamingSyncImplementation
 } from '@powersync/web';
+import { BSON } from 'bson';
 import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -34,7 +36,7 @@ export class TestConnector implements PowerSyncBackendConnector {
 }
 
 export class MockRemote extends AbstractRemote {
-  streamController: ReadableStreamDefaultController<StreamingSyncLine> | null;
+  streamController: ReadableStreamDefaultController<string> | null;
   errorOnStreamStart = false;
   generateCheckpoint: MockedFunction<() => any>;
 
@@ -100,16 +102,16 @@ export class MockRemote extends AbstractRemote {
     return new Response(stream).body!;
   }
 
-  socketStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    // For this test mock these are essentially the same
-    return this.postStream(options);
+  async socketStreamRaw<T>(): Promise<DataStream<T>> {
+    throw 'Unsupported: Socket streams are not currently supported in tests';
   }
 
-  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
     const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
     const mockReader = mockResponse.getReader();
-    const stream = new DataStream<StreamingSyncLine>({
-      logger: this.logger
+    const stream = new DataStream<T, string>({
+      logger: this.logger,
+      mapLine: mapLine
     });
 
     if (options.abortSignal?.aborted) {
@@ -143,7 +145,7 @@ export class MockRemote extends AbstractRemote {
   }
 
   enqueueLine(line: StreamingSyncLine) {
-    this.streamController?.enqueue(line);
+    this.streamController?.enqueue(JSON.stringify(line));
   }
 }
 

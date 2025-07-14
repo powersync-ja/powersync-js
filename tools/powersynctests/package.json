@@ -9,6 +9,7 @@
     "start": "react-native start"
   },
   "dependencies": {
+    "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@op-engineering/op-sqlite": "^14.0.2",
     "@powersync/common": "workspace:*",
     "@powersync/op-sqlite": "workspace:*",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@babel/plugin-transform-async-generator-functions": "^7.27.1",
     "@babel/plugin-transform-class-static-block": "^7.26.0",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
