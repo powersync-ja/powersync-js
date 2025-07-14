@@ -55,8 +55,7 @@ Deno.serve(async (req) => {
     // insert the new merged update as new single update for the document
     const supabaseInsert = await supabase.from('document_updates').insert({
       document_id: document_id,
-      update_data: Uint8ArrayToHex(docState),
-      editor_id: 'merged_update'
+      update_data: Uint8ArrayToHex(docState)
     });
     if (supabaseInsert.error) {
       throw new Error(supabaseInsert.error);

@@ -5,7 +5,6 @@
 - Added a local development option with local Supabase and PowerSync services.
 - Updated Sync rules to use client parameters. Each client now only syncs `document` and `document_updates` for the document being edited.
 - Updated `PowerSyncYjsProvider` to use an incremental watched query for `document_updates`.
-  - Added a `editor_id` column to the `document_updates` table. This tracks which editor created the update and avoids reapplying updates in the source editor.
   - The incremental watched query now applies updates from external editors.
 
 ## 0.1.16

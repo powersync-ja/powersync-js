@@ -3,7 +3,6 @@ import * as Y from 'yjs';
 import { b64ToUint8Array, Uint8ArrayTob64 } from '@/library/binary-utils';
 import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { ObservableV2 } from 'lib0/observable';
-import { v4 as uuidv4 } from 'uuid';
 import { DocumentUpdates } from './AppSchema';
 
 export interface PowerSyncYjsEvents {
@@ -26,8 +25,6 @@ export interface PowerSyncYjsEvents {
  */
 export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
   private abortController = new AbortController();
-  // This ID is updated on every new instance of the provider.
-  private id = uuidv4();
 
   constructor(
     public readonly doc: Y.Doc,
@@ -49,9 +46,8 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
             document_updates
           WHERE
             document_id = ?
-            AND editor_id != ?
         `,
-        parameters: [documentId, this.id]
+        parameters: [documentId]
       })
       .differentialWatch();
 
@@ -68,11 +64,18 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
     this.destroy = this.destroy.bind(this);
 
     let synced = false;
-
+    const origin = this;
     updateQuery.registerListener({
       onDiff: async (diff) => {
         for (const added of diff.added) {
-          Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64));
+          /**
+           * Local document updates get stored to the database and synced.
+           *
+           * These updates here originate from syncing remote updates.
+           * Applying these updates to YJS should not result in the `storeUpdate`
+           * handler creating a new `document_update` record. We mark the origin
+           */
+          Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64), origin);
         }
         if (!synced) {
           synced = true;
@@ -89,15 +92,19 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
   }
 
   private async _storeUpdate(update: Uint8Array, origin: any) {
-    // update originated from elsewhere - save to the database
+    if (origin === this) {
+      // update originated from the database / PowerSync - ignore
+      return;
+    }
+
     await this.db.execute(
       /* sql */ `
         INSERT INTO
-          document_updates (id, document_id, update_b64, editor_id)
+          document_updates (id, document_id, update_b64)
         VALUES
-          (uuid (), ?, ?, ?)
+          (uuid (), ?, ?)
       `,
-      [this.documentId, Uint8ArrayTob64(update), this.id]
+      [this.documentId, Uint8ArrayTob64(update)]
     );
   }
 
