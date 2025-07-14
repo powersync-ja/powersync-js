@@ -2,6 +2,10 @@
 
 A development DB Adapter for PowerSync which uses [SQL.js](https://sql.js.org/#/)
 
+## Note: Alpha Release
+
+This package is currently in an alpha release.
+
 ## Usage
 
 By default the SQLJS adapter will be in-memory. Read further for persister examples.

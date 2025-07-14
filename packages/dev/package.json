@@ -1,8 +1,8 @@
 {
-  "name": "@powersync/dev-adapter",
+  "name": "@powersync/dev",
   "version": "0.0.0",
   "private": "true",
-  "description": "API definitions for JourneyApps PowerSync",
+  "description": "Development helpers for JourneyApps PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
   "module": "dist/bundle.mjs",
