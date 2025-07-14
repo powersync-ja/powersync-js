@@ -35,7 +35,6 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
     public readonly documentId: string
   ) {
     super();
-
     /**
      * Watch for changes to the `document_updates` table for this document.
      * This will be used to apply updates from other editors.
@@ -71,8 +70,8 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
     let synced = false;
 
     updateQuery.registerListener({
-      onStateChange: async () => {
-        for (const added of updateQuery.state.diff.added) {
+      onDiff: async (diff) => {
+        for (const added of diff.added) {
           Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64));
         }
         if (!synced) {

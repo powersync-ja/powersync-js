@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, ArrayComparator, GetAllQuery, WatchedQueryState } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  ArrayComparator,
+  GetAllQuery,
+  WatchedQueryDifferential,
+  WatchedQueryState
+} from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -495,6 +501,14 @@ describe('Watch Tests', { sequential: true }, () => {
       })
       .differentialWatch();
 
+    const diffs: WatchedQueryDifferential<{ id: string; make: string }>[] = [];
+
+    watch.registerListener({
+      onDiff: (diff) => {
+        diffs.push(diff);
+      }
+    });
+
     // Create sample data
     await powersync.execute(
       /* sql */ `
@@ -508,7 +522,7 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.diff.added[0]?.make).equals('test1');
+        expect(diffs[0].added[0]?.make).equals('test1');
       },
       { timeout: 1000 }
     );
@@ -525,12 +539,13 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
+        expect(diffs).toHaveLength(2);
         // This should now reflect that we had one change since the last event
-        expect(watch.state.diff.added).toHaveLength(1);
-        expect(watch.state.diff.added[0]?.make).equals('test2');
+        expect(diffs[1].added).toHaveLength(1);
+        expect(diffs[1].added[0]?.make).equals('test2');
 
-        expect(watch.state.diff.removed).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(2);
+        expect(diffs[1].removed).toHaveLength(0);
+        expect(diffs[1].all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -546,13 +561,14 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.diff.added).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(1);
-        expect(watch.state.diff.unchanged).toHaveLength(1);
-        expect(watch.state.diff.unchanged[0]?.make).equals('test1');
+        expect(diffs).toHaveLength(3);
+        expect(diffs[2].added).toHaveLength(0);
+        expect(diffs[2].all).toHaveLength(1);
+        expect(diffs[2].unchanged).toHaveLength(1);
+        expect(diffs[2].unchanged[0]?.make).equals('test1');
 
-        expect(watch.state.diff.removed).toHaveLength(1);
-        expect(watch.state.diff.removed[0]?.make).equals('test2');
+        expect(diffs[2].removed).toHaveLength(1);
+        expect(diffs[2].removed[0]?.make).equals('test2');
       },
       { timeout: 1000 }
     );
@@ -592,9 +608,18 @@ describe('Watch Tests', { sequential: true }, () => {
       ['test1', uuid()]
     );
 
+    const diffs: WatchedQueryDifferential<{ id: string; make: string }>[] = [];
+
+    watch.registerListener({
+      onDiff: (diff) => {
+        diffs.push(diff);
+      }
+    });
+
     await vi.waitFor(
       () => {
-        expect(watch.state.diff.added[0]?.make).equals('test1');
+        expect(diffs).toHaveLength(1);
+        expect(diffs[0].added[0]?.make).equals('test1');
       },
       { timeout: 1000 }
     );
@@ -611,12 +636,13 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
+        expect(diffs).toHaveLength(2);
         // This should now reflect that we had one change since the last event
-        expect(watch.state.diff.added).toHaveLength(1);
-        expect(watch.state.diff.added[0]?.make).equals('test2');
+        expect(diffs[1].added).toHaveLength(1);
+        expect(diffs[1].added[0]?.make).equals('test2');
 
-        expect(watch.state.diff.removed).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(2);
+        expect(diffs[1].removed).toHaveLength(0);
+        expect(diffs[1].all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -741,6 +767,14 @@ describe('Watch Tests', { sequential: true }, () => {
     // It should have the initial value
     expect(watch.state.data).toHaveLength(1);
 
+    const diffs: WatchedQueryDifferential<{ id: string; make: string }>[] = [];
+
+    watch.registerListener({
+      onDiff: (diff) => {
+        diffs.push(diff);
+      }
+    });
+
     await powersync.execute(
       /* sql */ `
         INSERT INTO
@@ -753,12 +787,13 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
+        expect(diffs).toHaveLength(1);
         // This should now reflect that we had one change since the last event
-        expect(watch.state.diff.added).toHaveLength(1);
-        expect(watch.state.diff.added[0]?.make).equals('test2');
+        expect(diffs[0].added).toHaveLength(1);
+        expect(diffs[0].added[0]?.make).equals('test2');
 
-        expect(watch.state.diff.removed).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(2);
+        expect(diffs[0].removed).toHaveLength(0);
+        expect(diffs[0].all).toHaveLength(2);
       },
       { timeout: 1000 }
     );
@@ -774,13 +809,14 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.diff.added).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(1);
-        expect(watch.state.diff.unchanged).toHaveLength(1);
-        expect(watch.state.diff.unchanged[0]?.make).equals('test1');
+        expect(diffs).toHaveLength(2);
+        expect(diffs[1].added).toHaveLength(0);
+        expect(diffs[1].all).toHaveLength(1);
+        expect(diffs[1].unchanged).toHaveLength(1);
+        expect(diffs[1].unchanged[0]?.make).equals('test1');
 
-        expect(watch.state.diff.removed).toHaveLength(1);
-        expect(watch.state.diff.removed[0]?.make).equals('test2');
+        expect(diffs[1].removed).toHaveLength(1);
+        expect(diffs[1].removed[0]?.make).equals('test2');
       },
       { timeout: 1000 }
     );
@@ -823,6 +859,14 @@ describe('Watch Tests', { sequential: true }, () => {
       { timeout: 1000, interval: 100 }
     );
 
+    const diffs: WatchedQueryDifferential<{ id: string; make: string }>[] = [];
+
+    watch.registerListener({
+      onDiff: (diff) => {
+        diffs.push(diff);
+      }
+    });
+
     await powersync.execute(
       /* sql */ `
         UPDATE assets
@@ -836,16 +880,17 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
-        expect(watch.state.diff.added).toHaveLength(0);
-        const updated = watch.state.diff.updated[0];
+        expect(diffs).toHaveLength(1);
+        expect(diffs[0].added).toHaveLength(0);
+        const updated = diffs[0].updated[0];
 
         // The update should contain previous and current values of changed rows
         expect(updated).toBeDefined();
         expect(updated.previous.make).equals('test1');
         expect(updated.current.make).equals('test2');
 
-        expect(watch.state.diff.removed).toHaveLength(0);
-        expect(watch.state.diff.all).toHaveLength(1);
+        expect(diffs[0].removed).toHaveLength(0);
+        expect(diffs[0].all).toHaveLength(1);
       },
       { timeout: 1000 }
     );

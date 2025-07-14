@@ -1,4 +1,10 @@
-import { WatchCompatibleQuery, WatchedQuery, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
+import {
+  WatchCompatibleQuery,
+  WatchedQuery,
+  WatchedQueryListener,
+  WatchedQueryOptions,
+  WatchedQueryState
+} from '../WatchedQuery.js';
 import {
   AbstractQueryProcessor,
   AbstractQueryProcessorOptions,
@@ -95,10 +101,16 @@ type MutableDifferentialWatchedQueryState<RowType> = MutableWatchedQueryState<Ro
   diff: WatchedQueryDifferential<RowType>;
 };
 
-export interface DifferentialWatchedQuery<RowType>
-  extends WatchedQuery<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>> {
-  readonly state: DifferentialWatchedQueryState<RowType>;
+export interface DifferentialWatchedQueryListener<RowType>
+  extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
+  onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
+
+export type DifferentialWatchedQuery<RowType> = WatchedQuery<
+  ReadonlyArray<Readonly<RowType>>,
+  DifferentialWatchedQuerySettings<RowType>,
+  DifferentialWatchedQueryListener<RowType>
+>;
 
 /**
  * @internal
@@ -286,9 +298,9 @@ export class DifferentialQueryProcessor<RowType>
             currentMap = map;
 
             if (hasChanged) {
+              await this.iterateAsyncListenersWithError((l) => l.onDiff?.(diff));
               Object.assign(partialStateUpdate, {
-                data: diff.all,
-                diff
+                data: diff.all
               });
             }
 

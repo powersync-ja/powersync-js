@@ -82,8 +82,11 @@ export const DEFAULT_WATCH_QUERY_OPTIONS: WatchedQueryOptions = {
   reportFetching: true
 };
 
-export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptions = WatchedQueryOptions>
-  extends MetaBaseObserverInterface<WatchedQueryListener<Data>> {
+export interface WatchedQuery<
+  Data = unknown,
+  Settings extends WatchedQueryOptions = WatchedQueryOptions,
+  Listener extends WatchedQueryListener<Data> = WatchedQueryListener<Data>
+> extends MetaBaseObserverInterface<Listener> {
   /**
    * Current state of the watched query.
    */
@@ -95,7 +98,7 @@ export interface WatchedQuery<Data = unknown, Settings extends WatchedQueryOptio
    * Subscribe to watched query events.
    * @returns A function to unsubscribe from the events.
    */
-  registerListener(listener: WatchedQueryListener<Data>): () => void;
+  registerListener(listener: Listener): () => void;
 
   /**
    * Updates the underlying query options.
