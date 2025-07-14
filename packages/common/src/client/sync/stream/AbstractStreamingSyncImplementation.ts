@@ -123,7 +123,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
+export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
+
+export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
 /** @internal */
 export interface BaseConnectionOptions {
@@ -181,7 +183,7 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   /**
    * Connects to the sync service
    */
-  connect(options?: PowerSyncConnectionOptions): Promise<void>;
+  connect(options?: InternalConnectionOptions): Promise<void>;
   /**
    * Disconnects from the sync services.
    * @throws if not connected or if abort is not controlled internally
