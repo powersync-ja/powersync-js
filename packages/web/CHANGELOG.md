@@ -1,5 +1,28 @@
 # @powersync/web
 
+## 1.23.2
+
+### Patch Changes
+
+- Updated dependencies [9b2bde3]
+  - @powersync/common@1.33.2
+
+## 1.23.1
+
+### Patch Changes
+
+- b398483: Use `BEGIN EXCLUSIVE` to open write transactions
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+
 ## 1.23.0
 
 ### Minor Changes

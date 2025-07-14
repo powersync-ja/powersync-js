@@ -1,5 +1,24 @@
 # diagnostics-app
 
+## 0.9.3
+
+### Patch Changes
+
+- @powersync/react@1.5.3
+- @powersync/web@1.23.2
+
+## 0.9.2
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- Updated dependencies [b398483]
+- Updated dependencies [ffe3095]
+- Updated dependencies [53236a8]
+- Updated dependencies [d1b7fcb]
+  - @powersync/web@1.23.1
+  - @powersync/react@1.5.3
+
 ## 0.9.1
 
 ### Patch Changes

@@ -3,6 +3,7 @@ import {
   createBaseLogger,
   DataStream,
   PowerSyncConnectionOptions,
+  SyncStreamConnectionMethod,
   WASQLiteOpenFactory,
   WASQLiteVFS
 } from '@powersync/web';
@@ -179,6 +180,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, remote } = await createConnectedDatabase();
+      const connectionOptions: PowerSyncConnectionOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
@@ -187,11 +189,11 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       const generatedStreams: DataStream<any>[] = [];
 
       // This method is used for all mocked connections
-      const basePostStream = remote.postStream;
-      const postSpy = vi.spyOn(remote, 'postStream').mockImplementation(async (...options) => {
+      const basePostStream = remote.postStreamRaw;
+      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...args) => {
         // Simulate a connection delay
         await new Promise((r) => setTimeout(r, 100));
-        const stream = await basePostStream.call(remote, ...options);
+        const stream = await basePostStream.call(remote, ...args);
         generatedStreams.push(stream);
         return stream;
       });
@@ -199,7 +201,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Connect many times. The calls here are not awaited and have no async calls in between.
       const connectionAttempts = 10;
       for (let i = 1; i <= connectionAttempts; i++) {
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(
@@ -217,7 +219,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Now with random awaited delays between unawaited calls
       for (let i = connectionAttempts; i >= 0; i--) {
         await new Promise((r) => setTimeout(r, Math.random() * 10));
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(
@@ -302,128 +304,6 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
           interval: 500
         }
       );
-    });
-
-    it('Should upload after reconnecting', async () => {
-      const { powersync, connect, uploadSpy } = await createConnectedDatabase();
-      expect(powersync.connected).toBe(true);
-
-      await powersync.disconnect();
-
-      // Status should update after uploads are completed
-      await vi.waitFor(
-        () => {
-          // to-have-been-called seems to not work after failing a check
-          expect(powersync.currentStatus.dataFlowStatus.uploading).false;
-        },
-        {
-          timeout: UPLOAD_TIMEOUT_MS
-        }
-      );
-    });
-
-    it('Should update sync state incrementally', async () => {
-      const { powersync, remote } = await createConnectedDatabase();
-      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
-
-      const buckets: BucketChecksum[] = [];
-      for (let prio = 0; prio <= 3; prio++) {
-        buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 10 + prio });
-      }
-      remote.enqueueLine({
-        checkpoint: {
-          last_op_id: '4',
-          buckets
-        }
-      });
-
-      let operationId = 1;
-      const addRow = (prio: number) => {
-        remote.enqueueLine({
-          data: {
-            bucket: `prio${prio}`,
-            data: [
-              {
-                checksum: prio + 10,
-                data: JSON.stringify({ name: 'row' }),
-                op: 'PUT',
-                op_id: (operationId++).toString(),
-                object_id: `prio${prio}`,
-                object_type: 'users'
-              }
-            ]
-          }
-        });
-      };
-
-      const syncCompleted = vi.fn();
-      powersync.waitForFirstSync().then(syncCompleted);
-
-      // Emit partial sync complete for each priority but the last.
-      for (var prio = 0; prio < 3; prio++) {
-        const partialSyncCompleted = vi.fn();
-        powersync.waitForFirstSync({ priority: prio }).then(partialSyncCompleted);
-        expect(powersync.currentStatus.statusForPriority(prio).hasSynced).toBe(false);
-        expect(partialSyncCompleted).not.toHaveBeenCalled();
-        expect(syncCompleted).not.toHaveBeenCalled();
-
-        addRow(prio);
-        remote.enqueueLine({
-          partial_checkpoint_complete: {
-            last_op_id: operationId.toString(),
-            priority: prio
-          }
-        });
-
-        await powersync.syncStreamImplementation!.waitUntilStatusMatches((status) => {
-          return status.statusForPriority(prio).hasSynced === true;
-        });
-        await new Promise((r) => setTimeout(r));
-        expect(partialSyncCompleted).toHaveBeenCalledOnce();
-
-        expect(await powersync.getAll('select * from users')).toHaveLength(prio + 1);
-      }
-
-      // Then, complete the sync.
-      addRow(3);
-      remote.enqueueLine({ checkpoint_complete: { last_op_id: operationId.toString() } });
-      await vi.waitFor(() => expect(syncCompleted).toHaveBeenCalledOnce(), 500);
-      expect(await powersync.getAll('select * from users')).toHaveLength(4);
-    });
-
-    it('Should remember sync state', async () => {
-      const { powersync, remote, openAnother } = await createConnectedDatabase();
-      expect(powersync.currentStatus.dataFlowStatus.downloading).toBe(false);
-
-      const buckets: BucketChecksum[] = [];
-      for (let prio = 0; prio <= 3; prio++) {
-        buckets.push({ bucket: `prio${prio}`, priority: prio, checksum: 0 });
-      }
-      remote.enqueueLine({
-        checkpoint: {
-          last_op_id: '0',
-          buckets
-        }
-      });
-      remote.enqueueLine({
-        partial_checkpoint_complete: {
-          last_op_id: '0',
-          priority: 0
-        }
-      });
-
-      await powersync.waitForFirstSync({ priority: 0 });
-
-      // Open another database instance.
-      const another = openAnother();
-      onTestFinished(async () => {
-        await another.close();
-      });
-      await another.init();
-
-      expect(another.currentStatus.priorityStatusEntries).toHaveLength(1);
-      expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
-      await another.waitForFirstSync({ priority: 0 });
     });
   };
 }

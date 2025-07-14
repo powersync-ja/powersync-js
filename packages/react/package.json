@@ -29,7 +29,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.33.0",
+    "@powersync/common": "workspace:^1.33.2",
     "react": "*"
   },
   "devDependencies": {

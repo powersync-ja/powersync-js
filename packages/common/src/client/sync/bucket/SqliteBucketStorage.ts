@@ -1,6 +1,5 @@
-import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter.js';
+import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapter.js';
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
 import {
@@ -26,7 +25,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   constructor(
     private db: DBAdapter,
-    private mutex: Mutex,
     private logger: ILogger = Logger.get('SqliteBucketStorage')
   ) {
     super();
@@ -364,7 +362,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     // No-op for now
   }
 
-  async control(op: PowerSyncControlCommand, payload: string | ArrayBuffer | null): Promise<string> {
+  async control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
       const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
       return raw;

@@ -1,5 +1,26 @@
 # @powersync/op-sqlite
 
+## 0.7.3
+
+### Patch Changes
+
+- Updated dependencies [9b2bde3]
+  - @powersync/common@1.33.2
+
+## 0.7.2
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 6ebaabe: Fixed an issue where the default `op-sqlite` database location determination logic was being overridden. The `dbLocation` is now only applied when explicitly provided, resolving issues with features like iOS App Groups.
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+
 ## 0.7.1
 
 ### Patch Changes

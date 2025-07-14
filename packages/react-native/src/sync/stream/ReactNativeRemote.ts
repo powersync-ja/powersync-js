@@ -9,8 +9,6 @@ import {
   FetchImplementation,
   FetchImplementationProvider,
   RemoteConnector,
-  SocketSyncStreamOptions,
-  StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
 import { Platform } from 'react-native';
@@ -57,11 +55,7 @@ export class ReactNativeRemote extends AbstractRemote {
     return BSON;
   }
 
-  async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    return super.socketStream(options);
-  }
-
-  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
+  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
     const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {
@@ -74,19 +68,22 @@ export class ReactNativeRemote extends AbstractRemote {
         : null;
 
     try {
-      return await super.postStream({
-        ...options,
-        fetchOptions: {
-          ...options.fetchOptions,
-          /**
-           * The `react-native-fetch-api` polyfill provides streaming support via
-           * this non-standard flag
-           * https://github.com/react-native-community/fetch#enable-text-streaming
-           */
-          // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
-          reactNative: { textStreaming: true }
-        }
-      });
+      return await super.postStreamRaw(
+        {
+          ...options,
+          fetchOptions: {
+            ...options.fetchOptions,
+            /**
+             * The `react-native-fetch-api` polyfill provides streaming support via
+             * this non-standard flag
+             * https://github.com/react-native-community/fetch#enable-text-streaming
+             */
+            // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
+            reactNative: { textStreaming: true }
+          }
+        },
+        mapLine
+      );
     } finally {
       if (timeout) {
         clearTimeout(timeout);
