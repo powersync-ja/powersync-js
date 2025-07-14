@@ -16,7 +16,6 @@ import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { throttleTrailing } from '../utils/async.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
@@ -148,12 +147,6 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
 };
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
-  /**
-   * Transactions should be queued in the DBAdapter, but we also want to prevent
-   * calls to `.execute` while an async transaction is running.
-   */
-  protected static transactionMutex: Mutex = new Mutex();
-
   /**
    * Returns true if the connection is closed.
    */
@@ -677,8 +670,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns The query result as an object with structured key-value pairs
    */
   async execute(sql: string, parameters?: any[]) {
-    await this.waitForReady();
-    return this.database.execute(sql, parameters);
+    return this.writeLock((tx) => tx.execute(sql, parameters));
   }
 
   /**
@@ -752,7 +744,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
-    return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, () => callback(this.database));
+    return this.database.readLock(callback);
   }
 
   /**
@@ -761,10 +753,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
-    return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, async () => {
-      const res = await callback(this.database);
-      return res;
-    });
+    return this.database.writeLock(callback);
   }
 
   /**
