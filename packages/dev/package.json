@@ -1,7 +1,10 @@
 {
   "name": "@powersync/dev",
   "version": "0.0.0",
-  "private": "true",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "description": "Development helpers for JourneyApps PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
