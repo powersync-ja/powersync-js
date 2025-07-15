@@ -1714,8 +1714,8 @@ importers:
         version: 0.4.1
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.0-dev-20250711104904
-        version: 0.0.0-dev-20250711104904
+        specifier: 0.0.1
+        version: 0.0.1
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -6514,8 +6514,8 @@ packages:
   '@powersync/better-sqlite3@0.2.0':
     resolution: {integrity: sha512-8otwueqHJqwilUz/vLENlpMp2c4k/TV6hGX016XrZxSkizDAil99yRm7lAVwpbYYGuSgyzidyDh6vy6PY+m4kw==}
 
-  '@powersync/sql-js@0.0.0-dev-20250711104904':
-    resolution: {integrity: sha512-dNyS4qysZ3/RMWOy6dxvDXGMX8SgpVKH0OnSDYruJJ/GJyUrl0UyNf2IqbE2b2ejoL+W5HZeDf5IMx0nJITDLw==}
+  '@powersync/sql-js@0.0.1':
+    resolution: {integrity: sha512-f1ZOPN1e8UjKqz/eQNwqmfr2IZlRlYp0BrVHGCrKh1KK+hY0o5DtdmzlZamvWYK+F73FK/Jb/E6i2xfT5mwsZA==}
 
   '@radix-ui/react-compose-refs@1.0.0':
     resolution: {integrity: sha512-0KaSv6sx787/hK3eF53iOkiSLwAGlFMx5lotrqD2pTjB18KbybKoEIgkNZTKC60YECDQTKGTRcDBILwZVqVKvA==}
@@ -27103,7 +27103,7 @@ snapshots:
     dependencies:
       bindings: 1.5.0
 
-  '@powersync/sql-js@0.0.0-dev-20250711104904': {}
+  '@powersync/sql-js@0.0.1': {}
 
   '@radix-ui/react-compose-refs@1.0.0(react@18.3.1)':
     dependencies:
@@ -28412,7 +28412,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -28423,7 +28425,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
