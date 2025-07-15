@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
 import { usePowerSync, useQuery } from '@powersync/react';
+import { DEFAULT_WATCHED_QUERY_DIFFERENTIATOR } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -58,7 +59,10 @@ const TodoEditSection = () => {
         created_at DESC,
         id
     `,
-    [listID]
+    [listID],
+    {
+      differentiator: DEFAULT_WATCHED_QUERY_DIFFERENTIATOR
+    }
   );
 
   const [showPrompt, setShowPrompt] = React.useState(false);
