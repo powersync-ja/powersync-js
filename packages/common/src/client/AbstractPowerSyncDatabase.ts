@@ -27,6 +27,7 @@ import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   DEFAULT_RETRY_DELAY_MS,
+  InternalConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener,
   type AdditionalConnectionOptions,
@@ -462,7 +463,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    return this.connectionManager.connect(connector, options);
+    const resolvedOptions: InternalConnectionOptions = options ?? {};
+    resolvedOptions.serializedSchema = this.schema.toJSON();
+
+    return this.connectionManager.connect(connector, resolvedOptions);
   }
 
   /**

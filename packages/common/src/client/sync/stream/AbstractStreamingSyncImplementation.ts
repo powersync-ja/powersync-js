@@ -123,7 +123,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
+export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
+
+export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
 /** @internal */
 export interface BaseConnectionOptions {
@@ -152,6 +154,11 @@ export interface BaseConnectionOptions {
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
+
+  /**
+   * The serialized schema - mainly used to forward information about raw tables to the sync client.
+   */
+  serializedSchema?: any;
 }
 
 /** @internal */
@@ -176,7 +183,7 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   /**
    * Connects to the sync service
    */
-  connect(options?: PowerSyncConnectionOptions): Promise<void>;
+  connect(options?: InternalConnectionOptions): Promise<void>;
   /**
    * Disconnects from the sync services.
    * @throws if not connected or if abort is not controlled internally
@@ -208,7 +215,8 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
-  params: {}
+  params: {},
+  serializedSchema: undefined
 };
 
 // The priority we assume when we receive checkpoint lines where no priority is set.
@@ -708,6 +716,8 @@ The next upload iteration will be delayed.`);
 
       if (isStreamingSyncCheckpoint(line)) {
         targetCheckpoint = line.checkpoint;
+        // New checkpoint - existing validated checkpoint is no longer valid
+        pendingValidatedCheckpoint = null;
         const bucketsToDelete = new Set<string>(bucketMap.keys());
         const newBuckets = new Map<string, BucketDescription>();
         for (const checksum of line.checkpoint.buckets) {
@@ -729,7 +739,13 @@ The next upload iteration will be delayed.`);
         if (result.endIteration) {
           return;
         } else if (!result.applied) {
+          // "Could not apply checkpoint due to local data". We need to retry after
+          // finishing uploads.
           pendingValidatedCheckpoint = targetCheckpoint;
+        } else {
+          // Nothing to retry later. This would likely already be null from the last
+          // checksum or checksum_diff operation, but we make sure.
+          pendingValidatedCheckpoint = null;
         }
       } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
         const priority = line.partial_checkpoint_complete.priority;
@@ -765,6 +781,8 @@ The next upload iteration will be delayed.`);
         if (targetCheckpoint == null) {
           throw new Error('Checkpoint diff without previous checkpoint');
         }
+        // New checkpoint - existing validated checkpoint is no longer valid
+        pendingValidatedCheckpoint = null;
         const diff = line.checkpoint_diff;
         const newBuckets = new Map<string, BucketChecksum>();
         for (const checksum of targetCheckpoint.buckets) {
@@ -1019,12 +1037,12 @@ The next upload iteration will be delayed.`);
     }
 
     try {
-      await control(
-        PowerSyncControlCommand.START,
-        JSON.stringify({
-          parameters: resolvedOptions.params
-        })
-      );
+      const options: any = { parameters: resolvedOptions.params };
+      if (resolvedOptions.serializedSchema) {
+        options.schema = resolvedOptions.serializedSchema;
+      }
+
+      await control(PowerSyncControlCommand.START, JSON.stringify(options));
 
       this.notifyCompletedUploads = () => {
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
