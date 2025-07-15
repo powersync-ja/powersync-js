@@ -623,10 +623,8 @@ The next upload iteration will be delayed.`);
   }
 
   private async legacyStreamingSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
-    if (resolvedOptions.serializedSchema) {
-      if (resolvedOptions.serializedSchema.raw_tables != null) {
-        this.logger.warn('Raw tables require the Rust-based sync client. The JS client will ignore them.');
-      }
+    if (resolvedOptions.serializedSchema?.raw_tables != null) {
+      this.logger.warn('Raw tables require the Rust-based sync client. The JS client will ignore them.');
     }
 
     this.logger.debug('Streaming sync iteration started');
