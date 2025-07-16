@@ -1,5 +1,11 @@
 # yjs-react-supabase-text-collab
 
+## 0.2.0
+
+- Added a local development option with local Supabase and PowerSync services.
+- Updated Sync rules to use client parameters. Each client now only syncs `document` and `document_updates` for the document being edited.
+- Updated `PowerSyncYjsProvider` to use an incremental watched query for `document_updates`.
+
 ## 0.1.16
 
 ### Patch Changes

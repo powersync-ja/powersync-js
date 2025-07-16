@@ -1,4 +1,4 @@
-import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { BaseListener, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
 import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, OpId } from './CrudEntry.js';
 import { SyncDataBatch } from './SyncDataBatch.js';
@@ -72,7 +72,7 @@ export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
 
-export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener>, Disposable {
+export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorageListener>, Disposable {
   init(): Promise<void>;
   saveSyncData(batch: SyncDataBatch, fixedKeyFormat?: boolean): Promise<void>;
   removeBuckets(buckets: string[]): Promise<void>;
