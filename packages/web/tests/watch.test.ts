@@ -2,6 +2,7 @@ import {
   AbstractPowerSyncDatabase,
   ArrayComparator,
   GetAllQuery,
+  QueryResult,
   WatchedQueryDifferential,
   WatchedQueryState
 } from '@powersync/common';
@@ -365,6 +366,56 @@ describe('Watch Tests', { sequential: true }, () => {
     state = await getNextState();
     expect(state.isFetching).false;
     expect(state.data).toHaveLength(1);
+  });
+
+  it('should compare results with old watch method', async () => {
+    const controller = new AbortController();
+
+    const resultSets: QueryResult[] = [];
+
+    // Wait for the first query load
+    await new Promise<void>((resolve) => {
+      powersync.watch(
+        'SELECT * FROM assets WHERE make = ?',
+        ['test'],
+        {
+          onResult: (result) => {
+            // Mark that we received the first result, this helps with counting events.
+            resolve();
+            resultSets.push(result);
+          }
+        },
+        {
+          signal: controller.signal,
+          comparator: {
+            checkEquality: (current, previous) => {
+              return JSON.stringify(current) === JSON.stringify(previous);
+            }
+          }
+        }
+      );
+    });
+
+    onTestFinished(() => controller.abort());
+
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['nottest', uuid()]);
+    await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    await vi.waitFor(
+      () => {
+        expect(resultSets[resultSets.length - 1]?.rows?._array?.map((r) => r.make)).deep.eq(['test', 'test']);
+        // We should only have updated less than or equal 3 times
+        expect(resultSets.length).lessThanOrEqual(3);
+      },
+      { timeout: 1000, interval: 100 }
+    );
   });
 
   it('should only report updates for relevant changes', async () => {
