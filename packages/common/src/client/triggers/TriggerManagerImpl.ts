@@ -173,12 +173,13 @@ export class TriggerManagerImpl implements TriggerManager {
             DiffTriggerOperation.DELETE
           ]} BEGIN
           INSERT INTO
-            ${destination} (id, operation, timestamp)
+            ${destination} (id, operation, timestamp, value)
           VALUES
             (
-              NEW.id,
+              OLD.id,
               'DELETE',
-              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now')
+              strftime ('%Y-%m-%dT%H:%M:%fZ', 'now'),
+              OLD.data
             );
 
           END;
@@ -231,7 +232,7 @@ export class TriggerManagerImpl implements TriggerManager {
           await this.db.writeTransaction(async (tx) => {
             const callbackResult = await options.onChange({
               ...tx,
-              destination_table: destination,
+              destinationTable: destination,
               withDiff: async <T>(query, params) => {
                 // Wrap the query to expose the destination table
                 const wrappedQuery = /* sql */ `
@@ -241,6 +242,8 @@ export class TriggerManagerImpl implements TriggerManager {
                         *
                       FROM
                         ${destination}
+                      ORDER BY
+                        timestamp ASC
                     ) ${query}
                 `;
                 return tx.getAll<T>(wrappedQuery, params);
@@ -258,6 +261,8 @@ export class TriggerManagerImpl implements TriggerManager {
                         previous_value as __previous_value
                       FROM
                         ${destination}
+                      ORDER BY
+                        __timestamp ASC
                     ) ${query}
                 `;
                 return tx.getAll<T>(wrappedQuery, params);

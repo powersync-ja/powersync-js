@@ -1,4 +1,4 @@
-import { DiffTriggerOperation, TriggerDiffRecord } from '@powersync/common';
+import { DiffTriggerOperation, ExtractedTriggerDiffRecord, TriggerDiffRecord } from '@powersync/common';
 // import 'source-map-support/register';
 import { describe, expect, vi } from 'vitest';
 import { Database, databaseTest } from './utils';
@@ -15,7 +15,7 @@ describe('Triggers', () => {
       source: 'lists',
       destination: tempTable,
       columns: ['name'],
-      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE]
+      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE]
     });
 
     const results = [] as TriggerDiffRecord[];
@@ -23,7 +23,7 @@ describe('Triggers', () => {
     database.onChange(
       {
         // This callback async processed. Invocations are sequential.
-        onChange: async (change) => {
+        onChange: async () => {
           await database.writeLock(async (tx) => {
             // API exposes a context to run things here.
             // using execute seems to be important on Node.js
@@ -48,13 +48,15 @@ describe('Triggers', () => {
     // Do some changes to the source table
     await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?);', ['test list']);
     await database.execute(`UPDATE lists SET name = 'wooo'`);
+    await database.execute('DELETE FROM lists WHERE name = ?', ['wooo']);
 
     // Wait for the changes to be processed and results to be collected
     await vi.waitFor(
       () => {
-        expect(results.length).toEqual(2);
+        expect(results.length).toEqual(3);
         expect(results[0].operation).toEqual('INSERT');
         expect(results[1].operation).toEqual('UPDATE');
+        expect(results[2].operation).toEqual('DELETE');
       },
       { timeout: 1000 }
     );
@@ -63,7 +65,7 @@ describe('Triggers', () => {
   /**
    * Uses the automatic handlers for triggers to track changes.
    */
-  databaseTest('Should be able to handle table inserts', async ({ database }) => {
+  databaseTest('Should be able to track table inserts', async ({ database }) => {
     await database.execute(
       /* sql */ `
         INSERT INTO
@@ -98,8 +100,8 @@ describe('Triggers', () => {
           SELECT
             todos.*
           FROM
-            diff
-            JOIN todos ON diff.id = todos.id
+            DIFF
+            JOIN todos ON DIFF.id = todos.id
         `);
 
         results.push(...newTodos);
@@ -124,7 +126,7 @@ describe('Triggers', () => {
       () => {
         expect(results.length).toEqual(1);
       },
-      { timeout: 10000 }
+      { timeout: 1000 }
     );
 
     // Do further inserts
@@ -144,11 +146,11 @@ describe('Triggers', () => {
       () => {
         expect(results.length).toEqual(2);
       },
-      { timeout: 10000 }
+      { timeout: 1000 }
     );
   });
 
-  databaseTest('Should be able to handle table updates', async ({ database }) => {
+  databaseTest('Should be able to track table updates', async ({ database }) => {
     const { rows } = await database.execute(
       /* sql */ `
         INSERT INTO
@@ -161,18 +163,18 @@ describe('Triggers', () => {
 
     const list = rows!.item(0) as Database['lists'];
 
-    const changes: Database['lists'][] = [];
+    const changes: ExtractedTriggerDiffRecord<Database['lists']>[] = [];
 
     /**
      * Watch the todos table for changes. Only track the diff for rows belonging to the first list.
      */
     await database.triggers.trackTableDiff({
       source: 'lists',
-      when: { [DiffTriggerOperation.INSERT]: `NEW.id = '${list.id}'` },
-      operations: [DiffTriggerOperation.UPDATE],
+      when: { [DiffTriggerOperation.UPDATE]: `NEW.id = '${list.id}'` },
+      operations: [DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
-        const diffs = await context.withExtractedDiff<Database['lists']>(/* sql */ `
+        const diffs = await context.withExtractedDiff<ExtractedTriggerDiffRecord<Database['lists']>>(/* sql */ `
           SELECT
             *
           FROM
@@ -203,7 +205,27 @@ describe('Triggers', () => {
         expect(changes.length).toEqual(updateCount);
         expect(changes.map((c) => c.name)).toEqual(Array.from({ length: updateCount }, (_, i) => `updated ${i}`));
       },
-      { timeout: 10000 }
+      { timeout: 1000 }
+    );
+
+    // clear the items
+    await database.execute(
+      /* sql */ `
+        DELETE FROM lists
+        WHERE
+          id = ?
+      `,
+      [list.id]
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(changes.length).toEqual(updateCount + 1);
+        expect(changes[changes.length - 1].__operation).eq(DiffTriggerOperation.DELETE);
+        // The delete diff should contain the previous value
+        expect(changes[changes.length - 1].name).eq(`updated ${updateCount - 1}`);
+      },
+      { timeout: 1000 }
     );
   });
 

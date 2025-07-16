@@ -31,7 +31,7 @@ export interface BaseTriggerDiffRecord {
 export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.UPDATE;
   value: string;
-  previous_value?: string;
+  previous_value: string;
 }
 
 /**
@@ -56,6 +56,21 @@ export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
  * This is the record structure for all diff records.
  */
 export type TriggerDiffRecord = TriggerDiffUpdateRecord | TriggerDiffInsertRecord | TriggerDiffDeleteRecord;
+
+/**
+ * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withExtractedDiff} will return records
+ * with the tracked columns extracted from the JSON value.
+ * This type represents the structure of such records.
+ * @example
+ * ```typescript
+ * const diffs = await context.withExtractedDiff<ExtractedTriggerDiffRecord<{id: string, name: string}>>('SELECT * FROM DIFF');
+ * ```
+ */
+export type ExtractedTriggerDiffRecord<T> = T & {
+  [K in keyof Omit<BaseTriggerDiffRecord, 'id'> as `__${string & K}`]: TriggerDiffRecord[K];
+} & {
+  __previous_value?: string;
+};
 
 /**
  * Hooks used in the creation of a table diff trigger.
@@ -131,7 +146,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
   /**
    * The name of the temporary destination table created by the trigger.
    */
-  destination_table: string;
+  destinationTable: string;
 
   /**
    * Allows querying the database with access to the table containing diff records.
@@ -158,7 +173,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * WHERE json_extract(DIFF.value, '$.status') = 'active'
    * ```
    */
-  withDiff: <T = any>(query: string, params?: any[]) => Promise<T[]>;
+  withDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>) => Promise<T[]>;
 
   /**
    * Allows querying the database with access to the table containing diff records.
@@ -189,7 +204,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * WHERE DIFF.name = 'example'
    * ```
    */
-  withExtractedDiff: <T = any>(query: string, params?: any[]) => Promise<T[]>;
+  withExtractedDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>) => Promise<T[]>;
 }
 
 /**
