@@ -54,10 +54,6 @@ export class TriggerManagerImpl implements TriggerManager {
       throw new Error('At least one operation must be specified for the trigger.');
     }
 
-    if (columns && columns.length == 0) {
-      throw new Error('At least one column must be specified for the trigger.');
-    }
-
     /**
      * Allow specifying the View name as the source.
      * We can lookup the internal table name from the schema.
@@ -67,20 +63,36 @@ export class TriggerManagerImpl implements TriggerManager {
       throw new Error(`Source table or view "${source}" not found in the schema.`);
     }
 
+    const replicatedColumns = columns ?? sourceDefinition.columns.map((col) => col.name);
+
     const internalSource = sourceDefinition.internalName;
 
-    /**
-     * When is a tuple of the query and the parameters.
-     */
-    const whenCondition = when ? `WHEN ${when}` : '';
+    const invalidWhenOperations =
+      when && Object.keys(when).filter((operation) => operations.includes(operation as DiffTriggerOperation) == false);
+    if (invalidWhenOperations?.length) {
+      throw new Error(
+        `Invalid 'when' conditions provided for operations: ${invalidWhenOperations.join(', ')}. ` +
+          `These operations are not included in the 'operations' array: ${operations.join(', ')}.`
+      );
+    }
+
+    const whenConditions = Object.fromEntries(
+      Object.values(DiffTriggerOperation).map((operation) => [
+        operation,
+        when?.[operation] ? `WHEN ${when[operation]}` : ''
+      ])
+    ) as Record<DiffTriggerOperation, string>;
 
     const triggerIds: string[] = [];
 
     const id = await this.getUUID();
 
+    /**
+     * We default to replicating all columns if no columns array is provided.
+     */
     const jsonFragment = (source: 'NEW' | 'OLD' = 'NEW') =>
       columns
-        ? `json_object(${columns.map((col) => `'${col}', json_extract(${source}.data, '$.${col}')`).join(', ')})`
+        ? `json_object(${replicatedColumns.map((col) => `'${col}', json_extract(${source}.data, '$.${col}')`).join(', ')})`
         : `${source}.data`;
 
     /**
@@ -112,7 +124,9 @@ export class TriggerManagerImpl implements TriggerManager {
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenCondition} BEGIN
+          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenConditions[
+            DiffTriggerOperation.INSERT
+          ]} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp, value)
           VALUES
@@ -133,7 +147,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
         await tx.execute(/* sql */ `
           CREATE TEMP TRIGGER ${updateTriggerId} AFTER
-          UPDATE ON ${internalSource} ${whenCondition} BEGIN
+          UPDATE ON ${internalSource} ${whenConditions[DiffTriggerOperation.UPDATE]} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp, value, previous_value)
           VALUES
@@ -155,7 +169,9 @@ export class TriggerManagerImpl implements TriggerManager {
 
         // Create delete trigger for basic JSON
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenCondition} BEGIN
+          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenConditions[
+            DiffTriggerOperation.DELETE
+          ]} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp)
           VALUES
@@ -180,9 +196,22 @@ export class TriggerManagerImpl implements TriggerManager {
   }
 
   async trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback> {
-    const { source, filter, columns, operations, hooks } = options;
+    const { source, when, columns, operations, hooks } = options;
 
     await this.db.waitForReady();
+
+    /**
+     * Allow specifying the View name as the source.
+     * We can lookup the internal table name from the schema.
+     */
+    const sourceDefinition = this.schema.tables.find((table) => table.viewName == source);
+    if (!sourceDefinition) {
+      throw new Error(`Source table or view "${source}" not found in the schema.`);
+    }
+
+    // The columns to present in the onChange context methods.
+    // If no array is provided, we use all columns from the source table.
+    const contextColumns = columns ?? sourceDefinition.columns.map((col) => col.name);
 
     const id = await this.getUUID();
     const destination = `ps_temp_track_${source}_${id}`;
@@ -201,13 +230,32 @@ export class TriggerManagerImpl implements TriggerManager {
           // destination table consistent.
           await this.db.writeTransaction(async (tx) => {
             const callbackResult = await options.onChange({
-              getAll: async <T>(query, params) => {
+              ...tx,
+              destination_table: destination,
+              withDiff: async <T>(query, params) => {
                 // Wrap the query to expose the destination table
                 const wrappedQuery = /* sql */ `
                   WITH
                     DIFF AS (
                       SELECT
                         *
+                      FROM
+                        ${destination}
+                    ) ${query}
+                `;
+                return tx.getAll<T>(wrappedQuery, params);
+              },
+              withExtractedDiff: async <T>(query, params) => {
+                // Wrap the query to expose the destination table
+                const wrappedQuery = /* sql */ `
+                  WITH
+                    DIFF AS (
+                      SELECT
+                        id,
+                        ${contextColumns.map((col) => `json_extract(value, '$.${col}') as ${col}`).join(', ')},
+                        operation as __operation,
+                        timestamp as __timestamp,
+                        previous_value as __previous_value
                       FROM
                         ${destination}
                     ) ${query}
@@ -229,9 +277,9 @@ export class TriggerManagerImpl implements TriggerManager {
       const removeTrigger = await this.createDiffTrigger({
         source,
         destination,
-        columns,
+        columns: contextColumns,
         operations,
-        when: filter,
+        when,
         hooks
       });
 

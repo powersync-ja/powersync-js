@@ -8,7 +8,7 @@ describe('Triggers', () => {
    * Tests a diff trigger for a table.
    * The triggered results are watched manually.
    */
-  databaseTest('Diff triggers should track table changes', { timeout: 100_000 }, async ({ database }) => {
+  databaseTest('Diff triggers should track table changes', async ({ database }) => {
     const tempTable = 'temp_remote_lists';
 
     await database.triggers.createDiffTrigger({
@@ -63,7 +63,7 @@ describe('Triggers', () => {
   /**
    * Uses the automatic handlers for triggers to track changes.
    */
-  databaseTest('Should be able to handle table changes', { timeout: 100_000 }, async ({ database }) => {
+  databaseTest('Should be able to handle table inserts', async ({ database }) => {
     await database.execute(
       /* sql */ `
         INSERT INTO
@@ -90,12 +90,11 @@ describe('Triggers', () => {
     await database.triggers.trackTableDiff({
       source: 'todos',
       columns: ['list_id'],
-      // TODO, should/could we expose columns without json. Maybe with a temp view
-      filter: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'`,
+      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
-        const newTodos = await context.getAll<Database['todos']>(/* sql */ `
+        const newTodos = await context.withDiff<Database['todos']>(/* sql */ `
           SELECT
             todos.*
           FROM
@@ -149,22 +148,81 @@ describe('Triggers', () => {
     );
   });
 
+  databaseTest('Should be able to handle table updates', async ({ database }) => {
+    const { rows } = await database.execute(
+      /* sql */ `
+        INSERT INTO
+          lists (id, name)
+        VALUES
+          (uuid (), ?) RETURNING *
+      `,
+      ['test list 1']
+    );
+
+    const list = rows!.item(0) as Database['lists'];
+
+    const changes: Database['lists'][] = [];
+
+    /**
+     * Watch the todos table for changes. Only track the diff for rows belonging to the first list.
+     */
+    await database.triggers.trackTableDiff({
+      source: 'lists',
+      when: { [DiffTriggerOperation.INSERT]: `NEW.id = '${list.id}'` },
+      operations: [DiffTriggerOperation.UPDATE],
+      onChange: async (context) => {
+        // Fetches the todo records that were inserted during this diff
+        const diffs = await context.withExtractedDiff<Database['lists']>(/* sql */ `
+          SELECT
+            *
+          FROM
+            DIFF
+        `);
+
+        changes.push(...diffs);
+      }
+    });
+
+    const updateCount = 10;
+    for (let i = 0; i < updateCount; i++) {
+      // Create todos for both lists
+      await database.execute(
+        /* sql */ `
+          UPDATE lists
+          set
+            name = 'updated ${i}'
+          WHERE
+            id = ?;
+        `,
+        [list.id]
+      );
+    }
+
+    await vi.waitFor(
+      () => {
+        expect(changes.length).toEqual(updateCount);
+        expect(changes.map((c) => c.name)).toEqual(Array.from({ length: updateCount }, (_, i) => `updated ${i}`));
+      },
+      { timeout: 10000 }
+    );
+  });
+
   /**
    * Allows syncing the current state of the database with a lock context.
    */
-  databaseTest('Should accept a lock context', { timeout: 100_000 }, async ({ database }) => {
+  databaseTest('Should accept hooks', async ({ database }) => {
     await database.execute(
       /* sql */ `
         INSERT INTO
           lists (id, name)
         VALUES
           (uuid (), ?),
-          (uuid (), ?) RETURNING *
+          (uuid (), ?)
       `,
       ['test list 1', 'test list 2']
     );
 
-    const [firstList, secondList] = await database.getAll<Database['lists']>(/* sql */ `
+    const [firstList] = await database.getAll<Database['lists']>(/* sql */ `
       SELECT
         *
       FROM
@@ -188,64 +246,134 @@ describe('Triggers', () => {
       });
     };
 
-    const setupWatch = () =>
-      // Configure the trigger to watch for changes.
-      // The onChange handler is guaranteed to see any change after the state above.
-      database.triggers.trackTableDiff({
-        source: 'todos',
-        columns: ['list_id'],
-        // TODO, should/could we expose columns without json. Maybe with a temp view
-        filter: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'`,
-        operations: [DiffTriggerOperation.INSERT],
-        onChange: async (context) => {
-          // Fetches the todo records that were inserted during this diff
-          const newTodos = await context.getAll<Database['todos']>(/* sql */ `
-            SELECT
-              todos.*
-            FROM
-              DIFF
-              JOIN todos ON DIFF.id = todos.id
-          `);
-          todos.push(...newTodos);
-        },
-        hooks: {
-          beforeCreate: async (lockContext) => {
-            // This hook is executed inside the write lock before the trigger is created.
-            // It can be used to synchronize the current state and fetch all changes after the current state.
-            // Read the current state of the todos table
-            const currentTodos = await lockContext.getAll<Database['todos']>(
-              /* sql */ `
-                SELECT
-                  *
-                FROM
-                  todos
-                WHERE
-                  list_id = ?
-              `,
-              [firstList.id]
-            );
-
-            // Example code could process the current todos if necessary
-            todos.push(...currentTodos);
-          }
-        }
-      });
-
     // Trigger the operations in a random order;
-    const todoCreationCount = 10;
-    const promises = [
-      ...Array(5).fill(0).map(createTodo),
-      setupWatch(),
-      ...Array(todoCreationCount - 5)
-        .fill(0)
-        .map(createTodo)
-    ];
+    const todoCreationCount = 100;
+    const initialTodoCreationCount = 10;
+
+    await Promise.all(Array.from({ length: initialTodoCreationCount }).map(createTodo));
+
+    // Configure the trigger to watch for changes.
+    // The onChange handler is guaranteed to see any change after the state above.
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      columns: ['list_id'],
+      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
+      operations: [DiffTriggerOperation.INSERT],
+      onChange: async (context) => {
+        // Fetches the todo records that were inserted during this diff
+        const newTodos = await context.withDiff<Database['todos']>(/* sql */ `
+          SELECT
+            todos.*
+          FROM
+            DIFF
+            JOIN todos ON DIFF.id = todos.id
+        `);
+        todos.push(...newTodos);
+      },
+      hooks: {
+        beforeCreate: async (lockContext) => {
+          // This hook is executed inside the write lock before the trigger is created.
+          // It can be used to synchronize the current state and fetch all changes after the current state.
+          // Read the current state of the todos table
+          const currentTodos = await lockContext.getAll<Database['todos']>(
+            /* sql */ `
+              SELECT
+                *
+              FROM
+                todos
+              WHERE
+                list_id = ?
+            `,
+            [firstList.id]
+          );
+
+          // Example code could process the current todos if necessary
+          todos.push(...currentTodos);
+        }
+      }
+    });
+
+    await Promise.all(Array.from({ length: todoCreationCount - initialTodoCreationCount }).map(createTodo));
 
     // Wait for the changes to be processed and results to be collected
     // We should have recorded all the todos which are present
     await vi.waitFor(
       async () => {
         expect(todos.length).toEqual(todoCreationCount);
+      },
+      { timeout: 10000, interval: 1000 }
+    );
+  });
+
+  databaseTest('Should extract diff values', { timeout: 10000 }, async ({ database }) => {
+    await database.execute(
+      /* sql */ `
+        INSERT INTO
+          lists (id, name)
+        VALUES
+          (uuid (), ?),
+          (uuid (), ?)
+      `,
+      ['test list 1', 'test list 2']
+    );
+
+    const [firstList] = await database.getAll<Database['lists']>(/* sql */ `
+      SELECT
+        *
+      FROM
+        lists
+    `);
+
+    const changes: Array<{ content: string; operation: DiffTriggerOperation }> = [];
+
+    const createTodo = async (content: string) => {
+      // Create todos for both lists
+      await database.writeLock(async (tx) => {
+        await tx.execute(
+          /* sql */ `
+            INSERT INTO
+              todos (id, content, list_id)
+            VALUES
+              (uuid (), ?, ?)
+          `,
+          [content, firstList.id]
+        );
+      });
+    };
+
+    // Configure the trigger to watch for changes.
+    // The onChange handler is guaranteed to see any change after the state above.
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
+      operations: [DiffTriggerOperation.INSERT],
+      onChange: async (context) => {
+        // Fetches the content of the records at the time of the operation
+        const extractedDiff = await context.withExtractedDiff<{ content: string; operation: DiffTriggerOperation }>(
+          /* sql */ `
+            SELECT
+              -- Get the values at the time of the operation
+              content,
+              __operation as operation
+            FROM
+              DIFF
+          `
+        );
+        changes.push(...extractedDiff);
+      }
+    });
+
+    await createTodo('todo 1');
+    await createTodo('todo 2');
+    await createTodo('todo 3');
+
+    // Wait for the changes to be processed and results to be collected
+    // We should have recorded all the todos which are present
+    await vi.waitFor(
+      async () => {
+        expect(changes.length).toEqual(3);
+        expect(changes.map((c) => c.content)).toEqual(['todo 1', 'todo 2', 'todo 3']);
+        expect(changes.every((c) => c.operation === DiffTriggerOperation.INSERT)).toBeTruthy();
       },
       { timeout: 10000, interval: 1000 }
     );
