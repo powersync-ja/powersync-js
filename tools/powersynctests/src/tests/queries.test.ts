@@ -619,43 +619,7 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
-    it('Should handle multiple closes', async () => {
-      // Bulk insert 10000 rows without using a transaction
-      const bulkInsertCommands = [];
-      const statement = `INSERT INTO t1(id, c) VALUES(uuid(), ?)`;
-
-      for (let i = 0; i < 10000; i++) {
-        bulkInsertCommands.push([[`value${i + 1}`]]);
-      }
-
-      await db.executeBatch(statement, bulkInsertCommands);
-      await db.close();
-
-      for (let i = 1; i < 10; i++) {
-        db = createDatabase();
-        await db.init();
-
-        // ensure a regular query works
-        const pExecute = await db.execute(`SELECT * FROM t1 `);
-        expect(pExecute.rows?.length).to.equal(10000);
-
-        // Queue a bunch of write locks, these will fail due to the db being closed
-        // before they are accepted.
-        const tests = [
-          db.execute(`SELECT * FROM t1 `),
-          db.execute(`SELECT * FROM t1 `),
-          db.execute(`SELECT * FROM t1 `),
-          db.execute(`SELECT * FROM t1 `)
-        ];
-
-        await db.close();
-
-        const results = await Promise.allSettled(tests);
-        expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
-      }
-    });
-
-     it('should compare results with old watch method', async () => {
+       it('should compare results with old watch method', async () => {
     const controller = new AbortController();
 
     const resultSets: QueryResult[] = [];
@@ -703,5 +667,43 @@ export function registerBaseTests() {
     // We should only have updated less than or equal 3 times
     expect(resultSets.length).lessThanOrEqual(3);
   });
+
+    it('Should handle multiple closes', async () => {
+      // Bulk insert 10000 rows without using a transaction
+      const bulkInsertCommands = [];
+      const statement = `INSERT INTO t1(id, c) VALUES(uuid(), ?)`;
+
+      for (let i = 0; i < 10000; i++) {
+        bulkInsertCommands.push([[`value${i + 1}`]]);
+      }
+
+      await db.executeBatch(statement, bulkInsertCommands);
+      await db.close();
+
+      for (let i = 1; i < 10; i++) {
+        db = createDatabase();
+        await db.init();
+
+        // ensure a regular query works
+        const pExecute = await db.execute(`SELECT * FROM t1 `);
+        expect(pExecute.rows?.length).to.equal(10000);
+
+        // Queue a bunch of write locks, these will fail due to the db being closed
+        // before they are accepted.
+        const tests = [
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `),
+          db.execute(`SELECT * FROM t1 `)
+        ];
+
+        await db.close();
+
+        const results = await Promise.allSettled(tests);
+        expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
+      }
+    });
+
+  
   });
 }
