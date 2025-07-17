@@ -278,7 +278,7 @@ export interface TriggerManager {
    * For {@link DiffTriggerOperation#UPDATE} operations the `previous_value` column contains the previous value of the changed row
    * in a JSON format.
    *
-   * NB The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase.updateSchema} calls.
+   * NB: The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase#updateSchema} calls.
    * These triggers should manually be dropped and recreated when updating the schema.
    *
    * @returns A callback to remove the trigger and drop the destination table.
@@ -301,7 +301,7 @@ export interface TriggerManager {
    *
    * @returns A callback to cleanup the trigger and stop tracking changes.
    *
-   * NB The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase.updateSchema} calls.
+   * NB: The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase#updateSchema} calls.
    * These triggers should manually be dropped and recreated when updating the schema.
    *
    * @example
