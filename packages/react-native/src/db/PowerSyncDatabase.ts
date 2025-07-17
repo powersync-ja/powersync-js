@@ -39,14 +39,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new ReactNativeBucketStorageAdapter(this.database);
+    return new ReactNativeBucketStorageAdapter(this.database, this.logger);
   }
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: RequiredAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new ReactNativeRemote(connector);
+    const remote = new ReactNativeRemote(connector, this.logger);
 
     return new ReactNativeStreamingSyncImplementation({
       adapter: this.bucketStorageAdapter,
@@ -57,7 +57,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       },
       retryDelayMs: options.retryDelayMs,
       crudUploadThrottleMs: options.crudUploadThrottleMs,
-      identifier: this.database.name
+      identifier: this.database.name,
+      logger: this.logger
     });
   }
 }

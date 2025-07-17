@@ -205,7 +205,6 @@ export const DEFAULT_RETRY_DELAY_MS = 5000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: DEFAULT_RETRY_DELAY_MS,
-  logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
@@ -234,6 +233,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
+  protected logger: ILogger;
 
   private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
@@ -244,6 +244,7 @@ export abstract class AbstractStreamingSyncImplementation
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+    this.logger = options.logger ?? Logger.get('PowerSyncStream');
 
     this.syncStatus = new SyncStatus({
       connected: false,
@@ -318,10 +319,6 @@ export abstract class AbstractStreamingSyncImplementation
     return this.syncStatus.connected;
   }
 
-  protected get logger() {
-    return this.options.logger!;
-  }
-
   async dispose() {
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
@@ -337,7 +334,9 @@ export abstract class AbstractStreamingSyncImplementation
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
     const response = await this.options.remote.get(path);
-    return response['data']['write_checkpoint'] as string;
+    const checkpoint = response['data']['write_checkpoint'] as string;
+    this.logger.debug(`Created write checkpoint: ${checkpoint}`);
+    return checkpoint;
   }
 
   protected async _uploadAllCrud(): Promise<void> {
@@ -379,7 +378,11 @@ The next upload iteration will be delayed.`);
               });
             } else {
               // Uploading is completed
-              await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              if (neededUpdate == false && checkedCrudItem != null) {
+                // Only log this if there was something to upload
+                this.logger.debug('Upload complete, no write checkpoint needed.');
+              }
               break;
             }
           } catch (ex) {
@@ -1105,20 +1108,20 @@ The next upload iteration will be delayed.`);
     let result = await this.options.adapter.syncLocalDatabase(checkpoint);
 
     if (!result.checkpointValid) {
-      this.logger.debug('Checksum mismatch in checkpoint, will reconnect');
+      this.logger.debug(`Checksum mismatch in checkpoint ${checkpoint.last_op_id}, will reconnect`);
       // This means checksums failed. Start again with a new checkpoint.
       // TODO: better back-off
       await new Promise((resolve) => setTimeout(resolve, 50));
       return { applied: false, endIteration: true };
     } else if (!result.ready) {
       this.logger.debug(
-        'Could not apply checkpoint due to local data. We will retry applying the checkpoint after that upload is completed.'
+        `Could not apply checkpoint ${checkpoint.last_op_id} due to local data. We will retry applying the checkpoint after that upload is completed.`
       );
 
       return { applied: false, endIteration: false };
     }
 
-    this.logger.debug('validated checkpoint', checkpoint);
+    this.logger.debug(`Applied checkpoint ${checkpoint.last_op_id}`, checkpoint);
     this.updateSyncStatus({
       connected: true,
       lastSyncedAt: new Date(),
