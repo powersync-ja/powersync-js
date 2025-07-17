@@ -1,4 +1,4 @@
-import { LockContext } from 'src/db/DBAdapter.js';
+import { LockContext } from '../../db/DBAdapter.js';
 
 /**
  * SQLite operations to track changes for with {@link TriggerManager}
@@ -14,7 +14,13 @@ export enum DiffTriggerOperation {
  * This is the base record structure for all diff records.
  */
 export interface BaseTriggerDiffRecord {
+  /**
+   * The modified row's `id` column value.
+   */
   id: string;
+  /**
+   * The operation performed which created this record.
+   */
   operation: DiffTriggerOperation;
   /**
    * Time the change operation was recorded.
@@ -30,7 +36,13 @@ export interface BaseTriggerDiffRecord {
  */
 export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.UPDATE;
+  /**
+   * The updated state of the row in JSON string format.
+   */
   value: string;
+  /**
+   * The previous value of the row in JSON string format.
+   */
   previous_value: string;
 }
 
@@ -40,6 +52,9 @@ export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
  */
 export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.INSERT;
+  /**
+   * The value of the row, at the time of INSERT, in JSON string format.
+   */
   value: string;
 }
 
@@ -49,11 +64,23 @@ export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
  */
 export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
   operation: DiffTriggerOperation.DELETE;
+  /**
+   * The value of the row, before the DELETE operation, in JSON string format.
+   */
+  value: string;
 }
 
 /**
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the record structure for all diff records.
+ *
+ * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withDiff} will return records
+ * with the structure of this type.
+ * @example
+ * ```typescript
+ * const diffs = await context.withDiff<TriggerDiffRecord>('SELECT * FROM DIFF');
+ * diff.forEach(diff => console.log(diff.operation, diff.timestamp, JSON.parse(diff.value)))
+ * ```
  */
 export type TriggerDiffRecord = TriggerDiffUpdateRecord | TriggerDiffInsertRecord | TriggerDiffDeleteRecord;
 
@@ -64,6 +91,7 @@ export type TriggerDiffRecord = TriggerDiffUpdateRecord | TriggerDiffInsertRecor
  * @example
  * ```typescript
  * const diffs = await context.withExtractedDiff<ExtractedTriggerDiffRecord<{id: string, name: string}>>('SELECT * FROM DIFF');
+ * diff.forEach(diff => console.log(diff.__operation, diff.__timestamp, diff.columnName))
  * ```
  */
 export type ExtractedTriggerDiffRecord<T> = T & {
@@ -88,7 +116,7 @@ export interface TriggerCreationHooks {
 
 interface BaseCreateDiffTriggerOptions {
   /**
-   * Source table/view to trigger and track changes from.
+   * PowerSync source table/view to trigger and track changes from.
    * This should be present in the PowerSync database's schema.
    */
   source: string;
@@ -107,9 +135,11 @@ interface BaseCreateDiffTriggerOptions {
 
   /**
    * Optional condition to filter when the triggers should fire.
+   * This corresponds to a SQLite [WHEN](https://sqlite.org/lang_createtrigger.html) clause in the trigger body.
    * This is useful for only triggering on specific conditions.
    * For example, you can use it to only trigger on certain values in the NEW row.
-   * Note that for PowerSync the data is stored in a JSON column named `data`.
+   * Note that for PowerSync the row data is stored in a JSON column named `data`.
+   * The row id is available in the `id` column.
    * @example
    * {
    *  'INSERT': `json_extract(NEW.data, '$.list_id') = 'abcd'`
@@ -120,8 +150,7 @@ interface BaseCreateDiffTriggerOptions {
   when?: Partial<Record<DiffTriggerOperation, string>>;
 
   /**
-   * Optional context to create the triggers in.
-   * This can be useful to synchronize the current state and fetch all changes after the current state.
+   * Hooks which allow execution during the trigger creation process.
    */
   hooks?: TriggerCreationHooks;
 }
@@ -132,15 +161,19 @@ interface BaseCreateDiffTriggerOptions {
 export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
   /**
    * Destination table to track changes to.
-   * This table is created internally.
+   * This table is created internally as a SQLite temporary table.
+   * This table will be dropped once the trigger is removed.
    */
   destination: string;
 }
 
+/**
+ * Callback to drop a trigger after it has been created.
+ */
 export type TriggerRemoveCallback = () => Promise<void>;
 
 /**
- * Context for the onChange handler provided to {@link TriggerManager#trackTableDiff}.
+ * Context for the `onChange` handler provided to {@link TriggerManager#trackTableDiff}.
  */
 export interface TriggerDiffHandlerContext extends LockContext {
   /**
@@ -149,7 +182,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
   destinationTable: string;
 
   /**
-   * Allows querying the database with access to the table containing diff records.
+   * Allows querying the database with access to the table containing DIFF records.
    * The diff table is accessible via the `DIFF` accessor.
    *
    * The `DIFF` table is of the form described in {@link TriggerManager#createDiffTrigger}
@@ -163,8 +196,13 @@ export interface TriggerDiffHandlerContext extends LockContext {
    *     );
    * ```
    *
+   * Note that the `value` and `previous_value` columns store the row state in JSON string format.
+   * To access the row state in an extracted form see {@link TriggerDiffHandlerContext#withExtractedDiff}.
+   *
    * @example
    * ```sql
+   * --- This fetches the current state of `todo` rows which have a diff operation present.
+   * --- The state of the row at the time of the operation is accessible in the DIFF records.
    * SELECT
    *  todos.*
    * FROM
@@ -179,8 +217,8 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * Allows querying the database with access to the table containing diff records.
    * The diff table is accessible via the `DIFF` accessor.
    *
-   * This is similar to {@link withDiff} but extracts the columns from the JSON value.
-   * The `DIFF` table exposes the tracked table columns directly as columns. The diff meta data is available as _columns.
+   * This is similar to {@link withDiff} but extracts the row columns from the tracked JSON value. The diff operation
+   * data is aliased as `__` columns to avoid column conflicts.
    *
    * ```sql
    * CREATE TEMP TABLE DIFF (
@@ -225,6 +263,7 @@ export interface TriggerManager {
    * and writes changes to a destination table.
    * The temporary destination table is created internally and will be dropped when the trigger is removed.
    * The temporary destination table is created with the structure:
+   *
    * ```sql
    * CREATE TEMP TABLE ${destination} (
    *       id TEXT,
@@ -234,57 +273,78 @@ export interface TriggerManager {
    *       previous_value TEXT
    *     );
    * ```
-   * The `value` column contains the JSON representation of the change. This column is NULL for
-   * {@link DiffTriggerOperation#DELETE} operations.
+   * The `value` column contains the JSON representation of the row's value at the change.
+   *
    * For {@link DiffTriggerOperation#UPDATE} operations the `previous_value` column contains the previous value of the changed row
    * in a JSON format.
    *
+   * NB The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase.updateSchema} calls.
+   * These triggers should manually be dropped and recreated when updating the schema.
+   *
    * @returns A callback to remove the trigger and drop the destination table.
+   *
+   * @example
+   * ```javascript
+   * const dispose = await database.triggers.createDiffTrigger({
+   *   source: 'lists',
+   *   destination: 'ps_temp_lists_diff',
+   *   columns: ['name'],
+   *   operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE]
+   * });
+   * ```
    */
   createDiffTrigger(options: CreateDiffTriggerOptions): Promise<TriggerRemoveCallback>;
 
   /**
    * Tracks changes for a table. Triggering a provided handler on changes.
    * Uses {@link createDiffTrigger} internally to create a temporary destination table.
+   *
    * @returns A callback to cleanup the trigger and stop tracking changes.
+   *
+   * NB The triggers created by this method might be invalidated by {@link AbstractPowerSyncDatabase.updateSchema} calls.
+   * These triggers should manually be dropped and recreated when updating the schema.
    *
    * @example
    * ```javascript
-   *  database.triggers.trackTableDiff({
-   *        source: 'ps_data__todos',
+   *  const dispose = database.triggers.trackTableDiff({
+   *        source: 'todos',
    *        columns: ['list_id'],
-   *        filter: "json_extract(NEW.data, '$.list_id') = '123'",
+   *        when: {
+   *          [DiffTriggerOperation.INSERT]: "json_extract(NEW.data, '$.list_id') = '123'"
+   *        },
    *        operations: [DiffTriggerOperation.INSERT],
    *        onChange: async (context) => {
    *          // Fetches the todo records that were inserted during this diff
-   *          const newTodos = await context.getAll<Database['todos']>("
+   *          const newTodos = await context.getAll<Database['todos']>(`
    *            SELECT
    *              todos.*
    *            FROM
    *              DIFF
    *              JOIN todos ON DIFF.id = todos.id
-   *          ");
-   *          todos.push(...newTodos);
+   *          `);
+   *
+   *          // Process newly created todos
    *        },
    *        hooks: {
    *          beforeCreate: async (lockContext) => {
    *            // This hook is executed inside the write lock before the trigger is created.
-   *            // It can be used to synchronize the current state and fetch all changes after the current state.
+   *            // It can be used to synchronize the current state of the table with processor logic.
+   *            // Any changes after this callback are guaranteed to trigger the `onChange` handler.
+   *
    *            // Read the current state of the todos table
    *            const currentTodos = await lockContext.getAll<Database['todos']>(
-   *              "
+   *              `
    *                SELECT
    *                  *
    *                FROM
    *                  todos
    *                WHERE
    *                  list_id = ?
-   *              ",
+   *              `,
    *              ['123']
    *            );
    *
-   *            // Example code could process the current todos if necessary
-   *            todos.push(...currentTodos);
+   *            // Process existing todos
    *          }
    *        }
    *      });
