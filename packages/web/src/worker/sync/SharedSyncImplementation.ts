@@ -239,7 +239,7 @@ export class SharedSyncImplementation
    */
   async connect(options?: PowerSyncConnectionOptions) {
     this.lastConnectOptions = options;
-    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options);
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {});
   }
 
   async disconnect() {
@@ -318,7 +318,7 @@ export class SharedSyncImplementation
       this.dbAdapter = null;
 
       if (shouldReconnect) {
-        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions);
+        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
       }
     }
 

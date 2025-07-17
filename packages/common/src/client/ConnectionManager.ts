@@ -2,7 +2,7 @@ import { ILogger } from 'js-logger';
 import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import {
-  PowerSyncConnectionOptions,
+  InternalConnectionOptions,
   StreamingSyncImplementation
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 
@@ -24,14 +24,14 @@ export interface ConnectionManagerSyncImplementationResult {
 export interface ConnectionManagerOptions {
   createSyncImplementation(
     connector: PowerSyncBackendConnector,
-    options: PowerSyncConnectionOptions
+    options: InternalConnectionOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
   logger: ILogger;
 }
 
 type StoredConnectionOptions = {
   connector: PowerSyncBackendConnector;
-  options: PowerSyncConnectionOptions;
+  options: InternalConnectionOptions;
 };
 
 /**
@@ -95,7 +95,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await this.syncDisposer?.();
   }
 
-  async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
+  async connect(connector: PowerSyncBackendConnector, options: InternalConnectionOptions) {
     // Keep track if there were pending operations before this call
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
@@ -140,7 +140,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   protected async connectInternal() {
-    let appliedOptions: PowerSyncConnectionOptions | null = null;
+    let appliedOptions: InternalConnectionOptions | null = null;
 
     // This method ensures a disconnect before any connection attempt
     await this.disconnectInternal();
