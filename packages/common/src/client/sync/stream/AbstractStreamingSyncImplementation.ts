@@ -205,7 +205,6 @@ export const DEFAULT_RETRY_DELAY_MS = 5000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: DEFAULT_RETRY_DELAY_MS,
-  logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
@@ -234,6 +233,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
+  protected logger: ILogger;
 
   private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
@@ -244,6 +244,7 @@ export abstract class AbstractStreamingSyncImplementation
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+    this.logger = options.logger ?? Logger.get('PowerSyncStream');
 
     this.syncStatus = new SyncStatus({
       connected: false,
@@ -316,10 +317,6 @@ export abstract class AbstractStreamingSyncImplementation
 
   get isConnected() {
     return this.syncStatus.connected;
-  }
-
-  protected get logger() {
-    return this.options.logger!;
   }
 
   async dispose() {

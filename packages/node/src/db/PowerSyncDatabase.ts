@@ -78,7 +78,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     connector: PowerSyncBackendConnector,
     options: NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const logger = this.options.logger;
+    const logger = this.logger;
     const remote = new NodeRemote(connector, logger, {
       dispatcher: options.dispatcher,
       ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
