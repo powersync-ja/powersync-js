@@ -26,6 +26,7 @@ describe('Triggers', () => {
         // This callback async processed. Invocations are sequential.
         onChange: async () => {
           await database.writeLock(async (tx) => {
+            // TODO
             // API exposes a context to run things here.
             // using execute seems to be important on Node.js
             // the temp table is not present if using getAll
@@ -458,7 +459,6 @@ describe('Triggers', () => {
           FROM
             DIFF
         `);
-        console.log('diff', extractedDiff);
         changes.push(...extractedDiff.map((d) => d.id));
       }
     });
