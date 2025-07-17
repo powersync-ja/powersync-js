@@ -11,10 +11,11 @@ describe('Triggers', () => {
   databaseTest('Diff triggers should track table changes', async ({ database }) => {
     const tempTable = 'temp_remote_lists';
 
+    const filteredColumns: Array<keyof Database['todos']> = ['content'];
     await database.triggers.createDiffTrigger({
-      source: 'lists',
+      source: 'todos',
       destination: tempTable,
-      columns: ['name'],
+      columns: filteredColumns,
       operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE]
     });
 
@@ -46,17 +47,34 @@ describe('Triggers', () => {
     );
 
     // Do some changes to the source table
-    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?);', ['test list']);
-    await database.execute(`UPDATE lists SET name = 'wooo'`);
-    await database.execute('DELETE FROM lists WHERE name = ?', ['wooo']);
+    const initialContent = 'test todo';
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?);', [initialContent]);
+    await database.execute(`UPDATE todos SET content = 'wooo'`);
+    const updatedContent = 'wooo';
+    await database.execute('DELETE FROM todos WHERE content = ?', [updatedContent]);
 
     // Wait for the changes to be processed and results to be collected
     await vi.waitFor(
       () => {
         expect(results.length).toEqual(3);
-        expect(results[0].operation).toEqual('INSERT');
-        expect(results[1].operation).toEqual('UPDATE');
-        expect(results[2].operation).toEqual('DELETE');
+
+        expect(results[0].operation).toEqual(DiffTriggerOperation.INSERT);
+        const parsedInsert = JSON.parse(results[0].value);
+        // only the filtered columns should be tracked
+        expect(Object.keys(parsedInsert)).deep.eq(filteredColumns);
+        expect(parsedInsert.content).eq(initialContent);
+
+        const updateRaw = results[1];
+        expect(updateRaw).toBeDefined();
+        expect(updateRaw.operation).toEqual(DiffTriggerOperation.UPDATE);
+        if (updateRaw.operation == DiffTriggerOperation.UPDATE) {
+          // The `if` just exposes the type correctly
+          expect(JSON.parse(updateRaw.value).content).eq(updatedContent);
+          expect(JSON.parse(updateRaw.previous_value).content).eq(initialContent);
+        }
+
+        expect(results[2].operation).toEqual(DiffTriggerOperation.DELETE);
+        expect(JSON.parse(results[2].value).content).eq(updatedContent);
       },
       { timeout: 1000 }
     );
@@ -95,7 +113,7 @@ describe('Triggers', () => {
       when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
-        // Fetches the todo records that were inserted during this diff
+        // Fetches the current state of  todo records that were inserted during this diff window.
         const newTodos = await context.withDiff<Database['todos']>(/* sql */ `
           SELECT
             todos.*
@@ -396,6 +414,82 @@ describe('Triggers', () => {
         expect(changes.length).toEqual(3);
         expect(changes.map((c) => c.content)).toEqual(['todo 1', 'todo 2', 'todo 3']);
         expect(changes.every((c) => c.operation === DiffTriggerOperation.INSERT)).toBeTruthy();
+      },
+      { timeout: 10000, interval: 1000 }
+    );
+  });
+
+  databaseTest('Should allow tracking 0 columns', { timeout: 10000 }, async ({ database }) => {
+    /**
+     * Tracks the ids of todos reported via the trigger
+     */
+    const changes: string[] = [];
+
+    /**
+     * Tracks the ids of todos created
+     */
+    const ids: string[] = [];
+    const createTodo = async (content: string) => {
+      // Create todos for both lists
+      return database.writeLock(async (tx) => {
+        const result = await tx.execute(
+          /* sql */ `
+            INSERT INTO
+              todos (id, content)
+            VALUES
+              (uuid (), ?) RETURNING id
+          `,
+          [content]
+        );
+        return result.rows?._array?.[0].id;
+      });
+    };
+
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
+      // Only track the row ids
+      columns: [],
+      onChange: async (context) => {
+        // Fetches the content of the records at the time of the operation
+        const extractedDiff = await context.withExtractedDiff<{ id: string }>(/* sql */ `
+          SELECT
+            *
+          FROM
+            DIFF
+        `);
+        console.log('diff', extractedDiff);
+        changes.push(...extractedDiff.map((d) => d.id));
+      }
+    });
+
+    ids.push(await createTodo('todo 1'));
+    ids.push(await createTodo('todo 2'));
+    const updatedId = await createTodo('todo 3');
+    ids.push(updatedId);
+
+    await database.execute(/* sql */ `
+      UPDATE todos
+      SET
+        content = 'todo 4'
+      WHERE
+        content = 'todo 3'
+    `);
+    // keep track of updates for comparison
+    ids.push(updatedId);
+
+    await database.execute(/* sql */ `
+      DELETE FROM todos
+      WHERE
+        content = 'todo 4'
+    `);
+    ids.push(updatedId);
+
+    // Wait for the changes to be processed and results to be collected
+    // We should have recorded all the todos which are present
+    await vi.waitFor(
+      async () => {
+        expect(changes).toEqual(ids);
       },
       { timeout: 10000, interval: 1000 }
     );

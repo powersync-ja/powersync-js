@@ -90,10 +90,18 @@ export class TriggerManagerImpl implements TriggerManager {
     /**
      * We default to replicating all columns if no columns array is provided.
      */
-    const jsonFragment = (source: 'NEW' | 'OLD' = 'NEW') =>
-      columns
-        ? `json_object(${replicatedColumns.map((col) => `'${col}', json_extract(${source}.data, '$.${col}')`).join(', ')})`
-        : `${source}.data`;
+    const jsonFragment = (source: 'NEW' | 'OLD' = 'NEW') => {
+      if (columns == null) {
+        // Track all columns
+        return `${source}.data`;
+      } else if (columns.length == 0) {
+        // Don't track any columns except for the id
+        return `'{}'`;
+      } else {
+        // Filter the data by the replicated columns
+        return `json_object(${replicatedColumns.map((col) => `'${col}', json_extract(${source}.data, '$.${col}')`).join(', ')})`;
+      }
+    };
 
     /**
      * Declare the cleanup function early since if any of the init steps fail,
@@ -255,8 +263,9 @@ export class TriggerManagerImpl implements TriggerManager {
                     DIFF AS (
                       SELECT
                         id,
-                        ${contextColumns.map((col) => `json_extract(value, '$.${col}') as ${col}`).join(', ')},
-                        operation as __operation,
+                        ${contextColumns.length > 0
+                    ? `${contextColumns.map((col) => `json_extract(value, '$.${col}') as ${col}`).join(', ')},`
+                    : ''} operation as __operation,
                         timestamp as __timestamp,
                         previous_value as __previous_value
                       FROM
