@@ -1,6 +1,9 @@
 import { OpId } from './CrudEntry.js';
 import { OplogEntry, OplogEntryJSON } from './OplogEntry.js';
 
+/**
+ * @internal
+ */
 export type SyncDataBucketJSON = {
   bucket: string;
   has_more?: boolean;
@@ -9,6 +12,9 @@ export type SyncDataBucketJSON = {
   data: OplogEntryJSON[];
 };
 
+/**
+ * @internal
+ */
 export class SyncDataBucket {
   static fromRow(row: SyncDataBucketJSON) {
     return new SyncDataBucket(

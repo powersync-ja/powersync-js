@@ -4,6 +4,7 @@ import { SyncDataBucketJSON } from '../bucket/SyncDataBucket.js';
 
 /**
  * For sync2.json
+ * @internal
  */
 export interface ContinueCheckpointRequest {
   /**
@@ -16,6 +17,9 @@ export interface ContinueCheckpointRequest {
   limit?: number;
 }
 
+/**
+ * @internal
+ */
 export interface SyncNewCheckpointRequest {
   /**
    * Existing bucket states. Used if include_data is specified.
@@ -37,8 +41,14 @@ export interface SyncNewCheckpointRequest {
   limit?: number;
 }
 
+/**
+ * @internal
+ */
 export type SyncRequest = ContinueCheckpointRequest | SyncNewCheckpointRequest;
 
+/**
+ * @internal
+ */
 export interface SyncResponse {
   /**
    * Data for the buckets returned. May not have an an entry for each bucket in the request.
@@ -62,8 +72,14 @@ interface JSONObject {
 }
 type JSONArray = JSONValue[];
 
+/**
+ * @internal
+ */
 export type StreamingSyncRequestParameterType = JSONValue;
 
+/**
+ * @internal
+ */
 export interface StreamingSyncRequest {
   /**
    * Existing bucket states.
@@ -93,10 +109,16 @@ export interface StreamingSyncRequest {
   client_id?: string;
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncCheckpoint {
   checkpoint: Checkpoint;
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncCheckpointDiff {
   checkpoint_diff: {
     last_op_id: OpId;
@@ -106,16 +128,25 @@ export interface StreamingSyncCheckpointDiff {
   };
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncDataJSON {
   data: SyncDataBucketJSON;
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncCheckpointComplete {
   checkpoint_complete: {
     last_op_id: OpId;
   };
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncCheckpointPartiallyComplete {
   partial_checkpoint_complete: {
     priority: number;
@@ -123,11 +154,17 @@ export interface StreamingSyncCheckpointPartiallyComplete {
   };
 }
 
+/**
+ * @internal
+ */
 export interface StreamingSyncKeepalive {
   /** If specified, token expires in this many seconds. */
   token_expires_in: number;
 }
 
+/**
+ * @internal
+ */
 export type StreamingSyncLine =
   | StreamingSyncDataJSON
   | StreamingSyncCheckpoint
@@ -136,10 +173,20 @@ export type StreamingSyncLine =
   | StreamingSyncCheckpointPartiallyComplete
   | StreamingSyncKeepalive;
 
+/**
+ * @internal
+ */
+
 export type CrudUploadNotification = { crud_upload_completed: null };
 
+/**
+ * @internal
+ */
 export type StreamingSyncLineOrCrudUploadComplete = StreamingSyncLine | CrudUploadNotification;
 
+/**
+ * @internal
+ */
 export interface BucketRequest {
   name: string;
 
@@ -149,32 +196,53 @@ export interface BucketRequest {
   after: OpId;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingSyncData(line: StreamingSyncLine): line is StreamingSyncDataJSON {
   return (line as StreamingSyncDataJSON).data != null;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingKeepalive(line: StreamingSyncLine): line is StreamingSyncKeepalive {
   return (line as StreamingSyncKeepalive).token_expires_in != null;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingSyncCheckpoint(line: StreamingSyncLine): line is StreamingSyncCheckpoint {
   return (line as StreamingSyncCheckpoint).checkpoint != null;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingSyncCheckpointComplete(line: StreamingSyncLine): line is StreamingSyncCheckpointComplete {
   return (line as StreamingSyncCheckpointComplete).checkpoint_complete != null;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingSyncCheckpointPartiallyComplete(
   line: StreamingSyncLine
 ): line is StreamingSyncCheckpointPartiallyComplete {
   return (line as StreamingSyncCheckpointPartiallyComplete).partial_checkpoint_complete != null;
 }
 
+/**
+ * @internal
+ */
 export function isStreamingSyncCheckpointDiff(line: StreamingSyncLine): line is StreamingSyncCheckpointDiff {
   return (line as StreamingSyncCheckpointDiff).checkpoint_diff != null;
 }
 
+/**
+ * @internal
+ */
 export function isContinueCheckpointRequest(request: SyncRequest): request is ContinueCheckpointRequest {
   return (
     Array.isArray((request as ContinueCheckpointRequest).buckets) &&
@@ -182,17 +250,25 @@ export function isContinueCheckpointRequest(request: SyncRequest): request is Co
   );
 }
 
+/**
+ * @internal
+ */
+
 export function isSyncNewCheckpointRequest(request: SyncRequest): request is SyncNewCheckpointRequest {
   return typeof (request as SyncNewCheckpointRequest).request_checkpoint == 'object';
 }
 
 /**
  * For crud.json
+ * @internal
  */
 export interface CrudRequest {
   data: CrudEntry[];
 }
 
+/**
+ * @internal
+ */
 export interface CrudResponse {
   /**
    * A sync response with a checkpoint >= this checkpoint would contain all the changes in this request.
