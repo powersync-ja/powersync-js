@@ -184,11 +184,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected runExclusiveMutex: Mutex;
 
-  protected triggerManager: TriggerManagerImpl;
-
-  get triggers(): TriggerManager {
-    return this.triggerManager;
-  }
+  /**
+   * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
+   */
+  readonly triggers: TriggerManager;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
@@ -251,7 +250,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this._isReadyPromise = this.initialize();
 
-    this.triggerManager = new TriggerManagerImpl({
+    this.triggers = new TriggerManagerImpl({
       db: this,
       schema: this.schema
     });
