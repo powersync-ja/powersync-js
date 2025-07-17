@@ -5,4 +5,4 @@
 '@powersync/web': minor
 ---
 
-Propagate logger from PowerSyncDatabase to streaming sync implementation.
+Propagate logger from PowerSyncDatabase to streaming sync and remote implementations, and tweak some log messages.
