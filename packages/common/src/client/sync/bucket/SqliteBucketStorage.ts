@@ -17,6 +17,9 @@ import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
 import { SyncDataBatch } from './SyncDataBatch.js';
 
+/**
+ * @internal
+ */
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
   public tableNames: Set<string>;
   private _hasCompletedSync: boolean;

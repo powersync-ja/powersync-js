@@ -1,3 +1,6 @@
+/**
+ * @internal
+ */
 export enum OpTypeEnum {
   CLEAR = 1,
   MOVE = 2,
@@ -5,10 +8,14 @@ export enum OpTypeEnum {
   REMOVE = 4
 }
 
+/**
+ * @internal
+ */
 export type OpTypeJSON = string;
 
 /**
  * Used internally for sync buckets.
+ * @internal
  */
 export class OpType {
   static fromJSON(jsonValue: OpTypeJSON) {
