@@ -310,7 +310,7 @@ export abstract class AbstractRemote {
       clearTimeout(keepAliveTimeout);
       keepAliveTimeout = setTimeout(() => {
         this.logger.error(`No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`);
-        stream.close();
+        stream?.close();
       }, SOCKET_TIMEOUT_MS);
     };
     resetTimeout();
