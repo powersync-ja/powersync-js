@@ -1,6 +1,5 @@
-import { Mutex } from 'async-mutex';
 import Logger, { ILogger } from 'js-logger';
-import { DBAdapter, Transaction, extractTableUpdates } from '../../../db/DBAdapter.js';
+import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapter.js';
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
 import {
@@ -26,7 +25,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   constructor(
     private db: DBAdapter,
-    private mutex: Mutex,
     private logger: ILogger = Logger.get('SqliteBucketStorage')
   ) {
     super();
@@ -94,11 +92,11 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   async saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean = false) {
     await this.writeTransaction(async (tx) => {
       for (const b of batch.buckets) {
-        const result = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
+        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
           'save',
           JSON.stringify({ buckets: [b.toJSON(fixedKeyFormat)] })
         ]);
-        this.logger.debug('saveSyncData', JSON.stringify(result));
+        this.logger.debug(`Saved batch of data for  bucket: ${b.bucket}, operations: ${b.data.length}`);
       }
     });
   }
@@ -117,7 +115,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', ['delete_bucket', bucket]);
     });
 
-    this.logger.debug('done deleting bucket');
+    this.logger.debug(`Done deleting bucket ${bucket}`);
   }
 
   async hasCompletedSync() {
@@ -141,6 +139,11 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       }
       return { ready: false, checkpointValid: false, checkpointFailures: r.checkpointFailures };
     }
+    if (priority == null) {
+      this.logger.debug(`Validated checksums checkpoint ${checkpoint.last_op_id}`);
+    } else {
+      this.logger.debug(`Validated checksums for partial checkpoint ${checkpoint.last_op_id}, priority ${priority}`);
+    }
 
     let buckets = checkpoint.buckets;
     if (priority !== undefined) {
@@ -160,7 +163,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
     const valid = await this.updateObjectsFromBuckets(checkpoint, priority);
     if (!valid) {
-      this.logger.debug('Not at a consistent checkpoint - cannot update local db');
       return { ready: false, checkpointValid: true };
     }
 
@@ -223,7 +225,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     ]);
 
     const resultItem = rs.rows?.item(0);
-    this.logger.debug('validateChecksums priority, checkpoint, result item', priority, checkpoint, resultItem);
     if (!resultItem) {
       return {
         checkpointValid: false,
@@ -264,34 +265,32 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
     const opId = await cb();
 
-    this.logger.debug(`[updateLocalTarget] Updating target to checkpoint ${opId}`);
-
     return this.writeTransaction(async (tx) => {
       const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
       if (anyData.rows?.length) {
         // if isNotEmpty
-        this.logger.debug('updateLocalTarget', 'ps crud is not empty');
+        this.logger.debug(`New data uploaded since write checkpoint ${opId} - need new write checkpoint`);
         return false;
       }
 
       const rs = await tx.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
       if (!rs.rows?.length) {
         // assert isNotEmpty
-        throw new Error('SQlite Sequence should not be empty');
+        throw new Error('SQLite Sequence should not be empty');
       }
 
       const seqAfter: number = rs.rows?.item(0)['seq'];
-      this.logger.debug('seqAfter', JSON.stringify(rs.rows?.item(0)));
       if (seqAfter != seqBefore) {
-        this.logger.debug('seqAfter != seqBefore', seqAfter, seqBefore);
+        this.logger.debug(
+          `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
+        );
+
         // New crud data may have been uploaded since we got the checkpoint. Abort.
         return false;
       }
 
-      const response = await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [
-        opId
-      ]);
-      this.logger.debug(['[updateLocalTarget] Response from updating target_op ', JSON.stringify(response)]);
+      this.logger.debug(`Updating target write checkpoint to ${opId}`);
+      await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [opId]);
       return true;
     });
   }

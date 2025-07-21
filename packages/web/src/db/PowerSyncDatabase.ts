@@ -172,7 +172,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new SqliteBucketStorage(this.database);
   }
 
   protected async runExclusive<T>(cb: () => Promise<T>) {
@@ -186,7 +186,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     connector: PowerSyncBackendConnector,
     options: RequiredAdditionalConnectionOptions
   ): StreamingSyncImplementation {
-    const remote = new WebRemote(connector);
+    const remote = new WebRemote(connector, this.logger);
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
       retryDelayMs: options.retryDelayMs,
@@ -198,7 +198,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      identifier: this.database.name
+      identifier: this.database.name,
+      logger: this.logger
     };
 
     switch (true) {

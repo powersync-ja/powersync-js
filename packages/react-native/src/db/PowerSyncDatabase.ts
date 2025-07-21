@@ -9,8 +9,8 @@ import {
 } from '@powersync/common';
 import { ReactNativeRemote } from '../sync/stream/ReactNativeRemote';
 import { ReactNativeStreamingSyncImplementation } from '../sync/stream/ReactNativeStreamingSyncImplementation';
-import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 import { ReactNativeBucketStorageAdapter } from './../sync/bucket/ReactNativeBucketStorageAdapter';
+import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -39,14 +39,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new ReactNativeBucketStorageAdapter(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new ReactNativeBucketStorageAdapter(this.database, this.logger);
   }
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: RequiredAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new ReactNativeRemote(connector);
+    const remote = new ReactNativeRemote(connector, this.logger);
 
     return new ReactNativeStreamingSyncImplementation({
       adapter: this.bucketStorageAdapter,
@@ -57,17 +57,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       },
       retryDelayMs: options.retryDelayMs,
       crudUploadThrottleMs: options.crudUploadThrottleMs,
-      identifier: this.database.name
+      identifier: this.database.name,
+      logger: this.logger
     });
-  }
-
-  async readLock<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
-    await this.waitForReady();
-    return this.database.readLock(callback);
-  }
-
-  async writeLock<T>(callback: (db: DBAdapter) => Promise<T>): Promise<T> {
-    await this.waitForReady();
-    return this.database.writeLock(callback);
   }
 }
