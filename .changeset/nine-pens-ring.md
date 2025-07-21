@@ -15,3 +15,29 @@ const { data } = useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
   }
 });
 ```
+
+- Added the ability to subscribe to an existing instance of a `WatchedQuery`
+
+```vue
+<script setup>
+import { useWatchedQuerySubscription } from '@powersync/vue';
+
+const listsQuery = powerSync
+  .query({
+    sql: `SELECT * FROM lists`
+  })
+  .differentialWatch();
+
+const { data, isLoading, isFetching, error } = useWatchedQuerySubscription(listsQuery);
+</script>
+
+<template>
+  <div v-if="isLoading">Loading...</div>
+  <div v-else-if="isFetching">Updating results...</div>
+
+  <div v-if="error">{{ error }}</div>
+  <ul v-else>
+    <li v-for="l in data" :key="l.id">{{ l.name }}</li>
+  </ul>
+</template>
+```

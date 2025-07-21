@@ -5,6 +5,7 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isProxy, isRef, ref } from 'vue';
 import { createPowerSyncPlugin } from '../src/composables/powerSync';
 import { useQuery } from '../src/composables/useQuery';
+import { useWatchedQuerySubscription } from '../src/composables/useWatchedQuerySubscription';
 import { withSetup } from './utils';
 
 export const openPowerSync = () => {
@@ -101,6 +102,34 @@ describe('useQuery', () => {
         const sqlParam = (getAllSpy.mock.calls[2] as Array<any>)[1];
         expect(isRef(sqlParam)).toEqual(false);
         expect(isProxy(sqlParam)).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should use an existing WatchedQuery instance', async () => {
+    // This query can be instantiated once and reused.
+    // The query retains it's state and will not re-fetch the data unless the result changes.
+    // This is useful for queries that are used in multiple components.
+    const listsQuery = powersync!
+      .query<{ id: string; name: string }>({ sql: `SELECT * FROM lists`, parameters: [] })
+      .differentialWatch();
+
+    const [state] = withPowerSyncSetup(() => useWatchedQuerySubscription(listsQuery));
+
+    await powersync!.execute(
+      /* sql */ `
+        INSERT INTO
+          lists (id, name)
+        VALUES
+          (uuid (), ?)
+      `,
+      ['test']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(state.data.length).eq(1);
       },
       { timeout: 1000 }
     );
