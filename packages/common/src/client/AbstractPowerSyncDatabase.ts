@@ -143,7 +143,6 @@ export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelayMs: 5000,
-  logger: Logger.get('PowerSyncDatabase'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
@@ -192,6 +191,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected runExclusiveMutex: Mutex;
 
+  logger: ILogger;
+
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
   constructor(options: PowerSyncDatabaseOptionsWithSettings);
@@ -214,6 +215,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     } else {
       throw new Error('The provided `database` option is invalid.');
     }
+
+    this.logger = options.logger ?? Logger.get(`PowerSyncDatabase[${this._database.name}]`);
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
@@ -435,17 +438,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       schema.validate();
     } catch (ex) {
-      this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+      this.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
 
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     await this.database.refreshSchema();
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
-  }
-
-  get logger() {
-    return this.options.logger!;
   }
 
   /**
@@ -951,7 +950,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @param options Options for configuring watch behavior
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    const { onResult, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
+    const { onResult, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
     }
@@ -1111,7 +1110,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A dispose function to stop watching for changes
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
-    const { onChange, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
+    const { onChange, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }
