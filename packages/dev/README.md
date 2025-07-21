@@ -1,6 +1,6 @@
-# PowerSync SDK Dev Adapter
+# PowerSync Dev
 
-A development DB Adapter for PowerSync which uses [SQL.js](https://sql.js.org/#/)
+A development package for PowerSync which uses [SQL.js](https://sql.js.org/#/)
 
 ## Note: Alpha Release
 
