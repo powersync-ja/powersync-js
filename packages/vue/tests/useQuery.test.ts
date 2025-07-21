@@ -129,7 +129,7 @@ describe('useQuery', () => {
 
     await vi.waitFor(
       () => {
-        expect(state.data.length).eq(1);
+        expect(state.data.value.length).eq(1);
       },
       { timeout: 1000 }
     );
