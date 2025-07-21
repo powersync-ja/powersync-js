@@ -10,7 +10,7 @@ export interface AdditionalOptions extends HookWatchOptions {
 
 export interface DifferentialHookOptions<RowType> extends HookWatchOptions {
   /**
-   * Used to detect and report differences in query result sets.
+   * Used to detect differences in query result sets.
    *
    * By default the hook will requery on any dependent table change. This will
    * emit a new hook result even if the result set has not changed.
