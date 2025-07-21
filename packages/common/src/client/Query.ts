@@ -1,4 +1,4 @@
-import { ArrayComparator } from './watched/processors/comparators.js';
+import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import {
   DifferentialWatchedQuery,
   DifferentialWatchedQueryOptions
@@ -36,9 +36,12 @@ export interface ArrayQueryDefinition<RowType = unknown> {
  */
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
   /**
-   * Optional comparator which processes the items of an array of rows.
-   * The comparator compares the result set rows by index using the {@link ArrayComparatorOptions#compareBy} function.
-   * The comparator reports a changed result set as soon as a row does not match the previous result set.
+   * The underlying watched query implementation (re)evaluates the query on any SQLite table change.
+   *
+   * Providing this optional comparator can be used to filter duplicate result set emissions when the result set is unchanged.
+   * The comparator compares the previous and current result set.
+   *
+   * For an efficient comparator see {@link ArrayComparator}.
    *
    * @example
    * ```javascript
@@ -47,7 +50,7 @@ export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOption
    * })
    * ```
    */
-  comparator?: ArrayComparator<RowType>;
+  comparator?: WatchedQueryComparator<RowType[]>;
 
   /**
    * The initial data state reported while the query is loading for the first time.
@@ -78,11 +81,26 @@ export interface Query<RowType> {
    * This query method watches for changes in the underlying SQLite tables and runs the query on each table change.
    * The difference between the current and previous result set is computed.
    * The watched query will not emit changes if the result set is identical to the previous result set.
-   * If the result set is different, the watched query will emit the new result set and provide a detailed diff of the changes.
+   *
+   * If the result set is different, the watched query will emit the new result set and emit a detailed diff of the changes via the `onData` and `onDiff` listeners.
    *
    * The deep differentiation allows maintaining result set object references between result emissions.
    * The {@link DifferentialWatchedQuery#state} `data` array will contain the previous row references for unchanged rows.
-   * A detailed diff of the changes can be accessed via {@link DifferentialWatchedQuery#state} `diff`.
+   *
+   * @example
+   * ```javascript
+   * const watchedLists = powerSync.query({sql: 'SELECT * FROM lists'})
+   *  .differentialWatch();
+   *
+   * const disposeListener = watchedLists.registerListener({
+   *  onData: (lists) => {
+   *    console.log('The latest result set for the query is', lists);
+   *  },
+   *  onDiff: (diff) => {
+   *    console.log('The lists result set has changed since the last emission', diff.added, diff.removed, diff.updated, diff.all)
+   *  }
+   * })
+   * ```
    */
   differentialWatch(options?: DifferentialWatchedQueryOptions<RowType>): DifferentialWatchedQuery<RowType>;
 }

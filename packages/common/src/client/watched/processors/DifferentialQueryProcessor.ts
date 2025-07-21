@@ -219,7 +219,7 @@ export class DifferentialQueryProcessor<RowType>
       } else {
         // Existing item
         if (hash == previousItem.hash) {
-          diff.unchanged.push(item);
+          diff.unchanged.push(previousItem.item);
           // Use the previous object reference
           diff.all.push(previousItem.item);
           // update the map to preserve the reference
