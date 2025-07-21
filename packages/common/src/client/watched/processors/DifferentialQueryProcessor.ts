@@ -1,10 +1,4 @@
-import {
-  WatchCompatibleQuery,
-  WatchedQuery,
-  WatchedQueryListener,
-  WatchedQueryOptions,
-  WatchedQueryState
-} from '../WatchedQuery.js';
+import { WatchCompatibleQuery, WatchedQuery, WatchedQueryListener, WatchedQueryOptions } from '../WatchedQuery.js';
 import {
   AbstractQueryProcessor,
   AbstractQueryProcessorOptions,
@@ -89,18 +83,6 @@ export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialW
   query: WatchCompatibleQuery<RowType[]>;
 }
 
-export interface DifferentialWatchedQueryState<RowType> extends WatchedQueryState<ReadonlyArray<Readonly<RowType>>> {
-  /**
-   * The difference between the current and previous result set.
-   */
-  readonly diff: WatchedQueryDifferential<RowType>;
-}
-
-type MutableDifferentialWatchedQueryState<RowType> = MutableWatchedQueryState<RowType[]> & {
-  data: RowType[];
-  diff: WatchedQueryDifferential<RowType>;
-};
-
 export interface DifferentialWatchedQueryListener<RowType>
   extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
   onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
@@ -158,24 +140,11 @@ export class DifferentialQueryProcessor<RowType>
   extends AbstractQueryProcessor<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>>
   implements DifferentialWatchedQuery<RowType>
 {
-  readonly state: DifferentialWatchedQueryState<RowType>;
-
   protected differentiator: WatchedQueryDifferentiator<RowType>;
 
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
-    this.state = this.constructInitialState();
     this.differentiator = options.differentiator ?? DEFAULT_WATCHED_QUERY_DIFFERENTIATOR;
-  }
-
-  protected constructInitialState(): DifferentialWatchedQueryState<RowType> {
-    return {
-      ...super.constructInitialState(),
-      diff: {
-        ...EMPTY_DIFFERENTIAL,
-        all: this.options.placeholderData
-      }
-    };
   }
 
   /*
@@ -274,7 +243,7 @@ export class DifferentialQueryProcessor<RowType>
               await this.updateState({ isFetching: true });
             }
 
-            const partialStateUpdate: Partial<MutableDifferentialWatchedQueryState<RowType>> = {};
+            const partialStateUpdate: Partial<MutableWatchedQueryState<RowType[]>> = {};
 
             // Always run the query if an underlying table has changed
             const result = await watchOptions.query.execute({
