@@ -32,7 +32,7 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 }
 
 /**
- * Options for {@link Query.watch}.
+ * Options for {@link Query#watch}.
  */
 export interface StandardWatchedQueryOptions<RowType> extends WatchedQueryOptions {
   /**

@@ -17,7 +17,9 @@ export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOp
    * emit a new hook result even if the result set has not changed.
    *
    * Specifying a {@link WatchedQueryDifferentiator} will remove emissions for
-   * unchanged result sets and preserve Array object references between result set emissions.
+   * unchanged result sets.
+   * Furthermore, emitted `data` arrays will preserve object references between result set emissions
+   * for unchanged rows.
    * @example
    * ```javascript
    * {

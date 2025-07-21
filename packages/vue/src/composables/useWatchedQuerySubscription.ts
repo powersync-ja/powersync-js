@@ -29,7 +29,7 @@ export const useWatchedQuerySubscription = <
   query: Query
 ): UnwrapNestedRefs<Query['state']> => {
   // Creates a reactive variable which will proxy the state
-  const state = reactive(query.state) as UnwrapNestedRefs<Query['state']>;
+  const state = reactive({ ...query.state }) as UnwrapNestedRefs<Query['state']>;
 
   watchEffect((onCleanup) => {
     const dispose = query.registerListener({
