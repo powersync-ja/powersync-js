@@ -4,4 +4,4 @@
 '@powersync/web': patch
 ---
 
-Fixed bug where a WebSocket connection timeout could cause a an uncaught exception.
+Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
