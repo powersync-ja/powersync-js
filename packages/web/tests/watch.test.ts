@@ -625,7 +625,7 @@ describe('Watch Tests', { sequential: true }, () => {
     );
   });
 
-  it('should report differential query results with a custom differentiator', async () => {
+  it('should report differential query results with a custom comparator', async () => {
     const watch = powersync
       .query({
         sql: /* sql */ `
@@ -642,8 +642,8 @@ describe('Watch Tests', { sequential: true }, () => {
         }
       })
       .differentialWatch({
-        differentiator: {
-          identify: (item) => item.id,
+        comparator: {
+          keyBy: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
         }
       });
@@ -719,8 +719,8 @@ describe('Watch Tests', { sequential: true }, () => {
         }
       })
       .differentialWatch({
-        differentiator: {
-          identify: (item) => item.id,
+        comparator: {
+          keyBy: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
         }
       });

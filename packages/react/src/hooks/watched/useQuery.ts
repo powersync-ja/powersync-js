@@ -24,10 +24,10 @@ import { constructCompatibleQuery } from './watch-utils';
  * export const DiffComponent = () => {
  * // A differential query will emit results when a change to the result set occurs.
  * // The internal array object references are maintained for unchanged rows.
- * // The returned lists array is read only when a `differentiator` is provided.
+ * // The returned lists array is read only when a `comparator` is provided.
  * const { data: lists }  = useQuery('SELECT * from lists', [], {
- *  differentiator: {
- *     identify: (item) => item.id,
+ *  comparator: {
+ *     keyBy: (item) => item.id,
  *     compareBy: (item) => JSON.stringify(item)
  *   }
  * });
@@ -47,7 +47,7 @@ export function useQuery<RowType = any>(
 ): QueryResult<RowType>;
 export function useQuery<RowType = any>(
   query: string | CompilableQuery<RowType>,
-  paramerers?: any[],
+  parameters?: any[],
   options?: DifferentialHookOptions<RowType>
 ): ReadonlyQueryResult<RowType>;
 export function useQuery<RowType = any>(
@@ -78,7 +78,7 @@ export function useQuery<RowType = any>(
           // Maintains backwards compatibility with previous versions
           // Differentiation is opt-in by default
           // We emit new data for each table change by default.
-          differentiator: options.differentiator
+          comparator: options.comparator
         }
       });
   }

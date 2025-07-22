@@ -1,4 +1,4 @@
-import { SQLOnChangeOptions, WatchedQueryDifferentiator } from '@powersync/common';
+import { DifferentialWatchedQueryComparator, SQLOnChangeOptions } from '@powersync/common';
 
 export interface HookWatchOptions extends Omit<SQLOnChangeOptions, 'signal'> {
   reportFetching?: boolean;
@@ -10,26 +10,26 @@ export interface AdditionalOptions extends HookWatchOptions {
 
 export interface DifferentialHookOptions<RowType> extends HookWatchOptions {
   /**
-   * Used to detect differences in query result sets.
+   * Used to compare result sets.
    *
    * By default the hook will requery on any dependent table change. This will
    * emit a new hook result even if the result set has not changed.
    *
-   * Specifying a {@link WatchedQueryDifferentiator} will remove emissions for
+   * Specifying a {@link DifferentialWatchedQueryComparator} will remove emissions for
    * unchanged result sets.
    * Furthermore, emitted `data` arrays will preserve object references between result set emissions
    * for unchanged rows.
    * @example
    * ```javascript
    * {
-   *  differentiator: {
-   *    identify: (item) => item.id,
+   *  comparator: {
+   *    keyBy: (item) => item.id,
    *    compareBy: (item) => JSON.stringify(item)
    *  }
    * }
    * ```
    */
-  differentiator?: WatchedQueryDifferentiator<RowType>;
+  comparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 export type ReadonlyQueryResult<RowType> = {

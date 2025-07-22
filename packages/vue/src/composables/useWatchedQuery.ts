@@ -59,9 +59,9 @@ export const useWatchedQuery = <T = any>(
       }
     };
 
-    const watch = options.differentiator
+    const watch = options.comparator
       ? powerSync.value.customQuery(compatibleQuery).differentialWatch({
-          differentiator: options.differentiator,
+          comparator: options.comparator,
           throttleMs: options.throttleMs
         })
       : powerSync.value.customQuery(compatibleQuery).watch({

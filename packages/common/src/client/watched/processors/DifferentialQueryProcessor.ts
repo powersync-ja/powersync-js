@@ -42,13 +42,13 @@ export interface WatchedQueryDifferential<RowType> {
 }
 
 /**
- * Differentiator for incremental watched queries which allows to identify and compare items in the result set.
+ * Comparator for differentially watched queries which keys and compares items in the result set.
  */
-export interface WatchedQueryDifferentiator<RowType> {
+export interface DifferentialWatchedQueryComparator<RowType> {
   /**
    * Unique identifier for the item.
    */
-  identify: (item: RowType) => string;
+  keyBy: (item: RowType) => string;
   /**
    * Generates a key for comparing items with matching identifiers.
    */
@@ -65,12 +65,12 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
   placeholderData?: RowType[];
 
   /**
-   * Differentiator used to identify and compare items in the result set.
-   * If not provided, the default differentiator will be used which identifies items by their `id` property if available,
-   * otherwise it uses JSON stringification of the entire item for identification and comparison.
-   * @defaultValue {@link DEFAULT_WATCHED_QUERY_DIFFERENTIATOR}
+   * Comparator used to identify and compare items in the result set.
+   * If not provided, the default comparator will be used which keys items by their `id` property if available,
+   * otherwise it uses JSON stringification of the entire item for keying and comparison.
+   * @defaultValue {@link DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR}
    */
-  differentiator?: WatchedQueryDifferentiator<RowType>;
+  comparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 /**
@@ -99,7 +99,7 @@ export type DifferentialWatchedQuery<RowType> = WatchedQuery<
  */
 export interface DifferentialQueryProcessorOptions<RowType>
   extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
-  differentiator?: WatchedQueryDifferentiator<RowType>;
+  comparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 type DataHashMap<RowType> = Map<string, { hash: string; item: RowType }>;
@@ -117,12 +117,12 @@ export const EMPTY_DIFFERENTIAL = {
 };
 
 /**
- * Default implementation of the {@link Differentiator} for watched queries.
- * It identifies items by their `id` property if available, otherwise it uses JSON stringification
- * of the entire item for identification and comparison.
+ * Default implementation of the {@link DifferentialWatchedQueryComparator} for watched queries.
+ * It keys items by their `id` property if available, alternatively it uses JSON stringification
+ * of the entire item for the key and comparison.
  */
-export const DEFAULT_WATCHED_QUERY_DIFFERENTIATOR: WatchedQueryDifferentiator<any> = {
-  identify: (item) => {
+export const DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR: DifferentialWatchedQueryComparator<any> = {
+  keyBy: (item) => {
     if (item && typeof item == 'object' && typeof item['id'] == 'string') {
       return item['id'];
     }
@@ -140,11 +140,11 @@ export class DifferentialQueryProcessor<RowType>
   extends AbstractQueryProcessor<ReadonlyArray<Readonly<RowType>>, DifferentialWatchedQuerySettings<RowType>>
   implements DifferentialWatchedQuery<RowType>
 {
-  protected differentiator: WatchedQueryDifferentiator<RowType>;
+  protected comparator: DifferentialWatchedQueryComparator<RowType>;
 
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
-    this.differentiator = options.differentiator ?? DEFAULT_WATCHED_QUERY_DIFFERENTIATOR;
+    this.comparator = options.comparator ?? DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR;
   }
 
   /*
@@ -154,7 +154,7 @@ export class DifferentialQueryProcessor<RowType>
     current: RowType[],
     previousMap: DataHashMap<RowType>
   ): { diff: WatchedQueryDifferential<RowType>; map: DataHashMap<RowType>; hasChanged: boolean } {
-    const { identify, compareBy } = this.differentiator;
+    const { keyBy, compareBy } = this.comparator;
 
     let hasChanged = false;
     const currentMap = new Map<string, { hash: string; item: RowType }>();
@@ -175,7 +175,7 @@ export class DifferentialQueryProcessor<RowType>
      * We can replace items in the current array with previous object references if they are equal.
      */
     for (const item of current) {
-      const key = identify(item);
+      const key = keyBy(item);
       const hash = compareBy(item);
       currentMap.set(key, { hash, item });
 
@@ -225,8 +225,8 @@ export class DifferentialQueryProcessor<RowType>
 
     // populate the currentMap from the placeholder data
     this.state.data.forEach((item) => {
-      currentMap.set(this.differentiator.identify(item), {
-        hash: this.differentiator.compareBy(item),
+      currentMap.set(this.comparator.keyBy(item), {
+        hash: this.comparator.compareBy(item),
         item
       });
     });

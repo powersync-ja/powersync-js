@@ -70,7 +70,7 @@ describe('useSuspenseQuery', () => {
       const builder = baseImplementation.call(powersync, options);
       const baseBuild = builder.differentialWatch;
 
-      // The hooks use the `watch` method if no differentiator is set
+      // The hooks use the `watch` method if no comparator is set
       vi.spyOn(builder, 'watch').mockImplementation((buildOptions) => {
         watch = baseBuild.call(builder, buildOptions);
         return watch!;

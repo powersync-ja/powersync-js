@@ -63,8 +63,8 @@ export default function SQLConsolePage() {
      * The query here will only emit results when the query data set changes.
      * Result sets are compared by serializing each item to JSON and comparing the strings.
      */
-    differentiator: {
-      identify: (item: any) => JSON.stringify(item),
+    comparator: {
+      keyBy: (item: any) => JSON.stringify(item),
       compareBy: (item: any) => JSON.stringify(item)
     }
   });

@@ -3,7 +3,7 @@ import {
   DifferentialWatchedQuery,
   DifferentialWatchedQueryOptions
 } from './watched/processors/DifferentialQueryProcessor.js';
-import { ComparisonWatchedQuery } from './watched/processors/OnChangeQueryProcessor.js';
+import { StandardWatchedQuery } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryOptions } from './watched/WatchedQuery.js';
 
 /**
@@ -73,7 +73,7 @@ export interface Query<RowType> {
    * but note that the result set will not maintain internal object references to the previous result set. If internal object references are needed,
    * consider using {@link Query#differentialWatch} instead.
    */
-  watch(options?: StandardWatchedQueryOptions<RowType>): ComparisonWatchedQuery<ReadonlyArray<Readonly<RowType>>>;
+  watch(options?: StandardWatchedQueryOptions<RowType>): StandardWatchedQuery<ReadonlyArray<Readonly<RowType>>>;
 
   /**
    * Creates a {@link WatchedQuery} which watches and emits results of the linked query.

@@ -1,3 +1,8 @@
+/**
+ * A basic comparator for incrementally watched queries. This performs a single comparison which
+ * determines if the result set has changed. The {@link WatchedQuery} will only emit the new result
+ * if a change has been detected.
+ */
 export interface WatchedQueryComparator<Data> {
   checkEquality: (current: Data, previous: Data) => boolean;
 }
@@ -13,7 +18,8 @@ export type ArrayComparatorOptions<ItemType> = {
 };
 
 /**
- * Compares array results of watched queries for incrementally watched queries created in the standard mode.
+ * An efficient comparator for {@link WatchedQuery} created with {@link Query#watch}. This has the ability to determine if a query
+ * result has changes without necessarily processing all items in the result.
  */
 export class ArrayComparator<ItemType> implements WatchedQueryComparator<ItemType[]> {
   constructor(protected options: ArrayComparatorOptions<ItemType>) {}
