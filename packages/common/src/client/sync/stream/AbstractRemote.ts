@@ -313,7 +313,6 @@ export abstract class AbstractRemote {
         stream?.close();
       }, SOCKET_TIMEOUT_MS);
     };
-    resetTimeout();
 
     const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
