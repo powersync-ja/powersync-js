@@ -90,33 +90,31 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               setConnectionAnchor(event.currentTarget);
             }}>
             {status?.connected ? <WifiIcon /> : <SignalWifiOffIcon />}
-            {/* Allows for manual connection and disconnect for testing purposes */}
-            <Menu
-              id="connection-menu"
-              anchorEl={connectionAnchor}
-              open={Boolean(connectionAnchor)}
-              onClose={() => setConnectionAnchor(null)}>
-              {status?.connected ? (
-                <MenuItem
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setConnectionAnchor(null);
-                    powerSync.disconnect();
-                  }}>
-                  Disconnect
-                </MenuItem>
-              ) : supabase ? (
-                <MenuItem
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setConnectionAnchor(null);
-                    powerSync.connect(supabase);
-                  }}>
-                  Connect
-                </MenuItem>
-              ) : null}
-            </Menu>
           </Box>
+          {/* Allows for manual connection and disconnect for testing purposes */}
+          <Menu
+            id="connection-menu"
+            anchorEl={connectionAnchor}
+            open={Boolean(connectionAnchor)}
+            onClose={() => setConnectionAnchor(null)}>
+            {status?.connected || status?.connecting ? (
+              <MenuItem
+                onClick={(event) => {
+                  setConnectionAnchor(null);
+                  powerSync.disconnect();
+                }}>
+                Disconnect
+              </MenuItem>
+            ) : supabase ? (
+              <MenuItem
+                onClick={(event) => {
+                  setConnectionAnchor(null);
+                  powerSync.connect(supabase);
+                }}>
+                Connect
+              </MenuItem>
+            ) : null}
+          </Menu>
         </Toolbar>
       </S.TopBar>
       <Drawer anchor={'left'} open={openDrawer} onClose={() => setOpenDrawer(false)}>
