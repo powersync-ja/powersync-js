@@ -46,11 +46,11 @@ export interface WatchedQueryDifferential<RowType> {
  */
 export interface DifferentialWatchedQueryComparator<RowType> {
   /**
-   * Unique identifier for the item.
+   * Generates a unique key for the item.
    */
   keyBy: (item: RowType) => string;
   /**
-   * Generates a key for comparing items with matching identifiers.
+   * Generates a token for comparing items with matching keys.
    */
   compareBy: (item: RowType) => string;
 }
