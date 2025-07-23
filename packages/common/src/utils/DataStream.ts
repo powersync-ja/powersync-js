@@ -1,6 +1,9 @@
 import Logger, { ILogger } from 'js-logger';
 import { BaseListener, BaseObserver } from './BaseObserver.js';
 
+/**
+ * @internal
+ */
 export type DataStreamOptions<ParsedData, SourceData> = {
   mapLine?: (line: SourceData) => ParsedData;
 
@@ -15,8 +18,14 @@ export type DataStreamOptions<ParsedData, SourceData> = {
   logger?: ILogger;
 };
 
+/**
+ * @internal
+ */
 export type DataStreamCallback<Data extends any = any> = (data: Data) => Promise<void>;
 
+/**
+ * @internal
+ */
 export interface DataStreamListener<Data extends any = any> extends BaseListener {
   data: (data: Data) => Promise<void>;
   closed: () => void;
@@ -25,6 +34,9 @@ export interface DataStreamListener<Data extends any = any> extends BaseListener
   lowWater: () => Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_PRESSURE_LIMITS = {
   highWater: 10,
   lowWater: 0
@@ -34,6 +46,7 @@ export const DEFAULT_PRESSURE_LIMITS = {
  * A very basic implementation of a data stream with backpressure support which does not use
  * native JS streams or async iterators.
  * This is handy for environments such as React Native which need polyfills for the above.
+ * @internal
  */
 export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataStreamListener<ParsedData>> {
   dataQueue: SourceData[];

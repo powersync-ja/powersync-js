@@ -3,40 +3,64 @@ import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, OpId } from './CrudEntry.js';
 import { SyncDataBatch } from './SyncDataBatch.js';
 
+/**
+ * @internal
+ */
 export interface BucketDescription {
   name: string;
   priority: number;
 }
 
+/**
+ * @internal
+ */
 export interface Checkpoint {
   last_op_id: OpId;
   buckets: BucketChecksum[];
   write_checkpoint?: string;
 }
 
+/**
+ * @internal
+ */
 export interface BucketState {
   bucket: string;
   op_id: string;
 }
 
+/**
+ * @internal
+ */
 export interface ChecksumCache {
   checksums: Map<string, { checksum: BucketChecksum; last_op_id: OpId }>;
   lastOpId: OpId;
 }
 
+/**
+ * @internal
+ */
 export interface SyncLocalDatabaseResult {
   ready: boolean;
   checkpointValid: boolean;
   checkpointFailures?: string[];
 }
 
+/**
+ * @internal
+ */
 export type SavedProgress = {
   atLast: number;
   sinceLast: number;
 };
 
+/**
+ * @internal
+ */
 export type BucketOperationProgress = Record<string, SavedProgress>;
 
+/**
+ * @internal
+ */
 export interface BucketChecksum {
   bucket: string;
   priority?: number;
@@ -51,6 +75,9 @@ export interface BucketChecksum {
   count?: number;
 }
 
+/**
+ * @internal
+ */
 export enum PSInternalTable {
   DATA = 'ps_data',
   CRUD = 'ps_crud',
@@ -59,6 +86,9 @@ export enum PSInternalTable {
   UNTYPED = 'ps_untyped'
 }
 
+/**
+ * @internal
+ */
 export enum PowerSyncControlCommand {
   PROCESS_TEXT_LINE = 'line_text',
   PROCESS_BSON_LINE = 'line_binary',
@@ -68,10 +98,16 @@ export enum PowerSyncControlCommand {
   NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload'
 }
 
+/**
+ * @internal
+ */
 export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
 
+/**
+ * @internal
+ */
 export interface BucketStorageAdapter extends BaseObserver<BucketStorageListener>, Disposable {
   init(): Promise<void>;
   saveSyncData(batch: SyncDataBatch, fixedKeyFormat?: boolean): Promise<void>;

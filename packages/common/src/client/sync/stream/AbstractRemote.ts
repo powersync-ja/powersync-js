@@ -10,8 +10,14 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
+/**
+ * @internal
+ */
 export type BSONImplementation = typeof BSON;
 
+/**
+ * @internal
+ */
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
   invalidateCredentials?: () => void;
@@ -35,6 +41,9 @@ const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
+/**
+ * @internal
+ */
 export type SyncStreamOptions = {
   path: string;
   data: StreamingSyncRequest;
@@ -61,6 +70,9 @@ export type SocketSyncStreamOptions = SyncStreamOptions & {
   fetchStrategy: FetchStrategy;
 };
 
+/**
+ * @internal
+ */
 export type FetchImplementation = typeof fetch;
 
 /**
@@ -68,6 +80,7 @@ export type FetchImplementation = typeof fetch;
  * The class wrapper is used to distinguish the fetchImplementation
  * option in [AbstractRemoteOptions] from the general fetch method
  * which is typeof "function"
+ * @internal
  */
 export class FetchImplementationProvider {
   getFetch(): FetchImplementation {
@@ -75,6 +88,9 @@ export class FetchImplementationProvider {
   }
 }
 
+/**
+ * @internal
+ */
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain

@@ -1,6 +1,9 @@
 import { OpId } from './CrudEntry.js';
 import { OpType, OpTypeJSON } from './OpType.js';
 
+/**
+ * @internal
+ */
 export interface OplogEntryJSON {
   checksum: number;
   data?: string;
@@ -11,6 +14,9 @@ export interface OplogEntryJSON {
   subkey?: string;
 }
 
+/**
+ * @internal
+ */
 export class OplogEntry {
   static fromRow(row: OplogEntryJSON) {
     return new OplogEntry(

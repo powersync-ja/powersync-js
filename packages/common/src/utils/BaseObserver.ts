@@ -1,15 +1,27 @@
+/**
+ * @internal
+ */
 export interface Disposable {
   dispose: () => Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export interface BaseObserverInterface<T extends BaseListener> {
   registerListener(listener: Partial<T>): () => void;
 }
 
+/**
+ * @internal
+ */
 export type BaseListener = {
   [key: string]: ((...event: any) => any) | undefined;
 };
 
+/**
+ * @internal
+ */
 export class BaseObserver<T extends BaseListener = BaseListener> implements BaseObserverInterface<T> {
   protected listeners = new Set<Partial<T>>();
 

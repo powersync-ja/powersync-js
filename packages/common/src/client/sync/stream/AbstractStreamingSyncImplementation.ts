@@ -1,11 +1,11 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { DataStream } from '../../../utils/DataStream.js';
-import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import * as sync_status from '../../../db/crud/SyncStatus.js';
+import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, Disposable } from '../../../utils/BaseObserver.js';
+import { DataStream } from '../../../utils/DataStream.js';
 import { throttleLeadingTrailing } from '../../../utils/async.js';
 import {
   BucketChecksum,
@@ -17,6 +17,7 @@ import {
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
+import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
 import {
   BucketRequest,
   CrudUploadNotification,
@@ -30,8 +31,10 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
 
+/**
+ * @internal
+ */
 export enum LockType {
   CRUD = 'crud',
   SYNC = 'sync'
@@ -88,6 +91,8 @@ export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.JAVAS
 
 /**
  * Abstract Lock to be implemented by various JS environments
+ *
+ * @internal
  */
 export interface LockOptions<T> {
   callback: () => Promise<T>;
@@ -95,6 +100,9 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
+/**
+ * @internal
+ */
 export interface AbstractStreamingSyncImplementationOptions extends AdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
   uploadCrud: () => Promise<void>;
@@ -125,6 +133,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  */
 export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
 
+/**
+ * @internal
+ */
 export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
 /** @internal */
@@ -208,6 +219,9 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
+/**
+ * @internal
+ */
 export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
