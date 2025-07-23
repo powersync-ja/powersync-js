@@ -797,6 +797,57 @@ function defineSyncTests(impl: SyncClientImplementation) {
 
       expect((await query.next()).value.rows._array).toStrictEqual([]);
     });
+  } else {
+    mockSyncServiceTest('warns about raw tables', async ({ syncService }) => {
+      const customSchema = new Schema({});
+      customSchema.withRawTables({
+        lists: {
+          put: {
+            sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
+            params: ['Id', { Column: 'name' }]
+          },
+          delete: {
+            sql: 'DELETE FROM lists WHERE id = ?',
+            params: ['Id']
+          }
+        }
+      });
+
+      const logger = createLogger('test', { logLevel: Logger.TRACE });
+      const logMessages: string[] = [];
+      (logger as any).invoke = (level, args) => {
+        console.log(...args);
+        logMessages.push(util.format(...args));
+      };
+
+      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
+      powersync.connect(new TestConnector(), options);
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+      expect(logMessages).toEqual(
+        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
+      );
+    });
+
+    mockSyncServiceTest(`does not warn about raw tables if they're not used`, async ({ syncService }) => {
+      // Regression test for https://github.com/powersync-ja/powersync-js/issues/672
+      const customSchema = new Schema({});
+
+      const logger = createLogger('test', { logLevel: Logger.TRACE });
+      const logMessages: string[] = [];
+      (logger as any).invoke = (level, args) => {
+        console.log(...args);
+        logMessages.push(util.format(...args));
+      };
+
+      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
+      powersync.connect(new TestConnector(), options);
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+      expect(logMessages).not.toEqual(
+        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
+      );
+    });
   }
 }
 
