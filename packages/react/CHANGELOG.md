@@ -1,5 +1,14 @@
 # @powersync/react
 
+## 1.5.4
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [6b38551]
+  - @powersync/common@1.34.1
+
 ## 1.5.3
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.34.1
+
+### Patch Changes
+
+- 319012e: Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
+- 6b38551: Fix a warning about raw tables being used when they're not.
+
 ## 1.34.0
 
 ### Minor Changes

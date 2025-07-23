@@ -1,5 +1,19 @@
 # @powersync/web
 
+## 1.25.0
+
+### Minor Changes
+
+- 79acd89: Export AsyncDatabaseConnection (and related) types for internal use
+
+### Patch Changes
+
+- 319012e: Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [6b38551]
+  - @powersync/common@1.34.1
+
 ## 1.24.0
 
 ### Minor Changes
