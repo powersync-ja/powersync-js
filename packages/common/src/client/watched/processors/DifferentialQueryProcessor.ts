@@ -68,7 +68,7 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
    * Comparator used to identify and compare items in the result set.
    * If not provided, the default comparator will be used which keys items by their `id` property if available,
    * otherwise it uses JSON stringification of the entire item for keying and comparison.
-   * @defaultValue {@link DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR}
+   * @defaultValue {@link DEFAULT_COMPARATOR}
    */
   comparator?: DifferentialWatchedQueryComparator<RowType>;
 }
@@ -121,7 +121,7 @@ export const EMPTY_DIFFERENTIAL = {
  * It keys items by their `id` property if available, alternatively it uses JSON stringification
  * of the entire item for the key and comparison.
  */
-export const DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR: DifferentialWatchedQueryComparator<any> = {
+export const DEFAULT_COMPARATOR: DifferentialWatchedQueryComparator<any> = {
   keyBy: (item) => {
     if (item && typeof item == 'object' && typeof item['id'] == 'string') {
       return item['id'];
@@ -144,7 +144,7 @@ export class DifferentialQueryProcessor<RowType>
 
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
-    this.comparator = options.comparator ?? DEFAULT_DIFFERENTIAL_WATCHED_QUERY_COMPARATOR;
+    this.comparator = options.comparator ?? DEFAULT_COMPARATOR;
   }
 
   /*
