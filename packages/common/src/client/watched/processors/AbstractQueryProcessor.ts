@@ -85,10 +85,9 @@ export abstract class AbstractQueryProcessor<
   async updateSettings(settings: Settings) {
     await this.initialized;
 
-    if (!this.state.isLoading) {
+    if (!this.state.isFetching && this.reportFetching) {
       await this.updateState({
-        isLoading: true,
-        isFetching: this.reportFetching ? true : false
+        isFetching: true
       });
     }
 

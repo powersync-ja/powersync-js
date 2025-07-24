@@ -521,11 +521,12 @@ describe('Watch Tests', { sequential: true }, () => {
       })
     });
 
-    expect(watch.state.isLoading).true;
+    expect(watch.state.isLoading).false;
+    expect(watch.state.isFetching).true;
 
     await vi.waitFor(
       () => {
-        expect(watch.state.isLoading).false;
+        expect(watch.state.isFetching).false;
       },
       { timeout: 1000 }
     );
