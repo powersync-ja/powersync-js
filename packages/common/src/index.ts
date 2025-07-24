@@ -33,6 +33,7 @@ export * from './db/schema/TableV2.js';
 
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
+export * from './utils/ControlledExecutor.js';
 export * from './utils/DataStream.js';
 export * from './utils/Logger.js';
 export * from './utils/parseQuery.js';
