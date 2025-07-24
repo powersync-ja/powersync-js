@@ -38,6 +38,10 @@ export type PendingStatement = {
  * Since raw tables are not backed by JSON, running complex queries on them may be more efficient. Further, they allow
  * using client-side table and column constraints.
  *
+ * To collect local writes to raw tables with PowerSync, custom triggers are required. See
+ * {@link https://docs.powersync.com/usage/use-case-examples/raw-tables the documentation} for details and an example on
+ * using raw tables.
+ *
  * Note that raw tables are only supported when using the new `SyncClientImplementation.rust` sync client.
  *
  * @experimental Please note that this feature is experimental at the moment, and not covered by PowerSync semver or

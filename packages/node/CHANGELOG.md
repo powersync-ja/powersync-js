@@ -1,5 +1,28 @@
 # @powersync/node
 
+## 0.8.0
+
+### Minor Changes
+
+- ab33799: Add experimental support for raw tables, giving you full control over the table structure to sync into.
+  While PowerSync manages tables as JSON views by default, raw tables have to be created by the application
+  developer.
+
+  For more information about raw tables, see [the documentation](https://docs.powersync.com/usage/use-case-examples/raw-tables).
+
+- 810c6ad: Propagate logger from PowerSyncDatabase to streaming sync and remote implementations, and tweak some log messages.
+
+### Patch Changes
+
+- 9fb898d: Fixed an issue where `readLock` and `writeLock` calls were unnecessarily serialized due to a shared mutex. This did not affect individual calls to `get`, `getAll`, or `getOptional`.
+- a9f6eba: Update PowerSync core extension to 0.4.2
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- Updated dependencies [ab33799]
+- Updated dependencies [810c6ad]
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.34.0
+
 ## 0.7.1
 
 ### Patch Changes

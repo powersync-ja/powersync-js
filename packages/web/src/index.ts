@@ -1,4 +1,5 @@
 export * from '@powersync/common';
+export * from './db/adapters/AsyncDatabaseConnection';
 export * from './db/adapters/AbstractWebPowerSyncDatabaseOpenFactory';
 export * from './db/adapters/AbstractWebSQLOpenFactory';
 export * from './db/adapters/wa-sqlite/WASQLiteConnection';
