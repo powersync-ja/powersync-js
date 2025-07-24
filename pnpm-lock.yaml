@@ -1906,9 +1906,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      '@powersync/dev':
-        specifier: workspace:*
-        version: link:../dev
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
@@ -28412,9 +28409,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -28425,9 +28420,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 

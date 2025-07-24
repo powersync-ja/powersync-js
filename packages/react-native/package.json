@@ -42,7 +42,6 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/dev": "workspace:*",
     "@powersync/react": "workspace:*"
   },
   "devDependencies": {
