@@ -1,4 +1,4 @@
-import { usePowerSyncStatus } from './usePowerSyncStatus';
+import { usePowerSyncStatus } from './deprecated/usePowerSyncStatus';
 
 /**
  * Custom hook that provides access to the current status of PowerSync.
@@ -14,4 +14,4 @@ import { usePowerSyncStatus } from './usePowerSyncStatus';
  *   </div>
  * };
  */
-export const useStatus = usePowerSyncStatus;
+export const useStatus = () => usePowerSyncStatus();
