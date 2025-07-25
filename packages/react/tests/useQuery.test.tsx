@@ -202,7 +202,7 @@ describe('useQuery', () => {
     const { result } = renderHook(
       () =>
         useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
-          comparator: {
+          rowComparator: {
             keyBy: (item) => item.id,
             compareBy: (item) => JSON.stringify(item)
           }

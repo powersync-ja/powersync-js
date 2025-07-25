@@ -65,12 +65,12 @@ export interface DifferentialWatchedQueryOptions<RowType> extends WatchedQueryOp
   placeholderData?: RowType[];
 
   /**
-   * Comparator used to identify and compare items in the result set.
+   * Comparator used to identify and compare rows in the result set.
    * If not provided, the default comparator will be used which keys items by their `id` property if available,
    * otherwise it uses JSON stringification of the entire item for keying and comparison.
    * @defaultValue {@link DEFAULT_COMPARATOR}
    */
-  comparator?: DifferentialWatchedQueryComparator<RowType>;
+  rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 /**
@@ -99,7 +99,7 @@ export type DifferentialWatchedQuery<RowType> = WatchedQuery<
  */
 export interface DifferentialQueryProcessorOptions<RowType>
   extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
-  comparator?: DifferentialWatchedQueryComparator<RowType>;
+  rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 type DataHashMap<RowType> = Map<string, { hash: string; item: RowType }>;
@@ -144,7 +144,7 @@ export class DifferentialQueryProcessor<RowType>
 
   constructor(protected options: DifferentialQueryProcessorOptions<RowType>) {
     super(options);
-    this.comparator = options.comparator ?? DEFAULT_COMPARATOR;
+    this.comparator = options.rowComparator ?? DEFAULT_COMPARATOR;
   }
 
   /*

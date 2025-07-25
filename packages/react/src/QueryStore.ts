@@ -24,9 +24,9 @@ export class QueryStore {
       return this.cache.get(key) as WatchedQuery<RowType[]>;
     }
 
-    const watch = options.comparator
+    const watch = options.rowComparator
       ? this.db.customQuery(query).differentialWatch({
-          comparator: options.comparator,
+          rowComparator: options.rowComparator,
           reportFetching: options.reportFetching,
           throttleMs: options.throttleMs
         })

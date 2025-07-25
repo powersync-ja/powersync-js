@@ -63,7 +63,7 @@ export default function SQLConsolePage() {
      * The query here will only emit results when the query data set changes.
      * Result sets are compared by serializing each item to JSON and comparing the strings.
      */
-    comparator: {
+    rowComparator: {
       keyBy: (item: any) => JSON.stringify(item),
       compareBy: (item: any) => JSON.stringify(item)
     }

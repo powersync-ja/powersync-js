@@ -17,9 +17,9 @@ export const useWatchedQuery = <RowType = unknown>(
   const { query, powerSync, queryChanged, options: hookOptions } = options;
 
   const createWatchedQuery = React.useCallback(() => {
-    const watch = hookOptions.comparator
+    const watch = hookOptions.rowComparator
       ? powerSync.customQuery(query).differentialWatch({
-          comparator: hookOptions.comparator,
+          rowComparator: hookOptions.rowComparator,
           reportFetching: hookOptions.reportFetching,
           throttleMs: hookOptions.throttleMs
         })

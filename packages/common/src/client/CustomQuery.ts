@@ -44,7 +44,7 @@ export class CustomQuery<RowType> implements Query<RowType> {
   differentialWatch(differentialWatchOptions: DifferentialWatchedQueryOptions<RowType>) {
     return new DifferentialQueryProcessor<RowType>({
       db: this.options.db,
-      comparator: differentialWatchOptions?.comparator,
+      rowComparator: differentialWatchOptions?.rowComparator,
       placeholderData: differentialWatchOptions?.placeholderData ?? [],
       watchOptions: {
         ...this.resolveOptions(differentialWatchOptions),

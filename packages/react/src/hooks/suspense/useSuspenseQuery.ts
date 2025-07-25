@@ -32,7 +32,7 @@ import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery';
  * // The internal array object references are maintained for unchanged rows.
  * // The returned lists array is read only when a `comparator` is provided.
  * const { data: lists }  = useSuspenseQuery('SELECT * from lists', [], {
- *  comparator: {
+ *  rowComparator: {
  *     keyBy: (item) => item.id,
  *     compareBy: (item) => JSON.stringify(item)
  *   }

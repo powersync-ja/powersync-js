@@ -26,7 +26,7 @@ import { constructCompatibleQuery } from './watch-utils';
  * // The internal array object references are maintained for unchanged rows.
  * // The returned lists array is read only when a `comparator` is provided.
  * const { data: lists }  = useQuery('SELECT * from lists', [], {
- *  comparator: {
+ *  rowComparator: {
  *     keyBy: (item) => item.id,
  *     compareBy: (item) => JSON.stringify(item)
  *   }
@@ -78,7 +78,7 @@ export function useQuery<RowType = any>(
           // Maintains backwards compatibility with previous versions
           // Differentiation is opt-in by default
           // We emit new data for each table change by default.
-          comparator: options.comparator
+          rowComparator: options.rowComparator
         }
       });
   }

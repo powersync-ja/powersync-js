@@ -22,14 +22,14 @@ export interface DifferentialHookOptions<RowType> extends HookWatchOptions {
    * @example
    * ```javascript
    * {
-   *  comparator: {
+   *  rowComparator: {
    *    keyBy: (item) => item.id,
    *    compareBy: (item) => JSON.stringify(item)
    *  }
    * }
    * ```
    */
-  comparator?: DifferentialWatchedQueryComparator<RowType>;
+  rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
 export type ReadonlyQueryResult<RowType> = {

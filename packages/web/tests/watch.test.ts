@@ -1,10 +1,10 @@
 import {
-  AbstractPowerSyncDatabase,
-  ArrayComparator,
-  GetAllQuery,
-  QueryResult,
-  WatchedQueryDifferential,
-  WatchedQueryState
+    AbstractPowerSyncDatabase,
+    ArrayComparator,
+    GetAllQuery,
+    QueryResult,
+    WatchedQueryDifferential,
+    WatchedQueryState
 } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
@@ -643,7 +643,7 @@ describe('Watch Tests', { sequential: true }, () => {
         }
       })
       .differentialWatch({
-        comparator: {
+        rowComparator: {
           keyBy: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
         }
@@ -720,7 +720,7 @@ describe('Watch Tests', { sequential: true }, () => {
         }
       })
       .differentialWatch({
-        comparator: {
+        rowComparator: {
           keyBy: (item) => item.id,
           compareBy: (item) => JSON.stringify(item)
         }
