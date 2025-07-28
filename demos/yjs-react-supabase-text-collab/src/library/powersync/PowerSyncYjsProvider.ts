@@ -72,8 +72,9 @@ export class PowerSyncYjsProvider extends ObservableV2<PowerSyncYjsEvents> {
            * Local document updates get stored to the database and synced.
            *
            * These updates here originate from syncing remote updates.
-           * Applying these updates to YJS should not result in the `storeUpdate`
-           * handler creating a new `document_update` record. We mark the origin
+           * Applying these updates to YJS should not result in the `_storeUpdate`
+           * handler creating a new `document_update` record since we mark the `origin`
+           * here and check the `origin` in `_storeUpdate`.
            */
           Y.applyUpdateV2(doc, b64ToUint8Array(added.update_b64), origin);
         }
