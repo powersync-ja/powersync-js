@@ -28,10 +28,11 @@ export default (commandLineArgs) => {
       commonjs({}),
       alias({
         entries: [
+          // The default Emscripten output contains code like `require("fs")`. This seems
+          // to be unreachable, but Metro complains when it detects it.
           { find: 'fs', replacement: path.resolve(__dirname, 'vendored/empty.js') },
           { find: 'path', replacement: path.resolve(__dirname, 'vendored/empty.js') },
           { find: 'crypto', replacement: path.resolve(__dirname, 'vendored/empty.js') }
-          // add others as needed
         ]
       })
     ],

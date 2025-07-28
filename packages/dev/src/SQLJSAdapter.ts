@@ -3,9 +3,11 @@ import {
   BaseObserver,
   BatchedUpdateNotification,
   ControlledExecutor,
+  createLogger,
   DBAdapter,
   DBAdapterListener,
   DBLockOptions,
+  ILogger,
   LockContext,
   QueryResult,
   SQLOpenFactory,
@@ -23,10 +25,12 @@ export interface SQLJSPersister {
 
 export interface SQLJSOpenOptions extends SQLOpenOptions {
   persister?: SQLJSPersister;
+  logger?: ILogger;
 }
 
 export interface ResolvedSQLJSOpenOptions extends SQLJSOpenOptions {
   persister: SQLJSPersister;
+  logger: ILogger;
 }
 
 export class SQLJSOpenFactory implements SQLOpenFactory {
@@ -101,9 +105,13 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       readFile: async () => null,
       writeFile: async () => {}
     };
+
+    const logger = options.logger ?? createLogger('SQLJSDBAdapter');
+
     return {
       ...options,
-      persister
+      persister,
+      logger
     };
   }
 
@@ -111,20 +119,15 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
       print: (text) => {
-        console.log('[stdout]', text);
+        this.options.logger.info(text);
       },
       printErr: (text) => {
-        console.error('[stderr]', text);
+        this.options.logger.error('[stderr]', text);
       }
     });
     const existing = await this.options.persister.readFile();
     const db = new SQL.Database(existing);
     this.dbP = db['db'];
-    // debugger;
-    // (db as any).updateHook(function (operation, database, table, rowId) {
-    //   console.log(`Update Hook: ${operation} on ${table}`);
-    //   this.tableUpdateCache.add(table);
-    // });
     this._db = db;
     return db;
   }
@@ -225,24 +228,24 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     let totalRowsAffected = 0;
     const db = await this.getDB();
 
+    const stmt = db.prepare(query);
     try {
-      const stmt = db.prepare(query);
-
       for (const paramSet of params) {
         stmt.run(paramSet);
         totalRowsAffected += db.getRowsModified();
       }
 
-      stmt.free();
-
       return {
         rowsAffected: totalRowsAffected
       };
-    } catch (error) {
-      throw error;
+    } finally {
+      stmt.free();
     }
   }
 
+  /**
+   * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
+   */
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.writeLock(fn, options);
   }
