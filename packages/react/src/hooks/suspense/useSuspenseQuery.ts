@@ -30,7 +30,7 @@ import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery';
  * export const DiffContentComponent = () => {
  * // A differential query will emit results when a change to the result set occurs.
  * // The internal array object references are maintained for unchanged rows.
- * // The returned lists array is read only when a `comparator` is provided.
+ * // The returned lists array is read only when a `rowComparator` is provided.
  * const { data: lists }  = useSuspenseQuery('SELECT * from lists', [], {
  *  rowComparator: {
  *     keyBy: (item) => item.id,

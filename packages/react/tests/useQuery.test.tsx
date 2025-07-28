@@ -270,7 +270,7 @@ describe('useQuery', () => {
   });
 
   // Verifies backwards compatibility with the previous implementation (no comparison)
-  it('should emit result data when data changes when not using comparator', async () => {
+  it('should emit result data when data changes when not using rowComparator', async () => {
     const db = openPowerSync();
     const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
     const { result } = renderHook(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']), { wrapper });
