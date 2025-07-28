@@ -219,7 +219,9 @@ export class DifferentialQueryProcessor<RowType>
     const { abortSignal } = options;
 
     const compiledQuery = watchOptions.query.compile();
-    const tables = await db.resolveTables(compiledQuery.sql, compiledQuery.parameters as any[]);
+    const tables = await db.resolveTables(compiledQuery.sql, compiledQuery.parameters as any[], {
+      tables: options.settings.triggerOnTables
+    });
 
     let currentMap: DataHashMap<RowType> = new Map();
 

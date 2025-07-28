@@ -22,10 +22,11 @@ export interface CustomQueryOptions<RowType> {
 export class CustomQuery<RowType> implements Query<RowType> {
   constructor(protected options: CustomQueryOptions<RowType>) {}
 
-  protected resolveOptions(options: WatchedQueryOptions) {
+  protected resolveOptions(options: WatchedQueryOptions): WatchedQueryOptions {
     return {
       reportFetching: options?.reportFetching ?? DEFAULT_WATCH_QUERY_OPTIONS.reportFetching,
-      throttleMs: options?.throttleMs ?? DEFAULT_WATCH_QUERY_OPTIONS.throttleMs
+      throttleMs: options?.throttleMs ?? DEFAULT_WATCH_QUERY_OPTIONS.throttleMs,
+      triggerOnTables: options?.triggerOnTables
     };
   }
 

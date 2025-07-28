@@ -50,7 +50,9 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
     const { abortSignal } = options;
 
     const compiledQuery = watchOptions.query.compile();
-    const tables = await db.resolveTables(compiledQuery.sql, compiledQuery.parameters as any[]);
+    const tables = await db.resolveTables(compiledQuery.sql, compiledQuery.parameters as any[], {
+      tables: options.settings.triggerOnTables
+    });
 
     db.onChangeWithCallback(
       {

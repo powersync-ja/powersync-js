@@ -59,6 +59,12 @@ export interface WatchedQueryOptions {
    * is not relevant to the consumer.
    */
   reportFetching?: boolean;
+
+  /**
+   * By default, watched queries requery the database on any change to any dependant table of the query.
+   * Supplying an override here can be used to limit the tables which trigger querying the database.
+   */
+  triggerOnTables?: string[];
 }
 
 export enum WatchedQueryListenerEvent {

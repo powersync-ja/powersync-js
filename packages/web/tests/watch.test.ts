@@ -1,15 +1,15 @@
 import {
-    AbstractPowerSyncDatabase,
-    ArrayComparator,
-    GetAllQuery,
-    QueryResult,
-    WatchedQueryDifferential,
-    WatchedQueryState
+  AbstractPowerSyncDatabase,
+  ArrayComparator,
+  GetAllQuery,
+  QueryResult,
+  WatchedQueryDifferential,
+  WatchedQueryState
 } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { testSchema } from './utils/testDb';
+import { TestDatabase, testSchema } from './utils/testDb';
 vi.useRealTimers();
 
 /**
@@ -268,6 +268,204 @@ describe('Watch Tests', { sequential: true }, () => {
 
     // Only the initial result should have yielded.
     expect(receivedCustomersUpdatesCount).equals(1);
+  });
+
+  it('should allow overriding table dependencies', async () => {
+    const assetsAbortController = new AbortController();
+
+    type CustomerAssetJoin = TestDatabase['assets'] & { customer_name: string; customer_email: string };
+    const results: CustomerAssetJoin[][] = [];
+
+    const onWatchAssets = (resultSet: CustomerAssetJoin[]) => {
+      results.push(resultSet);
+    };
+
+    const { id: customerId } = await powersync.get<{ id: string }>(`SELECT uuid() as id`);
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          customers (id, name, email)
+        VALUES
+          (?, ?, ?)
+      `,
+      [customerId, 'bob', 'bob@powersync.com']
+    );
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT into
+          assets (id, make, model, customer_id)
+        VALUES
+          (uuid (), 'sync_engine', 'powersync', ?)
+      `,
+      [customerId]
+    );
+
+    powersync.watch(
+      /* sql */
+      `
+        SELECT
+          assets.make,
+          assets.model,
+          assets.serial_number,
+          customers.name AS customer_name,
+          customers.email AS customer_email
+        FROM
+          assets
+          LEFT JOIN customers ON assets.customer_id = customers.id;
+      `,
+      [],
+      { onResult: (r) => onWatchAssets(r.rows?._array ?? []) },
+      {
+        signal: assetsAbortController.signal,
+        // Only trigger on changes to the customers table
+        tables: ['customers'],
+        throttleMs: 0
+      }
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).eq(1);
+        expect(results[0].length).eq(1);
+      },
+      {
+        timeout: 1000
+      }
+    );
+
+    // Do an update on the assets table, this should not trigger the watched query
+    // due to the override
+    for (let attemptCount = 0; attemptCount < 5; attemptCount++) {
+      await powersync.execute(
+        /* sql */ `
+          INSERT into
+            assets (id, make, model, customer_id)
+          VALUES
+            (uuid (), 'sync_engine', 'powersync_v2', ?)
+        `,
+        [customerId]
+      );
+      // Give some time for watched queries to fire (if they need to)
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    // now trigger an update on the customers table, this should update the watched query
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          customers (id, name, email)
+        VALUES
+          (uuid (), ?, ?)
+      `,
+      ['test', 'test@powersync.com']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).eq(2);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should allow overriding table dependencies (query api)', async () => {
+    const { id: customerId } = await powersync.get<{ id: string }>(`SELECT uuid() as id`);
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          customers (id, name, email)
+        VALUES
+          (?, ?, ?)
+      `,
+      [customerId, 'bob', 'bob@powersync.com']
+    );
+
+    await powersync.execute(
+      /* sql */ `
+        INSERT into
+          assets (id, make, model, customer_id)
+        VALUES
+          (uuid (), 'sync_engine', 'powersync', ?)
+      `,
+      [customerId]
+    );
+
+    type CustomerAssetJoin = TestDatabase['assets'] & { customer_name: string; customer_email: string };
+    const results: CustomerAssetJoin[][] = [];
+
+    const query = powersync
+      .query<CustomerAssetJoin>({
+        sql:
+          /* sql */
+          `
+            SELECT
+              assets.make,
+              assets.model,
+              assets.serial_number,
+              customers.name AS customer_name,
+              customers.email AS customer_email
+            FROM
+              assets
+              LEFT JOIN customers ON assets.customer_id = customers.id;
+          `
+      })
+      .watch({
+        triggerOnTables: ['customers'],
+        throttleMs: 0
+      });
+
+    query.registerListener({
+      onData: (data) => {
+        results.push([...data]);
+      }
+    });
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).eq(1);
+        expect(results[0].length).eq(1);
+      },
+      {
+        timeout: 1000
+      }
+    );
+
+    // Do an update on the assets table, this should not trigger the watched query
+    // due to the override
+    for (let attemptCount = 0; attemptCount < 5; attemptCount++) {
+      await powersync.execute(
+        /* sql */ `
+          INSERT into
+            assets (id, make, model, customer_id)
+          VALUES
+            (uuid (), 'sync_engine', 'powersync_v2', ?)
+        `,
+        [customerId]
+      );
+      // Give some time for watched queries to fire (if they need to)
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    // now trigger an update on the customers table, this should update the watched query
+    await powersync.execute(
+      /* sql */ `
+        INSERT INTO
+          customers (id, name, email)
+        VALUES
+          (uuid (), ?, ?)
+      `,
+      ['test', 'test@powersync.com']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).eq(2);
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should handle watch onError callback', async () => {

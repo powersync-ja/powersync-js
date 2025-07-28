@@ -971,7 +971,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
           execute: () => this.executeReadOnly(sql, parameters)
         },
         reportFetching: false,
-        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS
+        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
+        triggerOnTables: options?.tables
       }
     });
 
