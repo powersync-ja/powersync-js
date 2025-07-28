@@ -22,9 +22,10 @@ import { constructCompatibleQuery } from './watch-utils';
  * }
  *
  * export const DiffComponent = () => {
- * // A differential query will emit results when a change to the result set occurs.
+ * // Providing a `rowComparator` results in the hook using an incremental query under the hood.
+ * // An incremental query will only emit results when a change to the result set occurs.
  * // The internal array object references are maintained for unchanged rows.
- * // The returned lists array is read only when a `comparator` is provided.
+ * // The returned lists array is read only when a `rowComparator` is provided.
  * const { data: lists }  = useQuery('SELECT * from lists', [], {
  *  rowComparator: {
  *     keyBy: (item) => item.id,

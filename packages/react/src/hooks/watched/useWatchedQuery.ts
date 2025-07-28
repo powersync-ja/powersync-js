@@ -6,7 +6,7 @@ import { InternalHookOptions } from './watch-utils';
 /**
  * @internal This is not exported from the index.ts
  *
- * When a differential query is used the return type is readonly. This is required
+ * When an incremental query is used the return type is readonly. This is required
  * since the implementation requires a stable ref.
  * For legacy compatibility we allow mutating when a standard query is used. Mutations should
  * not affect the internal implementation in this case.
