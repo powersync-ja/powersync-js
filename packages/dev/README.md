@@ -1,10 +1,10 @@
 # PowerSync Dev
 
 A development package for PowerSync which uses [SQL.js](https://sql.js.org/#/) to provide a pure JavaScript SQLite implementation.
-This eliminates the need for native dependencies and enabling seamless development with Expo Go and other JavaScript-only environments.
+This eliminates the need for native dependencies and enables seamless development with Expo Go and other JavaScript-only environments.
 
 This package is specifically designed to streamline the development workflow and will be much slower than DB adapters that use native dependencies.
-For example when building React Native apps we recommend switching to our OP-sqlite or RNQS adapters when making production builds as they give substantially better performance.
+For example, when building React Native apps we recommend switching to our [react-native-quick-sqlite](https://www.npmjs.com/package/@journeyapps/react-native-quick-sqlite) or [OP-SQLite](https://www.npmjs.com/package/@powersync/op-sqlite) adapters when making production builds as they give substantially better performance.
 
 ## Note: Alpha Release
 

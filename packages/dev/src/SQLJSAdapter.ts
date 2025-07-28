@@ -159,7 +159,8 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
           return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
         });
         return {
-          insertId: (db as any).lastInsertId(), // does not seem to be available in SQL.js??
+          // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
+          insertId: (db as any).lastInsertId(),
           rowsAffected: db.getRowsModified(),
           rows: {
             _array: rows,
