@@ -391,3 +391,28 @@ function MyWidget() {
   )
 }
 ```
+
+## Query Subscriptions
+
+The `useWatchedQuerySubscription` hook lets you access the state of an externally managed `WatchedQuery` instance. Managing a query outside of a component enables in-memory caching and sharing of results between multiple subscribers. This reduces async loading time during component mount (thanks to in-memory caching) and minimizes the number of SQLite queries (by sharing results between multiple components).
+
+```jsx
+// The lifecycle of this query is managed outside of any individual React component.
+// The data is kept up-to-date in the background and can be shared by multiple subscribers.
+const listsQuery = powerSync.query({ sql: 'SELECT * FROM lists' }).differentialWatch();
+
+export const ContentComponent = () => {
+  // Subscribes to the `listsQuery` instance. The subscription is automatically
+  // cleaned up when the component unmounts. The `data` value always reflects
+  // the latest state of the query.
+  const { data: lists } = useWatchedQuerySubscription(listsQuery);
+
+  return (
+    <View>
+      {lists.map((l) => (
+        <Text key={l.id}>{JSON.stringify(l)}</Text>
+      ))}
+    </View>
+  );
+};
+```
