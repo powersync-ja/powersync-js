@@ -105,7 +105,7 @@ const addList = () => {
 
 By default, the `useQuery` composable emits a new `data` reference whenever any change occurs in the query's dependent tables. With incremental queries, updates are only emitted when relevant changes are detected, and the internal `data` array preserves object references for unchanged rows between emissions. This helps prevent unnecessary re-renders in your components.
 
-````Vue
+```Vue
 // TodoListDisplayQuery.vue
 <script setup>
 import { usePowerSync, useQuery } from '@powersync/vue';
@@ -129,6 +129,7 @@ const { data: lists, isLoading, isFetching, error} = useQuery('SELECT * FROM lis
         <li v-for="l in lists" :key="l.id">{{ l.name }}</li>
     </ul>
 </template>
+```
 
 ### Query Subscriptions
 
@@ -171,7 +172,6 @@ const { data: lists } = useWatchedQuerySubscription(getListsQuery());
 </template>
 ```
 
-
 ### Static Query
 
 The `useQuery` composable can be configured to only execute initially and not every time changes to dependent tables are detected. The query can be manually re-executed by using the returned `refresh` function.
@@ -193,7 +193,7 @@ const { data: list, refresh } = useQuery('SELECT id, name FROM lists', [], {
   <button @click="refresh">Refresh list</button>
 </template>
 
-````
+```
 
 ### TypeScript Support
 
