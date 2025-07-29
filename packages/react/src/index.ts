@@ -1,7 +1,11 @@
+export { usePowerSyncQuery } from './hooks/deprecated/usePowerSyncQuery';
+export { usePowerSyncStatus } from './hooks/deprecated/usePowerSyncStatus';
+export { usePowerSyncWatchedQuery } from './hooks/deprecated/usePowerSyncWatchedQuery';
 export * from './hooks/PowerSyncContext';
-export { usePowerSyncQuery } from './hooks/usePowerSyncQuery';
+export { SuspenseQueryResult } from './hooks/suspense/SuspenseQueryResult';
+export { useSuspenseQuery } from './hooks/suspense/useSuspenseQuery';
+export { useWatchedQuerySuspenseSubscription } from './hooks/suspense/useWatchedQuerySuspenseSubscription';
 export { useStatus } from './hooks/useStatus';
-export { useQuery } from './hooks/useQuery';
-export { useSuspenseQuery } from './hooks/useSuspenseQuery';
-export { usePowerSyncWatchedQuery } from './hooks/usePowerSyncWatchedQuery';
-export { usePowerSyncStatus } from './hooks/usePowerSyncStatus';
+export { useQuery } from './hooks/watched/useQuery';
+export { useWatchedQuerySubscription } from './hooks/watched/useWatchedQuerySubscription';
+export { AdditionalOptions } from './hooks/watched/watch-types';

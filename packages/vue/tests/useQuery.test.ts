@@ -1,28 +1,52 @@
+import * as commonSdk from '@powersync/common';
+import { PowerSyncDatabase } from '@powersync/web';
 import flushPromises from 'flush-promises';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { isProxy, isRef, ref } from 'vue';
-import * as PowerSync from '../src/composables/powerSync';
+import { createPowerSyncPlugin } from '../src/composables/powerSync';
 import { useQuery } from '../src/composables/useQuery';
+import { useWatchedQuerySubscription } from '../src/composables/useWatchedQuerySubscription';
 import { withSetup } from './utils';
 
-const mockPowerSync = {
-  currentStatus: { status: 'initial' },
-  registerListener: vi.fn(() => {}),
-  resolveTables: vi.fn(),
-  watch: vi.fn(),
-  onChangeWithCallback: vi.fn(),
-  getAll: vi.fn(() => ['list1', 'list2'])
+export const openPowerSync = () => {
+  const db = new PowerSyncDatabase({
+    database: { dbFilename: 'test.db' },
+    schema: new commonSdk.Schema({
+      lists: new commonSdk.Table({
+        name: commonSdk.column.text
+      })
+    })
+  });
+
+  onTestFinished(async () => {
+    await db.disconnectAndClear();
+    await db.close();
+  });
+
+  return db;
 };
 
 describe('useQuery', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+  let powersync: commonSdk.AbstractPowerSyncDatabase | null;
+
+  beforeEach(() => {
+    powersync = openPowerSync();
   });
 
-  it('should error when PowerSync is not set', () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(undefined);
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
 
-    const [{ data, isLoading, isFetching, error }] = withSetup(() => useQuery('SELECT * from lists'));
+  const withPowerSyncSetup = <Result>(callback: () => Result) => {
+    return withSetup(callback, (app) => {
+      const { install } = createPowerSyncPlugin({ database: powersync! });
+      install(app);
+    });
+  };
+
+  it('should error when PowerSync is not set', () => {
+    powersync = null;
+    const [{ data, isLoading, isFetching, error }] = withPowerSyncSetup(() => useQuery('SELECT * from lists'));
 
     expect(error.value?.message).toEqual('PowerSync not configured.');
     expect(isFetching.value).toEqual(false);
@@ -31,9 +55,9 @@ describe('useQuery', () => {
   });
 
   it('should handle error in watchEffect', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(undefined);
+    powersync = null;
 
-    const [{ data, isLoading, isFetching, error }] = withSetup(() => useQuery('SELECT * from lists'));
+    const [{ data, isLoading, isFetching, error }] = withPowerSyncSetup(() => useQuery('SELECT * from lists'));
 
     expect(error.value).toEqual(Error('PowerSync not configured.'));
     expect(isFetching.value).toEqual(false);
@@ -42,51 +66,93 @@ describe('useQuery', () => {
   });
 
   it('should run the query once when runQueryOnce flag is set', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-    const getAllSpy = mockPowerSync.getAll;
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'list1');
+    `);
 
-    const [{ data, isLoading, isFetching, error }] = withSetup(() =>
+    const [{ data, isLoading, isFetching, error }] = withPowerSyncSetup(() =>
       useQuery('SELECT * from lists', [], { runQueryOnce: true })
     );
-    await flushPromises();
 
-    expect(getAllSpy).toHaveBeenCalledTimes(1);
-    expect(data.value).toEqual(['list1', 'list2']);
-    expect(isLoading.value).toEqual(false);
-    expect(isFetching.value).toEqual(false);
-    expect(error.value).toEqual(undefined);
+    await vi.waitFor(
+      () => {
+        expect(data.value.map((item) => item.name)).toEqual(['list1']);
+        expect(isLoading.value).toEqual(false);
+        expect(isFetching.value).toEqual(false);
+        expect(error.value).toEqual(undefined);
+      },
+      { timeout: 1000 }
+    );
   });
 
   // ensure that Proxy wrapper object is stripped
   it('should propagate raw reactive sql parameters', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-    const getAllSpy = mockPowerSync.getAll;
+    const getAllSpy = vi.spyOn(powersync!, 'getAll');
 
-    const [{ data, isLoading, isFetching, error }] = withSetup(() =>
+    const [{ data, isLoading, isFetching, error }] = withPowerSyncSetup(() =>
       useQuery('SELECT * from lists where id = $1', ref([ref('test')]))
     );
-    await flushPromises();
-    expect(getAllSpy).toHaveBeenCalledTimes(1);
-    const sqlParam = (getAllSpy.mock.calls[0] as Array<any>)[1];
-    expect(isRef(sqlParam)).toEqual(false);
-    expect(isProxy(sqlParam)).toEqual(false);
+
+    await vi.waitFor(
+      () => {
+        expect(getAllSpy).toHaveBeenCalledTimes(3);
+        const sqlParam = (getAllSpy.mock.calls[2] as Array<any>)[1];
+        expect(isRef(sqlParam)).toEqual(false);
+        expect(isProxy(sqlParam)).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should use an existing WatchedQuery instance', async () => {
+    // This query can be instantiated once and reused.
+    // The query retains it's state and will not re-fetch the data unless the result changes.
+    // This is useful for queries that are used in multiple components.
+    const listsQuery = powersync!
+      .query<{ id: string; name: string }>({ sql: `SELECT * FROM lists`, parameters: [] })
+      .differentialWatch();
+
+    const [state] = withPowerSyncSetup(() => useWatchedQuerySubscription(listsQuery));
+
+    await powersync!.execute(
+      /* sql */ `
+        INSERT INTO
+          lists (id, name)
+        VALUES
+          (uuid (), ?)
+      `,
+      ['test']
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(state.data.value.length).eq(1);
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should rerun the query when refresh is used', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-    const getAllSpy = mockPowerSync.getAll;
+    const getAllSpy = vi.spyOn(powersync!, 'getAll');
 
-    const [{ isLoading, isFetching, refresh }] = withSetup(() =>
+    const [{ isLoading, isFetching, refresh }] = withPowerSyncSetup(() =>
       useQuery('SELECT * from lists', [], { runQueryOnce: true })
     );
     expect(isFetching.value).toEqual(true);
     expect(isLoading.value).toEqual(true);
 
-    await flushPromises();
-    expect(isFetching.value).toEqual(false);
-    expect(isLoading.value).toEqual(false);
+    await vi.waitFor(
+      () => {
+        expect(isFetching.value).toEqual(false);
+        expect(isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
 
-    expect(getAllSpy).toHaveBeenCalledTimes(1);
+    const callCount = getAllSpy.mock.calls.length;
 
     const refreshPromise = refresh?.();
     expect(isFetching.value).toEqual(true);
@@ -95,71 +161,71 @@ describe('useQuery', () => {
     await refreshPromise;
     expect(isFetching.value).toEqual(false);
 
-    expect(getAllSpy).toHaveBeenCalledTimes(2);
+    expect(getAllSpy).toHaveBeenCalledTimes(callCount + 1);
   });
 
   it('should set error when error occurs and runQueryOnce flag is set', async () => {
-    const mockPowerSyncError = {
-      ...mockPowerSync,
-      getAll: vi.fn(() => {
-        throw new Error('some error');
-      })
-    };
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSyncError) as any);
+    vi.spyOn(powersync!, 'getAll').mockImplementation(() => {
+      throw new Error('some error');
+    });
 
-    const [{ error }] = withSetup(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }));
+    const [{ error }] = withPowerSyncSetup(() => useQuery('SELECT * from lists', [], { runQueryOnce: true }));
     await flushPromises();
 
     expect(error.value?.message).toEqual('PowerSync failed to fetch data: some error');
   });
 
   it('should set error when error occurs', async () => {
-    const mockPowerSyncError = {
-      ...mockPowerSync,
-      getAll: vi.fn(() => {
-        throw new Error('some error');
-      })
-    };
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSyncError) as any);
+    vi.spyOn(powersync!, 'getAll').mockImplementation(() => {
+      throw new Error('some error');
+    });
 
-    const [{ error }] = withSetup(() => useQuery('SELECT * from lists', []));
-    await flushPromises();
-
-    expect(error.value?.message).toEqual('PowerSync failed to fetch data: some error');
+    const [{ error }] = withPowerSyncSetup(() => useQuery('SELECT * from lists', []));
+    await vi.waitFor(
+      () => {
+        expect(error.value?.message).toEqual('PowerSync failed to fetch data: some error');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should accept compilable queries', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-
-    const [{ isLoading }] = withSetup(() =>
+    const [{ isLoading }] = withPowerSyncSetup(() =>
       useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) })
     );
 
     expect(isLoading.value).toEqual(true);
-    await flushPromises();
-    expect(isLoading.value).toEqual(false);
+    await vi.waitFor(
+      () => {
+        expect(isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should execute compilable queries', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-
-    const [{ isLoading, data }] = withSetup(() =>
+    const [result] = withPowerSyncSetup(() =>
       useQuery({
         execute: () => [{ test: 'custom' }] as any,
         compile: () => ({ sql: 'SELECT * from lists', parameters: [] })
       })
     );
 
+    const { isLoading, data } = result;
+
     expect(isLoading.value).toEqual(true);
-    await flushPromises();
-    expect(isLoading.value).toEqual(false);
-    expect(data.value[0].test).toEqual('custom');
+
+    await vi.waitFor(
+      () => {
+        expect(isLoading.value).toEqual(false);
+        expect(data.value[0].test).toEqual('custom');
+      },
+      { timeout: 1000 }
+    );
   });
 
   it('should set error for compilable query on useQuery parameters', async () => {
-    vi.spyOn(PowerSync, 'usePowerSync').mockReturnValue(ref(mockPowerSync) as any);
-
-    const [{ error }] = withSetup(() =>
+    const [{ error }] = withPowerSyncSetup(() =>
       useQuery({ execute: () => [] as any, compile: () => ({ sql: 'SELECT * from lists', parameters: [] }) }, ['x'])
     );
 
