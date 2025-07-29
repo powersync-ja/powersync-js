@@ -1,5 +1,10 @@
-import { DiffTriggerOperation, ExtractedTriggerDiffRecord, TriggerDiffRecord } from '@powersync/common';
-// import 'source-map-support/register';
+import {
+  DiffTriggerOperation,
+  ExtractedTriggerDiffRecord,
+  sanitizeUUID,
+  TriggerDiffRecord,
+  whenClause
+} from '@powersync/common';
 import { describe, expect, vi } from 'vitest';
 import { Database, databaseTest } from './utils';
 
@@ -111,7 +116,9 @@ describe('Triggers', () => {
     await database.triggers.trackTableDiff({
       source: 'todos',
       columns: ['list_id'],
-      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
+      when: {
+        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+      },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the current state of  todo records that were inserted during this diff window.
@@ -189,7 +196,7 @@ describe('Triggers', () => {
      */
     await database.triggers.trackTableDiff({
       source: 'lists',
-      when: { [DiffTriggerOperation.UPDATE]: `NEW.id = '${list.id}'` },
+      when: { [DiffTriggerOperation.UPDATE]: whenClause`NEW.id = ${sanitizeUUID(list.id)}` },
       operations: [DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
@@ -298,7 +305,9 @@ describe('Triggers', () => {
     await database.triggers.trackTableDiff({
       source: 'todos',
       columns: ['list_id'],
-      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
+      when: {
+        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+      },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
@@ -342,11 +351,11 @@ describe('Triggers', () => {
       async () => {
         expect(todos.length).toEqual(todoCreationCount);
       },
-      { timeout: 10000, interval: 1000 }
+      { timeout: 1000, interval: 100 }
     );
   });
 
-  databaseTest('Should extract diff values', { timeout: 10000 }, async ({ database }) => {
+  databaseTest('Should extract diff values', async ({ database }) => {
     await database.execute(
       /* sql */ `
         INSERT INTO
@@ -386,7 +395,9 @@ describe('Triggers', () => {
     // The onChange handler is guaranteed to see any change after the state above.
     await database.triggers.trackTableDiff({
       source: 'todos',
-      when: { [DiffTriggerOperation.INSERT]: `json_extract(NEW.data, '$.list_id') = '${firstList.id}'` },
+      when: {
+        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+      },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the content of the records at the time of the operation
@@ -416,11 +427,11 @@ describe('Triggers', () => {
         expect(changes.map((c) => c.content)).toEqual(['todo 1', 'todo 2', 'todo 3']);
         expect(changes.every((c) => c.operation === DiffTriggerOperation.INSERT)).toBeTruthy();
       },
-      { timeout: 10000, interval: 1000 }
+      { timeout: 1000, interval: 100 }
     );
   });
 
-  databaseTest('Should allow tracking 0 columns', { timeout: 10000 }, async ({ database }) => {
+  databaseTest('Should allow tracking 0 columns', { timeout: 1000 }, async ({ database }) => {
     /**
      * Tracks the ids of todos reported via the trigger
      */
@@ -491,7 +502,7 @@ describe('Triggers', () => {
       async () => {
         expect(changes).toEqual(ids);
       },
-      { timeout: 10000, interval: 1000 }
+      { timeout: 1000, interval: 100 }
     );
   });
 });

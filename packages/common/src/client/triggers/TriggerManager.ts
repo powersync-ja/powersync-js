@@ -140,11 +140,16 @@ interface BaseCreateDiffTriggerOptions {
    * For example, you can use it to only trigger on certain values in the NEW row.
    * Note that for PowerSync the row data is stored in a JSON column named `data`.
    * The row id is available in the `id` column.
+   *
+   * NB! The WHEN clauses here added added directly to the SQLite trigger creation SQL.
+   * Any user input strings here should be sanitized externally. The {@link when} string template function performs
+   * some basic sanitization, extra external sanitization is recommended.
+   *
    * @example
    * {
-   *  'INSERT': `json_extract(NEW.data, '$.list_id') = 'abcd'`
-   *  'UPDATE': `NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`
-   *  'DELETE': `json_extract(OLD.data, '$.list_id') = 'abcd'`
+   *  'INSERT': whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`
+   *  'UPDATE': whenClause`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`
+   *  'DELETE': whenClause`json_extract(OLD.data, '$.list_id') = 'abcd'`
    * }
    */
   when?: Partial<Record<DiffTriggerOperation, string>>;
@@ -310,7 +315,7 @@ export interface TriggerManager {
    *        source: 'todos',
    *        columns: ['list_id'],
    *        when: {
-   *          [DiffTriggerOperation.INSERT]: "json_extract(NEW.data, '$.list_id') = '123'"
+   *          [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = '123'`
    *        },
    *        operations: [DiffTriggerOperation.INSERT],
    *        onChange: async (context) => {
