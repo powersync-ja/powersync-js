@@ -1,5 +1,5 @@
 ---
-'@powersync/dev': patch
+'@powersync/adapter-sql-js': patch
 ---
 
-Introduced dev package.
+Introduced adapter-sql-js package.
