@@ -21,8 +21,8 @@ export function sanitizeUUID(uuid: string): string {
  *
  * **String placeholders:**
  * - All string values passed as placeholders are automatically wrapped in single quotes (`'`).
- * - Any single quotes within the string value are escaped by doubling them (`''`), as required by SQL syntax.
  * - Do not manually wrap placeholders in single quotes in your template string; the function will handle quoting and escaping for you.
+ * - Any single quotes within the string value are escaped by doubling them (`''`), as required by SQL syntax.
  *
  * **Other types:**
  * - `null` and `undefined` are converted to SQL `NULL`.

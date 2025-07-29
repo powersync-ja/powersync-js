@@ -314,10 +314,10 @@ export interface TriggerManager {
    *  const dispose = database.triggers.trackTableDiff({
    *        source: 'todos',
    *        columns: ['list_id'],
-   *        when: {
-   *          [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = '123'`
-   *        },
    *        operations: [DiffTriggerOperation.INSERT],
+   *        when: {
+   *          [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(someIdVariable)}`
+   *        },
    *        onChange: async (context) => {
    *          // Fetches the todo records that were inserted during this diff
    *          const newTodos = await context.getAll<Database['todos']>(`
