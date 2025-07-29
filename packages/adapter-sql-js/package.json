@@ -1,11 +1,11 @@
 {
-  "name": "@powersync/dev",
+  "name": "@powersync/adapter-sql-js",
   "version": "0.0.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "Development helpers for JourneyApps PowerSync",
+  "description": "A development db adapter based on SQL.js for JourneyApps PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
   "module": "dist/bundle.mjs",

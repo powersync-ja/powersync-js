@@ -1,10 +1,13 @@
-# PowerSync Dev
+# PowerSync SQL-JS Adapter
 
 A development package for PowerSync which uses [SQL.js](https://sql.js.org/#/) to provide a pure JavaScript SQLite implementation.
 This eliminates the need for native dependencies and enables seamless development with Expo Go and other JavaScript-only environments.
 
-This package is specifically designed to streamline the development workflow and will be much slower than DB adapters that use native dependencies.
-For example, when building React Native apps we recommend switching to our [react-native-quick-sqlite](https://www.npmjs.com/package/@journeyapps/react-native-quick-sqlite) or [OP-SQLite](https://www.npmjs.com/package/@powersync/op-sqlite) adapters when making production builds as they give substantially better performance.
+This adapter is specifically intended to streamline the development workflow and will be much slower than DB adapters that use native dependencies.
+Every write operation triggers a complete rewrite of the entire database file to persistent storage, not just the changed data.
+In addition to the perfomance overheads, this adapter doesn't provide any of the SQLite consistency guarantees - you may end up with missing data or a corrupted database file if the app is killed while writing to the database file.
+
+For production use, when building React Native apps we recommend switching to our [react-native-quick-sqlite](https://www.npmjs.com/package/@journeyapps/react-native-quick-sqlite) or [OP-SQLite](https://www.npmjs.com/package/@powersync/op-sqlite) adapters when making production builds as they give substantially better performance.
 
 ## Note: Alpha Release
 
@@ -15,7 +18,7 @@ This package is currently in an alpha release.
 By default the SQLJS adapter will be in-memory. Read further for persister examples.
 
 ```tsx
-import { SQLJSOpenFactory } from '@powersync/dev';
+import { SQLJSOpenFactory } from '@powersync/adapter-sql-js';
 
 const powersync = new PowerSyncDatabase({
   schema: AppSchema,

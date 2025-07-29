@@ -1631,6 +1631,37 @@ importers:
         specifier: ^5.5.3
         version: 5.8.3
 
+  packages/adapter-sql-js:
+    dependencies:
+      '@powersync/common':
+        specifier: workspace:^
+        version: link:../common
+      async-mutex:
+        specifier: ^0.4.0
+        version: 0.4.1
+    devDependencies:
+      '@powersync/sql-js':
+        specifier: 0.0.1
+        version: 0.0.1
+      '@powersync/web':
+        specifier: workspace:*
+        version: link:../web
+      '@rollup/plugin-alias':
+        specifier: ^5.1.0
+        version: 5.1.1(rollup@4.14.3)
+      '@types/sql.js':
+        specifier: ^1.4.9
+        version: 1.4.9
+      chance:
+        specifier: ^1.1.9
+        version: 1.1.13
+      rollup:
+        specifier: 4.14.3
+        version: 4.14.3
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
+
   packages/attachments:
     devDependencies:
       '@powersync/common':
@@ -1703,37 +1734,6 @@ importers:
       web-streams-polyfill:
         specifier: 3.2.1
         version: 3.2.1
-
-  packages/dev:
-    dependencies:
-      '@powersync/common':
-        specifier: workspace:^
-        version: link:../common
-      async-mutex:
-        specifier: ^0.4.0
-        version: 0.4.1
-    devDependencies:
-      '@powersync/sql-js':
-        specifier: 0.0.1
-        version: 0.0.1
-      '@powersync/web':
-        specifier: workspace:*
-        version: link:../web
-      '@rollup/plugin-alias':
-        specifier: ^5.1.0
-        version: 5.1.1(rollup@4.14.3)
-      '@types/sql.js':
-        specifier: ^1.4.9
-        version: 1.4.9
-      chance:
-        specifier: ^1.1.9
-        version: 1.1.13
-      rollup:
-        specifier: 4.14.3
-        version: 4.14.3
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
 
   packages/drizzle-driver:
     dependencies:
