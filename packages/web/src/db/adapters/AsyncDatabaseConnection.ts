@@ -2,6 +2,7 @@ import { BatchedUpdateNotification, QueryResult } from '@powersync/common';
 import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 
 /**
+ * @internal
  * Proxied query result does not contain a function for accessing row values
  */
 export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
@@ -10,6 +11,10 @@ export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
     length: number;
   };
 };
+
+/**
+ * @internal
+ */
 export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
 
 /**
@@ -27,6 +32,9 @@ export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOption
   getConfig(): Promise<Config>;
 }
 
+/**
+ * @internal
+ */
 export type OpenAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = (
   config: Config
 ) => AsyncDatabaseConnection;

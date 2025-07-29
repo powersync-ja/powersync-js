@@ -123,7 +123,9 @@ export interface StreamingSyncImplementationListener extends BaseListener {
  * Configurable options to be used when connecting to the PowerSync
  * backend instance.
  */
-export interface PowerSyncConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
+export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
+
+export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
 
 /** @internal */
 export interface BaseConnectionOptions {
@@ -152,6 +154,11 @@ export interface BaseConnectionOptions {
    * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
    */
   params?: Record<string, StreamingSyncRequestParameterType>;
+
+  /**
+   * The serialized schema - mainly used to forward information about raw tables to the sync client.
+   */
+  serializedSchema?: any;
 }
 
 /** @internal */
@@ -176,7 +183,7 @@ export interface StreamingSyncImplementation extends BaseObserver<StreamingSyncI
   /**
    * Connects to the sync service
    */
-  connect(options?: PowerSyncConnectionOptions): Promise<void>;
+  connect(options?: InternalConnectionOptions): Promise<void>;
   /**
    * Disconnects from the sync services.
    * @throws if not connected or if abort is not controlled internally
@@ -198,7 +205,6 @@ export const DEFAULT_RETRY_DELAY_MS = 5000;
 
 export const DEFAULT_STREAMING_SYNC_OPTIONS = {
   retryDelayMs: DEFAULT_RETRY_DELAY_MS,
-  logger: Logger.get('PowerSyncStream'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
@@ -208,7 +214,8 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
-  params: {}
+  params: {},
+  serializedSchema: undefined
 };
 
 // The priority we assume when we receive checkpoint lines where no priority is set.
@@ -226,6 +233,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
+  protected logger: ILogger;
 
   private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
@@ -236,6 +244,7 @@ export abstract class AbstractStreamingSyncImplementation
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
     this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+    this.logger = options.logger ?? Logger.get('PowerSyncStream');
 
     this.syncStatus = new SyncStatus({
       connected: false,
@@ -310,10 +319,6 @@ export abstract class AbstractStreamingSyncImplementation
     return this.syncStatus.connected;
   }
 
-  protected get logger() {
-    return this.options.logger!;
-  }
-
   async dispose() {
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
@@ -329,7 +334,9 @@ export abstract class AbstractStreamingSyncImplementation
     const clientId = await this.options.adapter.getClientId();
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
     const response = await this.options.remote.get(path);
-    return response['data']['write_checkpoint'] as string;
+    const checkpoint = response['data']['write_checkpoint'] as string;
+    this.logger.debug(`Created write checkpoint: ${checkpoint}`);
+    return checkpoint;
   }
 
   protected async _uploadAllCrud(): Promise<void> {
@@ -371,7 +378,11 @@ The next upload iteration will be delayed.`);
               });
             } else {
               // Uploading is completed
-              await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
+              if (neededUpdate == false && checkedCrudItem != null) {
+                // Only log this if there was something to upload
+                this.logger.debug('Upload complete, no write checkpoint needed.');
+              }
               break;
             }
           } catch (ex) {
@@ -615,6 +626,11 @@ The next upload iteration will be delayed.`);
   }
 
   private async legacyStreamingSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
+    const rawTables = resolvedOptions.serializedSchema?.raw_tables;
+    if (rawTables != null && rawTables.length) {
+      this.logger.warn('Raw tables require the Rust-based sync client. The JS client will ignore them.');
+    }
+
     this.logger.debug('Streaming sync iteration started');
     this.options.adapter.startSession();
     let [req, bucketMap] = await this.collectLocalBucketState();
@@ -708,6 +724,8 @@ The next upload iteration will be delayed.`);
 
       if (isStreamingSyncCheckpoint(line)) {
         targetCheckpoint = line.checkpoint;
+        // New checkpoint - existing validated checkpoint is no longer valid
+        pendingValidatedCheckpoint = null;
         const bucketsToDelete = new Set<string>(bucketMap.keys());
         const newBuckets = new Map<string, BucketDescription>();
         for (const checksum of line.checkpoint.buckets) {
@@ -729,7 +747,13 @@ The next upload iteration will be delayed.`);
         if (result.endIteration) {
           return;
         } else if (!result.applied) {
+          // "Could not apply checkpoint due to local data". We need to retry after
+          // finishing uploads.
           pendingValidatedCheckpoint = targetCheckpoint;
+        } else {
+          // Nothing to retry later. This would likely already be null from the last
+          // checksum or checksum_diff operation, but we make sure.
+          pendingValidatedCheckpoint = null;
         }
       } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
         const priority = line.partial_checkpoint_complete.priority;
@@ -765,6 +789,8 @@ The next upload iteration will be delayed.`);
         if (targetCheckpoint == null) {
           throw new Error('Checkpoint diff without previous checkpoint');
         }
+        // New checkpoint - existing validated checkpoint is no longer valid
+        pendingValidatedCheckpoint = null;
         const diff = line.checkpoint_diff;
         const newBuckets = new Map<string, BucketChecksum>();
         for (const checksum of targetCheckpoint.buckets) {
@@ -1019,12 +1045,12 @@ The next upload iteration will be delayed.`);
     }
 
     try {
-      await control(
-        PowerSyncControlCommand.START,
-        JSON.stringify({
-          parameters: resolvedOptions.params
-        })
-      );
+      const options: any = { parameters: resolvedOptions.params };
+      if (resolvedOptions.serializedSchema) {
+        options.schema = resolvedOptions.serializedSchema;
+      }
+
+      await control(PowerSyncControlCommand.START, JSON.stringify(options));
 
       this.notifyCompletedUploads = () => {
         controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
@@ -1083,20 +1109,20 @@ The next upload iteration will be delayed.`);
     let result = await this.options.adapter.syncLocalDatabase(checkpoint);
 
     if (!result.checkpointValid) {
-      this.logger.debug('Checksum mismatch in checkpoint, will reconnect');
+      this.logger.debug(`Checksum mismatch in checkpoint ${checkpoint.last_op_id}, will reconnect`);
       // This means checksums failed. Start again with a new checkpoint.
       // TODO: better back-off
       await new Promise((resolve) => setTimeout(resolve, 50));
       return { applied: false, endIteration: true };
     } else if (!result.ready) {
       this.logger.debug(
-        'Could not apply checkpoint due to local data. We will retry applying the checkpoint after that upload is completed.'
+        `Could not apply checkpoint ${checkpoint.last_op_id} due to local data. We will retry applying the checkpoint after that upload is completed.`
       );
 
       return { applied: false, endIteration: false };
     }
 
-    this.logger.debug('validated checkpoint', checkpoint);
+    this.logger.debug(`Applied checkpoint ${checkpoint.last_op_id}`, checkpoint);
     this.updateSyncStatus({
       connected: true,
       lastSyncedAt: new Date(),

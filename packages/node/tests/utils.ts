@@ -9,7 +9,6 @@ import {
   column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
@@ -56,12 +55,12 @@ async function createDatabase(
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
   const database = new PowerSyncDatabase({
-    ...options,
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir
-    }
+    },
+    ...options
   });
   await database.init();
   return database;
@@ -128,8 +127,9 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
       }
     };
 
-    const newConnection = async () => {
+    const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
       const db = await createDatabase(tmpdir, {
+        ...options,
         remoteOptions: {
           fetchImplementation: inMemoryFetch
         }
@@ -156,7 +156,7 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
 export interface MockSyncService {
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
-  createDatabase: () => Promise<PowerSyncDatabase>;
+  createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }
 
 export class TestConnector implements PowerSyncBackendConnector {

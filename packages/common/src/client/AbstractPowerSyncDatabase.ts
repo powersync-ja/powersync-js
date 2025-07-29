@@ -16,7 +16,6 @@ import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { throttleTrailing } from '../utils/async.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
@@ -28,6 +27,7 @@ import { CrudTransaction } from './sync/bucket/CrudTransaction.js';
 import {
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   DEFAULT_RETRY_DELAY_MS,
+  InternalConnectionOptions,
   StreamingSyncImplementation,
   StreamingSyncImplementationListener,
   type AdditionalConnectionOptions,
@@ -129,7 +129,6 @@ export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelayMs: 5000,
-  logger: Logger.get('PowerSyncDatabase'),
   crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
 };
 
@@ -151,12 +150,6 @@ export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is Power
 };
 
 export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
-  /**
-   * Transactions should be queued in the DBAdapter, but we also want to prevent
-   * calls to `.execute` while an async transaction is running.
-   */
-  protected static transactionMutex: Mutex = new Mutex();
-
   /**
    * Returns true if the connection is closed.
    */
@@ -188,6 +181,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
    */
   readonly triggers: TriggerManager;
+  logger: ILogger;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
@@ -211,6 +205,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     } else {
       throw new Error('The provided `database` option is invalid.');
     }
+
+    this.logger = options.logger ?? Logger.get(`PowerSyncDatabase[${this._database.name}]`);
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
@@ -439,17 +435,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       schema.validate();
     } catch (ex) {
-      this.options.logger?.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+      this.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
     }
     this._schema = schema;
 
     await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
     await this.database.refreshSchema();
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
-  }
-
-  get logger() {
-    return this.options.logger!;
   }
 
   /**
@@ -483,7 +475,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Connects to stream of events from the PowerSync instance.
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
-    return this.connectionManager.connect(connector, options);
+    const resolvedOptions: InternalConnectionOptions = options ?? {};
+    resolvedOptions.serializedSchema = this.schema.toJSON();
+
+    return this.connectionManager.connect(connector, resolvedOptions);
   }
 
   /**
@@ -692,8 +687,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns The query result as an object with structured key-value pairs
    */
   async execute(sql: string, parameters?: any[]) {
-    await this.waitForReady();
-    return this.database.execute(sql, parameters);
+    return this.writeLock((tx) => tx.execute(sql, parameters));
   }
 
   /**
@@ -767,7 +761,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
-    return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, () => callback(this.database));
+    return this.database.readLock(callback);
   }
 
   /**
@@ -776,10 +770,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
     await this.waitForReady();
-    return mutexRunExclusive(AbstractPowerSyncDatabase.transactionMutex, async () => {
-      const res = await callback(this.database);
-      return res;
-    });
+    return this.database.writeLock(callback);
   }
 
   /**
@@ -897,7 +888,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @param options Options for configuring watch behavior
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    const { onResult, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
+    const { onResult, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
     }
@@ -1052,7 +1043,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A dispose function to stop watching for changes
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
-    const { onChange, onError = (e: Error) => this.options.logger?.error(e) } = handler ?? {};
+    const { onChange, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }

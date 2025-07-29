@@ -1,12 +1,15 @@
 import { describe, vi, expect, beforeEach } from 'vitest';
+import util from 'node:util';
 
 import { MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
 import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
+  createLogger,
   OplogEntryJSON,
   PowerSyncConnectionOptions,
   ProgressWithOperations,
+  Schema,
   SyncClientImplementation,
   SyncStreamConnectionMethod
 } from '@powersync/common';
@@ -536,6 +539,84 @@ function defineSyncTests(impl: SyncClientImplementation) {
     expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
 
+  mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
+    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logMessages: string[] = [];
+    (logger as any).invoke = (level, args) => {
+      console.log(...args);
+      logMessages.push(util.format(...args));
+    };
+
+    // Regression test for https://github.com/powersync-ja/powersync-js/pull/665
+    let database = await syncService.createDatabase({ logger });
+    const connector = new TestConnector();
+    let finishUpload: () => void;
+    const finishUploadPromise = new Promise<void>((resolve, reject) => {
+      finishUpload = resolve;
+    });
+    connector.uploadData = async (db) => {
+      const batch = await db.getCrudBatch();
+      if (batch != null) {
+        await finishUploadPromise;
+        await batch.complete();
+      }
+    };
+
+    await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?);', ['local']);
+    database.connect(connector, options);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine({ checkpoint: { last_op_id: '1', write_checkpoint: '1', buckets: [bucket('a', 1)] } });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: '1',
+            object_type: 'lists',
+            data: '{"name": "s1"}'
+          }
+        ]
+      }
+    });
+    // 1. Could not apply checkpoint due to local data. We will retry [...] after that upload is completed.
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+    await vi.waitFor(() => {
+      expect(logMessages).toEqual(expect.arrayContaining([expect.stringContaining('due to local data')]));
+    });
+
+    // 2. Send additional checkpoint while we're still busy uploading
+    syncService.pushLine({ checkpoint: { last_op_id: '2', write_checkpoint: '2', buckets: [bucket('a', 2)] } });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'PUT',
+            object_id: '2',
+            object_type: 'lists',
+            data: '{"name": "s2"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
+
+    // 3. Crud upload complete
+    finishUpload!();
+
+    // 4. Ensure the database is applying the second checkpoint
+    await vi.waitFor(async () => {
+      const rows = await database.getAll('SELECT * FROM lists WHERE name = ?', ['s2']);
+      expect(rows).toHaveLength(1);
+    });
+  });
+
   mockSyncServiceTest('should update sync state incrementally', async ({ syncService }) => {
     const powersync = await syncService.createDatabase();
     powersync.connect(new TestConnector(), options);
@@ -638,6 +719,136 @@ function defineSyncTests(impl: SyncClientImplementation) {
     expect(another.currentStatus.statusForPriority(0).hasSynced).toBeTruthy();
     await another.waitForFirstSync({ priority: 0 });
   });
+
+  if (impl == SyncClientImplementation.RUST) {
+    mockSyncServiceTest('raw tables', async ({ syncService }) => {
+      const customSchema = new Schema({});
+      customSchema.withRawTables({
+        lists: {
+          put: {
+            sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
+            params: ['Id', { Column: 'name' }]
+          },
+          delete: {
+            sql: 'DELETE FROM lists WHERE id = ?',
+            params: ['Id']
+          }
+        }
+      });
+
+      const powersync = await syncService.createDatabase({ schema: customSchema });
+      await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
+
+      const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
+      expect((await query.next()).value.rows._array).toStrictEqual([]);
+
+      powersync.connect(new TestConnector(), options);
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '1',
+          buckets: [bucket('a', 1)]
+        }
+      });
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '1',
+              op: 'PUT',
+              object_id: 'my_list',
+              object_type: 'lists',
+              data: '{"name": "custom list"}'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+      await powersync.waitForFirstSync();
+
+      expect((await query.next()).value.rows._array).toStrictEqual([{ id: 'my_list', name: 'custom list' }]);
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '2',
+          buckets: [bucket('a', 2)]
+        }
+      });
+      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '2',
+              op: 'REMOVE',
+              object_id: 'my_list',
+              object_type: 'lists'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
+      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+
+      expect((await query.next()).value.rows._array).toStrictEqual([]);
+    });
+  } else {
+    mockSyncServiceTest('warns about raw tables', async ({ syncService }) => {
+      const customSchema = new Schema({});
+      customSchema.withRawTables({
+        lists: {
+          put: {
+            sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
+            params: ['Id', { Column: 'name' }]
+          },
+          delete: {
+            sql: 'DELETE FROM lists WHERE id = ?',
+            params: ['Id']
+          }
+        }
+      });
+
+      const logger = createLogger('test', { logLevel: Logger.TRACE });
+      const logMessages: string[] = [];
+      (logger as any).invoke = (level, args) => {
+        console.log(...args);
+        logMessages.push(util.format(...args));
+      };
+
+      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
+      powersync.connect(new TestConnector(), options);
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+      expect(logMessages).toEqual(
+        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
+      );
+    });
+
+    mockSyncServiceTest(`does not warn about raw tables if they're not used`, async ({ syncService }) => {
+      // Regression test for https://github.com/powersync-ja/powersync-js/issues/672
+      const customSchema = new Schema({});
+
+      const logger = createLogger('test', { logLevel: Logger.TRACE });
+      const logMessages: string[] = [];
+      (logger as any).invoke = (level, args) => {
+        console.log(...args);
+        logMessages.push(util.format(...args));
+      };
+
+      const powersync = await syncService.createDatabase({ schema: customSchema, logger });
+      powersync.connect(new TestConnector(), options);
+
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+      expect(logMessages).not.toEqual(
+        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
+      );
+    });
+  }
 }
 
 function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {
