@@ -1,24 +1,24 @@
-import React from 'react';
-import { useQuery } from '@powersync/react';
-import { Box, Button, Grid, TextField, styled } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { Alert, Box, Button, Grid, TextField, styled } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { useQuery } from '@powersync/react';
+import React from 'react';
 
 export type LoginFormParams = {
   email: string;
   password: string;
 };
 
-const DEFAULT_QUERY = 'SELECT * FROM lists';
+const DEFAULT_QUERY = /* sql */ `
+  SELECT
+    *
+  FROM
+    lists
+`;
 
-export default function SQLConsolePage() {
-  const inputRef = React.useRef<HTMLInputElement>();
-  const [query, setQuery] = React.useState(DEFAULT_QUERY);
-  const { data: querySQLResult } = useQuery(query);
-
+const TableDisplay = React.memo(({ data }: { data: ReadonlyArray<any> }) => {
   const queryDataGridResult = React.useMemo(() => {
-    const firstItem = querySQLResult?.[0];
-
+    const firstItem = data?.[0];
     return {
       columns: firstItem
         ? Object.keys(firstItem).map((field) => ({
@@ -26,9 +26,48 @@ export default function SQLConsolePage() {
             flex: 1
           }))
         : [],
-      rows: querySQLResult
+      rows: data
     };
-  }, [querySQLResult]);
+  }, [data]);
+
+  return (
+    <S.QueryResultContainer>
+      <DataGrid
+        autoHeight={true}
+        rows={queryDataGridResult.rows.map((r, index) => ({ ...r, id: r.id ?? index })) ?? []}
+        columns={queryDataGridResult.columns}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 20
+            }
+          }
+        }}
+        pageSizeOptions={[20]}
+        disableRowSelectionOnClick
+      />
+    </S.QueryResultContainer>
+  );
+});
+
+export default function SQLConsolePage() {
+  const inputRef = React.useRef<HTMLInputElement>();
+  const [query, setQuery] = React.useState(DEFAULT_QUERY);
+
+  const { data, error } = useQuery(query, [], {
+    /**
+     * We don't use the isFetching status here, we can avoid re-renders if we don't report on it.
+     */
+    reportFetching: false,
+    /**
+     * The query here will only emit results when the query data set changes.
+     * Result sets are compared by serializing each item to JSON and comparing the strings.
+     */
+    rowComparator: {
+      keyBy: (item: any) => JSON.stringify(item),
+      compareBy: (item: any) => JSON.stringify(item)
+    }
+  });
 
   return (
     <NavigationPage title="SQL Console">
@@ -57,33 +96,13 @@ export default function SQLConsolePage() {
                 if (queryInput) {
                   setQuery(queryInput);
                 }
-              }}
-            >
+              }}>
               Execute Query
             </Button>
           </S.CenteredGrid>
         </S.CenteredGrid>
-
-        {queryDataGridResult ? (
-          <S.QueryResultContainer>
-            {queryDataGridResult.columns ? (
-              <DataGrid
-                autoHeight={true}
-                rows={queryDataGridResult.rows?.map((r, index) => ({ ...r, id: r.id ?? index })) ?? []}
-                columns={queryDataGridResult.columns}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: 20
-                    }
-                  }
-                }}
-                pageSizeOptions={[20]}
-                disableRowSelectionOnClick
-              />
-            ) : null}
-          </S.QueryResultContainer>
-        ) : null}
+        {error ? <Alert severity="error">{error.message}</Alert> : null}
+        <TableDisplay data={data} />
       </S.MainContainer>
     </NavigationPage>
   );

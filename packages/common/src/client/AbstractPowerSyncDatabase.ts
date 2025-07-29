@@ -17,9 +17,10 @@ import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { throttleTrailing } from '../utils/async.js';
 import { ConnectionManager } from './ConnectionManager.js';
+import { CustomQuery } from './CustomQuery.js';
+import { ArrayQueryDefinition, Query } from './Query.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import { runOnSchemaChange } from './runOnSchemaChange.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './sync/bucket/CrudEntry.js';
@@ -34,6 +35,9 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
+import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
+import { WatchedQueryComparator } from './watched/processors/comparators.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -71,7 +75,7 @@ export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatab
   database: SQLOpenOptions;
 }
 
-export interface SQLWatchOptions {
+export interface SQLOnChangeOptions {
   signal?: AbortSignal;
   tables?: string[];
   /** The minimum interval between queries. */
@@ -83,6 +87,18 @@ export interface SQLWatchOptions {
    * by not removing PowerSync table name prefixes
    */
   rawTableNames?: boolean;
+  /**
+   * Emits an empty result set immediately
+   */
+  triggerImmediate?: boolean;
+}
+
+export interface SQLWatchOptions extends SQLOnChangeOptions {
+  /**
+   * Optional comparator which will be used to compare the results of the query.
+   * The watched query will only yield results if the comparator returns false.
+   */
+  comparator?: WatchedQueryComparator<QueryResult>;
 }
 
 export interface WatchOnChangeEvent {
@@ -102,6 +118,8 @@ export interface WatchOnChangeHandler {
 export interface PowerSyncDBListener extends StreamingSyncImplementationListener {
   initialized: () => void;
   schemaChanged: (schema: Schema) => void;
+  closing: () => Promise<void> | void;
+  closed: () => Promise<void> | void;
 }
 
 export interface PowerSyncCloseOptions {
@@ -122,8 +140,6 @@ const DEFAULT_DISCONNECT_CLEAR_OPTIONS: DisconnectAndClearOptions = {
 export const DEFAULT_POWERSYNC_CLOSE_OPTIONS: PowerSyncCloseOptions = {
   disconnect: true
 };
-
-export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
 export const DEFAULT_POWERSYNC_DB_OPTIONS = {
   retryDelayMs: 5000,
@@ -516,6 +532,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       return;
     }
 
+    await this.iterateAsyncListeners(async (cb) => cb.closing?.());
+
     const { disconnect } = options;
     if (disconnect) {
       await this.disconnect();
@@ -524,6 +542,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.connectionManager.close();
     await this.database.close();
     this.closed = true;
+    await this.iterateAsyncListeners(async (cb) => cb.closed?.());
   }
 
   /**
@@ -863,6 +882,62 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * Allows defining a query which can be used to build a {@link WatchedQuery}.
+   * The defined query will be executed with {@link AbstractPowerSyncDatabase#getAll}.
+   * An optional mapper function can be provided to transform the results.
+   *
+   * @example
+   * ```javascript
+   * const watchedTodos = powersync.query({
+   *  sql: `SELECT photo_id as id FROM todos WHERE photo_id IS NOT NULL`,
+   *  parameters: [],
+   *  mapper: (row) => ({
+   *    ...row,
+   *    created_at: new Date(row.created_at as string)
+   *  })
+   * })
+   * .watch()
+   * // OR use .differentialWatch() for fine-grained watches.
+   * ```
+   */
+  query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType> {
+    const { sql, parameters = [], mapper } = query;
+    const compatibleQuery: WatchCompatibleQuery<RowType[]> = {
+      compile: () => ({
+        sql,
+        parameters
+      }),
+      execute: async ({ sql, parameters }) => {
+        const result = await this.getAll(sql, parameters);
+        return mapper ? result.map(mapper) : (result as RowType[]);
+      }
+    };
+    return this.customQuery(compatibleQuery);
+  }
+
+  /**
+   * Allows building a {@link WatchedQuery} using an existing {@link WatchCompatibleQuery}.
+   * The watched query will use the provided {@link WatchCompatibleQuery.execute} method to query results.
+   *
+   * @example
+   * ```javascript
+   *
+   * // Potentially a query from an ORM like Drizzle
+   * const query = db.select().from(lists);
+   *
+   * const watchedTodos = powersync.customQuery(query)
+   * .watch()
+   * // OR use .differentialWatch() for fine-grained watches.
+   * ```
+   */
+  customQuery<RowType>(query: WatchCompatibleQuery<RowType[]>): Query<RowType> {
+    return new CustomQuery({
+      db: this,
+      query
+    });
+  }
+
+  /**
    * Execute a read query every time the source tables are modified.
    * Use {@link SQLWatchOptions.throttleMs} to specify the minimum interval between queries.
    * Source tables are automatically detected using `EXPLAIN QUERY PLAN`.
@@ -879,39 +954,45 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (!onResult) {
       throw new Error('onResult is required');
     }
+    const { comparator } = options ?? {};
 
-    const watchQuery = async (abortSignal: AbortSignal) => {
-      try {
-        const resolvedTables = await this.resolveTables(sql, parameters, options);
-        // Fetch initial data
-        const result = await this.executeReadOnly(sql, parameters);
-        onResult(result);
-
-        this.onChangeWithCallback(
-          {
-            onChange: async () => {
-              try {
-                const result = await this.executeReadOnly(sql, parameters);
-                onResult(result);
-              } catch (error) {
-                onError?.(error);
-              }
-            },
-            onError
-          },
-          {
-            ...(options ?? {}),
-            tables: resolvedTables,
-            // Override the abort signal since we intercept it
-            signal: abortSignal
-          }
-        );
-      } catch (error) {
-        onError?.(error);
+    // This API yields a QueryResult type.
+    // This is not a standard Array result, which makes it incompatible with the .query API.
+    const watchedQuery = new OnChangeQueryProcessor({
+      db: this,
+      comparator,
+      placeholderData: null,
+      watchOptions: {
+        query: {
+          compile: () => ({
+            sql: sql,
+            parameters: parameters ?? []
+          }),
+          execute: () => this.executeReadOnly(sql, parameters)
+        },
+        reportFetching: false,
+        throttleMs: options?.throttleMs ?? DEFAULT_WATCH_THROTTLE_MS,
+        triggerOnTables: options?.tables
       }
-    };
+    });
 
-    runOnSchemaChange(watchQuery, this, options);
+    const dispose = watchedQuery.registerListener({
+      onData: (data) => {
+        if (!data) {
+          // This should not happen. We only use null for the initial data.
+          return;
+        }
+        onResult(data);
+      },
+      onError: (error) => {
+        onError(error);
+      }
+    });
+
+    options?.signal?.addEventListener('abort', () => {
+      dispose();
+      watchedQuery.close();
+    });
   }
 
   /**
@@ -985,7 +1066,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * }
    * ```
    */
-  onChange(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
+  onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
   /**
    * See {@link onChangeWithCallback}.
    *
@@ -1000,11 +1081,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * }
    * ```
    */
-  onChange(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void;
+  onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
 
   onChange(
-    handlerOrOptions?: WatchOnChangeHandler | SQLWatchOptions,
-    maybeOptions?: SQLWatchOptions
+    handlerOrOptions?: WatchOnChangeHandler | SQLOnChangeOptions,
+    maybeOptions?: SQLOnChangeOptions
   ): (() => void) | AsyncIterable<WatchOnChangeEvent> {
     if (handlerOrOptions && typeof handlerOrOptions === 'object' && 'onChange' in handlerOrOptions) {
       const handler = handlerOrOptions as WatchOnChangeHandler;
@@ -1029,7 +1110,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @param options Options for configuring watch behavior
    * @returns A dispose function to stop watching for changes
    */
-  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLWatchOptions): () => void {
+  onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
     const { onChange, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
@@ -1055,6 +1136,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         }),
       throttleMs
     );
+
+    if (options?.triggerImmediate) {
+      executor.schedule({ changedTables: [] });
+    }
 
     const dispose = this.database.registerListener({
       tablesUpdated: async (update) => {

@@ -4,6 +4,7 @@ import {
   column,
   LockContext,
   PowerSyncDatabase,
+  QueryResult,
   Schema,
   Table
 } from '@powersync/react-native';
@@ -618,6 +619,55 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
+       it('should compare results with old watch method', async () => {
+    const controller = new AbortController();
+
+    const resultSets: QueryResult[] = [];
+
+    // Wait for the first query load
+    const donePromise = new Promise<void>((resolve) => {
+      db.watch(
+        'SELECT * FROM users WHERE name = ?',
+        ['test'],
+        {
+          onResult: (result) => {
+            // Mark that we received the first result, this helps with counting events.
+            if (result.rows?._array?.length == 2) { 
+              resolve();
+            }
+            resultSets.push(result);
+          }
+        },
+        {
+          signal: controller.signal,
+          comparator: {
+            checkEquality: (current, previous) => {
+              return JSON.stringify(current) === JSON.stringify(previous);
+            }
+          }
+        }
+      );
+    });
+
+
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+
+
+    await donePromise;
+
+    expect(resultSets[resultSets.length - 1]?.rows?._array?.map((r) => r.name)).deep.eq(['test', 'test']);
+    // We should only have updated less than or equal 3 times
+    expect(resultSets.length).lessThanOrEqual(3);
+  });
+
     it('Should handle multiple closes', async () => {
       // Bulk insert 10000 rows without using a transaction
       const bulkInsertCommands = [];
@@ -653,5 +703,7 @@ export function registerBaseTests() {
         expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
       }
     });
+
+  
   });
 }
