@@ -17,12 +17,44 @@ pnpm install
 pnpm build:packages
 ```
 
+#### Quick Start: Local Development
+
+This demo can be started with local PowerSync and Supabase services.
+
+Follow the [instructions](https://supabase.com/docs/guides/cli/getting-started) for configuring Supabase locally.
+
+Copy the environment variables template file
+
+```bash
+cp .env.template .env.local
+```
+
+Start the Supabase project
+
+```bash
+supabase start
+```
+
+Copy the `anon key` and `JWT secret` into the `.env` file.
+
+Run the PowerSync service with
+
+```bash
+docker run \
+-p 8080:8080 \
+-e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
+-e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-rules.yaml) \
+--env-file ./.env.local \
+--network supabase_network_yjs-react-supabase-text-collab \
+--name my-powersync journeyapps/powersync-service:latest
+```
+
 ### 2. Create project on Supabase and set up Postgres
 
 This demo app uses Supabase as its Postgres database and backend:
 
 1. [Create a new project on the Supabase dashboard](https://supabase.com/dashboard/projects).
-2. Go to the Supabase SQL Editor for your new project and execute the SQL statements in [`database.sql`](database.sql) to create the database schema, database functions, and publication needed for PowerSync.
+2. Go to the Supabase SQL Editor for your new project and execute the SQL statements in [`database.sql`](./supabase/migrations/20250618064101_configure_powersync.sql) to create the database schema, database functions, and publication needed for PowerSync.
 3. Enable "anonymous sign-ins" for the project [here](https://supabase.com/dashboard/project/_/auth/providers).
 
 ### 3. Create new project on PowerSync and connect to Supabase/Postgres
@@ -108,8 +140,8 @@ To-do
 - [ ] Add button to the UI allowing the user to merge the Yjs edits i.e. `document_update` rows. Invoke `merge-document-updates` edge function in Supabase.
 - [ ] Prepopulate sample text into newly created documents.
 - [ ] Improve performance / rework inefficient parts of implementation:
-  - [ ] Optimize the 'seen updates' approach to filter the `SELECT` query for updates that have not yet been seen — perhaps based on `created_at` timestamp generated on the Postgres side. For the watch query — watch for certain tables instead of watching a query. This will allow querying `document_updates` with a dynamic parameter.
-  - [ ] Flush 'seen updates' when `document_updates` are merged.
+  - [] Optimize the 'seen updates' approach to filter the `SELECT` query for updates that have not yet been seen — perhaps based on `created_at` timestamp generated on the Postgres side. For the watch query — watch for certain tables instead of watching a query. This will allow querying `document_updates` with a dynamic parameter.
+  - [x] Flush 'seen updates' when `document_updates` are merged.
 
 Done
 

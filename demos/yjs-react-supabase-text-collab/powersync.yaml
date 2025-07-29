@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@latest/json-schema/powersync-config.json
+
+# This is a local development configuration file for PowerSync.
+
+# Note that this example uses YAML custom tags for environment variable substitution.
+# Using `!env [variable name]` will substitute the value of the environment variable named
+# [variable name].
+#
+# Only environment variables with names starting with `PS_` can be substituted.
+#
+# If using VS Code see the `.vscode/settings.json` definitions which define custom tags.
+
+# Settings for telemetry reporting
+# See https://docs.powersync.com/self-hosting/telemetry
+telemetry:
+  # Opt out of reporting anonymized usage metrics to PowerSync telemetry service
+  disable_telemetry_sharing: false
+
+# Settings for source database replication
+replication:
+  # Specify database connection details
+  # Note only 1 connection is currently supported
+  # Multiple connection support is on the roadmap
+  connections:
+    - type: postgresql
+      uri: postgresql://postgres:postgres@supabase_db_yjs-react-supabase-text-collab:5432/postgres
+
+      # SSL settings
+      sslmode: disable # 'verify-full' (default) or 'verify-ca' or 'disable'
+
+# This is valid if using the `mongo` service defined in `ps-mongo.yaml`
+
+# Connection settings for sync bucket storage
+storage:
+  # This uses Postgres bucket storage for simplicity
+  type: postgresql
+  uri: postgresql://postgres:postgres@supabase_db_yjs-react-supabase-text-collab:5432/postgres
+  # SSL settings
+  sslmode: disable # 'verify-full' (default) or 'verify-ca' or 'disable'
+
+# The port which the PowerSync API server will listen on
+port: 8080
+
+# Client (application end user) authentication settings
+client_auth:
+  supabase: true
+  supabase_jwt_secret: !env PS_SUPABASE_JWT_SECRET

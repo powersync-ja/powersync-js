@@ -101,7 +101,78 @@ const addList = () => {
 </template>
 ```
 
-### Static query
+### Incremental Query
+
+By default, the `useQuery` composable emits a new `data` reference whenever any change occurs in the query's dependent tables. With incremental queries, updates are only emitted when relevant changes are detected, and the internal `data` array preserves object references for unchanged rows between emissions. This helps prevent unnecessary re-renders in your components.
+
+```Vue
+// TodoListDisplayQuery.vue
+<script setup>
+import { usePowerSync, useQuery } from '@powersync/vue';
+import { ref } from 'vue';
+
+const { data: lists, isLoading, isFetching, error} = useQuery('SELECT * FROM lists', [], {
+  rowComparator: {
+    keyBy: item => item.id,
+    compareBy: item => JSON.stringify(item)
+  }
+});
+</script>
+
+<template>
+    <input v-model="query" />
+    <div v-if="isLoading">Loading...</div>
+    <div v-else-if="isFetching">Updating results...</div>
+
+    <div v-if="error">{{ error }}</div>
+    <ul v-else>
+        <li v-for="l in lists" :key="l.id">{{ l.name }}</li>
+    </ul>
+</template>
+```
+
+### Query Subscriptions
+
+The `useWatchedQuerySubscription` composable lets you access the state of an externally managed `WatchedQuery` instance. To enable in-memory caching and sharing of results between multiple subscribers, the query should be created outside of any component—such as in a module or singleton. This reduces async loading time when components mount (thanks to in-memory caching) and minimizes the number of SQLite queries (by sharing results between components).
+
+```js
+// listsQuery.js
+import { usePowerSync } from '@powersync/vue';
+
+// This module creates and exports a single shared query instance.
+// It should be imported wherever you want to subscribe to the query.
+let listsQuery;
+export function getListsQuery() {
+  if (!listsQuery) {
+    // Note: usePowerSync() must be called in a Vue setup context, so you may need to
+    // pass the PowerSync instance here if you are not using the default context.
+    const powerSync = usePowerSync();
+    listsQuery = powerSync.value.query({ sql: 'SELECT * FROM lists' }).differentialWatch();
+  }
+  return listsQuery;
+}
+```
+
+```vue
+<!-- ContentComponent.vue -->
+<script setup>
+import { useWatchedQuerySubscription } from '@powersync/vue';
+import { getListsQuery } from './listsQuery';
+
+// Subscribe to the shared `listsQuery` instance. The subscription is automatically
+// cleaned up when the component unmounts. The `data` value always reflects
+// the latest state of the query.
+const { data: lists } = useWatchedQuerySubscription(getListsQuery());
+</script>
+
+<template>
+  <ul>
+    <li v-for="l in lists" :key="l.id">{{ l.name }} ({{ l.id }})</li>
+  </ul>
+</template>
+```
+
+### Static Query
 
 The `useQuery` composable can be configured to only execute initially and not every time changes to dependent tables are detected. The query can be manually re-executed by using the returned `refresh` function.
 
