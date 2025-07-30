@@ -1,5 +1,16 @@
 # @powersync/node
 
+## 0.8.1
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+  - @powersync/common@1.35.0
+
 ## 0.8.0
 
 ### Minor Changes
