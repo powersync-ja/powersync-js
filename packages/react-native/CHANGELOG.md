@@ -1,5 +1,20 @@
 # @powersync/react-native
 
+## 1.23.1
+
+### Patch Changes
+
+- 319012e: Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+- Updated dependencies [c7d2b53]
+  - @powersync/common@1.35.0
+  - @powersync/react@1.6.0
+
 ## 1.23.0
 
 ### Minor Changes

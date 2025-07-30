@@ -1,5 +1,55 @@
 # @powersync/react
 
+## 1.6.0
+
+### Minor Changes
+
+- c7d2b53: - [Internal] Updated implementation to use shared `WatchedQuery` implementation.
+- c7d2b53: - Added the ability to limit re-renders by specifying a `rowComparator` for query results. The `useQuery` hook will only emit `data` changes when the data has changed.
+
+  ```javascript
+  // The data here will maintain previous object references for unchanged items.
+  const { data } = useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
+    rowComparator: {
+      keyBy: (item) => item.id,
+      compareBy: (item) => JSON.stringify(item)
+    }
+  });
+  ```
+
+  - Added the ability to subscribe to an existing instance of a `WatchedQuery`
+
+  ```jsx
+  import { useWatchedQuerySubscription } from '@powersync/react';
+
+  const listsQuery = powerSync
+    .query({
+      sql: `SELECT * FROM lists`
+    })
+    .differentialWatch();
+
+  export const ListsWidget = (props) => {
+    const { data: lists } = useWatchedQuerySubscription(listsQuery);
+
+    return (
+      <div>
+        {lists.map((list) => (
+          <div key={list.id}>{list.name}</div>
+        ))}
+      </div>
+    );
+  };
+  ```
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+  - @powersync/common@1.35.0
+
 ## 1.5.3
 
 ### Patch Changes
