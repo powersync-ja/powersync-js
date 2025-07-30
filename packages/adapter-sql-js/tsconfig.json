@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "jsx": "react",
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "./lib",
+    "lib": ["esnext"],
+    "declaration": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "preserveConstEnums": true,
+    "esModuleInterop": false,
+    "skipLibCheck": false,
+    "strictNullChecks": true
+  },
+  "include": ["src/**/*"]
+}

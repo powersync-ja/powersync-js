@@ -1,0 +1,46 @@
+{
+  "name": "@powersync/adapter-sql-js",
+  "version": "0.0.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "A development db adapter based on SQL.js for JourneyApps PowerSync",
+  "type": "module",
+  "main": "dist/bundle.mjs",
+  "module": "dist/bundle.mjs",
+  "types": "lib/index.d.ts",
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@powersync/common": "workspace:^",
+    "async-mutex": "^0.4.0"
+  },
+  "devDependencies": {
+    "@powersync/sql-js": "0.0.1",
+    "@powersync/web": "workspace:*",
+    "@rollup/plugin-alias": "^5.1.0",
+    "@types/sql.js": "^1.4.9",
+    "chance": "^1.1.9",
+    "rollup": "4.14.3",
+    "uuid": "^11.1.0"
+  }
+}
