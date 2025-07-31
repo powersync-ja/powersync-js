@@ -1,10 +1,10 @@
+import type * as Preset from '@docusaurus/preset-classic';
+import type { Config } from '@docusaurus/types';
+import type { PluginOptions } from 'docusaurus-plugin-typedoc';
+import 'dotenv/config';
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { TypeDocOptionMap } from 'typedoc';
-import type { Config } from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
-import type { PluginOptions } from 'docusaurus-plugin-typedoc';
 import { DOC_FOLDER, packageMap } from './utils/packageMap';
-import 'dotenv/config';
 
 const PROJECT_NAME = process.env.GH_PROJECT_NAME;
 
@@ -155,8 +155,8 @@ const config: Config = {
       darkTheme: prismThemes.dracula
     },
     future: {
-      experimental_faster: true,
-    },
+      experimental_faster: true
+    }
   } satisfies Preset.ThemeConfig
 };
 
