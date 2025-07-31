@@ -2,7 +2,7 @@ import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import pDefer from 'p-defer';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
@@ -163,6 +163,64 @@ describe('useQuery', () => {
     await vi.waitFor(
       () => {
         expect(result.current.data[0]?.test).toEqual('custom');
+      },
+      { timeout: 500, interval: 100 }
+    );
+  });
+
+  it('should react to updated queries', async () => {
+    const db = openPowerSync();
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+
+    let updateParameters = (params: string[]): void => {};
+    const newParametersPromise = new Promise<string[]>((resolve) => {
+      updateParameters = resolve;
+    });
+
+    await db.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const query = () => {
+      const [parameters, setParameters] = React.useState<string[]>(['first']);
+
+      useEffect(() => {
+        // allow updating the parameters externally
+        newParametersPromise.then((params) => setParameters(params));
+      }, []);
+
+      const query = React.useMemo(() => {
+        return {
+          execute: () => db.getAll<{ name: string }>('SELECT * FROM lists WHERE name = ?', parameters),
+          compile: () => ({ sql: 'SELECT * FROM lists WHERE name = ?', parameters })
+        };
+      }, [parameters]);
+
+      return useQuery(query);
+    };
+
+    const { result } = renderHook(query, { wrapper });
+
+    // We should only receive the first list due to the WHERE clause
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('first');
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Now update the parameter
+    updateParameters(['second']);
+
+    // We should now only receive the second list due to the WHERE clause and updated parameter
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('second');
       },
       { timeout: 500, interval: 100 }
     );
