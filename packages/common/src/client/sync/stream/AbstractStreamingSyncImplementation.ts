@@ -1071,7 +1071,9 @@ The next upload iteration will be delayed.`);
       await control(PowerSyncControlCommand.START, JSON.stringify(options));
 
       this.notifyCompletedUploads = () => {
-        controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
+        if (controlInvocations && !controlInvocations?.closed) {
+          controlInvocations.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
+        }
       };
       await receivingLines;
     } finally {
