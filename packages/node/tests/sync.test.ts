@@ -873,8 +873,17 @@ function defineSyncTests(impl: SyncClientImplementation) {
       parameters: { a: 0 }
     });
 
+    await powersync.execute('insert into lists (id, name) values (?, ?);', ['local_list', 'local']);
+
+    await vi.waitFor(() =>
+      expect(syncService.connectedListeners[0]).toMatchObject({
+        parameters: { a: 1 }
+      })
+    );
+
     syncService.pushLine({
       checkpoint: {
+        write_checkpoint: '1',
         last_op_id: '1',
         buckets: [bucket('a', 1)]
       }
@@ -887,9 +896,17 @@ function defineSyncTests(impl: SyncClientImplementation) {
             checksum: 0,
             op_id: '1',
             op: 'PUT',
+            object_id: 'local_list',
+            object_type: 'lists',
+            data: '{"name": "local"}'
+          },
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'PUT',
             object_id: 'my_list',
             object_type: 'lists',
-            data: '{"name": "l"}'
+            data: '{"name": "r"}'
           }
         ]
       }
@@ -898,7 +915,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
 
     await vi.waitFor(() =>
       expect(syncService.connectedListeners[0]).toMatchObject({
-        parameters: { a: 1 }
+        parameters: { a: 2 }
       })
     );
 
