@@ -1,6 +1,9 @@
 import * as commonSdk from '@powersync/common';
+import { toCompilableQuery, wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { eq } from 'drizzle-orm';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import pDefer from 'p-defer';
 import React, { useEffect } from 'react';
 import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -163,6 +166,69 @@ describe('useQuery', () => {
     await vi.waitFor(
       () => {
         expect(result.current.data[0]?.test).toEqual('custom');
+      },
+      { timeout: 500, interval: 100 }
+    );
+  });
+
+  it('should react to updated queries (Explicit Drizzle DB)', async () => {
+    const db = openPowerSync();
+
+    const lists = sqliteTable('lists', {
+      id: text('id'),
+      name: text('name')
+    });
+
+    const drizzleDb = wrapPowerSyncWithDrizzle(db, {
+      schema: {
+        lists
+      }
+    });
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+
+    let updateParameters = (params: string): void => {};
+    const newParametersPromise = new Promise<string>((resolve) => {
+      updateParameters = resolve;
+    });
+
+    await db.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const query = () => {
+      const [name, setName] = React.useState<string>('first');
+      const drizzleQuery = drizzleDb.select().from(lists).where(eq(lists.name, name));
+
+      useEffect(() => {
+        // allow updating the parameters externally
+        newParametersPromise.then((params) => setName(params));
+      }, []);
+
+      return useQuery(toCompilableQuery(drizzleQuery));
+    };
+
+    const { result } = renderHook(query, { wrapper });
+
+    // We should only receive the first list due to the WHERE clause
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('first');
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Now update the parameter
+    updateParameters('second');
+
+    // We should now only receive the second list due to the WHERE clause and updated parameter
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('second');
       },
       { timeout: 500, interval: 100 }
     );
