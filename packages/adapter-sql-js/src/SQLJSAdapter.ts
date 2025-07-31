@@ -113,6 +113,39 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     };
   }
 
+  /**
+   * Preprocesses parameters to convert ArrayBuffer objects to Uint8Array
+   * which SQL.js can properly handle in React Native environments
+   */
+  protected preprocessParams(params?: any[]): any[] | undefined {
+    if (!params) {
+      return params;
+    }
+
+    return params.map((param) => {
+      // Only convert actual ArrayBuffer instances, be very specific to avoid
+      // accidentally converting numeric values or other legitimate types
+      if (param instanceof ArrayBuffer) {
+        return new Uint8Array(param);
+      }
+
+      // More conservative check for cross-context ArrayBuffer detection
+      // Only convert if it's clearly an ArrayBuffer with the right properties
+      if (
+        param &&
+        typeof param === 'object' &&
+        param.constructor?.name === 'ArrayBuffer' &&
+        typeof param.byteLength === 'number' &&
+        typeof param.slice === 'function'
+      ) {
+        return new Uint8Array(param);
+      }
+
+      // Leave all other parameters unchanged (numbers, strings, etc.)
+      return param;
+    });
+  }
+
   protected async init(): Promise<SQLJs.Database> {
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
@@ -143,8 +176,9 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       const rawResults: any[][] = [];
       let columnNames: string[] | null = null;
       try {
-        if (params) {
-          statement.bind(params);
+        const processedParams = this.preprocessParams(params);
+        if (processedParams) {
+          statement.bind(processedParams);
         }
         while (statement.step()) {
           if (!columnNames) {
@@ -194,8 +228,9 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       const statement = db.prepare(query);
       const rawResults: any[][] = [];
       try {
-        if (params) {
-          statement.bind(params);
+        const processedParams = this.preprocessParams(params);
+        if (processedParams) {
+          statement.bind(processedParams);
         }
         while (statement.step()) {
           rawResults.push(statement.get());
@@ -230,7 +265,8 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     const stmt = db.prepare(query);
     try {
       for (const paramSet of params) {
-        stmt.run(paramSet);
+        const processedParams = this.preprocessParams(paramSet);
+        stmt.run(processedParams);
         totalRowsAffected += db.getRowsModified();
       }
 

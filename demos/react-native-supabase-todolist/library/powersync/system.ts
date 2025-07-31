@@ -1,6 +1,14 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
+import {
+  createBaseLogger,
+  LogLevel,
+  PowerSyncDatabase,
+  SyncClientImplementation,
+  SyncStreamConnectionMethod
+} from '@powersync/react-native';
+
+import { SQLJSOpenFactory } from '@powersync/adapter-sql-js';
 import React from 'react';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 
@@ -27,13 +35,22 @@ export class System {
     this.kvStorage = new KVStorage();
     this.supabaseConnector = new SupabaseConnector(this);
     this.storage = this.supabaseConnector.storage;
+    // this.powersync = new PowerSyncDatabase({
+    //   schema: AppSchema,
+    //   database: {
+    //     dbFilename: 'sqlite.db'
+    //   },
+    //   logger
+    // });
+
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
-      database: {
+      database: new SQLJSOpenFactory({
         dbFilename: 'sqlite.db'
-      },
+      }),
       logger
     });
+
     /**
      * The snippet below uses OP-SQLite as the default database adapter.
      * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
@@ -68,7 +85,10 @@ export class System {
 
   async init() {
     await this.powersync.init();
-    await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
+    await this.powersync.connect(this.supabaseConnector, {
+      clientImplementation: SyncClientImplementation.RUST
+      // connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
 
     if (this.attachmentQueue) {
       await this.attachmentQueue.init();
