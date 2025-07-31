@@ -1,11 +1,26 @@
 import { configureFts } from '@/app/utils/fts_setup';
-import { AppSchema, ListRecord, LISTS_TABLE, TODOS_TABLE } from '@/library/powersync/AppSchema';
+import {
+  AppSchema,
+  drizzleSchema,
+  drizzleTodos,
+  ListRecord,
+  LISTS_TABLE,
+  TODOS_TABLE
+} from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, DifferentialWatchedQuery, LogLevel, PowerSyncDatabase } from '@powersync/web';
+import {
+  createBaseLogger,
+  DifferentialWatchedQuery,
+  LogLevel,
+  PowerSyncDatabase,
+  SyncClientImplementation
+} from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
+import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
+import { inArray, sql } from 'drizzle-orm';
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
@@ -17,6 +32,8 @@ export const db = new PowerSyncDatabase({
   }
 });
 
+export const drizzleDb = wrapPowerSyncWithDrizzle(db, { schema: drizzleSchema });
+
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
 
 export type QueryStore = {
@@ -25,6 +42,13 @@ export type QueryStore = {
 
 const QueryStore = React.createContext<QueryStore | null>(null);
 export const useQueryStore = () => React.useContext(QueryStore);
+
+export async function markItemsAsCompleted(ids: string[]) {
+  await drizzleDb
+    .update(drizzleTodos)
+    .set({ completed: 1, completed_at: sql`datetime ('now')` })
+    .where(inArray(drizzleTodos.id, ids));
+}
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [connector] = React.useState(() => new SupabaseConnector());
@@ -68,7 +92,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector);
+        powerSync.connect(connector, { clientImplementation: SyncClientImplementation.RUST });
       }
     });
 
@@ -93,5 +117,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     </Suspense>
   );
 };
+
+(window as any).markItemsAsCompleted = markItemsAsCompleted;
 
 export default SystemProvider;
