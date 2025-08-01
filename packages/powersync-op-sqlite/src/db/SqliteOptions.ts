@@ -53,6 +53,11 @@ export interface SqliteOptions {
     path: string;
     entryPoint?: string;
   }>;
+
+  /**
+   * Number of read-only connections to use. Defaults to 5.
+   */
+  readConnections?: number;
 }
 
 export enum TemporaryStorageOption {
@@ -89,5 +94,6 @@ export const DEFAULT_SQLITE_OPTIONS: Required<SqliteOptions> = {
   temporaryStorage: TemporaryStorageOption.MEMORY,
   lockTimeoutMs: 30000,
   encryptionKey: null,
+  readConnections: 5,
   extensions: []
 };
