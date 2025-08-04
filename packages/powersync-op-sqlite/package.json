@@ -6,6 +6,7 @@
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/commonjs/src/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
       "import": {
@@ -101,7 +102,7 @@
       [
         "commonjs",
         {
-          "esm": true
+          "esm": false
         }
       ],
       [

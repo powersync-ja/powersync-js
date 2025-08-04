@@ -12,10 +12,14 @@
   "types": "lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./dist/bundle.mjs",
-      "require": "./dist/bundle.cjs",
-      "default": "./dist/bundle.mjs"
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./dist/bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "require": "./dist/bundle.cjs"
+      }
     }
   },
   "author": "JOURNEYAPPS",

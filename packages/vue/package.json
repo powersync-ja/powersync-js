@@ -6,6 +6,7 @@
     "access": "public"
   },
   "description": "Vue components for JourneyApps PowerSync",
+  "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
