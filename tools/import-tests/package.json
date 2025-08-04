@@ -1,0 +1,19 @@
+{
+  "name": "import-tests",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test:browser": "vitest",
+    "test:cjs": "node src/cjs-test.cjs",
+    "test:esm": "node src/esm-test.mjs",
+    "test": "pnpm test:cjs && pnpm test:esm && pnpm test:browser"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@powersync/attachments": "workspace:*",
+    "@powersync/drizzle-driver": "workspace:*",
+    "@powersync/kysely-driver": "workspace:*",
+    "@powersync/node": "workspace:*",
+    "@powersync/web": "workspace:*"
+  }
+}

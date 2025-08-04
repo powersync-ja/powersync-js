@@ -2,7 +2,7 @@ import * as commonSdk from '@powersync/common';
 import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PowerSyncContext } from '@powersync/react/';
+import { PowerSyncContext } from '@powersync/react';
 import { useQuery } from '../src/hooks/useQuery';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 

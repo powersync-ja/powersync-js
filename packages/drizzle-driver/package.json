@@ -17,7 +17,8 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {

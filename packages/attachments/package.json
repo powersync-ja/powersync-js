@@ -29,7 +29,8 @@
     }
   },
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "scripts": {
     "build": "tsc -b && rollup --config",
