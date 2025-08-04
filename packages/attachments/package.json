@@ -22,10 +22,14 @@
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./lib/index.js"
+      "import": {
+        "default": "./lib/index.js",
+        "types": "./lib/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
     }
   },
   "files": [

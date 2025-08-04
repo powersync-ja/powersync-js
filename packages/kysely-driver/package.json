@@ -8,10 +8,14 @@
   "types": "lib/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/src/index.d.ts",
-      "import": "./lib/src/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./lib/src/index.js"
+      "import": {
+        "default": "./lib/src/index.js",
+        "types": "./lib/src/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
     }
   },
   "author": "JOURNEYAPPS",
