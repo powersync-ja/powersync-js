@@ -9,8 +9,7 @@
     "moduleResolution": "node16",
     "outDir": "./lib",
     "strict": true,
-    "target": "es6",
-    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
+    "target": "es6"
   },
   "include": ["src/**/*"],
   "references": [

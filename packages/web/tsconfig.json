@@ -12,8 +12,7 @@
     "outDir": "./lib" /* Redirect output structure to the directory. */,
     "strict": true /* Enable all strict type-checking options. */,
     "target": "ESNext" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */,
-    "strictNullChecks": true,
-    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
+    "strictNullChecks": true
   },
   "references": [
     {

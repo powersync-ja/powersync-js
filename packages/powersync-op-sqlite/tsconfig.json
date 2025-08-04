@@ -11,8 +11,7 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "strict": true,
-    "esModuleInterop": true,
-    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
+    "esModuleInterop": true
   },
   "references": [
     {

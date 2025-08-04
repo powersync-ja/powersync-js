@@ -5,8 +5,7 @@
     "jsx": "react",
     "rootDir": "src",
     "outDir": "./lib",
-    "strictNullChecks": true,
-    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
+    "strictNullChecks": true
   },
   "references": [
     {

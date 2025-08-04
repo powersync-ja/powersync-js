@@ -46,7 +46,7 @@
     "build:webpack-workers": "webpack --config webpack.workers.config.js",
     "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
-    "clean": "rm -rf lib dist",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },

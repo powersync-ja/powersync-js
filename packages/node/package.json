@@ -16,7 +16,7 @@
     "install": "node download_core.js",
     "build": "tsc -b && rollup --config",
     "build:prod": "tsc -b --sourceMap false && rollup --config",
-    "clean": "rm -rf lib dist",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "vitest"
   },
