@@ -6,7 +6,7 @@ import {
   type AbstractPowerSyncDatabase
 } from '@powersync/common';
 import { Dialect, Kysely, type KyselyConfig } from 'kysely';
-import { PowerSyncDialect } from './sqlite-dialect';
+import { PowerSyncDialect } from './sqlite-dialect.js';
 
 /**
  * An extension of {@link KyselyConfig} which uses the {@link PowerSyncDialect} by default.

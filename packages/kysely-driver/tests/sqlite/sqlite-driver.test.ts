@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
-import * as SUT from '../../src/sqlite/sqlite-driver';
-import { PowerSyncConnection } from '../../src/sqlite/sqlite-connection';
-import { getPowerSyncDb } from '../setup/db';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PowerSyncConnection } from '../../src/sqlite/sqlite-connection.js';
+import * as SUT from '../../src/sqlite/sqlite-driver.js';
+import { getPowerSyncDb } from '../setup/db.js';
 
 describe('PowerSyncDriver', () => {
   let driver: SUT.PowerSyncDriver;

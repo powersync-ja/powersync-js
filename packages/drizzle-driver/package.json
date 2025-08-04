@@ -2,8 +2,17 @@
   "name": "@powersync/drizzle-driver",
   "version": "0.4.0",
   "description": "Drizzle driver for PowerSync",
+  "type": "module",
   "main": "lib/src/index.js",
+  "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/src/index.d.ts",
+      "import": "./lib/src/index.js",
+      "default": "./lib/src/index.js"
+    }
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
@@ -21,7 +30,7 @@
   "scripts": {
     "build": "tsc --build",
     "build:prod": "tsc --build --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib",
     "watch": "tsc --build -w",
     "test": "vitest"
   },

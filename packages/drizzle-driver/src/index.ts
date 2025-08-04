@@ -2,8 +2,8 @@ import {
   wrapPowerSyncWithDrizzle,
   type DrizzleQuery,
   type PowerSyncSQLiteDatabase
-} from './sqlite/PowerSyncSQLiteDatabase';
-import { toCompilableQuery } from './utils/compilableQuery';
+} from './sqlite/PowerSyncSQLiteDatabase.js';
+import { toCompilableQuery } from './utils/compilableQuery.js';
 import {
   DrizzleAppSchema,
   toPowerSyncTable,
@@ -14,14 +14,14 @@ import {
   type ExtractPowerSyncColumns,
   type TableName,
   type TablesFromSchemaEntries
-} from './utils/schema';
+} from './utils/schema.js';
 
 export {
   DrizzleAppSchema,
   DrizzleAppSchemaOptions,
+  DrizzleQuery,
   DrizzleTablePowerSyncOptions,
   DrizzleTableWithPowerSyncOptions,
-  DrizzleQuery,
   Expand,
   ExtractPowerSyncColumns,
   PowerSyncSQLiteDatabase,

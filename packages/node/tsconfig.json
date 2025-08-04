@@ -13,7 +13,8 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "skipLibCheck": false,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*"],
   "references": [

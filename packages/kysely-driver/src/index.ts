@@ -1,24 +1,24 @@
-import { wrapPowerSyncWithKysely, type PowerSyncKyselyDatabase } from './sqlite/db';
 import {
+  sql,
   type ColumnType,
   type Insertable,
-  type Selectable,
-  type Updateable,
   type JSONColumnType,
-  type KyselyConfig,
   type Kysely,
-  sql
+  type KyselyConfig,
+  type Selectable,
+  type Updateable
 } from 'kysely';
+import { wrapPowerSyncWithKysely, type PowerSyncKyselyDatabase } from './sqlite/db.js';
 
 export {
   ColumnType,
   Insertable,
-  Selectable,
-  Updateable,
   JSONColumnType,
-  KyselyConfig,
-  sql,
   Kysely,
+  KyselyConfig,
   PowerSyncKyselyDatabase,
+  Selectable,
+  sql,
+  Updateable,
   wrapPowerSyncWithKysely
 };

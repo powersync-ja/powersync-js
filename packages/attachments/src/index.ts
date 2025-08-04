@@ -1,4 +1,4 @@
-export * from './Schema';
-export * from './StorageAdapter';
+export * from './Schema.js';
+export * from './StorageAdapter.js';
 
-export * from './AbstractAttachmentQueue';
+export * from './AbstractAttachmentQueue.js';

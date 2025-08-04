@@ -18,9 +18,9 @@ import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
-import { toCompilableQuery } from './../utils/compilableQuery';
-import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession';
-import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession';
+import { toCompilableQuery } from './../utils/compilableQuery.js';
+import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
+import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession.js';
 
 export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
 

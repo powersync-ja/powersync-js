@@ -16,15 +16,24 @@
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
+  "type": "module",
   "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
+    }
+  },
   "files": [
     "lib"
   ],
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest"
   },

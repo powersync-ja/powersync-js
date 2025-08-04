@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { type CompiledQuery } from 'kysely';
-import * as SUT from '../../src/sqlite/sqlite-connection';
-import { getPowerSyncDb } from '../setup/db';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as SUT from '../../src/sqlite/sqlite-connection.js';
+import { getPowerSyncDb } from '../setup/db.js';
 
 describe('PowerSyncConnection', () => {
   let powerSyncConnection: SUT.PowerSyncConnection;
@@ -24,6 +24,7 @@ describe('PowerSyncConnection', () => {
       const getAllSpy = vi.spyOn(powerSyncDb, 'getAll');
 
       const compiledQuery: CompiledQuery = {
+        queryId: { queryId: 'id' },
         sql: 'SELECT * From users',
         parameters: [],
         query: { kind: 'SelectQueryNode' }
@@ -43,6 +44,7 @@ describe('PowerSyncConnection', () => {
       expect(usersBeforeInsert.length).toEqual(0);
 
       const compiledQuery: CompiledQuery = {
+        queryId: { queryId: 'id' },
         sql: 'INSERT INTO users (id, name) VALUES(uuid(), ?)',
         parameters: ['John'],
         query: { kind: 'InsertQueryNode' } as any
@@ -61,6 +63,7 @@ describe('PowerSyncConnection', () => {
       expect(usersBeforeDelete.length).toEqual(1);
 
       const compiledQuery: CompiledQuery = {
+        queryId: { queryId: 'id' },
         sql: 'DELETE FROM users where name = ?',
         parameters: ['John'],
         query: { kind: 'DeleteQueryNode' } as any
@@ -79,6 +82,7 @@ describe('PowerSyncConnection', () => {
       expect(usersBeforeDelete.length).toEqual(1);
 
       const compiledQuery: CompiledQuery = {
+        queryId: { queryId: 'id' },
         sql: 'DELETE FROM users where name = ?',
         parameters: ['John'],
         query: { kind: 'UpdateQueryNode' } as any
@@ -105,6 +109,7 @@ describe('PowerSyncConnection', () => {
       await powerSyncDb.execute('INSERT INTO users (id, name) VALUES(uuid(), ?)', ['John']);
 
       const compiledQuery: CompiledQuery = {
+        queryId: { queryId: 'id' },
         sql: 'SELECT * From users',
         parameters: [],
         query: { kind: 'SelectQueryNode' }

@@ -5,7 +5,8 @@
     "jsx": "react",
     "rootDir": "src",
     "outDir": "./lib",
-    "lib": ["es2022", "DOM"]
+    "lib": ["es2022", "DOM"],
+    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
   },
   "references": [
     {

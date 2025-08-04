@@ -4,7 +4,8 @@
     "baseUrl": "./",
     "jsx": "preserve",
     "outDir": "./lib",
-    "rootDir": "src"
+    "rootDir": "src",
+    "tsBuildInfoFile": "./lib/tsconfig.tsbuildinfo"
   },
   "references": [
     {

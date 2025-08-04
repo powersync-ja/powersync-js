@@ -3,7 +3,7 @@ import { PowerSyncDatabase } from '@powersync/web';
 import { count, eq, relations, sql } from 'drizzle-orm';
 import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase';
+import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
 
 vi.useRealTimers();
 
@@ -127,9 +127,9 @@ describe('Watch Tests', () => {
       await db
         .insert(assets)
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
 
@@ -158,9 +158,9 @@ describe('Watch Tests', () => {
       await db
         .insert(assets)
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
     }
@@ -212,9 +212,9 @@ describe('Watch Tests', () => {
     await db
       .insert(assets)
       .values({
-        id: sql`uuid()`,
+        id: sql`uuid ()`,
         make: 'test',
-        customer_id: sql`uuid()`
+        customer_id: sql`uuid ()`
       })
       .execute();
 
@@ -242,7 +242,7 @@ describe('Watch Tests', () => {
 
       const query = db
         .select({
-          id: sql`fakeFunction()` // Simulate an error with invalid function
+          id: sql`fakeFunction ()` // Simulate an error with invalid function
         })
         .from(assets);
 
@@ -276,9 +276,9 @@ describe('Watch Tests', () => {
     for (let i = 0; i < updatesCount; i++) {
       db.insert(assets)
         .values({
-          id: sql`uuid()`,
+          id: sql`uuid ()`,
           make: 'test',
-          customer_id: sql`uuid()`
+          customer_id: sql`uuid ()`
         })
         .execute();
     }
