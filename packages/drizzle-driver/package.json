@@ -3,13 +3,14 @@
   "version": "0.4.0",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
-  "main": "lib/src/index.js",
+  "main": "dist/index.cjs",
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "exports": {
     ".": {
       "types": "./lib/src/index.d.ts",
       "import": "./lib/src/index.js",
+      "require": "./dist/index.cjs",
       "default": "./lib/src/index.js"
     }
   },
@@ -28,8 +29,8 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc --build",
-    "build:prod": "tsc --build --sourceMap false",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
     "clean": "rm -rf lib",
     "watch": "tsc --build -w",
     "test": "vitest"

@@ -17,13 +17,14 @@
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
   "type": "module",
-  "main": "./lib/index.js",
+  "main": "./dist/index.cjs",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
       "import": "./lib/index.js",
+      "require": "./dist/index.cjs",
       "default": "./lib/index.js"
     }
   },
@@ -31,8 +32,8 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "build:prod": "tsc -b --sourceMap false",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
     "clean": "rm -rf lib",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest"

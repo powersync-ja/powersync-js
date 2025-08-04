@@ -7,10 +7,18 @@
   },
   "description": "React components for JourneyApps PowerSync",
   "main": "./lib/index.js",
+  "module": "lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib"
   ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
