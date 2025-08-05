@@ -19,28 +19,28 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution "
+    "test:exports": "attw --pack . --ignore-rules no-resolution"
   },
   "type": "module",
   "exports": {
     ".": {
       "import": {
-        "default:": "./lib/index.js",
-        "types": "./lib/worker.d.ts"
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
       },
       "require": {
-        "default:": "./dist/bundle.cjs",
-        "types": "./dist/bundle.d.cts"
+        "types": "./dist/bundle.d.cts",
+        "default": "./dist/bundle.cjs"
       }
     },
     "./worker.js": {
       "import": {
-        "default:": "./lib/worker.js",
-        "types": "./lib/worker.d.ts"
+        "types": "./lib/worker.d.ts",
+        "default": "./lib/worker.js"
       },
       "require": {
-        "default:": "./dist/worker.cjs",
-        "types": "./dist/worker.d.cts"
+        "types": "./dist/worker.d.cts",
+        "default": "./dist/worker.cjs"
       }
     },
     "./package.json": "./package.json"
