@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { PowerSyncContext } from '../PowerSyncContext';
+import { PowerSyncContext } from '../PowerSyncContext.js';
 
 /**
  * @deprecated Use {@link useStatus} instead.

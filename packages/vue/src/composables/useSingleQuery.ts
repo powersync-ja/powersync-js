@@ -6,7 +6,7 @@ import {
   SQLOnChangeOptions
 } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
-import { usePowerSync } from './powerSync';
+import { usePowerSync } from './powerSync.js';
 
 export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOptions, 'signal'> {
   runQueryOnce?: boolean;

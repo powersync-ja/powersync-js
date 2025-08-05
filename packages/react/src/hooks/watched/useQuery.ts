@@ -1,9 +1,9 @@
 import { type CompilableQuery } from '@powersync/common';
-import { usePowerSync } from '../PowerSyncContext';
-import { useSingleQuery } from './useSingleQuery';
-import { useWatchedQuery } from './useWatchedQuery';
-import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types';
-import { constructCompatibleQuery } from './watch-utils';
+import { usePowerSync } from '../PowerSyncContext.js';
+import { useSingleQuery } from './useSingleQuery.js';
+import { useWatchedQuery } from './useWatchedQuery.js';
+import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
+import { constructCompatibleQuery } from './watch-utils.js';
 
 /**
  * A hook to access the results of a watched query.

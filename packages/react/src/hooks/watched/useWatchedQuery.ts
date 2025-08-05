@@ -1,7 +1,7 @@
 import React from 'react';
-import { useWatchedQuerySubscription } from './useWatchedQuerySubscription';
-import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types';
-import { InternalHookOptions } from './watch-utils';
+import { useWatchedQuerySubscription } from './useWatchedQuerySubscription.js';
+import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
+import { InternalHookOptions } from './watch-utils.js';
 
 /**
  * @internal This is not exported from the index.ts

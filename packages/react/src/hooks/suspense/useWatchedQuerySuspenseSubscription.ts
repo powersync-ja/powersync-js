@@ -1,6 +1,6 @@
 import { WatchedQuery } from '@powersync/common';
 import React from 'react';
-import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
+import { createSuspendingPromise, useTemporaryHold } from './suspense-utils.js';
 
 /**
  * A hook to access and subscribe to the results of an existing {@link WatchedQuery}.

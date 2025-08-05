@@ -18,7 +18,7 @@
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
     "watch": "tsc -b -w",
-    "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
+    "test:exports": "attw --pack --profile=esm-only  ."
   },
   "repository": {
     "type": "git",

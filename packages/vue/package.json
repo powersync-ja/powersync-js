@@ -17,7 +17,8 @@
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest"
+    "test": "vitest",
+    "test:exports": "attw --pack --profile=esm-only  ."
   },
   "repository": {
     "type": "git",
