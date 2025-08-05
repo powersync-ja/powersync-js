@@ -467,6 +467,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
+   * @deprecated Use {@link AbstractPowerSyncDatabase#close} instead.
+   * Clears all listeners registered by {@link AbstractPowerSyncDatabase#registerListener}.
+   */
+  dispose(): void {
+    return super.dispose();
+  }
+
+  /**
    * Locking mechanism for exclusively running critical portions of connect/disconnect operations.
    * Locking here is mostly only important on web for multiple tab scenarios.
    */
