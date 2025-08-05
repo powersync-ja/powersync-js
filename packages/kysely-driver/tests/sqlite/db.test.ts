@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as SUT from '../../src/sqlite/db';
-import { Kysely, sql } from 'kysely';
-import { getPowerSyncDb } from '../setup/db';
 import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { Database, UsersTable } from '../setup/types';
+import { Kysely, sql } from 'kysely';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import * as SUT from '../../src/sqlite/db.js';
+import { getPowerSyncDb } from '../setup/db.js';
+import { Database } from '../setup/types.js';
 
 describe('CRUD operations', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
@@ -53,7 +53,12 @@ describe('CRUD operations', () => {
 
   it('should insert a user and update that user within a transaction when raw sql is used', async () => {
     await db.transaction().execute(async (transaction) => {
-      await sql`INSERT INTO users (id, name) VALUES ('4', 'James');`.execute(transaction);
+      await sql`
+        INSERT INTO
+          users (id, name)
+        VALUES
+          ('4', 'James');
+      `.execute(transaction);
       await transaction.updateTable('users').where('name', '=', 'James').set('name', 'James Smith').execute();
     });
     const result = await db.selectFrom('users').select('name').executeTakeFirstOrThrow();

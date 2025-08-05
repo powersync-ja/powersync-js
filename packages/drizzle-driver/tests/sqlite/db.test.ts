@@ -1,8 +1,8 @@
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { eq, sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase';
-import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db';
+import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
+import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
 
 describe('Database operations', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
@@ -52,7 +52,12 @@ describe('Database operations', () => {
 
   it('should insert a user and update that user within a transaction when raw sql is used', async () => {
     await db.transaction(async (transaction) => {
-      await transaction.run(sql`INSERT INTO users (id, name) VALUES ('4', 'James');`);
+      await transaction.run(sql`
+        INSERT INTO
+          users (id, name)
+        VALUES
+          ('4', 'James');
+      `);
       await transaction.update(drizzleUsers).set({ name: 'James Smith' }).where(eq(drizzleUsers.name, 'James'));
     });
 

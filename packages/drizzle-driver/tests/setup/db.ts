@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, column, PowerSyncDatabase, Schema, Table } from '@powersync/web';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { wrapPowerSyncWithDrizzle } from '../../src/sqlite/PowerSyncSQLiteDatabase';
+import { wrapPowerSyncWithDrizzle } from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
 
 const users = new Table({
   name: column.text

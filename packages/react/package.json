@@ -6,7 +6,9 @@
     "access": "public"
   },
   "description": "React components for JourneyApps PowerSync",
+  "type": "module",
   "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib"
@@ -14,8 +16,9 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
+    "test:exports": "attw --pack --profile=esm-only  .",
     "watch": "tsc -b -w"
   },
   "repository": {

@@ -2,12 +2,27 @@
   "name": "@powersync/drizzle-driver",
   "version": "0.4.0",
   "description": "Drizzle driver for PowerSync",
-  "main": "lib/src/index.js",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./lib/src/index.js",
+        "types": "./lib/src/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
+    }
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -19,11 +34,12 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc --build",
-    "build:prod": "tsc --build --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "vitest"
+    "test": "vitest",
+    "test:exports": "attw --pack ."
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.35.0",

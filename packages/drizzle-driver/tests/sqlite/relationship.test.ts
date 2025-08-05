@@ -3,7 +3,7 @@ import { PowerSyncDatabase } from '@powersync/web';
 import { eq, relations } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase';
+import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
 
 const users = new Table({
   name: column.text

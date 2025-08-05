@@ -1,6 +1,6 @@
 import { type AbstractPowerSyncDatabase } from '@powersync/common';
 import { Driver } from 'kysely';
-import { PowerSyncConnection } from './sqlite-connection';
+import { PowerSyncConnection } from './sqlite-connection.js';
 
 export interface PowerSyncDialectConfig {
   db: AbstractPowerSyncDatabase;

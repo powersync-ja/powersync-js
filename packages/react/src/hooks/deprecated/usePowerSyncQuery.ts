@@ -1,5 +1,5 @@
 import React from 'react';
-import { usePowerSync } from '../PowerSyncContext';
+import { usePowerSync } from '../PowerSyncContext.js';
 
 /**
  * @deprecated use {@link useQuery} instead.

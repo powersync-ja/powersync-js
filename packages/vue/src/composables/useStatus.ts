@@ -1,4 +1,4 @@
-import { usePowerSyncStatus } from './usePowerSyncStatus';
+import { usePowerSyncStatus } from './usePowerSyncStatus.js';
 
 /**
  * Retrieve the current synchronization status of PowerSync.

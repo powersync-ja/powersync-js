@@ -3,6 +3,7 @@
  */
 
 import '@journeyapps/wa-sqlite';
+import { createBaseLogger, createLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
 import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
@@ -11,7 +12,6 @@ import {
   WorkerDBOpenerOptions
 } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
-import { createBaseLogger, createLogger } from '@powersync/common';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -71,10 +71,10 @@ const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDataba
 
     const wrappedConnection = {
       ...db,
-      init: Comlink.proxy(() => {
+      init: Comlink.proxy(async () => {
         // the init has been done automatically
       }),
-      close: Comlink.proxy(() => {
+      close: Comlink.proxy(async () => {
         const { clientIds } = dbEntry;
         logger.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
         clientIds.delete(clientId);

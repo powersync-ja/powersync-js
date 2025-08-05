@@ -12,10 +12,14 @@
   "types": "lib/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/bundle.mjs",
-      "require": "./dist/bundle.cjs",
-      "types": "./lib/index.d.ts",
-      "default": "./dist/bundle.mjs"
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./dist/bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "require": "./dist/bundle.cjs"
+      }
     }
   },
   "author": "JOURNEYAPPS",
@@ -35,8 +39,9 @@
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
     "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
-    "test": "vitest"
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest",
+    "test:exports": "attw --pack ."
   },
   "dependencies": {
     "js-logger": "^1.6.1"

@@ -1,6 +1,6 @@
 import React from 'react';
-import { QueryResult } from './watch-types';
-import { InternalHookOptions } from './watch-utils';
+import { QueryResult } from './watch-types.js';
+import { InternalHookOptions } from './watch-utils.js';
 
 export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType[]>): QueryResult<RowType> => {
   const { query, powerSync, queryChanged } = options;

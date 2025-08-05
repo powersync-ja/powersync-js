@@ -2,7 +2,7 @@ import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/com
 import { PowerSyncDatabase } from '@powersync/web';
 import { sql } from 'kysely';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as SUT from '../../src/sqlite/db';
+import * as SUT from '../../src/sqlite/db.js';
 
 vi.useRealTimers();
 
