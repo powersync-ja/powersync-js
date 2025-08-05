@@ -21,7 +21,7 @@
     "lint": "eslint .",
     "release": "pnpm build:packages:prod && pnpm changeset publish",
     "test": "pnpm run -r --workspace-concurrency=1 test --run",
-    "test:packages:exports": "pnpm -r --filter {./packages/**} test:exports "
+    "test:packages:exports": "pnpm -r --filter {./packages/**} test:exports"
   },
   "keywords": [],
   "type": "module",

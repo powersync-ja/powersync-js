@@ -36,7 +36,7 @@
   "scripts": {
     "build": "tsc -b && rollup --config",
     "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "vitest",
     "test:exports": "attw --pack ."
