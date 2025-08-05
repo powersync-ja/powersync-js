@@ -38,7 +38,8 @@
     "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack ."
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.35.0"

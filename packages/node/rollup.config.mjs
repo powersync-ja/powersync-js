@@ -1,3 +1,5 @@
+import dts from 'rollup-plugin-dts';
+
 const plugin = () => {
   return {
     name: 'mark-as-commonjs',
@@ -7,7 +9,7 @@ const plugin = () => {
       }
 
       return null;
-    },
+    }
   };
 };
 
@@ -20,6 +22,14 @@ export default [
       format: 'cjs',
       sourcemap: true
     }
+  },
+  {
+    input: 'lib/index.d.ts',
+    output: {
+      file: 'dist/bundle.d.cts',
+      format: 'cjs'
+    },
+    plugins: [dts()]
   },
   {
     input: 'lib/db/DefaultWorker.js',
@@ -38,5 +48,13 @@ export default [
       format: 'cjs',
       sourcemap: true
     }
+  },
+  {
+    input: 'lib/worker.d.ts',
+    output: {
+      file: 'dist/worker.d.cts',
+      format: 'cjs'
+    },
+    plugins: [dts()]
   }
 ];

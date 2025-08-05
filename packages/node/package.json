@@ -18,19 +18,30 @@
     "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest"
+    "test": "vitest",
+    "test:exports": "attw --pack . --ignore-rules no-resolution "
   },
   "type": "module",
   "exports": {
     ".": {
-      "import": "./lib/index.js",
-      "require": "./dist/bundle.cjs",
-      "types": "./lib/index.d.ts"
+      "import": {
+        "default:": "./lib/index.js",
+        "types": "./lib/worker.d.ts"
+      },
+      "require": {
+        "default:": "./dist/bundle.cjs",
+        "types": "./dist/bundle.d.cts"
+      }
     },
     "./worker.js": {
-      "import": "./lib/worker.js",
-      "require": "./dist/worker.cjs",
-      "types": "./lib/worker.d.ts"
+      "import": {
+        "default:": "./lib/worker.js",
+        "types": "./lib/worker.d.ts"
+      },
+      "require": {
+        "default:": "./dist/worker.cjs",
+        "types": "./dist/worker.d.cts"
+      }
     },
     "./package.json": "./package.json"
   },

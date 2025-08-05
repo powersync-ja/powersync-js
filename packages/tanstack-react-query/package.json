@@ -8,6 +8,7 @@
   "description": "PowerSync integration with TanStack Query for offline-first and real-time data synchronization in React apps",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "type": "module",
   "files": [
     "lib"
   ],
@@ -16,7 +17,8 @@
     "build:prod": "tsc -b --sourceMap false",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
-    "watch": "tsc -b -w"
+    "watch": "tsc -b -w",
+    "test:exports": "attw --pack . --ignore-rules cjs-resolves-to-esm"
   },
   "repository": {
     "type": "git",

@@ -46,7 +46,7 @@ jobs:
         run: pnpm build:packages
 
       - name: Test Package Exports
-        run: pnpm test:packages:types
+        run: pnpm test:packages:exports
 
       - name: Start Verdaccio
         run: |
