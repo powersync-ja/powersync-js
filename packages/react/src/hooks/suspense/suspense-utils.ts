@@ -9,8 +9,6 @@ import React from 'react';
  * Creates a subscription for state change which creates a temporary hold on the query
  */
 export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
-  // Defaults to a no-op. If the provided WatchedQuery is not loading, we don't need a
-  // temporary hold.
   const releaseTemporaryHold = React.useRef<() => void | undefined>(undefined);
   const addedHoldTo = React.useRef<WatchedQuery<unknown> | undefined>(undefined);
 
