@@ -1,5 +1,20 @@
 # @powersync/react
 
+## 1.7.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM nature.
+- 7ad251a: Update package exports to reflect ESM exports.
+
+### Patch Changes
+
+- dce523a: Fixed regression in useSuspendingQuery where `releaseHold is not a function` could be thrown during rendering.
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
 ## 1.6.0
 
 ### Minor Changes

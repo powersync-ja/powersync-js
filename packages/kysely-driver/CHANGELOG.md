@@ -1,5 +1,18 @@
 # @powersync/kysely-driver
 
+## 1.3.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM exports. Added CommonJS exports.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
 ## 1.2.0
 
 ### Minor Changes
