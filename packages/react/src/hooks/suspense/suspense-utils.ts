@@ -1,6 +1,8 @@
 import { WatchedQuery } from '@powersync/common';
 import React from 'react';
 
+const NO_OP_RELEASE = () => {};
+
 /**
  * The store will dispose this query if it has no subscribers attached to it.
  * The suspense promise adds a subscriber to the query, but the promise could resolve
@@ -10,17 +12,20 @@ import React from 'react';
  * @returns a function to release the hold
  */
 export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
-  const releaseTemporaryHold = React.useRef<(() => void) | undefined>(undefined);
+  // Defaults to a no-op. If the provided WatchedQuery is not loading, we don't need a
+  // temporary hold.
+  const releaseTemporaryHold = React.useRef<() => void>(NO_OP_RELEASE);
   const addedHoldTo = React.useRef<WatchedQuery<unknown> | undefined>(undefined);
 
   if (addedHoldTo.current !== watchedQuery) {
     releaseTemporaryHold.current?.();
+    releaseTemporaryHold.current = NO_OP_RELEASE;
     addedHoldTo.current = watchedQuery;
 
     if (!watchedQuery || !watchedQuery.state.isLoading) {
       // No query to hold or no reason to hold, return a no-op
       return {
-        releaseHold: () => {}
+        releaseHold: releaseTemporaryHold.current
       };
     }
 
