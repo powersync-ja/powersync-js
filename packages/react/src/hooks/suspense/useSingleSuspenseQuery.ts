@@ -37,7 +37,7 @@ export const useSingleSuspenseQuery = <T = any>(
 
   // Only use a temporary watched query if we don't have data yet.
   const watchedQuery = data ? null : (store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>);
-  const { releaseHold } = useTemporaryHold(watchedQuery);
+  useTemporaryHold(watchedQuery);
   React.useEffect(() => {
     // Set the initial yielded data
     // it should be available once we commit the component
@@ -46,10 +46,6 @@ export const useSingleSuspenseQuery = <T = any>(
     } else if (watchedQuery?.state.isLoading === false) {
       setData(watchedQuery.state.data);
       setError(null);
-    }
-
-    if (!watchedQuery?.state.isLoading) {
-      releaseHold();
     }
   }, []);
 

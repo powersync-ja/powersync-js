@@ -1,33 +1,28 @@
 import { WatchedQuery } from '@powersync/common';
 import React from 'react';
 
-const NO_OP_RELEASE = () => {};
-
 /**
  * The store will dispose this query if it has no subscribers attached to it.
  * The suspense promise adds a subscriber to the query, but the promise could resolve
  * before this component is committed. The promise will release it's listener once the query is no longer loading.
  * This temporary hold is used to ensure that the query is not disposed in the interim.
  * Creates a subscription for state change which creates a temporary hold on the query
- * @returns a function to release the hold
  */
 export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
   // Defaults to a no-op. If the provided WatchedQuery is not loading, we don't need a
   // temporary hold.
-  const releaseTemporaryHold = React.useRef<() => void>(NO_OP_RELEASE);
+  const releaseTemporaryHold = React.useRef<() => void | undefined>(undefined);
   const addedHoldTo = React.useRef<WatchedQuery<unknown> | undefined>(undefined);
 
   if (addedHoldTo.current !== watchedQuery) {
     // The query changed, we no longer need the previous hold if present
     releaseTemporaryHold.current?.();
-    releaseTemporaryHold.current = NO_OP_RELEASE;
+    releaseTemporaryHold.current = undefined;
     addedHoldTo.current = watchedQuery;
 
     if (!watchedQuery || !watchedQuery.state.isLoading) {
-      // No query to hold or no reason to hold, return a no-op
-      return {
-        releaseHold: releaseTemporaryHold.current
-      };
+      // No query to hold or no reason to hold, return
+      return;
     }
 
     // Create a hold by subscribing
@@ -67,10 +62,6 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
     // Set a timeout to conditionally remove the temporary hold
     setTimeout(checkHold, timeoutPollMs);
   }
-
-  return {
-    releaseHold: releaseTemporaryHold.current
-  };
 };
 
 /**
