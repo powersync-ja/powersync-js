@@ -18,6 +18,7 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
   const addedHoldTo = React.useRef<WatchedQuery<unknown> | undefined>(undefined);
 
   if (addedHoldTo.current !== watchedQuery) {
+    // The query changed, we no longer need the previous hold if present
     releaseTemporaryHold.current?.();
     releaseTemporaryHold.current = NO_OP_RELEASE;
     addedHoldTo.current = watchedQuery;
@@ -29,6 +30,7 @@ export const useTemporaryHold = (watchedQuery?: WatchedQuery<unknown>) => {
       };
     }
 
+    // Create a hold by subscribing
     const disposeSubscription = watchedQuery.registerListener({
       onStateChange: (state) => {}
     });
