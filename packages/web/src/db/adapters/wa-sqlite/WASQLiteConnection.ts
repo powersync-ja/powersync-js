@@ -111,6 +111,7 @@ export const DEFAULT_MODULE_FACTORIES = {
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
     const vfs = await AccessHandlePoolVFS.create(options.dbFileName, module);
 
+    // TODO, maybe use a different flag for this (if we want to actually expose this)
     if (options.debugMode && options.logger) {
       // Enable VFS logs
       vfs.log = (...params: any[]) => options.logger?.debug(...params);

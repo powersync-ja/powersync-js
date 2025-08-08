@@ -11,7 +11,7 @@ const platform = Capacitor.getPlatform();
 const powerSync = new PowerSyncDatabase({
   database: new WASQLiteOpenFactory({
     dbFilename: 'ps.db',
-    vfs: WASQLiteVFS.AccessHandlePoolVFS,
+    vfs: platform == 'ios' ? WASQLiteVFS.AccessHandlePoolVFS : WASQLiteVFS.OPFSCoopSyncVFS,
     debugMode: true
   }),
   schema: AppSchema,
