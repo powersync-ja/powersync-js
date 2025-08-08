@@ -120,7 +120,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
       const database = (await comlink.open({
         path: dbFilePath,
         isWriter,
-        implementation: this.options.implementation ?? 'node'
+        implementation: this.options.implementation ?? 'better-sqlite3'
       })) as Remote<AsyncDatabase>;
       return new RemoteConnection(worker, comlink, database);
     };
