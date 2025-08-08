@@ -1,4 +1,5 @@
 import { QueryResult } from '@powersync/common';
+import { NodeDatabaseImplementation } from './options.js';
 
 export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
   rows?: {
@@ -7,8 +8,14 @@ export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
   };
 };
 
+export interface AsyncDatabaseOpenOptions {
+  path: string;
+  isWriter: boolean;
+  implementation: NodeDatabaseImplementation;
+}
+
 export interface AsyncDatabaseOpener {
-  open(path: string, isWriter: boolean): Promise<AsyncDatabase>;
+  open(options: AsyncDatabaseOpenOptions): Promise<AsyncDatabase>;
 }
 
 export interface AsyncDatabase {
