@@ -2,7 +2,7 @@ import { type ILogLevel, DBAdapter } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
-import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
+import { AsyncDatabaseConnection, DBWorkerLogEvent, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
 import {
   DEFAULT_CACHE_SIZE_KB,
@@ -21,7 +21,7 @@ export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOp
   vfs: WASQLiteVFS;
 }
 
-export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
+export interface WorkerDBOpenerOptions extends Omit<ResolvedWASQLiteOpenFactoryOptions, 'logger'> {
   logLevel: ILogLevel;
 }
 
@@ -82,15 +82,22 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
       return new WorkerWrappedAsyncDatabaseConnection({
         remote: workerDBOpener,
-        baseConnection: await workerDBOpener({
-          dbFilename: this.options.dbFilename,
-          vfs,
-          temporaryStorage,
-          cacheSizeKb,
-          flags: this.resolvedFlags,
-          encryptionKey: encryptionKey,
-          logLevel: this.logger.getLevel()
-        }),
+        baseConnection: await workerDBOpener(
+          {
+            dbFilename: this.options.dbFilename,
+            vfs,
+            temporaryStorage,
+            cacheSizeKb,
+            flags: this.resolvedFlags,
+            encryptionKey: encryptionKey,
+            logLevel: this.logger.getLevel(),
+            debugMode: this.options.debugMode
+          },
+          Comlink.proxy((event: DBWorkerLogEvent) => {
+            // TODO
+            (this.logger as any)[event.logLevel.toLocaleLowerCase()]('[DB Worker] ', ...event.messages);
+          })
+        ),
         identifier: this.options.dbFilename,
         onClose: () => {
           if (workerPort instanceof Worker) {

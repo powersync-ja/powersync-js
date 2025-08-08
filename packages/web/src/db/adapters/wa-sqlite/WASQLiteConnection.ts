@@ -1,5 +1,5 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
-import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
+import { BaseObserver, BatchedUpdateNotification, ILogger } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory';
@@ -36,7 +36,12 @@ export type SQLiteModule = Parameters<typeof SQLite.Factory>[0];
 /**
  * @internal
  */
-export type WASQLiteModuleFactoryOptions = { dbFileName: string; encryptionKey?: string };
+export type WASQLiteModuleFactoryOptions = {
+  dbFileName: string;
+  logger?: ILogger;
+  encryptionKey?: string;
+  debugMode?: boolean;
+};
 
 /**
  * @internal
@@ -104,9 +109,16 @@ export const DEFAULT_MODULE_FACTORIES = {
     }
     // @ts-expect-error The types for this static method are missing upstream
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
+    const vfs = await AccessHandlePoolVFS.create(options.dbFileName, module);
+
+    if (options.debugMode && options.logger) {
+      // Enable VFS logs
+      vfs.log = (...params: any[]) => options.logger?.debug(...params);
+    }
+
     return {
       module,
-      vfs: await AccessHandlePoolVFS.create(options.dbFileName, module)
+      vfs
     };
   },
   [WASQLiteVFS.OPFSCoopSyncVFS]: async (options: WASQLiteModuleFactoryOptions) => {
@@ -187,7 +199,9 @@ export class WASqliteConnection
   protected async openSQLiteAPI(): Promise<SQLiteAPI> {
     const { module, vfs } = await this._moduleFactory({
       dbFileName: this.options.dbFilename,
-      encryptionKey: this.options.encryptionKey
+      encryptionKey: this.options.encryptionKey,
+      debugMode: this.options.debugMode,
+      logger: this.options.logger
     });
     const sqlite3 = SQLite.Factory(module);
     sqlite3.vfs_register(vfs, true);

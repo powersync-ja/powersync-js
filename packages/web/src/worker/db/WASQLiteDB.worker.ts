@@ -3,19 +3,16 @@
  */
 
 import '@journeyapps/wa-sqlite';
-import { createBaseLogger, createLogger } from '@powersync/common';
+import { createBaseLogger, createLogger, ILogHandler, LogLevel } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
+import { AsyncDatabaseConnection, WorkerLogHandler } from '../../db/adapters/AsyncDatabaseConnection';
 import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
 import {
   ResolvedWASQLiteOpenFactoryOptions,
   WorkerDBOpenerOptions
 } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
-
-const baseLogger = createBaseLogger();
-baseLogger.useDefaults();
-const logger = createLogger('db-worker');
+import { LogHandler } from './LogHandler';
 
 /**
  * Keeps track of open DB connections and the clients which
@@ -31,11 +28,60 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 let nextClientId = 1;
 
+function logUnhandledException(error: Error) {
+  const errorMessage = `
+  Name: ${error.name}
+  Cause: ${error.cause}
+  Message: ${error.message}
+  Stack: ${error.stack}`.trim();
+
+  for (const dbFilename of DBMap.keys()) {
+    logBroadcaster.pushLog({
+      loggerName: dbFilename,
+      logLevel: LogLevel.ERROR.name,
+      messages: ['Uncaught Exception in DB worker', errorMessage]
+    });
+  }
+}
+
+// Report unhandled exceptions to all loggers
+addEventListener('unhandledrejection', (event) => {
+  logUnhandledException(event.reason);
+});
+
+addEventListener('error', (event) => {
+  logUnhandledException(event.error);
+});
+
+const baseLogger = createBaseLogger();
+
+const logBroadcaster = new LogHandler();
+
+const defaultHandler = baseLogger.createDefaultHandler();
+const logHandler: ILogHandler = (messages, context) => {
+  logBroadcaster.pushLog({
+    loggerName: context.name ?? 'unknown',
+    logLevel: context.level.name,
+    messages: messages.map((m) => String(m))
+  });
+  defaultHandler(messages, context);
+};
+
+baseLogger.useDefaults({
+  formatter: logHandler
+});
+
+const workerLogger = createLogger('db-worker');
+
 const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions): Promise<AsyncDatabaseConnection> => {
   const connection = new WASqliteConnection(options);
   return {
     init: Comlink.proxy(() => connection.init()),
-    getConfig: Comlink.proxy(() => connection.getConfig()),
+    getConfig: Comlink.proxy(() => {
+      const config = connection.getConfig();
+      // TODO logger is not transferable
+      return Object.fromEntries(Object.entries(config).filter(([key]) => key !== 'logger')) as any;
+    }),
     close: Comlink.proxy(() => connection.close()),
     execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
     executeRaw: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeRaw(sql, params)),
@@ -47,17 +93,38 @@ const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions)
   };
 };
 
-const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDatabaseConnection> => {
+const openDBShared = async (
+  options: WorkerDBOpenerOptions,
+  logHandler?: WorkerLogHandler
+): Promise<AsyncDatabaseConnection> => {
   // Prevent multiple simultaneous opens from causing race conditions
   return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;
     const { dbFilename, logLevel } = options;
 
-    logger.setLevel(logLevel);
+    // This updates the log level for the worker-level logger
+    // The DB connection logger will automatically track the main context logger
+    // since it passes logs to it.
+    workerLogger.setLevel(logLevel);
+
+    let disposeLogListener = logHandler
+      ? logBroadcaster.registerListener({
+          onLog: (event) => {
+            if (event.loggerName !== dbFilename) {
+              return;
+            }
+            logHandler(event);
+          }
+        })
+      : null;
 
     if (!DBMap.has(dbFilename)) {
       const clientIds = new Set<number>();
-      const connection = await openWorkerConnection(options);
+      const logger = createLogger(dbFilename);
+      const connection = await openWorkerConnection({
+        ...options,
+        logger
+      });
       await connection.init();
       DBMap.set(dbFilename, {
         clientIds,
@@ -76,14 +143,15 @@ const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDataba
       }),
       close: Comlink.proxy(async () => {
         const { clientIds } = dbEntry;
-        logger.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
+        disposeLogListener?.();
+        workerLogger.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
         clientIds.delete(clientId);
         if (clientIds.size == 0) {
-          logger.debug(`Closing connection to ${dbFilename}.`);
+          workerLogger.debug(`Closing connection to ${dbFilename}.`);
           DBMap.delete(dbFilename);
           return db.close?.();
         }
-        logger.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
+        workerLogger.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
         return;
       })
     };
