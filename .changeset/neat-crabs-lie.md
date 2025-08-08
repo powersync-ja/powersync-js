@@ -1,0 +1,5 @@
+---
+'@powersync/web': patch
+---
+
+Testing
