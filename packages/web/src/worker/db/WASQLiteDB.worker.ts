@@ -77,10 +77,10 @@ const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions)
   const connection = new WASqliteConnection(options);
   return {
     init: Comlink.proxy(() => connection.init()),
-    getConfig: Comlink.proxy(() => {
-      const config = connection.getConfig();
-      // TODO logger is not transferable
-      return Object.fromEntries(Object.entries(config).filter(([key]) => key !== 'logger')) as any;
+    getConfig: Comlink.proxy(async () => {
+      // Can't send the logger over
+      const { logger, ...rest } = await connection.getConfig();
+      return rest;
     }),
     close: Comlink.proxy(() => connection.close()),
     execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
