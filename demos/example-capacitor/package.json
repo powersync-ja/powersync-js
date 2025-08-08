@@ -21,14 +21,19 @@
   "dependencies": {
     "@capacitor/android": "^6.0.0",
     "@capacitor/core": "latest",
+    "@capacitor/filesystem": "^6.0.0",
     "@capacitor/ios": "^6.0.0",
+    "@capacitor/share": "^6.0.0",
     "@capacitor/splash-screen": "latest",
     "@journeyapps/wa-sqlite": "^1.2.0",
+    "@mui/icons-material": "^7.3.1",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@types/react-router-dom": "^5.3.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.0"
+    "react-router-dom": "^6.30.1",
+    "react-window": "^1.8.11"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
@@ -36,6 +41,7 @@
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",
+    "@types/react-window": "^1.8.8",
     "vite": "^5.2.11",
     "vite-plugin-require": "^1.2.14",
     "vite-plugin-top-level-await": "^1.4.1",

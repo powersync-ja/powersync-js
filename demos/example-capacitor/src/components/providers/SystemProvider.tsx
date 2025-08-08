@@ -1,30 +1,25 @@
-import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase, createBaseLogger, LogLevel } from '@powersync/web';
+import { Capacitor } from '@capacitor/core';
 import { CircularProgress } from '@mui/material';
+import { PowerSyncContext } from '@powersync/react';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
-import { Capacitor } from '@capacitor/core';
-
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
 
 const platform = Capacitor.getPlatform();
-const isIOs = platform === 'ios';
-// Web worker implementation does not work on iOS
-const useWebWorker = !isIOs;
 
 const powerSync = new PowerSyncDatabase({
-  database: { dbFilename: 'powersync2.db' },
+  database: new WASQLiteOpenFactory({
+    dbFilename: 'ps.db',
+    vfs: WASQLiteVFS.AccessHandlePoolVFS,
+    debugMode: true
+  }),
   schema: AppSchema,
   flags: {
-    enableMultiTabs: false,
-    useWebWorker
+    enableMultiTabs: false
   }
 });
 const connector = new BackendConnector();
-
 powerSync.connect(connector);
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {

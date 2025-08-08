@@ -271,21 +271,33 @@ importers:
       '@capacitor/core':
         specifier: latest
         version: 7.4.2
+      '@capacitor/filesystem':
+        specifier: ^6.0.0
+        version: 6.0.3(@capacitor/core@7.4.2)
       '@capacitor/ios':
         specifier: ^6.0.0
         version: 6.2.1(@capacitor/core@7.4.2)
+      '@capacitor/share':
+        specifier: ^6.0.0
+        version: 6.0.3(@capacitor/core@7.4.2)
       '@capacitor/splash-screen':
         specifier: latest
-        version: 7.0.1(@capacitor/core@7.4.2)
+        version: 7.0.2(@capacitor/core@7.4.2)
       '@journeyapps/wa-sqlite':
         specifier: ^1.2.0
         version: 1.2.6
+      '@mui/icons-material':
+        specifier: ^7.3.1
+        version: 7.3.1(@mui/material@5.17.1(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.23)(react@18.3.1)
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
       '@powersync/web':
         specifier: workspace:*
         version: link:../../packages/web
+      '@types/react-router-dom':
+        specifier: ^5.3.3
+        version: 5.3.3
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -293,8 +305,11 @@ importers:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
       react-router-dom:
-        specifier: ^6.23.0
+        specifier: ^6.30.1
         version: 6.30.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-window:
+        specifier: ^1.8.11
+        version: 1.8.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
       '@capacitor/cli':
         specifier: ^6.0.0
@@ -311,6 +326,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.6(@types/react@18.3.23)
+      '@types/react-window':
+        specifier: ^1.8.8
+        version: 1.8.8
       vite:
         specifier: ^5.2.11
         version: 5.4.19(@types/node@20.17.57)(less@4.2.2)(lightningcss@1.30.1)(sass@1.89.1)(terser@5.40.0)
@@ -847,7 +865,7 @@ importers:
         version: 1.23.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))
       '@shopify/flash-list':
         specifier: 1.7.3
-        version: 1.7.3(@babel/runtime@7.27.6)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+        version: 1.7.3(@babel/runtime@7.28.2)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
       '@supabase/supabase-js':
         specifier: 2.39.0
         version: 2.39.0
@@ -3486,6 +3504,10 @@ packages:
     resolution: {integrity: sha512-vbavdySgbTTrmFE+EsiqUTzlOr5bzlnJtUv9PynGCAKvfQqjIXbvFdumPM/GxMDfyuGMJaJAU6TO4zc1Jf1i8Q==}
     engines: {node: '>=6.9.0'}
 
+  '@babel/runtime@7.28.2':
+    resolution: {integrity: sha512-KHp2IflsnGywDjBWDkR9iEqiWSpc8GIi0lgTT3mOElT0PP1tG26P4tmFI2YvAdzgq9RGyoHZQEIEdZy6Ec5xCA==}
+    engines: {node: '>=6.9.0'}
+
   '@babel/template@7.27.2':
     resolution: {integrity: sha512-LPDZ85aEJyYSd18/DkjNh4/y1ntkE5KwUHWTiqgRxruuZL2F1yuHligVHLvcHY2vMHXttKFpJn6LwfI7cw7ODw==}
     engines: {node: '>=6.9.0'}
@@ -3522,13 +3544,23 @@ packages:
   '@capacitor/core@7.4.2':
     resolution: {integrity: sha512-akCf9A1FUR8AWTtmgGjHEq6LmGsjA2U7igaJ9PxiCBfyxKqlDbuGHrlNdpvHEjV5tUPH3KYtkze6gtFcNKPU9A==}
 
+  '@capacitor/filesystem@6.0.3':
+    resolution: {integrity: sha512-PdIP/yOGAbG1lq1wbFbSPhXQ9/5lpTpeiok2NneawJOk6UXvy9W7QZXRo7wXAP7J6FdzU7bKfOORRXpOJpgXyw==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
+
   '@capacitor/ios@6.2.1':
     resolution: {integrity: sha512-tbMlQdQjxe1wyaBvYVU1yTojKJjgluZQsJkALuJxv/6F8QTw5b6vd7X785O/O7cMpIAZfUWo/vtAHzFkRV+kXw==}
     peerDependencies:
       '@capacitor/core': ^6.2.0
 
-  '@capacitor/splash-screen@7.0.1':
-    resolution: {integrity: sha512-Nbqw9bEIe7uHj/HOT81mf4jT6uK1YykozpQw/uIKQDueMg6RJYaJK2/TMajIOohLk8fJF4TYIc1i9nGjNLnfGg==}
+  '@capacitor/share@6.0.3':
+    resolution: {integrity: sha512-BkNM73Ix+yxQ7fkni8CrrGcp1kSl7u+YNoPLwWKQ1MuQ5Uav0d+CT8M67ie+3dc4jASmegnzlC6tkTmFcPTLeA==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
+
+  '@capacitor/splash-screen@7.0.2':
+    resolution: {integrity: sha512-bchh4F73CnVONm6XFEgXKEhbSEDQh2CQ0rNSoasIeJ5pf9JqHkkPS3t0Fnm33qHkLVFcaPoKPW69Y9zMpT5Vxg==}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
 
@@ -5929,6 +5961,17 @@ packages:
     engines: {node: '>=12.0.0'}
     peerDependencies:
       '@mui/material': ^5.0.0
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@mui/icons-material@7.3.1':
+    resolution: {integrity: sha512-upzCtG6awpL6noEZlJ5Z01khZ9VnLNLaj7tb6iPbN6G97eYfUTs8e9OyPKy3rEms3VQWmVBfri7jzeaRxdFIzA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@mui/material': ^7.3.1
       '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
       react: ^17.0.0 || ^18.0.0 || ^19.0.0
     peerDependenciesMeta:
@@ -9012,6 +9055,9 @@ packages:
     resolution: {integrity: sha512-8TV6R3h2j7a91c+1DXdJi3Syo69zzIZbz7Lg5tORM5LEJG7X/E6a1V3drRyBRZq7/utz7A+c4OgYLiLcYGHG6w==}
     peerDependencies:
       '@types/react': '*'
+
+  '@types/react-window@1.8.8':
+    resolution: {integrity: sha512-8Ls660bHR1AUA2kuRvVG9D/4XpRC6wjAaPT9dil7Ckc76eP9TKWZwwmgfq8Q1LANX3QNDnoU4Zp48A3w+zK69Q==}
 
   '@types/react@18.3.1':
     resolution: {integrity: sha512-V0kuGBX3+prX+DQ/7r2qsv1NsdfnCLnTgnRJ1pYnxykBhGMz+qj+box5lq7XsO5mtZsBqpjwwTu/7wszPfMBcw==}
@@ -17800,6 +17846,13 @@ packages:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
 
+  react-window@1.8.11:
+    resolution: {integrity: sha512-+SRbUVT2scadgFSWx+R1P754xHPEqvcfSfVX10QYg6POOz+WNgkN48pS+BtZNIMGiL1HYrSEiCkwsMS15QogEQ==}
+    engines: {node: '>8.0.0'}
+    peerDependencies:
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
@@ -22492,6 +22545,8 @@ snapshots:
 
   '@babel/runtime@7.27.6': {}
 
+  '@babel/runtime@7.28.2': {}
+
   '@babel/template@7.27.2':
     dependencies:
       '@babel/code-frame': 7.27.1
@@ -22555,11 +22610,19 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@capacitor/filesystem@6.0.3(@capacitor/core@7.4.2)':
+    dependencies:
+      '@capacitor/core': 7.4.2
+
   '@capacitor/ios@6.2.1(@capacitor/core@7.4.2)':
     dependencies:
       '@capacitor/core': 7.4.2
 
-  '@capacitor/splash-screen@7.0.1(@capacitor/core@7.4.2)':
+  '@capacitor/share@6.0.3(@capacitor/core@7.4.2)':
+    dependencies:
+      '@capacitor/core': 7.4.2
+
+  '@capacitor/splash-screen@7.0.2(@capacitor/core@7.4.2)':
     dependencies:
       '@capacitor/core': 7.4.2
 
@@ -26489,6 +26552,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.23
 
+  '@mui/icons-material@7.3.1(@mui/material@5.17.1(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.23)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.28.2
+      '@mui/material': 5.17.1(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+    optionalDependencies:
+      '@types/react': 18.3.23
+
   '@mui/material@5.17.1(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.6
@@ -29273,9 +29344,9 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/flash-list@1.7.3(@babel/runtime@7.27.6)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
+  '@shopify/flash-list@1.7.3(@babel/runtime@7.28.2)(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@babel/runtime': 7.27.6
+      '@babel/runtime': 7.28.2
       react: 18.3.1
       react-native: 0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1)
       recyclerlistview: 4.2.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))(@react-native-community/cli@15.1.3(typescript@5.3.3))(@types/react@18.3.23)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
@@ -31067,6 +31138,10 @@ snapshots:
       '@types/react': 18.3.23
 
   '@types/react-transition-group@4.4.12(@types/react@18.3.23)':
+    dependencies:
+      '@types/react': 18.3.23
+
+  '@types/react-window@1.8.8':
     dependencies:
       '@types/react': 18.3.23
 
@@ -43458,6 +43533,13 @@ snapshots:
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
+  react-window@1.8.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@babel/runtime': 7.27.6
+      memoize-one: 5.2.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
