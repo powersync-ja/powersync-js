@@ -3,11 +3,15 @@ import { SQLOpenOptions } from '@powersync/common';
 
 export type WorkerOpener = (...args: ConstructorParameters<typeof Worker>) => InstanceType<typeof Worker>;
 
+export type NodeDatabaseImplementation = 'better-sqlite3' | 'node';
+
 /**
  * The {@link SQLOpenOptions} available across all PowerSync SDKs for JavaScript extended with
  * Node.JS-specific options.
  */
 export interface NodeSQLOpenOptions extends SQLOpenOptions {
+  implementation?: NodeDatabaseImplementation;
+
   /**
    * The Node.JS SDK will use one worker to run writing queries and additional workers to run reads.
    * This option controls how many workers to use for reads.

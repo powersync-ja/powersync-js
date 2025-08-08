@@ -117,7 +117,11 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         console.error('Unexpected PowerSync database worker error', e);
       });
 
-      const database = (await comlink.open(dbFilePath, isWriter)) as Remote<AsyncDatabase>;
+      const database = (await comlink.open({
+        path: dbFilePath,
+        isWriter,
+        implementation: this.options.implementation ?? 'node'
+      })) as Remote<AsyncDatabase>;
       return new RemoteConnection(worker, comlink, database);
     };
 
