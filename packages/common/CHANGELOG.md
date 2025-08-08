@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.36.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- 7609155: Marked AbstractPowerSyncDatabase.dispose method as deprecated. The AbstractPowerSyncDatabase.close method should be used instead.
+- 7f2c53d: Fix warning when reconnecting during CRUD uploads and using the Rust client.
+
 ## 1.35.0
 
 ### Minor Changes

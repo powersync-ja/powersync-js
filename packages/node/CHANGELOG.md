@@ -1,5 +1,18 @@
 # @powersync/node
 
+## 0.9.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
 ## 0.8.1
 
 ### Patch Changes
