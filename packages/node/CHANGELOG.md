@@ -1,5 +1,29 @@
 # @powersync/node
 
+## 0.9.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
+## 0.8.1
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+  - @powersync/common@1.35.0
+
 ## 0.8.0
 
 ### Minor Changes

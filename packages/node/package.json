@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -16,21 +16,32 @@
     "install": "node download_core.js",
     "build": "tsc -b && rollup --config",
     "build:prod": "tsc -b --sourceMap false && rollup --config",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo dist",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest"
+    "test": "vitest",
+    "test:exports": "attw --pack . --ignore-rules no-resolution"
   },
   "type": "module",
   "exports": {
     ".": {
-      "import": "./lib/index.js",
-      "require": "./dist/bundle.cjs",
-      "types": "./lib/index.d.ts"
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./dist/bundle.d.cts",
+        "default": "./dist/bundle.cjs"
+      }
     },
     "./worker.js": {
-      "import": "./lib/worker.js",
-      "require": "./dist/worker.cjs",
-      "types": "./lib/worker.d.ts"
+      "import": {
+        "types": "./lib/worker.d.ts",
+        "default": "./lib/worker.js"
+      },
+      "require": {
+        "types": "./dist/worker.d.cts",
+        "default": "./dist/worker.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -45,7 +56,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.34.0"
+    "@powersync/common": "workspace:^1.36.0"
   },
   "dependencies": {
     "@powersync/better-sqlite3": "^0.2.0",

@@ -1,26 +1,24 @@
-import * as commonSdk from '@powersync/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AbstractAttachmentQueue } from '../../src/AbstractAttachmentQueue';
-import { AttachmentRecord, AttachmentState } from '../../src/Schema';
-import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { StorageAdapter } from '../../src/StorageAdapter';
+import { AbstractAttachmentQueue } from '../../src/AbstractAttachmentQueue.js';
+import { AttachmentRecord, AttachmentState } from '../../src/Schema.js';
+import { StorageAdapter } from '../../src/StorageAdapter.js';
 
 const record = {
   id: 'test-1',
   filename: 'test.jpg',
   state: AttachmentState.QUEUED_DOWNLOAD
- }
+};
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
   registerListener: vi.fn(() => {}),
   resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
-  getAll: vi.fn(() => Promise.resolve([{id: 'test-1'}, {id: 'test-2'}])),
+  getAll: vi.fn(() => Promise.resolve([{ id: 'test-1' }, { id: 'test-2' }])),
   execute: vi.fn(() => Promise.resolve()),
   getOptional: vi.fn((_query, params) => Promise.resolve(record)),
   watch: vi.fn((query, params, callbacks) => {
-    callbacks?.onResult?.({ rows: { _array: [{id: 'test-1'}, {id: 'test-2'}] } });
+    callbacks?.onResult?.({ rows: { _array: [{ id: 'test-1' }, { id: 'test-2' }] } });
   }),
   writeTransaction: vi.fn(async (callback) => {
     await callback({
@@ -57,9 +55,9 @@ describe('attachments', () => {
 
   it('should not download attachments when downloadRecord is called with downloadAttachments false', async () => {
     const queue = new TestAttachmentQueue({
-        powersync: mockPowerSync as any,
-        storage: mockStorage,
-        downloadAttachments: false
+      powersync: mockPowerSync as any,
+      storage: mockStorage,
+      downloadAttachments: false
     });
 
     await queue.downloadRecord(record);
@@ -69,9 +67,9 @@ describe('attachments', () => {
 
   it('should download attachments when downloadRecord is called with downloadAttachments true', async () => {
     const queue = new TestAttachmentQueue({
-        powersync: mockPowerSync as any,
-        storage: mockStorage,
-        downloadAttachments: true
+      powersync: mockPowerSync as any,
+      storage: mockStorage,
+      downloadAttachments: true
     });
 
     await queue.downloadRecord(record);
@@ -82,9 +80,9 @@ describe('attachments', () => {
   // Testing the inverse of this test, i.e. when downloadAttachments is false, is not required as you can't wait for something that does not happen
   it('should not download attachments with watchDownloads is called with downloadAttachments false', async () => {
     const queue = new TestAttachmentQueue({
-        powersync: mockPowerSync as any,
-        storage: mockStorage,
-        downloadAttachments: true
+      powersync: mockPowerSync as any,
+      storage: mockStorage,
+      downloadAttachments: true
     });
 
     queue.watchDownloads();

@@ -1,5 +1,5 @@
 import { MaybeRef, Ref, ref, toValue, watch } from 'vue';
-import { usePowerSync } from './powerSync';
+import { usePowerSync } from './powerSync.js';
 
 export type QueryOptions = {
   /**

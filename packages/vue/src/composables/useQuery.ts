@@ -1,7 +1,7 @@
 import { type CompilableQuery } from '@powersync/common';
 import { type MaybeRef, type Ref } from 'vue';
-import { AdditionalOptions, useSingleQuery } from './useSingleQuery';
-import { useWatchedQuery } from './useWatchedQuery';
+import { AdditionalOptions, useSingleQuery } from './useSingleQuery.js';
+import { useWatchedQuery } from './useWatchedQuery.js';
 
 export type WatchedQueryResult<T> = {
   readonly data: Ref<ReadonlyArray<Readonly<T>>>;

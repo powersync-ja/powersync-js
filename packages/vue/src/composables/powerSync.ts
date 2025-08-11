@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { App, MaybeRef, Ref, inject, provide, ref, hasInjectionContext } from 'vue';
-import { setupTopLevelWarningMessage } from './messages';
+import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, ref } from 'vue';
+import { setupTopLevelWarningMessage } from './messages.js';
 
 // Create a unique symbol for the PowerSync context
 const PowerSyncKey = Symbol();

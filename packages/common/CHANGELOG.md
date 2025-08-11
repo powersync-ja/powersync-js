@@ -1,5 +1,30 @@
 # @powersync/common
 
+## 1.36.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- 7609155: Marked AbstractPowerSyncDatabase.dispose method as deprecated. The AbstractPowerSyncDatabase.close method should be used instead.
+- 7f2c53d: Fix warning when reconnecting during CRUD uploads and using the Rust client.
+
+## 1.35.0
+
+### Minor Changes
+
+- c7d2b53: - Added additional listeners for `closing` and `closed` events in `AbstractPowerSyncDatabase`.
+  - Added `query` and `customQuery` APIs for enhanced watched queries.
+  - Added `triggerImmediate` option to the `onChange` API. This allows emitting an initial event which can be useful for downstream use cases.
+- a1abb15: Added ControlledExecutor utility to exports.
+
+### Patch Changes
+
+- 319012e: Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
+- 6b38551: Fix a warning about raw tables being used when they're not.
+
 ## 1.34.0
 
 ### Minor Changes

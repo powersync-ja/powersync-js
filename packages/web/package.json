@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.24.0",
+  "version": "1.25.1",
   "description": "PowerSync web SDK. Sync Postgres, MongoDB or MySQL with SQLite in your web app",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -46,7 +46,7 @@
     "build:webpack-workers": "webpack --config webpack.workers.config.js",
     "build": "pnpm run build:tsc && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
-    "clean": "rm -rf lib dist tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest"
   },
@@ -61,7 +61,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "^1.2.6",
-    "@powersync/common": "workspace:^1.34.0"
+    "@powersync/common": "workspace:^1.36.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",

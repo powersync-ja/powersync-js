@@ -1,8 +1,8 @@
 import { CompilableQuery } from '@powersync/common';
-import { AdditionalOptions, DifferentialHookOptions } from '../watched/watch-types';
-import { ReadonlySuspenseQueryResult, SuspenseQueryResult } from './SuspenseQueryResult';
-import { useSingleSuspenseQuery } from './useSingleSuspenseQuery';
-import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery';
+import { AdditionalOptions, DifferentialHookOptions } from '../watched/watch-types.js';
+import { ReadonlySuspenseQueryResult, SuspenseQueryResult } from './SuspenseQueryResult.js';
+import { useSingleSuspenseQuery } from './useSingleSuspenseQuery.js';
+import { useWatchedSuspenseQuery } from './useWatchedSuspenseQuery.js';
 
 /**
  * A hook to access the results of a watched query that suspends until the initial result has loaded.

@@ -1,6 +1,6 @@
 import { SQLWatchOptions } from '@powersync/common';
 import { MaybeRef, Ref, ref, toValue, watchEffect } from 'vue';
-import { usePowerSync } from './powerSync';
+import { usePowerSync } from './powerSync.js';
 
 export type WatchedQueryResult<T> = {
   data: Ref<T[]>;

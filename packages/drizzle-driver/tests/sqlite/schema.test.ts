@@ -1,8 +1,8 @@
 import { column, Schema, Table } from '@powersync/common';
+import { CasingCache } from 'drizzle-orm/casing';
 import { customType, index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { describe, expect, it } from 'vitest';
-import { DrizzleAppSchema, DrizzleTableWithPowerSyncOptions, toPowerSyncTable } from '../../src/utils/schema';
-import { CasingCache } from 'drizzle-orm/casing';
+import { DrizzleAppSchema, DrizzleTableWithPowerSyncOptions, toPowerSyncTable } from '../../src/utils/schema.js';
 
 describe('toPowerSyncTable', () => {
   it('basic conversion', () => {
