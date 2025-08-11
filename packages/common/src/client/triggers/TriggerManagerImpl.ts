@@ -210,7 +210,11 @@ export class TriggerManagerImpl implements TriggerManager {
       await this.db.writeLock(setup);
       return cleanup;
     } catch (error) {
-      await cleanup();
+      try {
+        await cleanup();
+      } catch (cleanupError) {
+        throw new AggregateError([error, cleanupError], 'Error during operation and cleanup');
+      }
       throw error;
     }
   }
@@ -313,7 +317,11 @@ export class TriggerManagerImpl implements TriggerManager {
         await removeTrigger();
       };
     } catch (error) {
-      abortOnChange();
+      try {
+        abortOnChange();
+      } catch (cleanupError) {
+        throw new AggregateError([error, cleanupError], 'Error during operation and cleanup');
+      }
       throw error;
     }
   }
