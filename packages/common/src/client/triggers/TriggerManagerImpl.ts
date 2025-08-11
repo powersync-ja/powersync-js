@@ -1,6 +1,7 @@
 import { LockContext } from '../../db/DBAdapter.js';
 import { Schema } from '../../db/schema/Schema.js';
 import { type AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
   CreateDiffTriggerOptions,
   DiffTriggerOperation,
@@ -103,16 +104,26 @@ export class TriggerManagerImpl implements TriggerManager {
       }
     };
 
+    const disposeWarningListener = this.db.registerListener({
+      schemaChanged: () => {
+        this.db.logger.warn(
+          `The PowerSync schema has changed while previously configured triggers are still operational. This might cause unexpected results.`
+        );
+      }
+    });
+
     /**
      * Declare the cleanup function early since if any of the init steps fail,
      * we need to ensure we can cleanup the created resources.
      * We unfortunately cannot rely on transaction rollback.
      */
-    const cleanup = async () =>
-      this.db.writeLock(async (tx) => {
+    const cleanup = async () => {
+      disposeWarningListener();
+      return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
       });
+    };
 
     const setup = async (tx: LockContext) => {
       // Allow user code to execute in this lock context before the trigger is created.
@@ -187,7 +198,7 @@ export class TriggerManagerImpl implements TriggerManager {
               OLD.id,
               'DELETE',
               strftime ('%Y-%m-%dT%H:%M:%fZ', 'now'),
-              OLD.data
+              ${jsonFragment('OLD')}
             );
 
           END;
@@ -205,7 +216,7 @@ export class TriggerManagerImpl implements TriggerManager {
   }
 
   async trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback> {
-    const { source, when, columns, operations, hooks } = options;
+    const { source, when, columns, operations, hooks, throttleMs = DEFAULT_WATCH_THROTTLE_MS } = options;
 
     await this.db.waitForReady();
 
@@ -284,7 +295,7 @@ export class TriggerManagerImpl implements TriggerManager {
           });
         }
       },
-      { tables: [destination], signal: abortController.signal }
+      { tables: [destination], signal: abortController.signal, throttleMs }
     );
 
     try {

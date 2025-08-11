@@ -1,5 +1,11 @@
 packages:
-  - "demos/*"
-  - "packages/*"
-  - "tools/*"
-  - "docs/"
+  - demos/*
+  - packages/*
+  - tools/*
+  - docs/
+
+onlyBuiltDependencies:
+  - '@journeyapps/wa-sqlite'
+  - esbuild
+  - react-native-elements
+  - vue-demi

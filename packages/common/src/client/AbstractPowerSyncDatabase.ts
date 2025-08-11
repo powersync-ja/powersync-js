@@ -194,9 +194,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected runExclusiveMutex: Mutex;
 
   /**
+   * @experimental
    * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
    */
   readonly triggers: TriggerManager;
+
   logger: ILogger;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);

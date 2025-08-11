@@ -2,6 +2,7 @@ import { LockContext } from '../../db/DBAdapter.js';
 
 /**
  * SQLite operations to track changes for with {@link TriggerManager}
+ * @experimental
  */
 export enum DiffTriggerOperation {
   INSERT = 'INSERT',
@@ -10,6 +11,7 @@ export enum DiffTriggerOperation {
 }
 
 /**
+ * @experimental
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the base record structure for all diff records.
  */
@@ -30,6 +32,7 @@ export interface BaseTriggerDiffRecord {
 }
 
 /**
+ * @experimental
  * Represents a diff record for a SQLite UPDATE operation.
  * This record contains the new value and optionally the previous value.
  * Values are stored as JSON strings.
@@ -47,6 +50,7 @@ export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
 }
 
 /**
+ * @experimental
  * Represents a diff record for a SQLite INSERT operation.
  * This record contains the new value represented as a JSON string.
  */
@@ -59,6 +63,7 @@ export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
 }
 
 /**
+ * @experimental
  * Represents a diff record for a SQLite DELETE operation.
  * This record contains the new value represented as a JSON string.
  */
@@ -71,6 +76,7 @@ export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
 }
 
 /**
+ * @experimental
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the record structure for all diff records.
  *
@@ -85,6 +91,7 @@ export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
 export type TriggerDiffRecord = TriggerDiffUpdateRecord | TriggerDiffInsertRecord | TriggerDiffDeleteRecord;
 
 /**
+ * @experimental
  * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withExtractedDiff} will return records
  * with the tracked columns extracted from the JSON value.
  * This type represents the structure of such records.
@@ -101,6 +108,7 @@ export type ExtractedTriggerDiffRecord<T> = T & {
 };
 
 /**
+ * @experimental
  * Hooks used in the creation of a table diff trigger.
  */
 export interface TriggerCreationHooks {
@@ -161,6 +169,7 @@ interface BaseCreateDiffTriggerOptions {
 }
 
 /**
+ * @experimental
  * Options for {@link TriggerManager#createDiffTrigger}.
  */
 export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
@@ -173,11 +182,13 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
 }
 
 /**
+ * @experimental
  * Callback to drop a trigger after it has been created.
  */
 export type TriggerRemoveCallback = () => Promise<void>;
 
 /**
+ * @experimental
  * Context for the `onChange` handler provided to {@link TriggerManager#trackTableDiff}.
  */
 export interface TriggerDiffHandlerContext extends LockContext {
@@ -225,6 +236,9 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * This is similar to {@link withDiff} but extracts the row columns from the tracked JSON value. The diff operation
    * data is aliased as `__` columns to avoid column conflicts.
    *
+   * For {@link DiffTriggerOperation#DELETE} operations the previous_value columns are extracted for convenience.
+   *
+   *
    * ```sql
    * CREATE TEMP TABLE DIFF (
    *       id TEXT,
@@ -251,6 +265,7 @@ export interface TriggerDiffHandlerContext extends LockContext {
 }
 
 /**
+ * @experimental
  * Options for tracking changes to a table with {@link TriggerManager#trackTableDiff}.
  */
 export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
@@ -260,10 +275,20 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
    * Diff items are automatically cleared after the handler is invoked.
    */
   onChange: (context: TriggerDiffHandlerContext) => Promise<void>;
+
+  /**
+   * The minimum interval, in milliseconds, between {@link onChange} invocations.
+   *  @default {@link DEFAULT_WATCH_THROTTLE_MS}
+   */
+  throttleMs?: number;
 }
 
+/**
+ * @experimental
+ */
 export interface TriggerManager {
   /**
+   * @experimental
    * Creates a temporary trigger which tracks changes to a source table
    * and writes changes to a destination table.
    * The temporary destination table is created internally and will be dropped when the trigger is removed.
@@ -301,6 +326,7 @@ export interface TriggerManager {
   createDiffTrigger(options: CreateDiffTriggerOptions): Promise<TriggerRemoveCallback>;
 
   /**
+   * @experimental
    * Tracks changes for a table. Triggering a provided handler on changes.
    * Uses {@link createDiffTrigger} internally to create a temporary destination table.
    *

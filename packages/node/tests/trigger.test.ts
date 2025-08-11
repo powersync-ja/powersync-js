@@ -1,7 +1,10 @@
 import {
+  column,
   DiffTriggerOperation,
   ExtractedTriggerDiffRecord,
   sanitizeUUID,
+  Schema,
+  Table,
   TriggerDiffRecord,
   whenClause
 } from '@powersync/common';
@@ -425,7 +428,7 @@ describe('Triggers', () => {
     );
   });
 
-  databaseTest('Should allow tracking 0 columns', { timeout: 1000 }, async ({ database }) => {
+  databaseTest('Should allow tracking 0 columns', async ({ database }) => {
     /**
      * Tracks the ids of todos reported via the trigger
      */
@@ -498,5 +501,97 @@ describe('Triggers', () => {
       },
       { timeout: 1000, interval: 100 }
     );
+  });
+
+  databaseTest('Should only track listed columns', async ({ database }) => {
+    const newSchema = new Schema({
+      todos: new Table({
+        content: column.text,
+        columnA: column.text,
+        columnB: column.text
+      })
+    });
+    await database.updateSchema(newSchema);
+
+    type NewTodoRecord = (typeof newSchema)['types']['todos'];
+
+    const changes: ExtractedTriggerDiffRecord<NewTodoRecord>[] = [];
+
+    const createTodo = async (content: string, columnA = 'A', columnB = 'B'): Promise<NewTodoRecord> => {
+      // Create todos for both lists
+      return database.writeLock(async (tx) => {
+        const result = await tx.execute(
+          /* sql */ `
+            INSERT INTO
+              todos (id, content, columnA, columnB)
+            VALUES
+              (uuid (), ?, ?, ?) RETURNING id
+          `,
+          [content, columnA, columnB]
+        );
+        return result.rows?._array?.[0];
+      });
+    };
+
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
+      columns: ['columnA'],
+      onChange: async (context) => {
+        // Fetches the content of the records at the time of the operation
+        const extractedDiff = await context.withExtractedDiff<ExtractedTriggerDiffRecord<NewTodoRecord>>(/* sql */ `
+          SELECT
+            *
+          FROM
+            DIFF
+        `);
+        changes.push(...extractedDiff);
+      }
+    });
+
+    await createTodo('todo 1');
+    await createTodo('todo 2');
+    await createTodo('todo 3');
+
+    // Do an update operation to ensure only the tracked columns of updated values are stored
+    await database.execute(/* sql */ `
+      UPDATE todos
+      SET
+        content = 'todo 4'
+      WHERE
+        content = 'todo 3'
+    `);
+
+    // Do a delete operation to ensure only the tracked columns of updated values are stored
+    await database.execute(/* sql */ `
+      DELETE FROM todos
+      WHERE
+        content = 'todo 4'
+    `);
+
+    // Wait for all the changes to be recorded
+    await vi.waitFor(
+      async () => {
+        expect(changes.length).toEqual(5);
+      },
+      { timeout: 1000, interval: 100 }
+    );
+
+    // Inserts should only have the tracked columns
+    expect(changes[0].__operation).eq(DiffTriggerOperation.INSERT);
+    expect(changes[1].__operation).eq(DiffTriggerOperation.INSERT);
+    expect(changes[2].__operation).eq(DiffTriggerOperation.INSERT);
+    // Should not track this column
+    expect(changes[0].columnB).toBeUndefined();
+
+    expect(changes[3].__operation).eq(DiffTriggerOperation.UPDATE);
+    expect(changes[3].columnB).toBeUndefined();
+    expect(changes[3].__previous_value).toBeDefined();
+    expect(Object.keys(JSON.parse(changes[3].__previous_value))).to.deep.equal(['columnA']);
+
+    // For deletes we extract the old value for convenience (there is no new value)
+    expect(changes[4].__operation).eq(DiffTriggerOperation.DELETE);
+    expect(changes[4].columnB).toBeUndefined();
+    expect(changes[4].__previous_value).toBeNull();
   });
 });
