@@ -35,6 +35,8 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { TriggerManager } from './triggers/TriggerManager.js';
+import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -191,6 +193,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   protected runExclusiveMutex: Mutex;
 
+  /**
+   * @experimental
+   * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
+   */
+  readonly triggers: TriggerManager;
+
   logger: ILogger;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
@@ -226,6 +234,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.ready = false;
     this.sdkVersion = '';
     this.runExclusiveMutex = new Mutex();
+
     // Start async init
     this.connectionManager = new ConnectionManager({
       createSyncImplementation: async (connector, options) => {
@@ -252,7 +261,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       },
       logger: this.logger
     });
+
     this._isReadyPromise = this.initialize();
+
+    this.triggers = new TriggerManagerImpl({
+      db: this,
+      schema: this.schema
+    });
   }
 
   /**
