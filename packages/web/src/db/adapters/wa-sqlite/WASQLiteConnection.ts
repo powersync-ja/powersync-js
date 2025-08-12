@@ -102,6 +102,7 @@ export const DEFAULT_MODULE_FACTORIES = {
   },
   [WASQLiteVFS.AccessHandlePoolVFS]: async (options: WASQLiteModuleFactoryOptions) => {
     let module;
+    options.logger?.debug(`Opening VFS with options`, JSON.stringify(options));
     if (options.encryptionKey) {
       module = await MultiCipherSyncWASQLiteModuleFactory();
     } else {
@@ -109,17 +110,32 @@ export const DEFAULT_MODULE_FACTORIES = {
     }
     // @ts-expect-error The types for this static method are missing upstream
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
-    const vfs = await AccessHandlePoolVFS.create(options.dbFileName, module);
+    const vfs = new AccessHandlePoolVFS(options.dbFileName, module);
 
-    // TODO, maybe use a different flag for this (if we want to actually expose this)
-    if (options.debugMode && options.logger) {
-      // Enable VFS logs
-      vfs.log = (...params: any[]) => options.logger?.debug(...params);
-    }
+    // Allow extra logs
+    const proxiedVFS = new Proxy(vfs, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+
+        // Only wrap methods, not properties
+        if (typeof value === 'function') {
+          return function (...args: any[]) {
+            options.logger?.debug(`VFS: Called ${String(prop)} with:`, args);
+            return value.apply(vfs, args);
+          };
+        }
+
+        return value;
+      }
+    });
+
+    await vfs.isReady();
+
+    // const vfs = await AccessHandlePoolVFS.create(options.dbFileName, module);
 
     return {
       module,
-      vfs
+      vfs: proxiedVFS
     };
   },
   [WASQLiteVFS.OPFSCoopSyncVFS]: async (options: WASQLiteModuleFactoryOptions) => {
@@ -246,6 +262,7 @@ export class WASqliteConnection
   }
 
   async init() {
+    this.options.logger?.debug('Opening WASQLite connection for', this.options.dbFilename);
     this._sqliteAPI = await this.openSQLiteAPI();
     await this.openDB();
     this.registerBroadcastListeners();
@@ -356,6 +373,7 @@ export class WASqliteConnection
   }
 
   async close() {
+    this.options.logger?.debug('Closing WASQLite connection', this.options.dbFilename);
     this.broadcastChannel?.close();
     await this.sqliteAPI.close(this.dbP);
   }
@@ -419,6 +437,11 @@ export class WASqliteConnection
     sql: string | TemplateStringsArray,
     bindings?: any[]
   ): Promise<{ columns: string[]; rows: SQLiteCompatibleType[][] }[]> {
+    // TODO, this might be redundant
+    if (this.options.debugMode) {
+      this.options.logger?.debug(`Executing SQL: ${sql}`);
+    }
+
     const results = [];
     for await (const stmt of this.sqliteAPI.statements(this.dbP, sql as string)) {
       let columns;

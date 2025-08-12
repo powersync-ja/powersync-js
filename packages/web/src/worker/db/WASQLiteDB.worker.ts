@@ -26,6 +26,16 @@ type SharedDBWorkerConnection = {
 const DBMap = new Map<string, SharedDBWorkerConnection>();
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
+function logToAll(logLevel: string, ...messages: string[]) {
+  for (const dbFilename of DBMap.keys()) {
+    logBroadcaster.pushLog({
+      loggerName: dbFilename,
+      logLevel,
+      messages
+    });
+  }
+}
+
 let nextClientId = 1;
 
 function logUnhandledException(error: Error) {
@@ -35,13 +45,7 @@ function logUnhandledException(error: Error) {
   Message: ${error.message}
   Stack: ${error.stack}`.trim();
 
-  for (const dbFilename of DBMap.keys()) {
-    logBroadcaster.pushLog({
-      loggerName: dbFilename,
-      logLevel: LogLevel.ERROR.name,
-      messages: ['Uncaught Exception in DB worker', errorMessage]
-    });
-  }
+  logToAll(LogLevel.ERROR.name, 'Uncaught Exception in DB worker', errorMessage);
 }
 
 // Report unhandled exceptions to all loggers
@@ -51,6 +55,15 @@ addEventListener('unhandledrejection', (event) => {
 
 addEventListener('error', (event) => {
   logUnhandledException(event.error);
+});
+
+addEventListener('unload', () => {
+  logToAll(LogLevel.INFO.name, 'DB worker is unloading');
+  Array.from(DBMap.values()).forEach(async (dbConnection) => {
+    const { db, clientIds } = dbConnection;
+    logToAll(LogLevel.INFO.name, `closing db with ids ${clientIds}`);
+    db.close();
+  });
 });
 
 const baseLogger = createBaseLogger();
@@ -102,6 +115,8 @@ const openDBShared = async (
     const clientId = nextClientId++;
     const { dbFilename, logLevel } = options;
 
+    logToAll(`Worker opening DB connection for`, JSON.stringify(options));
+
     // This updates the log level for the worker-level logger
     // The DB connection logger will automatically track the main context logger
     // since it passes logs to it.
@@ -121,6 +136,7 @@ const openDBShared = async (
     if (!DBMap.has(dbFilename)) {
       const clientIds = new Set<number>();
       const logger = createLogger(dbFilename);
+      logger.debug(`Worker opened a new connection`);
       const connection = await openWorkerConnection({
         ...options,
         logger
@@ -171,10 +187,3 @@ if (typeof SharedWorkerGlobalScope !== 'undefined') {
   // A dedicated worker can be shared externally
   Comlink.expose(openDBShared);
 }
-
-addEventListener('unload', () => {
-  Array.from(DBMap.values()).forEach(async (dbConnection) => {
-    const { db } = dbConnection;
-    db.close?.();
-  });
-});
