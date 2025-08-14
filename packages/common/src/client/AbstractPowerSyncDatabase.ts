@@ -643,11 +643,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Returns an async iterator of completed transactions with local writes against the database.
    *
    * This is typically used from the {@link PowerSyncBackendConnector.uploadData} callback. Each entry emitted by the
-   * returned flow is a full transaction containing all local writes made while that transaction was active.
+   * returned iterator is a full transaction containing all local writes made while that transaction was active.
    *
    * Unlike {@link getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
-   * {@link CrudTransaction.complete}d yet, this flow can be used to collect multiple transactions. Calling
-   * {@link CrudTransaction.complete} will mark _all_ transactions emitted by the flow until that point as completed.
+   * {@link CrudTransaction.complete}d yet, this iterator can be used to receive multiple transactions. Calling
+   * {@link CrudTransaction.complete} will mark _all_ transactions emitted by the iterator until that point as
+   * completed.
    *
    * This can be used to upload multiple transactions in a single batch, e.g with:
    *
