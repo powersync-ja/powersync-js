@@ -5,9 +5,11 @@ import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
+import { LOGGER } from './Logging.js';
 
 const platform = Capacitor.getPlatform();
 
+LOGGER.debug('Initing PowerSync globally ');
 const powerSync = new PowerSyncDatabase({
   database: new WASQLiteOpenFactory({
     dbFilename: 'ps.db',

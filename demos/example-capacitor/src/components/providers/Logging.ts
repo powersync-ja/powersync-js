@@ -1,4 +1,4 @@
-import { BaseObserver, ControlledExecutor, createBaseLogger, LogLevel } from '@powersync/web';
+import { BaseObserver, ControlledExecutor, createBaseLogger, createLogger, LogLevel } from '@powersync/web';
 
 export type LogRecord = {
   level: string;
@@ -107,8 +107,8 @@ Stack: ${param.stack}
 };
 
 // Configure base logger for global settings
-const logger = createBaseLogger();
-logger.useDefaults({
+export const BASE_LOGGER = createBaseLogger();
+BASE_LOGGER.useDefaults({
   defaultLevel: LogLevel.DEBUG,
   formatter: (messages, context) => {
     LOG_STORAGE.writeLog({
@@ -118,3 +118,5 @@ logger.useDefaults({
     });
   }
 });
+
+export const LOGGER = createLogger('CapacitorPS');
