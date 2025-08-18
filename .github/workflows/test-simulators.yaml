@@ -138,6 +138,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: CocoaPods Cache
         uses: actions/cache@v3
         id: cocoapods-cache
