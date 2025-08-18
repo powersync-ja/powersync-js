@@ -644,8 +644,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    *
    * Unlike {@link getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
    * {@link CrudTransaction.complete}d yet, this iterator can be used to receive multiple transactions. Calling
-   * {@link CrudTransaction.complete} will mark _all_ transactions emitted by the iterator until that point as
-   * completed.
+   * {@link CrudTransaction.complete} will mark that and all prior transactions emitted by the iterator as completed.
    *
    * This can be used to upload multiple transactions in a single batch, e.g with:
    *
