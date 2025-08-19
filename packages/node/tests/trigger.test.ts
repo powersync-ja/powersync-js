@@ -2,11 +2,11 @@ import {
   column,
   DiffTriggerOperation,
   ExtractedTriggerDiffRecord,
+  sanitizeSQL,
   sanitizeUUID,
   Schema,
   Table,
-  TriggerDiffRecord,
-  whenClause
+  TriggerDiffRecord
 } from '@powersync/common';
 import { describe, expect, vi } from 'vitest';
 import { Database, databaseTest } from './utils';
@@ -114,7 +114,7 @@ describe('Triggers', () => {
       source: 'todos',
       columns: ['list_id'],
       when: {
-        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+        [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
@@ -193,7 +193,7 @@ describe('Triggers', () => {
      */
     await database.triggers.trackTableDiff({
       source: 'lists',
-      when: { [DiffTriggerOperation.UPDATE]: whenClause`NEW.id = ${sanitizeUUID(list.id)}` },
+      when: { [DiffTriggerOperation.UPDATE]: sanitizeSQL`NEW.id = ${sanitizeUUID(list.id)}` },
       operations: [DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
@@ -303,7 +303,7 @@ describe('Triggers', () => {
       source: 'todos',
       columns: ['list_id'],
       when: {
-        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+        [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
@@ -393,7 +393,7 @@ describe('Triggers', () => {
     await database.triggers.trackTableDiff({
       source: 'todos',
       when: {
-        [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
+        [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
       operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {

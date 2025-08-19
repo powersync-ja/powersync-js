@@ -3,7 +3,7 @@ function sanitizeString(input: string): string {
 }
 /**
  * Helper function for sanitizing UUID input strings.
- * Typically used with {@link whenClause}.
+ * Typically used with {@link sanitizeSQL}.
  */
 export function sanitizeUUID(uuid: string): string {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -32,17 +32,17 @@ export function sanitizeUUID(uuid: string): string {
  * **Usage example:**
  * ```typescript
  * const myID = "O'Reilly";
- * const clause = whenClause`New.id = ${myID}`;
+ * const clause = sanitizeSQL`New.id = ${myID}`;
  * // Result: "New.id = 'O''Reilly'"
  * ```
  *
  * Avoid manually quoting placeholders:
  * ```typescript
  * // Incorrect:
- * whenClause`New.id = '${myID}'` // Produces double quotes: New.id = ''O''Reilly''
+ * sanitizeSQL`New.id = '${myID}'` // Produces double quotes: New.id = ''O''Reilly''
  * ```
  */
-export function whenClause(strings: TemplateStringsArray, ...values: any[]): string {
+export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string {
   let result = '';
   strings.forEach((str, i) => {
     result += str;

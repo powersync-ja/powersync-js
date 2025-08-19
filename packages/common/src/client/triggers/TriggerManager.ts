@@ -155,9 +155,9 @@ interface BaseCreateDiffTriggerOptions {
    *
    * @example
    * {
-   *  'INSERT': whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`
-   *  'UPDATE': whenClause`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`
-   *  'DELETE': whenClause`json_extract(OLD.data, '$.list_id') = 'abcd'`
+   *  'INSERT': sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`
+   *  'UPDATE': sanitizeSQL`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`
+   *  'DELETE': sanitizeSQL`json_extract(OLD.data, '$.list_id') = 'abcd'`
    * }
    */
   when?: Partial<Record<DiffTriggerOperation, string>>;
@@ -342,7 +342,7 @@ export interface TriggerManager {
    *        columns: ['list_id'],
    *        operations: [DiffTriggerOperation.INSERT],
    *        when: {
-   *          [DiffTriggerOperation.INSERT]: whenClause`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(someIdVariable)}`
+   *          [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(someIdVariable)}`
    *        },
    *        onChange: async (context) => {
    *          // Fetches the todo records that were inserted during this diff
