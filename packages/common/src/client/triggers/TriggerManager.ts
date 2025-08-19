@@ -174,7 +174,7 @@ interface BaseCreateDiffTriggerOptions {
  */
 export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
   /**
-   * Destination table to track changes to.
+   * Destination table to send changes to.
    * This table is created internally as a SQLite temporary table.
    * This table will be dropped once the trigger is removed.
    */
