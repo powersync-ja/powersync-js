@@ -149,7 +149,7 @@ interface BaseCreateDiffTriggerOptions {
    * Note that for PowerSync the row data is stored in a JSON column named `data`.
    * The row id is available in the `id` column.
    *
-   * NB! The WHEN clauses here added added directly to the SQLite trigger creation SQL.
+   * NB! The WHEN clauses here are added directly to the SQLite trigger creation SQL.
    * Any user input strings here should be sanitized externally. The {@link when} string template function performs
    * some basic sanitization, extra external sanitization is recommended.
    *
