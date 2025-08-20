@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWatchedQuerySubscription } from './useWatchedQuerySubscription.js';
+import { useNullableWatchedQuerySubscription } from './useWatchedQuerySubscription.js';
 import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { InternalHookOptions } from './watch-utils.js';
 
@@ -14,9 +14,13 @@ import { InternalHookOptions } from './watch-utils.js';
 export const useWatchedQuery = <RowType = unknown>(
   options: InternalHookOptions<RowType[]> & { options: DifferentialHookOptions<RowType> }
 ): QueryResult<RowType> | ReadonlyQueryResult<RowType> => {
-  const { query, powerSync, queryChanged, options: hookOptions } = options;
+  const { query, powerSync, queryChanged, options: hookOptions, active } = options;
 
-  const createWatchedQuery = React.useCallback(() => {
+  function createWatchedQuery() {
+    if (!active) {
+      return null;
+    }
+
     const watch = hookOptions.rowComparator
       ? powerSync.customQuery(query).differentialWatch({
           rowComparator: hookOptions.rowComparator,
@@ -28,20 +32,20 @@ export const useWatchedQuery = <RowType = unknown>(
           throttleMs: hookOptions.throttleMs
         });
     return watch;
-  }, []);
+  }
 
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
 
   React.useEffect(() => {
-    watchedQuery.close();
+    watchedQuery?.close();
     setWatchedQuery(createWatchedQuery);
-  }, [powerSync]);
+  }, [powerSync, active]);
 
   // Indicates that the query will be re-fetched due to a change in the query.
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
     if (queryChanged) {
-      watchedQuery.updateSettings({
+      watchedQuery?.updateSettings({
         query,
         throttleMs: hookOptions.throttleMs,
         reportFetching: hookOptions.reportFetching
@@ -49,5 +53,5 @@ export const useWatchedQuery = <RowType = unknown>(
     }
   }, [queryChanged]);
 
-  return useWatchedQuerySubscription(watchedQuery);
+  return useNullableWatchedQuerySubscription(watchedQuery);
 };
