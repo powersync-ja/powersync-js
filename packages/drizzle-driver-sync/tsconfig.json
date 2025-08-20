@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "declaration": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["DOM", "ES2020", "WebWorker"],
+    "module": "node16",
+    "moduleResolution": "node16",
+    "outDir": "./lib",
+    "strict": true,
+    "target": "es6"
+  },
+  "include": ["src/**/*"],
+  "references": [
+    {
+      "path": "../common"
+    }
+  ]
+}
