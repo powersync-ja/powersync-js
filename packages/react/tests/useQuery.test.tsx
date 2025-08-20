@@ -309,6 +309,53 @@ describe('useQuery', () => {
     expect(result.current.data == previousData).false;
   });
 
+  it('should be able to switch between single and watched query', async () => {
+    const db = openPowerSync();
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+
+    let changeRunOnce: React.Dispatch<React.SetStateAction<boolean>>;
+    const { result } = renderHook(
+      () => {
+        const [runOnce, setRunOnce] = React.useState(true);
+        changeRunOnce = setRunOnce;
+
+        return useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], { runQueryOnce: runOnce });
+      },
+      { wrapper }
+    );
+
+    // Wait for the query to run once.
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.isLoading).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Then switch to watched queries.
+    act(() => changeRunOnce(false));
+    expect(result.current.isLoading).toBeTruthy();
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.isLoading).toEqual(false);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Because we're watching, this should trigger an update.
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+      },
+      { timeout: 500, interval: 100 }
+    );
+  });
+
   it('should use an existing WatchedQuery instance', async () => {
     const db = openPowerSync();
 

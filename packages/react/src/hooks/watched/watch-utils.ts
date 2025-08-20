@@ -7,6 +7,7 @@ export type InternalHookOptions<DataType> = {
   query: WatchCompatibleQuery<DataType>;
   powerSync: AbstractPowerSyncDatabase;
   queryChanged: boolean;
+  active: boolean;
 };
 
 export const checkQueryChanged = <T>(query: WatchCompatibleQuery<T>, options: AdditionalOptions) => {

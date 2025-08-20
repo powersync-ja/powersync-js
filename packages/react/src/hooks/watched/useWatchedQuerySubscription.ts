@@ -21,18 +21,31 @@ export const useWatchedQuerySubscription = <
 >(
   query: Query
 ): Query['state'] => {
-  const [output, setOutputState] = React.useState(query.state);
+  return useNullableWatchedQuerySubscription(query);
+};
 
+/**
+ * @internal
+ */
+export const useNullableWatchedQuerySubscription = <
+  ResultType = unknown,
+  Query extends WatchedQuery<ResultType> = WatchedQuery<ResultType>
+>(
+  query: Query | null
+): Query['state'] | undefined => {
+  const [output, setOutputState] = React.useState(query?.state);
+
+  // @ts-ignore: Complains about not all code paths returning a value
   React.useEffect(() => {
-    const dispose = query.registerListener({
-      onStateChange: (state) => {
-        setOutputState({ ...state });
-      }
-    });
+    if (query) {
+      setOutputState(query.state);
 
-    return () => {
-      dispose();
-    };
+      return query.registerListener({
+        onStateChange: (state) => {
+          setOutputState({ ...state });
+        }
+      });
+    }
   }, [query]);
 
   return output;
