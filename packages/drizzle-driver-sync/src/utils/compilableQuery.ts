@@ -21,7 +21,7 @@ import { Query } from 'drizzle-orm';
  * );
  */
 export function toCompilableQuery<T>(query: {
-  execute: () => Promise<T | T[]>;
+  execute: () => T | T[];
   toSQL: () => Query;
 }): CompilableQuery<T> {
   return {
@@ -33,8 +33,8 @@ export function toCompilableQuery<T>(query: {
       };
     },
     execute: async () => {
-      const result = await query.execute();
+      const result = query.execute();
       return Array.isArray(result) ? result : [result];
-    },
+    }
   };
 }

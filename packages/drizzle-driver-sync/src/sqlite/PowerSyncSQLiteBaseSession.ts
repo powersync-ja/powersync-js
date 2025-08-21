@@ -1,4 +1,3 @@
-import { LockContext, QueryResult } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { NoopLogger } from 'drizzle-orm/logger';
@@ -14,8 +13,7 @@ import {
   type SQLiteTransactionConfig
 } from 'drizzle-orm/sqlite-core/session';
 import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery.js';
-import { DB } from '@op-engineering/op-sqlite';
-
+import { DB, QueryResult } from '@op-engineering/op-sqlite';
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;
 }

@@ -46,8 +46,8 @@
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
+    "@op-engineering/op-sqlite": "github:joshua-journey-apps/op-sqlite#execute-raw-sync",
     "@powersync/web": "workspace:*",
-    "@op-engineering/op-sqlite": "^14.0.2",
     "@journeyapps/wa-sqlite": "^1.2.0",
     "@types/node": "^20.17.6",
     "drizzle-orm": "^0.35.2",

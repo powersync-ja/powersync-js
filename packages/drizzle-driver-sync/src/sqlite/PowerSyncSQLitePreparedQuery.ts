@@ -1,5 +1,4 @@
 import { DB, QueryResult, Scalar } from '@op-engineering/op-sqlite';
-import { LockContext } from '@powersync/common';
 import { Column, DriverValueDecoder, getTableName, SQL } from 'drizzle-orm';
 import { entityKind, is } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
@@ -7,6 +6,7 @@ import { fillPlaceholders, type Query } from 'drizzle-orm/sql/sql';
 import { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
+  ExecuteResultSync,
   type PreparedQueryConfig as PreparedQueryConfigBase,
   type SQLiteExecuteMethod,
   SQLitePreparedQuery
@@ -38,6 +38,15 @@ export class PowerSyncSQLitePreparedQuery<
     super('sync', executeMethod, query);
   }
 
+  execute(placeholderValues?: Record<string, unknown>): ExecuteResultSync<T['execute']> {
+    const params = fillPlaceholders(this.query.params, placeholderValues ?? {}) as Scalar[];
+    this.logger.logQuery(this.query.sql, params);
+    const rs = this.db.executeRawSync(this.query.sql, params);
+    return new ExecuteResultSync(() => {
+      return this.mapResult(rs, false);
+    });
+  }
+
   run(placeholderValues?: Record<string, unknown>): QueryResult {
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {}) as Scalar[];
     this.logger.logQuery(this.query.sql, params);
@@ -56,10 +65,10 @@ export class PowerSyncSQLitePreparedQuery<
 
     const rows = this.values(placeholderValues) as unknown[][];
 
-    if (customResultMapper) {
-      const mapped = customResultMapper(rows) as T['all'];
-      return mapped;
-    }
+    // if (customResultMapper) {
+    //   const mapped = customResultMapper(rows) as T['all'];
+    //   return mapped;
+    // }
     return rows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
   }
 
@@ -70,7 +79,6 @@ export class PowerSyncSQLitePreparedQuery<
     const { fields, customResultMapper } = this;
     const joinsNotNullableMap = (this as any).joinsNotNullableMap;
     if (!fields && !customResultMapper) {
-      // return this.db.get(this.query.sql, params);
       return this.db.executeSync(this.query.sql, params) as T['get'];
     }
 
@@ -81,9 +89,9 @@ export class PowerSyncSQLitePreparedQuery<
       return undefined;
     }
 
-    if (customResultMapper) {
-      return customResultMapper(rows) as T['get'];
-    }
+    // if (customResultMapper) {
+    //   return customResultMapper(rows) as T['get'];
+    // }
 
     return mapResultRow(fields!, row, joinsNotNullableMap);
   }
@@ -92,7 +100,7 @@ export class PowerSyncSQLitePreparedQuery<
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {}) as Scalar[];
     this.logger.logQuery(this.query.sql, params);
 
-    return this.db.executeRaw(this.query.sql, params);
+    return this.db.executeRawSync(this.query.sql, params);
   }
 
   isResponseInArrayMode(): boolean {
@@ -101,7 +109,7 @@ export class PowerSyncSQLitePreparedQuery<
 }
 
 /**
- * Maps a flat array of database row values to a result object based on the provided column definitions.
+ * Maps a database row object to a result object based on the provided column definitions.
  * It reconstructs the hierarchical structure of the result by following the specified paths for each field.
  * It also handles nullification of nested objects when joined tables are nullable.
  */

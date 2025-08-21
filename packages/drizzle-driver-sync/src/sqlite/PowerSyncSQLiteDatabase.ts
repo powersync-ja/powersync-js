@@ -1,10 +1,3 @@
-import {
-  AbstractPowerSyncDatabase,
-  compilableQueryWatch,
-  CompilableQueryWatchHandler,
-  QueryResult,
-  SQLWatchOptions
-} from '@powersync/common';
 import { Query } from 'drizzle-orm';
 import { DefaultLogger } from 'drizzle-orm/logger';
 import {
@@ -18,18 +11,18 @@ import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteSyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
-import { toCompilableQuery } from '../utils/compilableQuery.js';
 import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
 import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession.js';
+import { DB, QueryResult } from '@op-engineering/op-sqlite';
 
 export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
 
 export class PowerSyncSQLiteDatabase<
   TSchema extends Record<string, unknown> = Record<string, never>
 > extends BaseSQLiteDatabase<'sync', QueryResult, TSchema> {
-  private db: AbstractPowerSyncDatabase;
+  private db: DB;
 
-  constructor(db: AbstractPowerSyncDatabase, config: DrizzleConfig<TSchema> = {}) {
+  constructor(db: DB, config: DrizzleConfig<TSchema> = {}) {
     const dialect = new SQLiteSyncDialect({ casing: config.casing });
     let logger;
     if (config.logger === true) {
@@ -63,13 +56,13 @@ export class PowerSyncSQLiteDatabase<
     return super.transaction(transaction, config);
   }
 
-  watch<T>(query: DrizzleQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void {
-    compilableQueryWatch(this.db, toCompilableQuery(query), handler, options);
-  }
+  // watch<T>(query: DrizzleQuery<T>, handler: CompilableQueryWatchHandler<T>, options?: SQLWatchOptions): void {
+  //   compilableQueryWatch(this.db, toCompilableQuery(query), handler, options);
+  // }
 }
 
 export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown> = Record<string, never>>(
-  db: AbstractPowerSyncDatabase,
+  db: DB,
   config: DrizzleConfig<TSchema> = {}
 ): PowerSyncSQLiteDatabase<TSchema> {
   return new PowerSyncSQLiteDatabase<TSchema>(db, config);

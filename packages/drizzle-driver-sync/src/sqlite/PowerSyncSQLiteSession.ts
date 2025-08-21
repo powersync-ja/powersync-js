@@ -1,4 +1,3 @@
-import { AbstractPowerSyncDatabase, DBAdapter } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
 import type { RelationalSchemaConfig, TablesRelationalConfig } from 'drizzle-orm/relations';
 import type { SQLiteSyncDialect } from 'drizzle-orm/sqlite-core/dialect';
@@ -8,15 +7,16 @@ import {
   PowerSyncSQLiteTransaction,
   PowerSyncSQLiteTransactionConfig
 } from './PowerSyncSQLiteBaseSession.js';
+import { DB, Transaction } from '@op-engineering/op-sqlite';
 
 export class PowerSyncSQLiteSession<
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig
 > extends PowerSyncSQLiteBaseSession<TFullSchema, TSchema> {
   static readonly [entityKind]: string = 'PowerSyncSQLiteSession';
-  protected client: AbstractPowerSyncDatabase;
+  protected client: DB;
   constructor(
-    db: AbstractPowerSyncDatabase,
+    db: DB,
     dialect: SQLiteSyncDialect,
     schema: RelationalSchemaConfig<TSchema> | undefined,
     options: PowerSyncSQLiteSessionOptions = {}
@@ -29,34 +29,51 @@ export class PowerSyncSQLiteSession<
     transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
     config: PowerSyncSQLiteTransactionConfig = {}
   ): T {
-    const { accessMode = 'read write' } = config;
+    let result: T;
 
-    if (accessMode === 'read only') {
-      return this.client.readLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
-    }
+    this.client.transaction(async (trx) => {
+      const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
+        'sync',
+        this.dialect,
+        new PowerSyncSQLiteBaseSession(this.client, this.dialect, this.schema, this.options),
+        // trx,
+        this.schema
+      );
+      result = this.internalTransaction(trx, () => transaction(tx), config);
+    });
 
-    return this.client.writeLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
+    // @ts-ignore
+    return result;
+
+    // const { accessMode = 'read write' } = config;
+
+    // if (accessMode === 'read only') {
+    // return this.client.readLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
+    // return this.client.transaction(async (ctx) => this.internalTransaction(ctx, transaction, config));
+    // }
+
+    // return this.client.writeLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
   }
 
-  protected async internalTransaction<T>(
-    connection: DBAdapter,
+  protected internalTransaction<T>(
+    transaction: Transaction,
     fn: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
     config: PowerSyncSQLiteTransactionConfig = {}
-  ): Promise<T> {
+  ): T {
     const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
       'sync',
       (this as any).dialect,
-      new PowerSyncSQLiteBaseSession(connection, this.dialect, this.schema, this.options),
+      new PowerSyncSQLiteBaseSession(this.client, this.dialect, this.schema, this.options),
       this.schema
     );
 
-    await connection.execute(`begin${config?.behavior ? ' ' + config.behavior : ''}`);
+    transaction.execute(`begin${config?.behavior ? ' ' + config.behavior : ''}`);
     try {
-      const result = await fn(tx);
-      await connection.execute(`commit`);
+      const result = fn(tx);
+      transaction.commit();
       return result;
     } catch (err) {
-      await connection.execute(`rollback`);
+      transaction.rollback();
       throw err;
     }
   }
