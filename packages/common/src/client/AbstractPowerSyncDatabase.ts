@@ -15,7 +15,7 @@ import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { throttleTrailing } from '../utils/async.js';
+import { symbolAsyncIterator, throttleTrailing } from '../utils/async.js';
 import { ConnectionManager } from './ConnectionManager.js';
 import { CustomQuery } from './CustomQuery.js';
 import { ArrayQueryDefinition, Query } from './Query.js';
@@ -647,35 +647,80 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A transaction of CRUD operations to upload, or null if there are none
    */
   async getNextCrudTransaction(): Promise<CrudTransaction | null> {
-    return await this.readTransaction(async (tx) => {
-      const first = await tx.getOptional<CrudEntryJSON>(
-        `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} ORDER BY id ASC LIMIT 1`
-      );
+    const iterator = this.getCrudTransactions()[symbolAsyncIterator]();
+    return (await iterator.next()).value;
+  }
 
-      if (!first) {
-        return null;
+  /**
+   * Returns an async iterator of completed transactions with local writes against the database.
+   *
+   * This is typically used from the {@link PowerSyncBackendConnector.uploadData} callback. Each entry emitted by the
+   * returned iterator is a full transaction containing all local writes made while that transaction was active.
+   *
+   * Unlike {@link getNextCrudTransaction}, which always returns the oldest transaction that hasn't been
+   * {@link CrudTransaction.complete}d yet, this iterator can be used to receive multiple transactions. Calling
+   * {@link CrudTransaction.complete} will mark that and all prior transactions emitted by the iterator as completed.
+   *
+   * This can be used to upload multiple transactions in a single batch, e.g with:
+   *
+   * ```JavaScript
+   * let lastTransaction = null;
+   * let batch = [];
+   *
+   * for await (const transaction of database.getCrudTransactions()) {
+   *   batch.push(...transaction.crud);
+   *   lastTransaction = transaction;
+   *
+   *   if (batch.length > 10) {
+   *     break;
+   *    }
+   * }
+   * ```
+   *
+   * If there is no local data to upload, the async iterator complete without emitting any items.
+   *
+   * Note that iterating over async iterables requires a [polyfill](https://github.com/powersync-ja/powersync-js/tree/main/packages/react-native#babel-plugins-watched-queries)
+   * for React Native.
+   */
+  getCrudTransactions(): AsyncIterable<CrudTransaction, null> {
+    return {
+      [symbolAsyncIterator]: () => {
+        let lastCrudItemId = -1;
+        const sql = `
+WITH RECURSIVE crud_entries AS (
+  SELECT id, tx_id, data FROM ps_crud WHERE id = (SELECT min(id) FROM ps_crud WHERE id > ?)
+  UNION ALL
+  SELECT ps_crud.id, ps_crud.tx_id, ps_crud.data FROM ps_crud
+    INNER JOIN crud_entries ON crud_entries.id + 1 = rowid
+  WHERE crud_entries.tx_id = ps_crud.tx_id
+)
+SELECT * FROM crud_entries;
+    `;
+
+        return {
+          next: async () => {
+            const nextTransaction = await this.database.getAll<CrudEntryJSON>(sql, [lastCrudItemId]);
+            if (nextTransaction.length == 0) {
+              return { done: true, value: null };
+            }
+
+            const items = nextTransaction.map((row) => CrudEntry.fromRow(row));
+            const last = items[items.length - 1];
+            const txId = last.transactionId;
+            lastCrudItemId = last.clientId;
+
+            return {
+              done: false,
+              value: new CrudTransaction(
+                items,
+                async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint),
+                txId
+              )
+            };
+          }
+        };
       }
-      const txId = first.tx_id;
-
-      let all: CrudEntry[];
-      if (!txId) {
-        all = [CrudEntry.fromRow(first)];
-      } else {
-        const result = await tx.getAll<CrudEntryJSON>(
-          `SELECT id, tx_id, data FROM ${PSInternalTable.CRUD} WHERE tx_id = ? ORDER BY id ASC`,
-          [txId]
-        );
-        all = result.map((row) => CrudEntry.fromRow(row));
-      }
-
-      const last = all[all.length - 1];
-
-      return new CrudTransaction(
-        all,
-        async (writeCheckpoint?: string) => this.handleCrudCheckpoint(last.clientId, writeCheckpoint),
-        txId
-      );
-    });
+    };
   }
 
   /**
