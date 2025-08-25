@@ -267,16 +267,16 @@ importers:
     dependencies:
       '@capacitor/android':
         specifier: ^6.0.0
-        version: 6.2.1(@capacitor/core@7.4.2)
+        version: 6.2.1(@capacitor/core@7.4.3)
       '@capacitor/core':
         specifier: latest
-        version: 7.4.2
+        version: 7.4.3
       '@capacitor/ios':
         specifier: ^6.0.0
-        version: 6.2.1(@capacitor/core@7.4.2)
+        version: 6.2.1(@capacitor/core@7.4.3)
       '@capacitor/splash-screen':
         specifier: latest
-        version: 7.0.2(@capacitor/core@7.4.2)
+        version: 7.0.2(@capacitor/core@7.4.3)
       '@journeyapps/wa-sqlite':
         specifier: ^1.2.0
         version: 1.2.6
@@ -1762,7 +1762,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.36.0
+        specifier: workspace:^1.37.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1790,7 +1790,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.36.0
+        specifier: workspace:^1.37.0
         version: link:../common
       kysely:
         specifier: ^0.28.0
@@ -3519,8 +3519,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@capacitor/core@7.4.2':
-    resolution: {integrity: sha512-akCf9A1FUR8AWTtmgGjHEq6LmGsjA2U7igaJ9PxiCBfyxKqlDbuGHrlNdpvHEjV5tUPH3KYtkze6gtFcNKPU9A==}
+  '@capacitor/core@7.4.3':
+    resolution: {integrity: sha512-wCWr8fQ9Wxn0466vPg7nMn0tivbNVjNy1yL4GvDSIZuZx7UpU2HeVGNe9QjN/quEd+YLRFeKEBLBw619VqUiNg==}
 
   '@capacitor/ios@6.2.1':
     resolution: {integrity: sha512-tbMlQdQjxe1wyaBvYVU1yTojKJjgluZQsJkALuJxv/6F8QTw5b6vd7X785O/O7cMpIAZfUWo/vtAHzFkRV+kXw==}
@@ -22526,9 +22526,9 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.0.0
 
-  '@capacitor/android@6.2.1(@capacitor/core@7.4.2)':
+  '@capacitor/android@6.2.1(@capacitor/core@7.4.3)':
     dependencies:
-      '@capacitor/core': 7.4.2
+      '@capacitor/core': 7.4.3
 
   '@capacitor/cli@6.2.1':
     dependencies:
@@ -22552,17 +22552,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@capacitor/core@7.4.2':
+  '@capacitor/core@7.4.3':
     dependencies:
       tslib: 2.8.1
 
-  '@capacitor/ios@6.2.1(@capacitor/core@7.4.2)':
+  '@capacitor/ios@6.2.1(@capacitor/core@7.4.3)':
     dependencies:
-      '@capacitor/core': 7.4.2
+      '@capacitor/core': 7.4.3
 
-  '@capacitor/splash-screen@7.0.2(@capacitor/core@7.4.2)':
+  '@capacitor/splash-screen@7.0.2(@capacitor/core@7.4.3)':
     dependencies:
-      '@capacitor/core': 7.4.2
+      '@capacitor/core': 7.4.3
 
   '@changesets/apply-release-plan@7.0.12':
     dependencies:
@@ -28547,7 +28547,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
