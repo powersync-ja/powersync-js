@@ -49,11 +49,15 @@ export class TriggerManagerImpl implements TriggerManager {
 
   async createDiffTrigger(options: CreateDiffTriggerOptions) {
     await this.db.waitForReady();
-    const { source, destination, columns, operations, when, hooks } = options;
-
+    const { source, destination, columns, when, hooks } = options;
+    const operations = Object.keys(when) as DiffTriggerOperation[];
     if (operations.length == 0) {
-      throw new Error('At least one operation must be specified for the trigger.');
+      throw new Error('At least one WHEN operation must be specified for the trigger.');
     }
+
+    const whenClauses = Object.fromEntries(
+      Object.entries(when).map(([operation, filter]) => [operation, `WHEN ${filter}`])
+    );
 
     /**
      * Allow specifying the View name as the source.
@@ -67,23 +71,6 @@ export class TriggerManagerImpl implements TriggerManager {
     const replicatedColumns = columns ?? sourceDefinition.columns.map((col) => col.name);
 
     const internalSource = sourceDefinition.internalName;
-
-    const invalidWhenOperations =
-      when && Object.keys(when).filter((operation) => operations.includes(operation as DiffTriggerOperation) == false);
-    if (invalidWhenOperations?.length) {
-      throw new Error(
-        `Invalid 'when' conditions provided for operations: ${invalidWhenOperations.join(', ')}. ` +
-          `These operations are not included in the 'operations' array: ${operations.join(', ')}.`
-      );
-    }
-
-    const whenConditions = Object.fromEntries(
-      Object.values(DiffTriggerOperation).map((operation) => [
-        operation,
-        when?.[operation] ? `WHEN ${when[operation]}` : ''
-      ])
-    ) as Record<DiffTriggerOperation, string>;
-
     const triggerIds: string[] = [];
 
     const id = await this.getUUID();
@@ -143,7 +130,7 @@ export class TriggerManagerImpl implements TriggerManager {
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenConditions[
+          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenClauses[
             DiffTriggerOperation.INSERT
           ]} BEGIN
           INSERT INTO
@@ -166,7 +153,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
         await tx.execute(/* sql */ `
           CREATE TEMP TRIGGER ${updateTriggerId} AFTER
-          UPDATE ON ${internalSource} ${whenConditions[DiffTriggerOperation.UPDATE]} BEGIN
+          UPDATE ON ${internalSource} ${whenClauses[DiffTriggerOperation.UPDATE]} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp, value, previous_value)
           VALUES
@@ -188,7 +175,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
         // Create delete trigger for basic JSON
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenConditions[
+          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenClauses[
             DiffTriggerOperation.DELETE
           ]} BEGIN
           INSERT INTO
@@ -220,7 +207,7 @@ export class TriggerManagerImpl implements TriggerManager {
   }
 
   async trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback> {
-    const { source, when, columns, operations, hooks, throttleMs = DEFAULT_WATCH_THROTTLE_MS } = options;
+    const { source, when, columns, hooks, throttleMs = DEFAULT_WATCH_THROTTLE_MS } = options;
 
     await this.db.waitForReady();
 
@@ -307,7 +294,6 @@ export class TriggerManagerImpl implements TriggerManager {
         source,
         destination,
         columns: contextColumns,
-        operations,
         when,
         hooks
       });

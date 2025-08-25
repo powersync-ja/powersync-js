@@ -130,11 +130,6 @@ interface BaseCreateDiffTriggerOptions {
   source: string;
 
   /**
-   * Operations to track changes for.
-   */
-  operations: DiffTriggerOperation[];
-
-  /**
    * Columns to track and report changes for.
    * Defaults to all columns in the source table.
    * Use an empty array to track only the ID and operation.
@@ -142,7 +137,7 @@ interface BaseCreateDiffTriggerOptions {
   columns?: string[];
 
   /**
-   * Optional condition to filter when the triggers should fire.
+   * Condition to filter when the triggers should fire.
    * This corresponds to a SQLite [WHEN](https://sqlite.org/lang_createtrigger.html) clause in the trigger body.
    * This is useful for only triggering on specific conditions.
    * For example, you can use it to only trigger on certain values in the NEW row.
@@ -155,12 +150,13 @@ interface BaseCreateDiffTriggerOptions {
    *
    * @example
    * {
-   *  'INSERT': sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`
-   *  'UPDATE': sanitizeSQL`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`
+   *  'INSERT': sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(list.id)}`,
+   *  'INSERT': `TRUE`,
+   *  'UPDATE': sanitizeSQL`NEW.id = 'abcd' AND json_extract(NEW.data, '$.status') = 'active'`,
    *  'DELETE': sanitizeSQL`json_extract(OLD.data, '$.list_id') = 'abcd'`
    * }
    */
-  when?: Partial<Record<DiffTriggerOperation, string>>;
+  when: Partial<Record<DiffTriggerOperation, string>>;
 
   /**
    * Hooks which allow execution during the trigger creation process.
@@ -319,7 +315,11 @@ export interface TriggerManager {
    *   source: 'lists',
    *   destination: 'ps_temp_lists_diff',
    *   columns: ['name'],
-   *   operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE]
+   *   when: {
+   *    [DiffTriggerOperation.INSERT]: 'TRUE',
+   *    [DiffTriggerOperation.UPDATE]: 'TRUE',
+   *    [DiffTriggerOperation.DELETE]: 'TRUE'
+   *   }
    * });
    * ```
    */
@@ -340,7 +340,6 @@ export interface TriggerManager {
    *  const dispose = database.triggers.trackTableDiff({
    *        source: 'todos',
    *        columns: ['list_id'],
-   *        operations: [DiffTriggerOperation.INSERT],
    *        when: {
    *          [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(someIdVariable)}`
    *        },
