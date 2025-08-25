@@ -49,9 +49,9 @@ export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): st
     if (i < values.length) {
       // For SQL, escape single quotes in string values
       const value = values[i];
-      if (typeof value === 'string') {
+      if (typeof value == 'string') {
         result += sanitizeString(value);
-      } else if (value === null || value === undefined) {
+      } else if (value == null) {
         result += 'NULL';
       } else if (typeof value == 'object') {
         // Stringify the object and escape single quotes in the result

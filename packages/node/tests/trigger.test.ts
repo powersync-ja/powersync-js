@@ -24,7 +24,11 @@ describe('Triggers', () => {
       source: 'todos',
       destination: tempTable,
       columns: filteredColumns,
-      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE]
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE',
+        [DiffTriggerOperation.UPDATE]: 'TRUE',
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      }
     });
 
     const results = [] as TriggerDiffRecord[];
@@ -116,7 +120,6 @@ describe('Triggers', () => {
       when: {
         [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
-      operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the current state of  todo records that were inserted during this diff window.
         const newTodos = await context.withDiff<Database['todos']>(/* sql */ `
@@ -193,8 +196,10 @@ describe('Triggers', () => {
      */
     await database.triggers.trackTableDiff({
       source: 'lists',
-      when: { [DiffTriggerOperation.UPDATE]: sanitizeSQL`NEW.id = ${sanitizeUUID(list.id)}` },
-      operations: [DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
+      when: {
+        [DiffTriggerOperation.UPDATE]: sanitizeSQL`NEW.id = ${sanitizeUUID(list.id)}`,
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      },
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
         const diffs = await context.withExtractedDiff<ExtractedTriggerDiffRecord<Database['lists']>>(/* sql */ `
@@ -305,7 +310,6 @@ describe('Triggers', () => {
       when: {
         [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
-      operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the todo records that were inserted during this diff
         const newTodos = await context.withDiff<Database['todos']>(/* sql */ `
@@ -395,7 +399,6 @@ describe('Triggers', () => {
       when: {
         [DiffTriggerOperation.INSERT]: sanitizeSQL`json_extract(NEW.data, '$.list_id') = ${sanitizeUUID(firstList.id)}`
       },
-      operations: [DiffTriggerOperation.INSERT],
       onChange: async (context) => {
         // Fetches the content of the records at the time of the operation
         const extractedDiff = await context.withExtractedDiff<{ content: string; operation: DiffTriggerOperation }>(
@@ -456,7 +459,11 @@ describe('Triggers', () => {
 
     await database.triggers.trackTableDiff({
       source: 'todos',
-      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE',
+        [DiffTriggerOperation.UPDATE]: 'TRUE',
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      },
       // Only track the row ids
       columns: [],
       onChange: async (context) => {
@@ -535,7 +542,11 @@ describe('Triggers', () => {
 
     await database.triggers.trackTableDiff({
       source: 'todos',
-      operations: [DiffTriggerOperation.INSERT, DiffTriggerOperation.UPDATE, DiffTriggerOperation.DELETE],
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE',
+        [DiffTriggerOperation.UPDATE]: 'TRUE',
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      },
       columns: ['columnA'],
       onChange: async (context) => {
         // Fetches the content of the records at the time of the operation
