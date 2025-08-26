@@ -30,7 +30,7 @@ export default (commandLineArgs) => {
            * The Typescript plugin complains about internal Drizzle types not matching when selecting
            * other moduleResolution settings.
            */
-          moduleResolution: 'bundler'
+          // moduleResolution: 'bundler'
         })
       ],
       external: ['@powersync/common', /^drizzle-orm(\/.*)?$/]
