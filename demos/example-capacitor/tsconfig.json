@@ -11,7 +11,7 @@
     "outDir": "dist",
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "jsx": "preserve"
+    "jsx": "react-jsx"
   },
   "references": [
     {

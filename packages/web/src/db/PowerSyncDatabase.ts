@@ -164,6 +164,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     if (this.unloadListener) {
       window.removeEventListener('unload', this.unloadListener);
     }
+    this.logger.debug(`Closing PowerSync instance for ${this.database.name}`);
 
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled

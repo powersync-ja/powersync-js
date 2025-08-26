@@ -1,3 +1,4 @@
+import { ILogger } from 'js-logger';
 import { DBAdapter } from '../db/DBAdapter.js';
 
 export interface SQLOpenOptions {
@@ -23,6 +24,8 @@ export interface SQLOpenOptions {
    *    debugMode: process.env.NODE_ENV !== 'production'
    */
   debugMode?: boolean;
+
+  logger?: ILogger;
 }
 
 export interface SQLOpenFactory {

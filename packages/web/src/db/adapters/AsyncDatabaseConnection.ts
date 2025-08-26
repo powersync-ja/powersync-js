@@ -35,6 +35,21 @@ export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOption
 /**
  * @internal
  */
+export interface DBWorkerLogEvent {
+  loggerName: string;
+  logLevel: string;
+  messages: string[];
+}
+
+/**
+ * @internal
+ */
+export type WorkerLogHandler = (event: DBWorkerLogEvent) => void;
+
+/**
+ * @internal
+ */
 export type OpenAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = (
-  config: Config
+  config: Config,
+  logger?: WorkerLogHandler
 ) => AsyncDatabaseConnection;
