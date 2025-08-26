@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
-    "@op-engineering/op-sqlite": "^14.0.2",
-    "@powersync/op-sqlite": "workspace:*",
+    "@op-engineering/op-sqlite": "github:joshua-journey-apps/op-sqlite#execute-raw-sync",
     "@powersync/common": "workspace:*",
-    "@powersync/react-native": "workspace:*",
+    "@powersync/drizzle-driver": "workspace:*",
+    "@powersync/drizzle-driver-sync": "workspace:*",
+    "@powersync/op-sqlite": "workspace:*",
     "@powersync/react": "workspace:*",
+    "@powersync/react-native": "workspace:*",
     "react": "18.3.1",
     "react-native": "0.77.0"
   },

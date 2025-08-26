@@ -1,170 +1,340 @@
 import '@azure/core-asynciterator-polyfill';
 import React, { useEffect } from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { Button, SafeAreaView, Text, useColorScheme, View, Image, FlatList } from 'react-native';
+import { useQuery, PowerSyncContext, usePowerSync } from '@powersync/react-native';
+import { lists as drizzleLists, system, SystemContext, todos, useOpSqlite, useSystem } from './SystemContext';
+import { Scalar } from '@op-engineering/op-sqlite';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+import { eq } from 'drizzle-orm';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
-import { column, Schema, Table, PowerSyncDatabase } from '@powersync/react-native';
-
-/**
- * A placeholder connector which doesn't do anything but used to confirm connect can run.
- */
-class DummyConnector {
-  async fetchCredentials() {
-    return {
-      endpoint: '',
-      token: '',
+function App(): React.JSX.Element {
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        await system.init();
+        console.log('System initialized successfully');
+      } catch (error) {
+        console.error('Error initializing system:', error);
+      }
     };
-  }
+    initialize();
+  }, []);
 
-  async uploadData() {}
+  return (
+    <SystemContext.Provider value={system}>
+      <PowerSyncContext.Provider value={system.powersync}>
+        <SafeAreaView>
+          <View
+            style={{
+              padding: 20
+            }}>
+            <Image
+              source={require('./logo.png')}
+              style={{
+                objectFit: 'contain',
+                height: 50,
+                width: '100%'
+              }}
+            />
+          </View>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              padding: 25
+            }}>
+            <View>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginVertical: 10,
+                  textAlign: 'center'
+                }}>
+                Async List
+              </Text>
+              <AsyncList />
+            </View>
+            <View>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginVertical: 10,
+                  textAlign: 'center'
+                }}>
+                Sync List
+              </Text>
+              <SyncDrizzleList />
+            </View>
+          </View>
+        </SafeAreaView>
+      </PowerSyncContext.Provider>
+    </SystemContext.Provider>
+  );
 }
 
-const customers = new Table({ name: column.text });
+function AsyncList() {
+  // const powerSync = usePowerSync();
+  const { drizzle } = useSystem();
+  const {
+    data: lists,
+    isLoading,
+    error
+  } = useQuery(
+    toCompilableQuery(drizzle.select().from(drizzleLists).leftJoin(todos, eq(drizzleLists.id, todos.list_id)))
+  );
 
-const schema = new Schema({ customers });
+  if (isLoading) {
+    return <Text>Loading...</Text>;
+  }
 
-let powerSync: PowerSyncDatabase | null = null;
+  if (error) {
+    return <Text>Error: {error.message}</Text>;
+  }
 
-const setupDatabase = async () => {
-  if (powerSync) return powerSync;
-
-  const factory = new OPSqliteOpenFactory({
-    dbFilename: 'powersync.db',
-  });
-
-  powerSync = new PowerSyncDatabase({
-    schema,
-    database: factory,
-  });
-
-  await powerSync.init();
-  return powerSync;
-};
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View>
+      <FlatList
+        data={lists.flatMap((list) => list.lists)}
+        renderItem={({ item: list, index }) => (
+          <View
+            key={`${list.id}${index}`}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                marginVertical: 5,
+                padding: 10,
+                backgroundColor: '#f0f0f0',
+                borderRadius: 5
+              }}>
+              {list.name}
+            </Text>
+            <Button
+              title="X"
+              onPress={async () => {
+                // await powerSync.execute('DELETE FROM lists WHERE id = ?', [list.id]);
+                await drizzle.delete(drizzleLists).where(eq(drizzleLists.id, list.id!));
+              }}></Button>
+          </View>
+        )}
+      />
+      <Button
+        title="Add List"
+        onPress={async () => {
+          const id = Math.floor(Math.random() * 1000).toString();
+          // await powerSync.execute('INSERT INTO lists(id, name) VALUES(?, ?)', [id, `List ${id}`]);
+          await drizzle.insert(drizzleLists).values({
+            id,
+            name: `List ${id}`
+          });
+        }}
+      />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+function SyncDrizzleList() {
+  const system = useSystem();
+  const [lists, setLists] = React.useState(
+    system.drizzleSync
+      .select()
+      .from(drizzleLists)
+      .leftJoin(todos, eq(drizzleLists.id, todos.list_id))
+      .all()
+  );
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+  // Listens for changes from PowerSync updates
   useEffect(() => {
-    const initDB = async () => {
-      try {
-        const db = await setupDatabase();
-
-        // Test database operations
-        await db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', ['Fred']);
-        const result = await db.getAll('SELECT * FROM customers');
-        console.log('Customers:', result);
-
-        // Connect with dummy connector
-        await db.connect(new DummyConnector());
-      } catch (error) {
-        console.error('Database initialization error:', error);
+    const disposeChange = system.powersync.onChangeWithCallback(
+      {
+        onChange: () => {
+          setLists(
+            system.drizzleSync.select().from(drizzleLists).leftJoin(todos, eq(drizzleLists.id, todos.list_id)).all()
+          );
+        }
+      },
+      {
+        tables: ['lists']
       }
-    };
+    );
 
-    initDB();
+    return () => {
+      disposeChange();
+    };
   }, []);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <View>
+      <FlatList
+        data={lists.flatMap((list) => list.lists)}
+        renderItem={({ item: list, index }) => (
+          <View
+            key={`${list.id}${index}`}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                marginVertical: 5,
+                padding: 10,
+                backgroundColor: '#f0f0f0',
+                borderRadius: 5
+              }}>
+              {list.name}
+            </Text>
+            <Button
+              title="X"
+              onPress={() => {
+                system.drizzleSync
+                  .delete(drizzleLists)
+                  .where(eq(drizzleLists.id, list.id!))
+                  .run();
+              }}></Button>
+          </View>
+        )}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <Button
+        title="Add List"
+        onPress={() => {
+          const id = Math.floor(Math.random() * 1000);
+          system.drizzleSync
+            .insert(drizzleLists)
+            .values({
+              id: id.toString(),
+              name: `List ${id}`
+            })
+            .run();
+        }}
+      />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+function SyncList() {
+  const [lists, setLists] = React.useState<{ id: string; name: string }[]>([]);
+  const opSqlite = useOpSqlite();
+  const system = useSystem();
+
+  const getLists = () => {
+    if (!opSqlite) return;
+
+    try {
+      const result = opSqlite.executeSync('SELECT * FROM lists');
+      setLists(
+        result.rows.map((row) => ({
+          id: row.id as string,
+          name: row.name as string
+        }))
+      );
+    } catch (error) {
+      console.error('Error fetching lists:', error);
+      return;
+    }
+  };
+
+  // Queue up transactions from ps_crud
+  const flushCrudTransactions = async () => {
+    await system.connector.uploadData(system.powersync);
+  };
+
+  // Intial update of lists
+  useEffect(() => {
+    getLists();
+  }, [opSqlite]);
+
+  // Listens for changes from PowerSync updates
+  useEffect(() => {
+    const disposeChange = system.powersync.onChangeWithCallback(
+      {
+        onChange: () => {
+          getLists();
+        }
+      },
+      {
+        tables: ['lists']
+      }
+    );
+
+    return () => {
+      disposeChange();
+    };
+  }, []);
+
+  return (
+    <View>
+      <FlatList
+        data={lists}
+        renderItem={({ item: list }) => (
+          <View
+            key={list.id}
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                marginVertical: 5,
+                padding: 10,
+                backgroundColor: '#f0f0f0',
+                borderRadius: 5
+              }}>
+              {list.name}
+            </Text>
+            <Button
+              title="X"
+              onPress={() => {
+                const id = Math.floor(Math.random() * 1000);
+                opSqlite.executeSync('INSERT INTO ps_crud (id, data, tx_id) VALUES(?, ?, ?)', [
+                  id,
+                  JSON.stringify({
+                    op: 'DELETE',
+                    type: 'lists',
+                    id: list.id
+                  }),
+                  id
+                ]);
+                flushCrudTransactions();
+                getLists();
+              }}></Button>
+          </View>
+        )}
+      />
+      <Button
+        title="Add List"
+        onPress={() => {
+          const id = Math.floor(Math.random() * 1000);
+          opSqlite.executeSync('INSERT INTO ps_crud (id, data, tx_id) VALUES(?, ?, ?)', [
+            id,
+            JSON.stringify({
+              op: 'PUT',
+              type: 'lists',
+              id,
+              data: {
+                name: `List ${id}`
+              }
+            })
+          ]);
+          flushCrudTransactions();
+          getLists();
+        }}
+      />
+    </View>
+  );
+}
 
 export default App;
