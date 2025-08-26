@@ -61,26 +61,26 @@ export function useQuery<RowType = any>(
     return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
   }
   const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
+  const runOnce = options?.runQueryOnce == true;
+  const single = useSingleQuery<RowType>({
+    query: parsedQuery,
+    powerSync,
+    queryChanged,
+    active: runOnce
+  });
+  const watched = useWatchedQuery<RowType>({
+    query: parsedQuery,
+    powerSync,
+    queryChanged,
+    options: {
+      reportFetching: options.reportFetching,
+      // Maintains backwards compatibility with previous versions
+      // Differentiation is opt-in by default
+      // We emit new data for each table change by default.
+      rowComparator: options.rowComparator
+    },
+    active: !runOnce
+  });
 
-  switch (options?.runQueryOnce) {
-    case true:
-      return useSingleQuery<RowType>({
-        query: parsedQuery,
-        powerSync,
-        queryChanged
-      });
-    default:
-      return useWatchedQuery<RowType>({
-        query: parsedQuery,
-        powerSync,
-        queryChanged,
-        options: {
-          reportFetching: options.reportFetching,
-          // Maintains backwards compatibility with previous versions
-          // Differentiation is opt-in by default
-          // We emit new data for each table change by default.
-          rowComparator: options.rowComparator
-        }
-      });
-  }
+  return runOnce ? single : watched;
 }

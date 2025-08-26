@@ -37,6 +37,7 @@ npx expo install @journeyapps/react-native-quick-sqlite
 Watched queries can be used with either a callback response or Async Iterator response.
 
 Watched queries using the Async Iterator response format require support for Async Iterators.
+`PowerSyncDatabase.getCrudTransactions()` also returns an Async Iterator and requires this workaround.
 
 Expo apps currently require polyfill and Babel plugins in order to use this functionality.
 
