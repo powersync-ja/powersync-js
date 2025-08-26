@@ -19,11 +19,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^6.0.0",
+    "@capacitor/android": "^7.4.3",
     "@capacitor/core": "latest",
-    "@capacitor/filesystem": "^6.0.0",
-    "@capacitor/ios": "^6.0.0",
-    "@capacitor/share": "^6.0.0",
+    "@capacitor/filesystem": "^7.1.4",
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/share": "^7.0.2",
     "@capacitor/splash-screen": "latest",
     "@journeyapps/wa-sqlite": "^1.2.0",
     "@mui/icons-material": "^7.3.1",
@@ -36,7 +36,7 @@
     "react-window": "^1.8.11"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.0.0",
+    "@capacitor/cli": "^7.4.3",
     "@swc/core": "~1.6.0",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.2",
