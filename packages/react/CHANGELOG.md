@@ -1,5 +1,15 @@
 # @powersync/react
 
+## 1.7.1
+
+### Patch Changes
+
+- 8decd49: Refactor useQuery hook to avoid calling internal hooks conditionally.
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+
 ## 1.7.0
 
 ### Minor Changes
