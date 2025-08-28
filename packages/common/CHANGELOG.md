@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.37.0
+
+### Minor Changes
+
+- c910c66: Add `getCrudTransactions()`, returning an async iterator of transactions. This can be used to batch transactions when uploading CRUD data.
+- 9e3e3a5: Added SQLite trigger based table change tracking.
+
+### Patch Changes
+
+- 876c550: Fix issue where Rust sync implementation might not disconnect in some circumstances.
+
 ## 1.36.0
 
 ### Minor Changes
