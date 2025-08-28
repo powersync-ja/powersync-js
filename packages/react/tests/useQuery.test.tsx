@@ -292,6 +292,57 @@ describe('useQuery', () => {
     );
   });
 
+  it('should react to updated queries (simple update)', async () => {
+    const db = openPowerSync();
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+
+    let updateParameters = (params: string[]): void => {};
+    const newParametersPromise = new Promise<string[]>((resolve) => {
+      updateParameters = resolve;
+    });
+
+    await db.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const query = () => {
+      const [parameters, setParameters] = React.useState<string[]>(['first']);
+
+      useEffect(() => {
+        // allow updating the parameters externally
+        newParametersPromise.then((params) => setParameters(params));
+      }, []);
+
+      return useQuery('SELECT * FROM lists WHERE name = ?', parameters);
+    };
+
+    const { result } = renderHook(query, { wrapper });
+
+    // We should only receive the first list due to the WHERE clause
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('first');
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // Now update the parameter
+    updateParameters(['second']);
+
+    // We should now only receive the second list due to the WHERE clause and updated parameter
+    await vi.waitFor(
+      () => {
+        expect(result.current.data[0]?.name).toEqual('second');
+      },
+      { timeout: 500, interval: 100 }
+    );
+  });
+
   it('should show an error if parsing the query results in an error', async () => {
     const db = openPowerSync();
 
