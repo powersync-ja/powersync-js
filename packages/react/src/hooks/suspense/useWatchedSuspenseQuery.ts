@@ -1,9 +1,9 @@
 import { CompilableQuery } from '@powersync/common';
-import { generateQueryKey, getQueryStore } from '../../QueryStore';
-import { usePowerSync } from '../PowerSyncContext';
-import { AdditionalOptions } from '../watched/watch-types';
-import { constructCompatibleQuery } from '../watched/watch-utils';
-import { useWatchedQuerySuspenseSubscription } from './useWatchedQuerySuspenseSubscription';
+import { generateQueryKey, getQueryStore } from '../../QueryStore.js';
+import { usePowerSync } from '../PowerSyncContext.js';
+import { AdditionalOptions } from '../watched/watch-types.js';
+import { constructCompatibleQuery } from '../watched/watch-utils.js';
+import { useWatchedQuerySuspenseSubscription } from './useWatchedQuerySuspenseSubscription.js';
 
 /**
  * @internal This is not exported in the index.ts

@@ -1,5 +1,35 @@
 # @powersync/react-native
 
+## 1.24.0
+
+### Minor Changes
+
+- c910c66: Add `getCrudTransactions()`, returning an async iterator of transactions. This can be used to batch transactions when uploading CRUD data.
+- 9e3e3a5: Added SQLite trigger based table change tracking.
+
+### Patch Changes
+
+- 47294f2: Update PowerSync core extension to version 0.4.4
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [8decd49]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+  - @powersync/react@1.7.1
+
+## 1.23.2
+
+### Patch Changes
+
+- Updated dependencies [dce523a]
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7ad251a]
+  - @powersync/react@1.7.0
+  - @powersync/common@1.36.0
+
 ## 1.23.1
 
 ### Patch Changes

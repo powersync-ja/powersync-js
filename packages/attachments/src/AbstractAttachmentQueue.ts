@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, Transaction } from '@powersync/common';
-import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema';
-import { EncodingType, StorageAdapter } from './StorageAdapter';
+import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
+import { EncodingType, StorageAdapter } from './StorageAdapter.js';
 
 export interface AttachmentQueueOptions {
   powersync: AbstractPowerSyncDatabase;

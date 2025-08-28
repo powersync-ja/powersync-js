@@ -4,7 +4,7 @@ import {
   WatchedQuery,
   WatchedQueryListenerEvent
 } from '@powersync/common';
-import { DifferentialHookOptions } from './hooks/watched/watch-types';
+import { DifferentialHookOptions } from './hooks/watched/watch-types.js';
 
 export function generateQueryKey(
   sqlStatement: string,

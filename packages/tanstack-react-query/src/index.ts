@@ -1,2 +1,1 @@
-export { useQuery } from './hooks/useQuery';
-export { useSuspenseQuery } from './hooks/useQuery';
+export { useQuery, useSuspenseQuery } from './hooks/useQuery.js';

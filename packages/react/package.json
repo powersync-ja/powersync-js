@@ -1,12 +1,14 @@
 {
   "name": "@powersync/react",
-  "version": "1.6.0",
+  "version": "1.7.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "React components for JourneyApps PowerSync",
+  "type": "module",
   "main": "./lib/index.js",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
     "lib"
@@ -14,8 +16,9 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
+    "test:exports": "attw --pack --profile=esm-only  .",
     "watch": "tsc -b -w"
   },
   "repository": {
@@ -29,7 +32,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.35.0",
+    "@powersync/common": "workspace:^1.37.0",
     "react": "*"
   },
   "devDependencies": {

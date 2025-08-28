@@ -1,11 +1,11 @@
 import { CompilableQuery, WatchedQuery } from '@powersync/common';
 import React from 'react';
-import { generateQueryKey, getQueryStore } from '../../QueryStore';
-import { usePowerSync } from '../PowerSyncContext';
-import { AdditionalOptions } from '../watched/watch-types';
-import { constructCompatibleQuery } from '../watched/watch-utils';
-import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
-import { SuspenseQueryResult } from './SuspenseQueryResult';
+import { generateQueryKey, getQueryStore } from '../../QueryStore.js';
+import { usePowerSync } from '../PowerSyncContext.js';
+import { AdditionalOptions } from '../watched/watch-types.js';
+import { constructCompatibleQuery } from '../watched/watch-utils.js';
+import { createSuspendingPromise, useTemporaryHold } from './suspense-utils.js';
+import { SuspenseQueryResult } from './SuspenseQueryResult.js';
 
 /**
  * Use a query which is not watched, but suspends until the initial result has loaded.
@@ -37,7 +37,7 @@ export const useSingleSuspenseQuery = <T = any>(
 
   // Only use a temporary watched query if we don't have data yet.
   const watchedQuery = data ? null : (store.getQuery(key, parsedQuery, options) as WatchedQuery<T[]>);
-  const { releaseHold } = useTemporaryHold(watchedQuery);
+  useTemporaryHold(watchedQuery);
   React.useEffect(() => {
     // Set the initial yielded data
     // it should be available once we commit the component
@@ -46,10 +46,6 @@ export const useSingleSuspenseQuery = <T = any>(
     } else if (watchedQuery?.state.isLoading === false) {
       setData(watchedQuery.state.data);
       setError(null);
-    }
-
-    if (!watchedQuery?.state.isLoading) {
-      releaseHold();
     }
   }, []);
 

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/op-sqlite",
-  "version": "0.7.5",
+  "version": "0.7.7",
   "description": "PowerSync - sync Postgres or MongoDB with SQLite in your React Native app for offline-first and real-time data",
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",
@@ -41,7 +41,7 @@
     "build:prod": "bob build",
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
-    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib node_modules"
+    "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib tsconfig.tsbuildinfo"
   },
   "keywords": [
     "data sync",
@@ -66,7 +66,7 @@
   },
   "peerDependencies": {
     "@op-engineering/op-sqlite": "^13.0.0 || ^14.0.0",
-    "@powersync/common": "workspace:^1.35.0",
+    "@powersync/common": "workspace:^1.37.0",
     "react": "*",
     "react-native": "*"
   },

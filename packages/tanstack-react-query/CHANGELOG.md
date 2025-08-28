@@ -1,5 +1,33 @@
 # @powersync/tanstack-react-query
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [8decd49]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+  - @powersync/react@1.7.1
+
+## 0.1.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM nature.
+
+### Patch Changes
+
+- Updated dependencies [dce523a]
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7ad251a]
+  - @powersync/react@1.7.0
+  - @powersync/common@1.36.0
+
 ## 0.0.31
 
 ### Patch Changes

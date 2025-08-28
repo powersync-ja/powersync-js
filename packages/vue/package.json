@@ -1,11 +1,12 @@
 {
   "name": "@powersync/vue",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "description": "Vue components for JourneyApps PowerSync",
+  "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,9 +15,10 @@
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest"
+    "test": "vitest",
+    "test:exports": "attw --pack --profile=esm-only  ."
   },
   "repository": {
     "type": "git",
@@ -30,7 +32,7 @@
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
     "vue": "*",
-    "@powersync/common": "workspace:^1.35.0"
+    "@powersync/common": "workspace:^1.37.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

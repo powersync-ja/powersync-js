@@ -849,6 +849,80 @@ function defineSyncTests(impl: SyncClientImplementation) {
       );
     });
   }
+
+  mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
+    // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
+    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logMessages: string[] = [];
+    (logger as any).invoke = (level, args) => {
+      console.log(...args);
+      logMessages.push(util.format(...args));
+    };
+
+    const powersync = await syncService.createDatabase({ logger });
+    powersync.watchWithCallback('SELECT * FROM lists', [], {
+      onResult(results) {
+        const param = results.rows?.length ?? 0;
+
+        powersync.connect(new TestConnector(), { ...options, params: { a: param } });
+      }
+    });
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    expect(syncService.connectedListeners[0]).toMatchObject({
+      parameters: { a: 0 }
+    });
+
+    await powersync.execute('insert into lists (id, name) values (?, ?);', ['local_list', 'local']);
+
+    await vi.waitFor(() =>
+      expect(syncService.connectedListeners[0]).toMatchObject({
+        parameters: { a: 1 }
+      })
+    );
+
+    syncService.pushLine({
+      checkpoint: {
+        write_checkpoint: '1',
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    syncService.pushLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'local_list',
+            object_type: 'lists',
+            data: '{"name": "local"}'
+          },
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'PUT',
+            object_id: 'my_list',
+            object_type: 'lists',
+            data: '{"name": "r"}'
+          }
+        ]
+      }
+    });
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+
+    await vi.waitFor(() =>
+      expect(syncService.connectedListeners[0]).toMatchObject({
+        parameters: { a: 2 }
+      })
+    );
+
+    expect(logMessages).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('Cannot enqueue data into closed stream')])
+    );
+  });
 }
 
 function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {

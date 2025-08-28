@@ -1,5 +1,27 @@
 # diagnostics-app
 
+## 0.9.7
+
+### Patch Changes
+
+- 47294f2: Update PowerSync core extension to version 0.4.4
+- Updated dependencies [c910c66]
+- Updated dependencies [8decd49]
+- Updated dependencies [9e3e3a5]
+- Updated dependencies [47294f2]
+  - @powersync/web@1.26.0
+  - @powersync/react@1.7.1
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies [dce523a]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7ad251a]
+  - @powersync/react@1.7.0
+  - @powersync/web@1.25.1
+
 ## 0.9.5
 
 ### Patch Changes

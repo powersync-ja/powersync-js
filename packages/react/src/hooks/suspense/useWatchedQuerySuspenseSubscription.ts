@@ -1,6 +1,6 @@
 import { WatchedQuery } from '@powersync/common';
 import React from 'react';
-import { createSuspendingPromise, useTemporaryHold } from './suspense-utils';
+import { createSuspendingPromise, useTemporaryHold } from './suspense-utils.js';
 
 /**
  * A hook to access and subscribe to the results of an existing {@link WatchedQuery}.
@@ -29,7 +29,7 @@ export const useWatchedQuerySuspenseSubscription = <
 >(
   query: Query
 ): Query['state'] => {
-  const { releaseHold } = useTemporaryHold(query);
+  useTemporaryHold(query);
 
   // Force update state function
   const [, setUpdateCounter] = React.useState(0);
@@ -43,12 +43,6 @@ export const useWatchedQuerySuspenseSubscription = <
         setUpdateCounter((prev) => prev + 1);
       }
     });
-
-    // This runs on the first iteration before the component is suspended
-    // We should only release the hold once the component is no longer loading
-    if (!query.state.isLoading) {
-      releaseHold();
-    }
 
     return dispose;
   }, []);

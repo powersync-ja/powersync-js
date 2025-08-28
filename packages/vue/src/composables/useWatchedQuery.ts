@@ -1,7 +1,7 @@
 import { type CompilableQuery, ParsedQuery, parseQuery, WatchCompatibleQuery } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
-import { usePowerSync } from './powerSync';
-import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery';
+import { usePowerSync } from './powerSync.js';
+import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery.js';
 
 export const useWatchedQuery = <T = any>(
   query: MaybeRef<string | CompilableQuery<T>>,

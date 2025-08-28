@@ -29,7 +29,7 @@ export interface SQLJSOpenOptions extends SQLOpenOptions {
 }
 
 export interface ResolvedSQLJSOpenOptions extends SQLJSOpenOptions {
-  persister: SQLJSPersister;
+  persister?: SQLJSPersister;
   logger: ILogger;
 }
 
@@ -96,21 +96,19 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     });
 
     this.writeScheduler = new ControlledExecutor(async (db: SQLJs.Database) => {
+      if (!this.options.persister) {
+        return;
+      }
+
       await this.options.persister.writeFile(db.export());
     });
   }
 
   protected resolveOptions(options: SQLJSOpenOptions): ResolvedSQLJSOpenOptions {
-    const persister = options.persister ?? {
-      readFile: async () => null,
-      writeFile: async () => {}
-    };
-
     const logger = options.logger ?? createLogger('SQLJSDBAdapter');
 
     return {
       ...options,
-      persister,
       logger
     };
   }
@@ -125,7 +123,7 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
         this.options.logger.error('[stderr]', text);
       }
     });
-    const existing = await this.options.persister.readFile();
+    const existing = await this.options.persister?.readFile();
     const db = new SQL.Database(existing);
     this.dbP = db['db'];
     this._db = db;
@@ -262,7 +260,10 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       const db = await this.getDB();
       const result = await fn(this.generateLockContext());
 
-      this.writeScheduler.schedule(db);
+      // No point to schedule a write if there's no persister.
+      if (this.options.persister) {
+        this.writeScheduler.schedule(db);
+      }
 
       const notification: BatchedUpdateNotification = {
         rawUpdates: [],

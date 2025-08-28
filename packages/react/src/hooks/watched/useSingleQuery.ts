@@ -1,9 +1,12 @@
 import React from 'react';
-import { QueryResult } from './watch-types';
-import { InternalHookOptions } from './watch-utils';
+import { QueryResult } from './watch-types.js';
+import { InternalHookOptions } from './watch-utils.js';
 
+/**
+ * @internal not exported from `index.ts`
+ */
 export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowType[]>): QueryResult<RowType> => {
-  const { query, powerSync, queryChanged } = options;
+  const { query, powerSync, queryChanged, active } = options;
 
   const [output, setOutputState] = React.useState<QueryResult<RowType>>({
     isLoading: true,
@@ -46,13 +49,16 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
   );
 
   // Trigger initial query execution
+  // @ts-ignore: Complains about not all code paths returning a value
   React.useEffect(() => {
-    const abortController = new AbortController();
-    runQuery(abortController.signal);
-    return () => {
-      abortController.abort();
-    };
-  }, [powerSync, queryChanged]);
+    if (active) {
+      const abortController = new AbortController();
+      runQuery(abortController.signal);
+      return () => {
+        abortController.abort();
+      };
+    }
+  }, [powerSync, active, queryChanged]);
 
   return {
     ...output,

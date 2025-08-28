@@ -1,7 +1,6 @@
 import {
   AbstractStreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
-  createLogger,
   LockOptions,
   LockType
 } from '@powersync/common';
@@ -25,7 +24,7 @@ export class WebStreamingSyncImplementation extends AbstractStreamingSyncImpleme
     return this.options as WebStreamingSyncImplementationOptions;
   }
 
-  obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
+  async obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
     const identifier = `streaming-sync-${lockOptions.type}-${this.webOptions.identifier}`;
     if (lockOptions.type == LockType.SYNC) {
       this.logger.debug('requesting lock for ', identifier);

@@ -299,4 +299,37 @@ describe('useSuspenseQuery', () => {
     expect(newResult.current).not.null;
     expect(newResult.current.data.length).toEqual(1);
   });
+
+  it('should use an existing loaded WatchedQuery instance', async () => {
+    const db = openPowerSync();
+
+    const listsQuery = db
+      .query({
+        sql: `SELECT * FROM lists`,
+        parameters: []
+      })
+      .watch();
+
+    // Ensure the query has loaded before passing it to the hook.
+    // This means we don't require a temporary hold
+    await waitFor(
+      () => {
+        expect(listsQuery.state.isLoading).toBe(false);
+      },
+      { timeout: 1000 }
+    );
+
+    const wrapper = ({ children }) => (
+      <React.StrictMode>
+        <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
+      </React.StrictMode>
+    );
+    const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {
+      wrapper
+    });
+
+    // Initially, the query should be loading/suspended
+    expect(result.current).toBeDefined();
+    expect(result.current.data.length).toEqual(0);
+  });
 });
