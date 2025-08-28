@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 1.7.2
+
+### Patch Changes
+
+- c191989: Fix regression in useQuery where updating the supplied query parameters would not update the underlaying query.
+
 ## 1.7.1
 
 ### Patch Changes
