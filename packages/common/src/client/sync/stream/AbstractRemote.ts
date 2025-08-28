@@ -502,6 +502,10 @@ export abstract class AbstractRemote {
      *  Aborting the active fetch request while it is being consumed seems to throw
      *  an unhandled exception on the window level.
      */
+    if (abortSignal?.aborted) {
+      throw new AbortOperation('Abort request received before making postStreamRaw request');
+    }
+
     const controller = new AbortController();
     let requestResolved = false;
     abortSignal?.addEventListener('abort', () => {

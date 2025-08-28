@@ -900,7 +900,7 @@ The next upload iteration will be delayed.`);
     let hadSyncLine = false;
 
     if (signal.aborted) {
-      return;
+      throw new AbortOperation('Connection request has been aborted');
     }
     const abortController = new AbortController();
     signal.addEventListener('abort', () => abortController.abort());
