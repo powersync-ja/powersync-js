@@ -68,7 +68,7 @@ export const constructCompatibleQuery = <RowType>(
         execute: () => query.execute()
       };
     }
-  }, [query, powerSync]);
+  }, [query, powerSync, ...parameters]);
 
   const queryChanged = checkQueryChanged(parsedQuery, options);
 
