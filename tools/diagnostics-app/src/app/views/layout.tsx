@@ -155,6 +155,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography>{title}</Typography>
           </Box>
+          {syncStatus?.clientImplementation && <Typography>Client: {syncStatus?.clientImplementation}</Typography>}
           <NorthIcon
             sx={{ marginRight: '-10px' }}
             color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}

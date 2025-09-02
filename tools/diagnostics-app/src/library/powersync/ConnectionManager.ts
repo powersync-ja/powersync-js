@@ -3,6 +3,7 @@ import {
   createBaseLogger,
   LogLevel,
   PowerSyncDatabase,
+  SyncClientImplementation,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
   WASQLiteVFS,
@@ -14,6 +15,7 @@ import { safeParse } from '../safeParse/safeParse';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
+import { RustClientInterceptor } from './RustClientInterceptor';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -57,9 +59,19 @@ if (connector.hasCredentials()) {
 }
 
 export async function connect() {
+  const client =
+    localStorage.getItem('preferred_client_implementation') == SyncClientImplementation.RUST
+      ? SyncClientImplementation.RUST
+      : SyncClientImplementation.JAVASCRIPT;
+
   const params = getParams();
   await sync?.disconnect();
   const remote = new WebRemote(connector);
+  const adapter =
+    client == SyncClientImplementation.JAVASCRIPT
+      ? new RecordingStorageAdapter(db.database, schemaManager)
+      : new RustClientInterceptor(db.database, remote, schemaManager);
+
   const syncOptions: WebStreamingSyncImplementationOptions = {
     adapter,
     remote,
@@ -69,7 +81,7 @@ export async function connect() {
     identifier: 'diagnostics'
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
-  await sync.connect({ params });
+  await sync.connect({ params, clientImplementation: client });
   if (!sync.syncStatus.connected) {
     const error = sync.syncStatus.dataFlowStatus.downloadError ?? new Error('Failed to connect');
     // Disconnect but don't wait for it

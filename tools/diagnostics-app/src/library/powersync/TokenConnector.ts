@@ -1,5 +1,6 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
+import { LoginDetailsFormValues } from '@/components/widgets/LoginDetailsWidget';
 
 export interface Credentials {
   token: string;
@@ -21,11 +22,12 @@ export class TokenConnector implements PowerSyncBackendConnector {
     await tx?.complete();
   }
 
-  async signIn(credentials: Credentials) {
+  async signIn(credentials: LoginDetailsFormValues) {
     validateSecureContext(credentials.endpoint);
     checkJWT(credentials.token);
     try {
       localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
+      localStorage.setItem('preferred_client_implementation', credentials.clientImplementation);
       await connect();
     } catch (e) {
       this.clearCredentials();
@@ -39,6 +41,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
 
   clearCredentials() {
     localStorage.removeItem('powersync_credentials');
+    localStorage.removeItem('preferred_client_implementation');
   }
 }
 

@@ -632,8 +632,10 @@ The next upload iteration will be delayed.`);
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
+        const clientImplementation = resolvedOptions.clientImplementation;
+        this.updateSyncStatus({ clientImplementation });
 
-        if (resolvedOptions.clientImplementation == SyncClientImplementation.JAVASCRIPT) {
+        if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
           await this.legacyStreamingSyncIteration(signal, resolvedOptions);
         } else {
           await this.requireKeyFormat(true);
@@ -1168,7 +1170,8 @@ The next upload iteration will be delayed.`);
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries
+      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries,
+      clientImplementation: options.clientImplementation ?? this.syncStatus.clientImplementation
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
