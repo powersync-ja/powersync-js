@@ -33,7 +33,7 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   get database() {
     return {
-      get: vi.fn().mockResolvedValue({ version: '0.3.11' }),
+      get: vi.fn().mockResolvedValue({ version: '0.4.5' }),
       getAll: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
       refreshSchema: vi.fn()
