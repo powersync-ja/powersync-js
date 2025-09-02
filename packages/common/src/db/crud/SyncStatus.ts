@@ -1,4 +1,4 @@
-import { SyncClientImplementation } from 'src/client/sync/stream/AbstractStreamingSyncImplementation.js';
+import { SyncClientImplementation } from '../../client/sync/stream/AbstractStreamingSyncImplementation.js';
 import { InternalProgressInformation, SyncProgress } from './SyncProgress.js';
 
 export type SyncDataFlowStatus = Partial<{
