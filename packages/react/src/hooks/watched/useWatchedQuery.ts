@@ -16,6 +16,8 @@ export const useWatchedQuery = <RowType = unknown>(
 ): QueryResult<RowType> | ReadonlyQueryResult<RowType> => {
   const { query, powerSync, queryChanged, options: hookOptions, active } = options;
 
+  // This ref is used to protect against cases where `queryChanged` changes multiple times too quickly to be
+  // picked up by the useEffect below. This typically happens when React.StrictMode is enabled.
   const queryChangeRef = React.useRef(false);
   if (queryChanged && !queryChangeRef.current) {
     queryChangeRef.current = true;
