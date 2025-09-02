@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
 
   s.dependency "React-callinvoker"
   s.dependency "React"
-  s.dependency "powersync-sqlite-core", "~> 0.4.4"
+  s.dependency "powersync-sqlite-core", "~> 0.4.5"
   if defined?(install_modules_dependencies())
     install_modules_dependencies(s)
   else
