@@ -393,13 +393,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
         .map((n) => parseInt(n));
     } catch (e) {
       throw new Error(
-        `Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
+        `Unsupported powersync extension version. Need >=0.4.5 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
     }
 
-    // Validate >=0.3.11 <1.0.0
-    if (versionInts[0] != 0 || versionInts[1] < 3 || (versionInts[1] == 3 && versionInts[2] < 11)) {
-      throw new Error(`Unsupported powersync extension version. Need >=0.3.11 <1.0.0, got: ${this.sdkVersion}`);
+    // Validate >=0.4.5 <1.0.0
+    if (versionInts[0] != 0 || versionInts[1] < 4 || (versionInts[1] == 4 && versionInts[2] < 5)) {
+      throw new Error(`Unsupported powersync extension version. Need >=0.4.5 <1.0.0, got: ${this.sdkVersion}`);
     }
   }
 
