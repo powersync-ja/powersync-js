@@ -93,7 +93,7 @@ describe('useQuery', () => {
         );
       });
 
-      it.only('should rerun the query when refresh is used', async () => {
+      it('should rerun the query when refresh is used', async () => {
         const db = openPowerSync();
         const getAllSpy = vi.spyOn(db, 'getAll');
 
