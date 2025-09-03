@@ -16,6 +16,13 @@ export const useWatchedQuery = <RowType = unknown>(
 ): QueryResult<RowType> | ReadonlyQueryResult<RowType> => {
   const { query, powerSync, queryChanged, options: hookOptions, active } = options;
 
+  // This ref is used to protect against cases where `queryChanged` changes multiple times too quickly to be
+  // picked up by the useEffect below. This typically happens when React.StrictMode is enabled.
+  const queryChangeRef = React.useRef(false);
+  if (queryChanged && !queryChangeRef.current) {
+    queryChangeRef.current = true;
+  }
+
   function createWatchedQuery() {
     if (!active) {
       return null;
@@ -44,14 +51,15 @@ export const useWatchedQuery = <RowType = unknown>(
   // Indicates that the query will be re-fetched due to a change in the query.
   // Used when `isFetching` hasn't been set to true yet due to React execution.
   React.useEffect(() => {
-    if (queryChanged) {
+    if (queryChangeRef.current) {
       watchedQuery?.updateSettings({
         query,
         throttleMs: hookOptions.throttleMs,
         reportFetching: hookOptions.reportFetching
       });
+      queryChangeRef.current = false;
     }
-  }, [queryChanged]);
+  }, [queryChangeRef.current]);
 
   return useNullableWatchedQuerySubscription(watchedQuery);
 };
