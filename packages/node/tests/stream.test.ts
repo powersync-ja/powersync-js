@@ -1,0 +1,153 @@
+import { describe, vi, expect, beforeEach } from 'vitest';
+import { SyncClientImplementation, SyncStreamConnectionMethod } from '@powersync/common';
+import Logger from 'js-logger';
+import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils';
+
+Logger.useDefaults({ defaultLevel: Logger.WARN });
+
+describe('Sync streams', () => {
+  const defaultOptions = {
+    clientImplementation: SyncClientImplementation.RUST,
+    connectionMethod: SyncStreamConnectionMethod.HTTP
+  };
+
+  mockSyncServiceTest('can disable default streams', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    database.connect(new TestConnector(), {
+      includeDefaultStreams: false,
+      ...defaultOptions
+    });
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    expect(syncService.connectedListeners[0]).toMatchObject({
+      streams: {
+        include_defaults: false,
+        subscriptions: []
+      }
+    });
+  });
+
+  mockSyncServiceTest('subscribes with streams', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    const a = await database.syncStream('stream', { foo: 'a' }).subscribe();
+    const b = await database.syncStream('stream', { foo: 'b' }).subscribe({ priority: 1 });
+
+    database.connect(new TestConnector(), defaultOptions);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    expect(syncService.connectedListeners[0]).toMatchObject({
+      streams: {
+        include_defaults: true,
+        subscriptions: [
+          {
+            stream: 'stream',
+            parameters: { foo: 'a' },
+            override_priority: null
+          },
+          {
+            stream: 'stream',
+            parameters: { foo: 'b' },
+            override_priority: 1
+          }
+        ]
+      }
+    });
+
+    let statusPromise = nextStatus(database);
+    syncService.pushLine(
+      checkpoint({
+        last_op_id: 0,
+        buckets: [
+          bucket('a', 0, { priority: 3, subscriptions: [{ sub: 0 }] }),
+          bucket('b', 0, { priority: 1, subscriptions: [{ sub: 1 }] })
+        ],
+        streams: [stream('stream', false)]
+      })
+    );
+    let status = await statusPromise;
+    for (const subscription of [a, b]) {
+      expect(status.statusFor(subscription).subscription.active).toBeTruthy();
+      expect(status.statusFor(subscription).subscription.lastSyncedAt).toBeNull();
+      expect(status.statusFor(subscription).subscription.hasExplicitSubscription).toBeTruthy();
+    }
+
+    statusPromise = nextStatus(database);
+    syncService.pushLine({ partial_checkpoint_complete: { last_op_id: '0', priority: 1 } });
+    status = await statusPromise;
+    expect(status.statusFor(a).subscription.lastSyncedAt).toBeNull();
+    expect(status.statusFor(b).subscription.lastSyncedAt).not.toBeNull();
+    await b.waitForFirstSync();
+
+    syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+    await a.waitForFirstSync();
+  });
+
+  mockSyncServiceTest('reports default streams', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    database.connect(new TestConnector(), defaultOptions);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    let statusPromise = nextStatus(database);
+    syncService.pushLine(
+      checkpoint({
+        last_op_id: 0,
+        buckets: [],
+        streams: [stream('default_stream', true)]
+      })
+    );
+    let status = await statusPromise;
+
+    expect(status.subscriptions).toHaveLength(1);
+    expect(status.subscriptions[0]).toMatchObject({
+      subscription: {
+        name: 'default_stream',
+        parameters: null,
+        isDefault: true,
+        hasExplicitSubscription: false
+      }
+    });
+  });
+
+  mockSyncServiceTest('changes subscriptions dynamically', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    database.connect(new TestConnector(), defaultOptions);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    syncService.pushLine(
+      checkpoint({
+        last_op_id: 0,
+        buckets: []
+      })
+    );
+    const subscription = await database.syncStream('a').subscribe();
+
+    await vi.waitFor(() =>
+      expect(syncService.connectedListeners[0]).toMatchObject({
+        streams: {
+          include_defaults: true,
+          subscriptions: [
+            {
+              stream: 'a',
+              parameters: null,
+              override_priority: null
+            }
+          ]
+        }
+      })
+    );
+
+    // Given that the subscription has a TTL, dropping the handle should not re-subscribe.
+    subscription.unsubscribe();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(syncService.connectedListeners[0].streams.subscriptions).toHaveLength(1);
+  });
+
+  mockSyncServiceTest('subscriptions update while offline', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+
+    let statusPromise = nextStatus(database);
+    const subscription = await database.syncStream('foo').subscribe();
+    let status = await statusPromise;
+    expect(status.statusFor(subscription)).not.toBeNull();
+  });
+});

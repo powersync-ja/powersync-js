@@ -87,7 +87,8 @@ export function coreStatusToJs(status: CoreSyncStatus): sync_status.SyncStatusOp
     connecting: status.connecting,
     dataFlow: {
       downloading: status.downloading != null,
-      downloadProgress: status.downloading?.buckets
+      downloadProgress: status.downloading?.buckets,
+      internalStreamSubscriptions: status.streams
     },
     lastSyncedAt: completeSync?.lastSyncedAt,
     hasSynced: completeSync?.hasSynced,

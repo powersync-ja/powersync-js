@@ -40,6 +40,7 @@ import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/Watch
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { coreStatusToJs, CoreSyncStatus } from './sync/stream/core-instruction.js';
+import { SyncStream } from './sync/sync-streams.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -536,7 +537,9 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
-  syncStream(name: string, params?: Record<string, any>) {}
+  syncStream(name: string, params?: Record<string, any>): SyncStream {
+    return this.connectionManager.stream(name, params ?? null);
+  }
 
   /**
    * Close the database, releasing resources.

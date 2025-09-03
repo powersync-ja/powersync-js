@@ -1,7 +1,7 @@
 import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
 import { SyncClientImplementation } from '../../client/sync/stream/AbstractStreamingSyncImplementation.js';
 import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
-import { SyncStreamDescription, SyncSubscriptionDescription } from 'src/client/sync/sync-streams.js';
+import { SyncStreamDescription, SyncSubscriptionDescription } from '../../client/sync/sync-streams.js';
 
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
