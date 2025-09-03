@@ -548,11 +548,13 @@ The next upload iteration will be delayed.`);
     while (true) {
       this.updateSyncStatus({ connecting: true });
       let shouldDelayRetry = true;
+      let result: RustIterationResult | null = null;
+
       try {
         if (signal?.aborted) {
           break;
         }
-        await this.streamingSyncIteration(nestedAbortController.signal, options);
+        result = await this.streamingSyncIteration(nestedAbortController.signal, options);
         // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
         /**
@@ -586,14 +588,16 @@ The next upload iteration will be delayed.`);
           nestedAbortController = new AbortController();
         }
 
-        this.updateSyncStatus({
-          connected: false,
-          connecting: true // May be unnecessary
-        });
+        if (result?.immediateRestart != true) {
+          this.updateSyncStatus({
+            connected: false,
+            connecting: true // May be unnecessary
+          });
 
-        // On error, wait a little before retrying
-        if (shouldDelayRetry) {
-          await this.delayRetry(nestedAbortController.signal);
+          // On error, wait a little before retrying
+          if (shouldDelayRetry) {
+            await this.delayRetry(nestedAbortController.signal);
+          }
         }
       }
     }
@@ -641,8 +645,11 @@ The next upload iteration will be delayed.`);
     }
   }
 
-  protected async streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
-    await this.obtainLock({
+  protected streamingSyncIteration(
+    signal: AbortSignal,
+    options?: PowerSyncConnectionOptions
+  ): Promise<RustIterationResult | null> {
+    return this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
@@ -655,9 +662,10 @@ The next upload iteration will be delayed.`);
 
         if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
           await this.legacyStreamingSyncIteration(signal, resolvedOptions);
+          return null;
         } else {
           await this.requireKeyFormat(true);
-          await this.rustSyncIteration(signal, resolvedOptions);
+          return await this.rustSyncIteration(signal, resolvedOptions);
         }
       }
     });
@@ -912,12 +920,16 @@ The next upload iteration will be delayed.`);
     return;
   }
 
-  private async rustSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
+  private async rustSyncIteration(
+    signal: AbortSignal,
+    resolvedOptions: RequiredPowerSyncConnectionOptions
+  ): Promise<RustIterationResult> {
     const syncImplementation = this;
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let receivingLines: Promise<void> | null = null;
     let hadSyncLine = false;
+    let hideDisconnectOnRestart = false;
 
     if (signal.aborted) {
       throw new AbortOperation('Connection request has been aborted');
@@ -1046,6 +1058,7 @@ The next upload iteration will be delayed.`);
         }
       } else if ('CloseSyncStream' in instruction) {
         abortController.abort();
+        hideDisconnectOnRestart = instruction.CloseSyncStream.hide_disconnect;
       } else if ('FlushFileSystem' in instruction) {
         // Not necessary on JS platforms.
       } else if ('DidCompleteSync' in instruction) {
@@ -1084,7 +1097,7 @@ The next upload iteration will be delayed.`);
         if (controlInvocations && !controlInvocations?.closed) {
           controlInvocations.enqueueData({
             command: PowerSyncControlCommand.UPDATE_SUBSCRIPTIONS,
-            payload: JSON.stringify({ active_streams: this.activeStreams })
+            payload: JSON.stringify(this.activeStreams)
           });
         }
       };
@@ -1093,6 +1106,8 @@ The next upload iteration will be delayed.`);
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       await stop();
     }
+
+    return { immediateRestart: hideDisconnectOnRestart };
   }
 
   private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
@@ -1227,4 +1242,8 @@ The next upload iteration will be delayed.`);
 interface EnqueuedCommand {
   command: PowerSyncControlCommand;
   payload?: Uint8Array | string;
+}
+
+interface RustIterationResult {
+  immediateRestart: boolean;
 }

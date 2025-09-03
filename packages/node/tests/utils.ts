@@ -6,12 +6,15 @@ import { ReadableStream, TransformStream } from 'node:stream/web';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
+  BucketChecksum,
   column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
+  StreamingSyncCheckpoint,
+  StreamingSyncCheckpointComplete,
   StreamingSyncLine,
   SyncStatus,
   Table
@@ -50,7 +53,7 @@ export const tempDirectoryTest = test.extend<{ tmpdir: string }>({
   }
 });
 
-async function createDatabase(
+export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
@@ -192,6 +195,48 @@ export function waitForSyncStatus(
           reject(e);
           dispose();
         }
+      }
+    });
+  });
+}
+
+export function checkpoint(options: { last_op_id: number; buckets?: any[]; streams?: any[] }): StreamingSyncCheckpoint {
+  return {
+    checkpoint: {
+      last_op_id: `${options.last_op_id}`,
+      buckets: options.buckets ?? [],
+      write_checkpoint: null,
+      streams: options.streams ?? []
+    }
+  };
+}
+
+export function bucket(
+  name: string,
+  count: number,
+  options: { priority: number; subscriptions?: any } = { priority: 3 }
+): BucketChecksum {
+  return {
+    bucket: name,
+    count,
+    checksum: 0,
+    priority: options.priority,
+    subscriptions: options.subscriptions
+  };
+}
+
+export function stream(name: string, isDefault: boolean, errors = []) {
+  return { name, is_default: isDefault, errors };
+}
+
+export function nextStatus(db: PowerSyncDatabase): Promise<SyncStatus> {
+  return new Promise((resolve) => {
+    let l;
+
+    l = db.registerListener({
+      statusChanged(status) {
+        resolve(status);
+        l();
       }
     });
   });

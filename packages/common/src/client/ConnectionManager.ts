@@ -292,7 +292,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
           }
         });
 
-        if (!this.pendingConnectionOptions) {
+        if (!this.syncStreamImplementation) {
           // We're not connected. So, update the offline sync status to reflect the new subscription.
           // (With an active iteration, the sync client would include it in its state).
           await this.options.resolveOfflineSyncStatus();

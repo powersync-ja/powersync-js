@@ -12,6 +12,7 @@ export interface Checkpoint {
   last_op_id: OpId;
   buckets: BucketChecksum[];
   write_checkpoint?: string;
+  streams?: any[];
 }
 
 export interface BucketState {
@@ -49,6 +50,7 @@ export interface BucketChecksum {
    * Count of operations - informational only.
    */
   count?: number;
+  subscriptions?: any;
 }
 
 export enum PSInternalTable {

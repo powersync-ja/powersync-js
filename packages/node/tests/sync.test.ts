@@ -1,7 +1,7 @@
 import { describe, vi, expect, beforeEach } from 'vitest';
 import util from 'node:util';
 
-import { MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
+import { bucket, MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
 import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
@@ -923,15 +923,6 @@ function defineSyncTests(impl: SyncClientImplementation) {
       expect.arrayContaining([expect.stringContaining('Cannot enqueue data into closed stream')])
     );
   });
-}
-
-function bucket(name: string, count: number, options: { priority: number } = { priority: 3 }): BucketChecksum {
-  return {
-    bucket: name,
-    count,
-    checksum: 0,
-    priority: options.priority
-  };
 }
 
 async function waitForProgress(
