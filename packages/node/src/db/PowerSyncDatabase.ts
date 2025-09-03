@@ -4,6 +4,7 @@ import {
   AbstractStreamingSyncImplementation,
   AdditionalConnectionOptions,
   BucketStorageAdapter,
+  CreateSyncImplementationOptions,
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
@@ -76,7 +77,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: NodeAdditionalConnectionOptions
+    options: CreateSyncImplementationOptions & NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;
     const remote = new NodeRemote(connector, logger, {
@@ -85,6 +86,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     });
 
     return new NodeStreamingSyncImplementation({
+      subscriptions: options.subscriptions,
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {
