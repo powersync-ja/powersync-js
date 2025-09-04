@@ -1,5 +1,5 @@
-import { describe, vi, expect, beforeEach } from 'vitest';
-import { SyncClientImplementation, SyncStreamConnectionMethod } from '@powersync/common';
+import { describe, vi, expect } from 'vitest';
+import { PowerSyncConnectionOptions, SyncClientImplementation, SyncStreamConnectionMethod } from '@powersync/common';
 import Logger from 'js-logger';
 import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils';
 
@@ -9,16 +9,15 @@ describe('Sync streams', () => {
   const defaultOptions = {
     clientImplementation: SyncClientImplementation.RUST,
     connectionMethod: SyncStreamConnectionMethod.HTTP
-  };
+  } satisfies PowerSyncConnectionOptions;
 
   mockSyncServiceTest('can disable default streams', async ({ syncService }) => {
     const database = await syncService.createDatabase();
-    database.connect(new TestConnector(), {
+    await database.connect(new TestConnector(), {
       includeDefaultStreams: false,
       ...defaultOptions
     });
 
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
     expect(syncService.connectedListeners[0]).toMatchObject({
       streams: {
         include_defaults: false,
@@ -32,8 +31,7 @@ describe('Sync streams', () => {
     const a = await database.syncStream('stream', { foo: 'a' }).subscribe();
     const b = await database.syncStream('stream', { foo: 'b' }).subscribe({ priority: 1 });
 
-    database.connect(new TestConnector(), defaultOptions);
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    await database.connect(new TestConnector(), defaultOptions);
 
     expect(syncService.connectedListeners[0]).toMatchObject({
       streams: {
@@ -84,8 +82,7 @@ describe('Sync streams', () => {
 
   mockSyncServiceTest('reports default streams', async ({ syncService }) => {
     const database = await syncService.createDatabase();
-    database.connect(new TestConnector(), defaultOptions);
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    await database.connect(new TestConnector(), defaultOptions);
 
     let statusPromise = nextStatus(database);
     syncService.pushLine(
@@ -110,8 +107,7 @@ describe('Sync streams', () => {
 
   mockSyncServiceTest('changes subscriptions dynamically', async ({ syncService }) => {
     const database = await syncService.createDatabase();
-    database.connect(new TestConnector(), defaultOptions);
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    await database.connect(new TestConnector(), defaultOptions);
 
     syncService.pushLine(
       checkpoint({
