@@ -98,7 +98,7 @@ export interface SyncStreamSubscription extends SyncStreamDescription {
   /**
    * A promise that resolves once data from in this sync stream has been synced and applied.
    */
-  waitForFirstSync(): Promise<void>;
+  waitForFirstSync(abort?: AbortSignal): Promise<void>;
 
   /**
    * Removes this stream subscription.

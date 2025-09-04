@@ -5,6 +5,7 @@ import {
   LockType,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
+  SubscribedStream,
   SyncStatus,
   SyncStatusOptions
 } from '@powersync/common';
@@ -80,4 +81,9 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
    * This is a no-op in SSR mode.
    */
   triggerCrudUpload() {}
+
+  /**
+   * No-op in SSR mode.
+   */
+  updateSubscriptions(): void {}
 }

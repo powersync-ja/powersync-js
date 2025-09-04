@@ -12,6 +12,7 @@ import {
   DBAdapter,
   PowerSyncBackendConnector,
   SqliteBucketStorage,
+  SubscribedStream,
   SyncStatus
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
@@ -55,7 +56,7 @@ export type ManualSharedSyncPayload = {
  * @internal
  */
 export type SharedSyncInitOptions = {
-  streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote'>;
+  streamOptions: Omit<WebStreamingSyncImplementationOptions, 'adapter' | 'uploadCrud' | 'remote' | 'subscriptions'>;
   dbParams: ResolvedWebSQLOpenOptions;
 };
 
@@ -73,6 +74,7 @@ export type WrappedSyncPort = {
   port: MessagePort;
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
   db?: DBAdapter;
+  currentSubscriptions: SubscribedStream[];
 };
 
 /**
@@ -94,10 +96,7 @@ const CONNECTOR_PLACEHOLDER = {} as PowerSyncBackendConnector;
  * @internal
  * Shared sync implementation which runs inside a shared webworker
  */
-export class SharedSyncImplementation
-  extends BaseObserver<SharedSyncImplementationListener>
-  implements StreamingSyncImplementation
-{
+export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementationListener> {
   protected ports: WrappedSyncPort[];
 
   protected isInitialized: Promise<void>;
@@ -111,6 +110,7 @@ export class SharedSyncImplementation
   protected logger: ILogger;
   protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
   protected portMutex: Mutex;
+  private subscriptions: SubscribedStream[] = [];
 
   protected connectionManager: ConnectionManager;
   syncStatus: SyncStatus;
@@ -186,6 +186,25 @@ export class SharedSyncImplementation
     return this.isInitialized;
   }
 
+  private collectActiveSubscriptions() {
+    this.logger.debug('Collecting active stream subscriptions across tabs');
+    const active = new Map<string, SubscribedStream>();
+    for (const port of this.ports) {
+      for (const stream of port.currentSubscriptions) {
+        const serializedKey = JSON.stringify(stream);
+        active.set(serializedKey, stream);
+      }
+    }
+    this.subscriptions = [...active.values()];
+    this.logger.debug('Collected stream subscriptions', this.subscriptions);
+    this.connectionManager.syncStreamImplementation?.updateSubscriptions(this.subscriptions);
+  }
+
+  updateSubscriptions(port: WrappedSyncPort, subscriptions: SubscribedStream[]) {
+    port.currentSubscriptions = subscriptions;
+    this.collectActiveSubscriptions();
+  }
+
   setLogLevel(level: ILogLevel) {
     this.logger.setLevel(level);
     this.broadCastLogger.setLevel(level);
@@ -196,6 +215,7 @@ export class SharedSyncImplementation
    */
   async setParams(params: SharedSyncInitOptions) {
     await this.portMutex.runExclusive(async () => {
+      this.collectActiveSubscriptions();
       if (this.syncParams) {
         // Cannot modify already existing sync implementation params
         // But we can ask for a DB adapter, if required, at this point.
@@ -250,11 +270,12 @@ export class SharedSyncImplementation
    * Adds a new client tab's message port to the list of connected ports
    */
   async addPort(port: MessagePort) {
-    await this.portMutex.runExclusive(() => {
+    return await this.portMutex.runExclusive(() => {
       const portProvider = {
         port,
-        clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port)
-      };
+        clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port),
+        currentSubscriptions: []
+      } satisfies WrappedSyncPort;
       this.ports.push(portProvider);
 
       // Give the newly connected client the latest status
@@ -262,6 +283,8 @@ export class SharedSyncImplementation
       if (status) {
         portProvider.clientProvider.statusChanged(status.toJSON());
       }
+
+      return portProvider;
     });
   }
 
@@ -427,6 +450,7 @@ export class SharedSyncImplementation
         });
       },
       ...syncParams.streamOptions,
+      subscriptions: this.subscriptions,
       // Logger cannot be transferred just yet
       logger: this.logger
     });

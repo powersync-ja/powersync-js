@@ -1,4 +1,10 @@
-import { PowerSyncConnectionOptions, PowerSyncCredentials, SyncStatus, SyncStatusOptions } from '@powersync/common';
+import {
+  PowerSyncConnectionOptions,
+  PowerSyncCredentials,
+  SubscribedStream,
+  SyncStatus,
+  SyncStatusOptions
+} from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import {
@@ -12,6 +18,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
+import { WorkerClient } from '../../worker/sync/WorkerClient';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -94,8 +101,11 @@ export interface SharedWebStreamingSyncImplementationOptions extends WebStreamin
   db: WebDBAdapter;
 }
 
+/**
+ * The local part of the sync implementation on the web, which talks to a sync implementation hosted in a shared worker.
+ */
 export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplementation {
-  protected syncManager: Comlink.Remote<SharedSyncImplementation>;
+  protected syncManager: Comlink.Remote<WorkerClient>;
   protected clientProvider: SharedSyncClientProvider;
   protected messagePort: MessagePort;
 
@@ -138,7 +148,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       ).port;
     }
 
-    this.syncManager = Comlink.wrap<SharedSyncImplementation>(this.messagePort);
+    this.syncManager = Comlink.wrap<WorkerClient>(this.messagePort);
     this.syncManager.setLogLevel(this.logger.getLevel());
 
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
@@ -152,15 +162,18 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
 
-    this.isInitialized = this.syncManager.setParams({
-      dbParams: this.dbAdapter.getConfiguration(),
-      streamOptions: {
-        crudUploadThrottleMs,
-        identifier,
-        retryDelayMs,
-        flags: flags
-      }
-    });
+    this.isInitialized = this.syncManager.setParams(
+      {
+        dbParams: this.dbAdapter.getConfiguration(),
+        streamOptions: {
+          crudUploadThrottleMs,
+          identifier,
+          retryDelayMs,
+          flags: flags
+        }
+      },
+      options.subscriptions
+    );
 
     /**
      * Pass along any sync status updates to this listener
@@ -233,6 +246,10 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   async waitForReady() {
     return this.isInitialized;
+  }
+
+  updateSubscriptions(subscriptions: SubscribedStream[]): void {
+    this.syncManager.updateSubscriptions(subscriptions);
   }
 
   /**
