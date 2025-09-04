@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.38.0
+
+### Minor Changes
+
+- ce40042: Add `clientImplementation` field to `SyncStatus`.
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- 4d532d4: Improved the abort handling for stale watched query results when the query/parameters change. This fixes the edge case where an already fetching query would handle a query change and briefly report `isFetching` being false before becoming true again.
+
 ## 1.37.0
 
 ### Minor Changes

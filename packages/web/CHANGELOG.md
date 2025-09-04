@@ -1,5 +1,15 @@
 # @powersync/web
 
+## 1.26.1
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+
 ## 1.26.0
 
 ### Minor Changes
