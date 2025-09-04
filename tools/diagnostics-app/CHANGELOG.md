@@ -1,5 +1,16 @@
 # diagnostics-app
 
+## 0.9.9
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- ce40042: Support Rust client.
+- Updated dependencies [9003153]
+- Updated dependencies [b1aca34]
+  - @powersync/web@1.26.1
+  - @powersync/react@1.7.3
+
 ## 0.9.8
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @powersync/react-native
 
+## 1.24.2
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [b1aca34]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+  - @powersync/react@1.7.3
+
 ## 1.24.1
 
 ### Patch Changes

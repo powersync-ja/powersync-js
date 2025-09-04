@@ -1,5 +1,15 @@
 # @powersync/react
 
+## 1.7.3
+
+### Patch Changes
+
+- b1aca34: Fixed issue where `useQuery()` would not correctly trigger a new execution when the query or parameters changed while using StrictMode.
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+
 ## 1.7.2
 
 ### Patch Changes
