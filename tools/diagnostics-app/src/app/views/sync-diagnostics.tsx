@@ -1,5 +1,6 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { clearData, db, sync } from '@/library/powersync/ConnectionManager';
+import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
+import { clearData, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
 import {
   Box,
   Button,
@@ -15,7 +16,8 @@ import {
   styled
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import React from 'react';
+import { SyncStreamStatus } from '@powersync/web';
+import React, { useState } from 'react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -295,8 +297,75 @@ export default function SyncDiagnosticsPage() {
           </Typography>
           {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
         </S.QueryResultContainer>
+        <StreamsState />
       </S.MainContainer>
     </NavigationPage>
+  );
+}
+
+function StreamsState() {
+  const syncStreams = useSyncStatus()?.syncStreams;
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const syncStreamsLoading = syncStreams == null;
+
+  return (
+    <S.QueryResultContainer>
+      <Typography variant="h4" gutterBottom>
+        Sync stream subscriptions
+      </Typography>
+      {syncStreamsLoading ? <CircularProgress /> : <StreamsGrid streams={syncStreams} />}
+      <NewStreamSubscription open={dialogOpen} close={() => setDialogOpen(false)} />
+      <Button sx={{ margin: '10px' }} variant="contained" onClick={() => setDialogOpen(true)}>
+        Add subscription
+      </Button>
+    </S.QueryResultContainer>
+  );
+}
+
+function StreamsGrid(props: { streams: SyncStreamStatus[] }) {
+  const columns: GridColDef[] = [
+    { field: 'name', headerName: 'Stream name', flex: 2 },
+    { field: 'parameters', headerName: 'Parameters', flex: 3, type: 'text' },
+    { field: 'default', headerName: 'Default', flex: 1, type: 'boolean' },
+    { field: 'active', headerName: 'Active', flex: 1, type: 'boolean' },
+    { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean' },
+    { field: 'priority', headerName: 'Priority', flex: 1, type: 'number' },
+    { field: 'last_synced_at', headerName: 'Last synced at', flex: 2, type: 'dateTime' },
+    { field: 'expires', headerName: 'Eviction time', flex: 2, type: 'dateTime' }
+  ];
+
+  const rows = props.streams.map((stream) => {
+    const name = stream.subscription.name;
+    const parameters = JSON.stringify(stream.subscription.parameters);
+
+    return {
+      id: `${name}-${parameters}`,
+      name,
+      parameters,
+      default: stream.subscription.isDefault,
+      has_explicit_subscription: stream.subscription.hasExplicitSubscription,
+      active: stream.subscription.active,
+      last_synced_at: stream.subscription.lastSyncedAt,
+      expires: stream.subscription.expiresAt,
+      priority: stream.priority
+    };
+  });
+
+  return (
+    <DataGrid
+      autoHeight={true}
+      rows={rows}
+      columns={columns}
+      initialState={{
+        pagination: {
+          paginationModel: {
+            pageSize: 10
+          }
+        }
+      }}
+      pageSizeOptions={[10, 50, 100]}
+      disableRowSelectionOnClick
+    />
   );
 }
 

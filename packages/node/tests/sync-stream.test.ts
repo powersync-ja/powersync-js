@@ -64,16 +64,16 @@ describe('Sync streams', () => {
     );
     let status = await statusPromise;
     for (const subscription of [a, b]) {
-      expect(status.statusFor(subscription).subscription.active).toBeTruthy();
-      expect(status.statusFor(subscription).subscription.lastSyncedAt).toBeNull();
-      expect(status.statusFor(subscription).subscription.hasExplicitSubscription).toBeTruthy();
+      expect(status.forStream(subscription).subscription.active).toBeTruthy();
+      expect(status.forStream(subscription).subscription.lastSyncedAt).toBeNull();
+      expect(status.forStream(subscription).subscription.hasExplicitSubscription).toBeTruthy();
     }
 
     statusPromise = nextStatus(database);
     syncService.pushLine({ partial_checkpoint_complete: { last_op_id: '0', priority: 1 } });
     status = await statusPromise;
-    expect(status.statusFor(a).subscription.lastSyncedAt).toBeNull();
-    expect(status.statusFor(b).subscription.lastSyncedAt).not.toBeNull();
+    expect(status.forStream(a).subscription.lastSyncedAt).toBeNull();
+    expect(status.forStream(b).subscription.lastSyncedAt).not.toBeNull();
     await b.waitForFirstSync();
 
     syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
@@ -94,8 +94,8 @@ describe('Sync streams', () => {
     );
     let status = await statusPromise;
 
-    expect(status.subscriptions).toHaveLength(1);
-    expect(status.subscriptions[0]).toMatchObject({
+    expect(status.syncStreams).toHaveLength(1);
+    expect(status.syncStreams[0]).toMatchObject({
       subscription: {
         name: 'default_stream',
         parameters: null,
@@ -144,6 +144,6 @@ describe('Sync streams', () => {
     let statusPromise = nextStatus(database);
     const subscription = await database.syncStream('foo').subscribe();
     let status = await statusPromise;
-    expect(status.statusFor(subscription)).not.toBeNull();
+    expect(status.forStream(subscription)).not.toBeNull();
   });
 });
