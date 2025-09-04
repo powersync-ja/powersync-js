@@ -6,7 +6,7 @@ import {
   SharedSyncInitOptions,
   WrappedSyncPort
 } from './SharedSyncImplementation';
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
+import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
 
 /**
  * A client to the shared sync worker.
@@ -76,5 +76,9 @@ export class WorkerClient {
 
   disconnect() {
     return this.sync.disconnect();
+  }
+
+  async _testUpdateAllStatuses(status: SyncStatusOptions) {
+    return this.sync._testUpdateAllStatuses(status);
   }
 }
