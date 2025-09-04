@@ -2,7 +2,7 @@ import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import flushPromises from 'flush-promises';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
-import { isProxy, isRef, ref } from 'vue';
+import { computed, isProxy, isRef, ref, watchEffect } from 'vue';
 import { createPowerSyncPlugin } from '../src/composables/powerSync';
 import { useQuery } from '../src/composables/useQuery';
 import { useWatchedQuerySubscription } from '../src/composables/useWatchedQuerySubscription';
@@ -232,5 +232,95 @@ describe('useQuery', () => {
     expect(error.value?.message).toEqual(
       'PowerSync failed to fetch data: You cannot pass parameters to a compiled query.'
     );
+  });
+
+  it('should handle dependent query parameter changes with correct state transitions', async () => {
+    const db = openPowerSync();
+
+    await db.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'item1')
+    `);
+
+    // Track state transitions
+    const stateTransitions: Array<{
+      param: string | number;
+      dataLength: number;
+      isFetching: boolean;
+      isLoading: boolean;
+    }> = [];
+
+    const [state] = withPowerSyncSetup(() => {
+      // First query that provides the parameter - starts with 0, then returns 1
+      const paramQuery = useQuery('SELECT 1 as result;', []);
+      const param = computed(() => paramQuery.data.value?.[0]?.result ?? 0);
+
+      // Second query that depends on the first query's result
+      const dataQuery = useQuery(
+        computed(() => 'SELECT * FROM lists LIMIT ?'),
+        computed(() => [param.value])
+      );
+
+      // Track state changes
+      watchEffect(() => {
+        const currentState = {
+          param: param.value,
+          dataLength: dataQuery.data.value?.length || 0,
+          isFetching: dataQuery.isFetching.value,
+          isLoading: dataQuery.isLoading.value
+        };
+        stateTransitions.push(currentState);
+      });
+
+      return {
+        paramData: paramQuery.data,
+        data: dataQuery.data,
+        isFetching: dataQuery.isFetching,
+        isLoading: dataQuery.isLoading,
+        param
+      };
+    });
+
+    // Wait for final state
+    await vi.waitFor(
+      () => {
+        expect(state.isLoading.value).toEqual(false);
+        expect(state.isFetching.value).toEqual(false);
+        expect(state.data.value?.length).toEqual(1);
+        expect(state.paramData.value[0].result).toEqual(1);
+      },
+      { timeout: 1000 }
+    );
+
+    // Find the index where param changes from 0 to 1
+    let beforeParamChangeIndex = 0;
+    for (const transition of stateTransitions) {
+      if (transition.param === 1) {
+        beforeParamChangeIndex = stateTransitions.indexOf(transition) - 1;
+        break;
+      }
+    }
+    const initialState = stateTransitions[beforeParamChangeIndex];
+    expect(initialState).toBeDefined();
+    expect(initialState?.param).toEqual(0);
+    expect(initialState?.dataLength).toEqual(0);
+    expect(initialState?.isFetching).toEqual(true);
+    expect(initialState?.isLoading).toEqual(true);
+
+    const paramChangedState = stateTransitions[beforeParamChangeIndex + 1];
+    expect(paramChangedState).toBeDefined();
+    expect(paramChangedState?.param).toEqual(1);
+    expect(paramChangedState?.dataLength).toEqual(0);
+    expect(paramChangedState?.isFetching).toEqual(true);
+    expect(paramChangedState?.isLoading).toEqual(true);
+
+    const finalState = stateTransitions[beforeParamChangeIndex + 2];
+    expect(finalState).toBeDefined();
+    expect(finalState.param).toEqual(1);
+    expect(finalState.dataLength).toEqual(1);
+    expect(finalState.isFetching).toEqual(false);
+    expect(finalState.isLoading).toEqual(false);
   });
 });
