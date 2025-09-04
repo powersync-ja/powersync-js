@@ -57,7 +57,7 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
     db.onChangeWithCallback(
       {
         onChange: async () => {
-          if (this.closed) {
+          if (this.closed || abortSignal.aborted) {
             return;
           }
           // This fires for each change of the relevant tables
@@ -76,6 +76,10 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
               parameters: [...compiledQuery.parameters],
               db: this.options.db
             });
+
+            if (abortSignal.aborted) {
+              return;
+            }
 
             if (this.reportFetching) {
               partialStateUpdate.isFetching = false;

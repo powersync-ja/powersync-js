@@ -236,7 +236,7 @@ export class DifferentialQueryProcessor<RowType>
     db.onChangeWithCallback(
       {
         onChange: async () => {
-          if (this.closed) {
+          if (this.closed || abortSignal.aborted) {
             return;
           }
           // This fires for each change of the relevant tables
@@ -255,6 +255,10 @@ export class DifferentialQueryProcessor<RowType>
               parameters: [...compiledQuery.parameters],
               db: this.options.db
             });
+
+            if (abortSignal.aborted) {
+              return;
+            }
 
             if (this.reportFetching) {
               partialStateUpdate.isFetching = false;

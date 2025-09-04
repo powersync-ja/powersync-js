@@ -83,6 +83,7 @@ export abstract class AbstractQueryProcessor<
    * Updates the underlying query.
    */
   async updateSettings(settings: Settings) {
+    this.abortController.abort();
     await this.initialized;
 
     if (!this.state.isFetching && this.reportFetching) {
@@ -92,7 +93,7 @@ export abstract class AbstractQueryProcessor<
     }
 
     this.options.watchOptions = settings;
-    this.abortController.abort();
+
     this.abortController = new AbortController();
     await this.runWithReporting(() =>
       this.linkQuery({
@@ -121,7 +122,6 @@ export abstract class AbstractQueryProcessor<
     if (typeof update.data !== 'undefined') {
       await this.iterateAsyncListenersWithError(async (l) => l.onData?.(this.state.data));
     }
-
     await this.iterateAsyncListenersWithError(async (l) => l.onStateChange?.(this.state));
   }
 
