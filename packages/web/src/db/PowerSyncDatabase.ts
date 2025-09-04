@@ -189,8 +189,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     const remote = new WebRemote(connector, this.logger);
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
-      retryDelayMs: options.retryDelayMs,
-      crudUploadThrottleMs: options.crudUploadThrottleMs,
+      ...options,
       flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,

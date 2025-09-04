@@ -36,6 +36,12 @@ export interface CreateSyncImplementationOptions extends AdditionalConnectionOpt
   subscriptions: SubscribedStream[];
 }
 
+export interface InternalSubscriptionAdapter {
+  firstStatusMatching(predicate: (status: SyncStatus) => any, abort?: AbortSignal): Promise<void>;
+  resolveOfflineSyncStatus(): Promise<void>;
+  rustSubscriptionsCommand(payload: any): Promise<void>;
+}
+
 /**
  * @internal
  */
@@ -44,9 +50,7 @@ export interface ConnectionManagerOptions {
     connector: PowerSyncBackendConnector,
     options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
-  firstStatusMatching(predicate: (status: SyncStatus) => any): Promise<void>;
-  resolveOfflineSyncStatus(): Promise<void>;
-  rustSubscriptionsCommand(payload: any): Promise<void>;
+
   logger: ILogger;
 }
 
@@ -269,11 +273,11 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await disposer?.();
   }
 
-  stream(name: string, parameters: Record<string, any> | null): SyncStream {
+  stream(adapter: InternalSubscriptionAdapter, name: string, parameters: Record<string, any> | null): SyncStream {
     const desc = { name, parameters } satisfies SyncStreamDescription;
 
-    const waitForFirstSync = () => {
-      return this.options.firstStatusMatching((s) => s.statusFor(desc)?.subscription.hasSynced ?? false);
+    const waitForFirstSync = (abort?: AbortSignal) => {
+      return adapter.firstStatusMatching((s) => s.statusFor(desc)?.subscription.hasSynced, abort);
     };
 
     return {
@@ -281,7 +285,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
       subscribe: async (options?: SyncStreamSubscribeOptions) => {
         // NOTE: We also run this command if a subscription already exists, because this increases the expiry date
         // (relevant if the app is closed before connecting again, where the last subscribe call determines the ttl).
-        await this.options.rustSubscriptionsCommand({
+        await adapter.rustSubscriptionsCommand({
           subscribe: {
             stream: {
               name,
@@ -295,7 +299,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         if (!this.syncStreamImplementation) {
           // We're not connected. So, update the offline sync status to reflect the new subscription.
           // (With an active iteration, the sync client would include it in its state).
-          await this.options.resolveOfflineSyncStatus();
+          await adapter.resolveOfflineSyncStatus();
         }
 
         const key = `${name}|${JSON.stringify(parameters)}`;
@@ -314,7 +318,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         return new SyncStreamSubscriptionHandle(subscription);
       },
       unsubscribeAll: async () => {
-        await this.options.rustSubscriptionsCommand({ unsubscribe: { name, params: parameters } });
+        await adapter.rustSubscriptionsCommand({ unsubscribe: { name, params: parameters } });
         this.subscriptionsMayHaveChanged();
       }
     };
@@ -337,7 +341,7 @@ class ActiveSubscription {
   constructor(
     readonly name: string,
     readonly parameters: Record<string, any> | null,
-    readonly waitForFirstSync: () => Promise<void>,
+    readonly waitForFirstSync: (abort?: AbortSignal) => Promise<void>,
     private clearSubscription: () => void
   ) {}
 
@@ -362,8 +366,8 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
     return this.subscription.parameters;
   }
 
-  waitForFirstSync(): Promise<void> {
-    return this.subscription.waitForFirstSync();
+  waitForFirstSync(abort?: AbortSignal): Promise<void> {
+    return this.subscription.waitForFirstSync(abort);
   }
 
   unsubscribe(): void {

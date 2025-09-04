@@ -15,7 +15,11 @@ import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
 import { symbolAsyncIterator, throttleTrailing } from '../utils/async.js';
-import { ConnectionManager, CreateSyncImplementationOptions } from './ConnectionManager.js';
+import {
+  ConnectionManager,
+  CreateSyncImplementationOptions,
+  InternalSubscriptionAdapter
+} from './ConnectionManager.js';
 import { CustomQuery } from './CustomQuery.js';
 import { ArrayQueryDefinition, Query } from './Query.js';
 import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
@@ -183,6 +187,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected bucketStorageAdapter: BucketStorageAdapter;
   protected _isReadyPromise: Promise<void>;
   protected connectionManager: ConnectionManager;
+  private subscriptions: InternalSubscriptionAdapter;
 
   get syncStreamImplementation() {
     return this.connectionManager.syncStreamImplementation;
@@ -237,14 +242,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.runExclusiveMutex = new Mutex();
 
     // Start async init
-    this.connectionManager = new ConnectionManager({
-      firstStatusMatching: (predicate) => this.waitForStatus(predicate),
+    this.subscriptions = {
+      firstStatusMatching: (predicate, abort) => this.waitForStatus(predicate, abort),
       resolveOfflineSyncStatus: () => this.resolveOfflineSyncStatus(),
       rustSubscriptionsCommand: async (payload) => {
         await this.writeTransaction((tx) => {
           return tx.execute('select powersync_control(?,?)', ['subscriptions', JSON.stringify(payload)]);
         });
-      },
+      }
+    };
+    this.connectionManager = new ConnectionManager({
       createSyncImplementation: async (connector, options) => {
         await this.waitForReady();
         return this.runExclusive(async () => {
@@ -538,7 +545,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   syncStream(name: string, params?: Record<string, any>): SyncStream {
-    return this.connectionManager.stream(name, params ?? null);
+    return this.connectionManager.stream(this.subscriptions, name, params ?? null);
   }
 
   /**

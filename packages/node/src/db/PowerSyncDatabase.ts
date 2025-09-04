@@ -4,12 +4,12 @@ import {
   AbstractStreamingSyncImplementation,
   AdditionalConnectionOptions,
   BucketStorageAdapter,
-  CreateSyncImplementationOptions,
   DBAdapter,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
+  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -77,7 +77,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: CreateSyncImplementationOptions & NodeAdditionalConnectionOptions
+    options: RequiredAdditionalConnectionOptions & NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;
     const remote = new NodeRemote(connector, logger, {
@@ -86,15 +86,13 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     });
 
     return new NodeStreamingSyncImplementation({
-      subscriptions: options.subscriptions,
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs: this.options.retryDelayMs,
-      crudUploadThrottleMs: this.options.crudUploadThrottleMs,
+      ...options,
       identifier: this.database.name,
       logger
     });

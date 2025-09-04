@@ -95,7 +95,7 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
-export interface AbstractStreamingSyncImplementationOptions extends AdditionalConnectionOptions {
+export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
   uploadCrud: () => Promise<void>;
@@ -185,7 +185,9 @@ export interface AdditionalConnectionOptions {
 }
 
 /** @internal */
-export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>;
+export interface RequiredAdditionalConnectionOptions extends Required<AdditionalConnectionOptions> {
+  subscriptions: SubscribedStream[];
+}
 
 export interface StreamingSyncImplementation
   extends BaseObserverInterface<StreamingSyncImplementationListener>,
@@ -265,7 +267,7 @@ export abstract class AbstractStreamingSyncImplementation
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
-    this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+    this.options = options;
     this.activeStreams = options.subscriptions;
     this.logger = options.logger ?? Logger.get('PowerSyncStream');
 
