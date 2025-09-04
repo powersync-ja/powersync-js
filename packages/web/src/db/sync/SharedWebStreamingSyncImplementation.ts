@@ -257,6 +257,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    */
   private async _testUpdateStatus(status: SyncStatus) {
     await this.isInitialized;
-    return (this.syncManager as any)['_testUpdateAllStatuses'](status.toJSON());
+    return this.syncManager._testUpdateAllStatuses(status.toJSON());
   }
 }

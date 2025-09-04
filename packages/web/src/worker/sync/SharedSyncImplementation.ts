@@ -494,7 +494,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * A function only used for unit tests which updates the internal
    * sync stream client and all tab client's sync status
    */
-  private async _testUpdateAllStatuses(status: SyncStatusOptions) {
+  async _testUpdateAllStatuses(status: SyncStatusOptions) {
     if (!this.connectionManager.syncStreamImplementation) {
       throw new Error('Cannot update status without a sync stream implementation');
     }
