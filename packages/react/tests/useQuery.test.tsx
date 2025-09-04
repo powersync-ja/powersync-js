@@ -542,6 +542,91 @@ describe('useQuery', () => {
         // It should be the same data array reference, no update should have happened
         expect(result.current.data == previousData).false;
       });
+
+      it('should handle dependent query parameter changes with correct state transitions', async () => {
+        const db = openPowerSync();
+
+        await db.execute(/* sql */ `
+          INSERT INTO
+            lists (id, name)
+          VALUES
+            (uuid (), 'item1')
+        `);
+
+        // Track state transitions
+        const stateTransitions: Array<{
+          param: string | number;
+          dataLength: number;
+          isFetching: boolean;
+          isLoading: boolean;
+        }> = [];
+
+        const testHook = () => {
+          // First query that provides the parameter - starts with 0, then returns 1
+          const { data: paramData } = useQuery('SELECT 1 as result;', []);
+          const param = paramData?.[0]?.result ?? 0;
+
+          // Second query that depends on the first query's result
+          const { data, isFetching, isLoading } = useQuery('SELECT * FROM lists LIMIT ?', [param]);
+
+          const currentState = {
+            param: param,
+            dataLength: data?.length || 0,
+            isFetching: isFetching,
+            isLoading: isLoading
+          };
+
+          stateTransitions.push(currentState);
+          return currentState;
+        };
+
+        const { result } = renderHook(() => testHook(), {
+          wrapper: ({ children }) => testWrapper({ children, db })
+        });
+
+        // Wait for final state
+        await waitFor(
+          () => {
+            const { current } = result;
+            expect(current.isLoading).toEqual(false);
+            expect(current.isFetching).toEqual(false);
+            expect(current.param).toEqual(1);
+            expect(current.dataLength).toEqual(1);
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        // Find the index where param changes from 0 to 1
+        let beforeParamChangeIndex = 0;
+        for (const transition of stateTransitions) {
+          if (transition.param === 1) {
+            beforeParamChangeIndex = stateTransitions.indexOf(transition) - 1;
+            break;
+          }
+        }
+
+        const indexMultiplier = isStrictMode ? 2 : 1; // StrictMode causes 1 extra render per state
+        const initialState = stateTransitions[beforeParamChangeIndex];
+        expect(initialState).toBeDefined();
+        expect(initialState?.param).toEqual(0);
+        expect(initialState?.dataLength).toEqual(0);
+        expect(initialState?.isFetching).toEqual(true);
+        expect(initialState?.isLoading).toEqual(true);
+
+        const paramChangedState = stateTransitions[beforeParamChangeIndex + 1 * indexMultiplier];
+        expect(paramChangedState).toBeDefined();
+        expect(paramChangedState?.param).toEqual(1);
+        expect(paramChangedState?.dataLength).toEqual(0);
+        expect(paramChangedState?.isFetching).toEqual(true);
+        expect(paramChangedState?.isLoading).toEqual(true);
+
+        const finalState = stateTransitions[beforeParamChangeIndex + 2 * indexMultiplier];
+        expect(finalState).toBeDefined();
+        expect(finalState.param).toEqual(1);
+        expect(finalState.dataLength).toEqual(1);
+        expect(finalState.isFetching).toEqual(false);
+        expect(finalState.isLoading).toEqual(false);
+      });
     });
   });
 
