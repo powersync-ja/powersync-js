@@ -277,7 +277,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     const desc = { name, parameters } satisfies SyncStreamDescription;
 
     const waitForFirstSync = (abort?: AbortSignal) => {
-      return adapter.firstStatusMatching((s) => s.statusFor(desc)?.subscription.hasSynced, abort);
+      return adapter.firstStatusMatching((s) => s.forStream(desc)?.subscription.hasSynced, abort);
     };
 
     return {

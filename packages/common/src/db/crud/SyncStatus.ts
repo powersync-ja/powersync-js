@@ -123,14 +123,14 @@ export class SyncStatus {
    * This returns null when the database is currently being opened and we don't have reliable information about all
    * included streams yet.
    */
-  get subscriptions(): SyncStreamStatus[] | undefined {
+  get syncStreams(): SyncStreamStatus[] | undefined {
     return this.options.dataFlow?.internalStreamSubscriptions?.map((core) => new SyncStreamStatusView(this, core));
   }
 
   /**
-   * If the `stream` appears in {@link subscriptions}, returns the current status for that stream.
+   * If the `stream` appears in {@link syncStreams}, returns the current status for that stream.
    */
-  statusFor(stream: SyncStreamDescription): SyncStreamStatus | undefined {
+  forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined {
     const asJson = JSON.stringify(stream.parameters);
     const raw = this.options.dataFlow?.internalStreamSubscriptions?.find(
       (r) => r.name == stream.name && asJson == JSON.stringify(r.parameters)
@@ -280,9 +280,9 @@ class SyncStreamStatusView implements SyncStreamStatus {
       active: core.active,
       isDefault: core.is_default,
       hasExplicitSubscription: core.has_explicit_subscription,
-      expiresAt: core.expires_at != null ? new Date(core.expires_at) : null,
+      expiresAt: core.expires_at != null ? new Date(core.expires_at * 1000) : null,
       hasSynced: core.last_synced_at != null,
-      lastSyncedAt: core.last_synced_at != null ? new Date(core.last_synced_at) : null
+      lastSyncedAt: core.last_synced_at != null ? new Date(core.last_synced_at * 1000) : null
     };
   }
 
