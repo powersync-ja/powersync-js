@@ -19,14 +19,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-community/sqlite": "^7.0.1",
     "@capacitor/android": "^7.4.3",
     "@capacitor/core": "latest",
     "@capacitor/ios": "^7.4.3",
     "@capacitor/splash-screen": "latest",
     "@journeyapps/wa-sqlite": "^1.3.1",
+    "@powersync/capacitor": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@powersync/capacitor": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"

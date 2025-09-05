@@ -1,10 +1,11 @@
-import { PowerSyncContext } from '@powersync/react';
-import { PowerSyncDatabase, createBaseLogger, LogLevel } from '@powersync/web';
+import { Capacitor } from '@capacitor/core';
 import { CircularProgress } from '@mui/material';
+import { CapacitorSQLiteAdapter } from '@powersync/capacitor';
+import { PowerSyncContext } from '@powersync/react';
+import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
-import { Capacitor } from '@capacitor/core';
 
 const logger = createBaseLogger();
 logger.useDefaults();
@@ -16,7 +17,10 @@ const isIOs = platform === 'ios';
 const useWebWorker = !isIOs;
 
 const powerSync = new PowerSyncDatabase({
-  database: { dbFilename: 'powersync2.db' },
+  // We should probably rather have a separate Capacitor PowerSync client
+  database: new CapacitorSQLiteAdapter({
+    dbFilename: 'test.sqlite'
+  }),
   schema: AppSchema,
   flags: {
     enableMultiTabs: false,

@@ -47,6 +47,7 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
+    "@capacitor-community/sqlite": "^7.0.1",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/docgen": "^0.3.0",
@@ -54,22 +55,19 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
+    "@powersync/common": "workspace:*",
     "eslint": "^8.57.0",
     "prettier": "^3.4.2",
     "prettier-plugin-java": "^2.6.6",
     "rimraf": "^6.0.1",
     "rollup": "^4.30.1",
-    "swiftlint": "^2.0.0",
-    "typescript": "~4.1.5"
+    "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
-    "@capacitor/core": ">=7.0.0"
+    "@capacitor/core": ">=7.0.0",
+    "@powersync/common": "workspace:*"
   },
-  "prettier": "@ionic/prettier-config",
   "swiftlint": "@ionic/swiftlint-config",
-  "eslintConfig": {
-    "extends": "@ionic/eslint-config/recommended"
-  },
   "capacitor": {
     "ios": {
       "src": "ios"
@@ -77,5 +75,8 @@
     "android": {
       "src": "android"
     }
+  },
+  "dependencies": {
+    "async-lock": "^1.4.0"
   }
 }
