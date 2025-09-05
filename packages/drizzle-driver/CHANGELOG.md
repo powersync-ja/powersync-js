@@ -1,5 +1,11 @@
 # @powersync/drizzle-driver
 
+## 0.6.0
+
+### Minor Changes
+
+- 08d1557: Bumped to Beta release
+
 ## 0.5.0
 
 ### Minor Changes
