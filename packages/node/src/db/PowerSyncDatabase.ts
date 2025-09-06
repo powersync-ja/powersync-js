@@ -9,6 +9,7 @@ import {
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
+  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -76,7 +77,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: NodeAdditionalConnectionOptions
+    options: RequiredAdditionalConnectionOptions & NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;
     const remote = new NodeRemote(connector, logger, {
@@ -91,8 +92,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs: this.options.retryDelayMs,
-      crudUploadThrottleMs: this.options.crudUploadThrottleMs,
+      ...options,
       identifier: this.database.name,
       logger
     });

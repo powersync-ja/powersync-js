@@ -4,6 +4,7 @@ import {
   AbstractStreamingSyncImplementation,
   BSONImplementation,
   DataStream,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
@@ -169,7 +170,9 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await connector.uploadData(this);
       },
       identifier: this.database.name,
-      retryDelayMs: this.options.crudUploadThrottleMs ?? 0 // The zero here makes tests faster
+      retryDelayMs: this.options.crudUploadThrottleMs ?? 0, // The zero here makes tests faster
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      subscriptions: []
     });
   }
 }

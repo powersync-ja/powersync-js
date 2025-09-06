@@ -12,6 +12,7 @@ export interface Checkpoint {
   last_op_id: OpId;
   buckets: BucketChecksum[];
   write_checkpoint?: string;
+  streams?: any[];
 }
 
 export interface BucketState {
@@ -49,6 +50,7 @@ export interface BucketChecksum {
    * Count of operations - informational only.
    */
   count?: number;
+  subscriptions?: any;
 }
 
 export enum PSInternalTable {
@@ -65,7 +67,8 @@ export enum PowerSyncControlCommand {
   STOP = 'stop',
   START = 'start',
   NOTIFY_TOKEN_REFRESHED = 'refreshed_token',
-  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload'
+  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload',
+  UPDATE_SUBSCRIPTIONS = 'update_subscriptions'
 }
 
 export interface BucketStorageListener extends BaseListener {

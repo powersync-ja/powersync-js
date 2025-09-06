@@ -1,9 +1,11 @@
 import {
   BaseListener,
   createBaseLogger,
+  DEFAULT_STREAMING_SYNC_OPTIONS,
   LogLevel,
   PowerSyncDatabase,
   SyncClientImplementation,
+  SyncStreamSubscription,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
   WASQLiteVFS,
@@ -16,6 +18,7 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { TokenConnector } from './TokenConnector';
 import { RustClientInterceptor } from './RustClientInterceptor';
+import React from 'react';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -45,8 +48,7 @@ export const db = new PowerSyncDatabase({
 });
 
 export const connector = new TokenConnector();
-
-const adapter = new RecordingStorageAdapter(db.database, schemaManager);
+export const activeSubscriptions: SyncStreamSubscription[] = [];
 
 export let sync: WebStreamingSyncImplementation | undefined;
 
@@ -59,6 +61,7 @@ if (connector.hasCredentials()) {
 }
 
 export async function connect() {
+  activeSubscriptions.length = 0;
   const client =
     localStorage.getItem('preferred_client_implementation') == SyncClientImplementation.RUST
       ? SyncClientImplementation.RUST
@@ -78,7 +81,9 @@ export async function connect() {
     uploadCrud: async () => {
       // No-op
     },
-    identifier: 'diagnostics'
+    identifier: 'diagnostics',
+    ...DEFAULT_STREAMING_SYNC_OPTIONS,
+    subscriptions: []
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
   await sync.connect({ params, clientImplementation: client });
@@ -117,5 +122,22 @@ export const setParams = (p: object) => {
   localStorage.setItem(PARAMS_STORE, stringified);
   connect();
 };
+
+/**
+ * The current sync status - we can't use `useStatus()` since we're not using the default sync implementation.
+ */
+export function useSyncStatus() {
+  const [current, setCurrent] = React.useState(sync?.syncStatus);
+  React.useEffect(() => {
+    const l = sync?.registerListener({
+      statusChanged: (status) => {
+        setCurrent(status);
+      }
+    });
+    return () => l?.();
+  }, []);
+
+  return current;
+}
 
 (window as any).db = db;
