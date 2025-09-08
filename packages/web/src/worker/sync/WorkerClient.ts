@@ -42,6 +42,7 @@ export class WorkerClient {
   private async removePort() {
     if (this.resolvedPort) {
       const release = await this.sync.removePort(this.resolvedPort);
+      this.resolvedPort = null;
       this.port.postMessage({
         event: SharedSyncClientEvent.CLOSE_ACK,
         data: {}
@@ -89,7 +90,7 @@ export class WorkerClient {
 
   updateSubscriptions(subscriptions: SubscribedStream[]) {
     if (this.resolvedPort) {
-      this.sync.updateSubscriptions;
+      this.sync.updateSubscriptions(this.resolvedPort, subscriptions);
     }
   }
 

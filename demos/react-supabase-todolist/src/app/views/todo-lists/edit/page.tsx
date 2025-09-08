@@ -19,7 +19,8 @@ import {
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
 import { usePowerSync, useQuery } from '@powersync/react';
-import React, { Suspense } from 'react';
+import { SyncStreamSubscription } from '@powersync/web';
+import React, { Suspense, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 /**
@@ -31,6 +32,29 @@ const TodoEditSection = () => {
   const powerSync = usePowerSync();
   const supabase = useSupabase();
   const { id: listID } = useParams();
+
+  if (import.meta.env.VITE_USE_SYNC_STREAMS == 'true') {
+    useEffect(() => {
+      let active = true;
+      let subscription: SyncStreamSubscription | null = null;
+
+      powerSync
+        .syncStream('todos', { list: listID })
+        .subscribe()
+        .then((sub) => {
+          if (!active) {
+            sub.unsubscribe();
+          } else {
+            subscription = sub;
+          }
+        });
+
+      return () => {
+        active = false;
+        subscription?.unsubscribe();
+      };
+    }, [listID]);
+  }
 
   const {
     data: [listRecord]
