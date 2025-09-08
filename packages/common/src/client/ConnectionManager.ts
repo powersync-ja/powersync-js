@@ -310,7 +310,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
             this.subscriptionsMayHaveChanged();
           };
 
-          subscription = new ActiveSubscription(name, parameters, waitForFirstSync, clearSubscription);
+          subscription = new ActiveSubscription(name, parameters, this.logger, waitForFirstSync, clearSubscription);
           this.locallyActiveSubscriptions.set(key, subscription);
           this.subscriptionsMayHaveChanged();
         }
@@ -341,6 +341,7 @@ class ActiveSubscription {
   constructor(
     readonly name: string,
     readonly parameters: Record<string, any> | null,
+    readonly logger: ILogger,
     readonly waitForFirstSync: (abort?: AbortSignal) => Promise<void>,
     private clearSubscription: () => void
   ) {}
@@ -377,4 +378,10 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
 }
 
 const _finalizer =
-  FinalizationRegistry != null ? new FinalizationRegistry<ActiveSubscription>((sub) => sub.decrementRefCount()) : null;
+  FinalizationRegistry != null
+    ? new FinalizationRegistry<ActiveSubscription>((sub) => {
+        sub.logger.warn(
+          `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
+        );
+      })
+    : null;
