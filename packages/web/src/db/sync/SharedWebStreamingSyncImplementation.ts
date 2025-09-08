@@ -7,11 +7,7 @@ import {
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
-import {
-  ManualSharedSyncPayload,
-  SharedSyncClientEvent,
-  SharedSyncImplementation
-} from '../../worker/sync/SharedSyncImplementation';
+import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation';
 import { DEFAULT_CACHE_SIZE_KB, resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
 import { WebDBAdapter } from '../adapters/WebDBAdapter';
 import {
@@ -19,6 +15,7 @@ import {
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
 import { WorkerClient } from '../../worker/sync/WorkerClient';
+import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -111,6 +108,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   protected isInitialized: Promise<void>;
   protected dbAdapter: WebDBAdapter;
+  private abortOnClose = new AbortController();
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
@@ -192,6 +190,19 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * This performs bi-directional method calling.
      */
     Comlink.expose(this.clientProvider, this.messagePort);
+
+    // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
+    // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
+    // to free resources associated with this tab.
+    getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
+      if (!this.abortOnClose.signal.aborted) {
+        this.syncManager.addLockBasedCloseSignal(lock!.name);
+
+        await new Promise<void>((r) => {
+          this.abortOnClose.signal.onabort = () => r();
+        });
+      }
+    });
   }
 
   /**
@@ -238,6 +249,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       };
       this.messagePort.postMessage(closeMessagePayload);
     });
+    this.abortOnClose.abort();
 
     // Release the proxy
     this.syncManager[Comlink.releaseProxy]();

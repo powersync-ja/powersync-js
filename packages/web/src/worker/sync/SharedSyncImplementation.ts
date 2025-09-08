@@ -292,12 +292,12 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * Removes a message port client from this manager's managed
    * clients.
    */
-  async removePort(port: MessagePort) {
+  async removePort(port: WrappedSyncPort) {
     // Remove the port within a mutex context.
     // Warns if the port is not found. This should not happen in practice.
     // We return early if the port is not found.
     const { trackedPort, shouldReconnect } = await this.portMutex.runExclusive(async () => {
-      const index = this.ports.findIndex((p) => p.port == port);
+      const index = this.ports.findIndex((p) => p == port);
       if (index < 0) {
         this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
         return {};
@@ -312,7 +312,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
        * not resolve. Abort them here.
        */
       [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
-        if (abortController?.activePort.port == port) {
+        if (abortController?.activePort == port) {
           abortController!.controller.abort(
             new AbortOperation('Closing pending requests after client port is removed')
           );
@@ -347,6 +347,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     if (trackedPort.db) {
       await trackedPort.db.close();
     }
+
+    // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
+    this.collectActiveSubscriptions();
+
     // Release proxy
     return () => trackedPort.clientProvider[Comlink.releaseProxy]();
   }

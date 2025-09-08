@@ -7,6 +7,7 @@ import {
   WrappedSyncPort
 } from './SharedSyncImplementation';
 import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
+import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * A client to the shared sync worker.
@@ -30,17 +31,35 @@ export class WorkerClient {
     this.port.addEventListener('message', async (event) => {
       const payload = event.data as ManualSharedSyncPayload;
       if (payload?.event == SharedSyncClientEvent.CLOSE_CLIENT) {
-        const release = await this.sync.removePort(this.port);
-        this.port.postMessage({
-          event: SharedSyncClientEvent.CLOSE_ACK,
-          data: {}
-        } satisfies ManualSharedSyncPayload);
-        release?.();
+        await this.removePort();
       }
     });
 
     this.resolvedPort = await this.sync.addPort(this.port);
     Comlink.expose(this, this.port);
+  }
+
+  private async removePort() {
+    if (this.resolvedPort) {
+      const release = await this.sync.removePort(this.resolvedPort);
+      this.port.postMessage({
+        event: SharedSyncClientEvent.CLOSE_ACK,
+        data: {}
+      } satisfies ManualSharedSyncPayload);
+      release?.();
+    }
+  }
+
+  /**
+   * Called by a client after obtaining a lock with a random name.
+   *
+   * When the client tab is closed, its lock will be returned. So when the shared worker attempts to acquire the lock,
+   * it can consider the connection to be closed.
+   */
+  addLockBasedCloseSignal(name: string) {
+    getNavigatorLocks().request(name, async () => {
+      await this.removePort();
+    });
   }
 
   setLogLevel(level: ILogLevel) {
