@@ -146,4 +146,40 @@ describe('Sync streams', () => {
     let status = await statusPromise;
     expect(status.forStream(subscription)).not.toBeNull();
   });
+
+  mockSyncServiceTest('unsubscribing multiple times has no effect', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    const a = await database.syncStream('a').subscribe();
+    const aAgain = await database.syncStream('a').subscribe();
+    a.unsubscribe();
+    a.unsubscribe();
+
+    // Pretend the streams are expired - they should still be requested because the core extension extends the lifetime
+    // of streams currently referenced before connecting.
+    await database.execute('UPDATE ps_stream_subscriptions SET expires_at = unixepoch() - 1000');
+    await database.connect(new TestConnector(), defaultOptions);
+
+    expect(syncService.connectedListeners[0]).toMatchObject({
+      streams: {
+        include_defaults: true,
+        subscriptions: [{}]
+      }
+    });
+    aAgain.unsubscribe();
+  });
+
+  mockSyncServiceTest('unsubscribeAll', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    const a = await database.syncStream('a').subscribe();
+    database.syncStream('a').unsubscribeAll();
+
+    await database.connect(new TestConnector(), defaultOptions);
+    expect(syncService.connectedListeners[0]).toMatchObject({
+      streams: {
+        include_defaults: true,
+        subscriptions: []
+      }
+    });
+    a.unsubscribe();
+  });
 });

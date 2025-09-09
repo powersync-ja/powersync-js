@@ -355,6 +355,8 @@ class ActiveSubscription {
 }
 
 class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
+  private active: boolean = false;
+
   constructor(readonly subscription: ActiveSubscription) {
     subscription.refcount++;
     _finalizer?.register(this, subscription);
@@ -373,8 +375,11 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
   }
 
   unsubscribe(): void {
-    _finalizer?.unregister(this);
-    this.subscription.decrementRefCount();
+    if (this.active) {
+      this.active = false;
+      _finalizer?.unregister(this);
+      this.subscription.decrementRefCount();
+    }
   }
 }
 
