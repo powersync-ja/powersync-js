@@ -83,8 +83,21 @@ export abstract class AbstractQueryProcessor<
    * Updates the underlying query.
    */
   async updateSettings(settings: Settings) {
+    // Abort any previous requests
     this.abortController.abort();
+
+    this.options.watchOptions = settings;
+    // Keep track of this controller's abort status
+    const abortController = new AbortController();
+    // Allow this to be aborted externally
+    this.abortController = abortController;
+
     await this.initialized;
+
+    // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
+    if (abortController.signal.aborted) {
+      return;
+    }
 
     if (!this.state.isFetching && this.reportFetching) {
       await this.updateState({
@@ -92,12 +105,9 @@ export abstract class AbstractQueryProcessor<
       });
     }
 
-    this.options.watchOptions = settings;
-
-    this.abortController = new AbortController();
     await this.runWithReporting(() =>
       this.linkQuery({
-        abortSignal: this.abortController.signal,
+        abortSignal: abortController.signal,
         settings
       })
     );
