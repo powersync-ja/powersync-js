@@ -79,25 +79,21 @@ export abstract class AbstractQueryProcessor<
     return this.options.watchOptions.reportFetching ?? true;
   }
 
-  /**
-   * Updates the underlying query.
-   */
-  async updateSettings(settings: Settings) {
+  protected async updateSettingsInternal(settings: Settings) {
     // Abort any previous requests
     this.abortController.abort();
 
-    this.options.watchOptions = settings;
     // Keep track of this controller's abort status
     const abortController = new AbortController();
     // Allow this to be aborted externally
     this.abortController = abortController;
 
-    await this.initialized;
-
     // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
     if (abortController.signal.aborted) {
       return;
     }
+
+    this.options.watchOptions = settings;
 
     if (!this.state.isFetching && this.reportFetching) {
       await this.updateState({
@@ -111,6 +107,14 @@ export abstract class AbstractQueryProcessor<
         settings
       })
     );
+  }
+
+  /**
+   * Updates the underlying query.
+   */
+  async updateSettings(settings: Settings) {
+    await this.initialized;
+    return this.updateSettingsInternal(settings);
   }
 
   /**
@@ -163,8 +167,8 @@ export abstract class AbstractQueryProcessor<
     };
 
     // Initial setup
-    this.runWithReporting(async () => {
-      await this.updateSettings(this.options.watchOptions);
+    await this.runWithReporting(async () => {
+      await this.updateSettingsInternal(this.options.watchOptions);
     });
   }
 

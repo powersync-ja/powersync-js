@@ -766,12 +766,14 @@ describe('Watch Tests', { sequential: true }, () => {
 
     await vi.waitFor(
       () => {
+        console.log(JSON.stringify(states));
         expect(states[states.length - 1].isFetching).false;
         expect(states[states.length - 1].data[0].result).eq(100);
       },
       { timeout: 3000 }
     );
     dispose();
+    console.log(JSON.stringify(states));
   });
 
   it('should report differential query results', async () => {
