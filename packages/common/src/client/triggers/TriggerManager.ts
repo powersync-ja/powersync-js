@@ -345,7 +345,7 @@ export interface TriggerManager {
    *        },
    *        onChange: async (context) => {
    *          // Fetches the todo records that were inserted during this diff
-   *          const newTodos = await context.getAll<Database['todos']>(`
+   *          const newTodos = await context.withDiff<Database['todos']>(`
    *            SELECT
    *              todos.*
    *            FROM
