@@ -384,7 +384,7 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
 }
 
 const _finalizer =
-  FinalizationRegistry != null
+  'FinalizationRegistry' in globalThis
     ? new FinalizationRegistry<ActiveSubscription>((sub) => {
         sub.logger.warn(
           `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
