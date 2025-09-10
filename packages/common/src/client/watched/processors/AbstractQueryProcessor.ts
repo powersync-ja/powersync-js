@@ -79,17 +79,9 @@ export abstract class AbstractQueryProcessor<
     return this.options.watchOptions.reportFetching ?? true;
   }
 
-  protected async updateSettingsInternal(settings: Settings) {
-    // Abort any previous requests
-    this.abortController.abort();
-
-    // Keep track of this controller's abort status
-    const abortController = new AbortController();
-    // Allow this to be aborted externally
-    this.abortController = abortController;
-
+  protected async updateSettingsInternal(settings: Settings, signal: AbortSignal) {
     // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
-    if (abortController.signal.aborted) {
+    if (signal.aborted) {
       return;
     }
 
@@ -103,7 +95,7 @@ export abstract class AbstractQueryProcessor<
 
     await this.runWithReporting(() =>
       this.linkQuery({
-        abortSignal: abortController.signal,
+        abortSignal: signal,
         settings
       })
     );
@@ -113,8 +105,16 @@ export abstract class AbstractQueryProcessor<
    * Updates the underlying query.
    */
   async updateSettings(settings: Settings) {
+    // Abort any previous requests
+    this.abortController.abort();
+
+    // Keep track of this controller's abort status
+    const abortController = new AbortController();
+    // Allow this to be aborted externally
+    this.abortController = abortController;
+
     await this.initialized;
-    return this.updateSettingsInternal(settings);
+    return this.updateSettingsInternal(settings, abortController.signal);
   }
 
   /**
@@ -168,7 +168,7 @@ export abstract class AbstractQueryProcessor<
 
     // Initial setup
     await this.runWithReporting(async () => {
-      await this.updateSettingsInternal(this.options.watchOptions);
+      await this.updateSettingsInternal(this.options.watchOptions, this.abortController.signal);
     });
   }
 
