@@ -50,6 +50,11 @@ export interface BucketChecksum {
    * Count of operations - informational only.
    */
   count?: number;
+  /**
+   * The JavaScript client does not use this field, which is why it's defined to be `any`. We rely on the structure of
+   * this interface to pass custom `BucketChecksum`s to the Rust client in unit tests, which so all fields need to be
+   * present.
+   */
   subscriptions?: any;
 }
 

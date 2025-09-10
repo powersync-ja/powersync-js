@@ -86,6 +86,8 @@ export function coreStatusToJs(status: CoreSyncStatus): sync_status.SyncStatusOp
     connected: status.connected,
     connecting: status.connecting,
     dataFlow: {
+      // We expose downloading as a boolean field, the core extension reports download information as a nullable
+      // download status. When that status is non-null, a download is in progress.
       downloading: status.downloading != null,
       downloadProgress: status.downloading?.buckets,
       internalStreamSubscriptions: status.streams
