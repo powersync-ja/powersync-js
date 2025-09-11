@@ -1,5 +1,6 @@
 import { once } from 'node:events';
 import repl_factory from 'node:repl';
+import { Worker } from 'node:worker_threads';
 
 import {
   createBaseLogger,
@@ -11,11 +12,14 @@ import {
 import { exit } from 'node:process';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
+import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
+import { LockContext } from 'node_modules/@powersync/node/dist/bundle.cjs';
 
 const main = async () => {
   const baseLogger = createBaseLogger();
   const logger = createLogger('PowerSyncDemo');
   const debug = process.env.POWERSYNC_DEBUG == '1';
+  const encryptionKey = process.env.ENCRYPTION_KEY ?? '';
   baseLogger.useDefaults({ defaultLevel: debug ? logger.TRACE : logger.WARN });
 
   // Enable detailed request/response logging for debugging purposes.
@@ -30,10 +34,27 @@ const main = async () => {
     return;
   }
 
+  let customWorker: WorkerOpener | undefined;
+  if (encryptionKey.length) {
+    customWorker = (_, options) => {
+      return new Worker(new URL('./encryption.worker.js', import.meta.url), options);
+    };
+  }
+
   const db = new PowerSyncDatabase({
     schema: AppSchema,
     database: {
-      dbFilename: 'test.db'
+      dbFilename: 'test.db',
+      openWorker: customWorker,
+      initializeConnection: async (db) => {
+        if (encryptionKey.length) {
+          const escapedKey = encryptionKey.replace("'", "''");
+          await db.execute(`pragma key = '${escapedKey}'`);
+        }
+
+        // Make sure the database is readable, this fails early if the key is wrong.
+        await db.execute('pragma user_version');
+      }
     },
     logger
   });
