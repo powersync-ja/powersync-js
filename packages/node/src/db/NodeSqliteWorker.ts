@@ -57,11 +57,7 @@ export async function openDatabase(worker: PowerSyncWorkerOptions, options: Asyn
   const { DatabaseSync } = await dynamicImport('node:sqlite');
 
   const baseDB = new DatabaseSync(options.path, { allowExtension: true });
-  baseDB.exec('pragma journal_mode = WAL');
   baseDB.loadExtension(worker.extensionPath());
-  if (!options.isWriter) {
-    baseDB.exec('pragma query_only = true');
-  }
 
   return new BlockingNodeDatabase(baseDB, options.isWriter);
 }
