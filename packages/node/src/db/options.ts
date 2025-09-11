@@ -3,7 +3,30 @@ import { SQLOpenOptions } from '@powersync/common';
 
 export type WorkerOpener = (...args: ConstructorParameters<typeof Worker>) => InstanceType<typeof Worker>;
 
-export type NodeDatabaseImplementation = 'better-sqlite3' | 'node';
+/**
+ * Use the [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) package as a SQLite driver for PowerSync.
+ */
+export interface BetterSqlite3Options {
+  type: 'better-sqlite3';
+  /**
+   * The package import to resolve for better-sqlite3.
+   *
+   * While this defaults to `better-sqlite3`, this allows using forked better-sqlite3 packages, such as those used for
+   * encryption.
+   */
+  package?: string;
+}
+
+/**
+ * Use the experimental `node:sqlite` interface as a SQLite driver for PowerSync.
+ *
+ * Note that this option is not currently tested and highly unstable.
+ */
+export interface NodeSqliteOptions {
+  type: 'node:sqlite';
+}
+
+export type NodeDatabaseImplementation = BetterSqlite3Options | NodeSqliteOptions;
 
 /**
  * The {@link SQLOpenOptions} available across all PowerSync SDKs for JavaScript extended with
