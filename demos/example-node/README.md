@@ -15,6 +15,13 @@ Results from the query are printed every time it changes. Try:
 1. Updating a row in the backend database and see changes reflected in the running client.
 2. Enter `add('my list')` and see the new list show up in the backend database.
 
+## Encryption
+
+This demo can use encrypted databases with the `better-sqlite3-multiple-ciphers` package.
+To test encryption, set the `ENCRYPTION_KEY` in `.env` to a non-empty value.
+
+## References
+
 For more details, see the documentation for [the PowerSync node package](https://docs.powersync.com/client-sdk-references/node) and check other examples:
 
 - [example-electron-node](../example-electron-node/): An Electron example that runs PowerSync in the main process using the Node.js SDK.

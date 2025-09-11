@@ -131,7 +131,17 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         await database.execute("SELECT powersync_update_hooks('install');", []);
       }
 
-      return new RemoteConnection(worker, comlink, database);
+      const connection = new RemoteConnection(worker, comlink, database);
+      if (this.options.initializeConnection) {
+        await this.options.initializeConnection(connection, isWriter);
+      }
+
+      await connection.execute('pragma journal_mode = WAL');
+      if (!isWriter) {
+        await connection.execute('pragma query_only = true');
+      }
+
+      return connection;
     };
 
     // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).

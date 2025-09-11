@@ -5,6 +5,7 @@ import { vi, expect, test } from 'vitest';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
+import { LockContext } from '@powersync/common';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -36,6 +37,33 @@ tempDirectoryTest('can customize loading workers', async ({ tmpdir }) => {
 
   await database.get('SELECT 1;'); // Make sure the database is ready and works
   expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
+  await database.close();
+});
+
+tempDirectoryTest('can customize connection initialization', async ({ tmpdir }) => {
+  const initializeConnection = vi.fn(async (db: LockContext, isWriter: boolean) => {
+    const row = await db.get('pragma journal_mode');
+    if (isWriter) {
+      // This should run before anything else, so the database should not be in WAL mode here.
+      expect(row).toMatchObject({ journal_mode: 'delete' });
+    } else {
+      // Readers are initialized after writers, and initializing the writer will enable WAL mode.
+      expect(row).toMatchObject({ journal_mode: 'wal' });
+    }
+  });
+
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: tmpdir,
+      initializeConnection,
+      readWorkerCount: 2
+    }
+  });
+
+  await database.get('SELECT 1;'); // Make sure the database is ready and works
+  expect(initializeConnection).toHaveBeenCalledTimes(3); // One writer, two readers
   await database.close();
 });
 

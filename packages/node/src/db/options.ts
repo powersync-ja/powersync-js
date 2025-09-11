@@ -1,5 +1,5 @@
 import { type Worker } from 'node:worker_threads';
-import { SQLOpenOptions } from '@powersync/common';
+import { LockContext, SQLOpenOptions } from '@powersync/common';
 
 export type WorkerOpener = (...args: ConstructorParameters<typeof Worker>) => InstanceType<typeof Worker>;
 
@@ -41,4 +41,11 @@ export interface NodeSQLOpenOptions extends SQLOpenOptions {
    * @returns the resolved worker.
    */
   openWorker?: WorkerOpener;
+
+  /**
+   * Initializes a created database connection.
+   *
+   * This can be used to e.g. set encryption keys, if an encrypted database should be used.
+   */
+  initializeConnection?: (db: LockContext, isWriter: boolean) => Promise<void>;
 }

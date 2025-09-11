@@ -20,7 +20,7 @@ The `@powersync/node` package is currently in a Beta release.
 ## Install Package
 
 ```bash
-npm install @powersync/node
+npm install @powersync/node better-sqlite3
 ```
 
 Both `@powersync/node` and the `better-sqlite3` packages have install scripts that need to run to compile
