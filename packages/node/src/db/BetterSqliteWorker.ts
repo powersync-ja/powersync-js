@@ -2,7 +2,6 @@ import type { Database } from 'better-sqlite3';
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { threadId } from 'node:worker_threads';
-import { dynamicImport } from '../utils/modules.js';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
@@ -63,8 +62,8 @@ class BlockingAsyncDatabase implements AsyncDatabase {
   }
 }
 
-export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions, pkg: string) {
-  const BetterSQLite3Database: typeof Database = (await dynamicImport(pkg)).default;
+export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions) {
+  const BetterSQLite3Database = await worker.loadBetterSqlite3();
   const baseDB = new BetterSQLite3Database(options.path);
   baseDB.pragma('journal_mode = WAL');
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');

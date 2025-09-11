@@ -29,8 +29,7 @@ export type BetterSQLite3Transaction = Transaction & BetterSQLite3LockContext;
 const READ_CONNECTIONS = 5;
 
 const defaultDatabaseImplementation: NodeDatabaseImplementation = {
-  type: 'better-sqlite3',
-  package: 'better-sqlite3'
+  type: 'better-sqlite3'
 };
 
 /**
