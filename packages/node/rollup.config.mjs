@@ -3,6 +3,13 @@ import dts from 'rollup-plugin-dts';
 const plugin = () => {
   return {
     name: 'mark-as-commonjs',
+    async resolveId(source, importer, options) {
+      if (importer && source.indexOf('modules.js')) {
+        return await this.resolve(source.replace('modules.js', 'modules_commonjs.js'), importer, options);
+      } else {
+        return await this.resolve(source, importer, options);
+      }
+    },
     resolveImportMeta: (property) => {
       if (property == 'isBundlingToCommonJs') {
         return 'true';

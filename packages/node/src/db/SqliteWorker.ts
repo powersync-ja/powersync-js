@@ -6,6 +6,7 @@ import url from 'node:url';
 import { openDatabase as openBetterSqliteDatabase } from './BetterSqliteWorker.js';
 import { openDatabase as openNodeDatabase } from './NodeSqliteWorker.js';
 import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import { isBundledToCommonJs } from '../utils/modules.js';
 
 export interface PowerSyncWorkerOptions {
   /**
@@ -19,7 +20,7 @@ export interface PowerSyncWorkerOptions {
 export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) {
   const resolvedOptions: PowerSyncWorkerOptions = {
     extensionPath() {
-      const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
+      const isCommonJsModule = isBundledToCommonJs;
 
       const platform = OS.platform();
       let extensionPath: string;
@@ -58,11 +59,12 @@ class DatabaseOpenHelper implements AsyncDatabaseOpener {
   async open(options: AsyncDatabaseOpenOptions): Promise<AsyncDatabase> {
     let database: AsyncDatabase;
 
-    switch (options.implementation) {
+    const implementation = options.implementation;
+    switch (implementation.type) {
       case 'better-sqlite3':
-        database = await openBetterSqliteDatabase(this.options, options);
+        database = await openBetterSqliteDatabase(this.options, options, implementation.package ?? 'better-sqlite3');
         break;
-      case 'node':
+      case 'node:sqlite':
         database = await openNodeDatabase(this.options, options);
         break;
       default:

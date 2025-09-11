@@ -1,9 +1,9 @@
 import { threadId } from 'node:worker_threads';
 import type { DatabaseSync } from 'node:sqlite';
 
-import * as Comlink from 'comlink';
-import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
+import { dynamicImport } from '../utils/modules.js';
 
 class BlockingNodeDatabase implements AsyncDatabase {
   private readonly db: DatabaseSync;
@@ -12,16 +12,6 @@ class BlockingNodeDatabase implements AsyncDatabase {
     this.db = db;
 
     db.function('node_thread_id', () => threadId);
-    if (write) {
-      db.exec("SELECT powersync_update_hooks('install');");
-    }
-  }
-
-  async collectCommittedUpdates() {
-    const stmt = this.db.prepare("SELECT powersync_update_hooks('get') AS r;");
-    const row = stmt.get()!;
-
-    return JSON.parse(row['r'] as string) as string[];
   }
 
   async close() {
@@ -64,7 +54,7 @@ class BlockingNodeDatabase implements AsyncDatabase {
 export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions) {
   // NOTE: We want to import node:sqlite dynamically, to avoid bundlers unconditionally requiring node:sqlite in the
   // end, since that would make us incompatible with older Node.JS versions.
-  const { DatabaseSync } = await import('node:sqlite');
+  const { DatabaseSync } = await dynamicImport('node:sqlite');
 
   const baseDB = new DatabaseSync(options.path, { allowExtension: true });
   baseDB.exec('pragma journal_mode = WAL');
