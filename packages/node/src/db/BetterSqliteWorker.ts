@@ -1,43 +1,16 @@
-import * as Comlink from 'comlink';
-import BetterSQLite3Database, { Database } from '@powersync/better-sqlite3';
-import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import type { Database } from 'better-sqlite3';
+import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
 import { threadId } from 'node:worker_threads';
+import { dynamicImport } from '../utils/modules.js';
 
 class BlockingAsyncDatabase implements AsyncDatabase {
   private readonly db: Database;
-
-  private readonly uncommittedUpdatedTables = new Set<string>();
-  private readonly committedUpdatedTables = new Set<string>();
 
   constructor(db: Database) {
     this.db = db;
 
     db.function('node_thread_id', () => threadId);
-  }
-
-  collectCommittedUpdates() {
-    const resolved = Promise.resolve([...this.committedUpdatedTables]);
-    this.committedUpdatedTables.clear();
-    return resolved;
-  }
-
-  installUpdateHooks() {
-    this.db.updateHook((_op: string, _dbName: string, tableName: string, _rowid: bigint) => {
-      this.uncommittedUpdatedTables.add(tableName);
-    });
-
-    this.db.commitHook(() => {
-      for (const tableName of this.uncommittedUpdatedTables) {
-        this.committedUpdatedTables.add(tableName);
-      }
-      this.uncommittedUpdatedTables.clear();
-      return true;
-    });
-
-    this.db.rollbackHook(() => {
-      this.uncommittedUpdatedTables.clear();
-    });
   }
 
   async close() {
@@ -90,7 +63,8 @@ class BlockingAsyncDatabase implements AsyncDatabase {
   }
 }
 
-export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions) {
+export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions, pkg: string) {
+  const BetterSQLite3Database: typeof Database = (await dynamicImport(pkg)).default;
   const baseDB = new BetterSQLite3Database(options.path);
   baseDB.pragma('journal_mode = WAL');
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
@@ -99,6 +73,5 @@ export async function openDatabase(worker: PowerSyncWorkerOptions, options: Asyn
   }
 
   const asyncDb = new BlockingAsyncDatabase(baseDB);
-  asyncDb.installUpdateHooks();
   return asyncDb;
 }
