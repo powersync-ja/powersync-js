@@ -50,7 +50,7 @@ To resolve this, either:
 #### Package better-sqlite3 not found errors
 
 This package does not import `better-sqlite3` statically (with unconditional `require()` or static `import` statements).
-Instead, to allow users to us custom `better-sqlite3` forks, a dynamic `require()` / `import` expression is used.
+Instead, to allow users to use `node:sqlite` instead of that package, a dynamic `require()` / `import` expression is used.
 This may prevent bundlers from detecting that `better-sqlite3` is used by this package.
 
 To fix this, ensure you have a dependency on `better-sqlite3` (and, if you're using TypeScript, a dev-dependency on
