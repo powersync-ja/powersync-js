@@ -40,7 +40,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
     const stmt = this.db.prepare(query);
 
     if (stmt.reader) {
-      return stmt.raw().all(params);
+      return stmt.raw().all(params) as any[][];
     } else {
       stmt.raw().run(params);
       return [];
