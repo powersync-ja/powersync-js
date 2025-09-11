@@ -9,13 +9,6 @@ const plugin = () => {
       } else {
         return await this.resolve(source, importer, options);
       }
-    },
-    resolveImportMeta: (property) => {
-      if (property == 'isBundlingToCommonJs') {
-        return 'true';
-      }
-
-      return null;
     }
   };
 };

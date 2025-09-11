@@ -8,13 +8,6 @@ export type WorkerOpener = (...args: ConstructorParameters<typeof Worker>) => In
  */
 export interface BetterSqlite3Options {
   type: 'better-sqlite3';
-  /**
-   * The package import to resolve for better-sqlite3.
-   *
-   * While this defaults to `better-sqlite3`, this allows using forked better-sqlite3 packages, such as those used for
-   * encryption.
-   */
-  package?: string;
 }
 
 /**
