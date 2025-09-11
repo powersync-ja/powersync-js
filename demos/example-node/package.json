@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@powersync/node": "workspace:*",
+    "better-sqlite3": "^12.2.0",
+    "better-sqlite3-multiple-ciphers": "^12.2.0",
     "dotenv": "^16.4.7",
     "undici": "^7.11.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }
