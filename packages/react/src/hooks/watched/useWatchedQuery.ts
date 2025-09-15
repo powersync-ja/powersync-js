@@ -35,13 +35,14 @@ export const useWatchedQuery = <RowType = unknown>(
   }
 
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
-  const updatingPromise = React.useRef<Promise<void> | null>();
+  const disposePendingUpdateListener = React.useRef<() => void | null>(null);
 
   React.useEffect(() => {
     watchedQuery?.close();
     setWatchedQuery(createWatchedQuery);
 
     return () => {
+      disposePendingUpdateListener.current?.();
       watchedQuery?.close();
     };
   }, [powerSync, active]);
@@ -55,33 +56,30 @@ export const useWatchedQuery = <RowType = unknown>(
    * as soon as the query has been updated. This prevents a result flow where e.g. the hook:
    *  - already returned a result: isLoading, isFetching are both false
    *  - the query is updated, but the state is still isFetching=false from the previous state
-   * We override the isFetching status while the `updateSettings` method is running (if we report `isFetching`).
-   * The query could change multiple times while settings are being updated. In order to cater for this, we
-   * track the latest update operation promise.
+   * We override the isFetching status while the `updateSettings` method is running (if we report `isFetching`),
+   * we override this value just until the `updateSettings` method itself will update the `isFetching` status.
+   * We achieve this by registering a `settingsWillUpdate` listener on the `WatchedQuery`. This will fire
+   * just before the `isFetching` status is updated.
    */
   if (queryChanged) {
     // Keep track of this pending operation
-    let pendingUpdate = watchedQuery?.updateSettings({
+    watchedQuery?.updateSettings({
       query,
       throttleMs: hookOptions.throttleMs,
       reportFetching: hookOptions.reportFetching
     });
-
-    // Keep track of the latest pending update operation
-    updatingPromise.current = pendingUpdate;
-
-    // Clear the latest pending update operation when the latest
-    // operation has completed.
-    pendingUpdate?.then(() => {
-      // Only clear if this iteration was the latest iteration
-      if (pendingUpdate == updatingPromise.current) {
-        updatingPromise.current = null;
+    // This could have been called multiple times, clear any old listeners.
+    disposePendingUpdateListener.current?.();
+    disposePendingUpdateListener.current = watchedQuery?.registerListener({
+      settingsWillUpdate: () => {
+        // We'll use the fact that we have a listener at all as an indication
+        disposePendingUpdateListener.current?.();
+        disposePendingUpdateListener.current = null;
       }
     });
   }
 
-  const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && !!updatingPromise.current;
-
+  const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && !!disposePendingUpdateListener.current;
   const result = useNullableWatchedQuerySubscription(watchedQuery);
   return {
     ...result,

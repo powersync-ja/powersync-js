@@ -1,6 +1,12 @@
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
 import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
-import { WatchedQuery, WatchedQueryListener, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
+import {
+  WatchedQuery,
+  WatchedQueryListener,
+  WatchedQueryListenerEvent,
+  WatchedQueryOptions,
+  WatchedQueryState
+} from '../WatchedQuery.js';
 
 /**
  * @internal
@@ -86,6 +92,8 @@ export abstract class AbstractQueryProcessor<
     }
 
     this.options.watchOptions = settings;
+
+    this.iterateListeners((l) => l[WatchedQueryListenerEvent.SETTINGS_WILL_UPDATE]?.());
 
     if (!this.state.isFetching && this.reportFetching) {
       await this.updateState({
