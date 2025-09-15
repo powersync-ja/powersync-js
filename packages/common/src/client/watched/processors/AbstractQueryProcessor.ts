@@ -156,6 +156,9 @@ export abstract class AbstractQueryProcessor<
    */
   protected async init() {
     const { db } = this.options;
+    // Make a ref copy of this early since it might be updated by updateSettings while this
+    // method is running
+    const { abortController } = this;
 
     const disposeCloseListener = db.registerListener({
       closing: async () => {
@@ -180,13 +183,12 @@ export abstract class AbstractQueryProcessor<
 
     // Initial setup
     await this.runWithReporting(async () => {
-      await this.updateSettingsInternal(this.options.watchOptions, this.abortController.signal);
+      await this.updateSettingsInternal(this.options.watchOptions, abortController.signal);
     });
   }
 
   async close() {
     this._closed = true;
-    await this.initialized;
     this.abortController.abort();
     this.disposeListeners?.();
     this.disposeListeners = null;
