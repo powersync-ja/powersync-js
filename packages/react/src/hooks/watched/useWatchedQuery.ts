@@ -55,9 +55,9 @@ export const useWatchedQuery = <RowType = unknown>(
    * as soon as the query has been updated. This prevents a result flow where e.g. the hook:
    *  - already returned a result: isLoading, isFetching are both false
    *  - the query is updated, but the state is still isFetching=false from the previous state
-   * We only need to override the isFetching status on the initial render where the query changed
-   * (if we report the fetching status). The fetching status will be updated internally in the `updateSettings`
-   * method eventually.
+   * We override the isFetching status while the `updateSettings` method is running (if we report `isFetching`).
+   * The query could change multiple times while settings are being updated. In order to cater for this, we
+   * track the latest update operation promise.
    */
   if (queryChanged) {
     // Keep track of this pending operation
@@ -72,7 +72,7 @@ export const useWatchedQuery = <RowType = unknown>(
 
     // Clear the latest pending update operation when the latest
     // operation has completed.
-    pendingUpdate.then(() => {
+    pendingUpdate?.then(() => {
       // Only clear if this iteration was the latest iteration
       if (pendingUpdate == updatingPromise.current) {
         updatingPromise.current = null;
