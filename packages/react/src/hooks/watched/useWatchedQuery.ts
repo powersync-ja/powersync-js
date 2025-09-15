@@ -16,13 +16,6 @@ export const useWatchedQuery = <RowType = unknown>(
 ): QueryResult<RowType> | ReadonlyQueryResult<RowType> => {
   const { query, powerSync, queryChanged, options: hookOptions, active } = options;
 
-  // This ref is used to protect against cases where `queryChanged` changes multiple times too quickly to be
-  // picked up by the useEffect below. This typically happens when React.StrictMode is enabled.
-  const queryChangeRef = React.useRef(false);
-  if (queryChanged && !queryChangeRef.current) {
-    queryChangeRef.current = true;
-  }
-
   function createWatchedQuery() {
     if (!active) {
       return null;
@@ -46,20 +39,40 @@ export const useWatchedQuery = <RowType = unknown>(
   React.useEffect(() => {
     watchedQuery?.close();
     setWatchedQuery(createWatchedQuery);
+
+    return () => {
+      watchedQuery?.close();
+    };
   }, [powerSync, active]);
 
-  // Indicates that the query will be re-fetched due to a change in the query.
-  // Used when `isFetching` hasn't been set to true yet due to React execution.
-  React.useEffect(() => {
-    if (queryChangeRef.current) {
-      watchedQuery?.updateSettings({
-        query,
-        throttleMs: hookOptions.throttleMs,
-        reportFetching: hookOptions.reportFetching
-      });
-      queryChangeRef.current = false;
-    }
-  }, [queryChangeRef.current]);
+  /**
+   * Indicates that the query will be re-fetched due to a change in the query.
+   * We execute this in-line (not using an effect) since effects are delayed till after the hook returns.
+   * The `queryChanged` value should only be true for a single render.
+   * The `updateSettings` method is asynchronous, thus it will update the state asynchronously.
+   * In the React hooks we'd like to report that we are fetching the data for an updated query
+   * as soon as the query has been updated. This prevents a result flow where e.g. the hook:
+   *  - already returned a result: isLoading, isFetching are both false
+   *  - the query is updated, but the state is still isFetching=false from the previous state
+   * We only need to override the isFetching status on the initial render where the query changed
+   * (if we report the fetching status). The fetching status will be updated internally in the `updateSettings`
+   * method eventually.
+   * Only overriding when the `queryChanged` value is true also prevents races if the query changes
+   * rapidly.
+   */
+  if (queryChanged) {
+    watchedQuery?.updateSettings({
+      query,
+      throttleMs: hookOptions.throttleMs,
+      reportFetching: hookOptions.reportFetching
+    });
+  }
 
-  return useNullableWatchedQuerySubscription(watchedQuery);
+  const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && queryChanged;
+
+  const result = useNullableWatchedQuerySubscription(watchedQuery);
+  return {
+    ...result,
+    isFetching: result?.isFetching || shouldReportCurrentlyFetching
+  };
 };

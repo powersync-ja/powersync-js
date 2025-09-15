@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
+import { QueryResult } from '../src/hooks/watched/watch-types';
 
 export const openPowerSync = () => {
   const db = new PowerSyncDatabase({
@@ -147,6 +148,13 @@ describe('useQuery', () => {
             (uuid (), 'second')
         `);
 
+        type TestEvent = {
+          parameters: string[];
+          hookResults: QueryResult<any>;
+        };
+
+        const hookEvents: TestEvent[] = [];
+
         const query = () => {
           const [parameters, setParameters] = React.useState<string[]>(['first']);
 
@@ -155,7 +163,12 @@ describe('useQuery', () => {
             newParametersPromise.then((params) => setParameters(params));
           }, []);
 
-          return useQuery('SELECT * FROM lists WHERE name = ?', parameters);
+          const result = useQuery('SELECT * FROM lists WHERE name = ?', parameters);
+          hookEvents.push({
+            parameters,
+            hookResults: result
+          });
+          return result;
         };
 
         const { result } = renderHook(query, { wrapper: ({ children }) => testWrapper({ children, db }) });
@@ -168,6 +181,12 @@ describe('useQuery', () => {
           { timeout: 500, interval: 100 }
         );
 
+        // Verify that the fetching status was correlated to the parameters
+        const firstResultEvent = hookEvents.find((event) => event.hookResults.data.length == 1);
+        expect(firstResultEvent).toBeDefined();
+        // Fetching should be false as soon as the results were made available
+        expect(firstResultEvent?.hookResults.isFetching).false;
+
         // Now update the parameter
         updateParameters(['second']);
 
@@ -178,6 +197,135 @@ describe('useQuery', () => {
           },
           { timeout: 500, interval: 100 }
         );
+
+        // finds the first result where the parameters have changed
+        const secondFetchingEvent = hookEvents.find((event) => event.parameters[0] == 'second');
+        expect(secondFetchingEvent).toBeDefined();
+        // We should immediately report that we are fetching once we detect new params
+        expect(secondFetchingEvent?.hookResults.isFetching).true;
+      });
+
+      it('should react to updated queries (fast update)', async () => {
+        const db = openPowerSync();
+
+        await db.execute(/* sql */ `
+          INSERT INTO
+            lists (id, name)
+          VALUES
+            (uuid (), 'first'),
+            (uuid (), 'second')
+        `);
+
+        type TestEvent = {
+          parameters: string[];
+          hookResults: QueryResult<any>;
+        };
+
+        const hookEvents: TestEvent[] = [];
+
+        const queryObserver = new commonSdk.BaseObserver();
+        const baseQuery = 'SELECT * FROM lists WHERE name = ?';
+        const query = () => {
+          const [query, setQuery] = React.useState({
+            sql: baseQuery,
+            params: ['']
+          });
+
+          useEffect(() => {
+            // allow updating the parameters externally
+            queryObserver.registerListener({
+              queryUpdated: (query) => setQuery(query)
+            });
+          }, []);
+
+          const result = useQuery(query.sql, query.params);
+          hookEvents.push({
+            parameters: query.params,
+            hookResults: result
+          });
+          return result;
+        };
+
+        const { result } = renderHook(query, { wrapper: ({ children }) => testWrapper({ children, db }) });
+        // let the hook render once, and immediately update the query
+        queryObserver.iterateListeners((l) =>
+          l.queryUpdated?.({
+            sql: baseQuery,
+            params: ['first']
+          })
+        );
+
+        // We should only receive the first list due to the WHERE clause
+        await vi.waitFor(
+          () => {
+            expect(result.current.data[0]?.name).toEqual('first');
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        // We changed the params before the initial query could execute (we changed the params immediately)
+        // We should not see isLoading=false for the first set of params
+        expect(
+          hookEvents.find((event) => event.parameters[0] == '' && event.hookResults.isLoading == false)
+        ).toBeUndefined();
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 'first' &&
+              event.hookResults.isLoading == true &&
+              event.hookResults.isFetching == true
+          )
+        ).toBeDefined();
+
+        // Verify that the fetching status was correlated to the parameters
+        const firstResultEvent = hookEvents.find((event) => event.hookResults.data.length == 1);
+        expect(firstResultEvent).toBeDefined();
+        // Fetching should be false as soon as the results were made available
+        expect(firstResultEvent?.hookResults.isFetching).false;
+
+        // Now update the parameter with something which will cause an error
+        queryObserver.iterateListeners((l) =>
+          l.queryUpdated?.({
+            sql: 'select this is a broken query',
+            params: ['first']
+          })
+        );
+
+        // wait for the error to have been found
+        await vi.waitFor(
+          () => {
+            console.log(result.current);
+            expect(result.current.error).not.equal(null);
+            expect(result.current.isFetching).false;
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        // The error should not be present before isFetching is false
+        expect(
+          hookEvents.find((event) => event.hookResults.error != null && event.hookResults.isFetching == true)
+        ).toBeUndefined();
+
+        queryObserver.iterateListeners((l) =>
+          l.queryUpdated?.({
+            sql: baseQuery,
+            params: ['second']
+          })
+        );
+
+        // We should now only receive the second list due to the WHERE clause and updated parameter
+        await vi.waitFor(
+          () => {
+            expect(result.current.data[0]?.name).toEqual('second');
+            expect(result.current.error).null;
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        const secondFetchingEvent = hookEvents.find((event) => event.parameters[0] == 'second');
+        expect(secondFetchingEvent).toBeDefined();
+        // We should immediately report that we are fetching once we detect new params
+        expect(secondFetchingEvent?.hookResults.isFetching).true;
       });
 
       it('should execute compatible queries', async () => {
