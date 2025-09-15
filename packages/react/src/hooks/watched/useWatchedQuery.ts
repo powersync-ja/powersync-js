@@ -39,11 +39,12 @@ export const useWatchedQuery = <RowType = unknown>(
 
   React.useEffect(() => {
     watchedQuery?.close();
-    setWatchedQuery(createWatchedQuery);
+    const newQuery = createWatchedQuery();
+    setWatchedQuery(newQuery);
 
     return () => {
       disposePendingUpdateListener.current?.();
-      watchedQuery?.close();
+      newQuery?.close();
     };
   }, [powerSync, active]);
 

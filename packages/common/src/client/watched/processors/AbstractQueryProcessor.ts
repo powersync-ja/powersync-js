@@ -68,7 +68,7 @@ export abstract class AbstractQueryProcessor<
     this._closed = false;
     this.state = this.constructInitialState();
     this.disposeListeners = null;
-    this.initialized = this.init();
+    this.initialized = this.init(this.abortController.signal);
   }
 
   protected constructInitialState(): WatchedQueryState<Data> {
@@ -113,7 +113,7 @@ export abstract class AbstractQueryProcessor<
    * Updates the underlying query.
    */
   async updateSettings(settings: Settings) {
-    // Abort any previous requests
+    // Abort the previous request
     this.abortController.abort();
 
     // Keep track of this controller's abort status
@@ -154,11 +154,8 @@ export abstract class AbstractQueryProcessor<
   /**
    * Configures base DB listeners and links the query to listeners.
    */
-  protected async init() {
+  protected async init(signal: AbortSignal) {
     const { db } = this.options;
-    // Make a ref copy of this early since it might be updated by updateSettings while this
-    // method is running
-    const { abortController } = this;
 
     const disposeCloseListener = db.registerListener({
       closing: async () => {
@@ -183,7 +180,7 @@ export abstract class AbstractQueryProcessor<
 
     // Initial setup
     await this.runWithReporting(async () => {
-      await this.updateSettingsInternal(this.options.watchOptions, abortController.signal);
+      await this.updateSettingsInternal(this.options.watchOptions, signal);
     });
   }
 
