@@ -35,6 +35,7 @@ export const useWatchedQuery = <RowType = unknown>(
   }
 
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
+  const updatingPromise = React.useRef<Promise<void> | null>();
 
   React.useEffect(() => {
     watchedQuery?.close();
@@ -57,18 +58,29 @@ export const useWatchedQuery = <RowType = unknown>(
    * We only need to override the isFetching status on the initial render where the query changed
    * (if we report the fetching status). The fetching status will be updated internally in the `updateSettings`
    * method eventually.
-   * Only overriding when the `queryChanged` value is true also prevents races if the query changes
-   * rapidly.
    */
   if (queryChanged) {
-    watchedQuery?.updateSettings({
+    // Keep track of this pending operation
+    let pendingUpdate = watchedQuery?.updateSettings({
       query,
       throttleMs: hookOptions.throttleMs,
       reportFetching: hookOptions.reportFetching
     });
+
+    // Keep track of the latest pending update operation
+    updatingPromise.current = pendingUpdate;
+
+    // Clear the latest pending update operation when the latest
+    // operation has completed.
+    pendingUpdate.then(() => {
+      // Only clear if this iteration was the latest iteration
+      if (pendingUpdate == updatingPromise.current) {
+        updatingPromise.current = null;
+      }
+    });
   }
 
-  const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && queryChanged;
+  const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && !!updatingPromise.current;
 
   const result = useNullableWatchedQuerySubscription(watchedQuery);
   return {

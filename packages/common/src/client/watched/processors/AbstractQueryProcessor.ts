@@ -81,7 +81,7 @@ export abstract class AbstractQueryProcessor<
 
   protected async updateSettingsInternal(settings: Settings, signal: AbortSignal) {
     // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
-    if (signal.aborted) {
+    if (this._closed || signal.aborted) {
       return;
     }
 
@@ -124,6 +124,10 @@ export abstract class AbstractQueryProcessor<
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
   protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
+    if (this._closed) {
+      return;
+    }
+
     if (typeof update.error !== 'undefined') {
       await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
       // An error always stops for the current fetching state
@@ -173,11 +177,11 @@ export abstract class AbstractQueryProcessor<
   }
 
   async close() {
+    this._closed = true;
     await this.initialized;
     this.abortController.abort();
     this.disposeListeners?.();
     this.disposeListeners = null;
-    this._closed = true;
     this.iterateListeners((l) => l.closed?.());
     this.listeners.clear();
   }

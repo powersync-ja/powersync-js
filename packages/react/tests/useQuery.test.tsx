@@ -255,10 +255,12 @@ describe('useQuery', () => {
           })
         );
 
-        // We should only receive the first list due to the WHERE clause
+        // Wait for the first result to be emitted
         await vi.waitFor(
           () => {
             expect(result.current.data[0]?.name).toEqual('first');
+            expect(result.current.isFetching).false;
+            expect(result.current.isLoading).false;
           },
           { timeout: 500, interval: 100 }
         );
@@ -268,6 +270,7 @@ describe('useQuery', () => {
         expect(
           hookEvents.find((event) => event.parameters[0] == '' && event.hookResults.isLoading == false)
         ).toBeUndefined();
+        // We should have an event where this was both loading and fetching
         expect(
           hookEvents.find(
             (event) =>
@@ -276,6 +279,15 @@ describe('useQuery', () => {
               event.hookResults.isFetching == true
           )
         ).toBeDefined();
+        // We should not have any event where isLoading or isFetching is false without data being presented
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 'first' &&
+              (event.hookResults.isLoading || event.hookResults.isFetching) == false &&
+              event.hookResults.data[0]?.name != 'first'
+          )
+        ).toBeUndefined();
 
         // Verify that the fetching status was correlated to the parameters
         const firstResultEvent = hookEvents.find((event) => event.hookResults.data.length == 1);
@@ -287,14 +299,13 @@ describe('useQuery', () => {
         queryObserver.iterateListeners((l) =>
           l.queryUpdated?.({
             sql: 'select this is a broken query',
-            params: ['first']
+            params: ['error']
           })
         );
 
         // wait for the error to have been found
         await vi.waitFor(
           () => {
-            console.log(result.current);
             expect(result.current.error).not.equal(null);
             expect(result.current.isFetching).false;
           },
@@ -304,6 +315,15 @@ describe('useQuery', () => {
         // The error should not be present before isFetching is false
         expect(
           hookEvents.find((event) => event.hookResults.error != null && event.hookResults.isFetching == true)
+        ).toBeUndefined();
+        // there should not be any results where the fetching status is false, but the error is not presented
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 'error' &&
+              event.hookResults.error == null &&
+              (event.hookResults.isFetching || event.hookResults.isLoading) == false
+          )
         ).toBeUndefined();
 
         queryObserver.iterateListeners((l) =>
@@ -318,6 +338,8 @@ describe('useQuery', () => {
           () => {
             expect(result.current.data[0]?.name).toEqual('second');
             expect(result.current.error).null;
+            expect(result.current.isFetching).false;
+            expect(result.current.isLoading).false;
           },
           { timeout: 500, interval: 100 }
         );
@@ -326,6 +348,15 @@ describe('useQuery', () => {
         expect(secondFetchingEvent).toBeDefined();
         // We should immediately report that we are fetching once we detect new params
         expect(secondFetchingEvent?.hookResults.isFetching).true;
+        // We should never have reported that fetching was false before the results were present
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 'second' &&
+              event.hookResults.data[0]?.name != 'second' &&
+              (event.hookResults.isFetching == false || event.hookResults.isLoading == false)
+          )
+        );
       });
 
       it('should execute compatible queries', async () => {
