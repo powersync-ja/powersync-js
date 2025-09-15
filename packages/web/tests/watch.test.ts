@@ -773,7 +773,6 @@ describe('Watch Tests', { sequential: true }, () => {
       { timeout: 3000 }
     );
     dispose();
-    console.log(JSON.stringify(states));
   });
 
   it('should report differential query results', async () => {
