@@ -205,7 +205,7 @@ describe('useQuery', () => {
         expect(secondFetchingEvent?.hookResults.isFetching).true;
       });
 
-      it('should react to updated queries (fast update)', async () => {
+      it('should react to updated queries (many updates)', async () => {
         const db = openPowerSync();
 
         await db.execute(/* sql */ `
@@ -357,6 +357,108 @@ describe('useQuery', () => {
               (event.hookResults.isFetching == false || event.hookResults.isLoading == false)
           )
         );
+      });
+
+      it('should react to updated queries (immediate updates)', async () => {
+        const db = openPowerSync();
+
+        await db.execute(/* sql */ `
+          INSERT INTO
+            lists (id, name)
+          VALUES
+            (uuid (), 'first'),
+            (uuid (), 'second'),
+            (uuid (), 'third')
+        `);
+
+        type TestEvent = {
+          parameters: number[];
+          hookResults: QueryResult<any>;
+        };
+
+        const hookEvents: TestEvent[] = [];
+
+        const baseQuery = 'SELECT * FROM lists LIMIT ?';
+
+        const query = () => {
+          const [query, setQuery] = React.useState({
+            sql: baseQuery,
+            params: [1]
+          });
+
+          // Change the params after the first render
+          useEffect(() => {
+            setQuery({
+              sql: baseQuery,
+              params: [2]
+            });
+          }, []);
+
+          const result = useQuery(query.sql, query.params);
+          hookEvents.push({
+            parameters: query.params,
+            hookResults: result
+          });
+          return result;
+        };
+
+        const { result } = renderHook(query, { wrapper: ({ children }) => testWrapper({ children, db }) });
+        // Wait for the first result to be emitted
+        await vi.waitFor(
+          () => {
+            expect(result.current.data.length).toEqual(2);
+            expect(result.current.isFetching).false;
+            expect(result.current.isLoading).false;
+          },
+          { timeout: 500, interval: 100 }
+        );
+
+        console.log(JSON.stringify(hookEvents));
+
+        // We changed the params before the initial query could execute (we changed the params immediately)
+        // We should not see isLoading=false for the first set of params
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 1 &&
+              (event.hookResults.isLoading == false || event.hookResults.isFetching == false)
+          )
+        ).toBeUndefined();
+        // We should have an event where this was both loading and fetching
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 1 && event.hookResults.isLoading == true && event.hookResults.isFetching == true
+          )
+        ).toBeDefined();
+
+        // We should not have any event where isLoading or isFetching is false without data being presented
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 1 &&
+              (event.hookResults.isLoading || event.hookResults.isFetching) == false &&
+              event.hookResults.data.length != 1
+          )
+        ).toBeUndefined();
+
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 2 &&
+              (event.hookResults.isLoading || event.hookResults.isFetching) == false &&
+              event.hookResults.data.length != 2
+          )
+        ).toBeUndefined();
+
+        expect(
+          hookEvents.find(
+            (event) =>
+              event.parameters[0] == 2 &&
+              (event.hookResults.isLoading && event.hookResults.isFetching) == false &&
+              event.hookResults.data.length == 2
+          )
+        ).toBeDefined();
       });
 
       it('should execute compatible queries', async () => {
