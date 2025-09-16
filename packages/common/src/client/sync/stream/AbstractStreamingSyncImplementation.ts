@@ -1,7 +1,6 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
-import * as sync_status from '../../../db/crud/SyncStatus.js';
+import { InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
@@ -1017,6 +1016,14 @@ The next upload iteration will be delayed.`);
 
     async function control(op: PowerSyncControlCommand, payload?: Uint8Array | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
+      const logger = syncImplementation.logger;
+      logger.trace(
+        'powersync_control',
+        op,
+        payload == null || typeof payload == 'string' ? payload : '<bytes>',
+        rawResponse
+      );
+
       await handleInstructions(JSON.parse(rawResponse));
     }
 

@@ -14,11 +14,12 @@ import {
   PowerSyncDatabase,
   Schema,
   StreamingSyncCheckpoint,
-  StreamingSyncCheckpointComplete,
   StreamingSyncLine,
   SyncStatus,
   Table
 } from '../lib';
+import { createLogger } from '@powersync/common';
+import Logger from 'js-logger';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -57,12 +58,18 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
+  const defaultLogger = createLogger('PowerSyncTest', { logLevel: Logger.TRACE });
+  (defaultLogger as any).invoke = (_, args) => {
+    console.log(...args);
+  };
+
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir
     },
+    logger: defaultLogger,
     ...options
   });
   await database.init();

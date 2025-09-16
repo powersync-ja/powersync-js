@@ -355,7 +355,7 @@ class ActiveSubscription {
 }
 
 class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
-  private active: boolean = false;
+  private active: boolean = true;
 
   constructor(readonly subscription: ActiveSubscription) {
     subscription.refcount++;

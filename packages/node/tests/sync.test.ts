@@ -15,8 +15,6 @@ import {
 } from '@powersync/common';
 import Logger from 'js-logger';
 
-Logger.useDefaults({ defaultLevel: Logger.WARN });
-
 describe('Sync', () => {
   describe('js client', () => {
     defineSyncTests(SyncClientImplementation.JAVASCRIPT);

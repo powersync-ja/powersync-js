@@ -1,4 +1,4 @@
-import { describe, vi, expect } from 'vitest';
+import { describe, vi, expect, onTestFinished } from 'vitest';
 import { PowerSyncConnectionOptions, SyncClientImplementation, SyncStreamConnectionMethod } from '@powersync/common';
 import Logger from 'js-logger';
 import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils';
@@ -30,6 +30,10 @@ describe('Sync streams', () => {
     const database = await syncService.createDatabase();
     const a = await database.syncStream('stream', { foo: 'a' }).subscribe();
     const b = await database.syncStream('stream', { foo: 'b' }).subscribe({ priority: 1 });
+    onTestFinished(() => {
+      a.unsubscribe();
+      b.unsubscribe();
+    });
 
     await database.connect(new TestConnector(), defaultOptions);
 
