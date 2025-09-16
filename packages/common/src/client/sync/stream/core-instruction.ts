@@ -74,7 +74,7 @@ function priorityToJs(status: SyncPriorityStatus): sync_status.SyncPriorityStatu
   return {
     priority: status.priority,
     hasSynced: status.has_synced ?? undefined,
-    lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at! * 1000) : undefined
+    lastSyncedAt: status?.last_synced_at != null ? new Date(status.last_synced_at * 1000) : undefined
   };
 }
 
