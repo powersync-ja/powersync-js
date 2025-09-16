@@ -122,6 +122,8 @@ export class SyncStatus {
    *
    * This returns null when the database is currently being opened and we don't have reliable information about all
    * included streams yet.
+   *
+   * @experimental Sync streams are currently in alpha.
    */
   get syncStreams(): SyncStreamStatus[] | undefined {
     return this.options.dataFlow?.internalStreamSubscriptions?.map((core) => new SyncStreamStatusView(this, core));
@@ -129,6 +131,8 @@ export class SyncStatus {
 
   /**
    * If the `stream` appears in {@link syncStreams}, returns the current status for that stream.
+   *
+   * @experimental Sync streams are currently in alpha.
    */
   forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined {
     const asJson = JSON.stringify(stream.parameters);

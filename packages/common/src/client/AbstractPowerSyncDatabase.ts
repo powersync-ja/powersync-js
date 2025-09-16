@@ -544,6 +544,14 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
   }
 
+  /**
+   * Create a sync stream to query its status or to subscribe to it.
+   *
+   * @param name The name of the stream to subscribe to.
+   * @param params Optional parameters for the stream subscription.
+   * @returns A {@link SyncStream} instance that can be subscribed to.
+   * @experimental Sync streams are currently in alpha.
+   */
   syncStream(name: string, params?: Record<string, any>): SyncStream {
     return this.connectionManager.stream(this.subscriptions, name, params ?? null);
   }
