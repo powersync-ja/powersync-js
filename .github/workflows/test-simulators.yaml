@@ -141,7 +141,8 @@ jobs:
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          # TODO: Update to latest-stable once GH installs iOS 26 simulators
+          xcode-version: '^16.4.0'
 
       - name: CocoaPods Cache
         uses: actions/cache@v3
