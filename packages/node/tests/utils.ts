@@ -58,7 +58,8 @@ async function createDatabase(
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
-      dbLocation: tmpdir
+      dbLocation: tmpdir,
+      readWorkerCount: 1
     },
     ...options
   });

@@ -43,7 +43,14 @@ databaseTest('links powersync', async ({ database }) => {
   await database.get('select powersync_rs_version();');
 });
 
-databaseTest('runs queries on multiple threads', async ({ database }) => {
+tempDirectoryTest('runs queries on multiple threads', async ({ tmpdir }) => {
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: tmpdir
+    }
+  });
   const threads = new Set<number>();
 
   const collectWorkerThreadId = async () => {
@@ -58,9 +65,12 @@ databaseTest('runs queries on multiple threads', async ({ database }) => {
   }
 
   const res = await Promise.all(queryTasks);
+  await database.close();
   expect(res).toHaveLength(10);
   expect([...threads]).toHaveLength(5);
 });
+
+databaseTest('runs queries on multiple threads', async ({ database }) => {});
 
 databaseTest('can watch tables', async ({ database }) => {
   const fn = vi.fn();
