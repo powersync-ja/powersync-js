@@ -68,6 +68,8 @@ export async function createDatabase(
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir,
+      // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
+      // actions. So far, we've not been able to reproduce these failures locally.
       readWorkerCount: 1
     },
     logger: defaultLogger,
