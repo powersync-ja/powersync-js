@@ -1,0 +1,12 @@
+.env.example 
+.env.local
+
+# Ignore artifacts:
+build
+coverage
+
+# Ignore all HTML files:
+**/*.html
+
+# Builds
+dist

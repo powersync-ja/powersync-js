@@ -1,0 +1,12 @@
+# PowerSync Sync Rules (example)
+# Docs: https://docs.powersync.com/usage/sync-rules
+#
+# Bucket-based rules: Each user gets a bucket keyed by their user_id.
+# PowerSync resolves request.user_id() from the authenticated identity (for Supabase, JWT sub).
+
+bucket_definitions:
+  user_data:
+    parameters: SELECT request.user_id() AS user_id
+    data:
+      - SELECT * FROM public.todos WHERE user_id = bucket.user_id
+      - SELECT * FROM public.e2ee_keys WHERE user_id = bucket.user_id

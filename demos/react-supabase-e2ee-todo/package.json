@@ -1,0 +1,18 @@
+{
+  "name": "powersync-e2ee",
+  "private": true,
+  "workspaces": [
+    "packages/crypto/*",
+    "packages/todo-raw-table/frontend"
+  ],
+  "scripts": {
+    "dev": "yarn workspace @app/todo-raw-table dev",
+    "build": "lerna --include-dependencies --sort run build",
+    "test": "lerna run test",
+    "typecheck": "lerna run typecheck"
+  },
+  "devDependencies": {
+    "lerna": "^8.2.4",
+    "supabase": "^2.41.4"
+  }
+}

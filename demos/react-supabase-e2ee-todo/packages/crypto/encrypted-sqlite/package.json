@@ -1,0 +1,23 @@
+{
+  "name": "@crypto/sqlite",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@crypto/interface": "^0.1.0",
+    "libsodium-wrappers": "^0.7.13",
+    "@powersync/web": "^1.26.2"
+  },
+  "devDependencies": {
+    "@types/libsodium-wrappers": "^0.7.14",
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
+  }
+}
