@@ -1,6 +1,12 @@
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
 import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
-import { WatchedQuery, WatchedQueryListener, WatchedQueryOptions, WatchedQueryState } from '../WatchedQuery.js';
+import {
+  WatchedQuery,
+  WatchedQueryListener,
+  WatchedQueryListenerEvent,
+  WatchedQueryOptions,
+  WatchedQueryState
+} from '../WatchedQuery.js';
 
 /**
  * @internal
@@ -62,7 +68,7 @@ export abstract class AbstractQueryProcessor<
     this._closed = false;
     this.state = this.constructInitialState();
     this.disposeListeners = null;
-    this.initialized = this.init();
+    this.initialized = this.init(this.abortController.signal);
   }
 
   protected constructInitialState(): WatchedQueryState<Data> {
@@ -79,12 +85,15 @@ export abstract class AbstractQueryProcessor<
     return this.options.watchOptions.reportFetching ?? true;
   }
 
-  /**
-   * Updates the underlying query.
-   */
-  async updateSettings(settings: Settings) {
-    this.abortController.abort();
-    await this.initialized;
+  protected async updateSettingsInternal(settings: Settings, signal: AbortSignal) {
+    // This may have been aborted while awaiting or if multiple calls to `updateSettings` were made
+    if (this._closed || signal.aborted) {
+      return;
+    }
+
+    this.options.watchOptions = settings;
+
+    this.iterateListeners((l) => l[WatchedQueryListenerEvent.SETTINGS_WILL_UPDATE]?.());
 
     if (!this.state.isFetching && this.reportFetching) {
       await this.updateState({
@@ -92,15 +101,28 @@ export abstract class AbstractQueryProcessor<
       });
     }
 
-    this.options.watchOptions = settings;
-
-    this.abortController = new AbortController();
     await this.runWithReporting(() =>
       this.linkQuery({
-        abortSignal: this.abortController.signal,
+        abortSignal: signal,
         settings
       })
     );
+  }
+
+  /**
+   * Updates the underlying query.
+   */
+  async updateSettings(settings: Settings) {
+    // Abort the previous request
+    this.abortController.abort();
+
+    // Keep track of this controller's abort status
+    const abortController = new AbortController();
+    // Allow this to be aborted externally
+    this.abortController = abortController;
+
+    await this.initialized;
+    return this.updateSettingsInternal(settings, abortController.signal);
   }
 
   /**
@@ -110,6 +132,10 @@ export abstract class AbstractQueryProcessor<
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 
   protected async updateState(update: Partial<MutableWatchedQueryState<Data>>) {
+    if (this._closed) {
+      return;
+    }
+
     if (typeof update.error !== 'undefined') {
       await this.iterateAsyncListenersWithError(async (l) => l.onError?.(update.error!));
       // An error always stops for the current fetching state
@@ -128,7 +154,7 @@ export abstract class AbstractQueryProcessor<
   /**
    * Configures base DB listeners and links the query to listeners.
    */
-  protected async init() {
+  protected async init(signal: AbortSignal) {
     const { db } = this.options;
 
     const disposeCloseListener = db.registerListener({
@@ -153,17 +179,16 @@ export abstract class AbstractQueryProcessor<
     };
 
     // Initial setup
-    this.runWithReporting(async () => {
-      await this.updateSettings(this.options.watchOptions);
+    await this.runWithReporting(async () => {
+      await this.updateSettingsInternal(this.options.watchOptions, signal);
     });
   }
 
   async close() {
-    await this.initialized;
+    this._closed = true;
     this.abortController.abort();
     this.disposeListeners?.();
     this.disposeListeners = null;
-    this._closed = true;
     this.iterateListeners((l) => l.closed?.());
     this.listeners.clear();
   }
