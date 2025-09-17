@@ -4,6 +4,7 @@ import { useSingleQuery } from './useSingleQuery.js';
 import { useWatchedQuery } from './useWatchedQuery.js';
 import { AdditionalOptions, DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { constructCompatibleQuery } from './watch-utils.js';
+import { useAllSyncStreamsHaveSynced } from '../streams.js';
 
 /**
  * A hook to access the results of a watched query.
@@ -58,15 +59,20 @@ export function useQuery<RowType = any>(
 ) {
   const powerSync = usePowerSync();
   if (!powerSync) {
-    return { isLoading: false, isFetching: false, data: [], error: new Error('PowerSync not configured.') };
+    return {
+      ..._loadingState,
+      isLoading: false,
+      error: new Error('PowerSync not configured.')
+    };
   }
   const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
+  const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync, options?.streams);
   const runOnce = options?.runQueryOnce == true;
   const single = useSingleQuery<RowType>({
     query: parsedQuery,
     powerSync,
     queryChanged,
-    active: runOnce
+    active: runOnce && streamsHaveSynced
   });
   const watched = useWatchedQuery<RowType>({
     query: parsedQuery,
@@ -79,8 +85,14 @@ export function useQuery<RowType = any>(
       // We emit new data for each table change by default.
       rowComparator: options.rowComparator
     },
-    active: !runOnce
+    active: !runOnce && streamsHaveSynced
   });
 
-  return runOnce ? single : watched;
+  if (!streamsHaveSynced) {
+    return { ..._loadingState };
+  }
+
+  return (runOnce ? single : watched) ?? _loadingState;
 }
+
+const _loadingState = { isLoading: true, isFetching: false, data: [], error: undefined };

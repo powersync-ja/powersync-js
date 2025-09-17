@@ -355,7 +355,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     return this.waitForStatus(statusMatches, signal);
   }
 
-  private async waitForStatus(predicate: (status: SyncStatus) => any, signal?: AbortSignal): Promise<void> {
+  /**
+   * Waits for the first sync status for which the `status` callback returns a truthy value.
+   */
+  async waitForStatus(predicate: (status: SyncStatus) => any, signal?: AbortSignal): Promise<void> {
     if (predicate(this.currentStatus)) {
       return;
     }
@@ -364,16 +367,21 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       const dispose = this.registerListener({
         statusChanged: (status) => {
           if (predicate(status)) {
-            dispose();
-            resolve();
+            abort();
           }
         }
       });
 
-      signal?.addEventListener('abort', () => {
+      function abort() {
         dispose();
         resolve();
-      });
+      }
+
+      if (signal?.aborted) {
+        abort();
+      } else {
+        signal?.addEventListener('abort', abort);
+      }
     });
   }
 
