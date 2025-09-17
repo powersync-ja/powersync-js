@@ -1,5 +1,16 @@
 # @powersync/web
 
+## 1.27.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+### Patch Changes
+
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
 ## 1.26.2
 
 ### Patch Changes
