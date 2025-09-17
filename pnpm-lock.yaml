@@ -1762,7 +1762,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.38.1
+        specifier: workspace:^1.39.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -1790,7 +1790,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.38.1
+        specifier: workspace:^1.39.0
         version: link:../common
       kysely:
         specifier: ^0.28.0
