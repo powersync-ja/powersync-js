@@ -1,5 +1,13 @@
 # @powersync/node
 
+## 0.10.2
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+
 ## 0.10.1
 
 ### Patch Changes
