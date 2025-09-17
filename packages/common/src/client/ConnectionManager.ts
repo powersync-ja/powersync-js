@@ -2,9 +2,18 @@ import { ILogger } from 'js-logger';
 import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import {
+  AdditionalConnectionOptions,
   InternalConnectionOptions,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  SubscribedStream
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import {
+  SyncStream,
+  SyncStreamDescription,
+  SyncStreamSubscribeOptions,
+  SyncStreamSubscription
+} from './sync/sync-streams.js';
+import { SyncStatus } from '../db/crud/SyncStatus.js';
 
 /**
  * @internal
@@ -19,13 +28,29 @@ export interface ConnectionManagerSyncImplementationResult {
 }
 
 /**
+ * The subset of {@link AbstractStreamingSyncImplementationOptions} managed by the connection manager.
+ *
+ * @internal
+ */
+export interface CreateSyncImplementationOptions extends AdditionalConnectionOptions {
+  subscriptions: SubscribedStream[];
+}
+
+export interface InternalSubscriptionAdapter {
+  firstStatusMatching(predicate: (status: SyncStatus) => any, abort?: AbortSignal): Promise<void>;
+  resolveOfflineSyncStatus(): Promise<void>;
+  rustSubscriptionsCommand(payload: any): Promise<void>;
+}
+
+/**
  * @internal
  */
 export interface ConnectionManagerOptions {
   createSyncImplementation(
     connector: PowerSyncBackendConnector,
-    options: InternalConnectionOptions
+    options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
+
   logger: ILogger;
 }
 
@@ -76,6 +101,13 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
    */
   protected syncDisposer: (() => Promise<void> | void) | null;
 
+  /**
+   * Subscriptions managed in this connection manager.
+   *
+   * On the web, these local subscriptions are merged across tabs by a shared worker.
+   */
+  private locallyActiveSubscriptions = new Map<string, ActiveSubscription>();
+
   constructor(protected options: ConnectionManagerOptions) {
     super();
     this.connectingPromise = null;
@@ -102,7 +134,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // Update pending options to the latest values
     this.pendingConnectionOptions = {
       connector,
-      options: options ?? {}
+      options
     };
 
     // Disconnecting here provides aborting in progress connection attempts.
@@ -169,7 +201,11 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
         appliedOptions = options;
 
         this.pendingConnectionOptions = null;
-        const { sync, onDispose } = await this.options.createSyncImplementation(connector, options);
+
+        const { sync, onDispose } = await this.options.createSyncImplementation(connector, {
+          subscriptions: this.activeStreams,
+          ...options
+        });
         this.iterateListeners((l) => l.syncStreamCreated?.(sync));
         this.syncStreamImplementation = sync;
         this.syncDisposer = onDispose;
@@ -236,4 +272,122 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await sync?.dispose();
     await disposer?.();
   }
+
+  stream(adapter: InternalSubscriptionAdapter, name: string, parameters: Record<string, any> | null): SyncStream {
+    const desc = { name, parameters } satisfies SyncStreamDescription;
+
+    const waitForFirstSync = (abort?: AbortSignal) => {
+      return adapter.firstStatusMatching((s) => s.forStream(desc)?.subscription.hasSynced, abort);
+    };
+
+    return {
+      ...desc,
+      subscribe: async (options?: SyncStreamSubscribeOptions) => {
+        // NOTE: We also run this command if a subscription already exists, because this increases the expiry date
+        // (relevant if the app is closed before connecting again, where the last subscribe call determines the ttl).
+        await adapter.rustSubscriptionsCommand({
+          subscribe: {
+            stream: {
+              name,
+              params: parameters
+            },
+            ttl: options?.ttl,
+            priority: options?.priority
+          }
+        });
+
+        if (!this.syncStreamImplementation) {
+          // We're not connected. So, update the offline sync status to reflect the new subscription.
+          // (With an active iteration, the sync client would include it in its state).
+          await adapter.resolveOfflineSyncStatus();
+        }
+
+        const key = `${name}|${JSON.stringify(parameters)}`;
+        let subscription = this.locallyActiveSubscriptions.get(key);
+        if (subscription == null) {
+          const clearSubscription = () => {
+            this.locallyActiveSubscriptions.delete(key);
+            this.subscriptionsMayHaveChanged();
+          };
+
+          subscription = new ActiveSubscription(name, parameters, this.logger, waitForFirstSync, clearSubscription);
+          this.locallyActiveSubscriptions.set(key, subscription);
+          this.subscriptionsMayHaveChanged();
+        }
+
+        return new SyncStreamSubscriptionHandle(subscription);
+      },
+      unsubscribeAll: async () => {
+        await adapter.rustSubscriptionsCommand({ unsubscribe: { name, params: parameters } });
+        this.subscriptionsMayHaveChanged();
+      }
+    };
+  }
+
+  private get activeStreams() {
+    return [...this.locallyActiveSubscriptions.values()].map((a) => ({ name: a.name, params: a.parameters }));
+  }
+
+  private subscriptionsMayHaveChanged() {
+    if (this.syncStreamImplementation) {
+      this.syncStreamImplementation.updateSubscriptions(this.activeStreams);
+    }
+  }
 }
+
+class ActiveSubscription {
+  refcount: number = 0;
+
+  constructor(
+    readonly name: string,
+    readonly parameters: Record<string, any> | null,
+    readonly logger: ILogger,
+    readonly waitForFirstSync: (abort?: AbortSignal) => Promise<void>,
+    private clearSubscription: () => void
+  ) {}
+
+  decrementRefCount() {
+    this.refcount--;
+    if (this.refcount == 0) {
+      this.clearSubscription();
+    }
+  }
+}
+
+class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
+  private active: boolean = true;
+
+  constructor(readonly subscription: ActiveSubscription) {
+    subscription.refcount++;
+    _finalizer?.register(this, subscription);
+  }
+
+  get name() {
+    return this.subscription.name;
+  }
+
+  get parameters() {
+    return this.subscription.parameters;
+  }
+
+  waitForFirstSync(abort?: AbortSignal): Promise<void> {
+    return this.subscription.waitForFirstSync(abort);
+  }
+
+  unsubscribe(): void {
+    if (this.active) {
+      this.active = false;
+      _finalizer?.unregister(this);
+      this.subscription.decrementRefCount();
+    }
+  }
+}
+
+const _finalizer =
+  'FinalizationRegistry' in globalThis
+    ? new FinalizationRegistry<ActiveSubscription>((sub) => {
+        sub.logger.warn(
+          `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
+        );
+      })
+    : null;

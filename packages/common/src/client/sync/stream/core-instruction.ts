@@ -1,4 +1,6 @@
 import { StreamingSyncRequest } from './streaming-sync-types.js';
+import * as sync_status from '../../../db/crud/SyncStatus.js';
+import { FULL_SYNC_PRIORITY } from '../../../db/crud/SyncProgress.js';
 
 /**
  * An internal instruction emitted by the sync client in the core extension in response to the JS
@@ -9,7 +11,7 @@ export type Instruction =
   | { UpdateSyncStatus: UpdateSyncStatus }
   | { EstablishSyncStream: EstablishSyncStream }
   | { FetchCredentials: FetchCredentials }
-  | { CloseSyncStream: any }
+  | { CloseSyncStream: { hide_disconnect: boolean } }
   | { FlushFileSystem: any }
   | { DidCompleteSync: any };
 
@@ -31,6 +33,20 @@ export interface CoreSyncStatus {
   connecting: boolean;
   priority_status: SyncPriorityStatus[];
   downloading: DownloadProgress | null;
+  streams: CoreStreamSubscription[];
+}
+
+/// An `ActiveStreamSubscription` from the core extension + serialized progress information.
+export interface CoreStreamSubscription {
+  progress: { total: number; downloaded: number };
+  name: string;
+  parameters: any;
+  priority: number | null;
+  active: boolean;
+  is_default: boolean;
+  has_explicit_subscription: boolean;
+  expires_at: number | null;
+  last_synced_at: number | null;
 }
 
 export interface SyncPriorityStatus {
@@ -52,4 +68,32 @@ export interface BucketProgress {
 
 export interface FetchCredentials {
   did_expire: boolean;
+}
+
+function priorityToJs(status: SyncPriorityStatus): sync_status.SyncPriorityStatus {
+  return {
+    priority: status.priority,
+    hasSynced: status.has_synced ?? undefined,
+    lastSyncedAt: status.last_synced_at != null ? new Date(status.last_synced_at * 1000) : undefined
+  };
+}
+
+export function coreStatusToJs(status: CoreSyncStatus): sync_status.SyncStatusOptions {
+  const coreCompleteSync = status.priority_status.find((s) => s.priority == FULL_SYNC_PRIORITY);
+  const completeSync = coreCompleteSync != null ? priorityToJs(coreCompleteSync) : null;
+
+  return {
+    connected: status.connected,
+    connecting: status.connecting,
+    dataFlow: {
+      // We expose downloading as a boolean field, the core extension reports download information as a nullable
+      // download status. When that status is non-null, a download is in progress.
+      downloading: status.downloading != null,
+      downloadProgress: status.downloading?.buckets,
+      internalStreamSubscriptions: status.streams
+    },
+    lastSyncedAt: completeSync?.lastSyncedAt,
+    hasSynced: completeSync?.hasSynced,
+    priorityStatusEntries: status.priority_status.map(priorityToJs)
+  };
 }
