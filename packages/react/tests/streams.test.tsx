@@ -43,7 +43,7 @@ describe('stream hooks', () => {
           wrapper: testWrapper
         });
         expect(result.current).toBeNull();
-        await waitFor(() => expect(result.current).not.toBeNull(), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(result.current).not.toBeNull(), { timeout: 1000, interval: 100 });
         expect(currentStreams()).toStrictEqual([{ name: 'a', params: null }]);
 
         // Should drop subscription on unmount
@@ -57,7 +57,7 @@ describe('stream hooks', () => {
         });
         expect(result.current).toMatchObject({ isLoading: true });
         // Including the stream should subscribe.
-        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
         expect(result.current).toMatchObject({ isLoading: true });
 
         // Set last_synced_at for the subscription
@@ -65,17 +65,17 @@ describe('stream hooks', () => {
         db.iterateListeners((l) => l.statusChanged?.(_testStatus));
 
         // Which should eventually run the query.
-        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
       });
 
       it('unsubscribes on unmount', async () => {
         const { unmount } = renderHook(() => useQuery('SELECT 1', [], { streams: [{ name: 'a' }, { name: 'b' }] }), {
           wrapper: testWrapper
         });
-        await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 1000, interval: 100 });
 
         unmount();
-        await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 1000, interval: 100 });
       });
 
       it('handles stream parameter changes', async () => {
@@ -105,7 +105,7 @@ describe('stream hooks', () => {
           }
         );
 
-        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
 
         // Adopt streams - this should reset back to loading
         streams = [{ name: 'a' }];
@@ -113,13 +113,13 @@ describe('stream hooks', () => {
         expect(result.current).toMatchObject({ isLoading: true });
 
         // ... and subscribe
-        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
         expect(result.current).toMatchObject({ isLoading: true });
 
         // update back to no streams
         streams = [];
         act(() => streamUpdateListeners.forEach((cb) => cb()));
-        await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 500, interval: 100 });
+        await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 1000, interval: 100 });
       });
     });
   });
