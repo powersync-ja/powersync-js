@@ -58,7 +58,8 @@ const TodoEditSection = () => {
         created_at DESC,
         id
     `,
-    [listID]
+    [listID],
+    { streams: [{ name: 'todos', parameters: { list: listID } }] }
   );
 
   const [showPrompt, setShowPrompt] = React.useState(false);
@@ -96,11 +97,13 @@ const TodoEditSection = () => {
           <AddIcon />
         </S.FloatingActionButton>
         <Box>
-          <List dense={false}>
-            {todos.map((r) => (
-              <TodoItemWidget key={r.id} id={r.id} description={r.description} isComplete={r.completed == 1} />
-            ))}
-          </List>
+          {todos && (
+            <List dense={false}>
+              {todos.map((r) => (
+                <TodoItemWidget key={r.id} id={r.id} description={r.description} isComplete={r.completed == 1} />
+              ))}
+            </List>
+          )}
         </Box>
         {/* TODO use a dialog service in future, this is just a simple example app */}
         <Dialog
