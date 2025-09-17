@@ -3,13 +3,7 @@ import { AppSchema, ListRecord, LISTS_TABLE, TODOS_TABLE } from '@/library/power
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import {
-  createBaseLogger,
-  DifferentialWatchedQuery,
-  LogLevel,
-  PowerSyncDatabase,
-  SyncClientImplementation
-} from '@powersync/web';
+import { createBaseLogger, DifferentialWatchedQuery, LogLevel, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
@@ -74,7 +68,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector, { clientImplementation: SyncClientImplementation.RUST });
+        powerSync.connect(connector);
       }
     });
 
