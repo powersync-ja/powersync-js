@@ -8,13 +8,13 @@ import { finished } from 'node:stream/promises';
 import { exit } from 'node:process';
 
 // When changing this version, run node download_core.js update_hashes
-const version = '0.4.5';
+const version = '0.4.6';
 const versionHashes = {
-  'powersync_x64.dll': '0e9e47f7265257c9f8f7416a1b5ddf91d82199ff88760b595ff6cb1776231489',
-  'libpowersync_x64.so': '6421d9b280604ca4497b99949e3de24c4245b24105dee5c1e86500942ee27a17',
-  'libpowersync_aarch64.so': 'fda0951274d5ce623b19a32dee6473597cd401f898f871062421557b2c36936a',
-  'libpowersync_x64.dylib': '7337dcf21295d293dd073254014386a7e7809a3bb9acec0362158581c5ab3cdb',
-  'libpowersync_aarch64.dylib': '7d54da7b57f76eb5fd5286151d8f4f75f3ebc9d60e66391a0e6c5cca2ee5c5bc'
+  'powersync_x64.dll': '5efaa9ad4975094912a36843cb7b503376cacd233d21ae0956f0f4b42dcb457b',
+  'libpowersync_x64.so': 'e9d78620d69d3cf7d57353891fe0bf85b79d326b42c4669b9500b9e610388f76',
+  'libpowersync_aarch64.so': '0d84c0dc0134fc89af65724d11e2c45e3c15569c575ecda52d0ec2fa2aeec495',
+  'libpowersync_x64.dylib': '9b484eaf361451f7758ca6ad53190a73563be930a8f8a39ccefd29390046ef6c',
+  'libpowersync_aarch64.dylib': 'bfb4f1ec207b298aff560f1825f8123d24316edaa27b6df3a17dd49466576b92'
 };
 
 const platform = OS.platform();
