@@ -1,25 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
-import type { CryptoProvider } from "@crypto/interface";
-import { usePowerSync } from "@powersync/react";
-import { useStatus } from "@powersync/react";
-import { useQuery } from "@powersync/react";
-import {
-  startEncryptedMirrors,
-  insertEncrypted,
-  updateEncrypted,
-  deleteEncrypted,
-} from "@crypto/sqlite";
-import { TODOS_PAIR } from "../encrypted/todosPair";
-import LoadingSpinner from "./LoadingSpinner";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { getCurrentUserId } from "../lib/supabase";
+import { useEffect, useMemo, useState } from 'react';
+import type { CryptoProvider } from '@crypto/interface';
+import { usePowerSync } from '@powersync/react';
+import { useStatus } from '@powersync/react';
+import { useQuery } from '@powersync/react';
+import { startEncryptedMirrors, insertEncrypted, updateEncrypted, deleteEncrypted } from '@crypto/sqlite';
+import { TODOS_PAIR } from '../encrypted/todosPair';
+import LoadingSpinner from './LoadingSpinner';
+import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { getCurrentUserId } from '../utils/supabase';
 
 export function TodoList({ crypto }: { crypto: CryptoProvider }) {
   const db = usePowerSync();
   const status = useStatus();
 
   const [userId, setUserId] = useState<string | null>(null);
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
 
   // Resolve current user
   useEffect(() => {
@@ -30,7 +25,7 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
   useEffect(() => {
     if (!userId || !crypto) return;
     const stop = startEncryptedMirrors({ db, userId, crypto }, [TODOS_PAIR], {
-      throttleMs: 150,
+      throttleMs: 150
     });
     return () => {
       try {
@@ -43,14 +38,14 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
   const {
     data: todos = [],
     isLoading,
-    isFetching,
+    isFetching
   } = useQuery(
     `SELECT id, user_id, bucket_id, updated_at, text, completed
        FROM ${TODOS_PAIR.mirrorTable}
       WHERE user_id = ?
       ORDER BY updated_at DESC`,
-    [userId ?? ""],
-    { throttleMs: 200 },
+    [userId ?? ''],
+    { throttleMs: 200 }
   );
 
   async function addTodo() {
@@ -58,16 +53,16 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
     const id = cryptoRandomId();
     await insertEncrypted({ db, userId, crypto }, TODOS_PAIR, {
       id,
-      object: { text: text.trim(), completed: false },
+      object: { text: text.trim(), completed: false }
     });
-    setText("");
+    setText('');
   }
 
   async function toggle(todo: { id: string; text: string; completed: number }) {
     if (!userId) return;
     await updateEncrypted({ db, userId, crypto }, TODOS_PAIR, {
       id: todo.id,
-      object: { text: todo.text, completed: !todo.completed },
+      object: { text: todo.text, completed: !todo.completed }
     });
   }
 
@@ -76,10 +71,7 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
     await deleteEncrypted({ db, userId, crypto }, TODOS_PAIR, { id });
   }
 
-  const syncing =
-    status.connecting ||
-    !!status.dataFlowStatus?.downloading ||
-    !!status.dataFlowStatus?.uploading;
+  const syncing = status.connecting || !!status.dataFlowStatus?.downloading || !!status.dataFlowStatus?.uploading;
 
   return (
     <div className="card">
@@ -89,13 +81,9 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
           placeholder="Add a task"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTodo()}
+          onKeyDown={(e) => e.key === 'Enter' && addTodo()}
         />
-        <button
-          className="btn"
-          onClick={addTodo}
-          disabled={!text.trim() || !userId}
-        >
+        <button className="btn" onClick={addTodo} disabled={!text.trim() || !userId}>
           <PlusIcon className="h-4 w-4" /> Add
         </button>
       </div>
@@ -109,9 +97,7 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
         </div>
       ) : todos.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-8 text-center">
-          <p className="muted">
-            No tasks yet. Add your first encrypted task above.
-          </p>
+          <p className="muted">No tasks yet. Add your first encrypted task above.</p>
         </div>
       ) : (
         <ul className="space-y-2 relative">
@@ -122,23 +108,11 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
             </div>
           )}
           {todos.map((t: any) => (
-            <li
-              key={t.id}
-              className="p-3 rounded-md border border-gray-200 dark:border-gray-700"
-            >
+            <li key={t.id} className="p-3 rounded-md border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between gap-3">
                 <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="size-4"
-                    checked={!!t.completed}
-                    onChange={() => toggle(t as any)}
-                  />
-                  <span
-                    className={t.completed ? "line-through opacity-70" : ""}
-                  >
-                    {(t as any).text}
-                  </span>
+                  <input type="checkbox" className="size-4" checked={!!t.completed} onChange={() => toggle(t as any)} />
+                  <span className={t.completed ? 'line-through opacity-70' : ''}>{(t as any).text}</span>
                 </label>
                 <button className="btn-secondary" onClick={() => remove(t.id)}>
                   <TrashIcon className="h-4 w-4" /> Delete
@@ -149,7 +123,7 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
         </ul>
       )}
       <div className="mt-3 text-xs text-gray-600 dark:text-gray-400">
-        {status.connected ? (syncing ? "Syncing…" : "Synced") : "Offline"}
+        {status.connected ? (syncing ? 'Syncing…' : 'Synced') : 'Offline'}
       </div>
     </div>
   );
@@ -158,5 +132,5 @@ export function TodoList({ crypto }: { crypto: CryptoProvider }) {
 function cryptoRandomId() {
   const bytes = new Uint8Array(10);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }

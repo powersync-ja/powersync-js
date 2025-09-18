@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { createPasswordCrypto } from "@crypto/password";
-import { createWebAuthnCrypto, WebAuthnProvider } from "@crypto/webauthn";
-import { TodoList } from "./components/TodoList";
+import { useEffect, useMemo, useState } from 'react';
+import { createPasswordCrypto } from '@crypto/password';
+import { createWebAuthnCrypto, WebAuthnProvider } from '@crypto/webauthn';
+import { TodoList } from './components/TodoList';
 import {
   ShieldCheckIcon,
   KeyIcon,
@@ -12,100 +12,89 @@ import {
   ChevronDownIcon,
   LockClosedIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
-import SyncStatusBadge from "./components/SyncStatusBadge";
-import Identicon from "./components/Identicon";
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
+import SyncStatusBadge from './components/SyncStatusBadge';
+import Identicon from './components/Identicon';
 import {
   getSupabase,
   signInWithPassword,
   signOut,
   signUpWithPassword,
   signInAnonymously,
-  isAnonymousSupported,
-} from "./lib/supabase";
-import { usePowerSync } from "@powersync/react";
-import { useQuery } from "@powersync/react";
-import { useWrappedKey } from "./powersync/keys";
-import { ensureDEKWrapped } from "./lib/keyring";
-import type { CryptoProvider } from "@crypto/interface";
-import { createDEKCrypto } from "@crypto/sqlite";
+  isAnonymousSupported
+} from './utils/supabase';
+import { usePowerSync } from '@powersync/react';
+import { useQuery } from '@powersync/react';
+import { useWrappedKey } from './powersync/keys';
+import { ensureDEKWrapped } from './utils/keyring';
+import type { CryptoProvider } from '@crypto/interface';
+import { createDEKCrypto } from '@crypto/sqlite';
 
 export default function App() {
   const db = usePowerSync();
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const [ready, setReady] = useState(false);
   const [useWebAuthn, setUseWebAuthn] = useState(false);
-  const [email, setEmail] = useState("");
-  const [pwd, setPwd] = useState("");
+  const [email, setEmail] = useState('');
+  const [pwd, setPwd] = useState('');
   const [authed, setAuthed] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [authMenuOpen, setAuthMenuOpen] = useState(false);
   const [anonAvailable, setAnonAvailable] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [passphraseHint, setPassphraseHint] = useState<
-    "unknown" | "checking" | "match" | "mismatch" | "no-key" | "not-authed"
-  >("unknown");
+    'unknown' | 'checking' | 'match' | 'mismatch' | 'no-key' | 'not-authed'
+  >('unknown');
 
   // Reactive wrapped key from local DB for current provider
-  const { data: wrappedKeyRows } = useWrappedKey(
-    userId,
-    useWebAuthn ? "webauthn" : "password",
-  );
+  const { data: wrappedKeyRows } = useWrappedKey(userId, useWebAuthn ? 'webauthn' : 'password');
   const wrappedKey = (wrappedKeyRows?.[0] as any) ?? null;
   // Per-user key only; no per-list key ids
   const [dataCrypto, setDataCrypto] = useState<CryptoProvider | null>(null);
   const [keyError, setKeyError] = useState<string | null>(null);
-  const [vaultExists, setVaultExists] = useState<"unknown" | "none" | "exists">(
-    "unknown",
-  );
+  const [vaultExists, setVaultExists] = useState<'unknown' | 'none' | 'exists'>('unknown');
   const [hasPasswordVault, setHasPasswordVault] = useState(false);
   const [hasPasskeyVault, setHasPasskeyVault] = useState(false);
-  const [pass1, setPass1] = useState("");
-  const [pass2, setPass2] = useState("");
+  const [pass1, setPass1] = useState('');
+  const [pass2, setPass2] = useState('');
   const [passModalError, setPassModalError] = useState<string | null>(null);
-  const [passkeyStatus, setPasskeyStatus] = useState<
-    "idle" | "in_progress" | "ready" | "error"
-  >("idle");
+  const [passkeyStatus, setPasskeyStatus] = useState<'idle' | 'in_progress' | 'ready' | 'error'>('idle');
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   // URL state sync: allow back/forward between setup and main screens
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    const readyParam = p.get("ready");
-    const provParam = p.get("prov");
+    const readyParam = p.get('ready');
+    const provParam = p.get('prov');
     // Only auto-ready for WebAuthn. For password, require entering passphrase after refresh.
-    if (readyParam === "1") {
-      if (provParam === "webauthn") setReady(true);
+    if (readyParam === '1') {
+      if (provParam === 'webauthn') setReady(true);
       else setReady(false);
     }
-    if (provParam === "webauthn") setUseWebAuthn(true);
+    if (provParam === 'webauthn') setUseWebAuthn(true);
     // no per-list key id anymore
     const onPop = () => {
       const q = new URLSearchParams(window.location.search);
-      const r = q.get("ready") === "1";
-      const prov = q.get("prov");
-      setUseWebAuthn(prov === "webauthn");
+      const r = q.get('ready') === '1';
+      const prov = q.get('prov');
+      setUseWebAuthn(prov === 'webauthn');
       // Same rule on back/forward: only auto-ready for WebAuthn
-      setReady(r && prov === "webauthn");
+      setReady(r && prov === 'webauthn');
       // no per-list key id anymore
       setAuthMenuOpen(false);
     };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
-  function pushMode(nextReady: boolean, provider: "password" | "webauthn") {
+  function pushMode(nextReady: boolean, provider: 'password' | 'webauthn') {
     const q = new URLSearchParams(window.location.search);
-    q.set("ready", nextReady ? "1" : "0");
-    q.set("prov", provider);
-    q.delete("key");
-    window.history.pushState(
-      {},
-      "",
-      `${window.location.pathname}?${q.toString()}`,
-    );
+    q.set('ready', nextReady ? '1' : '0');
+    q.set('prov', provider);
+    q.delete('key');
+    window.history.pushState({}, '', `${window.location.pathname}?${q.toString()}`);
   }
 
   // wrappedKey is reactive via useWrappedKey (per-user key id)
@@ -116,42 +105,42 @@ export default function App() {
     (async () => {
       // WebAuthn path: we can't predict until assertion, keep neutral
       if (useWebAuthn) {
-        setPassphraseHint("unknown");
+        setPassphraseHint('unknown');
         return;
       }
       if (!authed || !userId) {
-        setPassphraseHint("not-authed");
+        setPassphraseHint('not-authed');
         return;
       }
       if (!password) {
-        setPassphraseHint("unknown");
+        setPassphraseHint('unknown');
         return;
       }
       if (!wrappedKey) {
-        setPassphraseHint("no-key");
+        setPassphraseHint('no-key');
         return;
       }
 
       try {
-        setPassphraseHint("checking");
+        setPassphraseHint('checking');
         const env = {
           header: {
             v: 1 as const,
             alg: wrappedKey.alg,
             aad: wrappedKey.aad ?? undefined,
-            kdf: { saltB64: wrappedKey.kdf_salt_b64 },
+            kdf: { saltB64: wrappedKey.kdf_salt_b64 }
           },
           nB64: wrappedKey.nonce_b64,
-          cB64: wrappedKey.cipher_b64,
+          cB64: wrappedKey.cipher_b64
         };
         const provider = createPasswordCrypto({
           password,
-          preferWebCrypto: true,
+          preferWebCrypto: true
         });
         await provider.decrypt(env, wrappedKey.aad ?? undefined);
-        if (!cancelled) setPassphraseHint("match");
+        if (!cancelled) setPassphraseHint('match');
       } catch {
-        if (!cancelled) setPassphraseHint("mismatch");
+        if (!cancelled) setPassphraseHint('mismatch');
       }
     })();
     return () => {
@@ -162,7 +151,7 @@ export default function App() {
   const cryptoProvider = useMemo(() => {
     if (!ready) return null;
     if (useWebAuthn) {
-      return createWebAuthnCrypto({ keyId: "default" });
+      return createWebAuthnCrypto({ keyId: 'default' });
     }
     // Prefer WebCrypto PBKDF2 for KDF to avoid heavy Argon2 in UI
     return createPasswordCrypto({ password, preferWebCrypto: true });
@@ -176,19 +165,14 @@ export default function App() {
       if (!cryptoProvider) return;
       try {
         setKeyError(null);
-        const dek = await ensureDEKWrapped(
-          db,
-          userId,
-          useWebAuthn ? "webauthn" : "password",
-          cryptoProvider,
-        );
+        const dek = await ensureDEKWrapped(db, userId, useWebAuthn ? 'webauthn' : 'password', cryptoProvider);
         setDataCrypto(createDEKCrypto(dek));
       } catch (e) {
-        console.error("Failed to ensure DEK", e);
+        console.error('Failed to ensure DEK', e);
         setKeyError(
           useWebAuthn
-            ? "Passkey could not unlock your data. Try again or reset."
-            : "Passphrase mismatch. Try again or reset to start fresh.",
+            ? 'Passkey could not unlock your data. Try again or reset.'
+            : 'Passphrase mismatch. Try again or reset to start fresh.'
         );
         setDataCrypto(null);
       }
@@ -205,32 +189,32 @@ export default function App() {
     try {
       await db.writeTransaction(async (tx) => {
         // Remove all wrapped keys and encrypted rows for this user
-        await tx.execute("DELETE FROM e2ee_keys WHERE user_id = ?", [userId]);
-        await tx.execute("DELETE FROM todos WHERE user_id = ?", [userId]);
+        await tx.execute('DELETE FROM e2ee_keys WHERE user_id = ?', [userId]);
+        await tx.execute('DELETE FROM todos WHERE user_id = ?', [userId]);
       });
       setDataCrypto(null);
       setKeyError(null);
-      console.log("Reset account data for user", userId);
-      setVaultExists("none");
+      console.log('Reset account data for user', userId);
+      setVaultExists('none');
       setHasPasswordVault(false);
       setHasPasskeyVault(false);
       // Keep ready true, user can immediately set a new credential and continue
     } catch (e) {
-      console.error("Reset failed", e);
+      console.error('Reset failed', e);
     }
   }
 
   // Reactive vault existence via live query
   const { data: vaultRows, isFetching: vaultFetching } = useQuery(
-    "SELECT provider FROM e2ee_keys WHERE user_id = ?",
-    [userId ?? ""],
-    { throttleMs: 50 },
+    'SELECT provider FROM e2ee_keys WHERE user_id = ?',
+    [userId ?? ''],
+    { throttleMs: 50 }
   );
 
   useEffect(() => {
     if (!userId) {
-      console.log("Reset on no user");
-      setVaultExists("unknown");
+      console.log('Reset on no user');
+      setVaultExists('unknown');
       setHasPasswordVault(false);
       setHasPasskeyVault(false);
       return;
@@ -239,13 +223,13 @@ export default function App() {
       const rows = Array.isArray(vaultRows) ? (vaultRows as any[]) : [];
       const providers = new Set(rows.map((r: any) => r.provider));
       const any = providers.size > 0;
-      console.log("Vault providers for user", userId, providers, rows);
-      setVaultExists(any ? "exists" : "none");
-      setHasPasswordVault(providers.has("password"));
-      setHasPasskeyVault(providers.has("webauthn"));
+      console.log('Vault providers for user', userId, providers, rows);
+      setVaultExists(any ? 'exists' : 'none');
+      setHasPasswordVault(providers.has('password'));
+      setHasPasskeyVault(providers.has('webauthn'));
     } catch (e) {
-      console.error("Vault query failed", e);
-      setVaultExists("unknown");
+      console.error('Vault query failed', e);
+      setVaultExists('unknown');
       setHasPasswordVault(false);
       setHasPasskeyVault(false);
     }
@@ -253,7 +237,7 @@ export default function App() {
 
   // If only one unlock method exists, auto-select it
   useEffect(() => {
-    if (vaultExists !== "exists") return;
+    if (vaultExists !== 'exists') return;
     if (hasPasswordVault && !hasPasskeyVault) setUseWebAuthn(false);
     if (hasPasskeyVault && !hasPasswordVault) setUseWebAuthn(true);
   }, [vaultExists, hasPasswordVault, hasPasskeyVault]);
@@ -262,42 +246,42 @@ export default function App() {
   useEffect(() => {
     setPassModalError(null);
     if (useWebAuthn) {
-      setPassword("");
+      setPassword('');
     } else {
-      setPass1("");
-      setPass2("");
+      setPass1('');
+      setPass2('');
     }
   }, [useWebAuthn]);
 
   // Auto-prompt WebAuthn registration when selecting Passkey on Create flow
   useEffect(() => {
     (async () => {
-      if (vaultExists === "exists") return;
+      if (vaultExists === 'exists') return;
       if (!userId) return;
       if (!useWebAuthn) return;
-      if (passkeyStatus === "in_progress" || passkeyStatus === "ready") return;
+      if (passkeyStatus === 'in_progress' || passkeyStatus === 'ready') return;
       try {
-        setPasskeyStatus("in_progress");
+        setPasskeyStatus('in_progress');
         setPasskeyError(null);
-        const prov = createWebAuthnCrypto({ keyId: "default" });
-        const label = userId.slice(0, 6) + "…" + userId.slice(-4);
+        const prov = createWebAuthnCrypto({ keyId: 'default' });
+        const label = userId.slice(0, 6) + '…' + userId.slice(-4);
         await (prov as any).register(label);
-        setPasskeyStatus("ready");
+        setPasskeyStatus('ready');
       } catch (e: any) {
-        setPasskeyStatus("error");
-        setPasskeyError(e?.message ?? "Passkey setup failed. Try again.");
+        setPasskeyStatus('error');
+        setPasskeyError(e?.message ?? 'Passkey setup failed. Try again.');
       }
     })();
   }, [useWebAuthn, vaultExists, userId, passkeyStatus]);
 
   async function createPassphraseVault() {
-    console.log("createPassphraseVault");
+    console.log('createPassphraseVault');
     if (!userId) {
-      setPassModalError("User not authenticated.");
+      setPassModalError('User not authenticated.');
       return;
     }
     if (!pass1 || pass1 !== pass2) {
-      setPassModalError("Passphrases do not match.");
+      setPassModalError('Passphrases do not match.');
       return;
     }
     setCreating(true);
@@ -306,15 +290,15 @@ export default function App() {
       await waitForLocal();
       const wrapper = createPasswordCrypto({
         password: pass1,
-        preferWebCrypto: true,
+        preferWebCrypto: true
       });
-      const dek = await ensureDEKWrapped(db, userId, "password", wrapper);
+      const dek = await ensureDEKWrapped(db, userId, 'password', wrapper);
       setDataCrypto(createDEKCrypto(dek));
       setUseWebAuthn(false);
       setReady(true);
-      pushMode(true, "password");
+      pushMode(true, 'password');
     } catch (e: any) {
-      setPassModalError(e?.message ?? "Failed to create vault. Try again.");
+      setPassModalError(e?.message ?? 'Failed to create vault. Try again.');
     } finally {
       setCreating(false);
     }
@@ -322,28 +306,28 @@ export default function App() {
 
   async function createPasskeyVault() {
     if (!userId) {
-      setPasskeyStatus("error");
-      setPasskeyError("User ID not found.");
+      setPasskeyStatus('error');
+      setPasskeyError('User ID not found.');
       return;
     }
     setCreating(true);
     try {
       // Ensure local DB is initialized
       await waitForLocal();
-      let prov = createWebAuthnCrypto({ keyId: "default" });
-      if (passkeyStatus !== "ready") {
-        const label = userId.slice(0, 6) + "…" + userId.slice(-4);
+      let prov = createWebAuthnCrypto({ keyId: 'default' });
+      if (passkeyStatus !== 'ready') {
+        const label = userId.slice(0, 6) + '…' + userId.slice(-4);
         await (prov as any).register(label);
-        setPasskeyStatus("ready");
+        setPasskeyStatus('ready');
       }
-      const dek = await ensureDEKWrapped(db, userId, "webauthn", prov);
+      const dek = await ensureDEKWrapped(db, userId, 'webauthn', prov);
       setDataCrypto(createDEKCrypto(dek));
       setUseWebAuthn(true);
       setReady(true);
-      pushMode(true, "webauthn");
+      pushMode(true, 'webauthn');
     } catch (e: any) {
-      setPasskeyStatus("error");
-      setPasskeyError(e?.message ?? "Failed to create passkey vault.");
+      setPasskeyStatus('error');
+      setPasskeyError(e?.message ?? 'Failed to create passkey vault.');
     } finally {
       setCreating(false);
     }
@@ -354,11 +338,10 @@ export default function App() {
     // Poll until a trivial query succeeds or timeout
     while (true) {
       try {
-        await db.getAll("SELECT 1");
+        await db.getAll('SELECT 1');
         return;
       } catch {
-        if (Date.now() - t0 > timeoutMs)
-          throw new Error("Local database not ready");
+        if (Date.now() - t0 > timeoutMs) throw new Error('Local database not ready');
         await new Promise((r) => setTimeout(r, 100));
       }
     }
@@ -370,12 +353,12 @@ export default function App() {
       if (!userId) return;
       try {
         const rows = await db.getAll(
-          "SELECT provider, COUNT(*) as cnt FROM e2ee_keys WHERE user_id = ? GROUP BY provider",
-          [userId],
+          'SELECT provider, COUNT(*) as cnt FROM e2ee_keys WHERE user_id = ? GROUP BY provider',
+          [userId]
         );
-        console.debug("[keys] counts for user", userId, rows);
+        console.debug('[keys] counts for user', userId, rows);
       } catch (e) {
-        console.debug("[keys] count query failed", e);
+        console.debug('[keys] count query failed', e);
       }
     })();
   }, [ready, userId, db]);
@@ -402,7 +385,7 @@ export default function App() {
 
   function shortId(id: string) {
     if (id.length <= 10) return id;
-    return id.slice(0, 6) + "…" + id.slice(-4);
+    return id.slice(0, 6) + '…' + id.slice(-4);
   }
 
   // Connection status surfaces via SyncStatusBadge; explicit connect not required here.
@@ -417,9 +400,7 @@ export default function App() {
                 <ShieldCheckIcon className="h-5 w-5" />
               </span>
               <div className="leading-tight">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                  Secret tasks
-                </h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Secret tasks</h1>
                 <p className="muted -mt-0.5">End‑to‑end encrypted tasks</p>
               </div>
             </div>
@@ -436,11 +417,7 @@ export default function App() {
                 </button>
               ) : (
                 <div className="flex items-center gap-2 h-9">
-                  <button
-                    type="button"
-                    className="btn-secondary-sm h-9"
-                    onClick={() => setAuthMenuOpen((v) => !v)}
-                  >
+                  <button type="button" className="btn-secondary-sm h-9" onClick={() => setAuthMenuOpen((v) => !v)}>
                     <UserIcon className="h-4 w-4" /> Sign In
                   </button>
                   <button
@@ -544,26 +521,22 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <LockClosedIcon className="h-5 w-5 text-blue-600" />
                   <span className="font-medium">
-                    {vaultExists === "exists"
-                      ? "Unlock your Vault"
-                      : vaultExists === "none"
-                        ? "Create your Vault"
-                        : "Your Vault"}
+                    {vaultExists === 'exists'
+                      ? 'Unlock your Vault'
+                      : vaultExists === 'none'
+                        ? 'Create your Vault'
+                        : 'Your Vault'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                  {vaultExists === "exists" ? (
+                  {vaultExists === 'exists' ? (
                     <>
                       <span>Available:</span>
-                      <span className={hasPasswordVault ? "" : "opacity-50"}>
-                        Passphrase
-                      </span>
+                      <span className={hasPasswordVault ? '' : 'opacity-50'}>Passphrase</span>
                       <span>·</span>
-                      <span className={hasPasskeyVault ? "" : "opacity-50"}>
-                        Passkey
-                      </span>
+                      <span className={hasPasskeyVault ? '' : 'opacity-50'}>Passkey</span>
                     </>
-                  ) : vaultExists === "none" ? (
+                  ) : vaultExists === 'none' ? (
                     <span>Choose a method</span>
                   ) : (
                     <span>Checking vault…</span>
@@ -572,83 +545,59 @@ export default function App() {
               </div>
 
               <div className="flex items-center gap-2 mb-3">
-                {!(
-                  vaultExists === "exists" &&
-                  hasPasskeyVault &&
-                  !hasPasswordVault
-                ) && (
+                {!(vaultExists === 'exists' && hasPasskeyVault && !hasPasswordVault) && (
                   <button
                     type="button"
-                    className={`h-9 px-3 rounded-md text-sm border ${!useWebAuthn ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 dark:border-gray-700"}`}
+                    className={`h-9 px-3 rounded-md text-sm border ${!useWebAuthn ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-700'}`}
                     onClick={() => setUseWebAuthn(false)}
-                    disabled={vaultExists === "exists" && !hasPasswordVault}
-                    title={
-                      vaultExists === "exists" && !hasPasswordVault
-                        ? "No passphrase vault yet"
-                        : "Use passphrase"
-                    }
+                    disabled={vaultExists === 'exists' && !hasPasswordVault}
+                    title={vaultExists === 'exists' && !hasPasswordVault ? 'No passphrase vault yet' : 'Use passphrase'}
                   >
                     Passphrase
                   </button>
                 )}
-                {!(
-                  vaultExists === "exists" &&
-                  hasPasswordVault &&
-                  !hasPasskeyVault
-                ) && (
+                {!(vaultExists === 'exists' && hasPasswordVault && !hasPasskeyVault) && (
                   <button
                     type="button"
-                    className={`h-9 px-3 rounded-md text-sm border ${useWebAuthn ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 dark:border-gray-700"}`}
+                    className={`h-9 px-3 rounded-md text-sm border ${useWebAuthn ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-700'}`}
                     onClick={() => {
                       setUseWebAuthn(true);
-                      setPasskeyStatus("idle");
+                      setPasskeyStatus('idle');
                       setPasskeyError(null);
                     }}
-                    disabled={vaultExists === "exists" && !hasPasskeyVault}
-                    title={
-                      vaultExists === "exists" && !hasPasskeyVault
-                        ? "No passkey vault yet"
-                        : "Use passkey"
-                    }
+                    disabled={vaultExists === 'exists' && !hasPasskeyVault}
+                    title={vaultExists === 'exists' && !hasPasskeyVault ? 'No passkey vault yet' : 'Use passkey'}
                   >
                     Passkey
                   </button>
                 )}
-                {vaultExists === "exists" && (
-                  <button
-                    className="ml-auto btn-secondary h-9"
-                    onClick={resetAccountData}
-                    disabled={!userId}
-                  >
+                {vaultExists === 'exists' && (
+                  <button className="ml-auto btn-secondary h-9" onClick={resetAccountData} disabled={!userId}>
                     Reset Vault
                   </button>
                 )}
               </div>
 
-              {vaultExists !== "exists" && useWebAuthn && (
+              {vaultExists !== 'exists' && useWebAuthn && (
                 <div className="rounded-md border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/30 p-3 mb-2 text-sm flex items-center gap-2">
-                  {passkeyStatus === "ready" ? (
+                  {passkeyStatus === 'ready' ? (
                     <>
                       <CheckCircleIcon className="h-4 w-4 text-blue-600" />
-                      <span>
-                        Passkey registered. Click Create Vault to continue.
-                      </span>
+                      <span>Passkey registered. Click Create Vault to continue.</span>
                     </>
-                  ) : passkeyStatus === "in_progress" ? (
+                  ) : passkeyStatus === 'in_progress' ? (
                     <>
                       <BoltIcon className="h-4 w-4 text-blue-600" />
                       <span>Waiting for your authenticator…</span>
                     </>
-                  ) : passkeyStatus === "error" ? (
+                  ) : passkeyStatus === 'error' ? (
                     <>
                       <ExclamationTriangleIcon className="h-4 w-4 text-amber-600" />
-                      <span>
-                        {passkeyError ?? "Passkey setup failed. Try again."}
-                      </span>
+                      <span>{passkeyError ?? 'Passkey setup failed. Try again.'}</span>
                       <button
                         className="btn-secondary ml-auto"
                         onClick={() => {
-                          setPasskeyStatus("idle");
+                          setPasskeyStatus('idle');
                           setTimeout(() => setUseWebAuthn(true), 0);
                         }}
                       >
@@ -657,15 +606,13 @@ export default function App() {
                     </>
                   ) : (
                     <>
-                      <span>
-                        Select Passkey to register your authenticator.
-                      </span>
+                      <span>Select Passkey to register your authenticator.</span>
                     </>
                   )}
                 </div>
               )}
 
-              {!useWebAuthn && vaultExists === "exists" && (
+              {!useWebAuthn && vaultExists === 'exists' && (
                 <input
                   className="input"
                   type="password"
@@ -674,7 +621,7 @@ export default function App() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               )}
-              {!useWebAuthn && vaultExists !== "exists" && (
+              {!useWebAuthn && vaultExists !== 'exists' && (
                 <div className="grid gap-2">
                   <input
                     className="input"
@@ -704,7 +651,7 @@ export default function App() {
                 </div>
               )}
 
-              {vaultExists !== "exists" && !userId && (
+              {vaultExists !== 'exists' && !userId && (
                 <div className="mb-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md p-2">
                   Sign in to create a Vault.
                 </div>
@@ -712,60 +659,49 @@ export default function App() {
 
               <div className="mt-4 flex items-center justify-between gap-3">
                 <div className="min-h-9 flex items-center">
-                  {vaultExists !== "exists" &&
-                    !useWebAuthn &&
-                    passModalError && (
-                      <div className="inline-flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md px-2 py-1">
-                        <ExclamationTriangleIcon className="h-4 w-4" />
-                        <span>{passModalError}</span>
-                      </div>
-                    )}
+                  {vaultExists !== 'exists' && !useWebAuthn && passModalError && (
+                    <div className="inline-flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md px-2 py-1">
+                      <ExclamationTriangleIcon className="h-4 w-4" />
+                      <span>{passModalError}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {vaultExists !== "exists" && useWebAuthn && (
-                    <button
-                      className="btn h-9"
-                      onClick={createPasskeyVault}
-                      disabled={!userId || creating}
-                    >
+                  {vaultExists !== 'exists' && useWebAuthn && (
+                    <button className="btn h-9" onClick={createPasskeyVault} disabled={!userId || creating}>
                       <ArrowRightIcon className="h-4 w-4" /> Create Vault
                     </button>
                   )}
-                  {vaultExists !== "exists" && !useWebAuthn && (
+                  {vaultExists !== 'exists' && !useWebAuthn && (
                     <button
                       className="btn h-9"
                       onClick={() => {
-                        console.log("createPassphraseVault");
+                        console.log('createPassphraseVault');
                         if (!pass1 || pass1.length < 6) {
-                          console.log(
-                            "Passphrase must be at least 6 characters.",
-                          );
-                          setPassModalError(
-                            "Passphrase must be at least 6 characters.",
-                          );
+                          console.log('Passphrase must be at least 6 characters.');
+                          setPassModalError('Passphrase must be at least 6 characters.');
                           return;
                         }
                         if (pass1 !== pass2) {
-                          console.log("Passphrases do not match.");
-                          setPassModalError("Passphrases do not match.");
+                          console.log('Passphrases do not match.');
+                          setPassModalError('Passphrases do not match.');
                           return;
                         }
-                        console.log("createPassphraseVault");
+                        console.log('createPassphraseVault');
                         setPassword(pass1);
                         void createPassphraseVault();
                       }}
                       disabled={!userId || creating}
                     >
-                      <ArrowRightIcon className="h-4 w-4" />{" "}
-                      {creating ? "Creating…" : "Create Vault"}
+                      <ArrowRightIcon className="h-4 w-4" /> {creating ? 'Creating…' : 'Create Vault'}
                     </button>
                   )}
-                  {vaultExists === "exists" && (
+                  {vaultExists === 'exists' && (
                     <button
                       className="btn h-9"
                       onClick={() => {
                         setReady(true);
-                        pushMode(true, useWebAuthn ? "webauthn" : "password");
+                        pushMode(true, useWebAuthn ? 'webauthn' : 'password');
                       }}
                       disabled={!userId || (!useWebAuthn && !password)}
                     >
@@ -789,9 +725,7 @@ export default function App() {
             <span className="h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm">
               <ShieldCheckIcon className="h-5 w-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">
-              Encrypted Tasks
-            </h1>
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Encrypted Tasks</h1>
           </div>
           <div className="flex items-center gap-3 relative h-9">
             {userId ? (
@@ -810,11 +744,7 @@ export default function App() {
               </button>
             ) : (
               <div className="flex items-center gap-2 h-9">
-                <button
-                  type="button"
-                  className="btn-secondary-sm h-9"
-                  onClick={() => setAuthMenuOpen((v) => !v)}
-                >
+                <button type="button" className="btn-secondary-sm h-9" onClick={() => setAuthMenuOpen((v) => !v)}>
                   <UserIcon className="h-4 w-4" /> Sign In
                 </button>
                 <button
@@ -891,9 +821,7 @@ export default function App() {
             )}
             {authMenuOpen && userId && (
               <div className="absolute right-0 top-10 w-48 rounded-md border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg p-2 z-10">
-                <div className="px-2 py-1 text-xs text-gray-600 dark:text-gray-300">
-                  {shortId(userId)}
-                </div>
+                <div className="px-2 py-1 text-xs text-gray-600 dark:text-gray-300">{shortId(userId)}</div>
                 <button
                   type="button"
                   className="w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
@@ -913,15 +841,14 @@ export default function App() {
 
         <footer className="mt-10 muted">
           <p>
-            Raw SQLite tables store only metadata (
-            <code className="mx-1">user_id</code>,{" "}
+            Raw SQLite tables store only metadata (<code className="mx-1">user_id</code>,{' '}
             <code className="mx-1">bucket_id</code>) and encrypted envelopes.
           </p>
         </footer>
       </div>
 
       {/* Inline passphrase errors */}
-      {passModalError && vaultExists !== "exists" && !useWebAuthn && (
+      {passModalError && vaultExists !== 'exists' && !useWebAuthn && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 rounded-md px-2 py-1">
           {passModalError}
         </div>

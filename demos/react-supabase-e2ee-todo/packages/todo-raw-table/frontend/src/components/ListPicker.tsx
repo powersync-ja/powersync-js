@@ -1,5 +1,5 @@
-import React from "react";
-import { useQuery } from "@powersync/react";
+import React from 'react';
+import { useQuery } from '@powersync/react';
 
 type KeyRow = { id: string; provider: string; created_at: string };
 
@@ -7,7 +7,7 @@ export function ListPicker({
   userId,
   activeKeyId,
   onChange,
-  onCreate,
+  onCreate
 }: {
   userId: string | null;
   activeKeyId: string | null;
@@ -15,18 +15,14 @@ export function ListPicker({
   onCreate: () => void;
 }) {
   const { data } = useQuery<KeyRow>(
-    "SELECT id, provider, created_at FROM e2ee_keys WHERE user_id = ? ORDER BY created_at DESC",
-    [userId ?? ""],
+    'SELECT id, provider, created_at FROM e2ee_keys WHERE user_id = ? ORDER BY created_at DESC',
+    [userId ?? '']
   );
   const keys = (data as any[]) || [];
 
   return (
     <div className="inline-flex items-center gap-2">
-      <select
-        className="input-sm"
-        value={activeKeyId ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-      >
+      <select className="input-sm" value={activeKeyId ?? ''} onChange={(e) => onChange(e.target.value)}>
         <option value="" disabled>
           Select list…
         </option>
@@ -44,7 +40,7 @@ export function ListPicker({
 }
 
 function labelFromId(id: string): string {
-  const parts = id.split(":");
+  const parts = id.split(':');
   return parts[2] || id;
 }
 

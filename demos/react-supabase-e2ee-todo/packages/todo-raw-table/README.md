@@ -14,8 +14,9 @@ This is the simplest path: use a hosted Supabase project and a hosted PowerSync 
 From the repo root:
 
 ```sh
-yarn
-yarn build
+pnpm install
+pnpm build:packages
+pnpm --filter apps-e2ee build
 ```
 
 ### 2) Supabase (hosted, via CLI)
@@ -25,20 +26,20 @@ yarn build
 
 ```sh
 supabase login
-yarn workspace @app/todo-raw-table supabase:init
+pnpm -filter @app/todo-e2ee supabase:init
 # Link the CLI to your hosted project. E.g. if the url to your project is https://supabase.com/dashboard/project/mcvxpinhffmvwutgsdua
 # then your project ref is `mcvxpinhffmvwutgsdua`
-yarn workspace @app/todo-raw-table supabase:link --project-ref <your-project-ref>
+pnpm -filter @app/todo-e2ee supabase:link --project-ref <your-project-ref>
 ```
 
 3) Apply the schema using the CLI (one command):
 
 ```sh
-yarn workspace @app/todo-raw-table supabase:db:push
+pnpm --filter @app/todo-e2ee supabase:db:push
 ```
 
 ```sh
-yarn workspace @app/todo-raw-table migrate
+pnpm --filter @app/todo-e2ee migrate
 ```
 
 This generates a timestamped migration from `packages/todo-raw-table/infra/schema.sql` and pushes it to your linked project.
@@ -46,7 +47,7 @@ This generates a timestamped migration from `packages/todo-raw-table/infra/schem
 If you have old/broken local migrations and the CLI warns about them, clean the local migrations and try again:
 
 ```sh
-yarn workspace @app/todo-raw-table migrate:reset
+pnpm --filter @app/todo-e2ee migrate:reset
 ```
 
 After it completes, confirm the tables exist in the Supabase Dashboard → Table Editor (you should see `public.todos` and `public.e2ee_keys`.
@@ -128,7 +129,7 @@ VITE_POWERSYNC_URL=<your-powersync-instance-url>
 ### 5) Run the app
 
 ```sh
-yarn workspace @app/todo-raw-table dev
+pnpm --filter @app/todo-e2ee dev
 ```
 
 Open the printed URL in your browser.

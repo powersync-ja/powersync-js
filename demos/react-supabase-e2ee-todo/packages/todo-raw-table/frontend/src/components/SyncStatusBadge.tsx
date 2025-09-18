@@ -1,34 +1,27 @@
-import React from "react";
-import { useStatus } from "@powersync/react";
-import {
-  CheckCircleIcon,
-  ArrowPathIcon,
-  BoltIcon,
-  SignalSlashIcon,
-} from "@heroicons/react/24/outline";
+import React from 'react';
+import { useStatus } from '@powersync/react';
+import { CheckCircleIcon, ArrowPathIcon, BoltIcon, SignalSlashIcon } from '@heroicons/react/24/outline';
 
-export function SyncStatusBadge({ className = "" }: { className?: string }) {
+export function SyncStatusBadge({ className = '' }: { className?: string }) {
   const status = useStatus();
-  const syncing = !!(
-    status.dataFlowStatus?.downloading || status.dataFlowStatus?.uploading
-  );
+  const syncing = !!(status.dataFlowStatus?.downloading || status.dataFlowStatus?.uploading);
 
-  let label = "Offline";
+  let label = 'Offline';
   let Icon: React.ComponentType<any> = SignalSlashIcon;
-  let color = "text-gray-600 dark:text-gray-300";
+  let color = 'text-gray-600 dark:text-gray-300';
 
   if (status.connecting) {
-    label = "Connecting…";
+    label = 'Connecting…';
     Icon = ArrowPathIcon;
-    color = "text-blue-600";
+    color = 'text-blue-600';
   } else if (status.connected && syncing) {
-    label = "Syncing…";
+    label = 'Syncing…';
     Icon = BoltIcon;
-    color = "text-blue-600";
+    color = 'text-blue-600';
   } else if (status.connected) {
-    label = "Synced";
+    label = 'Synced';
     Icon = CheckCircleIcon;
-    color = "text-emerald-600";
+    color = 'text-emerald-600';
   }
 
   return (

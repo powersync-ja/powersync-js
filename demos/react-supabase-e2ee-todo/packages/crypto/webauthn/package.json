@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@crypto/interface": "^0.1.0",
+    "@crypto/interface": "workspace:*",
     "libsodium-wrappers": "^0.7.13"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 function djb2Hash(str: string): number {
   let hash = 5381;
@@ -15,19 +15,11 @@ function hslFromHash(hash: number): { h: number; s: number; l: number } {
   return { h, s, l };
 }
 
-export function Identicon({
-  seed,
-  size = 32,
-  className,
-}: {
-  seed: string;
-  size?: number;
-  className?: string;
-}) {
+export function Identicon({ seed, size = 32, className }: { seed: string; size?: number; className?: string }) {
   const hash = djb2Hash(seed);
   const { h, s, l } = hslFromHash(hash);
   const color = `hsl(${h}, ${s}%, ${l}%)`;
-  const bg = "#f3f4f6"; // gray-100
+  const bg = '#f3f4f6'; // gray-100
   const cells = 5;
   const cell = Math.floor(size / cells);
   const padding = Math.max(0, Math.floor((size - cell * cells) / 2));
@@ -56,7 +48,7 @@ export function Identicon({
           height={cell}
           fill={color}
           rx={Math.max(1, Math.floor(cell / 6))}
-        />,
+        />
       );
     }
   }
@@ -71,14 +63,7 @@ export function Identicon({
       aria-hidden="true"
       role="img"
     >
-      <rect
-        x={0}
-        y={0}
-        width={size}
-        height={size}
-        fill={bg}
-        rx={Math.floor(size / 6)}
-      />
+      <rect x={0} y={0} width={size} height={size} fill={bg} rx={Math.floor(size / 6)} />
       {rects}
     </svg>
   );
