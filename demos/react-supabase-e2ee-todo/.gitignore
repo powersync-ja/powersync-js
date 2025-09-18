@@ -1,0 +1,28 @@
+# TypeScript build info caches
+**/tsconfig.tsbuildinfo
+**/*.tsbuildinfo
+
+# Node/JS
+node_modules
+dist
+**/node_modules
+**/dist
+.turbo
+.cache
+.vite
+coverage
+*.log
+**/.powersync
+
+# Env
+# .env.example
+# .env.local
+
+# Editor
+.DS_Store
+.idea
+.vscode
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp
