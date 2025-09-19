@@ -8,6 +8,7 @@ import {
   SyncStreamSubscription
 } from '@powersync/common';
 import { useStatus } from './useStatus.js';
+import { QuerySyncStreamOptions } from './watched/watch-types.js';
 
 /**
  * A sync stream to subscribe to in {@link useSyncStream}.
@@ -51,12 +52,15 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
           subscription = sub;
           setSubscription(sub);
         } else {
+          // The cleanup function already ran, unsubscribe immediately.
           sub.unsubscribe();
         }
       });
 
     return () => {
       active = false;
+      // If we don't have a subscription yet, it'll still get cleaned up once the promise resolves because we've set
+      // active to false.
       subscription?.unsubscribe();
     };
   }, [name, parameters]);
@@ -69,12 +73,12 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
  */
 export function useAllSyncStreamsHaveSynced(
   db: AbstractPowerSyncDatabase,
-  streams: UseSyncStreamOptions[] | undefined
+  streams: QuerySyncStreamOptions[] | undefined
 ): boolean {
   // Since streams are a user-supplied array, they will likely be different each time this function is called. We don't
   // want to update underlying subscriptions each time, though.
   const hash = useMemo(() => streams && JSON.stringify(streams), [streams]);
-  const [synced, setHasSynced] = useState(streams == null || streams.length == 0);
+  const [synced, setHasSynced] = useState(streams == null || streams.every((e) => e.waitForStream != true));
 
   useEffect(() => {
     if (streams) {
@@ -87,9 +91,12 @@ export function useAllSyncStreamsHaveSynced(
       }
 
       // First, wait for all subscribe() calls to make all subscriptions active.
-      Promise.all(promises).then(async (streams) => {
+      Promise.all(promises).then(async (resolvedStreams) => {
         function allHaveSynced(status: SyncStatus) {
-          return streams.every((s) => status.forStream(s)?.subscription?.hasSynced);
+          return resolvedStreams.every((s, i) => {
+            const request = streams[i];
+            return !request.waitForStream || status.forStream(s)?.subscription?.hasSynced;
+          });
         }
 
         // Wait for the effect to be cancelled or all streams having synced.
@@ -107,7 +114,7 @@ export function useAllSyncStreamsHaveSynced(
         }
 
         // Effect was definitely cancelled at this point, so drop the subscriptions.
-        for (const stream of streams) {
+        for (const stream of resolvedStreams) {
           stream.unsubscribe();
         }
       });
