@@ -1,7 +1,33 @@
-import { DifferentialWatchedQueryComparator, SQLOnChangeOptions } from '@powersync/common';
+import { DifferentialWatchedQueryComparator, SQLOnChangeOptions, SyncSubscriptionDescription } from '@powersync/common';
+import { UseSyncStreamOptions } from '../streams.js';
 
 export interface HookWatchOptions extends Omit<SQLOnChangeOptions, 'signal'> {
+  /**
+   * An optional array of sync streams (with names and parameters) backing the query.
+   *
+   * When set, `useQuery` will subscribe to those streams (and automatically handle unsubscribing from them, too).
+   *
+   * If {@link QuerySyncStreamOptions} is set on a stream, `useQuery` will remain in a loading state until that stream
+   * is marked as {@link SyncSubscriptionDescription.hasSynced}. This ensures the query is not missing rows that haven't
+   * been downloaded.
+   * Note however that after an initial sync, the query will not block itself while new rows are downloading. Instead,
+   * consistent sync snapshots will be made available as they've been processed by PowerSync.
+   *
+   * @experimental Sync streams are currently in alpha.
+   */
+  streams?: QuerySyncStreamOptions[];
   reportFetching?: boolean;
+}
+
+/**
+ * Additional options to control how `useQuery` behaves when subscribing to a stream.
+ */
+export interface QuerySyncStreamOptions extends UseSyncStreamOptions {
+  /**
+   * When set to `true`, a `useQuery` hook will remain in a loading state as long as the stream is resolving or
+   * downloading for the first time (in other words, until {@link SyncSubscriptionDescription.hasSynced} is true).
+   */
+  waitForStream?: boolean;
 }
 
 export interface AdditionalOptions extends HookWatchOptions {

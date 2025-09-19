@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useSuspenseQuery } from '../src/hooks/suspense/useSuspenseQuery';
 import { useWatchedQuerySuspenseSubscription } from '../src/hooks/suspense/useWatchedQuerySuspenseSubscription';
-import { openPowerSync } from './useQuery.test';
+import { openPowerSync } from './utils';
 
 describe('useSuspenseQuery', () => {
   const loadingFallback = 'Loading';
