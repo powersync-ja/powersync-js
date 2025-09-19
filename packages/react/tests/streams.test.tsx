@@ -6,6 +6,7 @@ import { openPowerSync } from './utils';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useSyncStream, UseSyncStreamOptions } from '../src/hooks/streams';
 import { useQuery } from '../src/hooks/watched/useQuery';
+import { QuerySyncStreamOptions } from '../src/hooks/watched/watch-types';
 
 describe('stream hooks', () => {
   let db: AbstractPowerSyncDatabase;
@@ -51,10 +52,13 @@ describe('stream hooks', () => {
         expect(currentStreams()).toStrictEqual([]);
       });
 
-      it('useQuery', async () => {
-        const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [{ name: 'a' }] }), {
-          wrapper: testWrapper
-        });
+      it('useQuery waiting on stream', async () => {
+        const { result } = renderHook(
+          () => useQuery('SELECT 1', [], { streams: [{ name: 'a', waitForStream: true }] }),
+          {
+            wrapper: testWrapper
+          }
+        );
         expect(result.current).toMatchObject({ isLoading: true });
         // Including the stream should subscribe.
         await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
@@ -65,6 +69,16 @@ describe('stream hooks', () => {
         db.iterateListeners((l) => l.statusChanged?.(_testStatus));
 
         // Which should eventually run the query.
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+      });
+
+      it('useQuery not waiting on stream', async () => {
+        // By default, it should still run the query immediately instead of waiting for the stream to resolve.
+        const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [{ name: 'a' }] }), {
+          wrapper: testWrapper
+        });
+
+        // Not resolving the subscription.
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
       });
 
@@ -80,7 +94,7 @@ describe('stream hooks', () => {
 
       it('handles stream parameter changes', async () => {
         // Start without streams
-        let streams: UseSyncStreamOptions[] = [];
+        let streams: QuerySyncStreamOptions[] = [];
         let streamUpdateListeners: (() => void)[] = [];
 
         const { result } = renderHook(
@@ -108,7 +122,7 @@ describe('stream hooks', () => {
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
 
         // Adopt streams - this should reset back to loading
-        streams = [{ name: 'a' }];
+        streams = [{ name: 'a', waitForStream: true }];
         act(() => streamUpdateListeners.forEach((cb) => cb()));
         expect(result.current).toMatchObject({ isLoading: true });
 
