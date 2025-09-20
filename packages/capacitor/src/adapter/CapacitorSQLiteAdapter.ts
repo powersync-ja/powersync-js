@@ -16,16 +16,15 @@ import { PowerSyncCore } from '../plugin/PowerSyncCore';
 
 export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   protected _writeConnection: SQLiteDBConnection | null;
+  protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
   protected lock: Lock;
-  // TODO update hooks
-  protected tableUpdatesCache: Set<string>;
 
   constructor(protected options: SQLOpenOptions) {
     super();
     this._writeConnection = null;
+    this._readConnection = null;
     this.lock = new Lock();
-    this.tableUpdatesCache = new Set();
     this.initializedPromise = this.init();
   }
 
@@ -36,37 +35,51 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     return this._writeConnection;
   }
 
+  protected get readConnection(): SQLiteDBConnection {
+    if (!this._readConnection) {
+      throw new Error('Init not completed yet');
+    }
+    return this._readConnection;
+  }
+
   private async init() {
     await PowerSyncCore.registerCore();
     const sqlite = new SQLiteConnection(CapacitorSQLite);
-    try {
-      const existing = await sqlite.isConnection(this.options.dbFilename, false);
-      if (existing.result) {
-        await sqlite.closeConnection(this.options.dbFilename, false);
-      }
-    } catch (ex) {
-      console.error('Error retrieving existing connection:', ex);
+    for (const isReadOnly of [true, false]) {
+      // Close any existing native connection if it already exists.
+      // It seems like the isConnection and retrieveConnection methods
+      // only check a JS side map of connections.
+      // On hot reload this JS cache can be cleared, while the connection
+      // still exists natively. and `createConnection` will fail if it already exists.
+      await sqlite.closeConnection(this.options.dbFilename, isReadOnly).catch(() => {});
     }
 
+    // TODO support encryption eventually
     this._writeConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, false);
+    this._readConnection = await sqlite.createConnection(this.options.dbFilename, true, 'no-encryption', 1, true);
+
+    // TODO validate WAL mode
     await this._writeConnection.open();
+    await this._readConnection.open();
+
+    this.writeConnection.query("SELECT powersync_update_hooks('install')");
   }
 
   async close(): Promise<void> {
     await this.initializedPromise;
     await this.writeConnection.close();
+    await this.readConnection.close();
   }
   get name() {
     return this.options.dbFilename;
   }
 
-  protected generateLockContext(): LockContext {
+  protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      await this.initializedPromise;
-      const db = this.writeConnection;
       // TODO verify transactions
       // AND handle this better. This driver does not support returning results
       // for execute methods
+
       if (query.toLowerCase().trim().startsWith('select')) {
         let result = await db.query(query, params);
         let arrayResult = result.values ?? [];
@@ -94,8 +107,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     };
 
     const executeQuery = async (query: string, params?: any[]): Promise<QueryResult> => {
-      await this.initializedPromise;
-      const db = this.writeConnection;
       let result = await db.query(query, params);
 
       let arrayResult = result.values ?? [];
@@ -150,25 +161,29 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    await this.initializedPromise;
-    let result = await this.writeConnection.executeSet(
-      params.map((param) => ({
-        statement: query,
-        values: param
-      }))
-    );
+    return this.writeLock(async (tx) => {
+      let result = await this.writeConnection.executeSet(
+        params.map((param) => ({
+          statement: query,
+          values: param
+        }))
+      );
 
-    return {
-      rowsAffected: result.changes?.changes ?? 0,
-      insertId: result.changes?.lastId
-    };
+      return {
+        rowsAffected: result.changes?.changes ?? 0,
+        insertId: result.changes?.lastId
+      };
+    });
   }
 
   /**
    * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
    */
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock(fn, options);
+    return this.lock.acquire('read_lock', async () => {
+      await this.initializedPromise;
+      return await fn(this.generateLockContext(this.readConnection));
+    });
   }
 
   readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -178,16 +193,21 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.lock.acquire('lock', async () => {
+    return this.lock.acquire('write_lock', async () => {
       await this.initializedPromise;
-      const result = await fn(this.generateLockContext());
+      const result = await fn(this.generateLockContext(this.writeConnection));
 
+      // Fetch table updates
+      const updates = await this.writeConnection.query("SELECT powersync_update_hooks('get') AS table_name");
+      const jsonUpdates = updates.values?.[0];
+      if (!jsonUpdates || !jsonUpdates.table_name) {
+        throw new Error('Could not fetch table updates');
+      }
       const notification: BatchedUpdateNotification = {
         rawUpdates: [],
-        tables: Array.from(this.tableUpdatesCache),
+        tables: JSON.parse(jsonUpdates.table_name),
         groupedUpdates: {}
       };
-      this.tableUpdatesCache.clear();
       this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;
     });
@@ -200,7 +220,13 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   refreshSchema(): Promise<void> {
-    return this.get("PRAGMA table_info('sqlite_master')");
+    return this.writeLock(async (writeTx) => {
+      return this.readLock(async (readTx) => {
+        const updateQuery = `PRAGMA table_info('sqlite_master')`;
+        await writeTx.get(updateQuery);
+        await readTx.get(updateQuery);
+      });
+    });
   }
 
   getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
