@@ -39,7 +39,15 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   private async init() {
     await PowerSyncCore.registerCore();
     const sqlite = new SQLiteConnection(CapacitorSQLite);
-    await sqlite.closeConnection(this.options.dbFilename, false);
+    try {
+      const existing = await sqlite.isConnection(this.options.dbFilename, false);
+      if (existing.result) {
+        await sqlite.closeConnection(this.options.dbFilename, false);
+      }
+    } catch (ex) {
+      console.error('Error retrieving existing connection:', ex);
+    }
+
     this._writeConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, false);
     await this._writeConnection.open();
   }

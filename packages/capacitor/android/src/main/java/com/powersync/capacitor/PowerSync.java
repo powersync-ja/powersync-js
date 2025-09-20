@@ -3,9 +3,11 @@ package com.powersync.capacitor;
 import com.getcapacitor.Logger;
 
 public class PowerSync {
-
-    public String echo(String value) {
-        Logger.info("Echo", value);
-        return value;
+    static {
+        System.loadLibrary("powersync_capacitor"); 
+        // Ensures we load this early before registering. 
+        System.loadLibrary("sqlcipher");
     }
+
+    public static native int registerPowersync();
 }

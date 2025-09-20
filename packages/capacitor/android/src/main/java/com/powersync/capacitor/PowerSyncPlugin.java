@@ -12,11 +12,9 @@ public class PowerSyncPlugin extends Plugin {
     private PowerSync implementation = new PowerSync();
 
     @PluginMethod
-    public void echo(PluginCall call) {
-        String value = call.getString("value");
-
+    public void registerCore(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("value", implementation.echo(value));
+        ret.put("responseCode", implementation.registerPowersync());
         call.resolve(ret);
     }
 }
