@@ -41,7 +41,7 @@
     "swiftlint": "node-swiftlint",
     "docgen": "docgen --api PowerSyncPlugin --output-readme README.md --output-json dist/docs.json",
     "build": "pnpm clean && pnpm docgen && tsc && rollup -c rollup.config.mjs",
-    "build:prod": "pnpm builds",
+    "build:prod": "pnpm build",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "prepublishOnly": "pnpm build"
