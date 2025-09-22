@@ -149,24 +149,24 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   async close(): Promise<void> {
     // Abort any pending lock requests.
     this.lockAbortController.abort();
-    await this.baseConnection.close();
+    await this.withRemote(() => this.baseConnection.close());
     this.options.remote[Comlink.releaseProxy]();
     this.options.onClose?.();
   }
 
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult> {
-    return this.baseConnection.execute(sql, params);
+    return this.withRemote(() => this.baseConnection.execute(sql, params));
   }
 
   executeRaw(sql: string, params?: any[]): Promise<any[][]> {
-    return this.baseConnection.executeRaw(sql, params);
+    return this.withRemote(() => this.baseConnection.executeRaw(sql, params));
   }
 
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult> {
-    return this.baseConnection.executeBatch(sql, params);
+    return this.withRemote(() => this.baseConnection.executeBatch(sql, params));
   }
 
   getConfig(): Promise<ResolvedWebSQLOpenOptions> {
-    return this.baseConnection.getConfig();
+    return this.withRemote(() => this.baseConnection.getConfig());
   }
 }
