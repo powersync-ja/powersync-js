@@ -203,8 +203,6 @@ export class LockedAsyncDatabaseAdapter
     );
   }
 
-  static dbLockRequestId = 0;
-
   protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
     await this.waitForInitialized();
 
@@ -223,7 +221,6 @@ export class LockedAsyncDatabaseAdapter
         }, timeoutMs)
       : null;
 
-    const id = LockedAsyncDatabaseAdapter.dbLockRequestId++;
     return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
       this.pendingAbortControllers.delete(abortController);
       if (timoutId) {

@@ -149,9 +149,12 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   async close(): Promise<void> {
     // Abort any pending lock requests.
     this.lockAbortController.abort();
-    this.options.remote[Comlink.releaseProxy]();
-    this.options.onClose?.();
-    await this.baseConnection.close();
+    try {
+      await this.withRemote(() => this.baseConnection.close());
+    } finally {
+      this.options.remote[Comlink.releaseProxy]();
+      this.options.onClose?.();
+    }
   }
 
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult> {
