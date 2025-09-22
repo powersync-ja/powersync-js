@@ -481,9 +481,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         const wrapped = new WorkerWrappedAsyncDatabaseConnection({
           remote,
           baseConnection: db,
-          identifier
+          identifier,
+          // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
+          // that and ensure pending requests are aborted when the tab is closed.
+          remoteCanCloseUnexpectedly: true
         });
         lastClient.closeListeners.push(() => {
+          this.logger.info('Aborting open connection because associated tab closed.');
           wrapped.markRemoteClosed();
         });
 
