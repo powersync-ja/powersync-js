@@ -79,7 +79,8 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
           await connector.uploadData(this);
         },
         identifier: this.database.name,
-        logger: this.logger
+        logger: this.logger,
+        subscriptions: options.subscriptions
       });
     } else {
       this.logger.debug(`Using default web sync implementation for web platform`);
