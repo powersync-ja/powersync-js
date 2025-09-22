@@ -8,6 +8,19 @@ export type RegistrationResponse = {
   responseCode: number;
 };
 
+export const messageForErrorCode = (code: number): string => {
+  switch (code) {
+    case -1:
+      return '[Android] SQLCipher library not found';
+    case -2:
+      return '[Android] Required symbols not found';
+    case 0:
+      return 'Success';
+    default:
+      return `Extension registration failed with SQLite error code: ${code}`;
+  }
+};
+
 export interface PowerSyncPlugin {
   /**
    * Registers the PowerSync core extension with the SQLite library.

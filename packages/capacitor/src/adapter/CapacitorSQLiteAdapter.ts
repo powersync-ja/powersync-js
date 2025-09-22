@@ -13,6 +13,7 @@ import {
 } from '@powersync/web';
 import Lock from 'async-lock';
 import { PowerSyncCore } from '../plugin/PowerSyncCore';
+import { messageForErrorCode } from '../plugin/PowerSyncPlugin';
 
 /**
  * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
@@ -48,8 +49,16 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     return this._readConnection;
   }
 
+  get name() {
+    return this.options.dbFilename;
+  }
+
   private async init() {
-    await PowerSyncCore.registerCore();
+    const { responseCode: registrationResponseCode } = await PowerSyncCore.registerCore();
+    if (registrationResponseCode != 0) {
+      throw new Error(`Could not register PowerSync core extension: ${messageForErrorCode(registrationResponseCode)}`);
+    }
+
     const sqlite = new SQLiteConnection(CapacitorSQLite);
 
     // It seems like the isConnection and retrieveConnection methods
@@ -74,9 +83,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     await this.initializedPromise;
     await this.writeConnection.close();
     await this.readConnection.close();
-  }
-  get name() {
-    return this.options.dbFilename;
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
