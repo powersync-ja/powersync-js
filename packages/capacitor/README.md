@@ -42,7 +42,7 @@ npx cap sync
 
 ## Usage
 
-```typescript
+```javascript
 import { PowerSyncDatabase } from '@powersync/capacitor';
 // Import general components from the Web SDK package
 import { Schema } from '@powersync/web';
@@ -51,12 +51,25 @@ import { Schema } from '@powersync/web';
  * and use the appropriate database drivers.
  */
 const db = new PowerSyncDatabase({
-  schema: new Schema({...})
+  schema: new Schema({...}),
+  database: {
+    dbFilename: "mydatabase.sqlite"
+  }
 });
 ```
 
 - On Android and iOS, this SDK uses [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite) for native database access.
 - On web, it falls back to the [PowerSync Web SDK](https://www.npmjs.com/package/@powersync/web).
+
+When using custom database factories, be sure to specify the `CapacitorSQLiteOpenFactory` for Capacitor platforms.
+
+```javascript
+const db = new PowerSyncDatabase({
+  schema: new Schema({...}),
+  database: isWeb ? new WASQLiteOpenFactory({dbFilename: "mydb.sqlite"}) :
+    new CapacitorSQLiteOpenFactory({dbFilename: "mydb.sqlite"})
+});
+```
 
 ## Platform Support
 
