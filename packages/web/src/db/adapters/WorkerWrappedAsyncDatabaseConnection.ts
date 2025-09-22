@@ -15,6 +15,7 @@ export type SharedConnectionWorker = {
 export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> = {
   baseConnection: AsyncDatabaseConnection;
   identifier: string;
+  remoteCanCloseUnexpectedly: boolean;
   /**
    * Need a remote in order to keep a reference to the Proxied worker
    */
@@ -29,10 +30,13 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
 export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
   implements AsyncDatabaseConnection
 {
-  protected lockAbortController: AbortController;
+  protected lockAbortController = new AbortController();
+  protected notifyRemoteClosed: AbortController | undefined;
 
   constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
-    this.lockAbortController = new AbortController();
+    if (options.remoteCanCloseUnexpectedly) {
+      this.notifyRemoteClosed = new AbortController();
+    }
   }
 
   protected get baseConnection() {
@@ -41,6 +45,48 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
 
   init(): Promise<void> {
     return this.baseConnection.init();
+  }
+
+  /**
+   * Marks the remote as closed.
+   *
+   * This can sometimes happen outside of our control, e.g. when a shared worker requests a connection from a tab. When
+   * it happens, all methods on the {@link baseConnection} would never resolve. To avoid livelocks in this scenario, we
+   * throw on all outstanding promises and forbid new calls.
+   */
+  markRemoteClosed() {
+    // Can non-null assert here because this function is only supposed to be called when remoteCanCloseUnexpectedly was
+    // set.
+    this.notifyRemoteClosed!.abort();
+  }
+
+  private withRemote<T>(inner: () => Promise<T>): Promise<T> {
+    const controller = this.notifyRemoteClosed;
+    if (controller) {
+      return new Promise((resolve, reject) => {
+        if (controller.signal.aborted) {
+          reject(new Error('Called operation on closed remote'));
+        }
+
+        function handleAbort() {
+          reject(new Error('Remote peer closed with request in flight'));
+        }
+
+        function markResolved(inner: () => void) {
+          controller!.signal.removeEventListener('abort', handleAbort);
+          inner();
+        }
+
+        controller.signal.addEventListener('abort', handleAbort);
+
+        inner()
+          .then((data) => markResolved(() => resolve(data)))
+          .catch((e) => markResolved(() => reject(e)));
+      });
+    } else {
+      // Can't close, so just return the inner promise unguarded.
+      return inner();
+    }
   }
 
   /**

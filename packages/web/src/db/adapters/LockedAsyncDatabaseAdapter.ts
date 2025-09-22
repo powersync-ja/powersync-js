@@ -203,6 +203,8 @@ export class LockedAsyncDatabaseAdapter
     );
   }
 
+  static dbLockRequestId = 0;
+
   protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
     await this.waitForInitialized();
 
@@ -221,13 +223,17 @@ export class LockedAsyncDatabaseAdapter
         }, timeoutMs)
       : null;
 
-    return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
-      this.pendingAbortControllers.delete(abortController);
-      if (timoutId) {
-        clearTimeout(timoutId);
-      }
-      return callback();
-    });
+    const id = LockedAsyncDatabaseAdapter.dbLockRequestId++;
+    console.trace('Requesting database lock', this._dbIdentifier, id);
+    return getNavigatorLocks()
+      .request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
+        this.pendingAbortControllers.delete(abortController);
+        if (timoutId) {
+          clearTimeout(timoutId);
+        }
+        return callback();
+      })
+      .finally(() => console.log('returning database lock', id));
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
