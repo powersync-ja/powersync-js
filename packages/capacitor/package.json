@@ -2,6 +2,10 @@
   "name": "@powersync/capacitor",
   "version": "0.0.1",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
