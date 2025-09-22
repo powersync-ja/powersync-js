@@ -279,6 +279,10 @@ export class DifferentialQueryProcessor<RowType>
               });
             }
 
+            if (this.state.error) {
+              partialStateUpdate.error = null;
+            }
+
             if (Object.keys(partialStateUpdate).length > 0) {
               await this.updateState(partialStateUpdate);
             }

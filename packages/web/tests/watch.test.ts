@@ -733,6 +733,48 @@ describe('Watch Tests', { sequential: true }, () => {
     expect(watch.state.data[0].make).equals('nottest');
   });
 
+  it('should allow updating queries', async () => {
+    const watch = powersync
+      .query<{ make: string }>({
+        sql: 'SELECT ? as result',
+        parameters: [0]
+      })
+      .watch({
+        reportFetching: false
+      });
+
+    let states: WatchedQueryState<any>[] = [];
+
+    // Keep track of all the states which have been updated
+    const dispose = watch.registerListener({
+      onStateChange: (state) => {
+        states.push(state);
+      }
+    });
+
+    // Spam the updateSettings
+    let updatePromises = Array.from({ length: 100 }).map(async (_, index) =>
+      watch.updateSettings({
+        query: new GetAllQuery({
+          sql: 'SELECT ? as result',
+          parameters: [index + 1]
+        })
+      })
+    );
+
+    await Promise.all(updatePromises);
+
+    await vi.waitFor(
+      () => {
+        console.log(JSON.stringify(states));
+        expect(states[states.length - 1].isFetching).false;
+        expect(states[states.length - 1].data[0].result).eq(100);
+      },
+      { timeout: 3000 }
+    );
+    dispose();
+  });
+
   it('should report differential query results', async () => {
     const watch = powersync
       .query({

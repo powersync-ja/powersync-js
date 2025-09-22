@@ -71,6 +71,7 @@ export enum WatchedQueryListenerEvent {
   ON_DATA = 'onData',
   ON_ERROR = 'onError',
   ON_STATE_CHANGE = 'onStateChange',
+  SETTINGS_WILL_UPDATE = 'settingsWillUpdate',
   CLOSED = 'closed'
 }
 
@@ -78,6 +79,7 @@ export interface WatchedQueryListener<Data> extends BaseListener {
   [WatchedQueryListenerEvent.ON_DATA]?: (data: Data) => void | Promise<void>;
   [WatchedQueryListenerEvent.ON_ERROR]?: (error: Error) => void | Promise<void>;
   [WatchedQueryListenerEvent.ON_STATE_CHANGE]?: (state: WatchedQueryState<Data>) => void | Promise<void>;
+  [WatchedQueryListenerEvent.SETTINGS_WILL_UPDATE]?: () => void;
   [WatchedQueryListenerEvent.CLOSED]?: () => void | Promise<void>;
 }
 

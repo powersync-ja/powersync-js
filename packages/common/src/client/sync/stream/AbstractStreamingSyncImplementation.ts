@@ -1,7 +1,6 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { FULL_SYNC_PRIORITY, InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
-import * as sync_status from '../../../db/crud/SyncStatus.js';
+import { InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
@@ -17,7 +16,7 @@ import {
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
-import { EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
+import { coreStatusToJs, EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
 import {
   BucketRequest,
   CrudUploadNotification,
@@ -95,8 +94,9 @@ export interface LockOptions<T> {
   signal?: AbortSignal;
 }
 
-export interface AbstractStreamingSyncImplementationOptions extends AdditionalConnectionOptions {
+export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
   adapter: BucketStorageAdapter;
+  subscriptions: SubscribedStream[];
   uploadCrud: () => Promise<void>;
   /**
    * An identifier for which PowerSync DB this sync implementation is
@@ -156,6 +156,13 @@ export interface BaseConnectionOptions {
   params?: Record<string, StreamingSyncRequestParameterType>;
 
   /**
+   * Whether to include streams that have `auto_subscribe: true` in their definition.
+   *
+   * This defaults to `true`.
+   */
+  includeDefaultStreams?: boolean;
+
+  /**
    * The serialized schema - mainly used to forward information about raw tables to the sync client.
    */
   serializedSchema?: any;
@@ -177,7 +184,9 @@ export interface AdditionalConnectionOptions {
 }
 
 /** @internal */
-export type RequiredAdditionalConnectionOptions = Required<AdditionalConnectionOptions>;
+export interface RequiredAdditionalConnectionOptions extends Required<AdditionalConnectionOptions> {
+  subscriptions: SubscribedStream[];
+}
 
 export interface StreamingSyncImplementation
   extends BaseObserverInterface<StreamingSyncImplementationListener>,
@@ -200,6 +209,7 @@ export interface StreamingSyncImplementation
   waitForReady(): Promise<void>;
   waitForStatus(status: SyncStatusOptions): Promise<void>;
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
+  updateSubscriptions(subscriptions: SubscribedStream[]): void;
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
@@ -217,7 +227,13 @@ export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptio
   clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
   params: {},
-  serializedSchema: undefined
+  serializedSchema: undefined,
+  includeDefaultStreams: true
+};
+
+export type SubscribedStream = {
+  name: string;
+  params: Record<string, any> | null;
 };
 
 // The priority we assume when we receive checkpoint lines where no priority is set.
@@ -239,16 +255,19 @@ export abstract class AbstractStreamingSyncImplementation
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
   protected logger: ILogger;
+  private activeStreams: SubscribedStream[];
 
   private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
+  private handleActiveStreamsChange?: () => void;
 
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
-    this.options = { ...DEFAULT_STREAMING_SYNC_OPTIONS, ...options };
+    this.options = options;
+    this.activeStreams = options.subscriptions;
     this.logger = options.logger ?? Logger.get('PowerSyncStream');
 
     this.syncStatus = new SyncStatus({
@@ -530,11 +549,13 @@ The next upload iteration will be delayed.`);
     while (true) {
       this.updateSyncStatus({ connecting: true });
       let shouldDelayRetry = true;
+      let result: RustIterationResult | null = null;
+
       try {
         if (signal?.aborted) {
           break;
         }
-        await this.streamingSyncIteration(nestedAbortController.signal, options);
+        result = await this.streamingSyncIteration(nestedAbortController.signal, options);
         // Continue immediately, streamingSyncIteration will wait before completing if necessary.
       } catch (ex) {
         /**
@@ -568,14 +589,16 @@ The next upload iteration will be delayed.`);
           nestedAbortController = new AbortController();
         }
 
-        this.updateSyncStatus({
-          connected: false,
-          connecting: true // May be unnecessary
-        });
+        if (result?.immediateRestart != true) {
+          this.updateSyncStatus({
+            connected: false,
+            connecting: true // May be unnecessary
+          });
 
-        // On error, wait a little before retrying
-        if (shouldDelayRetry) {
-          await this.delayRetry(nestedAbortController.signal);
+          // On error, wait a little before retrying
+          if (shouldDelayRetry) {
+            await this.delayRetry(nestedAbortController.signal);
+          }
         }
       }
     }
@@ -623,8 +646,11 @@ The next upload iteration will be delayed.`);
     }
   }
 
-  protected async streamingSyncIteration(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
-    await this.obtainLock({
+  protected streamingSyncIteration(
+    signal: AbortSignal,
+    options?: PowerSyncConnectionOptions
+  ): Promise<RustIterationResult | null> {
+    return this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
@@ -637,9 +663,10 @@ The next upload iteration will be delayed.`);
 
         if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
           await this.legacyStreamingSyncIteration(signal, resolvedOptions);
+          return null;
         } else {
           await this.requireKeyFormat(true);
-          await this.rustSyncIteration(signal, resolvedOptions);
+          return await this.rustSyncIteration(signal, resolvedOptions);
         }
       }
     });
@@ -894,12 +921,16 @@ The next upload iteration will be delayed.`);
     return;
   }
 
-  private async rustSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
+  private async rustSyncIteration(
+    signal: AbortSignal,
+    resolvedOptions: RequiredPowerSyncConnectionOptions
+  ): Promise<RustIterationResult> {
     const syncImplementation = this;
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let receivingLines: Promise<void> | null = null;
     let hadSyncLine = false;
+    let hideDisconnectOnRestart = false;
 
     if (signal.aborted) {
       throw new AbortOperation('Connection request has been aborted');
@@ -985,6 +1016,14 @@ The next upload iteration will be delayed.`);
 
     async function control(op: PowerSyncControlCommand, payload?: Uint8Array | string) {
       const rawResponse = await adapter.control(op, payload ?? null);
+      const logger = syncImplementation.logger;
+      logger.trace(
+        'powersync_control',
+        op,
+        payload == null || typeof payload == 'string' ? payload : '<bytes>',
+        rawResponse
+      );
+
       await handleInstructions(JSON.parse(rawResponse));
     }
 
@@ -1002,29 +1041,7 @@ The next upload iteration will be delayed.`);
             break;
         }
       } else if ('UpdateSyncStatus' in instruction) {
-        function coreStatusToJs(status: SyncPriorityStatus): sync_status.SyncPriorityStatus {
-          return {
-            priority: status.priority,
-            hasSynced: status.has_synced ?? undefined,
-            lastSyncedAt: status?.last_synced_at != null ? new Date(status!.last_synced_at! * 1000) : undefined
-          };
-        }
-
-        const info = instruction.UpdateSyncStatus.status;
-        const coreCompleteSync = info.priority_status.find((s) => s.priority == FULL_SYNC_PRIORITY);
-        const completeSync = coreCompleteSync != null ? coreStatusToJs(coreCompleteSync) : null;
-
-        syncImplementation.updateSyncStatus({
-          connected: info.connected,
-          connecting: info.connecting,
-          dataFlow: {
-            downloading: info.downloading != null,
-            downloadProgress: info.downloading?.buckets
-          },
-          lastSyncedAt: completeSync?.lastSyncedAt,
-          hasSynced: completeSync?.hasSynced,
-          priorityStatusEntries: info.priority_status.map(coreStatusToJs)
-        });
+        syncImplementation.updateSyncStatus(coreStatusToJs(instruction.UpdateSyncStatus.status));
       } else if ('EstablishSyncStream' in instruction) {
         if (receivingLines != null) {
           // Already connected, this shouldn't happen during a single iteration.
@@ -1050,6 +1067,7 @@ The next upload iteration will be delayed.`);
         }
       } else if ('CloseSyncStream' in instruction) {
         abortController.abort();
+        hideDisconnectOnRestart = instruction.CloseSyncStream.hide_disconnect;
       } else if ('FlushFileSystem' in instruction) {
         // Not necessary on JS platforms.
       } else if ('DidCompleteSync' in instruction) {
@@ -1068,7 +1086,11 @@ The next upload iteration will be delayed.`);
     }
 
     try {
-      const options: any = { parameters: resolvedOptions.params };
+      const options: any = {
+        parameters: resolvedOptions.params,
+        active_streams: this.activeStreams,
+        include_defaults: resolvedOptions.includeDefaultStreams
+      };
       if (resolvedOptions.serializedSchema) {
         options.schema = resolvedOptions.serializedSchema;
       }
@@ -1080,11 +1102,21 @@ The next upload iteration will be delayed.`);
           controlInvocations.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
         }
       };
+      this.handleActiveStreamsChange = () => {
+        if (controlInvocations && !controlInvocations?.closed) {
+          controlInvocations.enqueueData({
+            command: PowerSyncControlCommand.UPDATE_SUBSCRIPTIONS,
+            payload: JSON.stringify(this.activeStreams)
+          });
+        }
+      };
       await receivingLines;
     } finally {
-      this.notifyCompletedUploads = undefined;
+      this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
       await stop();
     }
+
+    return { immediateRestart: hideDisconnectOnRestart };
   }
 
   private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
@@ -1209,9 +1241,18 @@ The next upload iteration will be delayed.`);
       timeoutId = setTimeout(endDelay, retryDelayMs);
     });
   }
+
+  updateSubscriptions(subscriptions: SubscribedStream[]): void {
+    this.activeStreams = subscriptions;
+    this.handleActiveStreamsChange?.();
+  }
 }
 
 interface EnqueuedCommand {
   command: PowerSyncControlCommand;
   payload?: Uint8Array | string;
+}
+
+interface RustIterationResult {
+  immediateRestart: boolean;
 }

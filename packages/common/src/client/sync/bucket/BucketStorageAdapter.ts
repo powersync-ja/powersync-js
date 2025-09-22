@@ -12,6 +12,7 @@ export interface Checkpoint {
   last_op_id: OpId;
   buckets: BucketChecksum[];
   write_checkpoint?: string;
+  streams?: any[];
 }
 
 export interface BucketState {
@@ -49,6 +50,12 @@ export interface BucketChecksum {
    * Count of operations - informational only.
    */
   count?: number;
+  /**
+   * The JavaScript client does not use this field, which is why it's defined to be `any`. We rely on the structure of
+   * this interface to pass custom `BucketChecksum`s to the Rust client in unit tests, which so all fields need to be
+   * present.
+   */
+  subscriptions?: any;
 }
 
 export enum PSInternalTable {
@@ -65,7 +72,8 @@ export enum PowerSyncControlCommand {
   STOP = 'stop',
   START = 'start',
   NOTIFY_TOKEN_REFRESHED = 'refreshed_token',
-  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload'
+  NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload',
+  UPDATE_SUBSCRIPTIONS = 'update_subscriptions'
 }
 
 export interface BucketStorageListener extends BaseListener {

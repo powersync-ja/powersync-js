@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
   "main": "dist/index.cjs",
@@ -42,7 +42,7 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.38.0",
+    "@powersync/common": "workspace:^1.38.1",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
