@@ -69,6 +69,7 @@ const db = new PowerSyncDatabase({
 
 - Encryption for native mobile platforms is not yet supported.
 - Multiple tab support is not available for native Android and iOS targets.
+- The Capacitor Community SQLite APIs differ for execution and query operations. The `.execute()` method cannot be used for `SELECT` queries or `RETURNING` queries.
 
 ## Examples
 

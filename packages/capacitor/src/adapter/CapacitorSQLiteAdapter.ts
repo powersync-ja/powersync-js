@@ -81,8 +81,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      // TODO handle this better. This driver does not support returning results
-      // for execute methods
+      // This driver does not support returning results for execute methods
       if (query.toLowerCase().trim().startsWith('select')) {
         let result = await db.query(query, params);
         let arrayResult = result.values ?? [];
@@ -96,7 +95,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
         };
       } else {
         let result = await db.executeSet([{ statement: query, values: params }], false);
-        // TODO document execute caveat
         return {
           insertId: result.changes?.lastId,
           rowsAffected: result.changes?.changes ?? 0,
@@ -179,9 +177,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     });
   }
 
-  /**
-   * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
-   */
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
     return this.lock.acquire('read_lock', async () => {
       await this.initializedPromise;
