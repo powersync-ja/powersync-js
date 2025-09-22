@@ -349,10 +349,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       }
     }
 
-    if (trackedPort.db) {
-      await trackedPort.db.close();
-    }
-
     // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
     this.collectActiveSubscriptions();
 
@@ -488,6 +484,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         });
         lastClient.closeListeners.push(() => {
           this.logger.info('Aborting open connection because associated tab closed.');
+          wrapped.close();
           wrapped.markRemoteClosed();
         });
 

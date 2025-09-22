@@ -224,16 +224,13 @@ export class LockedAsyncDatabaseAdapter
       : null;
 
     const id = LockedAsyncDatabaseAdapter.dbLockRequestId++;
-    console.trace('Requesting database lock', this._dbIdentifier, id);
-    return getNavigatorLocks()
-      .request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
-        this.pendingAbortControllers.delete(abortController);
-        if (timoutId) {
-          clearTimeout(timoutId);
-        }
-        return callback();
-      })
-      .finally(() => console.log('returning database lock', id));
+    return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
+      this.pendingAbortControllers.delete(abortController);
+      if (timoutId) {
+        clearTimeout(timoutId);
+      }
+      return callback();
+    });
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
