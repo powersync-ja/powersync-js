@@ -6,7 +6,7 @@ PODS:
     - SQLCipher
     - ZIPFoundation
   - CapacitorCordova (7.4.3)
-  - CapacitorSplashScreen (7.0.2):
+  - CapacitorSplashScreen (7.0.3):
     - Capacitor
   - powersync-sqlite-core (0.4.5)
   - PowersyncCapacitor (0.0.1):
@@ -49,7 +49,7 @@ SPEC CHECKSUMS:
   Capacitor: b4741ca7affb32c1b70debd03df92cbf522d8a80
   CapacitorCommunitySqlite: 3f60098baa077322ce32a678614a5fa0029ab519
   CapacitorCordova: 435121e81a2df4d0034f0fb11fcefab5104cfdb5
-  CapacitorSplashScreen: 8d6c8cb0542a8e81585c593815db8785ed8ce454
+  CapacitorSplashScreen: d06ae8804808e9f649a08e7bb7f283c77b688084
   powersync-sqlite-core: 6f32860379009d2a37cadc9e9427a431bdbd83c8
   PowersyncCapacitor: 91411eaf8f7a773df9da4b76b19f576275b5a40a
   SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc

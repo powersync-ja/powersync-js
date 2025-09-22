@@ -14,5 +14,6 @@
     "target": "es2017"
   },
   "files": ["src/index.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "references": [{ "path": "../common" }, { "path": "../web" }]
 }

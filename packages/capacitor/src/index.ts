@@ -1,2 +1,3 @@
 export { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter';
-export { PowerSyncCore } from './plugin/PowerSyncCore';
+export { CapacitorSQLiteOpenFactory } from './adapter/CapacitorSQLiteOpenFactory';
+export { PowerSyncDatabase } from './PowerSyncDatabase';

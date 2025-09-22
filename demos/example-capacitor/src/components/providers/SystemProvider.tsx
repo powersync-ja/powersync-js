@@ -1,8 +1,7 @@
-import { Capacitor } from '@capacitor/core';
 import { CircularProgress } from '@mui/material';
-import { CapacitorSQLiteAdapter } from '@powersync/capacitor';
+import { PowerSyncDatabase } from '@powersync/capacitor';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, LogLevel, PowerSyncDatabase } from '@powersync/web';
+import { createBaseLogger, LogLevel } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
@@ -11,20 +10,14 @@ const logger = createBaseLogger();
 logger.useDefaults();
 logger.setLevel(LogLevel.DEBUG);
 
-const platform = Capacitor.getPlatform();
-const isIOs = platform === 'ios';
-// Web worker implementation does not work on iOS
-const useWebWorker = !isIOs;
-
+// Uses the Web SDK for web, and Capacitor adapters for iOS/Android.
 const powerSync = new PowerSyncDatabase({
-  // We should probably rather have a separate Capacitor PowerSync client
-  database: new CapacitorSQLiteAdapter({
-    dbFilename: 'test.sqlite'
-  }),
+  database: {
+    dbFilename: 'tests.sqlite'
+  },
   schema: AppSchema,
   flags: {
-    enableMultiTabs: false,
-    useWebWorker
+    enableMultiTabs: typeof SharedWorker !== 'undefined'
   }
 });
 const connector = new BackendConnector();

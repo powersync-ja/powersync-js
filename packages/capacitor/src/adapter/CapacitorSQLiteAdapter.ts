@@ -10,10 +10,16 @@ import {
   QueryResult,
   SQLOpenOptions,
   Transaction
-} from '@powersync/common';
+} from '@powersync/web';
 import Lock from 'async-lock';
 import { PowerSyncCore } from '../plugin/PowerSyncCore';
 
+/**
+ * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
 export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
@@ -45,18 +51,17 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   private async init() {
     await PowerSyncCore.registerCore();
     const sqlite = new SQLiteConnection(CapacitorSQLite);
-    for (const isReadOnly of [true, false]) {
-      // Close any existing native connection if it already exists.
-      // It seems like the isConnection and retrieveConnection methods
-      // only check a JS side map of connections.
-      // On hot reload this JS cache can be cleared, while the connection
-      // still exists natively. and `createConnection` will fail if it already exists.
-      await sqlite.closeConnection(this.options.dbFilename, isReadOnly).catch(() => {});
-    }
+
+    // It seems like the isConnection and retrieveConnection methods
+    // only check a JS side map of connections.
+    // On hot reload this JS cache can be cleared, while the connection
+    // still exists natively. and `createConnection` will fail if it already exists.
+    await sqlite.closeConnection(this.options.dbFilename, false).catch(() => {});
+    await sqlite.closeConnection(this.options.dbFilename, true).catch(() => {});
 
     // TODO support encryption eventually
     this._writeConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, false);
-    this._readConnection = await sqlite.createConnection(this.options.dbFilename, true, 'no-encryption', 1, true);
+    this._readConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, true);
 
     // TODO validate WAL mode
     await this._writeConnection.open();
@@ -76,10 +81,8 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      // TODO verify transactions
-      // AND handle this better. This driver does not support returning results
+      // TODO handle this better. This driver does not support returning results
       // for execute methods
-
       if (query.toLowerCase().trim().startsWith('select')) {
         let result = await db.query(query, params);
         let arrayResult = result.values ?? [];

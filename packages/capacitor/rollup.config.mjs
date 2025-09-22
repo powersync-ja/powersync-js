@@ -6,17 +6,23 @@ export default {
       format: 'iife',
       name: 'capacitorPowerSync',
       globals: {
-        '@capacitor/core': 'capacitorExports',
+        '@capacitor/core': 'capacitorExports'
       },
       sourcemap: true,
-      inlineDynamicImports: true,
+      inlineDynamicImports: true
     },
     {
       file: 'dist/plugin.cjs.js',
       format: 'cjs',
       sourcemap: true,
-      inlineDynamicImports: true,
-    },
+      inlineDynamicImports: true
+    }
   ],
-  external: ['@capacitor/core'],
+  external: [
+    '@capacitor/core',
+    '@capacitor-community/sqlite',
+    '@powersync/common',
+    '@powersync/web',
+    '@journeyapps/wa-sqlite'
+  ]
 };
