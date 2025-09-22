@@ -8,12 +8,12 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  SQLOpenOptions,
   Transaction
 } from '@powersync/web';
 import Lock from 'async-lock';
 import { PowerSyncCore } from '../plugin/PowerSyncCore';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin';
+import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory';
 
 /**
  * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
@@ -27,7 +27,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   protected initializedPromise: Promise<void>;
   protected lock: Lock;
 
-  constructor(protected options: SQLOpenOptions) {
+  constructor(protected options: CapacitorSQLiteOpenFactoryOptions) {
     super();
     this._writeConnection = null;
     this._readConnection = null;
@@ -72,11 +72,17 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     this._writeConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, false);
     this._readConnection = await sqlite.createConnection(this.options.dbFilename, false, 'no-encryption', 1, true);
 
-    // TODO validate WAL mode
     await this._writeConnection.open();
-    await this._readConnection.open();
 
-    this.writeConnection.query("SELECT powersync_update_hooks('install')");
+    const { cacheSizeKb, journalSizeLimit, synchronous } = { ...DEFAULT_SQLITE_OPTIONS, ...this.options.sqliteOptions };
+    await this.writeConnection.query("SELECT powersync_update_hooks('install')");
+    await this.writeConnection.query('PRAGMA journal_mode = WAL');
+    await this.writeConnection.query(`PRAGMA journal_size_limit = ${journalSizeLimit}`);
+    await this.writeConnection.query(`PRAGMA temp_store = memory`);
+    await this.writeConnection.query(`PRAGMA synchronous = ${synchronous}`);
+    await this.writeConnection.query(`PRAGMA cache_size = -${cacheSizeKb}`);
+
+    await this._readConnection.open();
   }
 
   async close(): Promise<void> {
