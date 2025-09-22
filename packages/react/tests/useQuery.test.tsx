@@ -596,6 +596,49 @@ describe('useQuery', () => {
         );
       });
 
+      it('sohuld allow changing parameter array size', async () => {
+        const db = openPowerSync();
+
+        let currentQuery = { sql: 'SELECT ? AS a', params: ['foo'] };
+        let listeners: (() => void)[] = [];
+
+        const query = () => {
+          const current = React.useSyncExternalStore(
+            (onChange) => {
+              listeners.push(onChange);
+              return () => listeners.splice(listeners.indexOf(onChange), 1);
+            },
+            () => currentQuery
+          );
+
+          return useQuery(current.sql, current.params);
+        };
+
+        const { result } = renderHook(query, { wrapper: ({ children }) => testWrapper({ children, db }) });
+
+        await vi.waitFor(
+          () => {
+            expect(result.current.data).toStrictEqual([{ a: 'foo' }]);
+          },
+          { timeout: 500, interval: 50 }
+        );
+
+        // Now update the parameter
+        act(() => {
+          currentQuery = { sql: 'SELECT ? AS a, ? AS b', params: ['foo', 'bar'] };
+          for (const listener of listeners) {
+            listener();
+          }
+        });
+
+        await vi.waitFor(
+          () => {
+            expect(result.current.data).toStrictEqual([{ a: 'foo', b: 'bar' }]);
+          },
+          { timeout: 500, interval: 50 }
+        );
+      });
+
       it('should show an error if parsing the query results in an error', async () => {
         const db = openPowerSync();
 
