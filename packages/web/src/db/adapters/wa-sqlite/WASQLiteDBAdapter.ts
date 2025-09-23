@@ -54,6 +54,7 @@ export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
           const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
           return new WorkerWrappedAsyncDatabaseConnection({
             remote,
+            remoteCanCloseUnexpectedly: false,
             identifier: options.dbFilename,
             baseConnection: await remote({
               ...options,

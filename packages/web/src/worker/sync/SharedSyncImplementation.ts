@@ -75,6 +75,7 @@ export type WrappedSyncPort = {
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
   db?: DBAdapter;
   currentSubscriptions: SubscribedStream[];
+  closeListeners: (() => void)[];
 };
 
 /**
@@ -274,7 +275,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       const portProvider = {
         port,
         clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port),
-        currentSubscriptions: []
+        currentSubscriptions: [],
+        closeListeners: []
       } satisfies WrappedSyncPort;
       this.ports.push(portProvider);
 
@@ -331,10 +333,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       return () => {};
     }
 
+    for (const closeListener of trackedPort.closeListeners) {
+      closeListener();
+    }
+
     if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
-      if (shouldReconnect) {
-        await this.connectionManager.disconnect();
-      }
+      // Unconditionally close the connection because the database it's writing to has just been closed.
+      await this.connectionManager.disconnect();
 
       // Clearing the adapter will result in a new one being opened in connect
       this.dbAdapter = null;
@@ -342,10 +347,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       if (shouldReconnect) {
         await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
       }
-    }
-
-    if (trackedPort.db) {
-      await trackedPort.db.close();
     }
 
     // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
@@ -473,11 +474,21 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const locked = new LockedAsyncDatabaseAdapter({
       name: identifier,
       openConnection: async () => {
-        return new WorkerWrappedAsyncDatabaseConnection({
+        const wrapped = new WorkerWrappedAsyncDatabaseConnection({
           remote,
           baseConnection: db,
-          identifier
+          identifier,
+          // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
+          // that and ensure pending requests are aborted when the tab is closed.
+          remoteCanCloseUnexpectedly: true
         });
+        lastClient.closeListeners.push(() => {
+          this.logger.info('Aborting open connection because associated tab closed.');
+          wrapped.close();
+          wrapped.markRemoteClosed();
+        });
+
+        return wrapped;
       },
       logger: this.logger
     });

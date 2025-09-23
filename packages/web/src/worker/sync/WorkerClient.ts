@@ -41,7 +41,9 @@ export class WorkerClient {
 
   private async removePort() {
     if (this.resolvedPort) {
-      const release = await this.sync.removePort(this.resolvedPort);
+      const resolved = this.resolvedPort;
+      this.resolvedPort = null;
+      const release = await this.sync.removePort(resolved);
       this.resolvedPort = null;
       this.port.postMessage({
         event: SharedSyncClientEvent.CLOSE_ACK,
