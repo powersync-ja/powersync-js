@@ -28,6 +28,7 @@ jobs:
     needs: check-changes
     if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     runs-on: ubuntu-xl
+    timeout-minutes: 30
     env:
       AVD_NAME: ubuntu-avd-x86_64-31
     steps:
@@ -134,6 +135,7 @@ jobs:
     # any apparent cause. In particular, it seems like even starting the simulator times out most of the time.
     if: ${{ false && needs.check-changes.outputs.should_run == 'true' }}
     runs-on: macOS-15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
