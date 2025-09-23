@@ -60,7 +60,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     this.notifyRemoteClosed!.abort();
   }
 
-  private withRemote<T>(inner: () => Promise<T>): Promise<T> {
+  private withRemote<T>(workerPromise: () => Promise<T>): Promise<T> {
     const controller = this.notifyRemoteClosed;
     if (controller) {
       return new Promise((resolve, reject) => {
@@ -72,20 +72,20 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
           reject(new Error('Remote peer closed with request in flight'));
         }
 
-        function markResolved(inner: () => void) {
+        function completePromise(action: () => void) {
           controller!.signal.removeEventListener('abort', handleAbort);
-          inner();
+          action();
         }
 
         controller.signal.addEventListener('abort', handleAbort);
 
-        inner()
-          .then((data) => markResolved(() => resolve(data)))
-          .catch((e) => markResolved(() => reject(e)));
+        workerPromise()
+          .then((data) => completePromise(() => resolve(data)))
+          .catch((e) => completePromise(() => reject(e)));
       });
     } else {
-      // Can't close, so just return the inner promise unguarded.
-      return inner();
+      // Can't close, so just return the inner worker promise unguarded.
+      return workerPromise();
     }
   }
 
