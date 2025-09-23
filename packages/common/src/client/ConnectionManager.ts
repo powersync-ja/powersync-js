@@ -324,14 +324,15 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     };
   }
 
-  private get activeStreams() {
+  /**
+   * @internal exposed for testing
+   */
+  get activeStreams() {
     return [...this.locallyActiveSubscriptions.values()].map((a) => ({ name: a.name, params: a.parameters }));
   }
 
   private subscriptionsMayHaveChanged() {
-    if (this.syncStreamImplementation) {
-      this.syncStreamImplementation.updateSubscriptions(this.activeStreams);
-    }
+    this.syncStreamImplementation?.updateSubscriptions(this.activeStreams);
   }
 }
 
