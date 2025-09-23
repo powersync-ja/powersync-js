@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowUnreachableCode": false,
+    "declaration": true,
+    "esModuleInterop": true,
+    "inlineSources": true,
+    "lib": ["dom", "es2017"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "outDir": "dist/esm",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2017"
+  },
+  "files": ["src/index.ts"],
+  "exclude": ["node_modules"],
+  "references": [{ "path": "../common" }, { "path": "../web" }]
+}

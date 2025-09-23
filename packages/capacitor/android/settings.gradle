@@ -1,0 +1,9 @@
+def capacitorAndroidPath = new ByteArrayOutputStream()
+exec {
+    commandLine 'node', '-p', "require.resolve('@capacitor/android/package.json')"
+    standardOutput = capacitorAndroidPath
+}
+def resolvedPath = capacitorAndroidPath.toString().trim().replaceAll('/package\\.json$', '')
+println "Resolved Capacitor Android path: ${resolvedPath}"
+include ':capacitor-android'
+project(':capacitor-android').projectDir = new File(resolvedPath + '/capacitor')
