@@ -181,6 +181,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Current connection status.
    */
   currentStatus: SyncStatus;
+  connectionOptions: PowerSyncConnectionOptions;
 
   sdkVersion: string;
 
@@ -514,6 +515,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   async connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions) {
     const resolvedOptions: InternalConnectionOptions = options ?? {};
+    this.connectionOptions = resolvedOptions;
     resolvedOptions.serializedSchema = this.schema.toJSON();
 
     return this.connectionManager.connect(connector, resolvedOptions);
@@ -590,6 +592,15 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.database.close();
     this.closed = true;
     await this.iterateAsyncListeners(async (cb) => cb.closed?.());
+  }
+
+  /**
+   * Get the connection options used to connect to the PowerSync backend instance.
+   *
+   * @returns The connection options used to connect to the PowerSync backend instance.
+   */
+  getConnectionOptions(): PowerSyncConnectionOptions | null {
+    return this.connectionOptions ?? null;
   }
 
   /**
