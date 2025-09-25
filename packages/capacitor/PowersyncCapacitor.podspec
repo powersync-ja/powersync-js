@@ -4,7 +4,12 @@ package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
   s.name = 'PowersyncCapacitor'
-  s.version = package['version']
+  version = package['version']
+  if version.include?('-dev')
+    s.version = '0.0.0'
+  else
+    s.version = version
+  end
   s.summary = package['description']
   s.license = package['license']
   s.homepage = package['repository']['url']
