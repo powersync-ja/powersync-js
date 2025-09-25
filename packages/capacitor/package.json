@@ -17,7 +17,7 @@
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
-    "Powersync.podspec"
+    "PowersyncCapacitor.podspec"
   ],
   "author": "",
   "license": "Apache-2.0",
