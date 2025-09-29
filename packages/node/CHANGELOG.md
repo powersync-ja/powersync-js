@@ -1,5 +1,17 @@
 # @powersync/node
 
+## 0.11.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
 ## 0.10.2
 
 ### Patch Changes
