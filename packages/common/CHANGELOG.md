@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.39.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
 ## 1.38.1
 
 ### Patch Changes
