@@ -36,7 +36,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       }
       options.logger?.debug(`Using CapacitorSQLiteAdapter for platform: ${platform}`);
       return new CapacitorSQLiteAdapter({
-        dbFilename: options.database.dbFilename
+        ...options.database
       });
     } else {
       options.logger?.debug(`Using default web adapter for web platform`);

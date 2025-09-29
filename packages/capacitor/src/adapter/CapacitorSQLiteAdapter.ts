@@ -16,6 +16,20 @@ import { messageForErrorCode } from '../plugin/PowerSyncPlugin';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory';
 
 /**
+ * Monitors the execution time of a query and logs it to the performance timeline.
+ */
+async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): Promise<QueryResult> {
+  const start = performance.now();
+  try {
+    const r = await executor();
+    performance.measure(`[SQL] ${sql}`, { start });
+    return r;
+  } catch (e: any) {
+    performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
+    throw e;
+  }
+}
+/**
  * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
  *
  * @experimental
@@ -92,7 +106,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
-    const execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
+    const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
       // This driver does not support returning results for execute methods
       if (query.toLowerCase().trim().startsWith('select')) {
         let result = await db.query(query, params);
@@ -119,7 +133,11 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
       }
     };
 
-    const executeQuery = async (query: string, params?: any[]): Promise<QueryResult> => {
+    const execute = this.options.debugMode
+      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _execute(sql, params))
+      : _execute;
+
+    const _executeQuery = async (query: string, params?: any[]): Promise<QueryResult> => {
       let result = await db.query(query, params);
 
       let arrayResult = result.values ?? [];
@@ -133,6 +151,10 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
         }
       };
     };
+
+    const executeQuery = this.options.debugMode
+      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _executeQuery(sql, params))
+      : _executeQuery;
 
     const getAll = async <T>(query: string, params?: any[]): Promise<T[]> => {
       const result = await executeQuery(query, params);
