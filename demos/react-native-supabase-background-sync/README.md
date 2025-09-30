@@ -22,7 +22,7 @@ pnpm build:packages
 Then switch into the demo's directory:
 
 ```bash
-cd demos/react-native-background-sync
+cd demos/react-native-supabase-background-sync
 ```
 
 Set up the Environment variables: Copy the `.env` file:
