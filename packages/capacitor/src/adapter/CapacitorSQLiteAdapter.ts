@@ -107,30 +107,33 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      // This driver does not support returning results for execute methods
-      if (query.toLowerCase().trim().startsWith('select')) {
-        let result = await db.query(query, params);
-        let arrayResult = result.values ?? [];
-        return {
-          rowsAffected: 0,
-          rows: {
-            _array: arrayResult,
-            length: arrayResult.length,
-            item: (idx: number) => arrayResult[idx]
-          }
-        };
-      } else {
-        let result = await db.executeSet([{ statement: query, values: params }], false);
-        return {
-          insertId: result.changes?.lastId,
-          rowsAffected: result.changes?.changes ?? 0,
-          rows: {
-            _array: [],
-            length: 0,
-            item: () => null
-          }
-        };
-      }
+      let result = await db.run(query, params, false, 'all');
+      /**
+       * This is a sample response for `SELECT powersync_control(?, ?)`
+       * ```json
+       * {
+       *   "changes": {
+       *     "changes": 0,
+       *     "values": [
+       *       {
+       *         "powersync_control(?, ?)": "[]"
+       *       }
+       *     ],
+       *     "lastId": 0
+       *   }
+       * }
+       * ```
+       */
+      const resultSet = result.changes?.values ?? [];
+      return {
+        insertId: result.changes?.lastId,
+        rowsAffected: result.changes?.changes ?? 0,
+        rows: {
+          _array: resultSet,
+          length: resultSet.length,
+          item: (idx) => resultSet[idx]
+        }
+      };
     };
 
     const execute = this.options.debugMode
@@ -175,7 +178,9 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     };
 
     const executeRaw = async (query: string, params?: any[]): Promise<any[][]> => {
-      throw new Error('Not supported');
+      // This is a workaround, we don't support multiple columns of the same name
+      const results = await execute(query, params);
+      return results.rows?._array.map((row) => Object.values(row)) ?? [];
     };
 
     return {
