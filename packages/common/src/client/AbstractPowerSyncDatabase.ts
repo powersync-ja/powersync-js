@@ -194,14 +194,19 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   /**
-   * The connector and connection options used to connect to the PowerSync service.
+   * The connector used to connect to the PowerSync service.
    * 
-   * @returns The connector and connection options used to connect to the PowerSync service or null if `connect()` has not been called.
+   * @returns The connector used to connect to the PowerSync service or null if `connect()` has not been called.
    */
   get connector() {
     return this.connectionManager.connector;
   }
 
+  /**
+   * The resolved connection options used to connect to the PowerSync service.
+   * 
+   * @returns The resolved connection options used to connect to the PowerSync service or null if `connect()` has not been called.
+   */
   get connectionOptions() {
     return this.connectionManager.connectionOptions;
   }
