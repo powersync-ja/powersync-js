@@ -1,5 +1,21 @@
 # @powersync/op-sqlite
 
+## 0.7.10
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
+## 0.7.9
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+
 ## 0.7.8
 
 ### Patch Changes

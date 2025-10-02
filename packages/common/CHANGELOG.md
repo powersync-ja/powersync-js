@@ -1,5 +1,18 @@
 # @powersync/common
 
+## 1.39.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+## 1.38.1
+
+### Patch Changes
+
+- a0ee132: Fixed potential race conditions in WatchedQueries when updateSettings is called frequently.
+- ba72a58: Update TriggerManager trackTableDiff API example
+
 ## 1.38.0
 
 ### Minor Changes

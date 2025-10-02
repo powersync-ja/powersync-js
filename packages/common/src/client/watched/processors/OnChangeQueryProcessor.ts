@@ -96,6 +96,10 @@ export class OnChangeQueryProcessor<Data> extends AbstractQueryProcessor<Data, W
               });
             }
 
+            if (this.state.error) {
+              partialStateUpdate.error = null;
+            }
+
             if (Object.keys(partialStateUpdate).length > 0) {
               await this.updateState(partialStateUpdate);
             }

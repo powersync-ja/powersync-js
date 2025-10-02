@@ -2,6 +2,8 @@ import {
   AbstractPowerSyncDatabase,
   createBaseLogger,
   createLogger,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  DEFAULT_STREAMING_SYNC_OPTIONS,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
@@ -131,8 +133,10 @@ describe('Multiple Instances', { sequential: true }, () => {
         await connector1.uploadData(db);
       },
       identifier,
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
       retryDelayMs: 90_000, // Large delay to allow for testing
-      db: db.database as WebDBAdapter
+      db: db.database as WebDBAdapter,
+      subscriptions: []
     };
 
     const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
@@ -146,7 +150,10 @@ describe('Multiple Instances', { sequential: true }, () => {
         await connector2.uploadData(db);
       },
       identifier,
-      db: db.database as WebDBAdapter
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      retryDelayMs: 90_000, // Large delay to allow for testing
+      db: db.database as WebDBAdapter,
+      subscriptions: []
     };
 
     const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
@@ -195,6 +202,8 @@ describe('Multiple Instances', { sequential: true }, () => {
       identifier,
       // The large delay here allows us to test between connection retries
       retryDelayMs: 90_000,
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      subscriptions: [],
       flags: {
         broadcastLogs: true
       }

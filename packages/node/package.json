@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -56,7 +56,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.38.0"
+    "@powersync/common": "workspace:^1.39.0"
   },
   "dependencies": {
     "@powersync/better-sqlite3": "^0.2.0",

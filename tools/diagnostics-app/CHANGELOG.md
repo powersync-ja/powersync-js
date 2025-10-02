@@ -1,5 +1,32 @@
 # diagnostics-app
 
+## 0.9.12
+
+### Patch Changes
+
+- 0a6af1c: Added support for a "token" query parameter, when supplied to the root URL it will be used as the API token for the diagnostics tool instead of needing to be provided manually to the login form.
+
+## 0.9.11
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+- Updated dependencies [d8236aa]
+- Updated dependencies [c9c1e24]
+- Updated dependencies [7a5aaf5]
+- Updated dependencies [c78071f]
+  - @powersync/web@1.27.0
+  - @powersync/react@1.8.0
+
+## 0.9.10
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+  - @powersync/react@1.7.4
+  - @powersync/web@1.26.2
+
 ## 0.9.9
 
 ### Patch Changes

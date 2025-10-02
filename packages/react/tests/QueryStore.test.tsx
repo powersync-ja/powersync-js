@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase, SQLWatchOptions } from '@powersync/common';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { generateQueryKey, getQueryStore, QueryStore } from '../src/QueryStore';
-import { openPowerSync } from './useQuery.test';
+import { openPowerSync } from './utils';
 
 describe('QueryStore', () => {
   describe('generateQueryKey', () => {

@@ -1,5 +1,30 @@
 # @powersync/react-native
 
+## 1.25.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+- Updated dependencies [d8236aa]
+- Updated dependencies [7a5aaf5]
+  - @powersync/common@1.39.0
+  - @powersync/react@1.8.0
+
+## 1.24.3
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+  - @powersync/react@1.7.4
+
 ## 1.24.2
 
 ### Patch Changes
