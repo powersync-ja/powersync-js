@@ -78,3 +78,30 @@ function checkJWT(token: string) {
     throw new Error(`Token must be a JWT: Not all parts are base64 encoded`);
   }
 }
+
+export function getTokenEndpoint(token: string): string | null {
+  try {
+    const [head, body, signature] = token.split('.');
+    const payload = JSON.parse(atob(body));
+    const aud = payload.aud as string | string[] | undefined;
+    const audiences = Array.isArray(aud) ? aud : [aud];
+
+    // Prioritize public powersync URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:.*.journeyapps.com/)) {
+        return aud;
+      }
+    }
+
+    // Fallback to any URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:/)) {
+        return aud;
+      }
+    }
+
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
