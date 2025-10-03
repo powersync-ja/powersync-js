@@ -1,5 +1,14 @@
 # diagnostics-app
 
+## 0.9.13
+
+### Patch Changes
+
+- 0c94c40: Rename Diagnostics App to Sync Diagnostics Client
+- Updated dependencies [3008dbc]
+  - @powersync/react@1.8.1
+  - @powersync/web@1.27.1
+
 ## 0.9.12
 
 ### Patch Changes

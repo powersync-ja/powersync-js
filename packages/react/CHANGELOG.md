@@ -1,5 +1,13 @@
 # @powersync/react
 
+## 1.8.1
+
+### Patch Changes
+
+- 3008dbc: Allow using `db.syncStream()` instances in `useQuery` hooks.
+- Updated dependencies [c2bc2c1]
+  - @powersync/common@1.40.0
+
 ## 1.8.0
 
 ### Minor Changes
