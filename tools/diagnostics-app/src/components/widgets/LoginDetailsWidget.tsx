@@ -34,7 +34,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
   return (
     <S.MainContainer>
       <S.LoginContainer elevation={1}>
-        <S.LoginHeader variant="h4">Diagnostics Config</S.LoginHeader>
+        <S.LoginHeader variant="h4">Sync Diagnostics Client</S.LoginHeader>
         <S.LogoBox>
           <S.Logo alt="PowerSync Logo" width={400} height={100} src="/powersync-logo.svg" />
         </S.LogoBox>
