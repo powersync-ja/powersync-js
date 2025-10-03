@@ -1,9 +1,9 @@
-import { threadId } from 'node:worker_threads';
 import type { DatabaseSync } from 'node:sqlite';
+import { threadId } from 'node:worker_threads';
 
+import { dynamicImport } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { PowerSyncWorkerOptions } from './SqliteWorker.js';
-import { dynamicImport } from '../utils/modules.js';
 
 class BlockingNodeDatabase implements AsyncDatabase {
   private readonly db: DatabaseSync;
@@ -57,7 +57,7 @@ export async function openDatabase(worker: PowerSyncWorkerOptions, options: Asyn
   const { DatabaseSync } = await dynamicImport('node:sqlite');
 
   const baseDB = new DatabaseSync(options.path, { allowExtension: true });
-  baseDB.loadExtension(worker.extensionPath());
+  baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
 
   return new BlockingNodeDatabase(baseDB, options.isWriter);
 }
