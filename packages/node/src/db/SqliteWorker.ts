@@ -1,13 +1,12 @@
-import * as path from 'node:path';
 import * as Comlink from 'comlink';
-import { parentPort } from 'node:worker_threads';
 import OS from 'node:os';
+import * as path from 'node:path';
 import url from 'node:url';
+import { parentPort } from 'node:worker_threads';
+import { dynamicImport, isBundledToCommonJs } from '../utils/modules.js';
+import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
 import { openDatabase as openBetterSqliteDatabase } from './BetterSqliteWorker.js';
 import { openDatabase as openNodeDatabase } from './NodeSqliteWorker.js';
-import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
-import { isBundledToCommonJs } from '../utils/modules.js';
-import { dynamicImport } from '../utils/modules.js';
 
 export interface PowerSyncWorkerOptions {
   /**
@@ -29,13 +28,31 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
       const isCommonJsModule = isBundledToCommonJs;
 
       const platform = OS.platform();
+      const arch = OS.arch();
       let extensionPath: string;
+
       if (platform === 'win32') {
-        extensionPath = 'powersync.dll';
+        if (arch === 'x64') {
+          extensionPath = 'powersync.dll';
+        } else {
+          throw 'Windows platform only supports x64 architecture.';
+        }
       } else if (platform === 'linux') {
-        extensionPath = 'libpowersync.so';
+        if (arch === 'x64') {
+          extensionPath = 'libpowersync.so';
+        } else if (arch === 'arm64') {
+          extensionPath = 'libpowersync-aarch64.so';
+        } else {
+          throw 'Linux platform only supports x64 and arm64 architectures.';
+        }
       } else if (platform === 'darwin') {
-        extensionPath = 'libpowersync.dylib';
+        if (arch === 'x64') {
+          extensionPath = 'libpowersync.dylib';
+        } else if (arch === 'arm64') {
+          extensionPath = 'libpowersync-aarch64.dylib';
+        } else {
+          throw 'macOS platform only supports x64 and arm64 architectures.';
+        }
       } else {
         throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
       }

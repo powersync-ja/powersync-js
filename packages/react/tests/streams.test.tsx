@@ -52,6 +52,15 @@ describe('stream hooks', () => {
         expect(currentStreams()).toStrictEqual([]);
       });
 
+      it('useQuery can take syncStream instance', async () => {
+        const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [db.syncStream('a')] }), {
+          wrapper: testWrapper
+        });
+
+        // Not resolving the subscription.
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+      });
+
       it('useQuery waiting on stream', async () => {
         const { result } = renderHook(
           () => useQuery('SELECT 1', [], { streams: [{ name: 'a', waitForStream: true }] }),

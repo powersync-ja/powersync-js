@@ -1,11 +1,8 @@
-// TODO: Make this a pre-publish hook and just bundle everything
 import { createHash } from 'node:crypto';
-import * as OS from 'node:os';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Readable } from 'node:stream';
 import { finished } from 'node:stream/promises';
-import { exit } from 'node:process';
 
 // When changing this version, run node download_core.js update_hashes
 const version = '0.4.6';
@@ -17,23 +14,14 @@ const versionHashes = {
   'libpowersync_aarch64.dylib': 'bfb4f1ec207b298aff560f1825f8123d24316edaa27b6df3a17dd49466576b92'
 };
 
-const platform = OS.platform();
-let destination;
-let asset;
-
-if (platform === 'win32') {
-  asset = 'powersync_x64.dll';
-  destination = 'powersync.dll';
-} else if (platform === 'linux') {
-  asset = OS.arch() === 'x64' ? 'libpowersync_x64.so' : 'libpowersync_aarch64.so';
-  destination = 'libpowersync.so';
-} else if (platform === 'darwin') {
-  asset = OS.arch() === 'x64' ? 'libpowersync_x64.dylib' : 'libpowersync_aarch64.dylib';
-  destination = 'libpowersync.dylib';
-}
-
-const expectedHash = versionHashes[asset];
-const destinationPath = path.resolve('lib', destination);
+// Map of all assets to their destinations
+const assetMap = {
+  'powersync_x64.dll': 'powersync.dll',
+  'libpowersync_x64.so': 'libpowersync.so',
+  'libpowersync_aarch64.so': 'libpowersync-aarch64.so',
+  'libpowersync_x64.dylib': 'libpowersync.dylib',
+  'libpowersync_aarch64.dylib': 'libpowersync-aarch64.dylib'
+};
 
 const hashStream = async (input) => {
   for await (const chunk of input.pipe(createHash('sha256')).setEncoding('hex')) {
@@ -41,9 +29,9 @@ const hashStream = async (input) => {
   }
 };
 
-const hashLocal = async () => {
+const hashLocal = async (filePath) => {
   try {
-    const handle = await fs.open(destinationPath, 'r');
+    const handle = await fs.open(filePath, 'r');
     const input = handle.createReadStream();
 
     const result = await hashStream(input);
@@ -54,31 +42,92 @@ const hashLocal = async () => {
   }
 };
 
-const download = async () => {
-  if ((await hashLocal()) == expectedHash) {
-    console.debug('Local copy is up-to-date, skipping download');
-    exit(0);
+const downloadAsset = async (asset, destination) => {
+  const destinationPath = path.resolve('lib', destination);
+  const expectedHash = versionHashes[asset];
+
+  // Check if file exists and has correct hash
+  const currentHash = await hashLocal(destinationPath);
+  if (currentHash === expectedHash) {
+    console.debug(`${destination} is up-to-date, skipping download`);
+    return;
   }
 
   const url = `https://github.com/powersync-ja/powersync-sqlite-core/releases/download/v${version}/${asset}`;
+  console.log(`Downloading ${url}`);
   const response = await fetch(url);
   if (response.status != 200) {
     throw `Could not download ${url}`;
-  }
-
-  try {
-    await fs.access('lib');
-  } catch {
-    await fs.mkdir('lib');
   }
 
   const file = await fs.open(destinationPath, 'w');
   await finished(Readable.fromWeb(response.body).pipe(file.createWriteStream()));
   await file.close();
 
-  const hashAfterDownloading = await hashLocal();
+  const hashAfterDownloading = await hashLocal(destinationPath);
   if (hashAfterDownloading != expectedHash) {
-    throw `Unexpected hash after downloading (got ${hashAfterDownloading}, expected ${expectedHash})`;
+    throw `Unexpected hash after downloading ${asset} (got ${hashAfterDownloading}, expected ${expectedHash})`;
+  }
+  console.log(`Successfully downloaded ${destination}`);
+};
+
+const checkAsset = async (asset, destination) => {
+  const destinationPath = path.resolve('lib', destination);
+  const expectedHash = versionHashes[asset];
+  const currentHash = await hashLocal(destinationPath);
+
+  return {
+    asset,
+    destination,
+    destinationPath,
+    expectedHash,
+    currentHash,
+    exists: currentHash !== null,
+    isValid: currentHash === expectedHash
+  };
+};
+
+const download = async () => {
+  try {
+    await fs.access('lib');
+  } catch {
+    await fs.mkdir('lib');
+  }
+
+  // First check all assets
+  console.log('Checking existing files...');
+  const checks = await Promise.all(
+    Object.entries(assetMap).map(([asset, destination]) => checkAsset(asset, destination))
+  );
+
+  const toDownload = checks.filter((check) => !check.isValid);
+  const upToDate = checks.filter((check) => check.isValid);
+
+  // Print summary
+  if (upToDate.length > 0) {
+    console.log('\nUp-to-date files:');
+    for (const check of upToDate) {
+      console.log(`  ✓ ${check.destination}`);
+    }
+  }
+
+  if (toDownload.length > 0) {
+    console.log('\nFiles to download:');
+    for (const check of toDownload) {
+      if (!check.exists) {
+        console.log(`  • ${check.destination} (missing)`);
+      } else {
+        console.log(`  • ${check.destination} (hash mismatch)`);
+      }
+    }
+
+    console.log('\nStarting downloads...');
+    // Download required assets in parallel
+    await Promise.all(toDownload.map((check) => downloadAsset(check.asset, check.destination)));
+
+    console.log('\nAll downloads completed successfully!');
+  } else {
+    console.log('\nAll files are up-to-date, nothing to download.');
   }
 };
 

@@ -24,7 +24,7 @@ export interface UseSyncStreamOptions extends SyncStreamSubscribeOptions {
    * Parameters for the stream subscription. A single stream can have multiple subscriptions with different parameter
    * sets.
    */
-  parameters?: Record<string, any>;
+  parameters?: Record<string, any> | null;
 }
 
 /**

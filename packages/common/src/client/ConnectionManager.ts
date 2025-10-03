@@ -118,6 +118,14 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.syncDisposer = null;
   }
 
+  get connector() {
+    return this.pendingConnectionOptions?.connector ?? null;
+  }
+
+  get connectionOptions() {
+    return this.pendingConnectionOptions?.options ?? null;
+  }
+
   get logger() {
     return this.options.logger;
   }

@@ -1,5 +1,11 @@
 # diagnostics-app
 
+## 0.9.12
+
+### Patch Changes
+
+- 0a6af1c: Added support for a "token" query parameter, when supplied to the root URL it will be used as the API token for the diagnostics tool instead of needing to be provided manually to the login form.
+
 ## 0.9.11
 
 ### Patch Changes
