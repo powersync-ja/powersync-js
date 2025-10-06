@@ -1,0 +1,113 @@
+import { EncodingType, LocalStorageAdapter } from 'src/LocalStorageAdapter.js';
+
+export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
+  private dbPromise: Promise<IDBDatabase>;
+
+  async initialize(): Promise<void> {
+    this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('PowerSyncFiles', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('files');
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private async getStore(mode: IDBTransactionMode = 'readonly'): Promise<IDBObjectStore> {
+    const db = await this.dbPromise;
+    const tx = db.transaction('files', mode);
+    return tx.objectStore('files');
+  }
+
+  async saveFile(filePath: string, data: string): Promise<number> {
+    const store = await this.getStore('readwrite');
+    return await new Promise<number>((resolve, reject) => {
+      const req = store.put(data, filePath);
+      req.onsuccess = () => resolve(data.length);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async downloadFile(filePath: string): Promise<Blob> {
+    const store = await this.getStore();
+    return new Promise<Blob>((resolve, reject) => {
+      const req = store.get(filePath);
+      req.onsuccess = () => {
+        if (req.result) {
+          resolve(new Blob([req.result]));
+        } else {
+          reject(new Error('File not found'));
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async readFile(fileUri: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
+    const store = await this.getStore();
+    return new Promise<ArrayBuffer>((resolve, reject) => {
+      const req = store.get(fileUri);
+      req.onsuccess = async () => {
+        if (!req.result) {
+          reject(new Error('File not found'));
+          return;
+        }
+
+        if (options?.encoding === EncodingType.Base64) {
+          const base64String = req.result.replace(/^data:\w+;base64,/, '');
+          const binaryString = atob(base64String);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          resolve(bytes.buffer);
+        }
+
+        if (options?.encoding === EncodingType.UTF8) {
+          const encoder = new TextEncoder();
+          const arrayBuffer = encoder.encode(req.result).buffer;
+          resolve(arrayBuffer);
+        }
+
+        reject(new Error('Unsupported encoding'));
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async deleteFile(uri: string, options?: { filename?: string }): Promise<void> {
+    const store = await this.getStore('readwrite');
+    await new Promise<void>((resolve, reject) => {
+      const req = store.delete(uri);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async fileExists(fileUri: string): Promise<boolean> {
+    const store = await this.getStore();
+    return new Promise<boolean>((resolve, reject) => {
+      const req = store.get(fileUri);
+      req.onsuccess = () => resolve(!!req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  getUserStorageDirectory(): string {
+    // Not applicable for web, but return a logical root
+    return 'indexeddb://PowerSyncFiles/files';
+  }
+
+  clear(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      const db = await this.dbPromise;
+      const tx = db.transaction('files', 'readwrite');
+      const store = tx.objectStore('files');
+      const req = store.clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+}

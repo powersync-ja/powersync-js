@@ -1,46 +1,64 @@
-import { Column, ColumnType, Table, TableOptions } from '@powersync/common';
+import { column, Table, TableV2Options } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
 export interface AttachmentRecord {
   id: string;
   filename: string;
-  local_uri?: string;
+  localUri?: string;
   size?: number;
-  media_type?: string;
+  mediaType?: string;
   timestamp?: number;
+  metaData?: string;
+  hasSynced?: boolean;
   state: AttachmentState;
+}
+
+// map from db to record
+export function attachmentFromSql(row: any): AttachmentRecord {
+  return {
+    id: row.id,
+    filename: row.filename,
+    localUri: row.local_uri,
+    size: row.size,
+    mediaType: row.media_type,
+    timestamp: row.timestamp,
+    metaData: row.meta_data,
+    hasSynced: row.has_synced === 1,
+    state: row.state
+  };
 }
 
 export enum AttachmentState {
   QUEUED_SYNC = 0, // Check if the attachment needs to be uploaded or downloaded
   QUEUED_UPLOAD = 1, // Attachment to be uploaded
   QUEUED_DOWNLOAD = 2, // Attachment to be downloaded
-  SYNCED = 3, // Attachment has been synced
-  ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
+  QUEUED_DELETE = 3, // Attachment to be deleted
+  SYNCED = 4, // Attachment has been synced
+  ARCHIVED = 5 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
-export interface AttachmentTableOptions extends Omit<TableOptions, 'name' | 'columns'> {
-  name?: string;
-  additionalColumns?: Column[];
-}
+export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
 
 export class AttachmentTable extends Table {
   constructor(options?: AttachmentTableOptions) {
-    super({
-      ...options,
-      name: options?.name ?? ATTACHMENT_TABLE,
-      localOnly: true,
-      insertOnly: false,
-      columns: [
-        new Column({ name: 'filename', type: ColumnType.TEXT }),
-        new Column({ name: 'local_uri', type: ColumnType.TEXT }),
-        new Column({ name: 'timestamp', type: ColumnType.INTEGER }),
-        new Column({ name: 'size', type: ColumnType.INTEGER }),
-        new Column({ name: 'media_type', type: ColumnType.TEXT }),
-        new Column({ name: 'state', type: ColumnType.INTEGER }), // Corresponds to AttachmentState
-        ...(options?.additionalColumns ?? [])
-      ]
-    });
+    super(
+      {
+        filename: column.text,
+        local_uri: column.text,
+        timestamp: column.integer,
+        size: column.integer,
+        media_type: column.text,
+        state: column.integer, // Corresponds to AttachmentState
+        has_synced: column.integer,
+        meta_data: column.text
+      },
+      {
+        ...options,
+        viewName: options?.viewName ?? ATTACHMENT_TABLE,
+        localOnly: true,
+        insertOnly: false
+      }
+    );
   }
 }
