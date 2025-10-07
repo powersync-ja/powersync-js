@@ -1,4 +1,4 @@
-import { EncodingType, LocalStorageAdapter } from 'src/LocalStorageAdapter.js';
+import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
   private dbPromise: Promise<IDBDatabase>;
@@ -12,6 +12,21 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+  }
+
+  clear(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      const db = await this.dbPromise;
+      const tx = db.transaction('files', 'readwrite');
+      const store = tx.objectStore('files');
+      const req = store.clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  getLocalUri(filename: string): string {
+    return `indexeddb://PowerSyncFiles/files/${filename}`;
   }
 
   private async getStore(mode: IDBTransactionMode = 'readonly'): Promise<IDBObjectStore> {
@@ -54,16 +69,8 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
           return;
         }
 
-        if (options?.encoding === EncodingType.Base64) {
-          const base64String = req.result.replace(/^data:\w+;base64,/, '');
-          const binaryString = atob(base64String);
-          const len = binaryString.length;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          resolve(bytes.buffer);
-        }
+        // if (options?.encoding === EncodingType.Base64) {
+        // }
 
         if (options?.encoding === EncodingType.UTF8) {
           const encoder = new TextEncoder();
@@ -71,7 +78,17 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
           resolve(arrayBuffer);
         }
 
-        reject(new Error('Unsupported encoding'));
+        // Default base64 encoding
+        const base64String = req.result.replace(/^data:\w+;base64,/, '');
+        const binaryString = atob(base64String);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        resolve(bytes.buffer);
+
+        // reject(new Error('Unsupported encoding'));
       };
       req.onerror = () => reject(req.error);
     });
@@ -95,19 +112,11 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
     });
   }
 
-  getUserStorageDirectory(): string {
-    // Not applicable for web, but return a logical root
-    return 'indexeddb://PowerSyncFiles/files';
+  async makeDir(path: string): Promise<void> {
+    // No-op for IndexedDB
   }
 
-  clear(): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      const db = await this.dbPromise;
-      const tx = db.transaction('files', 'readwrite');
-      const store = tx.objectStore('files');
-      const req = store.clear();
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
+  async rmDir(path: string): Promise<void> {
+    // No-op for IndexedDB
   }
 }

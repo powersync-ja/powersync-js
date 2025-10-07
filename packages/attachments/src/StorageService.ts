@@ -92,9 +92,8 @@ export class StorageService {
         reader.onerror = reject;
         reader.readAsDataURL(fileBlob);
       });
-      const userDir = this.localStorage.getUserStorageDirectory();
-      const localUri = `${userDir}${attachment.id}`;
 
+      const localUri = this.localStorage.getLocalUri(attachment.filename);
       await this.localStorage.saveFile(localUri, base64Data);
 
       return {

@@ -158,10 +158,6 @@ export class AttachmentQueue {
     this.watchActiveAbortController?.abort();
   }
 
-  getLocalUri(filePath: string): string {
-    return `${this.localStorage.getUserStorageDirectory()}/${filePath}`;
-  }
-
   async saveFile({
     data,
     fileExtension,
@@ -177,7 +173,7 @@ export class AttachmentQueue {
   }): Promise<AttachmentRecord> {
     const resolvedId = id ?? (await this.context.db.get<{ id: string }>('SELECT uuid() as id')).id;
     const filename = `${resolvedId}.${fileExtension}`;
-    const localUri = this.getLocalUri(filename);
+    const localUri = this.localStorage.getLocalUri(filename);
     const size = await this.localStorage.saveFile(localUri, data);
 
     const attachment: AttachmentRecord = {
@@ -214,7 +210,7 @@ export class AttachmentQueue {
         continue;
       }
 
-      const newLocalUri = this.getLocalUri(attachment.filename);
+      const newLocalUri = this.localStorage.getLocalUri(attachment.filename);
       const newExists = await this.localStorage.fileExists(newLocalUri);
       if (newExists) {
         // The file exists but the localUri is broken, lets update it.

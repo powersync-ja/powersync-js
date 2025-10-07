@@ -8,7 +8,7 @@ export interface LocalStorageAdapter {
    * Saves buffer data to a local file.
    * @param filePath Path where the file will be stored
    * @param data Data string to store
-   * @returns number of bytes written
+   * @returns Number of bytes written
    */
   saveFile(filePath: string, data: ArrayBuffer | Blob | string): Promise<number>;
 
@@ -28,8 +28,23 @@ export interface LocalStorageAdapter {
   /**
    * Checks if a file exists at the given path.
    * @param filePath Path where the file is stored
+   * @returns True if the file exists, false otherwise
    */
   fileExists(filePath: string): Promise<boolean>;
+
+  /**
+   * Creates a directory at the specified path.
+   * @param path The full path to the directory
+   * @throws PowerSyncAttachmentError if creation fails
+   */
+  makeDir(path: string): Promise<void>;
+
+  /**
+   * Removes a directory at the specified path.
+   * @param path The full path to the directory
+   * @throws PowerSyncAttachmentError if removal fails
+   */
+  rmDir(path: string): Promise<void>;
 
   /**
    * Initializes the storage adapter (e.g., creating necessary directories).
@@ -42,8 +57,9 @@ export interface LocalStorageAdapter {
   clear(): Promise<void>;
 
   /**
-   * Get the base directory used by the storage adapter.
-   * @returns The base directory path as a string.
+   * Returns the file path of the provided filename in the user storage directory.
+   * @param filename The filename to get the path for
+   * @returns The full file path
    */
-  getUserStorageDirectory(): string;
+  getLocalUri(filename: string): string;
 }

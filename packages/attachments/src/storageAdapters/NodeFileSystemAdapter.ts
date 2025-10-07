@@ -1,8 +1,24 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { EncodingType, LocalStorageAdapter } from 'src/LocalStorageAdapter.js';
+import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 export class NodeFileSystemAdapter implements LocalStorageAdapter {
+  async initialize(): Promise<void> {
+    // const dir = this.getUserStorageDirectory();
+    const dir = path.resolve('./user_data');
+    await fs.mkdir(dir, { recursive: true });
+  }
+
+  async clear(): Promise<void> {
+    // const dir = this.getUserStorageDirectory();
+    const dir = path.resolve('./user_data');
+    await fs.rmdir(dir, { recursive: true });
+  }
+
+  getLocalUri(filename: string): string {
+    return path.join(path.resolve('./user_data'), filename);
+  }
+
   async uploadFile(filePath: string, data: ArrayBuffer, options?: { encoding: EncodingType }): Promise<void> {
     const buffer = Buffer.from(data);
     await fs.writeFile(filePath, buffer, {
@@ -57,15 +73,7 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
     await fs.mkdir(path, { recursive: true });
   }
 
-  async rmDir(filePath: string): Promise<void> {
-    await fs.rmdir(filePath, { recursive: true });
-  }
-
-  async copyFile(sourcePath: string, targetPath: string): Promise<void> {
-    await fs.copyFile(sourcePath, targetPath);
-  }
-
-  getUserStorageDirectory(): string {
-    return path.resolve('./user_data') + path.sep;
+  async rmDir(path: string): Promise<void> {
+    await fs.rmdir(path, { recursive: true });
   }
 }
