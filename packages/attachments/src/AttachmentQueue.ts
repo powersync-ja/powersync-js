@@ -2,47 +2,58 @@ import { AbstractPowerSyncDatabase, ILogger } from '@powersync/common';
 import { AttachmentContext } from './AttachmentContext.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
-import { AttachmentRecord, AttachmentState } from './Schema.js';
+import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { StorageService } from './StorageService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 
 export class AttachmentQueue {
   periodicSyncTimer?: ReturnType<typeof setInterval>;
-  syncInterval: number = 30 * 1000;
   context: AttachmentContext;
   storageService: StorageService;
   localStorage: LocalStorageAdapter;
   remoteStorage: RemoteStorageAdapter;
+  attachmentsDirectory?: string;
+  tableName?: string;
+  logger?: ILogger;
+  syncInterval: number = 30 * 1000;
+  syncThrottleDuration: number;
   downloadAttachments: boolean = true;
   watchActiveAbortController?: AbortController;
+  archivedCacheLimit: number;
 
   constructor({
     db,
     localStorage,
     remoteStorage,
     watchAttachments,
-    tableName,
     logger,
-    options
+    tableName = ATTACHMENT_TABLE,
+    syncInterval = 30 * 1000,
+    syncThrottleDuration = 1000,
+    downloadAttachments = true,
+    archivedCacheLimit = 100
   }: {
     db: AbstractPowerSyncDatabase;
     remoteStorage: RemoteStorageAdapter;
     localStorage: LocalStorageAdapter;
-    watchAttachments?: (onUpdate: (attachement: WatchedAttachmentItem[]) => void) => void;
+    watchAttachments: (onUpdate: (attachement: WatchedAttachmentItem[]) => void) => void;
     tableName?: string;
     logger?: ILogger;
-    options?: { syncInterval?: number; downloadAttachments?: boolean };
+    syncInterval?: number;
+    syncThrottleDuration?: number;
+    downloadAttachments?: boolean;
+    archivedCacheLimit?: number;
   }) {
     this.context = new AttachmentContext(db, tableName, logger ?? db.logger);
+    this.remoteStorage = remoteStorage;
+    this.localStorage = localStorage;
+    this.watchAttachments = watchAttachments;
+    this.tableName = tableName;
     this.storageService = new StorageService(this.context, localStorage, remoteStorage, logger ?? db.logger);
-    if (options?.syncInterval != null) {
-      this.syncInterval = options.syncInterval;
-    }
-    if (options?.downloadAttachments != null) {
-      this.downloadAttachments = options.downloadAttachments;
-    }
-
-    this.watchAttachments = watchAttachments ?? this.watchAttachments;
+    this.syncInterval = syncInterval;
+    this.syncThrottleDuration = syncThrottleDuration;
+    this.downloadAttachments = downloadAttachments;
+    this.archivedCacheLimit = archivedCacheLimit;
   }
 
   watchAttachments(onUpdate: (attachement: WatchedAttachmentItem[]) => void): void {
