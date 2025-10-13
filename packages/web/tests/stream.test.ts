@@ -3,12 +3,17 @@ import {
   createBaseLogger,
   DataStream,
   PowerSyncConnectionOptions,
+  Schema,
+  SyncClientImplementation,
+  SyncStreamConnectionMethod,
   WASQLiteOpenFactory,
-  WASQLiteVFS
+  WASQLiteVFS,
+  WebPowerSyncOpenFactoryOptions
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
+import { v4 } from 'uuid';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -21,10 +26,11 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests(() =>
+    describeStreamingTests((options) =>
       generateConnectedDatabase({
         powerSyncOptions: {
-          logger
+          logger,
+          ...options
         }
       })
     )
@@ -159,9 +165,109 @@ describe('Streaming', { sequential: true }, () => {
       await expectUserRows(2);
     });
   });
+
+  // There are more tests for raw tables in the node package and in the core extension itself. We just want to make
+  // sure the schema options are properly forwarded.
+  it('raw tables smoke test', async () => {
+    const customSchema = new Schema({});
+    customSchema.withRawTables({
+      lists: {
+        put: {
+          sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
+          params: ['Id', { Column: 'name' }]
+        },
+        delete: {
+          sql: 'DELETE FROM lists WHERE id = ?',
+          params: ['Id']
+        }
+      }
+    });
+
+    function bucket(name: string, count: number): BucketChecksum {
+      return {
+        bucket: name,
+        count,
+        checksum: 0,
+        priority: 3
+      };
+    }
+
+    const { powersync, waitForStream, remote } = await generateConnectedDatabase({
+      powerSyncOptions: { schema: customSchema, flags: { enableMultiTabs: true } }
+    });
+    await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
+    onTestFinished(async () => {
+      await powersync.execute('DROP TABLE lists');
+    });
+
+    const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
+
+    powersync.connect(new TestConnector(), {
+      connectionMethod: SyncStreamConnectionMethod.HTTP,
+      clientImplementation: SyncClientImplementation.RUST
+    });
+    await waitForStream();
+
+    remote.enqueueLine({
+      checkpoint: {
+        last_op_id: '1',
+        buckets: [bucket('a', 1)]
+      }
+    });
+    remote.enqueueLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '1',
+            op: 'PUT',
+            object_id: 'my_list',
+            object_type: 'lists',
+            data: '{"name": "custom list"}'
+          }
+        ]
+      }
+    });
+    remote.enqueueLine({ checkpoint_complete: { last_op_id: '1' } });
+    await powersync.waitForFirstSync();
+
+    console.log('has first sync, should update list');
+    expect((await query.next()).value.rows._array).toStrictEqual([{ id: 'my_list', name: 'custom list' }]);
+
+    remote.enqueueLine({
+      checkpoint: {
+        last_op_id: '2',
+        buckets: [bucket('a', 2)]
+      }
+    });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+    remote.enqueueLine({
+      data: {
+        bucket: 'a',
+        data: [
+          {
+            checksum: 0,
+            op_id: '2',
+            op: 'REMOVE',
+            object_id: 'my_list',
+            object_type: 'lists'
+          }
+        ]
+      }
+    });
+    remote.enqueueLine({ checkpoint_complete: { last_op_id: '2' } });
+    await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+
+    console.log('has second sync, should update list');
+    expect((await query.next()).value.rows._array).toStrictEqual([]);
+  });
 });
 
-function describeStreamingTests(createConnectedDatabase: () => Promise<ConnectedDatabaseUtils>) {
+function describeStreamingTests(
+  createConnectedDatabase: (options?: Partial<WebPowerSyncOpenFactoryOptions>) => Promise<ConnectedDatabaseUtils>
+) {
   return () => {
     it('PowerSync reconnect on closed stream', async () => {
       const { powersync, waitForStream, remote } = await createConnectedDatabase();
@@ -179,6 +285,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, remote } = await createConnectedDatabase();
+      const connectionOptions: PowerSyncConnectionOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
@@ -187,11 +294,11 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       const generatedStreams: DataStream<any>[] = [];
 
       // This method is used for all mocked connections
-      const basePostStream = remote.postStream;
-      const postSpy = vi.spyOn(remote, 'postStream').mockImplementation(async (...options) => {
+      const basePostStream = remote.postStreamRaw;
+      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...args) => {
         // Simulate a connection delay
         await new Promise((r) => setTimeout(r, 100));
-        const stream = await basePostStream.call(remote, ...options);
+        const stream = await basePostStream.call(remote, ...args);
         generatedStreams.push(stream);
         return stream;
       });
@@ -199,7 +306,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Connect many times. The calls here are not awaited and have no async calls in between.
       const connectionAttempts = 10;
       for (let i = 1; i <= connectionAttempts; i++) {
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(
@@ -217,7 +324,7 @@ function describeStreamingTests(createConnectedDatabase: () => Promise<Connected
       // Now with random awaited delays between unawaited calls
       for (let i = connectionAttempts; i >= 0; i--) {
         await new Promise((r) => setTimeout(r, Math.random() * 10));
-        powersync.connect(new TestConnector(), { params: { count: i } });
+        powersync.connect(new TestConnector(), { params: { count: i }, ...connectionOptions });
       }
 
       await vi.waitFor(

@@ -1,5 +1,125 @@
 # @powersync/tanstack-react-query
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [3008dbc]
+- Updated dependencies [c2bc2c1]
+  - @powersync/react@1.8.1
+  - @powersync/common@1.40.0
+
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [eff8cbf]
+- Updated dependencies [d8236aa]
+- Updated dependencies [7a5aaf5]
+  - @powersync/common@1.39.0
+  - @powersync/react@1.8.0
+
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+  - @powersync/react@1.7.4
+
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [b1aca34]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+  - @powersync/react@1.7.3
+
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [c191989]
+  - @powersync/react@1.7.2
+
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [8decd49]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+  - @powersync/react@1.7.1
+
+## 0.1.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM nature.
+
+### Patch Changes
+
+- Updated dependencies [dce523a]
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7ad251a]
+  - @powersync/react@1.7.0
+  - @powersync/common@1.36.0
+
+## 0.0.31
+
+### Patch Changes
+
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+- Updated dependencies [c7d2b53]
+  - @powersync/common@1.35.0
+  - @powersync/react@1.6.0
+
+## 0.0.30
+
+### Patch Changes
+
+- Updated dependencies [ab33799]
+- Updated dependencies [810c6ad]
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.34.0
+  - @powersync/react@1.5.3
+
+## 0.0.29
+
+### Patch Changes
+
+- Updated dependencies [9b2bde3]
+  - @powersync/common@1.33.2
+  - @powersync/react@1.5.3
+
+## 0.0.28
+
+### Patch Changes
+
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+  - @powersync/react@1.5.3
+
 ## 0.0.27
 
 ### Patch Changes

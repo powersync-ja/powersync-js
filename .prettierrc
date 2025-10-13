@@ -5,5 +5,6 @@
   "jsxBracketSameLine": true,
   "useTabs": false,
   "printWidth": 120,
-  "trailingComma": "none"
+  "trailingComma": "none",
+  "plugins": ["prettier-plugin-embed", "prettier-plugin-sql"]
 }

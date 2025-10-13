@@ -8,6 +8,7 @@ jobs:
   test:
     name: Test Packages
     runs-on: ubuntu-xl
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:

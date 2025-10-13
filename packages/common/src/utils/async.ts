@@ -1,4 +1,15 @@
 /**
+ * A ponyfill for `Symbol.asyncIterator` that is compatible with the
+ * [recommended polyfill](https://github.com/Azure/azure-sdk-for-js/blob/%40azure/core-asynciterator-polyfill_1.0.2/sdk/core/core-asynciterator-polyfill/src/index.ts#L4-L6)
+ * we recommend for React Native.
+ *
+ * As long as we use this symbol (instead of `for await` and `async *`) in this package, we can be compatible with async
+ * iterators without requiring them.
+ */
+export const symbolAsyncIterator: typeof Symbol.asyncIterator =
+  Symbol.asyncIterator ?? Symbol.for('Symbol.asyncIterator');
+
+/**
  * Throttle a function to be called at most once every "wait" milliseconds,
  * on the trailing edge.
  *
@@ -47,14 +58,4 @@ export function throttleLeadingTrailing(func: () => void, wait: number) {
       timeoutId = setTimeout(invokeFunction, timeToWait);
     }
   };
-}
-
-export function onAbortPromise(signal: AbortSignal): Promise<void> {
-  return new Promise<void>((resolve) => {
-    if (signal.aborted) {
-      resolve();
-    } else {
-      signal.onabort = () => resolve();
-    }
-  });
 }

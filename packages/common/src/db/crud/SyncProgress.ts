@@ -1,4 +1,4 @@
-import { BucketProgress } from 'src/client/sync/stream/core-instruction.js';
+import type { BucketProgress } from '../../client/sync/stream/core-instruction.js';
 import type { SyncStatus } from './SyncStatus.js';
 
 // (bucket, progress) pairs

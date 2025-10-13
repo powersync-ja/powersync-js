@@ -1,5 +1,6 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
+import { LoginDetailsFormValues } from '@/components/widgets/LoginDetailsWidget';
 
 export interface Credentials {
   token: string;
@@ -21,11 +22,12 @@ export class TokenConnector implements PowerSyncBackendConnector {
     await tx?.complete();
   }
 
-  async signIn(credentials: Credentials) {
+  async signIn(credentials: LoginDetailsFormValues) {
     validateSecureContext(credentials.endpoint);
     checkJWT(credentials.token);
     try {
       localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
+      localStorage.setItem('preferred_client_implementation', credentials.clientImplementation);
       await connect();
     } catch (e) {
       this.clearCredentials();
@@ -39,6 +41,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
 
   clearCredentials() {
     localStorage.removeItem('powersync_credentials');
+    localStorage.removeItem('preferred_client_implementation');
   }
 }
 
@@ -73,5 +76,32 @@ function checkJWT(token: string) {
   const isBase64 = parts.every((part) => base64UrlRegex.test(part));
   if (!isBase64) {
     throw new Error(`Token must be a JWT: Not all parts are base64 encoded`);
+  }
+}
+
+export function getTokenEndpoint(token: string): string | null {
+  try {
+    const [head, body, signature] = token.split('.');
+    const payload = JSON.parse(atob(body));
+    const aud = payload.aud as string | string[] | undefined;
+    const audiences = Array.isArray(aud) ? aud : [aud];
+
+    // Prioritize public powersync URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:.*.journeyapps.com/)) {
+        return aud;
+      }
+    }
+
+    // Fallback to any URL
+    for (let aud of audiences) {
+      if (aud?.match(/^https?:/)) {
+        return aud;
+      }
+    }
+
+    return null;
+  } catch (e) {
+    return null;
   }
 }

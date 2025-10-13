@@ -9,7 +9,7 @@ import {
   SqliteIntrospector,
   SqliteQueryCompiler
 } from 'kysely';
-import { PowerSyncDialectConfig, PowerSyncDriver } from './sqlite-driver';
+import { PowerSyncDialectConfig, PowerSyncDriver } from './sqlite-driver.js';
 
 export class PowerSyncDialect implements Dialect {
   readonly #config: PowerSyncDialectConfig;

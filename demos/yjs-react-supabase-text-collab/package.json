@@ -1,6 +1,6 @@
 {
   "name": "yjs-react-supabase-text-collab",
-  "version": "0.1.16",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
   "dependencies": {
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "^1.2.0",
+    "@journeyapps/wa-sqlite": "^1.3.2",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@supabase/supabase-js": "^2.39.8",

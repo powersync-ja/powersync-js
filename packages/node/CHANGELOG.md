@@ -1,5 +1,130 @@
 # @powersync/node
 
+## 0.11.1
+
+### Patch Changes
+
+- Updated dependencies [c2bc2c1]
+  - @powersync/common@1.40.0
+
+## 0.11.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
+## 0.10.2
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+
+## 0.10.1
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+
+## 0.10.0
+
+### Minor Changes
+
+- c910c66: Add `getCrudTransactions()`, returning an async iterator of transactions. This can be used to batch transactions when uploading CRUD data.
+- 9e3e3a5: Added SQLite trigger based table change tracking.
+
+### Patch Changes
+
+- 47294f2: Update PowerSync core extension to version 0.4.4
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+
+## 0.9.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
+## 0.8.1
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+  - @powersync/common@1.35.0
+
+## 0.8.0
+
+### Minor Changes
+
+- ab33799: Add experimental support for raw tables, giving you full control over the table structure to sync into.
+  While PowerSync manages tables as JSON views by default, raw tables have to be created by the application
+  developer.
+
+  For more information about raw tables, see [the documentation](https://docs.powersync.com/usage/use-case-examples/raw-tables).
+
+- 810c6ad: Propagate logger from PowerSyncDatabase to streaming sync and remote implementations, and tweak some log messages.
+
+### Patch Changes
+
+- 9fb898d: Fixed an issue where `readLock` and `writeLock` calls were unnecessarily serialized due to a shared mutex. This did not affect individual calls to `get`, `getAll`, or `getOptional`.
+- a9f6eba: Update PowerSync core extension to 0.4.2
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- Updated dependencies [ab33799]
+- Updated dependencies [810c6ad]
+- Updated dependencies [a1aa18c]
+- Updated dependencies [9fb898d]
+  - @powersync/common@1.34.0
+
+## 0.7.1
+
+### Patch Changes
+
+- Updated dependencies [9b2bde3]
+  - @powersync/common@1.33.2
+
+## 0.7.0
+
+### Minor Changes
+
+- 31e942f: Upgrade undici and use the default undici errors for WebSockets.
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+- Updated dependencies [ffe3095]
+- Updated dependencies [36d8f28]
+- Updated dependencies [53236a8]
+- Updated dependencies [b7255b7]
+- Updated dependencies [70a9cf5]
+- Updated dependencies [d1b7fcb]
+  - @powersync/common@1.33.1
+
 ## 0.6.0
 
 ### Minor Changes

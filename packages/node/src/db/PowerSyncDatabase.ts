@@ -9,6 +9,7 @@ import {
   PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
+  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
@@ -64,7 +65,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database, AbstractPowerSyncDatabase.transactionMutex);
+    return new SqliteBucketStorage(this.database, this.logger);
   }
 
   connect(
@@ -76,9 +77,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: NodeAdditionalConnectionOptions
+    options: RequiredAdditionalConnectionOptions & NodeAdditionalConnectionOptions
   ): AbstractStreamingSyncImplementation {
-    const remote = new NodeRemote(connector, this.options.logger, {
+    const logger = this.logger;
+    const remote = new NodeRemote(connector, logger, {
       dispatcher: options.dispatcher,
       ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
     });
@@ -90,9 +92,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
         await this.waitForReady();
         await connector.uploadData(this);
       },
-      retryDelayMs: this.options.retryDelayMs,
-      crudUploadThrottleMs: this.options.crudUploadThrottleMs,
-      identifier: this.database.name
+      ...options,
+      identifier: this.database.name,
+      logger
     });
   }
 }

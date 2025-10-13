@@ -1,6 +1,6 @@
 import { SyncStatus } from '@powersync/common';
 import { ref, watchEffect } from 'vue';
-import { usePowerSync } from './powerSync';
+import { usePowerSync } from './powerSync.js';
 
 /**
  * @deprecated Use {@link useStatus} instead.

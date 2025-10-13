@@ -7,7 +7,7 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
-import { StreamingSyncLine, StreamingSyncRequest } from './streaming-sync-types.js';
+import { StreamingSyncRequest } from './streaming-sync-types.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 
 export type BSONImplementation = typeof BSON;
@@ -268,15 +268,6 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Connects to the sync/stream websocket endpoint and delivers sync lines by decoding the BSON events
-   * sent by the server.
-   */
-  async socketStream(options: SocketSyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    const bson = await this.getBSON();
-    return await this.socketStreamRaw(options, (data) => bson.deserialize(data) as StreamingSyncLine, bson);
-  }
-
-  /**
    * Returns a data stream of sync line data.
    *
    * @param map Maps received payload frames to the typed event value.
@@ -310,6 +301,27 @@ export abstract class AbstractRemote {
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
+    const stream = new DataStream<T, Uint8Array>({
+      logger: this.logger,
+      pressure: {
+        lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
+      },
+      mapLine: map
+    });
+
+    // Handle upstream abort
+    if (options.abortSignal?.aborted) {
+      throw new AbortOperation('Connection request aborted');
+    } else {
+      options.abortSignal?.addEventListener(
+        'abort',
+        () => {
+          stream.close();
+        },
+        { once: true }
+      );
+    }
+
     let keepAliveTimeout: any;
     const resetTimeout = () => {
       clearTimeout(keepAliveTimeout);
@@ -320,15 +332,28 @@ export abstract class AbstractRemote {
     };
     resetTimeout();
 
+    // Typescript complains about this being `never` if it's not assigned here.
+    // This is assigned in `wsCreator`.
+    let disposeSocketConnectionTimeout = () => {};
+
     const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url,
         wsCreator: (url) => {
           const socket = this.createSocket(url);
+          disposeSocketConnectionTimeout = stream.registerListener({
+            closed: () => {
+              // Allow closing the underlying WebSocket if the stream was closed before the
+              // RSocket connect completed. This should effectively abort the request.
+              socket.close();
+            }
+          });
+
           socket.addEventListener('message', (event) => {
             resetTimeout();
           });
+
           return socket;
         }
       }),
@@ -350,21 +375,18 @@ export abstract class AbstractRemote {
     let rsocket: RSocket;
     try {
       rsocket = await connector.connect();
+      // The connection is established, we no longer need to monitor the initial timeout
+      disposeSocketConnectionTimeout();
     } catch (ex) {
       this.logger.error(`Failed to connect WebSocket`, ex);
       clearTimeout(keepAliveTimeout);
+      if (!stream.closed) {
+        await stream.close();
+      }
       throw ex;
     }
 
     resetTimeout();
-
-    const stream = new DataStream<T, Uint8Array>({
-      logger: this.logger,
-      pressure: {
-        lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
-      },
-      mapLine: map
-    });
 
     let socketIsClosed = false;
     const closeSocket = () => {
@@ -460,28 +482,7 @@ export abstract class AbstractRemote {
       }
     });
 
-    /**
-     * Handle abort operations here.
-     * Unfortunately cannot insert them into the connection.
-     */
-    if (options.abortSignal?.aborted) {
-      stream.close();
-    } else {
-      options.abortSignal?.addEventListener('abort', () => {
-        stream.close();
-      });
-    }
-
     return stream;
-  }
-
-  /**
-   * Connects to the sync/stream http endpoint, parsing lines as JSON.
-   */
-  async postStream(options: SyncStreamOptions): Promise<DataStream<StreamingSyncLine>> {
-    return await this.postStreamRaw(options, (line) => {
-      return JSON.parse(line) as StreamingSyncLine;
-    });
   }
 
   /**
@@ -501,6 +502,10 @@ export abstract class AbstractRemote {
      *  Aborting the active fetch request while it is being consumed seems to throw
      *  an unhandled exception on the window level.
      */
+    if (abortSignal?.aborted) {
+      throw new AbortOperation('Abort request received before making postStreamRaw request');
+    }
+
     const controller = new AbortController();
     let requestResolved = false;
     abortSignal?.addEventListener('abort', () => {

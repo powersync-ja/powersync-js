@@ -1,13 +1,28 @@
 {
   "name": "@powersync/kysely-driver",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Kysely driver for PowerSync",
-  "main": "lib/src/index.js",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./lib/src/index.js",
+        "types": "./lib/src/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
+    }
+  },
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -19,21 +34,22 @@
   },
   "homepage": "https://docs.powersync.com",
   "scripts": {
-    "build": "tsc --build",
-    "build:prod": "tsc --build --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.33.0"
+    "@powersync/common": "workspace:^1.40.0"
   },
   "dependencies": {
     "kysely": "^0.28.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "^1.2.0",
+    "@journeyapps/wa-sqlite": "^1.3.2",
     "@types/node": "^20.17.6",
     "vite": "^6.1.0",
     "vite-plugin-top-level-await": "^1.4.4",

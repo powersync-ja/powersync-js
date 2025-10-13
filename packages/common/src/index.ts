@@ -18,6 +18,7 @@ export * from './client/sync/bucket/SyncDataBucket.js';
 export * from './client/sync/stream/AbstractRemote.js';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation.js';
 export * from './client/sync/stream/streaming-sync-types.js';
+export * from './client/sync/sync-streams.js';
 
 export * from './client/ConnectionManager.js';
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
@@ -31,8 +32,19 @@ export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
+export * from './client/Query.js';
+export * from './client/triggers/sanitizeSQL.js';
+export * from './client/triggers/TriggerManager.js';
+export * from './client/watched/GetAllQuery.js';
+export * from './client/watched/processors/AbstractQueryProcessor.js';
+export * from './client/watched/processors/comparators.js';
+export * from './client/watched/processors/DifferentialQueryProcessor.js';
+export * from './client/watched/processors/OnChangeQueryProcessor.js';
+export * from './client/watched/WatchedQuery.js';
+
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
+export * from './utils/ControlledExecutor.js';
 export * from './utils/DataStream.js';
 export * from './utils/Logger.js';
 export * from './utils/parseQuery.js';

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -16,20 +16,36 @@
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "description": "An PowerSync library to manage attachments for TypeScript and React Native apps",
-  "main": "./lib/index.js",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./lib/index.js",
+        "types": "./lib/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
+    }
+  },
   "files": [
-    "lib"
+    "lib",
+    "dist"
   ],
   "scripts": {
-    "build": "tsc -b",
-    "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.33.0"
+    "@powersync/common": "workspace:^1.40.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

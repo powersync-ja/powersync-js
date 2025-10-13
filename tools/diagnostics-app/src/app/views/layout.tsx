@@ -25,7 +25,7 @@ import {
   Typography,
   styled
 } from '@mui/material';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   CLIENT_PARAMETERS_ROUTE,
@@ -35,7 +35,7 @@ import {
   SYNC_DIAGNOSTICS_ROUTE
 } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { signOut, sync } from '@/library/powersync/ConnectionManager';
+import { signOut, useSyncStatus } from '@/library/powersync/ConnectionManager';
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,8 +43,8 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   const powerSync = usePowerSync();
   const navigate = useNavigate();
 
-  const [syncStatus, setSyncStatus] = React.useState(sync?.syncStatus);
-  const [syncError, setSyncError] = React.useState<Error | null>(null);
+  const syncStatus = useSyncStatus();
+  const syncError = useMemo(() => syncStatus?.dataFlowStatus?.downloadError, [syncStatus]);
   const { title } = useNavigationPanel();
 
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -99,17 +99,6 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
     [powerSync]
   );
 
-  // Cannot use `useStatus()`, since we're not using the default sync implementation.
-  React.useEffect(() => {
-    const l = sync?.registerListener({
-      statusChanged: (status) => {
-        setSyncStatus(status);
-        setSyncError(status.dataFlowStatus.downloadError ?? null);
-      }
-    });
-    return () => l?.();
-  }, []);
-
   const drawerWidth = 320;
 
   const drawer = (
@@ -155,6 +144,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography>{title}</Typography>
           </Box>
+          {syncStatus?.clientImplementation && <Typography>Client: {syncStatus?.clientImplementation}</Typography>}
           <NorthIcon
             sx={{ marginRight: '-10px' }}
             color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}

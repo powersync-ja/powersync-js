@@ -1,6 +1,6 @@
-# Diagnostics app
+# Sync Diagnostics Client
 
-This diagnostics app presents data from the perspective of a specific user (no server-side stats) and can be used to:
+The Sync Diagnostics Client presents data from the perspective of a specific user (no server-side stats) and can be used to:
 
 - See stats about the user's local database.
 - Inspect tables and sync buckets on the device.

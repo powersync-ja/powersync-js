@@ -2,9 +2,9 @@
 
 This package (`@powersync/drizzle-driver`) brings the benefits of an ORM through our maintained [Drizzle](https://orm.drizzle.team/) driver to PowerSync.
 
-## Alpha Release
+## Beta Release
 
-The `drizzle-driver` package is currently in an Alpha release.
+The `drizzle-driver` package is currently in an Beta release.
 
 ## Getting Started
 

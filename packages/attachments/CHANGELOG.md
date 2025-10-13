@@ -1,5 +1,18 @@
 # @powersync/attachments
 
+## 2.4.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM exports. Added CommonJS exports.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
 ## 2.3.1
 
 ### Patch Changes

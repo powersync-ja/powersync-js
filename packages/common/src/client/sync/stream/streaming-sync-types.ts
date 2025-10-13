@@ -136,6 +136,10 @@ export type StreamingSyncLine =
   | StreamingSyncCheckpointPartiallyComplete
   | StreamingSyncKeepalive;
 
+export type CrudUploadNotification = { crud_upload_completed: null };
+
+export type StreamingSyncLineOrCrudUploadComplete = StreamingSyncLine | CrudUploadNotification;
+
 export interface BucketRequest {
   name: string;
 

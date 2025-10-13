@@ -1,5 +1,24 @@
 # @powersync/drizzle-driver
 
+## 0.6.0
+
+### Minor Changes
+
+- 08d1557: Bumped to Beta release
+
+## 0.5.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM exports. Added CommonJS exports.
+
+### Patch Changes
+
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
 ## 0.4.0
 
 ### Minor Changes

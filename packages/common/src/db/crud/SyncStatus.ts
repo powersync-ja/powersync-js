@@ -1,4 +1,7 @@
-import { InternalProgressInformation, SyncProgress } from './SyncProgress.js';
+import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
+import { SyncClientImplementation } from '../../client/sync/stream/AbstractStreamingSyncImplementation.js';
+import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
+import { SyncStreamDescription, SyncSubscriptionDescription } from '../../client/sync/sync-streams.js';
 
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
@@ -20,6 +23,7 @@ export type SyncDataFlowStatus = Partial<{
    * Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
    */
   downloadProgress: InternalProgressInformation | null;
+  internalStreamSubscriptions: CoreStreamSubscription[] | null;
 }>;
 
 export interface SyncPriorityStatus {
@@ -35,10 +39,21 @@ export type SyncStatusOptions = {
   lastSyncedAt?: Date;
   hasSynced?: boolean;
   priorityStatusEntries?: SyncPriorityStatus[];
+  clientImplementation?: SyncClientImplementation;
 };
 
 export class SyncStatus {
   constructor(protected options: SyncStatusOptions) {}
+
+  /**
+   * Returns the used sync client implementation (either the one implemented in JavaScript or the newer Rust-based
+   * implementation).
+   *
+   * This information is only available after a connection has been requested.
+   */
+  get clientImplementation() {
+    return this.options.clientImplementation;
+  }
 
   /**
    * Indicates if the client is currently connected to the PowerSync service.
@@ -100,6 +115,32 @@ export class SyncStatus {
         uploading: false
       }
     );
+  }
+
+  /**
+   * All sync streams currently being tracked in teh database.
+   *
+   * This returns null when the database is currently being opened and we don't have reliable information about all
+   * included streams yet.
+   *
+   * @experimental Sync streams are currently in alpha.
+   */
+  get syncStreams(): SyncStreamStatus[] | undefined {
+    return this.options.dataFlow?.internalStreamSubscriptions?.map((core) => new SyncStreamStatusView(this, core));
+  }
+
+  /**
+   * If the `stream` appears in {@link syncStreams}, returns the current status for that stream.
+   *
+   * @experimental Sync streams are currently in alpha.
+   */
+  forStream(stream: SyncStreamDescription): SyncStreamStatus | undefined {
+    const asJson = JSON.stringify(stream.parameters);
+    const raw = this.options.dataFlow?.internalStreamSubscriptions?.find(
+      (r) => r.name == stream.name && asJson == JSON.stringify(r.parameters)
+    );
+
+    return raw && new SyncStreamStatusView(this, raw);
   }
 
   /**
@@ -218,5 +259,50 @@ export class SyncStatus {
 
   private static comparePriorities(a: SyncPriorityStatus, b: SyncPriorityStatus) {
     return b.priority - a.priority; // Reverse because higher priorities have lower numbers
+  }
+}
+
+/**
+ * Information about a sync stream subscription.
+ */
+export interface SyncStreamStatus {
+  progress: ProgressWithOperations | null;
+  subscription: SyncSubscriptionDescription;
+  priority: number | null;
+}
+
+class SyncStreamStatusView implements SyncStreamStatus {
+  subscription: SyncSubscriptionDescription;
+
+  constructor(
+    private status: SyncStatus,
+    private core: CoreStreamSubscription
+  ) {
+    this.subscription = {
+      name: core.name,
+      parameters: core.parameters,
+      active: core.active,
+      isDefault: core.is_default,
+      hasExplicitSubscription: core.has_explicit_subscription,
+      expiresAt: core.expires_at != null ? new Date(core.expires_at * 1000) : null,
+      hasSynced: core.last_synced_at != null,
+      lastSyncedAt: core.last_synced_at != null ? new Date(core.last_synced_at * 1000) : null
+    };
+  }
+
+  get progress() {
+    if (this.status.dataFlowStatus.downloadProgress == null) {
+      // Don't make download progress public if we're not currently downloading.
+      return null;
+    }
+
+    const { total, downloaded } = this.core.progress;
+    const progress = total == 0 ? 0.0 : downloaded / total;
+
+    return { totalOperations: total, downloadedOperations: downloaded, downloadedFraction: progress };
+  }
+
+  get priority() {
+    return this.core.priority;
   }
 }

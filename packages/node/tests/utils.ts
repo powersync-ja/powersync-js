@@ -6,17 +6,20 @@ import { ReadableStream, TransformStream } from 'node:stream/web';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
+  BucketChecksum,
   column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
+  StreamingSyncCheckpoint,
   StreamingSyncLine,
   SyncStatus,
   Table
 } from '../lib';
+import { createLogger } from '@powersync/common';
+import Logger from 'js-logger';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -51,17 +54,26 @@ export const tempDirectoryTest = test.extend<{ tmpdir: string }>({
   }
 });
 
-async function createDatabase(
+export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
+  const defaultLogger = createLogger('PowerSyncTest', { logLevel: Logger.TRACE });
+  (defaultLogger as any).invoke = (_, args) => {
+    console.log(...args);
+  };
+
   const database = new PowerSyncDatabase({
-    ...options,
     schema: AppSchema,
     database: {
       dbFilename: 'test.db',
-      dbLocation: tmpdir
-    }
+      dbLocation: tmpdir,
+      // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
+      // actions. So far, we've not been able to reproduce these failures locally.
+      readWorkerCount: 1
+    },
+    logger: defaultLogger,
+    ...options
   });
   await database.init();
   return database;
@@ -128,8 +140,9 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
       }
     };
 
-    const newConnection = async () => {
+    const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
       const db = await createDatabase(tmpdir, {
+        ...options,
         remoteOptions: {
           fetchImplementation: inMemoryFetch
         }
@@ -156,7 +169,7 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
 export interface MockSyncService {
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
-  createDatabase: () => Promise<PowerSyncDatabase>;
+  createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -192,6 +205,48 @@ export function waitForSyncStatus(
           reject(e);
           dispose();
         }
+      }
+    });
+  });
+}
+
+export function checkpoint(options: { last_op_id: number; buckets?: any[]; streams?: any[] }): StreamingSyncCheckpoint {
+  return {
+    checkpoint: {
+      last_op_id: `${options.last_op_id}`,
+      buckets: options.buckets ?? [],
+      write_checkpoint: null,
+      streams: options.streams ?? []
+    }
+  };
+}
+
+export function bucket(
+  name: string,
+  count: number,
+  options: { priority: number; subscriptions?: any } = { priority: 3 }
+): BucketChecksum {
+  return {
+    bucket: name,
+    count,
+    checksum: 0,
+    priority: options.priority,
+    subscriptions: options.subscriptions
+  };
+}
+
+export function stream(name: string, isDefault: boolean, errors = []) {
+  return { name, is_default: isDefault, errors };
+}
+
+export function nextStatus(db: PowerSyncDatabase): Promise<SyncStatus> {
+  return new Promise((resolve) => {
+    let l;
+
+    l = db.registerListener({
+      statusChanged(status) {
+        resolve(status);
+        l();
       }
     });
   });

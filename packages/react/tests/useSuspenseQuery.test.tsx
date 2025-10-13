@@ -1,37 +1,23 @@
-import * as commonSdk from '@powersync/common';
+import { AbstractPowerSyncDatabase, WatchedQuery, WatchedQueryListenerEvent } from '@powersync/common';
 import { cleanup, renderHook, screen, waitFor } from '@testing-library/react';
-import React, { Suspense } from 'react';
+import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
-import { useSuspenseQuery } from '../src/hooks/useSuspenseQuery';
-
-const defaultQueryResult = ['list1', 'list2'];
-
-const createMockPowerSync = () => {
-  return {
-    currentStatus: { status: 'initial' },
-    registerListener: vi.fn(() => {}),
-    resolveTables: vi.fn(() => ['table1', 'table2']),
-    onChangeWithCallback: vi.fn(),
-    getAll: vi.fn(() => Promise.resolve(defaultQueryResult)) as Mock<any, any>
-  };
-};
-
-let mockPowerSync = createMockPowerSync();
-
-vi.mock('./PowerSyncContext', () => ({
-  useContext: vi.fn(() => mockPowerSync)
-}));
+import { useSuspenseQuery } from '../src/hooks/suspense/useSuspenseQuery';
+import { useWatchedQuerySuspenseSubscription } from '../src/hooks/suspense/useWatchedQuerySuspenseSubscription';
+import { openPowerSync } from './utils';
 
 describe('useSuspenseQuery', () => {
   const loadingFallback = 'Loading';
   const errorFallback = 'Error';
 
+  let powersync: AbstractPowerSyncDatabase;
+
   const wrapper = ({ children }) => (
-    <PowerSyncContext.Provider value={mockPowerSync as any}>
+    <PowerSyncContext.Provider value={powersync}>
       <ErrorBoundary fallback={errorFallback}>
-        <Suspense fallback={loadingFallback}>{children}</Suspense>
+        <React.Suspense fallback={loadingFallback}>{children}</React.Suspense>
       </ErrorBoundary>
     </PowerSyncContext.Provider>
   );
@@ -66,7 +52,7 @@ describe('useSuspenseQuery', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup(); // Cleanup the DOM after each test
-    mockPowerSync = createMockPowerSync();
+    powersync = openPowerSync();
   });
 
   it('should error when PowerSync is not set', async () => {
@@ -76,50 +62,106 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should suspend on initial load', async () => {
-    mockPowerSync.getAll = vi.fn(() => {
-      return new Promise(() => {});
+    // spy on watched query generation
+    const baseImplementation = powersync.customQuery;
+    let watch: WatchedQuery<any> | null = null;
+
+    const spy = vi.spyOn(powersync, 'customQuery').mockImplementation((options) => {
+      const builder = baseImplementation.call(powersync, options);
+      const baseBuild = builder.differentialWatch;
+
+      // The hooks use the `watch` method if no comparator is set
+      vi.spyOn(builder, 'watch').mockImplementation((buildOptions) => {
+        watch = baseBuild.call(builder, buildOptions);
+        return watch!;
+      });
+
+      return builder!;
     });
 
     const wrapper = ({ children }) => (
-      <PowerSyncContext.Provider value={mockPowerSync as any}>
-        <Suspense fallback={loadingFallback}>{children}</Suspense>
+      <PowerSyncContext.Provider value={powersync}>
+        <React.Suspense fallback={loadingFallback}>
+          {children}
+          <div>Not suspending</div>
+        </React.Suspense>
       </PowerSyncContext.Provider>
     );
 
-    renderHook(() => useSuspenseQuery('SELECT * from lists'), { wrapper });
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'aname')");
 
+    const { unmount } = renderHook(() => useSuspenseQuery('SELECT * from lists'), { wrapper });
+
+    expect(screen.queryByText('Not suspending')).toBeFalsy();
     await waitForSuspend();
 
-    expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
+    // The component should render after suspending
+    await waitFor(
+      async () => {
+        expect(screen.queryByText('Not suspending')).toBeTruthy();
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    expect(watch).toBeDefined();
+    expect(watch!.closed).false;
+    expect(watch!.state.data.length).eq(1);
+    expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).greaterThanOrEqual(2); // should have a temporary hold and state listener
+
+    // wait for the temporary hold to elapse
+    await waitFor(
+      async () => {
+        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).eq(1);
+      },
+      { timeout: 10_000, interval: 500 }
+    );
+
+    // now unmount the hook, this should remove listeners from the watch and close the query
+    unmount();
+
+    // wait for the temporary hold to elapse
+    await waitFor(
+      async () => {
+        expect(watch!.listenerMeta.counts[WatchedQueryListenerEvent.ON_STATE_CHANGE]).undefined;
+        expect(watch?.closed).true;
+      },
+      { timeout: 10_000, interval: 500 }
+    );
   });
 
   it('should run the query once if runQueryOnce flag is set', async () => {
-    let resolvePromise: (_: string[]) => void = () => {};
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-    mockPowerSync.getAll = vi.fn(() => {
-      return new Promise<string[]>((resolve) => {
-        resolvePromise = resolve;
-      });
-    });
+    const { result } = renderHook(
+      () => useSuspenseQuery<{ name: string }>('SELECT * from lists', [], { runQueryOnce: true }),
+      {
+        wrapper
+      }
+    );
 
-    const { result } = renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
-      wrapper
-    });
-
-    await waitForSuspend();
-
-    resolvePromise(defaultQueryResult);
-
-    await waitForCompletedSuspend();
+    // Wait for the data to be presented
+    let lastData;
     await waitFor(
       async () => {
         const currentResult = result.current;
-        expect(currentResult?.data).toEqual(['list1', 'list2']);
-        expect(mockPowerSync.onChangeWithCallback).not.toHaveBeenCalled();
-        expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
+        lastData = currentResult?.data;
+        expect(lastData?.[0]).toBeDefined();
+        expect(lastData?.[0].name).toBe('list1');
       },
-      { timeout: 100 }
+      { timeout: 1000 }
     );
+
+    await waitForCompletedSuspend();
+
+    // Do another insert, this should not trigger a re-render
+    await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list2')");
+
+    // Wait a bit, it's difficult to test that something did not happen, so we just wait a bit
+    await new Promise((r) => setTimeout(r, 1000));
+
+    expect(result.current.data).toEqual(lastData);
+    // sanity
+    expect(result.current.data?.length).toBe(1);
   });
 
   it('should rerun the query when refresh is used', async () => {
@@ -127,59 +169,41 @@ describe('useSuspenseQuery', () => {
       wrapper
     });
 
+    // First ensure we do suspend, then wait for suspending to complete
     await waitForSuspend();
 
     let refresh;
-
     await waitFor(
       async () => {
         const currentResult = result.current;
-        refresh = currentResult.refresh;
-        expect(mockPowerSync.getAll).toHaveBeenCalledTimes(1);
+        console.log(currentResult);
+        refresh = currentResult?.refresh;
+        expect(refresh).toBeDefined();
       },
-      { timeout: 100 }
+      { timeout: 1000 }
     );
 
     await waitForCompletedSuspend();
+    expect(refresh).toBeDefined();
 
+    const spy = vi.spyOn(powersync, 'getAll');
+    const callCount = spy.mock.calls.length;
     await refresh();
-    expect(mockPowerSync.getAll).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenCalledTimes(callCount + 1);
   });
 
   it('should set error when error occurs', async () => {
-    let rejectPromise: (err: string) => void = () => {};
+    renderHook(() => useSuspenseQuery('SELECT * from fakelists', []), { wrapper });
 
-    mockPowerSync.getAll = vi.fn(() => {
-      return new Promise<void>((_resolve, reject) => {
-        rejectPromise = reject;
-      });
-    });
-
-    renderHook(() => useSuspenseQuery('SELECT * from lists', []), { wrapper });
-
-    await waitForSuspend();
-
-    rejectPromise('failure');
     await waitForCompletedSuspend();
     await waitForError();
   });
 
   it('should set error when error occurs and runQueryOnce flag is set', async () => {
-    let rejectPromise: (err: string) => void = () => {};
-
-    mockPowerSync.getAll = vi.fn(() => {
-      return new Promise<void>((_resolve, reject) => {
-        rejectPromise = reject;
-      });
-    });
-
-    renderHook(() => useSuspenseQuery('SELECT * from lists', [], { runQueryOnce: true }), {
+    renderHook(() => useSuspenseQuery('SELECT * from fakelists', [], { runQueryOnce: true }), {
       wrapper
     });
 
-    await waitForSuspend();
-
-    rejectPromise('failure');
     await waitForCompletedSuspend();
     await waitForError();
   });
@@ -214,20 +238,98 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should show an error if parsing the query results in an error', async () => {
-    vi.spyOn(commonSdk, 'parseQuery').mockImplementation(() => {
-      throw new Error('error');
-    });
-
     const { result } = renderHook(
       () =>
         useSuspenseQuery({
           execute: () => [] as any,
-          compile: () => ({ sql: 'SELECT * from lists', parameters: ['param'] })
+          compile: () => {
+            throw Error('error');
+          }
         }),
       { wrapper }
     );
 
     await waitForCompletedSuspend();
     await waitForError();
+  });
+
+  it('should use an existing WatchedQuery instance', async () => {
+    const db = openPowerSync();
+
+    // This query can be instantiated once and reused.
+    // The query retains it's state and will not re-fetch the data unless the result changes.
+    // This is useful for queries that are used in multiple components.
+    const listsQuery = db
+      .query({
+        sql: `SELECT * FROM lists`,
+        parameters: []
+      })
+      .watch();
+
+    const wrapper = ({ children }) => <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>;
+    const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {
+      wrapper
+    });
+
+    // Initially, the query should be loading/suspended
+    expect(result.current).toEqual(null);
+
+    await waitFor(
+      async () => {
+        expect(result.current).not.null;
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    expect(result.current.data.length).toEqual(0);
+
+    // This should trigger an update
+    await db.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+
+    await waitFor(
+      async () => {
+        const { current } = result;
+        expect(current.data.length).toEqual(1);
+      },
+      { timeout: 500, interval: 100 }
+    );
+
+    // now use the same query again, the result should be available immediately
+    const { result: newResult } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), { wrapper });
+    expect(newResult.current).not.null;
+    expect(newResult.current.data.length).toEqual(1);
+  });
+
+  it('should use an existing loaded WatchedQuery instance', async () => {
+    const db = openPowerSync();
+
+    const listsQuery = db
+      .query({
+        sql: `SELECT * FROM lists`,
+        parameters: []
+      })
+      .watch();
+
+    // Ensure the query has loaded before passing it to the hook.
+    // This means we don't require a temporary hold
+    await waitFor(
+      () => {
+        expect(listsQuery.state.isLoading).toBe(false);
+      },
+      { timeout: 1000 }
+    );
+
+    const wrapper = ({ children }) => (
+      <React.StrictMode>
+        <PowerSyncContext.Provider value={db}>{children}</PowerSyncContext.Provider>
+      </React.StrictMode>
+    );
+    const { result } = renderHook(() => useWatchedQuerySuspenseSubscription(listsQuery), {
+      wrapper
+    });
+
+    // Initially, the query should be loading/suspended
+    expect(result.current).toBeDefined();
+    expect(result.current.data.length).toEqual(0);
   });
 });

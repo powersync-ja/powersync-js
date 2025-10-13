@@ -1,0 +1,88 @@
+import { AbstractPowerSyncDatabase, CompilableQuery, CompiledQuery, WatchCompatibleQuery } from '@powersync/common';
+import React from 'react';
+import { usePowerSync } from '../PowerSyncContext.js';
+import { AdditionalOptions } from './watch-types.js';
+
+export type InternalHookOptions<DataType> = {
+  query: WatchCompatibleQuery<DataType>;
+  powerSync: AbstractPowerSyncDatabase;
+  queryChanged: boolean;
+  active: boolean;
+};
+
+interface WatchCompatibleQueryWithParams<T> extends WatchCompatibleQuery<T> {
+  stringifiedParameters?: string;
+}
+
+export const checkQueryChanged = <T>(query: WatchCompatibleQueryWithParams<T>, options: AdditionalOptions) => {
+  let _compiled: CompiledQuery;
+  try {
+    _compiled = query.compile();
+  } catch (error) {
+    return false; // If compilation fails, we assume the query has changed
+  }
+  const compiled = _compiled!;
+
+  const stringifiedParams = query.stringifiedParameters ?? JSON.stringify(compiled.parameters);
+  const stringifiedOptions = JSON.stringify(options);
+
+  const previousQueryRef = React.useRef({ sqlStatement: compiled.sql, stringifiedParams, stringifiedOptions });
+
+  if (
+    previousQueryRef.current.sqlStatement !== compiled.sql ||
+    previousQueryRef.current.stringifiedParams != stringifiedParams ||
+    previousQueryRef.current.stringifiedOptions != stringifiedOptions
+  ) {
+    previousQueryRef.current.sqlStatement = compiled.sql;
+    previousQueryRef.current.stringifiedParams = stringifiedParams;
+    previousQueryRef.current.stringifiedOptions = stringifiedOptions;
+
+    return true;
+  }
+
+  return false;
+};
+
+export const constructCompatibleQuery = <RowType>(
+  query: string | CompilableQuery<RowType>,
+  parameters: any[] = [],
+  options: AdditionalOptions
+) => {
+  const powerSync = usePowerSync();
+  const stringifiedParameters = React.useMemo(() => JSON.stringify(parameters), [parameters]);
+
+  const parsedQuery = React.useMemo<WatchCompatibleQueryWithParams<RowType[]>>(() => {
+    if (typeof query == 'string') {
+      return {
+        compile: () => ({
+          sql: query,
+          parameters
+        }),
+        execute: () => powerSync.getAll(query, parameters),
+        // Setting this is a small optimization that avoids checkQueryChanged recomputing the JSON representation.
+        stringifiedParameters
+      };
+    } else {
+      return {
+        // Generics differ a bit but holistically this is the same
+        compile: () => {
+          const compiled = query.compile();
+          return {
+            sql: compiled.sql,
+            parameters: [...compiled.parameters]
+          };
+        },
+        execute: () => query.execute()
+        // Note that we can't set stringifiedParameters here because we only know parameters after the query has been
+        // compiled.
+      };
+    }
+  }, [query, powerSync, stringifiedParameters]);
+
+  const queryChanged = checkQueryChanged(parsedQuery, options);
+
+  return {
+    parsedQuery,
+    queryChanged
+  };
+};

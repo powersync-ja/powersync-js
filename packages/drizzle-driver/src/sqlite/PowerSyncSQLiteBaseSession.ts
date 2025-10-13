@@ -13,7 +13,7 @@ import {
   SQLiteTransaction,
   type SQLiteTransactionConfig
 } from 'drizzle-orm/sqlite-core/session';
-import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery';
+import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery.js';
 
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;

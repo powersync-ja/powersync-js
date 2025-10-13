@@ -1,5 +1,124 @@
 # diagnostics-app
 
+## 0.9.13
+
+### Patch Changes
+
+- 0c94c40: Rename Diagnostics App to Sync Diagnostics Client
+- Updated dependencies [3008dbc]
+  - @powersync/react@1.8.1
+  - @powersync/web@1.27.1
+
+## 0.9.12
+
+### Patch Changes
+
+- 0a6af1c: Added support for a "token" query parameter, when supplied to the root URL it will be used as the API token for the diagnostics tool instead of needing to be provided manually to the login form.
+
+## 0.9.11
+
+### Patch Changes
+
+- c78071f: Update core extension to 0.4.6
+- Updated dependencies [eff8cbf]
+- Updated dependencies [d8236aa]
+- Updated dependencies [c9c1e24]
+- Updated dependencies [7a5aaf5]
+- Updated dependencies [c78071f]
+  - @powersync/web@1.27.0
+  - @powersync/react@1.8.0
+
+## 0.9.10
+
+### Patch Changes
+
+- Updated dependencies [a0ee132]
+  - @powersync/react@1.7.4
+  - @powersync/web@1.26.2
+
+## 0.9.9
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- ce40042: Support Rust client.
+- Updated dependencies [9003153]
+- Updated dependencies [b1aca34]
+  - @powersync/web@1.26.1
+  - @powersync/react@1.7.3
+
+## 0.9.8
+
+### Patch Changes
+
+- Updated dependencies [c191989]
+  - @powersync/react@1.7.2
+
+## 0.9.7
+
+### Patch Changes
+
+- 47294f2: Update PowerSync core extension to version 0.4.4
+- Updated dependencies [c910c66]
+- Updated dependencies [8decd49]
+- Updated dependencies [9e3e3a5]
+- Updated dependencies [47294f2]
+  - @powersync/web@1.26.0
+  - @powersync/react@1.7.1
+
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies [dce523a]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7ad251a]
+  - @powersync/react@1.7.0
+  - @powersync/web@1.25.1
+
+## 0.9.5
+
+### Patch Changes
+
+- Updated dependencies [319012e]
+- Updated dependencies [79acd89]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [c7d2b53]
+  - @powersync/web@1.25.0
+  - @powersync/react@1.6.0
+
+## 0.9.4
+
+### Patch Changes
+
+- Updated dependencies [ab33799]
+- Updated dependencies [810c6ad]
+- Updated dependencies [a9f6eba]
+- Updated dependencies [a1aa18c]
+  - @powersync/web@1.24.0
+  - @powersync/react@1.5.3
+
+## 0.9.3
+
+### Patch Changes
+
+- @powersync/react@1.5.3
+- @powersync/web@1.23.2
+
+## 0.9.2
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- Updated dependencies [b398483]
+- Updated dependencies [ffe3095]
+- Updated dependencies [53236a8]
+- Updated dependencies [d1b7fcb]
+  - @powersync/web@1.23.1
+  - @powersync/react@1.5.3
+
 ## 0.9.1
 
 ### Patch Changes

@@ -19,10 +19,12 @@ npm-debug.log*
 
 docs/attachments-sdk/
 docs/common-sdk/
+docs/node-sdk/
 docs/react-native-sdk/
 docs/react-sdk/
 docs/vue-sdk/
 docs/web-sdk/
 docs/tanstack-react-query-sdk
+docs/node-sdk
 
 .env

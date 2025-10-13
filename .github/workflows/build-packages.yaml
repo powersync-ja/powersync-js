@@ -6,6 +6,7 @@ on:
 
 jobs:
   build:
+    timeout-minutes: 10
     name: Build Packages
     runs-on: ubuntu-latest
     steps:

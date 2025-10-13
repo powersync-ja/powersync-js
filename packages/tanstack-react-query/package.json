@@ -1,6 +1,6 @@
 {
   "name": "@powersync/tanstack-react-query",
-  "version": "0.0.27",
+  "version": "0.1.6",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -8,15 +8,17 @@
   "description": "PowerSync integration with TanStack Query for offline-first and real-time data synchronization in React apps",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "type": "module",
   "files": [
     "lib"
   ],
   "scripts": {
     "build": "tsc -b",
     "build:prod": "tsc -b --sourceMap false",
-    "clean": "rm -rf lib tsconfig.tsbuildinfo node_modules",
+    "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
-    "watch": "tsc -b -w"
+    "watch": "tsc -b -w",
+    "test:exports": "attw --pack --profile=esm-only  ."
   },
   "repository": {
     "type": "git",
@@ -29,7 +31,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.33.0",
+    "@powersync/common": "workspace:^1.40.0",
     "react": "*"
   },
   "dependencies": {

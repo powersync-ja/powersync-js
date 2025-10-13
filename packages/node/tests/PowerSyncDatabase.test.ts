@@ -3,7 +3,7 @@ import { Worker } from 'node:worker_threads';
 
 import { vi, expect, test } from 'vitest';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
-import { PowerSyncDatabase } from '../lib';
+import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
 
 test('validates options', async () => {
@@ -43,7 +43,14 @@ databaseTest('links powersync', async ({ database }) => {
   await database.get('select powersync_rs_version();');
 });
 
-databaseTest('runs queries on multiple threads', async ({ database }) => {
+tempDirectoryTest('runs queries on multiple threads', async ({ tmpdir }) => {
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: tmpdir
+    }
+  });
   const threads = new Set<number>();
 
   const collectWorkerThreadId = async () => {
@@ -58,6 +65,7 @@ databaseTest('runs queries on multiple threads', async ({ database }) => {
   }
 
   const res = await Promise.all(queryTasks);
+  await database.close();
   expect(res).toHaveLength(10);
   expect([...threads]).toHaveLength(5);
 });
@@ -130,4 +138,40 @@ databaseTest.skip('can watch queries', async ({ database }) => {
 
   await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?)', ['fourth']);
   expect((await query.next()).value.rows).toHaveLength(4);
+});
+
+databaseTest('getCrudTransactions', async ({ database }) => {
+  async function createTransaction(amount: number) {
+    await database.writeTransaction(async (tx) => {
+      for (let i = 0; i < amount; i++) {
+        await tx.execute('insert into todos (id) values (uuid())');
+      }
+    });
+  }
+
+  let iterator = database.getCrudTransactions()[Symbol.asyncIterator]();
+  expect(await iterator.next()).toMatchObject({ done: true });
+
+  await createTransaction(5);
+  await createTransaction(10);
+  await createTransaction(15);
+
+  let lastTransaction: CrudTransaction | null = null;
+  let batch: CrudEntry[] = [];
+
+  // Take the first two transactions via the async generator.
+  for await (const transaction of database.getCrudTransactions()) {
+    batch.push(...transaction.crud);
+    lastTransaction = transaction;
+
+    if (batch.length > 10) {
+      break;
+    }
+  }
+
+  expect(batch).toHaveLength(15);
+  await lastTransaction!.complete();
+
+  const remainingTransaction = await database.getNextCrudTransaction();
+  expect(remainingTransaction?.crud).toHaveLength(15);
 });

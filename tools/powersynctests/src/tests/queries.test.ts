@@ -4,6 +4,7 @@ import {
   column,
   LockContext,
   PowerSyncDatabase,
+  QueryResult,
   Schema,
   Table
 } from '@powersync/react-native';
@@ -528,6 +529,49 @@ export function registerBaseTests() {
       await watched;
     });
 
+    it('Should reflect writeTransaction updates on read connections (iterator)', async () => {
+      const watched = new Promise<void>(async (resolve) => {
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM users', [])) {
+          if (result.rows?.item(0).count == 1) {
+            resolve();
+          }
+        }
+      });
+
+      await db.writeTransaction(async (tx) => {
+        return createTestUser(tx);
+      });
+
+      // The watched query should have updated
+      await watched;
+    });
+
+    it('Should throw for async iterator watch errors', async () => {
+      let error: Error | undefined;
+      try {
+        // The table here does not exist, so it should throw an error
+        for await (const result of db.watch('SELECT COUNT(*) as count FROM faketable', [])) {
+        }
+      } catch (ex) {
+        error = ex as Error;
+      }
+
+      expect(error!.message).to.include('no such table: faketable');
+    });
+
+    it('Should throw for async iterator invalid query errors', async () => {
+      let error: Error | undefined;
+      try {
+        // Invalid SQL
+        for await (const result of db.watch('invalidsyntax', [])) {
+        }
+      } catch (ex) {
+        error = ex as Error;
+      }
+
+      expect(error!.message).to.include('sqlite query error');
+    });
+
     it('Should reflect writeLock updates on read connections ', async () => {
       const numberOfUsers = 1000;
 
@@ -575,6 +619,55 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
+       it('should compare results with old watch method', async () => {
+    const controller = new AbortController();
+
+    const resultSets: QueryResult[] = [];
+
+    // Wait for the first query load
+    const donePromise = new Promise<void>((resolve) => {
+      db.watch(
+        'SELECT * FROM users WHERE name = ?',
+        ['test'],
+        {
+          onResult: (result) => {
+            // Mark that we received the first result, this helps with counting events.
+            if (result.rows?._array?.length == 2) { 
+              resolve();
+            }
+            resultSets.push(result);
+          }
+        },
+        {
+          signal: controller.signal,
+          comparator: {
+            checkEquality: (current, previous) => {
+              return JSON.stringify(current) === JSON.stringify(previous);
+            }
+          }
+        }
+      );
+    });
+
+
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+
+
+    await donePromise;
+
+    expect(resultSets[resultSets.length - 1]?.rows?._array?.map((r) => r.name)).deep.eq(['test', 'test']);
+    // We should only have updated less than or equal 3 times
+    expect(resultSets.length).lessThanOrEqual(3);
+  });
+
     it('Should handle multiple closes', async () => {
       // Bulk insert 10000 rows without using a transaction
       const bulkInsertCommands = [];
@@ -610,5 +703,7 @@ export function registerBaseTests() {
         expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
       }
     });
+
+  
   });
 }

@@ -1,20 +1,13 @@
 import { AbstractPowerSyncDatabase, DBAdapter } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
 import type { RelationalSchemaConfig, TablesRelationalConfig } from 'drizzle-orm/relations';
-import { type Query } from 'drizzle-orm/sql/sql';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
-import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
-  type PreparedQueryConfig as PreparedQueryConfigBase,
-  type SQLiteExecuteMethod
-} from 'drizzle-orm/sqlite-core/session';
-import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery';
-import {
+  PowerSyncSQLiteBaseSession,
   PowerSyncSQLiteSessionOptions,
   PowerSyncSQLiteTransaction,
-  PowerSyncSQLiteTransactionConfig,
-  PowerSyncSQLiteBaseSession
-} from './PowerSyncSQLiteBaseSession';
+  PowerSyncSQLiteTransactionConfig
+} from './PowerSyncSQLiteBaseSession.js';
 
 export class PowerSyncSQLiteSession<
   TFullSchema extends Record<string, unknown>,

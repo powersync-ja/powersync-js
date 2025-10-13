@@ -1,22 +1,23 @@
-import { usePowerSync, useQuery, useStatus } from '@powersync/react';
-import { Box, Container, FormControlLabel, Switch, Typography } from '@mui/material';
-import { useEffect, useMemo, useState } from 'react';
+import { connector, useSupabase } from '@/components/providers/SystemProvider';
 import MenuBar from '@/components/widgets/MenuBar';
 import { PowerSyncYjsProvider } from '@/library/powersync/PowerSyncYjsProvider';
+import { Box, Container, FormControlLabel, Switch, Typography } from '@mui/material';
+import { usePowerSync, useQuery, useStatus } from '@powersync/react';
 import Collaboration from '@tiptap/extension-collaboration';
 import Highlight from '@tiptap/extension-highlight';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import * as Y from 'yjs';
 import './tiptap-styles.scss';
-import { useParams } from 'react-router-dom';
-import { connector } from '@/components/providers/SystemProvider';
 
 export default function EditorPage() {
   const powerSync = usePowerSync();
   const status = useStatus();
+  const supabase = useSupabase();
   const { id: documentId } = useParams();
 
   // cache the last edited document ID in local storage
@@ -33,6 +34,12 @@ export default function EditorPage() {
 
   useEffect(() => {
     const provider = new PowerSyncYjsProvider(ydoc, powerSync, documentId!);
+    // Only sync changes for this document
+    powerSync.connect(supabase!, {
+      params: {
+        document_id: documentId!
+      }
+    });
     return () => {
       provider.destroy();
     };

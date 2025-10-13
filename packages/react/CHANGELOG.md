@@ -1,5 +1,126 @@
 # @powersync/react
 
+## 1.8.1
+
+### Patch Changes
+
+- 3008dbc: Allow using `db.syncStream()` instances in `useQuery` hooks.
+- Updated dependencies [c2bc2c1]
+  - @powersync/common@1.40.0
+
+## 1.8.0
+
+### Minor Changes
+
+- 7a5aaf5: Add hooks for sync streams
+
+### Patch Changes
+
+- d8236aa: Fix "order and size of this array must remain constant" warning.
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
+## 1.7.4
+
+### Patch Changes
+
+- a0ee132: - Fixed bug where the `useQuery` reported `error` state would not clear after updating the query to a valid query.
+  - Fixed bug where `useQuery` `isFetching` status would not immediately be reported as true when the query has changed.
+- Updated dependencies [a0ee132]
+- Updated dependencies [ba72a58]
+  - @powersync/common@1.38.1
+
+## 1.7.3
+
+### Patch Changes
+
+- b1aca34: Fixed issue where `useQuery()` would not correctly trigger a new execution when the query or parameters changed while using StrictMode.
+- Updated dependencies [ce40042]
+- Updated dependencies [9003153]
+- Updated dependencies [4d532d4]
+  - @powersync/common@1.38.0
+
+## 1.7.2
+
+### Patch Changes
+
+- c191989: Fix regression in useQuery where updating the supplied query parameters would not update the underlaying query.
+
+## 1.7.1
+
+### Patch Changes
+
+- 8decd49: Refactor useQuery hook to avoid calling internal hooks conditionally.
+- Updated dependencies [876c550]
+- Updated dependencies [c910c66]
+- Updated dependencies [9e3e3a5]
+  - @powersync/common@1.37.0
+
+## 1.7.0
+
+### Minor Changes
+
+- 7ad251a: Updated package exports to reflect ESM nature.
+- 7ad251a: Update package exports to reflect ESM exports.
+
+### Patch Changes
+
+- dce523a: Fixed regression in useSuspendingQuery where `releaseHold is not a function` could be thrown during rendering.
+- Updated dependencies [7609155]
+- Updated dependencies [7ad251a]
+- Updated dependencies [7f2c53d]
+  - @powersync/common@1.36.0
+
+## 1.6.0
+
+### Minor Changes
+
+- c7d2b53: - [Internal] Updated implementation to use shared `WatchedQuery` implementation.
+- c7d2b53: - Added the ability to limit re-renders by specifying a `rowComparator` for query results. The `useQuery` hook will only emit `data` changes when the data has changed.
+
+  ```javascript
+  // The data here will maintain previous object references for unchanged items.
+  const { data } = useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
+    rowComparator: {
+      keyBy: (item) => item.id,
+      compareBy: (item) => JSON.stringify(item)
+    }
+  });
+  ```
+
+  - Added the ability to subscribe to an existing instance of a `WatchedQuery`
+
+  ```jsx
+  import { useWatchedQuerySubscription } from '@powersync/react';
+
+  const listsQuery = powerSync
+    .query({
+      sql: `SELECT * FROM lists`
+    })
+    .differentialWatch();
+
+  export const ListsWidget = (props) => {
+    const { data: lists } = useWatchedQuerySubscription(listsQuery);
+
+    return (
+      <div>
+        {lists.map((list) => (
+          <div key={list.id}>{list.name}</div>
+        ))}
+      </div>
+    );
+  };
+  ```
+
+### Patch Changes
+
+- 6b38551: Fix a warning about raw tables being used when they're not.
+- Updated dependencies [319012e]
+- Updated dependencies [c7d2b53]
+- Updated dependencies [6b38551]
+- Updated dependencies [a1abb15]
+  - @powersync/common@1.35.0
+
 ## 1.5.3
 
 ### Patch Changes

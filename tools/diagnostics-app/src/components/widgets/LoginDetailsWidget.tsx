@@ -1,10 +1,24 @@
 import React from 'react';
-import { Box, Button, ButtonGroup, FormGroup, Paper, TextField, Typography, styled } from '@mui/material';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  FormControlLabel,
+  FormGroup,
+  Paper,
+  Switch,
+  TextField,
+  Typography,
+  styled
+} from '@mui/material';
 import { Formik, FormikErrors } from 'formik';
+import { SyncClientImplementation } from '@powersync/web';
+import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
 
 export type LoginDetailsFormValues = {
   token: string;
   endpoint: string;
+  clientImplementation: SyncClientImplementation;
 };
 
 export type LoginAction = {
@@ -20,12 +34,12 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
   return (
     <S.MainContainer>
       <S.LoginContainer elevation={1}>
-        <S.LoginHeader variant="h4">Diagnostics Config</S.LoginHeader>
+        <S.LoginHeader variant="h4">Sync Diagnostics Client</S.LoginHeader>
         <S.LogoBox>
           <S.Logo alt="PowerSync Logo" width={400} height={100} src="/powersync-logo.svg" />
         </S.LogoBox>
         <Formik<LoginDetailsFormValues>
-          initialValues={{ token: '', endpoint: '' }}
+          initialValues={{ token: '', endpoint: '', clientImplementation: SyncClientImplementation.RUST }}
           validateOnChange={false}
           validateOnBlur={false}
           validate={(values) => {
@@ -44,7 +58,8 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
               }
               await props.onSubmit({
                 token: values.token,
-                endpoint
+                endpoint,
+                clientImplementation: values.clientImplementation
               });
             } catch (ex: any) {
               console.error(ex);
@@ -52,7 +67,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
               setFieldError('endpoint', ex.message);
             }
           }}>
-          {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit }) => (
+          {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
             <form onSubmit={handleSubmit}>
               <FormGroup>
                 <S.TextInput
@@ -84,6 +99,34 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                 />
               </FormGroup>
               <S.ActionButtonGroup>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={values.clientImplementation == SyncClientImplementation.RUST}
+                      onChange={() =>
+                        setFieldValue(
+                          'clientImplementation',
+                          values.clientImplementation == SyncClientImplementation.RUST
+                            ? SyncClientImplementation.JAVASCRIPT
+                            : SyncClientImplementation.RUST
+                        )
+                      }
+                    />
+                  }
+                  label={
+                    <span>
+                      Rust sync client (
+                      <a
+                        style={{ color: 'lightblue' }}
+                        target="_blank"
+                        href="https://releases.powersync.com/announcements/improved-sync-performance-in-our-client-sdks">
+                        what's that?
+                      </a>
+                      )
+                    </span>
+                  }
+                />
+
                 <Button variant="outlined" type="submit" disabled={isSubmitting}>
                   Proceed
                 </Button>
@@ -143,37 +186,10 @@ namespace S {
     margin-top: 20px;
     width: 100%;
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
   `;
 
   export const TextInput = styled(TextField)`
     margin-bottom: 20px;
   `;
-}
-
-function getTokenEndpoint(token: string) {
-  try {
-    const [head, body, signature] = token.split('.');
-    const payload = JSON.parse(atob(body));
-    const aud = payload.aud as string | string[] | undefined;
-    const audiences = Array.isArray(aud) ? aud : [aud];
-
-    // Prioritize public powersync URL
-    for (let aud of audiences) {
-      if (aud?.match(/^https?:.*.journeyapps.com/)) {
-        return aud;
-      }
-    }
-
-    // Fallback to any URL
-    for (let aud of audiences) {
-      if (aud?.match(/^https?:/)) {
-        return aud;
-      }
-    }
-
-    return null;
-  } catch (e) {
-    return null;
-  }
 }

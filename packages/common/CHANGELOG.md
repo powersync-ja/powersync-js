@@ -1,5 +1,105 @@
 # @powersync/common
 
+## 1.40.0
+
+### Minor Changes
+
+- c2bc2c1: Exposed the connection and connection option used by `connect()`
+
+## 1.39.0
+
+### Minor Changes
+
+- eff8cbf: Add alpha support for sync streams, allowing different sets of data to be synced dynamically.
+
+## 1.38.1
+
+### Patch Changes
+
+- a0ee132: Fixed potential race conditions in WatchedQueries when updateSettings is called frequently.
+- ba72a58: Update TriggerManager trackTableDiff API example
+
+## 1.38.0
+
+### Minor Changes
+
+- ce40042: Add `clientImplementation` field to `SyncStatus`.
+
+### Patch Changes
+
+- 9003153: Update core extension to 0.4.5
+- 4d532d4: Improved the abort handling for stale watched query results when the query/parameters change. This fixes the edge case where an already fetching query would handle a query change and briefly report `isFetching` being false before becoming true again.
+
+## 1.37.0
+
+### Minor Changes
+
+- c910c66: Add `getCrudTransactions()`, returning an async iterator of transactions. This can be used to batch transactions when uploading CRUD data.
+- 9e3e3a5: Added SQLite trigger based table change tracking.
+
+### Patch Changes
+
+- 876c550: Fix issue where Rust sync implementation might not disconnect in some circumstances.
+
+## 1.36.0
+
+### Minor Changes
+
+- 7ad251a: Added CJS specific type declarations.
+
+### Patch Changes
+
+- 7609155: Marked AbstractPowerSyncDatabase.dispose method as deprecated. The AbstractPowerSyncDatabase.close method should be used instead.
+- 7f2c53d: Fix warning when reconnecting during CRUD uploads and using the Rust client.
+
+## 1.35.0
+
+### Minor Changes
+
+- c7d2b53: - Added additional listeners for `closing` and `closed` events in `AbstractPowerSyncDatabase`.
+  - Added `query` and `customQuery` APIs for enhanced watched queries.
+  - Added `triggerImmediate` option to the `onChange` API. This allows emitting an initial event which can be useful for downstream use cases.
+- a1abb15: Added ControlledExecutor utility to exports.
+
+### Patch Changes
+
+- 319012e: Fixed bug where a WebSocket connection timeout could cause an uncaught exception.
+- 6b38551: Fix a warning about raw tables being used when they're not.
+
+## 1.34.0
+
+### Minor Changes
+
+- ab33799: Add experimental support for raw tables, giving you full control over the table structure to sync into.
+  While PowerSync manages tables as JSON views by default, raw tables have to be created by the application
+  developer.
+
+  For more information about raw tables, see [the documentation](https://docs.powersync.com/usage/use-case-examples/raw-tables).
+
+- 810c6ad: Propagate logger from PowerSyncDatabase to streaming sync and remote implementations, and tweak some log messages.
+
+### Patch Changes
+
+- a1aa18c: Fix sync stream delays during CRUD upload.
+- 9fb898d: [Internal] Removed shared mutex implementation of `readLock` and `writeLock`.
+
+## 1.33.2
+
+### Patch Changes
+
+- 9b2bde3: Fix compilation error due to broken import in `SyncProgress.d.ts`
+
+## 1.33.1
+
+### Patch Changes
+
+- ffe3095: Improve websocket keepalive logic to reduce keepalive errors.
+- 36d8f28: Remove unused compaction logic.
+- 53236a8: Rust client: Properly upload CRUD entries made while offline.
+- b7255b7: Rust sync client: Fix `connect()` resolving before a connection is made.
+- 70a9cf5: Added CommonJs output for common package. Ensuring default export entry is last so that require statements don't use .mjs output instead of .cjs.
+- d1b7fcb: Rust sync client: Fix reported `lastSyncedAt` values in sync status.
+
 ## 1.33.0
 
 ### Minor Changes

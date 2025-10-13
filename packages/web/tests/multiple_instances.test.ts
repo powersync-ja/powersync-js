@@ -2,6 +2,8 @@ import {
   AbstractPowerSyncDatabase,
   createBaseLogger,
   createLogger,
+  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+  DEFAULT_STREAMING_SYNC_OPTIONS,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
@@ -10,7 +12,6 @@ import {
   SharedWebStreamingSyncImplementationOptions,
   WebRemote
 } from '@powersync/web';
-import { Mutex } from 'async-mutex';
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
@@ -126,27 +127,33 @@ describe('Multiple Instances', { sequential: true }, () => {
     // They need to use the same identifier to use the same shared worker.
     const identifier = 'streaming-sync-shared';
     const syncOptions1: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector1.uploadData(db);
       },
       identifier,
-      db: db.database as WebDBAdapter
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      retryDelayMs: 90_000, // Large delay to allow for testing
+      db: db.database as WebDBAdapter,
+      subscriptions: []
     };
 
     const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
-
+    await stream1.connect();
     // Generate the second streaming sync implementation
     const connector2 = new TestConnector();
     const syncOptions2: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
+      adapter: new SqliteBucketStorage(db.database),
       remote: new WebRemote(connector1),
       uploadCrud: async () => {
         await connector2.uploadData(db);
       },
       identifier,
-      db: db.database as WebDBAdapter
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      retryDelayMs: 90_000, // Large delay to allow for testing
+      db: db.database as WebDBAdapter,
+      subscriptions: []
     };
 
     const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
@@ -188,19 +195,26 @@ describe('Multiple Instances', { sequential: true }, () => {
       triggerUpload1 = resolve;
     });
 
+    const sharedSyncOptions = {
+      adapter: new SqliteBucketStorage(db.database),
+      remote: new WebRemote(connector1),
+      db: db.database as WebDBAdapter,
+      identifier,
+      // The large delay here allows us to test between connection retries
+      retryDelayMs: 90_000,
+      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
+      subscriptions: [],
+      flags: {
+        broadcastLogs: true
+      }
+    };
+
     // Create the first streaming client
     const stream1 = new SharedWebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
-      remote: new WebRemote(connector1),
+      ...sharedSyncOptions,
       uploadCrud: async () => {
         triggerUpload1();
         connector1.uploadData(db);
-      },
-      db: db.database as WebDBAdapter,
-      identifier,
-      retryDelayMs: 100,
-      flags: {
-        broadcastLogs: true
       }
     });
 
@@ -216,18 +230,11 @@ describe('Multiple Instances', { sequential: true }, () => {
     });
 
     const stream2 = new SharedWebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(db.database, new Mutex()),
-      remote: new WebRemote(connector1),
+      ...sharedSyncOptions,
       uploadCrud: async () => {
         triggerUpload2();
         connector2.uploadData(db);
-      },
-      identifier,
-      retryDelayMs: 100,
-      flags: {
-        broadcastLogs: true
-      },
-      db: db.database as WebDBAdapter
+      }
     });
 
     // Waits for the stream to be marked as connected
@@ -243,7 +250,9 @@ describe('Multiple Instances', { sequential: true }, () => {
     });
 
     // hack to set the status to connected for tests
-    (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
+    await stream1.connect();
+    // Hack, set the status to connected in order to trigger the upload
+    await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
 
     // The status in the second stream client should be updated
     await stream2UpdatedPromise;
@@ -256,7 +265,6 @@ describe('Multiple Instances', { sequential: true }, () => {
       'steven@journeyapps.com'
     ]);
 
-    // Manual trigger since tests don't entirely configure watches for ps_crud
     stream1.triggerCrudUpload();
     // The second connector should be called to upload
     await upload2TriggeredPromise;
@@ -267,12 +275,13 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Close the second client, leaving only the first one
     await stream2.dispose();
 
+    // Hack, set the status to connected in order to trigger the upload
+    await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
     stream1.triggerCrudUpload();
     // It should now upload from the first client
     await upload1TriggeredPromise;
 
     expect(spy1).toHaveBeenCalledOnce();
-
     await stream1.dispose();
   });
 });
