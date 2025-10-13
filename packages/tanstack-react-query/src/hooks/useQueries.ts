@@ -2,7 +2,7 @@ import { type CompilableQuery } from '@powersync/common';
 import { usePowerSync } from '@powersync/react';
 import * as Tanstack from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { usePowerSyncQueries } from './usePowerSyncQueries';
+import { usePowerSyncQueries } from './usePowerSyncQueries.js';
 
 export type PowerSyncQueryOptions<T> = {
   query?: string | CompilableQuery<T>;
