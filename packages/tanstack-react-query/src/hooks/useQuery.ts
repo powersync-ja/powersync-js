@@ -10,12 +10,44 @@ export type PowerSyncQueryOptions<T> = {
 
 export type UseBaseQueryOptions<TQueryOptions> = TQueryOptions & PowerSyncQueryOptions<any>;
 
+/**
+ *
+ * Uses the `queryFn` to execute the query. No different from the base `useQuery` hook.
+ *
+ * @example
+ * ```
+ * const { data, error, isLoading } = useQuery({
+ *   queryKey: ['lists'],
+ *   queryFn: getTodos,
+ * });
+ * ```
+ */
 export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseQueryOptions<TData, TError>> & { query?: undefined },
   queryClient?: Tanstack.QueryClient
 ): Tanstack.UseQueryResult<TData, TError>;
 
-// Overload when 'query' is present
+/**
+ *
+ * Uses the `query` to execute the PowerSync query.
+ *
+ * @example
+ * ```
+ * const { data, error, isLoading } = useQuery({
+ *   queryKey: ['lists'],
+ *   query: 'SELECT * from lists where id = ?',
+ *   parameters: ['id-1']
+ * });
+ * ```
+ *
+ * @example
+ * ```
+ * const { data, error, isLoading } = useQuery({
+ *   queryKey: ['lists'],
+ *   query: compilableQuery,
+ * });
+ * ```
+ */
 export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseQueryOptions<TData[], TError>> & { query: string | CompilableQuery<TData> },
   queryClient?: Tanstack.QueryClient
@@ -28,12 +60,36 @@ export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
   return useQueryCore(options, queryClient, Tanstack.useQuery);
 }
 
+/**
+ *
+ * Uses the `queryFn` to execute the query. No different from the base `useSuspenseQuery` hook.
+ *
+ * @example
+ * ```
+ * const { data } = useSuspenseQuery({
+ *   queryKey: ['lists'],
+ *   queryFn: getTodos,
+ * });
+ * ```
+ */
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData, TError>> & { query?: undefined },
   queryClient?: Tanstack.QueryClient
 ): Tanstack.UseSuspenseQueryResult<TData, TError>;
 
-// Overload when 'query' is present
+/***
+ *
+ * Uses the `query` to execute the PowerSync query.
+ *
+ * @example
+ * ```
+ * const { data } = useSuspenseQuery({
+ *   queryKey: ['lists'],
+ *   query: 'SELECT * from lists where id = ?',
+ *   parameters: ['id-1']
+ * });
+ * ```
+ */
 export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData[], TError>> & {
     query: string | CompilableQuery<TData>;
