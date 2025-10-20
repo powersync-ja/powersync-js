@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -56,10 +56,15 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.39.0"
+    "@powersync/common": "workspace:^1.40.0",
+    "better-sqlite3": "12.x"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "@powersync/better-sqlite3": "^0.2.0",
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
@@ -69,6 +74,8 @@
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
     "@types/async-lock": "^1.4.0",
+    "@types/node": "^24.2.0",
+    "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.35.2",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",

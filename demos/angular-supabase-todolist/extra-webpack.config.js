@@ -18,7 +18,7 @@ module.exports = (config, options, targetOptions) => {
       ...config.plugins,
       new webpack.DefinePlugin({
         // Embed environment variables starting with `WEBPACK_PUBLIC_`
-        'process.env': JSON.stringify(
+        env: JSON.stringify(
           Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('WEBPACK_PUBLIC_')))
         )
       })

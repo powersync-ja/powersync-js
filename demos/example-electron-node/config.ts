@@ -1,6 +1,5 @@
 import OS from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
@@ -14,7 +13,7 @@ import * as dotenv from 'dotenv';
 import type IForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import type ICopyPlugin from 'copy-webpack-plugin';
 
-dotenv.config({path: '.env.local'});
+dotenv.config({ path: '.env.local' });
 
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CopyPlugin: typeof ICopyPlugin = require('copy-webpack-plugin');
@@ -78,25 +77,27 @@ const mainConfig: Configuration = {
   entry: './src/main/index.ts',
   // Put your normal webpack config below here
   module: {
-    rules: defaultWebpackRules(),
+    rules: defaultWebpackRules()
   },
   plugins: [
     ...webpackPlugins,
     new CopyPlugin({
-      patterns: [{
-        from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
-        to: path.join('powersync', extensionPath),
-      }],
+      patterns: [
+        {
+          from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
+          to: path.join('powersync', extensionPath)
+        }
+      ]
     }),
     new DefinePluginImpl({
       POWERSYNC_URL: JSON.stringify(process.env.POWERSYNC_URL),
-      POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN),
-    }),
+      POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN)
+    })
   ],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   },
-  target: "electron-main",
+  target: 'electron-main'
 };
 
 const rendererConfig: Configuration = {
@@ -107,7 +108,7 @@ const rendererConfig: Configuration = {
         test: /\.css$/,
         use: [{ loader: 'style-loader' }, { loader: 'css-loader' }]
       }
-    ],
+    ]
   },
   plugins: webpackPlugins,
   resolve: {
@@ -119,10 +120,10 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: {
       unpack: '**/{.**,**}/**/powersync/*'
-    },
+    }
   },
   rebuildConfig: {
-    force: true,
+    force: true
   },
   makers: [
     new MakerSquirrel(),
@@ -142,7 +143,7 @@ const config: ForgeConfig = {
             html: './src/render/index.html',
             js: './src/render/main.ts',
             preload: {
-              js: './src/render/preload.ts',
+              js: './src/render/preload.ts'
             }
           }
         ]

@@ -1,5 +1,21 @@
 # diagnostics-app
 
+## 0.9.14
+
+### Patch Changes
+
+- ac82680: - Fixed bug where Rust client implementation would not update the dynamic schema after sync.
+  - Improved dynamic schema refresh logic for all implementations. Updating the schema should now always update all dependent watched queries e.g. in the SQL Console.
+
+## 0.9.13
+
+### Patch Changes
+
+- 0c94c40: Rename Diagnostics App to Sync Diagnostics Client
+- Updated dependencies [3008dbc]
+  - @powersync/react@1.8.1
+  - @powersync/web@1.27.1
+
 ## 0.9.12
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.40.0
+
+### Minor Changes
+
+- c2bc2c1: Exposed the connection and connection option used by `connect()`
+
 ## 1.39.0
 
 ### Minor Changes
