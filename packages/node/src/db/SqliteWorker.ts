@@ -35,7 +35,7 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
         if (arch == 'x64') {
           extensionPath = 'powersync.dll';
         } else {
-          throw 'Windows platform only supports x64 architecture.';
+          throw new Error('Windows platform only supports x64 architecture.');
         }
       } else if (platform == 'linux') {
         if (arch == 'x64') {
@@ -43,7 +43,7 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
         } else if (arch == 'arm64') {
           extensionPath = 'libpowersync-aarch64.so';
         } else {
-          throw 'Linux platform only supports x64 and arm64 architectures.';
+          throw new Error('Linux platform only supports x64 and arm64 architectures.');
         }
       } else if (platform == 'darwin') {
         if (arch == 'x64') {
@@ -51,10 +51,12 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
         } else if (arch == 'arm64') {
           extensionPath = 'libpowersync-aarch64.dylib';
         } else {
-          throw 'macOS platform only supports x64 and arm64 architectures.';
+          throw new Error('macOS platform only supports x64 and arm64 architectures.');
         }
       } else {
-        throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
+        throw new Error(
+          `Unknown platform: ${platform}, PowerSync for Node.js currently supports Windows, Linux and macOS.`
+        );
       }
 
       let resolved: string;

@@ -48,7 +48,7 @@ const downloadAsset = async (asset, destination) => {
 
   // Check if file exists and has correct hash
   const currentHash = await hashLocal(destinationPath);
-  if (currentHash === expectedHash) {
+  if (currentHash == expectedHash) {
     console.debug(`${destination} is up-to-date, skipping download`);
     return;
   }
@@ -83,7 +83,7 @@ const checkAsset = async (asset, destination) => {
     expectedHash,
     currentHash,
     exists: currentHash !== null,
-    isValid: currentHash === expectedHash
+    isValid: currentHash == expectedHash
   };
 };
 
