@@ -14,14 +14,7 @@ const versionHashes = {
   'libpowersync_aarch64.dylib': 'bfb4f1ec207b298aff560f1825f8123d24316edaa27b6df3a17dd49466576b92'
 };
 
-// Map of all assets to their destinations
-const assetMap = {
-  'powersync_x64.dll': 'powersync.dll',
-  'libpowersync_x64.so': 'libpowersync.so',
-  'libpowersync_aarch64.so': 'libpowersync-aarch64.so',
-  'libpowersync_x64.dylib': 'libpowersync.dylib',
-  'libpowersync_aarch64.dylib': 'libpowersync-aarch64.dylib'
-};
+const assets = Object.keys(versionHashes);
 
 const hashStream = async (input) => {
   for await (const chunk of input.pipe(createHash('sha256')).setEncoding('hex')) {
@@ -42,14 +35,14 @@ const hashLocal = async (filePath) => {
   }
 };
 
-const downloadAsset = async (asset, destination) => {
-  const destinationPath = path.resolve('lib', destination);
+const downloadAsset = async (asset) => {
+  const destinationPath = path.resolve('lib', asset);
   const expectedHash = versionHashes[asset];
 
   // Check if file exists and has correct hash
   const currentHash = await hashLocal(destinationPath);
   if (currentHash == expectedHash) {
-    console.debug(`${destination} is up-to-date, skipping download`);
+    console.debug(`${asset} is up-to-date, skipping download`);
     return;
   }
 
@@ -68,17 +61,16 @@ const downloadAsset = async (asset, destination) => {
   if (hashAfterDownloading != expectedHash) {
     throw `Unexpected hash after downloading ${asset} (got ${hashAfterDownloading}, expected ${expectedHash})`;
   }
-  console.log(`Successfully downloaded ${destination}`);
+  console.log(`Successfully downloaded ${asset}`);
 };
 
-const checkAsset = async (asset, destination) => {
-  const destinationPath = path.resolve('lib', destination);
+const checkAsset = async (asset) => {
+  const destinationPath = path.resolve('lib', asset);
   const expectedHash = versionHashes[asset];
   const currentHash = await hashLocal(destinationPath);
 
   return {
     asset,
-    destination,
     destinationPath,
     expectedHash,
     currentHash,
@@ -96,9 +88,7 @@ const download = async () => {
 
   // First check all assets
   console.log('Checking existing files...');
-  const checks = await Promise.all(
-    Object.entries(assetMap).map(([asset, destination]) => checkAsset(asset, destination))
-  );
+  const checks = await Promise.all(assets.map((asset) => checkAsset(asset, asset)));
 
   const toDownload = checks.filter((check) => !check.isValid);
   const upToDate = checks.filter((check) => check.isValid);
@@ -107,7 +97,7 @@ const download = async () => {
   if (upToDate.length > 0) {
     console.log('\nUp-to-date files:');
     for (const check of upToDate) {
-      console.log(`  ✓ ${check.destination}`);
+      console.log(`  ✓ ${check.asset}`);
     }
   }
 
@@ -115,15 +105,14 @@ const download = async () => {
     console.log('\nFiles to download:');
     for (const check of toDownload) {
       if (!check.exists) {
-        console.log(`  • ${check.destination} (missing)`);
+        console.log(`  • ${check.asset} (missing)`);
       } else {
-        console.log(`  • ${check.destination} (hash mismatch)`);
+        console.log(`  • ${check.asset} (hash mismatch)`);
       }
     }
 
     console.log('\nStarting downloads...');
-    // Download required assets in parallel
-    await Promise.all(toDownload.map((check) => downloadAsset(check.asset, check.destination)));
+    await Promise.all(toDownload.map((check) => downloadAsset(check.asset)));
 
     console.log('\nAll downloads completed successfully!');
   } else {

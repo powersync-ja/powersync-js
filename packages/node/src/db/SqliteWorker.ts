@@ -22,48 +22,55 @@ export interface PowerSyncWorkerOptions {
   loadBetterSqlite3: () => Promise<any>;
 }
 
+/**
+ * @returns The relevant PowerSync extension binary filename for the current platform and architecture
+ */
+export function getPowerSyncExtensionFilename() {
+  const platform = OS.platform();
+  const arch = OS.arch();
+  let extensionFile: string;
+
+  if (platform == 'win32') {
+    if (arch == 'x64') {
+      extensionFile = 'powersync_x64.dll';
+    } else {
+      throw new Error('Windows platform only supports x64 architecture.');
+    }
+  } else if (platform == 'linux') {
+    if (arch == 'x64') {
+      extensionFile = 'libpowersync_x64.so';
+    } else if (arch == 'arm64') {
+      extensionFile = 'libpowersync_aarch64.so';
+    } else {
+      throw new Error('Linux platform only supports x64 and arm64 architectures.');
+    }
+  } else if (platform == 'darwin') {
+    if (arch == 'x64') {
+      extensionFile = 'libpowersync_x64.dylib';
+    } else if (arch == 'arm64') {
+      extensionFile = 'libpowersync_aarch64.dylib';
+    } else {
+      throw new Error('macOS platform only supports x64 and arm64 architectures.');
+    }
+  } else {
+    throw new Error(
+      `Unknown platform: ${platform}, PowerSync for Node.js currently supports Windows, Linux and macOS.`
+    );
+  }
+
+  return extensionFile;
+}
+
 export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) {
   const resolvedOptions: PowerSyncWorkerOptions = {
     extensionPath() {
       const isCommonJsModule = isBundledToCommonJs;
-
-      const platform = OS.platform();
-      const arch = OS.arch();
-      let extensionPath: string;
-
-      if (platform == 'win32') {
-        if (arch == 'x64') {
-          extensionPath = 'powersync.dll';
-        } else {
-          throw new Error('Windows platform only supports x64 architecture.');
-        }
-      } else if (platform == 'linux') {
-        if (arch == 'x64') {
-          extensionPath = 'libpowersync.so';
-        } else if (arch == 'arm64') {
-          extensionPath = 'libpowersync-aarch64.so';
-        } else {
-          throw new Error('Linux platform only supports x64 and arm64 architectures.');
-        }
-      } else if (platform == 'darwin') {
-        if (arch == 'x64') {
-          extensionPath = 'libpowersync.dylib';
-        } else if (arch == 'arm64') {
-          extensionPath = 'libpowersync-aarch64.dylib';
-        } else {
-          throw new Error('macOS platform only supports x64 and arm64 architectures.');
-        }
-      } else {
-        throw new Error(
-          `Unknown platform: ${platform}, PowerSync for Node.js currently supports Windows, Linux and macOS.`
-        );
-      }
-
+      const extensionFilename = getPowerSyncExtensionFilename();
       let resolved: string;
       if (isCommonJsModule) {
-        resolved = path.resolve(__dirname, '../lib/', extensionPath);
+        resolved = path.resolve(__dirname, '../lib/', extensionFilename);
       } else {
-        resolved = url.fileURLToPath(new URL(`../${extensionPath}`, import.meta.url));
+        resolved = url.fileURLToPath(new URL(`../${extensionFilename}`, import.meta.url));
       }
 
       return resolved;
