@@ -4,7 +4,6 @@ import {
   BucketChecksum,
   Checkpoint,
   ColumnType,
-  DBAdapter,
   isStreamingSyncCheckpoint,
   isStreamingSyncCheckpointComplete,
   isStreamingSyncCheckpointDiff,
@@ -25,17 +24,17 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
  * `powersync_control` calls to decode sync lines and derive progress information.
  */
 export class RustClientInterceptor extends SqliteBucketStorage {
-  private rdb: DBAdapter;
+  private rdb: AbstractPowerSyncDatabase;
   private lastStartedCheckpoint: Checkpoint | null = null;
 
   public tables: Record<string, Record<string, ColumnType>> = {};
 
   constructor(
-    db: DBAdapter,
+    db: AbstractPowerSyncDatabase,
     private remote: AbstractRemote,
     private schemaManager: DynamicSchemaManager
   ) {
-    super(db, (AbstractPowerSyncDatabase as any).transactionMutex);
+    super(db.database, (AbstractPowerSyncDatabase as any).transactionMutex);
     this.rdb = db;
   }
 

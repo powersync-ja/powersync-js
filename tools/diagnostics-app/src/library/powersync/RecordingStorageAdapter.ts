@@ -1,23 +1,16 @@
-import {
-  AbstractPowerSyncDatabase,
-  Checkpoint,
-  ColumnType,
-  DBAdapter,
-  SqliteBucketStorage,
-  SyncDataBatch
-} from '@powersync/web';
+import { AbstractPowerSyncDatabase, Checkpoint, ColumnType, SqliteBucketStorage, SyncDataBatch } from '@powersync/web';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 
 export class RecordingStorageAdapter extends SqliteBucketStorage {
-  private rdb: DBAdapter;
+  private rdb: AbstractPowerSyncDatabase;
 
   public tables: Record<string, Record<string, ColumnType>> = {};
 
   constructor(
-    db: DBAdapter,
+    db: AbstractPowerSyncDatabase,
     private schemaManager: DynamicSchemaManager
   ) {
-    super(db, (AbstractPowerSyncDatabase as any).transactionMutex);
+    super(db.database, (AbstractPowerSyncDatabase as any).transactionMutex);
     this.rdb = db;
   }
 
