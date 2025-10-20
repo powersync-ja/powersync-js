@@ -6,7 +6,9 @@ import {
   ColumnType,
   DBAdapter,
   isStreamingSyncCheckpoint,
+  isStreamingSyncCheckpointComplete,
   isStreamingSyncCheckpointDiff,
+  isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData,
   PowerSyncControlCommand,
   SqliteBucketStorage,
@@ -102,6 +104,12 @@ export class RustClientInterceptor extends SqliteBucketStorage {
       });
 
       await this.schemaManager.updateFromOperations(batch);
+    } else if (isStreamingSyncCheckpointPartiallyComplete(line) || isStreamingSyncCheckpointComplete(line)) {
+      // Refresh schema asynchronously, to allow us to better measure
+      // performance of initial sync.
+      setTimeout(() => {
+        this.schemaManager.refreshSchema(this.rdb);
+      }, 60);
     }
   }
 
