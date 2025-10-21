@@ -33,16 +33,23 @@ export function getPowerSyncExtensionFilename() {
   if (platform == 'win32') {
     if (arch == 'x64') {
       extensionFile = 'powersync_x64.dll';
+    } else if (arch == 'ia32') {
+      extensionFile = 'powersync_x86.dll';
+    } else if (arch == 'arm64') {
+      extensionFile = 'powersync_aarch64.dll';
     } else {
-      throw new Error('Windows platform only supports x64 architecture.');
+      throw new Error('Windows platform only supports arm64, ia32 and x64 architecture.');
     }
   } else if (platform == 'linux') {
     if (arch == 'x64') {
       extensionFile = 'libpowersync_x64.so';
     } else if (arch == 'arm64') {
+      // TODO detect armv7 as an option
       extensionFile = 'libpowersync_aarch64.so';
+    } else if (arch == 'riscv64') {
+      extensionFile = 'libpowersync_riscv64gc.so';
     } else {
-      throw new Error('Linux platform only supports x64 and arm64 architectures.');
+      throw new Error('Linux platform only supports x64, arm64 and riscv64 architectures.');
     }
   } else if (platform == 'darwin') {
     if (arch == 'x64') {

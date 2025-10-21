@@ -8,8 +8,13 @@ import { finished } from 'node:stream/promises';
 const version = '0.4.6';
 const versionHashes = {
   'powersync_x64.dll': '5efaa9ad4975094912a36843cb7b503376cacd233d21ae0956f0f4b42dcb457b',
+  'powersync_x86.dll': '4151ba8aa6f024b50b7aebe52ba59f2c5be54e3fed26f7f3f48e1127dcda027d',
+  'powersync_aarch64.dll': '3abe46074432593ff5cfc2098b186c592f020c5cfa81285f8e49962732a94bf5',
+  'libpowersync_x86.so': '1321a7de13fda0b2de7d2bc231a68cb5691f84010f3858e5cf02e47f88ba6f4a',
   'libpowersync_x64.so': 'e9d78620d69d3cf7d57353891fe0bf85b79d326b42c4669b9500b9e610388f76',
   'libpowersync_aarch64.so': '0d84c0dc0134fc89af65724d11e2c45e3c15569c575ecda52d0ec2fa2aeec495',
+  'libpowersync_armv7.so': 'c7887181ce9c524b68a7ac284ab447b8584511c87527ca26186e5874bf9ba3d6',
+  'libpowersync_riscv64gc.so': 'a89f3a71f22f707707d97517e9310e42e2a57dc5343cee08d09002a8cea048d5',
   'libpowersync_x64.dylib': '9b484eaf361451f7758ca6ad53190a73563be930a8f8a39ccefd29390046ef6c',
   'libpowersync_aarch64.dylib': 'bfb4f1ec207b298aff560f1825f8123d24316edaa27b6df3a17dd49466576b92'
 };
