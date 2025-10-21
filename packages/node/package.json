@@ -13,12 +13,12 @@
     "download_core.js"
   ],
   "scripts": {
-    "install": "node download_core.js",
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config",
+    "prepare:core": "node download_core.js",
+    "build": " pnpm prepare:core && tsc -b && rollup --config",
+    "build:prod": "pnpm prepare:core && tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest",
+    "test": " pnpm prepare:core && vitest",
     "test:exports": "attw --pack . --ignore-rules no-resolution"
   },
   "type": "module",

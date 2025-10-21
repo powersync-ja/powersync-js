@@ -1,18 +1,17 @@
-import OS from 'node:os';
 import path from 'node:path';
 
-import type { ForgeConfig } from '@electron-forge/shared-types';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
+import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerZIP } from '@electron-forge/maker-zip';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
-import { type Configuration, type ModuleOptions, type DefinePlugin } from 'webpack';
+import type { ForgeConfig } from '@electron-forge/shared-types';
+import { getPowerSyncExtensionFilename } from '@powersync/node/worker.js';
+import type ICopyPlugin from 'copy-webpack-plugin';
 import * as dotenv from 'dotenv';
 import type IForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-import type ICopyPlugin from 'copy-webpack-plugin';
-
+import { type Configuration, type DefinePlugin, type ModuleOptions } from 'webpack';
 dotenv.config({ path: '.env.local' });
 
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -57,17 +56,7 @@ const defaultWebpackRules: () => Required<ModuleOptions>['rules'] = () => {
   ];
 };
 
-const platform = OS.platform();
-let extensionPath: string;
-if (platform === 'win32') {
-  extensionPath = 'powersync.dll';
-} else if (platform === 'linux') {
-  extensionPath = 'libpowersync.so';
-} else if (platform === 'darwin') {
-  extensionPath = 'libpowersync.dylib';
-} else {
-  throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
-}
+let extensionFilename = getPowerSyncExtensionFilename();
 
 const mainConfig: Configuration = {
   /**
@@ -84,8 +73,8 @@ const mainConfig: Configuration = {
     new CopyPlugin({
       patterns: [
         {
-          from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
-          to: path.join('powersync', extensionPath)
+          from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionFilename}`),
+          to: path.join('powersync', extensionFilename)
         }
       ]
     }),
