@@ -1,5 +1,46 @@
 # @powersync/node
 
+## 0.12.0
+
+### Minor Changes
+
+- 688265f: Experimental support for integrating with node:sqlite.
+- 688265f: Support custom better-sqlite3 forks (see an example for encryption in the README).
+- aa90aa0: Pre-package all the PowerSync Rust extension binaries for all supported platforms and architectures in the NPM package `lib` folder. Install scripts are no longer required to download the PowerSync core.
+
+  The binary files relevant to a specific architecture now have updated filenames. Custom code which previously referenced binary filenames requires updating. A helper function is available to automatically provide the correct filename.
+
+  ```diff
+  + import { getPowerSyncExtensionFilename } from '@powersync/node/worker.js';
+
+  function resolvePowerSyncCoreExtension() {
+  -  const platform = OS.platform();
+  -  let extensionPath: string;
+  -  if (platform === 'win32') {
+  -    extensionPath = 'powersync.dll';
+  -  } else if (platform === 'linux') {
+  -    extensionPath = 'libpowersync.so';
+  -  } else if (platform === 'darwin') {
+  -    extensionPath = 'libpowersync.dylib';
+  -  } else {
+  -    throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
+  -  }
+  +  const extensionPath = getPowerSyncExtensionFilename();
+
+    // This example uses copy-webpack-plugin to copy the prebuilt library over. This ensures that it is
+    // available in packaged release builds.
+    let libraryPath = path.resolve(__dirname, 'powersync', extensionPath);
+  ```
+
+- 688265f: Use upstream better-sqlite3 dependency instead of the PowerSync fork.
+
+  After upgrading:
+
+  1. Ensure you no longer depend on the `@powersync/better-sqlite3` package: `npm uninstall @powersync/better-sqlite3`.
+  2. Unlike in older versions, the upstream `better-sqlite3` dependency is marked as optional since custom forks
+     are supported too.
+     Use `npm install better-sqlite3` to install it.
+
 ## 0.11.1
 
 ### Patch Changes
