@@ -35,8 +35,11 @@ export class Schema<S extends SchemaType = SchemaType> {
       }
       this.tables = tables;
     } else {
-      this.props = tables as S;
-      this.tables = this.convertToClassicTables(this.props);
+      // Update the table entries with the provided table name key
+      this.props = Object.fromEntries(
+        Object.entries(tables).map(([tableName, table]) => [tableName, table.copyWithName(tableName)])
+      ) as S;
+      this.tables = Object.values(this.props);
     }
 
     this.rawTables = [];
@@ -66,15 +69,8 @@ export class Schema<S extends SchemaType = SchemaType> {
 
   toJSON() {
     return {
-      // This is required because "name" field is not present in TableV2
       tables: this.tables.map((t) => t.toJSON()),
       raw_tables: this.rawTables
     };
-  }
-
-  private convertToClassicTables(props: S) {
-    return Object.entries(props).map(([name, table]) => {
-      return table.copyWithName(name);
-    });
   }
 }
