@@ -5,4 +5,4 @@
 '@powersync/react-native': minor
 ---
 
-Populate table `name` values in `schema.props` for Schemas created with typed `Table`s (e.g. `schema.props['some_table'].name` will contain the table name).
+Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
