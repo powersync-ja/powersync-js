@@ -144,4 +144,17 @@ describe('Schema Tests', { sequential: true }, () => {
     const aliasedTable = await powersync.getAll('SELECT * FROM test1');
     expect(Array.isArray(aliasedTable)).toBe(true);
   });
+
+  it('should have table names present in schema props', async () => {
+    // The table names aren't present when creating the Table instances.
+    // Passing Tables into a Schema should populate the table name based
+    // off the key of the prop
+    expect(schema.props.aliased.name).eq('aliased');
+    expect(schema.props.aliased.internalName).eq('ps_data__aliased');
+    expect(schema.props.aliased.viewName).eq('test1');
+
+    expect(schema.props.assets.name).eq('assets');
+    expect(schema.props.assets.internalName).eq('ps_data__assets');
+    expect(schema.props.assets.viewName).eq('assets');
+  });
 });
