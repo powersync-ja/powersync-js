@@ -12,36 +12,6 @@ export class AttachmentContext {
     this.logger = logger;
   }
 
-  watchActiveAttachments(onUpdate: () => void): AbortController {
-    const abortController = new AbortController();
-    this.db.watchWithCallback(
-      /* sql */
-      `
-        SELECT
-          *
-        FROM
-          ${this.tableName}
-        WHERE
-          state = ?
-          OR state = ?
-          OR state = ?
-        ORDER BY
-          timestamp ASC
-      `,
-      [AttachmentState.QUEUED_UPLOAD, AttachmentState.QUEUED_DOWNLOAD, AttachmentState.QUEUED_DELETE],
-      {
-        onResult: () => {
-          onUpdate();
-        }
-      },
-      {
-        signal: abortController.signal
-      }
-    );
-
-    return abortController;
-  }
-
   async getActiveAttachments(): Promise<any[]> {
     const attachments = await this.db.getAll(
       /* sql */

@@ -5,6 +5,7 @@ import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { StorageService } from './StorageService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
+import { AttachmentService } from './AttachmentService.js';
 
 export class AttachmentQueue {
   periodicSyncTimer?: ReturnType<typeof setInterval>;
@@ -20,6 +21,7 @@ export class AttachmentQueue {
   downloadAttachments: boolean = true;
   watchActiveAbortController?: AbortController;
   archivedCacheLimit: number;
+  attachmentService: AttachmentService;
 
   constructor({
     db,
@@ -51,6 +53,7 @@ export class AttachmentQueue {
     this.tableName = tableName;
     this.storageService = new StorageService(this.context, localStorage, remoteStorage, logger ?? db.logger);
     this.syncInterval = syncInterval;
+    this.attachmentService = new AttachmentService(tableName, db);
     this.syncThrottleDuration = syncThrottleDuration;
     this.downloadAttachments = downloadAttachments;
     this.archivedCacheLimit = archivedCacheLimit;
@@ -69,8 +72,10 @@ export class AttachmentQueue {
     }, this.syncInterval);
 
     // Sync storage when there is a change in active attachments
-    this.watchActiveAbortController = this.context.watchActiveAttachments(async () => {
-      await this.syncStorage();
+    this.attachmentService.watchActiveAttachments().registerListener({
+      onDiff: async () => {
+        await this.syncStorage();
+      }
     });
 
     // Process attachments when there is a change in watched attachments
@@ -166,7 +171,7 @@ export class AttachmentQueue {
   async stopSync(): Promise<void> {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
-    this.watchActiveAbortController?.abort();
+    await this.attachmentService.watchActiveAttachments().close();
   }
 
   async saveFile({
