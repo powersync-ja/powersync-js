@@ -2,10 +2,12 @@ import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
   private dbPromise: Promise<IDBDatabase>;
+  
+  constructor(private databaseName: string = 'PowerSyncFiles') {}
 
   async initialize(): Promise<void> {
     this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open('PowerSyncFiles', 1);
+      const request = indexedDB.open(this.databaseName, 1);
       request.onupgradeneeded = () => {
         request.result.createObjectStore('files');
       };
@@ -26,7 +28,7 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
   }
 
   getLocalUri(filename: string): string {
-    return `indexeddb://PowerSyncFiles/files/${filename}`;
+    return `indexeddb://${this.databaseName}/files/${filename}`;
   }
 
   private async getStore(mode: IDBTransactionMode = 'readonly'): Promise<IDBObjectStore> {

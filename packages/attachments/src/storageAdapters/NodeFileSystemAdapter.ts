@@ -3,20 +3,23 @@ import * as path from 'path';
 import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 export class NodeFileSystemAdapter implements LocalStorageAdapter {
+
+  constructor(private storageDirectory: string = './user_data') {}
+
   async initialize(): Promise<void> {
     // const dir = this.getUserStorageDirectory();
-    const dir = path.resolve('./user_data');
+    const dir = path.resolve(this.storageDirectory);
     await fs.mkdir(dir, { recursive: true });
   }
 
   async clear(): Promise<void> {
     // const dir = this.getUserStorageDirectory();
-    const dir = path.resolve('./user_data');
+    const dir = path.resolve(this.storageDirectory);
     await fs.rmdir(dir, { recursive: true });
   }
 
   getLocalUri(filename: string): string {
-    return path.join(path.resolve('./user_data'), filename);
+    return path.join(path.resolve(this.storageDirectory), filename);
   }
 
   async uploadFile(filePath: string, data: ArrayBuffer, options?: { encoding: EncodingType }): Promise<void> {
