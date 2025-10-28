@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, ILogger, Transaction } from '@powersync/common';
+import { AbstractPowerSyncDatabase, DifferentialWatchedQuery, ILogger, Transaction } from '@powersync/common';
 import { AttachmentContext } from './AttachmentContext.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -54,6 +54,8 @@ export class AttachmentQueue {
   /** Service for managing attachment-related database operations */
   attachmentService: AttachmentService;
 
+  watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
+
   /**
    * Creates a new AttachmentQueue instance.
    * 
@@ -99,6 +101,7 @@ export class AttachmentQueue {
     this.tableName = tableName;
     this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger);
     this.attachmentService = new AttachmentService(tableName, db);
+    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments();
     this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
     this.downloadAttachments = downloadAttachments;
@@ -138,7 +141,7 @@ export class AttachmentQueue {
     }, this.syncIntervalMs);
 
     // Sync storage when there is a change in active attachments
-    this.attachmentService.watchActiveAttachments().registerListener({
+    this.watchActiveAttachments.registerListener({
       onDiff: async () => {
         await this.syncStorage();
       }
@@ -247,7 +250,7 @@ export class AttachmentQueue {
   async stopSync(): Promise<void> {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
-    await this.attachmentService.watchActiveAttachments().close();
+    await this.watchActiveAttachments.close();
   }
 
   /**
