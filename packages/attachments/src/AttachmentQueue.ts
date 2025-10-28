@@ -178,13 +178,15 @@ export class AttachmentQueue {
     fileExtension,
     mediaType,
     metaData,
-    id
+    id,
+    updateHook
   }: {
     data: ArrayBuffer | Blob | string;
     fileExtension: string;
     mediaType?: string;
     metaData?: string;
     id?: string;
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => void;
   }): Promise<AttachmentRecord> {
     const resolvedId = id ?? (await this.context.db.get<{ id: string }>('SELECT uuid() as id')).id;
     const filename = `${resolvedId}.${fileExtension}`;
@@ -204,6 +206,7 @@ export class AttachmentQueue {
     };
 
     await this.context.db.writeTransaction(async (tx) => {
+      updateHook?.(tx, attachment);
       this.context.upsertAttachment(attachment, tx);
     });
 
