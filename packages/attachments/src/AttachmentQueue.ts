@@ -18,7 +18,6 @@ export class AttachmentQueue {
   logger?: ILogger;
   syncThrottleDuration: number;
   downloadAttachments: boolean = true;
-  watchActiveAbortController?: AbortController;
   archivedCacheLimit: number;
   attachmentService: AttachmentService;
 
@@ -37,7 +36,7 @@ export class AttachmentQueue {
     db: AbstractPowerSyncDatabase;
     remoteStorage: RemoteStorageAdapter;
     localStorage: LocalStorageAdapter;
-    watchAttachments: (onUpdate: (attachement: WatchedAttachmentItem[]) => void) => void;
+    watchAttachments: (onUpdate: (attachement: WatchedAttachmentItem[]) => Promise<void>) => void;
     tableName?: string;
     logger?: ILogger;
     syncIntervalMs?: number;
@@ -58,8 +57,6 @@ export class AttachmentQueue {
     this.archivedCacheLimit = archivedCacheLimit;
   }
 
-  watchAttachments(onUpdate: (attachement: WatchedAttachmentItem[]) => void): void {
-    throw new Error('watchAttachments not implemented');
   }
 
   async startSync(): Promise<void> {
