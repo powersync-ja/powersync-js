@@ -16,7 +16,6 @@ export class AttachmentQueue {
   attachmentsDirectory?: string;
   tableName?: string;
   logger?: ILogger;
-  syncInterval: number = 30 * 1000;
   syncThrottleDuration: number;
   downloadAttachments: boolean = true;
   watchActiveAbortController?: AbortController;
@@ -30,7 +29,7 @@ export class AttachmentQueue {
     watchAttachments,
     logger,
     tableName = ATTACHMENT_TABLE,
-    syncInterval = 30 * 1000,
+    syncIntervalMs = 30 * 1000,
     syncThrottleDuration = 1000,
     downloadAttachments = true,
     archivedCacheLimit = 100
@@ -41,7 +40,7 @@ export class AttachmentQueue {
     watchAttachments: (onUpdate: (attachement: WatchedAttachmentItem[]) => void) => void;
     tableName?: string;
     logger?: ILogger;
-    syncInterval?: number;
+    syncIntervalMs?: number;
     syncThrottleDuration?: number;
     downloadAttachments?: boolean;
     archivedCacheLimit?: number;
@@ -52,8 +51,8 @@ export class AttachmentQueue {
     this.watchAttachments = watchAttachments;
     this.tableName = tableName;
     this.storageService = new StorageService(this.context, localStorage, remoteStorage, logger ?? db.logger);
-    this.syncInterval = syncInterval;
     this.attachmentService = new AttachmentService(tableName, db);
+    this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
     this.downloadAttachments = downloadAttachments;
     this.archivedCacheLimit = archivedCacheLimit;
@@ -69,7 +68,7 @@ export class AttachmentQueue {
     // Sync storage periodically
     this.periodicSyncTimer = setInterval(async () => {
       await this.syncStorage();
-    }, this.syncInterval);
+    }, this.syncIntervalMs);
 
     // Sync storage when there is a change in active attachments
     this.attachmentService.watchActiveAttachments().registerListener({
