@@ -3,19 +3,23 @@ export enum EncodingType {
   Base64 = 'base64'
 }
 
+/**
+ * LocalStorageAdapter defines the interface for local file storage operations.
+ * Implementations handle file I/O, directory management, and storage initialization.
+ */
 export interface LocalStorageAdapter {
   /**
-   * Saves buffer data to a local file.
+   * Saves data to a local file.
    * @param filePath Path where the file will be stored
-   * @param data Data string to store
+   * @param data Data to store (ArrayBuffer, Blob, or string)
    * @returns Number of bytes written
    */
   saveFile(filePath: string, data: ArrayBuffer | Blob | string): Promise<number>;
 
   /**
-   * Retrieves an ArrayBuffer with the file data from the given path.
+   * Retrieves file data as an ArrayBuffer.
    * @param filePath Path where the file is stored
-   * @returns ArrayBuffer with the file data
+   * @returns ArrayBuffer containing the file data
    */
   readFile(filePath: string): Promise<ArrayBuffer>;
 
@@ -35,14 +39,12 @@ export interface LocalStorageAdapter {
   /**
    * Creates a directory at the specified path.
    * @param path The full path to the directory
-   * @throws PowerSyncAttachmentError if creation fails
    */
   makeDir(path: string): Promise<void>;
 
   /**
    * Removes a directory at the specified path.
    * @param path The full path to the directory
-   * @throws PowerSyncAttachmentError if removal fails
    */
   rmDir(path: string): Promise<void>;
 
@@ -57,7 +59,7 @@ export interface LocalStorageAdapter {
   clear(): Promise<void>;
 
   /**
-   * Returns the file path of the provided filename in the user storage directory.
+   * Returns the file path for the provided filename in the storage directory.
    * @param filename The filename to get the path for
    * @returns The full file path
    */

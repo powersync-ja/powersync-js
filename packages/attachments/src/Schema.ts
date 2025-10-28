@@ -2,6 +2,9 @@ import { column, Table, TableV2Options } from '@powersync/common';
 
 export const ATTACHMENT_TABLE = 'attachments';
 
+/**
+ * AttachmentRecord represents an attachment in the local database.
+ */
 export interface AttachmentRecord {
   id: string;
   filename: string;
@@ -14,7 +17,9 @@ export interface AttachmentRecord {
   state: AttachmentState;
 }
 
-// map from db to record
+/**
+ * Maps a database row to an AttachmentRecord.
+ */
 export function attachmentFromSql(row: any): AttachmentRecord {
   return {
     id: row.id,
@@ -29,6 +34,9 @@ export function attachmentFromSql(row: any): AttachmentRecord {
   };
 }
 
+/**
+ * AttachmentState represents the current synchronization state of an attachment.
+ */
 export enum AttachmentState {
   QUEUED_SYNC = 0, // Check if the attachment needs to be uploaded or downloaded
   QUEUED_UPLOAD = 1, // Attachment to be uploaded
@@ -40,6 +48,9 @@ export enum AttachmentState {
 
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
 
+/**
+ * AttachmentTable defines the schema for the attachment queue table.
+ */
 export class AttachmentTable extends Table {
   constructor(options?: AttachmentTableOptions) {
     super(

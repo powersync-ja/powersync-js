@@ -1,5 +1,9 @@
 import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
+/**
+ * IndexDBFileSystemStorageAdapter implements LocalStorageAdapter using IndexedDB.
+ * Suitable for web browsers and web-based environments.
+ */
 export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
   private dbPromise: Promise<IDBDatabase>;
   
@@ -71,9 +75,6 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
           return;
         }
 
-        // if (options?.encoding === EncodingType.Base64) {
-        // }
-
         if (options?.encoding === EncodingType.UTF8) {
           const encoder = new TextEncoder();
           const arrayBuffer = encoder.encode(req.result).buffer;
@@ -89,8 +90,6 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
           bytes[i] = binaryString.charCodeAt(i);
         }
         resolve(bytes.buffer);
-
-        // reject(new Error('Unsupported encoding'));
       };
       req.onerror = () => reject(req.error);
     });
@@ -115,10 +114,16 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
   }
 
   async makeDir(path: string): Promise<void> {
-    // No-op for IndexedDB
+    // No-op for IndexedDB as it does not have a directory structure
   }
 
   async rmDir(path: string): Promise<void> {
-    // No-op for IndexedDB
+    const store = await this.getStore('readwrite');
+    // TODO: Test this to ensure it deletes all files under the directory
+    await new Promise<void>((resolve, reject) => {
+      const req = store.delete(path);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
   }
 }

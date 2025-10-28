@@ -1,27 +1,27 @@
 import { AttachmentRecord } from "./Schema.js";
 
+/**
+ * RemoteStorageAdapter defines the interface for remote storage operations.
+ * Implementations handle uploading, downloading, and deleting files from remote storage.
+ */
 export interface RemoteStorageAdapter {
     /**
      * Uploads a file to remote storage.
-     *
-     * @param fileData The binary content of the file to upload.
-     * @param attachment The associated `Attachment` metadata describing the file.
-     * @throws An error if the upload fails.
+     * @param fileData The binary content of the file to upload
+     * @param attachment The associated attachment metadata
      */
     uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
+    
     /**
      * Downloads a file from remote storage.
-     *
-     * @param attachment The `Attachment` describing the file to download.
-     * @returns The binary data of the downloaded file.
-     * @throws An error if the download fails or the file is not found.
+     * @param attachment The attachment describing the file to download
+     * @returns The binary data of the downloaded file
      */
-    downloadFile(attachment: AttachmentRecord): Promise<Blob>;
+    downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer>;
+    
     /**
      * Deletes a file from remote storage.
-     *
-     * @param attachment The `Attachment` describing the file to delete.
-     * @throws An error if the deletion fails or the file does not exist.
+     * @param attachment The attachment describing the file to delete
      */
     deleteFile(attachment: AttachmentRecord): Promise<void>;
 } 

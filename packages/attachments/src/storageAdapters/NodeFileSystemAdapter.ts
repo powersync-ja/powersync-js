@@ -2,6 +2,10 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
+/**
+ * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
+ * Suitable for Node.js environments and Electron applications.
+ */
 export class NodeFileSystemAdapter implements LocalStorageAdapter {
 
   constructor(private storageDirectory: string = './user_data') {}
