@@ -32,14 +32,14 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:^",
-    "async-mutex": "^0.4.0"
+    "async-mutex": "^0.4.1"
   },
   "devDependencies": {
     "@powersync/sql-js": "0.0.5",
     "@powersync/web": "workspace:*",
-    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-alias": "^5.1.1",
     "@types/sql.js": "^1.4.9",
-    "chance": "^1.1.9",
+    "chance": "^1.1.13",
     "rollup": "4.14.3",
     "uuid": "^11.1.0"
   }

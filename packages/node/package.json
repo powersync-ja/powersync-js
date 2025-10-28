@@ -66,19 +66,19 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-lock": "^1.4.0",
-    "bson": "^6.6.0",
+    "async-lock": "^1.4.1",
+    "bson": "^6.10.4",
     "comlink": "^4.4.2",
-    "undici": "^7.11.0"
+    "undici": "^7.16.0"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
-    "@types/async-lock": "^1.4.0",
-    "@types/node": "^24.2.0",
-    "better-sqlite3": "^12.2.0",
-    "drizzle-orm": "^0.35.2",
+    "@types/async-lock": "^1.4.2",
+    "@types/node": "^24.9.1",
+    "better-sqlite3": "^12.4.1",
+    "drizzle-orm": "^0.35.3",
     "rollup": "4.14.3",
-    "typescript": "^5.5.3",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "keywords": [
