@@ -1,11 +1,15 @@
 import { ILogger } from '@powersync/common';
 import { AttachmentContext } from './AttachmentContext.js';
-import { EncodingType, LocalStorageAdapter } from './LocalStorageAdapter.js';
+import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncErrorHandler } from './SyncErrorHandler.js';
 
-export class StorageService {
+/**
+ * Orchestrates attachment synchronization between local and remote storage.
+ * Handles uploads, downloads, deletions, and state transitions.
+ */
+export class SyncingService {
   context: AttachmentContext;
   localStorage: LocalStorageAdapter;
   remoteStorage: RemoteStorageAdapter;
@@ -26,6 +30,13 @@ export class StorageService {
     this.errorHandler = errorHandler;
   }
 
+  /**
+   * Processes attachments based on their state (upload, download, or delete).
+   * All updates are saved in a single batch after processing.
+   * 
+   * @param attachments - Array of attachment records to process
+   * @returns Promise that resolves when all attachments have been processed and saved
+   */
   async processAttachments(attachments: AttachmentRecord[]): Promise<void> {
     const updatedAttachments: AttachmentRecord[] = [];
     for (const attachment of attachments) {
@@ -51,6 +62,14 @@ export class StorageService {
     await this.context.saveAttachments(updatedAttachments);
   }
 
+  /**
+   * Uploads an attachment from local storage to remote storage.
+   * On success, marks as SYNCED. On failure, defers to error handler or archives.
+   * 
+   * @param attachment - The attachment record to upload
+   * @returns Updated attachment record with new state
+   * @throws Error if the attachment has no localUri
+   */
   async uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
     this.logger.info(`Uploading attachment ${attachment.filename}`);
     try {
@@ -79,9 +98,17 @@ export class StorageService {
     }
   }
 
+  /**
+   * Downloads an attachment from remote storage to local storage.
+   * Retrieves the file, converts to base64, and saves locally.
+   * On success, marks as SYNCED. On failure, defers to error handler or archives.
+   * 
+   * @param attachment - The attachment record to download
+   * @returns Updated attachment record with local URI and new state
+   */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
     try {
-      const fileBlob = await this.remoteStorage.downloadFile(attachment);
+      const file = await this.remoteStorage.downloadFile(attachment);
 
       const base64Data = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -90,7 +117,7 @@ export class StorageService {
           resolve(reader.result?.toString().replace(/^data:.+;base64,/, '') || '');
         };
         reader.onerror = reject;
-        reader.readAsDataURL(fileBlob);
+        reader.readAsDataURL(new File([file], attachment.filename));
       });
 
       const localUri = this.localStorage.getLocalUri(attachment.filename);
@@ -114,6 +141,14 @@ export class StorageService {
     }
   }
 
+  /**
+   * Deletes an attachment from both remote and local storage.
+   * Removes the remote file, local file (if exists), and the attachment record.
+   * On failure, defers to error handler or archives.
+   * 
+   * @param attachment - The attachment record to delete
+   * @returns Updated attachment record
+   */
   async deleteAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
     try {
       await this.remoteStorage.deleteFile(attachment);
@@ -141,6 +176,10 @@ export class StorageService {
     }
   }
 
+  /**
+   * Performs cleanup of archived attachments by removing their local files and records.
+   * Errors during local file deletion are logged but do not prevent record deletion.
+   */
   async deleteArchivedAttachments(): Promise<void> {
     const archivedAttachments = await this.context.getArchivedAttachments();
     for (const attachment of archivedAttachments) {

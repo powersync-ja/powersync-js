@@ -3,14 +3,14 @@ import { AttachmentContext } from './AttachmentContext.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
-import { StorageService } from './StorageService.js';
+import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 import { AttachmentService } from './AttachmentService.js';
 
 export class AttachmentQueue {
   periodicSyncTimer?: ReturnType<typeof setInterval>;
   context: AttachmentContext;
-  storageService: StorageService;
+  syncingService: SyncingService;
   localStorage: LocalStorageAdapter;
   remoteStorage: RemoteStorageAdapter;
   attachmentsDirectory?: string;
@@ -50,7 +50,7 @@ export class AttachmentQueue {
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
     this.tableName = tableName;
-    this.storageService = new StorageService(this.context, localStorage, remoteStorage, logger ?? db.logger);
+    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger);
     this.attachmentService = new AttachmentService(tableName, db);
     this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
@@ -163,8 +163,8 @@ export class AttachmentQueue {
   async syncStorage(): Promise<void> {
     const activeAttachments = await this.context.getActiveAttachments();
     await this.localStorage.initialize();
-    await this.storageService.processAttachments(activeAttachments);
-    await this.storageService.deleteArchivedAttachments();
+    await this.syncingService.processAttachments(activeAttachments);
+    await this.syncingService.deleteArchivedAttachments();
   }
 
   async stopSync(): Promise<void> {
