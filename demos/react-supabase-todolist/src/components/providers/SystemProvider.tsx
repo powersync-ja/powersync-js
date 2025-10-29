@@ -3,7 +3,14 @@ import { AppSchema, ListRecord, LISTS_TABLE, TODOS_TABLE } from '@/library/power
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, DifferentialWatchedQuery, LogLevel, PowerSyncDatabase } from '@powersync/web';
+import {
+  createBaseLogger,
+  DifferentialWatchedQuery,
+  LogLevel,
+  PowerSyncDatabase,
+  WASQLiteOpenFactory,
+  WASQLiteVFS
+} from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
@@ -12,9 +19,10 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  database: {
-    dbFilename: 'example.db'
-  }
+  database: new WASQLiteOpenFactory({
+    dbFilename: 'example.db',
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  })
 });
 
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
