@@ -1,11 +1,12 @@
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
-import { vi, expect, test } from 'vitest';
-import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
+import { LockContext } from '@powersync/common';
+import { randomUUID } from 'node:crypto';
+import { expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
-import { LockContext } from '@powersync/common';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -202,4 +203,23 @@ databaseTest('getCrudTransactions', async ({ database }) => {
 
   const remainingTransaction = await database.getNextCrudTransaction();
   expect(remainingTransaction?.crud).toHaveLength(15);
+});
+
+tempDirectoryTest('should not present database is locked errors on startup', async ({ tmpdir }) => {
+  for (let i = 0; i < 10; i++) {
+    const database = new PowerSyncDatabase({
+      schema: AppSchema,
+      database: {
+        dbFilename: `${randomUUID()}.sqlite`,
+        dbLocation: tmpdir,
+        implementation: {
+          type: 'node:sqlite'
+        }
+      }
+    });
+
+    // This should not throw
+    await database.waitForReady();
+    await database.close();
+  }
 });
