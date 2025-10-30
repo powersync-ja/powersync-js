@@ -23,11 +23,12 @@
     "@electron-forge/maker-zip": "^7.7.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.7.0",
     "@electron-forge/plugin-webpack": "^7.7.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.11.0",
     "dotenv": "^16.4.7",
-    "electron": "30.0.2",
+    "electron": "37.0.0",
     "electron-rebuild": "^3.2.9",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "node-loader": "^2.1.0",
@@ -40,6 +41,7 @@
   },
   "dependencies": {
     "@powersync/node": "workspace:*",
+    "better-sqlite3": "^12.2.0",
     "electron-squirrel-startup": "^1.0.1"
   }
 }

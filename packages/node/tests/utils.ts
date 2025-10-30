@@ -1,8 +1,10 @@
-import os from 'node:os';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
+import { createLogger } from '@powersync/common';
+import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
@@ -18,8 +20,6 @@ import {
   SyncStatus,
   Table
 } from '../lib';
-import { createLogger } from '@powersync/common';
-import Logger from 'js-logger';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();

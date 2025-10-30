@@ -9,8 +9,9 @@ In particular:
    queries. This worker is part of the `@powersync/node` package and wouldn't be copied into the resulting Electron
    app by default. For this reason, this example has its own `src/main/worker.ts` loaded with `new URL('./worker.ts', import.meta.url)`.
 2. In addition to the worker, PowerSync requires access to a SQLite extension providing sync functionality.
-   This file is also part of the `@powersync/node` package and called `powersync.dll`, `libpowersync.dylib` or
-   `libpowersync.so` depending on the operating system.
+   This file is also part of the `@powersync/node` package and is the prebuilt release asset (for example
+   `powersync_x64.dll`, `libpowersync_x64.dylib` or `libpowersync_x64.so`) depending on the operating system and
+   architecture.
    We use the `copy-webpack-plugin` package to make sure a copy of that file is available to the main process,
    and load it in the custom `src/main/worker.ts`.
 3. The `get()` and `getAll()` methods are exposed to the renderer process with an IPC channel.
@@ -21,7 +22,7 @@ To see it in action:
 2. Copy `.env.local.template` to `.env.local`, and complete the environment variables. You can generate a [temporary development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens), or leave blank to test with local-only data.
    The example works with the schema from the [PowerSync + Supabase tutorial](https://docs.powersync.com/integration-guides/supabase-+-powersync#supabase-powersync).
 3. `cd` into this directory. In this mono-repo, you'll have to run `./node_modules/.bin/electron-rebuild` once to make sure `@powersync/better-sqlite3` was compiled with Electron's toolchain.
-3. Finally, run `pnpm start`.
+4. Finally, run `pnpm start`.
 
 Apart from the build setup, this example is purposefully kept simple.
 To make sure PowerSync is working, you can run `await powersync.get('SELECT powersync_rs_version()');` in the DevTools

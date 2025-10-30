@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -13,12 +13,12 @@
     "download_core.js"
   ],
   "scripts": {
-    "install": "node download_core.js",
-    "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config",
+    "prepare:core": "node download_core.js",
+    "build": " pnpm prepare:core && tsc -b && rollup --config",
+    "build:prod": "pnpm prepare:core && tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
-    "test": "vitest",
+    "test": " pnpm prepare:core && vitest",
     "test:exports": "attw --pack . --ignore-rules no-resolution"
   },
   "type": "module",
@@ -56,10 +56,15 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0"
+    "@powersync/common": "workspace:^1.40.0",
+    "better-sqlite3": "12.x"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "@powersync/better-sqlite3": "^0.2.0",
     "@powersync/common": "workspace:*",
     "async-lock": "^1.4.0",
     "bson": "^6.6.0",
@@ -69,6 +74,8 @@
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
     "@types/async-lock": "^1.4.0",
+    "@types/node": "^24.2.0",
+    "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.35.2",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",
