@@ -31,14 +31,14 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "vue": "*",
-    "@powersync/common": "workspace:^1.40.0"
+    "@powersync/common": "workspace:^1.40.0",
+    "vue": "*"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
     "flush-promises": "^1.0.2",
-    "jsdom": "^24.0.0",
+    "jsdom": "^24.1.3",
     "vue": "3.4.21"
   }
 }

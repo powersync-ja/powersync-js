@@ -14,9 +14,9 @@
     "@powersync/web": "workspace:*"
   },
   "devDependencies": {
-    "@swc/core": "~1.6.0",
-    "vite": "^5.0.12",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "@swc/core": "~1.6.13",
+    "vite": "^5.4.21",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
   }
 }

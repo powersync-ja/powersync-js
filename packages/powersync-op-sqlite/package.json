@@ -72,22 +72,22 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-lock": "^1.4.0"
+    "async-lock": "^1.4.1"
   },
   "devDependencies": {
-    "@op-engineering/op-sqlite": "^14.0.2",
-    "@react-native/eslint-config": "^0.73.1",
-    "@types/async-lock": "^1.4.0",
-    "@types/react": "^18.2.44",
+    "@op-engineering/op-sqlite": "^14.1.4",
+    "@react-native/eslint-config": "^0.73.2",
+    "@types/async-lock": "^1.4.2",
+    "@types/react": "^18.3.26",
     "del-cli": "^5.1.0",
-    "eslint": "^8.51.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.0.3",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
     "react": "18.3.1",
     "react-native": "0.75.3",
-    "react-native-builder-bob": "^0.30.2",
-    "turbo": "^1.10.7"
+    "react-native-builder-bob": "^0.30.3",
+    "turbo": "^1.13.4"
   },
   "eslintIgnore": [
     "node_modules/",
