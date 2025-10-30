@@ -1,4 +1,5 @@
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { Capacitor } from '@capacitor/core';
 
 import {
   BaseObserver,
@@ -14,7 +15,6 @@ import Lock from 'async-lock';
 import { PowerSyncCore } from '../plugin/PowerSyncCore';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory';
-
 /**
  * Monitors the execution time of a query and logs it to the performance timeline.
  */
@@ -107,23 +107,37 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      let result = await db.run(query, params, false, 'all');
-      /**
-       * This is a sample response for `SELECT powersync_control(?, ?)`
-       * ```json
-       * {
-       *   "changes": {
-       *     "changes": 0,
-       *     "values": [
-       *       {
-       *         "powersync_control(?, ?)": "[]"
-       *       }
-       *     ],
-       *     "lastId": 0
-       *   }
-       * }
-       * ```
-       */
+      const platform = Capacitor.getPlatform();
+      if (platform == 'android') {
+        // Android: use query for SELECT and executeSet for mutations
+        // We cannot use `run` here for both cases.
+        if (query.toLowerCase().trim().startsWith('select')) {
+          const result = await db.query(query, params);
+          const arrayResult = result.values ?? [];
+          return {
+            rowsAffected: 0,
+            rows: {
+              _array: arrayResult,
+              length: arrayResult.length,
+              item: (idx: number) => arrayResult[idx]
+            }
+          };
+        } else {
+          const result = await db.executeSet([{ statement: query, values: params }], false);
+          return {
+            insertId: result.changes?.lastId,
+            rowsAffected: result.changes?.changes ?? 0,
+            rows: {
+              _array: [],
+              length: 0,
+              item: () => null
+            }
+          };
+        }
+      }
+
+      // iOS (and other platforms): use run("all")
+      const result = await db.run(query, params, false, 'all');
       const resultSet = result.changes?.values ?? [];
       return {
         insertId: result.changes?.lastId,

@@ -52,7 +52,7 @@
     "test:exports": "attw --pack ."
   },
   "devDependencies": {
-    "@capacitor-community/sqlite": "^7.0.1",
+    "@capacitor-community/sqlite": "^7.0.2",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/docgen": "^0.3.0",
@@ -68,7 +68,7 @@
     "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
-    "@capacitor-community/sqlite": "^7.0.1",
+    "@capacitor-community/sqlite": "^7.0.2",
     "@powersync/web": "workspace:^"
   },
   "swiftlint": "@ionic/swiftlint-config",

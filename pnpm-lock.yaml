@@ -1817,8 +1817,8 @@ importers:
         version: 1.4.1
     devDependencies:
       '@capacitor-community/sqlite':
-        specifier: ^7.0.1
-        version: 7.0.1(@capacitor/core@7.4.3)
+        specifier: ^7.0.2
+        version: 7.0.2(@capacitor/core@7.4.3)
       '@capacitor/android':
         specifier: ^7.0.0
         version: 7.4.3(@capacitor/core@7.4.3)
@@ -3675,6 +3675,12 @@ packages:
 
   '@capacitor-community/sqlite@7.0.1':
     resolution: {integrity: sha512-Ypl8rTzgugBiPlqkeHM3mtt30py3AM5Ax4zZML+5XZjrNYUXHuiKUFgvSNW4a8glzP3/bjpYGiYkMHfclV1pTQ==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
+
+  '@capacitor-community/sqlite@7.0.2':
+    resolution: {integrity: sha512-TkxvuLgVCSmme/NSUEE2xopTVMwMqdT6+zH9pH8g76DMdi2z+ZsPEATQnJchGw4YAhhiQ8vTYxIP9se3/zkhGg==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@capacitor/core': '>=7.0.0'
@@ -22895,14 +22901,14 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.0.0
 
-  '@capacitor-community/sqlite@7.0.1(@capacitor/core@7.4.3)':
-    dependencies:
-      '@capacitor/core': 7.4.3
-      jeep-sqlite: 2.8.0
-
   '@capacitor-community/sqlite@7.0.1(@capacitor/core@7.4.4)':
     dependencies:
       '@capacitor/core': 7.4.4
+      jeep-sqlite: 2.8.0
+
+  '@capacitor-community/sqlite@7.0.2(@capacitor/core@7.4.3)':
+    dependencies:
+      '@capacitor/core': 7.4.3
       jeep-sqlite: 2.8.0
 
   '@capacitor/android@7.4.3(@capacitor/core@7.4.3)':
@@ -29033,9 +29039,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -29046,9 +29050,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
