@@ -205,21 +205,28 @@ databaseTest('getCrudTransactions', async ({ database }) => {
   expect(remainingTransaction?.crud).toHaveLength(15);
 });
 
-tempDirectoryTest('should not present database is locked errors on startup', async ({ tmpdir }) => {
-  for (let i = 0; i < 10; i++) {
-    const database = new PowerSyncDatabase({
-      schema: AppSchema,
-      database: {
-        dbFilename: `${randomUUID()}.sqlite`,
-        dbLocation: tmpdir,
-        implementation: {
-          type: 'node:sqlite'
+tempDirectoryTest(
+  'should not present database is locked errors on startup',
+  {
+    // This is not a SemVer check, but is basic enough to skip this test on older versions of Node.js
+    skip: process.versions.node < '22.5.0'
+  },
+  async ({ tmpdir }) => {
+    for (let i = 0; i < 10; i++) {
+      const database = new PowerSyncDatabase({
+        schema: AppSchema,
+        database: {
+          dbFilename: `${randomUUID()}.sqlite`,
+          dbLocation: tmpdir,
+          implementation: {
+            type: 'node:sqlite'
+          }
         }
-      }
-    });
+      });
 
-    // This should not throw
-    await database.waitForReady();
-    await database.close();
+      // This should not throw
+      await database.waitForReady();
+      await database.close();
+    }
   }
-});
+);
