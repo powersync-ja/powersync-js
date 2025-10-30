@@ -3,7 +3,9 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name = 'PowerSyncCapacitor'
+  # This is not a typo. Capacitor determines the plugin name from the npm package name.
+  # The case is sensitive.
+  s.name = 'PowersyncCapacitor'
   version = package['version']
   if version.include?('-dev')
     s.version = '0.0.0'
