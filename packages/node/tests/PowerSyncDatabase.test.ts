@@ -205,12 +205,9 @@ databaseTest('getCrudTransactions', async ({ database }) => {
   expect(remainingTransaction?.crud).toHaveLength(15);
 });
 
-tempDirectoryTest(
+// This is not a SemVer check, but is basic enough to skip this test on older versions of Node.js
+tempDirectoryTest.skipIf(process.versions.node < '22.5.0')(
   'should not present database is locked errors on startup',
-  {
-    // This is not a SemVer check, but is basic enough to skip this test on older versions of Node.js
-    skip: process.versions.node < '22.5.0'
-  },
   async ({ tmpdir }) => {
     for (let i = 0; i < 10; i++) {
       const database = new PowerSyncDatabase({
