@@ -1,8 +1,10 @@
+import { playwright } from '@vitest/browser-playwright';
 import topLevelAwait from 'vite-plugin-top-level-await';
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import wasm from 'vite-plugin-wasm';
+import { defineConfig, ViteUserConfigExport } from 'vitest/config';
 
-const config: UserConfigExport = {
-  plugins: [topLevelAwait()],
+const config: ViteUserConfigExport = {
+  plugins: [wasm(), topLevelAwait()],
   test: {
     isolate: false,
     globals: true,
@@ -10,7 +12,7 @@ const config: UserConfigExport = {
     browser: {
       enabled: true,
       headless: true,
-      provider: 'playwright',
+      provider: playwright(),
       instances: [
         {
           browser: 'chromium'

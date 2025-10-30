@@ -1,9 +1,10 @@
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
+import { defineConfig, ViteUserConfigExport } from 'vitest/config';
 
 import topLevelAwait from 'vite-plugin-top-level-await';
 import wasm from 'vite-plugin-wasm';
 
-const config: UserConfigExport = {
+const config: ViteUserConfigExport = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
     format: 'es',
@@ -31,7 +32,7 @@ const config: UserConfigExport = {
        * Starts each test in a new iFrame
        */
       isolate: true,
-      provider: 'playwright',
+      provider: playwright(),
       headless: true,
       instances: [
         {
