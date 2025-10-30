@@ -1,4 +1,12 @@
-import { Column, ColumnType, DBAdapter, OpTypeEnum, Schema, SyncDataBatch, Table } from '@powersync/web';
+import {
+  AbstractPowerSyncDatabase,
+  Column,
+  ColumnType,
+  OpTypeEnum,
+  Schema,
+  SyncDataBatch,
+  Table
+} from '@powersync/web';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 
@@ -65,10 +73,10 @@ export class DynamicSchemaManager {
     }
   }
 
-  async refreshSchema(db: DBAdapter) {
+  async refreshSchema(db: AbstractPowerSyncDatabase) {
     if (this.dirty) {
-      const json = this.buildSchema().toJSON();
-      await db.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(json)]);
+      // Use the PowerSyncDatabase since this will refresh all watched queries
+      await db.updateSchema(this.buildSchema());
       this.dirty = false;
       console.log('Updated dynamic schema:', this.tables);
     }

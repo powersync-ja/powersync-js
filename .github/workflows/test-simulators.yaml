@@ -28,6 +28,7 @@ jobs:
     needs: check-changes
     if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     runs-on: ubuntu-xl
+    timeout-minutes: 30
     env:
       AVD_NAME: ubuntu-avd-x86_64-31
     steps:
@@ -130,8 +131,11 @@ jobs:
   test-ios:
     name: Test iOS
     needs: check-changes
-    if: ${{ needs.check-changes.outputs.should_run == 'true' }}
+    # TODO: Re-enable iOS tests. They have been disabled because they are failing extremely frequently without
+    # any apparent cause. In particular, it seems like even starting the simulator times out most of the time.
+    if: ${{ false && needs.check-changes.outputs.should_run == 'true' }}
     runs-on: macOS-15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4

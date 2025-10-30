@@ -1,5 +1,25 @@
 # @powersync/react
 
+## 1.8.1
+
+### Patch Changes
+
+- 3008dbc: Allow using `db.syncStream()` instances in `useQuery` hooks.
+- Updated dependencies [c2bc2c1]
+  - @powersync/common@1.40.0
+
+## 1.8.0
+
+### Minor Changes
+
+- 7a5aaf5: Add hooks for sync streams
+
+### Patch Changes
+
+- d8236aa: Fix "order and size of this array must remain constant" warning.
+- Updated dependencies [eff8cbf]
+  - @powersync/common@1.39.0
+
 ## 1.7.4
 
 ### Patch Changes

@@ -1,10 +1,12 @@
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
-import { vi, expect, test } from 'vitest';
-import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
+import { LockContext } from '@powersync/common';
+import { randomUUID } from 'node:crypto';
+import { expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
 import { WorkerOpener } from '../lib/db/options';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -36,6 +38,33 @@ tempDirectoryTest('can customize loading workers', async ({ tmpdir }) => {
 
   await database.get('SELECT 1;'); // Make sure the database is ready and works
   expect(openFunction).toHaveBeenCalledTimes(3); // One writer, two readers
+  await database.close();
+});
+
+tempDirectoryTest('can customize connection initialization', async ({ tmpdir }) => {
+  const initializeConnection = vi.fn(async (db: LockContext, isWriter: boolean) => {
+    const row = await db.get('pragma journal_mode');
+    if (isWriter) {
+      // This should run before anything else, so the database should not be in WAL mode here.
+      expect(row).toMatchObject({ journal_mode: 'delete' });
+    } else {
+      // Readers are initialized after writers, and initializing the writer will enable WAL mode.
+      expect(row).toMatchObject({ journal_mode: 'wal' });
+    }
+  });
+
+  const database = new PowerSyncDatabase({
+    schema: AppSchema,
+    database: {
+      dbFilename: 'test.db',
+      dbLocation: tmpdir,
+      initializeConnection,
+      readWorkerCount: 2
+    }
+  });
+
+  await database.get('SELECT 1;'); // Make sure the database is ready and works
+  expect(initializeConnection).toHaveBeenCalledTimes(3); // One writer, two readers
   await database.close();
 });
 
@@ -175,3 +204,26 @@ databaseTest('getCrudTransactions', async ({ database }) => {
   const remainingTransaction = await database.getNextCrudTransaction();
   expect(remainingTransaction?.crud).toHaveLength(15);
 });
+
+// This is not a SemVer check, but is basic enough to skip this test on older versions of Node.js
+tempDirectoryTest.skipIf(process.versions.node < '22.5.0')(
+  'should not present database is locked errors on startup',
+  async ({ tmpdir }) => {
+    for (let i = 0; i < 10; i++) {
+      const database = new PowerSyncDatabase({
+        schema: AppSchema,
+        database: {
+          dbFilename: `${randomUUID()}.sqlite`,
+          dbLocation: tmpdir,
+          implementation: {
+            type: 'node:sqlite'
+          }
+        }
+      });
+
+      // This should not throw
+      await database.waitForReady();
+      await database.close();
+    }
+  }
+);

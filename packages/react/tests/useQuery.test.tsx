@@ -1,34 +1,16 @@
 import * as commonSdk from '@powersync/common';
 import { toCompilableQuery, wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
-import { PowerSyncDatabase } from '@powersync/web';
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { eq } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import pDefer from 'p-defer';
 import React, { useEffect } from 'react';
-import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { useWatchedQuerySubscription } from '../src/hooks/watched/useWatchedQuerySubscription';
 import { QueryResult } from '../src/hooks/watched/watch-types';
-
-export const openPowerSync = () => {
-  const db = new PowerSyncDatabase({
-    database: { dbFilename: 'test.db' },
-    schema: new commonSdk.Schema({
-      lists: new commonSdk.Table({
-        name: commonSdk.column.text
-      })
-    })
-  });
-
-  onTestFinished(async () => {
-    await db.disconnectAndClear();
-    await db.close();
-  });
-
-  return db;
-};
+import { openPowerSync } from './utils';
 
 describe('useQuery', () => {
   beforeEach(() => {

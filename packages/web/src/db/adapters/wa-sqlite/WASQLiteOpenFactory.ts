@@ -82,6 +82,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
       return new WorkerWrappedAsyncDatabaseConnection({
         remote: workerDBOpener,
+        // This tab owns the worker, so we're guaranteed to outlive it.
+        remoteCanCloseUnexpectedly: false,
         baseConnection: await workerDBOpener({
           dbFilename: this.options.dbFilename,
           vfs,

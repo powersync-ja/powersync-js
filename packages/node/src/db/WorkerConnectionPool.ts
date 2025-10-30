@@ -1,23 +1,24 @@
+import * as Comlink from 'comlink';
 import fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import * as Comlink from 'comlink';
 
 import {
   BaseObserver,
   BatchedUpdateNotification,
   DBAdapter,
   DBAdapterListener,
-  LockContext,
-  Transaction,
   DBLockOptions,
-  QueryResult
+  LockContext,
+  QueryResult,
+  Transaction
 } from '@powersync/common';
 import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';
+import { isBundledToCommonJs } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';
-import { NodeSQLOpenOptions } from './options.js';
+import { NodeDatabaseImplementation, NodeSQLOpenOptions } from './options.js';
 
 export type BetterSQLite3LockContext = LockContext & {
   executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
@@ -27,10 +28,14 @@ export type BetterSQLite3Transaction = Transaction & BetterSQLite3LockContext;
 
 const READ_CONNECTIONS = 5;
 
+const defaultDatabaseImplementation: NodeDatabaseImplementation = {
+  type: 'better-sqlite3'
+};
+
 /**
  * Adapter for better-sqlite3
  */
-export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implements DBAdapter {
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
@@ -73,7 +78,7 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
     }
 
     const openWorker = async (isWriter: boolean) => {
-      const isCommonJsModule = import.meta.isBundlingToCommonJs ?? false;
+      const isCommonJsModule = isBundledToCommonJs;
       let worker: Worker;
       const workerName = isWriter ? `write ${dbFilePath}` : `read ${dbFilePath}`;
 
@@ -117,8 +122,28 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         console.error('Unexpected PowerSync database worker error', e);
       });
 
-      const database = (await comlink.open(dbFilePath, isWriter)) as Remote<AsyncDatabase>;
-      return new RemoteConnection(worker, comlink, database);
+      const database = (await comlink.open({
+        path: dbFilePath,
+        isWriter,
+        implementation: this.options.implementation ?? defaultDatabaseImplementation
+      })) as Remote<AsyncDatabase>;
+      if (isWriter) {
+        await database.execute("SELECT powersync_update_hooks('install');", []);
+      }
+
+      const connection = new RemoteConnection(worker, comlink, database);
+      if (this.options.initializeConnection) {
+        await this.options.initializeConnection(connection, isWriter);
+      }
+      if (!isWriter) {
+        await connection.execute('pragma query_only = true');
+      } else {
+        // We only need to enable this on the writer connection.
+        // We can get `database is locked` errors if we enable this on concurrently opening read connections.
+        await connection.execute('pragma journal_mode = WAL');
+      }
+
+      return connection;
     };
 
     // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).
@@ -188,7 +213,11 @@ export class BetterSQLite3DBAdapter extends BaseObserver<DBAdapterListener> impl
         try {
           return await fn(this.writeConnection);
         } finally {
-          const updates = await this.writeConnection.database.collectCommittedUpdates();
+          const serializedUpdates = await this.writeConnection.database.executeRaw(
+            "SELECT powersync_update_hooks('get');",
+            []
+          );
+          const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
           if (updates.length > 0) {
             const event: BatchedUpdateNotification = {

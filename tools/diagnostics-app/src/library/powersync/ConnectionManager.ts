@@ -13,12 +13,12 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
+import React from 'react';
 import { safeParse } from '../safeParse/safeParse';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RecordingStorageAdapter } from './RecordingStorageAdapter';
-import { TokenConnector } from './TokenConnector';
 import { RustClientInterceptor } from './RustClientInterceptor';
-import React from 'react';
+import { TokenConnector } from './TokenConnector';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -72,8 +72,8 @@ export async function connect() {
   const remote = new WebRemote(connector);
   const adapter =
     client == SyncClientImplementation.JAVASCRIPT
-      ? new RecordingStorageAdapter(db.database, schemaManager)
-      : new RustClientInterceptor(db.database, remote, schemaManager);
+      ? new RecordingStorageAdapter(db, schemaManager)
+      : new RustClientInterceptor(db, remote, schemaManager);
 
   const syncOptions: WebStreamingSyncImplementationOptions = {
     adapter,
@@ -99,7 +99,7 @@ export async function clearData() {
   await sync?.disconnect();
   await db.disconnectAndClear();
   await schemaManager.clear();
-  await schemaManager.refreshSchema(db.database);
+  await schemaManager.refreshSchema(db);
   if (connector.hasCredentials()) {
     const params = getParams();
     await sync?.connect({ params });

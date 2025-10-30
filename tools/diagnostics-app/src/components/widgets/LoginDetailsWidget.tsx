@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Formik, FormikErrors } from 'formik';
 import { SyncClientImplementation } from '@powersync/web';
+import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
 
 export type LoginDetailsFormValues = {
   token: string;
@@ -33,7 +34,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
   return (
     <S.MainContainer>
       <S.LoginContainer elevation={1}>
-        <S.LoginHeader variant="h4">Diagnostics Config</S.LoginHeader>
+        <S.LoginHeader variant="h4">Sync Diagnostics Client</S.LoginHeader>
         <S.LogoBox>
           <S.Logo alt="PowerSync Logo" width={400} height={100} src="/powersync-logo.svg" />
         </S.LogoBox>
@@ -191,31 +192,4 @@ namespace S {
   export const TextInput = styled(TextField)`
     margin-bottom: 20px;
   `;
-}
-
-function getTokenEndpoint(token: string) {
-  try {
-    const [head, body, signature] = token.split('.');
-    const payload = JSON.parse(atob(body));
-    const aud = payload.aud as string | string[] | undefined;
-    const audiences = Array.isArray(aud) ? aud : [aud];
-
-    // Prioritize public powersync URL
-    for (let aud of audiences) {
-      if (aud?.match(/^https?:.*.journeyapps.com/)) {
-        return aud;
-      }
-    }
-
-    // Fallback to any URL
-    for (let aud of audiences) {
-      if (aud?.match(/^https?:/)) {
-        return aud;
-      }
-    }
-
-    return null;
-  } catch (e) {
-    return null;
-  }
 }
