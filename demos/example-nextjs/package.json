@@ -22,7 +22,7 @@
     "@powersync/web": "workspace:*",
     "lato-font": "^3.0.0",
     "lexical": "^0.15.0",
-    "next": "14.2.3",
+    "next": "^14.2.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
