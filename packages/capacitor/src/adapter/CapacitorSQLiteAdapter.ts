@@ -89,7 +89,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     await this._writeConnection.open();
 
     const { cacheSizeKb, journalSizeLimit, synchronous } = { ...DEFAULT_SQLITE_OPTIONS, ...this.options.sqliteOptions };
-    await this.writeConnection.query("SELECT powersync_update_hooks('install')");
+
     await this.writeConnection.query('PRAGMA journal_mode = WAL');
     await this.writeConnection.query(`PRAGMA journal_size_limit = ${journalSizeLimit}`);
     await this.writeConnection.query(`PRAGMA temp_store = memory`);
@@ -97,6 +97,18 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     await this.writeConnection.query(`PRAGMA cache_size = -${cacheSizeKb}`);
 
     await this._readConnection.open();
+
+    const platform = Capacitor.getPlatform();
+    if (platform == 'android') {
+      /**
+       * SQLCipher for Android enables dynamic loading of extensions.
+       * On iOS we use a static auto extension registration.
+       */
+      const extensionQuery = "SELECT load_extension('libpowersync.so', 'sqlite3_powersync_init')";
+      await this.writeConnection.query(extensionQuery);
+      await this.readConnection.query(extensionQuery);
+    }
+    await this.writeConnection.query("SELECT powersync_update_hooks('install')");
   }
 
   async close(): Promise<void> {

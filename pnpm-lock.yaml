@@ -266,8 +266,8 @@ importers:
   demos/example-capacitor:
     dependencies:
       '@capacitor-community/sqlite':
-        specifier: ^7.0.1
-        version: 7.0.1(@capacitor/core@7.4.4)
+        specifier: ^7.0.2
+        version: 7.0.2(@capacitor/core@7.4.4)
       '@capacitor/android':
         specifier: ^7.4.3
         version: 7.4.3(@capacitor/core@7.4.4)
@@ -3672,12 +3672,6 @@ packages:
     resolution: {integrity: sha512-tTQ0uDSCL0ypeMa8T/E9wAZRGKWj8kXP7+6RYgPTfOPs9N07C9xM8P02GJ3feETap4Ux5S69D9nteq9mEj86NA==}
     peerDependencies:
       react: '>=16.3.0'
-
-  '@capacitor-community/sqlite@7.0.1':
-    resolution: {integrity: sha512-Ypl8rTzgugBiPlqkeHM3mtt30py3AM5Ax4zZML+5XZjrNYUXHuiKUFgvSNW4a8glzP3/bjpYGiYkMHfclV1pTQ==}
-    engines: {node: '>=16.0.0'}
-    peerDependencies:
-      '@capacitor/core': '>=7.0.0'
 
   '@capacitor-community/sqlite@7.0.2':
     resolution: {integrity: sha512-TkxvuLgVCSmme/NSUEE2xopTVMwMqdT6+zH9pH8g76DMdi2z+ZsPEATQnJchGw4YAhhiQ8vTYxIP9se3/zkhGg==}
@@ -22901,14 +22895,14 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.0.0
 
-  '@capacitor-community/sqlite@7.0.1(@capacitor/core@7.4.4)':
-    dependencies:
-      '@capacitor/core': 7.4.4
-      jeep-sqlite: 2.8.0
-
   '@capacitor-community/sqlite@7.0.2(@capacitor/core@7.4.3)':
     dependencies:
       '@capacitor/core': 7.4.3
+      jeep-sqlite: 2.8.0
+
+  '@capacitor-community/sqlite@7.0.2(@capacitor/core@7.4.4)':
+    dependencies:
+      '@capacitor/core': 7.4.4
       jeep-sqlite: 2.8.0
 
   '@capacitor/android@7.4.3(@capacitor/core@7.4.3)':

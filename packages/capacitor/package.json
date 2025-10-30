@@ -17,7 +17,7 @@
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
-    "PowersyncCapacitor.podspec"
+    "PowerSyncCapacitor.podspec"
   ],
   "author": "",
   "license": "Apache-2.0",
@@ -48,6 +48,7 @@
     "build:prod": "pnpm build",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
+    "test": "pnpm verify:android",
     "prepublishOnly": "pnpm build",
     "test:exports": "attw --pack ."
   },
