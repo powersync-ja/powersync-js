@@ -1,4 +1,8 @@
 export * from './Schema.js';
-export * from './StorageAdapter.js';
-
-export * from './AbstractAttachmentQueue.js';
+export * from './LocalStorageAdapter.js';
+export * from './storageAdapters/NodeFileSystemAdapter.js';
+export * from './storageAdapters/IndexDBFileSystemAdapter.js';
+export * from './RemoteStorageAdapter.js';
+export * from './AttachmentContext.js';
+export * from './SyncingService.js';
+export * from './AttachmentQueue.js';
