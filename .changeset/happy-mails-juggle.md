@@ -2,4 +2,4 @@
 '@powersync/capacitor': minor
 ---
 
-Intial release
+Initial release
