@@ -106,6 +106,38 @@ export const TodoListDisplaySuspense = () => {
 };
 ```
 
+### useQueries
+
+The `useQueries` hook allows you to run multiple queries in parallel and combine the results into a single result.
+
+```JSX
+// TodoListDisplay.jsx
+import { useQueries } from '@powersync/tanstack-react-query';
+
+export const TodoListDisplay = () => {
+  const { data: todoLists } = useQueries({
+    queries: [
+      { queryKey: ['todoLists'], query: 'SELECT * from lists' },
+      { queryKey: ['todoLists2'], query: 'SELECT * from lists2' },
+    ],
+    combine: (results) => {
+      return {
+        data: results.map((result) => result.data),
+        pending: results.some((result) => result.isPending),
+      }
+    },
+  });
+
+  return (
+    <div>
+      {todoLists.map((list) => (
+        <li key={list.id}>{list.name}</li>
+      ))}
+    </div>
+  );
+};
+```
+
 ### TypeScript Support
 
 A type can be specified for each row returned by `useQuery` and `useSuspenseQuery`.
