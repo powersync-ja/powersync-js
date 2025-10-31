@@ -1,0 +1,88 @@
+{
+  "name": "@powersync/capacitor",
+  "version": "0.0.1",
+  "description": "Adds PowerSync Capacitor support for iOS/Android",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "main": "dist/plugin.cjs.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "unpkg": "dist/plugin.js",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "ios/Tests",
+    "Package.swift",
+    "PowersyncCapacitor.podspec"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "keywords": [
+    "capacitor",
+    "plugin",
+    "native"
+  ],
+  "scripts": {
+    "verify": "pnpm verify:ios && pnpm verify:android && pnpm verify:web",
+    "verify:ios": "cd example-app && npm install && cd ios/App && pod install && xcodebuild -workspace App.xcworkspace -scheme App -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest'",
+    "verify:android": "cd android && ./gradlew clean build test && cd ..",
+    "verify:web": "pnpm build",
+    "lint": "pnpm eslint && pnpm prettier -- --check && pnpm swiftlint -- lint",
+    "fmt": "pnpm eslint -- --fix && pnpm prettier -- --write && pnpm swiftlint -- --fix --format",
+    "eslint": "eslint . --ext ts",
+    "prettier": "prettier \"**/*.{css,html,ts,js,java}\" --plugin=prettier-plugin-java",
+    "swiftlint": "node-swiftlint",
+    "docgen": "docgen --api PowerSyncPlugin --output-readme README.md --output-json dist/docs.json",
+    "build": "pnpm clean && pnpm docgen && tsc && rollup -c rollup.config.mjs",
+    "build:prod": "pnpm build",
+    "clean": "rimraf ./dist",
+    "watch": "tsc --watch",
+    "prepublishOnly": "pnpm build",
+    "test:exports": "attw --pack ."
+  },
+  "devDependencies": {
+    "@capacitor-community/sqlite": "^7.0.2",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/docgen": "^0.3.0",
+    "@capacitor/ios": "^7.0.0",
+    "@ionic/eslint-config": "^0.4.0",
+    "@ionic/prettier-config": "^4.0.0",
+    "@ionic/swiftlint-config": "^2.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-java": "^2.6.6",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.30.1",
+    "swiftlint": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@capacitor-community/sqlite": "^7.0.2",
+    "@powersync/web": "workspace:^"
+  },
+  "swiftlint": "@ionic/swiftlint-config",
+  "capacitor": {
+    "name": "PowerSyncCapacitor",
+    "ios": {
+      "name": "PowerSyncCapacitor",
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  },
+  "dependencies": {
+    "async-lock": "^1.4.0"
+  }
+}

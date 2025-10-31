@@ -7,5 +7,11 @@
     "SplashScreen": {
       "launchShowDuration": 0
     }
+  },
+  "android": {
+    "loggingBehavior": "production"
+  },
+  "ios": {
+    "loggingBehavior": "production"
   }
 }
