@@ -56,7 +56,6 @@ beforeAll(async () => {
     }),
     database: {
       dbFilename: 'testing.db',
-      dbLocation: './tests/temp'
     }
   });
 
@@ -101,7 +100,6 @@ const watchAttachments = (onUpdate: (attachments: WatchedAttachmentItem[]) => vo
 
 // Helper to watch the attachments table
 async function* watchAttachmentsTable(): AsyncGenerator<AttachmentRecord[]> {
-  console.debug('[TEST] watchAttachmentsTable: watching attachments table');
   const watcher = db.watch(
     `
         SELECT
@@ -113,10 +111,7 @@ async function* watchAttachmentsTable(): AsyncGenerator<AttachmentRecord[]> {
   );
 
   for await (const result of watcher) {
-    console.debug('[TEST] watchAttachmentsTable: result', result);
     const attachments = result.rows?._array.map((r: any) => attachmentFromSql(r)) ?? [];
-    console.debug('[TEST] watchAttachmentsTable: attachments', attachments);
-    console.debug('[TEST] Mapped attachments:', attachments.map(a => ({ id: a.id?.substring(0,8), state: a.state, hasSynced: a.hasSynced })));
     yield attachments;
   }
 }
@@ -126,7 +121,6 @@ async function waitForMatchCondition(
   predicate: (attachments: AttachmentRecord[]) => boolean,
   timeoutSeconds: number = 5
 ): Promise<AttachmentRecord[]> {
-  console.debug('[TEST] waitForMatchCondition: waiting for condition');
   const timeoutMs = timeoutSeconds * 1000;
   const abortController = new AbortController();
   const startTime = Date.now();
@@ -135,21 +129,16 @@ async function waitForMatchCondition(
 
   try {
     for await (const value of generator) {
-      console.debug('[TEST] waitForMatchCondition: generator value', value);
       if (Date.now() - startTime > timeoutMs) {
-        console.debug('[TEST] waitForMatchCondition: timeout');
         throw new Error(`Timeout waiting for condition after ${timeoutSeconds}s`);
       }
       
       if (predicate(value)) {
-        console.debug('[TEST] waitForMatchCondition: match found!');
         return value;
       }
     }
-    console.debug('[TEST] waitForMatchCondition: for await loop ended without match');
     throw new Error('Stream ended without match');
   } finally {
-    console.debug('[TEST] waitForMatchCondition: finally finaling');
     await generator.return?.(undefined);
     abortController.abort();
   }
@@ -188,7 +177,6 @@ describe('attachment queue', () => {
       const attachments = await waitForMatchCondition(
         () => watchAttachmentsTable(),
         (results) => {
-          console.debug('[TEST] Predicate checking:', results.map(r => ({ id: r.id?.substring(0,8), state: r.state })));
           return results.some((r) => r.state === AttachmentState.SYNCED)
         },
         5
@@ -204,7 +192,7 @@ describe('attachment queue', () => {
 
     // Verify local file exists
     const localData = await queue.localStorage.readFile(attachmentRecord.localUri!);
-    expect(localData).toEqual(MOCK_JPEG_U8A);
+    expect(Array.from(new Uint8Array(localData))).toEqual(MOCK_JPEG_U8A);
 
     await queue.stopSync();
   });

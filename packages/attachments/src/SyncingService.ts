@@ -107,22 +107,11 @@ export class SyncingService {
    * @returns Updated attachment record with local URI and new state
    */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    console.debug('[SYNC] Downloading:', attachment.id);
     try {
-      const file = await this.remoteStorage.downloadFile(attachment);
-      console.debug('[SYNC] Downloaded, converting to base64');
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          // remove the header from the result: 'data:*/*;base64,'
-          resolve(reader.result?.toString().replace(/^data:.+;base64,/, '') || '');
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(new File([file], attachment.filename));
-      });
+      const fileData = await this.remoteStorage.downloadFile(attachment);
 
       const localUri = this.localStorage.getLocalUri(attachment.filename);
-      await this.localStorage.saveFile(localUri, base64Data);
+      await this.localStorage.saveFile(localUri, fileData);
 
       return {
         ...attachment,

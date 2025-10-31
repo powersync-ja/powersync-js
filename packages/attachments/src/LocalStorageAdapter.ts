@@ -1,7 +1,10 @@
+export type AttachmentData = ArrayBuffer | string;
+
 export enum EncodingType {
   UTF8 = 'utf8',
   Base64 = 'base64'
 }
+
 
 /**
  * LocalStorageAdapter defines the interface for local file storage operations.
@@ -14,7 +17,7 @@ export interface LocalStorageAdapter {
    * @param data Data to store (ArrayBuffer, Blob, or string)
    * @returns Number of bytes written
    */
-  saveFile(filePath: string, data: ArrayBuffer | Blob | string): Promise<number>;
+  saveFile(filePath: string, data: AttachmentData): Promise<number>;
 
   /**
    * Retrieves file data as an ArrayBuffer.

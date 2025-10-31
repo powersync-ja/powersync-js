@@ -1,4 +1,4 @@
-import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
+import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 /**
  * IndexDBFileSystemStorageAdapter implements LocalStorageAdapter using IndexedDB.
@@ -41,11 +41,28 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
     return tx.objectStore('files');
   }
 
-  async saveFile(filePath: string, data: string): Promise<number> {
+  async saveFile(filePath: string, data: AttachmentData): Promise<number> {
     const store = await this.getStore('readwrite');
+
+    let dataToStore: ArrayBuffer;
+    let size: number;
+
+    if (typeof data === 'string') {
+      const binaryString = atob(data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      dataToStore = bytes.buffer;
+      size = bytes.byteLength;
+    } else {
+      dataToStore = data;
+      size = dataToStore.byteLength;
+    }
+
     return await new Promise<number>((resolve, reject) => {
-      const req = store.put(data, filePath);
-      req.onsuccess = () => resolve(data.length);
+      const req = store.put(dataToStore, filePath);
+      req.onsuccess = () => resolve(size);
       req.onerror = () => reject(req.error);
     });
   }

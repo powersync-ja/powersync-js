@@ -117,20 +117,9 @@ export class AttachmentContext {
    * @param attachment - The attachment record to upsert
    * @param context - Active database transaction context
    */
-  upsertAttachment(attachment: AttachmentRecord, context: Transaction): void {
-    console.debug('[ATTACHMENT CONTEXT] Upserting attachment:', [
-      attachment.id,
-      attachment.filename,
-      attachment.localUri || null,
-      attachment.size || null,
-      attachment.mediaType || null,
-      attachment.timestamp,
-      attachment.state,
-      attachment.hasSynced ? 1 : 0,
-      attachment.metaData || null
-    ]);
+  async upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void> {    
     try {
-      context.execute(
+      const result = await context.execute(
         /* sql */
         `
           INSERT
@@ -161,7 +150,6 @@ export class AttachmentContext {
         ]
       );
     } catch (error) {
-      console.error('[ATTACHMENT CONTEXT] Error upserting attachment:', attachment.id?.substring(0,8), attachment.state, error);
       throw error;
     }
   }
@@ -198,9 +186,7 @@ export class AttachmentContext {
    * @param attachments - Array of attachment records to save
    */
   async saveAttachments(attachments: AttachmentRecord[]): Promise<void> {
-    console.debug('[ATTACHMENT CONTEXT] Saving attachments:', attachments.map(a => ({ id: a.id?.substring(0,8), state: a.state })));
     if (attachments.length === 0) {
-      console.debug('[ATTACHMENT CONTEXT] No attachments to save');
       return;
     }
     await this.db.writeTransaction(async (tx) => {

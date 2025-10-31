@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
+import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
@@ -40,13 +40,17 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
 
   async saveFile(
     filePath: string,
-    data: string,
+    data: AttachmentData,
     options?: { encoding?: EncodingType; mediaType?: string }
   ): Promise<number> {
-    const buffer = options?.encoding === EncodingType.Base64 ? Buffer.from(data, 'base64') : Buffer.from(data, 'utf8');
-    await fs.writeFile(filePath, buffer, {
-      encoding: options?.encoding
-    });
+    let buffer: Buffer;
+
+    if (typeof data === 'string') {
+      buffer = Buffer.from(data, options?.encoding ?? EncodingType.Base64);
+    } else {
+      buffer = Buffer.from(data);
+    }
+    await fs.writeFile(filePath, buffer);
     return buffer.length;
   }
 
