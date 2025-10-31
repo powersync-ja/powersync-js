@@ -9,3 +9,5 @@ dist
 # Useful if running repository in VSCode dev container
 .pnpm-store
 __screenshots__
+**/tests/temp/**/*
+**/tests/temp/**/.*

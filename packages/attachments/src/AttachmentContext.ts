@@ -118,36 +118,52 @@ export class AttachmentContext {
    * @param context - Active database transaction context
    */
   upsertAttachment(attachment: AttachmentRecord, context: Transaction): void {
-    context.execute(
-      /* sql */
-      `
-        INSERT
-        OR REPLACE INTO ${this.tableName} (
-          id,
-          filename,
-          local_uri,
-          size,
-          media_type,
-          timestamp,
-          state,
-          has_synced,
-          meta_data
-        )
-        VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        attachment.id,
-        attachment.filename,
-        attachment.localUri || null,
-        attachment.size || null,
-        attachment.mediaType || null,
-        attachment.timestamp,
-        attachment.state,
-        attachment.hasSynced ? 1 : 0,
-        attachment.metaData || null
-      ]
-    );
+    console.debug('[ATTACHMENT CONTEXT] Upserting attachment:', [
+      attachment.id,
+      attachment.filename,
+      attachment.localUri || null,
+      attachment.size || null,
+      attachment.mediaType || null,
+      attachment.timestamp,
+      attachment.state,
+      attachment.hasSynced ? 1 : 0,
+      attachment.metaData || null
+    ]);
+    try {
+      context.execute(
+        /* sql */
+        `
+          INSERT
+          OR REPLACE INTO ${this.tableName} (
+            id,
+            filename,
+            local_uri,
+            size,
+            media_type,
+            timestamp,
+            state,
+            has_synced,
+            meta_data
+          )
+          VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          attachment.id,
+          attachment.filename,
+          attachment.localUri || 'dummy',
+          attachment.size || 1,
+          attachment.mediaType || 'dummy',
+          attachment.timestamp || Date.now(),
+          attachment.state,
+          attachment.hasSynced ? 1 : 0,
+          attachment.metaData || 'dummy'
+        ]
+      );
+    } catch (error) {
+      console.error('[ATTACHMENT CONTEXT] Error upserting attachment:', attachment.id?.substring(0,8), attachment.state, error);
+      throw error;
+    }
   }
 
   /**
@@ -182,7 +198,9 @@ export class AttachmentContext {
    * @param attachments - Array of attachment records to save
    */
   async saveAttachments(attachments: AttachmentRecord[]): Promise<void> {
+    console.debug('[ATTACHMENT CONTEXT] Saving attachments:', attachments.map(a => ({ id: a.id?.substring(0,8), state: a.state })));
     if (attachments.length === 0) {
+      console.debug('[ATTACHMENT CONTEXT] No attachments to save');
       return;
     }
     await this.db.writeTransaction(async (tx) => {

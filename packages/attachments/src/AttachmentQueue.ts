@@ -7,6 +7,8 @@ import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 import { AttachmentService } from './AttachmentService.js';
 
+export type AttachmentData = ArrayBuffer | Blob | string;
+
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
@@ -94,6 +96,7 @@ export class AttachmentQueue {
     downloadAttachments?: boolean;
     archivedCacheLimit?: number;
   }) {
+    console.debug('AttachmentQueue constructor')
     this.context = new AttachmentContext(db, tableName, logger ?? db.logger);
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
@@ -133,7 +136,12 @@ export class AttachmentQueue {
    * - Handles state transitions for archived and new attachments
    */
   async startSync(): Promise<void> {
-    await this.stopSync();
+    console.debug('[QUEUE] AttachmentQueue startSync')
+    if (this.attachmentService.watchActiveAttachments) {
+      await this.stopSync();
+      // re-create the watch after it was stopped
+      this.watchActiveAttachments = this.attachmentService.watchActiveAttachments();
+    }
 
     // Sync storage periodically
     this.periodicSyncTimer = setInterval(async () => {
@@ -143,12 +151,14 @@ export class AttachmentQueue {
     // Sync storage when there is a change in active attachments
     this.watchActiveAttachments.registerListener({
       onDiff: async () => {
+        console.debug('[QUEUE] watchActiveAttachments: diff detected, syncing storage');
         await this.syncStorage();
       }
     });
 
     // Process attachments when there is a change in watched attachments
     this.watchAttachments(async (watchedAttachments) => {
+      console.debug('[QUEUE] watchAttachments callback:', watchedAttachments.length, 'items');
       // Need to get all the attachments which are tracked in the DB.
       // We might need to restore an archived attachment.
       const currentAttachments = await this.context.getAttachments();
@@ -224,6 +234,7 @@ export class AttachmentQueue {
       }
 
       if (attachmentUpdates.length > 0) {
+        console.debug('[QUEUE] Saving attachments:', attachmentUpdates);
         await this.context.saveAttachments(attachmentUpdates);
       }
     });
@@ -237,6 +248,7 @@ export class AttachmentQueue {
    */
   async syncStorage(): Promise<void> {
     const activeAttachments = await this.context.getActiveAttachments();
+    console.debug('[QUEUE] syncStorage: processing', activeAttachments.length, 'active attachments');
     await this.localStorage.initialize();
     await this.syncingService.processAttachments(activeAttachments);
     await this.syncingService.deleteArchivedAttachments();
@@ -275,7 +287,7 @@ export class AttachmentQueue {
     updateHook
   }: {
     // TODO: create a dedicated type for data
-    data: ArrayBuffer | Blob | string;
+    data: AttachmentData;
     fileExtension: string;
     mediaType?: string;
     metaData?: string;

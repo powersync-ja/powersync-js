@@ -18,16 +18,16 @@ const config: UserConfigExport = {
     isolate: false,
     globals: true,
     include: ['tests/**/*.test.ts'],
-    browser: {
-      enabled: true,
-      headless: true,
-      provider: 'playwright',
-      instances: [
-        {
-          browser: 'chromium'
-        }
-      ]
-    }
+    // browser: {
+    //   enabled: true,
+    //   headless: true,
+    //   provider: 'playwright',
+    //   instances: [
+    //     {
+    //       browser: 'chromium'
+    //     }
+    //   ]
+    // }
   }
 };
 
