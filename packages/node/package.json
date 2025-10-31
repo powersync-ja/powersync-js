@@ -57,7 +57,9 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@powersync/common": "workspace:^1.41.0",
-    "better-sqlite3": "12.x"
+    "better-sqlite3": "12.x",
+    "async-mutex": "^0.5.0",
+    "bson": "^6.10.4"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
@@ -66,8 +68,6 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-lock": "^1.4.0",
-    "bson": "^6.6.0",
     "comlink": "^4.4.2",
     "undici": "^7.11.0"
   },
