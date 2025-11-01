@@ -1,4 +1,4 @@
-import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
 import Lock from 'async-lock';
 import { Platform } from 'react-native';
@@ -158,6 +158,10 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
+    if (this.readConnections?.length == 0) {
+      // When opened with no read connections, use the write connection for reads.
+      return this.writeLock(fn, options);
+    }
     return new Promise(async (resolve, reject) => {
       const execute = async () => {
         // Find an available connection that is not busy
@@ -231,11 +235,11 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
   }
 
   readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readLock((ctx) => this.internalTransaction(ctx, fn));
+    return this.readLock((ctx) => this.internalTransaction(ctx, 'BEGIN', fn));
   }
 
   writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock((ctx) => this.internalTransaction(ctx, fn));
+    return this.writeLock((ctx) => this.internalTransaction(ctx, 'BEGIN EXCLUSIVE', fn));
   }
 
   getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
@@ -264,6 +268,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
   protected async internalTransaction<T>(
     connection: OPSQLiteConnection,
+    transactionType: 'BEGIN' | 'BEGIN EXCLUSIVE',
     fn: (tx: Transaction) => Promise<T>
   ): Promise<T> {
     let finalized = false;
@@ -282,7 +287,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       return connection.execute('ROLLBACK');
     };
     try {
-      await connection.execute('BEGIN');
+      await connection.execute(transactionType);
       const result = await fn({
         execute: (query, params) => connection.execute(query, params),
         executeRaw: (query, params) => connection.executeRaw(query, params),
