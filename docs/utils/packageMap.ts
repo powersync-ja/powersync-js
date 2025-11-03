@@ -1,13 +1,14 @@
 export const DOC_FOLDER = 'docs';
 
 enum Packages {
+  CapacitorSdk = 'capacitor-sdk',
   ReactNativeSdk = 'react-native-sdk',
   ReactSdk = 'react-sdk',
   VueSdk = 'vue-sdk',
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk',
   TanstackReactQuerySdk = 'tanstack-react-query-sdk',
-  NodeSdk = 'node-sdk',
+  NodeSdk = 'node-sdk'
 }
 
 interface Package {
@@ -23,6 +24,13 @@ type PackageMap = {
 };
 
 export const packageMap: PackageMap = {
+  [Packages.CapacitorSdk]: {
+    name: 'Capacitor SDK',
+    dirName: Packages.CapacitorSdk,
+    entryPoints: ['../packages/capacitor/src/'],
+    tsconfig: '../packages/capacitor/tsconfig.json',
+    id: Packages.CapacitorSdk
+  },
   [Packages.ReactNativeSdk]: {
     name: 'React Native SDK',
     dirName: Packages.ReactNativeSdk,
@@ -71,5 +79,5 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/node/src/index.ts'],
     tsconfig: '../packages/node/tsconfig.json',
     id: Packages.NodeSdk
-  },
+  }
 };
