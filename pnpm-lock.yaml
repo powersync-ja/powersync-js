@@ -1810,7 +1810,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^
+        specifier: workspace:^1.27.1
         version: link:../web
       async-lock:
         specifier: ^1.4.0
