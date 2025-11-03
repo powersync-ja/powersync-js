@@ -36,7 +36,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/attachments](./packages/attachments/README.md)
 
-  - Attachments helper package for React Native and JavaScript/TypeScript projects. 
+  - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
@@ -67,6 +67,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 ### Web
 
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
+- [demos/react-supabase-todolist-tanstackdb](./demos/react-supabase-todolist-tanstackdb/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend + TanStackDB collections.
 - [demos/react-multi-client](./demos/react-multi-client/README.md): A React widget that illustrates how data flows from one PowerSync client to another.
 - [demos/yjs-react-supabase-text-collab](./demos/yjs-react-supabase-text-collab/README.md): A React real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
 - [demos/vue-supabase-todolist](./demos/vue-supabase-todolist/README.md): A Vue to-do list example app using the PowerSync Web SDK and a Supabase backend.
