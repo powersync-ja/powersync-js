@@ -13,12 +13,14 @@ To see it in action:
 
 To run the iOS version of the app run:
 
- 1. `pnpm sync`
- 2. `pnpm ios`
+1. `pnpm build`
+2. `pnpm sync`
+3. `pnpm ios`
 
 ## Android
 
 To run the Android version of the app run:
 
- 1. `pnpm sync`
- 2. `pnpm android` (to see console run `chrome://inspect/#devices` in browser)
+1. `pnpm build`
+2. `pnpm sync`
+3. `pnpm android` (to see console run `chrome://inspect/#devices` in browser)
