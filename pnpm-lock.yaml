@@ -1873,16 +1873,13 @@ importers:
       event-iterator:
         specifier: ^2.0.0
         version: 2.0.0
-      rsocket-core:
-        specifier: 1.0.0-alpha.3
-        version: 1.0.0-alpha.3
-      rsocket-websocket-client:
-        specifier: 1.0.0-alpha.3
-        version: 1.0.0-alpha.3
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^29.0.0
         version: 29.0.0(rollup@4.52.5)
+      '@rollup/plugin-inject':
+        specifier: ^5.0.5
+        version: 5.0.5(rollup@4.52.5)
       '@rollup/plugin-json':
         specifier: ^6.1.0
         version: 6.1.0(rollup@4.52.5)
@@ -1904,9 +1901,12 @@ importers:
       rollup:
         specifier: ^4.52.5
         version: 4.52.5
-      rollup-plugin-node-externals:
-        specifier: ^8.1.1
-        version: 8.1.1(rollup@4.52.5)
+      rsocket-core:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
+      rsocket-websocket-client:
+        specifier: 1.0.0-alpha.3
+        version: 1.0.0-alpha.3
 
   packages/drizzle-driver:
     dependencies:
@@ -2132,7 +2132,7 @@ importers:
         specifier: ^1.4.0
         version: 1.4.1
       bson:
-        specifier: ^6.6.0
+        specifier: ^6.10.4
         version: 6.10.4
       react:
         specifier: 18.3.1
@@ -2205,7 +2205,7 @@ importers:
         specifier: ^0.4.0
         version: 0.4.1
       bson:
-        specifier: ^6.6.0
+        specifier: ^6.10.4
         version: 6.10.4
       comlink:
         specifier: ^4.4.2
@@ -18662,12 +18662,6 @@ packages:
       rollup: ^3.29.4 || ^4
       typescript: ^4.5 || ^5.0
 
-  rollup-plugin-node-externals@8.1.1:
-    resolution: {integrity: sha512-MEWJmXMGjo5E7o9hgAmma6XLCdU9gTVRcaaCubugTJdoJD3A91qxtxiukT9k2PeUdogtCaNehV3pvJUWrRNtwg==}
-    engines: {node: '>= 21 || ^20.6.0 || ^18.19.0'}
-    peerDependencies:
-      rollup: ^4.0.0
-
   rollup@2.79.2:
     resolution: {integrity: sha512-fS6iqSPZDs3dr/y7Od6y5nha8dW1YnbgtsyotCVvoFGKbERG++CVRFv1meyGDE1SNItQA8BrnCw7ScdAhRJ3XQ==}
     engines: {node: '>=10.0.0'}
@@ -29448,6 +29442,14 @@ snapshots:
       magic-string: 0.30.17
     optionalDependencies:
       rollup: 4.14.3
+
+  '@rollup/plugin-inject@5.0.5(rollup@4.52.5)':
+    dependencies:
+      '@rollup/pluginutils': 5.1.4(rollup@4.52.5)
+      estree-walker: 2.0.2
+      magic-string: 0.30.17
+    optionalDependencies:
+      rollup: 4.52.5
 
   '@rollup/plugin-json@6.1.0(rollup@4.14.3)':
     dependencies:
@@ -44829,10 +44831,6 @@ snapshots:
       typescript: 5.9.2
     optionalDependencies:
       '@babel/code-frame': 7.27.1
-
-  rollup-plugin-node-externals@8.1.1(rollup@4.52.5):
-    dependencies:
-      rollup: 4.52.5
 
   rollup@2.79.2:
     optionalDependencies:
