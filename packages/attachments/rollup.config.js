@@ -5,18 +5,13 @@ import { dts } from 'rollup-plugin-dts';
 
 /** @type {import('rollup').RollupOptions} */
 export default (commandLineArgs) => {
-  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
-
-  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
-  delete commandLineArgs.sourceMap;
-
   return [
     {
       input: 'src/index.ts',
       output: {
         format: 'cjs',
         file: 'dist/index.cjs',
-        sourcemap: sourceMap,
+        sourcemap: true,
         exports: 'named'
       },
       plugins: [
@@ -25,7 +20,7 @@ export default (commandLineArgs) => {
         typescript({
           tsconfig: './tsconfig.json',
           outDir: 'dist',
-          sourceMap
+          sourceMap: true
         })
       ],
       external: ['@powersync/common']

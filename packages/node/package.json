@@ -66,13 +66,13 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
+    "async-mutex": "^0.5.0",
     "comlink": "^4.4.2",
     "undici": "^7.11.0",
       "bson": "^6.10.4"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
-    "@types/async-lock": "^1.4.0",
     "@types/node": "^24.2.0",
     "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.35.2",
