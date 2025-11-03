@@ -1,5 +1,13 @@
 # @powersync/tanstack-react-query
 
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+  - @powersync/react@1.8.1
+
 ## 0.1.6
 
 ### Patch Changes
