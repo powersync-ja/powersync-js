@@ -1,6 +1,6 @@
 # PowerSync + Capacitor Example
 
-Example demonstrating the use of the [PowerSync SDK for Web](/packages/web/README.md) together with a Capacitor App.
+Example demonstrating the use of the [PowerSync SDK for Capacitor](/packages/capacitor/README.md) together with a Capacitor App.
 
 To see it in action:
 
