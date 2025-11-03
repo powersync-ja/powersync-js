@@ -4,7 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import { dts } from 'rollup-plugin-dts';
 
 /** @type {import('rollup').RollupOptions} */
-export default (commandLineArgs) => {
+export default () => {
   return [
     {
       input: 'src/index.ts',

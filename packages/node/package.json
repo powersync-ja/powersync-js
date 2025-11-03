@@ -10,7 +10,8 @@
   "files": [
     "lib",
     "dist",
-    "download_core.js"
+    "download_core.js",
+    "src"
   ],
   "scripts": {
     "prepare:core": "node download_core.js",

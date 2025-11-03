@@ -11,7 +11,8 @@
     "bin",
     "lib",
     "!lib/tests",
-    "dist"
+    "dist",
+    "src"
   ],
   "exports": {
     ".": "./lib/src/index.js",

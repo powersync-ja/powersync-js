@@ -10,7 +10,8 @@
   "types": "./lib/index.d.ts",
   "type": "module",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "scripts": {
     "build": "tsc -b",

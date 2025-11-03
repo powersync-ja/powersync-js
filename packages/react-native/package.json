@@ -11,7 +11,8 @@
   "types": "./lib/index.d.ts",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
