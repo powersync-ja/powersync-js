@@ -1557,14 +1557,14 @@ importers:
         specifier: ^2.39.7
         version: 2.49.9
       '@tanstack/db':
-        specifier: 0.4.11
-        version: 0.4.11(typescript@5.9.2)
+        specifier: 0.4.16
+        version: 0.4.16(typescript@5.9.2)
       '@tanstack/powersync-db-collection':
         specifier: link:/Users/stevenontong/Documents/platform_code/powersync/temp-tanstack-db/packages/powersync-db-collection
         version: link:../../../temp-tanstack-db/packages/powersync-db-collection
       '@tanstack/react-db':
-        specifier: 0.1.33
-        version: 0.1.33(react@18.3.1)(typescript@5.9.2)
+        specifier: 0.1.38
+        version: 0.1.38(react@18.3.1)(typescript@5.9.2)
       formik:
         specifier: ^2.4.6
         version: 2.4.6(react@18.3.1)
@@ -8896,21 +8896,25 @@ packages:
     peerDependencies:
       react: '*'
 
-  '@tanstack/db-ivm@0.1.11':
-    resolution: {integrity: sha512-xLCbIPRE6DUAKfR/Png2G5gqI+LseZ0qFdwSX+vs3q/37dzdHex5xDC666VQPz9IYy6nWjYebK3U7N0jx/xgSQ==}
+  '@tanstack/db-ivm@0.1.12':
+    resolution: {integrity: sha512-QTs2dgrjTCkATZh12nb854K/Of80QyyR6URYyxnGPnJgXFchvw25Ve3TtFW51fHR5hheQltkbtpPgBjSZvoMVA==}
     peerDependencies:
       typescript: '>=4.7'
 
-  '@tanstack/db@0.4.11':
-    resolution: {integrity: sha512-xFK2ltAqpoW4Nr30cSNFXI40ILy9jWrcg3l3od4vUuG0O/Xhc5B5rcwGNMKvKOGS8LN1E0kyFHgMTC/mRKigtQ==}
+  '@tanstack/db@0.4.16':
+    resolution: {integrity: sha512-CaQ/Ezto3/iRNpUqbVnv1QU86EDTRxe6bgUztQrDDD0coKuncckLPSFL3ZzoQiT/R/QTf3NDnryah209LehEng==}
     peerDependencies:
       typescript: '>=4.7'
+
+  '@tanstack/pacer@0.1.0':
+    resolution: {integrity: sha512-QVzkGO5clvGj/qdX8H2wUj0QCXCLZ/pwPMnfSqhoYfpzDRkRHDj+3D+VzdcehBIVnE+GCd1D/P1tGMzfjmfrzQ==}
+    engines: {node: '>=18'}
 
   '@tanstack/query-core@5.79.0':
     resolution: {integrity: sha512-s+epTqqLM0/TbJzMAK7OEhZIzh63P9sWz5HEFc5XHL4FvKQXQkcjI8F3nee+H/xVVn7mrP610nVXwOytTSYd0w==}
 
-  '@tanstack/react-db@0.1.33':
-    resolution: {integrity: sha512-xsxNFTV8TuSuOMDT8/sbXa2GP2m7MZEryWsS1m8a/22APDQsacSq/IiPrSO08R09w1CRzuQ05TkxhZrYZH0ROA==}
+  '@tanstack/react-db@0.1.38':
+    resolution: {integrity: sha512-EMMOZ41LWBPlJIDGdg5ppC78tGeKruxUyb+uT2T7YuELbRDEp65GR4rkGdZGaJQXsK0SjQ3jxGXBk0YcvQytIA==}
     peerDependencies:
       react: '>=16.8.0'
 
@@ -31105,23 +31109,26 @@ snapshots:
       '@tamagui/use-force-update': 1.79.6(react@18.3.1)
       react: 18.3.1
 
-  '@tanstack/db-ivm@0.1.11(typescript@5.9.2)':
+  '@tanstack/db-ivm@0.1.12(typescript@5.9.2)':
     dependencies:
       fractional-indexing: 3.2.0
       sorted-btree: 1.8.1
       typescript: 5.9.2
 
-  '@tanstack/db@0.4.11(typescript@5.9.2)':
+  '@tanstack/db@0.4.16(typescript@5.9.2)':
     dependencies:
       '@standard-schema/spec': 1.0.0
-      '@tanstack/db-ivm': 0.1.11(typescript@5.9.2)
+      '@tanstack/db-ivm': 0.1.12(typescript@5.9.2)
+      '@tanstack/pacer': 0.1.0
       typescript: 5.9.2
+
+  '@tanstack/pacer@0.1.0': {}
 
   '@tanstack/query-core@5.79.0': {}
 
-  '@tanstack/react-db@0.1.33(react@18.3.1)(typescript@5.9.2)':
+  '@tanstack/react-db@0.1.38(react@18.3.1)(typescript@5.9.2)':
     dependencies:
-      '@tanstack/db': 0.4.11(typescript@5.9.2)
+      '@tanstack/db': 0.4.16(typescript@5.9.2)
       react: 18.3.1
       use-sync-external-store: 1.6.0(react@18.3.1)
     transitivePeerDependencies:
