@@ -29,7 +29,7 @@ function defineBuild(isNode) {
         nodeResolve({ preferBuiltins: false, browser: true }),
         commonjs({}),
         inject({
-          Buffer: isNode ? ['node:buffer', 'Buffer'] : path.resolve('lib/buffer.js')
+          Buffer: isNode ? ['node:buffer', 'Buffer'] : ['buffer/', 'Buffer']
         })
       ]
     ],
