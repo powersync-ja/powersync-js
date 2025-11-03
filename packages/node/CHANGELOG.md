@@ -1,5 +1,17 @@
 # @powersync/node
 
+## 0.13.0
+
+### Minor Changes
+
+- 2f8b30c: Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
+
+### Patch Changes
+
+- b00e1ec: [`node:sqlite`] Prevent `database is locked` errors when instantiating the database.
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+
 ## 0.12.0
 
 ### Minor Changes
