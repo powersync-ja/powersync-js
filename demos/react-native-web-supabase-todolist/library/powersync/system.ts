@@ -1,9 +1,9 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import { LogLevel, PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
+import { PowerSyncDatabase as PowerSyncDatabaseNative } from '@powersync/react-native';
 import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory } from '@powersync/web';
-import { AbstractPowerSyncDatabase, createBaseLogger } from '@powersync/common';
+import { LogLevel, AbstractPowerSyncDatabase, createBaseLogger } from '@powersync/common';
 import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
 import { type AttachmentRecord } from '@powersync/attachments';
 import { KVStorage } from '../storage/KVStorage';
