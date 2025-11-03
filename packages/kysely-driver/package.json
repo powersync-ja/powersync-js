@@ -35,7 +35,7 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "build:prod": "tsc -b && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest",

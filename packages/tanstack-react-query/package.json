@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:prod": "tsc -b --sourceMap false",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
     "watch": "tsc -b -w",

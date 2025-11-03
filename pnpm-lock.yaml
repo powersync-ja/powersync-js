@@ -1767,8 +1767,8 @@ importers:
         specifier: workspace:^
         version: link:../common
       async-mutex:
-        specifier: ^0.4.0
-        version: 0.4.1
+        specifier: ^0.5.0
+        version: 0.5.0
     devDependencies:
       '@powersync/sql-js':
         specifier: 0.0.5
@@ -1884,8 +1884,8 @@ importers:
         specifier: ^6.1.0
         version: 6.1.0(rollup@4.52.5)
       '@rollup/plugin-node-resolve':
-        specifier: 15.2.3
-        version: 15.2.3(rollup@4.52.5)
+        specifier: ^16.0.3
+        version: 16.0.3(rollup@4.52.5)
       '@types/node':
         specifier: ^20.5.9
         version: 20.17.57
@@ -1893,7 +1893,7 @@ importers:
         specifier: ^9.0.1
         version: 9.0.8
       cross-fetch:
-        specifier: ^4.0.0
+        specifier: ^4.1.0
         version: 4.1.0(encoding@0.1.13)
       js-logger:
         specifier: ^1.6.1
@@ -1969,9 +1969,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      async-mutex:
-        specifier: ^0.5.0
-        version: 0.5.0
       bson:
         specifier: ^6.10.4
         version: 6.10.4
@@ -2097,6 +2094,9 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
+      async-mutex:
+        specifier: ^0.5.0
+        version: 0.5.0
     devDependencies:
       '@craftzdog/react-native-buffer':
         specifier: ^6.0.5
@@ -2125,12 +2125,6 @@ importers:
       '@rollup/plugin-terser':
         specifier: ^0.4.4
         version: 0.4.4(rollup@4.14.3)
-      '@types/async-lock':
-        specifier: ^1.4.0
-        version: 1.4.2
-      async-lock:
-        specifier: ^1.4.0
-        version: 1.4.1
       bson:
         specifier: ^6.10.4
         version: 6.10.4
@@ -2202,8 +2196,8 @@ importers:
         specifier: workspace:*
         version: link:../common
       async-mutex:
-        specifier: ^0.4.0
-        version: 0.4.1
+        specifier: ^0.5.0
+        version: 0.5.0
       bson:
         specifier: ^6.10.4
         version: 6.10.4
@@ -7457,6 +7451,15 @@ packages:
       rollup:
         optional: true
 
+  '@rollup/plugin-node-resolve@16.0.3':
+    resolution: {integrity: sha512-lUYM3UBGuM93CnMPG1YocWu7X802BrNF3jW2zny5gQyLQgRFJhV1Sq0Zi74+dh/6NBx1DxFC4b4GXg9wUCG5Qg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^2.78.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   '@rollup/plugin-replace@2.4.2':
     resolution: {integrity: sha512-IGcu+cydlUMZ5En85jxHH4qj2hta/11BHq95iHEyb2sbgiN0eCdzvUcHw5gt9pBL5lTi4JDYJ1acCoMGpTvEZg==}
     peerDependencies:
@@ -10375,9 +10378,6 @@ packages:
 
   async-lock@1.4.1:
     resolution: {integrity: sha512-Az2ZTpuytrtqENulXwO3GGv1Bztugx6TT37NIo7imr/Qo0gsYiGtSdBa2B6fsXhTpVZDNfu1Qn3pk531e3q+nQ==}
-
-  async-mutex@0.4.1:
-    resolution: {integrity: sha512-WfoBo4E/TbCX1G95XTjbWTE3X2XLG0m1Xbv2cwOtuPdyH9CZvnaA5nCt1ucjaKEgW2A5IF71hxrRhr83Je5xjA==}
 
   async-mutex@0.5.0:
     resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
@@ -29485,12 +29485,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.14.3
 
-  '@rollup/plugin-node-resolve@15.2.3(rollup@4.52.5)':
+  '@rollup/plugin-node-resolve@16.0.3(rollup@4.52.5)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.52.5)
       '@types/resolve': 1.20.2
       deepmerge: 4.3.1
-      is-builtin-module: 3.2.1
       is-module: 1.0.0
       resolve: 1.22.10
     optionalDependencies:
@@ -33112,10 +33111,6 @@ snapshots:
   async-limiter@1.0.1: {}
 
   async-lock@1.4.1: {}
-
-  async-mutex@0.4.1:
-    dependencies:
-      tslib: 2.8.1
 
   async-mutex@0.5.0:
     dependencies:

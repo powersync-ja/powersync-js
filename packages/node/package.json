@@ -15,7 +15,7 @@
   "scripts": {
     "prepare:core": "node download_core.js",
     "build": " pnpm prepare:core && tsc -b && rollup --config",
-    "build:prod": "pnpm prepare:core && tsc -b --sourceMap false && rollup --config",
+    "build:prod": "pnpm prepare:core && tsc -b && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": " pnpm prepare:core && vitest",
@@ -57,9 +57,7 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@powersync/common": "workspace:^1.41.0",
-    "better-sqlite3": "12.x",
-    "async-mutex": "^0.5.0",
-    "bson": "^6.10.4"
+    "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
@@ -69,7 +67,8 @@
   "dependencies": {
     "@powersync/common": "workspace:*",
     "comlink": "^4.4.2",
-    "undici": "^7.11.0"
+    "undici": "^7.11.0",
+      "bson": "^6.10.4"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",

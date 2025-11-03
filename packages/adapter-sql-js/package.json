@@ -26,13 +26,13 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "build:prod": "tsc -b --sourceMap false && rollup -c rollup.config.mjs --sourceMap false",
+    "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest"
   },
   "dependencies": {
     "@powersync/common": "workspace:^",
-    "async-mutex": "^0.4.0"
+    "async-mutex": "^0.5.0"
   },
   "devDependencies": {
     "@powersync/sql-js": "0.0.5",
