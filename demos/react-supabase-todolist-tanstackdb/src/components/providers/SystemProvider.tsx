@@ -27,7 +27,8 @@ export const listsCollection = createCollection(
     schema: ListsSchema,
     deserializationSchema: ListsDeserializationSchema,
     onDeserializationError: (error) => {
-      // TODO handle deserialization error
+      // This should be fixed in development
+      console.error(`Could not deserialize lists collection! ${error.issues.map((i) => i.message).join(', ')}`);
     }
   })
 );
@@ -39,7 +40,8 @@ export const todosCollection = createCollection(
     schema: TodosSchema,
     deserializationSchema: TodosDeserializationSchema,
     onDeserializationError: (error) => {
-      // TODO handle deserialization error
+      // This should be fixed in development
+      console.error(`Could not deserialize todos collection! ${error.issues.map((i) => i.message).join(', ')}`);
     }
   })
 );
