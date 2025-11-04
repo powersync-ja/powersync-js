@@ -1,5 +1,5 @@
 {
-  "name": "react-supabase-todolist",
+  "name": "react-supabase-todolist-tanstackdb",
   "version": "0.0.1",
   "private": true,
   "scripts": {

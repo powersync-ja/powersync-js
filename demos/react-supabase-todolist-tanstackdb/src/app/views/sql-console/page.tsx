@@ -50,6 +50,11 @@ const TableDisplay = React.memo(({ data }: { data: ReadonlyArray<any> }) => {
   );
 });
 
+/**
+ * The page here is as it's named. A SQL console for debug purposes.
+ * We provide SQL access to the PowerSync database.
+ * We cannot use TanStack collections for this page.
+ */
 export default function SQLConsolePage() {
   const inputRef = React.useRef<HTMLInputElement>();
   const [query, setQuery] = React.useState(DEFAULT_QUERY);

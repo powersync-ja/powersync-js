@@ -2,7 +2,7 @@
 
 ## Overview
 
-Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase and the PowerSync TanStackDB integration.
+Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase and the PowerSync [TanStackDB](https://tanstack.com/db/latest) integration.
 
 A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase-+-powersync).
 

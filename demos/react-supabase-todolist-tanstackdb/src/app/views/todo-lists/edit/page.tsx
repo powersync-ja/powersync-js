@@ -21,11 +21,6 @@ import { eq, useLiveQuery } from '@tanstack/react-db';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
-/**
- * useSearchParams causes the entire element to fall back to client side rendering
- * This is exposed as a separate React component in order to suspend its render
- * and allow the root page to render on the server.
- */
 const TodoEditSection = () => {
   const supabase = useSupabase();
   const { id: listID } = useParams();
