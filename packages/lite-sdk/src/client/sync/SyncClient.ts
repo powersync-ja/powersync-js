@@ -1,3 +1,4 @@
+import type { BucketRequest, StreamingSyncLine } from '@powersync/service-core';
 import { BaseListener, BaseObserverInterface, Disposable } from '../../utils/BaseObserver.js';
 import type { BucketStorage } from '../storage/BucketStorage.js';
 import type { SystemDependencies } from '../system/SystemDependencies.js';
@@ -79,6 +80,20 @@ export interface SyncClient extends BaseObserverInterface<SyncClientListener>, D
   disconnect: () => void;
 }
 
+export type StreamOptions = {
+  endpoint: string;
+  token: string;
+  clientId: string | undefined;
+  signal: AbortSignal | undefined;
+  bucketPositions: BucketRequest[];
+  systemDependencies: SystemDependencies;
+};
+
+/**
+ * Function type for opening a sync stream. Can be overridden in tests.
+ */
+export type StreamOpener = (options: StreamOptions) => Promise<ReadableStream<StreamingSyncLine>>;
+
 /**
  * Configuration options for creating a SyncClient instance.
  */
@@ -93,4 +108,6 @@ export type SyncClientOptions = {
   storage: BucketStorage;
   /** System-level dependencies (HTTP client, timers, etc.) required for sync operations. */
   systemDependencies: SystemDependencies;
+  /** Optional function to open a sync stream. Defaults to openHttpStream. Used for testing. */
+  streamOpener?: StreamOpener;
 };

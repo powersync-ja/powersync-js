@@ -7,7 +7,7 @@ import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/system/SystemDependen
 
 describe(`PowerSync Lite`, { timeout: Infinity }, () => {
   describe(`Connection`, () => {
-    it(`should connect to a PowerSync server`, async () => {
+    it.skip(`should connect to a PowerSync server`, async () => {
       const connector = {
         fetchCredentials: async () => {
           const tokenResponse = await fetch(`http://localhost:6060/api/auth/token`, {

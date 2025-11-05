@@ -4,6 +4,7 @@ import type { BucketStorage } from '../storage/BucketStorage.js';
 import type {
   Connector,
   PowerSyncCredentials,
+  StreamOpener,
   SyncClient,
   SyncClientListener,
   SyncClientOptions,
@@ -34,6 +35,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
 
   protected cachedCredentials: PowerSyncCredentials | null;
   protected abortController: AbortController;
+  protected openStreamFn: StreamOpener;
 
   constructor(protected options: SyncClientOptions) {
     super();
@@ -47,6 +49,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
       downloading: false,
       downloadError: null
     };
+    this.openStreamFn = options.streamOpener ?? openHttpStream;
   }
 
   protected get bucketStorage(): BucketStorage {
@@ -129,7 +132,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
 
     const [bucketRequests, initBucketMap] = await this.collectLocalBucketState();
 
-    const stream = await openHttpStream({
+    const stream = await this.openStreamFn({
       endpoint: credentials.endpoint,
       token: credentials.token,
       signal: signal,

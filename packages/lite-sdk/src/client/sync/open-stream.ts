@@ -1,5 +1,5 @@
 import type { StreamingSyncLine, StreamingSyncRequest } from '@powersync/service-core';
-import type { SystemDependencies } from '../system/SystemDependencies.js';
+import type { StreamOptions } from './SyncClient.js';
 import { ndjsonStream } from './ndjson.js';
 
 export class AuthorizationError extends Error {
@@ -24,17 +24,8 @@ export interface BucketRequest {
   after: string;
 }
 
-export type SyncOptions = {
-  endpoint: string;
-  token: string;
-  clientId: string | undefined;
-  signal: AbortSignal | undefined;
-  bucketPositions: BucketRequest[];
-  systemDependencies: SystemDependencies;
-};
-
 // TODO This currently uses NDJSON streaming. We should add binary streaming also
-export async function openHttpStream(options: SyncOptions): Promise<ReadableStream<StreamingSyncLine>> {
+export async function openHttpStream(options: StreamOptions): Promise<ReadableStream<StreamingSyncLine>> {
   const streamRequest: StreamingSyncRequest = {
     raw_data: true,
     client_id: options.clientId,
