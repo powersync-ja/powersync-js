@@ -6,8 +6,6 @@
  * Schema:
  * - key (TEXT PRIMARY KEY NOT NULL)
  * - value (BLOB)
- *
- * Note: Added in migration 3
  */
 export interface PSKeyValue {
   /** TEXT PRIMARY KEY NOT NULL */

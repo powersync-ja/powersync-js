@@ -3,38 +3,88 @@ import type { BucketStorage } from '../storage/BucketStorage.js';
 import type { SystemDependencies } from '../system/SystemDependencies.js';
 import { BucketRequest, openHttpStream } from './open-stream.js';
 
+/**
+ * Credentials required to connect to a PowerSync instance.
+ */
 export type PowerSyncCredentials = {
+  /** The PowerSync endpoint URL to connect to. */
   endpoint: string;
+  /** Authentication token for the PowerSync service. */
   token: string;
 };
 
+/**
+ * Provides credentials dynamically for PowerSync connections.
+ * This allows for credential refresh and token rotation without
+ * disconnecting the client.
+ */
 export type Connector = {
+  /**
+   * Fetches the current PowerSync credentials.
+   * @returns A promise that resolves to credentials, or null if no credentials are available.
+   */
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
 
-// TODO improve this
+/**
+ * Current synchronization status of the sync client.
+ * Provides real-time information about connection state and any errors.
+ */
 export interface SyncStatus {
+  /** Whether the client is currently connected to the PowerSync service. */
   connected: boolean;
+  /** Whether the client is currently attempting to connect. */
   connecting: boolean;
+  /** Whether data is currently being uploaded to the service. */
   uploading: boolean;
+  /** Whether data is currently being downloaded from the service. */
   downloading: boolean;
+  /** Error that occurred during upload, if any. */
   uploadError?: Error;
+  /** Error that occurred during download, if any. */
   downloadError?: Error;
+  /** Any other error that occurred during sync operations. */
   anyError?: Error;
 }
 
+/**
+ * Main interface for synchronizing data with a PowerSync service.
+ * Handles bidirectional sync, connection management, and status tracking.
+ */
 export interface SyncClient {
+  /** Current synchronization status. */
   status: SyncStatus;
 
+  /**
+   * Establishes a connection to the PowerSync service and begins syncing.
+   * The connection will automatically retry on failure using the configured retry delay.
+   * @param connector Provides credentials for authentication. Can be called multiple times
+   *                  to refresh credentials as needed.
+   * @returns A promise that resolves when the connection process starts. The promise may
+   *          not resolve if the connection is maintained indefinitely.
+   */
   connect: (connector: Connector) => Promise<void>;
 
+  /**
+   * Disconnects from the PowerSync service and stops all sync operations.
+   * Any ongoing sync operations will be aborted.
+   */
   disconnect: () => void;
 }
 
+/**
+ * Configuration options for creating a SyncClient instance.
+ */
 export type SyncClientOptions = {
+  /** Delay in milliseconds before retrying a failed connection attempt. */
   connectionRetryDelayMs: number;
+  /** Delay in milliseconds before retrying a failed upload operation. */
   uploadRetryDelayMs: number;
+  /** Whether to enable debug logging for sync operations. */
+  debugMode?: boolean;
+  /** Storage implementation for managing bucket data and synchronization state. */
   storage: BucketStorage;
+  /** System-level dependencies (HTTP client, timers, etc.) required for sync operations. */
   systemDependencies: SystemDependencies;
 };
 
@@ -151,7 +201,7 @@ export class SyncClientImpl implements SyncClient {
 
         // Handle various sync line types
         if (`checkpoint` in line) {
-          console.debug(`Received checkpoint`, line.checkpoint);
+          this.options.debugMode && console.debug(`Received checkpoint`, line.checkpoint);
           const bucketsToDelete = new Set<string>(syncState.bucketMap.keys());
           const newBuckets = new Map<string, BucketDescription>();
           for (const checksum of line.checkpoint.buckets) {
@@ -171,7 +221,7 @@ export class SyncClientImpl implements SyncClient {
           // TODO update sync status
           // await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
         } else if (`checkpoint_complete` in line) {
-          console.debug(`Received checkpoint complete`, syncState.targetCheckpoint);
+          this.options.debugMode && console.debug(`Received checkpoint complete`, syncState.targetCheckpoint);
           const result = await this.applyCheckpoint(syncState.targetCheckpoint!);
           if (result.endIteration) {
             return;
@@ -181,9 +231,8 @@ export class SyncClientImpl implements SyncClient {
             syncState.pendingValidatedCheckpoint = null;
           }
         } else if (`partial_checkpoint_complete` in line) {
-          console.debug(`Received partial checkpoint complete`, syncState.targetCheckpoint);
+          this.options.debugMode && console.debug(`Received partial checkpoint complete`, syncState.targetCheckpoint);
           const priority = line.partial_checkpoint_complete.priority;
-          console.debug(`Partial checkpoint complete`, priority);
           const result = await this.bucketStorage.syncLocalDatabase(syncState.targetCheckpoint!, priority);
           if (!result.checkpointValid) {
             // This means checksums failed. Start again with a new checkpoint.
@@ -197,7 +246,7 @@ export class SyncClientImpl implements SyncClient {
             // We'll keep on downloading, but can report that this priority is synced now.
           }
         } else if (`checkpoint_diff` in line) {
-          console.debug(`Received checkpoint diff`, syncState.targetCheckpoint);
+          this.options.debugMode && console.debug(`Received checkpoint diff`, syncState.targetCheckpoint);
           // TODO: It may be faster to just keep track of the diff, instead of the entire checkpoint
           if (syncState.targetCheckpoint == null) {
             throw new Error(`Checkpoint diff without previous checkpoint`);
@@ -240,14 +289,14 @@ export class SyncClientImpl implements SyncClient {
           await this.bucketStorage.removeBuckets(bucketsToDelete);
           await this.bucketStorage.setTargetCheckpoint(syncState.targetCheckpoint!);
         } else if (`data` in line) {
-          console.debug(`Received data`, line.data);
+          this.options.debugMode && console.debug(`Received data`, line.data);
           const { data } = line;
           // TODO update sync status
           await this.bucketStorage.saveSyncData({
             buckets: [data]
           });
         } else if (`token_expires_in` in line) {
-          console.debug(`Received token expires in`, line.token_expires_in);
+          this.options.debugMode && console.debug(`Received token expires in`, line.token_expires_in);
           const { token_expires_in } = line;
 
           if (token_expires_in == 0) {
@@ -282,7 +331,7 @@ export class SyncClientImpl implements SyncClient {
       return { applied: false, endIteration: false };
     }
 
-    console.debug(`Applied checkpoint ${checkpoint.last_op_id}`, checkpoint);
+    this.options.debugMode && console.debug(`Applied checkpoint ${checkpoint.last_op_id}`, checkpoint);
     // this.updateSyncStatus({
     //   connected: true,
     //   lastSyncedAt: new Date(),

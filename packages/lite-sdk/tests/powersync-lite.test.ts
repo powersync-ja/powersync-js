@@ -32,17 +32,21 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
         processOperations: async (operations) => {
           // Funnel these operations to external storage
           console.log(`Processing ${operations.length} operations`);
+          console.log(operations);
         }
       };
 
+      const systemDependencies = DEFAULT_SYSTEM_DEPENDENCIES();
       const syncClient = new SyncClientImpl({
         connectionRetryDelayMs: 1000,
+        debugMode: false,
         // TODO uploads
         uploadRetryDelayMs: 1000,
         storage: new MemoryBucketStorageImpl({
-          operationsHandlers: [syncOperationsHandler]
+          operationsHandlers: [syncOperationsHandler],
+          systemDependencies: systemDependencies
         }),
-        systemDependencies: DEFAULT_SYSTEM_DEPENDENCIES()
+        systemDependencies
       });
 
       await syncClient.connect(connector);

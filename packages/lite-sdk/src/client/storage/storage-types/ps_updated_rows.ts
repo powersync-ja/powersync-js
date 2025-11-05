@@ -9,12 +9,12 @@
  *
  * PRIMARY KEY (row_type, row_id)
  *
- * Note: Created WITHOUT ROWID (added in migration 5)
+ * Note: Created WITHOUT ROWID
  */
 export interface PsUpdatedRows {
   /** TEXT */
-  row_type: string | null
+  row_type: string | null;
 
   /** TEXT */
-  row_id: string | null
+  row_id: string | null;
 }

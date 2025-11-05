@@ -1,4 +1,4 @@
-import type { SystemDependencies } from './SystemDependencies.js';
+import type { SystemDependencies } from '../system/SystemDependencies.js';
 
 export function ndjsonStream<T>(
   response: ReadableStream<Uint8Array>,

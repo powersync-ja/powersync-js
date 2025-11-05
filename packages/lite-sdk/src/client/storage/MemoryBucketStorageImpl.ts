@@ -1,4 +1,5 @@
 import type { BucketState, Checkpoint } from '@powersync/service-core';
+import { SystemDependencies } from '../system/SystemDependencies.js';
 import type { BucketOperationProgress, BucketStorage, SyncDataBatch } from './BucketStorage.js';
 import type { SyncOperation, SyncOperationsHandler } from './SyncOperationsHandler.js';
 import { constructKey, toStringOrNull } from './bucketHelpers.js';
@@ -8,7 +9,7 @@ import type { PSCrud } from './storage-types/ps_crud.js';
 import type { PSKeyValue } from './storage-types/ps_kv.js';
 import type { PSOplog } from './storage-types/ps_oplog.js';
 import type { PSTx } from './storage-types/ps_tx.js';
-import type { PSUntyped } from './storage-types/ps_untyped.js';
+import { PsUpdatedRows } from './storage-types/ps_updated_rows.js';
 
 export type OpType = 'PUT' | 'REMOVE' | 'MOVE' | 'CLEAR';
 
@@ -17,12 +18,13 @@ export const MAX_OP_ID = '9223372036854775807';
 export type MemoryBucketStorageImplOptions = {
   /** Array of handlers for processing sync operations collected from the protocol */
   operationsHandlers: SyncOperationsHandler[];
+  systemDependencies: SystemDependencies;
 };
 
 export class MemoryBucketStorageImpl implements BucketStorage {
   protected ps_buckets: PSBucket[];
   protected ps_oplog: PSOplog[];
-  protected ps_updated_rows: PSUntyped[];
+  protected ps_updated_rows: PsUpdatedRows[];
   // TODO: ps_crud implementation - ignoring for now
   // ps_crud tracks client-side changes that need to be uploaded to the server
   protected ps_crud: PSCrud[];
@@ -38,7 +40,12 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   /** Handlers for processing sync operations collected from the protocol */
   protected operationsHandlers: SyncOperationsHandler[];
 
-  constructor(options: MemoryBucketStorageImplOptions) {
+  constructor(protected options: MemoryBucketStorageImplOptions) {
+    this.operationsHandlers = options.operationsHandlers;
+    this.initDefaultState();
+  }
+
+  protected initDefaultState() {
     this.ps_buckets = [];
     this.ps_oplog = [];
     this.ps_tx = {
@@ -48,11 +55,14 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     this.ps_updated_rows = [];
     this.ps_crud = [];
     this.ps_kv = [];
-    this.clientId = 'TODO';
-    this.operationsHandlers = options.operationsHandlers;
+    this.clientId = this.options.systemDependencies.crypto.randomUUID();
   }
 
   async init(): Promise<void> {}
+
+  async clear(): Promise<void> {
+    this.initDefaultState();
+  }
 
   getMaxOpId(): string {
     return MAX_OP_ID;
@@ -153,12 +163,11 @@ export class MemoryBucketStorageImpl implements BucketStorage {
       const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
       for (const op of bucketOps) {
         if (op.row_type && op.row_id) {
-          const exists = this.ps_updated_rows.some((row) => row.type === op.row_type && row.id === op.row_id);
+          const exists = this.ps_updated_rows.some((row) => row.row_type === op.row_type && row.row_id === op.row_id);
           if (!exists) {
             this.ps_updated_rows.push({
-              type: op.row_type,
-              id: op.row_id,
-              data: null
+              row_type: op.row_type,
+              row_id: op.row_id
             });
           }
         }
@@ -258,12 +267,13 @@ export class MemoryBucketStorageImpl implements BucketStorage {
             if (!shouldSkipRemove) {
               if (objectType && objectId) {
                 // Insert into ps_updated_rows (or ignore if already exists)
-                const exists = this.ps_updated_rows.some((row) => row.type === objectType && row.id === objectId);
+                const exists = this.ps_updated_rows.some(
+                  (row) => row.row_type === objectType && row.row_id === objectId
+                );
                 if (!exists) {
                   this.ps_updated_rows.push({
-                    type: objectType,
-                    id: objectId,
-                    data: null
+                    row_type: objectType,
+                    row_id: objectId
                   });
                 }
               }
@@ -292,12 +302,13 @@ export class MemoryBucketStorageImpl implements BucketStorage {
           const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
           for (const op of bucketOps) {
             if (op.row_type && op.row_id) {
-              const exists = this.ps_updated_rows.some((row) => row.type === op.row_type && row.id === op.row_id);
+              const exists = this.ps_updated_rows.some(
+                (row) => row.row_type === op.row_type && row.row_id === op.row_id
+              );
               if (!exists) {
                 this.ps_updated_rows.push({
-                  type: op.row_type,
-                  id: op.row_id,
-                  data: null
+                  row_type: op.row_type,
+                  row_id: op.row_id
                 });
               }
             }
@@ -512,12 +523,12 @@ export class MemoryBucketStorageImpl implements BucketStorage {
 
       // Add rows from ps_updated_rows
       for (const row of this.ps_updated_rows) {
-        if (row.type && row.id) {
-          const key = `${row.type}:${row.id}`;
+        if (row.row_type && row.row_id) {
+          const key = `${row.row_type}:${row.row_id}`;
           if (!updatedRows.has(key)) {
             updatedRows.set(key, {
-              type: row.type,
-              id: row.id,
+              type: row.row_type,
+              id: row.row_id,
               maxOpId: 0n,
               data: null
             });

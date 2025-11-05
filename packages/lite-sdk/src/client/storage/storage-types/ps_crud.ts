@@ -6,7 +6,7 @@
  * Schema:
  * - id (INTEGER PRIMARY KEY AUTOINCREMENT)
  * - data (TEXT) - JSON data for the operation
- * - tx_id (INTEGER) - Transaction ID (added in migration 2)
+ * - tx_id (INTEGER) - Transaction ID
  */
 export interface PSCrud {
   /** INTEGER PRIMARY KEY AUTOINCREMENT */

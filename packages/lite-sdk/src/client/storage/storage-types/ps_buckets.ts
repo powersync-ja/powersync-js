@@ -12,8 +12,8 @@
  * - add_checksum (INTEGER NOT NULL DEFAULT 0)
  * - op_checksum (INTEGER NOT NULL DEFAULT 0)
  * - pending_delete (INTEGER NOT NULL DEFAULT 0)
- * - count_at_last (INTEGER NOT NULL DEFAULT 0) - Added in migration 9
- * - count_since_last (INTEGER NOT NULL DEFAULT 0) - Added in migration 9
+ * - count_at_last (INTEGER NOT NULL DEFAULT 0)
+ * - count_since_last (INTEGER NOT NULL DEFAULT 0)
  *
  * Index: ps_buckets_name (UNIQUE on name)
  */
