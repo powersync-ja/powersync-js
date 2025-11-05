@@ -268,3 +268,11 @@ The following features are planned but not yet fully implemented:
 2. **CRUD Functionality**: Client-side CRUD operations (create, read, update, delete) that need to be uploaded to the server are not yet fully implemented. The `ps_crud` storage layer exists but is not complete.
 
 3. **Sync Streams Support**: Support for sync streams is mentioned in the codebase but may need additional implementation work. The checkpoint structure includes streams, but full stream synchronization support may be pending.
+
+## Known Limitations
+
+The following features are not supported in the Lite SDK:
+
+1. **Bucket Priority Sync Statuses**: The SDK does not support bucket priority sync statuses. All buckets are synced with equal priority.
+
+2. **Download Progress Statuses**: The SDK does not provide download progress statuses. While the sync status tracks overall downloading state, granular progress information for individual downloads is not available.

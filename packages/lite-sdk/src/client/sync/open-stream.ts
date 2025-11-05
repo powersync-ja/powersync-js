@@ -2,6 +2,19 @@ import type { StreamingSyncLine, StreamingSyncRequest } from '@powersync/service
 import type { SystemDependencies } from '../system/SystemDependencies.js';
 import { ndjsonStream } from './ndjson.js';
 
+export class AuthorizationError extends Error {
+  constructor(message: string) {
+    super(message);
+    // Set the prototype explicitly
+    Object.setPrototypeOf(this, AuthorizationError.prototype);
+
+    // Capture stack trace
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, AuthorizationError);
+    }
+  }
+}
+
 export interface BucketRequest {
   name: string;
 
@@ -39,6 +52,11 @@ export async function openHttpStream(options: SyncOptions): Promise<ReadableStre
     body: JSON.stringify(streamRequest),
     signal: options.signal
   });
+
+  if (response.status >= 400 && response.status < 500) {
+    const errorText = await response.text();
+    throw new AuthorizationError(`Authorization failed: ${errorText}`);
+  }
 
   if (response.status != 200) {
     throw new Error(`Request failed with code: ${response.status}\n${await response.text()}`);

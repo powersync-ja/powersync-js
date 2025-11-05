@@ -48,27 +48,11 @@ export interface BucketStorage {
   removeBuckets: (buckets: Array<string>) => Promise<void>;
 
   /**
-   * Set a target checkpoint to sync towards.
-   * This checkpoint represents the desired state we want to reach.
-   *
-   * @param checkpoint - The target checkpoint containing bucket states and operation IDs
-   */
-  setTargetCheckpoint: (checkpoint: Checkpoint) => Promise<void>;
-
-  /**
    * Get the current state of all buckets.
    *
    * @returns Array of bucket states, each containing bucket name, operation ID, checksums, etc.
    */
   getBucketStates: () => Promise<Array<BucketState>>;
-
-  /**
-   * Get progress information for bucket operations.
-   * Returns counts of operations at last checkpoint and since last checkpoint.
-   *
-   * @returns Record mapping bucket names to their operation progress
-   */
-  getBucketOperationProgress: () => Promise<BucketOperationProgress>;
 
   /**
    * Synchronize the local database with a checkpoint.

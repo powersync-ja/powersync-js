@@ -1,7 +1,7 @@
 import type { Checkpoint, CheckpointBucket } from '@powersync/service-core';
 import type { BucketStorage } from '../storage/BucketStorage.js';
 import type { SystemDependencies } from '../system/SystemDependencies.js';
-import { BucketRequest, openHttpStream } from './open-stream.js';
+import { AuthorizationError, BucketRequest, openHttpStream } from './open-stream.js';
 
 /**
  * Credentials required to connect to a PowerSync instance.
@@ -37,6 +37,8 @@ export interface SyncStatus {
   connecting: boolean;
   /** Whether data is currently being uploaded to the service. */
   uploading: boolean;
+  /** Whether the client has synced all data from the PowerSync service. */
+  hasSynced: boolean;
   /** Whether data is currently being downloaded from the service. */
   downloading: boolean;
   /** Error that occurred during upload, if any. */
@@ -117,6 +119,7 @@ export class SyncClientImpl implements SyncClient {
     this.abortController = new AbortController();
     this.status = {
       connected: false,
+      hasSynced: false,
       connecting: false,
       uploading: false,
       downloading: false
@@ -184,6 +187,11 @@ export class SyncClientImpl implements SyncClient {
       clientId: await this.bucketStorage.getClientId(),
       bucketPositions: bucketRequests,
       systemDependencies: this.options.systemDependencies
+    }).catch((ex) => {
+      if (ex instanceof AuthorizationError) {
+        this.invalidateCredentials();
+      }
+      throw ex;
     });
 
     let syncState: InternalSyncState = {

@@ -1,6 +1,6 @@
 import type { BucketState, Checkpoint } from '@powersync/service-core';
 import { SystemDependencies } from '../system/SystemDependencies.js';
-import type { BucketOperationProgress, BucketStorage, SyncDataBatch } from './BucketStorage.js';
+import type { BucketStorage, SyncDataBatch } from './BucketStorage.js';
 import type { SyncOperation, SyncOperationsHandler } from './SyncOperationsHandler.js';
 import { constructKey, toStringOrNull } from './bucketHelpers.js';
 import { addChecksums, normalizeChecksum, subtractChecksums } from './checksumUtils.js';
@@ -32,6 +32,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   protected clientId: string;
 
   protected ps_tx: PSTx;
+  protected lastSyncedAt: Date | null;
 
   // Track sequence/counter for ps_crud (simulates SQLite sequence)
   // TODO: This should be properly managed when ps_crud is implemented
@@ -54,6 +55,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     };
     this.ps_updated_rows = [];
     this.ps_crud = [];
+    this.lastSyncedAt = null;
     this.ps_kv = [];
     this.clientId = this.options.systemDependencies.crypto.randomUUID();
   }
@@ -84,7 +86,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   }
 
   async hasCompletedSync(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    return !!this.ps_buckets.find((b) => b.last_applied_op > 0);
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
@@ -139,11 +141,6 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     localBucket.target_op = opIdBigint;
 
     return true;
-  }
-
-  async getBucketOperationProgress(): Promise<BucketOperationProgress> {
-    // TODO
-    return {};
   }
 
   async removeBuckets(buckets: Array<string>): Promise<void> {
@@ -780,10 +777,6 @@ export class MemoryBucketStorageImpl implements BucketStorage {
       valid: failedBuckets.length === 0,
       failed_buckets: failedBuckets.length > 0 ? failedBuckets : undefined
     };
-  }
-
-  async setTargetCheckpoint(checkpoint: Checkpoint): Promise<void> {
-    // This is a no-op
   }
 }
 
