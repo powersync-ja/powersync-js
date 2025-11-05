@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, DEFAULT_WATCH_THROTTLE_MS, DifferentialWatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, DifferentialWatchedQuery } from '@powersync/common';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 
 /**

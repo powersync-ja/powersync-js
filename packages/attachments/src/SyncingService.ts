@@ -3,7 +3,7 @@ import { AttachmentContext } from './AttachmentContext.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
-import { SyncErrorHandler } from './SyncErrorHandler.js';
+import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 
 /**
  * Orchestrates attachment synchronization between local and remote storage.
@@ -14,14 +14,14 @@ export class SyncingService {
   localStorage: LocalStorageAdapter;
   remoteStorage: RemoteStorageAdapter;
   logger: ILogger;
-  errorHandler?: SyncErrorHandler;
+  errorHandler?: AttachmentErrorHandler;
 
   constructor(
     context: AttachmentContext,
     localStorage: LocalStorageAdapter,
     remoteStorage: RemoteStorageAdapter,
     logger: ILogger,
-    errorHandler?: SyncErrorHandler
+    errorHandler?: AttachmentErrorHandler
   ) {
     this.context = context;
     this.localStorage = localStorage;

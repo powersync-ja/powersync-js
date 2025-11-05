@@ -7,6 +7,7 @@ import { attachmentFromSql, AttachmentRecord, AttachmentState, AttachmentTable }
 import { RemoteStorageAdapter } from '../src/RemoteStorageAdapter.js';
 import { WatchedAttachmentItem } from '../src/WatchedAttachmentItem.js';
 import { NodeFileSystemAdapter } from '../src/storageAdapters/NodeFileSystemAdapter.js';
+import { AttachmentErrorHandler } from '../src/AttachmentErrorHandler.js';
 
 const MOCK_JPEG_U8A = [
   0xFF, 0xD8, 0xFF, 0xE0,
@@ -438,7 +439,23 @@ describe('attachment queue', () => {
     await queue.stopSync();
   })
 
-  it.todo('should skip failed download and retry it in the next sync', async () => {
+  it('should skip failed download and retry it in the next sync', async () => {
+    const mockErrorHandler = vi.fn().mockRejectedValue(false);
+    const errorHandler: AttachmentErrorHandler = {
+      onDeleteError: mockErrorHandler,
+      onDownloadError: mockErrorHandler,
+      onUploadError: mockErrorHandler,
+    }
+    const mockDownloadFile = vi.fn()
+    .mockRejectedValueOnce(new Error('Download failed'))
+    .mockResolvedValueOnce(createMockJpegBuffer());
+
+    const mockRemoteStorage: RemoteStorageAdapter = {
+      downloadFile: mockDownloadFile,
+      uploadFile: mockUploadFile,
+      deleteFile: mockDeleteFile
+    };
+
     // no error handling yet expose error handling
     const localeQueue = new AttachmentQueue({
       db: db,
@@ -446,6 +463,26 @@ describe('attachment queue', () => {
       remoteStorage: mockRemoteStorage,
       localStorage: mockLocalStorage,
       syncIntervalMs: INTERVAL_MILLISECONDS,
+      errorHandler,
     });
+
+    const id = await localeQueue.generateAttachmentId();
+
+    await localeQueue.startSync()
+
+    await db.execute(
+      'INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)',
+      ['testuser', 'testuser@journeyapps.com', id],
+    );
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    expect(mockErrorHandler).toHaveBeenCalledOnce();
+    expect(mockDownloadFile).toHaveBeenCalledTimes(2);
+
   })
 });

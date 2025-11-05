@@ -6,6 +6,7 @@ import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
 import { AttachmentService } from './AttachmentService.js';
+import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
@@ -81,7 +82,8 @@ export class AttachmentQueue {
     syncIntervalMs = 30 * 1000,
     syncThrottleDuration = DEFAULT_WATCH_THROTTLE_MS,
     downloadAttachments = true,
-    archivedCacheLimit = 100
+    archivedCacheLimit = 100,
+    errorHandler
   }: {
     db: AbstractPowerSyncDatabase;
     remoteStorage: RemoteStorageAdapter;
@@ -93,13 +95,14 @@ export class AttachmentQueue {
     syncThrottleDuration?: number;
     downloadAttachments?: boolean;
     archivedCacheLimit?: number;
+    errorHandler?: AttachmentErrorHandler;
   }) {
     this.context = new AttachmentContext(db, tableName, logger ?? db.logger);
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
     this.tableName = tableName;
-    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger);
+    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger, errorHandler);
     this.attachmentService = new AttachmentService(tableName, db);
     this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
