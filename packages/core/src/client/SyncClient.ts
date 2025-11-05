@@ -1,7 +1,7 @@
 import type { Checkpoint, CheckpointBucket } from '@powersync/service-core';
 import type { BucketStorage } from './BucketStorage.js';
 import type { SystemDependencies } from './SystemDependencies.js';
-import { openHttpStream } from './open-stream.js';
+import { BucketRequest, openHttpStream } from './open-stream.js';
 
 export type PowerSyncCredentials = {
   endpoint: string;
@@ -12,6 +12,7 @@ export type Connector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
 };
 
+// TODO improve this
 export interface SyncStatus {
   connected: boolean;
   connecting: boolean;
@@ -42,7 +43,7 @@ type BucketDescription = {
   priority: number;
 };
 
-type SyncState = {
+type InternalSyncState = {
   targetCheckpoint: Checkpoint | null;
   // A checkpoint that has been validated but not applied (e.g. due to pending local writes)
   pendingValidatedCheckpoint: Checkpoint | null;
@@ -103,6 +104,20 @@ export class SyncClientImpl implements SyncClient {
     this.cachedCredentials = null;
   }
 
+  private async collectLocalBucketState(): Promise<[BucketRequest[], Map<string, BucketDescription | null>]> {
+    const bucketEntries = await this.bucketStorage.getBucketStates();
+    const req: BucketRequest[] = bucketEntries.map((entry) => ({
+      name: entry.bucket,
+      after: entry.op_id
+    }));
+    const localDescriptions = new Map<string, BucketDescription | null>();
+    for (const entry of bucketEntries) {
+      localDescriptions.set(entry.bucket, null);
+    }
+
+    return [req, localDescriptions];
+  }
+
   protected async syncIteration(connector: Connector, signal: AbortSignal): Promise<void> {
     const credentials = this.cachedCredentials ?? (await connector.fetchCredentials());
 
@@ -110,23 +125,25 @@ export class SyncClientImpl implements SyncClient {
       throw new Error(`No credentials found`);
     }
 
+    const [bucketRequests, initBucketMap] = await this.collectLocalBucketState();
+
     const stream = await openHttpStream({
       endpoint: credentials.endpoint,
       token: credentials.token,
       signal: signal,
-      clientId: 'TODO',
-      // TODO fetch these
-      bucketPositions: new Map(),
+      clientId: await this.bucketStorage.getClientId(),
+      bucketPositions: bucketRequests,
       systemDependencies: this.options.systemDependencies
     });
 
-    let syncState: SyncState = {
+    let syncState: InternalSyncState = {
       targetCheckpoint: null,
       pendingValidatedCheckpoint: null,
-      bucketMap: new Map()
+      bucketMap: initBucketMap
     };
 
     const reader = stream.getReader();
+    console.debug(`Starting sync iteration`);
     try {
       while (!signal.aborted) {
         const { value: line, done } = await reader.read();
@@ -134,6 +151,7 @@ export class SyncClientImpl implements SyncClient {
 
         // Handle various sync line types
         if (`checkpoint` in line) {
+          console.debug(`Received checkpoint`, line.checkpoint);
           const bucketsToDelete = new Set<string>(syncState.bucketMap.keys());
           const newBuckets = new Map<string, BucketDescription>();
           for (const checksum of line.checkpoint.buckets) {
@@ -153,6 +171,7 @@ export class SyncClientImpl implements SyncClient {
           // TODO update sync status
           // await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
         } else if (`checkpoint_complete` in line) {
+          console.debug(`Received checkpoint complete`, syncState.targetCheckpoint);
           const result = await this.applyCheckpoint(syncState.targetCheckpoint!);
           if (result.endIteration) {
             return;
@@ -162,6 +181,7 @@ export class SyncClientImpl implements SyncClient {
             syncState.pendingValidatedCheckpoint = null;
           }
         } else if (`partial_checkpoint_complete` in line) {
+          console.debug(`Received partial checkpoint complete`, syncState.targetCheckpoint);
           const priority = line.partial_checkpoint_complete.priority;
           console.debug(`Partial checkpoint complete`, priority);
           const result = await this.bucketStorage.syncLocalDatabase(syncState.targetCheckpoint!, priority);
@@ -177,6 +197,7 @@ export class SyncClientImpl implements SyncClient {
             // We'll keep on downloading, but can report that this priority is synced now.
           }
         } else if (`checkpoint_diff` in line) {
+          console.debug(`Received checkpoint diff`, syncState.targetCheckpoint);
           // TODO: It may be faster to just keep track of the diff, instead of the entire checkpoint
           if (syncState.targetCheckpoint == null) {
             throw new Error(`Checkpoint diff without previous checkpoint`);
@@ -219,12 +240,14 @@ export class SyncClientImpl implements SyncClient {
           await this.bucketStorage.removeBuckets(bucketsToDelete);
           await this.bucketStorage.setTargetCheckpoint(syncState.targetCheckpoint!);
         } else if (`data` in line) {
+          console.debug(`Received data`, line.data);
           const { data } = line;
           // TODO update sync status
           await this.bucketStorage.saveSyncData({
             buckets: [data]
           });
         } else if (`token_expires_in` in line) {
+          console.debug(`Received token expires in`, line.token_expires_in);
           const { token_expires_in } = line;
 
           if (token_expires_in == 0) {
@@ -232,9 +255,9 @@ export class SyncClientImpl implements SyncClient {
           } else if (token_expires_in < 30) {
             this.invalidateCredentials();
             throw new Error(`Token will expire soon. Need to reconnect.`);
-          } else {
-            console.debug(`Received unknown sync line`, line);
           }
+        } else {
+          console.debug(`Received unknown sync line`, line);
         }
       }
     } finally {

@@ -3,7 +3,7 @@ import { BucketStorageImpl } from '../src/client/BucketStorageImpl.js';
 import { SyncClientImpl, type Connector } from '../src/client/SyncClient.js';
 import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/SystemDependencies.js';
 
-describe(`PowerSync Lite`, () => {
+describe(`PowerSync Lite`, { timeout: Infinity }, () => {
   describe(`Connection`, () => {
     it(`should connect to a PowerSync server`, async () => {
       const connector = {

@@ -2,23 +2,30 @@ import type { StreamingSyncLine, StreamingSyncRequest } from '@powersync/service
 import type { SystemDependencies } from './SystemDependencies.js';
 import { ndjsonStream } from './ndjson.js';
 
+export interface BucketRequest {
+  name: string;
+
+  /**
+   * Base-10 number. Sync all data from this bucket with op_id > after.
+   */
+  after: string;
+}
+
 export type SyncOptions = {
   endpoint: string;
   token: string;
   clientId: string | undefined;
   signal: AbortSignal | undefined;
-  bucketPositions: Map<string, string>;
+  bucketPositions: BucketRequest[];
   systemDependencies: SystemDependencies;
 };
 
+// TODO This currently uses NDJSON streaming. We should add binary streaming also
 export async function openHttpStream(options: SyncOptions): Promise<ReadableStream<StreamingSyncLine>> {
   const streamRequest: StreamingSyncRequest = {
     raw_data: true,
     client_id: options.clientId,
-    buckets: Array.from(options.bucketPositions.entries()).map(([bucket, after]) => ({
-      name: bucket,
-      after: after
-    }))
+    buckets: options.bucketPositions
   };
 
   const { fetch } = options.systemDependencies;
