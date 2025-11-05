@@ -1,5 +1,5 @@
 import type { StreamingSyncLine, StreamingSyncRequest } from '@powersync/service-core';
-import type { SystemDependencies } from './SystemDependencies.js';
+import type { SystemDependencies } from '../system/SystemDependencies.js';
 import { ndjsonStream } from './ndjson.js';
 
 export interface BucketRequest {

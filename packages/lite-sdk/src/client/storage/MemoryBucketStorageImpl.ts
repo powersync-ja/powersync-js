@@ -1,19 +1,25 @@
 import type { BucketState, Checkpoint } from '@powersync/service-core';
 import type { BucketOperationProgress, BucketStorage, SyncDataBatch } from './BucketStorage.js';
+import type { SyncOperation, SyncOperationsHandler } from './SyncOperationsHandler.js';
 import { constructKey, toStringOrNull } from './bucketHelpers.js';
-import type { PSBucket } from './buckets/ps_buckets.js';
-import type { PSCrud } from './buckets/ps_crud.js';
-import type { PSKeyValue } from './buckets/ps_kv.js';
-import type { PSOplog } from './buckets/ps_oplog.js';
-import type { PSTx } from './buckets/ps_tx.js';
-import type { PSUntyped } from './buckets/ps_untyped.js';
 import { addChecksums, normalizeChecksum, subtractChecksums } from './checksumUtils.js';
+import type { PSBucket } from './storage-types/ps_buckets.js';
+import type { PSCrud } from './storage-types/ps_crud.js';
+import type { PSKeyValue } from './storage-types/ps_kv.js';
+import type { PSOplog } from './storage-types/ps_oplog.js';
+import type { PSTx } from './storage-types/ps_tx.js';
+import type { PSUntyped } from './storage-types/ps_untyped.js';
 
 export type OpType = 'PUT' | 'REMOVE' | 'MOVE' | 'CLEAR';
 
 export const MAX_OP_ID = '9223372036854775807';
 
-export class BucketStorageImpl implements BucketStorage {
+export type MemoryBucketStorageImplOptions = {
+  /** Array of handlers for processing sync operations collected from the protocol */
+  operationsHandlers: SyncOperationsHandler[];
+};
+
+export class MemoryBucketStorageImpl implements BucketStorage {
   protected ps_buckets: PSBucket[];
   protected ps_oplog: PSOplog[];
   protected ps_updated_rows: PSUntyped[];
@@ -29,7 +35,10 @@ export class BucketStorageImpl implements BucketStorage {
   // TODO: This should be properly managed when ps_crud is implemented
   protected ps_crud_seq: number = 0;
 
-  constructor() {
+  /** Handlers for processing sync operations collected from the protocol */
+  protected operationsHandlers: SyncOperationsHandler[];
+
+  constructor(options: MemoryBucketStorageImplOptions) {
     this.ps_buckets = [];
     this.ps_oplog = [];
     this.ps_tx = {
@@ -40,6 +49,7 @@ export class BucketStorageImpl implements BucketStorage {
     this.ps_crud = [];
     this.ps_kv = [];
     this.clientId = 'TODO';
+    this.operationsHandlers = options.operationsHandlers;
   }
 
   async init(): Promise<void> {}
@@ -70,6 +80,7 @@ export class BucketStorageImpl implements BucketStorage {
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
     // Find the '$local' bucket and check if target_op = MAX_OP_ID
     // SQL: SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = CAST(? as INTEGER)
+    // TODO: maybe store local state separately
     const localBucket = this.ps_buckets.find((b) => b.name === '$local');
     if (!localBucket) {
       // Nothing to update
@@ -381,11 +392,12 @@ export class BucketStorageImpl implements BucketStorage {
     // Collect operations that need to be applied
     const operations = await this.collectFullOperations(checkpoint, priority);
 
-    console.log('operations', operations);
-
-    // TODO: Apply operations to output collections (pluggable approach)
-    // For now, we just collect them but don't actually write to output collections
-    // This will be handled in a pluggable manner later
+    // Process operations using all handlers if provided
+    if (this.operationsHandlers.length > 0 && operations.length > 0) {
+      for (const handler of this.operationsHandlers) {
+        await handler.processOperations(operations);
+      }
+    }
 
     // Update last_applied_op for buckets
     await this.setLastAppliedOp(checkpoint, priority);
@@ -457,8 +469,8 @@ export class BucketStorageImpl implements BucketStorage {
   private async collectFullOperations(
     checkpoint: Checkpoint,
     priority: number | undefined
-  ): Promise<Array<{ type: string; id: string; op: 'PUT' | 'REMOVE'; data: string | null }>> {
-    const operations: Array<{ type: string; id: string; op: 'PUT' | 'REMOVE'; data: string | null }> = [];
+  ): Promise<Array<SyncOperation>> {
+    const operations: Array<SyncOperation> = [];
 
     if (priority === undefined) {
       // Complete sync - collect all updated rows

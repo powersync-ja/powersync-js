@@ -1,6 +1,6 @@
 import type { Checkpoint, CheckpointBucket } from '@powersync/service-core';
-import type { BucketStorage } from './BucketStorage.js';
-import type { SystemDependencies } from './SystemDependencies.js';
+import type { BucketStorage } from '../storage/BucketStorage.js';
+import type { SystemDependencies } from '../system/SystemDependencies.js';
 import { BucketRequest, openHttpStream } from './open-stream.js';
 
 export type PowerSyncCredentials = {

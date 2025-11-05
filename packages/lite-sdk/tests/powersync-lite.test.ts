@@ -1,7 +1,8 @@
 import { describe, it } from 'vitest';
-import { BucketStorageImpl } from '../src/client/BucketStorageImpl.js';
-import { SyncClientImpl, type Connector } from '../src/client/SyncClient.js';
-import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/SystemDependencies.js';
+import { MemoryBucketStorageImpl } from '../src/client/storage/MemoryBucketStorageImpl.js';
+import { SyncOperationsHandler } from '../src/client/storage/SyncOperationsHandler.js';
+import { SyncClientImpl, type Connector } from '../src/client/sync/SyncClient.js';
+import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/system/SystemDependencies.js';
 
 describe(`PowerSync Lite`, { timeout: Infinity }, () => {
   describe(`Connection`, () => {
@@ -27,16 +28,26 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
         }
       } satisfies Connector;
 
+      const syncOperationsHandler: SyncOperationsHandler = {
+        processOperations: async (operations) => {
+          // Funnel these operations to external storage
+          console.log(`Processing ${operations.length} operations`);
+        }
+      };
+
       const syncClient = new SyncClientImpl({
         connectionRetryDelayMs: 1000,
+        // TODO uploads
         uploadRetryDelayMs: 1000,
-        storage: new BucketStorageImpl(),
+        storage: new MemoryBucketStorageImpl({
+          operationsHandlers: [syncOperationsHandler]
+        }),
         systemDependencies: DEFAULT_SYSTEM_DEPENDENCIES()
       });
 
       await syncClient.connect(connector);
 
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      // Long running test for demonstrating the sync client
     });
   });
 });
