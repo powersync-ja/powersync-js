@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, DifferentialWatchedQuery, ILogger, Transaction } from '@powersync/common';
+import { AbstractPowerSyncDatabase, DEFAULT_WATCH_THROTTLE_MS, DifferentialWatchedQuery, ILogger, Transaction } from '@powersync/common';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -79,14 +79,14 @@ export class AttachmentQueue {
     logger,
     tableName = ATTACHMENT_TABLE,
     syncIntervalMs = 30 * 1000,
-    syncThrottleDuration = 1000,
+    syncThrottleDuration = DEFAULT_WATCH_THROTTLE_MS,
     downloadAttachments = true,
     archivedCacheLimit = 100
   }: {
     db: AbstractPowerSyncDatabase;
     remoteStorage: RemoteStorageAdapter;
     localStorage: LocalStorageAdapter;
-    watchAttachments: (onUpdate: (attachement: WatchedAttachmentItem[]) => Promise<void>) => void;
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>) => void;
     tableName?: string;
     logger?: ILogger;
     syncIntervalMs?: number;
@@ -101,9 +101,9 @@ export class AttachmentQueue {
     this.tableName = tableName;
     this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger);
     this.attachmentService = new AttachmentService(tableName, db);
-    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments();
     this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
+    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
     this.downloadAttachments = downloadAttachments;
     this.archivedCacheLimit = archivedCacheLimit;
   }
@@ -118,8 +118,17 @@ export class AttachmentQueue {
    * @param onUpdate - Callback to invoke when attachment references change
    * @throws Error indicating this method must be implemented by the user
    */
-  watchAttachments(onUpdate: (attachement: WatchedAttachmentItem[]) => Promise<void>): void {
+  watchAttachments(onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>): void {
     throw new Error('watchAttachments should be implemented by the user of AttachmentQueue');
+  }
+
+  /**
+   * Generates a new attachment ID using a SQLite UUID function.
+   * 
+   * @returns Promise resolving to the new attachment ID
+   */
+  async generateAttachmentId(): Promise<string> {
+    return (await this.context.db.get<{ id: string }>('SELECT uuid() as id')).id;
   }
 
   /**
@@ -136,8 +145,13 @@ export class AttachmentQueue {
     if (this.attachmentService.watchActiveAttachments) {
       await this.stopSync();
       // re-create the watch after it was stopped
-      this.watchActiveAttachments = this.attachmentService.watchActiveAttachments();
+      this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
     }
+
+    // immediately invoke the sync storage to initialize local storage
+    await this.localStorage.initialize();
+
+    await this.verifyAttachments();
 
     // Sync storage periodically
     this.periodicSyncTimer = setInterval(async () => {
@@ -162,7 +176,6 @@ export class AttachmentQueue {
         const existingQueueItem = currentAttachments.find((a) => a.id === watchedAttachment.id);
         if (!existingQueueItem) {
           // Item is watched but not in the queue yet. Need to add it.
-
           if (!this.downloadAttachments) {
             continue;
           }
@@ -284,9 +297,9 @@ export class AttachmentQueue {
     mediaType?: string;
     metaData?: string;
     id?: string;
-    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => void;
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
   }): Promise<AttachmentRecord> {
-    const resolvedId = id ?? (await this.context.db.get<{ id: string }>('SELECT uuid() as id')).id;
+    const resolvedId = id ?? await this.generateAttachmentId();
     const filename = `${resolvedId}.${fileExtension}`;
     const localUri = this.localStorage.getLocalUri(filename);
     const size = await this.localStorage.saveFile(localUri, data);
@@ -304,11 +317,30 @@ export class AttachmentQueue {
     };
 
     await this.context.db.writeTransaction(async (tx) => {
-      updateHook?.(tx, attachment);
-      this.context.upsertAttachment(attachment, tx);
+      await updateHook?.(tx, attachment);
+      await this.context.upsertAttachment(attachment, tx);
     });
 
     return attachment;
+  }
+
+  async deleteFile({ id, updateHook }: {
+    id: string, 
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>
+  }): Promise<void> {
+    const attachment = await this.context.getAttachment(id);
+    if (!attachment) {
+      throw new Error(`Attachment with id ${id} not found`);
+    }
+
+    await this.context.db.writeTransaction(async (tx) => {
+      await updateHook?.(tx, attachment);
+      await this.context.upsertAttachment({
+        ...attachment,
+        state: AttachmentState.QUEUED_DELETE,
+        hasSynced: false,
+      }, tx);
+    });
   }
 
   /**
@@ -322,12 +354,12 @@ export class AttachmentQueue {
   verifyAttachments = async (): Promise<void> => {
     const attachments = await this.context.getAttachments();
     const updates: AttachmentRecord[] = [];
-
+    
     for (const attachment of attachments) {
       if (attachment.localUri == null) {
         continue;
       }
-
+      
       const exists = await this.localStorage.fileExists(attachment.localUri);
       if (exists) {
         // The file exists, this is correct
@@ -342,19 +374,16 @@ export class AttachmentQueue {
           ...attachment,
           localUri: newLocalUri
         });
-      } else if (attachment.state === AttachmentState.QUEUED_UPLOAD || attachment.state === AttachmentState.ARCHIVED) {
-        // The file must have been removed from the local storage before upload was completed
-        updates.push({
-          ...attachment,
-          state: AttachmentState.ARCHIVED,
-          localUri: undefined // Clears the value
-        });
-      } else if (attachment.state === AttachmentState.SYNCED) {
-        // The file was downloaded, but removed - trigger redownload
-        updates.push({
-          ...attachment,
-          state: AttachmentState.QUEUED_DOWNLOAD
-        });
+      } else {
+        // no new exists
+        if (attachment.state === AttachmentState.QUEUED_UPLOAD || attachment.state === AttachmentState.SYNCED) {
+          // The file must have been removed from the local storage before upload was completed
+          updates.push({
+            ...attachment,
+            state: AttachmentState.ARCHIVED,
+            localUri: undefined // Clears the value
+          });
+        }
       }
     }
 

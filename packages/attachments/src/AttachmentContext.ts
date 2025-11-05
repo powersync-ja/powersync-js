@@ -119,7 +119,7 @@ export class AttachmentContext {
    */
   async upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void> {    
     try {
-      const result = await context.execute(
+      await context.execute(
         /* sql */
         `
           INSERT
@@ -140,18 +140,32 @@ export class AttachmentContext {
         [
           attachment.id,
           attachment.filename,
-          attachment.localUri || 'dummy',
-          attachment.size || 1,
-          attachment.mediaType || 'dummy',
-          attachment.timestamp || Date.now(),
+          attachment.localUri || null,
+          attachment.size || null,
+          attachment.mediaType || null,
+          attachment.timestamp,
           attachment.state,
           attachment.hasSynced ? 1 : 0,
-          attachment.metaData || 'dummy'
+          attachment.metaData || null
         ]
       );
     } catch (error) {
       throw error;
     }
+  }
+
+  async getAttachment(id: string): Promise<AttachmentRecord | undefined> {
+    const attachment = await this.db.get(
+      /* sql */
+      `
+        SELECT * FROM ${this.tableName}
+        WHERE 
+          id = ?
+      `,
+      [id]
+    );
+
+    return attachment ? attachmentFromSql(attachment) : undefined;
   }
 
   /**
@@ -191,7 +205,7 @@ export class AttachmentContext {
     }
     await this.db.writeTransaction(async (tx) => {
       for (const attachment of attachments) {
-        this.upsertAttachment(attachment, tx);
+        await this.upsertAttachment(attachment, tx);
       }
     });
   }

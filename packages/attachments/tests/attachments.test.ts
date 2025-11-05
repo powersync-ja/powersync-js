@@ -43,38 +43,19 @@ vi.mock('fs', () => {
 const mockLocalStorage = new NodeFileSystemAdapter('./temp/attachments');
 
 let db: AbstractPowerSyncDatabase;
-
-beforeAll(async () => {
-  db = new PowerSyncDatabase({
-    schema: new Schema({
-      users: new Table({
-        name: column.text,
-        email: column.text,
-        photo_id: column.text
-      }),
-      attachments: new AttachmentTable()
-    }),
-    database: {
-      dbFilename: 'testing.db',
-    }
-  });
-
+let queue: AttachmentQueue;
+const schema = new Schema({
+  users: new Table({
+    name: column.text,
+    email: column.text,
+    photo_id: column.text
+  }),
+  attachments: new AttachmentTable()
 });
 
-beforeEach(() => {
-  // reset the state of in-memory fs
-  vol.reset()
-  // Reset mock call history
-  mockUploadFile.mockClear();
-  mockDownloadFile.mockClear();
-  mockDeleteFile.mockClear();
-})
+const INTERVAL_MILLISECONDS = 1000;
 
-afterEach(async () => {
-  await db.disconnectAndClear();
-});
-
-const watchAttachments = (onUpdate: (attachments: WatchedAttachmentItem[]) => void) => {
+const watchAttachments = (onUpdate: (attachments: WatchedAttachmentItem[]) => Promise<void>) => {
   db.watch(
     /* sql */
     `
@@ -87,8 +68,8 @@ const watchAttachments = (onUpdate: (attachments: WatchedAttachmentItem[]) => vo
     `,
     [],
     {
-      onResult: (result: any) =>
-        onUpdate(
+      onResult: async (result: any) =>
+      await onUpdate(
           result.rows?._array.map((r: any) => ({
             id: r.photo_id,
             fileExtension: 'jpg'
@@ -97,6 +78,34 @@ const watchAttachments = (onUpdate: (attachments: WatchedAttachmentItem[]) => vo
     }
   );
 };
+
+beforeEach(() => {
+  db = new PowerSyncDatabase({
+    schema,
+    database: {
+      dbFilename: 'testing.db',
+    }
+  });
+  // reset the state of in-memory fs
+  vol.reset()
+  // Reset mock call history
+  mockUploadFile.mockClear();
+  mockDownloadFile.mockClear();
+  mockDeleteFile.mockClear();
+  queue = new AttachmentQueue({
+    db: db,
+    watchAttachments,
+    remoteStorage: mockRemoteStorage,
+    localStorage: mockLocalStorage,
+    syncIntervalMs: INTERVAL_MILLISECONDS,
+  });
+})
+
+afterEach(async () => {
+  await queue.stopSync();
+  await db.disconnectAndClear();
+  await db.close();
+});
 
 // Helper to watch the attachments table
 async function* watchAttachmentsTable(): AsyncGenerator<AttachmentRecord[]> {
@@ -107,7 +116,6 @@ async function* watchAttachmentsTable(): AsyncGenerator<AttachmentRecord[]> {
       FROM
         attachments;
     `,
-    // [AttachmentState.QUEUED_UPLOAD, AttachmentState.QUEUED_DOWNLOAD, AttachmentState.QUEUED_DELETE],
   );
 
   for await (const result of watcher) {
@@ -145,16 +153,30 @@ async function waitForMatchCondition(
 }
 
 describe('attachment queue', () => {
+  it('should use the correct relative path for the local file', async () => {
+    await queue.startSync();
+    const id = await queue.generateAttachmentId();
+    await db.execute(
+      'INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)',
+      ['steven', 'steven@journeyapps.com', id],
+    );
+
+    // wait for the file to be synced
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+      5
+    );
+    const expectedLocalUri = await queue.localStorage.getLocalUri(`${id}.jpg`);
+
+    expect(await mockLocalStorage.fileExists(expectedLocalUri)).toBe(true);
+
+    await queue.stopSync();
+  })
+
   it('should download attachments when a new record with an attachment is added', {
     timeout: 10000 // 10 seconds
   }, async () => {
-    const queue = new AttachmentQueue({
-      db: db,
-      watchAttachments,
-      remoteStorage: mockRemoteStorage,
-      localStorage: mockLocalStorage,
-    });
-
     await queue.startSync();
 
     
@@ -196,42 +218,234 @@ describe('attachment queue', () => {
 
     await queue.stopSync();
   });
+
+  it('should upload attachments when a new file is saved', {
+    timeout: 10000
+  }, async () => {
+    await queue.startSync();
+  
+    // Create mock file data (123 bytes)
+    const mockFileData = new Uint8Array(123).fill(42); // Fill with some data
+  
+    // Save file with updateHook to link to user
+    const record = await queue.saveFile({
+      data: mockFileData.buffer,
+      fileExtension: 'jpg',
+      mediaType: 'image/jpeg',
+      updateHook: async (tx, attachment) => {
+        await tx.execute(
+          'INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)',
+          ['testuser', 'testuser@journeyapps.com', attachment.id]
+        );
+      }
+    });
+  
+    expect(record.size).toBe(123);
+    expect(record.state).toBe(AttachmentState.QUEUED_UPLOAD);
+  
+    // Wait for attachment to be uploaded and synced
+    const attachments = await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === record.id && r.state === AttachmentState.SYNCED),
+      5
+    );
+  
+    const attachmentRecord = attachments.find((r) => r.id === record.id);
+    expect(attachmentRecord?.state).toBe(AttachmentState.SYNCED);
+  
+    // Verify upload was called
+    expect(mockUploadFile).toHaveBeenCalled();
+    const uploadCall = mockUploadFile.mock.calls[0];
+    expect(uploadCall[1].id).toBe(record.id);
+  
+    // Verify local file exists
+    expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(true);
+  
+    // Clear the user's photo_id to archive the attachment
+    await db.execute('UPDATE users SET photo_id = NULL');
+  
+  
+    // Wait for attachment to be archived
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === record.id && r.state === AttachmentState.ARCHIVED),
+      5
+    )
+
+    // Wait for attachment to be deleted (not just archived)
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => !results.some(r => r.id === record.id),
+      5
+    );
+
+    // await queue.syncStorage(); // <-- explicitly delete
+  
+    // File should be deleted too
+    expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(false);
+  
+    await queue.stopSync();
+  });
+
+  it('should delete attachments', async () => {
+    await queue.startSync();
+
+    const id = await queue.generateAttachmentId();
+
+    await db.execute(
+      'INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)',
+      ['steven', 'steven@journeyapps.com', id],
+    );
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    await queue.deleteFile({
+      id,
+      updateHook: async (tx, attachment) => {
+        await tx.execute(
+          'UPDATE users SET photo_id = NULL WHERE photo_id = ?',
+          [attachment.id],
+        );
+      }
+    });
+
+    const toBeDeletedAttachments = await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.QUEUED_DELETE),
+      5
+    );
+
+    expect(toBeDeletedAttachments.length).toBe(1);
+    expect(toBeDeletedAttachments[0].id).toBe(id);
+    expect(toBeDeletedAttachments[0].state).toBe(AttachmentState.QUEUED_DELETE);
+    expect(toBeDeletedAttachments[0].hasSynced).toBe(false);
+
+    // wait for the file to be deleted
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    expect(await mockLocalStorage.fileExists(toBeDeletedAttachments[0].localUri!)).toBe(false);
+
+    await queue.stopSync();
+  })
+
+  it('should recover from deleted local file', async () => {
+    // create an attachment record that has an invalid localUri
+    await db.execute(
+      `
+      INSERT 
+      OR REPLACE INTO attachments (
+        id,
+        timestamp,
+        filename,
+        local_uri,
+        size,
+        media_type,
+        has_synced,
+        state
+      )
+      VALUES 
+        (uuid(), current_timestamp, ?, ?, ?, ?, ?, ?)`,
+      [
+        'test.jpg',
+        'invalid/dir/test.jpg', 
+        100, 
+        'image/jpeg', 
+        1, 
+        AttachmentState.SYNCED
+      ],
+    );
+
+    await queue.startSync();
+
+    const attachmentRecord = await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.state === AttachmentState.ARCHIVED),
+      5
+    );
+
+    expect(attachmentRecord[0].filename).toBe('test.jpg');
+    // it seems that the localUri is not set to null
+    expect(attachmentRecord[0].localUri).toBe(null);
+    expect(attachmentRecord[0].state).toBe(AttachmentState.ARCHIVED);
+
+    await queue.stopSync();
+  });
+
+  it('should cache downloaded attachments', async () => {
+    await queue.startSync();
+
+    const id = await queue.generateAttachmentId();
+    await db.execute(
+      'INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)',
+      ['testuser', 'testuser@journeyapps.com', id],
+    );
+
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    expect(mockDownloadFile).toHaveBeenCalled();
+    expect(mockDownloadFile).toHaveBeenCalledWith({
+      filename: `${id}.jpg`,
+      hasSynced: false,
+      id: id,
+      localUri: null,
+      mediaType: null,
+      metaData: null,
+      size: null,
+      state: AttachmentState.QUEUED_DOWNLOAD,
+      timestamp: null,
+    });
+
+    // Archive attachment by not referencing it anymore.
+    await db.execute('UPDATE users SET photo_id = NULL');
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.state === AttachmentState.ARCHIVED),
+      5
+    );
+
+    // Restore from cache
+    await db.execute('UPDATE users SET photo_id = ?', [id]);
+    await waitForMatchCondition(
+      () => watchAttachmentsTable(),
+      (results) => results.some((r) => r.state === AttachmentState.SYNCED),
+      5
+    );
+
+    const localUri = await queue.localStorage.getLocalUri(`${id}.jpg`);
+    expect(await mockLocalStorage.fileExists(localUri)).toBe(true);
+
+    // Verify the download was not called again
+    expect(mockDownloadFile).toHaveBeenCalledExactlyOnceWith({
+      filename: `${id}.jpg`,
+      hasSynced: false,
+      id: id,
+      localUri: null,
+      mediaType: null,
+      metaData: null,
+      size: null,
+      state: AttachmentState.QUEUED_DOWNLOAD,
+      timestamp: null,
+    });
+
+    await queue.stopSync();
+  })
+
+  it.todo('should skip failed download and retry it in the next sync', async () => {
+    // no error handling yet expose error handling
+    const localeQueue = new AttachmentQueue({
+      db: db,
+      watchAttachments,
+      remoteStorage: mockRemoteStorage,
+      localStorage: mockLocalStorage,
+      syncIntervalMs: INTERVAL_MILLISECONDS,
+    });
+  })
 });
-
-// async function waitForMatch(
-//   iteratorGenerator: () => AsyncGenerator<AttachmentRecord[]>,
-//   predicate: (attachments: AttachmentRecord[]) => boolean,
-//   timeoutSeconds: number = 5
-// ): Promise<AttachmentRecord[]> {
-//   const timeoutMs = timeoutSeconds * 1000;
-//   const abortController = new AbortController();
-
-//   const matchPromise = (async () => {
-//     const asyncIterable = iteratorGenerator();
-//     try {
-//       for await (const value of asyncIterable) {
-//         if (abortController.signal.aborted) {
-//           throw new Error('Timeout');
-//         }
-//         if (predicate(value)) {
-//           return value;
-//         }
-//       }
-//       throw new Error('Stream ended without match');
-//     } finally {
-//       const iterator = asyncIterable[Symbol.asyncIterator]();
-//       if (iterator.return) {
-//         await iterator.return();
-//       }
-//     }
-//   })();
-
-//   const timeoutPromise = new Promise((_, reject) =>
-//     setTimeout(() => {
-//       abortController.abort();
-//       reject(new Error('Timeout'));
-//     }, timeoutMs)
-//   );
-
-//   return Promise.race([matchPromise, timeoutPromise]);
-// }

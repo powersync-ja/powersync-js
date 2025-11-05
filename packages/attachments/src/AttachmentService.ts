@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, DifferentialWatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, DEFAULT_WATCH_THROTTLE_MS, DifferentialWatchedQuery } from '@powersync/common';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 
 /**
@@ -14,7 +14,7 @@ export class AttachmentService {
    * Creates a differential watch query for active attachments requiring synchronization.
    * @returns Watch query that emits changes for queued uploads, downloads, and deletes
    */
-  watchActiveAttachments(): DifferentialWatchedQuery<AttachmentRecord> {
+  watchActiveAttachments({ throttleMs }: { throttleMs?: number } = {}): DifferentialWatchedQuery<AttachmentRecord> {
     const watch = this.db
       .query<AttachmentRecord>({
         sql: /* sql */ `
@@ -31,7 +31,7 @@ export class AttachmentService {
         `,
         parameters: [AttachmentState.QUEUED_UPLOAD, AttachmentState.QUEUED_DOWNLOAD, AttachmentState.QUEUED_DELETE]
       })
-      .differentialWatch();
+      .differentialWatch({ throttleMs });
 
     return watch;
   }
