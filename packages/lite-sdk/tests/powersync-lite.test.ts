@@ -1,7 +1,8 @@
 import { describe, it } from 'vitest';
 import { MemoryBucketStorageImpl } from '../src/client/storage/MemoryBucketStorageImpl.js';
 import { SyncOperationsHandler } from '../src/client/storage/SyncOperationsHandler.js';
-import { SyncClientImpl, type Connector } from '../src/client/sync/SyncClient.js';
+import { type Connector } from '../src/client/sync/SyncClient.js';
+import { SyncClientImpl } from '../src/client/sync/SyncClientImpl.js';
 import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/system/SystemDependencies.js';
 
 describe(`PowerSync Lite`, { timeout: Infinity }, () => {

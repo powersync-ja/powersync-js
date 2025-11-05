@@ -6,7 +6,6 @@ import { constructKey, toStringOrNull } from './bucketHelpers.js';
 import { addChecksums, normalizeChecksum, subtractChecksums } from './checksumUtils.js';
 import type { PSBucket } from './storage-types/ps_buckets.js';
 import type { PSCrud } from './storage-types/ps_crud.js';
-import type { PSKeyValue } from './storage-types/ps_kv.js';
 import type { PSOplog } from './storage-types/ps_oplog.js';
 import type { PSTx } from './storage-types/ps_tx.js';
 import { PsUpdatedRows } from './storage-types/ps_updated_rows.js';
@@ -28,7 +27,6 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   // TODO: ps_crud implementation - ignoring for now
   // ps_crud tracks client-side changes that need to be uploaded to the server
   protected ps_crud: PSCrud[];
-  protected ps_kv: PSKeyValue[];
   protected clientId: string;
 
   protected ps_tx: PSTx;
@@ -56,7 +54,6 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     this.ps_updated_rows = [];
     this.ps_crud = [];
     this.lastSyncedAt = null;
-    this.ps_kv = [];
     this.clientId = this.options.systemDependencies.crypto.randomUUID();
   }
 
