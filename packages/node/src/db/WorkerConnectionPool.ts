@@ -92,10 +92,21 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
       const comlink = Comlink.wrap<AsyncDatabaseOpener>({
-        postMessage: worker.postMessage.bind(worker),
+        postMessage: (message: any, transfer?: any) => {
+          console.log('to worker', message);
+          return worker.postMessage(message, transfer);
+        },
         addEventListener: (type, listener) => {
           let resolved: (event: any) => void =
             'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
+
+          {
+            const original = resolved;
+            resolved = (event) => {
+              console.log('from worker', event);
+              return original(event);
+            };
+          }
 
           // Comlink wants message events, but the message event on workers in Node returns the data only.
           if (type === 'message') {
@@ -213,10 +224,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         try {
           return await fn(this.writeConnection);
         } finally {
-          const serializedUpdates = await this.writeConnection.database.executeRaw(
-            "SELECT powersync_update_hooks('get');",
-            []
-          );
+          const serializedUpdates = await this.writeConnection.executeRaw("SELECT powersync_update_hooks('get');", []);
           const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
           if (updates.length > 0) {
