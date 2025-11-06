@@ -13,9 +13,5 @@
     "resolveJsonModule": true,
     "jsx": "preserve"
   },
-  "references": [
-    {
-      "path": "../../packages/web"
-    }
-  ]
+  "references": []
 }
