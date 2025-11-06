@@ -56,7 +56,6 @@
   },
   "dependencies": {
     "async-mutex": "^0.5.0",
-    "bson": "^6.10.4",
     "buffer": "^6.0.3",
     "event-iterator": "^2.0.0"
   },
@@ -71,6 +70,7 @@
     "cross-fetch": "^4.1.0",
     "js-logger": "^1.6.1",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3"
+    "rsocket-websocket-client": "1.0.0-alpha.3",
+    "bson": "^6.10.4"
   }
 }
