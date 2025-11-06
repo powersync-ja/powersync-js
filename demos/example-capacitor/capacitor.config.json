@@ -9,7 +9,14 @@
     }
   },
   "android": {
-    "loggingBehavior": "production"
+    "loggingBehavior": "production",
+    "buildOptions": {
+      "releaseType": "APK",
+      "keystorePath": "debug-isolated.keystore",
+      "keystorePassword": "android",
+      "keystoreAlias": "androiddebugkey",
+      "keystoreAliasPassword": "android"
+    }
   },
   "ios": {
     "loggingBehavior": "production"
