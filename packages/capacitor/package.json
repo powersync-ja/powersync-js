@@ -13,6 +13,7 @@
   "files": [
     "android/src/main/",
     "android/build.gradle",
+    "android/proguard-rules.pro",
     "dist/",
     "src",
     "ios/Sources",
