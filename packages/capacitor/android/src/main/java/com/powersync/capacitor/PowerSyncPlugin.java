@@ -14,7 +14,8 @@ public class PowerSyncPlugin extends Plugin {
     @PluginMethod
     public void registerCore(PluginCall call) {
         JSObject ret = new JSObject();
-        ret.put("responseCode", implementation.registerPowersync());
+        // For Android we don't statically register the library, so we always return 0
+        ret.put("responseCode", 0);
         call.resolve(ret);
     }
 }
