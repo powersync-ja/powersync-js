@@ -170,17 +170,18 @@ export class SyncingService {
    * Performs cleanup of archived attachments by removing their local files and records.
    * Errors during local file deletion are logged but do not prevent record deletion.
    */
-  async deleteArchivedAttachments(): Promise<void> {
-    const archivedAttachments = await this.context.getArchivedAttachments();
-    for (const attachment of archivedAttachments) {
-      if (attachment.localUri) {
-        try {
-          await this.localStorage.deleteFile(attachment.localUri);
-        } catch (error) {
-          this.logger.error('Error deleting local file for archived attachment', error);
+  async deleteArchivedAttachments(): Promise<boolean> {
+    return await this.context.deleteArchivedAttachments(async (archivedAttachments) => {
+      for (const attachment of archivedAttachments) {
+        if (attachment.localUri) {
+          try {
+            await this.localStorage.deleteFile(attachment.localUri);
+          } catch (error) {
+            this.logger.error('Error deleting local file for archived attachment', error);
+          }
         }
+        await this.context.deleteAttachment(attachment.id);
       }
-      await this.context.deleteAttachment(attachment.id);
-    }
+    });
   }
 }

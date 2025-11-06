@@ -97,18 +97,18 @@ export class AttachmentQueue {
     archivedCacheLimit?: number;
     errorHandler?: AttachmentErrorHandler;
   }) {
-    this.context = new AttachmentContext(db, tableName, logger ?? db.logger);
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
     this.tableName = tableName;
-    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger, errorHandler);
-    this.attachmentService = new AttachmentService(tableName, db);
     this.syncIntervalMs = syncIntervalMs;
     this.syncThrottleDuration = syncThrottleDuration;
-    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
-    this.downloadAttachments = downloadAttachments;
     this.archivedCacheLimit = archivedCacheLimit;
+    this.downloadAttachments = downloadAttachments;
+    this.context = new AttachmentContext(db, tableName, logger ?? db.logger, archivedCacheLimit);
+    this.attachmentService = new AttachmentService(db, logger ?? db.logger, tableName);
+    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger, errorHandler);
+    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
   }
 
   /**
@@ -346,6 +346,18 @@ export class AttachmentQueue {
     });
   }
 
+  async expireCache(): Promise<void> {
+    let isDone = false;
+    while (!isDone) {
+      isDone = await this.syncingService.deleteArchivedAttachments();
+    }
+  }
+
+  async clearQueue(): Promise<void> {
+    await this.context.clearQueue();
+    await this.localStorage.clear();
+  }
+
   /**
    * Verifies the integrity of all attachment records and repairs inconsistencies.
    * 
@@ -372,15 +384,23 @@ export class AttachmentQueue {
       const newLocalUri = this.localStorage.getLocalUri(attachment.filename);
       const newExists = await this.localStorage.fileExists(newLocalUri);
       if (newExists) {
-        // The file exists but the localUri is broken, lets update it.
+        // The file exists locally but the localUri is broken, we update it.
         updates.push({
           ...attachment,
           localUri: newLocalUri
         });
       } else {
-        // no new exists
-        if (attachment.state === AttachmentState.QUEUED_UPLOAD || attachment.state === AttachmentState.SYNCED) {
-          // The file must have been removed from the local storage before upload was completed
+        // the file doesn't exist locally.
+        if (attachment.state === AttachmentState.SYNCED) {
+          // the file has been successfully synced to remote storage but is missing
+          // we download it again
+          updates.push({
+            ...attachment,
+            state: AttachmentState.QUEUED_DOWNLOAD,
+            localUri: undefined
+          });
+        } else {
+          // the file wasn't successfully synced to remote storage, we archive it
           updates.push({
             ...attachment,
             state: AttachmentState.ARCHIVED,

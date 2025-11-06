@@ -17,6 +17,9 @@ export class AttachmentContext {
   /** Logger instance for diagnostic information */
   logger: ILogger;
 
+  /** Maximum number of archived attachments to keep before cleanup */
+  archivedCacheLimit: number = 100;
+
   /**
    * Creates a new AttachmentContext instance.
    * 
@@ -24,10 +27,11 @@ export class AttachmentContext {
    * @param tableName - Name of the table storing attachment records. Default: 'attachments'
    * @param logger - Logger instance for diagnostic output
    */
-  constructor(db: AbstractPowerSyncDatabase, tableName: string = 'attachments', logger: ILogger) {
+  constructor(db: AbstractPowerSyncDatabase, tableName: string = 'attachments', logger: ILogger, archivedCacheLimit: number) {
     this.db = db;
     this.tableName = tableName;
     this.logger = logger;
+    this.archivedCacheLimit = archivedCacheLimit;
   }
 
   /**
@@ -189,6 +193,53 @@ export class AttachmentContext {
         [attachmentId]
       )
     );
+  }
+
+  async clearQueue(): Promise<void> {
+    await this.db.writeTransaction((tx) =>
+      tx.execute(
+        /* sql */
+        `
+          DELETE FROM ${this.tableName}
+        `
+      )
+    );
+  }
+
+  async deleteArchivedAttachments(callback?: (attachments: AttachmentRecord[]) => Promise<void>): Promise<boolean> {
+    const limit = 1000;
+
+    const results = await this.db.getAll(
+      /* sql */
+      `
+        SELECT * FROM ${this.tableName} WHERE state = ? ORDER BY timestamp DESC LIMIT ? OFFSET ?
+      `,
+      [
+        AttachmentState.ARCHIVED,
+        limit,
+        this.archivedCacheLimit,
+      ],
+    );
+
+    const archivedAttachments = results.map(attachmentFromSql);
+    if (archivedAttachments.length === 0) return false;
+
+    this.logger.info(`Deleting ${archivedAttachments.length} archived attachments. Archived attachment exceeds cache archiveCacheLimit of ${this.archivedCacheLimit}.`);
+
+    await callback?.(archivedAttachments);
+
+    const ids = archivedAttachments.map(attachment => attachment.id);
+
+    await this.db.executeBatch(
+      /* sql */
+      `
+        DELETE FROM ${this.tableName} WHERE id IN (?)
+      `,
+      [ids]
+    );
+
+    this.logger.info(`Deleted ${archivedAttachments.length} archived attachments`);
+    return archivedAttachments.length < limit;
   }
 
   /**

@@ -1,13 +1,15 @@
-import { AbstractPowerSyncDatabase, DifferentialWatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase, DifferentialWatchedQuery, ILogger } from '@powersync/common';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
+import { AttachmentContext } from './AttachmentContext.js';
 
 /**
  * Service for querying and watching attachment records in the database.
  */
 export class AttachmentService {
   constructor(
+    private db: AbstractPowerSyncDatabase,
+    private logger: ILogger,
     private tableName: string = 'attachments',
-    private db: AbstractPowerSyncDatabase
   ) {}
 
   /**
@@ -15,6 +17,7 @@ export class AttachmentService {
    * @returns Watch query that emits changes for queued uploads, downloads, and deletes
    */
   watchActiveAttachments({ throttleMs }: { throttleMs?: number } = {}): DifferentialWatchedQuery<AttachmentRecord> {
+    this.logger.info('Watching active attachments...');
     const watch = this.db
       .query<AttachmentRecord>({
         sql: /* sql */ `

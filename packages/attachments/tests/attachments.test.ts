@@ -99,6 +99,7 @@ beforeEach(() => {
     remoteStorage: mockRemoteStorage,
     localStorage: mockLocalStorage,
     syncIntervalMs: INTERVAL_MILLISECONDS,
+    archivedCacheLimit: 0,
   });
 })
 
@@ -280,7 +281,7 @@ describe('attachment queue', () => {
       5
     );
 
-    // await queue.syncStorage(); // <-- explicitly delete
+    // await new Promise(resolve => setTimeout(resolve, 1500));
   
     // File should be deleted too
     expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(false);
