@@ -10,18 +10,13 @@ const __dirname = path.dirname(__filename);
 /**
  * @returns {import('rollup').RollupOptions}
  */
-export default (commandLineArgs) => {
-  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
-
-  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
-  delete commandLineArgs.sourceMap;
-
+export default () => {
   return {
     input: 'lib/index.js',
     output: {
       file: 'dist/bundle.mjs',
       format: 'esm',
-      sourcemap: sourceMap
+      sourcemap: true
     },
     plugins: [
       nodeResolve({ preferBuiltins: false, browser: true }),
@@ -36,6 +31,6 @@ export default (commandLineArgs) => {
         ]
       })
     ],
-    external: ['@powersync/common']
+    external: ['@powersync/common', 'async-mutex']
   };
 };

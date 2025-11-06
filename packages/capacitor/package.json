@@ -1,6 +1,6 @@
 {
   "name": "@powersync/capacitor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -15,6 +15,7 @@
     "android/build.gradle",
     "android/proguard-rules.pro",
     "dist/",
+    "src",
     "ios/Sources",
     "ios/Tests",
     "Package.swift",

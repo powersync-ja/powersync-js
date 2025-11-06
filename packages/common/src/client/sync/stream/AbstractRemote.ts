@@ -1,5 +1,4 @@
 import type { BSON } from 'bson';
-import { Buffer } from 'buffer';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
@@ -262,6 +261,14 @@ export abstract class AbstractRemote {
    * Provides a BSON implementation. The import nature of this varies depending on the platform
    */
   abstract getBSON(): Promise<BSONImplementation>;
+
+  /**
+   * @returns A text decoder decoding UTF-8. This is a method to allow patching it for Hermes which doesn't support the
+   * builtin, without forcing us to bundle a polyfill with `@powersync/common`.
+   */
+  protected createTextDecoder(): TextDecoder {
+    return new TextDecoder();
+  }
 
   protected createSocket(url: string): WebSocket {
     return new WebSocket(url);
@@ -564,7 +571,7 @@ export abstract class AbstractRemote {
       closeReader();
     });
 
-    const decoder = new TextDecoder();
+    const decoder = this.createTextDecoder();
     let buffer = '';
 
     const stream = new DataStream<T, string>({
