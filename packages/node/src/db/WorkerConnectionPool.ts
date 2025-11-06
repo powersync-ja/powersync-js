@@ -92,21 +92,10 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
       const comlink = Comlink.wrap<AsyncDatabaseOpener>({
-        postMessage: (message: any, transfer?: any) => {
-          console.log('to worker', message);
-          return worker.postMessage(message, transfer);
-        },
+        postMessage: worker.postMessage.bind(worker),
         addEventListener: (type, listener) => {
           let resolved: (event: any) => void =
             'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
-
-          {
-            const original = resolved;
-            resolved = (event) => {
-              console.log('from worker', event);
-              return original(event);
-            };
-          }
 
           // Comlink wants message events, but the message event on workers in Node returns the data only.
           if (type === 'message') {
