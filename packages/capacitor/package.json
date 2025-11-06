@@ -1,6 +1,6 @@
 {
   "name": "@powersync/capacitor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
