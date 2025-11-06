@@ -1,5 +1,12 @@
 # @powersync/capacitor
 
+## 0.1.1
+
+### Patch Changes
+
+- 58cf447: [Android] Fixed missing CMakeLists file error.
+- fe71006: Updated limitations in README
+
 ## 0.1.0
 
 ### Minor Changes
