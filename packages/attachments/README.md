@@ -1,236 +1,719 @@
 # @powersync/attachments
 
-A [PowerSync](https://powersync.com) library to manage attachments in React Native and JavaScript/TypeScript apps.
+PowerSync SDK for managing file attachments in JavaScript/TypeScript applications. Automatically handles synchronization of files between local storage and remote storage (S3, Supabase Storage, etc.), with support for upload/download queuing, offline functionality, and cache management.
+
+For detailed concepts and guides, see the [PowerSync documentation](https://docs.powersync.com).
 
 ## Installation
-
-**yarn**
-
-```bash
-yarn add @powersync/attachments
-```
-
-**pnpm**
-
-```bash
-pnpm add @powersync/attachments
-```
-
-**npm**
 
 ```bash
 npm install @powersync/attachments
 ```
 
-## Usage
+```bash
+yarn add @powersync/attachments
+```
 
-The `AttachmentQueue` class is used to manage and sync attachments in your app.
+```bash
+pnpm add @powersync/attachments
+```
+
+## Quick Start
+
+This example shows a web application where users have profile photos stored as attachments.
+
+### 1. Add AttachmentTable to your schema
+
+```typescript
+import { Schema, Table, column } from '@powersync/web';
+import { AttachmentTable } from '@powersync/attachments';
+
+const appSchema = new Schema({
+  users: new Table({
+    name: column.text,
+    email: column.text,
+    photo_id: column.text
+  }),
+  attachments: new AttachmentTable()
+});
+```
+
+### 2. Set up storage adapters
+
+```typescript
+import { IndexDBFileSystemStorageAdapter } from '@powersync/attachments';
+
+// Local storage for the browser (IndexedDB)
+const localStorage = new IndexDBFileSystemStorageAdapter('my-app-files');
+
+// Remote storage adapter for your cloud storage (e.g., S3, Supabase)
+const remoteStorage = {
+  async uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void> {
+    // Get signed upload URL from your backend
+    const { uploadUrl } = await fetch('/api/attachments/upload-url', {
+      method: 'POST',
+      body: JSON.stringify({ filename: attachment.filename })
+    }).then(r => r.json());
+    
+    // Upload file to cloud storage
+    await fetch(uploadUrl, {
+      method: 'PUT',
+      body: fileData,
+      headers: { 'Content-Type': attachment.mediaType || 'application/octet-stream' }
+    });
+  },
+  
+  async downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer> {
+    // Get signed download URL from your backend
+    const { downloadUrl } = await fetch(`/api/attachments/download-url/${attachment.id}`)
+      .then(r => r.json());
+    
+    // Download file from cloud storage
+    const response = await fetch(downloadUrl);
+    return response.arrayBuffer();
+  },
+  
+  async deleteFile(attachment: AttachmentRecord): Promise<void> {
+    // Delete from cloud storage via your backend
+    await fetch(`/api/attachments/${attachment.id}`, { method: 'DELETE' });
+  }
+};
+```
+
+> **Note:** For Node.js or Electron apps, use `NodeFileSystemAdapter` instead:
+> ```typescript
+> import { NodeFileSystemAdapter } from '@powersync/attachments';
+> const localStorage = new NodeFileSystemAdapter('./user-attachments');
+> ```
+
+### 3. Create and start AttachmentQueue
+
+```typescript
+import { AttachmentQueue } from '@powersync/attachments';
+
+const profilePicturesQueue = new AttachmentQueue({
+  db: powersync,
+  localStorage,
+  remoteStorage,
+  // Determine what attachments the queue should handle
+  // in this case it handles only the user profile pictures
+  watchAttachments: (onUpdate) => {
+    powersync.watch(
+      'SELECT photo_id FROM users WHERE photo_id IS NOT NULL',
+      [],
+      {
+        onResult: (result) => {
+          const attachments = result.rows?._array.map(row => ({
+            id: row.photo_id,
+            fileExtension: 'jpg'
+          })) ?? [];
+          onUpdate(attachments);
+        }
+      }
+    );
+  }
+});
+
+// Start automatic syncing
+await profilePicturesQueue.startSync();
+```
+
+### 4. Save files with atomic updates
+
+```typescript
+// When user uploads a profile photo
+async function uploadProfilePhoto(imageBlob: Blob) {
+  const arrayBuffer = await imageBlob.arrayBuffer();
+  
+  const attachment = await queue.saveFile({
+    data: arrayBuffer,
+    fileExtension: 'jpg',
+    mediaType: 'image/jpeg',
+    // Atomically update the user record in the same transaction
+    updateHook: async (tx, attachment) => {
+      await tx.execute(
+        'UPDATE users SET photo_id = ? WHERE id = ?',
+        [attachment.id, currentUserId]
+      );
+    }
+  });
+  
+  console.log('Photo queued for upload:', attachment.id);
+  // File will automatically upload in the background
+}
+```
+
+## Storage Adapters
+
+### Local Storage Adapters
+
+Local storage adapters handle file persistence on the device.
+
+#### IndexDBFileSystemStorageAdapter
+
+For web browsers using IndexedDB:
+
+```typescript
+import { IndexDBFileSystemStorageAdapter } from '@powersync/attachments';
+
+const localStorage = new IndexDBFileSystemStorageAdapter('database-name');
+```
+
+**Constructor Parameters:**
+- `databaseName` (string, optional): IndexedDB database name. Default: `'PowerSyncFiles'`
+
+#### NodeFileSystemAdapter
+
+For Node.js and Electron using the filesystem:
+
+```typescript
+import { NodeFileSystemAdapter } from '@powersync/attachments';
+
+const localStorage = new NodeFileSystemAdapter('./attachments');
+```
+
+**Constructor Parameters:**
+- `storageDirectory` (string, optional): Directory path for storing files. Default: `'./user_data'`
+
+#### Custom Local Storage Adapter
+
+Implement the `LocalStorageAdapter` interface for other environments:
+
+```typescript
+interface LocalStorageAdapter {
+  initialize(): Promise<void>;
+  clear(): Promise<void>;
+  getLocalUri(filename: string): string;
+  saveFile(filePath: string, data: ArrayBuffer | string): Promise<number>;
+  readFile(filePath: string): Promise<ArrayBuffer>;
+  deleteFile(filePath: string): Promise<void>;
+  fileExists(filePath: string): Promise<boolean>;
+  makeDir(path: string): Promise<void>;
+  rmDir(path: string): Promise<void>;
+}
+```
+
+### Remote Storage Adapter
+
+Remote storage adapters handle communication with your cloud storage (S3, Supabase Storage, Cloudflare R2, etc.).
+
+#### Interface
+
+```typescript
+interface RemoteStorageAdapter {
+  uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
+  downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer>;
+  deleteFile(attachment: AttachmentRecord): Promise<void>;
+}
+```
+
+#### Example: S3-Compatible Storage with Signed URLs
+
+```typescript
+import { RemoteStorageAdapter, AttachmentRecord } from '@powersync/attachments';
+
+const remoteStorage: RemoteStorageAdapter = {
+  async uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void> {
+    // Request signed upload URL from your backend
+    const response = await fetch('https://api.example.com/attachments/upload-url', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ 
+        filename: attachment.filename,
+        contentType: attachment.mediaType 
+      })
+    });
+    
+    const { uploadUrl } = await response.json();
+    
+    // Upload directly to S3 using signed URL
+    await fetch(uploadUrl, {
+      method: 'PUT',
+      body: fileData,
+      headers: { 'Content-Type': attachment.mediaType || 'application/octet-stream' }
+    });
+  },
+
+  async downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer> {
+    // Request signed download URL from your backend
+    const response = await fetch(
+      `https://api.example.com/attachments/${attachment.id}/download-url`,
+      { headers: { 'Authorization': `Bearer ${getAuthToken()}` } }
+    );
+    
+    const { downloadUrl } = await response.json();
+    
+    // Download from S3 using signed URL
+    const fileResponse = await fetch(downloadUrl);
+    if (!fileResponse.ok) {
+      throw new Error(`Download failed: ${fileResponse.statusText}`);
+    }
+    
+    return fileResponse.arrayBuffer();
+  },
+
+  async deleteFile(attachment: AttachmentRecord): Promise<void> {
+    // Delete via your backend (backend handles S3 deletion)
+    await fetch(`https://api.example.com/attachments/${attachment.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+  }
+};
+```
+
+> **Security Note:** Always use your backend to generate signed URLs and validate permissions. Never expose storage credentials to the client.
+
+## API Reference
+
+### AttachmentQueue
+
+Main class for managing attachment synchronization.
+
+#### Constructor
+
+```typescript
+new AttachmentQueue(options: AttachmentQueueOptions)
+```
+
+**Options:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `db` | `AbstractPowerSyncDatabase` | Yes | - | PowerSync database instance |
+| `remoteStorage` | `RemoteStorageAdapter` | Yes | - | Remote storage adapter implementation |
+| `localStorage` | `LocalStorageAdapter` | Yes | - | Local storage adapter implementation |
+| `watchAttachments` | `(onUpdate: (attachments: WatchedAttachmentItem[]) => Promise<void>) => void` | Yes | - | Callback to determine which attachments to handle by the queue from your user defined query |
+| `tableName` | `string` | No | `'attachments'` | Name of the attachments table |
+| `logger` | `ILogger` | No | `db.logger` | Logger instance for diagnostic output |
+| `syncIntervalMs` | `number` | No | `30000` | Interval between automatic syncs in milliseconds |
+| `syncThrottleDuration` | `number` | No | `30` | Throttle duration for sync operations in milliseconds |
+| `downloadAttachments` | `boolean` | No | `true` | Whether to automatically download remote attachments |
+| `archivedCacheLimit` | `number` | No | `100` | Maximum number of archived attachments before cleanup |
+| `errorHandler` | `AttachmentErrorHandler` | No | `undefined` | Custom error handler for upload/download/delete operations |
+
+#### Methods
+
+##### `startSync()`
+
+Starts automatic attachment synchronization.
+
+```typescript
+await queue.startSync();
+```
+
+This will:
+- Initialize local storage
+- Set up periodic sync based on `syncIntervalMs`
+- Watch for changes in active attachments
+- Process queued uploads, downloads, and deletes
+
+##### `stopSync()`
+
+Stops automatic attachment synchronization.
+
+```typescript
+await queue.stopSync();
+```
+
+##### `saveFile(options)`
+
+Saves a file locally and queues it for upload to remote storage.
+
+```typescript
+const attachment = await queue.saveFile({
+  data: arrayBuffer,
+  fileExtension: 'pdf',
+  mediaType: 'application/pdf',
+  id: 'custom-id', // optional
+  metaData: '{"description": "Invoice"}', // optional
+  updateHook: async (tx, attachment) => {
+    // Update your data model in the same transaction
+    await tx.execute(
+      'INSERT INTO documents (id, attachment_id) VALUES (?, ?)',
+      [documentId, attachment.id]
+    );
+  }
+});
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `data` | `ArrayBuffer \| string` | Yes | File data as ArrayBuffer or base64 string |
+| `fileExtension` | `string` | Yes | File extension (e.g., 'jpg', 'pdf') |
+| `mediaType` | `string` | No | MIME type (e.g., 'image/jpeg') |
+| `id` | `string` | No | Custom attachment ID (UUID generated if not provided) |
+| `metaData` | `string` | No | Optional metadata JSON string |
+| `updateHook` | `(tx: Transaction, attachment: AttachmentRecord) => Promise<void>` | No | Callback to update your data model atomically |
+
+**Returns:** `Promise<AttachmentRecord>` - The created attachment record
+
+The `updateHook` is executed in the same database transaction as the attachment creation, ensuring atomic operations. This is the recommended way to link attachments to your data model.
+
+##### `deleteFile(options)`
+
+Deletes an attachment from both local and remote storage.
+
+```typescript
+await queue.deleteFile({
+  id: attachmentId,
+  updateHook: async (tx, attachment) => {
+    // Update your data model in the same transaction
+    await tx.execute(
+      'UPDATE users SET photo_id = NULL WHERE photo_id = ?',
+      [attachment.id]
+    );
+  }
+});
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `string` | Yes | Attachment ID to delete |
+| `updateHook` | `(tx: Transaction, attachment: AttachmentRecord) => Promise<void>` | No | Callback to update your data model atomically |
+
+##### `generateAttachmentId()`
+
+Generates a new UUID for an attachment using SQLite's `uuid()` function.
+
+```typescript
+const id = await queue.generateAttachmentId();
+```
+
+**Returns:** `Promise<string>` - A new UUID
+
+##### `syncStorage()`
+
+Manually triggers a sync operation. This is called automatically at regular intervals, but can be invoked manually if needed.
+
+```typescript
+await queue.syncStorage();
+```
+
+##### `verifyAttachments()`
+
+Verifies the integrity of all attachment records and repairs inconsistencies. Checks each attachment against local storage and:
+- Updates `localUri` if file exists at a different path
+- Archives attachments with missing local files that haven't been uploaded
+- Requeues synced attachments for download if local files are missing
+
+```typescript
+await queue.verifyAttachments();
+```
+
+This is automatically called when `startSync()` is invoked.
+
+##### `watchAttachments` callback
+
+The `watchAttachments` callback is a required parameter that tells the AttachmentQueue which attachments to handle. This tells the queue which attachments to download, upload, or archive.
+
+**Signature:**
+
+```typescript
+(onUpdate: (attachments: WatchedAttachmentItem[]) => Promise<void>) => void
+```
+
+**WatchedAttachmentItem:**
+
+```typescript
+type WatchedAttachmentItem = {
+  id: string;
+  fileExtension: string;  // e.g., 'jpg', 'pdf'
+  metaData?: string;
+} | {
+  id: string;
+  filename: string;       // e.g., 'document.pdf'
+  metaData?: string;
+};
+```
+
+Use either `fileExtension` OR `filename`, not both.
+
+**Example:**
+
+```typescript
+watchAttachments: (onUpdate) => {
+  // Watch for photo references in users table
+  db.watch(
+    'SELECT photo_id, metadata FROM users WHERE photo_id IS NOT NULL',
+    [],
+    {
+      onResult: async (result) => {
+        const attachments = result.rows?._array.map(row => ({
+          id: row.photo_id,
+          fileExtension: 'jpg',
+          metaData: row.metadata
+        })) ?? [];
+        await onUpdate(attachments);
+      }
+    }
+  );
+}
+```
+
+---
+
+### AttachmentTable
+
+PowerSync schema table for storing attachment metadata.
+
+#### Constructor
+
+```typescript
+new AttachmentTable(options?: AttachmentTableOptions)
+```
+
+**Options:**
+
+Extends PowerSync `TableV2Options` (excluding `name` and `columns`).
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `viewName` | `string` | View name for the table. Default: `'attachments'` |
+| `localOnly` | `boolean` | Whether table is local-only. Default: `true` |
+| `insertOnly` | `boolean` | Whether table is insert-only. Default: `false` |
+
+#### Default Columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | `TEXT` | Attachment ID (primary key) |
+| `filename` | `TEXT` | Filename with extension |
+| `local_uri` | `TEXT` | Local file path or URI |
+| `timestamp` | `INTEGER` | Last update timestamp |
+| `size` | `INTEGER` | File size in bytes |
+| `media_type` | `TEXT` | MIME type |
+| `state` | `INTEGER` | Sync state (see `AttachmentState`) |
+| `has_synced` | `INTEGER` | Whether file has synced (0 or 1) |
+| `meta_data` | `TEXT` | Optional metadata JSON string |
+
+---
+
+### AttachmentRecord
+
+Interface representing an attachment record.
+
+```typescript
+interface AttachmentRecord {
+  id: string;
+  filename: string;
+  localUri?: string;
+  size?: number;
+  mediaType?: string;
+  timestamp?: number;
+  metaData?: string;
+  hasSynced?: boolean;
+  state: AttachmentState;
+}
+```
+
+---
+
+### AttachmentState
+
+Enum representing attachment synchronization states.
+
+```typescript
+enum AttachmentState {
+  QUEUED_SYNC = 0,      // Check if upload or download needed
+  QUEUED_UPLOAD = 1,    // Queued for upload
+  QUEUED_DOWNLOAD = 2,  // Queued for download
+  QUEUED_DELETE = 3,    // Queued for deletion
+  SYNCED = 4,           // Successfully synced
+  ARCHIVED = 5          // No longer referenced (orphaned)
+}
+```
+
+---
+
+### LocalStorageAdapter
+
+Interface for local file storage operations.
+
+```typescript
+interface LocalStorageAdapter {
+  initialize(): Promise<void>;
+  clear(): Promise<void>;
+  getLocalUri(filename: string): string;
+  saveFile(filePath: string, data: ArrayBuffer | string): Promise<number>;
+  readFile(filePath: string): Promise<ArrayBuffer>;
+  deleteFile(filePath: string): Promise<void>;
+  fileExists(filePath: string): Promise<boolean>;
+  makeDir(path: string): Promise<void>;
+  rmDir(path: string): Promise<void>;
+}
+```
+
+---
+
+### RemoteStorageAdapter
+
+Interface for remote storage operations.
+
+```typescript
+interface RemoteStorageAdapter {
+  uploadFile(fileData: ArrayBuffer, attachment: AttachmentRecord): Promise<void>;
+  downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer>;
+  deleteFile(attachment: AttachmentRecord): Promise<void>;
+}
+```
+
+---
+
+### NodeFileSystemAdapter
+
+Local storage adapter for Node.js and Electron.
+
+**Constructor:**
+
+```typescript
+new NodeFileSystemAdapter(storageDirectory?: string)
+```
+
+- `storageDirectory` (optional): Directory path for storing files. Default: `'./user_data'`
+
+---
+
+### IndexDBFileSystemStorageAdapter
+
+Local storage adapter for web browsers using IndexedDB.
+
+**Constructor:**
+
+```typescript
+new IndexDBFileSystemStorageAdapter(databaseName?: string)
+```
+
+- `databaseName` (optional): IndexedDB database name. Default: `'PowerSyncFiles'`
+
+## Error Handling
+
+The `AttachmentErrorHandler` interface allows you to customize error handling for sync operations.
+
+### Interface
+
+```typescript
+interface AttachmentErrorHandler {
+  onDownloadError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+  onUploadError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+  onDeleteError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+}
+```
+
+Each method returns:
+- `true` to retry the operation
+- `false` to archive the attachment and skip retrying
 
 ### Example
 
-In this example, the user captures photos when checklist items are completed as part of an inspection workflow.
-
-The schema for the `checklist` table:
-
-```javascript
-const checklists = new Table(
-  {
-    photo_id: column.text,
-    description: column.text,
-    completed: column.integer,
-    completed_at: column.text,
-    completed_by: column.text
+```typescript
+const errorHandler: AttachmentErrorHandler = {
+  async onDownloadError(attachment, error) {
+    console.error(`Download failed for ${attachment.filename}:`, error);
+    
+    // Retry on network errors, archive on 404s
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('File not found, archiving attachment');
+      return false; // Archive
+    }
+    
+    console.log('Will retry download on next sync');
+    return true; // Retry
   },
-  { indexes: { inspections: ['checklist_id'] } }
-);
 
-const AppSchema = new Schema({
-  checklists
+  async onUploadError(attachment, error) {
+    console.error(`Upload failed for ${attachment.filename}:`, error);
+    
+    // Always retry uploads
+    return true;
+  },
+
+  async onDeleteError(attachment, error) {
+    console.error(`Delete failed for ${attachment.filename}:`, error);
+    
+    // Retry deletes, but archive after too many attempts
+    const attempts = attachment.metaData ? 
+      JSON.parse(attachment.metaData).deleteAttempts || 0 : 0;
+    
+    return attempts < 3; // Retry up to 3 times
+  }
+};
+
+const queue = new AttachmentQueue({
+  // ... other options
+  errorHandler
 });
 ```
 
-### Steps to implement
+## Advanced Usage
 
-1. Create a new class `AttachmentQueue` that extends `AbstractAttachmentQueue` from `@powersync/attachments`.
+### Verification and Recovery
 
-```javascript
-import { AbstractAttachmentQueue } from '@powersync/attachments';
+The `verifyAttachments()` method checks attachment integrity and repairs issues:
 
-export class AttachmentQueue extends AbstractAttachmentQueue {}
+```typescript
+// Manually verify all attachments
+await queue.verifyAttachments();
 ```
 
-2. Implement `onAttachmentIdsChange`, which takes in a callback to handle an array of `string` values of IDs that relate to attachments in your app. We recommend using `PowerSync`'s `watch` query to return the all IDs of attachments in your app.
+This is useful if:
+- Local files may have been manually deleted
+- Storage paths changed
+- You suspect data inconsistencies
 
-   In this example, we query all photos that have been captured as part of an inspection and map these to an array of `string` values.
+Verification is automatically run when `startSync()` is called.
 
-```javascript
-import { AbstractAttachmentQueue } from '@powersync/attachments';
+### Custom Sync Intervals
 
-export class AttachmentQueue extends AbstractAttachmentQueue {
-  onAttachmentIdsChange(onUpdate) {
-    this.powersync.watch('SELECT photo_id as id FROM checklists WHERE photo_id IS NOT NULL', [], {
-      onResult: (result) => onUpdate(result.rows?._array.map((r) => r.id) ?? [])
-    });
-  }
-}
-```
+Adjust sync frequency based on your needs:
 
-3. Implement `newAttachmentRecord` to return an object that represents the attachment record in your app.
-
-   In this example we always work with `JPEG` images, but you can use any media type that is supported by your app and storage solution. Note: we are set the state to `QUEUED_UPLOAD` when creating a new photo record which assumes that the photo data is already on the device.
-
-```javascript
-import { AbstractAttachmentQueue } from '@powersync/attachments';
-
-export class AttachmentQueue extends AbstractAttachmentQueue {
-  // ...
-  async newAttachmentRecord(record) {
-    const photoId = record?.id ?? uuid();
-    const filename = record?.filename ?? `${photoId}.jpg`;
-    return {
-      id: photoId,
-      filename,
-      media_type: 'image/jpeg',
-      state: AttachmentState.QUEUED_UPLOAD,
-      ...record
-    };
-  }
-}
-```
-
-4. Add an `AttachmentTable` to your app's PowerSync Schema:
-
-```javascript
-import { AttachmentTable } from '@powersync/attachments';
-
-const AppSchema = new Schema({
-  // ... other tables
-  attachments: new AttachmentTable({
-    name: 'attachments',
-  }),
+```typescript
+const queue = new AttachmentQueue({
+  // ... other options
+  syncIntervalMs: 60000, // Sync every 60 seconds instead of 30
 });
 ```
 
-In addition to `Table` options, the `AttachmentTable` can optionally be configured with the following options:
+Set to `0` to disable periodic syncing (manual `syncStorage()` calls only).
 
-| Option              | Description                                                                     | Default                       |
-| ------------------- | ------------------------------------------------------------------------------- | ----------------------------- |
-| `name`              | The name of the table                                                           | `attachments`                 |
-| `additionalColumns` | An array of addition `Column` objects added to the default columns in the table | See below for default columns |
+### Archive and Cache Management
 
-The default columns in `AttachmentTable`:
+Control how many archived attachments are kept before cleanup:
 
-| Column Name  | Type      | Description                                                       |
-| ------------ | --------- | ----------------------------------------------------------------- |
-| `id`         | `TEXT`    | The ID of the attachment record                                   |
-| `filename`    | `TEXT`    | The filename of the attachment                                     |
-| `media_type` | `TEXT`    | The media type of the attachment                                  |
-| `state`      | `INTEGER` | The state of the attachment, one of `AttachmentState` enum values |
-| `timestamp`  | `INTEGER` | The timestamp of last update to the attachment record             |
-| `size`       | `INTEGER` | The size of the attachment in bytes                               |
-
-5. To instantiate an `AttachmentQueue`, one needs to provide an instance of `AbstractPowerSyncDatabase` from PowerSync and an instance of `StorageAdapter`.
-   See the `StorageAdapter` interface definition [here](https://github.com/powersync-ja/powersync-js/blob/main/packages/attachments/src/StorageAdapter.ts).
-
-6. Instantiate a new `AttachmentQueue` and call `init()` to start syncing attachments. Our example, uses a `StorageAdapter` that integrates with Supabase Storage.
-
-```javascript
-this.storage = this.supabaseConnector.storage;
-this.powersync = new PowerSyncDatabase({
-  schema: AppSchema,
-  database: {
-    dbFilename: 'sqlite.db'
-  }
+```typescript
+const queue = new AttachmentQueue({
+  // ... other options
+  archivedCacheLimit: 200, // Keep up to 200 archived attachments
 });
-
-this.attachmentQueue = new AttachmentQueue({
-  powersync: this.powersync,
-  storage: this.storage
-});
-
-// Initialize and connect PowerSync ...
-// Then initialize the attachment queue
-await this.attachmentQueue.init();
 ```
 
-7. Finally, to create an attachment and add it to the queue, call `saveToQueue()`.
+Archived attachments are those no longer referenced in your data model but not yet deleted. This allows for:
+- Quick restoration if references are added back
+- Caching of recently used files
+- Gradual cleanup to avoid storage bloat
 
-   In our example we added a `savePhoto()` method to our `AttachmentQueue` class, that does this:
+When the limit is reached, the oldest archived attachments are permanently deleted.
 
-```javascript
-export class AttachmentQueue extends AbstractAttachmentQueue {
-  // ...
-  async savePhoto(base64Data) {
-    const photoAttachment = await this.newAttachmentRecord();
-    photoAttachment.local_uri = this.getLocalFilePathSuffix(photoAttachment.filename);
+## Examples
 
-    const localFilePathUri = this.getLocalUri(photoAttachment.local_uri);
+See the following demo applications in this repository:
 
-    await this.storage.writeFile(localFilePathUri, base64Data, { encoding: 'base64' });
+- **[react-supabase-todolist](../../demos/react-supabase-todolist)** - React web app with Supabase Storage integration
+- **[react-native-supabase-todolist](../../demos/react-native-supabase-todolist)** - React Native mobile app with attachment support
 
-    return this.saveToQueue(photoAttachment);
-  }
-}
-```
+Each demo shows a complete implementation including:
+- Schema setup
+- Storage adapter configuration
+- File upload/download UI
+- Error handling
 
-# Implementation details
+## License
 
-## Attachment State
-
-The `AttachmentQueue` class manages attachments in your app by tracking their state.
-
-The state of an attachment can be one of the following:
-
-| State             | Description                                                                   |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `QUEUED_SYNC`     | Check if the attachment needs to be uploaded or downloaded                    |
-| `QUEUED_UPLOAD`   | The attachment has been queued for upload to the cloud storage                |
-| `QUEUED_DOWNLOAD` | The attachment has been queued for download from the cloud storage            |
-| `SYNCED`          | The attachment has been synced                                                |
-| `ARCHIVED`        | The attachment has been orphaned, i.e. the associated record has been deleted |
-
-## Initial sync
-
-Upon initializing the `AttachmentQueue`, an initial sync of attachments will take place if the `performInitialSync` is set to true.
-Any `AttachmentRecord` with `id` in first set of IDs retrieved from the watch query will be marked as `QUEUED_SYNC`, and these records will be rechecked to see if they need to be uploaded or downloaded.
-
-## Syncing attachments
-
-The `AttachmentQueue` sets up two watch queries on the `attachments` table, one for records in `QUEUED_UPLOAD` state and one for `QUEUED_DOWNLOAD` state.
-
-In addition to watching for changes, the `AttachmentQueue` also triggers a sync every few seconds. This will retry any failed uploads/downloads, in particular after the app was offline.
-
-By default, this is every 30 seconds, but can be configured by setting `syncInterval` in the `AttachmentQueue` constructor options, or disabled by setting the interval to `0`.
-
-### Uploading
-
-- An `AttachmentRecord` is created or updated with a state of `QUEUED_UPLOAD`.
-- The `AttachmentQueue` picks this up and upon successful upload to Supabase, sets the state to `SYNCED`.
-- If the upload is not successful, the record remains in `QUEUED_UPLOAD` state and uploading will be retried when syncing triggers again.
-
-### Downloading
-
-- An `AttachmentRecord` is created or updated with `QUEUED_DOWNLOAD` state.
-- The watch query adds the `id` into a queue of IDs to download and triggers the download process
-- This checks whether the photo is already on the device and if so, skips downloading.
-- If the photo is not on the device, it is downloaded from cloud storage.
-- Writes file to the user's local storage.
-- If this is successful, update the `AttachmentRecord` state to `SYNCED`.
-- If any of these fail, the download is retried in the next sync trigger.
-
-### Deleting attachments
-
-When an attachment is deleted by a user action or cache expiration:
-
-- Related `AttachmentRecord` is removed from attachments table.
-- Local file (if exists) is deleted.
-- File on cloud storage is deleted.
-
-### Expire Cache
-
-When PowerSync removes a record, as a result of coming back online or conflict resolution for instance:
-
-- Any associated `AttachmentRecord` is orphaned.
-- On the next sync trigger, the `AttachmentQueue` sets all records that are orphaned to `ARCHIVED` state.
-- By default, the `AttachmentQueue` only keeps the last `100` attachment records and then expires the rest.
-- This can be configured by setting `cacheLimit` in the `AttachmentQueue` constructor options.
+Apache 2.0
