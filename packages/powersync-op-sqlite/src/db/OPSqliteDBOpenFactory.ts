@@ -19,7 +19,8 @@ export class OPSqliteOpenFactory implements SQLOpenFactory {
     return new OPSQLiteDBAdapter({
       name: this.options.dbFilename,
       dbLocation: this.options.dbLocation,
-      sqliteOptions: this.sqliteOptions
+      sqliteOptions: this.sqliteOptions,
+      debugMode: this.options.debugMode
     });
   }
 }

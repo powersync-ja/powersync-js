@@ -10,6 +10,8 @@ import {
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;
+  debugMode: boolean;
+  connectionName: string;
 };
 
 export type OPSQLiteUpdateNotification = {
@@ -35,6 +37,16 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
     this.DB.updateHook((update) => {
       this.addTableUpdate(update);
     });
+
+    if (options.debugMode) {
+      const c = this.options.connectionName;
+      this.execute = withDebug(this.execute.bind(this), `[SQL execute ${c}]`);
+      this.executeRaw = withDebug(this.executeRaw.bind(this), `[SQL executeRaw ${c}]`);
+      this.executeBatch = withDebug(this.executeBatch.bind(this), `[SQL executeBatch ${c}]`);
+      this.get = withDebug(this.get.bind(this), `[SQL get ${c}]`);
+      this.getAll = withDebug(this.getAll.bind(this), `[SQL getAll ${c}]`);
+      this.getOptional = withDebug(this.getOptional.bind(this), `[SQL getOptional ${c}]`);
+    }
   }
 
   addTableUpdate(update: OPSQLiteUpdateNotification) {
@@ -132,4 +144,20 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
   async refreshSchema() {
     await this.get("PRAGMA table_info('sqlite_master')");
   }
+}
+
+function withDebug<T extends (sql: string, ...args: any[]) => Promise<any>>(fn: T, name: string): T {
+  return (async (sql: string, ...args: any[]): Promise<any> => {
+    const start = performance.now();
+    try {
+      const r = await fn(sql, ...args);
+      const duration = performance.now() - start;
+      console.log(name, `[${duration.toFixed(1)}ms]`, sql);
+      return r;
+    } catch (e: any) {
+      const duration = performance.now() - start;
+      console.error(name, `[ERROR: ${e.message}]`, `[${duration.toFixed(1)}ms]`, sql);
+      throw e;
+    }
+  }) as T;
 }
