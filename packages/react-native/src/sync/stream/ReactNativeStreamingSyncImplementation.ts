@@ -4,16 +4,16 @@ import {
   LockOptions,
   LockType
 } from '@powersync/common';
-import Lock from 'async-lock';
+import { Mutex } from 'async-mutex';
 
 /**
  * Global locks which prevent multiple instances from syncing
  * concurrently.
  */
-const LOCKS = new Map<string, Map<LockType, Lock>>();
+const LOCKS = new Map<string, Map<LockType, Mutex>>();
 
 export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
-  locks: Map<LockType, Lock>;
+  locks: Map<LockType, Mutex>;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super(options);
@@ -30,9 +30,9 @@ export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyn
       return;
     }
 
-    this.locks = new Map<LockType, Lock>();
-    this.locks.set(LockType.CRUD, new Lock());
-    this.locks.set(LockType.SYNC, new Lock());
+    this.locks = new Map<LockType, Mutex>();
+    this.locks.set(LockType.CRUD, new Mutex());
+    this.locks.set(LockType.SYNC, new Mutex());
 
     if (identifier) {
       LOCKS.set(identifier, this.locks);
@@ -44,7 +44,7 @@ export class ReactNativeStreamingSyncImplementation extends AbstractStreamingSyn
     if (!lock) {
       throw new Error(`Lock type ${lockOptions.type} not found`);
     }
-    return lock.acquire(lockOptions.type, async () => {
+    return lock.runExclusive(async () => {
       if (lockOptions.signal?.aborted) {
         throw new Error('Aborted');
       }

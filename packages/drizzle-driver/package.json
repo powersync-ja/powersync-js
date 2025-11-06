@@ -22,7 +22,8 @@
   "license": "Apache-2.0",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "src"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -35,7 +36,7 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "build:prod": "tsc -b && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "vitest",

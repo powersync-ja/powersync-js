@@ -1,52 +1,49 @@
+import * as path from 'node:path';
+
 import commonjs from '@rollup/plugin-commonjs';
 import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import terser from '@rollup/plugin-terser';
 import { dts } from 'rollup-plugin-dts';
 
-/**
- * @returns {import('rollup').RollupOptions}
- */
-export default (commandLineArgs) => {
-  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
+function defineBuild(isNode) {
+  const suffix = isNode ? '.node' : '';
 
-  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
-  delete commandLineArgs.sourceMap;
-
-  return [
-    {
-      input: 'lib/index.js',
-      output: [
-        {
-          file: 'dist/bundle.mjs',
-          format: 'esm',
-          sourcemap: sourceMap
-        },
-        {
-          file: 'dist/bundle.cjs',
-          format: 'cjs',
-          sourcemap: sourceMap
-        }
-      ],
-      plugins: [
+  return {
+    input: 'lib/index.js',
+    output: [
+      {
+        file: `dist/bundle${suffix}.mjs`,
+        format: 'esm',
+        sourcemap: true
+      },
+      {
+        file: `dist/bundle${suffix}.cjs`,
+        format: 'cjs',
+        sourcemap: true
+      }
+    ],
+    plugins: [
+      [
         json(),
         nodeResolve({ preferBuiltins: false, browser: true }),
         commonjs({}),
         inject({
-          Buffer: ['buffer', 'Buffer'],
-          ReadableStream: ['web-streams-polyfill/ponyfill', 'ReadableStream'],
-          // Used by can-ndjson-stream
-          TextDecoder: ['text-encoding', 'TextDecoder']
-        }),
-        terser({ sourceMap })
-      ],
-      // This makes life easier
-      external: [
-        // This has dynamic logic - makes bundling hard
-        'cross-fetch'
+          Buffer: isNode ? ['node:buffer', 'Buffer'] : ['buffer/', 'Buffer']
+        })
       ]
-    },
+    ],
+    external: ['async-mutex', 'bson', 'buffer/', 'event-iterator']
+  };
+}
+
+/**
+ * @returns {import('rollup').RollupOptions}
+ */
+export default () => {
+  return [
+    defineBuild(false),
+    defineBuild(true),
     {
       input: './lib/index.d.ts',
       output: [{ file: 'dist/index.d.cts', format: 'cjs' }],

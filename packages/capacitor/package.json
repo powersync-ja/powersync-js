@@ -15,6 +15,7 @@
     "android/build.gradle",
     "android/proguard-rules.pro",
     "dist/",
+    "src",
     "ios/Sources",
     "ios/Tests",
     "Package.swift",
