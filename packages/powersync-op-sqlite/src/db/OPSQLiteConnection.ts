@@ -58,6 +58,10 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
     });
   }
 
+  hasUpdates(): boolean {
+    return this.updateBuffer.length > 0;
+  }
+
   flushUpdates() {
     if (!this.updateBuffer.length) {
       return;
