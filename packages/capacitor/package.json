@@ -62,7 +62,7 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "eslint": "^8.57.0",
+    "eslint": "catalog:",
     "prettier": "^3.4.2",
     "prettier-plugin-java": "^2.6.6",
     "rimraf": "^6.0.1",

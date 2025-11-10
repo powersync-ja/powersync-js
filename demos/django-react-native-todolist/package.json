@@ -51,7 +51,7 @@
     "@types/react": "~18.3.18",
     "@types/react-dom": "18.3.6",
     "@types/react-native-table-component": "^1.2.8",
-    "typescript": "^5.3.3"
+    "typescript": "catalog:"
   },
   "private": true
 }

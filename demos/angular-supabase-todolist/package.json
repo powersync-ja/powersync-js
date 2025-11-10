@@ -37,6 +37,6 @@
     "@angular/compiler-cli": "^19.2.4",
     "dotenv": "^16.4.5",
     "http-server": "^14.1.1",
-    "typescript": "~5.5.3"
+    "typescript": "catalog:"
   }
 }

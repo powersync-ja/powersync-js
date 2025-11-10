@@ -28,7 +28,7 @@
     "docusaurus-plugin-typedoc": "^1.2.1",
     "typedoc": "~0.27.6",
     "typedoc-plugin-markdown": "~4.4.1",
-    "typescript": "^5.5.3"
+    "typescript": "catalog:"
   },
   "browserslist": {
     "production": [

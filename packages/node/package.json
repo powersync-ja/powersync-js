@@ -70,7 +70,7 @@
     "async-mutex": "^0.5.0",
     "comlink": "^4.4.2",
     "undici": "^7.11.0",
-    "bson": "^6.10.4"
+    "bson": "catalog:"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
@@ -78,7 +78,7 @@
     "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.35.2",
     "rollup": "4.14.3",
-    "typescript": "^5.5.3",
+    "typescript": "catalog:",
     "vitest": "^3.2.4"
   },
   "keywords": [

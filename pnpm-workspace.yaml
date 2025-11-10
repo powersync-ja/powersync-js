@@ -4,6 +4,63 @@ packages:
   - tools/*
   - docs/
 
+catalog:
+  # General development tools
+  playwright: ^1.56.1
+  husky: ^9.1.7
+  vitest: ^3.2.4 # TODO: Update to v4, https://github.com/powersync-ja/powersync-js/pull/750
+  "@vitest/browser": ^3.2.4
+  "@changesets/cli": ^2.29.7
+  "@actions/core": ^1.11.1
+  "@pnpm/workspace.find-packages": ^1000.0.44
+
+  # Typescript
+  typescript: ^5.9.3
+  "@types/node": ^20.14.8
+
+  # Vue
+  vue: ^3.5.24
+  vue-router: ^4.6.3
+  vuetify: ^3.10.9
+  vue-tsc: ^3.1.3
+
+  # Misc dependencies
+  async-mutex: ^0.5.0
+  buffer: ^6.0.3
+  cross-fetch: ^4.1.0
+  event-iterator: ^2.0.0
+  bson: ^6.10.4
+  js-logger: ^1.6.1
+  uuid: ^13.0.0
+  rsocket-core: 1.0.0-alpha.3
+  rsocket-websocket-client: 1.0.0-alpha.3
+
+  # Build tools
+  rollup: ^4.53.2
+  rollup-plugin-dts: ^6.2.3
+  "@rollup/plugin-typescript": ^12.3.0
+  "@rollup/plugin-inject": ^5.0.5
+  "@rollup/plugin-json": ^6.1.0
+  "@rollup/plugin-node-resolve": ^16.0.3
+  "@rollup/plugin-commonjs": ^29.0.0
+  sass: ^1.91.0
+  vite: ^7.2.2
+  vite-plugin-pwa: ^1.1.0
+  vite-plugin-top-level-await: ^1.6.0 # TODO: Check if we really still need this
+  vite-plugin-wasm: ^3.5.0
+  vite-plugin-vuetify: ^2.1.2
+  "@vitejs/plugin-react": ^4.2.1
+  "@vitejs/plugin-vue": ^6.0.1
+
+  # Formatters and linters
+  prettier: ^3.6.2
+  prettier-plugin-embed: ^0.5.0
+  prettier-plugin-sql: ^0.19.2
+  lint-staged: ^16.2.6
+  "@arethetypeswrong/cli": ^0.18.2
+  eslint: ^9.39.1
+  eslint-config-next: ^16.0.1
+
 onlyBuiltDependencies:
   - better-sqlite3
   - better-sqlite3-multiple-ciphers

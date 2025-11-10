@@ -42,6 +42,6 @@
     "@types/sql.js": "^1.4.9",
     "chance": "^1.1.9",
     "rollup": "4.14.3",
-    "uuid": "^11.1.0"
+    "uuid": "catalog:"
   }
 }

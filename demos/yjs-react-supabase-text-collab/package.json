@@ -29,22 +29,21 @@
     "react-router": "^6.22.3",
     "react-router-dom": "^6.22.3",
     "remixicon": "^2.5.0",
-    "uuid": "^9.0.1",
+    "uuid": "catalog:",
     "yjs": "^13.6.14"
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
-    "@types/node": "^20.11.26",
+    "@types/node": "catalog:",
     "@types/react": "^18.2.65",
     "@types/react-dom": "^18.2.21",
-    "@types/uuid": "9.0.8",
     "autoprefixer": "^10.4.18",
     "postcss": "^8.4.35",
     "style-loader": "^3.3.4",
     "supabase": "1.142.2",
-    "vite": "^5.1.6",
-    "vite-plugin-pwa": "^0.19.2",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
+    "vite-plugin-wasm": "catalog:"
   }
 }
