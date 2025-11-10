@@ -7,3 +7,4 @@ export * from './RemoteStorageAdapter.js';
 export * from './AttachmentContext.js';
 export * from './SyncingService.js';
 export * from './AttachmentQueue.js';
+export * from './WatchedAttachmentItem.js';
