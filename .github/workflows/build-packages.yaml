@@ -43,3 +43,6 @@ jobs:
 
       - name: Build
         run: pnpm build:packages
+
+      - name: Build (prod)
+        run: pnpm build:packages:prod
