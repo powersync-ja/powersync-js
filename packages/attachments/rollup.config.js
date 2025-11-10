@@ -28,7 +28,7 @@ export default (commandLineArgs) => {
           sourceMap
         })
       ],
-      external: ['@powersync/common']
+      external: ['@powersync/common', 'expo-file-system', 'base64-arraybuffer']
     },
     // This is required to avoid https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseESM.md
     {

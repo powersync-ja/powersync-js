@@ -45,7 +45,17 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0"
+    "@powersync/common": "workspace:^1.40.0",
+    "expo-file-system": "^18.0.0",
+    "base64-arraybuffer": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-file-system": {
+      "optional": true
+    },
+    "base64-arraybuffer": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

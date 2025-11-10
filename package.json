@@ -23,6 +23,11 @@
     "test": "pnpm run -r --workspace-concurrency=1 test --run",
     "test:packages:exports": "pnpm -r --filter {./packages/**} test:exports"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@powersync/better-sqlite3"
+    ]
+  },
   "keywords": [],
   "type": "module",
   "author": "JOURNEYAPPS",
