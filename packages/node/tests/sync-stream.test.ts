@@ -66,6 +66,7 @@ describe('Sync streams', () => {
         streams: [stream('stream', false)]
       })
     );
+    console.log('waiting for status update after sending checkpoint line');
     let status = await statusPromise;
     for (const subscription of [a, b]) {
       expect(status.forStream(subscription).subscription.active).toBeTruthy();
@@ -75,12 +76,15 @@ describe('Sync streams', () => {
 
     statusPromise = nextStatus(database);
     syncService.pushLine({ partial_checkpoint_complete: { last_op_id: '0', priority: 1 } });
+    console.log('waiting for status update after sending partial checkpoint complete');
     status = await statusPromise;
     expect(status.forStream(a).subscription.lastSyncedAt).toBeNull();
     expect(status.forStream(b).subscription.lastSyncedAt).not.toBeNull();
+    console.log('waiting for b.waitForFirstSync()');
     await b.waitForFirstSync();
 
     syncService.pushLine({ checkpoint_complete: { last_op_id: '0' } });
+    console.log('waiting for a.waitForFirstSync() after sending checkpoint_complete line');
     await a.waitForFirstSync();
   });
 
