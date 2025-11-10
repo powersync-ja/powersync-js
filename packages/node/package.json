@@ -70,7 +70,7 @@
     "async-mutex": "^0.5.0",
     "comlink": "^4.4.2",
     "undici": "^7.11.0",
-      "bson": "^6.10.4"
+    "bson": "^6.10.4"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",

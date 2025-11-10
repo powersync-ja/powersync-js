@@ -213,10 +213,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         try {
           return await fn(this.writeConnection);
         } finally {
-          const serializedUpdates = await this.writeConnection.database.executeRaw(
-            "SELECT powersync_update_hooks('get');",
-            []
-          );
+          const serializedUpdates = await this.writeConnection.executeRaw("SELECT powersync_update_hooks('get');", []);
           const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
           if (updates.length > 0) {
