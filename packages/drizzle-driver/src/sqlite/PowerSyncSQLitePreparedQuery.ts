@@ -71,8 +71,7 @@ export class PowerSyncSQLitePreparedQuery<
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
     return this.useContext(async (ctx) => {
-      const rs = await ctx.execute(this.query.sql, params);
-      return rs;
+      return await ctx.execute(this.query.sql, params);
     });
   }
 
@@ -81,7 +80,7 @@ export class PowerSyncSQLitePreparedQuery<
     if (!fields && !customResultMapper) {
       const params = fillPlaceholders(query.params, placeholderValues ?? {});
       logger.logQuery(query.sql, params);
-      return await this.contextProvider.useReadContext(async (ctx) => {
+      return await this.useContext(async (ctx) => {
         return await ctx.getAll(this.query.sql, params);
       });
     }
@@ -101,7 +100,7 @@ export class PowerSyncSQLitePreparedQuery<
     const { fields, customResultMapper } = this;
     const joinsNotNullableMap = (this as any).joinsNotNullableMap;
     if (!fields && !customResultMapper) {
-      return this.contextProvider.useReadContext(async (ctx) => {
+      return this.useContext(async (ctx) => {
         return await ctx.get(this.query.sql, params);
       });
     }
