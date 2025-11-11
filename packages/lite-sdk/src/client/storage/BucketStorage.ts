@@ -9,6 +9,11 @@ export type SavedProgress = {
   sinceLast: number;
 };
 
+export interface LocalState {
+  lastOpId: bigint;
+  targetOpId: bigint;
+}
+
 export type BucketOperationProgress = Record<string, SavedProgress>;
 
 /**
@@ -53,6 +58,13 @@ export interface BucketStorage {
    * @returns Array of bucket states, each containing bucket name, operation ID, checksums, etc.
    */
   getBucketStates: () => Promise<Array<BucketState>>;
+
+  /**
+   * Get the current state of the local bucket.
+   * FIXME maybe a better name?
+   * @returns The local bucket state, containing bucket name, operation ID, checksums, etc.
+   */
+  getLocalState: () => Promise<LocalState>;
 
   /**
    * Synchronize the local database with a checkpoint.

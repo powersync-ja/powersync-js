@@ -1,6 +1,7 @@
 import type { Checkpoint, CheckpointBucket } from '@powersync/service-core';
 import { BaseObserver } from '../../utils/BaseObserver.js';
 import type { BucketStorage } from '../storage/BucketStorage.js';
+import { normalizeChecksum } from '../storage/checksumUtils.js';
 import { Connector } from './Connector.js';
 import { CrudManager } from './CrudManager.js';
 import type {
@@ -92,10 +93,15 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
     const controller = new AbortController();
     this.abortController = controller;
 
-    while (!this.abortController.signal.aborted) {
+    // Don't await this, this will run until the connection is aborted
+    this.connectInternal(connector, controller.signal);
+  }
+
+  protected async connectInternal(connector: Connector, signal: AbortSignal): Promise<void> {
+    while (!signal.aborted) {
       try {
         this.updateSyncStatus({ connecting: true });
-        await this.syncIteration(connector, controller.signal);
+        await this.syncIteration(connector, signal);
       } catch (error) {
         this.updateSyncStatus({
           connected: false,
@@ -110,13 +116,16 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
       }
     }
   }
-
   disconnect() {
     this.abortController.abort();
   }
 
   async checkpoint(customCheckpoint?: string): Promise<CreateCheckpointResponse> {
     let targetCheckpoint: string | undefined = customCheckpoint;
+    // FIXME, could this be optimized?
+    // If there are no crud items, we set the target to the custom checkpoint or the max op id
+    // We then set the local target to the new checkpoint
+    await this.bucketStorage.handleCrudUploaded(customCheckpoint);
     const targetUpdated = await this.bucketStorage.updateLocalTarget(async () => {
       if (targetCheckpoint) {
         return targetCheckpoint;
@@ -126,11 +135,39 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
     });
     return {
       targetUpdated,
-      targetCheckpoint
+      targetCheckpoint,
+      waitForValidation: async (signal?: AbortSignal) => {
+        if (!targetCheckpoint || !targetUpdated) {
+          // FIXME throw an error in this case?
+          return;
+        }
+        const localBucketState = await this.bucketStorage.getLocalState();
+        if (localBucketState.lastOpId >= normalizeChecksum(targetCheckpoint)!) {
+          return;
+        }
+
+        return new Promise((resolve, reject) => {
+          let disposeListener: (() => void) | null = null;
+          const signalListener = () => {
+            reject(new Error('Aborted'));
+            disposeListener?.();
+          };
+          disposeListener = this.registerListener({
+            checkpointCompleted: (checkpoint) => {
+              if (checkpoint.write_checkpoint && checkpoint.write_checkpoint >= targetCheckpoint!) {
+                resolve();
+                disposeListener?.();
+                signal?.removeEventListener('abort', signalListener);
+              }
+            }
+          });
+          signal?.addEventListener('abort', disposeListener, { once: true });
+        });
+      }
     };
   }
 
-  protected triggerCrudUpload(): void {
+  triggerCrudUpload(): void {
     if (!this.crudManager) {
       return;
     }
@@ -420,6 +457,10 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
       hasSynced: true,
       downloading: false,
       lastSyncedAt: new Date()
+    });
+
+    this.iterateListeners((listener) => {
+      listener.checkpointCompleted?.(checkpoint);
     });
 
     return { applied: true, endIteration: false };

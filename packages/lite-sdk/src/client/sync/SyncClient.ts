@@ -1,4 +1,4 @@
-import type { BucketRequest, StreamingSyncLine } from '@powersync/service-core';
+import type { BucketRequest, Checkpoint, StreamingSyncLine } from '@powersync/service-core';
 import { BaseListener, BaseObserverInterface, Disposable } from '../../utils/BaseObserver.js';
 import type { BucketStorage } from '../storage/BucketStorage.js';
 import type { SystemDependencies } from '../system/SystemDependencies.js';
@@ -36,11 +36,17 @@ export interface SyncClientListener extends BaseListener {
    * Triggers whenever the status' members have changed in value
    */
   statusChanged?: ((status: SyncStatus) => void) | undefined;
+  /**
+   * Triggers whenever a checkpoint is completed.
+   * @param checkpoint - The checkpoint that was completed
+   */
+  checkpointCompleted?: ((checkpoint: Checkpoint) => void) | undefined;
 }
 
 export type CreateCheckpointResponse = {
   targetUpdated: boolean;
   targetCheckpoint?: string;
+  waitForValidation: (signal?: AbortSignal) => Promise<void>;
 };
 
 /**
@@ -71,8 +77,21 @@ export interface SyncClient extends BaseObserverInterface<SyncClientListener>, D
    * Sets the target write checkpoint.
    * @param customCheckpoint - Optional custom checkpoint to set the target to
    * defaults to creating a managed PowerSync checkpoint
+   *
+   * FIXME
+   * This is a no-op if there are pending CRUD items.
+   * This does not answer the generic question "have I synced to this point in time?"
+   * It answers the question "have I synced to after uploads have been completed?"
    */
   checkpoint: (customCheckpoint?: string) => Promise<CreateCheckpointResponse>;
+
+  /**
+   * Triggers a CRUD upload.
+   * This will perform an upload of the CRUD items if there are any.
+   * If there are no CRUD items, it will do nothing.
+   * If there are CRUD items, the {@link CrudManager} will be used to perform the upload.
+   */
+  triggerCrudUpload: () => void;
 }
 
 export type StreamOptions = {

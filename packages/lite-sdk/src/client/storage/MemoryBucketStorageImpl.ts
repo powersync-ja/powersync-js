@@ -2,7 +2,7 @@ import type { BucketState, Checkpoint } from '@powersync/service-core';
 import { Lock } from '../../utils/Lock.js';
 import { CrudManager } from '../sync/CrudManager.js';
 import { SystemDependencies } from '../system/SystemDependencies.js';
-import type { BucketStorage, SyncDataBatch } from './BucketStorage.js';
+import type { BucketStorage, LocalState, SyncDataBatch } from './BucketStorage.js';
 import type { SyncOperation, SyncOperationsHandler } from './SyncOperationsHandler.js';
 import { constructKey, toStringOrNull } from './bucketHelpers.js';
 import { addChecksums, normalizeChecksum, subtractChecksums } from './checksumUtils.js';
@@ -23,6 +23,8 @@ export type MemoryBucketStorageImplOptions = {
 
 export class MemoryBucketStorageImpl implements BucketStorage {
   protected ps_buckets: PSBucket[];
+  // TODO cleanup
+  protected localBucket: PSBucket;
   protected ps_oplog: PSOplog[];
   protected ps_updated_rows: PsUpdatedRows[];
   protected clientId: string;
@@ -43,6 +45,18 @@ export class MemoryBucketStorageImpl implements BucketStorage {
 
   protected initDefaultState() {
     this.ps_buckets = [];
+    this.localBucket = {
+      id: 0,
+      name: '$local',
+      last_applied_op: 0n,
+      last_op: 0n,
+      target_op: 0n,
+      add_checksum: 0n,
+      op_checksum: 0n,
+      pending_delete: false,
+      count_at_last: 0,
+      count_since_last: 0
+    };
     this.ps_oplog = [];
     this.ps_updated_rows = [];
     this.lastSyncedAt = null;
@@ -76,6 +90,15 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     });
   }
 
+  async getLocalState(): Promise<LocalState> {
+    return await this.lock.runExclusive(async () => {
+      return {
+        lastOpId: this.localBucket.last_op,
+        targetOpId: this.localBucket.target_op
+      };
+    });
+  }
+
   async hasCompletedSync(): Promise<boolean> {
     return await this.lock.runExclusive(async () => {
       return !!this.ps_buckets.find((b) => b.last_applied_op > 0);
@@ -90,18 +113,9 @@ export class MemoryBucketStorageImpl implements BucketStorage {
         if (await this.crudManager?.hasCrud()) {
           return;
         }
-        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-        if (!localBucket) {
-          throw new Error('Local bucket not found');
-        }
-        localBucket.target_op = normalizeChecksum(writeCheckpoint);
+        this.localBucket.target_op = normalizeChecksum(writeCheckpoint);
       } else {
-        // Set the target to the max op id
-        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-        if (!localBucket) {
-          throw new Error('Local bucket not found');
-        }
-        localBucket.target_op = normalizeChecksum(MAX_OP_ID);
+        this.localBucket.target_op = normalizeChecksum(MAX_OP_ID);
       }
     });
   }
@@ -124,14 +138,8 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     // SQL: SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = CAST(? as INTEGER)
     // TODO: maybe store local state separately
     const shouldProceed = await this.lock.runExclusive(async () => {
-      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-      if (!localBucket) {
-        // Nothing to update
-        return false;
-      }
-
       const maxOpIdBigint = BigInt(MAX_OP_ID);
-      if (localBucket.target_op !== maxOpIdBigint) {
+      if (this.localBucket.target_op !== maxOpIdBigint) {
         // target_op is not MAX_OP_ID, nothing to update
         return false;
       }
@@ -157,16 +165,10 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     // This is typically called after completing uploads which can
     // be concurrent.
     return await this.lock.runExclusive(async () => {
-      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-      if (!localBucket) {
-        // Nothing to update
-        return false;
-      }
-
       // Update the '$local' bucket's target_op to the new opId
       // SQL: UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'
       const opIdBigint = normalizeChecksum(opId);
-      localBucket.target_op = opIdBigint;
+      this.localBucket.target_op = opIdBigint;
       return true;
     });
   }
@@ -400,10 +402,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
 
       // Update '$local' bucket if write_checkpoint is provided and it's a complete sync
       if (priority == null && checkpoint.write_checkpoint) {
-        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-        if (localBucket) {
-          localBucket.last_op = normalizeChecksum(checkpoint.write_checkpoint);
-        }
+        this.localBucket.last_op = normalizeChecksum(checkpoint.write_checkpoint);
       }
     });
 
@@ -452,7 +451,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
       if (priority == null) {
         const bucketToCount = new Map(checkpoint.buckets.map((b) => [b.bucket, b.count ?? 0]));
         for (const bucket of this.ps_buckets) {
-          if (bucket.name !== '$local' && bucketToCount.has(bucket.name)) {
+          if (bucketToCount.has(bucket.name)) {
             bucket.count_at_last = bucketToCount.get(bucket.name)!;
             bucket.count_since_last = 0;
           }
@@ -479,8 +478,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     if (needsCheck) {
       // Check if '$local' bucket has target_op > last_op
       // SQL: SELECT 1 FROM ps_buckets WHERE target_op > last_op AND name = '$local'
-      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-      if (localBucket && localBucket.target_op > localBucket.last_op) {
+      if (this.localBucket.target_op > this.localBucket.last_op) {
         return false;
       }
 
