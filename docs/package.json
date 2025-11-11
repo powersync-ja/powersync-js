@@ -10,24 +10,24 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.7.0",
-    "@docusaurus/preset-classic": "^3.7.0",
-    "@mdx-js/react": "^3.1.0",
-    "dotenv": "^16.4.7",
-    "prism-react-renderer": "^2.4.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@docusaurus/core": "catalog:",
+    "@docusaurus/preset-classic": "catalog:",
+    "@mdx-js/react": "catalog:",
+    "dotenv": "catalog:",
+    "prism-react-renderer": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@docusaurus/faster": "^3.7.0",
-    "@docusaurus/module-type-aliases": "^3.7.0",
-    "@docusaurus/theme-classic": "^3.7.0",
-    "@docusaurus/tsconfig": "3.7.0",
-    "@docusaurus/types": "3.7.0",
-    "@types/node": "^20.17.12",
-    "docusaurus-plugin-typedoc": "^1.2.1",
-    "typedoc": "~0.27.6",
-    "typedoc-plugin-markdown": "~4.4.1",
+    "@docusaurus/faster": "catalog:",
+    "@docusaurus/module-type-aliases": "catalog:",
+    "@docusaurus/theme-classic": "catalog:",
+    "@docusaurus/tsconfig": "catalog:",
+    "@docusaurus/types": "catalog:",
+    "@types/node": "catalog:",
+    "docusaurus-plugin-typedoc": "catalog:",
+    "typedoc": "catalog:",
+    "typedoc-plugin-markdown": "catalog:",
     "typescript": "catalog:"
   },
   "browserslist": {

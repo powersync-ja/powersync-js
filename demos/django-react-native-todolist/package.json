@@ -49,7 +49,7 @@
     "@babel/preset-env": "^7.24.4",
     "@types/lodash": "^4.17.0",
     "@types/react": "~18.3.18",
-    "@types/react-dom": "18.3.6",
+    "@types/react-dom": "catalog:",
     "@types/react-native-table-component": "^1.2.8",
     "typescript": "catalog:"
   },

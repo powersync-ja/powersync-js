@@ -48,8 +48,8 @@
     "async-mutex": "catalog:"
   },
   "devDependencies": {
-    "@craftzdog/react-native-buffer": "^6.0.5",
-    "@journeyapps/react-native-quick-sqlite": "^2.4.9",
+    "@craftzdog/react-native-buffer": "catalog:",
+    "@journeyapps/react-native-quick-sqlite": "catalog:",
     "@rollup/plugin-alias": "catalog:",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-inject": "catalog:",

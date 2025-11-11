@@ -38,8 +38,8 @@
   "devDependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
-    "flush-promises": "^1.0.2",
-    "jsdom": "^24.0.0",
-    "vue": "3.4.21"
+    "flush-promises": "catalog:",
+    "jsdom": "catalog:",
+    "vue": "catalog:"
   }
 }
