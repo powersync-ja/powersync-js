@@ -74,8 +74,12 @@ export class PowerSyncSQLiteDatabase<
       }
     );
     if (this._.schema) {
+      // https://github.com/drizzle-team/drizzle-orm/blob/ad4ddd444d066b339ffd5765cb6ec3bf49380189/drizzle-orm/src/sqlite-core/db.ts#L72
+      const query = this.query as {
+        [K in keyof TSchema]: RelationalQueryBuilder<'async', any, any, any>;
+      };
       for (const [tableName, columns] of Object.entries(this._.schema)) {
-        this.query[tableName as keyof typeof this.query] = new RelationalQueryBuilder(
+        query[tableName as keyof TSchema] = new RelationalQueryBuilder(
           'async',
           schema!.fullSchema,
           this._.schema,
@@ -83,8 +87,8 @@ export class PowerSyncSQLiteDatabase<
           schema!.fullSchema[tableName] as SQLiteTable,
           columns as TableRelationalConfig,
           dialect,
-          querySession as SQLiteSession<any, any, any, any> as any
-        ) as any;
+          querySession as SQLiteSession<'async', any, any, any>
+        );
       }
     }
   }
