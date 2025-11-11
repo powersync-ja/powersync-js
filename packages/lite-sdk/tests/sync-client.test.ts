@@ -1,12 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SyncOperationsHandler } from '../src/client/storage/SyncOperationsHandler.js';
-import type { Connector, PowerSyncCredentials } from '../src/client/sync/SyncClient.js';
+import { Connector, type PowerSyncCredentials } from '../src/client/sync/Connector.js';
 import { MockStreamFactory, checkpoint, createTestSyncClient, waitForSyncStatus } from './utils.js';
+
+class PlaceholderConnector extends Connector {
+  async fetchCredentials(): Promise<PowerSyncCredentials | null> {
+    return {
+      endpoint: 'https://powersync.example.org',
+      token: 'test-token'
+    };
+  }
+}
 
 describe('SyncClient', () => {
   let mockStreamFactory: MockStreamFactory;
   const defaultOperationsHandler: SyncOperationsHandler = {
-    processOperations: async () => {
+    handleCheckpoint: async () => {
       // No-op for tests
     }
   };
@@ -21,19 +30,12 @@ describe('SyncClient', () => {
 
   it('should connect and receive checkpoint', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, {
-      processOperations: async () => {
+      handleCheckpoint: async () => {
         // No-op for tests
       }
     });
 
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     client.connect(connector);
 
@@ -67,14 +69,7 @@ describe('SyncClient', () => {
 
   it('should set last sync time after checkpoint complete', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, defaultOperationsHandler);
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     client.connect(connector);
     await waitForSyncStatus(client, (status) => status.connected === true, 1000);
@@ -110,14 +105,7 @@ describe('SyncClient', () => {
 
   it('should handle data lines', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, defaultOperationsHandler);
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     client.connect(connector);
     await waitForSyncStatus(client, (status) => status.connected === true, 1000);
@@ -172,14 +160,7 @@ describe('SyncClient', () => {
 
   it('should handle checkpoint diff', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, defaultOperationsHandler);
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     client.connect(connector);
     await waitForSyncStatus(client, (status) => status.connected === true, 1000);
@@ -233,14 +214,7 @@ describe('SyncClient', () => {
 
   it('should handle partial checkpoint complete', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, defaultOperationsHandler);
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     client.connect(connector);
     await waitForSyncStatus(client, (status) => status.connected === true, 1000);
@@ -290,14 +264,7 @@ describe('SyncClient', () => {
 
   it('should track connection status', async () => {
     const client = createTestSyncClient({}, mockStreamFactory, defaultOperationsHandler);
-    const connector: Connector = {
-      async fetchCredentials(): Promise<PowerSyncCredentials | null> {
-        return {
-          endpoint: 'https://powersync.example.org',
-          token: 'test-token'
-        };
-      }
-    };
+    const connector = new PlaceholderConnector();
 
     expect(client.status.connected).toBe(false);
     expect(client.status.connecting).toBe(false);

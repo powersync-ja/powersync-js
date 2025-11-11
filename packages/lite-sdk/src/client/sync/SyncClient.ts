@@ -2,29 +2,8 @@ import type { BucketRequest, StreamingSyncLine } from '@powersync/service-core';
 import { BaseListener, BaseObserverInterface, Disposable } from '../../utils/BaseObserver.js';
 import type { BucketStorage } from '../storage/BucketStorage.js';
 import type { SystemDependencies } from '../system/SystemDependencies.js';
-
-/**
- * Credentials required to connect to a PowerSync instance.
- */
-export type PowerSyncCredentials = {
-  /** The PowerSync endpoint URL to connect to. */
-  endpoint: string;
-  /** Authentication token for the PowerSync service. */
-  token: string;
-};
-
-/**
- * Provides credentials dynamically for PowerSync connections.
- * This allows for credential refresh and token rotation without
- * disconnecting the client.
- */
-export type Connector = {
-  /**
-   * Fetches the current PowerSync credentials.
-   * @returns A promise that resolves to credentials, or null if no credentials are available.
-   */
-  fetchCredentials: () => Promise<PowerSyncCredentials | null>;
-};
+import { Connector } from './Connector.js';
+import { CrudManager } from './CrudManager.js';
 
 /**
  * Current synchronization status of the sync client.
@@ -41,8 +20,12 @@ export interface SyncStatus {
   hasSynced: boolean;
   /** Whether data is currently being downloaded from the service. */
   downloading: boolean;
+  /** Whether data is currently being uploaded to the service. */
+  uploading: boolean;
   /** Error that occurred during download, if any. */
   downloadError: Error | null;
+  /** Error that occurred during upload, if any. */
+  uploadError: Error | null;
 }
 
 /**
@@ -54,6 +37,11 @@ export interface SyncClientListener extends BaseListener {
    */
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
+
+export type CreateCheckpointResponse = {
+  targetUpdated: boolean;
+  targetCheckpoint?: string;
+};
 
 /**
  * Main interface for synchronizing data with a PowerSync service.
@@ -78,6 +66,13 @@ export interface SyncClient extends BaseObserverInterface<SyncClientListener>, D
    * Any ongoing sync operations will be aborted.
    */
   disconnect: () => void;
+
+  /**
+   * Sets the target write checkpoint.
+   * @param customCheckpoint - Optional custom checkpoint to set the target to
+   * defaults to creating a managed PowerSync checkpoint
+   */
+  checkpoint: (customCheckpoint?: string) => Promise<CreateCheckpointResponse>;
 }
 
 export type StreamOptions = {
@@ -98,10 +93,12 @@ export type StreamOpener = (options: StreamOptions) => Promise<ReadableStream<St
  * Configuration options for creating a SyncClient instance.
  */
 export type SyncClientOptions = {
+  /** Manager for CRUD operations. */
+  crudManager?: CrudManager;
   /** Delay in milliseconds before retrying a failed connection attempt. */
   connectionRetryDelayMs: number;
   /** Delay in milliseconds before retrying a failed upload operation. */
-  uploadRetryDelayMs: number;
+  uploadThrottleMs: number;
   /** Whether to enable debug logging for sync operations. */
   debugMode?: boolean;
   /** Storage implementation for managing bucket data and synchronization state. */

@@ -1,13 +1,13 @@
 import type { BucketState, Checkpoint } from '@powersync/service-core';
+import { Lock } from '../../utils/Lock.js';
+import { CrudManager } from '../sync/CrudManager.js';
 import { SystemDependencies } from '../system/SystemDependencies.js';
 import type { BucketStorage, SyncDataBatch } from './BucketStorage.js';
 import type { SyncOperation, SyncOperationsHandler } from './SyncOperationsHandler.js';
 import { constructKey, toStringOrNull } from './bucketHelpers.js';
 import { addChecksums, normalizeChecksum, subtractChecksums } from './checksumUtils.js';
 import type { PSBucket } from './storage-types/ps_buckets.js';
-import type { PSCrud } from './storage-types/ps_crud.js';
 import type { PSOplog } from './storage-types/ps_oplog.js';
-import type { PSTx } from './storage-types/ps_tx.js';
 import { PsUpdatedRows } from './storage-types/ps_updated_rows.js';
 
 export type OpType = 'PUT' | 'REMOVE' | 'MOVE' | 'CLEAR';
@@ -15,6 +15,7 @@ export type OpType = 'PUT' | 'REMOVE' | 'MOVE' | 'CLEAR';
 export const MAX_OP_ID = '9223372036854775807';
 
 export type MemoryBucketStorageImplOptions = {
+  crudManager?: CrudManager;
   /** Array of handlers for processing sync operations collected from the protocol */
   operationsHandlers: SyncOperationsHandler[];
   systemDependencies: SystemDependencies;
@@ -24,35 +25,26 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   protected ps_buckets: PSBucket[];
   protected ps_oplog: PSOplog[];
   protected ps_updated_rows: PsUpdatedRows[];
-  // TODO: ps_crud implementation - ignoring for now
-  // ps_crud tracks client-side changes that need to be uploaded to the server
-  protected ps_crud: PSCrud[];
   protected clientId: string;
 
-  protected ps_tx: PSTx;
   protected lastSyncedAt: Date | null;
-
-  // Track sequence/counter for ps_crud (simulates SQLite sequence)
-  // TODO: This should be properly managed when ps_crud is implemented
-  protected ps_crud_seq: number = 0;
+  protected lock: Lock;
 
   /** Handlers for processing sync operations collected from the protocol */
   protected operationsHandlers: SyncOperationsHandler[];
+  protected crudManager?: CrudManager;
 
   constructor(protected options: MemoryBucketStorageImplOptions) {
     this.operationsHandlers = options.operationsHandlers;
+    this.crudManager = options.crudManager;
+    this.lock = new Lock();
     this.initDefaultState();
   }
 
   protected initDefaultState() {
     this.ps_buckets = [];
     this.ps_oplog = [];
-    this.ps_tx = {
-      current_tx: null,
-      next_tx: null
-    };
     this.ps_updated_rows = [];
-    this.ps_crud = [];
     this.lastSyncedAt = null;
     this.clientId = this.options.systemDependencies.crypto.randomUUID();
   }
@@ -72,39 +64,84 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   }
 
   async getBucketStates(): Promise<Array<BucketState>> {
-    return this.ps_buckets.map((bucket) => ({
-      bucket: bucket.name,
-      op_id: bucket.last_op.toString(),
-      target_op_id: bucket.target_op.toString(),
-      add_checksum: bucket.add_checksum.toString(),
-      op_checksum: bucket.op_checksum.toString(),
-      pending_delete: bucket.pending_delete
-    }));
+    return await this.lock.runExclusive(async () => {
+      return this.ps_buckets.map((bucket) => ({
+        bucket: bucket.name,
+        op_id: bucket.last_op.toString(),
+        target_op_id: bucket.target_op.toString(),
+        add_checksum: bucket.add_checksum.toString(),
+        op_checksum: bucket.op_checksum.toString(),
+        pending_delete: bucket.pending_delete
+      }));
+    });
   }
 
   async hasCompletedSync(): Promise<boolean> {
-    return !!this.ps_buckets.find((b) => b.last_applied_op > 0);
+    return await this.lock.runExclusive(async () => {
+      return !!this.ps_buckets.find((b) => b.last_applied_op > 0);
+    });
+  }
+
+  async handleCrudUploaded(writeCheckpoint?: string) {
+    await this.lock.runExclusive(async () => {
+      if (writeCheckpoint) {
+        // Custom write checkpoints are used
+        // only update if all crud items
+        if (await this.crudManager?.hasCrud()) {
+          return;
+        }
+        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
+        if (!localBucket) {
+          throw new Error('Local bucket not found');
+        }
+        localBucket.target_op = normalizeChecksum(writeCheckpoint);
+      } else {
+        // Set the target to the max op id
+        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
+        if (!localBucket) {
+          throw new Error('Local bucket not found');
+        }
+        localBucket.target_op = normalizeChecksum(MAX_OP_ID);
+      }
+    });
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
+    /**
+     * This is typically called after completing uploads.
+     * An upload handler will typically complete crud transactions before the upload process is completed.
+     * If not using custom write checkpoints:
+     *  - The `complete` method will set the $local target to the max op id.
+     *  - If the target is not the max op id, we should not proceed.
+     *  - We get a checkpoint from the callback
+     *  - If there are no pending CRUD items, we set the target checkpoint to this value
+     * If using custom write checkpoints:
+     *  - The complete method will set the target checkpoint to the custom write checkpoint (if there are no pending CRUD items)
+     *  - We return early here since the value is not the max op id
+     */
+
     // Find the '$local' bucket and check if target_op = MAX_OP_ID
     // SQL: SELECT target_op FROM ps_buckets WHERE name = '$local' AND target_op = CAST(? as INTEGER)
     // TODO: maybe store local state separately
-    const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-    if (!localBucket) {
-      // Nothing to update
+    const shouldProceed = await this.lock.runExclusive(async () => {
+      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
+      if (!localBucket) {
+        // Nothing to update
+        return false;
+      }
+
+      const maxOpIdBigint = BigInt(MAX_OP_ID);
+      if (localBucket.target_op !== maxOpIdBigint) {
+        // target_op is not MAX_OP_ID, nothing to update
+        return false;
+      }
+      // Should proceed
+      return true;
+    });
+
+    if (!shouldProceed) {
       return false;
     }
-
-    const maxOpIdBigint = BigInt(MAX_OP_ID);
-    if (localBucket.target_op !== maxOpIdBigint) {
-      // target_op is not MAX_OP_ID, nothing to update
-      return false;
-    }
-
-    // Save current sequence state before calling callback
-    // SQL: SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'
-    const seqBefore = this.ps_crud_seq;
 
     // Call the callback to get the new opId
     const opId = await cb();
@@ -112,67 +149,63 @@ export class MemoryBucketStorageImpl implements BucketStorage {
     // Within transaction equivalent (in memory, we do checks atomically):
     // 1. Check if ps_crud has any data (SELECT 1 FROM ps_crud LIMIT 1)
     // If it has data, new data was uploaded since write checkpoint - need new write checkpoint
-    if (this.ps_crud.length > 0) {
+    if (await this.crudManager?.hasCrud()) {
       // Still has crud data, can't update checkpoint
       return false;
     }
 
-    // TODO crud
-    // // 2. Verify sequence hasn't changed (SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud')
-    // // If sequence changed, new items were added even if later deleted
-    // if (this.ps_crud_seq !== seqBefore) {
-    //   // New crud data may have been uploaded since we got the checkpoint. Abort.
-    //   return false;
-    // }
+    // This is typically called after completing uploads which can
+    // be concurrent.
+    return await this.lock.runExclusive(async () => {
+      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
+      if (!localBucket) {
+        // Nothing to update
+        return false;
+      }
 
-    // // Verify sequence exists (should not be empty)
-    // // SQL: SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'
-    // if (this.ps_crud_seq === 0 && seqBefore === 0) {
-    //   // This shouldn't happen if we got past the first check, but defensive
-    //   throw new Error('SQLite Sequence should not be empty');
-    // }
-
-    // Update the '$local' bucket's target_op to the new opId
-    // SQL: UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'
-    const opIdBigint = normalizeChecksum(opId);
-    localBucket.target_op = opIdBigint;
-
-    return true;
+      // Update the '$local' bucket's target_op to the new opId
+      // SQL: UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'
+      const opIdBigint = normalizeChecksum(opId);
+      localBucket.target_op = opIdBigint;
+      return true;
+    });
   }
 
   async removeBuckets(buckets: Array<string>): Promise<void> {
-    for (const bucketName of buckets) {
-      // Find bucket by name and get its id
-      const bucketIndex = this.ps_buckets.findIndex((b) => b.name === bucketName);
-      if (bucketIndex === -1) {
-        // Bucket doesn't exist, nothing to do
-        continue;
-      }
+    await this.lock.runExclusive(async () => {
+      for (const bucketName of buckets) {
+        // Find bucket by name and get its id
+        const bucketIndex = this.ps_buckets.findIndex((b) => b.name === bucketName);
+        if (bucketIndex === -1) {
+          // Bucket doesn't exist, nothing to do
+          continue;
+        }
 
-      const bucket = this.ps_buckets[bucketIndex];
-      const bucketId = bucket.id;
+        const bucket = this.ps_buckets[bucketIndex];
+        const bucketId = bucket.id;
 
-      // Add all rows from ps_oplog for this bucket to ps_updated_rows
-      // (INSERT OR IGNORE logic - only add if not already exists)
-      const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
-      for (const op of bucketOps) {
-        if (op.row_type && op.row_id) {
-          const exists = this.ps_updated_rows.some((row) => row.row_type === op.row_type && row.row_id === op.row_id);
-          if (!exists) {
-            this.ps_updated_rows.push({
-              row_type: op.row_type,
-              row_id: op.row_id
-            });
+        // Add all rows from ps_oplog for this bucket to ps_updated_rows
+        // (INSERT OR IGNORE logic - only add if not already exists)
+        const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
+        for (const op of bucketOps) {
+          if (op.row_type && op.row_id) {
+            const exists = this.ps_updated_rows.some((row) => row.row_type === op.row_type && row.row_id === op.row_id);
+            if (!exists) {
+              this.ps_updated_rows.push({
+                row_type: op.row_type,
+                row_id: op.row_id
+              });
+            }
           }
         }
+
+        // Delete all rows from ps_oplog for this bucket
+        this.ps_oplog = this.ps_oplog.filter((op) => op.bucket !== bucketId);
+
+        // Delete the bucket from ps_buckets
+        this.ps_buckets.splice(bucketIndex, 1);
       }
-
-      // Delete all rows from ps_oplog for this bucket
-      this.ps_oplog = this.ps_oplog.filter((op) => op.bucket !== bucketId);
-
-      // Delete the bucket from ps_buckets
-      this.ps_buckets.splice(bucketIndex, 1);
-    }
+    });
   }
 
   /**
@@ -200,140 +233,142 @@ export class MemoryBucketStorageImpl implements BucketStorage {
   }
 
   async saveSyncData(batch: SyncDataBatch): Promise<void> {
-    for (const bucketData of batch.buckets) {
-      const bucketName = bucketData.bucket;
-      const bucket = this.findOrCreateBucket(bucketName);
-      const bucketId = bucket.id;
-      const lastAppliedOp = bucket.last_applied_op;
+    await this.lock.runExclusive(async () => {
+      for (const bucketData of batch.buckets) {
+        const bucketName = bucketData.bucket;
+        const bucket = this.findOrCreateBucket(bucketName);
+        const bucketId = bucket.id;
+        const lastAppliedOp = bucket.last_applied_op;
 
-      // Optimization for initial sync - we can avoid persisting individual REMOVE
-      // operations when last_applied_op = 0
-      let isEmpty = lastAppliedOp === 0n;
+        // Optimization for initial sync - we can avoid persisting individual REMOVE
+        // operations when last_applied_op = 0
+        let isEmpty = lastAppliedOp === 0n;
 
-      let lastOp: bigint | null = null;
-      let addChecksum = 0n;
-      let opChecksum = 0n; // Start at 0, will be added to bucket's op_checksum at the end
-      let addedOps = 0;
+        let lastOp: bigint | null = null;
+        let addChecksum = 0n;
+        let opChecksum = 0n; // Start at 0, will be added to bucket's op_checksum at the end
+        let addedOps = 0;
 
-      for (const line of bucketData.data) {
-        // line might be OplogEntry or ProtocolOplogData - access properties directly
-        const opId = normalizeChecksum(line.op_id);
-        const opType = line.op as OpType;
-        const objectType = line.object_type;
-        const objectId = line.object_id;
-        const subkey = line.subkey;
-        const checksum = normalizeChecksum(line.checksum);
-        const opData = toStringOrNull(line.data);
+        for (const line of bucketData.data) {
+          // line might be OplogEntry or ProtocolOplogData - access properties directly
+          const opId = normalizeChecksum(line.op_id);
+          const opType = line.op as OpType;
+          const objectType = line.object_type;
+          const objectId = line.object_id;
+          const subkey = line.subkey;
+          const checksum = normalizeChecksum(line.checksum);
+          const opData = toStringOrNull(line.data);
 
-        lastOp = opId;
-        addedOps += 1;
+          lastOp = opId;
+          addedOps += 1;
 
-        if (opType === 'PUT' || opType === 'REMOVE') {
-          const key = constructKey(objectType, objectId, subkey);
+          if (opType === 'PUT' || opType === 'REMOVE') {
+            const key = constructKey(objectType, objectId, subkey);
 
-          // Supersede (delete) previous operations with the same key
-          const supersededOps: PSOplog[] = [];
-          const remainingOps: PSOplog[] = [];
+            // Supersede (delete) previous operations with the same key
+            const supersededOps: PSOplog[] = [];
+            const remainingOps: PSOplog[] = [];
 
-          for (const oplog of this.ps_oplog) {
-            if (oplog.bucket === bucketId && oplog.key === key) {
-              supersededOps.push(oplog);
-              // Add superseded checksum to add_checksum
-              addChecksum = addChecksums(addChecksum, oplog.hash);
-              // Subtract superseded checksum from op_checksum
-              opChecksum = subtractChecksums(opChecksum, oplog.hash);
-            } else {
-              remainingOps.push(oplog);
+            for (const oplog of this.ps_oplog) {
+              if (oplog.bucket === bucketId && oplog.key === key) {
+                supersededOps.push(oplog);
+                // Add superseded checksum to add_checksum
+                addChecksum = addChecksums(addChecksum, oplog.hash);
+                // Subtract superseded checksum from op_checksum
+                opChecksum = subtractChecksums(opChecksum, oplog.hash);
+              } else {
+                remainingOps.push(oplog);
+              }
             }
-          }
 
-          // Update ps_oplog by removing superseded operations
-          this.ps_oplog = remainingOps;
+            // Update ps_oplog by removing superseded operations
+            this.ps_oplog = remainingOps;
 
-          // Check if we superseded an operation (only skip if bucket was empty)
-          const superseded = supersededOps.length > 0 && !isEmpty;
+            // Check if we superseded an operation (only skip if bucket was empty)
+            const superseded = supersededOps.length > 0 && !isEmpty;
 
-          if (opType === 'REMOVE') {
-            const shouldSkipRemove = !superseded;
+            if (opType === 'REMOVE') {
+              const shouldSkipRemove = !superseded;
 
+              addChecksum = addChecksums(addChecksum, checksum);
+
+              if (!shouldSkipRemove) {
+                if (objectType && objectId) {
+                  // Insert into ps_updated_rows (or ignore if already exists)
+                  const exists = this.ps_updated_rows.some(
+                    (row) => row.row_type === objectType && row.row_id === objectId
+                  );
+                  if (!exists) {
+                    this.ps_updated_rows.push({
+                      row_type: objectType,
+                      row_id: objectId
+                    });
+                  }
+                }
+              }
+              continue;
+            }
+
+            // Handle PUT operation
+            const newOplog: PSOplog = {
+              bucket: bucketId,
+              op_id: opId,
+              key: key || null,
+              row_type: objectType || null,
+              row_id: objectId || null,
+              data: opData,
+              hash: checksum // Already normalized to bigint
+            };
+
+            this.ps_oplog.push(newOplog);
+            opChecksum = addChecksums(opChecksum, checksum);
+          } else if (opType === 'MOVE') {
             addChecksum = addChecksums(addChecksum, checksum);
-
-            if (!shouldSkipRemove) {
-              if (objectType && objectId) {
-                // Insert into ps_updated_rows (or ignore if already exists)
+          } else if (opType === 'CLEAR') {
+            // Any remaining PUT operations should get an implicit REMOVE
+            // Add all rows from ps_oplog to ps_updated_rows for this bucket
+            const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
+            for (const op of bucketOps) {
+              if (op.row_type && op.row_id) {
                 const exists = this.ps_updated_rows.some(
-                  (row) => row.row_type === objectType && row.row_id === objectId
+                  (row) => row.row_type === op.row_type && row.row_id === op.row_id
                 );
                 if (!exists) {
                   this.ps_updated_rows.push({
-                    row_type: objectType,
-                    row_id: objectId
+                    row_type: op.row_type,
+                    row_id: op.row_id
                   });
                 }
               }
             }
-            continue;
+
+            // Delete all ops from ps_oplog for this bucket
+            this.ps_oplog = this.ps_oplog.filter((op) => op.bucket !== bucketId);
+
+            // Update bucket: set last_applied_op = 0, replace add_checksum with CLEAR op checksum, reset op_checksum
+            bucket.last_applied_op = 0n;
+            // Store checksum as-is (preserve full 64-bit value from SQLite)
+            // The checksum comes from the operation, which is already in correct range
+            bucket.add_checksum = checksum;
+            bucket.op_checksum = 0n;
+
+            addChecksum = 0n;
+            isEmpty = true;
+            opChecksum = 0n;
           }
+        }
 
-          // Handle PUT operation
-          const newOplog: PSOplog = {
-            bucket: bucketId,
-            op_id: opId,
-            key: key || null,
-            row_type: objectType || null,
-            row_id: objectId || null,
-            data: opData,
-            hash: checksum // Already normalized to bigint
-          };
-
-          this.ps_oplog.push(newOplog);
-          opChecksum = addChecksums(opChecksum, checksum);
-        } else if (opType === 'MOVE') {
-          addChecksum = addChecksums(addChecksum, checksum);
-        } else if (opType === 'CLEAR') {
-          // Any remaining PUT operations should get an implicit REMOVE
-          // Add all rows from ps_oplog to ps_updated_rows for this bucket
-          const bucketOps = this.ps_oplog.filter((op) => op.bucket === bucketId);
-          for (const op of bucketOps) {
-            if (op.row_type && op.row_id) {
-              const exists = this.ps_updated_rows.some(
-                (row) => row.row_type === op.row_type && row.row_id === op.row_id
-              );
-              if (!exists) {
-                this.ps_updated_rows.push({
-                  row_type: op.row_type,
-                  row_id: op.row_id
-                });
-              }
-            }
-          }
-
-          // Delete all ops from ps_oplog for this bucket
-          this.ps_oplog = this.ps_oplog.filter((op) => op.bucket !== bucketId);
-
-          // Update bucket: set last_applied_op = 0, replace add_checksum with CLEAR op checksum, reset op_checksum
-          bucket.last_applied_op = 0n;
-          // Store checksum as-is (preserve full 64-bit value from SQLite)
-          // The checksum comes from the operation, which is already in correct range
-          bucket.add_checksum = checksum;
-          bucket.op_checksum = 0n;
-
-          addChecksum = 0n;
-          isEmpty = true;
-          opChecksum = 0n;
+        // Update bucket state if we processed any operations
+        if (lastOp !== null) {
+          bucket.last_op = lastOp;
+          // addChecksums() handles 32-bit unsigned wrapping and returns the result
+          // We store as full bigint value (SQLite can store 64-bit INTEGERs)
+          bucket.add_checksum = addChecksums(bucket.add_checksum, addChecksum);
+          bucket.op_checksum = addChecksums(bucket.op_checksum, opChecksum);
+          bucket.count_since_last += addedOps;
         }
       }
-
-      // Update bucket state if we processed any operations
-      if (lastOp !== null) {
-        bucket.last_op = lastOp;
-        // addChecksums() handles 32-bit unsigned wrapping and returns the result
-        // We store as full bigint value (SQLite can store 64-bit INTEGERs)
-        bucket.add_checksum = addChecksums(bucket.add_checksum, addChecksum);
-        bucket.op_checksum = addChecksums(bucket.op_checksum, opChecksum);
-        bucket.count_since_last += addedOps;
-      }
-    }
+    });
   }
 
   async syncLocalDatabase(
@@ -353,22 +388,24 @@ export class MemoryBucketStorageImpl implements BucketStorage {
       buckets = buckets.filter((b) => hasMatchingPriority(priority, b));
     }
 
-    // Update bucket last_op to checkpoint.last_op_id
-    const bucketNames = buckets.map((b) => b.bucket);
-    for (const bucketName of bucketNames) {
-      const bucket = this.ps_buckets.find((b) => b.name === bucketName);
-      if (bucket) {
-        bucket.last_op = normalizeChecksum(checkpoint.last_op_id);
+    await this.lock.runExclusive(async () => {
+      // Update bucket last_op to checkpoint.last_op_id
+      const bucketNames = buckets.map((b) => b.bucket);
+      for (const bucketName of bucketNames) {
+        const bucket = this.ps_buckets.find((b) => b.name === bucketName);
+        if (bucket) {
+          bucket.last_op = normalizeChecksum(checkpoint.last_op_id);
+        }
       }
-    }
 
-    // Update '$local' bucket if write_checkpoint is provided and it's a complete sync
-    if (priority == null && checkpoint.write_checkpoint) {
-      const localBucket = this.ps_buckets.find((b) => b.name === '$local');
-      if (localBucket) {
-        localBucket.last_op = normalizeChecksum(checkpoint.write_checkpoint);
+      // Update '$local' bucket if write_checkpoint is provided and it's a complete sync
+      if (priority == null && checkpoint.write_checkpoint) {
+        const localBucket = this.ps_buckets.find((b) => b.name === '$local');
+        if (localBucket) {
+          localBucket.last_op = normalizeChecksum(checkpoint.write_checkpoint);
+        }
       }
-    }
+    });
 
     const valid = await this.updateObjectsFromBuckets(checkpoint, priority);
     if (!valid) {
@@ -389,39 +426,44 @@ export class MemoryBucketStorageImpl implements BucketStorage {
    * For now, operations are collected but not applied (pluggable approach).
    */
   private async updateObjectsFromBuckets(checkpoint: Checkpoint, priority: number | undefined): Promise<boolean> {
-    // Check if sync can apply (can_apply_sync_changes equivalent)
-    if (!(await this.canApplySyncChanges(priority))) {
-      return false;
-    }
-
-    // Collect operations that need to be applied
-    const operations = await this.collectFullOperations(checkpoint, priority);
-
-    // Process operations using all handlers if provided
-    if (this.operationsHandlers.length > 0 && operations.length > 0) {
-      for (const handler of this.operationsHandlers) {
-        await handler.processOperations(operations);
+    return await this.lock.runExclusive(async () => {
+      // Check if sync can apply (can_apply_sync_changes equivalent)
+      if (!(await this.canApplySyncChanges(priority))) {
+        return false;
       }
-    }
 
-    // Update last_applied_op for buckets
-    await this.setLastAppliedOp(checkpoint, priority);
+      // Collect operations that need to be applied
+      const operations = await this.collectFullOperations(checkpoint, priority);
 
-    // Update count_at_last for complete sync
-    if (priority == null) {
-      const bucketToCount = new Map(checkpoint.buckets.map((b) => [b.bucket, b.count ?? 0]));
-      for (const bucket of this.ps_buckets) {
-        if (bucket.name !== '$local' && bucketToCount.has(bucket.name)) {
-          bucket.count_at_last = bucketToCount.get(bucket.name)!;
-          bucket.count_since_last = 0;
+      // Process operations using all handlers if provided
+      if (this.operationsHandlers.length > 0 && operations.length > 0) {
+        for (const handler of this.operationsHandlers) {
+          await handler.handleCheckpoint({
+            checkpoint: checkpoint.last_op_id,
+            pendingOperations: operations
+          });
         }
       }
-    }
 
-    // Mark as completed (clear ps_updated_rows for complete sync)
-    await this.markCompleted(priority);
+      // Update last_applied_op for buckets
+      await this.setLastAppliedOp(checkpoint, priority);
 
-    return true;
+      // Update count_at_last for complete sync
+      if (priority == null) {
+        const bucketToCount = new Map(checkpoint.buckets.map((b) => [b.bucket, b.count ?? 0]));
+        for (const bucket of this.ps_buckets) {
+          if (bucket.name !== '$local' && bucketToCount.has(bucket.name)) {
+            bucket.count_at_last = bucketToCount.get(bucket.name)!;
+            bucket.count_since_last = 0;
+          }
+        }
+      }
+
+      // Mark as completed (clear ps_updated_rows for complete sync)
+      await this.markCompleted(priority);
+
+      return true;
+    });
   }
 
   /**
@@ -432,7 +474,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
    * (except for downloaded data in priority 0, which is published earlier).
    */
   private async canApplySyncChanges(priority: number | undefined): Promise<boolean> {
-    const needsCheck = priority === undefined || !this.mayPublishWithOutstandingUploads(priority);
+    const needsCheck = priority == undefined || !this.mayPublishWithOutstandingUploads(priority);
 
     if (needsCheck) {
       // Check if '$local' bucket has target_op > last_op
@@ -444,7 +486,7 @@ export class MemoryBucketStorageImpl implements BucketStorage {
 
       // Check if ps_crud has any data
       // SQL: SELECT 1 FROM ps_crud LIMIT 1
-      if (this.ps_crud.length > 0) {
+      if (await this.crudManager?.hasCrud()) {
         return false;
       }
     }

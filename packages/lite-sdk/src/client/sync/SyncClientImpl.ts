@@ -1,9 +1,10 @@
 import type { Checkpoint, CheckpointBucket } from '@powersync/service-core';
 import { BaseObserver } from '../../utils/BaseObserver.js';
 import type { BucketStorage } from '../storage/BucketStorage.js';
+import { Connector } from './Connector.js';
+import { CrudManager } from './CrudManager.js';
 import type {
-  Connector,
-  PowerSyncCredentials,
+  CreateCheckpointResponse,
   StreamOpener,
   SyncClient,
   SyncClientListener,
@@ -33,13 +34,14 @@ const FALLBACK_PRIORITY = 3;
 export class SyncClientImpl extends BaseObserver<SyncClientListener> implements SyncClient {
   status: SyncStatus;
 
-  protected cachedCredentials: PowerSyncCredentials | null;
   protected abortController: AbortController;
   protected openStreamFn: StreamOpener;
+  protected uploadPromise: Promise<void> | null;
+  protected connector: Connector | null;
 
   constructor(protected options: SyncClientOptions) {
     super();
-    this.cachedCredentials = null;
+    this.connector = null;
     this.abortController = new AbortController();
     this.status = {
       connected: false,
@@ -47,13 +49,20 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
       hasSynced: false,
       connecting: false,
       downloading: false,
+      uploading: false,
+      uploadError: null,
       downloadError: null
     };
+    this.uploadPromise = null;
     this.openStreamFn = options.streamOpener ?? openHttpStream;
   }
 
   protected get bucketStorage(): BucketStorage {
     return this.options.storage;
+  }
+
+  protected get crudManager(): CrudManager | undefined {
+    return this.options.crudManager;
   }
 
   /**
@@ -78,6 +87,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
   async connect(connector: Connector): Promise<void> {
     // Abort any existing connection
     this.abortController.abort();
+    this.connector = connector;
 
     const controller = new AbortController();
     this.abortController = controller;
@@ -105,8 +115,107 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
     this.abortController.abort();
   }
 
-  protected invalidateCredentials(): void {
-    this.cachedCredentials = null;
+  async checkpoint(customCheckpoint?: string): Promise<CreateCheckpointResponse> {
+    let targetCheckpoint: string | undefined = customCheckpoint;
+    const targetUpdated = await this.bucketStorage.updateLocalTarget(async () => {
+      if (targetCheckpoint) {
+        return targetCheckpoint;
+      }
+      targetCheckpoint = await this.getWriteCheckpoint();
+      return targetCheckpoint;
+    });
+    return {
+      targetUpdated,
+      targetCheckpoint
+    };
+  }
+
+  protected triggerCrudUpload(): void {
+    if (!this.crudManager) {
+      return;
+    }
+    // We already have an operation queued
+    if (this.uploadPromise) {
+      return;
+    }
+
+    const process = async () => {
+      try {
+        const hasCrud = await this.crudManager?.hasCrud().catch(() => false);
+        if (!hasCrud) {
+          // We are done
+          this.uploadPromise = null;
+          this.updateSyncStatus({
+            uploading: false
+          });
+          return;
+        }
+
+        this.updateSyncStatus({
+          uploading: true,
+          uploadError: null
+        });
+
+        try {
+          await this.crudManager?.performUpload({
+            complete: this.bucketStorage.handleCrudUploaded
+          });
+
+          const hasCrudAfter = await this.crudManager?.hasCrud().catch(() => false);
+          if (hasCrudAfter) {
+            // Keep the chain running
+            // Implement throttling
+            await new Promise((resolve) => setTimeout(resolve, this.options.uploadThrottleMs));
+            return (this.uploadPromise = process() ?? null);
+          } else {
+            // We are done with this iteration
+            this.uploadPromise = null;
+            this.updateSyncStatus({
+              uploading: false,
+              uploadError: null
+            });
+            // Get a write checkpoint
+            await this.bucketStorage.updateLocalTarget(() => this.getWriteCheckpoint());
+          }
+        } catch (error) {
+          this.updateSyncStatus({
+            uploadError: error as Error
+          });
+        } finally {
+          // Implement throttling
+          await new Promise((resolve) => setTimeout(resolve, this.options.uploadThrottleMs));
+        }
+      } catch (error) {
+        this.updateSyncStatus({
+          uploadError: error as Error
+        });
+      }
+    };
+    // Start by performing an upload
+    this.uploadPromise = process() ?? null;
+  }
+
+  protected async getWriteCheckpoint(): Promise<string> {
+    if (!this.connector) {
+      throw new Error(`No connector found`);
+    }
+    const credentials = await this.connector.prefetchCredentials();
+    if (!credentials) {
+      throw new Error(`No credentials found`);
+    }
+    const clientId = await this.bucketStorage.getClientId();
+    let path = `/write-checkpoint2.json?client_id=${clientId}`;
+    const response = await fetch(`${credentials.endpoint}${path}`, {
+      headers: {
+        Authorization: `Bearer ${credentials.token}`
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to get write checkpoint: ${response.statusText}`);
+    }
+    const data = (await response.json()) as { data: { write_checkpoint: string } };
+    const checkpoint = data['data']['write_checkpoint'] as string;
+    return checkpoint;
   }
 
   private async collectLocalBucketState(): Promise<[BucketRequest[], Map<string, BucketDescription | null>]> {
@@ -124,7 +233,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
   }
 
   protected async syncIteration(connector: Connector, signal: AbortSignal): Promise<void> {
-    const credentials = this.cachedCredentials ?? (await connector.fetchCredentials());
+    const credentials = connector.cachedCredentials ?? (await connector.fetchCredentials());
 
     if (!credentials) {
       throw new Error(`No credentials found`);
@@ -141,7 +250,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
       systemDependencies: this.options.systemDependencies
     }).catch((ex) => {
       if (ex instanceof AuthorizationError) {
-        this.invalidateCredentials();
+        connector.invalidateCredentials();
       }
       throw ex;
     });
@@ -160,6 +269,10 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
 
     const reader = stream.getReader();
     console.debug(`Starting sync iteration`);
+
+    // Trigger a CRUD upload immediately after connecting
+    Promise.resolve().then(() => this.triggerCrudUpload());
+
     try {
       while (!signal.aborted) {
         const { value: line, done } = await reader.read();
@@ -272,9 +385,10 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
           if (token_expires_in == 0) {
             throw new Error(`Token already expired`);
           } else if (token_expires_in < 30) {
-            this.invalidateCredentials();
+            connector.invalidateCredentials();
             throw new Error(`Token will expire soon. Need to reconnect.`);
           }
+          this.triggerCrudUpload();
         } else {
           console.debug(`Received unknown sync line`, line);
         }

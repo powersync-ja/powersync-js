@@ -12,6 +12,11 @@ export type SyncOperation = {
   data: string | null;
 };
 
+export type CheckpointEvent = {
+  checkpoint: string;
+  pendingOperations: ReadonlyArray<SyncOperation>;
+};
+
 /**
  * Handler interface for processing sync operations collected from the protocol.
  * This handler is responsible for applying operations to output collections.
@@ -21,5 +26,5 @@ export interface SyncOperationsHandler {
    * Process sync operations collected from the protocol.
    * @param operations Array of operations to process
    */
-  processOperations(operations: ReadonlyArray<SyncOperation>): Promise<void>;
+  handleCheckpoint(event: CheckpointEvent): Promise<void>;
 }

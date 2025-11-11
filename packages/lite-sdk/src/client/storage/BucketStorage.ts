@@ -79,6 +79,15 @@ export interface BucketStorage {
   hasCompletedSync: () => Promise<boolean>;
 
   /**
+   * Updates the local target checkpoint after CRUD items have been uploaded.
+   * @param writeCheckpoint - Optional write checkpoint to set the local target to
+   *  - If provided, only updates if all CRUD items have been uploaded
+   *  - If not provided, sets the local target to the max op id
+   * @returns void
+   */
+  handleCrudUploaded(writeCheckpoint?: string): Promise<void>;
+
+  /**
    * Update the local target checkpoint atomically.
    * Only updates if no new CRUD data has been added since the checkpoint was obtained.
    *

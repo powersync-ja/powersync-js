@@ -1,4 +1,3 @@
-import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import {
@@ -38,13 +37,13 @@ import {
   type PowerSyncConnectionOptions,
   type RequiredAdditionalConnectionOptions
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.js';
+import { SyncStream } from './sync/sync-streams.js';
 import { TriggerManager } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
-import { coreStatusToJs, CoreSyncStatus } from './sync/stream/core-instruction.js';
-import { SyncStream } from './sync/sync-streams.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -195,7 +194,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * The connector used to connect to the PowerSync service.
-   * 
+   *
    * @returns The connector used to connect to the PowerSync service or null if `connect()` has not been called.
    */
   get connector() {
@@ -204,7 +203,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   /**
    * The resolved connection options used to connect to the PowerSync service.
-   * 
+   *
    * @returns The resolved connection options used to connect to the PowerSync service or null if `connect()` has not been called.
    */
   get connectionOptions() {

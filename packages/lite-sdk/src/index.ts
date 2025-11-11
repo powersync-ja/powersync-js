@@ -1,6 +1,7 @@
 export * from './client/storage/BucketStorage.js';
 export * from './client/storage/MemoryBucketStorageImpl.js';
 export * from './client/storage/storage-types/storage-types-index.js';
+export * from './client/sync/Connector.js';
 export * from './client/sync/SyncClient.js';
 export * from './client/sync/SyncClientImpl.js';
 export * from './client/sync/ndjson.js';

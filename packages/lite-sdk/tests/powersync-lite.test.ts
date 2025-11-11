@@ -1,39 +1,39 @@
 import { describe, it } from 'vitest';
 import { MemoryBucketStorageImpl } from '../src/client/storage/MemoryBucketStorageImpl.js';
 import { SyncOperationsHandler } from '../src/client/storage/SyncOperationsHandler.js';
-import { type Connector } from '../src/client/sync/SyncClient.js';
+import { Connector, PowerSyncCredentials } from '../src/client/sync/Connector.js';
 import { SyncClientImpl } from '../src/client/sync/SyncClientImpl.js';
 import { DEFAULT_SYSTEM_DEPENDENCIES } from '../src/client/system/SystemDependencies.js';
 
+class TestConnector extends Connector {
+  async fetchCredentials(): Promise<PowerSyncCredentials | null> {
+    const tokenResponse = await fetch(`http://localhost:6060/api/auth/token`, {
+      method: `GET`,
+      headers: {
+        'content-type': `application/json`
+      }
+    });
+
+    if (!tokenResponse.ok) {
+      throw new Error(`Failed to fetch token: ${tokenResponse.statusText} ${await tokenResponse.text()}`);
+    }
+
+    const tokenBody = await tokenResponse.json();
+    return {
+      endpoint: `http://localhost:8080`,
+      token: tokenBody.token
+    };
+  }
+}
+
 describe(`PowerSync Lite`, { timeout: Infinity }, () => {
   describe(`Connection`, () => {
-    it.skip(`should connect to a PowerSync server`, async () => {
-      const connector = {
-        fetchCredentials: async () => {
-          const tokenResponse = await fetch(`http://localhost:6060/api/auth/token`, {
-            method: `GET`,
-            headers: {
-              'content-type': `application/json`
-            }
-          });
-
-          if (!tokenResponse.ok) {
-            throw new Error(`Failed to fetch token: ${tokenResponse.statusText} ${await tokenResponse.text()}`);
-          }
-
-          const tokenBody = await tokenResponse.json();
-          return {
-            endpoint: `http://localhost:8080`,
-            token: tokenBody.token
-          };
-        }
-      } satisfies Connector;
-
+    it(`should connect to a PowerSync server`, async () => {
       const syncOperationsHandler: SyncOperationsHandler = {
-        processOperations: async (operations) => {
+        handleCheckpoint: async (event) => {
           // Funnel these operations to external storage
-          console.log(`Processing ${operations.length} operations`);
-          console.log(operations);
+          console.log(`Processing ${event.pendingOperations.length} operations`);
+          console.log(event.checkpoint, event.pendingOperations);
         }
       };
 
@@ -41,8 +41,7 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
       const syncClient = new SyncClientImpl({
         connectionRetryDelayMs: 1000,
         debugMode: false,
-        // TODO uploads
-        uploadRetryDelayMs: 1000,
+        uploadThrottleMs: 1000,
         storage: new MemoryBucketStorageImpl({
           operationsHandlers: [syncOperationsHandler],
           systemDependencies: systemDependencies
@@ -50,7 +49,7 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
         systemDependencies
       });
 
-      await syncClient.connect(connector);
+      await syncClient.connect(new TestConnector());
 
       // Long running test for demonstrating the sync client
     });
