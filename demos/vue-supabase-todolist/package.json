@@ -13,17 +13,17 @@
   "dependencies": {
     "@powersync/web": "workspace:*",
     "@powersync/vue": "workspace:*",
-    "@mdi/font": "7.4.47",
-    "@supabase/supabase-js": "^2.39.7",
-    "@vuelidate/core": "^2.0.3",
-    "@vuelidate/validators": "^2.0.4",
+    "@mdi/font": "catalog:",
+    "@supabase/supabase-js": "catalog:",
+    "@vuelidate/core": "catalog:",
+    "@vuelidate/validators": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",
     "vuetify": "catalog:"
   },
   "devDependencies": {
     "@swc/core": "catalog:",
-    "@types/vuelidate": "^0.7.21",
+    "@types/vuelidate": "catalog:",
     "@vitejs/plugin-vue": "catalog:",
     "sass": "catalog:",
     "typescript": "catalog:",

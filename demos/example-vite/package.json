@@ -15,8 +15,8 @@
   },
   "devDependencies": {
     "@swc/core": "catalog:",
-    "vite": "^5.0.12",
-    "vite-plugin-top-level-await": "^1.4.1",
+    "vite": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
     "vite-plugin-wasm": "catalog:"
   }
 }

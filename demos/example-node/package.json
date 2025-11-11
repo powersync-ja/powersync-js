@@ -11,14 +11,14 @@
   },
   "dependencies": {
     "@powersync/node": "workspace:*",
-    "better-sqlite3": "^12.2.0",
-    "better-sqlite3-multiple-ciphers": "^12.2.0",
-    "dotenv": "^16.4.7",
-    "undici": "^7.11.0"
+    "better-sqlite3": "catalog:",
+    "better-sqlite3-multiple-ciphers": "catalog:",
+    "dotenv": "catalog:",
+    "undici": "catalog:"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "ts-node": "^10.9.2",
+    "@types/better-sqlite3": "catalog:",
+    "ts-node": "catalog:",
     "typescript": "catalog:"
   }
 }
