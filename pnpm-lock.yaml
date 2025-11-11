@@ -1556,6 +1556,9 @@ importers:
       '@mui/x-data-grid':
         specifier: ^6.19.6
         version: 6.20.4(@mui/material@5.17.1(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mui/system@5.17.1(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react@18.3.1))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -1570,7 +1573,7 @@ importers:
         version: 0.4.17(typescript@5.9.2)
       '@tanstack/powersync-db-collection':
         specifier: ^0.1.0
-        version: 0.1.0(@powersync/common@1.41.0)(typescript@5.9.2)
+        version: 0.1.0(@powersync/common@packages+common)(typescript@5.9.2)
       '@tanstack/react-db':
         specifier: ^0.1.39
         version: 0.1.39(react@18.3.1)(typescript@5.9.2)
@@ -6869,9 +6872,6 @@ packages:
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
-
-  '@powersync/common@1.41.0':
-    resolution: {integrity: sha512-N5Tpp2QU0RnP9eEDu+/Ok/IccSk8sNxnCBQgByEHg+DAHvSeSpIFe4nDSZwaRJrcltKi/FMzzjSIBjFrtsUz/g==}
 
   '@powersync/sql-js@0.0.5':
     resolution: {integrity: sha512-+rjUyEzwQIM51dJSbw5bpWyquwiHa5Pyu0Pb6oXhddfxhvuLHMWEM/+bN9em2LkFZ/jtLI9HBCcCsOORDeL5hg==}
@@ -27987,10 +27987,6 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@powersync/common@1.41.0':
-    dependencies:
-      js-logger: 1.6.1
-
   '@powersync/sql-js@0.0.5': {}
 
   '@radix-ui/react-compose-refs@1.0.0(react@18.3.1)':
@@ -31361,9 +31357,9 @@ snapshots:
 
   '@tanstack/pacer@0.1.0': {}
 
-  '@tanstack/powersync-db-collection@0.1.0(@powersync/common@1.41.0)(typescript@5.9.2)':
+  '@tanstack/powersync-db-collection@0.1.0(@powersync/common@packages+common)(typescript@5.9.2)':
     dependencies:
-      '@powersync/common': 1.41.0
+      '@powersync/common': link:packages/common
       '@standard-schema/spec': 1.0.0
       '@tanstack/db': 0.4.17(typescript@5.9.2)
       '@tanstack/store': 0.8.0
