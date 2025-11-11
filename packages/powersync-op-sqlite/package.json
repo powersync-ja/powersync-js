@@ -87,6 +87,7 @@
     "react": "catalog:",
     "react-native": "catalog:",
     "react-native-builder-bob": "catalog:",
+    "@react-native-community/cli": "catalog:",
     "turbo": "catalog:"
   },
   "eslintIgnore": [
@@ -97,7 +98,6 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      "codegen",
       [
         "commonjs",
         {
@@ -114,7 +114,6 @@
         "typescript",
         {
           "project": "tsconfig.build.json",
-          "esm": true,
           "tsc": "../../node_modules/.bin/tsc"
         }
       ]

@@ -127,7 +127,7 @@ catalog:
   '@types/jest': '30'
   '@types/lodash': ^4.17.20
   '@types/mocha': '10'
-  '@types/node': ^20.19.0
+  '@types/node': ^24.10.0
   '@types/react': ^19.2.0
   '@types/react-dom': ^19.2.0
   '@types/react-native-table-component': ^1.2.8
