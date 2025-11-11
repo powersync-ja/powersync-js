@@ -4,354 +4,314 @@ packages:
   - tools/*
   - docs/
 
-catalogs:
-  # When we have a public peer-dependency on another package, we may want to declare
-  # support for older versions too (to avoid breaking users).
-  # So, the default catalog (typically used for dev-dependencies) references a recent
-  # version, and the api catalog references the minimum version.
-  api:
-    drizzle-orm: "<1.0.0"
-    "@capacitor-community/sqlite": ^7.0.2
-    "@op-engineering/op-sqlite": "^13.0.0 || ^14.0.0 || ^15.0.0"
-
 catalog:
-  # General development tools
-  "@actions/core": ^1.11.1
-  "@pnpm/workspace.find-packages": "1000"
-
-  # Testing
-  playwright: ^1.56.1
-  husky: ^9.1.7
-  vitest: ^3.2.4 # TODO: Update to v4, https://github.com/powersync-ja/powersync-js/pull/750
-  "@vitest/browser": ^3.2.4
-  "@testing-library/react": ^16.3.0
-  jest: "30"
-  "@types/jest": "30"
-  ts-jest: ^29.4.5
-  babel-jest: "30"
-  mocha: "11"
-  "@types/mocha": "10"
-  chai: ^6.2.1
-  "@types/chai": ^5.2.3
-  chai-as-promised: ^8.0.2
-  "@types/chai-as-promised": ^8.0.2
-  detox: ^20.45.1
-
-  # CLI tools
-  "@changesets/cli": ^2.29.7
-  supabase: ^2.54.11
-  dotenv: ^17.2.3
-  del-cli: ^7.0.0
-  eas-cli: ^16.26.0
-  "@webflow/webflow-cli": ^1.8.49
-
-  # Typescript
-  typescript: ^5.9.3
-  "@types/node": ^20.19.0
-  "@types/sql.js": "^1.4.9"
-  tsx: ^4.20.6
-  "@swc/core": ^1.15.1
-  tslib: ^2.8.1
-  zone.js: ^0.15.1
-
-  # Documentation
-  "@docusaurus/core": ^3.9.2
-  "@docusaurus/preset-classic": ^3.9.2
-  "@docusaurus/faster": ^3.9.2
-  "@docusaurus/module-type-aliases": ^3.9.2
-  "@docusaurus/theme-classic": ^3.9.2
-  "@docusaurus/tsconfig": ^3.9.2
-  "@docusaurus/types": ^3.9.2
-  docusaurus-plugin-typedoc: ^1.4.2
-  "@mdx-js/react": ^3.1.1
-  prism-react-renderer: ^2.4.1
-  typedoc: ^0.28.14
-  typedoc-plugin-markdown: ^4.9.0
-
-  # React
-  react: ^19.2.0
-  "@types/react": ^19.2.0
-  react-dom: ^19.2.0
-  "@types/react-dom": ^19.2.0
-  react-test-renderer: ^19.2.0 # TODO: migrate to @testing-library/react
-  "@types/react-test-renderer": ^19.1.0
-  react-error-boundary: ^6.0.0
-  react-native: ^0.82.1
-  react-native-fetch-api: ^3.0.0
-  react-native-builder-bob: ^0.40.14
-  react-native-web: ^0.21.2
-  react-native-webview: ^13.16.0
-  react-native-screens: ^4.18.0
-  react-native-safe-area-context: ^5.6.2
-  react-native-reanimated: ^4.1.5
-  react-native-reanimated-table: ^0.0.2
-  react-native-prompt-android: ^1.1.0
-  react-native-logs: ^5.5.0
-  react-native-elements: ^3.4.3
-  react-native-encrypted-storage: ^4.0.3
-  react-native-gesture-handler: ^2.29.1
-  react-native-table-component: ^1.2.2
-  "@types/react-native-table-component": ^1.2.8
-  react-native-svg: ^15.14.0
-  react-native-pager-view: ^6.9.1
-  react-native-get-random-values: ^2.0.0
-  react-native-paper: ^5.14.5
-  "@react-native/eslint-config": ^0.82.1
-  "@react-native/typescript-config": ^0.82.1
-  "@react-native/metro-config": ^0.82.1
-  "@react-native/babel-preset": ^0.82.1
-  "@react-native-vector-icons/evil-icons": ^12.4.0
-  "@react-native-vector-icons/fontawesome6": ^12.3.0
-  turbo: ^2.6.0
-  react-router: ^7.9.5
-  react-router-dom: ^7.9.5
-
-  # Vue
-  vue: ^3.5.24
-  vue-router: ^4.6.3
-  vuetify: ^3.10.9
-  vue-tsc: ^3.1.3
-  "@vuelidate/core": ^2.0.3
-  "@vuelidate/validators": ^2.0.3
-  "@types/vuelidate": ^0.7.22
-
-  # Misc dependencies
-  "@azure/core-asynciterator-polyfill": ^1.0.2
+  '@actions/core': ^1.11.1
+  '@angular-builders/custom-webpack': ^20.0.0
+  '@angular-devkit/build-angular': ^20.3.9
+  '@angular/animations': ^20.3.10
+  '@angular/cli': ^20.3.9
+  '@angular/common': ^20.3.10
+  '@angular/compiler': ^20.3.10
+  '@angular/compiler-cli': ^20.3.10
+  '@angular/core': ^20.3.10
+  '@angular/forms': ^20.3.10
+  '@angular/platform-browser': ^20.3.10
+  '@angular/platform-browser-dynamic': ^20.3.10
+  '@angular/router': ^20.3.10
+  '@angular/service-worker': ^20.3.10
+  '@arethetypeswrong/cli': ^0.18.2
+  '@azure/core-asynciterator-polyfill': ^1.0.2
+  '@babel/core': ^7.28.5
+  '@babel/plugin-transform-async-generator-functions': ^7.28.0
+  '@babel/plugin-transform-class-static-block': ^7.28.0
+  '@babel/preset-env': ^7.28.5
+  '@babel/runtime': ^7.26.7
+  '@capacitor-community/sqlite': ^7.0.2
+  '@capacitor/android': ^7.0.0
+  '@capacitor/cli': ^7.4.4
+  '@capacitor/core': ^7.0.0
+  '@capacitor/docgen': ^0.3.0
+  '@capacitor/ios': ^7.0.0
+  '@capacitor/splash-screen': ^7.0.3
+  '@changesets/cli': ^2.29.7
+  '@craftzdog/react-native-buffer': ^6.0.5
+  '@docusaurus/core': ^3.9.2
+  '@docusaurus/faster': ^3.9.2
+  '@docusaurus/module-type-aliases': ^3.9.2
+  '@docusaurus/preset-classic': ^3.9.2
+  '@docusaurus/theme-classic': ^3.9.2
+  '@docusaurus/tsconfig': ^3.9.2
+  '@docusaurus/types': ^3.9.2
+  '@electron-forge/cli': ^7.10.0
+  '@electron-forge/maker-deb': ^7.10.0
+  '@electron-forge/maker-rpm': ^7.10.0
+  '@electron-forge/maker-squirrel': ^7.10.0
+  '@electron-forge/maker-zip': ^7.10.0
+  '@electron-forge/plugin-auto-unpack-natives': ^7.10.0
+  '@electron-forge/plugin-fuses': ^7.10.0
+  '@electron-forge/plugin-vite': ^7.10.0
+  '@electron-forge/plugin-webpack': ^7.10.0
+  '@electron/fuses': ^1.0.0
+  '@electron/rebuild': ^4.0.1
+  '@emotion/react': ^11.14.0
+  '@emotion/styled': ^11.14.1
+  '@expo/metro-runtime': ^6.1.2
+  '@expo/vector-icons': '15'
+  '@faker-js/faker': ^10.1.0
+  '@fontsource/roboto': ^5.2.8
+  '@ionic/eslint-config': ^0.4.0
+  '@ionic/prettier-config': ^4.0.0
+  '@ionic/swiftlint-config': ^2.0.0
+  '@journeyapps/react-native-quick-sqlite': 2.4.9
+  '@journeyapps/wa-sqlite': 1.3.2
+  '@lexical/react': ^0.38.2
+  '@mdi/font': ^7.4.47
+  '@mdx-js/react': ^3.1.1
+  '@mui/icons-material': ^7.3.5
+  '@mui/material': ^7.3.5
+  '@mui/x-data-grid': ^8.17.0
+  '@op-engineering/op-sqlite': ^15.0.7
+  '@pnpm/logger': ^1001.0.1
+  '@pnpm/workspace.find-packages': ^1000.0.44
+  '@powersync/sql-js': 0.0.5
+  '@react-native-async-storage/async-storage': ^2.2.0
+  '@react-native-community/cli': '20'
+  '@react-native-community/cli-platform-android': '20'
+  '@react-native-community/cli-platform-ios': '20'
+  '@react-native-masked-view/masked-view': ^0.3.2
+  '@react-native-vector-icons/evil-icons': ^12.4.0
+  '@react-native-vector-icons/fontawesome6': ^12.3.0
+  '@react-native/babel-preset': ^0.82.1
+  '@react-native/eslint-config': ^0.82.1
+  '@react-native/metro-config': ^0.82.1
+  '@react-native/typescript-config': ^0.82.1
+  '@react-navigation/bottom-tabs': ^7.8.4
+  '@react-navigation/drawer': ^7.7.2
+  '@react-navigation/native': ^7.1.19
+  '@react-navigation/stack': ^7.6.3
+  '@rneui/base': ^4.0.0-rc.8
+  '@rneui/themed': ^4.0.0-rc.8
+  '@rollup/plugin-alias': ^6.0.0
+  '@rollup/plugin-commonjs': ^29.0.0
+  '@rollup/plugin-inject': ^5.0.5
+  '@rollup/plugin-json': ^6.1.0
+  '@rollup/plugin-node-resolve': ^16.0.3
+  '@rollup/plugin-replace': ^6.0.3
+  '@rollup/plugin-terser': ^0.4.4
+  '@rollup/plugin-typescript': ^12.3.0
+  '@shopify/flash-list': ^2.2.0
+  '@supabase/supabase-js': ^2.81.0
+  '@swc/core': ^1.15.1
+  '@tamagui/animations-react-native': ^1.137.0
+  '@tamagui/babel-plugin': ^1.137.0
+  '@tamagui/config': ^1.137.0
+  '@tamagui/font-inter': ^1.137.0
+  '@tamagui/lucide-icons': ^1.137.0
+  '@tamagui/theme-base': ^1.137.0
+  '@tanstack/db': ^0.4.20
+  '@tanstack/powersync-db-collection': ^0.1.3
+  '@tanstack/react-db': ^0.1.43
+  '@tanstack/react-query': ^5.90.7
+  '@testing-library/react': ^16.3.0
+  '@tiptap/extension-collaboration': ^3.10.5
+  '@tiptap/extension-collaboration-cursor': ^2.26.2
+  '@tiptap/extension-highlight': ^3.10.5
+  '@tiptap/extension-task-item': ^3.10.5
+  '@tiptap/extension-task-list': ^3.10.5
+  '@tiptap/react': ^3.10.5
+  '@tiptap/starter-kit': ^3.10.5
+  '@types/async-lock': ^1.4.0
+  '@types/better-sqlite3': ^7.6.13
+  '@types/chai': ^5.2.3
+  '@types/chai-as-promised': ^8.0.2
+  '@types/chance': ^1.1.7
+  '@types/express': '5'
+  '@types/jest': '30'
+  '@types/lodash': ^4.17.20
+  '@types/mocha': '10'
+  '@types/node': ^20.19.0
+  '@types/react': ^19.2.0
+  '@types/react-dom': ^19.2.0
+  '@types/react-native-table-component': ^1.2.8
+  '@types/react-test-renderer': ^19.1.0
+  '@types/sql.js': ^1.4.9
+  '@types/vuelidate': ^0.7.22
+  '@types/webpack': ^5.28.5
+  '@vercel/webpack-asset-relocator-loader': ^1.10.0
+  '@vitejs/plugin-react': ^5.1.0
+  '@vitejs/plugin-vue': ^6.0.1
+  '@vitest/browser': ^3.2.4
+  '@vuelidate/core': ^2.0.3
+  '@vuelidate/validators': ^2.0.3
+  '@webflow/webflow-cli': ^1.8.49
+  async-lock: ^1.4.0
   async-mutex: ^0.5.0
-  async-lock: ^1.4.0 # todo: get rid of either async-mutex or async-lock
-  "@types/async-lock": ^1.4.0
+  autoprefixer: ^10.4.22
+  babel-jest: '30'
+  babel-loader: ^10.0.0
+  babel-plugin-module-resolver: ^5.0.2
+  babel-preset-expo: '54'
   base64-arraybuffer: ^1.0.2
-  buffer: ^6.0.3
+  better-sqlite3: ^12.4.1
+  better-sqlite3-multiple-ciphers: ^12.4.1
   bson: ^6.10.4
-  chart.js: ^4.5.1
+  buffer: ^6.0.3
+  chai: ^6.2.1
+  chai-as-promised: ^8.0.2
   chance: ^1.1.13
-  "@types/chance": ^1.1.7
-  commander: ^14.0.2
+  chart.js: ^4.5.1
   comlink: ^4.4.2
+  commander: ^14.0.2
+  copy-webpack-plugin: '13'
   cross-fetch: ^4.1.0
+  crypto-browserify: ^3.12.0
+  css-loader: ^7.1.2
   date-fns: ^4.1.0
+  del-cli: ^7.0.0
+  detox: ^20.45.1
+  docusaurus-plugin-typedoc: ^1.4.2
+  dotenv: ^17.2.3
+  drizzle-orm: ^0.44.7
+  eas-cli: ^16.26.0
+  electron: ^39.1.2
+  electron-squirrel-startup: ^1.0.1
+  eslint: ^9.39.1
+  eslint-config-next: ^16.0.1
+  eslint-config-prettier: ^10.1.8
+  eslint-config-universe: ^15.0.3
+  eslint-plugin-prettier: ^5.5.4
   event-iterator: ^2.0.0
   events: ^3.3.0
+  expo: ^54.0.23
+  expo-blur: ^15.0.7
+  expo-build-properties: ^1.0.9
+  expo-camera: '17'
+  expo-constants: '18'
+  expo-crypto: '15'
+  expo-dev-client: '6'
+  expo-file-system: '19'
+  expo-font: '14'
+  expo-haptics: '15'
+  expo-linking: ^8.0.8
+  expo-modules-autolinking: '3'
+  expo-router: ^6.0.14
+  expo-secure-store: '15'
+  expo-splash-screen: '31'
+  expo-status-bar: '3'
+  expo-symbols: '1'
+  expo-system-ui: '6'
+  expo-web-browser: '15'
   express: ^5.1.0
-  "@types/express": "5"
   flush-promises: ^1.0.2
+  fork-ts-checker-webpack-plugin: ^9.1.0
   formik: ^2.4.9
+  html-webpack-plugin: ^5.6.4
   http-server: ^14.1.1
-  lodash: ^4.17.21
-  "@types/lodash": ^4.17.20
-  jsdom: ^27.1.0
+  husky: ^9.1.7
+  jest: '30'
+  jest-expo: '54'
   js-logger: ^1.6.1
-  "@supabase/supabase-js": ^2.81.0
-  uuid: ^13.0.0
-  rsocket-core: 1.0.0-alpha.3
-  rsocket-websocket-client: 1.0.0-alpha.3
-  web-streams-polyfill: ^4.2.0
-  text-encoding: ^0.7.0 # TODO: Unmaintained, find alternative
+  jsdom: ^27.1.0
+  kysely: ^0.28.8
+  lato-font: ^3.0.0
+  lexical: ^0.38.2
+  lib0: ^0.2.114
+  lint-staged: ^16.2.6
+  lodash: ^4.17.21
+  mocha: '11'
+  next: '16'
+  node-loader: ^2.1.0
   p-defer: ^4.0.1
-  zod: ^4.1.12
-
-  # Build tools
+  playwright: ^1.56.1
+  postcss: ^8.5.6
+  prettier: ^3.6.2
+  prettier-plugin-embed: ^0.5.0
+  prettier-plugin-java: ^2.7.7
+  prettier-plugin-sql: ^0.19.2
+  prism-react-renderer: ^2.4.1
+  react: ^19.2.0
+  react-dom: ^19.2.0
+  react-error-boundary: ^6.0.0
+  react-native: ^0.82.1
+  react-native-builder-bob: ^0.40.14
+  react-native-elements: ^3.4.3
+  react-native-encrypted-storage: ^4.0.3
+  react-native-fetch-api: ^3.0.0
+  react-native-gesture-handler: ^2.29.1
+  react-native-get-random-values: ^2.0.0
+  react-native-logs: ^5.5.0
+  react-native-pager-view: ^6.9.1
+  react-native-paper: ^5.14.5
+  react-native-prompt-android: ^1.1.0
+  react-native-reanimated: ^4.1.5
+  react-native-reanimated-table: ^0.0.2
+  react-native-safe-area-context: ^5.6.2
+  react-native-screens: ^4.18.0
+  react-native-svg: ^15.14.0
+  react-native-table-component: ^1.2.2
+  react-native-web: ^0.21.2
+  react-native-webview: ^13.16.0
+  react-router: ^7.9.5
+  react-router-dom: ^7.9.5
+  react-test-renderer: ^19.2.0
+  remixicon: ^4.0.0
+  rimraf: ^6.1.0
   rollup: ^4.53.2
   rollup-plugin-dts: ^6.2.3
-  "@rollup/plugin-alias": ^6.0.0
-  "@rollup/plugin-typescript": ^12.3.0
-  "@rollup/plugin-inject": ^5.0.5
-  "@rollup/plugin-json": ^6.1.0
-  "@rollup/plugin-node-resolve": ^16.0.3
-  "@rollup/plugin-commonjs": ^29.0.0
-  "@rollup/plugin-terser": ^0.4.4
-  "@rollup/plugin-replace": ^6.0.3
+  rsocket-core: 1.0.0-alpha.3
+  rsocket-websocket-client: 1.0.0-alpha.3
+  rxjs: ^7.8.2
   sass: ^1.91.0
+  sass-loader: ^16.0.6
+  source-map-loader: ^5.0.0
+  stream-browserify: ^3.0.0
+  style-loader: ^4.0.0
+  supabase: ^2.54.11
+  swiftlint: ^2.0.0
+  tailwindcss: ^4.1.17
+  tamagui: ^1.137.0
+  terser-webpack-plugin: ^5.3.14
+  text-encoding: ^0.7.0
+  ts-jest: ^29.4.5
+  ts-loader: ^9.5.4
+  ts-node: ^10.9.2
+  tslib: ^2.8.1
+  tsx: ^4.20.6
+  turbo: ^2.6.0
+  typed-async-storage: ^3.1.2
+  typedoc: ^0.28.14
+  typedoc-plugin-markdown: ^4.9.0
+  typescript: ^5.9.3
+  undici: ^7.11.0
+  unplugin-fonts: ^1.4.0
+  unplugin-vue-components: ^30.0.0
+  util: ^0.12.5
+  uuid: ^13.0.0
   vite: ^7.2.2
   vite-plugin-pwa: ^1.1.0
   vite-plugin-require: ^1.2.4
-  vite-plugin-top-level-await: ^1.6.0 # TODO: Check if we really still need this
-  vite-plugin-wasm: ^3.5.0
+  vite-plugin-top-level-await: ^1.6.0
   vite-plugin-vuetify: ^2.1.2
-  "@vitejs/plugin-react": ^5.1.0
-  "@vitejs/plugin-vue": ^6.0.1
+  vite-plugin-wasm: ^3.5.0
+  vitest: ^3.2.4
+  vm-browserify: ^1.1.2
+  vue: ^3.5.24
+  vue-router: ^4.6.3
+  vue-tsc: ^3.1.3
+  vuetify: ^3.10.9
+  web-streams-polyfill: ^4.2.0
   webpack: ^5.102.1
-  copy-webpack-plugin: "13"
-  "@types/webpack": ^5.28.5
-  "@vercel/webpack-asset-relocator-loader": ^1.10.0
-  fork-ts-checker-webpack-plugin: ^9.1.0
   webpack-cli: ^6.0.1
   webpack-node-externals: ^3.0.0
-  terser-webpack-plugin: ^5.3.14
-  html-webpack-plugin: ^5.6.4
-  unplugin-fonts: ^1.4.0
-  unplugin-vue-components: ^30.0.0
-  rimraf: ^6.1.0
-  autoprefixer: ^10.4.22
-  babel-loader: ^10.0.0
-  style-loader: ^4.0.0
-  postcss: ^8.5.6
-  css-loader: ^7.1.2
-  sass-loader: ^16.0.6
-  source-map-loader: ^5.0.0
-  node-loader: ^2.1.0
-  ts-loader: ^9.5.4
-  tailwindcss: ^4.1.17
-  "@babel/core": ^7.28.5
-  "@babel/preset-env": ^7.28.5
-  "@babel/plugin-transform-async-generator-functions": ^7.28.0
-  "@babel/plugin-transform-class-static-block": ^7.28.0
-  "@babel/runtime": ^7.26.7
-  babel-plugin-module-resolver: ^5.0.2 
-
-  # Formatters and linters
-  prettier: ^3.6.2
-  prettier-plugin-embed: ^0.5.0
-  prettier-plugin-sql: ^0.19.2
-  prettier-plugin-java: ^2.7.7
-  lint-staged: ^16.2.6
-  "@arethetypeswrong/cli": ^0.18.2
-  eslint: ^9.39.1
-  eslint-config-next: ^16.0.1
-  eslint-config-universe: ^15.0.3
-  eslint-config-prettier: ^10.1.8
-  eslint-plugin-prettier: ^5.5.4
-  swiftlint: ^2.0.0
-
-  # Internal PowerSync builds
-  "@journeyapps/wa-sqlite": 1.3.2
-  "@journeyapps/react-native-quick-sqlite": 2.4.9
-  "@powersync/sql-js": 0.0.5
-
-  # ORM integrations
-  drizzle-orm: ^0.44.7
-  kysely: ^0.28.8
-  "@tanstack/react-query": ^5.90.7
-  "@tanstack/db": ^0.4.20
-  "@tanstack/react-db": ^0.1.43
-  "@tanstack/powersync-db-collection": ^0.1.3
-
-  # Target specific - node
-  undici: ^7.11.0
-  better-sqlite3: ^12.4.1
-  "@types/better-sqlite3": ^7.6.13
-  better-sqlite3-multiple-ciphers: ^12.4.1
-  ts-node: ^10.9.2
-
-  # Target specific - web
-  crypto-browserify: ^3.12.0
-  vm-browserify: ^1.1.2
-  stream-browserify: ^3.0.0
-  util: ^0.12.5
-
-  # Target specific - React Native
-  "@op-engineering/op-sqlite": "^15.0.7"
-  "@craftzdog/react-native-buffer": "^6.0.5"
-
-  # Capacitor & ionic
-  "@capacitor-community/sqlite": "^7.0.2"
-  "@capacitor/android": "^7.0.0"
-  "@capacitor/core": "^7.0.0"
-  "@capacitor/splash-screen": "^7.0.3"
-  "@capacitor/docgen": "^0.3.0"
-  "@capacitor/ios": "^7.0.0"
-  "@capacitor/cli": "^7.4.4"
-  "@ionic/eslint-config": "^0.4.0"
-  "@ionic/prettier-config": "^4.0.0"
-  "@ionic/swiftlint-config": "^2.0.0"
-
-  # Demos
-  "@emotion/react": ^11.14.0
-  "@emotion/styled": ^11.14.1
-  "@mui/material": ^7.3.5
-  "@mui/icons-material": ^7.3.5
-  "@mui/x-data-grid": ^8.17.0
-  "@mdi/font": ^7.4.47
-  "@rneui/base": "^4.0.0-rc.8"
-  "@rneui/themed": "^4.0.0-rc.8"
   yjs: ^13.6.27
-  "@tiptap/extension-collaboration": ^3.10.5
-  "@tiptap/extension-collaboration-cursor": ^2.26.2
-  "@tiptap/extension-highlight": ^3.10.5
-  "@tiptap/extension-task-item": ^3.10.5
-  "@tiptap/extension-task-list": ^3.10.5
-  "@tiptap/react": ^3.10.5
-  "@tiptap/starter-kit": ^3.10.5
-  lib0: ^0.2.114
-  lato-font: ^3.0.0
-  "@fontsource/roboto": ^5.2.8
-  remixicon: ^4.0.0
-  "@react-native-async-storage/async-storage": ^2.2.0
-  typed-async-storage: ^3.1.2
-  "@react-navigation/stack": ^7.6.3
-  "@react-navigation/bottom-tabs": ^7.8.4
-  "@react-navigation/drawer": ^7.7.2
-  "@react-navigation/native": ^7.1.19
-  "@react-native-masked-view/masked-view": ^0.3.2
-  "@react-native-community/cli": "20"
-  "@react-native-community/cli-platform-android": "20"
-  "@react-native-community/cli-platform-ios": "20"
-  "@shopify/flash-list": ^2.2.0
-  "@faker-js/faker": ^10.1.0
-  "lexical": "^0.38.2"
-  "@lexical/react": ^0.38.2
-  next: "16"
-  rxjs: ^7.8.2
+  zod: ^4.1.12
+  zone.js: ^0.15.1
 
-  electron: ^39.1.2
-  "@electron/rebuild": ^4.0.1
-  "@electron/fuses": ^2.0.0
-  electron-squirrel-startup: ^1.0.1
-  "@electron-forge/cli": ^7.10.0
-  "@electron-forge/maker-deb": ^7.10.0
-  "@electron-forge/maker-rpm": ^7.10.0
-  "@electron-forge/maker-squirrel": ^7.10.0
-  "@electron-forge/maker-zip": ^7.10.0
-  "@electron-forge/plugin-auto-unpack-natives": ^7.10.0
-  "@electron-forge/plugin-webpack": ^7.10.0
-  "@electron-forge/plugin-fuses": ^7.10.0
-  "@electron-forge/plugin-vite": ^7.10.0
-
-  expo: ^54.0.23
-  "@expo/metro-runtime": ^6.1.2
-  "@expo/vector-icons": "15"
-  expo-build-properties: ^1.0.9
-  expo-modules-autolinking: "3"
-  expo-dev-client: "6"
-  expo-linking: ^8.0.8
-  expo-router: ^6.0.14
-  expo-blur: ^15.0.7
-  expo-camera: "17"
-  expo-constants: "18"
-  expo-crypto: "15"
-  expo-font: "14"
-  expo-haptics: "15"
-  expo-symbols: "1"
-  expo-system-ui: "6"
-  expo-secure-store: "15"
-  expo-splash-screen: "31"
-  expo-status-bar: "3"
-  expo-web-browser: "15"
-  expo-file-system: "19"
-  jest-expo: "54"
-  babel-preset-expo: "54"
-
-  tamagui: ^1.137.0
-  "@tamagui/animations-react-native": ^1.137.0
-  "@tamagui/babel-plugin": ^1.137.0
-  "@tamagui/config": ^1.137.0
-  "@tamagui/font-inter": ^1.137.0
-  "@tamagui/lucide-icons": ^1.137.0
-  "@tamagui/theme-base": ^1.137.0
-
-  "@angular/animations": ^20.3.10
-  "@angular/common": ^20.3.10
-  "@angular/core": ^20.3.10
-  "@angular/compiler": ^20.3.10
-  "@angular/cli": ^20.3.9
-  "@angular/forms": ^20.3.10
-  "@angular/platform-browser": ^20.3.10
-  "@angular/platform-browser-dynamic": ^20.3.10
-  "@angular/router": ^20.3.10
-  "@angular/service-worker": ^20.3.10
-  "@angular/compiler-cli": ^20.3.10
-  "@angular-devkit/build-angular": ^20.3.9
-  "@angular-builders/custom-webpack": ^20.0.0
+catalogs:
+  api:
+    '@capacitor-community/sqlite': ^7.0.2
+    '@op-engineering/op-sqlite': ^13.0.0 || ^14.0.0 || ^15.0.0
+    drizzle-orm: <1.0.0
 
 onlyBuiltDependencies:
   - better-sqlite3
