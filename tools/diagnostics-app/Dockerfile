@@ -1,7 +1,7 @@
-FROM node:22.5 AS builder
+FROM node:24.11 AS builder
 WORKDIR /app
 
-RUN npm i -g pnpm@9
+RUN corepack enable
 
 COPY . /app
 
