@@ -54,7 +54,7 @@ const ensureTmpDirExists = async () => {
 
 const workspacePackages = new Map<string, string>();
 for (const packageSource of await fs.readdir('packages')) {
-  const packageJson = JSON.parse(await fs.readFile(path.join(packageSource, 'package.json'), 'utf-8'));#
+  const packageJson = JSON.parse(await fs.readFile(path.join(packageSource, 'package.json'), 'utf-8'));
   workspacePackages.set(packageJson.name, packageJson.version);
 }
 
