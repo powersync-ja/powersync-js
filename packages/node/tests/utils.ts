@@ -14,6 +14,7 @@ import {
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
+  PowerSyncDatabaseOptions,
   Schema,
   StreamingSyncCheckpoint,
   StreamingSyncLine,
@@ -65,27 +66,32 @@ export async function createDatabase(
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,
+    ...options,
+    logger: defaultLogger,
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir,
       // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
       // actions. So far, we've not been able to reproduce these failures locally.
-      readWorkerCount: 1
-    },
-    logger: defaultLogger,
-    ...options
+      readWorkerCount: 1,
+      ...options.database
+    }
   });
   await database.init();
   return database;
 }
 
-export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
-  database: async ({ tmpdir }, use) => {
-    const db = await createDatabase(tmpdir);
-    await use(db);
-    await db.close();
-  }
-});
+export const customDatabaseTest = (options?: Partial<NodePowerSyncDatabaseOptions>) => {
+  return tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
+    database: async ({ tmpdir }, use) => {
+      const db = await createDatabase(tmpdir, options);
+      await use(db);
+      await db.close();
+    }
+  });
+};
+
+export const databaseTest = customDatabaseTest();
 
 // TODO: Unify this with the test setup for the web SDK.
 export const mockSyncServiceTest = tempDirectoryTest.extend<{

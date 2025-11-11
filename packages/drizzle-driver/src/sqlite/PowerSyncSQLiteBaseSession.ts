@@ -1,4 +1,5 @@
-import { QueryResult } from '@powersync/common';
+import type { QueryResult } from '@powersync/common';
+import type { WithCacheConfig } from 'drizzle-orm/cache/core/types';
 import { entityKind } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { NoopLogger } from 'drizzle-orm/logger';
@@ -53,7 +54,12 @@ export class PowerSyncSQLiteBaseSession<
     fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
     isResponseInArrayMode: boolean,
-    customResultMapper?: (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown
+    customResultMapper?: (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown,
+    queryMetadata?: {
+      type: 'select' | 'update' | 'delete' | 'insert';
+      tables: string[];
+    },
+    cacheConfig?: WithCacheConfig
   ): PowerSyncSQLitePreparedQuery<T> {
     return new PowerSyncSQLitePreparedQuery(
       this.contextProvider,
@@ -62,7 +68,10 @@ export class PowerSyncSQLiteBaseSession<
       fields,
       executeMethod,
       isResponseInArrayMode,
-      customResultMapper
+      customResultMapper,
+      undefined, // cache not supported yet
+      queryMetadata,
+      cacheConfig
     );
   }
 

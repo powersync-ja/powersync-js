@@ -76,7 +76,7 @@
     "@powersync/drizzle-driver": "workspace:*",
     "@types/node": "^24.2.0",
     "better-sqlite3": "^12.2.0",
-    "drizzle-orm": "^0.35.2",
+    "drizzle-orm": "^0.44.7",
     "rollup": "4.14.3",
     "typescript": "^5.5.3",
     "vitest": "^3.2.4"

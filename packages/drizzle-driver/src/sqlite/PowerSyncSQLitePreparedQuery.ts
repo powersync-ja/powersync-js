@@ -1,5 +1,7 @@
-import { LockContext, QueryResult } from '@powersync/common';
-import { Column, DriverValueDecoder, SQL, getTableName } from 'drizzle-orm';
+import type { QueryResult } from '@powersync/common';
+import { Column, DriverValueDecoder, getTableName, SQL } from 'drizzle-orm';
+import type { Cache } from 'drizzle-orm/cache/core';
+import type { WithCacheConfig } from 'drizzle-orm/cache/core/types';
 import { entityKind, is } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { fillPlaceholders, type Query } from 'drizzle-orm/sql/sql';
@@ -42,6 +44,8 @@ export class PowerSyncSQLitePreparedQuery<
 }> {
   static readonly [entityKind]: string = 'PowerSyncSQLitePreparedQuery';
 
+  private readOnly = false;
+
   constructor(
     private contextProvider: ContextProvider,
     query: Query,
@@ -49,9 +53,18 @@ export class PowerSyncSQLitePreparedQuery<
     private fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
     private _isResponseInArrayMode: boolean,
-    private customResultMapper?: (rows: unknown[][]) => unknown
+    private customResultMapper?: (rows: unknown[][]) => unknown,
+    cache?: Cache | undefined,
+    queryMetadata?:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig?: WithCacheConfig | undefined
   ) {
-    super('async', executeMethod, query);
+    super('async', executeMethod, query, cache, queryMetadata, cacheConfig);
+    this.readOnly = queryMetadata?.type == 'select';
   }
 
   async run(placeholderValues?: Record<string, unknown>): Promise<QueryResult> {
@@ -115,9 +128,15 @@ export class PowerSyncSQLitePreparedQuery<
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
 
-    return await this.contextProvider.useReadContext(async (ctx) => {
-      return await ctx.executeRaw(this.query.sql, params);
-    });
+    if (this.readOnly) {
+      return await this.contextProvider.useReadContext(async (ctx) => {
+        return await ctx.executeRaw(this.query.sql, params);
+      });
+    } else {
+      return await this.contextProvider.useWriteContext(async (ctx) => {
+        return await ctx.executeRaw(this.query.sql, params);
+      });
+    }
   }
 
   isResponseInArrayMode(): boolean {
