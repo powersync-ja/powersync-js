@@ -81,6 +81,13 @@ describe('Lock Usage Tests', () => {
       expect(readLockSpy).toHaveBeenCalled();
       expect(writeLockSpy).not.toHaveBeenCalled();
     });
+
+    lockUsageTest('should use readLock for query.findMany()', async ({ db, readLockSpy, writeLockSpy }) => {
+      await db.query.users.findMany();
+
+      expect(readLockSpy).toHaveBeenCalled();
+      expect(writeLockSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('INSERT queries', () => {

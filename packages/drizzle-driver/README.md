@@ -155,4 +155,3 @@ For more information on how to use Drizzle queries in PowerSync, see [here](http
 ## Known limitations
 
 - The integration does not currently support nested transactions (also known as `savepoints`).
-- `findMany` queries execute with a write connection if not wrapped in an explicit `read only` transaction.
