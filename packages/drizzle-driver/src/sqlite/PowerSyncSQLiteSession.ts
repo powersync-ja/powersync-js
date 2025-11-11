@@ -8,6 +8,7 @@ import {
   PowerSyncSQLiteTransaction,
   PowerSyncSQLiteTransactionConfig
 } from './PowerSyncSQLiteBaseSession.js';
+import { DatabaseQueryContext, LockQueryContext } from './QueryContext.js';
 
 export class PowerSyncSQLiteSession<
   TFullSchema extends Record<string, unknown>,
@@ -21,7 +22,7 @@ export class PowerSyncSQLiteSession<
     schema: RelationalSchemaConfig<TSchema> | undefined,
     options: PowerSyncSQLiteSessionOptions = {}
   ) {
-    super(db, dialect, schema, options);
+    super(new DatabaseQueryContext(db), dialect, schema, options);
     this.client = db;
   }
 
@@ -46,7 +47,7 @@ export class PowerSyncSQLiteSession<
     const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
       'async',
       (this as any).dialect,
-      new PowerSyncSQLiteBaseSession(connection, this.dialect, this.schema, this.options),
+      new PowerSyncSQLiteBaseSession(new LockQueryContext(connection), this.dialect, this.schema, this.options),
       this.schema
     );
 
