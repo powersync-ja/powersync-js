@@ -71,8 +71,6 @@ catalog:
   '@mui/material': ^7.3.5
   '@mui/x-data-grid': ^8.17.0
   '@op-engineering/op-sqlite': ^15.0.7
-  '@pnpm/logger': ^1001.0.1
-  '@pnpm/workspace.find-packages': ^1000.0.44
   '@powersync/sql-js': 0.0.5
   '@react-native-async-storage/async-storage': ^2.2.0
   '@react-native-community/cli': '20'
@@ -164,7 +162,7 @@ catalog:
   commander: ^14.0.2
   copy-webpack-plugin: '13'
   cross-fetch: ^4.1.0
-  crypto-browserify: ^3.12.0
+  crypto-browserify: ^3.12.1
   css-loader: ^7.1.2
   date-fns: ^4.1.0
   del-cli: ^7.0.0
