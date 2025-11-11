@@ -17,6 +17,7 @@
     "@mui/x-data-grid": "^6.19.6",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@powersync/common": "workspace:*",
     "@supabase/supabase-js": "^2.39.7",
     "@tanstack/db": "^0.4.17",
     "@tanstack/powersync-db-collection": "^0.1.0",
