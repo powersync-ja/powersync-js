@@ -103,6 +103,54 @@ describe('Lock Usage Tests', () => {
         expect(readLockSpy).not.toHaveBeenCalled();
       }
     );
+
+    lockUsageTest(
+      'should use writeLock for insert().values().returning()',
+      async ({ db, readLockSpy, writeLockSpy }) => {
+        const result = await db.insert(drizzleUsers).values({ id: '2', name: 'Bob' }).returning();
+
+        expect(writeLockSpy).toHaveBeenCalled();
+        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({ id: '2', name: 'Bob' });
+      }
+    );
+
+    lockUsageTest(
+      'should use writeLock for insert().values().returning() with specific columns',
+      async ({ db, readLockSpy, writeLockSpy }) => {
+        const result = await db
+          .insert(drizzleUsers)
+          .values({ id: '2', name: 'Bob' })
+          .returning({ id: drizzleUsers.id, name: drizzleUsers.name });
+
+        expect(writeLockSpy).toHaveBeenCalled();
+        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({ id: '2', name: 'Bob' });
+      }
+    );
+
+    lockUsageTest(
+      'should use writeLock for insert().values() with multiple rows and returning()',
+      async ({ db, readLockSpy, writeLockSpy }) => {
+        const result = await db
+          .insert(drizzleUsers)
+          .values([
+            { id: '2', name: 'Bob' },
+            { id: '3', name: 'Charlie' }
+          ])
+          .returning();
+
+        expect(writeLockSpy).toHaveBeenCalled();
+        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(result).toHaveLength(2);
+        expect(result).toEqual([
+          { id: '2', name: 'Bob' },
+          { id: '3', name: 'Charlie' }
+        ]);
+      }
+    );
   });
 
   describe('UPDATE queries', () => {
@@ -119,6 +167,35 @@ describe('Lock Usage Tests', () => {
       expect(writeLockSpy).toHaveBeenCalled();
       expect(readLockSpy).not.toHaveBeenCalled();
     });
+
+    lockUsageTest('should use writeLock for update().set().returning()', async ({ db, readLockSpy, writeLockSpy }) => {
+      const result = await db
+        .update(drizzleUsers)
+        .set({ name: 'Alice Smith' })
+        .where(eq(drizzleUsers.id, '1'))
+        .returning();
+
+      expect(writeLockSpy).toHaveBeenCalled();
+      expect(readLockSpy).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({ id: '1', name: 'Alice Smith' });
+    });
+
+    lockUsageTest(
+      'should use writeLock for update().set().returning() with specific columns',
+      async ({ db, readLockSpy, writeLockSpy }) => {
+        const result = await db
+          .update(drizzleUsers)
+          .set({ name: 'Alice Smith' })
+          .where(eq(drizzleUsers.id, '1'))
+          .returning({ id: drizzleUsers.id, name: drizzleUsers.name });
+
+        expect(writeLockSpy).toHaveBeenCalled();
+        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({ id: '1', name: 'Alice Smith' });
+      }
+    );
   });
 
   describe('DELETE queries', () => {
@@ -135,6 +212,30 @@ describe('Lock Usage Tests', () => {
       expect(writeLockSpy).toHaveBeenCalled();
       expect(readLockSpy).not.toHaveBeenCalled();
     });
+
+    lockUsageTest('should use writeLock for delete().returning()', async ({ db, readLockSpy, writeLockSpy }) => {
+      const result = await db.delete(drizzleUsers).where(eq(drizzleUsers.id, '1')).returning();
+
+      expect(writeLockSpy).toHaveBeenCalled();
+      expect(readLockSpy).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({ id: '1', name: 'Alice' });
+    });
+
+    lockUsageTest(
+      'should use writeLock for delete().returning() with specific columns',
+      async ({ db, readLockSpy, writeLockSpy }) => {
+        const result = await db
+          .delete(drizzleUsers)
+          .where(eq(drizzleUsers.id, '1'))
+          .returning({ id: drizzleUsers.id, name: drizzleUsers.name });
+
+        expect(writeLockSpy).toHaveBeenCalled();
+        expect(readLockSpy).not.toHaveBeenCalled();
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({ id: '1', name: 'Alice' });
+      }
+    );
   });
 
   describe('Raw SQL queries', () => {
