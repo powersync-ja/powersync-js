@@ -22,7 +22,7 @@
     "vuetify": "catalog:"
   },
   "devDependencies": {
-    "@swc/core": "~1.6.0",
+    "@swc/core": "catalog:",
     "@types/vuelidate": "^0.7.21",
     "@vitejs/plugin-vue": "catalog:",
     "sass": "catalog:",

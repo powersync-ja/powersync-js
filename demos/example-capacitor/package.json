@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^7.4.3",
-    "@swc/core": "~1.6.0",
+    "@swc/core": "catalog:",
     "@mui/material": "^5.15.12",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",

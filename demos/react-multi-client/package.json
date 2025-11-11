@@ -24,13 +24,13 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@swc/core": "~1.6.0",
+    "@swc/core": "catalog:",
     "@types/cors": "~2.8.17",
     "@types/lodash": "^4.14.202",
     "@types/node": "catalog:",
     "@types/react": "^18.2.38",
     "@types/react-dom": "^18.2.17",
-    "prettier": "^3.1.0",
+    "prettier": "catalog:",
     "supabase": "^1.165.0",
     "typescript": "catalog:",
     "vite": "catalog:",

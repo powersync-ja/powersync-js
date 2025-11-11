@@ -63,10 +63,10 @@
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
     "eslint": "catalog:",
-    "prettier": "^3.4.2",
-    "prettier-plugin-java": "^2.6.6",
+    "prettier": "catalog:",
+    "prettier-plugin-java": "catalog:",
     "rimraf": "^6.0.1",
-    "rollup": "^4.30.1",
+    "rollup": "catalog:",
     "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
@@ -85,6 +85,6 @@
     }
   },
   "dependencies": {
-    "async-lock": "^1.4.0"
+    "async-lock": "catalog:"
   }
 }

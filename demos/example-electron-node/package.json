@@ -28,20 +28,20 @@
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.11.0",
     "dotenv": "^16.4.7",
-    "electron": "37.0.0",
-    "electron-rebuild": "^3.2.9",
+    "electron": "catalog:",
+    "@electron/rebuild": "catalog:",
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.3",
+    "tsx": "catalog:",
     "typescript": "catalog:",
-    "webpack": "^5.90.1"
+    "webpack": "catalog:"
   },
   "dependencies": {
     "@powersync/node": "workspace:*",
-    "better-sqlite3": "^12.2.0",
-    "electron-squirrel-startup": "^1.0.1"
+    "better-sqlite3": "catalog:",
+    "electron-squirrel-startup": "catalog:"
   }
 }
