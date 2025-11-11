@@ -3,11 +3,11 @@
   "version": "0.1.15",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "next build --webpack",
     "clean": "rm -rf .next",
-    "watch": "next dev",
+    "watch": "next dev --webpack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint",
     "test:build": "pnpm build"
   },
   "dependencies": {
