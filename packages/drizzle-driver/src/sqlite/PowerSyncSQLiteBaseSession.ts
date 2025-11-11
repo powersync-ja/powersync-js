@@ -14,7 +14,7 @@ import {
   type SQLiteExecuteMethod,
   type SQLiteTransactionConfig
 } from 'drizzle-orm/sqlite-core/session';
-import { ContextProvider, PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery.js';
+import { PowerSyncSQLitePreparedQuery, type ContextProvider } from './PowerSyncSQLitePreparedQuery.js';
 
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;
