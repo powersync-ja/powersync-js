@@ -14,7 +14,7 @@
   "devDependencies": {
     "@types/webpack": "catalog:",
     "html-webpack-plugin": "catalog:",
-    "serve": "^14.2.1",
+    "serve": "catalog:",
     "webpack": "catalog:",
     "webpack-cli": "catalog:"
   }

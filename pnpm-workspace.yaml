@@ -261,6 +261,7 @@ catalog:
   rxjs: ^7.8.2
   sass: ^1.91.0
   sass-loader: ^16.0.6
+  serve: ^14.2.5
   source-map-loader: ^5.0.0
   stream-browserify: ^3.0.0
   style-loader: ^4.0.0
