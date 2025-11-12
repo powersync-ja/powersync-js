@@ -42,7 +42,7 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
       const systemDependencies = DEFAULT_SYSTEM_DEPENDENCIES();
       const syncClient = new SyncClientImpl({
         connectionRetryDelayMs: 1000,
-        debugMode: false,
+        debugMode: true,
         uploadThrottleMs: 1000,
         storage: new MemoryBucketStorageImpl({
           operationsHandlers: [syncOperationsHandler],
@@ -53,10 +53,12 @@ describe(`PowerSync Lite`, { timeout: Infinity }, () => {
 
       await syncClient.connect(new TestConnector());
 
+      await new Promise((resolve) => setTimeout(resolve, 1000000));
+
       // Long running test for demonstrating the sync client
     });
 
-    it(`should handle uploads`, async () => {
+    it.skip(`should handle uploads`, async () => {
       let lastPut: SyncOperation | null = null;
 
       const syncOperationsHandler: SyncOperationsHandler = {

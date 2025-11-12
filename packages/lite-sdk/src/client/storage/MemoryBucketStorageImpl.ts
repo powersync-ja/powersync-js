@@ -151,6 +151,11 @@ export class MemoryBucketStorageImpl implements BucketStorage {
       return false;
     }
 
+    if (await this.crudManager?.hasCrud()) {
+      // Still has crud data, can't update checkpoint
+      return false;
+    }
+
     // Call the callback to get the new opId
     const opId = await cb();
 

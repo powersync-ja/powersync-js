@@ -58,7 +58,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
     this.openStreamFn = options.streamOpener ?? openHttpStream;
   }
 
-  protected get bucketStorage(): BucketStorage {
+  get bucketStorage(): BucketStorage {
     return this.options.storage;
   }
 
@@ -123,9 +123,9 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
   async checkpoint(customCheckpoint?: string): Promise<CreateCheckpointResponse> {
     let targetCheckpoint: string | undefined = customCheckpoint;
     // FIXME, could this be optimized?
-    // If there are no crud items, we set the target to the custom checkpoint or the max op id
-    // We then set the local target to the new checkpoint
-    await this.bucketStorage.handleCrudUploaded(customCheckpoint);
+    // We essentially set the target op to the max_id then if there is no crud we set it to the target later
+    // Don't pass in `customCheckpoint` here, that makes it difficult to test if we applied it later
+    await this.bucketStorage.handleCrudUploaded();
     const targetUpdated = await this.bucketStorage.updateLocalTarget(async () => {
       if (targetCheckpoint) {
         return targetCheckpoint;
@@ -317,7 +317,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
 
         // Handle various sync line types
         if (`checkpoint` in line) {
-          this.options.debugMode && console.debug(`Received checkpoint`, line.checkpoint);
+          this.options.debugMode && console.debug(`Received checkpoint`, JSON.stringify(line, null, '\t'));
           const bucketsToDelete = new Set<string>(syncState.bucketMap.keys());
           const newBuckets = new Map<string, BucketDescription>();
           for (const checksum of line.checkpoint.buckets) {
@@ -337,7 +337,8 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
             downloading: true
           });
         } else if (`checkpoint_complete` in line) {
-          this.options.debugMode && console.debug(`Received checkpoint complete`, syncState.targetCheckpoint);
+          this.options.debugMode &&
+            console.debug(`Received checkpoint complete`, JSON.stringify(line, null, '\t'), syncState.targetCheckpoint);
           const result = await this.applyCheckpoint(syncState.targetCheckpoint!);
           if (result.endIteration) {
             return;
@@ -348,7 +349,12 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
             // Status updated in applyCheckpoint when applied successfully
           }
         } else if (`partial_checkpoint_complete` in line) {
-          this.options.debugMode && console.debug(`Received partial checkpoint complete`, syncState.targetCheckpoint);
+          this.options.debugMode &&
+            console.debug(
+              `Received partial checkpoint complete`,
+              JSON.stringify(line, null, '\t'),
+              syncState.targetCheckpoint
+            );
           const priority = line.partial_checkpoint_complete.priority;
           const result = await this.bucketStorage.syncLocalDatabase(syncState.targetCheckpoint!, priority);
           if (!result.checkpointValid) {
@@ -363,7 +369,8 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
             // We'll keep on downloading, but can report that this priority is synced now.
           }
         } else if (`checkpoint_diff` in line) {
-          this.options.debugMode && console.debug(`Received checkpoint diff`, syncState.targetCheckpoint);
+          this.options.debugMode &&
+            console.debug(`Received checkpoint diff`, JSON.stringify(line, null, '\t'), syncState.targetCheckpoint);
           // TODO: It may be faster to just keep track of the diff, instead of the entire checkpoint
           if (syncState.targetCheckpoint == null) {
             throw new Error(`Checkpoint diff without previous checkpoint`);
@@ -406,7 +413,7 @@ export class SyncClientImpl extends BaseObserver<SyncClientListener> implements 
           }
           await this.bucketStorage.removeBuckets(bucketsToDelete);
         } else if (`data` in line) {
-          this.options.debugMode && console.debug(`Received data`, line.data);
+          this.options.debugMode && console.debug(`Received data`, JSON.stringify(line, null, '\t'));
           const { data } = line;
           // Update status to indicate we're downloading data
           this.updateSyncStatus({

@@ -44,12 +44,12 @@
     "test:exports": "attw --pack ."
   },
   "dependencies": {
-    "ts-codec": "^1.3.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.5.9",
+    "ts-codec": "^1.3.0",
     "@powersync/service-jsonbig": "^0.17.11",
     "@powersync/service-sync-rules": "^0.29.5",
     "@powersync/service-core": "^1.15.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9"
   }
 }

@@ -136,16 +136,17 @@ export function createTestSyncClient(
   partialOptions: Partial<SyncClientOptions>,
   mockFactory: MockStreamFactory,
   operationsHandler: SyncOperationsHandler
-): SyncClient {
+): SyncClientImpl {
   const systemDependencies = partialOptions.systemDependencies ?? DEFAULT_SYSTEM_DEPENDENCIES();
 
   const defaultOptions: SyncClientOptions = {
     connectionRetryDelayMs: 100,
-    uploadRetryDelayMs: 100,
+    uploadThrottleMs: 100,
     debugMode: false,
     storage:
       partialOptions.storage ??
       new MemoryBucketStorageImpl({
+        ...partialOptions,
         operationsHandlers: [operationsHandler],
         systemDependencies
       }),

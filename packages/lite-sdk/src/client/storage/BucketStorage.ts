@@ -10,7 +10,13 @@ export type SavedProgress = {
 };
 
 export interface LocalState {
+  /**
+   * The last write checkpoint that was applied to the local database.
+   */
   lastOpId: bigint;
+  /**
+   * The target write checkpoint that the local database is syncing to.
+   */
   targetOpId: bigint;
 }
 
