@@ -2,9 +2,15 @@ import { AbstractPowerSyncDatabase } from '@powersync/web';
 import { Query } from 'drizzle-orm/sql/sql';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PowerSyncSQLiteDatabase } from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
-import { PowerSyncSQLitePreparedQuery } from '../../src/sqlite/PowerSyncSQLitePreparedQuery.js';
+import { ContextProvider, PowerSyncSQLitePreparedQuery } from '../../src/sqlite/PowerSyncSQLitePreparedQuery.js';
 import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
 
+function toContextProvider(db: AbstractPowerSyncDatabase): ContextProvider {
+  return {
+    useReadContext: (callback) => db.readLock(callback),
+    useWriteContext: (callback) => db.writeLock(callback)
+  };
+}
 describe('PowerSyncSQLitePreparedQuery', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
   let db: PowerSyncSQLiteDatabase<typeof DrizzleSchema>;
@@ -24,7 +30,14 @@ describe('PowerSyncSQLitePreparedQuery', () => {
 
   it('should execute a query in run()', async () => {
     const query: Query = { sql: `SELECT * FROM users WHERE id = ?`, params: [1] };
-    const preparedQuery = new PowerSyncSQLitePreparedQuery(powerSyncDb, query, loggerMock, undefined, 'run', false);
+    const preparedQuery = new PowerSyncSQLitePreparedQuery(
+      toContextProvider(powerSyncDb),
+      query,
+      loggerMock,
+      undefined,
+      'run',
+      false
+    );
 
     const result = await preparedQuery.run();
     expect(result.rows?._array).toEqual([{ id: '1', name: 'Alice' }]);
@@ -32,7 +45,14 @@ describe('PowerSyncSQLitePreparedQuery', () => {
 
   it('should retrieve all rows in all()', async () => {
     const query: Query = { sql: `SELECT * FROM users`, params: [] } as Query;
-    const preparedQuery = new PowerSyncSQLitePreparedQuery(powerSyncDb, query, loggerMock, undefined, 'all', false);
+    const preparedQuery = new PowerSyncSQLitePreparedQuery(
+      toContextProvider(powerSyncDb),
+      query,
+      loggerMock,
+      undefined,
+      'all',
+      false
+    );
 
     const rows = await preparedQuery.all();
     expect(rows).toEqual([
@@ -44,7 +64,14 @@ describe('PowerSyncSQLitePreparedQuery', () => {
   it('should retrieve a single row in get()', async () => {
     const query: Query = { sql: `SELECT * FROM users WHERE id = ?`, params: [1] };
 
-    const preparedQuery = new PowerSyncSQLitePreparedQuery(powerSyncDb, query, loggerMock, undefined, 'get', false);
+    const preparedQuery = new PowerSyncSQLitePreparedQuery(
+      toContextProvider(powerSyncDb),
+      query,
+      loggerMock,
+      undefined,
+      'get',
+      false
+    );
 
     const row = await preparedQuery.get();
     expect(row).toEqual({ id: '1', name: 'Alice' });
@@ -53,7 +80,14 @@ describe('PowerSyncSQLitePreparedQuery', () => {
   it('should retrieve values in values()', async () => {
     const query: Query = { sql: `SELECT * FROM users`, params: [] } as Query;
 
-    const preparedQuery = new PowerSyncSQLitePreparedQuery(powerSyncDb, query, loggerMock, undefined, 'all', false);
+    const preparedQuery = new PowerSyncSQLitePreparedQuery(
+      toContextProvider(powerSyncDb),
+      query,
+      loggerMock,
+      undefined,
+      'all',
+      false
+    );
 
     const values = await preparedQuery.values();
 
