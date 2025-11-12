@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, DEFAULT_WATCH_THROTTLE_MS, DifferentialWatchedQuery, ILogger, Transaction } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  DEFAULT_WATCH_THROTTLE_MS,
+  DifferentialWatchedQuery,
+  ILogger,
+  Transaction
+} from '@powersync/common';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -11,47 +17,47 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
- * 
+ *
  * Provides automatic synchronization, upload/download queuing, attachment monitoring,
  * verification and repair of local files, and cleanup of archived attachments.
  */
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
   periodicSyncTimer?: ReturnType<typeof setInterval>;
-  
+
   /** Context for managing attachment records in the database */
   context: AttachmentContext;
-  
+
   /** Service for synchronizing attachments between local and remote storage */
   syncingService: SyncingService;
-  
+
   /** Adapter for local file storage operations */
   localStorage: LocalStorageAdapter;
-  
+
   /** Adapter for remote file storage operations */
   remoteStorage: RemoteStorageAdapter;
-  
+
   /** @deprecated Directory path for storing attachments  */
   attachmentsDirectory?: string;
-  
+
   /** Name of the database table storing attachment records */
   tableName?: string;
-  
+
   /** Logger instance for diagnostic information */
   logger?: ILogger;
-  
+
   /** Interval in milliseconds between periodic sync operations. Default: 30000 (30 seconds) */
   syncIntervalMs: number = 30 * 1000;
-  
+
   /** Duration in milliseconds to throttle sync operations */
   syncThrottleDuration: number;
-  
+
   /** Whether to automatically download remote attachments. Default: true */
   downloadAttachments: boolean = true;
-  
+
   /** Maximum number of archived attachments to keep before cleanup. Default: 100 */
   archivedCacheLimit: number;
-  
+
   /** Service for managing attachment-related database operations */
   attachmentService: AttachmentService;
 
@@ -59,7 +65,7 @@ export class AttachmentQueue {
 
   /**
    * Creates a new AttachmentQueue instance.
-   * 
+   *
    * @param options - Configuration options
    * @param options.db - PowerSync database instance
    * @param options.remoteStorage - Remote storage adapter for upload/download operations
@@ -107,17 +113,23 @@ export class AttachmentQueue {
     this.downloadAttachments = downloadAttachments;
     this.context = new AttachmentContext(db, tableName, logger ?? db.logger, archivedCacheLimit);
     this.attachmentService = new AttachmentService(db, logger ?? db.logger, tableName);
-    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, logger ?? db.logger, errorHandler);
-    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
+    this.syncingService = new SyncingService(
+      this.context,
+      localStorage,
+      remoteStorage,
+      logger ?? db.logger,
+      errorHandler
+    );
+    this.logger = logger ?? db.logger;
   }
 
   /**
    * Callback function to watch for changes in attachment references in your data model.
-   * 
+   *
    * This method should be implemented to monitor changes in your application's
    * data that reference attachments. When attachments are added, removed, or modified,
    * this callback should trigger the onUpdate function with the current set of attachments.
-   * 
+   *
    * @param onUpdate - Callback to invoke when attachment references change
    * @throws Error indicating this method must be implemented by the user
    */
@@ -127,7 +139,7 @@ export class AttachmentQueue {
 
   /**
    * Generates a new attachment ID using a SQLite UUID function.
-   * 
+   *
    * @returns Promise resolving to the new attachment ID
    */
   async generateAttachmentId(): Promise<string> {
@@ -136,7 +148,7 @@ export class AttachmentQueue {
 
   /**
    * Starts the attachment synchronization process.
-   * 
+   *
    * This method:
    * - Stops any existing sync operations
    * - Sets up periodic synchronization based on syncIntervalMs
@@ -145,11 +157,11 @@ export class AttachmentQueue {
    * - Handles state transitions for archived and new attachments
    */
   async startSync(): Promise<void> {
-    if (this.attachmentService.watchActiveAttachments) {
-      await this.stopSync();
-      // re-create the watch after it was stopped
-      this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({ throttleMs: this.syncThrottleDuration });
-    }
+    await this.stopSync();
+
+    this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({
+      throttleMs: this.syncThrottleDuration
+    });
 
     // immediately invoke the sync storage to initialize local storage
     await this.localStorage.initialize();
@@ -251,7 +263,7 @@ export class AttachmentQueue {
 
   /**
    * Synchronizes all active attachments between local and remote storage.
-   * 
+   *
    * This is called automatically at regular intervals when sync is started,
    * but can also be called manually to trigger an immediate sync.
    */
@@ -264,18 +276,18 @@ export class AttachmentQueue {
 
   /**
    * Stops the attachment synchronization process.
-   * 
+   *
    * Clears the periodic sync timer and closes all active attachment watchers.
    */
   async stopSync(): Promise<void> {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
-    await this.watchActiveAttachments.close();
+    if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
   }
 
   /**
    * Saves a file to local storage and queues it for upload to remote storage.
-   * 
+   *
    * @param options - File save options
    * @param options.data - The file data as ArrayBuffer, Blob, or base64 string
    * @param options.fileExtension - File extension (e.g., 'jpg', 'pdf')
@@ -294,7 +306,6 @@ export class AttachmentQueue {
     id,
     updateHook
   }: {
-    // TODO: create a dedicated type for data
     data: AttachmentData;
     fileExtension: string;
     mediaType?: string;
@@ -302,7 +313,7 @@ export class AttachmentQueue {
     id?: string;
     updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
   }): Promise<AttachmentRecord> {
-    const resolvedId = id ?? await this.generateAttachmentId();
+    const resolvedId = id ?? (await this.generateAttachmentId());
     const filename = `${resolvedId}.${fileExtension}`;
     const localUri = this.localStorage.getLocalUri(filename);
     const size = await this.localStorage.saveFile(localUri, data);
@@ -327,9 +338,12 @@ export class AttachmentQueue {
     return attachment;
   }
 
-  async deleteFile({ id, updateHook }: {
-    id: string, 
-    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>
+  async deleteFile({
+    id,
+    updateHook
+  }: {
+    id: string;
+    updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
   }): Promise<void> {
     const attachment = await this.context.getAttachment(id);
     if (!attachment) {
@@ -338,11 +352,14 @@ export class AttachmentQueue {
 
     await this.context.db.writeTransaction(async (tx) => {
       await updateHook?.(tx, attachment);
-      await this.context.upsertAttachment({
-        ...attachment,
-        state: AttachmentState.QUEUED_DELETE,
-        hasSynced: false,
-      }, tx);
+      await this.context.upsertAttachment(
+        {
+          ...attachment,
+          state: AttachmentState.QUEUED_DELETE,
+          hasSynced: false
+        },
+        tx
+      );
     });
   }
 
@@ -360,7 +377,7 @@ export class AttachmentQueue {
 
   /**
    * Verifies the integrity of all attachment records and repairs inconsistencies.
-   * 
+   *
    * This method checks each attachment record against the local filesystem and:
    * - Updates localUri if the file exists at a different path
    * - Archives attachments with missing local files that haven't been uploaded
@@ -369,12 +386,12 @@ export class AttachmentQueue {
   verifyAttachments = async (): Promise<void> => {
     const attachments = await this.context.getAttachments();
     const updates: AttachmentRecord[] = [];
-    
+
     for (const attachment of attachments) {
       if (attachment.localUri == null) {
         continue;
       }
-      
+
       const exists = await this.localStorage.fileExists(attachment.localUri);
       if (exists) {
         // The file exists, this is correct

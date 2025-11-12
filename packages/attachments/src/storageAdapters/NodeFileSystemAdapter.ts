@@ -7,17 +7,14 @@ import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStora
  * Suitable for Node.js environments and Electron applications.
  */
 export class NodeFileSystemAdapter implements LocalStorageAdapter {
-
   constructor(private storageDirectory: string = './user_data') {}
 
   async initialize(): Promise<void> {
-    // const dir = this.getUserStorageDirectory();
     const dir = path.resolve(this.storageDirectory);
     await fs.mkdir(dir, { recursive: true });
   }
 
   async clear(): Promise<void> {
-    // const dir = this.getUserStorageDirectory();
     const dir = path.resolve(this.storageDirectory);
     await fs.rmdir(dir, { recursive: true });
   }

@@ -1,6 +1,5 @@
 import { AbstractPowerSyncDatabase, DifferentialWatchedQuery, ILogger } from '@powersync/common';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
-import { AttachmentContext } from './AttachmentContext.js';
 
 /**
  * Service for querying and watching attachment records in the database.
