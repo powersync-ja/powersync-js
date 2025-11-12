@@ -1,6 +1,5 @@
 export * from './Schema.js';
 export * from './LocalStorageAdapter.js';
-export * from './storageAdapters/NodeFileSystemAdapter.js';
 export * from './storageAdapters/IndexDBFileSystemAdapter.js';
 export * from './storageAdapters/ExpoFileSystemAdapter.js';
 export * from './RemoteStorageAdapter.js';

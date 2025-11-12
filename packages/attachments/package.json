@@ -30,6 +30,19 @@
         "default": "./dist/index.cjs",
         "types": "./dist/index.d.cts"
       }
+    },
+    "./node": {
+      "node": {
+        "import": {
+          "default": "./lib/node.js",
+          "types": "./lib/node.d.ts"
+        },
+        "require": {
+          "default": "./dist/node.cjs",
+          "types": "./dist/node.d.cts"
+        }
+      },
+      "default": null
     }
   },
   "files": [
