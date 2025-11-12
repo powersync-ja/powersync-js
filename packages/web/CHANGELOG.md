@@ -1,5 +1,13 @@
 # @powersync/web
 
+## 1.28.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
 ## 1.28.0
 
 ### Minor Changes

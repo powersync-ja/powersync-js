@@ -1,5 +1,13 @@
 # @powersync/adapter-sql-js
 
+## 0.0.10
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
 ## 0.0.9
 
 ### Patch Changes
