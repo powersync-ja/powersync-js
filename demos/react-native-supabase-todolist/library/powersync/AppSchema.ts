@@ -28,7 +28,7 @@ export const AppSchema = new Schema({
   todos,
   lists,
   attachments: new AttachmentTable({
-    name: 'attachments',
+    viewName: 'attachments',
   }),
 });
 

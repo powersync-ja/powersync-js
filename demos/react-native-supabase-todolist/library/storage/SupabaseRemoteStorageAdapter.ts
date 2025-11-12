@@ -26,22 +26,24 @@ export class SupabaseRemoteStorageAdapter implements RemoteStorageAdapter {
   }
 
   async downloadFile(attachment: AttachmentRecord): Promise<ArrayBuffer> {
-    const { data, error } = await this.options.client.storage
-      .from(this.options.bucket)
-      .download(attachment.filename);
+    const { data, error } = await this.options.client.storage.from(this.options.bucket).download(attachment.filename);
 
     if (error) {
       throw error;
     }
 
-    // Convert Blob to ArrayBuffer
-    return await data.arrayBuffer();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as ArrayBuffer);
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(data);
+    });
   }
 
   async deleteFile(attachment: AttachmentRecord): Promise<void> {
-    const { error } = await this.options.client.storage
-      .from(this.options.bucket)
-      .remove([attachment.filename]);
+    const { error } = await this.options.client.storage.from(this.options.bucket).remove([attachment.filename]);
 
     if (error) {
       console.debug('Failed to delete file from Supabase Storage', error);
@@ -49,4 +51,3 @@ export class SupabaseRemoteStorageAdapter implements RemoteStorageAdapter {
     }
   }
 }
-
