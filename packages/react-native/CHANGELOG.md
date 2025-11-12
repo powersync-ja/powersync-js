@@ -1,5 +1,14 @@
 # @powersync/react-native
 
+## 1.26.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+  - @powersync/react@1.8.2
+
 ## 1.26.0
 
 ### Minor Changes

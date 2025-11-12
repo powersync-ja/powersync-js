@@ -1,5 +1,13 @@
 # @powersync/capacitor
 
+## 0.1.2
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/web@1.28.1
+
 ## 0.1.1
 
 ### Patch Changes

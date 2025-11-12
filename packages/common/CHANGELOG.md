@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.41.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+
 ## 1.41.0
 
 ### Minor Changes
