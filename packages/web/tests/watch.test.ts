@@ -671,8 +671,26 @@ describe('Watch Tests', { sequential: true }, () => {
     });
     onTestFinished(dispose);
 
+    // Wait for the initial load to complete
+    await vi.waitFor(
+      () => {
+        expect(watch.state.isLoading).false;
+      },
+      { timeout: 1000 }
+    );
+
+    notificationCount = 0; // We want to count the number of state changes after the initial load
+
     // Should only a state change trigger for this operation
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
+
+    // We should get an update for the change above
+    await vi.waitFor(
+      () => {
+        expect(notificationCount).equals(1);
+      },
+      { timeout: 1000 }
+    );
 
     // Should not trigger any state change for these operations
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);
