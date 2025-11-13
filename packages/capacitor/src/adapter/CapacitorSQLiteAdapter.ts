@@ -120,20 +120,29 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
       const platform = Capacitor.getPlatform();
+
+      const _query = async (query: string, params: any[] = []) => {
+        const result = await db.query(query, params);
+        const arrayResult = result.values ?? [];
+        return {
+          rowsAffected: 0,
+          rows: {
+            _array: arrayResult,
+            length: arrayResult.length,
+            item: (idx: number) => arrayResult[idx]
+          }
+        };
+      };
+
+      if (db.getConnectionReadOnly()) {
+        return _query(query, params);
+      }
+
       if (platform == 'android') {
         // Android: use query for SELECT and executeSet for mutations
         // We cannot use `run` here for both cases.
         if (query.toLowerCase().trim().startsWith('select')) {
-          const result = await db.query(query, params);
-          const arrayResult = result.values ?? [];
-          return {
-            rowsAffected: 0,
-            rows: {
-              _array: arrayResult,
-              length: arrayResult.length,
-              item: (idx: number) => arrayResult[idx]
-            }
-          };
+          return _query(query, params);
         } else {
           const result = await db.executeSet([{ statement: query, values: params }], false);
           return {
