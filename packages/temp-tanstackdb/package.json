@@ -1,0 +1,56 @@
+{
+  "name": "@powersync/temp-tanstackdb",
+  "private": true,
+  "version": "0.0.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "description": "API definitions for JourneyApps PowerSync",
+  "type": "module",
+  "main": "dist/bundle.mjs",
+  "module": "dist/bundle.mjs",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./dist/bundle.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "require": "./dist/bundle.cjs"
+      }
+    }
+  },
+  "author": "POWERSYNC",
+  "license": "Apache-2.0",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "scripts": {
+    "build": "tsc -b",
+    "build:prod": "tsc -b",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest",
+    "test:exports": "attw --pack ."
+  },
+  "dependencies": {
+    "@powersync/lite-sdk": "workspace:*",
+    "@standard-schema/spec": "^1.0.0",
+    "@tanstack/db": "0.4.20",
+    "@tanstack/store": "^0.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9"
+  }
+}
