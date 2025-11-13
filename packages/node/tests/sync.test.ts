@@ -484,6 +484,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
 
       // Re-open database
       await database.close();
+
       await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(0));
       database = await syncService.createDatabase();
       database.connect(new TestConnector(), options);

@@ -669,19 +669,16 @@ describe('Watch Tests', { sequential: true }, () => {
 
     let notificationCount = 0;
     const dispose = watch.registerListener({
-      onStateChange: (state) => {
+      onStateChange: () => {
         notificationCount++;
       }
     });
     onTestFinished(dispose);
 
     // Wait for the initial load to complete
-    await vi.waitFor(
-      () => {
-        expect(notificationCount).equals(1);
-      },
-      { timeout: 1000 }
-    );
+    await vi.waitFor(() => {
+      expect(notificationCount).equals(1);
+    });
 
     notificationCount = 0; // We want to count the number of state changes after the initial load
 
@@ -689,12 +686,9 @@ describe('Watch Tests', { sequential: true }, () => {
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['test', uuid()]);
 
     // We should get an update for the change above
-    await vi.waitFor(
-      () => {
-        expect(notificationCount).equals(1);
-      },
-      { timeout: 1000 }
-    );
+    await vi.waitFor(() => {
+      expect(notificationCount).equals(1);
+    });
 
     // Should not trigger any state change for these operations
     await powersync.execute('INSERT INTO assets(id, make, customer_id) VALUES (uuid(), ?, ?)', ['make1', uuid()]);

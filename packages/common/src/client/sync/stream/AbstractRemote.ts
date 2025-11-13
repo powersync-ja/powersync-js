@@ -8,7 +8,7 @@ import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
-;
+
 
 export type BSONImplementation = typeof BSON;
 
@@ -570,17 +570,21 @@ export abstract class AbstractRemote {
       reader.releaseLock();
     };
 
-    abortSignal?.addEventListener('abort', () => {
-      closeReader();
-    });
-
-    const decoder = this.createTextDecoder();
-    let buffer = '';
 
     const stream = new DataStream<T, string>({
       logger: this.logger,
       mapLine: mapLine
     });
+
+    abortSignal?.addEventListener('abort', () => {
+      closeReader();
+      stream.close();
+    });
+
+    const decoder = this.createTextDecoder();
+    let buffer = '';
+
+
 
     const l = stream.registerListener({
       lowWater: async () => {
