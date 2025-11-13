@@ -118,21 +118,21 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
+    const _query = async (query: string, params: any[] = []) => {
+      const result = await db.query(query, params);
+      const arrayResult = result.values ?? [];
+      return {
+        rowsAffected: 0,
+        rows: {
+          _array: arrayResult,
+          length: arrayResult.length,
+          item: (idx: number) => arrayResult[idx]
+        }
+      };
+    };
+
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
       const platform = Capacitor.getPlatform();
-
-      const _query = async (query: string, params: any[] = []) => {
-        const result = await db.query(query, params);
-        const arrayResult = result.values ?? [];
-        return {
-          rowsAffected: 0,
-          rows: {
-            _array: arrayResult,
-            length: arrayResult.length,
-            item: (idx: number) => arrayResult[idx]
-          }
-        };
-      };
 
       if (db.getConnectionReadOnly()) {
         return _query(query, params);
@@ -175,24 +175,9 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
       ? (sql: string, params?: any[]) => monitorQuery(sql, () => _execute(sql, params))
       : _execute;
 
-    const _executeQuery = async (query: string, params?: any[]): Promise<QueryResult> => {
-      let result = await db.query(query, params);
-
-      let arrayResult = result.values ?? [];
-
-      return {
-        rowsAffected: 0,
-        rows: {
-          _array: arrayResult,
-          length: arrayResult.length,
-          item: (idx: number) => arrayResult[idx]
-        }
-      };
-    };
-
     const executeQuery = this.options.debugMode
-      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _executeQuery(sql, params))
-      : _executeQuery;
+      ? (sql: string, params?: any[]) => monitorQuery(sql, () => _query(sql, params))
+      : _query;
 
     const getAll = async <T>(query: string, params?: any[]): Promise<T[]> => {
       const result = await executeQuery(query, params);
