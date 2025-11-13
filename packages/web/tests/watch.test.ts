@@ -665,7 +665,8 @@ describe('Watch Tests', { sequential: true }, () => {
 
     let notificationCount = 0;
     const dispose = watch.registerListener({
-      onStateChange: () => {
+      onStateChange: (state) => {
+        console.log('onStateChange', JSON.stringify(state));
         notificationCount++;
       }
     });
