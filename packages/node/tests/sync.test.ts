@@ -1,7 +1,6 @@
-import { describe, vi, expect, beforeEach } from 'vitest';
 import util from 'node:util';
+import { beforeEach, describe, expect, vi } from 'vitest';
 
-import { bucket, MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
 import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
@@ -14,6 +13,7 @@ import {
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import Logger from 'js-logger';
+import { bucket, MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
 
 describe('Sync', () => {
   describe('js client', () => {
@@ -821,10 +821,11 @@ function defineSyncTests(impl: SyncClientImplementation) {
       const powersync = await syncService.createDatabase({ schema: customSchema, logger });
       powersync.connect(new TestConnector(), options);
 
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-      expect(logMessages).toEqual(
-        expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
-      );
+      await vi.waitFor(() => {
+        expect(logMessages).toEqual(
+          expect.arrayContaining([expect.stringContaining('Raw tables require the Rust-based sync client')])
+        );
+      });
     });
 
     mockSyncServiceTest(`does not warn about raw tables if they're not used`, async ({ syncService }) => {

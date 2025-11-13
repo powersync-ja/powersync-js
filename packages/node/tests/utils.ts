@@ -9,17 +9,16 @@ import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
-  column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
-  PowerSyncDatabaseOptions,
   Schema,
   StreamingSyncCheckpoint,
   StreamingSyncLine,
   SyncStatus,
-  Table
+  Table,
+  column
 } from '../lib';
 
 export async function createTempDir() {
@@ -67,7 +66,7 @@ export async function createDatabase(
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     ...options,
-    logger: defaultLogger,
+    logger: options.logger ?? defaultLogger,
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir,
@@ -102,6 +101,9 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
       request: any;
       stream: ReadableStreamDefaultController<StreamingSyncLine>;
     }
+
+    // Uses a unique database name per mockSyncServiceTest to avoid conflicts with other tests.
+    const databaseName = `test-${crypto.randomUUID()}.db`;
 
     const listeners: Listener[] = [];
 
@@ -149,6 +151,10 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
     const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
       const db = await createDatabase(tmpdir, {
         ...options,
+        database: {
+          dbFilename: databaseName,
+          ...options?.database
+        },
         remoteOptions: {
           fetchImplementation: inMemoryFetch
         }
