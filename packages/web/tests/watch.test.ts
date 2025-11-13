@@ -674,7 +674,7 @@ describe('Watch Tests', { sequential: true }, () => {
     // Wait for the initial load to complete
     await vi.waitFor(
       () => {
-        expect(watch.state.isLoading).false;
+        expect(notificationCount).equals(1);
       },
       { timeout: 1000 }
     );
