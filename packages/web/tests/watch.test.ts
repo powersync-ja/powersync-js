@@ -658,7 +658,11 @@ describe('Watch Tests', { sequential: true }, () => {
         parameters: ['test']
       })
       .watch({
-        reportFetching: false
+        reportFetching: false,
+        // Comparisons require a comparator to be set
+        comparator: new ArrayComparator({
+          compareBy: (item) => JSON.stringify(item)
+        })
       });
 
     expect(watch.state.isFetching).false;
@@ -666,7 +670,6 @@ describe('Watch Tests', { sequential: true }, () => {
     let notificationCount = 0;
     const dispose = watch.registerListener({
       onStateChange: (state) => {
-        console.log('onStateChange', JSON.stringify(state));
         notificationCount++;
       }
     });
