@@ -65,6 +65,13 @@ describe('Triggers', () => {
       () => {
         expect(results.length).toEqual(3);
 
+        // Check that operation_id values exist and are numbers
+        expect(results[0].operation_id).toBeDefined();
+        expect(typeof results[0].operation_id).toBe('number');
+        expect(results[0].operation_id).eq(1);
+        expect(results[1].operation_id).toBeDefined();
+        expect(results[1].operation_id).eq(2);
+
         expect(results[0].operation).toEqual(DiffTriggerOperation.INSERT);
         const parsedInsert = JSON.parse(results[0].value);
         // only the filtered columns should be tracked
@@ -604,5 +611,97 @@ describe('Triggers', () => {
     expect(changes[4].__operation).eq(DiffTriggerOperation.DELETE);
     expect(changes[4].columnB).toBeUndefined();
     expect(changes[4].__previous_value).toBeNull();
+  });
+
+  databaseTest('Should cast operation_id as string with withDiff option', async ({ database }) => {
+    const results: TriggerDiffRecord<string>[] = [];
+
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      columns: ['content'],
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE'
+      },
+      onChange: async (context) => {
+        const diffs = await context.withDiff<TriggerDiffRecord<string>>('SELECT * FROM DIFF', undefined, {
+          castOperationIdAsText: true
+        });
+        results.push(...diffs);
+      }
+    });
+
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?);', ['test 1']);
+    await database.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?);', ['test 2']);
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).toEqual(2);
+        // Check that operation_id is a string when castOperationIdAsText is enabled
+        expect(typeof results[0].operation_id).toBe('string');
+        expect(typeof results[1].operation_id).toBe('string');
+        // Should be incrementing
+        expect(Number.parseInt(results[0].operation_id)).toBeLessThan(Number.parseInt(results[1].operation_id));
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  databaseTest('Should report changes in transaction order using operation_id', async ({ database }) => {
+    const results: TriggerDiffRecord[] = [];
+
+    await database.triggers.trackTableDiff({
+      source: 'todos',
+      columns: ['content'],
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE',
+        [DiffTriggerOperation.UPDATE]: 'TRUE',
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      },
+      onChange: async (context) => {
+        const diffs = await context.withDiff<TriggerDiffRecord>('SELECT * FROM DIFF');
+        results.push(...diffs);
+      }
+    });
+
+    // Perform multiple operations in a single transaction
+    const contents = ['first', 'second', 'third', 'fourth'];
+    await database.writeLock(async (tx) => {
+      // Insert first todo
+      await tx.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?);', [contents[0]]);
+      // Insert second todo
+      await tx.execute('INSERT INTO todos (id, content) VALUES (uuid(), ?);', [contents[1]]);
+      // Update first todo
+      await tx.execute('UPDATE todos SET content = ? WHERE content = ?;', [contents[2], contents[0]]);
+      // Delete second todo
+      await tx.execute('DELETE FROM todos WHERE content = ?;', [contents[1]]);
+    });
+
+    await vi.waitFor(
+      () => {
+        expect(results.length).toEqual(4);
+
+        // Verify operation_ids are incrementing (ensuring order)
+        expect(results[0].operation_id).toBeLessThan(results[1].operation_id);
+        expect(results[1].operation_id).toBeLessThan(results[2].operation_id);
+        expect(results[2].operation_id).toBeLessThan(results[3].operation_id);
+
+        // Verify operations are in the correct order
+        expect(results[0].operation).toBe(DiffTriggerOperation.INSERT);
+        expect(JSON.parse(results[0].value).content).toBe(contents[0]);
+
+        expect(results[1].operation).toBe(DiffTriggerOperation.INSERT);
+        expect(JSON.parse(results[1].value).content).toBe(contents[1]);
+
+        expect(results[2].operation).toBe(DiffTriggerOperation.UPDATE);
+        if (results[2].operation === DiffTriggerOperation.UPDATE) {
+          expect(JSON.parse(results[2].value).content).toBe(contents[2]);
+          expect(JSON.parse(results[2].previous_value).content).toBe(contents[0]);
+        }
+
+        expect(results[3].operation).toBe(DiffTriggerOperation.DELETE);
+        expect(JSON.parse(results[3].value).content).toBe(contents[1]);
+      },
+      { timeout: 1000 }
+    );
   });
 });
