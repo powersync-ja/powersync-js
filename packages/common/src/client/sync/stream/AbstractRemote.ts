@@ -6,8 +6,9 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
+import { StreamingSyncRequest } from './streaming-sync-types.js';
+;
 
 export type BSONImplementation = typeof BSON;
 
@@ -557,9 +558,11 @@ export abstract class AbstractRemote {
     // Create a new stream splitting the response at line endings while also handling cancellations
     // by closing the reader.
     const reader = res.body.getReader();
+    let readerReleased = false;
     // This will close the network request and read stream
     const closeReader = async () => {
       try {
+        readerReleased = true;
         await reader.cancel();
       } catch (ex) {
         // an error will throw if the reader hasn't been used yet
@@ -581,6 +584,9 @@ export abstract class AbstractRemote {
 
     const l = stream.registerListener({
       lowWater: async () => {
+        if (stream.closed || abortSignal?.aborted || readerReleased) {
+          return
+        } 
         try {
           let didCompleteLine = false;
           while (!didCompleteLine) {
