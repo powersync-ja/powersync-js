@@ -43,7 +43,7 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.41.1"
+    "@powersync/common": "workspace:^1.42.0"
   },
   "dependencies": {
     "kysely": "^0.28.0"
