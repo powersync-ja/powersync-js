@@ -1,5 +1,12 @@
 # @powersync/capacitor
 
+## 0.1.3
+
+### Patch Changes
+
+- 4c66487: Fixed readTransaction method throwing "not allowed in read-only mode" errors
+  - @powersync/web@1.28.2
+
 ## 0.1.2
 
 ### Patch Changes

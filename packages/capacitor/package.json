@@ -1,6 +1,6 @@
 {
   "name": "@powersync/capacitor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -71,7 +71,7 @@
   },
   "peerDependencies": {
     "@capacitor-community/sqlite": "^7.0.2",
-    "@powersync/web": "workspace:^1.28.1"
+    "@powersync/web": "workspace:^1.28.2"
   },
   "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {

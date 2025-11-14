@@ -1919,7 +1919,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.28.1
+        specifier: workspace:^1.28.2
         version: link:../web
       async-lock:
         specifier: ^1.4.0
@@ -2020,7 +2020,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.41.1
+        specifier: workspace:^1.42.0
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -2048,7 +2048,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.41.1
+        specifier: workspace:^1.42.0
         version: link:../common
       kysely:
         specifier: ^0.28.0
@@ -29224,7 +29224,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:

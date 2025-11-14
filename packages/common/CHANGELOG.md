@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.42.0
+
+### Minor Changes
+
+- 3af4a2c: Added auto incrementing operation_id column to Trigger based diff temporary tables and results. This allows for better operation ordering compared to using the previous timestamp column.
+
+### Patch Changes
+
+- 66218b2: Improved potential race condition when closing HTTP stream connections.
+
 ## 1.41.1
 
 ### Patch Changes
