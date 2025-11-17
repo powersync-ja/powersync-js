@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mockPowerSync = {
   currentStatus: { status: 'initial' },
-  registerListener: vi.fn(() => { }),
+  registerListener: vi.fn(() => {}),
   resolveTables: vi.fn(() => ['table1', 'table2']),
   onChangeWithCallback: vi.fn(),
   getAll: vi.fn(() => Promise.resolve(['list1', 'list2']))
@@ -22,10 +22,10 @@ describe('useQuery', () => {
   let queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        retry: false,
-      },
+        retry: false
+      }
     }
-  })
+  });
 
   const wrapper = ({ children }) => (
     <QueryClientProvider client={queryClient}>
@@ -40,12 +40,15 @@ describe('useQuery', () => {
     cleanup(); // Cleanup the DOM after each test
   });
 
-
   it('should set loading states on initial load', async () => {
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['lists'],
-      query: 'SELECT * from lists'
-    }), { wrapper });
+    const { result } = renderHook(
+      () =>
+        useQuery({
+          queryKey: ['lists'],
+          query: 'SELECT * from lists'
+        }),
+      { wrapper }
+    );
     const currentResult = result.current;
     expect(currentResult.isLoading).toEqual(true);
     expect(currentResult.isFetching).toEqual(true);
@@ -55,20 +58,23 @@ describe('useQuery', () => {
     const query = () =>
       useQuery({
         queryKey: ['lists'],
-        query: "SELECT * from lists"
+        query: 'SELECT * from lists'
       });
     const { result } = renderHook(query, { wrapper });
 
-    await vi.waitFor(() => {
-      expect(result.current.data![0]).toEqual('list1');
-      expect(result.current.data![1]).toEqual('list2');
-    }, { timeout: 500 });
+    await vi.waitFor(
+      () => {
+        expect(result.current.data![0]).toEqual('list1');
+        expect(result.current.data![1]).toEqual('list2');
+      },
+      { timeout: 500 }
+    );
   });
 
   it('should set error during query execution', async () => {
     const mockPowerSyncError = {
       currentStatus: { status: 'initial' },
-      registerListener: vi.fn(() => { }),
+      registerListener: vi.fn(() => {}),
       onChangeWithCallback: vi.fn(),
       resolveTables: vi.fn(() => ['table1', 'table2']),
       getAll: vi.fn(() => {
@@ -82,10 +88,14 @@ describe('useQuery', () => {
       </QueryClientProvider>
     );
 
-    const { result } = renderHook(() => useQuery({
-      queryKey: ['lists'],
-      query: 'SELECT * from lists'
-    }), { wrapper });
+    const { result } = renderHook(
+      () =>
+        useQuery({
+          queryKey: ['lists'],
+          query: 'SELECT * from lists'
+        }),
+      { wrapper }
+    );
 
     await waitFor(
       async () => {
@@ -108,9 +118,12 @@ describe('useQuery', () => {
       });
     const { result } = renderHook(query, { wrapper });
 
-    await vi.waitFor(() => {
-      expect(result.current.data![0].test).toEqual('custom');
-    }, { timeout: 500 });
+    await vi.waitFor(
+      () => {
+        expect(result.current.data![0].test).toEqual('custom');
+      },
+      { timeout: 500 }
+    );
   });
 
   it('should show an error if parsing the query results in an error', async () => {
@@ -135,10 +148,9 @@ describe('useQuery', () => {
         expect(currentResult.isLoading).toEqual(false);
         expect(currentResult.isFetching).toEqual(false);
         expect(currentResult.error).toEqual(Error('You cannot pass parameters to a compiled query.'));
-        expect(currentResult.data).toBeUndefined()
+        expect(currentResult.data).toBeUndefined();
       },
       { timeout: 100 }
     );
   });
-
 });
