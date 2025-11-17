@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -34,18 +34,19 @@
   },
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest",
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0"
+    "@powersync/common": "workspace:^1.42.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

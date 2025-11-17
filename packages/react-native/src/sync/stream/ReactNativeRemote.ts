@@ -14,6 +14,7 @@ import {
 import { Platform } from 'react-native';
 // Note docs for React Native https://github.com/mongodb/js-bson?tab=readme-ov-file#react-native
 import { BSON } from 'bson';
+import { TextDecoder } from 'text-encoding';
 
 import { fetch } from 'react-native-fetch-api';
 
@@ -53,6 +54,10 @@ export class ReactNativeRemote extends AbstractRemote {
 
   async getBSON(): Promise<BSONImplementation> {
     return BSON;
+  }
+
+  protected createTextDecoder(): TextDecoder {
+    return new TextDecoder();
   }
 
   async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {

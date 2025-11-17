@@ -1,5 +1,29 @@
 # diagnostics-app
 
+## 0.9.17
+
+### Patch Changes
+
+- @powersync/react@1.8.2
+- @powersync/web@1.28.2
+
+## 0.9.16
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/react@1.8.2
+  - @powersync/web@1.28.1
+
+## 0.9.15
+
+### Patch Changes
+
+- Updated dependencies [2f8b30c]
+  - @powersync/web@1.28.0
+  - @powersync/react@1.8.1
+
 ## 0.9.14
 
 ### Patch Changes

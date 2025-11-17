@@ -1,4 +1,5 @@
-import { LockContext, QueryResult } from '@powersync/common';
+import type { QueryResult } from '@powersync/common';
+import type { WithCacheConfig } from 'drizzle-orm/cache/core/types';
 import { entityKind } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { NoopLogger } from 'drizzle-orm/logger';
@@ -7,13 +8,13 @@ import { type Query } from 'drizzle-orm/sql/sql';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
-  type PreparedQueryConfig as PreparedQueryConfigBase,
-  type SQLiteExecuteMethod,
   SQLiteSession,
   SQLiteTransaction,
+  type PreparedQueryConfig as PreparedQueryConfigBase,
+  type SQLiteExecuteMethod,
   type SQLiteTransactionConfig
 } from 'drizzle-orm/sqlite-core/session';
-import { PowerSyncSQLitePreparedQuery } from './PowerSyncSQLitePreparedQuery.js';
+import { PowerSyncSQLitePreparedQuery, type ContextProvider } from './PowerSyncSQLitePreparedQuery.js';
 
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;
@@ -39,7 +40,7 @@ export class PowerSyncSQLiteBaseSession<
   protected logger: Logger;
 
   constructor(
-    protected db: LockContext,
+    protected contextProvider: ContextProvider,
     protected dialect: SQLiteAsyncDialect,
     protected schema: RelationalSchemaConfig<TSchema> | undefined,
     protected options: PowerSyncSQLiteSessionOptions = {}
@@ -53,16 +54,24 @@ export class PowerSyncSQLiteBaseSession<
     fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
     isResponseInArrayMode: boolean,
-    customResultMapper?: (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown
+    customResultMapper?: (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown,
+    queryMetadata?: {
+      type: 'select' | 'update' | 'delete' | 'insert';
+      tables: string[];
+    },
+    cacheConfig?: WithCacheConfig
   ): PowerSyncSQLitePreparedQuery<T> {
     return new PowerSyncSQLitePreparedQuery(
-      this.db,
+      this.contextProvider,
       query,
       this.logger,
       fields,
       executeMethod,
       isResponseInArrayMode,
-      customResultMapper
+      customResultMapper,
+      undefined, // cache not supported yet
+      queryMetadata,
+      cacheConfig
     );
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
   "main": "dist/index.cjs",
@@ -22,7 +22,8 @@
   "license": "Apache-2.0",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "src"
   ],
   "repository": "https://github.com/powersync-ja/powersync-js",
   "bugs": {
@@ -35,21 +36,21 @@
   "homepage": "https://docs.powersync.com",
   "scripts": {
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "build:prod": "tsc -b && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "vitest",
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0",
+    "@powersync/common": "workspace:^1.42.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
     "@journeyapps/wa-sqlite": "^1.3.2",
     "@types/node": "^20.17.6",
-    "drizzle-orm": "^0.35.2",
+    "drizzle-orm": "^0.44.7",
     "vite": "^6.1.0",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.3.0"

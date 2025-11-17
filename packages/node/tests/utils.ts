@@ -9,7 +9,6 @@ import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
   BucketChecksum,
-  column,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
@@ -18,7 +17,8 @@ import {
   StreamingSyncCheckpoint,
   StreamingSyncLine,
   SyncStatus,
-  Table
+  Table,
+  column
 } from '../lib';
 
 export async function createTempDir() {
@@ -65,27 +65,32 @@ export async function createDatabase(
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,
+    ...options,
+    logger: options.logger ?? defaultLogger,
     database: {
       dbFilename: 'test.db',
       dbLocation: tmpdir,
       // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
       // actions. So far, we've not been able to reproduce these failures locally.
-      readWorkerCount: 1
-    },
-    logger: defaultLogger,
-    ...options
+      readWorkerCount: 1,
+      ...options.database
+    }
   });
   await database.init();
   return database;
 }
 
-export const databaseTest = tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
-  database: async ({ tmpdir }, use) => {
-    const db = await createDatabase(tmpdir);
-    await use(db);
-    await db.close();
-  }
-});
+export const customDatabaseTest = (options?: Partial<NodePowerSyncDatabaseOptions>) => {
+  return tempDirectoryTest.extend<{ database: PowerSyncDatabase }>({
+    database: async ({ tmpdir }, use) => {
+      const db = await createDatabase(tmpdir, options);
+      await use(db);
+      await db.close();
+    }
+  });
+};
+
+export const databaseTest = customDatabaseTest();
 
 // TODO: Unify this with the test setup for the web SDK.
 export const mockSyncServiceTest = tempDirectoryTest.extend<{
@@ -96,6 +101,9 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
       request: any;
       stream: ReadableStreamDefaultController<StreamingSyncLine>;
     }
+
+    // Uses a unique database name per mockSyncServiceTest to avoid conflicts with other tests.
+    const databaseName = `test-${crypto.randomUUID()}.db`;
 
     const listeners: Listener[] = [];
 
@@ -143,6 +151,10 @@ export const mockSyncServiceTest = tempDirectoryTest.extend<{
     const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
       const db = await createDatabase(tmpdir, {
         ...options,
+        database: {
+          dbFilename: databaseName,
+          ...options?.database
+        },
         remoteOptions: {
           fetchImplementation: inMemoryFetch
         }

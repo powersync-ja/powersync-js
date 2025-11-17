@@ -1,5 +1,38 @@
 # @powersync/node
 
+## 0.14.1
+
+### Patch Changes
+
+- Updated dependencies [66218b2]
+- Updated dependencies [3af4a2c]
+  - @powersync/common@1.42.0
+
+## 0.14.0
+
+### Minor Changes
+
+- b7a150a: Add support for concurrent read queries with Drizzle.
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- d3808db: Throw when database is used after being closed.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
+## 0.13.0
+
+### Minor Changes
+
+- 2f8b30c: Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
+
+### Patch Changes
+
+- b00e1ec: [`node:sqlite`] Prevent `database is locked` errors when instantiating the database.
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+
 ## 0.12.0
 
 ### Minor Changes

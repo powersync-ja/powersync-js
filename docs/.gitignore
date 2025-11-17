@@ -17,6 +17,7 @@
 
 npm-debug.log*
 
+docs/capacitor-sdk/
 docs/attachments-sdk/
 docs/common-sdk/
 docs/node-sdk/

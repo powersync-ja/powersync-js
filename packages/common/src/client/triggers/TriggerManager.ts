@@ -14,8 +14,11 @@ export enum DiffTriggerOperation {
  * @experimental
  * Diffs created by {@link TriggerManager#createDiffTrigger} are stored in a temporary table.
  * This is the base record structure for all diff records.
+ *
+ * @template TOperationId - The type for `operation_id`. Defaults to `number` as returned by default SQLite database queries.
+ * Use `string` for full 64-bit precision when using `{ castOperationIdAsText: true }` option.
  */
-export interface BaseTriggerDiffRecord {
+export interface BaseTriggerDiffRecord<TOperationId extends string | number = number> {
   /**
    * The modified row's `id` column value.
    */
@@ -24,6 +27,13 @@ export interface BaseTriggerDiffRecord {
    * The operation performed which created this record.
    */
   operation: DiffTriggerOperation;
+  /**
+   * Auto-incrementing primary key for the operation.
+   * Defaults to number as returned by database queries (wa-sqlite returns lower 32 bits).
+   * Can be string for full 64-bit precision when using `{ castOperationIdAsText: true }` option.
+   */
+  operation_id: TOperationId;
+
   /**
    * Time the change operation was recorded.
    * This is in ISO 8601 format, e.g. `2023-10-01T12:00:00.000Z`.
@@ -37,7 +47,8 @@ export interface BaseTriggerDiffRecord {
  * This record contains the new value and optionally the previous value.
  * Values are stored as JSON strings.
  */
-export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
+export interface TriggerDiffUpdateRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.UPDATE;
   /**
    * The updated state of the row in JSON string format.
@@ -54,7 +65,8 @@ export interface TriggerDiffUpdateRecord extends BaseTriggerDiffRecord {
  * Represents a diff record for a SQLite INSERT operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
+export interface TriggerDiffInsertRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.INSERT;
   /**
    * The value of the row, at the time of INSERT, in JSON string format.
@@ -67,7 +79,8 @@ export interface TriggerDiffInsertRecord extends BaseTriggerDiffRecord {
  * Represents a diff record for a SQLite DELETE operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
+export interface TriggerDiffDeleteRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.DELETE;
   /**
    * The value of the row, before the DELETE operation, in JSON string format.
@@ -82,27 +95,53 @@ export interface TriggerDiffDeleteRecord extends BaseTriggerDiffRecord {
  *
  * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withDiff} will return records
  * with the structure of this type.
+ *
+ * @template TOperationId - The type for `operation_id`. Defaults to `number` as returned by database queries.
+ * Use `string` for full 64-bit precision when using `{ castOperationIdAsText: true }` option.
+ *
  * @example
  * ```typescript
+ * // Default: operation_id is number
  * const diffs = await context.withDiff<TriggerDiffRecord>('SELECT * FROM DIFF');
- * diff.forEach(diff => console.log(diff.operation, diff.timestamp, JSON.parse(diff.value)))
+ *
+ * // With string operation_id for full precision
+ * const diffsWithString = await context.withDiff<TriggerDiffRecord<string>>(
+ *   'SELECT * FROM DIFF',
+ *   undefined,
+ *   { castOperationIdAsText: true }
+ * );
  * ```
  */
-export type TriggerDiffRecord = TriggerDiffUpdateRecord | TriggerDiffInsertRecord | TriggerDiffDeleteRecord;
+export type TriggerDiffRecord<TOperationId extends string | number = number> =
+  | TriggerDiffUpdateRecord<TOperationId>
+  | TriggerDiffInsertRecord<TOperationId>
+  | TriggerDiffDeleteRecord<TOperationId>;
 
 /**
  * @experimental
  * Querying the DIFF table directly with {@link TriggerDiffHandlerContext#withExtractedDiff} will return records
  * with the tracked columns extracted from the JSON value.
  * This type represents the structure of such records.
+ *
+ * @template T - The type for the extracted columns from the tracked JSON value.
+ * @template TOperationId - The type for `operation_id`. Defaults to `number` as returned by database queries.
+ * Use `string` for full 64-bit precision when using `{ castOperationIdAsText: true }` option.
+ *
  * @example
  * ```typescript
+ * // Default: operation_id is number
  * const diffs = await context.withExtractedDiff<ExtractedTriggerDiffRecord<{id: string, name: string}>>('SELECT * FROM DIFF');
- * diff.forEach(diff => console.log(diff.__operation, diff.__timestamp, diff.columnName))
+ *
+ * // With string operation_id for full precision
+ * const diffsWithString = await context.withExtractedDiff<ExtractedTriggerDiffRecord<{id: string, name: string}, string>>(
+ *   'SELECT * FROM DIFF',
+ *   undefined,
+ *   { castOperationIdAsText: true }
+ * );
  * ```
  */
-export type ExtractedTriggerDiffRecord<T> = T & {
-  [K in keyof Omit<BaseTriggerDiffRecord, 'id'> as `__${string & K}`]: TriggerDiffRecord[K];
+export type ExtractedTriggerDiffRecord<T, TOperationId extends string | number = number> = T & {
+  [K in keyof Omit<BaseTriggerDiffRecord<TOperationId>, 'id'> as `__${string & K}`]: TriggerDiffRecord<TOperationId>[K];
 } & {
   __previous_value?: string;
 };
@@ -185,6 +224,21 @@ export type TriggerRemoveCallback = () => Promise<void>;
 
 /**
  * @experimental
+ * Options for {@link TriggerDiffHandlerContext#withDiff}.
+ */
+export interface WithDiffOptions {
+  /**
+   * If true, casts `operation_id` as TEXT in the internal CTE to preserve full 64-bit precision.
+   * Use this when you need to ensure `operation_id` is treated as a string to avoid precision loss
+   * for values exceeding JavaScript's Number.MAX_SAFE_INTEGER.
+   *
+   * When enabled, use {@link TriggerDiffRecord}<string> to type the result correctly.
+   */
+  castOperationIdAsText?: boolean;
+}
+
+/**
+ * @experimental
  * Context for the `onChange` handler provided to {@link TriggerManager#trackTableDiff}.
  */
 export interface TriggerDiffHandlerContext extends LockContext {
@@ -200,9 +254,10 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * The `DIFF` table is of the form described in {@link TriggerManager#createDiffTrigger}
    * ```sql
    * CREATE TEMP DIFF (
+   *       operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
    *       id TEXT,
    *       operation TEXT,
-   *       timestamp TEXT
+   *       timestamp TEXT,
    *       value TEXT,
    *       previous_value TEXT
    *     );
@@ -222,8 +277,19 @@ export interface TriggerDiffHandlerContext extends LockContext {
    * JOIN todos ON DIFF.id = todos.id
    * WHERE json_extract(DIFF.value, '$.status') = 'active'
    * ```
+   *
+   * @example
+   * ```typescript
+   * // With operation_id cast as TEXT for full precision
+   * const diffs = await context.withDiff<TriggerDiffRecord<string>>(
+   *   'SELECT * FROM DIFF',
+   *   undefined,
+   *   { castOperationIdAsText: true }
+   * );
+   * // diffs[0].operation_id is now typed as string
+   * ```
    */
-  withDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>) => Promise<T[]>;
+  withDiff: <T = any>(query: string, params?: ReadonlyArray<Readonly<any>>, options?: WithDiffOptions) => Promise<T[]>;
 
   /**
    * Allows querying the database with access to the table containing diff records.
@@ -292,9 +358,10 @@ export interface TriggerManager {
    *
    * ```sql
    * CREATE TEMP TABLE ${destination} (
+   *       operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
    *       id TEXT,
    *       operation TEXT,
-   *       timestamp TEXT
+   *       timestamp TEXT,
    *       value TEXT,
    *       previous_value TEXT
    *     );

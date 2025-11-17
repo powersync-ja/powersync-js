@@ -1,24 +1,24 @@
+import * as Comlink from 'comlink';
 import fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
-import * as Comlink from 'comlink';
 
 import {
   BaseObserver,
   BatchedUpdateNotification,
   DBAdapter,
   DBAdapterListener,
-  LockContext,
-  Transaction,
   DBLockOptions,
-  QueryResult
+  LockContext,
+  QueryResult,
+  Transaction
 } from '@powersync/common';
 import { Remote } from 'comlink';
 import { AsyncResource } from 'node:async_hooks';
+import { isBundledToCommonJs } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';
 import { NodeDatabaseImplementation, NodeSQLOpenOptions } from './options.js';
-import { isBundledToCommonJs } from '../utils/modules.js';
 
 export type BetterSQLite3LockContext = LockContext & {
   executeBatch(query: string, params?: any[][]): Promise<QueryResult>;
@@ -135,10 +135,12 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       if (this.options.initializeConnection) {
         await this.options.initializeConnection(connection, isWriter);
       }
-
-      await connection.execute('pragma journal_mode = WAL');
       if (!isWriter) {
         await connection.execute('pragma query_only = true');
+      } else {
+        // We only need to enable this on the writer connection.
+        // We can get `database is locked` errors if we enable this on concurrently opening read connections.
+        await connection.execute('pragma journal_mode = WAL');
       }
 
       return connection;
@@ -211,10 +213,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         try {
           return await fn(this.writeConnection);
         } finally {
-          const serializedUpdates = await this.writeConnection.database.executeRaw(
-            "SELECT powersync_update_hooks('get');",
-            []
-          );
+          const serializedUpdates = await this.writeConnection.executeRaw("SELECT powersync_update_hooks('get');", []);
           const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
 
           if (updates.length > 0) {
