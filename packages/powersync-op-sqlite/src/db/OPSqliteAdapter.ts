@@ -12,6 +12,7 @@ export type OPSQLiteAdapterOptions = {
   name: string;
   dbLocation?: string;
   sqliteOptions?: SqliteOptions;
+  debugMode?: boolean;
 };
 
 enum LockType {
@@ -50,7 +51,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
-    this.writeConnection = await this.openConnection(dbFilename);
+    this.writeConnection = await this.openConnection('w');
 
     const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -89,7 +90,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
 
     this.readConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const conn = await this.openConnection(dbFilename);
+      const conn = await this.openConnection(`r-${i}`);
       for (let statement of readConnectionStatements) {
         await conn.execute(statement);
       }
@@ -97,8 +98,8 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 
-  protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
-    const dbFilename = filenameOverride ?? this.options.name;
+  protected async openConnection(connectionName: string): Promise<OPSQLiteConnection> {
+    const dbFilename = this.options.name;
     const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
     //Load extensions for all connections
@@ -108,7 +109,9 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB
+      baseDB: DB,
+      debugMode: this.options.debugMode ?? false,
+      connectionName
     });
   }
 
