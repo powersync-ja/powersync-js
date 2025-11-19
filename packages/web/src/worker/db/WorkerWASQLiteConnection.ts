@@ -22,8 +22,8 @@ export function proxyWASQLiteConnection(connection: AsyncDatabaseConnection): As
 }
 
 export class WorkerWASQLiteConnection extends WASqliteConnection {
-  registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void> {
+  async registerOnTableChange(callback: OnTableChangeCallback): Promise<() => void> {
     // Proxy the callback remove function
-    return Comlink.proxy(super.registerOnTableChange(callback));
+    return Comlink.proxy(await super.registerOnTableChange(callback));
   }
 }

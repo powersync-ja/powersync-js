@@ -90,8 +90,9 @@ export class SharedWASQLiteConnection implements AsyncDatabaseConnection {
 
     if (clientIds.size == 0) {
       logger.debug(`Closing connection to ${this.options}.`);
+      const connection = this.connection;
       dbMap.delete(dbFilename);
-      return this.connection.close();
+      await connection.close();
     }
     logger.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
     return;
