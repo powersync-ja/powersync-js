@@ -80,12 +80,11 @@ export class SharedWASQLiteConnection implements AsyncDatabaseConnection {
     clientIds.delete(clientId);
 
     if (this.activeHoldId) {
-      /**
-       * The hold hasn't been released, but we're closing now.
-       * We can proactively cleanup and release the hold.
-       */
-      await this.connection.execute('ROLLBACK').catch(() => {});
-      await this.connection.releaseHold(this.activeHoldId).catch(() => {});
+      // We can't cleanup here since we're not in a lock context.
+      // The cleanup will occur once a new hold is acquired.
+      this.logger.info(
+        `Hold ${this.activeHoldId} was still active when the connection was closed. Cleanup will occur once a new hold is acquired.`
+      );
     }
 
     if (clientIds.size == 0) {

@@ -25,7 +25,15 @@ export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
 export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> {
   init(): Promise<void>;
   close(): Promise<void>;
+  /**
+   * Marks the connection as in-use by a certain actor.
+   * @returns A hold ID which can be used to release the hold.
+   */
   markHold(): Promise<string>;
+  /**
+   * Releases a hold on the connection.
+   * @param holdId The hold ID to release.
+   */
   releaseHold(holdId: string): Promise<void>;
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   executeRaw(sql: string, params?: any[]): Promise<any[][]>;
