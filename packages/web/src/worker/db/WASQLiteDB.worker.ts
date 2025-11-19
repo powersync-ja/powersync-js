@@ -6,46 +6,19 @@ import '@journeyapps/wa-sqlite';
 import { createBaseLogger, createLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
-import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
-import {
-  ResolvedWASQLiteOpenFactoryOptions,
-  WorkerDBOpenerOptions
-} from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
+import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
+import { SharedDBWorkerConnection, SharedWASQLiteConnection } from './SharedWASQLiteConnection';
+import { WorkerWASQLiteConnection, proxyWASQLiteConnection } from './WorkerWASQLiteConnection';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
 const logger = createLogger('db-worker');
 
-/**
- * Keeps track of open DB connections and the clients which
- * are using it.
- */
-type SharedDBWorkerConnection = {
-  clientIds: Set<number>;
-  db: AsyncDatabaseConnection;
-};
-
 const DBMap = new Map<string, SharedDBWorkerConnection>();
 const OPEN_DB_LOCK = 'open-wasqlite-db';
 
 let nextClientId = 1;
-
-const openWorkerConnection = async (options: ResolvedWASQLiteOpenFactoryOptions): Promise<AsyncDatabaseConnection> => {
-  const connection = new WASqliteConnection(options);
-  return {
-    init: Comlink.proxy(() => connection.init()),
-    getConfig: Comlink.proxy(() => connection.getConfig()),
-    close: Comlink.proxy(() => connection.close()),
-    execute: Comlink.proxy(async (sql: string, params?: any[]) => connection.execute(sql, params)),
-    executeRaw: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeRaw(sql, params)),
-    executeBatch: Comlink.proxy(async (sql: string, params?: any[]) => connection.executeBatch(sql, params)),
-    registerOnTableChange: Comlink.proxy(async (callback) => {
-      // Proxy the callback remove function
-      return Comlink.proxy(await connection.registerOnTableChange(callback));
-    })
-  };
-};
 
 const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDatabaseConnection> => {
   // Prevent multiple simultaneous opens from causing race conditions
@@ -57,38 +30,36 @@ const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDataba
 
     if (!DBMap.has(dbFilename)) {
       const clientIds = new Set<number>();
-      const connection = await openWorkerConnection(options);
+      // This format returns proxy objects for function callbacks
+      const connection = new WorkerWASQLiteConnection(options);
       await connection.init();
+
+      connection.registerListener({
+        holdOverwritten: async () => {
+          /**
+           * The previous hold has been overwritten, without being released.
+           * we need to cleanup any resources associated with it.
+           * We can perform a rollback to release any potential transactions that were started.
+           */
+          await connection.execute('ROLLBACK').catch(() => {});
+        }
+      });
+
       DBMap.set(dbFilename, {
         clientIds,
         db: connection
       });
     }
 
-    const dbEntry = DBMap.get(dbFilename)!;
-    dbEntry.clientIds.add(clientId);
-    const { db } = dbEntry;
+    // Associates this clientId with the shared connection entry
+    const sharedConnection = new SharedWASQLiteConnection({
+      dbMap: DBMap,
+      dbFilename,
+      clientId,
+      logger
+    });
 
-    const wrappedConnection = {
-      ...db,
-      init: Comlink.proxy(async () => {
-        // the init has been done automatically
-      }),
-      close: Comlink.proxy(async () => {
-        const { clientIds } = dbEntry;
-        logger.debug(`Close requested from client ${clientId} of ${[...clientIds]}`);
-        clientIds.delete(clientId);
-        if (clientIds.size == 0) {
-          logger.debug(`Closing connection to ${dbFilename}.`);
-          DBMap.delete(dbFilename);
-          return db.close?.();
-        }
-        logger.debug(`Connection to ${dbFilename} not closed yet due to active clients.`);
-        return;
-      })
-    };
-
-    return Comlink.proxy(wrappedConnection);
+    return proxyWASQLiteConnection(sharedConnection);
   });
 };
 

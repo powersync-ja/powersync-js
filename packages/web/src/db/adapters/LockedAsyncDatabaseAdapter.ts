@@ -1,14 +1,14 @@
 import {
-  type ILogger,
   BaseObserver,
-  createLogger,
   DBAdapter,
   DBAdapterListener,
   DBGetUtils,
   DBLockOptions,
   LockContext,
   QueryResult,
-  Transaction
+  Transaction,
+  createLogger,
+  type ILogger
 } from '@powersync/common';
 import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
@@ -125,7 +125,7 @@ export class LockedAsyncDatabaseAdapter
     if (false == this._db instanceof WorkerWrappedAsyncDatabaseConnection) {
       throw new Error(`Only worker connections can be shared`);
     }
-    return this._db.shareConnection();
+    return (this._db as WorkerWrappedAsyncDatabaseConnection).shareConnection();
   }
 
   /**
@@ -221,13 +221,22 @@ export class LockedAsyncDatabaseAdapter
         }, timeoutMs)
       : null;
 
-    return getNavigatorLocks().request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, () => {
-      this.pendingAbortControllers.delete(abortController);
-      if (timoutId) {
-        clearTimeout(timoutId);
+    return getNavigatorLocks().request(
+      `db-lock-${this._dbIdentifier}`,
+      { signal: abortController.signal },
+      async () => {
+        this.pendingAbortControllers.delete(abortController);
+        if (timoutId) {
+          clearTimeout(timoutId);
+        }
+        const holdId = await this.baseDB.markHold();
+        try {
+          return await callback();
+        } finally {
+          await this.baseDB.releaseHold(holdId);
+        }
       }
-      return callback();
-    });
+    );
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {

@@ -25,6 +25,8 @@ export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
 export interface AsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions> {
   init(): Promise<void>;
   close(): Promise<void>;
+  markHold(): Promise<string>;
+  releaseHold(holdId: string): Promise<void>;
   execute(sql: string, params?: any[]): Promise<ProxiedQueryResult>;
   executeRaw(sql: string, params?: any[]): Promise<any[][]>;
   executeBatch(sql: string, params?: any[]): Promise<ProxiedQueryResult>;

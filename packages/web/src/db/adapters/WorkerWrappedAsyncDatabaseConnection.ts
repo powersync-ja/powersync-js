@@ -60,6 +60,14 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     this.notifyRemoteClosed!.abort();
   }
 
+  markHold(): Promise<string> {
+    return this.baseConnection.markHold();
+  }
+
+  releaseHold(holdId: string): Promise<void> {
+    return this.baseConnection.releaseHold(holdId);
+  }
+
   private withRemote<T>(workerPromise: () => Promise<T>): Promise<T> {
     const controller = this.notifyRemoteClosed;
     if (controller) {
