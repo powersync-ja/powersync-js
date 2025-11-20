@@ -1,6 +1,5 @@
 ---
 '@powersync/common': minor
-'@powersync/node': minor
 '@powersync/react-native': minor
 '@powersync/web': minor
 ---

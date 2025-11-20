@@ -1982,6 +1982,9 @@ importers:
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
+      event-iterator:
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^29.0.0
@@ -2010,9 +2013,6 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0(encoding@0.1.13)
-      event-iterator:
-        specifier: ^2.0.0
-        version: 2.0.0
       js-logger:
         specifier: ^1.6.1
         version: 1.6.1
