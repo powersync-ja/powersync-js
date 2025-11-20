@@ -1,5 +1,3 @@
-import * as path from 'node:path';
-
 import commonjs from '@rollup/plugin-commonjs';
 import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
@@ -33,7 +31,7 @@ function defineBuild(isNode) {
         })
       ]
     ],
-    external: ['async-mutex', 'bson', 'buffer/', 'event-iterator']
+    external: ['async-mutex', 'bson', 'buffer/']
   };
 }
 
