@@ -16,6 +16,10 @@
 - Updated dependencies [3e4a25c]
   - @powersync/common@1.41.1
 
+Note for Vite users:
+
+This release introduced a regression which requires including `'@powersync/web > event-iterator'` in the Vite `optimizeDeps -> include` config. This regression was fixed in `@powersync/web@1.29.0`.
+
 ## 1.28.0
 
 ### Minor Changes

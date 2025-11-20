@@ -56,7 +56,6 @@
   },
   "dependencies": {
     "async-mutex": "^0.5.0",
-    "buffer": "^6.0.3",
     "event-iterator": "^2.0.0"
   },
   "devDependencies": {
@@ -66,6 +65,7 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@types/node": "^20.5.9",
     "@types/uuid": "^9.0.1",
+    "buffer": "^6.0.3",
     "rollup": "^4.52.5",
     "cross-fetch": "^4.1.0",
     "js-logger": "^1.6.1",
