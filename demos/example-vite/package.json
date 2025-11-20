@@ -10,6 +10,7 @@
     "start": "pnpm build && pnpm preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepare:isolated:test": "pnpm exec playwright install ",
     "test:build": "pnpm build && pnpm test"
   },
   "dependencies": {
