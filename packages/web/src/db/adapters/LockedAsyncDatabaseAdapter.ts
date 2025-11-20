@@ -14,6 +14,8 @@ import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
+import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
+import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
 import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
 
 /**
@@ -48,6 +50,7 @@ export class LockedAsyncDatabaseAdapter
   protected _disposeTableChangeListener: (() => void) | null = null;
   private _config: ResolvedWebSQLOpenOptions | null = null;
   protected pendingAbortControllers: Set<AbortController>;
+  protected requiresHolds: boolean | null;
 
   closing: boolean;
   closed: boolean;
@@ -59,6 +62,7 @@ export class LockedAsyncDatabaseAdapter
     this.pendingAbortControllers = new Set<AbortController>();
     this.closed = false;
     this.closing = false;
+    this.requiresHolds = null;
     // Set the name if provided. We can query for the name if not available yet
     this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {
@@ -107,6 +111,10 @@ export class LockedAsyncDatabaseAdapter
     this._config = await this._db.getConfig();
     await this.registerOnChangeListener(this._db);
     this.iterateListeners((cb) => cb.initialized?.());
+    /**
+     * This is only required for the long-lived shared IndexedDB connections.
+     */
+    this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
   }
 
   getConfiguration(): ResolvedWebSQLOpenOptions {
@@ -229,11 +237,13 @@ export class LockedAsyncDatabaseAdapter
         if (timoutId) {
           clearTimeout(timoutId);
         }
-        const holdId = await this.baseDB.markHold();
+        const holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
         try {
           return await callback();
         } finally {
-          await this.baseDB.releaseHold(holdId);
+          if (holdId) {
+            await this.baseDB.releaseHold(holdId);
+          }
         }
       }
     );
