@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
+import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
 /**
  * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's FileSystem.

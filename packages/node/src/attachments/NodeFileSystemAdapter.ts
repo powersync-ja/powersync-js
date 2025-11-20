@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
+import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
 /**
  * NodeFileSystemAdapter implements LocalStorageAdapter using Node.js filesystem.
@@ -26,7 +26,7 @@ export class NodeFileSystemAdapter implements LocalStorageAdapter {
   async uploadFile(filePath: string, data: ArrayBuffer, options?: { encoding: EncodingType }): Promise<void> {
     const buffer = Buffer.from(data);
     await fs.writeFile(filePath, buffer, {
-      encoding: options.encoding
+      encoding: options?.encoding
     });
   }
 

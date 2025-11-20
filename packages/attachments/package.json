@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -9,6 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
+  "deprecated": "This package has been merged into @powersync/common. Please use @powersync/common instead.",
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",
@@ -30,55 +31,28 @@
         "default": "./dist/index.cjs",
         "types": "./dist/index.d.cts"
       }
-    },
-    "./node": {
-      "node": {
-        "import": {
-          "default": "./lib/node.js",
-          "types": "./lib/node.d.ts"
-        },
-        "require": {
-          "default": "./dist/node.cjs",
-          "types": "./dist/node.d.cts"
-        }
-      },
-      "default": null
     }
   },
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -b && rollup --config",
-    "build:prod": "tsc -b --sourceMap false && rollup --config --sourceMap=false",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": "pnpm build && vitest",
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0",
-    "expo-file-system": "^18.0.0",
-    "base64-arraybuffer": "^1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "expo-file-system": {
-      "optional": true
-    },
-    "base64-arraybuffer": {
-      "optional": true
-    }
+    "@powersync/common": "workspace:^1.42.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/web": "workspace:*",
-    "@powersync/node": "workspace:*",
-    "@powersync/better-sqlite3": "^0.2.0",
     "@types/node": "^20.17.6",
-    "memfs": "^4.50.0",
     "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-top-level-await": "^1.4.4"
   }
 }

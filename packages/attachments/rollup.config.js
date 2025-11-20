@@ -4,53 +4,31 @@ import typescript from '@rollup/plugin-typescript';
 import { dts } from 'rollup-plugin-dts';
 
 /** @type {import('rollup').RollupOptions} */
-export default (commandLineArgs) => {
-  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
-
-  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
-  delete commandLineArgs.sourceMap;
-
-  const plugins = [
-    resolve(),
-    commonjs(),
-    typescript({
-      tsconfig: './tsconfig.json',
-      outDir: 'dist',
-      sourceMap
-    })
-  ];
-
+export default () => {
   return [
     {
       input: 'src/index.ts',
       output: {
         format: 'cjs',
         file: 'dist/index.cjs',
-        sourcemap: sourceMap,
+        sourcemap: true,
         exports: 'named'
       },
-      plugins,
-      external: ['@powersync/common', 'expo-file-system', 'base64-arraybuffer']
+      plugins: [
+        resolve(),
+        commonjs(),
+        typescript({
+          tsconfig: './tsconfig.json',
+          outDir: 'dist',
+          sourceMap: true
+        })
+      ],
+      external: ['@powersync/common']
     },
-    {
-      input: 'src/node.ts',
-      output: {
-        format: 'cjs',
-        file: 'dist/node.cjs',
-        sourcemap: sourceMap,
-        exports: 'named'
-      },
-      plugins,
-      external: ['@powersync/common', 'fs', 'path']
-    },
+    // This is required to avoid https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseESM.md
     {
       input: './lib/index.d.ts',
       output: [{ file: 'dist/index.d.cts', format: 'cjs' }],
-      plugins: [dts()]
-    },
-    {
-      input: './lib/node.d.ts',
-      output: [{ file: 'dist/node.d.cts', format: 'cjs' }],
       plugins: [dts()]
     }
   ];

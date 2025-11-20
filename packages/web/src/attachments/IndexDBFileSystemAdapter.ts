@@ -1,12 +1,12 @@
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '../LocalStorageAdapter.js';
+import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
 /**
  * IndexDBFileSystemStorageAdapter implements LocalStorageAdapter using IndexedDB.
  * Suitable for web browsers and web-based environments.
  */
 export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
-  private dbPromise: Promise<IDBDatabase>;
-  
+  private dbPromise!: Promise<IDBDatabase>; 
+
   constructor(private databaseName: string = 'PowerSyncFiles') {}
 
   async initialize(): Promise<void> {
