@@ -193,6 +193,14 @@ export class WASqliteConnection
     return this._dbP;
   }
 
+  /**
+   * Checks if the database connection is in autocommit mode.
+   * @returns true if in autocommit mode, false if in a transaction
+   */
+  async isAutoCommit(): Promise<boolean> {
+    return this.sqliteAPI.get_autocommit(this.dbP) != 0;
+  }
+
   async markHold(): Promise<string> {
     const previousHoldId = this._holdId;
     this._holdId = `${++this._holdCounter}`;

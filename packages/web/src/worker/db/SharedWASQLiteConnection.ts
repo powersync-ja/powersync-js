@@ -34,6 +34,22 @@ export class SharedWASQLiteConnection implements AsyncDatabaseConnection {
     this.activeHoldId = null;
   }
 
+  protected get logger() {
+    return this.options.logger;
+  }
+
+  protected get dbEntry() {
+    return this.options.dbMap.get(this.options.dbFilename)!;
+  }
+
+  protected get connection() {
+    return this.dbEntry.db;
+  }
+
+  protected get clientIds() {
+    return this.dbEntry.clientIds;
+  }
+
   async init(): Promise<void> {
     // No-op since the connection is already initialized when it was created
   }
@@ -51,20 +67,8 @@ export class SharedWASQLiteConnection implements AsyncDatabaseConnection {
     }
   }
 
-  protected get logger() {
-    return this.options.logger;
-  }
-
-  protected get dbEntry() {
-    return this.options.dbMap.get(this.options.dbFilename)!;
-  }
-
-  protected get connection() {
-    return this.dbEntry.db;
-  }
-
-  protected get clientIds() {
-    return this.dbEntry.clientIds;
+  async isAutoCommit(): Promise<boolean> {
+    return this.connection.isAutoCommit();
   }
 
   /**

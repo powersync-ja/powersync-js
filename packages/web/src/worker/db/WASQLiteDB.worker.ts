@@ -9,7 +9,7 @@ import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnecti
 import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { SharedDBWorkerConnection, SharedWASQLiteConnection } from './SharedWASQLiteConnection';
-import { WorkerWASQLiteConnection, proxyWASQLiteConnection } from './WorkerWASQLiteConnection';
+import { WorkerWASQLiteConnection } from './WorkerWASQLiteConnection';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -59,7 +59,7 @@ const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDataba
       logger
     });
 
-    return proxyWASQLiteConnection(sharedConnection);
+    return Comlink.proxy(sharedConnection);
   });
 };
 

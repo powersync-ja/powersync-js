@@ -61,11 +61,15 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   }
 
   markHold(): Promise<string> {
-    return this.baseConnection.markHold();
+    return this.withRemote(() => this.baseConnection.markHold());
   }
 
   releaseHold(holdId: string): Promise<void> {
-    return this.baseConnection.releaseHold(holdId);
+    return this.withRemote(() => this.baseConnection.releaseHold(holdId));
+  }
+
+  isAutoCommit(): Promise<boolean> {
+    return this.baseConnection.isAutoCommit();
   }
 
   private withRemote<T>(workerPromise: () => Promise<T>): Promise<T> {
@@ -74,6 +78,8 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
       return new Promise((resolve, reject) => {
         if (controller.signal.aborted) {
           reject(new Error('Called operation on closed remote'));
+          // Don't run the operation if we're going to reject
+          return;
         }
 
         function handleAbort() {
