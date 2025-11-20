@@ -69,7 +69,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
   }
 
   isAutoCommit(): Promise<boolean> {
-    return this.baseConnection.isAutoCommit();
+    return this.withRemote(() => this.baseConnection.isAutoCommit());
   }
 
   private withRemote<T>(workerPromise: () => Promise<T>): Promise<T> {
