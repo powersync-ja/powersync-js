@@ -1,5 +1,27 @@
 # @powersync/web
 
+## 1.29.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+- 507197f: Fixes regression introduced in `@powersync/web@1.28.1`. Vite users don't need to include `event-iterator` in included optimized dependencies.
+
+  vite.config.js
+
+  ```diff
+  include: [
+  -   '@powersync/web > event-iterator'
+  ]
+  ```
+
+### Patch Changes
+
+- e88154e: - Fixed an issue where IndexedDB could cause "cannot start a transaction within a transaction" errors.
+  - Improved reconnect logic when multiple tabs are closed.
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+
 ## 1.28.2
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @powersync/react-native
 
+## 1.27.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+
+### Patch Changes
+
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+  - @powersync/react@1.8.2
+
 ## 1.26.2
 
 ### Patch Changes

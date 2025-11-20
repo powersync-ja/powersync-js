@@ -1,5 +1,14 @@
 # @powersync/tanstack-react-query
 
+## 0.1.10
+
+### Patch Changes
+
+- d88fc5f: Added Tanstack useQueries support. See https://tanstack.com/query/latest/docs/framework/react/reference/useQueries for more information.
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+  - @powersync/react@1.8.2
+
 ## 0.1.9
 
 ### Patch Changes

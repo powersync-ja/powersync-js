@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.43.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+
 ## 1.42.0
 
 ### Minor Changes
