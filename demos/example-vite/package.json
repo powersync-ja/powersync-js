@@ -10,7 +10,7 @@
     "start": "pnpm build && pnpm preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:build": "pnpm build"
+    "test:build": "pnpm build && pnpm test"
   },
   "dependencies": {
     "@powersync/web": "workspace:*"

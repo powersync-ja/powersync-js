@@ -31,7 +31,7 @@ function defineBuild(isNode) {
         })
       ]
     ],
-    external: ['async-mutex', 'bson', 'buffer/']
+    external: ['async-mutex', 'bson']
   };
 }
 
