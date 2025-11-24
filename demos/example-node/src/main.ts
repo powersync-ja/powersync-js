@@ -1,5 +1,8 @@
 import { once } from 'node:events';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import repl_factory from 'node:repl';
+import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import {
@@ -10,10 +13,9 @@ import {
   SyncStreamConnectionMethod
 } from '@powersync/node';
 import { exit } from 'node:process';
+import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
-import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
-import { LockContext } from 'node_modules/@powersync/node/dist/bundle.cjs';
 
 const main = async () => {
   const baseLogger = createBaseLogger();
@@ -60,9 +62,19 @@ const main = async () => {
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
+  // Read package version for metadata
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const packageJsonPath = join(__dirname, '..', 'package.json');
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+  const packageVersion = packageJson.version;
+
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
-    clientImplementation: SyncClientImplementation.RUST
+    clientImplementation: SyncClientImplementation.RUST,
+    appMetadata: {
+      package_version: packageVersion
+    }
   });
   // Example using a proxy agent for more control over the connection:
   // const proxyAgent = new (await import('undici')).ProxyAgent({
