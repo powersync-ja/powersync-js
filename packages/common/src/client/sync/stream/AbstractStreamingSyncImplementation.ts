@@ -954,7 +954,14 @@ The next upload iteration will be delayed.`);
       const syncOptions: SyncStreamOptions = {
         path: '/sync/stream',
         abortSignal: abortController.signal,
-        data: instr.request
+        data: {
+          ...instr.request,
+          // FIXME the Rust core does not currently pass metadata through
+          app_metadata: {
+            ...resolvedOptions.appMetadata,
+            ...instr.request.app_metadata
+          }
+        }
       };
 
       if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
