@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.43.1
+
+### Patch Changes
+
+- 9b82867: Fixed issue where using triggers could block syncing after performing uploads.
+
 ## 1.43.0
 
 ### Minor Changes
