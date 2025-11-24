@@ -7,6 +7,8 @@ import { createBaseLogger, DifferentialWatchedQuery, LogLevel, PowerSyncDatabase
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
+declare const APP_VERSION: string;
+
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
 
@@ -70,7 +72,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
       sessionStarted: () => {
         powerSync.connect(connector, {
           appMetadata: {
-            app_version: '1.0.0'
+            app_version: APP_VERSION
           }
         });
       }
