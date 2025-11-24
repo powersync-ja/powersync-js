@@ -1,8 +1,5 @@
 import { once } from 'node:events';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import repl_factory from 'node:repl';
-import { fileURLToPath } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
 import {
@@ -62,18 +59,11 @@ const main = async () => {
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
 
-  // Read package version for metadata
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  const packageJsonPath = join(__dirname, '..', 'package.json');
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-  const packageVersion = packageJson.version;
-
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
     clientImplementation: SyncClientImplementation.RUST,
     appMetadata: {
-      package_version: packageVersion
+      package_version: process.env.npm_package_version || 'unknown'
     }
   });
   // Example using a proxy agent for more control over the connection:
