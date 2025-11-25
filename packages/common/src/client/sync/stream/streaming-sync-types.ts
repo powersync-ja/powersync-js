@@ -90,6 +90,11 @@ export interface StreamingSyncRequest {
    */
   parameters?: Record<string, StreamingSyncRequestParameterType>;
 
+  /**
+   * Application metadata to be included in service logs.
+   */
+  app_metadata?: Record<string, string>;
+
   client_id?: string;
 }
 
