@@ -664,6 +664,16 @@ The next upload iteration will be delayed.`);
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
+
+        // Validate app metadata
+        const invalidMetadata = Object.entries(resolvedOptions.appMetadata).filter(
+          ([_, value]) => typeof value != 'string'
+        );
+        if (invalidMetadata.length > 0) {
+          throw new Error(
+            `Invalid appMetadata provided. Only string values are allowed. Invalid values: ${invalidMetadata.map(([key, value]) => `${key}: ${value}`).join(', ')}`
+          );
+        }
         const clientImplementation = resolvedOptions.clientImplementation;
         this.updateSyncStatus({ clientImplementation });
 

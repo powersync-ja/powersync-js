@@ -58,12 +58,11 @@ const main = async () => {
     logger
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
-
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
     clientImplementation: SyncClientImplementation.RUST,
     appMetadata: {
-      package_version: process.env.npm_package_version || 'unknown'
+      app_version: process.env.npm_package_version || 'unknown'
     }
   });
   // Example using a proxy agent for more control over the connection:
