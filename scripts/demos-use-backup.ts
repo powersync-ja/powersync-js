@@ -77,7 +77,7 @@ const main = () => {
     demoNames = allDemos;
   }
 
-  console.log('Linking demos...');
+  console.log('Unlinking demos...');
   for (const demoName of demoNames) {
     linkDemo(demoName);
   }
