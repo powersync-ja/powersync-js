@@ -487,7 +487,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         });
         lastClient.closeListeners.push(async () => {
           this.logger.info('Aborting open connection because associated tab closed.');
-          await wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
           wrapped.markRemoteClosed();
         });
 
