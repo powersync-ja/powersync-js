@@ -1,8 +1,8 @@
 /**
  * Script to move tsconfig.json's 'references' field into a 'tsconfig.override.json' file.
+ * Breaks if tsconfig has comments. Not fixing it because this script is just for convenience.
  */
 
-import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
