@@ -47,6 +47,7 @@ const linkDemo = async (demoName: string) => {
   console.log(`Linking ${demoName}`);
 
   // Update package.json
+  console.log('\nUpdating packages...');
   const packageJsonPath = path.join(demoSrc, 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
@@ -56,7 +57,7 @@ const linkDemo = async (demoName: string) => {
     for (const dep in deps) {
       const matchingPackage = workspacePackages.find((p) => p.manifest.name === dep);
       if (matchingPackage != undefined && deps[dep] != newPackageVer) {
-        console.log(`   - ${dep}: '${deps[dep]}' => '${newPackageVer}'`);
+        console.log(`- ${dep}: '${deps[dep]}' => '${newPackageVer}'`);
         deps[dep] = newPackageVer;
         changes++;
       }
@@ -65,6 +66,10 @@ const linkDemo = async (demoName: string) => {
 
   if (packageJson.dependencies) {
     updateDeps(packageJson.dependencies);
+  }
+
+  if (packageJson.peerDependencies) {
+    updateDeps(packageJson.devDependencies);
   }
 
   if (packageJson.devDependencies) {
@@ -76,7 +81,32 @@ const linkDemo = async (demoName: string) => {
     fs.copyFileSync(packageJsonPath, packageJsonPath + '.bak');
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
   } else {
-    console.log('   - No changes');
+    console.log('- No changes');
+  }
+
+  // Update tsconfig.json using tsconfig.override.json
+  const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
+  const tsConfigOverridePath = path.join(demoSrc, 'tsconfig.override.json');
+
+  if (fs.existsSync(tsConfigOverridePath)) {
+    const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+    const tsConfigOverride = JSON.parse(fs.readFileSync(tsConfigOverridePath, 'utf8'));
+
+    console.log('\nApplying tsconfig.json overrides');
+
+    changes = 0;
+    for (const entry of Object.entries(tsConfigOverride)) {
+      const [key, value] = entry;
+      console.log(`- '${key}'`);
+      tsConfig[key] = value;
+      changes++;
+    }
+
+    if (changes) {
+      fs.writeFileSync(tsConfigPath, `${JSON.stringify(tsConfig, null, 2)}\n`, 'utf8');
+    } else {
+      console.log('- No changes');
+    }
   }
 };
 
@@ -99,12 +129,12 @@ const main = () => {
   let demoNames: string[];
 
   if (args.length > 0) {
-    const [foundDemos, notFoundDemos] = filterDemos(allDemos, process.argv.slice(2));
+    const [foundDemos, notFoundDemos] = filterDemos(allDemos, args);
 
     if (notFoundDemos.length > 0) {
       console.log('⚠️ Warning: Failed to locate some demos:');
       for (const demo of notFoundDemos) {
-        console.log(`   - ${demo}`);
+        console.log(`- ${demo}`);
       }
     }
 
@@ -113,11 +143,11 @@ const main = () => {
     demoNames = allDemos;
   }
 
-  console.log('Linking demos...');
+  console.log('\nLinking demos...');
   for (const demoName of demoNames) {
     linkDemo(demoName);
   }
-  console.log('Done.');
+  console.log('\nDone.');
 
   if (opts.noInstall) {
     process.exit(0);
@@ -130,7 +160,7 @@ const main = () => {
     console.error(`Error installing packages: ${e}`);
     process.exit(1);
   }
-  console.log('Done.');
+  console.log('\nDone.');
 };
 
 main();
