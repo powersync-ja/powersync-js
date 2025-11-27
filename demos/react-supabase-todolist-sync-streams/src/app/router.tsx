@@ -7,7 +7,7 @@ import TodoListsPage from '@/app/views/todo-lists/page';
 import ViewsLayout from '@/app/views/layout';
 import SQLConsolePage from '@/app/views/sql-console/page';
 import { useSupabase } from '@/components/providers/SystemProvider';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 export const TODO_LISTS_ROUTE = '/views/todo-lists';
 export const TODO_EDIT_ROUTE = '/views/todo-lists/:id';
@@ -16,11 +16,11 @@ export const REGISTER_ROUTE = '/auth/register';
 export const SQL_CONSOLE_ROUTE = '/sql-console';
 
 interface AuthGuardProps {
-  children: JSX.Element;
+  children: ReactNode;
 }
 
 const AuthGuard = ({ children }: AuthGuardProps) => {
-  const connector = useSupabase()
+  const connector = useSupabase();
 
   const navigate = useNavigate();
   React.useEffect(() => {
@@ -39,7 +39,7 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       if (!connector.currentSession) {
         navigate(LOGIN_ROUTE);
       }
-    }
+    };
     if (connector.ready) {
       loginGuard();
     } else {
@@ -50,7 +50,6 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       });
       return () => l?.();
     }
-
   }, []);
   return children;
 };

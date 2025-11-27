@@ -31,23 +31,24 @@
     "node": ">=20.9.0"
   },
   "devDependencies": {
-    "@actions/core": "^1.10.1",
-    "@arethetypeswrong/cli": "^0.18.2",
-    "@changesets/cli": "2.27.2",
-    "@pnpm/workspace.find-packages": "^4.0.2",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-typescript": "^12.1.4",
-    "@vitest/browser": "^3.2.4",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
-    "playwright": "^1.51.0",
-    "prettier": "^3.2.5",
-    "prettier-plugin-embed": "^0.4.15",
-    "prettier-plugin-sql": "^0.18.1",
-    "rollup": "4.14.3",
-    "rollup-plugin-dts": "^6.2.1",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
-  }
+    "@actions/core": "catalog:",
+    "@arethetypeswrong/cli": "catalog:",
+    "@changesets/cli": "catalog:",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
+    "@vitest/browser": "catalog:",
+    "husky": "catalog:",
+    "lint-staged": "catalog:",
+    "playwright": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-embed": "catalog:",
+    "prettier-plugin-sql": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "typescript": "catalog:",
+    "tsx": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@10.21.0+sha512.da3337267e400fdd3d479a6c68079ac6db01d8ca4f67572083e722775a796788a7a9956613749e000fac20d424b594f7a791a5f4e2e13581c5ef947f26968a40"
 }

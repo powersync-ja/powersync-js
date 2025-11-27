@@ -54,23 +54,23 @@
     "test:exports": "attw --pack ."
   },
   "devDependencies": {
-    "@capacitor-community/sqlite": "^7.0.2",
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/docgen": "^0.3.0",
-    "@capacitor/ios": "^7.0.0",
-    "@ionic/eslint-config": "^0.4.0",
-    "@ionic/prettier-config": "^4.0.0",
-    "@ionic/swiftlint-config": "^2.0.0",
-    "eslint": "^8.57.0",
-    "prettier": "^3.4.2",
-    "prettier-plugin-java": "^2.6.6",
-    "rimraf": "^6.0.1",
-    "rollup": "^4.30.1",
-    "swiftlint": "^2.0.0"
+    "@capacitor-community/sqlite": "catalog:",
+    "@capacitor/android": "catalog:",
+    "@capacitor/core": "catalog:",
+    "@capacitor/docgen": "catalog:",
+    "@capacitor/ios": "catalog:",
+    "@ionic/eslint-config": "catalog:",
+    "@ionic/prettier-config": "catalog:",
+    "@ionic/swiftlint-config": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-java": "catalog:",
+    "rimraf": "catalog:",
+    "rollup": "catalog:",
+    "swiftlint": "catalog:"
   },
   "peerDependencies": {
-    "@capacitor-community/sqlite": "^7.0.2",
+    "@capacitor-community/sqlite": "catalog:api",
     "@powersync/web": "workspace:^1.28.2"
   },
   "swiftlint": "@ionic/swiftlint-config",
@@ -85,6 +85,6 @@
     }
   },
   "dependencies": {
-    "async-lock": "^1.4.0"
+    "async-lock": "catalog:"
   }
 }

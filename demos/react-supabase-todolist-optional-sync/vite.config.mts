@@ -34,6 +34,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['powersync-logo.svg', 'supabase-logo.png', 'favicon.ico'],
+      workbox: {
+        maximumFileSizeToCacheInBytes: 3000000
+      },
       manifest: {
         theme_color: '#c44eff',
         background_color: '#c44eff',

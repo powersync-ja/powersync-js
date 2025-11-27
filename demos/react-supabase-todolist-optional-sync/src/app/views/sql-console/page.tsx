@@ -12,7 +12,7 @@ export type LoginFormParams = {
 const DEFAULT_QUERY = 'SELECT * FROM lists';
 
 export default function SQLConsolePage() {
-  const inputRef = React.useRef<HTMLInputElement>();
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
   const { data: querySQLResult } = useQuery(query);
 
@@ -34,7 +34,7 @@ export default function SQLConsolePage() {
     <NavigationPage title="SQL Console">
       <S.MainContainer>
         <S.CenteredGrid container>
-          <S.CenteredGrid item xs={12} md={10}>
+          <S.CenteredGrid size={{ xs: 12, md: 10 }}>
             <TextField
               inputRef={inputRef}
               fullWidth
@@ -48,7 +48,7 @@ export default function SQLConsolePage() {
               }}
             />
           </S.CenteredGrid>
-          <S.CenteredGrid item xs={12} md={2}>
+          <S.CenteredGrid size={{ xs: 12, md: 2 }}>
             <Button
               sx={{ margin: '10px' }}
               variant="contained"
@@ -57,8 +57,7 @@ export default function SQLConsolePage() {
                 if (queryInput) {
                   setQuery(queryInput);
                 }
-              }}
-            >
+              }}>
               Execute Query
             </Button>
           </S.CenteredGrid>

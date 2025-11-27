@@ -44,15 +44,15 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.43.1",
-    "drizzle-orm": "<1.0.0"
+    "drizzle-orm": "catalog:api"
   },
   "devDependencies": {
     "@powersync/web": "workspace:*",
-    "@journeyapps/wa-sqlite": "^1.3.2",
-    "@types/node": "^20.17.6",
-    "drizzle-orm": "^0.44.7",
-    "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "@journeyapps/wa-sqlite": "catalog:",
+    "@types/node": "catalog:",
+    "drizzle-orm": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
+    "vite-plugin-wasm": "catalog:"
   }
 }

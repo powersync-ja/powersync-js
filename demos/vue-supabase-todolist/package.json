@@ -13,27 +13,27 @@
   "dependencies": {
     "@powersync/web": "workspace:*",
     "@powersync/vue": "workspace:*",
-    "@mdi/font": "7.4.47",
-    "@supabase/supabase-js": "^2.39.7",
-    "@vuelidate/core": "^2.0.3",
-    "@vuelidate/validators": "^2.0.4",
-    "vue": "^3.4.21",
-    "vue-router": "4",
-    "vuetify": "3.6.8"
+    "@mdi/font": "catalog:",
+    "@supabase/supabase-js": "catalog:",
+    "@vuelidate/core": "catalog:",
+    "@vuelidate/validators": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "vuetify": "catalog:"
   },
   "devDependencies": {
-    "@swc/core": "~1.6.0",
-    "@types/vuelidate": "^0.7.21",
-    "@vitejs/plugin-vue": "^5.0.4",
-    "sass": "^1.71.1",
-    "typescript": "^5.5.3",
-    "unplugin-fonts": "^1.1.1",
-    "unplugin-vue-components": "^0.26.0",
-    "vite": "^5.2.0",
-    "vite-plugin-pwa": "^0.19.2",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-vuetify": "^2.0.3",
-    "vite-plugin-wasm": "^3.3.0",
-    "vue-tsc": "2.0.6"
+    "@swc/core": "catalog:",
+    "@types/vuelidate": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "sass": "catalog:",
+    "typescript": "catalog:",
+    "unplugin-fonts": "catalog:",
+    "unplugin-vue-components": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "vite-plugin-top-level-await": "catalog:",
+    "vite-plugin-vuetify": "catalog:",
+    "vite-plugin-wasm": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

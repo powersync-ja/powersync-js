@@ -13,7 +13,8 @@ const EntryPage = () => {
     return (
       <S.MainGrid container>
         <p>
-          Syncing down from the backend. This will load indefinitely if you have not set up the connection correctly. Check the console for issues.
+          Syncing down from the backend. This will load indefinitely if you have not set up the connection correctly.
+          Check the console for issues.
         </p>
         <CircularProgress />
       </S.MainGrid>
@@ -39,7 +40,7 @@ const EntryPage = () => {
           <p>You currently have no customers. Please connect PowerSync to your database to see them sync down.</p>
         </S.CenteredGrid>
       ) : (
-        <S.CenteredGrid item xs={12} md={6} lg={5}>
+        <S.CenteredGrid size={{ xs: 12, md: 6, lg: 5 }}>
           <div>
             {customers.map((c) => (
               <ListItem key={c.id}>{c.name}</ListItem>
@@ -51,7 +52,6 @@ const EntryPage = () => {
     </S.MainGrid>
   );
 };
-
 
 namespace S {
   export const CenteredGrid = styled(Grid)`

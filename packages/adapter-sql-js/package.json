@@ -33,15 +33,15 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:^",
-    "async-mutex": "^0.5.0"
+    "async-mutex": "catalog:"
   },
   "devDependencies": {
-    "@powersync/sql-js": "0.0.5",
+    "@powersync/sql-js": "catalog:",
     "@powersync/web": "workspace:*",
-    "@rollup/plugin-alias": "^5.1.0",
-    "@types/sql.js": "^1.4.9",
-    "chance": "^1.1.9",
-    "rollup": "4.14.3",
-    "uuid": "^11.1.0"
+    "@rollup/plugin-alias": "catalog:",
+    "@types/sql.js": "catalog:",
+    "chance": "catalog:",
+    "rollup": "catalog:",
+    "uuid": "catalog:"
   }
 }

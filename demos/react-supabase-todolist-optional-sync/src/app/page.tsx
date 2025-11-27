@@ -45,7 +45,7 @@ export default function EntryPage() {
 
   return (
     <S.MainGrid container>
-      <S.CenteredGrid item xs={12} md={6} lg={5}>
+      <S.CenteredGrid size={{ xs: 12, md: 6, lg: 5 }}>
         <CircularProgress />
       </S.CenteredGrid>
     </S.MainGrid>

@@ -128,7 +128,7 @@ export default function SyncDiagnosticsPage() {
 
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
-    { field: 'tables', headerName: 'Table(s)', flex: 1, type: 'text' },
+    { field: 'tables', headerName: 'Table(s)', flex: 1, type: 'string' },
     { field: 'row_count', headerName: 'Row Count', flex: 1, type: 'number' },
     { field: 'downloaded_operations', headerName: 'Downloaded Operations', flex: 1, type: 'number' },
     { field: 'total_operations', headerName: 'Total Operations', flex: 1, type: 'number' },
@@ -137,27 +137,27 @@ export default function SyncDiagnosticsPage() {
       headerName: 'Data Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: formatBytes
     },
     {
       field: 'metadata_size',
       headerName: 'Metadata Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: formatBytes
     },
     {
       field: 'download_size',
       headerName: 'Downloaded Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: formatBytes
     },
     {
       field: 'status',
       headerName: 'Status',
       flex: 1,
-      type: 'text'
+      type: 'string'
     }
   ];
 
@@ -194,7 +194,7 @@ export default function SyncDiagnosticsPage() {
       headerName: 'Data Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: formatBytes
     }
   ];
 
@@ -325,7 +325,7 @@ function StreamsState() {
 function StreamsGrid(props: { streams: SyncStreamStatus[] }) {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Stream name', flex: 2 },
-    { field: 'parameters', headerName: 'Parameters', flex: 3, type: 'text' },
+    { field: 'parameters', headerName: 'Parameters', flex: 3, type: 'string' },
     { field: 'default', headerName: 'Default', flex: 1, type: 'boolean' },
     { field: 'active', headerName: 'Active', flex: 1, type: 'boolean' },
     { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean' },

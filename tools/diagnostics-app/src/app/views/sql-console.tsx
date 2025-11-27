@@ -7,7 +7,7 @@ import { NavigationPage } from '@/components/navigation/NavigationPage';
 const DEFAULT_QUERY = `SELECT name FROM ps_buckets`;
 
 export default function SQLConsolePage() {
-  const inputRef = React.useRef<HTMLInputElement>();
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const [query, setQuery] = React.useState(DEFAULT_QUERY);
   const { data: querySQLResult, isLoading, error } = useQuery(query);
 
@@ -31,7 +31,7 @@ export default function SQLConsolePage() {
     <NavigationPage title="SQL Console">
       <S.MainContainer>
         <S.CenteredGrid container>
-          <S.CenteredGrid item xs={12} md={10}>
+          <S.CenteredGrid size={{ xs: 12, md: 10 }}>
             <TextField
               inputRef={inputRef}
               fullWidth
@@ -47,7 +47,7 @@ export default function SQLConsolePage() {
               helperText={errorMessage}
             />
           </S.CenteredGrid>
-          <S.CenteredGrid item xs={12} md={2}>
+          <S.CenteredGrid size={{ xs: 12, md: 2 }}>
             <Button
               sx={{ margin: '10px' }}
               variant="contained"

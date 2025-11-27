@@ -119,7 +119,7 @@ function ClientParamsPage() {
         <form onSubmit={onSubmit}>
           {params.map(({ key, value, type, error }, idx: number) => (
             <S.CenteredGrid container key={idx}>
-              <S.CenteredGrid item xs={12} md={10}>
+              <S.CenteredGrid size={{ xs: 12, md: 10 }}>
                 <TextField
                   label="Key"
                   value={key}

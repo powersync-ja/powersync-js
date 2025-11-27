@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import os from 'os';
@@ -53,7 +52,13 @@ const ensureTmpDirExists = async () => {
   }
 };
 
-const workspacePackages = await findWorkspacePackages(path.resolve('.'));
+const workspacePackages = new Map<string, string>();
+for (const packageSource of await fs.readdir('packages')) {
+  const packageJson = JSON.parse(await fs.readFile(path.join(packageSource, 'package.json'), 'utf-8'));
+  workspacePackages.set(packageJson.name, packageJson.version);
+}
+
+//const workspacePackages = await findWorkspacePackages(path.resolve('.'));
 
 // Function to update dependencies in package.json
 const updateDependencies = async (packageJsonPath: string) => {
@@ -62,8 +67,8 @@ const updateDependencies = async (packageJsonPath: string) => {
   const updateDeps = async (deps: { [key: string]: string }) => {
     for (const dep in deps) {
       if (deps[dep].startsWith('workspace:')) {
-        const matchingPackage = workspacePackages.find((p) => p.manifest.name == dep);
-        deps[dep] = `^${matchingPackage!.manifest.version!}`;
+        const version = workspacePackages.get(dep);
+        deps[dep] = `^${version!}`;
       }
     }
   };
