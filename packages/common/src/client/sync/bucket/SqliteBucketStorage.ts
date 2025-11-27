@@ -255,7 +255,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       // Nothing to update
       return false;
     }
-    const rs = await this.db.getAll<{ seq: number }>("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+    const rs = await this.db.getAll<{ seq: number }>("SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'");
     if (!rs.length) {
       // Nothing to update
       return false;
@@ -273,7 +273,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         return false;
       }
 
-      const rs = await tx.execute("SELECT seq FROM sqlite_sequence WHERE name = 'ps_crud'");
+      const rs = await tx.execute("SELECT seq FROM main.sqlite_sequence WHERE name = 'ps_crud'");
       if (!rs.rows?.length) {
         // assert isNotEmpty
         throw new Error('SQLite Sequence should not be empty');

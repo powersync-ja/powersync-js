@@ -17,6 +17,7 @@
     "@mui/x-data-grid": "catalog:",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@powersync/common": "workspace:*",
     "@supabase/supabase-js": "catalog:",
     "@tanstack/db": "catalog:",
     "@tanstack/powersync-db-collection": "catalog:",

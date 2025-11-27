@@ -1,17 +1,36 @@
-import { LockContext, QueryResult } from '@powersync/common';
-import { Column, DriverValueDecoder, getTableName, SQL } from 'drizzle-orm';
+import type { LockContext, QueryResult } from '@powersync/common';
+import { Column, DriverValueDecoder, SQL, getTableName } from 'drizzle-orm';
+import type { Cache } from 'drizzle-orm/cache/core';
+import type { WithCacheConfig } from 'drizzle-orm/cache/core/types';
 import { entityKind, is } from 'drizzle-orm/entity';
 import type { Logger } from 'drizzle-orm/logger';
 import { fillPlaceholders, type Query } from 'drizzle-orm/sql/sql';
 import { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import type { SelectedFieldsOrdered } from 'drizzle-orm/sqlite-core/query-builders/select.types';
 import {
+  SQLitePreparedQuery,
   type PreparedQueryConfig as PreparedQueryConfigBase,
-  type SQLiteExecuteMethod,
-  SQLitePreparedQuery
+  type SQLiteExecuteMethod
 } from 'drizzle-orm/sqlite-core/session';
 
 type PreparedQueryConfig = Omit<PreparedQueryConfigBase, 'statement' | 'run'>;
+
+/**
+ * Callback which uses a LockContext for database operations.
+ */
+export type LockCallback<T> = (ctx: LockContext) => Promise<T>;
+
+/**
+ * Provider for specific database contexts.
+ * Handlers are provided a context to the provided callback.
+ * This does not necessarily need to acquire a database lock for each call.
+ * Calls might use the same lock context for multiple operations.
+ * The read/write context may relate to a single read OR write context.
+ */
+export type ContextProvider = {
+  useReadContext: <T>(fn: LockCallback<T>) => Promise<T>;
+  useWriteContext: <T>(fn: LockCallback<T>) => Promise<T>;
+};
 
 export class PowerSyncSQLitePreparedQuery<
   T extends PreparedQueryConfig = PreparedQueryConfig
@@ -25,23 +44,35 @@ export class PowerSyncSQLitePreparedQuery<
 }> {
   static readonly [entityKind]: string = 'PowerSyncSQLitePreparedQuery';
 
+  private readOnly = false;
+
   constructor(
-    private db: LockContext,
+    private contextProvider: ContextProvider,
     query: Query,
     private logger: Logger,
     private fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
     private _isResponseInArrayMode: boolean,
-    private customResultMapper?: (rows: unknown[][]) => unknown
+    private customResultMapper?: (rows: unknown[][]) => unknown,
+    cache?: Cache | undefined,
+    queryMetadata?:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig?: WithCacheConfig | undefined
   ) {
-    super('async', executeMethod, query);
+    super('async', executeMethod, query, cache, queryMetadata, cacheConfig);
+    this.readOnly = queryMetadata?.type == 'select';
   }
 
   async run(placeholderValues?: Record<string, unknown>): Promise<QueryResult> {
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
-    const rs = await this.db.execute(this.query.sql, params);
-    return rs;
+    return this.useContext(async (ctx) => {
+      return await ctx.execute(this.query.sql, params);
+    });
   }
 
   async all(placeholderValues?: Record<string, unknown>): Promise<T['all']> {
@@ -49,12 +80,12 @@ export class PowerSyncSQLitePreparedQuery<
     if (!fields && !customResultMapper) {
       const params = fillPlaceholders(query.params, placeholderValues ?? {});
       logger.logQuery(query.sql, params);
-      const rs = await this.db.execute(this.query.sql, params);
-      return rs.rows?._array ?? [];
+      return await this.useContext(async (ctx) => {
+        return await ctx.getAll(this.query.sql, params);
+      });
     }
 
     const rows = (await this.values(placeholderValues)) as unknown[][];
-
     if (customResultMapper) {
       const mapped = customResultMapper(rows) as T['all'];
       return mapped;
@@ -69,7 +100,9 @@ export class PowerSyncSQLitePreparedQuery<
     const { fields, customResultMapper } = this;
     const joinsNotNullableMap = (this as any).joinsNotNullableMap;
     if (!fields && !customResultMapper) {
-      return this.db.get(this.query.sql, params);
+      return this.useContext(async (ctx) => {
+        return await ctx.get(this.query.sql, params);
+      });
     }
 
     const rows = (await this.values(placeholderValues)) as unknown[][];
@@ -90,11 +123,21 @@ export class PowerSyncSQLitePreparedQuery<
     const params = fillPlaceholders(this.query.params, placeholderValues ?? {});
     this.logger.logQuery(this.query.sql, params);
 
-    return await this.db.executeRaw(this.query.sql, params);
+    return await this.useContext(async (ctx) => {
+      return await ctx.executeRaw(this.query.sql, params);
+    });
   }
 
   isResponseInArrayMode(): boolean {
     return this._isResponseInArrayMode;
+  }
+
+  protected useContext<T>(callback: LockCallback<T>): Promise<T> {
+    if (this.readOnly) {
+      return this.contextProvider.useReadContext(callback);
+    } else {
+      return this.contextProvider.useWriteContext(callback);
+    }
   }
 }
 

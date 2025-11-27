@@ -1,4 +1,4 @@
-import { column, Schema, Table, PowerSyncDatabase, createBaseLogger } from '@powersync/web';
+import { PowerSyncDatabase, Schema, Table, column, createBaseLogger } from '@powersync/web';
 
 createBaseLogger().useDefaults();
 
@@ -37,6 +37,19 @@ const openDatabase = async () => {
 
   const result = await PowerSync.getAll('SELECT * FROM customers');
   console.log('contents of customers: ', result);
+
+  // Display customers in the HTML list
+  const customersList = document.getElementById('customers-list');
+  if (customersList) {
+    // Clear existing list items
+    customersList.textContent = '';
+    // Create and append list items
+    result.forEach((customer) => {
+      const listItem = document.createElement('li');
+      listItem.textContent = customer.name || 'Unknown';
+      customersList.appendChild(listItem);
+    });
+  }
 
   console.log(
     `Attempting to connect in order to verify web workers are correctly loaded.

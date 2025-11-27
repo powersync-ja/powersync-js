@@ -1,5 +1,40 @@
 # @powersync/node
 
+## 0.14.3
+
+### Patch Changes
+
+- Updated dependencies [9b82867]
+  - @powersync/common@1.43.1
+
+## 0.14.2
+
+### Patch Changes
+
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+
+## 0.14.1
+
+### Patch Changes
+
+- Updated dependencies [66218b2]
+- Updated dependencies [3af4a2c]
+  - @powersync/common@1.42.0
+
+## 0.14.0
+
+### Minor Changes
+
+- b7a150a: Add support for concurrent read queries with Drizzle.
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- d3808db: Throw when database is used after being closed.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
 ## 0.13.0
 
 ### Minor Changes

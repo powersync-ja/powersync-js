@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "pnpm build && pnpm preview",
-    "test:build": "pnpm build"
+    "prepare:isolated:test": "pnpm exec playwright install ",
+    "test:build": "pnpm build && vitest run"
   },
   "dependencies": {
     "@powersync/web": "workspace:*"
@@ -17,6 +18,9 @@
     "@swc/core": "catalog:",
     "vite": "catalog:",
     "vite-plugin-top-level-await": "catalog:",
-    "vite-plugin-wasm": "catalog:"
+    "vite-plugin-wasm": "catalog:",
+    "@vitest/browser": "catalog:",
+    "playwright": "catalog:",
+    "vitest": "catalog:"
   }
 }

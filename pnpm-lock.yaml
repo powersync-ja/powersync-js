@@ -1546,6 +1546,12 @@ importers:
       '@swc/core':
         specifier: 'catalog:'
         version: 1.15.1(@swc/helpers@0.5.17)
+      '@vitest/browser':
+        specifier: 'catalog:'
+        version: 3.2.4(playwright@1.56.1)(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))(vitest@3.2.4)
+      playwright:
+        specifier: 'catalog:'
+        version: 1.56.1
       vite:
         specifier: 'catalog:'
         version: 7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)
@@ -1555,6 +1561,9 @@ importers:
       vite-plugin-wasm:
         specifier: 'catalog:'
         version: 3.5.0(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.10.0)(@vitest/browser@3.2.4)(jiti@2.4.2)(jsdom@27.1.0)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1)
 
   demos/example-vite-encryption:
     dependencies:
@@ -1668,7 +1677,7 @@ importers:
         version: 1.1.0(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))(workbox-build@7.3.0(@types/babel__core@7.20.5))(workbox-window@7.3.0)
       vite-plugin-top-level-await:
         specifier: 'catalog:'
-        version: 1.6.0(@swc/helpers@0.5.17)(rollup@4.53.2)(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 1.6.0(@swc/helpers@0.5.17)(rollup@2.79.2)(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
       vite-plugin-wasm:
         specifier: 'catalog:'
         version: 3.5.0(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
@@ -2447,6 +2456,9 @@ importers:
       '@mui/x-data-grid':
         specifier: 'catalog:'
         version: 8.17.0(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react@19.2.0))(@mui/material@7.3.5(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@mui/system@7.3.5(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react@19.2.0))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@powersync/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -2461,7 +2473,7 @@ importers:
         version: 0.4.20(typescript@5.9.3)
       '@tanstack/powersync-db-collection':
         specifier: 'catalog:'
-        version: 0.1.3(@powersync/common@1.41.0)(typescript@5.9.3)
+        version: 0.1.3(@powersync/common@packages+common)(typescript@5.9.3)
       '@tanstack/react-db':
         specifier: 'catalog:'
         version: 0.1.43(react@19.2.0)(typescript@5.9.3)
@@ -2583,7 +2595,7 @@ importers:
         version: 1.1.0(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))(workbox-build@7.3.0(@types/babel__core@7.20.5))(workbox-window@7.3.0)
       vite-plugin-top-level-await:
         specifier: 'catalog:'
-        version: 1.6.0(@swc/helpers@0.5.17)(rollup@2.79.2)(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
+        version: 1.6.0(@swc/helpers@0.5.17)(rollup@4.53.2)(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))
       vite-plugin-vuetify:
         specifier: 'catalog:'
         version: 2.1.2(vite@7.2.2(@types/node@24.10.0)(jiti@2.4.2)(less@4.4.0)(lightningcss@1.30.1)(sass@1.93.3)(terser@5.44.1)(tsx@4.20.6)(yaml@2.8.1))(vue@3.5.24(typescript@5.9.3))(vuetify@3.10.9)
@@ -2804,7 +2816,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.28.0
+        specifier: workspace:^1.28.2
         version: link:../web
       async-lock:
         specifier: 'catalog:'
@@ -2861,9 +2873,6 @@ importers:
       buffer:
         specifier: 'catalog:'
         version: 6.0.3
-      event-iterator:
-        specifier: 'catalog:'
-        version: 2.0.0
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: 'catalog:'
@@ -2886,6 +2895,9 @@ importers:
       cross-fetch:
         specifier: 'catalog:'
         version: 4.1.0(encoding@0.1.13)
+      event-iterator:
+        specifier: 'catalog:'
+        version: 2.0.0
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1
@@ -2902,7 +2914,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.41.0
+        specifier: workspace:^1.43.1
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
@@ -2930,7 +2942,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.41.0
+        specifier: workspace:^1.43.1
         version: link:../common
       kysely:
         specifier: 'catalog:'
@@ -7712,9 +7724,6 @@ packages:
 
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
-
-  '@powersync/common@1.41.0':
-    resolution: {integrity: sha512-N5Tpp2QU0RnP9eEDu+/Ok/IccSk8sNxnCBQgByEHg+DAHvSeSpIFe4nDSZwaRJrcltKi/FMzzjSIBjFrtsUz/g==}
 
   '@powersync/sql-js@0.0.5':
     resolution: {integrity: sha512-+rjUyEzwQIM51dJSbw5bpWyquwiHa5Pyu0Pb6oXhddfxhvuLHMWEM/+bN9em2LkFZ/jtLI9HBCcCsOORDeL5hg==}
@@ -25858,7 +25867,7 @@ snapshots:
       wrap-ansi: 7.0.0
       ws: 8.18.3
     optionalDependencies:
-      expo-router: 6.0.14(f271545495243dddde67512908d52e4e)
+      expo-router: 6.0.14(2e65783d36071939d14870c704dc73f4)
       react-native: 0.82.1(@babel/core@7.28.5)(@react-native-community/cli@20.0.2(typescript@5.9.3))(@react-native/metro-config@0.82.1(@babel/core@7.28.5))(@types/react@19.2.2)(react@19.2.0)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
@@ -28297,10 +28306,6 @@ snapshots:
   '@polka/url@1.0.0-next.29': {}
 
   '@popperjs/core@2.11.8': {}
-
-  '@powersync/common@1.41.0':
-    dependencies:
-      js-logger: 1.6.1
 
   '@powersync/sql-js@0.0.5': {}
 
@@ -30962,9 +30967,9 @@ snapshots:
 
   '@tanstack/pacer@0.1.0': {}
 
-  '@tanstack/powersync-db-collection@0.1.3(@powersync/common@1.41.0)(typescript@5.9.3)':
+  '@tanstack/powersync-db-collection@0.1.3(@powersync/common@packages+common)(typescript@5.9.3)':
     dependencies:
-      '@powersync/common': 1.41.0
+      '@powersync/common': link:packages/common
       '@standard-schema/spec': 1.0.0
       '@tanstack/db': 0.4.20(typescript@5.9.3)
       '@tanstack/store': 0.8.0

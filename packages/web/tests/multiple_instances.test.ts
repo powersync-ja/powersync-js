@@ -3,26 +3,31 @@ import {
   createBaseLogger,
   createLogger,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  DEFAULT_STREAMING_SYNC_OPTIONS,
   SqliteBucketStorage,
   SyncStatus
 } from '@powersync/common';
 import {
+  OpenAsyncDatabaseConnection,
   SharedWebStreamingSyncImplementation,
   SharedWebStreamingSyncImplementationOptions,
+  WASqliteConnection,
   WebRemote
 } from '@powersync/web';
-
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import * as Comlink from 'comlink';
+import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
+import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { TestConnector } from './utils/MockStreamOpenFactory';
 import { generateTestDb, testSchema } from './utils/testDb';
+
+const DB_FILENAME = 'test-multiple-instances.db';
 
 describe('Multiple Instances', { sequential: true }, () => {
   const openDatabase = () =>
     generateTestDb({
       database: {
-        dbFilename: `test-multiple-instances.db`
+        dbFilename: DB_FILENAME
       },
       schema: testSchema
     });
@@ -97,6 +102,106 @@ describe('Multiple Instances', { sequential: true }, () => {
 
     // Create an asset on the first connection
     await createAsset(powersync2);
+  });
+
+  it('should handled interrupted transactions', { timeout: Infinity }, async () => {
+    //Create a shared PowerSync database. We'll just use this for internally managing connections.
+    const powersync = openDatabase();
+    await powersync.init();
+
+    // Now get a shared connection to the same database
+    const webAdapter = powersync.database as WebDBAdapter;
+
+    // Allow us to share the connection. This is what shared sync workers will use.
+    const shared = await webAdapter.shareConnection();
+    const config = webAdapter.getConfiguration();
+    const opener = Comlink.wrap<OpenAsyncDatabaseConnection>(shared.port);
+
+    // Open up a shared connection
+    const initialSharedConnection = (await opener(config)) as Comlink.Remote<WASqliteConnection>;
+    onTestFinished(async () => {
+      await initialSharedConnection.close();
+    });
+
+    // This will simulate another subsequent shared connection
+    const subsequentSharedConnection = (await opener(config)) as Comlink.Remote<WASqliteConnection>;
+    onTestFinished(async () => {
+      await subsequentSharedConnection.close();
+    });
+
+    // In the beginning, we should not be in a transaction
+    const isAutoCommit = await initialSharedConnection.isAutoCommit();
+    // Should be true initially
+    expect(isAutoCommit).true;
+
+    // Now we'll simulate the locked connections which are used by the shared sync worker
+    const wrappedInitialSharedConnection = new WorkerWrappedAsyncDatabaseConnection({
+      baseConnection: initialSharedConnection,
+      identifier: DB_FILENAME,
+      remoteCanCloseUnexpectedly: true,
+      remote: opener
+    });
+
+    // Wrap the second connection in a locked adapter, this simulates the actual use case
+    const lockedInitialConnection = new LockedAsyncDatabaseAdapter({
+      name: DB_FILENAME,
+      openConnection: async () => wrappedInitialSharedConnection
+    });
+
+    // Allows us to unblock a transaction which is awaiting a promise
+    let unblockTransaction: (() => void) | undefined;
+
+    // Start a transaction that will be interrupted
+    const transactionPromise = lockedInitialConnection.writeTransaction(async (tx) => {
+      // Transaction should be started now
+
+      // Wait till we are unblocked. Keep this transaction open.
+      await new Promise<void>((resolve) => {
+        unblockTransaction = resolve;
+      });
+
+      // This should throw if the db was closed
+      await tx.get('SELECT 1');
+    });
+
+    // Wait for the transaction to have started
+    await vi.waitFor(() => expect(unblockTransaction).toBeDefined(), { timeout: 2000 });
+
+    // Since we're in a transaction from above
+    expect(await initialSharedConnection.isAutoCommit()).false;
+
+    // The in-use connection should be closed now
+    // This simulates a tab being closed.
+    await wrappedInitialSharedConnection.close();
+    wrappedInitialSharedConnection.markRemoteClosed();
+
+    // The transaction should be unblocked now
+    unblockTransaction?.();
+
+    // Since we closed while in the transaction, the execution call should have thrown
+    await expect(transactionPromise).rejects.toThrow('Called operation on closed remote');
+
+    // It will still be false until we request a new hold
+    // Requesting a new hold will cleanup the previous transaction.
+    expect(await subsequentSharedConnection.isAutoCommit()).false;
+
+    // Allows us to simulate a new locked shared connection.
+    const lockedSubsequentConnection = new LockedAsyncDatabaseAdapter({
+      name: DB_FILENAME,
+      openConnection: async () =>
+        new WorkerWrappedAsyncDatabaseConnection({
+          baseConnection: subsequentSharedConnection,
+          identifier: DB_FILENAME,
+          remoteCanCloseUnexpectedly: true,
+          remote: opener
+        })
+    });
+
+    // Starting a new transaction should work cleanup the old and work as expected
+    await lockedSubsequentConnection.writeTransaction(async (tx) => {
+      await tx.get('SELECT 1');
+      expect(await subsequentSharedConnection.isAutoCommit()).false;
+    });
   });
 
   it('should watch table changes between instances', async () => {

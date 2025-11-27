@@ -7,7 +7,8 @@ import {
   DiffTriggerOperation,
   TrackDiffOptions,
   TriggerManager,
-  TriggerRemoveCallback
+  TriggerRemoveCallback,
+  WithDiffOptions
 } from './TriggerManager.js';
 
 export type TriggerManagerImplOptions = {
@@ -117,6 +118,7 @@ export class TriggerManagerImpl implements TriggerManager {
       await hooks?.beforeCreate?.(tx);
       await tx.execute(/* sql */ `
         CREATE TEMP TABLE ${destination} (
+          operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
           id TEXT,
           operation TEXT,
           timestamp TEXT,
@@ -243,17 +245,20 @@ export class TriggerManagerImpl implements TriggerManager {
             const callbackResult = await options.onChange({
               ...tx,
               destinationTable: destination,
-              withDiff: async <T>(query, params) => {
+              withDiff: async <T>(query, params, options?: WithDiffOptions) => {
                 // Wrap the query to expose the destination table
+                const operationIdSelect = options?.castOperationIdAsText
+                  ? 'id, operation, CAST(operation_id AS TEXT) as operation_id, timestamp, value, previous_value'
+                  : '*';
                 const wrappedQuery = /* sql */ `
                   WITH
                     DIFF AS (
                       SELECT
-                        *
+                        ${operationIdSelect}
                       FROM
                         ${destination}
                       ORDER BY
-                        timestamp ASC
+                        operation_id ASC
                     ) ${query}
                 `;
                 return tx.getAll<T>(wrappedQuery, params);
@@ -267,13 +272,14 @@ export class TriggerManagerImpl implements TriggerManager {
                         id,
                         ${contextColumns.length > 0
                     ? `${contextColumns.map((col) => `json_extract(value, '$.${col}') as ${col}`).join(', ')},`
-                    : ''} operation as __operation,
+                    : ''} operation_id as __operation_id,
+                        operation as __operation,
                         timestamp as __timestamp,
                         previous_value as __previous_value
                       FROM
                         ${destination}
                       ORDER BY
-                        __timestamp ASC
+                        __operation_id ASC
                     ) ${query}
                 `;
                 return tx.getAll<T>(wrappedQuery, params);

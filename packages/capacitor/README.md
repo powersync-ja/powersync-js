@@ -82,7 +82,7 @@ const db = new PowerSyncDatabase({
 
 - Encryption for native mobile platforms is not yet supported.
 - `PowerSyncDatabase.executeRaw` does not support results where multiple columns would have the same name in SQLite
-- `PowerSyncDatabase.execute` has limited support on Android. The SQLCipher Android driver exposes queries and executions as separate APIs, so there is no single method that handles both. While `PowerSyncDatabase.execute` accepts both, on Android we treat a statement as a query only when the SQL starts with `select` (case-insensitive).
+- `PowerSyncDatabase.execute` has limited support on Android. The SQLCipher Android driver exposes queries and executions as separate APIs, so there is no single method that handles both. While `PowerSyncDatabase.execute` accepts both, on Android we treat a statement as a query only when the SQL starts with `select` (case-insensitive). Queries such as `INSERT into customers (id, name) VALUES (uuid(), 'name') RETURNING *` do not work on Android.
 - Multiple tab support is not available for native Android and iOS targets. If you're not opening a second webview in your native app using something like `@jackobo/capacitor-webview`, you are unaffected by this.
 
 ## Examples

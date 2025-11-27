@@ -1,5 +1,13 @@
 # @powersync/kysely-driver
 
+## 1.3.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
 ## 1.3.0
 
 ### Minor Changes
