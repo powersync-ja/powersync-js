@@ -322,6 +322,22 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       });
 
       const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
+
+      /**
+       * If the current database adapter is the one that is being closed, we need to disconnect from the backend.
+       * We can disconnect in the portMutex lock. This ensures the disconnect is not affected by potential other
+       * connect operations coming from other tabs.
+       */
+      if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
+        this.logger.debug('disconnecting due to closed database', shouldReconnect);
+        this.dbAdapter = null;
+        // Unconditionally close the connection because the database it's writing to has just been closed.
+        // The connection has been closed previously, this might throw. We should be able to ignore it.
+        await this.connectionManager
+          .disconnect()
+          .catch((ex) => this.logger.warn('Error while disconnecting. Will attempt to reconnect.', ex));
+      }
+
       return {
         shouldReconnect,
         trackedPort
@@ -337,19 +353,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       await closeListener();
     }
 
-    if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
-      // Unconditionally close the connection because the database it's writing to has just been closed.
-      // The connection has been closed previously, this might throw. We should be able to ignore it.
-      await this.connectionManager
-        .disconnect()
-        .catch((ex) => this.logger.warn('Error while disconnecting. Will attempt to reconnect.', ex));
-
-      // Clearing the adapter will result in a new one being opened in connect
-      this.dbAdapter = null;
-
-      if (shouldReconnect) {
-        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
-      }
+    if (shouldReconnect) {
+      await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
     }
 
     // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
@@ -487,7 +492,12 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         });
         lastClient.closeListeners.push(async () => {
           this.logger.info('Aborting open connection because associated tab closed.');
-          await wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+          /**
+           * Don't await this close operation. It might never resolve if the tab is closed.
+           * We run the close operation first, before marking the remote as closed. This gives the database some chance
+           * to close the connection.
+           */
+          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
           wrapped.markRemoteClosed();
         });
 

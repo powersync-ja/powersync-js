@@ -6,16 +6,16 @@ import {
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation';
-import { DEFAULT_CACHE_SIZE_KB, resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
+import { WorkerClient } from '../../worker/sync/WorkerClient';
 import { WebDBAdapter } from '../adapters/WebDBAdapter';
+import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
-import { WorkerClient } from '../../worker/sync/WorkerClient';
-import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -160,6 +160,21 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
 
+    // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
+    // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
+    // to free resources associated with this tab.
+    // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
+    getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
+      if (!this.abortOnClose.signal.aborted) {
+        // Awaiting here ensures the worker is waiting for the lock
+        await this.syncManager.addLockBasedCloseSignal(lock!.name);
+
+        await new Promise<void>((r) => {
+          this.abortOnClose.signal.onabort = () => r();
+        });
+      }
+    });
+
     this.isInitialized = this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
@@ -190,19 +205,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * This performs bi-directional method calling.
      */
     Comlink.expose(this.clientProvider, this.messagePort);
-
-    // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
-    // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
-    // to free resources associated with this tab.
-    getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-      if (!this.abortOnClose.signal.aborted) {
-        this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-        await new Promise<void>((r) => {
-          this.abortOnClose.signal.onabort = () => r();
-        });
-      }
-    });
   }
 
   /**
