@@ -20,7 +20,11 @@ const config: UserConfigExport = {
        */
       '@powersync/web': path.resolve(__dirname, './lib/src'),
       // https://jira.mongodb.org/browse/NODE-5773
-      bson: require.resolve('bson')
+      bson: require.resolve('bson'),
+      // Mock WebRemote to throw 401 errors for all HTTP requests in tests
+      '../../db/sync/WebRemote': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts'),
+      // Also handle the case where it's imported from the worker context
+      '@powersync/web/src/db/sync/WebRemote': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts')
     }
   },
   worker: {
@@ -62,7 +66,17 @@ const config: UserConfigExport = {
         // {
         //   browser: 'webkit'
         // }
-      ]
+      ],
+      // Disable private browsing mode for WebKit
+      // This allows persistent storage (IndexedDB, localStorage, etc.) to work properly
+      providerOptions: {
+        webkit: {
+          launch: {
+            // WebKit-specific launch options
+          },
+          context: {}
+        }
+      }
     }
   }
 };

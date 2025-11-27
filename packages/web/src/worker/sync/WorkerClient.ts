@@ -1,4 +1,6 @@
+import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
+import { getNavigatorLocks } from '../../shared/navigator';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
@@ -6,8 +8,6 @@ import {
   SharedSyncInitOptions,
   WrappedSyncPort
 } from './SharedSyncImplementation';
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
-import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * A client to the shared sync worker.
@@ -21,7 +21,9 @@ export class WorkerClient {
   constructor(
     private readonly sync: SharedSyncImplementation,
     private readonly port: MessagePort
-  ) {}
+  ) {
+    Comlink.expose(this, this.port);
+  }
 
   async initialize() {
     /**
@@ -36,7 +38,6 @@ export class WorkerClient {
     });
 
     this.resolvedPort = await this.sync.addPort(this.port);
-    Comlink.expose(this, this.port);
   }
 
   private async removePort() {
