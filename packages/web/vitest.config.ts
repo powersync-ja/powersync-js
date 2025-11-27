@@ -54,11 +54,11 @@ const config: UserConfigExport = {
        */
       isolate: true,
       provider: 'playwright',
-      headless: false,
+      headless: true,
       instances: [
-        {
-          browser: 'chromium'
-        }
+        // {
+        //   browser: 'chromium'
+        // },
         // {
         //   browser: 'firefox'
         // }
@@ -66,7 +66,17 @@ const config: UserConfigExport = {
         // {
         //   browser: 'webkit'
         // }
-      ]
+      ],
+      // Disable private browsing mode for WebKit
+      // This allows persistent storage (IndexedDB, localStorage, etc.) to work properly
+      providerOptions: {
+        webkit: {
+          launch: {
+            // WebKit-specific launch options
+          },
+          context: {}
+        }
+      }
     }
   }
 };
