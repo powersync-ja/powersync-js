@@ -56,9 +56,9 @@ const config: UserConfigExport = {
       provider: 'playwright',
       headless: true,
       instances: [
-        // {
-        //   browser: 'chromium'
-        // },
+        {
+          browser: 'chromium'
+        }
         // {
         //   browser: 'firefox'
         // }
