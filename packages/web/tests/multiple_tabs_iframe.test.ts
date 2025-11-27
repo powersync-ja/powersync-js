@@ -372,7 +372,8 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       const tabsToKeep = tabs.slice(0, halfCount);
 
       // Close half the tabs simultaneously (without proper cleanup)
-      const closePromises = tabsToClose.map((tab) => tab.cleanup());
+      // Do this in reverse order to ensure the last connected tab is closed first.
+      const closePromises = tabsToClose.reverse().map((tab) => tab.cleanup());
       await Promise.all(closePromises);
 
       // Verify closed tabs are removed
@@ -449,7 +450,6 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       await vi.waitFor(
         async () => {
           const credentialsFetchCount = await newTab.getCredentialsFetchCount();
-          console.log('credentialsFetchCount', credentialsFetchCount);
           expect(
             credentialsFetchCount,
             'The new client should have been asked for credentials by the shared sync worker. ' +
