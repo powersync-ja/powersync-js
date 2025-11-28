@@ -700,8 +700,8 @@ When the limit is reached, the oldest archived attachments are permanently delet
 
 See the following demo applications in this repository:
 
-- **[react-supabase-todolist](../../../../demos/react-supabase-todolist)** - React web app with Supabase Storage integration
 - **[react-native-supabase-todolist](../../../../demos/react-native-supabase-todolist)** - React Native mobile app with attachment support
+- **[react-native-web-supabase-todolist](../../../../demos/react-native-web-supabase-todolist)** - React Native web app with Supabase Storage integration
 
 Each demo shows a complete implementation including:
 - Schema setup
