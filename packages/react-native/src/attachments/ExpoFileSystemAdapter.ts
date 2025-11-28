@@ -1,9 +1,9 @@
-import * as FileSystem from 'expo-file-system';
+import { getInfoAsync, makeDirectoryAsync, deleteAsync, writeAsStringAsync, readAsStringAsync, documentDirectory } from 'expo-file-system';
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
 import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
 /**
- * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's FileSystem.
+ * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's 
  * Suitable for React Native applications using Expo or Expo modules.
  */
 export class ExpoFileSystemAdapter implements LocalStorageAdapter {
@@ -11,20 +11,20 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
 
   constructor(storageDirectory?: string) {
     // Default to a subdirectory in the document directory
-    this.storageDirectory = storageDirectory ?? `${FileSystem.documentDirectory}attachments/`;
+    this.storageDirectory = storageDirectory ?? `${documentDirectory}attachments/`;
   }
 
   async initialize(): Promise<void> {
-    const dirInfo = await FileSystem.getInfoAsync(this.storageDirectory);
+    const dirInfo = await getInfoAsync(this.storageDirectory);
     if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(this.storageDirectory, { intermediates: true });
+      await makeDirectoryAsync(this.storageDirectory, { intermediates: true });
     }
   }
 
   async clear(): Promise<void> {
-    const dirInfo = await FileSystem.getInfoAsync(this.storageDirectory);
+    const dirInfo = await getInfoAsync(this.storageDirectory);
     if (dirInfo.exists) {
-      await FileSystem.deleteAsync(this.storageDirectory);
+      await deleteAsync(this.storageDirectory);
     }
   }
 
@@ -42,8 +42,8 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
     if (typeof data === 'string') {
       // Handle string data (typically base64 or UTF8)
       const encoding = options?.encoding ?? EncodingType.Base64;
-      await FileSystem.writeAsStringAsync(filePath, data, {
-        encoding: encoding === EncodingType.Base64 ? FileSystem.EncodingType.Base64 : FileSystem.EncodingType.UTF8
+      await writeAsStringAsync(filePath, data, {
+        encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8
       });
       
       // Calculate size based on encoding
@@ -58,8 +58,8 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
     } else {
       // Handle ArrayBuffer data
       const base64 = encodeBase64(data);
-      await FileSystem.writeAsStringAsync(filePath, base64, {
-        encoding: FileSystem.EncodingType.Base64
+      await writeAsStringAsync(filePath, base64, {
+        encoding: EncodingType.Base64
       });
       size = data.byteLength;
     }
@@ -71,8 +71,8 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
     const encoding = options?.encoding ?? EncodingType.Base64;
     
     // Let the native function throw if file doesn't exist
-    const content = await FileSystem.readAsStringAsync(filePath, {
-      encoding: encoding === EncodingType.Base64 ? FileSystem.EncodingType.Base64 : FileSystem.EncodingType.UTF8
+    const content = await readAsStringAsync(filePath, {
+      encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8
     });
 
     if (encoding === EncodingType.UTF8) {
@@ -86,7 +86,7 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
   }
 
   async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
-    await FileSystem.deleteAsync(filePath).catch((error: any) => {
+    await deleteAsync(filePath).catch((error: any) => {
       // Gracefully ignore file not found errors, throw others
       if (error?.message?.includes('not exist') || error?.message?.includes('ENOENT')) {
         return;
@@ -97,7 +97,7 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
 
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      const info = await FileSystem.getInfoAsync(filePath);
+      const info = await getInfoAsync(filePath);
       return info.exists;
     } catch {
       return false;
@@ -105,10 +105,10 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
   }
 
   async makeDir(path: string): Promise<void> {
-    await FileSystem.makeDirectoryAsync(path, { intermediates: true });
+    await makeDirectoryAsync(path, { intermediates: true });
   }
 
   async rmDir(path: string): Promise<void> {
-    await FileSystem.deleteAsync(path);
+    await deleteAsync(path);
   }
 }

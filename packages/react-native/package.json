@@ -43,7 +43,8 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*"
+    "@powersync/react": "workspace:*",
+    "expo-file-system": "18.0.12"
   },
   "devDependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",

@@ -63,7 +63,8 @@ export default (commandLineArgs) => {
       'node-fetch',
       'js-logger',
       'react-native',
-      'react'
+      'react',
+      'expo-file-system'
     ]
   };
 };
