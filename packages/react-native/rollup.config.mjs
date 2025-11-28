@@ -58,6 +58,7 @@ export default () => {
       'js-logger',
       'react-native',
       'react',
+      'expo-file-system',
       'async-mutex'
     ]
   };
