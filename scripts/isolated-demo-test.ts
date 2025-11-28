@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import os from 'os';
@@ -53,32 +52,6 @@ const ensureTmpDirExists = async () => {
   }
 };
 
-const workspacePackages = await findWorkspacePackages(path.resolve('.'));
-
-// Function to update dependencies in package.json
-const updateDependencies = async (packageJsonPath: string) => {
-  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-
-  const updateDeps = async (deps: { [key: string]: string }) => {
-    for (const dep in deps) {
-      if (deps[dep].startsWith('workspace:')) {
-        const matchingPackage = workspacePackages.find((p) => p.manifest.name == dep);
-        deps[dep] = `^${matchingPackage!.manifest.version!}`;
-      }
-    }
-  };
-
-  if (packageJson.dependencies) {
-    await updateDeps(packageJson.dependencies);
-  }
-
-  if (packageJson.devDependencies) {
-    await updateDeps(packageJson.devDependencies);
-  }
-
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8');
-};
-
 // Function to process each demo
 const processDemo = async (demoName: string): Promise<DemoResult> => {
   const demoSrc = path.join(demosDir, demoName);
@@ -91,10 +64,6 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   // Copy demo to tmp directory (without node modules)
   await fs.cp(demoSrc, demoDest, { recursive: true, filter: (source) => !source.includes('node_modules') });
 
-  // Update package.json
-  const packageJsonPath = path.join(demoDest, 'package.json');
-  await updateDependencies(packageJsonPath);
-
   const result: DemoResult = {
     name: demoName,
     installResult: {
@@ -104,6 +73,9 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
       state: TestState.WARN
     }
   };
+
+  const packageJSONPath = path.join(demoDest, 'package.json');
+  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
   // Run pnpm install and pnpm build
   try {
@@ -115,8 +87,18 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     return result;
   }
 
-  const packageJSONPath = path.join(demoDest, 'package.json');
-  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+  // Run pnpm clean for RN projects to avoid native build errors
+  if (pkg.scripts['clean']) {
+    try {
+      execSync('pnpm clean', { cwd: demoDest, stdio: 'inherit' });
+      result.installResult.state = TestState.PASSED;
+    } catch (ex) {
+      result.installResult.state = TestState.FAILED;
+      result.installResult.error = ex.message;
+      return result;
+    }
+  }
+
   if (!pkg.scripts['test:build']) {
     result.buildResult.state = TestState.WARN;
     return result;
@@ -170,6 +152,8 @@ const main = async () => {
   const errored = !!results.find(
     (r) => r.installResult.state == TestState.FAILED || r.buildResult.state == TestState.FAILED
   );
+
+  console.log(`Test results: \n${JSON.stringify(results, null, 2)}\n`);
 
   await core.summary
     .addHeading('Test Results')
