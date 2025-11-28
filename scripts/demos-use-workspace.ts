@@ -52,14 +52,14 @@ const linkDemo = async (demoName: string) => {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
   // Track changed files
-  let changes = 0;
+  let changes = false;
   const updateDeps = (deps: { [key: string]: string }) => {
     for (const dep in deps) {
       const matchingPackage = workspacePackages.find((p) => p.manifest.name === dep);
       if (matchingPackage != undefined && deps[dep] != newPackageVer) {
         console.log(`- ${dep}: '${deps[dep]}' => '${newPackageVer}'`);
         deps[dep] = newPackageVer;
-        changes++;
+        changes = true;
       }
     }
   };
@@ -84,25 +84,35 @@ const linkDemo = async (demoName: string) => {
     console.log('- No changes');
   }
 
-  // Update tsconfig.json using tsconfig.override.json
+  // Update tsconfig.json using tsconfig.workspace.json
   const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
-  const tsConfigOverridePath = path.join(demoSrc, 'tsconfig.override.json');
+  const tsConfigWorkspacePath = path.join(demoSrc, 'tsconfig.workspace.json');
 
-  if (fs.existsSync(tsConfigOverridePath)) {
+  if (fs.existsSync(tsConfigWorkspacePath)) {
     const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
-    const tsConfigOverride = JSON.parse(fs.readFileSync(tsConfigOverridePath, 'utf8'));
 
-    console.log('\nApplying tsconfig.json overrides');
+    const workspaceRef = {
+      path: 'tsconfig.workspace.json'
+    };
 
-    changes = 0;
-    for (const entry of Object.entries(tsConfigOverride)) {
-      const [key, value] = entry;
-      console.log(`- '${key}'`);
-      tsConfig[key] = value;
-      changes++;
+    console.log('Linking tsconfig.workspace.json');
+
+    changes = false;
+    const references = tsConfig['references'];
+
+    if (references) {
+      const existingWorkspaceRef = references.find((v: any) => v.path === 'tsconfig.workspace.json');
+      if (existingWorkspaceRef == undefined) {
+        tsConfig['references'].push(workspaceRef);
+        changes = true;
+      }
+    } else {
+      tsConfig['references'] = [workspaceRef];
+      changes = true;
     }
 
     if (changes) {
+      console.log(`- Added '${JSON.stringify(workspaceRef)}'`);
       fs.writeFileSync(tsConfigPath, `${JSON.stringify(tsConfig, null, 2)}\n`, 'utf8');
     } else {
       console.log('- No changes');

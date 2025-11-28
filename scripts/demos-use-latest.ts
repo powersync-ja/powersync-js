@@ -42,7 +42,8 @@ const linkDemo = async (demoName: string) => {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
   // Track changed files
-  let changes = 0;
+  let changes = false;
+
   const updateDeps = (deps: { [key: string]: string }) => {
     for (const dep in deps) {
       const matchingPackage = workspacePackages.find((p) => p.manifest.name === dep);
@@ -55,12 +56,11 @@ const linkDemo = async (demoName: string) => {
       }
       latestVersion = '^' + latestVersion;
       if (deps[dep] === latestVersion) {
-        console.log(`- ${dep}: '${deps[dep]}' => '${latestVersion}' (no changes)`);
         continue;
       }
       console.log(`- ${dep}: '${deps[dep]}' => '${latestVersion}'`);
       deps[dep] = latestVersion;
-      changes++;
+      changes = true;
     }
   };
 
@@ -78,6 +78,37 @@ const linkDemo = async (demoName: string) => {
 
   if (changes) {
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
+  } else {
+    console.log('- No changes');
+  }
+
+  const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
+  if (fs.existsSync(tsConfigPath)) {
+    changes = false;
+
+    console.log('Checking tsconfig.json');
+    const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+
+    if ('references' in tsConfig) {
+      for (let i = 0; i < tsConfig.references.length; i++) {
+        const ref = tsConfig.references[i];
+        if (ref.path === 'tsconfig.workspace.json') {
+          console.log('- Unlinking tsconfig.workspace.json');
+          tsConfig.references.splice(i);
+          changes = true;
+        }
+      }
+    }
+
+    if (tsConfig.references.length === 0) {
+      delete tsConfig.references;
+    }
+
+    if (changes) {
+      fs.writeFileSync(tsConfigPath, `${JSON.stringify(tsConfig, null, 2)}\n`, 'utf8');
+    } else {
+      console.log('- No changes');
+    }
   }
 };
 
@@ -130,7 +161,7 @@ const main = () => {
     console.log(`- ${demoName}`);
     try {
       // Patchy solution with rm -rf'ing node_modules because pnpm tries to reuse existing linked package
-      execSync('rm -rf node_modules && pnpm --ignore-workspace install', { cwd: demoSrc, stdio: 'inherit' });
+      execSync('rm -rf node_modules && pnpm install', { cwd: demoSrc, stdio: 'inherit' });
     } catch (e) {
       console.error(`Error installing packages: ${e}`);
       process.exit(1);
