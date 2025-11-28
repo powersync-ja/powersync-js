@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import os from 'os';
@@ -75,6 +74,9 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     }
   };
 
+  const packageJSONPath = path.join(demoDest, 'package.json');
+  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
@@ -85,8 +87,18 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     return result;
   }
 
-  const packageJSONPath = path.join(demoDest, 'package.json');
-  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+  // Run pnpm clean for RN projects to avoid native build errors
+  if (pkg.scripts['clean']) {
+    try {
+      execSync('pnpm clean', { cwd: demoDest, stdio: 'inherit' });
+      result.installResult.state = TestState.PASSED;
+    } catch (ex) {
+      result.installResult.state = TestState.FAILED;
+      result.installResult.error = ex.message;
+      return result;
+    }
+  }
+
   if (!pkg.scripts['test:build']) {
     result.buildResult.state = TestState.WARN;
     return result;
@@ -140,6 +152,8 @@ const main = async () => {
   const errored = !!results.find(
     (r) => r.installResult.state == TestState.FAILED || r.buildResult.state == TestState.FAILED
   );
+
+  console.log(`Test results: \n${JSON.stringify(results, null, 2)}\n`);
 
   await core.summary
     .addHeading('Test Results')
