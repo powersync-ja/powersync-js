@@ -49,8 +49,8 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
       logger
     });
 
-    // Connect to PowerSync
-    await db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    // Connect to PowerSync (don't await this since we want to create multiple tabs)
+    db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
 
     // Store reference for cleanup
     (window as any).powersyncClient = db;

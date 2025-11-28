@@ -510,10 +510,18 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       // Should not really happen in practice
       throw new Error(`Could not open DB connection since no client is connected.`);
     }
-    const workerPort = await lastClient.clientProvider.getDBWorkerPort();
+    const workerPort = await withTimeout(() => lastClient.clientProvider.getDBWorkerPort(), 5_000);
     const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
     const identifier = this.syncParams!.dbParams.dbFilename;
-    const db = await remote(this.syncParams!.dbParams);
+
+    /**
+     * The open could fail if the tab is closed while we're busy opening the database.
+     * This operation is typically executed inside an exclusive portMutex lock.
+     * We typically execute the closeListeners using the portMutex in a different context.
+     * We can't rely on the closeListeners to abort the operation if the tab is closed.
+     */
+    const db = await withTimeout(() => remote(this.syncParams!.dbParams), 5_000);
+
     const locked = new LockedAsyncDatabaseAdapter({
       name: identifier,
       defaultLockTimeoutMs: 20_000, // Max wait time for a lock request (we will retry failed attempts)
@@ -566,4 +574,19 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     this.connectionManager.syncStreamImplementation!.syncStatus = new SyncStatus(status);
     this.updateAllStatuses(status);
   }
+}
+
+/**
+ * Runs the action with a timeout. If the action takes longer than the timeout, the promise will be rejected.
+ */
+function withTimeout<T>(action: () => Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Timeout waiting for action'));
+    }, timeoutMs);
+    action()
+      .then(resolve)
+      .catch(reject)
+      .finally(() => clearTimeout(timeout));
+  });
 }

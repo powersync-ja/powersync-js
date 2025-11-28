@@ -247,11 +247,11 @@ async function createIframeWithPowerSyncClient(
  */
 function createMultipleTabsTest(vfs?: WASQLiteVFS) {
   const vfsName = vfs || 'IndexedDB';
-  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 120000 }, () => {
+  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 20_000 }, () => {
     const dbFilename = `test-multi-tab-${uuid()}.db`;
 
     // Configurable number of tabs to create (excluding the long-lived tab)
-    const NUM_TABS = 10;
+    const NUM_TABS = 50;
 
     it('should handle simultaneous close and reopen of tabs', async () => {
       // Step 1: Open a long-lived reference tab that stays open throughout the test
@@ -299,13 +299,20 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       }
       expect(longLivedTab.iframe.isConnected).toBe(true);
 
-      // Step 3: Simultaneously close half of the tabs (simulating abrupt closure)
-      const halfCount = Math.floor(NUM_TABS / 2);
-      // Close the latest opened tabs since we usually use the last connected tabs for operations.
-      const tabsToClose = tabs.slice(halfCount);
-      const tabsToKeep = tabs.slice(0, halfCount);
+      // Step 3: Simultaneously close the first and last quarters of the tabs (simulating abrupt closure)
+      const quarterCount = Math.floor(NUM_TABS / 4);
+      const firstQuarterEnd = quarterCount;
+      const lastQuarterStart = NUM_TABS - quarterCount;
 
-      // Close half the tabs simultaneously (without proper cleanup)
+      // Close the first quarter and last quarter of tabs
+      const firstQuarter = tabs.slice(0, firstQuarterEnd);
+      const lastQuarter = tabs.slice(lastQuarterStart);
+      const tabsToClose = [...firstQuarter, ...lastQuarter];
+
+      // Keep the middle two quarters
+      const tabsToKeep = tabs.slice(firstQuarterEnd, lastQuarterStart);
+
+      // Close the first and last quarters of tabs simultaneously (without proper cleanup)
       // Do this in reverse order to ensure the last connected tab is closed first.
       const closePromises = tabsToClose.reverse().map((tab) => tab.cleanup());
       await Promise.all(closePromises);
@@ -324,8 +331,13 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
 
       // Step 4: Reopen the closed tabs
       const reopenedTabs: IframeClient[] = [];
-      const reopenPromises = tabsToClose.map(async (_, index) => {
-        const identifier = tabIdentifiers[index];
+      // Get the identifiers for the closed tabs by finding their indices in the original tabs array
+      const closedTabIdentifiers = tabsToClose.map((closedTab) => {
+        const index = tabs.indexOf(closedTab);
+        return tabIdentifiers[index];
+      });
+
+      const reopenPromises = closedTabIdentifiers.map(async (identifier) => {
         const result = await createIframeWithPowerSyncClient(dbFilename, identifier, vfs);
         reopenedTabs.push(result);
 
@@ -366,6 +378,11 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       expect(Array.isArray(queryResult)).toBe(true);
       expect(queryResult.length).toBe(1);
       expect((queryResult[0] as { value: number }).value).toBe(1);
+
+      /**
+       * Wait a little for the state to settle.
+       */
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Step 6: Create a new tab which should trigger a connect. The shared sync worker should reconnect.
       // This ensures the shared sync worker is not stuck and is properly handling new connections
