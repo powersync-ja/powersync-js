@@ -1,4 +1,4 @@
-import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/react-native';
+import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/common';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
