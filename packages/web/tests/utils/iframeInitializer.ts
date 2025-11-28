@@ -1,12 +1,4 @@
-import {
-  LogLevel,
-  Schema,
-  SyncStatus,
-  SyncStreamConnectionMethod,
-  TableV2,
-  column,
-  createBaseLogger
-} from '@powersync/common';
+import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createBaseLogger } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 
 /**
@@ -28,21 +20,8 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
       async uploadData() {}
     };
 
-    // Create the same schema as used in tests
+    // Create a simple schema for testing
     const schema = new Schema({
-      assets: new TableV2(
-        {
-          created_at: column.text,
-          make: column.text,
-          model: column.text,
-          serial_number: column.text,
-          quantity: column.integer,
-          user_id: column.text,
-          customer_id: column.text,
-          description: column.text
-        },
-        { indexes: { makemodel: ['make', 'model'] } }
-      ),
       customers: new TableV2({
         name: column.text,
         email: column.text
@@ -70,40 +49,11 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
       logger
     });
 
-    // Register a listener for sync status updates
-    const updateStatusDisplay = (status: SyncStatus) => {
-      const statusEl = document.getElementById('status');
-      if (statusEl) {
-        const connected = status.connected ? 'Connected' : 'Disconnected';
-        const syncing = status.dataFlowStatus.downloading ? ' (Syncing...)' : '';
-        statusEl.textContent = `${connected}${syncing}`;
-
-        // Update color based on connection status
-        if (status.connected) {
-          statusEl.style.color = '#28a745';
-          statusEl.style.borderColor = '#28a745';
-        } else {
-          statusEl.style.color = '#dc3545';
-          statusEl.style.borderColor = '#dc3545';
-        }
-      }
-    };
-
-    // Register listener for status changes
-    db.registerListener({
-      statusChanged: (status) => {
-        updateStatusDisplay(status);
-      }
-    });
-
     // Connect to PowerSync
     await db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
 
     // Store reference for cleanup
     (window as any).powersyncClient = db;
-
-    // Update initial status
-    updateStatusDisplay(db.currentStatus);
 
     // Set up message handlers for test operations
     window.addEventListener('message', async (event: MessageEvent) => {
@@ -132,38 +82,6 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
           window.parent.postMessage(
             {
               type: 'query-result',
-              requestId,
-              identifier,
-              success: false,
-              error: (error as Error).message
-            },
-            '*'
-          );
-        }
-      } else if (type === 'get-sync-status' && requestId) {
-        try {
-          const status = db.currentStatus;
-          window.parent.postMessage(
-            {
-              type: 'sync-status-result',
-              requestId,
-              identifier,
-              success: true,
-              status: {
-                connected: status.connected,
-                connecting: status.connecting,
-                downloading: status.dataFlowStatus.downloading,
-                uploading: status.dataFlowStatus.uploading,
-                lastSyncedAt: status.lastSyncedAt?.toISOString(),
-                hasSynced: status.hasSynced
-              }
-            },
-            '*'
-          );
-        } catch (error) {
-          window.parent.postMessage(
-            {
-              type: 'sync-status-result',
               requestId,
               identifier,
               success: false,
@@ -208,12 +126,6 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
       '*'
     );
   } catch (error) {
-    const statusEl = document.getElementById('status');
-    if (statusEl) {
-      statusEl.textContent = 'Error: ' + (error as Error).message;
-      statusEl.style.color = '#dc3545';
-      statusEl.style.borderColor = '#dc3545';
-    }
     console.error('PowerSync initialization error:', error);
     window.parent.postMessage(
       {

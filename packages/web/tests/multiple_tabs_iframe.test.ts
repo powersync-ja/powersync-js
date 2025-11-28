@@ -13,14 +13,6 @@ interface IframeClient {
   iframe: HTMLIFrameElement;
   cleanup: () => Promise<void>;
   executeQuery: (query: string, parameters?: unknown[]) => Promise<unknown[]>;
-  getSyncStatus: () => Promise<{
-    connected: boolean;
-    connecting: boolean;
-    downloading: boolean;
-    uploading: boolean;
-    lastSyncedAt?: string;
-    hasSynced?: boolean;
-  }>;
   getCredentialsFetchCount: () => Promise<number>;
 }
 
@@ -67,15 +59,6 @@ async function createIframeWithPowerSyncClient(
       font-size: 12px;
       background: #f5f5f5;
     }
-    #status {
-      padding: 8px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      font-weight: 500;
-      transition: color 0.3s, border-color 0.3s;
-    }
     #info {
       padding: 8px;
       background: #e7f3ff;
@@ -91,7 +74,6 @@ async function createIframeWithPowerSyncClient(
   </style>
 </head>
 <body>
-  <div id="status">Initializing...</div>
   <div id="info">
     <div><span class="label">ID:</span>${identifier}</div>
     <div><span class="label">DB:</span>${dbFilename}</div>
@@ -166,44 +148,6 @@ async function createIframeWithPowerSyncClient(
               }, 30000);
             });
           },
-          getSyncStatus: (): Promise<{
-            connected: boolean;
-            connecting: boolean;
-            downloading: boolean;
-            uploading: boolean;
-            lastSyncedAt?: string;
-            hasSynced?: boolean;
-          }> => {
-            return new Promise((resolveStatus, rejectStatus) => {
-              const requestId = `status-${identifier}-${++requestIdCounter}`;
-              pendingRequests.set(requestId, {
-                resolve: resolveStatus,
-                reject: rejectStatus
-              });
-
-              const iframeWindow = iframe.contentWindow;
-              if (!iframeWindow) {
-                rejectStatus(new Error('Iframe window not available'));
-                return;
-              }
-
-              iframeWindow.postMessage(
-                {
-                  type: 'get-sync-status',
-                  requestId
-                },
-                '*'
-              );
-
-              // Cleanup after timeout to prevent memory leaks
-              setTimeout(() => {
-                if (pendingRequests.has(requestId)) {
-                  pendingRequests.delete(requestId);
-                  rejectStatus(new Error('Status request timeout'));
-                }
-              }, 10000);
-            });
-          },
           getCredentialsFetchCount: (): Promise<number> => {
             return new Promise((resolveCount, rejectCount) => {
               const requestId = `credentials-count-${identifier}-${++requestIdCounter}`;
@@ -251,16 +195,6 @@ async function createIframeWithPowerSyncClient(
             pending.resolve(data.result);
           } else {
             pending.reject(new Error(data.error || 'Query failed'));
-          }
-        }
-      } else if (data?.type === 'sync-status-result' && data.identifier === identifier) {
-        const pending = pendingRequests.get(data.requestId);
-        if (pending) {
-          pendingRequests.delete(data.requestId);
-          if (data.success) {
-            pending.resolve(data.status);
-          } else {
-            pending.reject(new Error(data.error || 'Status request failed'));
           }
         }
       } else if (data?.type === 'credentials-count-result' && data.identifier === identifier) {
@@ -447,17 +381,14 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
 
       // Wait for the new tab's credentials to be fetched (indicating the shared sync worker is active)
       // The mocked remote always returns 401, so the shared sync worker should try and fetch credentials again.
-      await vi.waitFor(
-        async () => {
-          const credentialsFetchCount = await newTab.getCredentialsFetchCount();
-          expect(
-            credentialsFetchCount,
-            'The new client should have been asked for credentials by the shared sync worker. ' +
-              'This indicates the shared sync worker may be stuck or not processing new connections.'
-          ).toBeGreaterThanOrEqual(1);
-        },
-        { timeout: 10000 }
-      );
+      await vi.waitFor(async () => {
+        const credentialsFetchCount = await newTab.getCredentialsFetchCount();
+        expect(
+          credentialsFetchCount,
+          'The new client should have been asked for credentials by the shared sync worker. ' +
+            'This indicates the shared sync worker may be stuck or not processing new connections.'
+        ).toBeGreaterThanOrEqual(1);
+      });
     });
   });
 }
