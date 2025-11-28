@@ -341,13 +341,31 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         }
       });
 
-      const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
+      const shouldReconnect =
+        !!this.connectionManager.syncStreamImplementation &&
+        this.ports.length > 0 &&
+        this.dbAdapter &&
+        this.dbAdapter == trackedPort.db;
+
+      // Close the worker wrapped database connection, we can't accurately rely on this connection
+      for (const closeListener of trackedPort.closeListeners) {
+        await closeListener();
+      }
+
+      // Close the LockedAsyncDatabaseAdapter for cleanup
+      try {
+        await trackedPort.db?.close();
+      } catch (ex) {
+        this.logger.warn('error closing database', ex);
+      }
+
       /**
        * If the current database adapter is the one that is being closed, we need to disconnect from the backend.
        * We can disconnect in the portMutex lock. This ensures the disconnect is not affected by potential other
        * connect operations coming from other tabs.
+       * Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
        */
-      if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
+      if (shouldReconnect) {
         this.logger.debug(`Disconnecting due to closed database: should reconnect: ${shouldReconnect}`);
         this.dbAdapter = null;
         // Unconditionally close the connection because the database it's writing to has just been closed.
@@ -355,20 +373,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         await this.connectionManager
           .disconnect()
           .catch((ex) => this.logger.warn('Error while disconnecting. Will attempt to reconnect.', ex));
-      }
-
-      for (const closeListener of trackedPort.closeListeners) {
-        await closeListener();
-      }
-
-      try {
-        await trackedPort.db?.close();
-      } catch (ex) {
-        this.logger.warn('error closing database', ex);
-      }
-
-      // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
-      if (shouldReconnect) {
         /**
          * The internals of this needs a port mutex lock.
          * It should be safe to start this operation here, but we cannot and don't need to await it.
