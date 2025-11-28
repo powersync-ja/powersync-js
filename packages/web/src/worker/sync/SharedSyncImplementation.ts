@@ -368,10 +368,18 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       }
 
       // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
-      this.collectActiveSubscriptions();
       if (shouldReconnect) {
-        // The internals of this needs a port mutex lock. It should be safe to start this operation here, but we cannot and don't need to await it.
-        this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
+        /**
+         * The internals of this needs a port mutex lock.
+         * It should be safe to start this operation here, but we cannot and don't need to await it.
+         * Since we disconnected, we need to collectActiveSubscriptions after reconnecting.
+         */
+        this.connectionManager
+          .connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {})
+          .then(() => this.collectActiveSubscriptions());
+      } else {
+        // The port removed was not the database in use. We didn't need to reconnect explicitly, but we need to update the subscriptions.
+        this.collectActiveSubscriptions();
       }
 
       return () => trackedPort.clientProvider[Comlink.releaseProxy]();
