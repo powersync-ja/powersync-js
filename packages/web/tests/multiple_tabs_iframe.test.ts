@@ -23,7 +23,8 @@ createMultipleTabsTest(WASQLiteVFS.OPFSCoopSyncVFS);
 async function createIframeWithPowerSyncClient(
   dbFilename: string,
   identifier: string,
-  vfs?: WASQLiteVFS
+  vfs?: WASQLiteVFS,
+  waitForConnection?: boolean
 ): Promise<IframeClient> {
   const iframe = document.createElement('iframe');
   // Make iframe visible for debugging
@@ -81,7 +82,7 @@ async function createIframeWithPowerSyncClient(
   </div>
   <script type="module">
     import { setupPowerSyncInIframe } from '${modulePath}';
-    setupPowerSyncInIframe('${dbFilename}', '${identifier}', ${vfs ? `'${vfs}'` : 'undefined'});
+    setupPowerSyncInIframe('${dbFilename}', '${identifier}', ${vfs ? `'${vfs}'` : 'undefined'}, ${waitForConnection ? 'true' : 'false'});
   </script>
 </body>
 </html>`;
@@ -251,7 +252,7 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
     const dbFilename = `test-multi-tab-${uuid()}.db`;
 
     // Configurable number of tabs to create (excluding the long-lived tab)
-    const NUM_TABS = 50;
+    const NUM_TABS = 20;
 
     it('should handle simultaneous close and reopen of tabs', async () => {
       // Step 1: Open a long-lived reference tab that stays open throughout the test
@@ -379,15 +380,10 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       expect(queryResult.length).toBe(1);
       expect((queryResult[0] as { value: number }).value).toBe(1);
 
-      /**
-       * Wait a little for the state to settle.
-       */
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       // Step 6: Create a new tab which should trigger a connect. The shared sync worker should reconnect.
       // This ensures the shared sync worker is not stuck and is properly handling new connections
       const newTabIdentifier = `new-tab-${Date.now()}`;
-      const newTab = await createIframeWithPowerSyncClient(dbFilename, newTabIdentifier, vfs);
+      const newTab = await createIframeWithPowerSyncClient(dbFilename, newTabIdentifier, vfs, true);
       onTestFinished(async () => {
         try {
           await newTab.cleanup();

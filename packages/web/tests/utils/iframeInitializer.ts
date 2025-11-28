@@ -7,7 +7,12 @@ import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/
  *
  * @param vfs - VFS option as a string (e.g., 'OPFSCoopSyncVFS' or 'IDBBatchAtomicVFS')
  */
-export async function setupPowerSyncInIframe(dbFilename: string, identifier: string, vfs?: string): Promise<void> {
+export async function setupPowerSyncInIframe(
+  dbFilename: string,
+  identifier: string,
+  vfs?: string,
+  waitForConnection?: boolean
+): Promise<void> {
   try {
     // Track the number of times fetchCredentials has been called
     let credentialsFetchCount = 0;
@@ -50,7 +55,11 @@ export async function setupPowerSyncInIframe(dbFilename: string, identifier: str
     });
 
     // Connect to PowerSync (don't await this since we want to create multiple tabs)
-    db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    const connectionPromise = db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+
+    if (waitForConnection) {
+      await connectionPromise;
+    }
 
     // Store reference for cleanup
     (window as any).powersyncClient = db;
