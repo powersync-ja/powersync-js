@@ -380,6 +380,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Close the second client, leaving only the first one
     await stream2.dispose();
 
+    // The dispose above will disconnect, but we need to wait for the sync stream to be created before we can update the status
+    await vi.waitFor(() => expect(stream1.syncStatus.connecting).true);
     // Hack, set the status to connected in order to trigger the upload
     await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
     stream1.triggerCrudUpload();

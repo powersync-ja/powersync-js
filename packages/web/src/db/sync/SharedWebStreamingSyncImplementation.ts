@@ -146,7 +146,25 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       ).port;
     }
 
+    /**
+     * Pass along any sync status updates to this listener
+     */
+    this.clientProvider = new SharedSyncClientProvider(
+      this.webOptions,
+      (status) => {
+        this.updateSyncStatus(status);
+      },
+      options.db
+    );
+
     this.syncManager = Comlink.wrap<WorkerClient>(this.messagePort);
+    /**
+     * The sync worker will call this client provider when it needs
+     * to fetch credentials or upload data.
+     * This performs bi-directional method calling.
+     */
+    Comlink.expose(this.clientProvider, this.messagePort);
+
     this.syncManager.setLogLevel(this.logger.getLevel());
 
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
@@ -159,17 +177,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
 
     this.isInitialized = this._init();
-
-    /**
-     * Pass along any sync status updates to this listener
-     */
-    this.clientProvider = new SharedSyncClientProvider(
-      this.webOptions,
-      (status) => {
-        this.iterateListeners((l) => this.updateSyncStatus(status));
-      },
-      options.db
-    );
   }
 
   protected async _init() {
@@ -190,29 +197,23 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       // to free resources associated with this tab.
       // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
       getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-        if (!this.abortOnClose.signal.aborted) {
-          // Awaiting here ensures the worker is waiting for the lock
-          await this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-          // The lock has been registered, we can continue with the initialization
-          resolve();
-
-          await new Promise<void>((r) => {
-            this.abortOnClose.signal.onabort = () => r();
-          });
+        if (this.abortOnClose.signal.aborted) {
+          return;
         }
+        // Awaiting here ensures the worker is waiting for the lock
+        await this.syncManager.addLockBasedCloseSignal(lock!.name);
+
+        // The lock has been registered, we can continue with the initialization
+        resolve();
+
+        await new Promise<void>((r) => {
+          this.abortOnClose.signal.onabort = () => r();
+        });
       });
     });
 
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
-
-    /**
-     * The sync worker will call this client provider when it needs
-     * to fetch credentials or upload data.
-     * This performs bi-directional method calling.
-     */
-    Comlink.expose(this.clientProvider, this.messagePort);
 
     await this.syncManager.setParams(
       {

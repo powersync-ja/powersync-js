@@ -16,7 +16,7 @@ import {
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
-import { coreStatusToJs, EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
+import { EstablishSyncStream, Instruction, coreStatusToJs } from './core-instruction.js';
 import {
   BucketRequest,
   CrudUploadNotification,
