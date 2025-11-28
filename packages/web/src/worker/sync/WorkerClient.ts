@@ -69,19 +69,18 @@ export class WorkerClient {
    * When the client tab is closed, its lock will be returned. So when the shared worker attempts to acquire the lock,
    * it can consider the connection to be closed.
    */
-  addLockBasedCloseSignal(name: string) {
+  async addLockBasedCloseSignal(name: string) {
     if (!this.resolvedPortPromise) {
       // The init logic above is actually synchronous, so this should not happen.
       this.sync.broadCastLogger.warn('addLockBasedCloseSignal called before port promise registered');
     } else {
-      this.resolvedPortPromise.then((wrappedPort) => {
-        /**
-         * The client registered a navigator lock. We now can guarantee detecting if the client has closed.
-         * E.g. before this point: It's possible some ports might have been created and closed before the
-         * lock based close signal is added. We should not trust those ports.
-         */
-        wrappedPort.isProtectedFromClose = true;
-      });
+      const wrappedPort = await this.resolvedPortPromise;
+      /**
+       * The client registered a navigator lock. We now can guarantee detecting if the client has closed.
+       * E.g. before this point: It's possible some ports might have been created and closed before the
+       * lock based close signal is added. We should not trust those ports.
+       */
+      wrappedPort.isProtectedFromClose = true;
     }
     getNavigatorLocks().request(name, async () => {
       await this.removePort();
