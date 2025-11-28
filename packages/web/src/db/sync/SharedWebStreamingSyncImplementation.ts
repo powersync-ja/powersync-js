@@ -157,36 +157,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * DB worker, but a port to the DB worker can be transferred to the
      * sync worker.
      */
-    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
-    const flags = { ...this.webOptions.flags, workers: undefined };
 
-    // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
-    // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
-    // to free resources associated with this tab.
-    // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
-    getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-      if (!this.abortOnClose.signal.aborted) {
-        // Awaiting here ensures the worker is waiting for the lock
-        await this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-        await new Promise<void>((r) => {
-          this.abortOnClose.signal.onabort = () => r();
-        });
-      }
-    });
-
-    this.isInitialized = this.syncManager.setParams(
-      {
-        dbParams: this.dbAdapter.getConfiguration(),
-        streamOptions: {
-          crudUploadThrottleMs,
-          identifier,
-          retryDelayMs,
-          flags: flags
-        }
-      },
-      options.subscriptions
-    );
+    this.isInitialized = this._init();
 
     /**
      * Pass along any sync status updates to this listener
@@ -198,6 +170,42 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       },
       options.db
     );
+  }
+
+  protected async _init() {
+    /**
+     * The general flow of initialization is:
+     *  - The client requests a unique navigator lock.
+     *    - Once the lock is acquired, we register the lock with the shared worker.
+     *    - The shared worker can then request the same lock. The client has been closed if the shared worker can acquire the lock.
+     *    - Once the shared worker knows the client's lock, we can guarentee that the shared worker will detect if the client has been closed.
+     *    - This makes the client safe for the shared worker to use.
+     *    - The client side lock is held until the client is disposed.
+     *    - We resolve the top-level promise after the lock has been registered with the shared worker.
+     * - The client sends the params to the shared worker after locks have been registered.
+     */
+    await new Promise<void>((resolve) => {
+      // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
+      // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
+      // to free resources associated with this tab.
+      // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
+      getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
+        if (!this.abortOnClose.signal.aborted) {
+          // Awaiting here ensures the worker is waiting for the lock
+          await this.syncManager.addLockBasedCloseSignal(lock!.name);
+
+          // The lock has been registered, we can continue with the initialization
+          resolve();
+
+          await new Promise<void>((r) => {
+            this.abortOnClose.signal.onabort = () => r();
+          });
+        }
+      });
+    });
+
+    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
+    const flags = { ...this.webOptions.flags, workers: undefined };
 
     /**
      * The sync worker will call this client provider when it needs
@@ -205,6 +213,19 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * This performs bi-directional method calling.
      */
     Comlink.expose(this.clientProvider, this.messagePort);
+
+    await this.syncManager.setParams(
+      {
+        dbParams: this.dbAdapter.getConfiguration(),
+        streamOptions: {
+          crudUploadThrottleMs,
+          identifier,
+          retryDelayMs,
+          flags: flags
+        }
+      },
+      this.options.subscriptions
+    );
   }
 
   /**

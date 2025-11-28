@@ -26,6 +26,7 @@ export interface LockedAsyncDatabaseAdapterOptions {
   openConnection: () => Promise<AsyncDatabaseConnection>;
   debugMode?: boolean;
   logger?: ILogger;
+  defaultLockTimeoutMs?: number;
 }
 
 export type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
@@ -196,7 +197,7 @@ export class LockedAsyncDatabaseAdapter
     return this.acquireLock(
       async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
       {
-        timeoutMs: options?.timeoutMs
+        timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
       }
     );
   }
@@ -206,7 +207,7 @@ export class LockedAsyncDatabaseAdapter
     return this.acquireLock(
       async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
       {
-        timeoutMs: options?.timeoutMs
+        timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
       }
     );
   }
