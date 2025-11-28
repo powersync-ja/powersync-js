@@ -1,5 +1,4 @@
-import { AttachmentTable } from '@powersync/attachments';
-import { column, Schema, Table } from '@powersync/react-native';
+import { column, Schema, Table, AttachmentTable } from '@powersync/react-native';
 
 export const LIST_TABLE = 'lists';
 export const TODO_TABLE = 'todos';
@@ -27,9 +26,7 @@ const lists = new Table({
 export const AppSchema = new Schema({
   todos,
   lists,
-  attachments: new AttachmentTable({
-    viewName: 'attachments',
-  }),
+  attachments: new AttachmentTable(),
 });
 
 export type Database = (typeof AppSchema)['types'];

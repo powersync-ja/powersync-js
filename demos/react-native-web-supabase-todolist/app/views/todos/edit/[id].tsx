@@ -1,4 +1,4 @@
-import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
+import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/react-native';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
@@ -78,9 +78,16 @@ const TodoView: React.FC = () => {
 
   const savePhoto = async (id: string, data: CameraCapturedPicture) => {
     // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
-    const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
+    if (system.photoAttachmentQueue) {
+      // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
+      const { id: photoId } = await system.photoAttachmentQueue.saveFile({
+        data: data.base64!,
+        fileExtension: 'jpg',
+        mediaType: 'image/jpeg'
+      });
 
-    await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+      await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
+    }
   };
 
   const createNewTodo = async (description: string) => {

@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, View, Modal, StyleSheet, Text } from 'react-n
 import { ListItem, Button, Icon, Image } from '@rneui/themed';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
-import { AttachmentRecord } from '@powersync/attachments';
+import { AttachmentRecord } from '@powersync/react-native';
 import { AppConfig } from '../supabase/AppConfig';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 

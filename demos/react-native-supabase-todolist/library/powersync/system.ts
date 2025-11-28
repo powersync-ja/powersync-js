@@ -1,14 +1,11 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
-import React from 'react';
-
-import { 
+import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation,   
   AttachmentQueue, 
   type AttachmentRecord, 
   ExpoFileSystemAdapter, 
-  type WatchedAttachmentItem 
-} from '@powersync/attachments';
+  type WatchedAttachmentItem } from '@powersync/react-native';
+import React from 'react';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
 import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAdapter';
@@ -95,7 +92,8 @@ export class System {
           onDeleteError: async (attachment: AttachmentRecord, error: Error) => {
             return true; // Retry deletes by default
           }
-        }
+        },
+        logger,
       });
     }
   }
