@@ -58,7 +58,7 @@ describe('useSuspenseQuery', () => {
   it('should error when PowerSync is not set', async () => {
     expect(() => {
       renderHook(() => useSuspenseQuery('SELECT * from lists'));
-    }).toThrow();
+    }).toThrow('PowerSync not configured.');
   });
 
   it('should suspend on initial load', async () => {
