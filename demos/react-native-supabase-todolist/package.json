@@ -4,6 +4,7 @@
   "main": "./index.js",
   "scripts": {
     "android": "expo run:android",
+    "test:build": "expo prebuild",
     "ios": "expo run:ios",
     "clean": "watchman watch-del-all && rm -rf .expo"
   },
