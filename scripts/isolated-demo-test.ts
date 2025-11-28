@@ -53,32 +53,6 @@ const ensureTmpDirExists = async () => {
   }
 };
 
-const workspacePackages = await findWorkspacePackages(path.resolve('.'));
-
-// Function to update dependencies in package.json
-const updateDependencies = async (packageJsonPath: string) => {
-  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-
-  const updateDeps = async (deps: { [key: string]: string }) => {
-    for (const dep in deps) {
-      if (deps[dep].startsWith('workspace:')) {
-        const matchingPackage = workspacePackages.find((p) => p.manifest.name == dep);
-        deps[dep] = `^${matchingPackage!.manifest.version!}`;
-      }
-    }
-  };
-
-  if (packageJson.dependencies) {
-    await updateDeps(packageJson.dependencies);
-  }
-
-  if (packageJson.devDependencies) {
-    await updateDeps(packageJson.devDependencies);
-  }
-
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8');
-};
-
 // Function to process each demo
 const processDemo = async (demoName: string): Promise<DemoResult> => {
   const demoSrc = path.join(demosDir, demoName);
@@ -90,10 +64,6 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
 
   // Copy demo to tmp directory (without node modules)
   await fs.cp(demoSrc, demoDest, { recursive: true, filter: (source) => !source.includes('node_modules') });
-
-  // Update package.json
-  const packageJsonPath = path.join(demoDest, 'package.json');
-  await updateDependencies(packageJsonPath);
 
   const result: DemoResult = {
     name: demoName,
