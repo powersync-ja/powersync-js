@@ -1,20 +1,18 @@
-import OS from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
-import type { ForgeConfig } from '@electron-forge/shared-types';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
+import { MakerSquirrel } from '@electron-forge/maker-squirrel';
+import { MakerZIP } from '@electron-forge/maker-zip';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
-import { type Configuration, type ModuleOptions, type DefinePlugin } from 'webpack';
+import type { ForgeConfig } from '@electron-forge/shared-types';
+import { getPowerSyncExtensionFilename } from '@powersync/node/worker.js';
+import type ICopyPlugin from 'copy-webpack-plugin';
 import * as dotenv from 'dotenv';
 import type IForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-import type ICopyPlugin from 'copy-webpack-plugin';
-
-dotenv.config({path: '.env.local'});
+import { type Configuration, type DefinePlugin, type ModuleOptions } from 'webpack';
+dotenv.config({ path: '.env.local' });
 
 const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CopyPlugin: typeof ICopyPlugin = require('copy-webpack-plugin');
@@ -58,17 +56,7 @@ const defaultWebpackRules: () => Required<ModuleOptions>['rules'] = () => {
   ];
 };
 
-const platform = OS.platform();
-let extensionPath: string;
-if (platform === 'win32') {
-  extensionPath = 'powersync.dll';
-} else if (platform === 'linux') {
-  extensionPath = 'libpowersync.so';
-} else if (platform === 'darwin') {
-  extensionPath = 'libpowersync.dylib';
-} else {
-  throw 'Unknown platform, PowerSync for Node.js currently supports Windows, Linux and macOS.';
-}
+let extensionFilename = getPowerSyncExtensionFilename();
 
 const mainConfig: Configuration = {
   /**
@@ -78,25 +66,27 @@ const mainConfig: Configuration = {
   entry: './src/main/index.ts',
   // Put your normal webpack config below here
   module: {
-    rules: defaultWebpackRules(),
+    rules: defaultWebpackRules()
   },
   plugins: [
     ...webpackPlugins,
     new CopyPlugin({
-      patterns: [{
-        from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionPath}`),
-        to: path.join('powersync', extensionPath),
-      }],
+      patterns: [
+        {
+          from: path.resolve(require.resolve('@powersync/node/package.json'), `../lib/${extensionFilename}`),
+          to: path.join('powersync', extensionFilename)
+        }
+      ]
     }),
     new DefinePluginImpl({
       POWERSYNC_URL: JSON.stringify(process.env.POWERSYNC_URL),
-      POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN),
-    }),
+      POWERSYNC_TOKEN: JSON.stringify(process.env.POWERSYNC_TOKEN)
+    })
   ],
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json']
   },
-  target: "electron-main",
+  target: 'electron-main'
 };
 
 const rendererConfig: Configuration = {
@@ -107,7 +97,7 @@ const rendererConfig: Configuration = {
         test: /\.css$/,
         use: [{ loader: 'style-loader' }, { loader: 'css-loader' }]
       }
-    ],
+    ]
   },
   plugins: webpackPlugins,
   resolve: {
@@ -119,10 +109,10 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: {
       unpack: '**/{.**,**}/**/powersync/*'
-    },
+    }
   },
   rebuildConfig: {
-    force: true,
+    force: true
   },
   makers: [
     new MakerSquirrel(),
@@ -142,7 +132,7 @@ const config: ForgeConfig = {
             html: './src/render/index.html',
             js: './src/render/main.ts',
             preload: {
-              js: './src/render/preload.ts',
+              js: './src/render/preload.ts'
             }
           }
         ]
