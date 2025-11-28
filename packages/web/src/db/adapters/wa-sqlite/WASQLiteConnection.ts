@@ -26,6 +26,14 @@ export type WASQLiteBroadCastTableUpdateEvent = {
  */
 export type WASQLiteConnectionListener = {
   tablesUpdated: (event: BatchedUpdateNotification) => void;
+  /**
+   * Triggered when an active hold is overwritten by a new hold.
+   * This is most likely to happen when a shared connection has been closed
+   * without releasing the hold.
+   * This listener can be used to cleanup any resources associated with the previous hold.
+   * @param holdId - The id of the hold that has been overwritten.
+   */
+  holdOverwritten: (holdId: string) => Promise<void>;
 };
 
 /**
@@ -148,6 +156,9 @@ export class WASqliteConnection
    */
   protected connectionId: number;
 
+  protected _holdCounter: number;
+  protected _holdId: string | null;
+
   constructor(protected options: ResolvedWASQLiteOpenFactoryOptions) {
     super();
     this.updatedTables = new Set();
@@ -156,6 +167,16 @@ export class WASqliteConnection
     this.connectionId = new Date().valueOf() + Math.random();
     this.statementMutex = new Mutex();
     this._moduleFactory = DEFAULT_MODULE_FACTORIES[this.options.vfs];
+    this._holdCounter = 0;
+    this._holdId = null;
+  }
+
+  /**
+   * Gets the id for the current hold.
+   * This can be used to check for invalid states.
+   */
+  get currentHoldId() {
+    return this._holdId;
   }
 
   protected get sqliteAPI() {
@@ -170,6 +191,30 @@ export class WASqliteConnection
       throw new Error(`Initialization has not completed`);
     }
     return this._dbP;
+  }
+
+  /**
+   * Checks if the database connection is in autocommit mode.
+   * @returns true if in autocommit mode, false if in a transaction
+   */
+  async isAutoCommit(): Promise<boolean> {
+    return this.sqliteAPI.get_autocommit(this.dbP) != 0;
+  }
+
+  async markHold(): Promise<string> {
+    const previousHoldId = this._holdId;
+    this._holdId = `${++this._holdCounter}`;
+    if (previousHoldId) {
+      await this.iterateAsyncListeners(async (cb) => cb.holdOverwritten?.(previousHoldId));
+    }
+    return this._holdId;
+  }
+
+  async releaseHold(holdId: string): Promise<void> {
+    if (holdId != this._holdId) {
+      throw new Error(`Invalid hold state, expected ${this._holdId} but got ${holdId}`);
+    }
+    this._holdId = null;
   }
 
   protected async openDB() {

@@ -7,5 +7,18 @@
     "SplashScreen": {
       "launchShowDuration": 0
     }
+  },
+  "android": {
+    "loggingBehavior": "production",
+    "buildOptions": {
+      "releaseType": "APK",
+      "keystorePath": "debug-isolated.keystore",
+      "keystorePassword": "android",
+      "keystoreAlias": "androiddebugkey",
+      "keystoreAliasPassword": "android"
+    }
+  },
+  "ios": {
+    "loggingBehavior": "production"
   }
 }

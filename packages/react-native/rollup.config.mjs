@@ -11,18 +11,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default (commandLineArgs) => {
-  const sourceMap = (commandLineArgs.sourceMap || 'true') == 'true';
-
-  // Clears rollup CLI warning https://github.com/rollup/rollup/issues/2694
-  delete commandLineArgs.sourceMap;
-
+export default () => {
   return {
     input: 'lib/index.js',
     output: {
       file: 'dist/index.js',
       format: 'cjs',
-      sourcemap: sourceMap
+      sourcemap: true
     },
     plugins: [
       // We do this so that we can inject on BSON's crypto usage.
@@ -53,8 +48,7 @@ export default (commandLineArgs) => {
             replacement: path.resolve(__dirname, './vendor/BlobManager.js')
           }
         ]
-      }),
-      terser({ sourceMap })
+      })
     ],
     external: [
       '@journeyapps/react-native-quick-sqlite',
@@ -64,7 +58,8 @@ export default (commandLineArgs) => {
       'js-logger',
       'react-native',
       'react',
-      'expo-file-system'
+      'expo-file-system',
+      'async-mutex'
     ]
   };
 };

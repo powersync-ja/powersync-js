@@ -11,15 +11,17 @@ import {
   createTableRelationsHelpers,
   extractTablesRelationalConfig,
   ExtractTablesWithRelations,
+  TableRelationalConfig,
   type RelationalSchemaConfig,
   type TablesRelationalConfig
 } from 'drizzle-orm/relations';
-import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
+import { SQLiteSession, SQLiteTable, SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
+import { RelationalQueryBuilder } from 'drizzle-orm/sqlite-core/query-builders/query';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
 import { toCompilableQuery } from './../utils/compilableQuery.js';
-import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
+import { PowerSyncSQLiteBaseSession, PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
 import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession.js';
 
 export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
@@ -54,6 +56,41 @@ export class PowerSyncSQLiteDatabase<
 
     super('async', dialect, session as any, schema as any);
     this.db = db;
+
+    /**
+     * A hack in order to use read locks for `db.query.users.findMany()` etc queries.
+     * We don't currently get queryMetadata for these queries, so we can't use the regular session.
+     * This session always uses read locks.
+     */
+    const querySession = new PowerSyncSQLiteBaseSession(
+      {
+        useReadContext: (callback) => db.readLock(callback),
+        useWriteContext: (callback) => db.readLock(callback)
+      },
+      dialect,
+      schema,
+      {
+        logger
+      }
+    );
+    if (this._.schema) {
+      // https://github.com/drizzle-team/drizzle-orm/blob/ad4ddd444d066b339ffd5765cb6ec3bf49380189/drizzle-orm/src/sqlite-core/db.ts#L72
+      const query = this.query as {
+        [K in keyof TSchema]: RelationalQueryBuilder<'async', any, any, any>;
+      };
+      for (const [tableName, columns] of Object.entries(this._.schema)) {
+        query[tableName as keyof TSchema] = new RelationalQueryBuilder(
+          'async',
+          schema!.fullSchema,
+          this._.schema,
+          this._.tableNamesMap,
+          schema!.fullSchema[tableName] as SQLiteTable,
+          columns as TableRelationalConfig,
+          dialect,
+          querySession as SQLiteSession<'async', any, any, any>
+        );
+      }
+    }
   }
 
   transaction<T>(

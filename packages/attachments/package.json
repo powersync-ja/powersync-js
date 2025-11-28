@@ -47,7 +47,7 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.42.0"
+    "@powersync/common": "workspace:^1.43.1"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

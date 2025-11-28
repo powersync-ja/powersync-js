@@ -123,6 +123,10 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   }
 
   try {
+    if (pkg.scripts['prepare:isolated:test']) {
+      execSync('pnpm run prepare:isolated:test', { cwd: demoDest, stdio: 'inherit' });
+    }
+
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
     result.buildResult.state = TestState.PASSED;
   } catch (ex) {

@@ -1,5 +1,42 @@
 # @powersync/op-sqlite
 
+## 0.7.16
+
+### Patch Changes
+
+- Updated dependencies [9b82867]
+  - @powersync/common@1.43.1
+
+## 0.7.15
+
+### Patch Changes
+
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+
+## 0.7.14
+
+### Patch Changes
+
+- Updated dependencies [66218b2]
+- Updated dependencies [3af4a2c]
+  - @powersync/common@1.42.0
+
+## 0.7.13
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
+## 0.7.12
+
+### Patch Changes
+
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+
 ## 0.7.11
 
 ### Patch Changes

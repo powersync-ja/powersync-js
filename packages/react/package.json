@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -11,11 +11,12 @@
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:prod": "tsc -b --sourceMap false",
+    "build:prod": "tsc -b",
     "clean": "rm -rf lib tsconfig.tsbuildinfo",
     "test": "vitest",
     "test:exports": "attw --pack --profile=esm-only  .",
@@ -32,7 +33,7 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.40.0",
+    "@powersync/common": "workspace:^1.43.1",
     "react": "*"
   },
   "devDependencies": {

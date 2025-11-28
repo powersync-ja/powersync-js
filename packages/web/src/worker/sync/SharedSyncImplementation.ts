@@ -1,10 +1,4 @@
 import {
-  type ILogger,
-  type ILogLevel,
-  type PowerSyncConnectionOptions,
-  type StreamingSyncImplementation,
-  type StreamingSyncImplementationListener,
-  type SyncStatusOptions,
   AbortOperation,
   BaseObserver,
   ConnectionManager,
@@ -13,7 +7,13 @@ import {
   PowerSyncBackendConnector,
   SqliteBucketStorage,
   SubscribedStream,
-  SyncStatus
+  SyncStatus,
+  type ILogger,
+  type ILogLevel,
+  type PowerSyncConnectionOptions,
+  type StreamingSyncImplementation,
+  type StreamingSyncImplementationListener,
+  type SyncStatusOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
@@ -75,7 +75,7 @@ export type WrappedSyncPort = {
   clientProvider: Comlink.Remote<AbstractSharedSyncClientProvider>;
   db?: DBAdapter;
   currentSubscriptions: SubscribedStream[];
-  closeListeners: (() => void)[];
+  closeListeners: (() => void | Promise<void>)[];
 };
 
 /**
@@ -334,12 +334,15 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     }
 
     for (const closeListener of trackedPort.closeListeners) {
-      closeListener();
+      await closeListener();
     }
 
     if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
       // Unconditionally close the connection because the database it's writing to has just been closed.
-      await this.connectionManager.disconnect();
+      // The connection has been closed previously, this might throw. We should be able to ignore it.
+      await this.connectionManager
+        .disconnect()
+        .catch((ex) => this.logger.warn('Error while disconnecting. Will attempt to reconnect.', ex));
 
       // Clearing the adapter will result in a new one being opened in connect
       this.dbAdapter = null;
@@ -482,9 +485,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           // that and ensure pending requests are aborted when the tab is closed.
           remoteCanCloseUnexpectedly: true
         });
-        lastClient.closeListeners.push(() => {
+        lastClient.closeListeners.push(async () => {
           this.logger.info('Aborting open connection because associated tab closed.');
-          wrapped.close();
+          await wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
           wrapped.markRemoteClosed();
         });
 

@@ -1,5 +1,4 @@
 import type { BSON } from 'bson';
-import { Buffer } from 'buffer';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
@@ -7,8 +6,9 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
+import { StreamingSyncRequest } from './streaming-sync-types.js';
+
 
 export type BSONImplementation = typeof BSON;
 
@@ -262,6 +262,14 @@ export abstract class AbstractRemote {
    * Provides a BSON implementation. The import nature of this varies depending on the platform
    */
   abstract getBSON(): Promise<BSONImplementation>;
+
+  /**
+   * @returns A text decoder decoding UTF-8. This is a method to allow patching it for Hermes which doesn't support the
+   * builtin, without forcing us to bundle a polyfill with `@powersync/common`.
+   */
+  protected createTextDecoder(): TextDecoder {
+    return new TextDecoder();
+  }
 
   protected createSocket(url: string): WebSocket {
     return new WebSocket(url);
@@ -550,9 +558,11 @@ export abstract class AbstractRemote {
     // Create a new stream splitting the response at line endings while also handling cancellations
     // by closing the reader.
     const reader = res.body.getReader();
+    let readerReleased = false;
     // This will close the network request and read stream
     const closeReader = async () => {
       try {
+        readerReleased = true;
         await reader.cancel();
       } catch (ex) {
         // an error will throw if the reader hasn't been used yet
@@ -560,20 +570,27 @@ export abstract class AbstractRemote {
       reader.releaseLock();
     };
 
-    abortSignal?.addEventListener('abort', () => {
-      closeReader();
-    });
-
-    const decoder = new TextDecoder();
-    let buffer = '';
 
     const stream = new DataStream<T, string>({
       logger: this.logger,
       mapLine: mapLine
     });
 
+    abortSignal?.addEventListener('abort', () => {
+      closeReader();
+      stream.close();
+    });
+
+    const decoder = this.createTextDecoder();
+    let buffer = '';
+
+
+
     const l = stream.registerListener({
       lowWater: async () => {
+        if (stream.closed || abortSignal?.aborted || readerReleased) {
+          return
+        } 
         try {
           let didCompleteLine = false;
           while (!didCompleteLine) {

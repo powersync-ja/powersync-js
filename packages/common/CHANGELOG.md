@@ -1,5 +1,39 @@
 # @powersync/common
 
+## 1.43.1
+
+### Patch Changes
+
+- 9b82867: Fixed issue where using triggers could block syncing after performing uploads.
+
+## 1.43.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+
+## 1.42.0
+
+### Minor Changes
+
+- 3af4a2c: Added auto incrementing operation_id column to Trigger based diff temporary tables and results. This allows for better operation ordering compared to using the previous timestamp column.
+
+### Patch Changes
+
+- 66218b2: Improved potential race condition when closing HTTP stream connections.
+
+## 1.41.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+
+## 1.41.0
+
+### Minor Changes
+
+- 2f8b30c: Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
+
 ## 1.40.0
 
 ### Minor Changes

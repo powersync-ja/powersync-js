@@ -1,5 +1,55 @@
 # @powersync/react-native
 
+## 1.27.1
+
+### Patch Changes
+
+- Updated dependencies [9b82867]
+  - @powersync/common@1.43.1
+  - @powersync/react@1.8.2
+
+## 1.27.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+
+### Patch Changes
+
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+  - @powersync/react@1.8.2
+
+## 1.26.2
+
+### Patch Changes
+
+- Updated dependencies [66218b2]
+- Updated dependencies [3af4a2c]
+  - @powersync/common@1.42.0
+  - @powersync/react@1.8.2
+
+## 1.26.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+  - @powersync/react@1.8.2
+
+## 1.26.0
+
+### Minor Changes
+
+- 2f8b30c: Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
+
+### Patch Changes
+
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+  - @powersync/react@1.8.1
+
 ## 1.25.1
 
 ### Patch Changes

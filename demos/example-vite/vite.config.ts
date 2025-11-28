@@ -1,6 +1,6 @@
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import { defineConfig } from 'vite';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,5 +22,21 @@ export default defineConfig({
   worker: {
     format: 'es',
     plugins: () => [wasm(), topLevelAwait()]
+  },
+  test: {
+    globals: true,
+    include: ['../e2e/**/*.test.js'],
+    maxConcurrency: 1,
+    browser: {
+      enabled: true,
+      isolate: true,
+      provider: 'playwright',
+      headless: true,
+      instances: [
+        {
+          browser: 'chromium'
+        }
+      ]
+    }
   }
 });

@@ -1,5 +1,65 @@
 # @powersync/web
 
+## 1.29.1
+
+### Patch Changes
+
+- Updated dependencies [9b82867]
+  - @powersync/common@1.43.1
+
+## 1.29.0
+
+### Minor Changes
+
+- 507197f: Revert `event-iterator` externalization in `@powersync/common` rollup config. This now bundles `event-iterator` again in `@powersync/common`'s non Node.js export.
+- 507197f: Fixes regression introduced in `@powersync/web@1.28.1`. Vite users don't need to include `event-iterator` in included optimized dependencies.
+
+  vite.config.js
+
+  ```diff
+  include: [
+  -   '@powersync/web > event-iterator'
+  ]
+  ```
+
+### Patch Changes
+
+- e88154e: - Fixed an issue where IndexedDB could cause "cannot start a transaction within a transaction" errors.
+  - Improved reconnect logic when multiple tabs are closed.
+- Updated dependencies [507197f]
+  - @powersync/common@1.43.0
+
+## 1.28.2
+
+### Patch Changes
+
+- Updated dependencies [66218b2]
+- Updated dependencies [3af4a2c]
+  - @powersync/common@1.42.0
+
+## 1.28.1
+
+### Patch Changes
+
+- 3e4a25c: Don't minify releases, enable source maps.
+- Updated dependencies [3e4a25c]
+  - @powersync/common@1.41.1
+
+Note for Vite users:
+
+This release introduced a regression which requires including `'@powersync/web > event-iterator'` in the Vite `optimizeDeps -> include` config. This regression was fixed in `@powersync/web@1.29.0`.
+
+## 1.28.0
+
+### Minor Changes
+
+- 2f8b30c: Populate Table `name` values in `schema.props` for Schemas created with typed `Table`s. e.g. `schema.props['some_table'].name` will contain the table name.
+
+### Patch Changes
+
+- Updated dependencies [2f8b30c]
+  - @powersync/common@1.41.0
+
 ## 1.27.1
 
 ### Patch Changes
