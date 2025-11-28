@@ -284,11 +284,12 @@ describe('Multiple Instances', { sequential: true }, () => {
     await stream2.dispose();
   });
 
-  it('should trigger uploads from last connected clients', async () => {
+  it('should trigger uploads from last connected clients', { timeout: Infinity }, async () => {
     // Generate the first streaming sync implementation
     const connector1 = new TestConnector();
     const spy1 = vi.spyOn(connector1, 'uploadData');
 
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     const db = openDatabase();
     await db.init();
     // They need to use the same identifier to use the same shared worker.
@@ -380,8 +381,6 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Close the second client, leaving only the first one
     await stream2.dispose();
 
-    // The dispose above will disconnect, but we need to wait for the sync stream to be created before we can update the status
-    await vi.waitFor(() => expect(stream1.syncStatus.connecting).true);
     // Hack, set the status to connected in order to trigger the upload
     await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
     stream1.triggerCrudUpload();

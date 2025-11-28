@@ -251,12 +251,16 @@ export class LockedAsyncDatabaseAdapter
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
-        const holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
+        let holdId: string | null = null;
         try {
           if (this.requiresReOpen) {
+            this.logger.debug('Re-opening database');
             await this.openInternalDB();
+            this.logger.debug('Database re-opened');
             this.requiresReOpen = false;
           }
+
+          holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
           return await callback();
         } catch (ex) {
           if (ex instanceof WorkerConnectionClosedError) {

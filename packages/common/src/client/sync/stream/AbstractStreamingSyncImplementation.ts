@@ -429,7 +429,7 @@ The next upload iteration will be delayed.`);
                 uploadError: ex
               }
             });
-            await this.delayRetry(controller.signal);
+            await this.delayRetry(controller.signal, this.options.crudUploadThrottleMs);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
               break;
@@ -1216,15 +1216,14 @@ The next upload iteration will be delayed.`);
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry(signal?: AbortSignal): Promise<void> {
+  private async delayRetry(signal?: AbortSignal, delayMs?: number): Promise<void> {
     return new Promise((resolve) => {
       if (signal?.aborted) {
         // If the signal is already aborted, resolve immediately
         resolve();
         return;
       }
-
-      const { retryDelayMs } = this.options;
+      const delay = delayMs ?? this.options.retryDelayMs;
 
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
@@ -1238,7 +1237,7 @@ The next upload iteration will be delayed.`);
       };
 
       signal?.addEventListener('abort', endDelay, { once: true });
-      timeoutId = setTimeout(endDelay, retryDelayMs);
+      timeoutId = setTimeout(endDelay, delay);
     });
   }
 
