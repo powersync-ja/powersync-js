@@ -13,7 +13,10 @@ import {
 import { getNavigatorLocks } from '../..//shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
+import {
+  WorkerConnectionClosedError,
+  WorkerWrappedAsyncDatabaseConnection
+} from './WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
 import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
@@ -52,6 +55,7 @@ export class LockedAsyncDatabaseAdapter
   private _config: ResolvedWebSQLOpenOptions | null = null;
   protected pendingAbortControllers: Set<AbortController>;
   protected requiresHolds: boolean | null;
+  protected requiresReOpen: boolean;
 
   closing: boolean;
   closed: boolean;
@@ -64,6 +68,7 @@ export class LockedAsyncDatabaseAdapter
     this.closed = false;
     this.closing = false;
     this.requiresHolds = null;
+    this.requiresReOpen = false;
     // Set the name if provided. We can query for the name if not available yet
     this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {
@@ -106,16 +111,24 @@ export class LockedAsyncDatabaseAdapter
     return this.initPromise;
   }
 
-  protected async _init() {
+  protected async openInternalDB() {
+    // Dispose any previous table change listener.
+    this._disposeTableChangeListener?.();
+    this._disposeTableChangeListener = null;
+
     this._db = await this.options.openConnection();
     await this._db.init();
     this._config = await this._db.getConfig();
     await this.registerOnChangeListener(this._db);
-    this.iterateListeners((cb) => cb.initialized?.());
     /**
      * This is only required for the long-lived shared IndexedDB connections.
      */
     this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
+  }
+
+  protected async _init() {
+    await this.openInternalDB();
+    this.iterateListeners((cb) => cb.initialized?.());
   }
 
   getConfiguration(): ResolvedWebSQLOpenOptions {
@@ -223,7 +236,7 @@ export class LockedAsyncDatabaseAdapter
     this.pendingAbortControllers.add(abortController);
     const { timeoutMs } = options ?? {};
 
-    const timoutId = timeoutMs
+    const timeoutId = timeoutMs
       ? setTimeout(() => {
           abortController.abort(`Timeout after ${timeoutMs}ms`);
           this.pendingAbortControllers.delete(abortController);
@@ -235,12 +248,21 @@ export class LockedAsyncDatabaseAdapter
       { signal: abortController.signal },
       async () => {
         this.pendingAbortControllers.delete(abortController);
-        if (timoutId) {
-          clearTimeout(timoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
         const holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
         try {
+          if (this.requiresReOpen) {
+            await this.openInternalDB();
+            this.requiresReOpen = false;
+          }
           return await callback();
+        } catch (ex) {
+          if (ex instanceof WorkerConnectionClosedError) {
+            this.requiresReOpen = true;
+          }
+          throw ex;
         } finally {
           if (holdId) {
             await this.baseDB.releaseHold(holdId);
