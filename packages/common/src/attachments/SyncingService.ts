@@ -1,4 +1,4 @@
-import { ILogger } from '@powersync/common';
+import { ILogger } from '../utils/Logger.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';

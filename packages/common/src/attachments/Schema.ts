@@ -1,4 +1,6 @@
-import { column, Table, TableV2Options } from '@powersync/common';
+import { column } from '../db/schema/Column.js';
+import { Table } from '../db/schema/Table.js';
+import { TableV2Options } from '../db/schema/Table.js';
 
 export const ATTACHMENT_TABLE = 'attachments';
 

@@ -1,10 +1,8 @@
-import {
-  AbstractPowerSyncDatabase,
-  DEFAULT_WATCH_THROTTLE_MS,
-  DifferentialWatchedQuery,
-  ILogger,
-  Transaction
-} from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
+import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
+import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
+import { ILogger } from '../utils/Logger.js';
+import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';

@@ -1,4 +1,6 @@
-import { AbstractPowerSyncDatabase, ILogger, Transaction } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
+import { ILogger } from '../utils/Logger.js';
+import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.js';
 
 /**

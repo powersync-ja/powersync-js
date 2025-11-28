@@ -1,4 +1,6 @@
-import { AbstractPowerSyncDatabase, DifferentialWatchedQuery, ILogger } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
+import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
+import { ILogger } from '../utils/Logger.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 
 /**
