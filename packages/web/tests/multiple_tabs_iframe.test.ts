@@ -1,6 +1,6 @@
 import { WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 /**
  * Creates an iframe with a PowerSync client that connects using the same database.
@@ -16,16 +16,22 @@ interface IframeClient {
   getCredentialsFetchCount: () => Promise<number>;
 }
 
+interface IframeClientResult {
+  iframe: HTMLIFrameElement;
+  cleanup: () => Promise<void>;
+  ready: Promise<IframeClient>;
+}
+
 // Run tests for both IndexedDB and OPFS
 createMultipleTabsTest(); // IndexedDB (default)
 createMultipleTabsTest(WASQLiteVFS.OPFSCoopSyncVFS);
 
-async function createIframeWithPowerSyncClient(
+function createIframeWithPowerSyncClient(
   dbFilename: string,
   identifier: string,
   vfs?: WASQLiteVFS,
   waitForConnection?: boolean
-): Promise<IframeClient> {
+): IframeClientResult {
   const iframe = document.createElement('iframe');
   // Make iframe visible for debugging
   iframe.style.display = 'block';
@@ -91,33 +97,60 @@ async function createIframeWithPowerSyncClient(
   const url = URL.createObjectURL(blob);
   iframe.src = url;
 
-  return new Promise((resolve, reject) => {
-    let requestIdCounter = 0;
-    const pendingRequests = new Map<
-      string,
-      {
-        resolve: (value: any) => void;
-        reject: (error: Error) => void;
-      }
-    >();
+  let requestIdCounter = 0;
+  const pendingRequests = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (error: Error) => void;
+    }
+  >();
 
-    const messageHandler = async (event: MessageEvent) => {
+  let messageHandler: ((event: MessageEvent) => void) | null = null;
+  let isCleanedUp = false;
+
+  // Create cleanup function that can be called immediately
+  const cleanup = async (): Promise<void> => {
+    if (isCleanedUp) {
+      return;
+    }
+    isCleanedUp = true;
+
+    // Remove message handler if it was added
+    if (messageHandler) {
+      window.removeEventListener('message', messageHandler);
+      messageHandler = null;
+    }
+
+    // Simulate abrupt tab closure - just remove the iframe without calling
+    // disconnect/close on the PowerSync client. This tests dead tab detection.
+    URL.revokeObjectURL(url);
+    if (iframe.parentNode) {
+      iframe.remove();
+    }
+  };
+
+  // Create promise that resolves when powersync-ready is received
+  const ready = new Promise<IframeClient>((resolve, reject) => {
+    messageHandler = async (event: MessageEvent) => {
+      if (isCleanedUp) {
+        return;
+      }
+
       const data = event.data;
 
       if (data?.type === 'powersync-ready' && data.identifier === identifier) {
         // Don't remove the message handler - we need it to receive query results!
         resolve({
           iframe,
-          cleanup: async () => {
-            // Simulate abrupt tab closure - just remove the iframe without calling
-            // disconnect/close on the PowerSync client. This tests dead tab detection.
-            URL.revokeObjectURL(url);
-            if (iframe.parentNode) {
-              iframe.remove();
-            }
-          },
+          cleanup,
           executeQuery: (query: string, parameters?: unknown[]): Promise<unknown[]> => {
             return new Promise((resolveQuery, rejectQuery) => {
+              if (isCleanedUp) {
+                rejectQuery(new Error('Iframe has been cleaned up'));
+                return;
+              }
+
               const requestId = `query-${identifier}-${++requestIdCounter}`;
               pendingRequests.set(requestId, {
                 resolve: resolveQuery,
@@ -126,6 +159,7 @@ async function createIframeWithPowerSyncClient(
 
               const iframeWindow = iframe.contentWindow;
               if (!iframeWindow) {
+                pendingRequests.delete(requestId);
                 rejectQuery(new Error('Iframe window not available'));
                 return;
               }
@@ -151,6 +185,11 @@ async function createIframeWithPowerSyncClient(
           },
           getCredentialsFetchCount: (): Promise<number> => {
             return new Promise((resolveCount, rejectCount) => {
+              if (isCleanedUp) {
+                rejectCount(new Error('Iframe has been cleaned up'));
+                return;
+              }
+
               const requestId = `credentials-count-${identifier}-${++requestIdCounter}`;
               pendingRequests.set(requestId, {
                 resolve: resolveCount,
@@ -159,6 +198,7 @@ async function createIframeWithPowerSyncClient(
 
               const iframeWindow = iframe.contentWindow;
               if (!iframeWindow) {
+                pendingRequests.delete(requestId);
                 rejectCount(new Error('Iframe window not available'));
                 return;
               }
@@ -182,7 +222,10 @@ async function createIframeWithPowerSyncClient(
           }
         });
       } else if (data?.type === 'powersync-error' && data.identifier === identifier) {
-        window.removeEventListener('message', messageHandler);
+        if (messageHandler) {
+          window.removeEventListener('message', messageHandler);
+          messageHandler = null;
+        }
         URL.revokeObjectURL(url);
         if (iframe.parentNode) {
           iframe.remove();
@@ -212,6 +255,12 @@ async function createIframeWithPowerSyncClient(
     };
     window.addEventListener('message', messageHandler);
   });
+
+  return {
+    iframe,
+    cleanup,
+    ready
+  };
 }
 
 /**
@@ -236,51 +285,33 @@ async function createIframeWithPowerSyncClient(
  *    enableMultiTabs is true).
  *
  * Test Scenarios:
- * - Opening a long-lived reference tab that remains open throughout the test
- * - Opening multiple additional tabs simultaneously
- * - Simultaneously closing half of the tabs (simulating abrupt tab closures)
- * - Simultaneously reopening the closed tabs
- * - Verifying that all tabs remain functional and the shared database connection
- *   is properly maintained across tab lifecycle events
+ * - Opening 100 tabs simultaneously
+ * - Waiting 1 second for all tabs to initialize
+ * - Simultaneously closing all tabs except the middle (50th) tab
+ * - Verifying that the remaining tab is still functional and the shared database
+ *   connection is properly maintained after closing 99 tabs
  *
  * This test suite runs for both IndexedDB and OPFS VFS backends to ensure dead tab
  * detection works correctly across different storage mechanisms.
  */
 function createMultipleTabsTest(vfs?: WASQLiteVFS) {
   const vfsName = vfs || 'IndexedDB';
-  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 20_000 }, () => {
+  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 60_000 }, () => {
     const dbFilename = `test-multi-tab-${uuid()}.db`;
 
-    // Configurable number of tabs to create (excluding the long-lived tab)
-    const NUM_TABS = 20;
+    // Number of tabs to create
+    const NUM_TABS = 100;
+    // Index of the middle tab to keep (0-indexed, so 49 is the 50th tab)
+    const MIDDLE_TAB_INDEX = 49;
 
-    it('should handle simultaneous close and reopen of tabs', async () => {
-      // Step 1: Open a long-lived reference tab that stays open throughout the test
-      const longLivedTab = await createIframeWithPowerSyncClient(dbFilename, 'long-lived-tab', vfs);
-      onTestFinished(async () => {
-        try {
-          await longLivedTab.cleanup();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      });
-
-      // Test query execution right after creating the long-lived tab
-      const initialQueryResult = await longLivedTab.executeQuery('SELECT 1 as value');
-      expect(initialQueryResult).toBeDefined();
-      expect(Array.isArray(initialQueryResult)).toBe(true);
-      expect(initialQueryResult.length).toBe(1);
-      expect((initialQueryResult[0] as { value: number }).value).toBe(1);
-
-      // Step 2: Open a configurable number of other tabs
-      const tabs: IframeClient[] = [];
-      const tabIdentifiers: string[] = [];
+    it('should handle opening and closing many tabs quickly', async () => {
+      // Step 1: Open 100 tabs (don't wait for them to be ready)
+      const tabResults: IframeClientResult[] = [];
 
       for (let i = 0; i < NUM_TABS; i++) {
         const identifier = `tab-${i}`;
-        tabIdentifiers.push(identifier);
-        const result = await createIframeWithPowerSyncClient(dbFilename, identifier, vfs);
-        tabs.push(result);
+        const result = createIframeWithPowerSyncClient(dbFilename, identifier, vfs);
+        tabResults.push(result);
 
         // Register cleanup for each tab
         onTestFinished(async () => {
@@ -292,87 +323,43 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
         });
       }
 
-      expect(tabs.length).toBe(NUM_TABS);
+      expect(tabResults.length).toBe(NUM_TABS);
 
-      // Verify all tabs are connected
-      for (const tab of tabs) {
-        expect(tab.iframe.isConnected).toBe(true);
+      // Verify all iframes are created (they're created immediately)
+      for (const result of tabResults) {
+        expect(result.iframe.isConnected).toBe(true);
       }
-      expect(longLivedTab.iframe.isConnected).toBe(true);
 
-      // Step 3: Simultaneously close the first and last quarters of the tabs (simulating abrupt closure)
-      const quarterCount = Math.floor(NUM_TABS / 4);
-      const firstQuarterEnd = quarterCount;
-      const lastQuarterStart = NUM_TABS - quarterCount;
+      // Step 2: Wait 1 second
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Close the first quarter and last quarter of tabs
-      const firstQuarter = tabs.slice(0, firstQuarterEnd);
-      const lastQuarter = tabs.slice(lastQuarterStart);
-      const tabsToClose = [...firstQuarter, ...lastQuarter];
+      // Step 3: Close all tabs except the middle (50th) tab
+      const tabsToClose: IframeClientResult[] = [];
+      for (let i = 0; i < NUM_TABS; i++) {
+        if (i !== MIDDLE_TAB_INDEX) {
+          tabsToClose.push(tabResults[i]);
+        }
+      }
 
-      // Keep the middle two quarters
-      const tabsToKeep = tabs.slice(firstQuarterEnd, lastQuarterStart);
-
-      // Close the first and last quarters of tabs simultaneously (without proper cleanup)
-      // Do this in reverse order to ensure the last connected tab is closed first.
-      const closePromises = tabsToClose.reverse().map((tab) => tab.cleanup());
+      // Close all tabs except the middle one simultaneously (without waiting for ready)
+      const closePromises = tabsToClose.map((result) => result.cleanup());
       await Promise.all(closePromises);
 
       // Verify closed tabs are removed
-      for (const tab of tabsToClose) {
-        expect(tab.iframe.isConnected).toBe(false);
-        expect(document.body.contains(tab.iframe)).toBe(false);
+      for (let i = 0; i < NUM_TABS; i++) {
+        if (i !== MIDDLE_TAB_INDEX) {
+          expect(tabResults[i].iframe.isConnected).toBe(false);
+          expect(document.body.contains(tabResults[i].iframe)).toBe(false);
+        }
       }
 
-      // Verify remaining tabs and long-lived tab are still connected
-      for (const tab of tabsToKeep) {
-        expect(tab.iframe.isConnected).toBe(true);
-      }
-      expect(longLivedTab.iframe.isConnected).toBe(true);
+      // Verify the middle tab is still present
+      expect(tabResults[MIDDLE_TAB_INDEX].iframe.isConnected).toBe(true);
+      expect(document.body.contains(tabResults[MIDDLE_TAB_INDEX].iframe)).toBe(true);
 
-      // Step 4: Reopen the closed tabs
-      const reopenedTabs: IframeClient[] = [];
-      // Get the identifiers for the closed tabs by finding their indices in the original tabs array
-      const closedTabIdentifiers = tabsToClose.map((closedTab) => {
-        const index = tabs.indexOf(closedTab);
-        return tabIdentifiers[index];
-      });
-
-      const reopenPromises = closedTabIdentifiers.map(async (identifier) => {
-        const result = await createIframeWithPowerSyncClient(dbFilename, identifier, vfs);
-        reopenedTabs.push(result);
-
-        // Register cleanup for reopened tabs
-        onTestFinished(async () => {
-          try {
-            await result.cleanup();
-          } catch (e) {
-            // Ignore cleanup errors
-          }
-        });
-        return result;
-      });
-
-      // Reopen all closed tabs simultaneously
-      await Promise.all(reopenPromises);
-
-      // Verify all reopened tabs are connected
-      for (const tab of reopenedTabs) {
-        expect(tab.iframe.isConnected).toBe(true);
-      }
-
-      // Verify tabs that were kept open are still connected
-      for (const tab of tabsToKeep) {
-        expect(tab.iframe.isConnected).toBe(true);
-      }
-
-      // Final verification: all tabs should be mounted
-      const allTabs = [...tabsToKeep, ...reopenedTabs];
-      expect(allTabs.length).toBe(NUM_TABS);
-      expect(longLivedTab.iframe.isConnected).toBe(true);
-
-      // Step 5: Execute a test query in the long-lived tab to verify its DB is still functional
-      const queryResult = await longLivedTab.executeQuery('SELECT 1 as value');
+      // Step 4: Wait for the middle tab to be ready, then execute a test query to verify its DB is still functional
+      const middleTabClient = await tabResults[MIDDLE_TAB_INDEX].ready;
+      const queryResult = await middleTabClient.executeQuery('SELECT 1 as value');
 
       // Verify the query result
       expect(queryResult).toBeDefined();
@@ -380,28 +367,22 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       expect(queryResult.length).toBe(1);
       expect((queryResult[0] as { value: number }).value).toBe(1);
 
-      // Step 6: Create a new tab which should trigger a connect. The shared sync worker should reconnect.
-      // This ensures the shared sync worker is not stuck and is properly handling new connections
+      // Step 5: Create another tab, wait for it to be ready, and verify its credentialsFetchCount is 1
       const newTabIdentifier = `new-tab-${Date.now()}`;
-      const newTab = await createIframeWithPowerSyncClient(dbFilename, newTabIdentifier, vfs, true);
+      const newTabResult = createIframeWithPowerSyncClient(dbFilename, newTabIdentifier, vfs, true);
       onTestFinished(async () => {
         try {
-          await newTab.cleanup();
+          await newTabResult.cleanup();
         } catch (e) {
           // Ignore cleanup errors
         }
       });
+      const newTabClient = await newTabResult.ready;
 
-      // Wait for the new tab's credentials to be fetched (indicating the shared sync worker is active)
-      // The mocked remote always returns 401, so the shared sync worker should try and fetch credentials again.
-      await vi.waitFor(async () => {
-        const credentialsFetchCount = await newTab.getCredentialsFetchCount();
-        expect(
-          credentialsFetchCount,
-          'The new client should have been asked for credentials by the shared sync worker. ' +
-            'This indicates the shared sync worker may be stuck or not processing new connections.'
-        ).toBeGreaterThanOrEqual(1);
-      });
+      // Verify the new tab's credentials fetch count is 1
+      // This means the shared worker is using the db and attempting to connect to the PowerSync server.
+      const credentialsFetchCount = await newTabClient.getCredentialsFetchCount();
+      expect(credentialsFetchCount).toBe(1);
     });
   });
 }
