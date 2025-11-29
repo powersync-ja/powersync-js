@@ -6,16 +6,16 @@ import {
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation';
-import { DEFAULT_CACHE_SIZE_KB, resolveWebSQLFlags, TemporaryStorageOption } from '../adapters/web-sql-flags';
+import { WorkerClient } from '../../worker/sync/WorkerClient';
 import { WebDBAdapter } from '../adapters/WebDBAdapter';
+import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation';
-import { WorkerClient } from '../../worker/sync/WorkerClient';
-import { getNavigatorLocks } from '../../shared/navigator';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -146,7 +146,25 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       ).port;
     }
 
+    /**
+     * Pass along any sync status updates to this listener
+     */
+    this.clientProvider = new SharedSyncClientProvider(
+      this.webOptions,
+      (status) => {
+        this.updateSyncStatus(status);
+      },
+      options.db
+    );
+
     this.syncManager = Comlink.wrap<WorkerClient>(this.messagePort);
+    /**
+     * The sync worker will call this client provider when it needs
+     * to fetch credentials or upload data.
+     * This performs bi-directional method calling.
+     */
+    Comlink.expose(this.clientProvider, this.messagePort);
+
     this.syncManager.setLogLevel(this.logger.getLevel());
 
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
@@ -157,10 +175,47 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      * DB worker, but a port to the DB worker can be transferred to the
      * sync worker.
      */
+
+    this.isInitialized = this._init();
+  }
+
+  protected async _init() {
+    /**
+     * The general flow of initialization is:
+     *  - The client requests a unique navigator lock.
+     *    - Once the lock is acquired, we register the lock with the shared worker.
+     *    - The shared worker can then request the same lock. The client has been closed if the shared worker can acquire the lock.
+     *    - Once the shared worker knows the client's lock, we can guarentee that the shared worker will detect if the client has been closed.
+     *    - This makes the client safe for the shared worker to use.
+     *    - The client side lock is held until the client is disposed.
+     *    - We resolve the top-level promise after the lock has been registered with the shared worker.
+     * - The client sends the params to the shared worker after locks have been registered.
+     */
+    await new Promise<void>((resolve) => {
+      // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
+      // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
+      // to free resources associated with this tab.
+      // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
+      getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
+        if (this.abortOnClose.signal.aborted) {
+          return;
+        }
+        // Awaiting here ensures the worker is waiting for the lock
+        await this.syncManager.addLockBasedCloseSignal(lock!.name);
+
+        // The lock has been registered, we can continue with the initialization
+        resolve();
+
+        await new Promise<void>((r) => {
+          this.abortOnClose.signal.onabort = () => r();
+        });
+      });
+    });
+
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
 
-    this.isInitialized = this.syncManager.setParams(
+    await this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
@@ -170,39 +225,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
           flags: flags
         }
       },
-      options.subscriptions
+      this.options.subscriptions
     );
-
-    /**
-     * Pass along any sync status updates to this listener
-     */
-    this.clientProvider = new SharedSyncClientProvider(
-      this.webOptions,
-      (status) => {
-        this.iterateListeners((l) => this.updateSyncStatus(status));
-      },
-      options.db
-    );
-
-    /**
-     * The sync worker will call this client provider when it needs
-     * to fetch credentials or upload data.
-     * This performs bi-directional method calling.
-     */
-    Comlink.expose(this.clientProvider, this.messagePort);
-
-    // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
-    // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
-    // to free resources associated with this tab.
-    getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-      if (!this.abortOnClose.signal.aborted) {
-        this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-        await new Promise<void>((r) => {
-          this.abortOnClose.signal.onabort = () => r();
-        });
-      }
-    });
   }
 
   /**

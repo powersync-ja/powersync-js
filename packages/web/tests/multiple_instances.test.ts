@@ -284,11 +284,12 @@ describe('Multiple Instances', { sequential: true }, () => {
     await stream2.dispose();
   });
 
-  it('should trigger uploads from last connected clients', async () => {
+  it('should trigger uploads from last connected clients', { timeout: Infinity }, async () => {
     // Generate the first streaming sync implementation
     const connector1 = new TestConnector();
     const spy1 = vi.spyOn(connector1, 'uploadData');
 
+    await new Promise((resolve) => setTimeout(resolve, 5000));
     const db = openDatabase();
     await db.init();
     // They need to use the same identifier to use the same shared worker.

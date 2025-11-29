@@ -2,14 +2,14 @@ import {
   AbortOperation,
   BaseObserver,
   ConnectionManager,
-  createLogger,
   DBAdapter,
   PowerSyncBackendConnector,
   SqliteBucketStorage,
   SubscribedStream,
   SyncStatus,
-  type ILogger,
+  createLogger,
   type ILogLevel,
+  type ILogger,
   type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
@@ -25,8 +25,8 @@ import {
 
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
 import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
-import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
 import { BroadcastLogger } from './BroadcastLogger';
 
@@ -76,6 +76,11 @@ export type WrappedSyncPort = {
   db?: DBAdapter;
   currentSubscriptions: SubscribedStream[];
   closeListeners: (() => void | Promise<void>)[];
+  /**
+   * If we can use Navigator locks to detect if the client has closed.
+   */
+  isProtectedFromClose: boolean;
+  isClosing: boolean;
 };
 
 /**
@@ -106,7 +111,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected fetchCredentialsController?: RemoteOperationAbortController;
   protected uploadDataController?: RemoteOperationAbortController;
 
-  protected dbAdapter: DBAdapter | null;
   protected syncParams: SharedSyncInitOptions | null;
   protected logger: ILogger;
   protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
@@ -116,11 +120,11 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected connectionManager: ConnectionManager;
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
+  protected distributedDB: DBAdapter | null;
 
   constructor() {
     super();
     this.ports = [];
-    this.dbAdapter = null;
     this.syncParams = null;
     this.logger = createLogger('shared-sync');
     this.lastConnectOptions = undefined;
@@ -135,29 +139,27 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       });
     });
 
+    // Should be configured once we get params
+    this.distributedDB = null;
+
     this.syncStatus = new SyncStatus({});
     this.broadCastLogger = new BroadcastLogger(this.ports);
 
     this.connectionManager = new ConnectionManager({
       createSyncImplementation: async () => {
-        return this.portMutex.runExclusive(async () => {
-          await this.waitForReady();
-          if (!this.dbAdapter) {
-            await this.openInternalDB();
+        await this.waitForReady();
+
+        const sync = this.generateStreamingImplementation();
+        const onDispose = sync.registerListener({
+          statusChanged: (status) => {
+            this.updateAllStatuses(status.toJSON());
           }
-
-          const sync = this.generateStreamingImplementation();
-          const onDispose = sync.registerListener({
-            statusChanged: (status) => {
-              this.updateAllStatuses(status.toJSON());
-            }
-          });
-
-          return {
-            sync,
-            onDispose
-          };
         });
+
+        return {
+          sync,
+          onDispose
+        };
       },
       logger: this.logger
     });
@@ -169,6 +171,19 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
   get isConnected(): boolean {
     return this.connectionManager.syncStreamImplementation?.isConnected ?? false;
+  }
+
+  /**
+   * Gets the last client port which we know is safe from unexpected closes.
+   */
+  protected get lastWrappedPort(): WrappedSyncPort | undefined {
+    // Find the last port which is protected from close
+    for (let i = this.ports.length - 1; i >= 0; i--) {
+      if (this.ports[i].isProtectedFromClose && !this.ports[i].isClosing) {
+        return this.ports[i];
+      }
+    }
+    return;
   }
 
   async waitForStatus(status: SyncStatusOptions): Promise<void> {
@@ -219,11 +234,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       this.collectActiveSubscriptions();
       if (this.syncParams) {
         // Cannot modify already existing sync implementation params
-        // But we can ask for a DB adapter, if required, at this point.
-
-        if (!this.dbAdapter) {
-          await this.openInternalDB();
-        }
         return;
       }
 
@@ -233,14 +243,30 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         this.logger = this.broadCastLogger;
       }
 
+      const lockedAdapter = new LockedAsyncDatabaseAdapter({
+        name: params.dbParams.dbFilename,
+        openConnection: async () => {
+          // Gets a connection from the clients when a new connection is requested.
+          return await this.openInternalDB();
+        },
+        logger: this.logger,
+        reOpenOnConnectionClosed: true
+      });
+      this.distributedDB = lockedAdapter;
+      await lockedAdapter.init();
+
+      lockedAdapter.registerListener({
+        databaseReOpened: () => {
+          // We may have missed some table updates while the database was closed.
+          // We can poke the crud in case we missed any updates.
+          this.connectionManager.syncStreamImplementation?.triggerCrudUpload();
+        }
+      });
+
       self.onerror = (event) => {
         // Share any uncaught events on the broadcast logger
         this.logger.error('Uncaught exception in PowerSync shared sync worker', event);
       };
-
-      if (!this.dbAdapter) {
-        await this.openInternalDB();
-      }
 
       this.iterateListeners((l) => l.initialized?.());
     });
@@ -276,7 +302,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         port,
         clientProvider: Comlink.wrap<AbstractSharedSyncClientProvider>(port),
         currentSubscriptions: [],
-        closeListeners: []
+        closeListeners: [],
+        isProtectedFromClose: false,
+        isClosing: false
       } satisfies WrappedSyncPort;
       this.ports.push(portProvider);
 
@@ -295,14 +323,17 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * clients.
    */
   async removePort(port: WrappedSyncPort) {
+    // Ports might be removed faster than we can process them.
+    port.isClosing = true;
+
     // Remove the port within a mutex context.
     // Warns if the port is not found. This should not happen in practice.
     // We return early if the port is not found.
-    const { trackedPort, shouldReconnect } = await this.portMutex.runExclusive(async () => {
+    return await this.portMutex.runExclusive(async () => {
       const index = this.ports.findIndex((p) => p == port);
       if (index < 0) {
         this.logger.warn(`Could not remove port ${port} since it is not present in active ports.`);
-        return {};
+        return () => {};
       }
 
       const trackedPort = this.ports[index];
@@ -321,42 +352,15 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         }
       });
 
-      const shouldReconnect = !!this.connectionManager.syncStreamImplementation && this.ports.length > 0;
-      return {
-        shouldReconnect,
-        trackedPort
-      };
-    });
-
-    if (!trackedPort) {
-      // We could not find the port to remove
-      return () => {};
-    }
-
-    for (const closeListener of trackedPort.closeListeners) {
-      await closeListener();
-    }
-
-    if (this.dbAdapter && this.dbAdapter == trackedPort.db) {
-      // Unconditionally close the connection because the database it's writing to has just been closed.
-      // The connection has been closed previously, this might throw. We should be able to ignore it.
-      await this.connectionManager
-        .disconnect()
-        .catch((ex) => this.logger.warn('Error while disconnecting. Will attempt to reconnect.', ex));
-
-      // Clearing the adapter will result in a new one being opened in connect
-      this.dbAdapter = null;
-
-      if (shouldReconnect) {
-        await this.connectionManager.connect(CONNECTOR_PLACEHOLDER, this.lastConnectOptions ?? {});
+      // Close the worker wrapped database connection, we can't accurately rely on this connection
+      for (const closeListener of trackedPort.closeListeners) {
+        await closeListener();
       }
-    }
 
-    // Re-index subscriptions, the subscriptions of the removed port would no longer be considered.
-    this.collectActiveSubscriptions();
+      this.collectActiveSubscriptions();
 
-    // Release proxy
-    return () => trackedPort.clientProvider[Comlink.releaseProxy]();
+      return () => trackedPort.clientProvider[Comlink.releaseProxy]();
+    });
   }
 
   triggerCrudUpload() {
@@ -401,11 +405,14 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const syncParams = this.syncParams!;
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
     return new WebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(this.dbAdapter!, this.logger),
+      adapter: new SqliteBucketStorage(this.distributedDB!, this.logger),
       remote: new WebRemote(
         {
           invalidateCredentials: async () => {
-            const lastPort = this.ports[this.ports.length - 1];
+            const lastPort = this.lastWrappedPort;
+            if (!lastPort) {
+              throw new Error('No client port found to invalidate credentials');
+            }
             try {
               this.logger.log('calling the last port client provider to invalidate credentials');
               lastPort.clientProvider.invalidateCredentials();
@@ -414,7 +421,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
             }
           },
           fetchCredentials: async () => {
-            const lastPort = this.ports[this.ports.length - 1];
+            const lastPort = this.lastWrappedPort;
+            if (!lastPort) {
+              throw new Error('No client port found to fetch credentials');
+            }
             return new Promise(async (resolve, reject) => {
               const abortController = new AbortController();
               this.fetchCredentialsController = {
@@ -437,7 +447,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         this.logger
       ),
       uploadCrud: async () => {
-        const lastPort = this.ports[this.ports.length - 1];
+        const lastPort = this.lastWrappedPort;
+        if (!lastPort) {
+          throw new Error('No client port found to upload crud');
+        }
 
         return new Promise(async (resolve, reject) => {
           const abortController = new AbortController();
@@ -464,19 +477,57 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
+  /**
+   * Opens a worker wrapped database connection. Using the last connected client port.
+   */
   protected async openInternalDB() {
-    const lastClient = this.ports[this.ports.length - 1];
-    if (!lastClient) {
-      // Should not really happen in practice
-      throw new Error(`Could not open DB connection since no client is connected.`);
-    }
-    const workerPort = await lastClient.clientProvider.getDBWorkerPort();
-    const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
-    const identifier = this.syncParams!.dbParams.dbFilename;
-    const db = await remote(this.syncParams!.dbParams);
-    const locked = new LockedAsyncDatabaseAdapter({
-      name: identifier,
-      openConnection: async () => {
+    while (true) {
+      try {
+        const lastClient = this.lastWrappedPort;
+        if (!lastClient) {
+          // Should not really happen in practice
+          throw new Error(`Could not open DB connection since no client is connected.`);
+        }
+
+        /**
+         * Handle cases where the client might close while opening a connection.
+         */
+        const abortController = new AbortController();
+        const closeListener = () => {
+          abortController.abort();
+        };
+
+        const removeCloseListener = () => {
+          const index = lastClient.closeListeners.indexOf(closeListener);
+          if (index >= 0) {
+            lastClient.closeListeners.splice(index, 1);
+          }
+        };
+
+        lastClient.closeListeners.push(closeListener);
+
+        const workerPort = await withAbort(
+          () => lastClient.clientProvider.getDBWorkerPort(),
+          abortController.signal
+        ).catch((ex) => {
+          removeCloseListener();
+          throw ex;
+        });
+
+        const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
+        const identifier = this.syncParams!.dbParams.dbFilename;
+
+        /**
+         * The open could fail if the tab is closed while we're busy opening the database.
+         * This operation is typically executed inside an exclusive portMutex lock.
+         * We typically execute the closeListeners using the portMutex in a different context.
+         * We can't rely on the closeListeners to abort the operation if the tab is closed.
+         */
+        const db = await withAbort(() => remote(this.syncParams!.dbParams), abortController.signal).finally(() => {
+          // We can remove the close listener here since we no longer need it past this point.
+          removeCloseListener();
+        });
+
         const wrapped = new WorkerWrappedAsyncDatabaseConnection({
           remote,
           baseConnection: db,
@@ -487,16 +538,21 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         });
         lastClient.closeListeners.push(async () => {
           this.logger.info('Aborting open connection because associated tab closed.');
-          await wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+          /**
+           * Don't await this close operation. It might never resolve if the tab is closed.
+           * We run the close operation first, before marking the remote as closed. This gives the database some chance
+           * to close the connection.
+           */
+          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
           wrapped.markRemoteClosed();
         });
 
         return wrapped;
-      },
-      logger: this.logger
-    });
-    await locked.init();
-    this.dbAdapter = lastClient.db = locked;
+      } catch (ex) {
+        this.logger.warn('Error opening internal DB', ex);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
   }
 
   /**
@@ -520,4 +576,32 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     this.connectionManager.syncStreamImplementation!.syncStatus = new SyncStatus(status);
     this.updateAllStatuses(status);
   }
+}
+
+/**
+ * Runs the action with an abort controller.
+ */
+function withAbort<T>(action: () => Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new AbortOperation('Operation aborted by abort controller'));
+      return;
+    }
+
+    function handleAbort() {
+      signal.removeEventListener('abort', handleAbort);
+      reject(new AbortOperation('Operation aborted by abort controller'));
+    }
+
+    signal.addEventListener('abort', handleAbort, { once: true });
+
+    function completePromise(action: () => void) {
+      signal.removeEventListener('abort', handleAbort);
+      action();
+    }
+
+    action()
+      .then((data) => completePromise(() => resolve(data)))
+      .catch((e) => completePromise(() => reject(e)));
+  });
 }
