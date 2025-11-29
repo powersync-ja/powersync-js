@@ -1,6 +1,7 @@
 import * as Comlink from 'comlink';
 import {
   AsyncDatabaseConnection,
+  ConnectionClosedError,
   OnTableChangeCallback,
   OpenAsyncDatabaseConnection,
   ProxiedQueryResult
@@ -22,13 +23,6 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
   remote: Comlink.Remote<OpenAsyncDatabaseConnection<Config>>;
   onClose?: () => void;
 };
-
-export class WorkerConnectionClosedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'WorkerConnectionClosedError';
-  }
-}
 
 /**
  * Wraps a provided instance of {@link AsyncDatabaseConnection}, providing necessary proxy
@@ -84,13 +78,13 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     if (controller) {
       return new Promise((resolve, reject) => {
         if (controller.signal.aborted) {
-          reject(new WorkerConnectionClosedError('Called operation on closed remote'));
+          reject(new ConnectionClosedError('Called operation on closed remote'));
           // Don't run the operation if we're going to reject
           return;
         }
 
         function handleAbort() {
-          reject(new WorkerConnectionClosedError('Remote peer closed with request in flight'));
+          reject(new ConnectionClosedError('Remote peer closed with request in flight'));
         }
 
         function completePromise(action: () => void) {

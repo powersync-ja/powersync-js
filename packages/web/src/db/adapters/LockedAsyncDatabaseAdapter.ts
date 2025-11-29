@@ -11,12 +11,9 @@ import {
   type ILogger
 } from '@powersync/common';
 import { getNavigatorLocks } from '../..//shared/navigator';
-import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
+import { AsyncDatabaseConnection, ConnectionClosedError } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
-import {
-  WorkerConnectionClosedError,
-  WorkerWrappedAsyncDatabaseConnection
-} from './WorkerWrappedAsyncDatabaseConnection';
+import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
 import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
@@ -30,10 +27,15 @@ export interface LockedAsyncDatabaseAdapterOptions {
   debugMode?: boolean;
   logger?: ILogger;
   defaultLockTimeoutMs?: number;
+  reOpenOnConnectionClosed?: boolean;
 }
 
 export type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
   initialized?: () => void;
+  /**
+   * Fired when the database is re-opened after being closed.
+   */
+  databaseReOpened?: () => void;
 };
 
 /**
@@ -56,6 +58,7 @@ export class LockedAsyncDatabaseAdapter
   protected pendingAbortControllers: Set<AbortController>;
   protected requiresHolds: boolean | null;
   protected requiresReOpen: boolean;
+  protected databaseOpenPromise: Promise<void> | null = null;
 
   closing: boolean;
   closed: boolean;
@@ -116,10 +119,15 @@ export class LockedAsyncDatabaseAdapter
     this._disposeTableChangeListener?.();
     this._disposeTableChangeListener = null;
 
+    const isReOpen = !!this._db;
+
     this._db = await this.options.openConnection();
     await this._db.init();
     this._config = await this._db.getConfig();
     await this.registerOnChangeListener(this._db);
+    if (isReOpen) {
+      this.iterateListeners((cb) => cb.databaseReOpened?.());
+    }
     /**
      * This is only required for the long-lived shared IndexedDB connections.
      */
@@ -253,18 +261,28 @@ export class LockedAsyncDatabaseAdapter
         }
         let holdId: string | null = null;
         try {
-          if (this.requiresReOpen) {
-            this.logger.debug('Re-opening database');
-            await this.openInternalDB();
-            this.logger.debug('Database re-opened');
-            this.requiresReOpen = false;
+          // The database is being opened in the background. Wait for it here.
+          if (this.databaseOpenPromise) {
+            try {
+              await this.databaseOpenPromise;
+            } catch (ex) {
+              // This will cause a retry of opening the database.
+              const wrappedError = new ConnectionClosedError('Could not open database');
+              wrappedError.cause = ex;
+              throw wrappedError;
+            }
           }
 
           holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
           return await callback();
         } catch (ex) {
-          if (ex instanceof WorkerConnectionClosedError) {
-            this.requiresReOpen = true;
+          if (ex instanceof ConnectionClosedError) {
+            if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
+              // Immediately re-open the database. We need to miss as little table updates as possible.
+              this.databaseOpenPromise = this.openInternalDB().finally(() => {
+                this.databaseOpenPromise = null;
+              });
+            }
           }
           throw ex;
         } finally {

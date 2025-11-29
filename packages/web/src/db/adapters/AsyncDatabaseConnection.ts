@@ -17,6 +17,13 @@ export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
  */
 export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
 
+export class ConnectionClosedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConnectionClosedError';
+  }
+}
+
 /**
  * @internal
  * An async Database connection which provides basic async SQL methods.

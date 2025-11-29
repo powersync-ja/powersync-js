@@ -249,10 +249,19 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           // Gets a connection from the clients when a new connection is requested.
           return await this.openInternalDB();
         },
-        logger: this.logger
+        logger: this.logger,
+        reOpenOnConnectionClosed: true
       });
       this.distributedDB = lockedAdapter;
       await lockedAdapter.init();
+
+      lockedAdapter.registerListener({
+        databaseReOpened: () => {
+          // We may have missed some table updates while the database was closed.
+          // We can poke the crud in case we missed any updates.
+          this.connectionManager.syncStreamImplementation?.triggerCrudUpload();
+        }
+      });
 
       self.onerror = (event) => {
         // Share any uncaught events on the broadcast logger
@@ -480,7 +489,31 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           throw new Error(`Could not open DB connection since no client is connected.`);
         }
 
-        const workerPort = await withTimeout(() => lastClient.clientProvider.getDBWorkerPort(), 5_000);
+        /**
+         * Handle cases where the client might close while opening a connection.
+         */
+        const abortController = new AbortController();
+        const closeListener = () => {
+          abortController.abort();
+        };
+
+        const removeCloseListener = () => {
+          const index = lastClient.closeListeners.indexOf(closeListener);
+          if (index >= 0) {
+            lastClient.closeListeners.splice(index, 1);
+          }
+        };
+
+        lastClient.closeListeners.push(closeListener);
+
+        const workerPort = await withAbort(
+          () => lastClient.clientProvider.getDBWorkerPort(),
+          abortController.signal
+        ).catch((ex) => {
+          removeCloseListener();
+          throw ex;
+        });
+
         const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
         const identifier = this.syncParams!.dbParams.dbFilename;
 
@@ -490,7 +523,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
          * We typically execute the closeListeners using the portMutex in a different context.
          * We can't rely on the closeListeners to abort the operation if the tab is closed.
          */
-        const db = await withTimeout(() => remote(this.syncParams!.dbParams), 5_000);
+        const db = await withAbort(() => remote(this.syncParams!.dbParams), abortController.signal).finally(() => {
+          // We can remove the close listener here since we no longer need it past this point.
+          removeCloseListener();
+        });
 
         const wrapped = new WorkerWrappedAsyncDatabaseConnection({
           remote,
@@ -543,16 +579,29 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 }
 
 /**
- * Runs the action with a timeout. If the action takes longer than the timeout, the promise will be rejected.
+ * Runs the action with an abort controller.
  */
-function withTimeout<T>(action: () => Promise<T>, timeoutMs: number): Promise<T> {
+function withAbort<T>(action: () => Promise<T>, signal: AbortSignal): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Timeout waiting for action'));
-    }, timeoutMs);
+    if (signal.aborted) {
+      reject(new AbortOperation('Operation aborted by abort controller'));
+      return;
+    }
+
+    function handleAbort() {
+      signal.removeEventListener('abort', handleAbort);
+      reject(new AbortOperation('Operation aborted by abort controller'));
+    }
+
+    signal.addEventListener('abort', handleAbort, { once: true });
+
+    function completePromise(action: () => void) {
+      signal.removeEventListener('abort', handleAbort);
+      action();
+    }
+
     action()
-      .then(resolve)
-      .catch(reject)
-      .finally(() => clearTimeout(timeout));
+      .then((data) => completePromise(() => resolve(data)))
+      .catch((e) => completePromise(() => reject(e)));
   });
 }
