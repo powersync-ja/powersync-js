@@ -74,25 +74,27 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     }
   };
 
-  const packageJSONPath = path.join(demoDest, 'package.json');
-  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
-
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
     result.installResult.state = TestState.PASSED;
   } catch (ex) {
+    console.error('Error installing packages: ', ex);
     result.installResult.state = TestState.FAILED;
     result.installResult.error = ex.message;
     return result;
   }
 
+  const packageJSONPath = path.join(demoDest, 'package.json');
+  const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+
   // Run pnpm clean for RN projects to avoid native build errors
   if (pkg.scripts['clean']) {
     try {
-      execSync('pnpm clean', { cwd: demoDest, stdio: 'inherit' });
+      execSync('pnpm run clean', { cwd: demoDest, stdio: 'inherit' });
       result.installResult.state = TestState.PASSED;
     } catch (ex) {
+      console.error('Error running "pnpm run clean": ', ex);
       result.installResult.state = TestState.FAILED;
       result.installResult.error = ex.message;
       return result;
@@ -112,6 +114,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
     result.buildResult.state = TestState.PASSED;
   } catch (ex) {
+    console.error('Error running "pnpm run "test:build": ', ex);
     result.buildResult.state = TestState.FAILED;
     result.buildResult.error = ex.message;
   }
@@ -149,9 +152,10 @@ const main = async () => {
     process.exit(1);
   }
 
-  const errored = !!results.find(
+  const failed = results.filter(
     (r) => r.installResult.state == TestState.FAILED || r.buildResult.state == TestState.FAILED
   );
+  const errored = failed.length > 0;
 
   console.log(`Test results: \n${JSON.stringify(results, null, 2)}\n`);
 
@@ -168,7 +172,10 @@ const main = async () => {
     .write();
 
   if (errored) {
-    console.error(`Some demos did not pass`);
+    console.error('Some demos did not pass:');
+    failed.forEach((r) =>
+      console.error(`- ${r.name} (${r.buildResult.state === TestState.FAILED ? 'build' : 'install'})`)
+    );
     process.exit(1);
   } else {
     console.log('All demos processed successfully.');
