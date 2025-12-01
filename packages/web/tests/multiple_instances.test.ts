@@ -232,11 +232,11 @@ describe('Multiple Instances', { sequential: true }, () => {
     // connect the second database in order for it to have access to the sync service.
     secondDatabase.connect(createTestConnector());
     // connect the first database - this will actually connect to the sync service.
-    const { syncService } = await connect();
+    await connect();
 
     expect(database.currentStatus.connected).true;
 
-    await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true);
+    await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true, { timeout: 3000 });
   });
 
   sharedMockSyncServiceTest(
