@@ -84,24 +84,23 @@ const linkDemo = async (demoName: string) => {
     console.log('- No changes');
   }
 
-  // Update tsconfig.json using tsconfig.workspace.json
+  // Update tsconfig.json to reference tsconfig.demo.json
   const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
-  const tsConfigWorkspacePath = path.join(demoSrc, 'tsconfig.workspace.json');
 
-  if (fs.existsSync(tsConfigWorkspacePath)) {
+  if (fs.existsSync(tsConfigPath)) {
     const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
 
     const workspaceRef = {
-      path: 'tsconfig.workspace.json'
+      path: '../../tsconfig.demo.json'
     };
 
-    console.log('Linking tsconfig.workspace.json');
+    console.log('Linking tsconfig.demo.json');
 
     changes = false;
     const references = tsConfig['references'];
 
     if (references) {
-      const existingWorkspaceRef = references.find((v: any) => v.path === 'tsconfig.workspace.json');
+      const existingWorkspaceRef = references.find((v: any) => v.path === '../../tsconfig.demo.json');
       if (existingWorkspaceRef == undefined) {
         tsConfig['references'].push(workspaceRef);
         changes = true;

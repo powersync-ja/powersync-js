@@ -83,15 +83,12 @@ const linkDemo = async (demoName: string) => {
   }
 
   const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
-  const tsConfigWorkspacePath = path.join(demoSrc, 'tsconfig.workspace.json');
-  let workspaceFileFound = false;
 
   changes = false;
   if (fs.existsSync(tsConfigPath)) {
     console.log('Checking tsconfig.json');
 
     let tsConfig: any;
-    let tsConfigWorkspace: any;
     try {
       tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
     } catch (ex) {
@@ -109,23 +106,6 @@ const linkDemo = async (demoName: string) => {
 
           tsConfig.references.splice(i);
           changes = true;
-        } else if (ref.path.startsWith('..')) {
-          // Move reference to workspace file
-          console.log(`- Moving ${ref.path} to tsconfig.workspace.json`);
-          tsConfigWorkspace = {};
-
-          if (fs.existsSync(tsConfigWorkspacePath)) {
-            tsConfigWorkspace = JSON.parse(fs.readFileSync(tsConfigWorkspacePath, 'utf8'));
-          }
-
-          if ('references' in tsConfigWorkspace) {
-            tsConfigWorkspace.references.push(ref);
-          } else {
-            tsConfigWorkspace.references = [ref];
-          }
-
-          tsConfig.references.splice(i);
-          changes = true;
         }
       }
     }
@@ -136,9 +116,6 @@ const linkDemo = async (demoName: string) => {
 
     if (changes) {
       fs.writeFileSync(tsConfigPath, `${JSON.stringify(tsConfig, null, 2)}\n`, 'utf8');
-      if (tsConfigWorkspace) {
-        fs.writeFileSync(tsConfigWorkspacePath, `${JSON.stringify(tsConfigWorkspace, null, 2)}\n`, 'utf8');
-      }
     } else {
       console.log('- No changes');
     }
