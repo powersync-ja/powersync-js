@@ -1,3 +1,4 @@
+import { StreamingSyncLine } from '@powersync/common';
 import type {
   MockSyncServiceMessage,
   MockSyncServiceResponse,
@@ -33,7 +34,7 @@ export interface MockSyncService {
    * This is a convenience method that encodes the line as JSON with a newline.
    * The response must have been created first using createResponse.
    */
-  pushBodyLine(pendingRequestId: string, line: any): Promise<void>;
+  pushBodyLine(pendingRequestId: string, line: StreamingSyncLine): Promise<void>;
 
   /**
    * Complete an active response (close the stream).

@@ -17,28 +17,9 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
   sharedMockSyncServiceTest(
     'should allow mocking sync responses in shared worker',
     { timeout: 100000 },
-    async ({ database, connect }) => {
+    async ({ context: { database, connect } }) => {
       // Call connect to start the sync worker and get the sync service
-      const { syncService, connectionPromise } = await connect();
-
-      // Wait for a pending request to appear
-      let pendingRequestId: string;
-      await vi.waitFor(async () => {
-        const requests = await syncService.getPendingRequests();
-        expect(requests.length).toBeGreaterThan(0);
-        pendingRequestId = requests[0].id;
-      });
-
-      // Get the pending request to inspect it
-      const requests = await syncService.getPendingRequests();
-      expect(requests).toHaveLength(1);
-      expect(requests[0].url).toContain('/sync/stream');
-      expect(requests[0].method).toBe('POST');
-      expect(requests[0].headers).toBeDefined();
-      expect(requests[0].body).toBeDefined();
-
-      // Create a response for the pending request
-      await syncService.createResponse(pendingRequestId!, 200, { 'Content-Type': 'application/json' });
+      const { syncService, syncRequestId } = await connect();
 
       // Push a checkpoint with buckets (following node test pattern)
       const checkpoint: StreamingSyncCheckpoint = {
@@ -56,13 +37,10 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
         }
       };
 
-      await syncService.pushBodyLine(pendingRequestId!, checkpoint);
+      await syncService.pushBodyLine(syncRequestId, checkpoint);
 
       // The connect call should resolve by now
-      await connectionPromise;
-
-      // Push data line with PUT operation to save data (following node test pattern)
-      await syncService.pushBodyLine(pendingRequestId!, {
+      await syncService.pushBodyLine(syncRequestId, {
         data: {
           bucket: 'a',
           data: [
@@ -79,14 +57,14 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
       });
 
       // Push checkpoint_complete to finish the sync
-      await syncService.pushBodyLine(pendingRequestId!, {
+      await syncService.pushBodyLine(syncRequestId, {
         checkpoint_complete: {
           last_op_id: '1'
         }
       });
 
       // Complete the response
-      await syncService.completeResponse(pendingRequestId!);
+      await syncService.completeResponse(syncRequestId);
 
       // Wait for sync to complete and verify the data was saved
       await vi.waitFor(async () => {

@@ -15,7 +15,13 @@ export class MockSyncService {
    * Register a new pending request (called by WebRemote when a sync stream is requested).
    * Returns a promise that resolves when a client creates a response for this request.
    */
-  registerPendingRequest(url: string, method: string, headers: Record<string, string>, body: any): Promise<Response> {
+  registerPendingRequest(
+    url: string,
+    method: string,
+    headers: Record<string, string>,
+    body: any,
+    signal?: AbortSignal
+  ): Promise<Response> {
     const id = `pending-${++this.nextId}`;
 
     let resolveResponse: (response: Response) => void;
@@ -39,6 +45,20 @@ export class MockSyncService {
     };
 
     this.pendingRequests.set(id, pendingRequest);
+
+    signal?.addEventListener('abort', () => {
+      this.pendingRequests.delete(id);
+      rejectResponse(new Error('Request aborted'));
+
+      // if already in active responses, remove it
+      if (this.activeResponses.has(id)) {
+        const response = this.activeResponses.get(id);
+        if (response) {
+          response.stream.close();
+        }
+        this.activeResponses.delete(id);
+      }
+    });
 
     // Return the promise - it will resolve when createResponse is called
     return responsePromise;

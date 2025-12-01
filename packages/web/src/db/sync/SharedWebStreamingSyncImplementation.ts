@@ -255,8 +255,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   async dispose(): Promise<void> {
     await this.waitForReady();
 
-    await super.dispose();
-
     await new Promise<void>((resolve) => {
       // Listen for the close acknowledgment from the worker
       this.messagePort.addEventListener('message', (event) => {
@@ -273,6 +271,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       };
       this.messagePort.postMessage(closeMessagePayload);
     });
+
+    await super.dispose();
+
     this.abortOnClose.abort();
 
     // Release the proxy

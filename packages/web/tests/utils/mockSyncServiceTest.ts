@@ -9,7 +9,7 @@ import {
   createBaseLogger
 } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { expect, onTestFinished, test, vi } from 'vitest';
+import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
 import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient';
 
 // Define schema similar to node tests
@@ -21,10 +21,13 @@ export const AppSchema = new Schema({
   lists
 });
 
+export type MockedTestConnector = {
+  [Key in keyof PowerSyncBackendConnector]: MockedFunction<PowerSyncBackendConnector[Key]>;
+};
 /**
  * Creates a test connector with vi.fn implementations for testing.
  */
-export function createTestConnector(): PowerSyncBackendConnector {
+export function createTestConnector(): MockedTestConnector {
   return {
     fetchCredentials: vi.fn().mockResolvedValue({
       endpoint: 'http://localhost:3000',
@@ -39,7 +42,7 @@ export function createTestConnector(): PowerSyncBackendConnector {
  */
 export interface ConnectResult {
   syncService: MockSyncService;
-  connectionPromise: Promise<void>;
+  syncRequestId: string;
 }
 
 /**
@@ -53,49 +56,47 @@ export interface ConnectResult {
  * - Exposes the database and test connector
  */
 export const sharedMockSyncServiceTest = test.extend<{
-  database: PowerSyncDatabase;
-  connector: PowerSyncBackendConnector;
-  connect: (customConnector?: PowerSyncBackendConnector) => Promise<ConnectResult>;
+  context: {
+    /** An automatically opened database */
+    connector: MockedTestConnector;
+    connect: (customConnector?: PowerSyncBackendConnector) => Promise<ConnectResult>;
+    database: PowerSyncDatabase;
+    databaseName: string;
+    openDatabase: () => PowerSyncDatabase;
+  };
 }>({
-  database: async ({}, use) => {
-    // Uses a unique database identifier per test to avoid conflicts
-    const identifier = `test-${crypto.randomUUID()}.db`;
-
-    // Create a logger with defaults enabled
+  context: async ({}, use) => {
+    const dbFilename = `test-${crypto.randomUUID()}.db`;
     const logger = createBaseLogger();
     logger.setLevel(LogLevel.DEBUG);
     logger.useDefaults();
 
-    // Create a PowerSync database with enableMultipleTabs: true
-    const db = new PowerSyncDatabase({
-      database: {
-        dbFilename: identifier
-      },
-      flags: {
-        enableMultiTabs: true
-      },
-      schema: AppSchema,
-      logger
-    });
+    const openDatabase = () => {
+      const db = new PowerSyncDatabase({
+        database: {
+          dbFilename
+        },
+        flags: {
+          enableMultiTabs: true
+        },
+        retryDelayMs: 1000,
+        crudUploadThrottleMs: 1000,
+        schema: AppSchema,
+        logger
+      });
+      onTestFinished(async () => {
+        if (!db.closed) {
+          await db.disconnect();
+          await db.close();
+        }
+      });
+      return db;
+    };
 
-    await db.init();
+    const database = openDatabase();
 
-    onTestFinished(async () => {
-      if (!db.closed) {
-        await db.disconnect();
-        await db.close();
-      }
-    });
-
-    await use(db);
-  },
-
-  connector: async ({}, use) => {
     const connector = createTestConnector();
-    await use(connector);
-  },
 
-  connect: async ({ database, connector }, use) => {
     const connectFn = async (customConnector?: PowerSyncBackendConnector): Promise<ConnectResult> => {
       const connectorToUse = customConnector ?? connector;
 
@@ -109,7 +110,7 @@ export const sharedMockSyncServiceTest = test.extend<{
         () => {
           expect(database.connecting).toBe(true);
         },
-        { timeout: 10000 }
+        { timeout: 1000 }
       );
 
       // Get the identifier from the database.name property
@@ -124,12 +125,36 @@ export const sharedMockSyncServiceTest = test.extend<{
         );
       }
 
+      let _syncRequestId: string;
+      await vi.waitFor(async () => {
+        const requests = await mockService.getPendingRequests();
+        expect(requests.length).toBeGreaterThan(0);
+        _syncRequestId = requests[0].id;
+      });
+
+      const syncRequestId = _syncRequestId!;
+
+      await mockService.createResponse(syncRequestId, 200, { 'Content-Type': 'application/json' });
+
+      // Send a Keepalive just as the first message
+      await mockService.pushBodyLine(syncRequestId, {
+        token_expires_in: 10_000_000
+      });
+
+      await connectionPromise;
+
       return {
         syncService: mockService,
-        connectionPromise
+        syncRequestId
       };
     };
 
-    await use(connectFn);
+    await use({
+      connector,
+      connect: connectFn,
+      database,
+      databaseName: dbFilename,
+      openDatabase
+    });
   }
 });

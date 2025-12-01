@@ -10,7 +10,7 @@ import {
   RemoteConnector,
   SocketSyncStreamOptions
 } from '@powersync/common';
-import type { BSON } from 'bson';
+import { serialize, type BSON } from 'bson';
 import { getMockSyncService, setupMockServiceMessageHandler } from '../utils/MockSyncService';
 
 /**
@@ -77,7 +77,7 @@ class MockSyncServiceFetchProvider extends FetchImplementationProvider {
         });
 
         // Register as a pending request and wait for client to create response
-        return await mockService.registerPendingRequest(request.url, request.method, headers, body);
+        return await mockService.registerPendingRequest(request.url, request.method, headers, body, request.signal);
       }
 
       // Fallback if mock service is not available
@@ -189,6 +189,6 @@ export class WebRemote extends AbstractRemote {
     bson?: typeof BSON
   ): Promise<DataStream<T>> {
     // postStreamRaw decodes to strings, so convert back to Uint8Array for the map function
-    return await this.postStreamRaw(options, (line: string) => map(new TextEncoder().encode(line)));
+    return await this.postStreamRaw(options, (line: string) => map(serialize(JSON.parse(line))));
   }
 }
