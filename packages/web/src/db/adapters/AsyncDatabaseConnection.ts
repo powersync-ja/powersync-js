@@ -17,6 +17,11 @@ export type ProxiedQueryResult = Omit<QueryResult, 'rows'> & {
  */
 export type OnTableChangeCallback = (event: BatchedUpdateNotification) => void;
 
+/**
+ * Thrown when an underlying database connection is closed.
+ * This is particularly relevant when worker connections are marked as closed while
+ * operations are still in progress.
+ */
 export class ConnectionClosedError extends Error {
   constructor(message: string) {
     super(message);

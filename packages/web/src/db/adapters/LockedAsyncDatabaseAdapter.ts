@@ -57,7 +57,6 @@ export class LockedAsyncDatabaseAdapter
   private _config: ResolvedWebSQLOpenOptions | null = null;
   protected pendingAbortControllers: Set<AbortController>;
   protected requiresHolds: boolean | null;
-  protected requiresReOpen: boolean;
   protected databaseOpenPromise: Promise<void> | null = null;
 
   closing: boolean;
@@ -71,7 +70,6 @@ export class LockedAsyncDatabaseAdapter
     this.closed = false;
     this.closing = false;
     this.requiresHolds = null;
-    this.requiresReOpen = false;
     // Set the name if provided. We can query for the name if not available yet
     this.debugMode = options.debugMode ?? false;
     if (this.debugMode) {

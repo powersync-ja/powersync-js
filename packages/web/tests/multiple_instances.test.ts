@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { getMockSyncServiceFromWorker } from './utils/MockSyncService';
+import { getMockSyncServiceFromWorker } from './utils/MockSyncServiceClient';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
 import { generateTestDb, testSchema } from './utils/testDb';
 

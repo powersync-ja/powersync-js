@@ -18,6 +18,13 @@ export class MockSyncService {
   private automaticResponse: AutomaticResponseConfig | null = null;
 
   /**
+   * A Static instance of the mock sync service.
+   * This can be used directly for non-worker environments.
+   * A proxy is required for worker environments.
+   */
+  static readonly GLOBAL_INSTANCE = new MockSyncService();
+
+  /**
    * Register a new pending request (called by WebRemote when a sync stream is requested).
    * Returns a promise that resolves when a client creates a response for this request.
    */
@@ -254,41 +261,17 @@ export class MockSyncService {
 }
 
 /**
- * Global mock service instance (only available in shared worker context)
- */
-let globalMockService: MockSyncService | null = null;
-
-/**
- * Get or create the global mock service instance
- */
-export function getMockSyncService(): MockSyncService | null {
-  // Only available in shared worker context
-  if (typeof SharedWorkerGlobalScope === 'undefined') {
-    return null;
-  }
-
-  if (!globalMockService) {
-    globalMockService = new MockSyncService();
-  }
-
-  return globalMockService;
-}
-
-/**
  * Set up message handler for the mock service on a MessagePort
  */
 export function setupMockServiceMessageHandler(port: MessagePort) {
-  const service = getMockSyncService();
-  if (!service) {
-    return;
-  }
-
   port.addEventListener('message', (event: MessageEvent<MockSyncServiceMessage>) => {
     const message = event.data;
 
     if (!message || typeof message !== 'object' || !('type' in message)) {
       return;
     }
+
+    const service = MockSyncService.GLOBAL_INSTANCE;
 
     try {
       switch (message.type) {
