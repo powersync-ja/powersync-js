@@ -8,7 +8,7 @@ import {
   column,
   createBaseLogger
 } from '@powersync/common';
-import { PowerSyncDatabase } from '@powersync/web';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
 import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient';
 
@@ -62,7 +62,7 @@ export const sharedMockSyncServiceTest = test.extend<{
     connect: (customConnector?: PowerSyncBackendConnector) => Promise<ConnectResult>;
     database: PowerSyncDatabase;
     databaseName: string;
-    openDatabase: () => PowerSyncDatabase;
+    openDatabase: (customConfig?: Partial<WebPowerSyncDatabaseOptions>) => PowerSyncDatabase;
   };
 }>({
   context: async ({}, use) => {
@@ -71,18 +71,21 @@ export const sharedMockSyncServiceTest = test.extend<{
     logger.setLevel(LogLevel.DEBUG);
     logger.useDefaults();
 
-    const openDatabase = () => {
+    const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
       const db = new PowerSyncDatabase({
         database: {
-          dbFilename
+          dbFilename,
+          ...(customConfig.database ?? {})
         },
         flags: {
-          enableMultiTabs: true
+          enableMultiTabs: true,
+          ...(customConfig.flags ?? {})
         },
         retryDelayMs: 1000,
         crudUploadThrottleMs: 1000,
         schema: AppSchema,
-        logger
+        logger,
+        ...customConfig
       });
       onTestFinished(async () => {
         if (!db.closed) {

@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
+import { getMockSyncServiceFromWorker } from './utils/MockSyncService';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
 import { generateTestDb, testSchema } from './utils/testDb';
 
@@ -37,45 +38,58 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(assets.length).equals(1);
   });
 
-  it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
-    const logger = createLogger('test-logger');
-    const spiedErrorLogger = vi.spyOn(logger, 'error');
-    const spiedDebugLogger = vi.spyOn(logger, 'debug');
+  sharedMockSyncServiceTest(
+    'should broadcast logs from shared sync worker',
+    { timeout: 10_000 },
+    async ({ context: { database, connect, openDatabase } }) => {
+      const logger = createLogger('test-logger');
+      const spiedErrorLogger = vi.spyOn(logger, 'error');
+      const spiedDebugLogger = vi.spyOn(logger, 'debug');
 
-    const powersync = generateTestDb({
-      logger,
-      database: {
-        dbFilename: 'broadcast-logger-test.sqlite'
-      },
-      schema: testSchema
-    });
+      // Open an additional database which we can spy on the logs.
+      const powersync = openDatabase({
+        logger
+      });
 
-    powersync.connect({
-      fetchCredentials: async () => {
-        return {
-          endpoint: 'http://localhost/does-not-exist',
-          token: 'none'
-        };
-      },
-      uploadData: async (db) => {}
-    });
+      powersync.connect({
+        fetchCredentials: async () => {
+          return {
+            endpoint: 'http://localhost/does-not-exist',
+            token: 'none'
+          };
+        },
+        uploadData: async (db) => {}
+      });
 
-    // Should log that a connection attempt has been made
-    const message = 'Streaming sync iteration started';
-    await vi.waitFor(
-      () =>
-        expect(
-          spiedDebugLogger.mock.calls
-            .flat(1)
-            .find((argument) => typeof argument == 'string' && argument.includes(message))
-        ).exist,
-      { timeout: 2000 }
-    );
+      // Should log that a connection attempt has been made
+      const message = 'Streaming sync iteration started';
+      await vi.waitFor(
+        () =>
+          expect(
+            spiedDebugLogger.mock.calls
+              .flat(1)
+              .find((argument) => typeof argument == 'string' && argument.includes(message))
+          ).exist,
+        { timeout: 2000 }
+      );
 
-    // The connection should fail with an error
-    await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
-    // This test seems to take quite long while waiting for this disconnect call
-  });
+      await vi.waitFor(async () => {
+        const syncService = await getMockSyncServiceFromWorker(powersync.database.name);
+        if (!syncService) {
+          throw new Error('Sync service not found');
+        }
+        const requests = await syncService.getPendingRequests();
+        expect(requests.length).toBeGreaterThan(0);
+        const pendingRequestId = requests[0].id;
+        // Generate an error
+        await syncService.createResponse(pendingRequestId, 401, { 'Content-Type': 'application/json' });
+        await syncService.completeResponse(pendingRequestId);
+      });
+
+      // The connection should fail with an error
+      await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+    }
+  );
 
   it('should maintain DB connections if instances call close', async () => {
     /**
@@ -215,11 +229,14 @@ describe('Multiple Instances', { sequential: true }, () => {
 
     expect(database.currentStatus.connected).false;
     expect(secondDatabase.currentStatus.connected).false;
-    // connect the first database
-    await connect();
+    // connect the second database in order for it to have access to the sync service.
+    secondDatabase.connect(createTestConnector());
+    // connect the first database - this will actually connect to the sync service.
+    const { syncService } = await connect();
 
     expect(database.currentStatus.connected).true;
-    expect(secondDatabase.currentStatus.connected).true;
+
+    await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true);
   });
 
   sharedMockSyncServiceTest(
