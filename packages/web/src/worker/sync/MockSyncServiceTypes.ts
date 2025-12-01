@@ -10,6 +10,15 @@ export interface PendingRequest {
 }
 
 /**
+ * Automatic response configuration
+ */
+export interface AutomaticResponseConfig {
+  status: number;
+  headers: Record<string, string>;
+  bodyLines?: any[];
+}
+
+/**
  * Message types for communication via MessagePort
  */
 export type MockSyncServiceMessage =
@@ -22,13 +31,17 @@ export type MockSyncServiceMessage =
       headers: Record<string, string>;
     }
   | { type: 'pushBodyData'; requestId: string; pendingRequestId: string; data: string | ArrayBuffer | Uint8Array }
-  | { type: 'completeResponse'; requestId: string; pendingRequestId: string };
+  | { type: 'completeResponse'; requestId: string; pendingRequestId: string }
+  | { type: 'setAutomaticResponse'; requestId: string; config: AutomaticResponseConfig | null }
+  | { type: 'replyToAllPendingRequests'; requestId: string };
 
 export type MockSyncServiceResponse =
   | { type: 'getPendingRequests'; requestId: string; requests: PendingRequest[] }
   | { type: 'createResponse'; requestId: string; success: boolean }
   | { type: 'pushBodyData'; requestId: string; success: boolean }
   | { type: 'completeResponse'; requestId: string; success: boolean }
+  | { type: 'setAutomaticResponse'; requestId: string; success: boolean }
+  | { type: 'replyToAllPendingRequests'; requestId: string; success: boolean; count: number }
   | { type: 'error'; requestId?: string; error: string };
 
 /**

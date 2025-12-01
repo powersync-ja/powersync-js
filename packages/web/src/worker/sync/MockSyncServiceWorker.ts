@@ -1,5 +1,10 @@
 import type { MockSyncServiceMessage, MockSyncServiceResponse } from './MockSyncServiceTypes';
-import { ActiveResponse, PendingRequest, PendingRequestInternal } from './MockSyncServiceTypes';
+import {
+  ActiveResponse,
+  AutomaticResponseConfig,
+  PendingRequest,
+  PendingRequestInternal
+} from './MockSyncServiceTypes';
 
 /**
  * Mock sync service implementation for shared worker environments.
@@ -10,6 +15,7 @@ export class MockSyncService {
   private pendingRequests: Map<string, PendingRequestInternal> = new Map();
   private activeResponses: Map<string, ActiveResponse> = new Map();
   private nextId = 0;
+  private automaticResponse: AutomaticResponseConfig | null = null;
 
   /**
    * Register a new pending request (called by WebRemote when a sync stream is requested).
@@ -60,7 +66,34 @@ export class MockSyncService {
       }
     });
 
-    // Return the promise - it will resolve when createResponse is called
+    // If automatic response is configured, apply it immediately
+    if (this.automaticResponse) {
+      // Use setTimeout to ensure the response is created asynchronously
+      // This prevents issues if the response creation happens synchronously
+      setTimeout(() => {
+        try {
+          // Create response with automatic config
+          this.createResponse(id, this.automaticResponse!.status, this.automaticResponse!.headers);
+
+          // Push body lines if provided
+          if (this.automaticResponse!.bodyLines) {
+            for (const line of this.automaticResponse!.bodyLines) {
+              const lineStr = `${JSON.stringify(line)}\n`;
+              const encoder = new TextEncoder();
+              this.pushBodyData(id, encoder.encode(lineStr));
+            }
+          }
+
+          // Complete the response
+          this.completeResponse(id);
+        } catch (e) {
+          // If automatic response fails, reject the promise
+          rejectResponse!(e instanceof Error ? e : new Error(String(e)));
+        }
+      }, 0);
+    }
+
+    // Return the promise - it will resolve when createResponse is called (or immediately if auto-response is set)
     return responsePromise;
   }
 
@@ -172,6 +205,52 @@ export class MockSyncService {
       this.activeResponses.delete(pendingRequestId);
     }
   }
+
+  /**
+   * Set the automatic response configuration.
+   * When set, this will be used to automatically reply to all pending requests.
+   */
+  setAutomaticResponse(config: AutomaticResponseConfig | null): void {
+    this.automaticResponse = config;
+  }
+
+  /**
+   * Automatically reply to all pending requests using the automatic response configuration.
+   * Returns the number of requests that were replied to.
+   */
+  replyToAllPendingRequests(): number {
+    if (!this.automaticResponse) {
+      throw new Error('Automatic response not set. Call setAutomaticResponse first.');
+    }
+
+    const pendingRequestIds = Array.from(this.pendingRequests.keys());
+    let count = 0;
+
+    for (const requestId of pendingRequestIds) {
+      try {
+        // Create response with automatic config
+        this.createResponse(requestId, this.automaticResponse.status, this.automaticResponse.headers);
+
+        // Push body lines if provided
+        if (this.automaticResponse.bodyLines) {
+          for (const line of this.automaticResponse.bodyLines) {
+            const lineStr = `${JSON.stringify(line)}\n`;
+            const encoder = new TextEncoder();
+            this.pushBodyData(requestId, encoder.encode(lineStr));
+          }
+        }
+
+        // Complete the response
+        this.completeResponse(requestId);
+        count++;
+      } catch (e) {
+        // Skip requests that fail (might already be handled)
+        continue;
+      }
+    }
+
+    return count;
+  }
 }
 
 /**
@@ -271,6 +350,41 @@ export function setupMockServiceMessageHandler(port: MessagePort) {
               type: 'completeResponse',
               requestId: message.requestId,
               success: true
+            } satisfies MockSyncServiceResponse);
+          } catch (error) {
+            port.postMessage({
+              type: 'error',
+              requestId: message.requestId,
+              error: error instanceof Error ? error.message : String(error)
+            } satisfies MockSyncServiceResponse);
+          }
+          break;
+        }
+        case 'setAutomaticResponse': {
+          try {
+            service.setAutomaticResponse(message.config);
+            port.postMessage({
+              type: 'setAutomaticResponse',
+              requestId: message.requestId,
+              success: true
+            } satisfies MockSyncServiceResponse);
+          } catch (error) {
+            port.postMessage({
+              type: 'error',
+              requestId: message.requestId,
+              error: error instanceof Error ? error.message : String(error)
+            } satisfies MockSyncServiceResponse);
+          }
+          break;
+        }
+        case 'replyToAllPendingRequests': {
+          try {
+            const count = service.replyToAllPendingRequests();
+            port.postMessage({
+              type: 'replyToAllPendingRequests',
+              requestId: message.requestId,
+              success: true,
+              count
             } satisfies MockSyncServiceResponse);
           } catch (error) {
             port.postMessage({

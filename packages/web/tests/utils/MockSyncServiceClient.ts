@@ -1,5 +1,6 @@
 import { StreamingSyncLine } from '@powersync/common';
 import type {
+  AutomaticResponseConfig,
   MockSyncServiceMessage,
   MockSyncServiceResponse,
   PendingRequest
@@ -41,6 +42,18 @@ export interface MockSyncService {
    * The response must have been created first using createResponse.
    */
   completeResponse(pendingRequestId: string): Promise<void>;
+
+  /**
+   * Set the automatic response configuration.
+   * When set, this will be used to automatically reply to all pending requests.
+   */
+  setAutomaticResponse(config: AutomaticResponseConfig | null): Promise<void>;
+
+  /**
+   * Automatically reply to all pending requests using the automatic response configuration.
+   * Returns the number of requests that were replied to.
+   */
+  replyToAllPendingRequests(): Promise<number>;
 }
 
 /**
@@ -181,6 +194,35 @@ export async function getMockSyncServiceFromWorker(
         } satisfies MockSyncServiceMessage,
         'completeResponse'
       );
+    },
+
+    async setAutomaticResponse(config: AutomaticResponseConfig | null): Promise<void> {
+      const requestId = crypto.randomUUID();
+      await sendMessage(
+        {
+          type: 'setAutomaticResponse',
+          requestId,
+          config
+        } satisfies MockSyncServiceMessage,
+        'setAutomaticResponse'
+      );
+    },
+
+    async replyToAllPendingRequests(): Promise<number> {
+      const requestId = crypto.randomUUID();
+      const response = await sendMessage<{
+        type: 'replyToAllPendingRequests';
+        requestId: string;
+        success: boolean;
+        count: number;
+      }>(
+        {
+          type: 'replyToAllPendingRequests',
+          requestId
+        } satisfies MockSyncServiceMessage,
+        'replyToAllPendingRequests'
+      );
+      return response.count;
     }
   };
 }

@@ -30,7 +30,8 @@ function createIframeWithPowerSyncClient(
   dbFilename: string,
   identifier: string,
   vfs?: WASQLiteVFS,
-  waitForConnection?: boolean
+  waitForConnection?: boolean,
+  configureMockResponses?: boolean
 ): IframeClientResult {
   const iframe = document.createElement('iframe');
   // Make iframe visible for debugging
@@ -88,7 +89,7 @@ function createIframeWithPowerSyncClient(
   </div>
   <script type="module">
     import { setupPowerSyncInIframe } from '${modulePath}';
-    setupPowerSyncInIframe('${dbFilename}', '${identifier}', ${vfs ? `'${vfs}'` : 'undefined'}, ${waitForConnection ? 'true' : 'false'});
+    setupPowerSyncInIframe('${dbFilename}', '${identifier}', ${vfs ? `'${vfs}'` : 'undefined'}, ${waitForConnection ? 'true' : 'false'}, ${configureMockResponses ? 'true' : 'false'});
   </script>
 </body>
 </html>`;
@@ -296,7 +297,7 @@ function createIframeWithPowerSyncClient(
  */
 function createMultipleTabsTest(vfs?: WASQLiteVFS) {
   const vfsName = vfs || 'IndexedDB';
-  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 60_000 }, () => {
+  describe(`Multiple Tabs with Iframes (${vfsName})`, { sequential: true, timeout: 30_000 }, () => {
     const dbFilename = `test-multi-tab-${uuid()}.db`;
 
     // Number of tabs to create
@@ -305,8 +306,20 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
     const MIDDLE_TAB_INDEX = 49;
 
     it('should handle opening and closing many tabs quickly', async () => {
+      // Step 0: Create an iframe to set up PowerSync and configure mock responses (401)
+      const setupIdentifier = `setup-${uuid()}`;
+      const setupIframe = createIframeWithPowerSyncClient(dbFilename, setupIdentifier, vfs, false, true);
+      onTestFinished(async () => {
+        try {
+          await setupIframe.cleanup();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      });
+      // Wait for the setup iframe to be ready (this ensures PowerSync is initialized and mock responses are configured)
+      await setupIframe.ready;
       // Step 1: Open 100 tabs (don't wait for them to be ready)
-      const tabResults: IframeClientResult[] = [];
+      const tabResults: IframeClientResult[] = [setupIframe];
 
       for (let i = 0; i < NUM_TABS; i++) {
         const identifier = `tab-${i}`;
@@ -323,7 +336,8 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
         });
       }
 
-      expect(tabResults.length).toBe(NUM_TABS);
+      // Total iframes: 1 setup + NUM_TABS tabs
+      expect(tabResults.length).toBe(NUM_TABS + 1);
 
       // Verify all iframes are created (they're created immediately)
       for (const result of tabResults) {
@@ -333,32 +347,37 @@ function createMultipleTabsTest(vfs?: WASQLiteVFS) {
       // Step 2: Wait 1 second
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Step 3: Close all tabs except the middle (50th) tab
+      // Step 3: Close all tabs except the setup iframe (index 0) and the middle (50th) tab
+      // The middle tab is at index 1 + MIDDLE_TAB_INDEX (since index 0 is the setup iframe)
+      const middleTabArrayIndex = 1 + MIDDLE_TAB_INDEX;
       const tabsToClose: IframeClientResult[] = [];
-      for (let i = 0; i < NUM_TABS; i++) {
-        if (i !== MIDDLE_TAB_INDEX) {
+      for (let i = 0; i < tabResults.length; i++) {
+        // Skip the setup iframe (index 0) and the middle tab
+        if (i !== 0 && i !== middleTabArrayIndex) {
           tabsToClose.push(tabResults[i]);
         }
       }
 
-      // Close all tabs except the middle one simultaneously (without waiting for ready)
+      // Close all tabs except the setup iframe and middle one simultaneously (without waiting for ready)
       const closePromises = tabsToClose.map((result) => result.cleanup());
       await Promise.all(closePromises);
 
       // Verify closed tabs are removed
-      for (let i = 0; i < NUM_TABS; i++) {
-        if (i !== MIDDLE_TAB_INDEX) {
+      for (let i = 0; i < tabResults.length; i++) {
+        if (i !== 0 && i !== middleTabArrayIndex) {
           expect(tabResults[i].iframe.isConnected).toBe(false);
           expect(document.body.contains(tabResults[i].iframe)).toBe(false);
         }
       }
 
-      // Verify the middle tab is still present
-      expect(tabResults[MIDDLE_TAB_INDEX].iframe.isConnected).toBe(true);
-      expect(document.body.contains(tabResults[MIDDLE_TAB_INDEX].iframe)).toBe(true);
+      // Verify the setup iframe and middle tab are still present
+      expect(tabResults[0].iframe.isConnected).toBe(true);
+      expect(document.body.contains(tabResults[0].iframe)).toBe(true);
+      expect(tabResults[middleTabArrayIndex].iframe.isConnected).toBe(true);
+      expect(document.body.contains(tabResults[middleTabArrayIndex].iframe)).toBe(true);
 
       // Step 4: Wait for the middle tab to be ready, then execute a test query to verify its DB is still functional
-      const middleTabClient = await tabResults[MIDDLE_TAB_INDEX].ready;
+      const middleTabClient = await tabResults[middleTabArrayIndex].ready;
       const queryResult = await middleTabClient.executeQuery('SELECT 1 as value');
 
       // Verify the query result

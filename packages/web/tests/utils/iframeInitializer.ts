@@ -1,5 +1,6 @@
 import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createBaseLogger } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { getMockSyncServiceFromWorker } from './MockSyncServiceClient';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.
@@ -11,7 +12,8 @@ export async function setupPowerSyncInIframe(
   dbFilename: string,
   identifier: string,
   vfs?: string,
-  waitForConnection?: boolean
+  waitForConnection?: boolean,
+  configureMockResponses?: boolean
 ): Promise<void> {
   try {
     // Track the number of times fetchCredentials has been called
@@ -50,6 +52,7 @@ export async function setupPowerSyncInIframe(
     const db = new PowerSyncDatabase({
       database: databaseOptions,
       schema: schema,
+      retryDelayMs: 100,
       flags: { enableMultiTabs: true, useWebWorker: true },
       logger
     });
@@ -59,6 +62,28 @@ export async function setupPowerSyncInIframe(
 
     if (waitForConnection) {
       await connectionPromise;
+    }
+
+    if (configureMockResponses) {
+      // Wait for connecting:true before setting up mock responses
+      const maxAttempts = 100;
+      const delayMs = 50;
+      for (let i = 0; i < maxAttempts; i++) {
+        if (db.currentStatus.connecting) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+
+      const mockSyncService = await getMockSyncServiceFromWorker(dbFilename);
+      if (mockSyncService) {
+        await mockSyncService.setAutomaticResponse({
+          // We want to confirm credentials are fetched due to invalidation.
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+        await mockSyncService.replyToAllPendingRequests();
+      }
     }
 
     // Store reference for cleanup
