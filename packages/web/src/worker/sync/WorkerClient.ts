@@ -1,4 +1,4 @@
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
+import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator';
 import {
@@ -24,9 +24,6 @@ export class WorkerClient {
     private readonly port: MessagePort
   ) {
     Comlink.expose(this, this.port);
-  }
-
-  async initialize() {
     /**
      * Adds an extra listener which can remove this port
      * from the list of monitored ports.
@@ -37,16 +34,6 @@ export class WorkerClient {
         await this.removePort();
       }
     });
-
-    /**
-     * Keep a reference to the resolved port promise.
-     * The init timing is difficult to predict due to the async message passing.
-     * We only want to use a port if we are know it's been protected from being closed.
-     * The lock based close signal will be added asynchronously. We need to use the
-     * added port once the lock is configured.
-     */
-    this.resolvedPortPromise = this.sync.addPort(this.port);
-    this.resolvedPort = await this.resolvedPortPromise;
   }
 
   private async removePort() {
@@ -70,18 +57,9 @@ export class WorkerClient {
    * it can consider the connection to be closed.
    */
   async addLockBasedCloseSignal(name: string) {
-    if (!this.resolvedPortPromise) {
-      // The init logic above is actually synchronous, so this should not happen.
-      this.sync.broadCastLogger.warn('addLockBasedCloseSignal called before port promise registered');
-    } else {
-      const wrappedPort = await this.resolvedPortPromise;
-      /**
-       * The client registered a navigator lock. We now can guarantee detecting if the client has closed.
-       * E.g. before this point: It's possible some ports might have been created and closed before the
-       * lock based close signal is added. We should not trust those ports.
-       */
-      wrappedPort.isProtectedFromClose = true;
-    }
+    // Only add the port once the lock has been obtained on the client.
+    this.resolvedPort = await this.sync.addPort(this.port);
+    // Don't await this lock request
     getNavigatorLocks().request(name, async () => {
       await this.removePort();
     });
@@ -120,9 +98,5 @@ export class WorkerClient {
 
   disconnect() {
     return this.sync.disconnect();
-  }
-
-  async _testUpdateAllStatuses(status: SyncStatusOptions) {
-    return this.sync._testUpdateAllStatuses(status);
   }
 }

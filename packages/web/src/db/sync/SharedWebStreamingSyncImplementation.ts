@@ -2,7 +2,6 @@ import {
   PowerSyncConnectionOptions,
   PowerSyncCredentials,
   SubscribedStream,
-  SyncStatus,
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
@@ -187,6 +186,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      *    - The shared worker can then request the same lock. The client has been closed if the shared worker can acquire the lock.
      *    - Once the shared worker knows the client's lock, we can guarentee that the shared worker will detect if the client has been closed.
      *    - This makes the client safe for the shared worker to use.
+     *    - The client is only added to the SharedSyncImplementation once the lock has been registered.
+     *      This ensures we don't ever keep track of dead clients (tabs that closed before the lock was registered).
      *    - The client side lock is held until the client is disposed.
      *    - We resolve the top-level promise after the lock has been registered with the shared worker.
      * - The client sends the params to the shared worker after locks have been registered.
@@ -287,13 +288,5 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
 
   updateSubscriptions(subscriptions: SubscribedStream[]): void {
     this.syncManager.updateSubscriptions(subscriptions);
-  }
-
-  /**
-   * Used in tests to force a connection states
-   */
-  private async _testUpdateStatus(status: SyncStatus) {
-    await this.isInitialized;
-    return this.syncManager._testUpdateAllStatuses(status.toJSON());
   }
 }
