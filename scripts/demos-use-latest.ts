@@ -83,17 +83,47 @@ const linkDemo = async (demoName: string) => {
   }
 
   const tsConfigPath = path.join(demoSrc, 'tsconfig.json');
-  if (fs.existsSync(tsConfigPath)) {
-    changes = false;
+  const tsConfigWorkspacePath = path.join(demoSrc, 'tsconfig.workspace.json');
+  let workspaceFileFound = false;
 
+  changes = false;
+  if (fs.existsSync(tsConfigPath)) {
     console.log('Checking tsconfig.json');
-    const tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+
+    let tsConfig: any;
+    let tsConfigWorkspace: any;
+    try {
+      tsConfig = JSON.parse(fs.readFileSync(tsConfigPath, 'utf8'));
+    } catch (ex) {
+      console.error("Failed to read tsconfig.json. This usually means there's a comment in one of the tsconfigs.");
+      console.error(ex);
+      return;
+    }
 
     if ('references' in tsConfig) {
       for (let i = 0; i < tsConfig.references.length; i++) {
         const ref = tsConfig.references[i];
+
         if (ref.path === 'tsconfig.workspace.json') {
           console.log('- Unlinking tsconfig.workspace.json');
+
+          tsConfig.references.splice(i);
+          changes = true;
+        } else if (ref.path.startsWith('..')) {
+          // Move reference to workspace file
+          console.log(`- Moving ${ref.path} to tsconfig.workspace.json`);
+          tsConfigWorkspace = {};
+
+          if (fs.existsSync(tsConfigWorkspacePath)) {
+            tsConfigWorkspace = JSON.parse(fs.readFileSync(tsConfigWorkspacePath, 'utf8'));
+          }
+
+          if ('references' in tsConfigWorkspace) {
+            tsConfigWorkspace.references.push(ref);
+          } else {
+            tsConfigWorkspace.references = [ref];
+          }
+
           tsConfig.references.splice(i);
           changes = true;
         }
@@ -106,6 +136,9 @@ const linkDemo = async (demoName: string) => {
 
     if (changes) {
       fs.writeFileSync(tsConfigPath, `${JSON.stringify(tsConfig, null, 2)}\n`, 'utf8');
+      if (tsConfigWorkspace) {
+        fs.writeFileSync(tsConfigWorkspacePath, `${JSON.stringify(tsConfigWorkspace, null, 2)}\n`, 'utf8');
+      }
     } else {
       console.log('- No changes');
     }

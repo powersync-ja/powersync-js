@@ -6,8 +6,6 @@
     "strictNullChecks": true,
     "moduleResolution": "nodenext",
     "module": "NodeNext",
-
-    // Copied from tsconfig.base.json
     "composite": true,
     "esModuleInterop": true,
     "lib": ["esnext", "DOM"],
