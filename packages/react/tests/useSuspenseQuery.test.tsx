@@ -56,9 +56,29 @@ describe('useSuspenseQuery', () => {
   });
 
   it('should error when PowerSync is not set', async () => {
-    expect(() => {
-      renderHook(() => useSuspenseQuery('SELECT * from lists'));
-    }).toThrow('PowerSync not configured.');
+    // don't log errors to console, since an error is expected
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    // use a custom error wrapper that captures the content of the error
+    const wrapper = ({ children }) => {
+      return (
+        <ErrorBoundary fallbackRender={({ error }) => <div data-testid="error-div">{error.message}</div>}>
+          <React.Suspense fallback={loadingFallback}>{children}</React.Suspense>
+        </ErrorBoundary>
+      );
+    };
+
+    renderHook(() => useSuspenseQuery('SELECT * FROM lists'), { wrapper });
+
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('error-div').textContent).toBe('PowerSync not configured.');
+      },
+      { timeout: 100 }
+    );
+
+    // reinstate error logging
+    spy.mockRestore();
   });
 
   it('should suspend on initial load', async () => {
