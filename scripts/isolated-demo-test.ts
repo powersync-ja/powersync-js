@@ -74,12 +74,22 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     }
   };
 
+  // Run pnpm upgrade on local packages
+  try {
+    execSync('pnpm upgrade "@powersync/*"');
+  } catch (ex) {
+    console.error(ex);
+    result.installResult.state = TestState.FAILED;
+    result.installResult.error = ex.message;
+    return result;
+  }
+
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
     result.installResult.state = TestState.PASSED;
   } catch (ex) {
-    console.error('Error installing packages: ', ex);
+    console.error(ex);
     result.installResult.state = TestState.FAILED;
     result.installResult.error = ex.message;
     return result;
@@ -94,7 +104,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
       execSync('pnpm run clean', { cwd: demoDest, stdio: 'inherit' });
       result.installResult.state = TestState.PASSED;
     } catch (ex) {
-      console.error('Error running "pnpm run clean": ', ex);
+      console.error(ex);
       result.installResult.state = TestState.FAILED;
       result.installResult.error = ex.message;
       return result;
@@ -114,7 +124,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
     result.buildResult.state = TestState.PASSED;
   } catch (ex) {
-    console.error('Error running "pnpm run "test:build": ', ex);
+    console.error(ex);
     result.buildResult.state = TestState.FAILED;
     result.buildResult.error = ex.message;
   }
