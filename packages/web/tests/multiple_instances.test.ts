@@ -231,6 +231,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(secondDatabase.currentStatus.connected).false;
     // connect the second database in order for it to have access to the sync service.
     secondDatabase.connect(createTestConnector());
+    // Timing of this can be tricky due to the need for responding to a pending request.
+    await vi.waitFor(() => expect(secondDatabase.currentStatus.connecting).true);
     // connect the first database - this will actually connect to the sync service.
     await connect();
 
@@ -241,7 +243,6 @@ describe('Multiple Instances', { sequential: true }, () => {
 
   sharedMockSyncServiceTest(
     'should trigger uploads from last connected clients',
-    { timeout: Infinity },
     async ({ context: { database, openDatabase, connect, connector } }) => {
       const secondDatabase = openDatabase();
 
@@ -288,7 +289,6 @@ describe('Multiple Instances', { sequential: true }, () => {
       // It should now upload from the second client
       await vi.waitFor(() => expect(secondConnector.uploadData).toHaveBeenCalledOnce());
       await new Promise((resolve) => setTimeout(resolve, 5000));
-      debugger;
       // Now disconnect and close the second client
       await secondDatabase.close();
 
