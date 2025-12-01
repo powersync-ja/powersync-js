@@ -132,6 +132,27 @@ export class LockedAsyncDatabaseAdapter
     this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
   }
 
+  protected _reOpen() {
+    this.databaseOpenPromise = this.openInternalDB().finally(() => {
+      this.databaseOpenPromise = null;
+    });
+    return this.databaseOpenPromise;
+  }
+
+  /**
+   * Re-opens the underlying database.
+   * Returns a pending operation if one is already in progress.
+   */
+  async reOpenInternalDB(): Promise<void> {
+    if (!this.options.reOpenOnConnectionClosed) {
+      throw new Error(`Cannot re-open underlying database, reOpenOnConnectionClosed is not enabled`);
+    }
+    if (this.databaseOpenPromise) {
+      return this.databaseOpenPromise;
+    }
+    return this._reOpen();
+  }
+
   protected async _init() {
     await this.openInternalDB();
     this.iterateListeners((cb) => cb.initialized?.());
@@ -277,9 +298,7 @@ export class LockedAsyncDatabaseAdapter
           if (ex instanceof ConnectionClosedError) {
             if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
               // Immediately re-open the database. We need to miss as little table updates as possible.
-              this.databaseOpenPromise = this.openInternalDB().finally(() => {
-                this.databaseOpenPromise = null;
-              });
+              this.reOpenInternalDB();
             }
           }
           throw ex;

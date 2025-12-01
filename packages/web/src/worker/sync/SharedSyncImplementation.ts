@@ -247,7 +247,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       name: params.dbParams.dbFilename,
       openConnection: async () => {
         // Gets a connection from the clients when a new connection is requested.
-        return await this.openInternalDB();
+        const db = await this.openInternalDB();
+        db.registerListener({
+          closing: () => {
+            lockedAdapter.reOpenInternalDB();
+          }
+        });
+        return db;
       },
       logger: this.logger,
       reOpenOnConnectionClosed: true

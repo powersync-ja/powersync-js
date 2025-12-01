@@ -1,3 +1,4 @@
+import { BaseObserver } from '@powersync/common';
 import * as Comlink from 'comlink';
 import {
   AsyncDatabaseConnection,
@@ -24,17 +25,23 @@ export type WrappedWorkerConnectionOptions<Config extends ResolvedWebSQLOpenOpti
   onClose?: () => void;
 };
 
+export type WorkerWrappedAsyncDatabaseConnectionListener = {
+  closing: () => void;
+};
 /**
  * Wraps a provided instance of {@link AsyncDatabaseConnection}, providing necessary proxy
  * functions for worker listeners.
  */
 export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLOpenOptions = ResolvedWebSQLOpenOptions>
+  extends BaseObserver<WorkerWrappedAsyncDatabaseConnectionListener>
   implements AsyncDatabaseConnection
 {
   protected lockAbortController = new AbortController();
   protected notifyRemoteClosed: AbortController | undefined;
 
   constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
+    super();
+
     if (options.remoteCanCloseUnexpectedly) {
       this.notifyRemoteClosed = new AbortController();
     }
@@ -169,6 +176,7 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     } finally {
       this.options.remote[Comlink.releaseProxy]();
       this.options.onClose?.();
+      this.iterateListeners((l) => l.closing?.());
     }
   }
 
