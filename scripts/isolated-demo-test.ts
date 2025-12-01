@@ -98,19 +98,6 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   const packageJSONPath = path.join(demoDest, 'package.json');
   const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  // Run pnpm clean for RN projects to avoid native build errors
-  if (pkg.scripts['clean']) {
-    try {
-      execSync('pnpm run clean', { cwd: demoDest, stdio: 'inherit' });
-      result.installResult.state = TestState.PASSED;
-    } catch (ex) {
-      console.error(ex);
-      result.installResult.state = TestState.FAILED;
-      result.installResult.error = ex.message;
-      return result;
-    }
-  }
-
   if (!pkg.scripts['test:build']) {
     result.buildResult.state = TestState.WARN;
     return result;
