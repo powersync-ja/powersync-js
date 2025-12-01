@@ -243,7 +243,7 @@ describe('Multiple Instances', { sequential: true }, () => {
 
   sharedMockSyncServiceTest(
     'should trigger uploads from last connected clients',
-    async ({ context: { database, openDatabase, connect, connector } }) => {
+    async ({ context: { database, openDatabase, connect, connector, mockService } }) => {
       const secondDatabase = openDatabase();
 
       expect(database.currentStatus.connected).false;
@@ -258,7 +258,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       await database.execute('INSERT into lists (id, name) VALUES (uuid(), ?)', ['steven']);
 
       // connect from the first database
-      const { syncService } = await connect();
+      await connect();
 
       await vi.waitFor(() => expect(database.currentStatus.connected).true);
 
@@ -275,13 +275,13 @@ describe('Multiple Instances', { sequential: true }, () => {
       const secondConnectPromise = secondDatabase.connect(secondConnector);
       let _pendingRequestId: string;
       await vi.waitFor(async () => {
-        const requests = await syncService.getPendingRequests();
+        const requests = await mockService.getPendingRequests();
         expect(requests.length).toBeGreaterThan(0);
         _pendingRequestId = requests[0].id;
       });
       const pendingRequestId = _pendingRequestId!;
-      await syncService.createResponse(pendingRequestId, 200, { 'Content-Type': 'application/json' });
-      await syncService.pushBodyLine(pendingRequestId, {
+      await mockService.createResponse(pendingRequestId, 200, { 'Content-Type': 'application/json' });
+      await mockService.pushBodyLine(pendingRequestId, {
         token_expires_in: 10000000
       });
       await secondConnectPromise;

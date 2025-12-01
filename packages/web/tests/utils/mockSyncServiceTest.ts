@@ -41,7 +41,6 @@ export function createTestConnector(): MockedTestConnector {
  * Result of calling the connect function
  */
 export interface ConnectResult {
-  syncService: MockSyncService;
   syncRequestId: string;
 }
 
@@ -63,6 +62,7 @@ export const sharedMockSyncServiceTest = test.extend<{
     database: PowerSyncDatabase;
     databaseName: string;
     openDatabase: (customConfig?: Partial<WebPowerSyncDatabaseOptions>) => PowerSyncDatabase;
+    mockService: MockSyncService;
   };
 }>({
   context: async ({}, use) => {
@@ -98,6 +98,15 @@ export const sharedMockSyncServiceTest = test.extend<{
 
     const database = openDatabase();
 
+    // Get the identifier from the database.name property
+    const identifier = database.database.name;
+
+    // Connect to the shared worker to get the mock service
+    const mockService = await getMockSyncServiceFromWorker(identifier);
+    if (!mockService) {
+      throw new Error('Mock service not available');
+    }
+
     const connector = createTestConnector();
 
     const connectFn = async (customConnector?: PowerSyncBackendConnector): Promise<ConnectResult> => {
@@ -115,18 +124,6 @@ export const sharedMockSyncServiceTest = test.extend<{
         },
         { timeout: 1000 }
       );
-
-      // Get the identifier from the database.name property
-      const identifier = database.database.name;
-
-      // Connect to the shared worker to get the mock service
-      const mockService = await getMockSyncServiceFromWorker(identifier);
-
-      if (!mockService) {
-        throw new Error(
-          'Mock service not available - ensure enableMultiTabs is true and running in a test environment'
-        );
-      }
 
       let _syncRequestId: string;
       await vi.waitFor(async () => {
@@ -147,7 +144,6 @@ export const sharedMockSyncServiceTest = test.extend<{
       await connectionPromise;
 
       return {
-        syncService: mockService,
         syncRequestId
       };
     };
@@ -157,7 +153,8 @@ export const sharedMockSyncServiceTest = test.extend<{
       connect: connectFn,
       database,
       databaseName: dbFilename,
-      openDatabase
+      openDatabase,
+      mockService
     });
   }
 });

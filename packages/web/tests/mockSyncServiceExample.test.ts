@@ -17,9 +17,9 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
   sharedMockSyncServiceTest(
     'should allow mocking sync responses in shared worker',
     { timeout: 100000 },
-    async ({ context: { database, connect } }) => {
+    async ({ context: { database, connect, mockService } }) => {
       // Call connect to start the sync worker and get the sync service
-      const { syncService, syncRequestId } = await connect();
+      const { syncRequestId } = await connect();
 
       // Push a checkpoint with buckets (following node test pattern)
       const checkpoint: StreamingSyncCheckpoint = {
@@ -37,10 +37,10 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
         }
       };
 
-      await syncService.pushBodyLine(syncRequestId, checkpoint);
+      await mockService.pushBodyLine(syncRequestId, checkpoint);
 
       // The connect call should resolve by now
-      await syncService.pushBodyLine(syncRequestId, {
+      await mockService.pushBodyLine(syncRequestId, {
         data: {
           bucket: 'a',
           data: [
@@ -57,14 +57,14 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
       });
 
       // Push checkpoint_complete to finish the sync
-      await syncService.pushBodyLine(syncRequestId, {
+      await mockService.pushBodyLine(syncRequestId, {
         checkpoint_complete: {
           last_op_id: '1'
         }
       });
 
       // Complete the response
-      await syncService.completeResponse(syncRequestId);
+      await mockService.completeResponse(syncRequestId);
 
       // Wait for sync to complete and verify the data was saved
       await vi.waitFor(async () => {

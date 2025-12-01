@@ -80,14 +80,17 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     return this.withRemote(() => this.baseConnection.isAutoCommit());
   }
 
-  private withRemote<T>(workerPromise: () => Promise<T>): Promise<T> {
+  private withRemote<T>(workerPromise: () => Promise<T>, fireActionOnAbort = false): Promise<T> {
     const controller = this.notifyRemoteClosed;
     if (controller) {
       return new Promise((resolve, reject) => {
         if (controller.signal.aborted) {
           reject(new ConnectionClosedError('Called operation on closed remote'));
-          // Don't run the operation if we're going to reject
-          return;
+          if (!fireActionOnAbort) {
+            // Don't run the operation if we're going to reject
+            // We might want to fire-and-forget the operation in some cases (like a close operation)
+            return;
+          }
         }
 
         function handleAbort() {
@@ -172,7 +175,8 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     // Abort any pending lock requests.
     this.lockAbortController.abort();
     try {
-      await this.withRemote(() => this.baseConnection.close());
+      // fire and forget the close operation
+      await this.withRemote(() => this.baseConnection.close(), true);
     } finally {
       this.options.remote[Comlink.releaseProxy]();
       this.options.onClose?.();

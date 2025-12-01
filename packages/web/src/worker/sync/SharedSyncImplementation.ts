@@ -184,6 +184,16 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
+  /**
+   * In some very rare cases a specific tab might not respond to requests.
+   * This returns a random port which is not closing.
+   */
+  protected async getRandomWrappedPort(): Promise<WrappedSyncPort | undefined> {
+    return await this.portMutex.runExclusive(() => {
+      return this.ports[Math.floor(Math.random() * this.ports.length)];
+    });
+  }
+
   async waitForStatus(status: SyncStatusOptions): Promise<void> {
     return this.withSyncImplementation(async (sync) => {
       return sync.waitForStatus(status);
@@ -487,11 +497,16 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected async openInternalDB() {
     while (true) {
       try {
-        const lastClient = await this.getLastWrappedPort();
-        if (!lastClient) {
+        const client = await this.getRandomWrappedPort();
+        if (!client) {
           // Should not really happen in practice
           throw new Error(`Could not open DB connection since no client is connected.`);
         }
+
+        // Fail-safe timeout for opening a database connection.
+        const timeout = setTimeout(() => {
+          abortController.abort();
+        }, 10_000);
 
         /**
          * Handle cases where the client might close while opening a connection.
@@ -502,21 +517,20 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         };
 
         const removeCloseListener = () => {
-          const index = lastClient.closeListeners.indexOf(closeListener);
+          const index = client.closeListeners.indexOf(closeListener);
           if (index >= 0) {
-            lastClient.closeListeners.splice(index, 1);
+            client.closeListeners.splice(index, 1);
           }
         };
 
-        lastClient.closeListeners.push(closeListener);
+        client.closeListeners.push(closeListener);
 
-        const workerPort = await withAbort(
-          () => lastClient.clientProvider.getDBWorkerPort(),
-          abortController.signal
-        ).catch((ex) => {
-          removeCloseListener();
-          throw ex;
-        });
+        const workerPort = await withAbort(() => client.clientProvider.getDBWorkerPort(), abortController.signal).catch(
+          (ex) => {
+            removeCloseListener();
+            throw ex;
+          }
+        );
 
         const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
         const identifier = this.syncParams!.dbParams.dbFilename;
@@ -532,6 +546,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           removeCloseListener();
         });
 
+        clearTimeout(timeout);
+
         const wrapped = new WorkerWrappedAsyncDatabaseConnection({
           remote,
           baseConnection: db,
@@ -540,15 +556,15 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
           // that and ensure pending requests are aborted when the tab is closed.
           remoteCanCloseUnexpectedly: true
         });
-        lastClient.closeListeners.push(async () => {
+        client.closeListeners.push(async () => {
           this.logger.info('Aborting open connection because associated tab closed.');
           /**
            * Don't await this close operation. It might never resolve if the tab is closed.
-           * We run the close operation first, before marking the remote as closed. This gives the database some chance
-           * to close the connection.
+           * We mark the remote as closed first, this will reject any pending requests.
+           * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
            */
-          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
           wrapped.markRemoteClosed();
+          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
         });
 
         return wrapped;
