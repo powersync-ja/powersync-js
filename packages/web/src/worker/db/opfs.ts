@@ -259,19 +259,7 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
       this.mapIdToFile.delete(fileId);
 
       if (file?.flags & VFS.SQLITE_OPEN_MAIN_DB) {
-        // Always close handles directly as well to ensure cleanup
-        // This handles edge cases where the lock mechanism might not work properly
-        if (file.persistentFile) {
-          DB_RELATED_FILE_SUFFIXES.forEach((suffix) => {
-            const persistentFile = this.persistentFiles.get(file.path + suffix);
-            if (persistentFile?.accessHandle) {
-              persistentFile.accessHandle.close();
-              persistentFile.accessHandle = null;
-            }
-          });
-        }
         if (file.persistentFile?.handleLockReleaser) {
-          // Normal case: release via the lock mechanism
           this.#releaseAccessHandle(file);
         }
       } else if (file?.flags & VFS.SQLITE_OPEN_DELETEONCLOSE) {
@@ -532,7 +520,6 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
         (async () => {
           // Acquire the Web Lock.
           file.persistentFile.handleLockReleaser = await this.#acquireLock(file.persistentFile);
-
           try {
             // Get access handles for the database and releated files in parallel.
             this.log?.(`creating access handles for ${file.path}`);
@@ -544,11 +531,13 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
                 }
               })
             );
-            file.persistentFile.isRequestInProgress = false;
           } catch (e) {
             this.log?.(`failed to create access handles for ${file.path}`, e);
+            // Release the lock, if we failed here, we'd need to obtain the lock later in order to retry
             file.persistentFile.handleLockReleaser();
             throw e;
+          } finally {
+            file.persistentFile.isRequestInProgress = false;
           }
         })()
       );
@@ -581,6 +570,7 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
    */
   #acquireLock(persistentFile) {
     return new Promise((resolve) => {
+      // Tell other connections we want the access handle.
       const lockName = persistentFile.handleRequestChannel.name;
       const notify = () => {
         this.log?.(`notifying for ${lockName}`);
@@ -590,19 +580,11 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
       setTimeout(notify);
 
       this.log?.(`lock requested: ${lockName}`);
-      let releaseLock; // This will hold the resolver for the lock Promise
-      const lockPromise = new Promise((release) => {
-        releaseLock = release; // Capture the resolver
-      });
-
       navigator.locks.request(lockName, (lock) => {
+        // We have the lock. Stop asking other connections for it.
         this.log?.(`lock acquired: ${lockName}`, lock);
         clearInterval(notifyId);
-        // Resolve the outer Promise with a function that releases the lock
-        resolve(() => {
-          releaseLock(); // This resolves lockPromise, releasing the lock
-        });
-        return lockPromise; // Return the Promise that controls the lock
+        return new Promise(resolve);
       });
     });
   }

@@ -525,12 +525,16 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
         client.closeListeners.push(closeListener);
 
-        const workerPort = await withAbort(() => client.clientProvider.getDBWorkerPort(), abortController.signal).catch(
-          (ex) => {
-            removeCloseListener();
-            throw ex;
+        const workerPort = await withAbort({
+          action: () => client.clientProvider.getDBWorkerPort(),
+          signal: abortController.signal,
+          cleanupOnAbort: (port) => {
+            port.close();
           }
-        );
+        }).catch((ex) => {
+          removeCloseListener();
+          throw ex;
+        });
 
         const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
         const identifier = this.syncParams!.dbParams.dbFilename;
@@ -541,7 +545,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
          * We typically execute the closeListeners using the portMutex in a different context.
          * We can't rely on the closeListeners to abort the operation if the tab is closed.
          */
-        const db = await withAbort(() => remote(this.syncParams!.dbParams), abortController.signal).finally(() => {
+        const db = await withAbort({
+          action: () => remote(this.syncParams!.dbParams),
+          signal: abortController.signal,
+          cleanupOnAbort: (db) => {
+            db.close();
+          }
+        }).finally(() => {
           // We can remove the close listener here since we no longer need it past this point.
           removeCloseListener();
         });
@@ -588,7 +598,12 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 /**
  * Runs the action with an abort controller.
  */
-function withAbort<T>(action: () => Promise<T>, signal: AbortSignal): Promise<T> {
+function withAbort<T>(options: {
+  action: () => Promise<T>;
+  signal: AbortSignal;
+  cleanupOnAbort?: (result: T) => void;
+}): Promise<T> {
+  const { action, signal, cleanupOnAbort } = options;
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
       reject(new AbortOperation('Operation aborted by abort controller'));
@@ -608,7 +623,13 @@ function withAbort<T>(action: () => Promise<T>, signal: AbortSignal): Promise<T>
     }
 
     action()
-      .then((data) => completePromise(() => resolve(data)))
+      .then((data) => {
+        completePromise(() => resolve(data));
+        // We already rejected due to the abort, allow for cleanup
+        if (signal.aborted) {
+          cleanupOnAbort?.(data);
+        }
+      })
       .catch((e) => completePromise(() => reject(e)));
   });
 }

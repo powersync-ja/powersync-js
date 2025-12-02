@@ -282,14 +282,10 @@ export class LockedAsyncDatabaseAdapter
         try {
           // The database is being opened in the background. Wait for it here.
           if (this.databaseOpenPromise) {
-            try {
-              await this.databaseOpenPromise;
-            } catch (ex) {
-              // This will cause a retry of opening the database.
-              const wrappedError = new ConnectionClosedError('Could not open database');
-              wrappedError.cause = ex;
-              throw wrappedError;
-            }
+            /**
+             * We can't await this since it uses the same lock as we're in now.
+             */
+            throw new ConnectionClosedError('Connection is busy re-opening');
           }
 
           holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
