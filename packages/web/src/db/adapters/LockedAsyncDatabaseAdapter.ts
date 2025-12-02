@@ -295,7 +295,10 @@ export class LockedAsyncDatabaseAdapter
           holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
           return await callback();
         } catch (ex) {
-          if (ex instanceof ConnectionClosedError) {
+          if (
+            ex instanceof ConnectionClosedError ||
+            (ex instanceof Error && ex.name === 'NoModificationAllowedError')
+          ) {
             if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
               // Immediately re-open the database. We need to miss as little table updates as possible.
               this.reOpenInternalDB();
