@@ -624,11 +624,11 @@ function withAbort<T>(options: {
 
     action()
       .then((data) => {
-        completePromise(() => resolve(data));
         // We already rejected due to the abort, allow for cleanup
         if (signal.aborted) {
-          cleanupOnAbort?.(data);
+          return completePromise(() => cleanupOnAbort?.(data));
         }
+        completePromise(() => resolve(data));
       })
       .catch((e) => completePromise(() => reject(e)));
   });
