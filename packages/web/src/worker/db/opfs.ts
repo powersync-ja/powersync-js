@@ -92,6 +92,19 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
         });
       });
     });
+
+    finalizationRegistry.register(this, async () => {
+      for (const file of this.persistentFiles.values()) {
+        const release = this.#releaseAccessHandle(file);
+        try {
+          await this.#releaseAccessHandle(file);
+        } catch (e) {
+          this.log?.('error releasing access handle', e);
+        } finally {
+          release();
+        }
+      }
+    });
     finalizationRegistry.register(this, this.releaser);
     const tmpDir = await root.getDirectoryHandle(tmpDirName, { create: true });
 
