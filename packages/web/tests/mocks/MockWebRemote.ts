@@ -11,7 +11,7 @@ import {
   SocketSyncStreamOptions
 } from '@powersync/common';
 import { serialize, type BSON } from 'bson';
-import { MockSyncService, setupMockServiceMessageHandler } from '../../src/worker/sync/MockSyncServiceWorker';
+import { MockSyncService, setupMockServiceMessageHandler } from '../utils/MockSyncServiceWorker';
 
 /**
  * Mock fetch provider that intercepts all requests and routes them to the mock sync service.
