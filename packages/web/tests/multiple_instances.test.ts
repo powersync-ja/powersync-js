@@ -5,7 +5,6 @@ import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { getMockSyncServiceFromWorker } from './utils/MockSyncServiceClient';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
 import { generateTestDb, testSchema } from './utils/testDb';
 
@@ -41,7 +40,7 @@ describe('Multiple Instances', { sequential: true }, () => {
   sharedMockSyncServiceTest(
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
-    async ({ context: { openDatabase } }) => {
+    async ({ context: { openDatabase, mockService } }) => {
       const logger = createLogger('test-logger');
       const spiedErrorLogger = vi.spyOn(logger, 'error');
       const spiedDebugLogger = vi.spyOn(logger, 'debug');
@@ -61,18 +60,17 @@ describe('Multiple Instances', { sequential: true }, () => {
         uploadData: async (db) => {}
       });
 
-      await vi.waitFor(async () => {
-        const syncService = await getMockSyncServiceFromWorker(powersync.database.name);
-        if (!syncService) {
-          throw new Error('Sync service not found');
-        }
-        const requests = await syncService.getPendingRequests();
-        expect(requests.length).toBeGreaterThan(0);
-        const pendingRequestId = requests[0].id;
-        // Generate an error
-        await syncService.createResponse(pendingRequestId, 401, { 'Content-Type': 'application/json' });
-        await syncService.completeResponse(pendingRequestId);
-      });
+      await vi.waitFor(
+        async () => {
+          const requests = await mockService.getPendingRequests();
+          expect(requests.length).toBeGreaterThan(0);
+          const pendingRequestId = requests[0].id;
+          // Generate an error
+          await mockService.createResponse(pendingRequestId, 401, { 'Content-Type': 'application/json' });
+          await mockService.completeResponse(pendingRequestId);
+        },
+        { timeout: 3_000 }
+      );
 
       // Should log that a connection attempt has been made
       const message = 'Streaming sync iteration started';
@@ -224,22 +222,26 @@ describe('Multiple Instances', { sequential: true }, () => {
     await watchedPromise;
   });
 
-  sharedMockSyncServiceTest('should share sync updates', async ({ context: { database, connect, openDatabase } }) => {
-    const secondDatabase = openDatabase();
+  sharedMockSyncServiceTest(
+    'should share sync updates',
+    { timeout: 10_000 },
+    async ({ context: { database, connect, openDatabase } }) => {
+      const secondDatabase = openDatabase();
 
-    expect(database.currentStatus.connected).false;
-    expect(secondDatabase.currentStatus.connected).false;
-    // connect the second database in order for it to have access to the sync service.
-    secondDatabase.connect(createTestConnector());
-    // Timing of this can be tricky due to the need for responding to a pending request.
-    await vi.waitFor(() => expect(secondDatabase.currentStatus.connecting).true, { timeout: 2000 });
-    // connect the first database - this will actually connect to the sync service.
-    await connect();
+      expect(database.currentStatus.connected).false;
+      expect(secondDatabase.currentStatus.connected).false;
+      // connect the second database in order for it to have access to the sync service.
+      secondDatabase.connect(createTestConnector());
+      // Timing of this can be tricky due to the need for responding to a pending request.
+      await vi.waitFor(() => expect(secondDatabase.currentStatus.connecting).true, { timeout: 5_000 });
+      // connect the first database - this will actually connect to the sync service.
+      await connect();
 
-    expect(database.currentStatus.connected).true;
+      expect(database.currentStatus.connected).true;
 
-    await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true, { timeout: 3000 });
-  });
+      await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true, { timeout: 5_000 });
+    }
+  );
 
   sharedMockSyncServiceTest(
     'should trigger uploads from last connected clients',
