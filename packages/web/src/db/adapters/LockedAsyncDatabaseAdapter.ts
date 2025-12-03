@@ -10,7 +10,7 @@ import {
   createLogger,
   type ILogger
 } from '@powersync/common';
-import { getNavigatorLocks } from '../..//shared/navigator';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { AsyncDatabaseConnection, ConnectionClosedError } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
@@ -120,8 +120,9 @@ export class LockedAsyncDatabaseAdapter
       // Dispose any previous table change listener.
       this._disposeTableChangeListener?.();
       this._disposeTableChangeListener = null;
-
+      this._db?.close().catch((ex) => this.logger.warn(`Error closing database before opening new instance`, ex));
       const isReOpen = !!this._db;
+      this._db = null;
 
       this._db = await this.options.openConnection();
       await this._db.init();
@@ -159,7 +160,23 @@ export class LockedAsyncDatabaseAdapter
   }
 
   protected async _init() {
-    await this.openInternalDB();
+    /**
+     * For OPFS, we can see this open call sometimes fail due to NoModificationAllowedError.
+     * We should be able to recover from this by re-opening the database.
+     */
+    const maxAttempts = 3;
+    for (let count = 0; count < maxAttempts; count++) {
+      try {
+        await this.openInternalDB();
+        break;
+      } catch (ex) {
+        if (count == maxAttempts - 1) {
+          throw ex;
+        }
+        this.logger.warn(`Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`, ex);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
