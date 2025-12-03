@@ -93,18 +93,21 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
       });
     });
 
-    finalizationRegistry.register(this, async () => {
-      for (const file of this.persistentFiles.values()) {
-        const release = this.#releaseAccessHandle(file);
-        try {
-          await this.#releaseAccessHandle(file);
-        } catch (e) {
-          this.log?.('error releasing access handle', e);
-        } finally {
-          release();
-        }
-      }
-    });
+    const releaseHandle = async () => {
+      await Promise.all(
+        this.persistentFiles.values().map(async (file) => {
+          try {
+            await this.#releaseAccessHandle(file);
+          } catch (e) {
+            this.log?.('error releasing access handle', e);
+          } finally {
+            release();
+          }
+        })
+      );
+    };
+
+    finalizationRegistry.register(this, releaseHandle);
     finalizationRegistry.register(this, this.releaser);
     const tmpDir = await root.getDirectoryHandle(tmpDirName, { create: true });
 
@@ -272,9 +275,10 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
       this.mapIdToFile.delete(fileId);
 
       if (file?.flags & VFS.SQLITE_OPEN_MAIN_DB) {
-        if (file.persistentFile?.handleLockReleaser) {
-          this.#releaseAccessHandle(file);
-        }
+        // Release this either way
+        // if (file.persistentFile?.handleLockReleaser) {
+        this.#releaseAccessHandle(file);
+        // }
       } else if (file?.flags & VFS.SQLITE_OPEN_DELETEONCLOSE) {
         file.accessHandle.truncate(0);
         this.accessiblePaths.delete(file.path);
