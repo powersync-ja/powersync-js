@@ -1,7 +1,11 @@
 import { createTamagui } from "@tamagui/core";
 import { shorthands } from "@tamagui/shorthands";
+import { createInterFont } from "@tamagui/font-inter";
 import { themes, tokens } from "@tamagui/themes";
 import { config } from "@/lib/config";
+
+const heading = createInterFont();
+const body = createInterFont();
 
 export const appConfig = createTamagui({
   themes,
@@ -15,7 +19,11 @@ export const appConfig = createTamagui({
       brand2: config.brand2
     }
   },
-  shorthands
+  shorthands,
+  fonts: {
+    heading,
+    body,
+  }
 });
 
 export default appConfig;

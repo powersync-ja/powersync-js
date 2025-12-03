@@ -29,14 +29,14 @@ const config: ExpoConfig = {
   },
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.powersync.example"
+    bundleIdentifier: "com.powersync.powerchat"
   },
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff"
     },
-    package: "com.powersync.example"
+    package: "com.powersync.powerchat"
   },
   extra: {
     eas: {
