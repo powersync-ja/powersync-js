@@ -1,16 +1,21 @@
 {
-  "extends": "../../tsconfig.base",
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "src",
     "outDir": "lib",
     "strictNullChecks": true,
     "moduleResolution": "nodenext",
-    "module": "NodeNext"
-  },
-  "references": [
-    {
-      "path": "../../packages/node"
-    }
-  ]
+    "module": "NodeNext",
+    "composite": true,
+    "esModuleInterop": true,
+    "lib": ["esnext", "DOM"],
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noStrictGenericChecks": false,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "target": "esnext"
+  }
 }
