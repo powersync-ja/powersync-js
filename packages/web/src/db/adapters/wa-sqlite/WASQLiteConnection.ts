@@ -125,10 +125,9 @@ export const DEFAULT_MODULE_FACTORIES = {
       module = await SyncWASQLiteModuleFactory();
     }
     const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
-    (vfs as any).log = (...args: any[]) => console.log('[OPFSCoopSyncVFS]', ...args);
     return {
       module,
-      vfs: vfs as any
+      vfs
     };
   }
 };
