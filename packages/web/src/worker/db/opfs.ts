@@ -275,10 +275,9 @@ export class OPFSCoopSyncVFS extends FacadeVFS {
       this.mapIdToFile.delete(fileId);
 
       if (file?.flags & VFS.SQLITE_OPEN_MAIN_DB) {
-        // Release this either way
-        // if (file.persistentFile?.handleLockReleaser) {
-        this.#releaseAccessHandle(file);
-        // }
+        if (file.persistentFile?.accessHandle) {
+          this.#releaseAccessHandle(file);
+        }
       } else if (file?.flags & VFS.SQLITE_OPEN_DELETEONCLOSE) {
         file.accessHandle.truncate(0);
         this.accessiblePaths.delete(file.path);
