@@ -127,7 +127,7 @@ export const DEFAULT_MODULE_FACTORIES = {
     const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
     return {
       module,
-      vfs
+      vfs: vfs as any
     };
   }
 };
