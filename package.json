@@ -49,10 +49,5 @@
     "rollup-plugin-dts": "^6.2.1",
     "typescript": "^5.7.2",
     "vitest": "^3.2.4"
-  },
-  "pnpm": {
-    "overrides": {
-      "@journeyapps/wa-sqlite": "0.0.0-dev-20251201120934"
-    }
   }
 }
