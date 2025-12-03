@@ -1,23 +1,23 @@
-import { usePowerSync, useQuery } from '@powersync/react-native';
-import { Save, Trash, XCircle } from '@tamagui/lucide-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
-import { Button, Input, XStack, YStack } from 'tamagui';
+import { usePowerSync, useQuery } from "@powersync/react-native";
+import { Save, Trash, XCircle } from "@tamagui/lucide-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Alert } from "react-native";
+import { Button, Input, XStack, YStack } from "tamagui";
 
-import { MemberSelector } from '@/components/groups/MemberSelector';
-import { uuid } from '@/lib/uuid';
+import { MemberSelector } from "@/components/groups/MemberSelector";
+import { uuid } from "@/lib/uuid";
 
 export default function GroupSettings() {
   const { group: groupId } = useLocalSearchParams<{ group: string }>();
   const router = useRouter();
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState<string>("");
   const [members, setMembers] = useState<Set<string>>(new Set());
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
   const powerSync = usePowerSync();
 
-  const { data: groups } = useQuery('SELECT name FROM groups WHERE id = ?', [groupId]);
-  const { data: groupMembers } = useQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId]);
+  const { data: groups } = useQuery("SELECT name FROM groups WHERE id = ?", [groupId]);
+  const { data: groupMembers } = useQuery("SELECT profile_id FROM memberships WHERE group_id = ?", [groupId]);
 
   useEffect(() => {
     if (groups.length > 0) {
@@ -74,20 +74,20 @@ export default function GroupSettings() {
 
     await powerSync.writeTransaction(async (tx) => {
       try {
-        await tx.execute('UPDATE groups SET name= ? WHERE id = ?', [name, groupId]);
+        await tx.execute("UPDATE groups SET name= ? WHERE id = ?", [name, groupId]);
         for (const profileId of removedContacts) {
-          await tx.execute('DELETE FROM memberships WHERE group_id = ? AND profile_id = ?', [groupId, profileId]);
+          await tx.execute("DELETE FROM memberships WHERE group_id = ? AND profile_id = ?", [groupId, profileId]);
         }
         for (const profileId of addedContacts) {
           const membershipId = uuid();
           await tx.execute(
-            'INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())',
+            "INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())",
             [membershipId, groupId, profileId]
           );
         }
         router.back();
       } catch (error) {
-        console.error('Error', error);
+        console.error("Error", error);
       }
     });
   }
@@ -96,27 +96,27 @@ export default function GroupSettings() {
     async function deleteTransaction() {
       await powerSync.writeTransaction(async (tx) => {
         try {
-          await tx.execute('DELETE FROM memberships WHERE group_id = ?', [groupId]);
-          await tx.execute('DELETE FROM messages WHERE group_id = ?', [groupId]);
-          await tx.execute('DELETE FROM groups WHERE id = ?', [groupId]);
+          await tx.execute("DELETE FROM memberships WHERE group_id = ?", [groupId]);
+          await tx.execute("DELETE FROM messages WHERE group_id = ?", [groupId]);
+          await tx.execute("DELETE FROM groups WHERE id = ?", [groupId]);
 
           router.back();
         } catch (error) {
-          console.error('Error', error);
+          console.error("Error", error);
         }
       });
     }
 
-    Alert.alert('Delete group', 'Are you sure you want to delete this group including all its messages?', [
+    Alert.alert("Delete group", "Are you sure you want to delete this group including all its messages?", [
       {
-        text: 'Cancel',
-        onPress: () => console.log('Cancel Pressed'),
-        style: 'cancel'
+        text: "Cancel",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel"
       },
       {
-        text: 'Delete',
+        text: "Delete",
         onPress: deleteTransaction,
-        style: 'destructive'
+        style: "destructive"
       }
     ]);
   }

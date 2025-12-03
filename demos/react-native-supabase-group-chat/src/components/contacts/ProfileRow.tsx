@@ -1,7 +1,7 @@
-import { Plus } from '@tamagui/lucide-icons';
-import { ListItem, Text } from 'tamagui';
+import { Plus } from "@tamagui/lucide-icons";
+import { ListItem, Text } from "tamagui";
 
-import { ProfileIcon } from '../profiles/ProfileIcon';
+import { ProfileIcon } from "@/components/profiles/ProfileIcon";
 
 export function ProfileRow({
   item,
@@ -14,7 +14,7 @@ export function ProfileRow({
     <ListItem
       title={<Text color="$gray9">{item.name}</Text>}
       subTitle={<Text color="$gray9">@{item.handle}</Text>}
-      icon={<ProfileIcon handle={item.handle ?? ''} create={true} />}
+      icon={<ProfileIcon handle={item.handle ?? ""} create={true} />}
       iconAfter={<Plus size="$1.5" color="$gray9" />}
       onPress={() => handleAddContact(item.id, item.name, item.handle)}
     />

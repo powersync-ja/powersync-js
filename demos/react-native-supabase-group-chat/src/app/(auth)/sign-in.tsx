@@ -1,7 +1,7 @@
-import { Redirect } from 'expo-router';
+import { Redirect } from "expo-router";
 
-import { SignIn } from '@/components/auth/SignIn';
-import { useAuth } from '@/providers/AuthProvider';
+import { SignIn } from "@/components/auth/SignIn";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function SignInScreen() {
   const { user } = useAuth();

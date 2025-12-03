@@ -1,8 +1,8 @@
-import { Contact, MessageSquare, Settings } from '@tamagui/lucide-icons';
-import { Redirect, Tabs } from 'expo-router';
+import { Contact, MessageSquare, Settings } from "@tamagui/lucide-icons";
+import { Redirect, Tabs } from "expo-router";
 
-import { useAuth } from '@/providers/AuthProvider';
-import { PowerSyncProvider } from '@/providers/PowerSync';
+import { useAuth } from "@/providers/AuthProvider";
+import { PowerSyncProvider } from "@/providers/PowerSyncProvider";
 
 export default function AppLayout() {
   const { session } = useAuth();
@@ -17,7 +17,7 @@ export default function AppLayout() {
         <Tabs.Screen
           name="(chats)"
           options={{
-            title: 'Chats',
+            title: "Chats",
             headerShown: false,
             tabBarIcon: ({ color }) => <MessageSquare color={color} />
           }}
@@ -25,7 +25,7 @@ export default function AppLayout() {
         <Tabs.Screen
           name="contacts"
           options={{
-            title: 'Contacts',
+            title: "Contacts",
             headerShown: false,
             tabBarIcon: ({ color }) => <Contact color={color} />
           }}
@@ -33,7 +33,7 @@ export default function AppLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: 'Settings',
+            title: "Settings",
             headerShown: false,
             tabBarIcon: ({ color }) => <Settings color={color} />
           }}

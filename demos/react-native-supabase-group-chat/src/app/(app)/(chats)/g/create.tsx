@@ -1,16 +1,16 @@
-import { usePowerSync } from '@powersync/react-native';
-import { Plus } from '@tamagui/lucide-icons';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Button, Input, XStack, YStack } from 'tamagui';
+import { usePowerSync } from "@powersync/react-native";
+import { Plus } from "@tamagui/lucide-icons";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import { Button, Input, XStack, YStack } from "tamagui";
 
-import { MemberSelector } from '@/components/groups/MemberSelector';
-import { uuid } from '@/lib/uuid';
-import { useAuth } from '@/providers/AuthProvider';
+import { MemberSelector } from "@/components/groups/MemberSelector";
+import { uuid } from "@/lib/uuid";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function CreateGroup() {
   const { name: initialName } = useLocalSearchParams<{ name: string }>();
-  const [name, setName] = useState<string>(initialName ?? '');
+  const [name, setName] = useState<string>(initialName ?? "");
   const powerSync = usePowerSync();
   const { user } = useAuth();
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
@@ -26,7 +26,7 @@ export default function CreateGroup() {
 
     await powerSync.writeTransaction(async (tx) => {
       try {
-        await tx.execute('INSERT INTO groups (id, owner_id, name, created_at) VALUES (?, ?, ?, datetime())', [
+        await tx.execute("INSERT INTO groups (id, owner_id, name, created_at) VALUES (?, ?, ?, datetime())", [
           groupId,
           user?.id,
           name
@@ -34,20 +34,20 @@ export default function CreateGroup() {
         for (const profileId of selectedContacts) {
           const membershipId = uuid();
           await tx.execute(
-            'INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())',
+            "INSERT INTO memberships (id, group_id, profile_id, created_at) VALUES (?, ?, ?, datetime())",
             [membershipId, groupId, profileId]
           );
         }
         router.push(`/(app)/(chats)/g/${groupId}`);
       } catch (error) {
-        console.error('Error', error);
+        console.error("Error", error);
       }
     });
   }
 
   return (
     <>
-      <Stack.Screen name="../../" options={{ title: 'Create group' }} />
+      <Stack.Screen name="../../" options={{ title: "Create group" }} />
       <YStack paddingTop="$3" fullscreen>
         <XStack marginHorizontal="$3" gap="$3">
           <Input

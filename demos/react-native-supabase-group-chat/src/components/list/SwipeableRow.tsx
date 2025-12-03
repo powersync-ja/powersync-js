@@ -1,7 +1,7 @@
-import { ReactNode, useRef } from 'react';
-import { Animated } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
-import { Button, XStack } from 'tamagui';
+import { ReactNode, useRef } from "react";
+import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, { Extrapolation, interpolate, SharedValue } from "react-native-reanimated";
+import { Button, XStack } from "tamagui";
 
 function RightAction({
   text,
@@ -13,13 +13,10 @@ function RightAction({
   text: ReactNode;
   color: string;
   x: number;
-  progress: Animated.AnimatedInterpolation<number>;
+  progress: SharedValue<number>;
   onPress: () => void;
 }) {
-  const trans = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [x, 0]
-  });
+  const trans = interpolate(progress.value, [0, 1], [1, x], Extrapolation.CLAMP);
 
   return (
     <Animated.View style={{ flex: 1, transform: [{ translateX: trans }] }}>
@@ -31,8 +28,7 @@ function RightAction({
         textAlign="center"
         alignItems="center"
         justifyContent="center"
-        color="white"
-      >
+        color="white">
         {text}
       </Button>
     </Animated.View>
@@ -46,7 +42,7 @@ function RightActions({
 }: {
   close: () => void;
   rightActions: { text: ReactNode; color: string; onPress: () => void }[];
-  progress: Animated.AnimatedInterpolation<number>;
+  progress: SharedValue<number>;
 }) {
   return (
     <XStack width={rightActions.length * 64} paddingBottom={3}>
@@ -79,10 +75,11 @@ export function SwipeableRow({
   // leftActions?: { text: ReactNode; color: string; onPress: () => void }[];
   rightActions?: { text: ReactNode; color: string; onPress: () => void }[];
 }) {
-  const ref = useRef<Swipeable>(null);
+  const ref = useRef<SwipeableMethods>(null);
 
   function close() {
     ref.current?.close();
+    ref.current;
   }
 
   return rightActions ? (
@@ -103,8 +100,7 @@ export function SwipeableRow({
       }}
       onSwipeableClose={(direction) => {
         console.log(`Closing swipeable to the ${direction}`);
-      }}
-    >
+      }}>
       {children}
     </Swipeable>
   ) : (

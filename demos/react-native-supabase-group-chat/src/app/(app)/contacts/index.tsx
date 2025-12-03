@@ -1,20 +1,20 @@
-import { faker } from '@faker-js/faker';
-import { usePowerSync, useQuery } from '@powersync/react-native';
-import { Search, Shuffle } from '@tamagui/lucide-icons';
-import { useState } from 'react';
-import { Button, Input, XStack, YStack } from 'tamagui';
+import { faker } from "@faker-js/faker";
+import { usePowerSync, useQuery } from "@powersync/react-native";
+import { Search, Shuffle } from "@tamagui/lucide-icons";
+import { useState } from "react";
+import { Button, Input, XStack, YStack } from "tamagui";
 
-import { ContactRow } from '@/components/contacts/ContactRow';
-import { ProfileRow } from '@/components/contacts/ProfileRow';
-import { List } from '@/components/list';
-import { supabase } from '@/lib/supabase';
-import { uuid } from '@/lib/uuid';
-import { useAuth } from '@/providers/AuthProvider';
+import { ContactRow } from "@/components/contacts/ContactRow";
+import { ProfileRow } from "@/components/contacts/ProfileRow";
+import { List } from "@/components/list";
+import { supabase } from "@/lib/supabase";
+import { uuid } from "@/lib/uuid";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function ContactsIndex() {
   const powerSync = usePowerSync();
   const { user } = useAuth();
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>("");
   const [profiles, setProfiles] = useState<any[]>([]);
 
   const { data: contacts } = useQuery(
@@ -29,14 +29,14 @@ export default function ContactsIndex() {
     const contactId = uuid();
     const ownerId = user?.id;
 
-    await powerSync.execute('INSERT INTO profiles (id, name, handle, demo) VALUES (?, ?, ?, ?)', [
+    await powerSync.execute("INSERT INTO profiles (id, name, handle, demo) VALUES (?, ?, ?, ?)", [
       profileId,
       name,
       handle,
       true
     ]);
 
-    await powerSync.execute('INSERT INTO contacts (id, owner_id, profile_id) VALUES (?, ?, ?)', [
+    await powerSync.execute("INSERT INTO contacts (id, owner_id, profile_id) VALUES (?, ?, ?)", [
       contactId,
       ownerId,
       profileId
@@ -47,7 +47,7 @@ export default function ContactsIndex() {
     const contactId = uuid();
     const ownerId = user?.id;
 
-    await powerSync.execute('INSERT INTO contacts (id, owner_id, profile_id) VALUES (?, ?, ?)', [
+    await powerSync.execute("INSERT INTO contacts (id, owner_id, profile_id) VALUES (?, ?, ?)", [
       contactId,
       ownerId,
       profileId
@@ -58,22 +58,22 @@ export default function ContactsIndex() {
       [profileId, name, handle]
     ); */
 
-    setSearch('');
+    setSearch("");
     setProfiles([]);
   }
 
   async function handleDeleteContact(contactId: string) {
-    console.log('Deleting contact', contactId);
+    console.log("Deleting contact", contactId);
 
-    const result = await powerSync.execute('DELETE FROM contacts WHERE id = ?', [contactId]);
+    const result = await powerSync.execute("DELETE FROM contacts WHERE id = ?", [contactId]);
   }
 
   async function handleProfileSearch() {
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, handle')
-      .filter('handle', 'ilike', `%${search}%`)
-      .filter('id', 'not.eq', user?.id);
+      .from("profiles")
+      .select("id, name, handle")
+      .filter("handle", "ilike", `%${search}%`)
+      .filter("id", "not.eq", user?.id);
 
     setProfiles(data ?? []);
   }
@@ -97,7 +97,7 @@ export default function ContactsIndex() {
           icon={<Search size="$1.5" />}
           backgroundColor="$brand1"
           borderRadius="$3"
-        // circular
+          // circular
         />
       </XStack>
 
@@ -105,7 +105,7 @@ export default function ContactsIndex() {
         data={[...profiles, ...contacts]}
         extraData={contacts}
         renderItem={({ item }) =>
-          item.type === 'contact' ? (
+          item.type === "contact" ? (
             <ContactRow item={item} handleDeleteContact={handleDeleteContact} />
           ) : (
             <ProfileRow item={item} handleAddContact={handleAddContact} />

@@ -1,5 +1,6 @@
-import { FlashList, ListRenderItem } from '@shopify/flash-list';
-import { Separator, Text } from 'tamagui';
+import { FlashList, ListRenderItem } from "@shopify/flash-list";
+import { Separator, Text } from "tamagui";
+import { type JSX } from "react";
 
 export function List<T>({
   data,
@@ -14,8 +15,8 @@ export function List<T>({
   extraData?: any;
   numColumns?: number;
 }) {
-  placeholder ??= 'No data';
-  if (typeof placeholder === 'string') {
+  placeholder ??= "No data";
+  if (typeof placeholder === "string") {
     placeholder = (
       <Text padding="$3" textAlign="center">
         {placeholder}
@@ -29,7 +30,6 @@ export function List<T>({
       data={data}
       extraData={extraData}
       renderItem={renderItem}
-      estimatedItemSize={87}
       ItemSeparatorComponent={() => <Separator />}
       numColumns={numColumns}
       /* refreshControl={
