@@ -20,6 +20,7 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 let nextClientId = 1;
 
 const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDatabaseConnection> => {
+  // Prevent multiple simultaneous opens from causing race conditions
   return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
     const clientId = nextClientId++;
     const { dbFilename, logLevel } = options;

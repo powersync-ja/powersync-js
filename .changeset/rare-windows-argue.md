@@ -1,5 +1,5 @@
 ---
-'@powersync/web': patch
+'@powersync/web': minor
 ---
 
 - Fixed some edge cases where multiple tabs with OPFS can cause sync deadlocks.

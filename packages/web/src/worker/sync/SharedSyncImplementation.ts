@@ -190,7 +190,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    */
   protected async getRandomWrappedPort(): Promise<WrappedSyncPort | undefined> {
     return await this.portMutex.runExclusive(() => {
-      return this.ports[Math.floor(Math.random() * this.ports.length)];
+      const nonClosingPorts = this.ports.filter((p) => !p.isClosing);
+      return nonClosingPorts[Math.floor(Math.random() * nonClosingPorts.length)];
     });
   }
 
