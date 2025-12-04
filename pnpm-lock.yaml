@@ -1889,8 +1889,8 @@ importers:
         version: 0.5.0
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.5
-        version: 0.0.5
+        specifier: 0.0.7
+        version: 0.0.7
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -7041,8 +7041,8 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@powersync/sql-js@0.0.5':
-    resolution: {integrity: sha512-+rjUyEzwQIM51dJSbw5bpWyquwiHa5Pyu0Pb6oXhddfxhvuLHMWEM/+bN9em2LkFZ/jtLI9HBCcCsOORDeL5hg==}
+  '@powersync/sql-js@0.0.7':
+    resolution: {integrity: sha512-6EuViqqAVnCz33zbvPWzPtHykoFaZTfUz6VHprRLWP/PybO/U2NREIH9CTzCrZGHkWnLEIT21pz6BhdrPAJT0g==}
 
   '@radix-ui/react-compose-refs@1.0.0':
     resolution: {integrity: sha512-0KaSv6sx787/hK3eF53iOkiSLwAGlFMx5lotrqD2pTjB18KbybKoEIgkNZTKC60YECDQTKGTRcDBILwZVqVKvA==}
@@ -28534,7 +28534,7 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@powersync/sql-js@0.0.5': {}
+  '@powersync/sql-js@0.0.7': {}
 
   '@radix-ui/react-compose-refs@1.0.0(react@18.3.1)':
     dependencies:
@@ -30056,9 +30056,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.78.0(@babel/core@7.26.10)(@babel/preset-env@7.27.2(@babel/core@7.26.10))':
     dependencies:
@@ -30069,9 +30067,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-color@2.1.0': {}
 
