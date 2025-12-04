@@ -11,8 +11,8 @@ dotenvConfig({
 const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
 const config: ExpoConfig = {
-  name: 'react-native-supabase-group-chat',
-  slug: 'react-native-supabase-group-chat',
+  name: 'PowerChat',
+  slug: 'powerchat',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -32,14 +32,14 @@ const config: ExpoConfig = {
     bundleIdentifier: 'com.powersync.powerchat'
   },
   android: {
+    package: 'com.powersync.powerchat',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#cb62ff'
-    },
-    package: 'com.powersync.powerchat'
+    }
   },
   web: {
-    bundler: 'metro',
+    bundler: 'metro'
   },
   extra: {
     eas: {
