@@ -10,5 +10,5 @@ const sharedSyncImplementation = new SharedSyncImplementation();
 
 _self.onconnect = async function (event: MessageEvent<string>) {
   const port = event.ports[0];
-  await new WorkerClient(sharedSyncImplementation, port).initialize();
+  new WorkerClient(sharedSyncImplementation, port);
 };

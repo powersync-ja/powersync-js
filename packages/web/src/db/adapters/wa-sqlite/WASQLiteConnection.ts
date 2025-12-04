@@ -3,7 +3,6 @@ import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory';
-
 /**
  * List of currently tested virtual filesystems
  */
@@ -126,9 +125,10 @@ export const DEFAULT_MODULE_FACTORIES = {
     }
     // @ts-expect-error The types for this static method are missing upstream
     const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
+    const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
     return {
       module,
-      vfs: await OPFSCoopSyncVFS.create(options.dbFileName, module)
+      vfs
     };
   }
 };
