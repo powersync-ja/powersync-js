@@ -10,7 +10,6 @@
     "ios": "expo run:ios",
     "web": "expo start --web --clear",
     "doc": "pnpx expo-doctor@latest",
-    "format": "prettier --write .",
     "prebuild": "expo prebuild --platform ios --clean --no-install",
     "build:simulator": "pnpx eas-cli build --profile simulator --platform ios --local",
     "build:development": "pnpx eas-cli build --profile development --platform ios --local",

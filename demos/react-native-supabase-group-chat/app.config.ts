@@ -22,7 +22,7 @@ const config: ExpoConfig = {
   splash: {
     image: './assets/splash.png',
     resizeMode: 'contain',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#cb62ff'
   },
   updates: {
     url: `https://u.expo.dev/${projectId}`
@@ -34,9 +34,12 @@ const config: ExpoConfig = {
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#cb62ff'
     },
     package: 'com.powersync.powerchat'
+  },
+  web: {
+    bundler: 'metro',
   },
   extra: {
     eas: {

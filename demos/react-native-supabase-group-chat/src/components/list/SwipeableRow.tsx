@@ -80,7 +80,6 @@ export function SwipeableRow({
 
   function close() {
     ref.current?.close();
-    ref.current;
   }
 
   return rightActions ? (

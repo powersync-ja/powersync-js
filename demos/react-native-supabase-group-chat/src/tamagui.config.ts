@@ -4,8 +4,8 @@ import { createInterFont } from '@tamagui/font-inter';
 import { themes, tokens } from '@tamagui/themes';
 import { config } from '@/lib/config';
 
-const heading = createInterFont();
-const body = createInterFont();
+const headingFont = createInterFont();
+const bodyFont = createInterFont();
 
 export const appConfig = createTamagui({
   themes,
@@ -21,8 +21,8 @@ export const appConfig = createTamagui({
   },
   shorthands,
   fonts: {
-    heading,
-    body
+    heading: headingFont,
+    body: bodyFont
   }
 });
 
