@@ -1,15 +1,15 @@
-import "expo-dev-client";
-import { TamaguiProvider, Theme } from "@tamagui/core";
-import { useFonts } from "expo-font";
-import { Slot } from "expo-router";
-import { useEffect, useRef, useState } from "react";
-import { AppState, LogBox, useColorScheme } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import 'expo-dev-client';
+import { TamaguiProvider, Theme } from '@tamagui/core';
+import { useFonts } from 'expo-font';
+import { Slot } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, LogBox, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { AuthProvider } from "@/providers/AuthProvider";
-import { NavigationThemeProvider } from "@/providers/NavigationThemeProvider";
-import tamaguiConfig from "@/tamagui.config";
+import { AuthProvider } from '@/providers/AuthProvider';
+import { NavigationThemeProvider } from '@/providers/NavigationThemeProvider';
+import tamaguiConfig from '@/tamagui.config';
 
 LogBox.ignoreAllLogs();
 
@@ -20,13 +20,13 @@ export default function Layout() {
   const [activeColorScheme, setActiveColorScheme] = useState(colorScheme);
 
   useEffect(() => {
-    if (appStateVisible === "active") {
+    if (appStateVisible === 'active') {
       setActiveColorScheme(colorScheme);
     }
   }, [appStateVisible, colorScheme]);
 
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
       appState.current = nextAppState;
       setAppStateVisible(appState.current);
     });
@@ -37,8 +37,8 @@ export default function Layout() {
   }, []);
 
   const [loaded] = useFonts({
-    Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
-    InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf")
+    Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
+    InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf')
   });
 
   if (!loaded) {

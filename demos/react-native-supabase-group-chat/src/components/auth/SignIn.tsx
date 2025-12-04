@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Input, Square, XStack, YStack } from "tamagui";
+import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button, Input, Square, XStack, YStack } from 'tamagui';
 
-import { Logo } from "@/components/Logo";
+import { Logo } from '@/components/Logo';
 
-import { config } from "@/lib/config";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/providers/AuthProvider";
+import { config } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 
 export function SignIn() {
   const inlets = useSafeAreaInsets();
   const [signUp, setSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { signIn } = useAuth();
 
   async function handleSignUp() {

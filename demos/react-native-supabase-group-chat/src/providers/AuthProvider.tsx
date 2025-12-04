@@ -1,7 +1,7 @@
-import { createContext, type ReactNode, useContext, useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { AuthUser, AuthSession } from "@supabase/supabase-js";
-import { Loading } from "@/components/loading/Loading";
+import { createContext, type ReactNode, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { AuthUser, AuthSession } from '@supabase/supabase-js';
+import { Loading } from '@/components/loading/Loading';
 
 export type AuthState = {
   session: AuthSession | null;
@@ -32,13 +32,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSyncEnabled, setIsSyncEnabled] = useState(true);
 
   async function signIn({ session, user }: { session: AuthSession | null; user: AuthUser | null }) {
-    console.log("signIn");
+    console.log('signIn');
     setSession(session);
     setUser(user);
   }
 
   async function signOut() {
-    console.log("signOut");
+    console.log('signOut');
     const { error } = await supabase.auth.signOut();
 
     setSession(null);
@@ -81,7 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signOut,
         isSyncEnabled,
         setIsSyncEnabled
-      }}>
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

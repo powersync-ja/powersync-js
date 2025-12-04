@@ -1,8 +1,0 @@
-node_modules/**
-.expo/**
-android/**
-assets/**
-bin/**
-ios/**
-supabase/**
-pnpm-lock.yaml

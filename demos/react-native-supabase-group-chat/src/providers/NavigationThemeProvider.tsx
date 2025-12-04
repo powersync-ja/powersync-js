@@ -1,7 +1,7 @@
-import { DefaultTheme, ThemeProvider, Theme } from "@react-navigation/native";
-import { useTheme } from "@tamagui/core";
-import { ReactNode } from "react";
-import { useColorScheme } from "react-native";
+import { DefaultTheme, ThemeProvider, Theme } from '@react-navigation/native';
+import { useTheme } from '@tamagui/core';
+import { ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 
 export const NavigationThemeProvider = ({ children }: { children: ReactNode }) => {
   const theme = useTheme();
@@ -9,7 +9,7 @@ export const NavigationThemeProvider = ({ children }: { children: ReactNode }) =
 
   const NavigationTheme: Theme = {
     ...DefaultTheme,
-    dark: colorScheme === "dark",
+    dark: colorScheme === 'dark',
     colors: {
       primary: theme.color!.val, // "rgb(0, 122, 255)",
       background: theme.background!.val, // "rgb(242, 242, 242)",

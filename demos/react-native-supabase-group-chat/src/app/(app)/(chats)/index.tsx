@@ -1,23 +1,23 @@
-import { usePowerSync, useQuery } from "@powersync/react-native";
-import { MessageSquare, Plus } from "@tamagui/lucide-icons";
-import { Link, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
-import { Input, ListItem, Text, XStack, YStack } from "tamagui";
+import { usePowerSync, useQuery } from '@powersync/react-native';
+import { MessageSquare, Plus } from '@tamagui/lucide-icons';
+import { Link, useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Input, ListItem, Text, XStack, YStack } from 'tamagui';
 
-import { GroupIcon } from "@/components/groups/GroupIcon";
-import { List } from "@/components/list";
-import { ProfileIcon } from "@/components/profiles/ProfileIcon";
-import { stringToRelativeDate } from "@/lib/date";
+import { GroupIcon } from '@/components/groups/GroupIcon';
+import { List } from '@/components/list';
+import { ProfileIcon } from '@/components/profiles/ProfileIcon';
+import { stringToRelativeDate } from '@/lib/date';
 
 export default function ChatsIndex() {
-  const [search, setSearch] = useState<string>("");
+  const [search, setSearch] = useState<string>('');
   const [contacts, setContacts] = useState<any[]>([]);
   const powerSync = usePowerSync();
   const navigation = useNavigation();
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener("blur", () => {
-      setSearch("");
+    const unsubscribe = navigation.addListener('blur', () => {
+      setSearch('');
       setContacts([]);
     });
 
@@ -46,7 +46,7 @@ export default function ChatsIndex() {
     }
   }, [search, setContacts]);
 
-  const newGroup = search ? [{ type: "create", name: search }] : [];
+  const newGroup = search ? [{ type: 'create', name: search }] : [];
 
   return (
     <YStack fullscreen gap="$3" paddingTop="$3">
@@ -67,12 +67,13 @@ export default function ChatsIndex() {
         }
         data={[...newGroup, ...contacts, ...chats]}
         renderItem={({ item }) =>
-          item.type === "create" ? (
+          item.type === 'create' ? (
             <Link
               href={{
-                pathname: "/(app)/(chats)/g/create",
+                pathname: '/(app)/(chats)/g/create',
                 params: { name: item.name }
-              }}>
+              }}
+            >
               <ListItem
                 icon={<GroupIcon create={true} />}
                 title={<Text color="$gray9">{item.name}</Text>}
@@ -81,18 +82,18 @@ export default function ChatsIndex() {
               />
             </Link>
           ) : (
-            <Link href={`/(app)/(chats)/${item.type === "group" ? "g" : "c"}/${item.partner_id}`}>
+            <Link href={`/(app)/(chats)/${item.type === 'group' ? 'g' : 'c'}/${item.partner_id}`}>
               <ListItem
                 title={item.name}
-                icon={item.type === "group" ? <GroupIcon /> : <ProfileIcon handle={item.handle} />}
+                icon={item.type === 'group' ? <GroupIcon /> : <ProfileIcon handle={item.handle} />}
                 subTitle={
-                  item.type === "new"
-                    ? "Start conversation"
+                  item.type === 'new'
+                    ? 'Start conversation'
                     : item.last_message_at
                       ? stringToRelativeDate(item.last_message_at)
-                      : "never"
+                      : 'never'
                 }
-                iconAfter={item.type === "new" ? <MessageSquare size="$1.5" /> : undefined}
+                iconAfter={item.type === 'new' ? <MessageSquare size="$1.5" /> : undefined}
               />
             </Link>
           )

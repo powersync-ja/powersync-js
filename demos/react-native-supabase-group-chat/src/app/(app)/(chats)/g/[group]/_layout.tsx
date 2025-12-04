@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
 export default function ChatsGroupLayout() {
   return (
@@ -9,7 +9,7 @@ export default function ChatsGroupLayout() {
           headerShown: false
         }}
       />
-      <Stack.Screen name="settings" options={{ title: "Group settings", headerShown: false }} />
+      <Stack.Screen name="settings" options={{ title: 'Group settings', headerShown: false }} />
     </Stack>
   );
 }

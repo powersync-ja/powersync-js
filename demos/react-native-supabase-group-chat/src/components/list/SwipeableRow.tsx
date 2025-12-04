@@ -1,7 +1,7 @@
-import { ReactNode, useRef } from "react";
-import Swipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import Animated, { Extrapolation, interpolate, SharedValue } from "react-native-reanimated";
-import { Button, XStack } from "tamagui";
+import { ReactNode, useRef } from 'react';
+import Swipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { Extrapolation, interpolate, SharedValue } from 'react-native-reanimated';
+import { Button, XStack } from 'tamagui';
 
 function RightAction({
   text,
@@ -28,7 +28,8 @@ function RightAction({
         textAlign="center"
         alignItems="center"
         justifyContent="center"
-        color="white">
+        color="white"
+      >
         {text}
       </Button>
     </Animated.View>
@@ -100,7 +101,8 @@ export function SwipeableRow({
       }}
       onSwipeableClose={(direction) => {
         console.log(`Closing swipeable to the ${direction}`);
-      }}>
+      }}
+    >
       {children}
     </Swipeable>
   ) : (
