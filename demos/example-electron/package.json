@@ -21,14 +21,14 @@
   "dependencies": {
     "@emotion/react": "^11.13.0",
     "@emotion/styled": "^11.13.0",
-    "@journeyapps/wa-sqlite": "^1.3.2",
+    "@journeyapps/wa-sqlite": "^1.4.0",
     "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.16",
     "@mui/x-data-grid": "^6.19.11",
-    "express": "^4.19.2",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
     "electron-squirrel-startup": "^1.0.0",
+    "express": "^4.19.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"

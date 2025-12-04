@@ -3,7 +3,7 @@ ext {
     androidxAppCompatVersion = project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.7.0'
     androidxJunitVersion = project.hasProperty('androidxJunitVersion') ? rootProject.ext.androidxJunitVersion : '1.2.1'
     androidxEspressoCoreVersion = project.hasProperty('androidxEspressoCoreVersion') ? rootProject.ext.androidxEspressoCoreVersion : '3.6.1'
-    powerSyncCoreVersion = project.hasProperty('powerSyncCoreVersion') ? rootProject.ext.powerSyncCoreVersion : '0.4.6'
+    powerSyncCoreVersion = project.hasProperty('powerSyncCoreVersion') ? rootProject.ext.powerSyncCoreVersion : '0.4.10'
 }
 
 buildscript {

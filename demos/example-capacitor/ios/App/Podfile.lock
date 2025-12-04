@@ -1,17 +1,17 @@
 PODS:
-  - Capacitor (7.4.3):
+  - Capacitor (7.4.4):
     - CapacitorCordova
   - CapacitorCommunitySqlite (7.0.2):
     - Capacitor
     - SQLCipher
     - ZIPFoundation
-  - CapacitorCordova (7.4.3)
+  - CapacitorCordova (7.4.4)
   - CapacitorSplashScreen (7.0.3):
     - Capacitor
-  - powersync-sqlite-core (0.4.8)
-  - PowersyncCapacitor (0.1.0):
+  - powersync-sqlite-core (0.4.10)
+  - PowersyncCapacitor (0.1.3):
     - Capacitor
-    - powersync-sqlite-core (~> 0.4.6)
+    - powersync-sqlite-core (~> 0.4.10)
     - SQLCipher (~> 4.0)
   - SQLCipher (4.10.0):
     - SQLCipher/standard (= 4.10.0)
@@ -46,12 +46,12 @@ EXTERNAL SOURCES:
     :path: "../../../../packages/capacitor"
 
 SPEC CHECKSUMS:
-  Capacitor: b4741ca7affb32c1b70debd03df92cbf522d8a80
+  Capacitor: 09d9ff8e9618e8c4b3cab2bbee34a17215dd2fef
   CapacitorCommunitySqlite: b8e23cd2fd5bff7da8cb2a3a1cb3a6ffb9714a32
-  CapacitorCordova: 435121e81a2df4d0034f0fb11fcefab5104cfdb5
+  CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
   CapacitorSplashScreen: d06ae8804808e9f649a08e7bb7f283c77b688084
-  powersync-sqlite-core: f48d06a7a9e6f73fee5bbc74da542466be2bb06f
-  PowersyncCapacitor: 9c39e1aec5125bdea55fa61e8277e4a3b16853d2
+  powersync-sqlite-core: b30017e077c91915d53faebc5f7245384df78275
+  PowersyncCapacitor: d5aef68961267967682077ce8be046862b99d004
   SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
