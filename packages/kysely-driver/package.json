@@ -49,7 +49,7 @@
     "kysely": "^0.28.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.3.4",
+    "@journeyapps/wa-sqlite": "0.0.0-dev-20251204121905",
     "@powersync/web": "workspace:*",
     "@types/node": "^20.17.6",
     "vite": "^6.1.0",

@@ -1,7 +1,6 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
 import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { OPFSCoopSyncVFS } from '../../../worker/db/opfs';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory';
 /**
@@ -124,10 +123,12 @@ export const DEFAULT_MODULE_FACTORIES = {
     } else {
       module = await SyncWASQLiteModuleFactory();
     }
+    // @ts-expect-error The types for this static method are missing upstream
+    const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
     const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
     return {
       module,
-      vfs: vfs as any
+      vfs
     };
   }
 };
