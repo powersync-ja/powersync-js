@@ -49,7 +49,7 @@ PODS:
   - hermes-engine (0.76.9):
     - hermes-engine/Pre-built (= 0.76.9)
   - hermes-engine/Pre-built (0.76.9)
-  - powersync-sqlite-core (0.3.14)
+  - powersync-sqlite-core (0.4.10)
   - RCT-Folly (2024.10.14.00):
     - boost
     - DoubleConversion
@@ -1330,11 +1330,11 @@ PODS:
     - Yoga
   - react-native-encrypted-storage (4.0.3):
     - React-Core
-  - react-native-quick-sqlite (2.4.4):
+  - react-native-quick-sqlite (2.5.0):
     - DoubleConversion
     - glog
     - hermes-engine
-    - powersync-sqlite-core (~> 0.3.14)
+    - powersync-sqlite-core (= 0.4.10)
     - RCT-Folly (= 2024.10.14.00)
     - RCTRequired
     - RCTTypeSafety
@@ -2049,7 +2049,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   boost: 1dca942403ed9342f98334bf4c3621f011aa7946
-  DoubleConversion: f16ae600a246532c4020132d54af21d0ddb2a385
+  DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   EXConstants: a1f35b9aabbb3c6791f8e67722579b1ffcdd3f18
   Expo: 3e53243e3281214a7d613f8a875c0b732d7512c2
   ExpoAsset: 0687fe05f5d051c4a34dd1f9440bd00858413cfe
@@ -2063,9 +2063,9 @@ SPEC CHECKSUMS:
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
   FBLazyVector: 7605ea4810e0e10ae4815292433c09bf4324ba45
   fmt: 01b82d4ca6470831d1cc0852a1af644be019e8f6
-  glog: 08b301085f15bcbb6ff8632a8ebaf239aae04e6a
+  glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: 9e868dc7be781364296d6ee2f56d0c1a9ef0bb11
-  powersync-sqlite-core: ef06642c8110680fcddce8a8c0dd2696daaf672d
+  powersync-sqlite-core: b30017e077c91915d53faebc5f7245384df78275
   RCT-Folly: 7b4f73a92ad9571b9dbdb05bb30fad927fa971e1
   RCTDeprecation: ebe712bb05077934b16c6bf25228bdec34b64f83
   RCTRequired: ca91e5dd26b64f577b528044c962baf171c6b716
@@ -2096,7 +2096,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 6efad4a606c1fae7e4a93385ee096681ef0300dc
   React-microtasksnativemodule: 8732b71aa66045da4bb341ddee1bb539f71e5f38
   react-native-encrypted-storage: db300a3f2f0aba1e818417c1c0a6be549038deb7
-  react-native-quick-sqlite: fda0db558958e54dd6c254838bf0c22c6e635b20
+  react-native-quick-sqlite: b3e36000e7f4819e7603015e51ac6c184455151e
   react-native-safe-area-context: 142fade490cbebbe428640b8cbdb09daf17e8191
   React-nativeconfig: 8efdb1ef1e9158c77098a93085438f7e7b463678
   React-NativeModulesApple: 958d4f6c5c2ace4c0f427cf7ef82e28ae6538a22
@@ -2136,4 +2136,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 658b89cfd4affa3f1307908a24b4fd7debecb037
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
