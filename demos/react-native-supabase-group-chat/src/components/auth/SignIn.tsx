@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Input, Square, XStack, YStack } from 'tamagui';
 
-import { Logo } from '../Logo';
+import { Logo } from '@/components/Logo';
 
 import { config } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
@@ -42,7 +42,7 @@ export function SignIn() {
   }
 
   return (
-    <YStack padding="$3" paddingTop={inlets.top} space="$3" justifyContent="center" alignItems="center" fullscreen>
+    <YStack padding="$3" paddingTop={inlets.top} gap="$3" justifyContent="center" alignItems="center" fullscreen>
       <Square size="$8" marginBottom="$10">
         <Logo color={config.brand1} gradient={true} />
       </Square>

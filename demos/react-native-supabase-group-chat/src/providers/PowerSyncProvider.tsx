@@ -1,10 +1,9 @@
-import '@azure/core-asynciterator-polyfill';
 import { createBaseLogger, PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
-import { Connector } from '../lib/connector';
-import { schema } from '../lib/schema';
+import { Connector } from '@/lib/connector';
+import { AppSchema } from '@/lib/schema';
 
 createBaseLogger().useDefaults();
 
@@ -15,9 +14,8 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
 
   const powerSync = useMemo(() => {
     const powerSync = new PowerSyncDatabase({
-      schema,
+      schema: AppSchema,
       database: { dbFilename: 'test.sqlite' }
-      //location: 'optional location directory to DB file'
     });
     powerSync.init();
     return powerSync;

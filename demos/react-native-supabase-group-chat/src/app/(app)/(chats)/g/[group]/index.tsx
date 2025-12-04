@@ -44,7 +44,7 @@ export default function ChatsChatIndex() {
       />
       <YStack fullscreen>
         <YStack flexGrow={1}>
-          <FlashList data={messages} renderItem={({ item }) => <Message message={item} />} estimatedItemSize={87} />
+          <FlashList data={messages} renderItem={({ item }) => <Message message={item} />} />
         </YStack>
         <YStack padding="$3" gap="$3">
           <Input

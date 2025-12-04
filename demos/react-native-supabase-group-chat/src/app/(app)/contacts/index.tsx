@@ -97,7 +97,7 @@ export default function ContactsIndex() {
           icon={<Search size="$1.5" />}
           backgroundColor="$brand1"
           borderRadius="$3"
-        // circular
+          // circular
         />
       </XStack>
 

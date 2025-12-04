@@ -145,7 +145,8 @@ export default function GroupSettings() {
             backgroundColor="$red10"
             color="white"
             onPress={handleDelete}
-            margin="$3">
+            margin="$3"
+          >
             Delete group
           </Button>
         </YStack>
