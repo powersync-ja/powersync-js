@@ -32,10 +32,12 @@
     "@shopify/flash-list": "2.0.2",
     "@supabase/supabase-js": "^2.86.0",
     "@tamagui/babel-plugin": "^1.138.6",
+    "@tamagui/shorthands": "^1.138.6",
     "@tamagui/config": "^1.138.6",
     "@tamagui/core": "^1.138.6",
     "@tamagui/lucide-icons": "^1.138.6",
     "@tamagui/themes": "^1.138.6",
+    "@tamagui/font-inter": "^1.138.6",
     "date-fns": "^4.1.0",
     "expo": "~54.0.25",
     "expo-build-properties": "~1.0.9",
@@ -75,5 +77,6 @@
     "typescript": "~5.9.2"
   },
   "license": "UNLICENSED",
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@9.12.3+sha256.24235772cc4ac82a62627cd47f834c72667a2ce87799a846ec4e8e555e2d4b8b"
 }
