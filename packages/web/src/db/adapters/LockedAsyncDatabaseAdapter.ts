@@ -305,14 +305,16 @@ export class LockedAsyncDatabaseAdapter
   protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
     await this.waitForInitialized();
 
+    // The database is being opened in the background. Wait for it here.
+    if (this.databaseOpenPromise) {
+      await this.databaseOpenPromise;
+    }
+
     return this._acquireLock(async () => {
       let holdId: string | null = null;
       try {
-        // The database is being opened in the background. Wait for it here.
+        // We can't await this since it uses the same lock as we're in now.
         if (this.databaseOpenPromise) {
-          /**
-           * We can't await this since it uses the same lock as we're in now.
-           */
           throw new ConnectionClosedError('Connection is busy re-opening');
         }
 
@@ -322,6 +324,7 @@ export class LockedAsyncDatabaseAdapter
         if (ex instanceof ConnectionClosedError) {
           if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
             // Immediately re-open the database. We need to miss as little table updates as possible.
+            // Note, don't await this since it uses the same lock as we're in now.
             this.reOpenInternalDB();
           }
         }
