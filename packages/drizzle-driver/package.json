@@ -47,7 +47,7 @@
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20251204121905",
+    "@journeyapps/wa-sqlite": "^1.4.0",
     "@powersync/web": "workspace:*",
     "@types/node": "^20.17.6",
     "drizzle-orm": "^0.44.7",

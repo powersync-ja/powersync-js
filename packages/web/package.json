@@ -72,7 +72,7 @@
     "commander": "^12.1.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20251204121905",
+    "@journeyapps/wa-sqlite": "^1.4.0",
     "@types/uuid": "^9.0.6",
     "crypto-browserify": "^3.12.0",
     "p-defer": "^4.0.1",

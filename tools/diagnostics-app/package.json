@@ -9,7 +9,7 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "0.0.0-dev-20251204121905",
+    "@journeyapps/wa-sqlite": "^1.4.0",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@powersync/react": "workspace:*",
