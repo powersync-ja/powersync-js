@@ -6,7 +6,9 @@
 '@powersync/capacitor': minor
 ---
 
-Added ability to specify `appMetadata` for sync/stream requests
+Added ability to specify `appMetadata` for sync/stream requests.
+
+Note: This requires a PowerSync service version `>=1.17.0` in order for logs to display metadata.
 
 ```javascript
 powerSync.connect(connector, {
