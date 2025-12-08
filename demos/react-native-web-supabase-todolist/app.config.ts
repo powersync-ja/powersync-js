@@ -38,7 +38,8 @@ const config: ExpoConfig = {
     },
     package: 'com.powersync.example'
   },
-
+  newArchEnabled: true,
+  jsEngine: 'hermes',
   web: {
     bundler: 'metro',
     output: 'single',
@@ -62,16 +63,12 @@ const config: ExpoConfig = {
       {
         ios: {
           deploymentTarget: '15.1',
-          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
-          newArchEnabled: false
         },
         android: {
           minSdkVersion: 24,
           compileSdkVersion: 35,
           targetSdkVersion: 35,
           buildToolsVersion: '35.0.0',
-          // TODO: New architecture is currently not yet supported by @journeyapps/react-native-quick-sqlite
-          newArchEnabled: false
         }
       }
     ],
