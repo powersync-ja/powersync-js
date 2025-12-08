@@ -6,7 +6,7 @@ import { Alert } from 'react-native';
 import { Button, Input, XStack, YStack } from 'tamagui';
 
 import { MemberSelector } from '@/components/groups/MemberSelector';
-import { uuid } from '@/lib/uuid';
+import { uuid } from '@/library/uuid';
 
 export default function GroupSettings() {
   const { group: groupId } = useLocalSearchParams<{ group: string }>();

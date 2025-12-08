@@ -4,8 +4,8 @@ import { Button, Input, Square, XStack, YStack } from 'tamagui';
 
 import { Logo } from '@/components/Logo';
 
-import { config } from '@/lib/config';
-import { supabase } from '@/lib/supabase';
+import { config } from '@/library/config';
+import { supabase } from '@/library/supabase';
 import { useAuth } from '@/providers/AuthProvider';
 
 export function SignIn() {

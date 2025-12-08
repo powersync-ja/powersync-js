@@ -2,8 +2,8 @@ import { createBaseLogger, PowerSyncContext, PowerSyncDatabase } from '@powersyn
 import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
-import { Connector } from '@/lib/connector';
-import { AppSchema } from '@/lib/schema';
+import { Connector } from '@/library/connector';
+import { AppSchema } from '@/library/schema';
 
 createBaseLogger().useDefaults();
 

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Input, YStack } from 'tamagui';
 
 import { Message } from '@/components/messages/Message';
-import { uuid } from '@/lib/uuid';
+import { uuid } from '@/library/uuid';
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function ChatsChatIndex() {

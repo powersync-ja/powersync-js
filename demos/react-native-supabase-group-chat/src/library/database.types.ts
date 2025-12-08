@@ -52,16 +52,16 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "contacts_owner_id_fkey";
-            columns: ["owner_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'contacts_owner_id_fkey';
+            columns: ['owner_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "contacts_profile_id_fkey";
-            columns: ["profile_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'contacts_profile_id_fkey';
+            columns: ['profile_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           }
         ];
       };
@@ -89,10 +89,10 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "groups_owner_id_fkey";
-            columns: ["owner_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'groups_owner_id_fkey';
+            columns: ['owner_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           }
         ];
       };
@@ -120,16 +120,16 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "memberships_group_id_fkey";
-            columns: ["group_id"];
-            referencedRelation: "groups";
-            referencedColumns: ["id"];
+            foreignKeyName: 'memberships_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "memberships_profile_id_fkey";
-            columns: ["profile_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'memberships_profile_id_fkey';
+            columns: ['profile_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           }
         ];
       };
@@ -166,22 +166,22 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "messages_group_id_fkey";
-            columns: ["group_id"];
-            referencedRelation: "groups";
-            referencedColumns: ["id"];
+            foreignKeyName: 'messages_group_id_fkey';
+            columns: ['group_id'];
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "messages_recipient_id_fkey";
-            columns: ["recipient_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'messages_recipient_id_fkey';
+            columns: ['recipient_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "messages_sender_id_fkey";
-            columns: ["sender_id"];
-            referencedRelation: "profiles";
-            referencedColumns: ["id"];
+            foreignKeyName: 'messages_sender_id_fkey';
+            columns: ['sender_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
           }
         ];
       };
@@ -270,10 +270,10 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "buckets_owner_fkey";
-            columns: ["owner"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            foreignKeyName: 'buckets_owner_fkey';
+            columns: ['owner'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
           }
         ];
       };
@@ -337,10 +337,10 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "objects_bucketId_fkey";
-            columns: ["bucket_id"];
-            referencedRelation: "buckets";
-            referencedColumns: ["id"];
+            foreignKeyName: 'objects_bucketId_fkey';
+            columns: ['bucket_id'];
+            referencedRelation: 'buckets';
+            referencedColumns: ['id'];
           }
         ];
       };

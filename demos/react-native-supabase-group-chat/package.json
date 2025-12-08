@@ -15,7 +15,7 @@
     "build:development": "pnpx eas-cli build --profile development --platform ios --local",
     "build:production": "pnpx eas-cli build --profile production --platform ios --local",
     "update:production": "pnpx eas-cli update --non-interactive -p ios --branch=production --auto",
-    "types": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "types": "supabase gen types typescript --local > src/library/database.types.ts",
     "lint": "eslint src"
   },
   "dependencies": {

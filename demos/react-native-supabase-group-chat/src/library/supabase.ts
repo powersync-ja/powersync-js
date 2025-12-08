@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createClient } from '@supabase/supabase-js';
 
-import { config } from "./config";
-import { Database } from "./database";
+import { config } from './config';
+import { Database } from './database.types';
 
 const authStorage = {
   setItem: async (key: string, value: string) => await AsyncStorage.setItem(key, value),

@@ -1,7 +1,7 @@
 import { createInterFont } from '@tamagui/font-inter';
 import { shorthands } from '@tamagui/shorthands';
 import { themes, tokens } from '@tamagui/themes';
-import { config } from '@/lib/config';
+import { config } from '@/library/config';
 import { createTamagui } from '@tamagui/core';
 
 const headingFont = createInterFont();
