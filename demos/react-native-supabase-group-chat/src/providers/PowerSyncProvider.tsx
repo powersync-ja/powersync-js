@@ -1,3 +1,4 @@
+import '@azure/core-asynciterator-polyfill';
 import { createBaseLogger, PowerSyncContext, PowerSyncDatabase } from '@powersync/react-native';
 import { ReactNode, useEffect, useMemo } from 'react';
 
