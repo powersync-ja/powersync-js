@@ -387,7 +387,15 @@ export class WASqliteConnection
 
   async close() {
     this.broadcastChannel?.close();
-    await this.sqliteAPI.close(this.dbP);
+    await this.acquireExecuteLock(async () => {
+      /**
+       * Running the close operation inside the same execute mutex prevents errors like:
+       * ```
+       * unable to close due to unfinalized statements or unfinished backups
+       * ```
+       */
+      await this.sqliteAPI.close(this.dbP);
+    });
   }
 
   async registerOnTableChange(callback: OnTableChangeCallback) {
