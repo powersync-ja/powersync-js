@@ -9,7 +9,7 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@powersync/web": "workspace:*"
+    "@powersync/web": "^1.29.1"
   },
   "devDependencies": {
     "@types/webpack": "^5.28.5",

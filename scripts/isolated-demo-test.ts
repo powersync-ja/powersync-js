@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
 import os from 'os';
@@ -53,32 +52,6 @@ const ensureTmpDirExists = async () => {
   }
 };
 
-const workspacePackages = await findWorkspacePackages(path.resolve('.'));
-
-// Function to update dependencies in package.json
-const updateDependencies = async (packageJsonPath: string) => {
-  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
-
-  const updateDeps = async (deps: { [key: string]: string }) => {
-    for (const dep in deps) {
-      if (deps[dep].startsWith('workspace:')) {
-        const matchingPackage = workspacePackages.find((p) => p.manifest.name == dep);
-        deps[dep] = `^${matchingPackage!.manifest.version!}`;
-      }
-    }
-  };
-
-  if (packageJson.dependencies) {
-    await updateDeps(packageJson.dependencies);
-  }
-
-  if (packageJson.devDependencies) {
-    await updateDeps(packageJson.devDependencies);
-  }
-
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf8');
-};
-
 // Function to process each demo
 const processDemo = async (demoName: string): Promise<DemoResult> => {
   const demoSrc = path.join(demosDir, demoName);
@@ -91,10 +64,6 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   // Copy demo to tmp directory (without node modules)
   await fs.cp(demoSrc, demoDest, { recursive: true, filter: (source) => !source.includes('node_modules') });
 
-  // Update package.json
-  const packageJsonPath = path.join(demoDest, 'package.json');
-  await updateDependencies(packageJsonPath);
-
   const result: DemoResult = {
     name: demoName,
     installResult: {
@@ -105,11 +74,22 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     }
   };
 
+  // Run pnpm upgrade on local packages
+  try {
+    execSync('pnpm upgrade "@powersync/*"', { cwd: demoDest, stdio: 'inherit' });
+  } catch (ex) {
+    console.error(ex);
+    result.installResult.state = TestState.FAILED;
+    result.installResult.error = ex.message;
+    return result;
+  }
+
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
     result.installResult.state = TestState.PASSED;
   } catch (ex) {
+    console.error(ex);
     result.installResult.state = TestState.FAILED;
     result.installResult.error = ex.message;
     return result;
@@ -117,6 +97,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
 
   const packageJSONPath = path.join(demoDest, 'package.json');
   const pkg = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+
   if (!pkg.scripts['test:build']) {
     result.buildResult.state = TestState.WARN;
     return result;
@@ -130,6 +111,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
     result.buildResult.state = TestState.PASSED;
   } catch (ex) {
+    console.error(ex);
     result.buildResult.state = TestState.FAILED;
     result.buildResult.error = ex.message;
   }
@@ -167,9 +149,12 @@ const main = async () => {
     process.exit(1);
   }
 
-  const errored = !!results.find(
+  const failed = results.filter(
     (r) => r.installResult.state == TestState.FAILED || r.buildResult.state == TestState.FAILED
   );
+  const errored = failed.length > 0;
+
+  console.log(`Test results: \n${JSON.stringify(results, null, 2)}\n`);
 
   await core.summary
     .addHeading('Test Results')
@@ -184,7 +169,10 @@ const main = async () => {
     .write();
 
   if (errored) {
-    console.error(`Some demos did not pass`);
+    console.error('Some demos did not pass:');
+    failed.forEach((r) =>
+      console.error(`- ${r.name} (${r.buildResult.state === TestState.FAILED ? 'build' : 'install'})`)
+    );
     process.exit(1);
   } else {
     console.log('All demos processed successfully.');

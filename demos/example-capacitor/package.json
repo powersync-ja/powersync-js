@@ -25,10 +25,10 @@
     "@capacitor/core": "latest",
     "@capacitor/ios": "^7.4.3",
     "@capacitor/splash-screen": "latest",
-    "@powersync/capacitor": "workspace:*",
+    "@powersync/capacitor": "^0.1.3",
     "@journeyapps/wa-sqlite": "^1.3.2",
-    "@powersync/react": "workspace:*",
-    "@powersync/web": "workspace:*",
+    "@powersync/react": "^1.8.2",
+    "@powersync/web": "^1.29.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"
