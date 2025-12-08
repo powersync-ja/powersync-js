@@ -3,8 +3,8 @@ import { CheckCircle2, Circle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Input, ListItem, XStack, YStack } from 'tamagui';
 
-import { List } from '../list';
-import { ProfileIcon } from '../profiles/ProfileIcon';
+import { List } from '@/components/list';
+import { ProfileIcon } from '@/components/profiles/ProfileIcon';
 
 export function MemberSelector({
   selectedContacts,

@@ -3,8 +3,8 @@ import { createBaseLogger, PowerSyncContext, PowerSyncDatabase } from '@powersyn
 import { ReactNode, useEffect, useMemo } from 'react';
 
 import { useAuth } from './AuthProvider';
-import { Connector } from '../lib/connector';
-import { schema } from '../lib/schema';
+import { Connector } from '@/library/connector';
+import { AppSchema } from '@/library/schema';
 
 createBaseLogger().useDefaults();
 
@@ -15,9 +15,8 @@ export const PowerSyncProvider = ({ children }: { children: ReactNode }) => {
 
   const powerSync = useMemo(() => {
     const powerSync = new PowerSyncDatabase({
-      schema,
+      schema: AppSchema,
       database: { dbFilename: 'test.sqlite' }
-      //location: 'optional location directory to DB file'
     });
     powerSync.init();
     return powerSync;
