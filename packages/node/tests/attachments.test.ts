@@ -1,12 +1,24 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { vol } from 'memfs';
-import { PowerSyncDatabase, Schema, Table, column, NodeFileSystemAdapter } from '../../node';
-import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { AttachmentQueue } from '../src/attachments/AttachmentQueue.js';
-import { attachmentFromSql, AttachmentRecord, AttachmentState, AttachmentTable } from '../src/attachments/Schema.js';
-import { RemoteStorageAdapter } from '../src/attachments/RemoteStorageAdapter.js';
-import { WatchedAttachmentItem } from '../src/attachments/WatchedAttachmentItem.js';
-import { AttachmentErrorHandler } from '../src/attachments/AttachmentErrorHandler.js';
+import {
+  PowerSyncDatabase,
+  Schema,
+  Table,
+  column,
+  NodeFileSystemAdapter,
+  AbstractPowerSyncDatabase,
+  AttachmentQueue,
+  AttachmentTable,
+  attachmentFromSql,
+  AttachmentRecord,
+  AttachmentState,
+  RemoteStorageAdapter,
+  WatchedAttachmentItem,
+  AttachmentErrorHandler
+} from '../../node';
+
+// import {
+// } from '@powersync/common';
 
 const MOCK_JPEG_U8A = [
   0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01,
