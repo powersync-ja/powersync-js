@@ -23,6 +23,15 @@ cd demos/react-native-barebones-opsqlite
 Run the development server:
 
 For iOS:
+
+First install pods:
+```bash
+cd ios
+pod install
+cd ..
+```
+
+Then run the project:
 ```bash
 pnpm start
 pnpm ios
