@@ -496,94 +496,87 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * Opens a worker wrapped database connection. Using the last connected client port.
    */
   protected async openInternalDB() {
-    while (true) {
-      try {
-        const client = await this.getRandomWrappedPort();
-        if (!client) {
-          // Should not really happen in practice
-          throw new Error(`Could not open DB connection since no client is connected.`);
-        }
-
-        // Fail-safe timeout for opening a database connection.
-        const timeout = setTimeout(() => {
-          abortController.abort();
-        }, 10_000);
-
-        /**
-         * Handle cases where the client might close while opening a connection.
-         */
-        const abortController = new AbortController();
-        const closeListener = () => {
-          abortController.abort();
-        };
-
-        const removeCloseListener = () => {
-          const index = client.closeListeners.indexOf(closeListener);
-          if (index >= 0) {
-            client.closeListeners.splice(index, 1);
-          }
-        };
-
-        client.closeListeners.push(closeListener);
-
-        const workerPort = await withAbort({
-          action: () => client.clientProvider.getDBWorkerPort(),
-          signal: abortController.signal,
-          cleanupOnAbort: (port) => {
-            port.close();
-          }
-        }).catch((ex) => {
-          removeCloseListener();
-          throw ex;
-        });
-
-        const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
-        const identifier = this.syncParams!.dbParams.dbFilename;
-
-        /**
-         * The open could fail if the tab is closed while we're busy opening the database.
-         * This operation is typically executed inside an exclusive portMutex lock.
-         * We typically execute the closeListeners using the portMutex in a different context.
-         * We can't rely on the closeListeners to abort the operation if the tab is closed.
-         */
-        const db = await withAbort({
-          action: () => remote(this.syncParams!.dbParams),
-          signal: abortController.signal,
-          cleanupOnAbort: (db) => {
-            db.close();
-          }
-        }).finally(() => {
-          // We can remove the close listener here since we no longer need it past this point.
-          removeCloseListener();
-        });
-
-        clearTimeout(timeout);
-
-        const wrapped = new WorkerWrappedAsyncDatabaseConnection({
-          remote,
-          baseConnection: db,
-          identifier,
-          // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
-          // that and ensure pending requests are aborted when the tab is closed.
-          remoteCanCloseUnexpectedly: true
-        });
-        client.closeListeners.push(async () => {
-          this.logger.info('Aborting open connection because associated tab closed.');
-          /**
-           * Don't await this close operation. It might never resolve if the tab is closed.
-           * We mark the remote as closed first, this will reject any pending requests.
-           * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
-           */
-          wrapped.markRemoteClosed();
-          wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
-        });
-
-        return wrapped;
-      } catch (ex) {
-        this.logger.warn('Error opening internal DB', ex);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+    const client = await this.getRandomWrappedPort();
+    if (!client) {
+      // Should not really happen in practice
+      throw new Error(`Could not open DB connection since no client is connected.`);
     }
+
+    // Fail-safe timeout for opening a database connection.
+    const timeout = setTimeout(() => {
+      abortController.abort();
+    }, 10_000);
+
+    /**
+     * Handle cases where the client might close while opening a connection.
+     */
+    const abortController = new AbortController();
+    const closeListener = () => {
+      abortController.abort();
+    };
+
+    const removeCloseListener = () => {
+      const index = client.closeListeners.indexOf(closeListener);
+      if (index >= 0) {
+        client.closeListeners.splice(index, 1);
+      }
+    };
+
+    client.closeListeners.push(closeListener);
+
+    const workerPort = await withAbort({
+      action: () => client.clientProvider.getDBWorkerPort(),
+      signal: abortController.signal,
+      cleanupOnAbort: (port) => {
+        port.close();
+      }
+    }).catch((ex) => {
+      removeCloseListener();
+      throw ex;
+    });
+
+    const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
+    const identifier = this.syncParams!.dbParams.dbFilename;
+
+    /**
+     * The open could fail if the tab is closed while we're busy opening the database.
+     * This operation is typically executed inside an exclusive portMutex lock.
+     * We typically execute the closeListeners using the portMutex in a different context.
+     * We can't rely on the closeListeners to abort the operation if the tab is closed.
+     */
+    const db = await withAbort({
+      action: () => remote(this.syncParams!.dbParams),
+      signal: abortController.signal,
+      cleanupOnAbort: (db) => {
+        db.close();
+      }
+    }).finally(() => {
+      // We can remove the close listener here since we no longer need it past this point.
+      removeCloseListener();
+    });
+
+    clearTimeout(timeout);
+
+    const wrapped = new WorkerWrappedAsyncDatabaseConnection({
+      remote,
+      baseConnection: db,
+      identifier,
+      // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
+      // that and ensure pending requests are aborted when the tab is closed.
+      remoteCanCloseUnexpectedly: true
+    });
+    client.closeListeners.push(async () => {
+      this.logger.info('Aborting open connection because associated tab closed.');
+      /**
+       * Don't await this close operation. It might never resolve if the tab is closed.
+       * We mark the remote as closed first, this will reject any pending requests.
+       * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
+       */
+      wrapped.markRemoteClosed();
+      wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+    });
+
+    return wrapped;
   }
 
   /**

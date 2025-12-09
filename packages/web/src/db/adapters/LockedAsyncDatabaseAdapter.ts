@@ -313,8 +313,13 @@ export class LockedAsyncDatabaseAdapter
     return this._acquireLock(async () => {
       let holdId: string | null = null;
       try {
-        // We can't await this since it uses the same lock as we're in now.
-        if (this.databaseOpenPromise) {
+        /**
+         * We can't await this since it uses the same lock as we're in now.
+         * If there is a pending open, this call will throw.
+         * If there is no pending open, but there is also no database - the open
+         * might have failed. We need to re-open the database.
+         */
+        if (this.databaseOpenPromise || !this._db) {
           throw new ConnectionClosedError('Connection is busy re-opening');
         }
 
