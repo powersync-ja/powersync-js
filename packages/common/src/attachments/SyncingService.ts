@@ -86,7 +86,7 @@ export class SyncingService {
         hasSynced: true
       };
     } catch (error) {
-      const shouldRetry = this.errorHandler?.onUploadError(attachment, error) ?? false;
+      const shouldRetry = this.errorHandler?.onUploadError(attachment, error) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,
@@ -119,7 +119,7 @@ export class SyncingService {
         localUri: localUri
       };
     } catch (error) {
-      const shouldRetry = this.errorHandler?.onDownloadError(attachment, error) ?? false;
+      const shouldRetry = this.errorHandler?.onDownloadError(attachment, error) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,
@@ -154,7 +154,7 @@ export class SyncingService {
         localUri: null
       };
     } catch (error) {
-      const shouldRetry = this.errorHandler?.onDeleteError(attachment, error) ?? false;
+      const shouldRetry = this.errorHandler?.onDeleteError(attachment, error) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,
