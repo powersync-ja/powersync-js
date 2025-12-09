@@ -13,7 +13,7 @@ def capacitor_pods
   pod 'CapacitorCordova', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios'
   pod 'CapacitorCommunitySqlite', :path => '../../node_modules/.pnpm/@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor-community/sqlite'
   pod 'CapacitorSplashScreen', :path => '../../node_modules/.pnpm/@capacitor+splash-screen@7.0.3_@capacitor+core@7.4.4/node_modules/@capacitor/splash-screen'
-  pod 'PowersyncCapacitor', :path => '../../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@po_6703af540e5669eebb1ca16a593ee995/node_modules/@powersync/capacitor'
+  pod 'PowersyncCapacitor', :path => '../../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@powersyn_smncg5wuctchvueg7u47nvgl4i/node_modules/@powersync/capacitor'
 end
 
 target 'App' do

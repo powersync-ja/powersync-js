@@ -9,4 +9,4 @@ include ':capacitor-splash-screen'
 project(':capacitor-splash-screen').projectDir = new File('../node_modules/.pnpm/@capacitor+splash-screen@7.0.3_@capacitor+core@7.4.4/node_modules/@capacitor/splash-screen/android')
 
 include ':powersync-capacitor'
-project(':powersync-capacitor').projectDir = new File('../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@po_6703af540e5669eebb1ca16a593ee995/node_modules/@powersync/capacitor/android')
+project(':powersync-capacitor').projectDir = new File('../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@powersyn_smncg5wuctchvueg7u47nvgl4i/node_modules/@powersync/capacitor/android')
