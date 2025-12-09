@@ -381,7 +381,7 @@ export class AttachmentQueue {
    * - Archives attachments with missing local files that haven't been uploaded
    * - Requeues synced attachments for download if their local files are missing
    */
-  verifyAttachments = async (): Promise<void> => {
+  async verifyAttachments(): Promise<void> {
     const attachments = await this.context.getAttachments();
     const updates: AttachmentRecord[] = [];
 
@@ -426,5 +426,5 @@ export class AttachmentQueue {
     }
 
     await this.context.saveAttachments(updates);
-  };
+  }
 }
