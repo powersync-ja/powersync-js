@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "PowerSync React Native SDK. Sync Postgres, MongoDB or MySQL with SQLite in your React Native app",
+  "description": "PowerSync React Native SDK",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./lib/index.d.ts",
