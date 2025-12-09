@@ -215,7 +215,7 @@ export class AttachmentQueue {
               state: AttachmentState.SYNCED
             });
           } else {
-            // The localURI should be set if the record was meant to be downloaded
+            // The localURI should be set if the record was meant to be uploaded
             // and hasSynced is false then
             // it must be an upload operation
             const newState =
