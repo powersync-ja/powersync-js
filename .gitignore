@@ -1,6 +1,7 @@
 node_modules
 lib
 dist
+.nuxt
 *.tsbuildinfo
 .vscode
 .DS_STORE

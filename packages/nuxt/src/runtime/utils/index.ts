@@ -1,0 +1,1 @@
+export { PowerSyncDatabaseWithDiagnostics } from './NuxtPowerSyncDatabase'

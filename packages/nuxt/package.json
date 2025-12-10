@@ -1,0 +1,81 @@
+{
+    "name": "@powersync/nuxt",
+    "version": "0.1.0",
+    "publishConfig": {
+      "registry": "https://registry.npmjs.org/",
+      "access": "public"
+    },
+    "description": "PowerSync Nuxt module",
+    "license": "Apache-2.0",
+    "type": "module",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/powersync-ja/powersync-js.git"
+    },
+    "author": "JOURNEYAPPS",
+    "bugs": {
+      "url": "https://github.com/powersync-ja/powersync-js/issues"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/types.d.mts",
+        "import": "./dist/module.mjs"
+      }
+    },
+    "main": "./dist/module.mjs",
+    "typesVersions": {
+      "*": {
+        ".": ["./dist/types.d.mts"]
+      }
+    },
+    "files": ["dist"],
+    "scripts": {
+      "prebuild": "nuxt-module-build prepare",
+      "build": "nuxt-module-build build",
+      "build:prod": "nuxt-module-build build",
+      "clean": "rm -rf dist .nuxt",
+      "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare",
+      "watch": "nuxt-module-build build --watch",
+      "test": "vitest run",
+      "test:watch": "vitest watch",
+      "test:exports": "attw --pack --profile=esm-only ."
+    },
+    "homepage": "https://docs.powersync.com",
+    "dependencies": {
+      "@iconify-json/carbon": "^1.2.13",
+      "@nuxt/devtools-kit": "^2.6.2",
+      "@nuxt/devtools-ui-kit": "^2.6.2",
+      "@nuxt/kit": "^4.0.3",
+      "@tanstack/vue-table": "^8.21.3",
+      "@vueuse/nuxt": "^13.9.0",
+      "consola": "^3.4.2",
+      "defu": "^6.1.4",
+      "fuse.js": "^7.1.0",
+      "mitt": "^3.0.1",
+      "reka-ui": "^2.5.0",
+      "shiki": "^3.13.0",
+      "unocss": "^66.5.2",
+      "unstorage": "^1.17.1"
+    },
+    "peerDependencies": {
+      "@journeyapps/wa-sqlite": "^1.2.6",
+      "@powersync/kysely-driver": "workspace:*",
+      "@powersync/vue": "workspace:*",
+      "@powersync/web": "workspace:*"
+    },
+    "devDependencies": {
+      "@journeyapps/wa-sqlite": "^1.4.0",
+      "@nuxt/module-builder": "^1.0.2",
+      "@nuxt/schema": "^4.1.2",
+      "@nuxt/test-utils": "^3.19.2",
+      "@powersync/kysely-driver": "workspace:*",
+      "@powersync/vue": "workspace:*",
+      "@powersync/web": "workspace:*",
+      "nuxt": "^4.1.2",
+      "vite-plugin-top-level-await": "^1.6.0",
+      "vite-plugin-wasm": "^3.5.0",
+      "vitest": "^3.2.4",
+      "vue": "^3.5.20",
+      "vue-tsc": "^3.0.8"
+    }
+  }
