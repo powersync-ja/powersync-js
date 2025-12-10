@@ -4,7 +4,7 @@
 
 # PowerSync SDK for Capacitor
 
-_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB or MySQL on the server-side._
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
 
 This package (`@powersync/capacitor`) is the PowerSync SDK for Capacitor apps. It wraps the [PowerSync Web SDK](https://www.npmjs.com/package/@powersync/web) for Capacitor PWAs and uses [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite) as the database driver for Android and iOS.
 
