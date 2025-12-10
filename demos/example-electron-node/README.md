@@ -18,7 +18,7 @@ In particular:
 
 To see it in action:
 
-1. Make sure to run `pnpm install` and `pnpm build:packages` in the root directory of this repo.
+1. Make sure to run `pnpm install` in the demo's directory.
 2. Copy `.env.local.template` to `.env.local`, and complete the environment variables. You can generate a [temporary development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens), or leave blank to test with local-only data.
    The example works with the schema from the [PowerSync + Supabase tutorial](https://docs.powersync.com/integration-guides/supabase-+-powersync#supabase-powersync).
 3. `cd` into this directory. In this mono-repo, you'll have to run `./node_modules/.bin/electron-rebuild` once to make sure `better-sqlite3` was compiled with Electron's toolchain.
