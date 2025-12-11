@@ -923,6 +923,35 @@ function defineSyncTests(impl: SyncClientImplementation) {
       expect.arrayContaining([expect.stringContaining('Cannot enqueue data into closed stream')])
     );
   });
+
+  mockSyncServiceTest('passes app metadata to the sync service', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    let connectCompleted = false;
+    database
+      .connect(new TestConnector(), {
+        ...options,
+        appMetadata: {
+          name: 'test'
+        }
+      })
+      .then(() => {
+        connectCompleted = true;
+      });
+    expect(connectCompleted).toBeFalsy();
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    // We want connected: true once we have a connection
+
+    await vi.waitFor(() => connectCompleted);
+    // The request should contain the app metadata
+    expect(syncService.connectedListeners[0]).toMatchObject(
+      expect.objectContaining({
+        app_metadata: {
+          name: 'test'
+        }
+      })
+    );
+  });
 }
 
 async function waitForProgress(
