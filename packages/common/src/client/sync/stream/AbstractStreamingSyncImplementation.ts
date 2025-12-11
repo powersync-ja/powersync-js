@@ -1241,7 +1241,6 @@ The next upload iteration will be delayed.`);
         resolve();
         return;
       }
-
       const { retryDelayMs } = this.options;
 
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
