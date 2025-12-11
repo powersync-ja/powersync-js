@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "pnpm build && pnpm preview",
-    "prepare:isolated:test": "pnpm exec playwright install ",
+    "prepare:isolated:test": "pnpm exec playwright install --with-deps",
     "test:build": "pnpm build && vitest run"
   },
   "dependencies": {
