@@ -6,8 +6,10 @@ dist
 .DS_STORE
 .idea
 .fleet
+
 # Useful if running repository in VSCode dev container
 .pnpm-store
 __screenshots__
-# Backups should be restored before committing
-demos/**/package.json.bak
+
+# Adds a lot of noise to commits
+demos/**/pnpm-lock.yaml
