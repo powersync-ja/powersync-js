@@ -118,7 +118,7 @@ const processDemo = (demoPath: string): ProcessResult => {
       const packageName = workspacePackage.manifest.name!;
       if (packageName in deps) {
         const originalVersion = deps[packageName];
-        const latestVersion = workspacePackage.manifest.version!;
+        const latestVersion = '^' + workspacePackage.manifest.version!;
 
         if (result.resultType !== ResultType.WARNING && originalVersion.startsWith('workspace')) {
           if (!programOpts['--ignore-workspace']) {
