@@ -6,7 +6,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "pnpm build && pnpm preview"
+    "start": "pnpm build && pnpm preview",
+    "prepare:isolated:test": "pnpm exec playwright install",
+    "test:build": "vitest run"
   },
   "dependencies": {
     "@emotion/react": "11.11.4",
@@ -19,9 +21,9 @@
     "@powersync/web": "^1.29.1",
     "@powersync/common": "^1.43.1",
     "@supabase/supabase-js": "^2.39.7",
-    "@tanstack/db": "0.4.17",
-    "@tanstack/powersync-db-collection": "0.1.0",
-    "@tanstack/react-db": "0.1.39",
+    "@tanstack/db": "^0.5.11",
+    "@tanstack/powersync-db-collection": "^0.1.15",
+    "@tanstack/react-db": "^0.1.55",
     "formik": "^2.4.6",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
@@ -31,17 +33,21 @@
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
+    "@testing-library/react": "^16.3.0",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.11.25",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/browser": "^3.2.4",
     "autoprefixer": "^10.4.18",
     "babel-loader": "^9.1.3",
+    "playwright": "^1.51.0",
     "typescript": "^5.4.2",
     "vite": "^5.1.5",
     "vite-plugin-pwa": "^0.19.2",
     "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-wasm": "^3.3.0",
+    "vitest": "^3.2.4"
   }
 }

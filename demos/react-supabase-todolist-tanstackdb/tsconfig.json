@@ -13,9 +13,12 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "types": ["vitest/globals"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "exclude": ["node_modules"]
+  "include": ["src", "e2e"],
+  "exclude": ["node_modules"],
+  "references": []
 }
