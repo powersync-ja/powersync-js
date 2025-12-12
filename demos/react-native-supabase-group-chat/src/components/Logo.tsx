@@ -1,6 +1,6 @@
 import Svg, { Defs, LinearGradient, Path, Stop, SvgProps } from 'react-native-svg';
 
-import { config } from '@/lib/config';
+import { config } from '@/library/config';
 
 export function Logo({ gradient, ...props }: SvgProps & { gradient?: boolean }) {
   return (

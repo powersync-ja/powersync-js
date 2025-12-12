@@ -2,7 +2,7 @@ import { Contact, MessageSquare, Settings } from '@tamagui/lucide-icons';
 import { Redirect, Tabs } from 'expo-router';
 
 import { useAuth } from '@/providers/AuthProvider';
-import { PowerSyncProvider } from '@/providers/PowerSync';
+import { PowerSyncProvider } from '@/providers/PowerSyncProvider';
 
 export default function AppLayout() {
   const { session } = useAuth();

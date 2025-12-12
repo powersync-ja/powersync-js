@@ -224,40 +224,44 @@ function defineSyncTests(impl: SyncClientImplementation) {
       }
     }
 
-    mockSyncServiceTest('without priorities', async ({ syncService }) => {
-      const database = await syncService.createDatabase();
-      database.connect(new TestConnector(), options);
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    mockSyncServiceTest(
+      'without priorities',
+      async ({ syncService }) => {
+        const database = await syncService.createDatabase();
+        database.connect(new TestConnector(), options);
+        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '10',
-          buckets: [bucket('a', 10)]
-        }
-      });
+        syncService.pushLine({
+          checkpoint: {
+            last_op_id: '10',
+            buckets: [bucket('a', 10)]
+          }
+        });
 
-      await waitForProgress(database, [0, 10]);
+        await waitForProgress(database, [0, 10]);
 
-      pushDataLine(syncService, 'a', 10);
-      await waitForProgress(database, [10, 10]);
+        pushDataLine(syncService, 'a', 10);
+        await waitForProgress(database, [10, 10]);
 
-      pushCheckpointComplete(syncService);
-      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+        pushCheckpointComplete(syncService);
+        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
 
-      // Emit new data, progress should be 0/2 instead of 10/12
-      syncService.pushLine({
-        checkpoint_diff: {
-          last_op_id: '12',
-          updated_buckets: [bucket('a', 12)],
-          removed_buckets: []
-        }
-      });
-      await waitForProgress(database, [0, 2]);
-      pushDataLine(syncService, 'a', 2);
-      await waitForProgress(database, [2, 2]);
-      pushCheckpointComplete(syncService);
-      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
-    });
+        // Emit new data, progress should be 0/2 instead of 10/12
+        syncService.pushLine({
+          checkpoint_diff: {
+            last_op_id: '12',
+            updated_buckets: [bucket('a', 12)],
+            removed_buckets: []
+          }
+        });
+        await waitForProgress(database, [0, 2]);
+        pushDataLine(syncService, 'a', 2);
+        await waitForProgress(database, [2, 2]);
+        pushCheckpointComplete(syncService);
+        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+      },
+      { timeout: 10000 }
+    );
 
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();

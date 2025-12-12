@@ -12,11 +12,16 @@ To run this demo, follow these instructions:
 
 ### Install dependencies
 
-In the repo root, use [pnpm](https://pnpm.io/installation) to install dependencies:
+Switch into the demo's directory:
+
+```bash
+cd demos/react-native-web-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
 
 ```bash
 pnpm install
-pnpm build:packages
 ```
 
 ### Set up Supabase Project

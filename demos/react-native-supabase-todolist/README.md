@@ -9,17 +9,16 @@ Follow all the steps until, but not including, [Test Everything (Using Our Demo 
 
 ## Getting Started
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/react-native-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
 ```
 
 Set up the Environment variables: Copy the `.env` file:

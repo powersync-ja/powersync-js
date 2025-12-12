@@ -7,7 +7,7 @@ import { Input, ListItem, Text, XStack, YStack } from 'tamagui';
 import { GroupIcon } from '@/components/groups/GroupIcon';
 import { List } from '@/components/list';
 import { ProfileIcon } from '@/components/profiles/ProfileIcon';
-import { stringToRelativeDate } from '@/lib/date';
+import { stringToRelativeDate } from '@/library/date';
 
 export default function ChatsIndex() {
   const [search, setSearch] = useState<string>('');

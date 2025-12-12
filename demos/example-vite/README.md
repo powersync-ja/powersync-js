@@ -4,6 +4,6 @@ This is a minimal example demonstrating bundling with Vite. It attempts a connec
 
 To see it in action:
 
-1. Make sure to run `pnpm install` and `pnpm build:packages` in the root directory of this repo.
-2. `cd` into this directory, and run `pnpm start`.
+1. `cd` into this directory and run `pnpm install`.
+2. Run `pnpm start`.
 3. Open the localhost URL displayed in the terminal output in your browser.

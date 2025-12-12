@@ -6,8 +6,8 @@ This demo is configured to talk to an example backend [you can host yourself](ht
 
 1. Start one of the Node.js backend examples from [the self-host-demo repository](https://github.com/powersync-ja/self-host-demo).
 2. If necessary, change `.env` to point to the started backend and sync service.
-3. Run `pnpm install` and `pnpm build:packages` in the root of this repo.
-4. In this directory, run `pnpm run start`.
+3. `cd` into this directory and run `pnpm install`.
+4. Run `pnpm start`.
 
 This opens the local database, connects to PowerSync, waits for a first sync and then runs a simple query.
 Results from the query are printed every time it changes. Try:

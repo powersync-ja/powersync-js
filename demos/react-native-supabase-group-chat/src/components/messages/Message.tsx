@@ -1,6 +1,6 @@
 import { Paragraph, YStack } from 'tamagui';
 
-import { stringToRelativeDate } from '@/lib/date';
+import { stringToRelativeDate } from '@/library/date';
 import { useAuth } from '@/providers/AuthProvider';
 
 export function Message({ message }: { message: any }) {

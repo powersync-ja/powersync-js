@@ -1,7 +1,7 @@
 import { Plus } from '@tamagui/lucide-icons';
 import { ListItem, Text } from 'tamagui';
 
-import { ProfileIcon } from '../profiles/ProfileIcon';
+import { ProfileIcon } from '@/components/profiles/ProfileIcon';
 
 export function ProfileRow({
   item,

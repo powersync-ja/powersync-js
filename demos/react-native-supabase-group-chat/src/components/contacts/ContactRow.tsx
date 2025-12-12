@@ -2,8 +2,8 @@ import { Trash2 } from '@tamagui/lucide-icons';
 import { Link } from 'expo-router';
 import { ListItem } from 'tamagui';
 
-import { SwipeableRow } from '../list/SwipeableRow';
-import { ProfileIcon } from '../profiles/ProfileIcon';
+import { SwipeableRow } from '@/components/list/SwipeableRow';
+import { ProfileIcon } from '@/components/profiles/ProfileIcon';
 
 export function ContactRow({
   item,

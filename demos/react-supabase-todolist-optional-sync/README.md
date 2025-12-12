@@ -14,17 +14,16 @@ For an overview of the mechanics behind this, see [the explanation further below
 
 # Run the app in local-only mode
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/react-supabase-todolist-optional-sync
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
 ```
 
 Run the development server:

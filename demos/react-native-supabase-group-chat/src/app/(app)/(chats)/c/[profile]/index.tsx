@@ -1,12 +1,12 @@
 import { faker } from '@faker-js/faker';
 import { usePowerSync, useQuery } from '@powersync/react-native';
 import { FlashList } from '@shopify/flash-list';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Button, Input, YStack } from 'tamagui';
 
 import { Message } from '@/components/messages/Message';
-import { uuid } from '@/lib/uuid';
+import { uuid } from '@/library/uuid';
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function ChatsChatIndex() {
@@ -113,10 +113,9 @@ export default function ChatsChatIndex() {
 
   return profile ? (
     <>
-      <Stack.Screen name="../../../" options={{ title: profile.name }} />
       <YStack fullscreen>
         <YStack flexGrow={1}>
-          <FlashList data={listMessages} renderItem={({ item }) => <Message message={item} />} estimatedItemSize={87} />
+          <FlashList data={listMessages} renderItem={({ item }) => <Message message={item} />} />
         </YStack>
         <YStack padding="$3" gap="$3">
           {profile.demo === 1 && <Button onPress={handleDemoMessage}>Receive demo message</Button>}

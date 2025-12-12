@@ -17,6 +17,8 @@
     "docs:build": "pnpm --filter docs build",
     "docs:start": "pnpm --filter docs start",
     "docs:clear": "pnpm --filter docs clear",
+    "demos:link": "tsc -b scripts && node scripts/dist/demos-use-workspace.js",
+    "demos:update": "tsc -b scripts && node scripts/dist/bump-demo-packages.js",
     "format": "prettier --write .",
     "lint": "eslint .",
     "release": "pnpm build:packages:prod && pnpm changeset publish",

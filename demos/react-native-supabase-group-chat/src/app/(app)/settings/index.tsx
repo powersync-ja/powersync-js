@@ -38,7 +38,7 @@ export default function SettingsIndex() {
     <YStack padding="$3" gap="$3">
       <Text>Email: {user?.email}</Text>
 
-      <XStack width={200} alignItems="center" space="$4">
+      <XStack width={200} alignItems="center" gap="$4">
         <Switch
           id="syncEnabled"
           size="$4"

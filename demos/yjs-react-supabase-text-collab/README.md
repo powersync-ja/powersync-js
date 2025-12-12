@@ -10,11 +10,16 @@ This demo is built using the [PowerSync JS web SDK](https://docs.powersync.com/c
 
 ### 1. Install dependencies
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+Switch into the demo's directory:
+
+```bash
+cd demos/vue-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
 
 ```bash
 pnpm install
-pnpm build:packages
 ```
 
 #### Quick Start: Local Development

@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@journeyapps/wa-sqlite": "^1.4.0",
+    "@mui/icons-material": "^7.3.5",
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "formik": "^2.4.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3"

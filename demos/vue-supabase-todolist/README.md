@@ -18,17 +18,16 @@ A step-by-step guide through the Supabase<>PowerSync integration is available [h
 
 ## Getting Started
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/vue-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
 ```
 
 Set up the Environment variables: Copy the `.env.local.template` file:
