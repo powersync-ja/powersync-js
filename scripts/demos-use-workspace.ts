@@ -1,18 +1,11 @@
 /**
- * Users want to be able to run 'pnpm build:packages', cd into a demo,
- * run 'pnpm install && pnpm build', and have just that demo's packages
- * installed. Currently, this is not possible, as demos are included in
- * the pnpm workspace and therefore all demos' packages will be installed.
+ * This script is for use by SDK devs who want to test their local
+ * package changes against the demo apps.
  *
- * This script goes through every package in 'demos/*' and replaces the
- * workspace packages' versions with 'workspace:*', allowing for easy
- * testing of new versions for SDK developers, as well as small
- * node_modules folders for SDK users.
- *
- * This way, users can use 'pnpm --ignore-workspace install && pnpm build',
- * while SDK devs can use 'tsx ./scripts/link-demos.ts' to build demos.
- *
- * Most of this code is copied from './scripts/isolated-demo-test.ts'.
+ * Make sure to add `  - demos/*` to the root pnpm-workspace.yaml.
+ * If you want to restore the demos' package.json versions, either run
+ * `git restore demos`, or run `pnpm demos:update` if you have made
+ * other modifications to the package.json.
  */
 
 import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
