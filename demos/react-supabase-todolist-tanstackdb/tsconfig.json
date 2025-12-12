@@ -20,9 +20,5 @@
   },
   "include": ["src", "e2e"],
   "exclude": ["node_modules"],
-  "references": [
-    {
-      "path": "../../packages/web"
-    }
-  ]
+  "references": []
 }
