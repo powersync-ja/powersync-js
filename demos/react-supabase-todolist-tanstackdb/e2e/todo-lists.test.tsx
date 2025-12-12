@@ -16,9 +16,10 @@ describe('TodoLists E2E', () => {
   let root: Root | null = null;
   let container: HTMLElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Set up DOM
     container = setupTestDOM();
+    await renderAppAndWaitForTodoListsScreen();
   });
 
   afterEach(async () => {
@@ -108,15 +109,11 @@ describe('TodoLists E2E', () => {
   }
 
   it('should load the app and show the Todo Lists screen', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     // Verify we're on the Todo Lists page
     expect(screen.getByText('Todo Lists')).toBeTruthy();
   });
 
   it('should display a list widget after inserting a list via PowerSync SQL', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     const listName = 'My Shopping List';
     await insertList(listName);
 
@@ -134,8 +131,6 @@ describe('TodoLists E2E', () => {
   });
 
   it('should display multiple list widgets after inserting multiple lists', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     // Insert multiple lists
     await insertList('Groceries');
     await insertList('Work Tasks');
@@ -157,8 +152,6 @@ describe('TodoLists E2E', () => {
   });
 
   it('should display list with correct todo counts (pending and completed)', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     const listName = 'My Task List';
     const listId = await insertList(listName);
 
@@ -180,8 +173,6 @@ describe('TodoLists E2E', () => {
   });
 
   it('should render list widgets with delete and navigate action buttons', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     const listName = 'Test List';
     await insertList(listName);
 
@@ -197,8 +188,6 @@ describe('TodoLists E2E', () => {
   });
 
   it('should display the floating action button to add new lists', async () => {
-    await renderAppAndWaitForTodoListsScreen();
-
     // The FAB should be present - find by class
     const fab = document.querySelector('.MuiFab-root');
     expect(fab).not.toBeNull();
