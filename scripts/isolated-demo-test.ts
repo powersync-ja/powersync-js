@@ -74,16 +74,6 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
     }
   };
 
-  // Run pnpm upgrade on local packages
-  try {
-    execSync('pnpm upgrade "@powersync/*"', { cwd: demoDest, stdio: 'inherit' });
-  } catch (ex) {
-    console.error(ex);
-    result.installResult.state = TestState.FAILED;
-    result.installResult.error = ex.message;
-    return result;
-  }
-
   // Run pnpm install and pnpm build
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
