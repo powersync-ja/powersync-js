@@ -1,12 +1,25 @@
-import { getInfoAsync, makeDirectoryAsync, deleteAsync, writeAsStringAsync, readAsStringAsync, documentDirectory } from 'expo-file-system';
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
 import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
+try {
+  var {
+    getInfoAsync,
+    makeDirectoryAsync,
+    deleteAsync,
+    writeAsStringAsync,
+    readAsStringAsync,
+    documentDirectory
+  } = require('expo-file-system');
+} catch (e) {
+  throw new Error(`Could not resolve expo-file-system.
+To use the Expo File System attachment adapter please install expo-file-system.`);
+}
+
 /**
- * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's 
+ * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's
  * Suitable for React Native applications using Expo or Expo modules.
  */
-export class ExpoFileSystemAdapter implements LocalStorageAdapter {
+export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
   private storageDirectory: string;
 
   constructor(storageDirectory?: string) {
@@ -45,7 +58,7 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
       await writeAsStringAsync(filePath, data, {
         encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8
       });
-      
+
       // Calculate size based on encoding
       if (encoding === EncodingType.Base64) {
         // Base64 string length / 4 * 3 gives approximate byte size
@@ -69,7 +82,7 @@ export class ExpoFileSystemAdapter implements LocalStorageAdapter {
 
   async readFile(filePath: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
     const encoding = options?.encoding ?? EncodingType.Base64;
-    
+
     // Let the native function throw if file doesn't exist
     const content = await readAsStringAsync(filePath, {
       encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8

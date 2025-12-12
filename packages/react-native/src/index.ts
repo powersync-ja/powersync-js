@@ -9,3 +9,4 @@ export * from './sync/stream/ReactNativeRemote';
 export * from './sync/stream/ReactNativeStreamingSyncImplementation';
 export * from './db/adapters/react-native-quick-sqlite/ReactNativeQuickSQLiteOpenFactory';
 export * from './attachments/ExpoFileSystemAdapter';
+export * from './attachments/ReactNativeFileSystemAdapter';

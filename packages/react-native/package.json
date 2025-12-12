@@ -33,6 +33,8 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^2.4.9",
+    "@dr.pogodin/react-native-fs": "^2.36.1",
+    "expo-file-system": "*",
     "@powersync/common": "workspace:^1.43.1",
     "react": "*",
     "react-native": "*"
@@ -40,12 +42,17 @@
   "peerDependenciesMeta": {
     "@journeyapps/react-native-quick-sqlite": {
       "optional": true
+    },
+    "@dr.pogodin/react-native-fs": {
+      "optional": true
+    },
+    "expo-file-system": {
+      "optional": true
     }
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
-    "expo-file-system": "18.0.12",
     "async-mutex": "^0.5.0"
   },
   "devDependencies": {

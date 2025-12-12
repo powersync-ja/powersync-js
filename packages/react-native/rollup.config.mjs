@@ -58,7 +58,7 @@ export default () => {
       'js-logger',
       'react-native',
       'react',
-      'expo-file-system',
+      '@dr.pogodin/react-native-fs',
       'async-mutex'
     ]
   };

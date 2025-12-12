@@ -4,7 +4,7 @@ import React from 'react';
 import {
   PowerSyncDatabase as PowerSyncDatabaseNative,
   AbstractPowerSyncDatabase,
-  ReactNativeFileSystemStorageAdapter
+  ExpoFileSystemStorageAdapter
 } from '@powersync/react-native';
 import {
   PowerSyncDatabase as PowerSyncDatabaseWeb,
@@ -92,7 +92,7 @@ export class System {
 
     if (AppConfig.supabaseBucket) {
       const isWeb = Platform.OS === 'web';
-      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ReactNativeFileSystemStorageAdapter();
+      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ExpoFileSystemStorageAdapter();
       const remoteStorage = new SupabaseRemoteStorageAdapter({
         client: this.supabaseConnector.client,
         bucket: AppConfig.supabaseBucket
