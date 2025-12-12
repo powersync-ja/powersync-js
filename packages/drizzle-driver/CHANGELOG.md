@@ -1,5 +1,14 @@
 # @powersync/drizzle-driver
 
+## 0.7.1
+
+### Patch Changes
+
+- 317c748: Reorder export attributes to prevent "Error: Default condition should be last one".
+- Updated dependencies [299c6dc]
+- Updated dependencies [616c2a1]
+  - @powersync/common@1.44.0
+
 ## 0.7.0
 
 ### Minor Changes

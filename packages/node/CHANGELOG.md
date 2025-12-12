@@ -1,5 +1,29 @@
 # @powersync/node
 
+## 0.15.0
+
+### Minor Changes
+
+- 299c6dc: Update PowerSync SQLite core to v0.4.10
+- 616c2a1: Added ability to specify `appMetadata` for sync/stream requests.
+
+  Note: This requires a PowerSync service version `>=1.17.0` in order for logs to display metadata.
+
+  ```javascript
+  powerSync.connect(connector, {
+    // This will be included in PowerSync service logs
+    appMetadata: {
+      app_version: MY_APP_VERSION
+    }
+  });
+  ```
+
+### Patch Changes
+
+- Updated dependencies [299c6dc]
+- Updated dependencies [616c2a1]
+  - @powersync/common@1.44.0
+
 ## 0.14.3
 
 ### Patch Changes
