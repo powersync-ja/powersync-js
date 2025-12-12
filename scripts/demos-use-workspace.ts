@@ -77,8 +77,6 @@ const linkDemo = async (demoName: string) => {
   }
 
   if (changes) {
-    // Save copy of original package.json to package.json.bak
-    fs.copyFileSync(packageJsonPath, packageJsonPath + '.bak');
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
   } else {
     console.log('- No changes');
