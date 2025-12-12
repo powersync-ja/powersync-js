@@ -61,6 +61,8 @@ export class AttachmentQueue {
 
   watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
 
+  watchAttachmentsAbortController: AbortController;
+
   /**
    * Creates a new AttachmentQueue instance.
    *
@@ -92,7 +94,7 @@ export class AttachmentQueue {
     db: AbstractPowerSyncDatabase;
     remoteStorage: RemoteStorageAdapter;
     localStorage: LocalStorageAdapter;
-    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>) => void;
+    watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
     tableName?: string;
     logger?: ILogger;
     syncIntervalMs?: number;
@@ -131,7 +133,7 @@ export class AttachmentQueue {
    * @param onUpdate - Callback to invoke when attachment references change
    * @throws Error indicating this method must be implemented by the user
    */
-  watchAttachments(onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>): void {
+  watchAttachments(onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal): void {
     throw new Error('watchAttachments should be implemented by the user of AttachmentQueue');
   }
 
@@ -177,6 +179,8 @@ export class AttachmentQueue {
         await this.syncStorage();
       }
     });
+
+    this.watchAttachmentsAbortController = new AbortController();
 
     // Process attachments when there is a change in watched attachments
     this.watchAttachments(async (watchedAttachments) => {
@@ -256,7 +260,7 @@ export class AttachmentQueue {
       if (attachmentUpdates.length > 0) {
         await this.context.saveAttachments(attachmentUpdates);
       }
-    });
+    }, this.watchAttachmentsAbortController.signal);
   }
 
   /**
@@ -281,6 +285,9 @@ export class AttachmentQueue {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
+    if (this.watchAttachmentsAbortController) {
+      this.watchAttachmentsAbortController.abort();
+    }
   }
 
   /**

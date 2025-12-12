@@ -1,10 +1,15 @@
 import '@azure/core-asynciterator-polyfill';
 
-import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation,   
-  AttachmentQueue, 
-  type AttachmentRecord, 
-  ExpoFileSystemAdapter, 
-  type WatchedAttachmentItem } from '@powersync/react-native';
+import {
+  createBaseLogger,
+  LogLevel,
+  PowerSyncDatabase,
+  SyncClientImplementation,
+  AttachmentQueue,
+  type AttachmentRecord,
+  type WatchedAttachmentItem,
+  ReactNativeFileSystemStorageAdapter
+} from '@powersync/react-native';
 import React from 'react';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
@@ -30,7 +35,7 @@ export class System {
       supabaseUrl: AppConfig.supabaseUrl,
       supabaseAnonKey: AppConfig.supabaseAnonKey
     });
-    
+
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
       database: {
@@ -54,7 +59,7 @@ export class System {
      */
 
     if (AppConfig.supabaseBucket) {
-      const localStorage = new ExpoFileSystemAdapter();
+      const localStorage = new ReactNativeFileSystemStorageAdapter();
       const remoteStorage = new SupabaseRemoteStorageAdapter({
         client: this.supabaseConnector.client,
         bucket: AppConfig.supabaseBucket
@@ -64,20 +69,22 @@ export class System {
         db: this.powersync,
         localStorage,
         remoteStorage,
-        watchAttachments: (onUpdate) => {
-          this.powersync.watch(
+        watchAttachments: async (onUpdate, signal) => {
+          const watcher = this.powersync.watch(
             `SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`,
             [],
             {
-              onResult: (result: any) => {
-                const attachments: WatchedAttachmentItem[] = (result.rows?._array ?? []).map((row: any) => ({
-                  id: row.id,
-                  fileExtension: 'jpg'
-                }));
-                onUpdate(attachments);
-              }
+              signal
             }
           );
+
+          for await (const result of watcher) {
+            const attachments: WatchedAttachmentItem[] = (result.rows?._array ?? []).map((row: any) => ({
+              id: row.id,
+              fileExtension: 'jpg'
+            }));
+            await onUpdate(attachments);
+          }
         },
         errorHandler: {
           onDownloadError: async (attachment: AttachmentRecord, error: Error) => {
@@ -93,7 +100,7 @@ export class System {
             return true; // Retry deletes by default
           }
         },
-        logger,
+        logger
       });
     }
   }

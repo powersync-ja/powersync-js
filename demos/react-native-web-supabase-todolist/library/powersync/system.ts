@@ -1,9 +1,23 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import { PowerSyncDatabase as PowerSyncDatabaseNative, AbstractPowerSyncDatabase, ExpoFileSystemAdapter } from '@powersync/react-native';
-import { PowerSyncDatabase as PowerSyncDatabaseWeb, WASQLiteOpenFactory, IndexDBFileSystemStorageAdapter } from '@powersync/web';
-import { type AttachmentRecord, AttachmentQueue, LogLevel, createBaseLogger, WatchedAttachmentItem } from '@powersync/common';
+import {
+  PowerSyncDatabase as PowerSyncDatabaseNative,
+  AbstractPowerSyncDatabase,
+  ReactNativeFileSystemStorageAdapter
+} from '@powersync/react-native';
+import {
+  PowerSyncDatabase as PowerSyncDatabaseWeb,
+  WASQLiteOpenFactory,
+  IndexDBFileSystemStorageAdapter
+} from '@powersync/web';
+import {
+  type AttachmentRecord,
+  AttachmentQueue,
+  LogLevel,
+  createBaseLogger,
+  WatchedAttachmentItem
+} from '@powersync/common';
 import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAdapter';
 import { ExpoKVStorage, WebKVStorage } from '../storage/KVStorage';
 import { AppConfig } from '../supabase/AppConfig';
@@ -34,7 +48,7 @@ export class System {
         database: {
           dbFilename: 'sqlite.db'
         },
-        logger,
+        logger
       });
     } else {
       const factory = new WASQLiteOpenFactory({
@@ -72,13 +86,13 @@ export class System {
           //   });
           // }
         },
-        logger,
+        logger
       });
     }
 
     if (AppConfig.supabaseBucket) {
       const isWeb = Platform.OS === 'web';
-      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ExpoFileSystemAdapter();
+      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ReactNativeFileSystemStorageAdapter();
       const remoteStorage = new SupabaseRemoteStorageAdapter({
         client: this.supabaseConnector.client,
         bucket: AppConfig.supabaseBucket
@@ -87,16 +101,22 @@ export class System {
         db: this.powersync,
         localStorage,
         remoteStorage,
-        watchAttachments: (onUpdate) => {
-          this.powersync.watch(`SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`, [], {
-            onResult: (result) => {
-              const attachments: WatchedAttachmentItem[] = (result.rows?._array ?? []).map((row: any) => ({
-                id: row.id,
-                fileExtension: 'jpg'
-              }));
-              onUpdate(attachments);
+        watchAttachments: async (onUpdate, signal) => {
+          const watcher = this.powersync.watch(
+            `SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`,
+            [],
+            {
+              signal
             }
-          });
+          );
+
+          for await (const result of watcher) {
+            const attachments: WatchedAttachmentItem[] = (result.rows?._array ?? []).map((row: any) => ({
+              id: row.id,
+              fileExtension: 'jpg'
+            }));
+            await onUpdate(attachments);
+          }
         },
         errorHandler: {
           onDownloadError: async (attachment: AttachmentRecord, error: Error) => {
@@ -112,7 +132,7 @@ export class System {
             return true; // Retry deletes by default
           }
         },
-        logger,
+        logger
       });
     }
   }
@@ -122,6 +142,7 @@ export class System {
     await this.powersync.connect(this.supabaseConnector);
 
     if (this.photoAttachmentQueue) {
+      // await this.photoAttachmentQueue.localStorage.initialize();
       await this.photoAttachmentQueue.startSync();
     }
   }
