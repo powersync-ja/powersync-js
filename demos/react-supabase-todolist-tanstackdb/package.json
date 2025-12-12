@@ -7,10 +7,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "start": "pnpm build && pnpm preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "prepare:isolated:test": "pnpm exec playwright install",
-    "test:build": "pnpm test"
+    "test:build": "vitest run"
   },
   "dependencies": {
     "@emotion/react": "11.11.4",
