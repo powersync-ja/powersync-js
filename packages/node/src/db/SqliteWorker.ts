@@ -84,7 +84,9 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
     },
     async loadBetterSqlite3() {
       const module = await dynamicImport('better-sqlite3');
-      return module.default;
+      return module && typeof module === 'object' && 'default' in module
+        ? module.default
+        : module;    
     },
     ...options
   };
