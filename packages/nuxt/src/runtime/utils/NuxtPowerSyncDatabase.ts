@@ -1,4 +1,5 @@
 import {
+  DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   PowerSyncDatabase,
   SyncClientImplementation,
   WASQLiteVFS,
@@ -79,7 +80,9 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const currentSchemaManager = getCurrentSchemaManager()
       const schemaManager = currentSchemaManager || this.schemaManager
 
-      const adapter = this.connectionOptions?.clientImplementation === SyncClientImplementation.JAVASCRIPT
+      let adapter: RecordingStorageAdapter | RustClientInterceptor
+      if (this.connectionOptions?.clientImplementation) { 
+        adapter = this.connectionOptions?.clientImplementation === SyncClientImplementation.JAVASCRIPT
         ? new RecordingStorageAdapter(
           ref(this) as Ref<PowerSyncDatabase>,
           ref(schemaManager) as Ref<DynamicSchemaManager>,
@@ -89,6 +92,17 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
           new WebRemote(connector, logger),
           ref(schemaManager) as Ref<DynamicSchemaManager>,
         )
+      } else {
+        // @ts-ignore - eventually the default will be Rust
+        adapter = DEFAULT_SYNC_CLIENT_IMPLEMENTATION === SyncClientImplementation.RUST ? new RustClientInterceptor(
+            ref(this) as Ref<PowerSyncDatabase>,
+            new WebRemote(connector, logger),
+            ref(schemaManager) as Ref<DynamicSchemaManager>,
+          ) : new RecordingStorageAdapter(
+            ref(this) as Ref<PowerSyncDatabase>,
+            ref(schemaManager) as Ref<DynamicSchemaManager>,
+          )
+        }
 
       return new WebStreamingSyncImplementation({
         adapter,
