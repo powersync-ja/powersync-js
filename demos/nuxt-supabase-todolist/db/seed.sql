@@ -1,56 +1,28 @@
 -- Past this into your Superbase SQL Editor
 
--- Note: change this if changing the DB connection name
+-- TODO change this if changing the DB connection name
 -- connect postgres;
 -- Create tables
-CREATE TABLE public.lists(
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  name text NOT NULL,
-  owner_id uuid NOT NULL,
-  CONSTRAINT lists_pkey PRIMARY KEY (id)
-);
 
-CREATE TABLE public.todos(
+CREATE TABLE IF NOT EXISTS public.tasks(
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   completed_at timestamp with time zone NULL,
   description text NOT NULL,
   completed boolean NOT NULL DEFAULT FALSE,
-  created_by uuid NULL,
-  completed_by uuid NULL,
-  list_id uuid NOT NULL,
-  photo_id uuid NULL,
-  CONSTRAINT todos_pkey PRIMARY KEY (id)
+  user_id uuid NOT NULL,
+  CONSTRAINT tasks_pkey PRIMARY KEY (id)
 );
 
--- Creates some initial data to be synced
-INSERT INTO lists(
-  id,
-  name,
-  owner_id)
-VALUES (
-  '75f89104-d95a-4f16-8309-5363f1bb377a',
-  'Getting Started',
-  gen_random_uuid());
+-- Create a role/user with replication privileges for PowerSync
+CREATE ROLE powersync_role WITH REPLICATION BYPASSRLS LOGIN PASSWORD 'postgres_12345';
+-- Set up permissions for the newly created role
+-- Read-only (SELECT) access is required
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO powersync_role;  
 
-INSERT INTO todos(
-  description,
-  list_id,
-  completed)
-VALUES (
-  'Run services locally',
-  '75f89104-d95a-4f16-8309-5363f1bb377a',
-  TRUE);
+-- Optionally, grant SELECT on all future tables (to cater for schema additions)
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO powersync_role; 
 
-INSERT INTO todos(
-  description,
-  list_id,
-  completed)
-VALUES (
-  'Create a todo here. Query the todos table via a Postgres connection. Your todo should be synced',
-  '75f89104-d95a-4f16-8309-5363f1bb377a',
-  FALSE);
 
 -- Create publication for PowerSync tables
 CREATE PUBLICATION powersync FOR ALL TABLES;
