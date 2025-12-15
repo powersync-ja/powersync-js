@@ -1,0 +1,9 @@
+config:
+  edition: 2
+
+bucket_definitions:
+  tasks:
+    parameters:
+      - SELECT request.user_id() AS user_id
+    data: 
+      - SELECT * FROM tasks WHERE tasks.user_id = bucket.user_id
