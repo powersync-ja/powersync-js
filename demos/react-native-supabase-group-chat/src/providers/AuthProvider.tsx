@@ -64,7 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     () => {
       if (!session) getSession();
     },
-    // [session, user]
     [session]
   );
 
