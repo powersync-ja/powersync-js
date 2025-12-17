@@ -12,7 +12,7 @@
     "test:build": "pnpm build && vitest run"
   },
   "dependencies": {
-    "@powersync/web": "^1.29.1"
+    "@powersync/web": "^1.30.0"
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
