@@ -1,82 +1,107 @@
+import { Command, type OptionValues } from 'commander';
+import { promises as fs } from 'fs';
+import path from 'path';
+import inquirer from 'inquirer';
 import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
-import { spawnSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as process from 'process';
 
-enum ResultType {
+enum ProcessStatus {
   SUCCESS,
   WARNING,
-  FAILED
+  ERROR
 }
 
 type ProcessResult =
   | {
       demoName: string;
-      resultType: ResultType.SUCCESS;
+      status: ProcessStatus.SUCCESS;
     }
   | {
       demoName: string;
-      resultType: ResultType.WARNING;
-      message: string;
+      status: ProcessStatus.WARNING;
+      errors: string[];
     }
   | {
       demoName: string;
-      resultType: ResultType.FAILED;
-      message: string;
+      status: ProcessStatus.ERROR;
+      errors: string[];
     };
 
-type Flags = {
-  '--ignore-workspace': boolean;
-  '--pattern': boolean;
-  '--dry-run': boolean;
+const displayStatus = (status: ProcessStatus): string => {
+  switch (status) {
+    case ProcessStatus.SUCCESS:
+      return '✅ Success';
+    case ProcessStatus.WARNING:
+      return '🚧 Warning';
+    case ProcessStatus.ERROR:
+      return '🚫  Error ';
+  }
 };
 
-const DEMOS_DIR = 'demos';
+const displayResults = (results: ProcessResult[]) => {
+  let errored = false;
+
+  const data = results.map((r) => {
+    errored = errored || r.status === ProcessStatus.ERROR;
+    const errors: string | null =
+      r.status === ProcessStatus.SUCCESS ? null : r.errors.map((e) => e.slice(0, 40)).join('\n');
+    return {
+      demo: r.demoName,
+      status: displayStatus(r.status),
+      errors
+    };
+  });
+
+  console.table(data, ['status', 'demo', 'errors']);
+
+  return errored;
+};
 
 const workspacePackages = await findWorkspacePackages(path.resolve('.'), {
   patterns: ['./packages/*']
 });
 
-const defaultFlags = (): Flags => {
-  return {
-    '--ignore-workspace': false,
-    '--pattern': false,
-    '--dry-run': false
-  };
+const resolveDemos = async (): Promise<string[]> => {
+  const demos = await fs.readdir('./demos');
+  return demos.sort();
 };
 
-const parseArgs = (processArgs: string[]): [string, string[], Flags] => {
-  // processArgs[0] == 'node'
-  // processArgs[1] == 'bump-demo-package.ts'
-  const name: string = processArgs[1];
-  const args: string[] = [];
-  const flags: Flags = defaultFlags();
+const chooseDemos = async (demos: string[]): Promise<string[]> => {
+  const choices = demos.map((d) => ({ name: d, value: d }));
+  const result = await inquirer.prompt({
+    type: 'checkbox',
+    message: 'Select the demos you want to version',
+    name: 'demos',
+    loop: false,
+    choices
+  });
+  return result.demos;
+};
 
-  // Boolean flags
-  for (const arg of processArgs.slice(2)) {
-    if (arg in flags) {
-      flags[arg] = true;
-    } else {
-      args.push(arg);
+const processDemos = async (demos: string[], options: OptionValues): Promise<ProcessResult[]> => {
+  const results = [];
+  for (const demo of demos) {
+    console.log(`\n> \x1b[1m${demo}\x1b[0m`);
+
+    const result = await processDemo(demo, options);
+    if (result.status !== ProcessStatus.SUCCESS) {
+      const prefix =
+        result.status === ProcessStatus.WARNING ? '\x1b[1;33m[WARNING]\x1b[0m: ' : '\x1b[1;31m[ERROR]\x1b[0m: ';
+      result.errors.forEach((e) => console.error(prefix + e));
     }
+    results.push(result);
   }
 
-  return [name, args, flags];
+  return results;
 };
 
-let [_programName, programArgs, programOpts]: [string, string[], Flags] = parseArgs(process.argv);
+const processDemo = async (demoName: string, options: OptionValues): Promise<ProcessResult> => {
+  const demoSrc = path.resolve(path.join('demos', demoName));
 
-const processDemo = (demoPath: string): ProcessResult => {
-  const demoName = path.basename(demoPath);
-  const demoSrc = path.resolve(demoPath);
-
-  console.log(`Processing ${demoName}`);
-  if (!fs.lstatSync(demoSrc).isDirectory()) {
+  if (!(await fs.lstat(demoSrc)).isDirectory()) {
     return {
       demoName,
-      resultType: ResultType.WARNING,
-      message: `'${demoSrc}' is not a directory.`
+      status: ProcessStatus.ERROR,
+      errors: [`./demos/${demoName} is not a directory.`]
     };
   }
 
@@ -84,126 +109,75 @@ const processDemo = (demoPath: string): ProcessResult => {
   let packageJson: any;
 
   try {
-    packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf8'));
   } catch (e) {
-    if (e instanceof SyntaxError) {
-      return {
-        demoName,
-        resultType: ResultType.FAILED,
-        message: `Error parsing package.json: ${e.message}`
-      };
-    }
-
-    if (!('code' in e)) {
-      return {
-        demoName,
-        resultType: ResultType.FAILED,
-        message: `Unknown error: ${e}`
-      };
-    }
-
     return {
       demoName,
-      resultType: ResultType.FAILED,
-      message: `Error reading package.json: ${e.message}`
+      status: ProcessStatus.ERROR,
+      errors: [`Error reading package.json: ${e}`]
     };
   }
 
-  let result: ProcessResult = {
-    demoName,
-    resultType: ResultType.SUCCESS
-  };
-  const processDeps = (deps: [string, string][]) => {
-    for (const workspacePackage of workspacePackages) {
-      const packageName = workspacePackage.manifest.name!;
-      if (packageName in deps) {
-        const originalVersion = deps[packageName];
-        const latestVersion = '^' + workspacePackage.manifest.version!;
+  let packagesFound = 0;
+  const processDeps = (deps: { [_: string]: string }) => {
+    workspacePackages.forEach((pkg) => {
+      const pkgName = pkg.manifest.name!;
+      if (!(pkgName in deps)) return;
+      packagesFound++;
 
-        if (result.resultType !== ResultType.WARNING && originalVersion.startsWith('workspace')) {
-          if (!programOpts['--ignore-workspace']) {
-            result = {
-              demoName,
-              resultType: ResultType.WARNING,
-              message: `Package '${packageName}' had version '${originalVersion}' which is unexpected.`
-            };
-          }
-        }
+      const currentVersion = deps[pkgName];
+      const latestVersion = '^' + pkg.manifest.version!;
 
-        console.log(`> ${packageName}: ${originalVersion} => ${latestVersion}`);
-        deps[packageName] = latestVersion;
-      }
-    }
+      console.log(`${pkgName}: ${currentVersion} => ${latestVersion}`);
+      deps[pkgName] = latestVersion;
+    });
   };
 
-  if (packageJson.dependencies) {
-    processDeps(packageJson.dependencies);
+  if (packageJson.dependencies) processDeps(packageJson.dependencies);
+  if (packageJson.devDependencies) processDeps(packageJson.devDependencies);
+
+  if (packagesFound === 0) {
+    return {
+      demoName,
+      status: ProcessStatus.WARNING,
+      errors: [`No workspace packages found`]
+    };
   }
 
-  if (packageJson.peerDependencies) {
-    processDeps(packageJson.peerDependencies);
-  }
-
-  if (packageJson.devDependencies) {
-    processDeps(packageJson.devDependencies);
-  }
-
-  if (!programOpts['--dry-run']) {
+  if (!options.dryRun) {
     try {
-      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+      await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
     } catch (e) {
-      result = {
+      return {
         demoName,
-        resultType: ResultType.FAILED,
-        message: `Error writing package.json: ${e.message}`
+        status: ProcessStatus.ERROR,
+        errors: [`Failed to write package.json: ${e}`]
       };
     }
   }
 
-  console.log('Done\n');
-  return result;
+  return {
+    demoName,
+    status: ProcessStatus.SUCCESS
+  };
 };
 
-const main = () => {
-  let demos: string[] = [];
+const main = async () => {
+  const program = new Command();
+  program.option('--dry-run', 'resolve version changes without applying', false);
+  program.parse();
+  const options = program.opts();
 
-  if (programOpts['--pattern']) {
-    const pattern = programArgs.join(' ');
-    console.log(`Finding demos using pattern '${pattern}'`);
+  const allDemos = await resolveDemos();
+  const userDemos = await chooseDemos(allDemos);
 
-    const process = spawnSync('find', [DEMOS_DIR, '-maxdepth', '1', '-name', pattern], {
-      encoding: 'utf8'
-    });
-    demos = process.stdout.split('\n').filter((d) => d.trim().length > 0);
-
-    console.log('Done\n');
-  } else {
-    const allDemos = fs.readdirSync(path.resolve('./demos'));
-    const givenDemos = programArgs;
-
-    if (givenDemos.length > 0) {
-      console.log('Bumping given demos');
-      demos = givenDemos;
-    } else {
-      console.log('Bumping all demos');
-      demos = allDemos;
-    }
-
-    demos = demos.map((d) => path.join(DEMOS_DIR, d));
+  const results = await processDemos(userDemos, options);
+  const failed = displayResults(results);
+  if (failed) {
+    console.error('Not all demos succeeded.');
+    process.exit(1);
   }
-
-  const results = demos.map((demo) => processDemo(demo));
-
-  const warnings = results.filter((r) => r.resultType == ResultType.WARNING);
-  const errors = results.filter((r) => r.resultType == ResultType.FAILED);
-
-  if (warnings.length > 0) {
-    console.log('Warnings:');
-  }
-
-  if (errors.length > 0) {
-    console.log('Failures:');
-  }
+  console.log('All demos succeeded.');
 };
 
 main();
