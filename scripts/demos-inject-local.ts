@@ -22,12 +22,12 @@ workspacePackages.forEach((pkg) => {
 const PNPMFILE_CJS = `const fs = require("fs");
 const path = require("path");
 
+const localPaths = ${JSON.stringify(packagePaths)};
+const getLocalPath = (name) => localPaths[name];
+
 module.exports = {
   hooks: {
     readPackage(pkg) {
-      const localPaths = ${JSON.stringify(packagePaths)};
-      const getLocalPath = (name) => localPaths[name];
-
       const injectPeers = (manifestPath) => {
         try {
           const content = fs.readFileSync(manifestPath, "utf-8");
