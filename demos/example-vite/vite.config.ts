@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import wasm from 'vite-plugin-wasm';
 
 // https://vitejs.dev/config/
@@ -18,10 +17,10 @@ export default defineConfig({
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web']
   },
-  plugins: [wasm(), topLevelAwait()],
+  plugins: [wasm()],
   worker: {
     format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    plugins: () => [wasm()]
   },
   test: {
     globals: true,
