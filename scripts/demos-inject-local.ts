@@ -3,96 +3,30 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import inquirer from 'inquirer';
+import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
+
+// Get workspace packages and create a mapping from package name to local path
+const workspacePackages = await findWorkspacePackages(path.resolve('.'), {
+  patterns: ['./packages/*']
+});
+const packagePaths = {};
+workspacePackages.forEach((pkg) => {
+  const pkgName = pkg.manifest.name!;
+  if (pkgName.startsWith('@powersync/')) {
+    packagePaths[pkgName] = pkg.rootDirRealPath;
+  }
+});
 
 // Intercepts the resolution of `@powersync/*` packages (plus peer dependencies) and
 // replaces them with local versions.
-//
-// TODO Find out if this can be done with links instead of needing to
-//      use bundles
-
-/*
-const PNPMFILE_CJS = `const fs = require('fs');
-const path = require('path');
-
-module.exports = {
-  hooks: {
-    async readPackage(pkg, context) {
-      const workspacePackages = await fs.promises.readdir('../../packages');
-
-      const workspaceOverrides = {};
-      workspacePackages.forEach((workspacePkg) => {
-        workspaceOverrides['@powersync/' + workspacePkg] = path.resolve('../../packages/' + workspacePkg);
-      });
-
-      const getPeerDeps = async (pkgName) => {
-        const workspacePath = workspaceOverrides[pkgName];
-        if (!workspacePath) return {};
-        try {
-          await fs.promises.access(workspacePath);
-          const content = await fs.promises.readFile(path.join(workspacePath, 'package.json'), 'utf8');
-          return JSON.parse(content).peerDependencies || {};
-        } catch (e) {
-          return {};
-        }
-      };
-
-      // Recursively find and add missing workspace peers
-      // Loops until no new workspace dependencies are added to handle chains (A -> B -> C)
-      let changed = true;
-      while (changed) {
-        changed = false;
-        const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-
-        for (const depName of Object.keys(allDeps)) {
-          if (workspaceOverrides[depName]) {
-            const peers = await getPeerDeps(depName);
-
-            for (const [peerName, peerVersion] of Object.entries(peers)) {
-              if (workspaceOverrides[peerName] && !allDeps[peerName]) {
-                if (!pkg.dependencies) pkg.dependencies = {};
-
-                pkg.dependencies[peerName] = peerVersion;
-
-                // Update our temp list so the loop sees it next time
-                allDeps[peerName] = peerVersion;
-                changed = true;
-                context.log(\`Autofilled workspace peer \${peerName} (required by \${depName})\`);
-              }
-            }
-          }
-        }
-      }
-
-      const replaceWithWorkspace = (dependencies) => {
-        if (!dependencies) return;
-        Object.keys(workspaceOverrides).forEach((name) => {
-          if (dependencies[name]) {
-            dependencies[name] = \`file:\${workspaceOverrides[name]}\`;
-
-            if (!pkg.dependenciesMeta) pkg.dependenciesMeta = {};
-            if (!pkg.dependenciesMeta[name]) pkg.dependenciesMeta[name] = {};
-            pkg.dependenciesMeta[name].injected = true;
-          }
-        });
-      };
-
-      replaceWithWorkspace(pkg.dependencies);
-      replaceWithWorkspace(pkg.devDependencies);
-
-      return pkg;
-    }
-  }
-}
-`;
-*/
-
 const PNPMFILE_CJS = `const fs = require("fs");
 const path = require("path");
 
 module.exports = {
   hooks: {
     readPackage(pkg) {
-      const getLocalPath = (name) => \`../../packages/\${name.split("/")[1]}\`;
+      const localPaths = ${JSON.stringify(packagePaths)};
+      const getLocalPath = (name) => localPaths[name];
 
       const injectPeers = (manifestPath) => {
         try {
@@ -215,6 +149,7 @@ const main = async () => {
     )
     .option('-p, --pattern <pattern>', 'specify a pattern matching which demos to select')
     .option('-d, --directory <path>', 'specify directory to search for demos in', 'demos')
+    .option('-a, --all', 'run for all demos non-interactively', false)
     .option('-i, --install', 'run `pnpm install` after injecting', false)
     .option('-f, --force', 'overwrite existing `.pnpmfile.cjs` files if found', false);
 
@@ -227,7 +162,15 @@ const main = async () => {
   const options = program.opts();
 
   const allDemos = await getDemosAll(options);
-  const demos = options.pattern ? filterDemosPattern(allDemos, options) : await filterDemosUser(allDemos, options);
+  let demos: string[];
+
+  if (options.all) {
+    demos = allDemos;
+  } else if (options.pattern) {
+    demos = filterDemosPattern(allDemos, options);
+  } else {
+    demos = await filterDemosUser(allDemos, options);
+  }
 
   await injectPackagesAll(demos, options);
   if (options.install) {
