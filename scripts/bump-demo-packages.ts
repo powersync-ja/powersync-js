@@ -164,12 +164,14 @@ const processDemo = async (demoName: string, options: OptionValues): Promise<Pro
 
 const main = async () => {
   const program = new Command();
-  program.option('--dry-run', 'resolve version changes without applying', false);
+  program
+    .option('--dry-run', 'resolve version changes without applying', false)
+    .option('--all', 'run for all demos non-interactively', false);
   program.parse();
   const options = program.opts();
 
   const allDemos = await resolveDemos();
-  const userDemos = await chooseDemos(allDemos);
+  const userDemos = options.all ? allDemos : await chooseDemos(allDemos);
 
   const results = await processDemos(userDemos, options);
   const failed = displayResults(results);
