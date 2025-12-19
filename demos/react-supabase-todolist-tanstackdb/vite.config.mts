@@ -1,9 +1,10 @@
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
+/// <reference types="vitest" />
 import { fileURLToPath, URL } from 'url';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
 
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
@@ -70,5 +71,29 @@ export default defineConfig({
   worker: {
     format: 'es',
     plugins: () => [wasm(), topLevelAwait()]
+  },
+  test: {
+    globals: true,
+    include: ['../e2e/**/*.test.{ts,tsx}'],
+    maxConcurrency: 1,
+    alias: {
+      // Mock SupabaseConnector with an authenticated session for tests
+      '@/library/powersync/SupabaseConnector': fileURLToPath(
+        new URL('./e2e/mocks/SupabaseConnector.ts', import.meta.url)
+      ),
+      // Mock GuardBySync to bypass the sync check for tests
+      '@/components/widgets/GuardBySync': fileURLToPath(new URL('./e2e/mocks/GuardBySync.tsx', import.meta.url))
+    },
+    browser: {
+      enabled: true,
+      isolate: true,
+      provider: 'playwright',
+      headless: true,
+      instances: [
+        {
+          browser: 'chromium'
+        }
+      ]
+    }
   }
 });
