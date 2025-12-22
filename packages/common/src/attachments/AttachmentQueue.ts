@@ -21,19 +21,19 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
  */
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
-  periodicSyncTimer?: ReturnType<typeof setInterval>;
+  readonly periodicSyncTimer?: ReturnType<typeof setInterval>;
 
   /** Context for managing attachment records in the database */
-  context: AttachmentContext;
+  readonly context: AttachmentContext;
 
   /** Service for synchronizing attachments between local and remote storage */
-  syncingService: SyncingService;
+  readonly syncingService: SyncingService;
 
   /** Adapter for local file storage operations */
-  localStorage: LocalStorageAdapter;
+  readonly localStorage: LocalStorageAdapter;
 
   /** Adapter for remote file storage operations */
-  remoteStorage: RemoteStorageAdapter;
+  readonly remoteStorage: RemoteStorageAdapter;
 
   /**
    * Callback function to watch for changes in attachment references in your data model.
@@ -42,31 +42,31 @@ export class AttachmentQueue {
    * data that reference attachments. When attachments are added, removed, or modified,
    * this callback should trigger the onUpdate function with the current set of attachments.
    */
-  watchAttachments: (
+  readonly watchAttachments: (
     onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>,
     signal: AbortSignal
   ) => void;
 
   /** Name of the database table storing attachment records */
-  tableName?: string;
+  readonly tableName?: string;
 
   /** Logger instance for diagnostic information */
-  logger?: ILogger;
+  readonly logger: ILogger;
 
   /** Interval in milliseconds between periodic sync operations. Default: 30000 (30 seconds) */
-  syncIntervalMs: number = 30 * 1000;
+  readonly syncIntervalMs: number = 30 * 1000;
 
   /** Duration in milliseconds to throttle sync operations */
-  syncThrottleDuration: number;
+  readonly syncThrottleDuration: number;
 
   /** Whether to automatically download remote attachments. Default: true */
-  downloadAttachments: boolean = true;
+  readonly downloadAttachments: boolean = true;
 
   /** Maximum number of archived attachments to keep before cleanup. Default: 100 */
-  archivedCacheLimit: number;
+  readonly archivedCacheLimit: number;
 
   /** Service for managing attachment-related database operations */
-  attachmentService: AttachmentService;
+  readonly attachmentService: AttachmentService;
 
   watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
 
@@ -120,16 +120,10 @@ export class AttachmentQueue {
     this.syncThrottleDuration = syncThrottleDuration;
     this.archivedCacheLimit = archivedCacheLimit;
     this.downloadAttachments = downloadAttachments;
-    this.context = new AttachmentContext(db, tableName, logger ?? db.logger, archivedCacheLimit);
-    this.attachmentService = new AttachmentService(db, logger ?? db.logger, tableName);
-    this.syncingService = new SyncingService(
-      this.context,
-      localStorage,
-      remoteStorage,
-      logger ?? db.logger,
-      errorHandler
-    );
     this.logger = logger ?? db.logger;
+    this.context = new AttachmentContext(db, tableName, this.logger, archivedCacheLimit);
+    this.attachmentService = new AttachmentService(db, this.logger, tableName);
+    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, this.logger, errorHandler);
   }
 
   /**
