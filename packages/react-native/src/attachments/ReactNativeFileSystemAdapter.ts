@@ -1,37 +1,51 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
 import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
-try {
-  var rnfs = require('@dr.pogodin/react-native-fs');
-} catch (e) {
-  throw new Error(`Could not resolve @dr.pogodin/react-native-fs.
-To use the React Native File System attachment adapter please install @dr.pogodin/react-native-fs.`);
-}
+type ReactNativeFsModule = {
+  DocumentDirectoryPath: string;
+  exists(path: string): Promise<boolean>;
+  mkdir(path: string): Promise<void>;
+  unlink(path: string): Promise<void>;
+  writeFile(path: string, contents: string, encoding?: 'base64' | 'utf8'): Promise<void>;
+  readFile(path: string, encoding?: 'base64' | 'utf8'): Promise<string>;
+};
 
 export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
+  private rnfs: ReactNativeFsModule;
   private storageDirectory: string;
 
   constructor(storageDirectory?: string) {
+    let rnfs: ReactNativeFsModule;
+    try {
+      rnfs = require('@dr.pogodin/react-native-fs');
+    } catch (e) {
+      throw new Error(`Could not resolve @dr.pogodin/react-native-fs.
+To use the React Native File System attachment adapter please install @dr.pogodin/react-native-fs.`);
+    }
+
+    this.rnfs = rnfs;
     // Default to a subdirectory in the document directory
-    this.storageDirectory = storageDirectory ?? `${rnfs.DocumentDirectoryPath}/attachments/`;
+    this.storageDirectory = storageDirectory ?? `${this.rnfs.DocumentDirectoryPath}/attachments/`;
   }
 
   async initialize(): Promise<void> {
-    const dirExists = await rnfs.exists(this.storageDirectory);
+    const dirExists = await this.rnfs.exists(this.storageDirectory);
     if (!dirExists) {
-      await rnfs.mkdir(this.storageDirectory);
+      await this.rnfs.mkdir(this.storageDirectory);
     }
   }
 
   async clear(): Promise<void> {
-    const dirExists = await rnfs.exists(this.storageDirectory);
+    const dirExists = await this.rnfs.exists(this.storageDirectory);
     if (dirExists) {
-      await rnfs.unlink(this.storageDirectory);
+      await this.rnfs.unlink(this.storageDirectory);
+      await this.rnfs.mkdir(this.storageDirectory);
     }
   }
 
   getLocalUri(filename: string): string {
-    return `${this.storageDirectory}${filename}`;
+    const separator = this.storageDirectory.endsWith('/') ? '' : '/';
+    return `${this.storageDirectory}${separator}${filename}`;
   }
 
   async saveFile(
@@ -43,7 +57,7 @@ export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter 
 
     if (typeof data === 'string') {
       const encoding = options?.encoding ?? EncodingType.Base64;
-      await rnfs.writeFile(filePath, data, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
+      await this.rnfs.writeFile(filePath, data, encoding);
 
       // Calculate size based on encoding
       if (encoding === EncodingType.Base64) {
@@ -54,7 +68,7 @@ export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter 
       }
     } else {
       const base64 = encodeBase64(data);
-      await rnfs.WriteFile(filePath, base64, 'base64');
+      await this.rnfs.writeFile(filePath, base64, 'base64');
       size = data.byteLength;
     }
 
@@ -64,7 +78,7 @@ export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter 
   async readFile(filePath: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
     const encoding = options?.encoding ?? EncodingType.Base64;
 
-    const content = await rnfs.readFile(filePath, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
+    const content = await this.rnfs.readFile(filePath, encoding);
 
     if (encoding === EncodingType.UTF8) {
       const encoder = new TextEncoder();
@@ -75,27 +89,34 @@ export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter 
   }
 
   async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
-    await rnfs.unlink(filePath).catch((error: any) => {
-      if (error?.message?.includes('not exist') || error?.message?.includes('ENOENT')) {
+    try {
+      await this.rnfs.unlink(filePath);
+    } catch (error: any) {
+      // Ignore file not found errors
+      if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT') || error?.message?.includes('not exist')) {
         return;
       }
       throw error;
-    });
+    }
   }
 
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      return await rnfs.exists(filePath);
-    } catch {
-      return false;
+      return await this.rnfs.exists(filePath);
+    } catch (error: any) {
+      // Only return false for file-not-found errors
+      if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT')) {
+        return false;
+      }
+      throw error;
     }
   }
 
   async makeDir(path: string): Promise<void> {
-    await rnfs.mkdir(path);
+    await this.rnfs.mkdir(path);
   }
 
   async rmDir(path: string): Promise<void> {
-    await rnfs.unlink(path);
+    await this.rnfs.unlink(path);
   }
 }
