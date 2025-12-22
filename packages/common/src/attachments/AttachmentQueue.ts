@@ -21,7 +21,7 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
  */
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
-  readonly periodicSyncTimer?: ReturnType<typeof setInterval>;
+  #periodicSyncTimer?: ReturnType<typeof setInterval>;
 
   /** Context for managing attachment records in the database */
   readonly context: AttachmentContext;
@@ -158,7 +158,7 @@ export class AttachmentQueue {
     await this.verifyAttachments();
 
     // Sync storage periodically
-    this.periodicSyncTimer = setInterval(async () => {
+    this.#periodicSyncTimer = setInterval(async () => {
       await this.syncStorage();
     }, this.syncIntervalMs);
 
@@ -271,8 +271,8 @@ export class AttachmentQueue {
    * Clears the periodic sync timer and closes all active attachment watchers.
    */
   async stopSync(): Promise<void> {
-    clearInterval(this.periodicSyncTimer);
-    this.periodicSyncTimer = undefined;
+    clearInterval(this.#periodicSyncTimer);
+    this.#periodicSyncTimer = undefined;
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();
