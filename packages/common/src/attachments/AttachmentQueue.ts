@@ -35,8 +35,17 @@ export class AttachmentQueue {
   /** Adapter for remote file storage operations */
   remoteStorage: RemoteStorageAdapter;
 
-  /** @deprecated Directory path for storing attachments  */
-  attachmentsDirectory?: string;
+  /**
+   * Callback function to watch for changes in attachment references in your data model.
+   *
+   * This should be implemented by the user of AttachmentQueue to monitor changes in your application's
+   * data that reference attachments. When attachments are added, removed, or modified,
+   * this callback should trigger the onUpdate function with the current set of attachments.
+   */
+  watchAttachments: (
+    onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>,
+    signal: AbortSignal
+  ) => void;
 
   /** Name of the database table storing attachment records */
   tableName?: string;
@@ -121,20 +130,6 @@ export class AttachmentQueue {
       errorHandler
     );
     this.logger = logger ?? db.logger;
-  }
-
-  /**
-   * Callback function to watch for changes in attachment references in your data model.
-   *
-   * This method should be implemented to monitor changes in your application's
-   * data that reference attachments. When attachments are added, removed, or modified,
-   * this callback should trigger the onUpdate function with the current set of attachments.
-   *
-   * @param onUpdate - Callback to invoke when attachment references change
-   * @throws Error indicating this method must be implemented by the user
-   */
-  watchAttachments(onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal): void {
-    throw new Error('watchAttachments should be implemented by the user of AttachmentQueue');
   }
 
   /**
