@@ -28,3 +28,6 @@ dist-ssr
 .env.local
 .env.development
 .env.production
+
+# Ignored by parent .gitignore
+!src/lib
