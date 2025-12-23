@@ -2,7 +2,7 @@
 
 This project demonstrates how to build a note-taking application using Neon's Data API (powered by PostgREST), Neon Auth for authentication and PowerSync for real-time updates and offline support. Instead of using traditional database access via a backend, or even a backend at all, this demo showcases how to leverage PowerSync for SQLite queries of replicated Postgres data with a very elegant JS SDK.
 
-**Note:** this demo was forked from [neon-data-api-neon-auth](https://github.com/neondatabase-labs/neon-data-api-neon-auth) to provide Neon users with a migration example of how to use PowerSync with Neon. The README provides only basic instructions for setting up the demo. Please refer to the [PowerSync documentation](https://neon.com/docs/powersync/get-started) for more information.
+**Note:** this demo was forked from [neon-data-api-neon-auth](https://github.com/neondatabase-labs/neon-data-api-neon-auth) to provide Neon users with a migration example of how to add PowerSync to an existing Neon project. This README provides only basic instructions for setting up the demo. Please refer to the [PowerSync / Neon integration guide](https://docs.powersync.com/integration-guides/neon-+-powersync) for more complete instructions.
 
 **PowerSync JS SDK**
 
@@ -52,8 +52,10 @@ For detailed instructions, see:
 
 ```bash
 git clone https://github.com/powersync-ja/powersync-js.git
-cd demos/react-neon-notes-tanstack
+cd powersync-js
 pnpm install
+pnpm build:packages
+cd demos/react-neon-tanstack-query-notes
 ```
 
 ### 3. Configure Environment Variables
