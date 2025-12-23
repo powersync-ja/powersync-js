@@ -1,14 +1,14 @@
-import React from "react";
-import { NoteTitle } from "@/components/app/note-title";
-import { Toggle } from "@/components/ui/toggle";
-import { queryKeys } from "@/lib/query-keys";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@powersync/tanstack-react-query";
-import { Share2 } from "lucide-react";
-import { powersyncDrizzle } from "@/lib/powersync";
-import { notes } from "@/lib/powersync-schema";
-import { toCompilableQuery } from "@powersync/drizzle-driver";
-import { eq } from "drizzle-orm";
+import React from 'react';
+import { NoteTitle } from '@/components/app/note-title';
+import { Toggle } from '@/components/ui/toggle';
+import { queryKeys } from '@/lib/query-keys';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@powersync/tanstack-react-query';
+import { Share2 } from 'lucide-react';
+import { powersyncDrizzle } from '@/lib/powersync';
+import { notes } from '@/lib/powersync-schema';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+import { eq } from 'drizzle-orm';
 
 type Props = {
   id: string;
@@ -19,14 +19,7 @@ type Props = {
   onShareToggle?: (isShared: boolean) => void;
 };
 
-export default function NoteHeader({
-  id,
-  title,
-  shared,
-  owner_id,
-  user_id,
-  onShareToggle,
-}: Props) {
+export default function NoteHeader({ id, title, shared, owner_id, user_id, onShareToggle }: Props) {
   const query = powersyncDrizzle.select({ shared: notes.shared }).from(notes).where(eq(notes.id, id));
   const { data: sharedRows } = useQuery({
     queryKey: queryKeys.noteShared(id),
@@ -40,7 +33,7 @@ export default function NoteHeader({
       return undefined;
     }
 
-    return typeof row.shared === "boolean" ? row.shared : Boolean(row.shared);
+    return typeof row.shared === 'boolean' ? row.shared : Boolean(row.shared);
   })();
 
   const isShared = hydratedShared ?? shared ?? false;
@@ -53,7 +46,10 @@ export default function NoteHeader({
 
   const toggleShareMutation = useMutation({
     mutationFn: async (newSharedState: boolean) => {
-      await powersyncDrizzle.update(notes).set({ shared: newSharedState, updated_at: new Date().toISOString() }).where(eq(notes.id, id));
+      await powersyncDrizzle
+        .update(notes)
+        .set({ shared: newSharedState, updated_at: new Date().toISOString() })
+        .where(eq(notes.id, id));
 
       return { shared: newSharedState };
     },
@@ -61,17 +57,12 @@ export default function NoteHeader({
       if (onShareToggle) {
         onShareToggle(data.shared);
       }
-    },
+    }
   });
 
   return (
     <header className="flex items-center justify-between">
-      <NoteTitle
-        id={id}
-        title={title}
-        shared={isShared}
-        owner={user_id === owner_id}
-      />
+      <NoteTitle id={id} title={title} shared={isShared} owner={user_id === owner_id} />
       {user_id === owner_id && (
         <Toggle
           pressed={isShared}

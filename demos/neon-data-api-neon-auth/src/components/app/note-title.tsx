@@ -1,10 +1,10 @@
-import { powersyncDrizzle } from "@/lib/powersync";
-import { queryKeys } from "@/lib/query-keys";
-import { useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { eq, type InferSelectModel } from "drizzle-orm";
-import { notes } from "@/lib/powersync-schema";
+import { powersyncDrizzle } from '@/lib/powersync';
+import { queryKeys } from '@/lib/query-keys';
+import { useQueryClient } from '@tanstack/react-query';
+import { Copy } from 'lucide-react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
+import { eq, type InferSelectModel } from 'drizzle-orm';
+import { notes } from '@/lib/powersync-schema';
 
 type Note = InferSelectModel<typeof notes>;
 
@@ -12,7 +12,7 @@ export function NoteTitle({
   id,
   title,
   shared,
-  owner,
+  owner
 }: {
   id: string;
   title: string;
@@ -42,7 +42,7 @@ export function NoteTitle({
   };
 
   const handleTitleKeyDown = (e: KeyboardEvent<HTMLHeadingElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       saveTitle();
     }
@@ -55,18 +55,21 @@ export function NoteTitle({
       const newTitle = titleRef.current.textContent.trim();
       if (newTitle !== title) {
         try {
-          await powersyncDrizzle.update(notes).set({title: newTitle, updated_at: new Date().toISOString()}).where(eq(notes.id, id));
+          await powersyncDrizzle
+            .update(notes)
+            .set({ title: newTitle, updated_at: new Date().toISOString() })
+            .where(eq(notes.id, id));
 
           queryClient.setQueryData(queryKeys.note(id), (old: Note) => ({
             ...old,
-            title: newTitle,
+            title: newTitle
           }));
 
           queryClient.invalidateQueries({ queryKey: queryKeys.notes() });
 
           setTitleValue(newTitle);
         } catch (err) {
-          console.error("Failed to update title", err);
+          console.error('Failed to update title', err);
           // Restore original title on error
           if (titleRef.current) {
             titleRef.current.textContent = titleValue;
@@ -95,9 +98,7 @@ export function NoteTitle({
         <Copy
           className="w-3 h-3 text-foreground/70 cursor-pointer"
           onClick={() => {
-            navigator.clipboard.writeText(
-              `${window.location.origin}/note?id=${id}`,
-            );
+            navigator.clipboard.writeText(`${window.location.origin}/note?id=${id}`);
           }}
         />
       )}

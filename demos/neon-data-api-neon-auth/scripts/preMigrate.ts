@@ -1,12 +1,12 @@
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
-import { sql } from "drizzle-orm";
+import 'dotenv/config';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { sql } from 'drizzle-orm';
 
 async function main() {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    console.error("[preMigrate] DATABASE_URL is not set");
+    console.error('[preMigrate] DATABASE_URL is not set');
     process.exit(1);
   }
 
@@ -15,17 +15,24 @@ async function main() {
   const db = drizzle(http);
 
   await db.execute(sql`
-    GRANT SELECT, UPDATE, INSERT, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+    GRANT
+    SELECT
+    ,
+    UPDATE,
+    INSERT,
+    DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
   `);
 
   await db.execute(sql`
-    GRANT SELECT ON ALL TABLES IN SCHEMA public TO anonymous;
+    GRANT
+    SELECT
+      ON ALL TABLES IN SCHEMA public TO anonymous;
   `);
 
-  console.log("[preMigrate] Successfully executed GRANT statements");
+  console.log('[preMigrate] Successfully executed GRANT statements');
 }
 
 main().catch((err) => {
-  console.error("[preMigrate] Error executing pre-migration grants:", err);
+  console.error('[preMigrate] Error executing pre-migration grants:', err);
   process.exit(1);
 });

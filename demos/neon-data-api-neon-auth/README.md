@@ -2,7 +2,7 @@
 
 This project demonstrates how to build a note-taking application using Neon's Data API (powered by PostgREST), Neon Auth for authentication and PowerSync for real-time updates and offline support. Instead of using traditional database access via a backend, or even a backend at all, this demo showcases how to leverage PowerSync for SQLite queries of replicated Postgres data with a very elegant JS SDK.
 
-**Note:** this demo was forked from [neon-data-api-neon-auth](https://github.com/neondatabase-labs/neon-data-api-neon-auth) to provide Neon users with a migration example of how to use PowerSync with Neon. The README provides only basic instructions for setting up the demo. Please refer to the [PowerSync documentation](https://neon.com/docs/powersync/get-started) for more information. 
+**Note:** this demo was forked from [neon-data-api-neon-auth](https://github.com/neondatabase-labs/neon-data-api-neon-auth) to provide Neon users with a migration example of how to use PowerSync with Neon. The README provides only basic instructions for setting up the demo. Please refer to the [PowerSync documentation](https://neon.com/docs/powersync/get-started) for more information.
 
 **PowerSync JS SDK**
 
@@ -25,7 +25,6 @@ This demo is built with:
 - [PowerSync JS SDK](https://powersync.com/docs/js-sdk/get-started) — Client SQLite interface to synced data
 - [PowerSync TanStack Query](https://docs.powersync.com/client-sdk-references/javascript-web/javascript-spa-frameworks#tanstack-query) — Brings TanStack’s advanced asynchronous state management features to the PowerSync JS SDK
 - [PowerSync Drizzle Driver](https://docs.powersync.com/client-sdk-references/javascript-web/javascript-orm/drizzle) - ORM driver for Drizzle
-
 
 ## Prerequisites
 
@@ -104,6 +103,7 @@ In the PowerSync dashboard, create a project, an instance and then create a data
 ### 7. Configure PowerSync auth and Sync Rules
 
 ### Auth
+
 Navigate to "Client Auth" in the PowerSync dashboard and configure:
 
 - Select "Enable development tokens"
@@ -111,6 +111,7 @@ Navigate to "Client Auth" in the PowerSync dashboard and configure:
 - Populate the "JWT Audience" with your project root URL (e.g., `https://ep-restless-resonance-adom1z4w.neonauth.c-2.us-east-1.aws.neon.tech/`)
 
 ### Sync Rules
+
 Navigate to "Sync Rules" in the PowerSync dashboard and configure these sync rules:
 
 ```yaml
@@ -133,9 +134,10 @@ bucket_definitions:
 ```
 
 ### 8. Test Sync
+
 You can use the Sync Test to validate your Sync Rules, but since your app won't have any data at this point yet, you can skip this step for now.
 
-Click on "Sync Test" test in the PowerSync dashboard, and enter the UUID of a user in your Neon Auth database to generate a test JWT. Then, click "Launch Sync Diagnostics Client" to test the sync rules. 
+Click on "Sync Test" test in the PowerSync dashboard, and enter the UUID of a user in your Neon Auth database to generate a test JWT. Then, click "Launch Sync Diagnostics Client" to test the sync rules.
 
 ### 9. Start the Development Server
 
@@ -170,12 +172,11 @@ git push -u origin main
 
 In the Vercel project settings, add these environment variables:
 
-| Variable                 | Value                                        | Where to find it             |
-| ------------------------ | -------------------------------------------- | ---------------------------- |
-| `VITE_NEON_DATA_API_URL` | `https://your-project-id.data-api.neon.tech` | Neon Console → Data API page |
-| `VITE_NEON_AUTH_URL`     | `https://your-project-id.auth.neon.tech`     | Neon Console → Auth page     |
-| `VITE_POWERSYNC_URL`     | `https://foo.powersync.journeyapps.com`     | PowerSync Dashboard → Connect     |
-
+| Variable                 | Value                                        | Where to find it              |
+| ------------------------ | -------------------------------------------- | ----------------------------- |
+| `VITE_NEON_DATA_API_URL` | `https://your-project-id.data-api.neon.tech` | Neon Console → Data API page  |
+| `VITE_NEON_AUTH_URL`     | `https://your-project-id.auth.neon.tech`     | Neon Console → Auth page      |
+| `VITE_POWERSYNC_URL`     | `https://foo.powersync.journeyapps.com`      | PowerSync Dashboard → Connect |
 
 > **Note:** You don't need `DATABASE_URL` on Vercel — migrations are run locally during development.
 

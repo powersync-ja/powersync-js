@@ -1,18 +1,13 @@
-import path from "node:path";
-import tailwindcss from "@tailwindcss/vite";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import path from 'node:path';
+import tailwindcss from '@tailwindcss/vite';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import wasm from 'vite-plugin-wasm';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    tanstackRouter({ target: "react", autoCodeSplitting: true }),
-    react(),
-    tailwindcss(),
-    wasm(),
-  ],
+  plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react(), tailwindcss(), wasm()],
   worker: {
     format: 'es'
   },
@@ -24,7 +19,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
+      '@': path.resolve(__dirname, './src')
+    }
+  }
 });

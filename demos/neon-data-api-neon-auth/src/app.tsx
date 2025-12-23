@@ -1,27 +1,27 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { StrictMode, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { StrictMode, useEffect } from 'react';
 
-import { PowerSyncContext } from "@powersync/react";
-import { connectPowerSync, neonConnector, powersync } from "@/lib/powersync";
+import { PowerSyncContext } from '@powersync/react';
+import { connectPowerSync, neonConnector, powersync } from '@/lib/powersync';
 
 // Import the generated route tree
-import { routeTree } from "./routeTree.gen";
+import { routeTree } from './routeTree.gen';
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
   context: {
-    accessToken: null,
-  },
+    accessToken: null
+  }
 });
 
 // Create a client
 const queryClient = new QueryClient();
 
 // Register the router instance for type safety
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
@@ -61,7 +61,7 @@ function PowerSyncAuthBridge() {
       },
       sessionStarted: () => {
         connectPowerSync();
-      },
+      }
     });
 
     initConnector();

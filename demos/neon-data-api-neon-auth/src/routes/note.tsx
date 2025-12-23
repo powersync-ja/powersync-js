@@ -1,47 +1,39 @@
-import Header from "@/components/app/header";
-import NoteHeader from "@/components/app/note-header";
-import {
-  CurrentParagraph,
-  Paragraph as WrittenParagraph,
-} from "@/components/app/paragraph";
-import { neonConnector } from "@/lib/powersync";
-import { queryKeys } from "@/lib/query-keys";
-import { generateNameNote } from "@/lib/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@powersync/tanstack-react-query";
-import {
-  createFileRoute,
-  redirect,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { powersyncDrizzle } from "@/lib/powersync";
-import { notes, paragraphs } from "@/lib/powersync-schema";
-import { toCompilableQuery } from "@powersync/drizzle-driver";
-import { eq, asc, InferSelectModel } from "drizzle-orm";
+import Header from '@/components/app/header';
+import NoteHeader from '@/components/app/note-header';
+import { CurrentParagraph, Paragraph as WrittenParagraph } from '@/components/app/paragraph';
+import { neonConnector } from '@/lib/powersync';
+import { queryKeys } from '@/lib/query-keys';
+import { generateNameNote } from '@/lib/utils';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@powersync/tanstack-react-query';
+import { createFileRoute, redirect, useNavigate, useSearch } from '@tanstack/react-router';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { powersyncDrizzle } from '@/lib/powersync';
+import { notes, paragraphs } from '@/lib/powersync-schema';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+import { eq, asc, InferSelectModel } from 'drizzle-orm';
 
 type InProgressParagraph = { content: string; timestamp: string };
 type Paragraph = InferSelectModel<typeof paragraphs>;
 type Note = InferSelectModel<typeof notes>;
 
 // Define the search params schema
-export const Route = createFileRoute("/note")({
+export const Route = createFileRoute('/note')({
   component: NoteComponent,
   async beforeLoad() {
     // Wait for connector to initialize (not guaranteed that the useEffect in app.tsx has run yet)
     await neonConnector.init();
     if (!neonConnector.currentSession) {
       throw redirect({
-        to: "/signin",
+        to: '/signin'
       });
     }
   },
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      id: search.id as string | undefined,
+      id: search.id as string | undefined
     };
-  },
+  }
 });
 
 function NoteComponent() {
@@ -50,9 +42,10 @@ function NoteComponent() {
   const navigate = useNavigate({ from: Route.fullPath });
   const queryClient = useQueryClient();
 
-  const [currentParagraph, setCurrentParagraph] = useState<InProgressParagraph>(
-    { content: "", timestamp: new Date().toISOString() },
-  );
+  const [currentParagraph, setCurrentParagraph] = useState<InProgressParagraph>({
+    content: '',
+    timestamp: new Date().toISOString()
+  });
   const [currentTime, setCurrentTime] = useState(() => new Date().toISOString());
   const creatingNoteRef = useRef(false);
   const storageKey = id ? `note-${id}-current-paragraph` : null;
@@ -66,7 +59,9 @@ function NoteComponent() {
       const now = new Date().toISOString();
       const title = generateNameNote();
 
-      await powersyncDrizzle.insert(notes).values({id: noteId, owner_id: userId, title, shared: false, created_at: now, updated_at: now});
+      await powersyncDrizzle
+        .insert(notes)
+        .values({ id: noteId, owner_id: userId, title, shared: false, created_at: now, updated_at: now });
 
       return {
         id: noteId,
@@ -75,13 +70,13 @@ function NoteComponent() {
         owner_id: userId,
         created_at: now,
         updated_at: now,
-        paragraphs: [],
-      }
+        paragraphs: []
+      };
     },
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.note(data.id), data);
       navigate({ search: { id: data.id } });
-    },
+    }
   });
 
   const noteQuery = powersyncDrizzle.select().from(notes).where(eq(notes.id, id!));
@@ -89,41 +84,43 @@ function NoteComponent() {
   const {
     data: noteRows,
     isLoading: isLoadingNote,
-    error: noteError,
+    error: noteError
   } = useQuery<Note, Error>({
     queryKey: queryKeys.note(id!),
     retry: false,
-    enabled: id !== "new-note" && Boolean(id),
-    query: toCompilableQuery(noteQuery),
+    enabled: id !== 'new-note' && Boolean(id),
+    query: toCompilableQuery(noteQuery)
   });
 
-  const paragraphQuery = powersyncDrizzle.select().from(paragraphs).where(eq(paragraphs.note_id, id!)).orderBy(asc(paragraphs.created_at));
+  const paragraphQuery = powersyncDrizzle
+    .select()
+    .from(paragraphs)
+    .where(eq(paragraphs.note_id, id!))
+    .orderBy(asc(paragraphs.created_at));
 
   const {
     data: paragraphRows,
     isLoading: isLoadingParagraphs,
-    error: paragraphsError,
+    error: paragraphsError
   } = useQuery<Paragraph, Error>({
     queryKey: queryKeys.noteParagraphs(id!),
     retry: false,
-    enabled: id !== "new-note" && Boolean(id),
-    query: toCompilableQuery(paragraphQuery),
+    enabled: id !== 'new-note' && Boolean(id),
+    query: toCompilableQuery(paragraphQuery)
   });
 
   const noteRow = noteRows?.[0];
-  const note = noteRow
-    ? { ...noteRow, shared: Boolean(noteRow.shared) } 
-    : undefined;
+  const note = noteRow ? { ...noteRow, shared: Boolean(noteRow.shared) } : undefined;
 
   const isLoading = isLoadingNote || isLoadingParagraphs;
   const error = noteError ?? paragraphsError;
 
   // Create new note if needed
   useEffect(() => {
-    if (id === "new-note" && !creatingNoteRef.current) {
+    if (id === 'new-note' && !creatingNoteRef.current) {
       creatingNoteRef.current = true;
       createNoteMutation.mutate();
-    } else if (id !== "new-note") {
+    } else if (id !== 'new-note') {
       creatingNoteRef.current = false;
     }
   }, [id]);
@@ -133,7 +130,11 @@ function NoteComponent() {
     if (!storageKey) return;
     const saved = localStorage.getItem(storageKey);
     if (saved) {
-      try { setCurrentParagraph(JSON.parse(saved)); } catch { /* ignore */ }
+      try {
+        setCurrentParagraph(JSON.parse(saved));
+      } catch {
+        /* ignore */
+      }
     }
   }, [storageKey]);
 
@@ -153,7 +154,7 @@ function NoteComponent() {
 
   // Invalidate on mount to catch changes that occurred while unmounted
   useEffect(() => {
-    if (id && id !== "new-note") {
+    if (id && id !== 'new-note') {
       queryClient.invalidateQueries({ queryKey: queryKeys.note(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.noteParagraphs(id) });
     }
@@ -161,30 +162,38 @@ function NoteComponent() {
 
   const addParagraphMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!id) throw new Error("Note ID is required");
-      await powersyncDrizzle.insert(paragraphs).values({id: crypto.randomUUID(), note_id: id, content, created_at: new Date().toISOString()});
+      if (!id) throw new Error('Note ID is required');
+      await powersyncDrizzle
+        .insert(paragraphs)
+        .values({ id: crypto.randomUUID(), note_id: id, content, created_at: new Date().toISOString() });
     },
     onError: (err) => {
-      console.error("Failed to save paragraph", err);
-      alert("Failed to save paragraph. Please try again.");
-    },
+      console.error('Failed to save paragraph', err);
+      alert('Failed to save paragraph. Please try again.');
+    }
   });
 
-  const handleTextareaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCurrentParagraph({ content: e.target.value, timestamp: currentTime });
-  }, [currentTime]);
+  const handleTextareaChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setCurrentParagraph({ content: e.target.value, timestamp: currentTime });
+    },
+    [currentTime]
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      const content = currentParagraph.content.trim();
-      if (content && id) {
-        setCurrentParagraph({ content: "", timestamp: new Date().toISOString() });
-        if (storageKey) localStorage.removeItem(storageKey);
-        addParagraphMutation.mutate(content);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const content = currentParagraph.content.trim();
+        if (content && id) {
+          setCurrentParagraph({ content: '', timestamp: new Date().toISOString() });
+          if (storageKey) localStorage.removeItem(storageKey);
+          addParagraphMutation.mutate(content);
+        }
       }
-    }
-  }, [currentParagraph.content, id, storageKey, addParagraphMutation]);
+    },
+    [currentParagraph.content, id, storageKey, addParagraphMutation]
+  );
 
   if (!session?.user) {
     return null;
@@ -220,11 +229,7 @@ function NoteComponent() {
         />
         <main className="space-y-4">
           {(paragraphRows ?? []).map((para) => (
-            <WrittenParagraph
-              key={para.id}
-              content={para.content}
-              timestamp={para.created_at}
-            />
+            <WrittenParagraph key={para.id} content={para.content} timestamp={para.created_at} />
           ))}
           {isOwner && (
             <CurrentParagraph

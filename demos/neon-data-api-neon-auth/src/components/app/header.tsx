@@ -1,6 +1,6 @@
-import { client } from "@/lib/auth";
-import { powersync, neonConnector } from "@/lib/powersync";
-import { useRouter } from "@tanstack/react-router";
+import { client } from '@/lib/auth';
+import { powersync, neonConnector } from '@/lib/powersync';
+import { useRouter } from '@tanstack/react-router';
 
 export default function Header({ name }: { name: string }) {
   const router = useRouter();
@@ -15,15 +15,14 @@ export default function Header({ name }: { name: string }) {
             await client.auth.signOut();
             neonConnector.updateSession(null);
             await powersync.disconnectAndClear();
-            router.navigate({ to: "/signin" });
+            router.navigate({ to: '/signin' });
           }}
         >
           Sign out
         </button>
       </div>
       <p className="text-foreground/70">
-        Your minimalist note-taking app that automatically records timestamps
-        for each of your notes.
+        Your minimalist note-taking app that automatically records timestamps for each of your notes.
       </p>
     </header>
   );

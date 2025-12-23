@@ -1,23 +1,23 @@
-import { client } from "@/lib/auth";
-import { neonConnector } from "@/lib/powersync";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { client } from '@/lib/auth';
+import { neonConnector } from '@/lib/powersync';
+import { createFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
 
-export const Route = createFileRoute("/signin")({
-  component: SignInComponent,
+export const Route = createFileRoute('/signin')({
+  component: SignInComponent
 });
 
 function SignInComponent() {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
 
     try {
@@ -25,12 +25,12 @@ function SignInComponent() {
         await client.auth.signUp.email({
           email,
           password,
-          name,
+          name
         });
       } else {
         await client.auth.signIn.email({
           email,
-          password,
+          password
         });
       }
 
@@ -38,29 +38,29 @@ function SignInComponent() {
       if (session.data) {
         // Update the connector's cached session
         neonConnector.updateSession(session.data);
-        window.location.href = "/";
+        window.location.href = '/';
       } else {
-        setError("Please enable cookies to continue.");
+        setError('Please enable cookies to continue.');
         setLoading(false);
       }
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : "Authentication failed");
+      setError(err instanceof Error ? err.message : 'Authentication failed');
       setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError("");
+    setError('');
     setLoading(true);
 
     try {
       await client.auth.signIn.social({
-        provider: "google",
-        callbackURL: "/",
+        provider: 'google',
+        callbackURL: '/'
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed");
+      setError(err instanceof Error ? err.message : 'Google sign-in failed');
       setLoading(false);
     }
   };
@@ -70,7 +70,7 @@ function SignInComponent() {
       <div className="max-w-md w-full space-y-8 p-8">
         <div>
           <h2 className="text-center text-3xl font-bold text-foreground">
-            {isSignUp ? "Create an account" : "Sign in to your account"}
+            {isSignUp ? 'Create an account' : 'Sign in to your account'}
           </h2>
         </div>
 
@@ -117,7 +117,7 @@ function SignInComponent() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={isSignUp ? "new-password" : "current-password"}
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-border rounded-md placeholder-foreground/50 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm bg-background"
                 placeholder="Password"
@@ -127,9 +127,7 @@ function SignInComponent() {
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm text-center">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
           <div>
             <button
@@ -137,7 +135,7 @@ function SignInComponent() {
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
             >
-              {loading ? "Please wait..." : isSignUp ? "Sign up" : "Sign in"}
+              {loading ? 'Please wait...' : isSignUp ? 'Sign up' : 'Sign in'}
             </button>
           </div>
 
@@ -146,9 +144,7 @@ function SignInComponent() {
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-foreground/70">
-                Or continue with
-              </span>
+              <span className="px-2 bg-background text-foreground/70">Or continue with</span>
             </div>
           </div>
 
@@ -168,13 +164,11 @@ function SignInComponent() {
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp);
-                setError("");
+                setError('');
               }}
               className="text-primary hover:text-primary/90"
             >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
           </div>
         </form>
