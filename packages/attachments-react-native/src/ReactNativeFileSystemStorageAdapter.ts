@@ -10,6 +10,18 @@ type ReactNativeFsModule = {
   readFile(path: string, encoding?: 'base64' | 'utf8'): Promise<string>;
 };
 
+/**
+ * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
+ * Suitable for React Native applications not using Expo, or those preferring react-native-fs.
+ *
+ * @example
+ * ```typescript
+ * import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+ *
+ * const adapter = new ReactNativeFileSystemStorageAdapter();
+ * await adapter.initialize();
+ * ```
+ */
 export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
   private rnfs: ReactNativeFsModule;
   private storageDirectory: string;
@@ -57,7 +69,7 @@ To use the React Native File System attachment adapter please install @dr.pogodi
 
     if (typeof data === 'string') {
       const encoding = options?.encoding ?? EncodingType.Base64;
-      await this.rnfs.writeFile(filePath, data, encoding);
+      await this.rnfs.writeFile(filePath, data, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
 
       // Calculate size based on encoding
       if (encoding === EncodingType.Base64) {

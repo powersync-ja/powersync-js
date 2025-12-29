@@ -1,48 +1,73 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
 import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
 
-try {
-  var {
-    getInfoAsync,
-    makeDirectoryAsync,
-    deleteAsync,
-    writeAsStringAsync,
-    readAsStringAsync,
-    documentDirectory
-  } = require('expo-file-system');
-} catch (e) {
-  throw new Error(`Could not resolve expo-file-system.
-To use the Expo File System attachment adapter please install expo-file-system.`);
-}
+type ExpoFileSystemModule = {
+  getInfoAsync(path: string): Promise<{ exists: boolean }>;
+  makeDirectoryAsync(path: string, options?: { intermediates?: boolean }): Promise<void>;
+  deleteAsync(path: string): Promise<void>;
+  writeAsStringAsync(
+    fileUri: string,
+    contents: string,
+    options?: { encoding?: EncodingType.Base64 | EncodingType.UTF8 }
+  ): Promise<void>;
+  readAsStringAsync(
+    fileUri: string,
+    options?: { encoding?: EncodingType.Base64 | EncodingType.UTF8 }
+  ): Promise<string>;
+  documentDirectory: string | null;
+};
 
 /**
- * ExpoFileSystemAdapter implements LocalStorageAdapter using Expo's
+ * ExpoFileSystemStorageAdapter implements LocalStorageAdapter using Expo's file system API.
  * Suitable for React Native applications using Expo or Expo modules.
+ *
+ * @example
+ * ```typescript
+ * import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+ *
+ * const adapter = new ExpoFileSystemStorageAdapter();
+ * await adapter.initialize();
+ * ```
  */
 export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
+  private fs: ExpoFileSystemModule;
   private storageDirectory: string;
 
   constructor(storageDirectory?: string) {
+    let fs: ExpoFileSystemModule;
+    try {
+      fs = require('expo-file-system');
+    } catch (e) {
+      throw new Error(`Could not resolve expo-file-system.
+To use the Expo File System attachment adapter please install expo-file-system.`);
+    }
+
+    if (!fs.documentDirectory) {
+      throw new Error(`expo-file-system documentDirectory is not available.`);
+    }
+
+    this.fs = fs;
     // Default to a subdirectory in the document directory
-    this.storageDirectory = storageDirectory ?? `${documentDirectory}attachments/`;
+    this.storageDirectory = storageDirectory ?? `${fs.documentDirectory}attachments/`;
   }
 
   async initialize(): Promise<void> {
-    const dirInfo = await getInfoAsync(this.storageDirectory);
+    const dirInfo = await this.fs.getInfoAsync(this.storageDirectory);
     if (!dirInfo.exists) {
-      await makeDirectoryAsync(this.storageDirectory, { intermediates: true });
+      await this.fs.makeDirectoryAsync(this.storageDirectory, { intermediates: true });
     }
   }
 
   async clear(): Promise<void> {
-    const dirInfo = await getInfoAsync(this.storageDirectory);
+    const dirInfo = await this.fs.getInfoAsync(this.storageDirectory);
     if (dirInfo.exists) {
-      await deleteAsync(this.storageDirectory);
+      await this.fs.deleteAsync(this.storageDirectory);
     }
   }
 
   getLocalUri(filename: string): string {
-    return `${this.storageDirectory}${filename}`;
+    const separator = this.storageDirectory.endsWith('/') ? '' : '/';
+    return `${this.storageDirectory}${separator}${filename}`;
   }
 
   async saveFile(
@@ -55,7 +80,7 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
     if (typeof data === 'string') {
       // Handle string data (typically base64 or UTF8)
       const encoding = options?.encoding ?? EncodingType.Base64;
-      await writeAsStringAsync(filePath, data, {
+      await this.fs.writeAsStringAsync(filePath, data, {
         encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8
       });
 
@@ -71,7 +96,7 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
     } else {
       // Handle ArrayBuffer data
       const base64 = encodeBase64(data);
-      await writeAsStringAsync(filePath, base64, {
+      await this.fs.writeAsStringAsync(filePath, base64, {
         encoding: EncodingType.Base64
       });
       size = data.byteLength;
@@ -84,7 +109,7 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
     const encoding = options?.encoding ?? EncodingType.Base64;
 
     // Let the native function throw if file doesn't exist
-    const content = await readAsStringAsync(filePath, {
+    const content = await this.fs.readAsStringAsync(filePath, {
       encoding: encoding === EncodingType.Base64 ? EncodingType.Base64 : EncodingType.UTF8
     });
 
@@ -99,7 +124,7 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
   }
 
   async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
-    await deleteAsync(filePath).catch((error: any) => {
+    await this.fs.deleteAsync(filePath).catch((error: any) => {
       // Gracefully ignore file not found errors, throw others
       if (error?.message?.includes('not exist') || error?.message?.includes('ENOENT')) {
         return;
@@ -110,7 +135,7 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
 
   async fileExists(filePath: string): Promise<boolean> {
     try {
-      const info = await getInfoAsync(filePath);
+      const info = await this.fs.getInfoAsync(filePath);
       return info.exists;
     } catch {
       return false;
@@ -118,10 +143,10 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
   }
 
   async makeDir(path: string): Promise<void> {
-    await makeDirectoryAsync(path, { intermediates: true });
+    await this.fs.makeDirectoryAsync(path, { intermediates: true });
   }
 
   async rmDir(path: string): Promise<void> {
-    await deleteAsync(path);
+    await this.fs.deleteAsync(path);
   }
 }

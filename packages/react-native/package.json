@@ -33,20 +33,12 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^2.4.9",
-    "@dr.pogodin/react-native-fs": "^2.36.1",
-    "expo-file-system": "*",
     "@powersync/common": "workspace:^1.43.1",
     "react": "*",
     "react-native": "*"
   },
   "peerDependenciesMeta": {
     "@journeyapps/react-native-quick-sqlite": {
-      "optional": true
-    },
-    "@dr.pogodin/react-native-fs": {
-      "optional": true
-    },
-    "expo-file-system": {
       "optional": true
     }
   },
@@ -57,7 +49,6 @@
   },
   "devDependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@dr.pogodin/react-native-fs": "^2.36.1",
     "@journeyapps/react-native-quick-sqlite": "^2.4.9",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -67,7 +58,6 @@
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
     "bson": "^6.10.4",
-    "expo-file-system": "^19.0.21",
     "react": "18.3.1",
     "react-native": "0.72.4",
     "react-native-fetch-api": "^3.0.0",
