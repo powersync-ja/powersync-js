@@ -23,6 +23,7 @@ const PNPMFILE_CJS = `const fs = require("fs");
 const path = require("path");
 
 const localPaths = ${JSON.stringify(packagePaths)};
+const localPackages = Object.keys(localPaths);
 const getLocalPath = (name) => localPaths[name];
 
 module.exports = {
@@ -35,7 +36,7 @@ module.exports = {
           if (localPkg.peerDependencies) {
             pkg.dependencies = pkg.dependencies || {};
             Object.keys(localPkg.peerDependencies).forEach((peer) => {
-              if (peer.startsWith("@powersync/")) {
+              if (localPackages.includes(peer)) {
                 // Force install the peer dependency pointing to local
                 pkg.dependencies[peer] = \`file:\${getLocalPath(peer)}\`;
               }
@@ -49,7 +50,7 @@ module.exports = {
       const scanDeps = (deps) => {
         if (!deps) return;
         Object.keys(deps).forEach((dep) => {
-          if (dep.startsWith("@powersync/")) {
+          if (localPackages.includes(dep)) {
             const relPath = getLocalPath(dep);
             
             // 1. Point the direct dependency to the local file
