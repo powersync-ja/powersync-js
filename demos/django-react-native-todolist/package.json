@@ -12,7 +12,6 @@
     "@expo/metro-runtime": "^4.0.1",
     "@expo/vector-icons": "^14.0.0",
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
-    "@powersync/common": "^1.44.0",
     "@powersync/react": "^1.8.2",
     "@powersync/react-native": "^1.28.0",
     "@react-native-community/async-storage": "^1.12.1",
