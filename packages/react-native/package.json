@@ -67,7 +67,7 @@
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-terser": "^0.4.4",
     "bson": "^6.10.4",
-    "expo-file-system": "^15.2.2",
+    "expo-file-system": "^19.0.21",
     "react": "18.3.1",
     "react-native": "0.72.4",
     "react-native-fetch-api": "^3.0.0",
