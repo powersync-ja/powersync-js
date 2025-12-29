@@ -3,7 +3,6 @@ import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { ILogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
-import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
@@ -22,9 +21,6 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
   #periodicSyncTimer?: ReturnType<typeof setInterval>;
-
-  /** Context for managing attachment records in the database */
-  readonly context: AttachmentContext;
 
   /** Service for synchronizing attachments between local and remote storage */
   readonly syncingService: SyncingService;
@@ -121,9 +117,8 @@ export class AttachmentQueue {
     this.archivedCacheLimit = archivedCacheLimit;
     this.downloadAttachments = downloadAttachments;
     this.logger = logger ?? db.logger;
-    this.context = new AttachmentContext(db, tableName, this.logger, archivedCacheLimit);
-    this.attachmentService = new AttachmentService(db, this.logger, tableName);
-    this.syncingService = new SyncingService(this.context, localStorage, remoteStorage, this.logger, errorHandler);
+    this.attachmentService = new AttachmentService(db, this.logger, tableName, archivedCacheLimit);
+    this.syncingService = new SyncingService(this.attachmentService, localStorage, remoteStorage, this.logger, errorHandler);
   }
 
   /**
@@ -132,7 +127,9 @@ export class AttachmentQueue {
    * @returns Promise resolving to the new attachment ID
    */
   async generateAttachmentId(): Promise<string> {
-    return (await this.context.db.get<{ id: string }>('SELECT uuid() as id')).id;
+    return this.attachmentService.withContext(async (ctx) => {
+      return (await ctx.db.get<{ id: string }>('SELECT uuid() as id')).id;
+    });
   }
 
   /**
@@ -173,82 +170,84 @@ export class AttachmentQueue {
 
     // Process attachments when there is a change in watched attachments
     this.watchAttachments(async (watchedAttachments) => {
-      // Need to get all the attachments which are tracked in the DB.
-      // We might need to restore an archived attachment.
-      const currentAttachments = await this.context.getAttachments();
-      const attachmentUpdates: AttachmentRecord[] = [];
+      await this.attachmentService.withContext(async (ctx) => {
+        // Need to get all the attachments which are tracked in the DB.
+        // We might need to restore an archived attachment.
+        const currentAttachments = await ctx.getAttachments();
+        const attachmentUpdates: AttachmentRecord[] = [];
 
-      for (const watchedAttachment of watchedAttachments) {
-        const existingQueueItem = currentAttachments.find((a) => a.id === watchedAttachment.id);
-        if (!existingQueueItem) {
-          // Item is watched but not in the queue yet. Need to add it.
-          if (!this.downloadAttachments) {
+        for (const watchedAttachment of watchedAttachments) {
+          const existingQueueItem = currentAttachments.find((a) => a.id === watchedAttachment.id);
+          if (!existingQueueItem) {
+            // Item is watched but not in the queue yet. Need to add it.
+            if (!this.downloadAttachments) {
+              continue;
+            }
+
+            const filename = `${watchedAttachment.id}.${watchedAttachment.fileExtension}`;
+
+            attachmentUpdates.push({
+              id: watchedAttachment.id,
+              filename,
+              state: AttachmentState.QUEUED_DOWNLOAD,
+              hasSynced: false,
+              metaData: watchedAttachment.metaData
+            });
             continue;
           }
 
-          const filename = `${watchedAttachment.id}.${watchedAttachment.fileExtension}`;
+          if (existingQueueItem.state === AttachmentState.ARCHIVED) {
+            // The attachment is present again. Need to queue it for sync.
+            // We might be able to optimize this in future
+            if (existingQueueItem.hasSynced === true) {
+              // No remote action required, we can restore the record (avoids deletion)
+              attachmentUpdates.push({
+                ...existingQueueItem,
+                state: AttachmentState.SYNCED
+              });
+            } else {
+              // The localURI should be set if the record was meant to be uploaded
+              // and hasSynced is false then
+              // it must be an upload operation
+              const newState =
+                existingQueueItem.localUri == null ? AttachmentState.QUEUED_DOWNLOAD : AttachmentState.QUEUED_UPLOAD;
 
-          attachmentUpdates.push({
-            id: watchedAttachment.id,
-            filename,
-            state: AttachmentState.QUEUED_DOWNLOAD,
-            hasSynced: false,
-            metaData: watchedAttachment.metaData
-          });
-          continue;
-        }
-
-        if (existingQueueItem.state === AttachmentState.ARCHIVED) {
-          // The attachment is present again. Need to queue it for sync.
-          // We might be able to optimize this in future
-          if (existingQueueItem.hasSynced === true) {
-            // No remote action required, we can restore the record (avoids deletion)
-            attachmentUpdates.push({
-              ...existingQueueItem,
-              state: AttachmentState.SYNCED
-            });
-          } else {
-            // The localURI should be set if the record was meant to be uploaded
-            // and hasSynced is false then
-            // it must be an upload operation
-            const newState =
-              existingQueueItem.localUri == null ? AttachmentState.QUEUED_DOWNLOAD : AttachmentState.QUEUED_UPLOAD;
-
-            attachmentUpdates.push({
-              ...existingQueueItem,
-              state: newState
-            });
+              attachmentUpdates.push({
+                ...existingQueueItem,
+                state: newState
+              });
+            }
           }
         }
-      }
 
-      for (const attachment of currentAttachments) {
-        const notInWatchedItems = watchedAttachments.find((i) => i.id === attachment.id) == null;
-        if (notInWatchedItems) {
-          switch (attachment.state) {
-            case AttachmentState.QUEUED_DELETE:
-            case AttachmentState.QUEUED_UPLOAD:
-              // Only archive if it has synced
-              if (attachment.hasSynced === true) {
+        for (const attachment of currentAttachments) {
+          const notInWatchedItems = watchedAttachments.find((i) => i.id === attachment.id) == null;
+          if (notInWatchedItems) {
+            switch (attachment.state) {
+              case AttachmentState.QUEUED_DELETE:
+              case AttachmentState.QUEUED_UPLOAD:
+                // Only archive if it has synced
+                if (attachment.hasSynced === true) {
+                  attachmentUpdates.push({
+                    ...attachment,
+                    state: AttachmentState.ARCHIVED
+                  });
+                }
+                break;
+              default:
+                // Archive other states such as QUEUED_DOWNLOAD
                 attachmentUpdates.push({
                   ...attachment,
                   state: AttachmentState.ARCHIVED
                 });
-              }
-              break;
-            default:
-              // Archive other states such as QUEUED_DOWNLOAD
-              attachmentUpdates.push({
-                ...attachment,
-                state: AttachmentState.ARCHIVED
-              });
+            }
           }
         }
-      }
 
-      if (attachmentUpdates.length > 0) {
-        await this.context.saveAttachments(attachmentUpdates);
-      }
+        if (attachmentUpdates.length > 0) {
+          await ctx.saveAttachments(attachmentUpdates);
+        }
+      });
     }, this.watchAttachmentsAbortController.signal);
   }
 
@@ -259,10 +258,12 @@ export class AttachmentQueue {
    * but can also be called manually to trigger an immediate sync.
    */
   async syncStorage(): Promise<void> {
-    const activeAttachments = await this.context.getActiveAttachments();
-    await this.localStorage.initialize();
-    await this.syncingService.processAttachments(activeAttachments);
-    await this.syncingService.deleteArchivedAttachments();
+    await this.attachmentService.withContext(async (ctx) => {
+      const activeAttachments = await ctx.getActiveAttachments();
+      await this.localStorage.initialize();
+      await this.syncingService.processAttachments(activeAttachments, ctx);
+      await this.syncingService.deleteArchivedAttachments(ctx);
+    });
   }
 
   /**
@@ -324,9 +325,11 @@ export class AttachmentQueue {
       metaData
     };
 
-    await this.context.db.writeTransaction(async (tx) => {
-      await updateHook?.(tx, attachment);
-      await this.context.upsertAttachment(attachment, tx);
+    await this.attachmentService.withContext(async (ctx) => {
+      await ctx.db.writeTransaction(async (tx) => {
+        await updateHook?.(tx, attachment);
+        await ctx.upsertAttachment(attachment, tx);
+      });
     });
 
     return attachment;
@@ -339,33 +342,39 @@ export class AttachmentQueue {
     id: string;
     updateHook?: (transaction: Transaction, attachment: AttachmentRecord) => Promise<void>;
   }): Promise<void> {
-    const attachment = await this.context.getAttachment(id);
-    if (!attachment) {
-      throw new Error(`Attachment with id ${id} not found`);
-    }
+    await this.attachmentService.withContext(async (ctx) => {
+      const attachment = await ctx.getAttachment(id);
+      if (!attachment) {
+        throw new Error(`Attachment with id ${id} not found`);
+      }
 
-    await this.context.db.writeTransaction(async (tx) => {
-      await updateHook?.(tx, attachment);
-      await this.context.upsertAttachment(
-        {
-          ...attachment,
-          state: AttachmentState.QUEUED_DELETE,
-          hasSynced: false
-        },
-        tx
-      );
+      await ctx.db.writeTransaction(async (tx) => {
+        await updateHook?.(tx, attachment);
+        await ctx.upsertAttachment(
+          {
+            ...attachment,
+            state: AttachmentState.QUEUED_DELETE,
+            hasSynced: false
+          },
+          tx
+        );
+      });
     });
   }
 
   async expireCache(): Promise<void> {
     let isDone = false;
     while (!isDone) {
-      isDone = await this.syncingService.deleteArchivedAttachments();
+      this.attachmentService.withContext(async (ctx) => {
+        isDone = await this.syncingService.deleteArchivedAttachments(ctx);
+      })
     }
   }
 
   async clearQueue(): Promise<void> {
-    await this.context.clearQueue();
+    await this.attachmentService.withContext(async (ctx) => {
+      await ctx.clearQueue();
+    });
     await this.localStorage.clear();
   }
 
@@ -378,49 +387,51 @@ export class AttachmentQueue {
    * - Requeues synced attachments for download if their local files are missing
    */
   async verifyAttachments(): Promise<void> {
-    const attachments = await this.context.getAttachments();
-    const updates: AttachmentRecord[] = [];
+    await this.attachmentService.withContext(async (ctx) => {
+      const attachments = await ctx.getAttachments();
+      const updates: AttachmentRecord[] = [];
 
-    for (const attachment of attachments) {
-      if (attachment.localUri == null) {
-        continue;
-      }
+      for (const attachment of attachments) {
+        if (attachment.localUri == null) {
+          continue;
+        }
 
-      const exists = await this.localStorage.fileExists(attachment.localUri);
-      if (exists) {
-        // The file exists, this is correct
-        continue;
-      }
+        const exists = await this.localStorage.fileExists(attachment.localUri);
+        if (exists) {
+          // The file exists, this is correct
+          continue;
+        }
 
-      const newLocalUri = this.localStorage.getLocalUri(attachment.filename);
-      const newExists = await this.localStorage.fileExists(newLocalUri);
-      if (newExists) {
-        // The file exists locally but the localUri is broken, we update it.
-        updates.push({
-          ...attachment,
-          localUri: newLocalUri
-        });
-      } else {
-        // the file doesn't exist locally.
-        if (attachment.state === AttachmentState.SYNCED) {
-          // the file has been successfully synced to remote storage but is missing
-          // we download it again
+        const newLocalUri = this.localStorage.getLocalUri(attachment.filename);
+        const newExists = await this.localStorage.fileExists(newLocalUri);
+        if (newExists) {
+          // The file exists locally but the localUri is broken, we update it.
           updates.push({
             ...attachment,
-            state: AttachmentState.QUEUED_DOWNLOAD,
-            localUri: undefined
+            localUri: newLocalUri
           });
         } else {
-          // the file wasn't successfully synced to remote storage, we archive it
-          updates.push({
-            ...attachment,
-            state: AttachmentState.ARCHIVED,
-            localUri: undefined // Clears the value
-          });
+          // the file doesn't exist locally.
+          if (attachment.state === AttachmentState.SYNCED) {
+            // the file has been successfully synced to remote storage but is missing
+            // we download it again
+            updates.push({
+              ...attachment,
+              state: AttachmentState.QUEUED_DOWNLOAD,
+              localUri: undefined
+            });
+          } else {
+            // the file wasn't successfully synced to remote storage, we archive it
+            updates.push({
+              ...attachment,
+              state: AttachmentState.ARCHIVED,
+              localUri: undefined // Clears the value
+            });
+          }
         }
       }
-    }
 
-    await this.context.saveAttachments(updates);
+      await ctx.saveAttachments(updates);
+    });
   }
 }

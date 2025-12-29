@@ -1,29 +1,30 @@
 import { ILogger } from '../utils/Logger.js';
-import { AttachmentContext } from './AttachmentContext.js';
+import { AttachmentService } from './AttachmentService.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
+import { AttachmentContext } from './AttachmentContext.js';
 
 /**
  * Orchestrates attachment synchronization between local and remote storage.
  * Handles uploads, downloads, deletions, and state transitions.
  */
 export class SyncingService {
-  context: AttachmentContext;
+  attachmentService: AttachmentService;
   localStorage: LocalStorageAdapter;
   remoteStorage: RemoteStorageAdapter;
   logger: ILogger;
   errorHandler?: AttachmentErrorHandler;
 
   constructor(
-    context: AttachmentContext,
+    attachmentService: AttachmentService,
     localStorage: LocalStorageAdapter,
     remoteStorage: RemoteStorageAdapter,
     logger: ILogger,
     errorHandler?: AttachmentErrorHandler
   ) {
-    this.context = context;
+    this.attachmentService = attachmentService;
     this.localStorage = localStorage;
     this.remoteStorage = remoteStorage;
     this.logger = logger;
@@ -35,9 +36,10 @@ export class SyncingService {
    * All updates are saved in a single batch after processing.
    * 
    * @param attachments - Array of attachment records to process
+   * @param context - Attachment context for database operations
    * @returns Promise that resolves when all attachments have been processed and saved
    */
-  async processAttachments(attachments: AttachmentRecord[]): Promise<void> {
+  async processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void> {
     const updatedAttachments: AttachmentRecord[] = [];
     for (const attachment of attachments) {
       switch (attachment.state) {
@@ -59,7 +61,7 @@ export class SyncingService {
       }
     }
 
-    await this.context.saveAttachments(updatedAttachments);
+    await context.saveAttachments(updatedAttachments);
   }
 
   /**
@@ -146,7 +148,9 @@ export class SyncingService {
         await this.localStorage.deleteFile(attachment.localUri);
       }
 
-      await this.context.deleteAttachment(attachment.id);
+      await this.attachmentService.withContext(async (ctx) => {
+        await ctx.deleteAttachment(attachment.id);
+      });
 
       return {
         ...attachment,
@@ -170,8 +174,8 @@ export class SyncingService {
    * Performs cleanup of archived attachments by removing their local files and records.
    * Errors during local file deletion are logged but do not prevent record deletion.
    */
-  async deleteArchivedAttachments(): Promise<boolean> {
-    return await this.context.deleteArchivedAttachments(async (archivedAttachments) => {
+  async deleteArchivedAttachments(context: AttachmentContext): Promise<boolean> {
+    return await context.deleteArchivedAttachments(async (archivedAttachments) => {
       for (const attachment of archivedAttachments) {
         if (attachment.localUri) {
           try {
@@ -180,7 +184,6 @@ export class SyncingService {
             this.logger.error('Error deleting local file for archived attachment', error);
           }
         }
-        await this.context.deleteAttachment(attachment.id);
       }
     });
   }
