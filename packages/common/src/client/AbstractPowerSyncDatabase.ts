@@ -42,6 +42,7 @@ import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.j
 import { SyncStream } from './sync/sync-streams.js';
 import { TriggerManager } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
+import { MemoryTriggerHoldManager } from './watched/MemoryTriggerHoldManager.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -222,6 +223,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
    */
   readonly triggers: TriggerManager;
+  protected triggersImpl: TriggerManagerImpl;
 
   logger: ILogger;
 
@@ -296,10 +298,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this._isReadyPromise = this.initialize();
 
-    this.triggers = new TriggerManagerImpl({
-      db: this,
-      schema: this.schema
-    });
+    this.triggers = this.triggersImpl = this.generateTriggerManager();
   }
 
   /**
@@ -333,6 +332,17 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Opens the DBAdapter given open options using a default open factory
    */
   protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
+
+  /**
+   * Generates a default trigger manager which uses a shared memory hold manager.
+   */
+  protected generateTriggerManager() {
+    return new TriggerManagerImpl({
+      db: this,
+      schema: this.schema,
+      holdManager: new MemoryTriggerHoldManager()
+    });
+  }
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
@@ -420,6 +430,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.updateSchema(this.options.schema);
     await this.resolveOfflineSyncStatus();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
+    // Don't await this, we just need to trigger it
+    this.triggersImpl.cleanupStaleItems();
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }

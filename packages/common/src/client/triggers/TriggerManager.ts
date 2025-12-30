@@ -47,8 +47,9 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
  * This record contains the new value and optionally the previous value.
  * Values are stored as JSON strings.
  */
-export interface TriggerDiffUpdateRecord<TOperationId extends string | number = number>
-  extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffUpdateRecord<
+  TOperationId extends string | number = number
+> extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.UPDATE;
   /**
    * The updated state of the row in JSON string format.
@@ -65,8 +66,9 @@ export interface TriggerDiffUpdateRecord<TOperationId extends string | number = 
  * Represents a diff record for a SQLite INSERT operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffInsertRecord<TOperationId extends string | number = number>
-  extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffInsertRecord<
+  TOperationId extends string | number = number
+> extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.INSERT;
   /**
    * The value of the row, at the time of INSERT, in JSON string format.
@@ -79,8 +81,9 @@ export interface TriggerDiffInsertRecord<TOperationId extends string | number = 
  * Represents a diff record for a SQLite DELETE operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffDeleteRecord<TOperationId extends string | number = number>
-  extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffDeleteRecord<
+  TOperationId extends string | number = number
+> extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.DELETE;
   /**
    * The value of the row, before the DELETE operation, in JSON string format.
@@ -201,6 +204,12 @@ interface BaseCreateDiffTriggerOptions {
    * Hooks which allow execution during the trigger creation process.
    */
   hooks?: TriggerCreationHooks;
+
+  /**
+   * Using persistence will result in creating a persisted SQLite trigger
+   * and destination table.
+   */
+  usePersistence?: boolean;
 }
 
 /**
@@ -448,4 +457,20 @@ export interface TriggerManager {
    * ```
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
+}
+
+/**
+ * @experimental
+ */
+
+export interface TriggerHoldManager {
+  /**
+   * Obtains or marks a hold on a certain identifier.
+   * @returns a callback to release the hold.
+   */
+  obtainHold: (identifier: string) => Promise<() => Promise<void>>;
+  /**
+   * Checks if a hold is present for an identifier.
+   */
+  checkHold: (identifier: string) => Promise<boolean>;
 }

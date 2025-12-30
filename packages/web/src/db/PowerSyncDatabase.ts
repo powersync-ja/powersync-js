@@ -13,11 +13,13 @@ import {
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  TriggerManagerImpl
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator';
-import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { WASQLiteVFS } from './adapters/wa-sqlite/WASQLiteConnection';
+import { ResolvedWASQLiteOpenFactoryOptions, WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
@@ -25,6 +27,7 @@ import {
   WebSQLFlags
 } from './adapters/web-sql-flags';
 import { WebDBAdapter } from './adapters/WebDBAdapter';
+import { NavigatorTriggerHoldManager } from './NavigatorTriggerHoldManager';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
@@ -145,6 +148,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   async _initialize(): Promise<void> {}
+
+  protected generateTriggerManager(): TriggerManagerImpl {
+    // TODO, capacitor should not use navigator locks
+    return new TriggerManagerImpl({
+      db: this,
+      schema: this.schema,
+      // We need to share hold information between tabs
+      holdManager: new NavigatorTriggerHoldManager(),
+      // TODO, cleanup
+      usePersistenceByDefault: async () =>
+        ((this.database as WebDBAdapter).getConfiguration() as ResolvedWASQLiteOpenFactoryOptions).vfs !=
+        WASQLiteVFS.IDBBatchAtomicVFS
+    });
+  }
 
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
