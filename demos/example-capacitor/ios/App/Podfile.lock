@@ -11,7 +11,7 @@ PODS:
   - powersync-sqlite-core (0.4.10)
   - PowersyncCapacitor (0.1.3):
     - Capacitor
-    - powersync-sqlite-core (~> 0.4.10)
+    - powersync-sqlite-core (~> 0.4.6)
     - SQLCipher (~> 4.0)
   - SQLCipher (4.10.0):
     - SQLCipher/standard (= 4.10.0)
@@ -21,11 +21,11 @@ PODS:
   - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
-  - "Capacitor (from `../../../../node_modules/@capacitor/ios`)"
-  - "CapacitorCommunitySqlite (from `../../../../node_modules/@capacitor-community/sqlite`)"
-  - "CapacitorCordova (from `../../../../node_modules/@capacitor/ios`)"
-  - "CapacitorSplashScreen (from `../../../../node_modules/@capacitor/splash-screen`)"
-  - PowersyncCapacitor (from `../../../../packages/capacitor`)
+  - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
+  - "CapacitorCommunitySqlite (from `../../node_modules/.pnpm/@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor-community/sqlite`)"
+  - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
+  - "CapacitorSplashScreen (from `../../node_modules/.pnpm/@capacitor+splash-screen@7.0.3_@capacitor+core@7.4.4/node_modules/@capacitor/splash-screen`)"
+  - "PowersyncCapacitor (from `../../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@powersyn_smncg5wuctchvueg7u47nvgl4i/node_modules/@powersync/capacitor`)"
 
 SPEC REPOS:
   trunk:
@@ -35,26 +35,26 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   Capacitor:
-    :path: "../../../../node_modules/@capacitor/ios"
+    :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
   CapacitorCommunitySqlite:
-    :path: "../../../../node_modules/@capacitor-community/sqlite"
+    :path: "../../node_modules/.pnpm/@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor-community/sqlite"
   CapacitorCordova:
-    :path: "../../../../node_modules/@capacitor/ios"
+    :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
   CapacitorSplashScreen:
-    :path: "../../../../node_modules/@capacitor/splash-screen"
+    :path: "../../node_modules/.pnpm/@capacitor+splash-screen@7.0.3_@capacitor+core@7.4.4/node_modules/@capacitor/splash-screen"
   PowersyncCapacitor:
-    :path: "../../../../packages/capacitor"
+    :path: "../../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@powersyn_smncg5wuctchvueg7u47nvgl4i/node_modules/@powersync/capacitor"
 
 SPEC CHECKSUMS:
-  Capacitor: 09d9ff8e9618e8c4b3cab2bbee34a17215dd2fef
-  CapacitorCommunitySqlite: b8e23cd2fd5bff7da8cb2a3a1cb3a6ffb9714a32
+  Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
+  CapacitorCommunitySqlite: a57c58e1c37f4bc250ef01e66b0055cb6ddd775e
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
-  CapacitorSplashScreen: d06ae8804808e9f649a08e7bb7f283c77b688084
+  CapacitorSplashScreen: e388b8e0ed0e982a9d3a40417f478e7a018a8763
   powersync-sqlite-core: b30017e077c91915d53faebc5f7245384df78275
-  PowersyncCapacitor: d5aef68961267967682077ce8be046862b99d004
+  PowersyncCapacitor: 45baea36962329f34237a1a421391f90c19acdbe
   SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: 1c728e00549cebade63eaffb81de205fd020c4ea
+PODFILE CHECKSUM: 56f567ab082005288c1d603459e2996d6bb9fb45
 
 COCOAPODS: 1.16.2

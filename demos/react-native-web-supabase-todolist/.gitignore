@@ -38,4 +38,5 @@ npm-debug.*
 .idea
 
 public/@powersync
+android/
 ios/

@@ -52,10 +52,8 @@ For detailed instructions, see:
 
 ```bash
 git clone https://github.com/powersync-ja/powersync-js.git
-cd powersync-js
+cd powersync-js/demos/react-neon-tanstack-query-notes
 pnpm install
-pnpm build:packages
-cd demos/react-neon-tanstack-query-notes
 ```
 
 ### 3. Configure Environment Variables
