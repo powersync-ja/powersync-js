@@ -1,5 +1,11 @@
 # @powersync/node
 
+## 0.15.1
+
+### Patch Changes
+
+- 84239b7: Fix loading `better-sqlite3` on CommonJS builds.
+
 ## 0.15.0
 
 ### Minor Changes

@@ -84,7 +84,8 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
     },
     async loadBetterSqlite3() {
       const module = await dynamicImport('better-sqlite3');
-      return module.default;
+      // require() gives us the default directly, for an ESM import() we need to use the default export.
+      return isBundledToCommonJs ? module : module.default;
     },
     ...options
   };
