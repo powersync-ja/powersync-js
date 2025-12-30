@@ -704,4 +704,92 @@ describe('Triggers', () => {
       { timeout: 1000 }
     );
   });
+
+  databaseTest('Should use persisted tables and triggers', async ({ database }) => {
+    const table = 'temp_remote_lists';
+
+    const filteredColumns: Array<keyof Database['todos']> = ['content'];
+    const cleanup = await database.triggers.createDiffTrigger({
+      source: 'todos',
+      destination: table,
+      columns: filteredColumns,
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE',
+        [DiffTriggerOperation.UPDATE]: 'TRUE',
+        [DiffTriggerOperation.DELETE]: 'TRUE'
+      },
+      usePersistence: true
+    });
+
+    const results = [] as TriggerDiffRecord[];
+
+    database.onChange(
+      {
+        // This callback async processed. Invocations are sequential.
+        onChange: async () => {
+          await database.writeLock(async (tx) => {
+            const changes = await tx.getAll<TriggerDiffRecord>(/* sql */ `
+              SELECT
+                *
+              FROM
+                ${table}
+            `);
+            results.push(...changes);
+            // Clear the temp table after processing
+            await tx.execute(/* sql */ ` DELETE FROM ${table}; `);
+          });
+        }
+      },
+      { tables: [table] }
+    );
+
+    // The destination table should not be temporary, it should be present in sqlite_master
+    const initialTableRows = await database.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
+      [table]
+    );
+    expect(initialTableRows.length).toEqual(1);
+
+    await database.execute(`INSERT INTO todos (id, content) VALUES (uuid(), 'hello');`);
+
+    // Smoke test that the trigger worked with persistence
+    await vi.waitFor(() => {
+      expect(results.length).toEqual(1);
+    });
+
+    const getTrackedTables = async () => {
+      // The table should be tracked in ps_kv
+      const { value: trackedTableItemsString } = await database.get<{ value: string }>(
+        'SELECT value from ps_kv where key = ?',
+        ['powersync_tables_to_cleanup']
+      );
+
+      type TrackedTableRecord = {
+        id: string;
+        table: string;
+      };
+
+      const trackedTableItems: TrackedTableRecord[] = JSON.parse(trackedTableItemsString);
+      return trackedTableItems;
+    };
+
+    const initialTrackedTableItems = await getTrackedTables();
+    // There should be an entry for this item
+    expect(initialTrackedTableItems.find((item) => item.table == table)).toBeDefined();
+
+    // perform a manual cleanup
+    await cleanup();
+
+    const afterCleanupTrackedTableItems = await getTrackedTables();
+
+    // There should no longer be an entry for this, since we ran cleanup
+    expect(afterCleanupTrackedTableItems.find((item) => item.table == table)).toBeUndefined();
+
+    // For sanity, the table should not exist
+    const tableRows = await database.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
+      [table]
+    );
+    expect(tableRows.length).toEqual(0);
+  });
 });

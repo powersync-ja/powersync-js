@@ -4,7 +4,7 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { TodosDeserializationSchema, TodosSchema } from '@/library/powersync/TodosSchema';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { LogLevel, PowerSyncDatabase, createBaseLogger } from '@powersync/web';
+import { createBaseLogger, LogLevel, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { createCollection } from '@tanstack/db';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import React, { Suspense } from 'react';
@@ -15,9 +15,10 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
-  database: {
-    dbFilename: 'example.db'
-  }
+  database: new WASQLiteOpenFactory({
+    dbFilename: 'test2.sqlite',
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  })
 });
 
 export const listsCollection = createCollection(
