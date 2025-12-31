@@ -37,4 +37,5 @@ npm-debug.*
 .fleet
 .idea
 
+android/
 ios/

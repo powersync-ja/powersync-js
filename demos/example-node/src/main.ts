@@ -10,10 +10,9 @@ import {
   SyncStreamConnectionMethod
 } from '@powersync/node';
 import { exit } from 'node:process';
+import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
 import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
-import { WorkerOpener } from 'node_modules/@powersync/node/src/db/options.js';
-import { LockContext } from 'node_modules/@powersync/node/dist/bundle.cjs';
 
 const main = async () => {
   const baseLogger = createBaseLogger();
@@ -59,10 +58,12 @@ const main = async () => {
     logger
   });
   console.log(await db.get('SELECT powersync_rs_version();'));
-
   await db.connect(new DemoConnector(), {
     connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
-    clientImplementation: SyncClientImplementation.RUST
+    clientImplementation: SyncClientImplementation.RUST,
+    appMetadata: {
+      app_version: process.env.npm_package_version || 'unknown'
+    }
   });
   // Example using a proxy agent for more control over the connection:
   // const proxyAgent = new (await import('undici')).ProxyAgent({

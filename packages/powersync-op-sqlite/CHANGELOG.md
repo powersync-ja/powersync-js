@@ -1,5 +1,14 @@
 # @powersync/op-sqlite
 
+## 0.7.17
+
+### Patch Changes
+
+- 299c6dc: Update PowerSync SQLite core to v0.4.10
+- Updated dependencies [299c6dc]
+- Updated dependencies [616c2a1]
+  - @powersync/common@1.44.0
+
 ## 0.7.16
 
 ### Patch Changes

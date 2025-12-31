@@ -11,7 +11,7 @@ module.exports = function (api) {
         }
       ],
       '@babel/plugin-transform-async-generator-functions',
-      'react-native-reanimated/plugin'
+      'react-native-worklets/plugin'
     ]
   };
 };
