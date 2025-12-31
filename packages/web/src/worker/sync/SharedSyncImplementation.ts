@@ -277,6 +277,15 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         // We may have missed some table updates while the database was closed.
         // We can poke the crud in case we missed any updates.
         this.connectionManager.syncStreamImplementation?.triggerCrudUpload();
+
+        /**
+         * FIXME or IMPROVE ME
+         * The Rust client implementation stores sync state on the connection level.
+         * Reopening the database causes a state machine error which should cause the
+         * StreamingSyncImplementation to reconnect. It would be nicer if we could trigger
+         * this reconnect earlier.
+         * This reconnect is not required for IndexedDB.
+         */
       }
     });
 
