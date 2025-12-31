@@ -1,7 +1,7 @@
-import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
 import { SyncClientImplementation } from '../../client/sync/stream/AbstractStreamingSyncImplementation.js';
-import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
+import { CoreStreamSubscription } from '../../client/sync/stream/core-instruction.js';
 import { SyncStreamDescription, SyncSubscriptionDescription } from '../../client/sync/sync-streams.js';
+import { InternalProgressInformation, ProgressWithOperations, SyncProgress } from './SyncProgress.js';
 
 export type SyncDataFlowStatus = Partial<{
   downloading: boolean;
@@ -250,10 +250,29 @@ export class SyncStatus {
     return {
       connected: this.connected,
       connecting: this.connecting,
-      dataFlow: this.dataFlowStatus,
+      dataFlow: {
+        ...this.dataFlowStatus,
+        uploadError: this.serializeError(this.dataFlowStatus.uploadError),
+        downloadError: this.serializeError(this.dataFlowStatus.downloadError)
+      },
       lastSyncedAt: this.lastSyncedAt,
       hasSynced: this.hasSynced,
       priorityStatusEntries: this.priorityStatusEntries
+    };
+  }
+
+  /**
+   * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers. 
+   * This explicitly serializes errors in the SyncStatus.
+   */
+  protected serializeError(error?: Error) {
+    if (typeof error == 'undefined') {
+      return undefined;
+    }
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
     };
   }
 

@@ -17,7 +17,6 @@ const logger = createLogger('db-worker');
 
 const DBMap = new Map<string, SharedDBWorkerConnection>();
 const OPEN_DB_LOCK = 'open-wasqlite-db';
-
 let nextClientId = 1;
 
 const openDBShared = async (options: WorkerDBOpenerOptions): Promise<AsyncDatabaseConnection> => {

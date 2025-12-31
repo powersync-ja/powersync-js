@@ -1,24 +1,11 @@
-import {
-  AbstractPowerSyncDatabase,
-  createBaseLogger,
-  createLogger,
-  DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-  SqliteBucketStorage,
-  SyncStatus
-} from '@powersync/common';
-import {
-  OpenAsyncDatabaseConnection,
-  SharedWebStreamingSyncImplementation,
-  SharedWebStreamingSyncImplementationOptions,
-  WASqliteConnection,
-  WebRemote
-} from '@powersync/web';
+import { AbstractPowerSyncDatabase, createBaseLogger, createLogger } from '@powersync/common';
+import { OpenAsyncDatabaseConnection, WASqliteConnection } from '@powersync/web';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { TestConnector } from './utils/MockStreamOpenFactory';
+import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
 import { generateTestDb, testSchema } from './utils/testDb';
 
 const DB_FILENAME = 'test-multiple-instances.db';
@@ -50,45 +37,57 @@ describe('Multiple Instances', { sequential: true }, () => {
     expect(assets.length).equals(1);
   });
 
-  it('should broadcast logs from shared sync worker', { timeout: 20000 }, async () => {
-    const logger = createLogger('test-logger');
-    const spiedErrorLogger = vi.spyOn(logger, 'error');
-    const spiedDebugLogger = vi.spyOn(logger, 'debug');
+  sharedMockSyncServiceTest(
+    'should broadcast logs from shared sync worker',
+    { timeout: 10_000 },
+    async ({ context: { openDatabase, mockService } }) => {
+      const logger = createLogger('test-logger');
+      const spiedErrorLogger = vi.spyOn(logger, 'error');
+      const spiedDebugLogger = vi.spyOn(logger, 'debug');
 
-    const powersync = generateTestDb({
-      logger,
-      database: {
-        dbFilename: 'broadcast-logger-test.sqlite'
-      },
-      schema: testSchema
-    });
+      // Open an additional database which we can spy on the logs.
+      const powersync = openDatabase({
+        logger
+      });
 
-    powersync.connect({
-      fetchCredentials: async () => {
-        return {
-          endpoint: 'http://localhost/does-not-exist',
-          token: 'none'
-        };
-      },
-      uploadData: async (db) => {}
-    });
+      powersync.connect({
+        fetchCredentials: async () => {
+          return {
+            endpoint: 'http://localhost/does-not-exist',
+            token: 'none'
+          };
+        },
+        uploadData: async (db) => {}
+      });
 
-    // Should log that a connection attempt has been made
-    const message = 'Streaming sync iteration started';
-    await vi.waitFor(
-      () =>
-        expect(
-          spiedDebugLogger.mock.calls
-            .flat(1)
-            .find((argument) => typeof argument == 'string' && argument.includes(message))
-        ).exist,
-      { timeout: 2000 }
-    );
+      await vi.waitFor(
+        async () => {
+          const requests = await mockService.getPendingRequests();
+          expect(requests.length).toBeGreaterThan(0);
+          const pendingRequestId = requests[0].id;
+          // Generate an error
+          await mockService.createResponse(pendingRequestId, 401, { 'Content-Type': 'application/json' });
+          await mockService.completeResponse(pendingRequestId);
+        },
+        { timeout: 3_000 }
+      );
 
-    // The connection should fail with an error
-    await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
-    // This test seems to take quite long while waiting for this disconnect call
-  });
+      // Should log that a connection attempt has been made
+      const message = 'Streaming sync iteration started';
+      await vi.waitFor(
+        () =>
+          expect(
+            spiedDebugLogger.mock.calls
+              .flat(1)
+              .find((argument) => typeof argument == 'string' && argument.includes(message))
+          ).exist,
+        { timeout: 2000 }
+      );
+
+      // The connection should fail with an error
+      await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+    }
+  );
 
   it('should maintain DB connections if instances call close', async () => {
     /**
@@ -104,7 +103,7 @@ describe('Multiple Instances', { sequential: true }, () => {
     await createAsset(powersync2);
   });
 
-  it('should handled interrupted transactions', { timeout: Infinity }, async () => {
+  it('should handled interrupted transactions', async () => {
     //Create a shared PowerSync database. We'll just use this for internally managing connections.
     const powersync = openDatabase();
     await powersync.init();
@@ -223,170 +222,82 @@ describe('Multiple Instances', { sequential: true }, () => {
     await watchedPromise;
   });
 
-  it('should share sync updates', async () => {
-    // Generate the first streaming sync implementation
-    const connector1 = new TestConnector();
-    const db = openDatabase();
-    await db.init();
+  sharedMockSyncServiceTest(
+    'should share sync updates',
+    { timeout: 10_000 },
+    async ({ context: { database, connect, openDatabase } }) => {
+      const secondDatabase = openDatabase();
 
-    // They need to use the same identifier to use the same shared worker.
-    const identifier = 'streaming-sync-shared';
-    const syncOptions1: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database),
-      remote: new WebRemote(connector1),
-      uploadCrud: async () => {
-        await connector1.uploadData(db);
-      },
-      identifier,
-      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-      retryDelayMs: 90_000, // Large delay to allow for testing
-      db: db.database as WebDBAdapter,
-      subscriptions: []
-    };
+      expect(database.currentStatus.connected).false;
+      expect(secondDatabase.currentStatus.connected).false;
+      // connect the second database in order for it to have access to the sync service.
+      secondDatabase.connect(createTestConnector());
+      // Timing of this can be tricky due to the need for responding to a pending request.
+      await vi.waitFor(() => expect(secondDatabase.currentStatus.connecting).true, { timeout: 5_000 });
+      // connect the first database - this will actually connect to the sync service.
+      await connect();
 
-    const stream1 = new SharedWebStreamingSyncImplementation(syncOptions1);
-    await stream1.connect();
-    // Generate the second streaming sync implementation
-    const connector2 = new TestConnector();
-    const syncOptions2: SharedWebStreamingSyncImplementationOptions = {
-      adapter: new SqliteBucketStorage(db.database),
-      remote: new WebRemote(connector1),
-      uploadCrud: async () => {
-        await connector2.uploadData(db);
-      },
-      identifier,
-      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-      retryDelayMs: 90_000, // Large delay to allow for testing
-      db: db.database as WebDBAdapter,
-      subscriptions: []
-    };
+      expect(database.currentStatus.connected).true;
 
-    const stream2 = new SharedWebStreamingSyncImplementation(syncOptions2);
+      await vi.waitFor(() => expect(secondDatabase.currentStatus.connected).true, { timeout: 5_000 });
+    }
+  );
 
-    const stream2UpdatedPromise = new Promise<void>((resolve, reject) => {
-      const l = stream2.registerListener({
-        statusChanged: (status) => {
-          if (status.connected) {
-            resolve();
-            l();
-          }
-        }
+  sharedMockSyncServiceTest(
+    'should trigger uploads from last connected clients',
+    async ({ context: { database, openDatabase, connect, connector, mockService } }) => {
+      const secondDatabase = openDatabase();
+
+      expect(database.currentStatus.connected).false;
+      expect(secondDatabase.currentStatus.connected).false;
+
+      // Don't actually upload data
+      connector.uploadData.mockImplementation(async (db) => {
+        console.log('uploading from first client');
       });
-    });
 
-    // hack to set the status to a new one for tests
-    (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
+      // Create something with CRUD in it.
+      await database.execute('INSERT into lists (id, name) VALUES (uuid(), ?)', ['steven']);
 
-    await stream2UpdatedPromise;
-    expect(stream2.isConnected).true;
+      // connect from the first database
+      await connect();
 
-    await stream1.dispose();
-    await stream2.dispose();
-  });
+      await vi.waitFor(() => expect(database.currentStatus.connected).true);
 
-  it('should trigger uploads from last connected clients', async () => {
-    // Generate the first streaming sync implementation
-    const connector1 = new TestConnector();
-    const spy1 = vi.spyOn(connector1, 'uploadData');
+      // It should initially try and upload from the first client
+      await vi.waitFor(() => expect(connector.uploadData).toHaveBeenCalledOnce(), { timeout: 2000 });
 
-    const db = openDatabase();
-    await db.init();
-    // They need to use the same identifier to use the same shared worker.
-    const identifier = db.database.name;
-
-    // Resolves once the first connector has been called to upload data
-    let triggerUpload1: () => void;
-    const upload1TriggeredPromise = new Promise<void>((resolve) => {
-      triggerUpload1 = resolve;
-    });
-
-    const sharedSyncOptions = {
-      adapter: new SqliteBucketStorage(db.database),
-      remote: new WebRemote(connector1),
-      db: db.database as WebDBAdapter,
-      identifier,
-      // The large delay here allows us to test between connection retries
-      retryDelayMs: 90_000,
-      crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
-      subscriptions: [],
-      flags: {
-        broadcastLogs: true
-      }
-    };
-
-    // Create the first streaming client
-    const stream1 = new SharedWebStreamingSyncImplementation({
-      ...sharedSyncOptions,
-      uploadCrud: async () => {
-        triggerUpload1();
-        connector1.uploadData(db);
-      }
-    });
-
-    // Generate the second streaming sync implementation
-    const connector2 = new TestConnector();
-    // The second connector will be called first to upload, we don't want it to actually upload
-    // This will cause the sync uploads to be delayed as the CRUD queue did not change
-    const spy2 = vi.spyOn(connector2, 'uploadData').mockImplementation(async () => {});
-
-    let triggerUpload2: () => void;
-    const upload2TriggeredPromise = new Promise<void>((resolve) => {
-      triggerUpload2 = resolve;
-    });
-
-    const stream2 = new SharedWebStreamingSyncImplementation({
-      ...sharedSyncOptions,
-      uploadCrud: async () => {
-        triggerUpload2();
-        connector2.uploadData(db);
-      }
-    });
-
-    // Waits for the stream to be marked as connected
-    const stream2UpdatedPromise = new Promise<void>((resolve, reject) => {
-      const l = stream2.registerListener({
-        statusChanged: (status) => {
-          if (status.connected) {
-            resolve();
-            l();
-          }
-        }
+      const secondConnector = createTestConnector();
+      // Don't actually upload data
+      secondConnector.uploadData.mockImplementation(async (db) => {
+        console.log('uploading from second client');
       });
-    });
 
-    // hack to set the status to connected for tests
-    await stream1.connect();
-    // Hack, set the status to connected in order to trigger the upload
-    await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
+      // Connect the second database and wait for a pending request to appear
+      const secondConnectPromise = secondDatabase.connect(secondConnector);
+      let _pendingRequestId: string;
+      await vi.waitFor(async () => {
+        const requests = await mockService.getPendingRequests();
+        expect(requests.length).toBeGreaterThan(0);
+        _pendingRequestId = requests[0].id;
+      });
+      const pendingRequestId = _pendingRequestId!;
+      await mockService.createResponse(pendingRequestId, 200, { 'Content-Type': 'application/json' });
+      await mockService.pushBodyLine(pendingRequestId, {
+        token_expires_in: 10000000
+      });
+      await secondConnectPromise;
 
-    // The status in the second stream client should be updated
-    await stream2UpdatedPromise;
+      // It should now upload from the second client
+      await vi.waitFor(() => expect(secondConnector.uploadData).toHaveBeenCalledOnce());
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // Now disconnect and close the second client
+      await secondDatabase.close();
 
-    expect(stream2.isConnected).true;
+      expect(database.currentStatus.connected).true;
 
-    // Create something with CRUD in it.
-    await db.execute('INSERT into customers (id, name, email) VALUES (uuid(), ?, ?)', [
-      'steven',
-      'steven@journeyapps.com'
-    ]);
-
-    stream1.triggerCrudUpload();
-    // The second connector should be called to upload
-    await upload2TriggeredPromise;
-
-    // It should call the latest connected client
-    expect(spy2).toHaveBeenCalledOnce();
-
-    // Close the second client, leaving only the first one
-    await stream2.dispose();
-
-    // Hack, set the status to connected in order to trigger the upload
-    await (stream1 as any)['_testUpdateStatus'](new SyncStatus({ connected: true }));
-    stream1.triggerCrudUpload();
-    // It should now upload from the first client
-    await upload1TriggeredPromise;
-
-    expect(spy1).toHaveBeenCalledOnce();
-    await stream1.dispose();
-  });
+      // It should now upload from the first client
+      await vi.waitFor(() => expect(connector.uploadData.mock.calls.length).greaterThanOrEqual(2), { timeout: 3000 });
+    }
+  );
 });

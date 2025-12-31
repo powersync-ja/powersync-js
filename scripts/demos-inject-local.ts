@@ -1,9 +1,9 @@
+import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { Command, type OptionValues } from 'commander';
+import inquirer from 'inquirer';
+import { execSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
-import inquirer from 'inquirer';
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 
 // Get workspace packages and create a mapping from package name to local path
 const workspacePackages = await findWorkspacePackages(path.resolve('.'), {
@@ -90,7 +90,7 @@ const filterDemosUser = async (allDemos: string[], _options: OptionValues): Prom
 };
 
 const filterDemosPattern = (demos: string[], options: OptionValues): string[] => {
-  return demos.filter((demo) => demo.includes(options.filter));
+  return demos.filter((demo) => demo.includes(options.pattern));
 };
 
 const injectPackagesAll = async (demos: string[], options: OptionValues) => {
