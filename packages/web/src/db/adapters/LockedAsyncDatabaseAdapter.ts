@@ -1,5 +1,6 @@
 import {
   BaseObserver,
+  ConnectionClosedError,
   DBAdapter,
   DBAdapterListener,
   DBGetUtils,
@@ -11,7 +12,7 @@ import {
   type ILogger
 } from '@powersync/common';
 import { getNavigatorLocks } from '../../shared/navigator';
-import { AsyncDatabaseConnection, ConnectionClosedError } from './AsyncDatabaseConnection';
+import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
@@ -326,7 +327,7 @@ export class LockedAsyncDatabaseAdapter
         holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
         return await callback();
       } catch (ex) {
-        if (ex instanceof ConnectionClosedError) {
+        if (ConnectionClosedError.MATCHES(ex)) {
           if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
             // Immediately re-open the database. We need to miss as little table updates as possible.
             // Note, don't await this since it uses the same lock as we're in now.

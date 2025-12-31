@@ -1,8 +1,7 @@
-import { BaseObserver } from '@powersync/common';
+import { BaseObserver, ConnectionClosedError } from '@powersync/common';
 import * as Comlink from 'comlink';
 import {
   AsyncDatabaseConnection,
-  ConnectionClosedError,
   OnTableChangeCallback,
   OpenAsyncDatabaseConnection,
   ProxiedQueryResult
