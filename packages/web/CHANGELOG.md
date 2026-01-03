@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.30.1
+
+### Patch Changes
+
+- d0c67b1: Avoid binding `this` when disposing table change listeners in the web adapter to prevent Comlink serialization errors on close.
+
 ## 1.30.0
 
 ### Minor Changes
