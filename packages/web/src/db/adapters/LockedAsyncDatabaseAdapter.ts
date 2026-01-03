@@ -170,7 +170,10 @@ export class LockedAsyncDatabaseAdapter
    */
   async close() {
     this.closing = true;
-    this._disposeTableChangeListener?.();
+    const dispose = this._disposeTableChangeListener;
+    if (dispose) {
+      dispose();
+    }
     this.pendingAbortControllers.forEach((controller) => controller.abort('Closed'));
     await this.baseDB?.close?.();
     this.closed = true;
