@@ -109,6 +109,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected isInitialized: Promise<void>;
   protected dbAdapter: WebDBAdapter;
   private abortOnClose = new AbortController();
+  private pagehideHandler?: (event: PageTransitionEvent) => void;
+  private pagehideTriggered = false;
+  private closeSignalPromise: Promise<void>;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
@@ -191,18 +194,35 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     Comlink.expose(this.clientProvider, this.messagePort);
 
+    this.closeSignalPromise = new Promise<void>((resolve) => {
+      const signal = this.abortOnClose.signal;
+      if (signal.aborted) {
+        resolve();
+        return;
+      }
+      const onAbort = () => resolve();
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+
     // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
     // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
     // to free resources associated with this tab.
     getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-      if (!this.abortOnClose.signal.aborted) {
+      if (!this.abortOnClose.signal.aborted && !this.pagehideTriggered) {
         this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-        await new Promise<void>((r) => {
-          this.abortOnClose.signal.onabort = () => r();
-        });
       }
+      await this.closeSignalPromise;
     });
+
+    this.pagehideHandler = (event) => {
+      if (!event.persisted) {
+        this.pagehideTriggered = true;
+        if (!this.abortOnClose.signal.aborted) {
+          this.abortOnClose.abort();
+        }
+      }
+    };
+    window.addEventListener('pagehide', this.pagehideHandler);
   }
 
   /**
@@ -250,6 +270,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
       this.messagePort.postMessage(closeMessagePayload);
     });
     this.abortOnClose.abort();
+    if (this.pagehideHandler) {
+      window.removeEventListener('pagehide', this.pagehideHandler);
+    }
 
     // Release the proxy
     this.syncManager[Comlink.releaseProxy]();

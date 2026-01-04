@@ -115,6 +115,12 @@ export class LockedAsyncDatabaseAdapter
      * This is only required for the long-lived shared IndexedDB connections.
      */
     this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
+
+    if (this._db instanceof WorkerWrappedAsyncDatabaseConnection) {
+      this._db.onClose(() => {
+        this.abortPendingLockRequests('Closed');
+      });
+    }
   }
 
   getConfiguration(): ResolvedWebSQLOpenOptions {
@@ -174,7 +180,7 @@ export class LockedAsyncDatabaseAdapter
     if (dispose) {
       dispose();
     }
-    this.pendingAbortControllers.forEach((controller) => controller.abort('Closed'));
+    this.abortPendingLockRequests('Closed');
     await this.baseDB?.close?.();
     this.closed = true;
   }
@@ -232,14 +238,15 @@ export class LockedAsyncDatabaseAdapter
         }, timeoutMs)
       : null;
 
-    return getNavigatorLocks().request(
-      `db-lock-${this._dbIdentifier}`,
-      { signal: abortController.signal },
-      async () => {
-        this.pendingAbortControllers.delete(abortController);
-        if (timoutId) {
-          clearTimeout(timoutId);
-        }
+    const clearTimeoutIfSet = () => {
+      if (timoutId) {
+        clearTimeout(timoutId);
+      }
+    };
+
+    return getNavigatorLocks()
+      .request(`db-lock-${this._dbIdentifier}`, { signal: abortController.signal }, async () => {
+        clearTimeoutIfSet();
         const holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
         try {
           return await callback();
@@ -248,8 +255,16 @@ export class LockedAsyncDatabaseAdapter
             await this.baseDB.releaseHold(holdId);
           }
         }
-      }
-    );
+      })
+      .finally(() => {
+        clearTimeoutIfSet();
+        this.pendingAbortControllers.delete(abortController);
+      });
+  }
+
+  private abortPendingLockRequests(reason: string) {
+    this.pendingAbortControllers.forEach((controller) => controller.abort(reason));
+    this.pendingAbortControllers.clear();
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {

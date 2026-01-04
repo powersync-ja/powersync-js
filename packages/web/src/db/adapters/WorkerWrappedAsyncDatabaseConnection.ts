@@ -32,10 +32,15 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
 {
   protected lockAbortController = new AbortController();
   protected notifyRemoteClosed: AbortController | undefined;
+  private finalized = false;
+  private closeListeners = new Set<() => void>();
 
   constructor(protected options: WrappedWorkerConnectionOptions<Config>) {
     if (options.remoteCanCloseUnexpectedly) {
       this.notifyRemoteClosed = new AbortController();
+    }
+    if (options.onClose) {
+      this.closeListeners.add(options.onClose);
     }
   }
 
@@ -160,14 +165,44 @@ export class WorkerWrappedAsyncDatabaseConnection<Config extends ResolvedWebSQLO
     return this.baseConnection.registerOnTableChange(Comlink.proxy(callback));
   }
 
+  onClose(callback: () => void): () => void {
+    this.closeListeners.add(callback);
+    return () => this.closeListeners.delete(callback);
+  }
+
+  private finalizeClose(): void {
+    if (this.finalized) {
+      return;
+    }
+    this.finalized = true;
+    // Ensure cleanup is idempotent if close is triggered from multiple paths.
+    this.notifyRemoteClosed?.abort();
+    try {
+      this.options.remote[Comlink.releaseProxy]();
+    } catch {
+      // Proxy can already be released on teardown.
+    }
+    this.closeListeners.forEach((listener) => {
+      try {
+        listener();
+      } catch {
+        // Avoid throwing during cleanup.
+      }
+    });
+  }
+
+  forceClose(): void {
+    this.lockAbortController.abort();
+    this.finalizeClose();
+  }
+
   async close(): Promise<void> {
     // Abort any pending lock requests.
     this.lockAbortController.abort();
     try {
       await this.withRemote(() => this.baseConnection.close());
     } finally {
-      this.options.remote[Comlink.releaseProxy]();
-      this.options.onClose?.();
+      this.finalizeClose();
     }
   }
 
