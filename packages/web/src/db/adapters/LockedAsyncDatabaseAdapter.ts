@@ -234,7 +234,14 @@ export class LockedAsyncDatabaseAdapter
    */
   async close() {
     this.closing = true;
-    this._disposeTableChangeListener?.();
+    /**
+     * Note that we obtain a reference to the callback to avoid calling the callback with `this` as the context.
+     * This is to avoid Comlink attempting to clone `this` when calling the method.
+     */
+    const dispose = this._disposeTableChangeListener;
+    if (dispose) {
+      dispose();
+    }
     this.pendingAbortControllers.forEach((controller) => controller.abort('Closed'));
     await this.baseDB?.close?.();
     this.closed = true;
