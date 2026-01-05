@@ -1,4 +1,5 @@
 import { ILogger } from 'js-logger';
+import { SyncStatus } from '../db/crud/SyncStatus.js';
 import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import {
@@ -13,7 +14,6 @@ import {
   SyncStreamSubscribeOptions,
   SyncStreamSubscription
 } from './sync/sync-streams.js';
-import { SyncStatus } from '../db/crud/SyncStatus.js';
 
 /**
  * @internal
