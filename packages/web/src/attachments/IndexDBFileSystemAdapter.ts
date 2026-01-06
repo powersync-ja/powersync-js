@@ -92,21 +92,7 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
           return;
         }
 
-        if (options?.encoding === EncodingType.UTF8) {
-          const encoder = new TextEncoder();
-          const arrayBuffer = encoder.encode(req.result).buffer;
-          resolve(arrayBuffer);
-        }
-
-        // Default base64 encoding
-        const base64String = req.result.replace(/^data:\w+;base64,/, '');
-        const binaryString = atob(base64String);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        resolve(bytes.buffer);
+        resolve(req.result as ArrayBuffer);
       };
       req.onerror = () => reject(req.error);
     });
