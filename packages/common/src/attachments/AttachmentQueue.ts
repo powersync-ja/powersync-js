@@ -171,6 +171,17 @@ export class AttachmentQueue {
       }
     });
 
+    this.statusListenerDispose = this.db.registerListener({
+      statusChanged: (status) => {
+        if (status.connected) {
+          // Device came online, process attachments immediately
+          this.syncStorage().catch((error) => {
+            this.logger.error('Error syncing storage on connection:', error);
+          });
+        }
+      }
+    });
+
     this.watchAttachmentsAbortController = new AbortController();
 
     // Process attachments when there is a change in watched attachments
@@ -282,6 +293,10 @@ export class AttachmentQueue {
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();
+    }
+    if (this.statusListenerDispose) {
+      this.statusListenerDispose();
+      this.statusListenerDispose = undefined;
     }
   }
 
