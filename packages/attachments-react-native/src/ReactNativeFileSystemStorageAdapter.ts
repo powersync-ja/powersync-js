@@ -1,5 +1,6 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
-import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/common';
+import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
+import { EncodingType } from '@powersync/common';
 
 type ReactNativeFsModule = {
   DocumentDirectoryPath: string;
