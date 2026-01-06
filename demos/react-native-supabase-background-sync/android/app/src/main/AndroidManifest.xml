@@ -27,7 +27,6 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="powersyncreactnativebackgroundsync"/>
-        <data android:scheme="exp+powersync-react-native-background-sync"/>
       </intent-filter>
     </activity>
   </application>
