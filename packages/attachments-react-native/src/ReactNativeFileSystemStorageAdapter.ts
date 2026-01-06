@@ -91,7 +91,7 @@ To use the React Native File System attachment adapter please install @dr.pogodi
   async readFile(filePath: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
     const encoding = options?.encoding ?? EncodingType.Base64;
 
-    const content = await this.rnfs.readFile(filePath, encoding);
+    const content = await this.rnfs.readFile(filePath, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
 
     if (encoding === EncodingType.UTF8) {
       const encoder = new TextEncoder();
@@ -109,7 +109,7 @@ To use the React Native File System attachment adapter please install @dr.pogodi
       if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT') || error?.message?.includes('not exist')) {
         return;
       }
-      throw error;
+      throw new Error(`Failed to delete file at ${filePath}: ${error.message}`, { cause: error });
     }
   }
 
@@ -121,7 +121,7 @@ To use the React Native File System attachment adapter please install @dr.pogodi
       if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT')) {
         return false;
       }
-      throw error;
+      throw new Error(`Failed to check existence of file at ${filePath}: ${error.message}`, { cause: error });
     }
   }
 

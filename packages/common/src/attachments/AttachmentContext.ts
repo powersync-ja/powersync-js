@@ -124,40 +124,36 @@ export class AttachmentContext {
    * @param context - Active database transaction context
    */
   async upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void> {    
-    try {
-      await context.execute(
-        /* sql */
-        `
-          INSERT
-          OR REPLACE INTO ${this.tableName} (
-            id,
-            filename,
-            local_uri,
-            size,
-            media_type,
-            timestamp,
-            state,
-            has_synced,
-            meta_data
-          )
-          VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          attachment.id,
-          attachment.filename,
-          attachment.localUri || null,
-          attachment.size || null,
-          attachment.mediaType || null,
-          attachment.timestamp,
-          attachment.state,
-          attachment.hasSynced ? 1 : 0,
-          attachment.metaData || null
-        ]
-      );
-    } catch (error) {
-      throw error;
-    }
+    await context.execute(
+      /* sql */
+      `
+        INSERT
+        OR REPLACE INTO ${this.tableName} (
+          id,
+          filename,
+          local_uri,
+          size,
+          media_type,
+          timestamp,
+          state,
+          has_synced,
+          meta_data
+        )
+        VALUES
+          (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        attachment.id,
+        attachment.filename,
+        attachment.localUri || null,
+        attachment.size || null,
+        attachment.mediaType || null,
+        attachment.timestamp,
+        attachment.state,
+        attachment.hasSynced ? 1 : 0,
+        attachment.metaData || null
+      ]
+    );
   }
 
   async getAttachment(id: string): Promise<AttachmentRecord | undefined> {
@@ -232,10 +228,10 @@ export class AttachmentContext {
 
     const ids = archivedAttachments.map(attachment => attachment.id);
 
-    await this.db.executeBatch(
+    await this.db.execute(
       /* sql */
       `
-        DELETE FROM ${this.tableName} WHERE id IN (?)
+        DELETE FROM ${this.tableName} WHERE id IN (SELECT value FROM json_each(?));
       `,
       [ids]
     );

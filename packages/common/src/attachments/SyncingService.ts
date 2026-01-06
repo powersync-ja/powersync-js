@@ -109,6 +109,7 @@ export class SyncingService {
    * @returns Updated attachment record with local URI and new state
    */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
+    this.logger.info(`Downloading attachment ${attachment.filename}`);
     try {
       const fileData = await this.remoteStorage.downloadFile(attachment);
 
