@@ -207,7 +207,8 @@ export class AttachmentQueue {
               filename,
               state: AttachmentState.QUEUED_DOWNLOAD,
               hasSynced: false,
-              metaData: watchedAttachment.metaData
+              metaData: watchedAttachment.metaData,
+              timestamp: new Date().getTime()
             });
             continue;
           }
