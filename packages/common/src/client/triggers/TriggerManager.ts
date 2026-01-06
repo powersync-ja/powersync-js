@@ -461,6 +461,9 @@ export interface TriggerManager {
 
 /**
  * @experimental
+ * @internal
+ * An interface which exposes which persisted managed SQLite triggers and destination SQLite tables
+ * are actively in use. Resource which are not reported as claimed by this interface will be disposed.
  */
 
 export interface TriggerHoldManager {
@@ -473,4 +476,12 @@ export interface TriggerHoldManager {
    * Checks if a hold is present for an identifier.
    */
   checkHold: (identifier: string) => Promise<boolean>;
+}
+
+/**
+ * @experimental
+ * @internal
+ */
+export interface TriggerManagerConfig {
+  holdManager: TriggerHoldManager;
 }

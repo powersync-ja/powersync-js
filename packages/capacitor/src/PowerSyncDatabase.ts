@@ -1,9 +1,11 @@
 import { Capacitor } from '@capacitor/core';
 import {
   DBAdapter,
+  MemoryTriggerHoldManager,
   PowerSyncBackendConnector,
   RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation,
+  TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
   WebPowerSyncDatabaseOptionsWithSettings,
   WebRemote
@@ -42,6 +44,18 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       options.logger?.debug(`Using default web adapter for web platform`);
       return super.openDBAdapter(options);
     }
+  }
+
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    const config = super.generateTriggerManagerConfig();
+    if (this.isNativeCapacitorPlatform) {
+      /**
+       * We usually only ever have a single tab for capacitor.
+       * Avoiding navigator locks allows insecure contexts (during development).
+       */
+      config.holdManager = new MemoryTriggerHoldManager();
+    }
+    return config;
   }
 
   protected runExclusive<T>(cb: () => Promise<T>): Promise<T> {

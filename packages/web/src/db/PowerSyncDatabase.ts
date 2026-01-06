@@ -7,7 +7,7 @@ import {
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
   StreamingSyncImplementation,
-  TriggerManagerImpl,
+  TriggerManagerConfig,
   isDBAdapter,
   isSQLOpenFactory,
   type BucketStorageAdapter,
@@ -18,9 +18,9 @@ import {
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator';
 import { NavigatorTriggerHoldManager } from './NavigatorTriggerHoldManager';
+import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter';
 import { WebDBAdapter } from './adapters/WebDBAdapter';
-import { WASQLiteVFS } from './adapters/wa-sqlite/WASQLiteConnection';
-import { ResolvedWASQLiteOpenFactoryOptions, WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
@@ -146,20 +146,28 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     }
   }
 
-  async _initialize(): Promise<void> {}
+  async _initialize(): Promise<void> {
+    if (this.database instanceof LockedAsyncDatabaseAdapter) {
+      /**
+       * While init is done automatically,
+       * LockedAsyncDatabaseAdapter only exposes config after init.
+       * We can explicitly wait for init here in order to access config.
+       */
+      await this.database.init();
+    }
+    const config = (this.database as WebDBAdapter).getConfiguration();
+    if (config.requiresPersistentTriggers) {
+      this.triggersImpl.updateDefaults({
+        usePersistenceByDefault: true
+      });
+    }
+  }
 
-  protected generateTriggerManager(): TriggerManagerImpl {
-    // TODO, capacitor should not use navigator locks
-    return new TriggerManagerImpl({
-      db: this,
-      schema: this.schema,
-      // We need to share hold information between tabs
-      holdManager: new NavigatorTriggerHoldManager(),
-      // TODO, cleanup
-      usePersistenceByDefault: async () =>
-        ((this.database as WebDBAdapter).getConfiguration() as ResolvedWASQLiteOpenFactoryOptions).vfs !=
-        WASQLiteVFS.IDBBatchAtomicVFS
-    });
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    return {
+      // We need to share hold information between tabs for web
+      holdManager: new NavigatorTriggerHoldManager()
+    };
   }
 
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {

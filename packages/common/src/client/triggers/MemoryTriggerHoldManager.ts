@@ -1,5 +1,9 @@
-import { TriggerHoldManager } from '../triggers/TriggerManager.js';
+import { TriggerHoldManager } from './TriggerManager.js';
 
+/**
+ * @internal
+ * @experimental
+ */
 export class MemoryTriggerHoldManager implements TriggerHoldManager {
   // Uses a global store to share the state between potentially multiple instances
   private static HOLD_STORE = new Map<string, () => Promise<void>>();

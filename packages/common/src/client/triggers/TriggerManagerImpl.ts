@@ -1,22 +1,28 @@
 import { LockContext } from '../../db/DBAdapter.js';
 import { Schema } from '../../db/schema/Schema.js';
-import { type AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
   CreateDiffTriggerOptions,
   DiffTriggerOperation,
   TrackDiffOptions,
-  TriggerHoldManager,
   TriggerManager,
+  TriggerManagerConfig,
   TriggerRemoveCallback,
   WithDiffOptions
 } from './TriggerManager.js';
 
-export type TriggerManagerImplOptions = {
+export type TriggerManagerImplOptions = TriggerManagerConfig & {
   db: AbstractPowerSyncDatabase;
   schema: Schema;
-  holdManager: TriggerHoldManager;
-  usePersistenceByDefault?: () => Promise<boolean>;
+};
+
+export type TriggerManagerImplConfiguration = {
+  usePersistenceByDefault: boolean;
+};
+
+export const DEFAULT_TRIGGER_MANAGER_CONFIGURATION: TriggerManagerImplConfiguration = {
+  usePersistenceByDefault: false
 };
 
 /**
@@ -43,6 +49,8 @@ const TRIGGER_TABLE_TRACKING_KEY = 'powersync_tables_to_cleanup';
 export class TriggerManagerImpl implements TriggerManager {
   protected schema: Schema;
 
+  protected defaultConfig: TriggerManagerImplConfiguration;
+
   constructor(protected options: TriggerManagerImplOptions) {
     this.schema = options.schema;
     options.db.registerListener({
@@ -50,6 +58,7 @@ export class TriggerManagerImpl implements TriggerManager {
         this.schema = schema;
       }
     });
+    this.defaultConfig = DEFAULT_TRIGGER_MANAGER_CONFIGURATION;
   }
 
   protected get db() {
@@ -70,6 +79,16 @@ export class TriggerManagerImpl implements TriggerManager {
     for (const triggerId of triggerIds) {
       await tx.execute(/* sql */ `DROP TRIGGER IF EXISTS ${triggerId}; `);
     }
+  }
+
+  /**
+   * Updates default config settings for platform specific use-cases.
+   */
+  updateDefaults(config: TriggerManagerImplConfiguration) {
+    this.defaultConfig = {
+      ...this.defaultConfig,
+      ...config
+    };
   }
 
   async cleanupStaleItems() {
@@ -125,7 +144,7 @@ export class TriggerManagerImpl implements TriggerManager {
       when,
       hooks,
       // Fall back to the provided default if not given on this level
-      usePersistence = await this.options.usePersistenceByDefault?.()
+      usePersistence = this.defaultConfig.usePersistenceByDefault
     } = options;
     const operations = Object.keys(when) as DiffTriggerOperation[];
     if (operations.length == 0) {

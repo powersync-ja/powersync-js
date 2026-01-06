@@ -3,7 +3,6 @@ import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
 import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
 import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
-import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
 import {
   DEFAULT_CACHE_SIZE_KB,
@@ -11,6 +10,7 @@ import {
   TemporaryStorageOption,
   WebSQLOpenFactoryOptions
 } from '../web-sql-flags';
+import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter';
 import { WASQLiteVFS, WASqliteConnection } from './WASQLiteConnection';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
@@ -41,7 +41,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
   }
 
   protected openAdapter(): DBAdapter {
-    return new LockedAsyncDatabaseAdapter({
+    return new InternalWASQLiteDBAdapter({
       name: this.options.dbFilename,
       openConnection: () => this.openConnection(),
       debugMode: this.options.debugMode,

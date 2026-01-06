@@ -40,9 +40,9 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.js';
 import { SyncStream } from './sync/sync-streams.js';
-import { TriggerManager } from './triggers/TriggerManager.js';
+import { MemoryTriggerHoldManager } from './triggers/MemoryTriggerHoldManager.js';
+import { TriggerManager, TriggerManagerConfig } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
-import { MemoryTriggerHoldManager } from './watched/MemoryTriggerHoldManager.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -298,7 +298,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this._isReadyPromise = this.initialize();
 
-    this.triggers = this.triggersImpl = this.generateTriggerManager();
+    this.triggers = this.triggersImpl = new TriggerManagerImpl({
+      db: this,
+      schema: this.schema,
+      ...this.generateTriggerManagerConfig()
+    });
   }
 
   /**
@@ -334,14 +338,13 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   /**
-   * Generates a default trigger manager which uses a shared memory hold manager.
+   * Generates a base configuration for {@link TriggerManagerImpl}.
+   * Implementations should override this if necessary.
    */
-  protected generateTriggerManager() {
-    return new TriggerManagerImpl({
-      db: this,
-      schema: this.schema,
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    return {
       holdManager: new MemoryTriggerHoldManager()
-    });
+    };
   }
 
   protected abstract generateSyncStreamImplementation(

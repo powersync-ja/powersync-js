@@ -2,7 +2,6 @@ import { type PowerSyncOpenFactoryOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { resolveWebPowerSyncFlags } from '../../PowerSyncDatabase';
 import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
-import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
 import {
   DEFAULT_CACHE_SIZE_KB,
   ResolvedWebSQLOpenOptions,
@@ -10,6 +9,7 @@ import {
   WebSQLFlags
 } from '../web-sql-flags';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
+import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter';
 import { WASQLiteVFS } from './WASQLiteConnection';
 import { WASQLiteOpenFactory } from './WASQLiteOpenFactory';
 
@@ -44,7 +44,7 @@ export interface WASQLiteDBAdapterOptions extends Omit<PowerSyncOpenFactoryOptio
 /**
  * Adapter for WA-SQLite SQLite connections.
  */
-export class WASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
+export class WASQLiteDBAdapter extends InternalWASQLiteDBAdapter {
   constructor(options: WASQLiteDBAdapterOptions) {
     super({
       name: options.dbFilename,

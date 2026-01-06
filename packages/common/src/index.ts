@@ -34,6 +34,7 @@ export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
 export * from './client/Query.js';
+export { MemoryTriggerHoldManager } from './client/triggers/MemoryTriggerHoldManager.js';
 export * from './client/triggers/sanitizeSQL.js';
 export * from './client/triggers/TriggerManager.js';
 export { TriggerManagerImpl } from './client/triggers/TriggerManagerImpl.js';
