@@ -11,11 +11,11 @@ import { AttachmentContext } from './AttachmentContext.js';
  * Handles uploads, downloads, deletions, and state transitions.
  */
 export class SyncingService {
-  attachmentService: AttachmentService;
-  localStorage: LocalStorageAdapter;
-  remoteStorage: RemoteStorageAdapter;
-  logger: ILogger;
-  errorHandler?: AttachmentErrorHandler;
+  private attachmentService: AttachmentService;
+  private localStorage: LocalStorageAdapter;
+  private remoteStorage: RemoteStorageAdapter;
+  private logger: ILogger;
+  private errorHandler?: AttachmentErrorHandler;
 
   constructor(
     attachmentService: AttachmentService,

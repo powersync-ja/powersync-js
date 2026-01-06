@@ -20,10 +20,10 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
  */
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */
-  #periodicSyncTimer?: ReturnType<typeof setInterval>;
+  private periodicSyncTimer?: ReturnType<typeof setInterval>;
 
   /** Service for synchronizing attachments between local and remote storage */
-  readonly syncingService: SyncingService;
+  private readonly syncingService: SyncingService;
 
   /** Adapter for local file storage operations */
   readonly localStorage: LocalStorageAdapter;
@@ -38,13 +38,13 @@ export class AttachmentQueue {
    * data that reference attachments. When attachments are added, removed, or modified,
    * this callback should trigger the onUpdate function with the current set of attachments.
    */
-  readonly watchAttachments: (
+  private readonly watchAttachments: (
     onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>,
     signal: AbortSignal
   ) => void;
 
   /** Name of the database table storing attachment records */
-  readonly tableName?: string;
+  readonly tableName: string;
 
   /** Logger instance for diagnostic information */
   readonly logger: ILogger;
@@ -62,11 +62,17 @@ export class AttachmentQueue {
   readonly archivedCacheLimit: number;
 
   /** Service for managing attachment-related database operations */
-  readonly attachmentService: AttachmentService;
+  private readonly attachmentService: AttachmentService;
 
-  watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
+  /** PowerSync database instance */
+  private readonly db: AbstractPowerSyncDatabase;
 
-  watchAttachmentsAbortController: AbortController;
+  /** Cleanup function for status change listener */
+  private statusListenerDispose?: () => void;
+
+  private watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
+
+  private watchAttachmentsAbortController: AbortController;
 
   /**
    * Creates a new AttachmentQueue instance.
@@ -108,6 +114,7 @@ export class AttachmentQueue {
     archivedCacheLimit?: number;
     errorHandler?: AttachmentErrorHandler;
   }) {
+    this.db = db;
     this.remoteStorage = remoteStorage;
     this.localStorage = localStorage;
     this.watchAttachments = watchAttachments;
@@ -127,9 +134,7 @@ export class AttachmentQueue {
    * @returns Promise resolving to the new attachment ID
    */
   async generateAttachmentId(): Promise<string> {
-    return this.attachmentService.withContext(async (ctx) => {
-      return (await ctx.db.get<{ id: string }>('SELECT uuid() as id')).id;
-    });
+    return this.db.get<{ id: string }>('SELECT uuid() as id').then((row) => row.id);
   }
 
   /**
@@ -155,7 +160,7 @@ export class AttachmentQueue {
     await this.verifyAttachments();
 
     // Sync storage periodically
-    this.#periodicSyncTimer = setInterval(async () => {
+    this.periodicSyncTimer = setInterval(async () => {
       await this.syncStorage();
     }, this.syncIntervalMs);
 
@@ -272,8 +277,8 @@ export class AttachmentQueue {
    * Clears the periodic sync timer and closes all active attachment watchers.
    */
   async stopSync(): Promise<void> {
-    clearInterval(this.#periodicSyncTimer);
-    this.#periodicSyncTimer = undefined;
+    clearInterval(this.periodicSyncTimer);
+    this.periodicSyncTimer = undefined;
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();
