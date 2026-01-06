@@ -386,7 +386,7 @@ export class AttachmentQueue {
   async expireCache(): Promise<void> {
     let isDone = false;
     while (!isDone) {
-      this.attachmentService.withContext(async (ctx) => {
+      await this.attachmentService.withContext(async (ctx) => {
         isDone = await this.syncingService.deleteArchivedAttachments(ctx);
       })
     }
