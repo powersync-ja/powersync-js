@@ -12,7 +12,7 @@
     "@dr.pogodin/react-native-fs": "^2.36.1",
     "@expo/vector-icons": "^14.0.3",
     "@journeyapps/react-native-quick-sqlite": "^2.4.9",
-    "@powersync/attachments": "workspace:*",
+    "@powersync/attachments-react-native": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",

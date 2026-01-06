@@ -3,14 +3,14 @@ import '@azure/core-asynciterator-polyfill';
 import React from 'react';
 import {
   PowerSyncDatabase as PowerSyncDatabaseNative,
-  AbstractPowerSyncDatabase,
-  ExpoFileSystemStorageAdapter
+  AbstractPowerSyncDatabase
 } from '@powersync/react-native';
 import {
   PowerSyncDatabase as PowerSyncDatabaseWeb,
   WASQLiteOpenFactory,
   IndexDBFileSystemStorageAdapter
 } from '@powersync/web';
+import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-react-native';
 import {
   type AttachmentRecord,
   AttachmentQueue,

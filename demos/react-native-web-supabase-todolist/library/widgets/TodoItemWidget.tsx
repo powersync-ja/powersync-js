@@ -4,10 +4,10 @@ import { ActivityIndicator, View, Modal, StyleSheet, Platform } from 'react-nati
 import { ListItem, Button, Icon, Image } from 'react-native-elements';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
-import { AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import { useSystem } from '../powersync/system';
 import { alert } from '../utils/alert';
+import { AttachmentRecord } from '@powersync/react-native';
 
 export interface TodoItemWidgetProps {
   record: TodoRecord;
@@ -32,18 +32,18 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
     let blobUrl: string | null = null;
 
     const loadImage = async () => {
-      if (!photoAttachment?.local_uri) {
+      if (!photoAttachment?.localUri) {
         setImageUri(null);
         return;
       }
 
       // On web, convert IndexedDB URI to blob URL
-      if (Platform.OS === 'web' && photoAttachment.local_uri.startsWith('indexeddb://')) {
+      if (Platform.OS === 'web' && photoAttachment.localUri.startsWith('indexeddb://')) {
         try {
           const localStorage = system.photoAttachmentQueue?.localStorage;
           if (localStorage && typeof localStorage === 'object' && 'downloadFile' in localStorage) {
             const downloadFile = (localStorage.downloadFile as (path: string) => Promise<Blob>).bind(localStorage);
-            const blob = await downloadFile(photoAttachment.local_uri);
+            const blob = await downloadFile(photoAttachment.localUri);
             blobUrl = URL.createObjectURL(blob);
             setImageUri(blobUrl);
           }
@@ -53,7 +53,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         }
       } else {
         // On native, use the URI directly
-        setImageUri(photoAttachment.local_uri);
+        setImageUri(photoAttachment.localUri!);
       }
     };
 
@@ -65,7 +65,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         URL.revokeObjectURL(blobUrl);
       }
     };
-  }, [photoAttachment?.local_uri, system.photoAttachmentQueue]);
+  }, [photoAttachment?.localUri, system.photoAttachmentQueue]);
 
   return (
     <View key={`todo-item-${record.id}`} style={{ padding: 10 }}>
@@ -112,7 +112,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         {AppConfig.supabaseBucket &&
           (record.photo_id == null ? (
             <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
-          ) : photoAttachment?.local_uri != null ? (
+          ) : photoAttachment?.localUri != null ? (
             <Image
               source={{ uri: imageUri || undefined }}
               containerStyle={styles.item}
