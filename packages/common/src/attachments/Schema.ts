@@ -10,7 +10,7 @@ export const ATTACHMENT_TABLE = 'attachments';
 export interface AttachmentRecord {
   id: string;
   filename: string;
-  localUri?: string | null;
+  localUri?: string;
   size?: number;
   mediaType?: string;
   timestamp?: number;

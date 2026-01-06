@@ -11,7 +11,7 @@ export interface AttachmentErrorHandler {
    * @param error The error encountered during the download
    * @returns `true` to retry the operation, `false` to archive the attachment
    */
-  onDownloadError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+  onDownloadError(attachment: AttachmentRecord, error: unknown): Promise<boolean>;
 
   /**
    * Handles an upload error for a specific attachment.
@@ -19,7 +19,7 @@ export interface AttachmentErrorHandler {
    * @param error The error encountered during the upload
    * @returns `true` to retry the operation, `false` to archive the attachment
    */
-  onUploadError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+  onUploadError(attachment: AttachmentRecord, error: unknown): Promise<boolean>;
 
   /**
    * Handles a delete error for a specific attachment.
@@ -27,5 +27,5 @@ export interface AttachmentErrorHandler {
    * @param error The error encountered during the delete
    * @returns `true` to retry the operation, `false` to archive the attachment
    */
-  onDeleteError(attachment: AttachmentRecord, error: Error): Promise<boolean>;
+  onDeleteError(attachment: AttachmentRecord, error: unknown): Promise<boolean>;
 }
