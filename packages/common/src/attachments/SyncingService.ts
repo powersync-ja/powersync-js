@@ -119,7 +119,8 @@ export class SyncingService {
       return {
         ...attachment,
         state: AttachmentState.SYNCED,
-        localUri: localUri
+        localUri: localUri,
+        hasSynced: true
       };
     } catch (error) {
       const shouldRetry = await this.errorHandler?.onDownloadError(attachment, error) ?? true;
