@@ -200,7 +200,7 @@ export class AttachmentQueue {
               continue;
             }
 
-            const filename = `${watchedAttachment.id}.${watchedAttachment.fileExtension}`;
+            const filename = watchedAttachment.filename ?? `${watchedAttachment.id}.${watchedAttachment.fileExtension}`;
 
             attachmentUpdates.push({
               id: watchedAttachment.id,
