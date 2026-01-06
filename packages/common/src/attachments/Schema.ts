@@ -40,12 +40,11 @@ export function attachmentFromSql(row: any): AttachmentRecord {
  * AttachmentState represents the current synchronization state of an attachment.
  */
 export enum AttachmentState {
-  QUEUED_SYNC = 0, // Check if the attachment needs to be uploaded or downloaded
-  QUEUED_UPLOAD = 1, // Attachment to be uploaded
-  QUEUED_DOWNLOAD = 2, // Attachment to be downloaded
-  QUEUED_DELETE = 3, // Attachment to be deleted
-  SYNCED = 4, // Attachment has been synced
-  ARCHIVED = 5 // Attachment has been orphaned, i.e. the associated record has been deleted
+  QUEUED_UPLOAD = 0, // Attachment to be uploaded
+  QUEUED_DOWNLOAD = 1, // Attachment to be downloaded
+  QUEUED_DELETE = 2, // Attachment to be deleted
+  SYNCED = 3, // Attachment has been synced
+  ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
