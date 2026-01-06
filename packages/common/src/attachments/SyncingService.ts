@@ -155,8 +155,7 @@ export class SyncingService {
 
       return {
         ...attachment,
-        state: AttachmentState.QUEUED_DELETE,
-        localUri: null
+        state: AttachmentState.ARCHIVED
       };
     } catch (error) {
       const shouldRetry = await this.errorHandler?.onDeleteError(attachment, error) ?? true;
