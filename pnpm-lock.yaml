@@ -281,7 +281,7 @@ importers:
         version: link:../common
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1
       '@powersync/web':
         specifier: workspace:*
@@ -312,7 +312,7 @@ importers:
         version: 0.28.9
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1
       '@powersync/web':
         specifier: workspace:*
@@ -575,7 +575,7 @@ importers:
         version: 12.1.0
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1
       '@types/uuid':
         specifier: ^9.0.6
@@ -629,7 +629,7 @@ importers:
         specifier: ^11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@18.3.1)(react@18.3.1))(@types/react@18.3.1)(react@18.3.1)
       '@journeyapps/wa-sqlite':
-        specifier: ^1.4.0
+        specifier: ^1.4.1
         version: 1.4.1
       '@mui/icons-material':
         specifier: ^7.3.5

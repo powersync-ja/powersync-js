@@ -1,35 +1,34 @@
 import {
-  type BucketStorageAdapter,
-  type PowerSyncBackendConnector,
-  type PowerSyncCloseOptions,
-  type RequiredAdditionalConnectionOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
-  isDBAdapter,
-  isSQLOpenFactory,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
   StreamingSyncImplementation,
-  TriggerManagerImpl
+  TriggerManagerImpl,
+  isDBAdapter,
+  isSQLOpenFactory,
+  type BucketStorageAdapter,
+  type PowerSyncBackendConnector,
+  type PowerSyncCloseOptions,
+  type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator';
+import { NavigatorTriggerHoldManager } from './NavigatorTriggerHoldManager';
+import { WebDBAdapter } from './adapters/WebDBAdapter';
 import { WASQLiteVFS } from './adapters/wa-sqlite/WASQLiteConnection';
 import { ResolvedWASQLiteOpenFactoryOptions, WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
-  resolveWebSQLFlags,
-  WebSQLFlags
+  WebSQLFlags,
+  resolveWebSQLFlags
 } from './adapters/web-sql-flags';
-import { WebDBAdapter } from './adapters/WebDBAdapter';
-import { NavigatorTriggerHoldManager } from './NavigatorTriggerHoldManager';
-import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
+import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
 import { WebRemote } from './sync/WebRemote';
 import {
   WebStreamingSyncImplementation,
@@ -177,14 +176,13 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * By default the sync stream client is only disconnected if
    * multiple tabs are not enabled.
    */
-  close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS): Promise<void> {
+  close(options?: PowerSyncCloseOptions): Promise<void> {
     if (this.unloadListener) {
       window.removeEventListener('unload', this.unloadListener);
     }
-
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
-      disconnect: options.disconnect ?? !this.resolvedFlags.enableMultiTabs
+      disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
     });
   }
 

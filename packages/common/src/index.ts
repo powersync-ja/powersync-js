@@ -21,6 +21,7 @@ export * from './client/sync/stream/streaming-sync-types.js';
 export * from './client/sync/sync-streams.js';
 
 export * from './client/ConnectionManager.js';
+export * from './db/ConnectionClosedError.js';
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';
