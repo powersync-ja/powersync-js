@@ -40,7 +40,7 @@ type TrackedTableRecord = {
   table: string;
 };
 
-const TRIGGER_TABLE_TRACKING_KEY = 'powersync_tables_to_cleanup';
+export const TRIGGER_TABLE_TRACKING_KEY = 'powersync_tables_to_cleanup';
 
 /**
  * @internal
@@ -91,8 +91,12 @@ export class TriggerManagerImpl implements TriggerManager {
     };
   }
 
-  async cleanupStaleItems() {
-    await this.db.writeLock(async (ctx) => {
+  /**
+   * Cleanup any SQLite triggers or tables that are no longer in use.
+   */
+  async cleanupResources() {
+    // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
+    await this.db.database.writeLock(async (ctx) => {
       const storedRecords = await ctx.getOptional<{ value: string }>(
         /* sql */ `
           SELECT
@@ -131,6 +135,9 @@ export class TriggerManagerImpl implements TriggerManager {
           await ctx.execute(`DROP TRIGGER IF EXISTS ${triggerName}`);
         }
         await ctx.execute(`DROP TABLE IF EXISTS ${trackedItem.table}`);
+
+        // Also remove the tracked record for this.
+        await this.removeTriggerRecord(ctx, trackedItem);
       }
     });
   }
@@ -216,37 +223,8 @@ export class TriggerManagerImpl implements TriggerManager {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
         if (usePersistence) {
-          // Remove these triggers and tables from the list of items to safeguard cleanup for.
-          await tx.execute(
-            /* sql */ `
-              UPDATE ps_kv
-              SET
-                value = (
-                  SELECT
-                    json_group_array (json_each.value)
-                  FROM
-                    json_each (value)
-                  WHERE
-                    json_extract (json_each.value, '$.id') != ?
-                )
-              WHERE
-                key = ?;
-            `,
-            [id, TRIGGER_TABLE_TRACKING_KEY]
-          );
-
-          // Remove the key when the array becomes empty
-          await tx.execute(
-            /* sql */ `
-              DELETE FROM ps_kv
-              WHERE
-                key = ?
-                AND value IS NULL;
-            `,
-            [TRIGGER_TABLE_TRACKING_KEY]
-          );
+          await this.removeTriggerRecord(tx, { id, table: destination });
         }
-
         await releasePersistenceHold?.();
       });
     };
@@ -279,8 +257,8 @@ export class TriggerManagerImpl implements TriggerManager {
             UPDATE
             SET
               value = json_insert (
-                value,
-                '$[' || json_array_length (value) || ']',
+                ps_kv.value,
+                '$[' || json_array_length (ps_kv.value) || ']',
                 json_object ('id', ?, 'table', ?)
               );
           `,
@@ -477,5 +455,25 @@ export class TriggerManagerImpl implements TriggerManager {
       }
       throw error;
     }
+  }
+
+  protected async removeTriggerRecord(ctx: LockContext, record: TrackedTableRecord) {
+    await ctx.execute(
+      /* sql */ `
+        UPDATE ps_kv AS kv
+        SET
+          value = (
+            SELECT
+              json_group_array (json_each.value)
+            FROM
+              json_each (kv.value) -- Explicitly reference kv.value
+            WHERE
+              json_extract (json_each.value, '$.id') != ?
+          )
+        WHERE
+          key = ?;
+      `,
+      [record.id, TRIGGER_TABLE_TRACKING_KEY]
+    );
   }
 }

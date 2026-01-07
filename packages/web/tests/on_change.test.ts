@@ -2,7 +2,7 @@ import { AbstractPowerSyncDatabase, WatchOnChangeEvent } from '@powersync/common
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { testSchema } from './utils/testDb';
+import { TEST_SCHEMA } from './utils/test-schema';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -12,7 +12,7 @@ describe('OnChange Tests', { sequential: true }, () => {
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
       database: { dbFilename: 'test-watch.db' },
-      schema: testSchema,
+      schema: TEST_SCHEMA,
       flags: {
         enableMultiTabs: false
       }

@@ -6,7 +6,7 @@ import {
   WASQLitePowerSyncDatabaseOpenFactory
 } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { testSchema } from './utils/testDb';
+import { TEST_SCHEMA } from './utils/test-schema';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -67,7 +67,7 @@ describe('Open Methods', { sequential: true }, () => {
   it('Should open PowerSync clients from old factory methods', async () => {
     const db = new WASQLitePowerSyncDatabaseOpenFactory({
       dbFilename: `test-legacy.db`,
-      schema: testSchema
+      schema: TEST_SCHEMA
     }).getInstance();
 
     await basicTest(db);
@@ -75,20 +75,20 @@ describe('Open Methods', { sequential: true }, () => {
 
   it('Should open with an existing DBAdapter', async () => {
     const adapter = new WASQLiteDBAdapter({ dbFilename: 'adapter-test.db' });
-    const db = new PowerSyncDatabase({ database: adapter, schema: testSchema });
+    const db = new PowerSyncDatabase({ database: adapter, schema: TEST_SCHEMA });
 
     await basicTest(db);
   });
 
   it('Should open with provided factory', async () => {
     const factory = new WASQLiteOpenFactory({ dbFilename: 'factory-test.db' });
-    const db = new PowerSyncDatabase({ database: factory, schema: testSchema });
+    const db = new PowerSyncDatabase({ database: factory, schema: TEST_SCHEMA });
 
     await basicTest(db);
   });
 
   it('Should open with options', async () => {
-    const db = new PowerSyncDatabase({ database: { dbFilename: 'options-test.db' }, schema: testSchema });
+    const db = new PowerSyncDatabase({ database: { dbFilename: 'options-test.db' }, schema: TEST_SCHEMA });
 
     await basicTest(db);
   });
@@ -96,7 +96,7 @@ describe('Open Methods', { sequential: true }, () => {
   it('Should use shared worker for multiple tabs', async () => {
     const sharedSpy = vi.spyOn(mocks.proxies.sharedWorkerProxyHandler, 'construct');
 
-    const db = new PowerSyncDatabase({ database: { dbFilename: 'options-test.db' }, schema: testSchema });
+    const db = new PowerSyncDatabase({ database: { dbFilename: 'options-test.db' }, schema: TEST_SCHEMA });
 
     await basicTest(db);
 
@@ -109,7 +109,7 @@ describe('Open Methods', { sequential: true }, () => {
 
     const db = new PowerSyncDatabase({
       database: { dbFilename: 'options-test.db' },
-      schema: testSchema,
+      schema: TEST_SCHEMA,
       flags: { enableMultiTabs: false }
     });
 
@@ -125,7 +125,7 @@ describe('Open Methods', { sequential: true }, () => {
 
     const db = new PowerSyncDatabase({
       database: { dbFilename: 'options-test.db' },
-      schema: testSchema,
+      schema: TEST_SCHEMA,
       flags: { useWebWorker: false }
     });
 

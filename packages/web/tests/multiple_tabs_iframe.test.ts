@@ -54,45 +54,51 @@ function createIframeWithPowerSyncClient(
 
   // Create HTML content with module script that imports and executes the setup function
   // Vite will serve the module file, allowing proper module resolution
-  const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>PowerSync Client ${identifier}</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 10px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 12px;
-      background: #f5f5f5;
-    }
-    #info {
-      padding: 8px;
-      background: #e7f3ff;
-      border: 1px solid #b3d9ff;
-      border-radius: 4px;
-      font-size: 11px;
-      color: #0066cc;
-    }
-    .label {
-      font-weight: 600;
-      margin-right: 4px;
-    }
-  </style>
-</head>
-<body>
-  <div id="info">
-    <div><span class="label">ID:</span>${identifier}</div>
-    <div><span class="label">DB:</span>${dbFilename}</div>
-    <div><span class="label">VFS:</span>${vfs || 'IndexedDB (default)'}</div>
-  </div>
-  <script type="module">
-    import { setupPowerSyncInIframe } from '${modulePath}';
-    setupPowerSyncInIframe('${dbFilename}', '${identifier}', ${vfs ? `'${vfs}'` : 'undefined'}, ${waitForConnection ? 'true' : 'false'}, ${configureMockResponses ? 'true' : 'false'});
-  </script>
-</body>
-</html>`;
+  const htmlContent = /* html */ `<!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>PowerSync Client ${identifier}</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 12px;
+            background: #f5f5f5;
+          }
+          #info {
+            padding: 8px;
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #0066cc;
+          }
+          .label {
+            font-weight: 600;
+            margin-right: 4px;
+          }
+        </style>
+      </head>
+      <body>
+        <div id="info">
+          <div><span class="label">ID:</span>${identifier}</div>
+          <div><span class="label">DB:</span>${dbFilename}</div>
+          <div><span class="label">VFS:</span>${vfs || 'IndexedDB (default)'}</div>
+        </div>
+        <script type="module">
+          import { setupPowerSyncInIframe } from '${modulePath}';
+          setupPowerSyncInIframe(
+            '${dbFilename}',
+            '${identifier}',
+            ${vfs ? `'${vfs}'` : 'undefined'},
+            ${waitForConnection ? 'true' : 'false'},
+            ${configureMockResponses ? 'true' : 'false'}
+          );
+        </script>
+      </body>
+    </html>`;
 
   const blob = new Blob([htmlContent], { type: 'text/html' });
   const url = URL.createObjectURL(blob);

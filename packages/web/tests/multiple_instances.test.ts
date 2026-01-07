@@ -6,7 +6,8 @@ import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDataba
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
-import { generateTestDb, testSchema } from './utils/testDb';
+import { TEST_SCHEMA } from './utils/test-schema';
+import { generateTestDb } from './utils/testDb';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -16,7 +17,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       database: {
         dbFilename: DB_FILENAME
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
 
   beforeAll(() => createBaseLogger().useDefaults());
