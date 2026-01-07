@@ -12,14 +12,7 @@ The background sync logic is located in `library/utils.ts`.
 
 ## Getting Started
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/react-native-supabase-background-sync
