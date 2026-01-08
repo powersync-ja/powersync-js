@@ -161,7 +161,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       const config = (this.database as WebDBAdapter).getConfiguration();
       if (config.requiresPersistentTriggers) {
         this.triggersImpl.updateDefaults({
-          usePersistenceByDefault: true
+          useStorageByDefault: true
         });
       }
     }

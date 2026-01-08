@@ -718,7 +718,7 @@ describe('Triggers', () => {
         [DiffTriggerOperation.UPDATE]: 'TRUE',
         [DiffTriggerOperation.DELETE]: 'TRUE'
       },
-      usePersistence: true
+      useStorage: true
     });
 
     const results = [] as TriggerDiffRecord[];

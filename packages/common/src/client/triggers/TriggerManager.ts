@@ -206,12 +206,10 @@ interface BaseCreateDiffTriggerOptions {
   hooks?: TriggerCreationHooks;
 
   /**
-   * Using persistence will result in creating a persisted SQLite trigger
-   * and destination table.
-   * The resources created, although persisted, still have a temporary lifecycle.
-   * These resources will be disposed automatically when no longer used.
+   * Use storage-backed (non-TEMP) tables and triggers that persist across sessions.
+   * These resources are still automatically disposed when no longer claimed.
    */
-  usePersistence?: boolean;
+  useStorage?: boolean;
 }
 
 /**

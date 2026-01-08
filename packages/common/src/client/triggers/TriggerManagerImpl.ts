@@ -18,11 +18,11 @@ export type TriggerManagerImplOptions = TriggerManagerConfig & {
 };
 
 export type TriggerManagerImplConfiguration = {
-  usePersistenceByDefault: boolean;
+  useStorageByDefault: boolean;
 };
 
 export const DEFAULT_TRIGGER_MANAGER_CONFIGURATION: TriggerManagerImplConfiguration = {
-  usePersistenceByDefault: false
+  useStorageByDefault: false
 };
 
 /**
@@ -202,7 +202,7 @@ export class TriggerManagerImpl implements TriggerManager {
       when,
       hooks,
       // Fall back to the provided default if not given on this level
-      usePersistence = this.defaultConfig.usePersistenceByDefault
+      useStorage = this.defaultConfig.useStorageByDefault
     } = options;
     const operations = Object.keys(when) as DiffTriggerOperation[];
     if (operations.length == 0) {
@@ -215,7 +215,7 @@ export class TriggerManagerImpl implements TriggerManager {
      * OR
      * CREATE ${tableTriggerTypeClause} TRIGGER
      */
-    const tableTriggerTypeClause = !usePersistence ? 'TEMP' : '';
+    const tableTriggerTypeClause = !useStorage ? 'TEMP' : '';
 
     const whenClauses = Object.fromEntries(
       Object.entries(when).map(([operation, filter]) => [operation, `WHEN ${filter}`])
@@ -237,7 +237,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
     const id = await this.getUUID();
 
-    const releasePersistenceClaim = usePersistence ? await this.options.claimManager.obtainClaim(id) : null;
+    const releaseStorageClaim = useStorage ? await this.options.claimManager.obtainClaim(id) : null;
 
     /**
      * We default to replicating all columns if no columns array is provided.
@@ -273,7 +273,7 @@ export class TriggerManagerImpl implements TriggerManager {
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
-        await releasePersistenceClaim?.();
+        await releaseStorageClaim?.();
       });
     };
 
