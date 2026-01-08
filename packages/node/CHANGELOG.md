@@ -1,5 +1,13 @@
 # @powersync/node
 
+## 0.15.2
+
+### Patch Changes
+
+- 133f376: DB operations will now throw a dedicated `ConnectionClosed` error when an attempt to perform an operation on a closed connection is made.
+- Updated dependencies [133f376]
+  - @powersync/common@1.45.0
+
 ## 0.15.1
 
 ### Patch Changes
@@ -112,7 +120,6 @@
 - 688265f: Use upstream better-sqlite3 dependency instead of the PowerSync fork.
 
   After upgrading:
-
   1. Ensure you no longer depend on the `@powersync/better-sqlite3` package: `npm uninstall @powersync/better-sqlite3`.
   2. Unlike in older versions, the upstream `better-sqlite3` dependency is marked as optional since custom forks
      are supported too.
