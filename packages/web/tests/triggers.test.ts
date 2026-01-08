@@ -123,8 +123,6 @@ describe('Triggers', () => {
   });
 
   it('should cleanup persisted trigger tables when opening a new client', async () => {
-    debugger;
-
     const openDB = () =>
       generateTestDb({
         database: new WASQLiteOpenFactory({
