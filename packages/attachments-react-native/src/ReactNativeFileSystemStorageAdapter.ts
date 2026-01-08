@@ -1,34 +1,16 @@
 import { decode as decodeBase64, encode as encodeBase64 } from 'base64-arraybuffer';
 import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
-import { EncodingType } from '@powersync/common';
-
-type ReactNativeFsModule = {
-  DocumentDirectoryPath: string;
-  exists(path: string): Promise<boolean>;
-  mkdir(path: string): Promise<void>;
-  unlink(path: string): Promise<void>;
-  writeFile(path: string, contents: string, encoding?: 'base64' | 'utf8'): Promise<void>;
-  readFile(path: string, encoding?: 'base64' | 'utf8'): Promise<string>;
-};
 
 /**
  * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
  * Suitable for React Native applications not using Expo, or those preferring react-native-fs.
- *
- * @example
- * ```typescript
- * import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-react-native';
- *
- * const adapter = new ReactNativeFileSystemStorageAdapter();
- * await adapter.initialize();
- * ```
  */
 export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
-  private rnfs: ReactNativeFsModule;
+  private rnfs: typeof import('@dr.pogodin/react-native-fs');
   private storageDirectory: string;
 
   constructor(storageDirectory?: string) {
-    let rnfs: ReactNativeFsModule;
+    let rnfs: typeof import('@dr.pogodin/react-native-fs');
     try {
       rnfs = require('@dr.pogodin/react-native-fs');
     } catch (e) {
@@ -86,12 +68,12 @@ To use the React Native File System attachment adapter please install @dr.pogodi
     return decodeBase64(content);
   }
 
-  async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
+  async deleteFile(filePath: string): Promise<void> {
     try {
       await this.rnfs.unlink(filePath);
     } catch (error: any) {
       // Ignore file not found errors
-      if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT') || error?.message?.includes('not exist')) {
+      if (error.code === 'ENOENT' || error.message?.includes('ENOENT') || error.message?.includes('not exist')) {
         return;
       }
       throw new Error(`Failed to delete file at ${filePath}: ${error.message}`, { cause: error });
@@ -103,7 +85,7 @@ To use the React Native File System attachment adapter please install @dr.pogodi
       return await this.rnfs.exists(filePath);
     } catch (error: any) {
       // Only return false for file-not-found errors
-      if (error?.code === 'ENOENT' || error?.message?.includes('ENOENT')) {
+      if (error.code === 'ENOENT' || error.message?.includes('ENOENT') || error.message?.includes('not exist')) {
         return false;
       }
       throw new Error(`Failed to check existence of file at ${filePath}: ${error.message}`, { cause: error });
@@ -111,7 +93,10 @@ To use the React Native File System attachment adapter please install @dr.pogodi
   }
 
   async makeDir(path: string): Promise<void> {
-    await this.rnfs.mkdir(path);
+    const dirExists = await this.rnfs.exists(path);
+    if (!dirExists) {
+      await this.rnfs.mkdir(path);
+    }
   }
 
   async rmDir(path: string): Promise<void> {

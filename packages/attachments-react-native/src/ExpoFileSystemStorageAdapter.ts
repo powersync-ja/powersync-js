@@ -1,13 +1,10 @@
 import { decode as decodeBase64 } from 'base64-arraybuffer';
 import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
-import { EncodingType } from '@powersync/common';
 import type { File, Directory } from 'expo-file-system';
 
 /**
  * ExpoFileSystemStorageAdapter implements LocalStorageAdapter using Expo's new File System API (SDK 54+).
  * Suitable for React Native applications using Expo SDK 54 or later.
- *
- * For Expo SDK 53 and below, use ExpoFileSystemLegacyStorageAdapter instead.
  */
 export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
   private File: typeof File;
@@ -20,16 +17,11 @@ export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
       fs = require('expo-file-system');
     } catch (e) {
       throw new Error(`Could not resolve expo-file-system.
-To use the Expo File System V2 attachment adapter please install expo-file-system (SDK 54+).`);
+To use the Expo File System attachment adapter please install expo-file-system (SDK 54+).`);
     }
 
     if (!fs.File || !fs.Directory || !fs.Paths) {
-      throw new Error(`Expo File System V2 API not available. 
-This adapter requires expo-file-system SDK 54+. For older versions, use ExpoFileSystemStorageAdapter.`);
-    }
-
-    if (!fs.Paths.document) {
-      throw new Error(`expo-file-system Paths.document is not available.`);
+      throw new Error(`Expo File System API not available. This adapter requires expo-file-system SDK 54+.`);
     }
 
     this.File = fs.File;
@@ -79,24 +71,21 @@ This adapter requires expo-file-system SDK 54+. For older versions, use ExpoFile
     return size;
   }
 
-  async readFile(filePath: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
+  async readFile(filePath: string, mediaType?: string): Promise<ArrayBuffer> {
     const file = new this.File(filePath);
     
-    // Let the native function throw if file doesn't exist
     const { buffer } = await file.bytes();
     return buffer;
   }
 
-  async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
-    const file = new this.File(filePath);
-    
+  async deleteFile(filePath: string): Promise<void> {
     try {
+      const file = new this.File(filePath);
       if (file.exists) {
         file.delete();
       }
     } catch (error: any) {
-      // Gracefully ignore file not found errors, throw others
-      if (error?.message?.includes('not exist') || error?.message?.includes('ENOENT')) {
+      if (error.code === 'ENOENT' || error.message?.includes('ENOENT') || error.message?.includes('not exist')) {
         return;
       }
       throw new Error(`Failed to delete file at ${filePath}: ${error.message}`, { cause: error });
@@ -107,7 +96,10 @@ This adapter requires expo-file-system SDK 54+. For older versions, use ExpoFile
     try {
       const file = new this.File(filePath);
       return file.exists;
-    } catch {
+    } catch (error: any) {
+      if (error.code === 'ENOENT' || error.message?.includes('ENOENT')) {
+        return false;
+      }
       return false;
     }
   }
