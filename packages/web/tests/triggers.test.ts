@@ -74,7 +74,7 @@ describe('Triggers', () => {
     expect(initialTableRows.length).toEqual(1);
   });
 
-  it('should cleanup persisted trigger tables when opening a new client', { timeout: Infinity }, async () => {
+  it('should cleanup persisted trigger tables when opening a new client', async () => {
     debugger;
 
     const openDB = () =>

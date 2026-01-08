@@ -208,6 +208,8 @@ interface BaseCreateDiffTriggerOptions {
   /**
    * Using persistence will result in creating a persisted SQLite trigger
    * and destination table.
+   * The resources created, although persisted, still have a temporary lifecycle.
+   * These resources will be disposed automatically when no longer used.
    */
   usePersistence?: boolean;
 }

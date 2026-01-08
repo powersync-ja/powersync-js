@@ -16,7 +16,7 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: new WASQLiteOpenFactory({
-    dbFilename: 'test2.sqlite',
+    dbFilename: 'example.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS
   })
 });
