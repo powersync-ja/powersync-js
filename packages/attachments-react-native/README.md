@@ -86,7 +86,7 @@ Both adapters implement the `LocalStorageAdapter` interface from `@powersync/com
 
 | Adapter                               | Library                       | Supported Versions |
 | ------------------------------------- | ----------------------------- | ------------------ |
-| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=15.0.0 <20.0.0   |
+| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0           |
 | `ReactNativeFileSystemStorageAdapter` | `@dr.pogodin/react-native-fs` | ^2.25.0            |
 
 ## License

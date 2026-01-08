@@ -46,7 +46,7 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.43.1",
-    "expo-file-system": ">=15.0.0 <20.0.0",
+    "expo-file-system": ">=19.0.0",
     "@dr.pogodin/react-native-fs": "^2.25.0"
   },
   "peerDependenciesMeta": {
