@@ -127,6 +127,10 @@ export class TriggerManagerImpl implements TriggerManager {
     };
   }
 
+  protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string) {
+    return `__ps_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
+  }
+
   /**
    * Cleanup any SQLite triggers or tables that are no longer in use.
    */
@@ -134,23 +138,40 @@ export class TriggerManagerImpl implements TriggerManager {
     // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
     await this.db.database.writeLock(async (ctx) => {
       // Query sqlite_master directly to find all persisted triggers and extract destination/id
-      // Trigger naming convention: ps_temp_trigger_<operation>__<destination>__<id>
-      // - Start after first '__': instr(name, '__') + 2
-      // - Length: total - start_offset - separator(2) - uuid(36) = length(name) - instr(name, '__') - 39
+      // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
+      // - Remove first '__' with substr(name, 3)
+      // - Find first '__' in remaining string (this is after operation)
+      // - Destination starts after that '__': instr(substr(name, 3), '__') + 4 (2 for removed '__' + 2 for found '__')
+      // - Destination length: length(name) - 39 (to exclude the last 38 chars and adjust for offset)
+      // - UUID is always last 36 chars
+      // Query sqlite_master directly to find all persisted triggers and extract destination/id
+      // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
+      // - Compute start index after the second '__' (after operation) as a CTE for clarity
+      //   _start_index = instr(substr(name, 3), '__') + 4
+      //   (add 2 to account for removed leading '__', plus 2 to skip the '__' before destination)
+      // - Destination length excludes the trailing '__' + 36-char UUID: length(name) - _start_index - 37
       // - UUID is always last 36 chars
       const trackedItems = await ctx.getAll<TrackedTableRecord>(/* sql */ `
+        WITH
+          trigger_names AS (
+            SELECT
+              name,
+              instr (substr (name, 3), '__') + 4 AS _start_index
+            FROM
+              sqlite_master
+            WHERE
+              type = 'trigger'
+              AND name LIKE '__ps_temp_trigger_%'
+          )
         SELECT DISTINCT
           substr (
             name,
-            instr (name, '__') + 2,
-            length (name) - instr (name, '__') - 39
-          ) as "table",
-          substr (name, -36) as id
+            _start_index,
+            length (name) - _start_index - 37
+          ) AS "table",
+          substr (name, -36) AS id
         FROM
-          sqlite_master
-        WHERE
-          type = 'trigger'
-          AND name LIKE 'ps_temp_trigger_%'
+          trigger_names
       `);
 
       if (trackedItems.length == 0) {
@@ -169,8 +190,8 @@ export class TriggerManagerImpl implements TriggerManager {
         this.db.logger.debug(`Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`);
 
         // We need to delete the triggers and table
-        const triggerNames = Object.values(DiffTriggerOperation).map(
-          (value) => `ps_temp_trigger_${value.toLowerCase()}__${trackedItem.table}__${trackedItem.id}`
+        const triggerNames = Object.values(DiffTriggerOperation).map((operation) =>
+          this.generateTriggerName(operation, trackedItem.table, trackedItem.id)
         );
         for (const triggerName of triggerNames) {
           // The trigger might not actually exist, we don't track each trigger name and we test all permutations
@@ -280,7 +301,7 @@ export class TriggerManagerImpl implements TriggerManager {
       `);
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
-        const insertTriggerId = `ps_temp_trigger_insert__${destination}__${id}`;
+        const insertTriggerId = this.generateTriggerName(DiffTriggerOperation.INSERT, destination, id);
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
@@ -302,7 +323,7 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.UPDATE)) {
-        const updateTriggerId = `ps_temp_trigger_update__${destination}__${id}`;
+        const updateTriggerId = this.generateTriggerName(DiffTriggerOperation.UPDATE, destination, id);
         triggerIds.push(updateTriggerId);
 
         await tx.execute(/* sql */ `
@@ -324,7 +345,7 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.DELETE)) {
-        const deleteTriggerId = `ps_temp_trigger_delete__${destination}__${id}`;
+        const deleteTriggerId = this.generateTriggerName(DiffTriggerOperation.DELETE, destination, id);
         triggerIds.push(deleteTriggerId);
 
         // Create delete trigger for basic JSON
@@ -379,7 +400,7 @@ export class TriggerManagerImpl implements TriggerManager {
     const contextColumns = columns ?? sourceDefinition.columns.map((col) => col.name);
 
     const id = await this.getUUID();
-    const destination = `ps_temp_track_${source}_${id}`;
+    const destination = `__ps_temp_track_${source}_${id}`;
 
     // register an onChange before the trigger is created
     const abortController = new AbortController();
