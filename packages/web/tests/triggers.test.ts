@@ -144,31 +144,4 @@ describe('Triggers', () => {
       { interval: 100 }
     );
   });
-
-  it('should remember table state after disconnectAndClear', async () => {
-    const db = generateTestDb({
-      database: new WASQLiteOpenFactory({
-        dbFilename: 'triggers.sqlite',
-        vfs: WASQLiteVFS.OPFSCoopSyncVFS
-      }),
-      schema: TEST_SCHEMA
-    });
-
-    await db.triggers.createDiffTrigger({
-      source: TEST_SCHEMA.props.customers.name,
-      destination: 'xxxx_test_1',
-      when: {
-        [DiffTriggerOperation.INSERT]: 'TRUE'
-      }
-    });
-
-    await db.disconnectAndClear();
-
-    const state = await db.get<{ value: string }>('SELECT value FROM ps_kv WHERE key = ?', [
-      'powersync_tables_to_cleanup'
-    ]);
-    expect(state).toBeDefined();
-    expect(state?.value).toBeDefined();
-    expect(JSON.parse(state?.value ?? '[]').length).eq(1);
-  });
 });

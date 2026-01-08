@@ -42,7 +42,7 @@ import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.j
 import { SyncStream } from './sync/sync-streams.js';
 import { MemoryTriggerHoldManager } from './triggers/MemoryTriggerHoldManager.js';
 import { TriggerManager, TriggerManagerConfig } from './triggers/TriggerManager.js';
-import { TRIGGER_TABLE_TRACKING_KEY, TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
+import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
@@ -575,21 +575,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     const { clearLocal } = options;
 
     await this.database.writeTransaction(async (tx) => {
-      /**
-       * Hack!: powersync_clear will keys != 'client_id' in the ps_kv table.
-       * We currently use ps_kv to track the tracked persisted tables and triggers.
-       * We can fetch and restore the key/value here.
-       */
-      const result = await tx.getOptional<{ value: string }>('SELECT value FROM ps_kv WHERE key = ?', [
-        TRIGGER_TABLE_TRACKING_KEY
-      ]);
       await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
-      if (result) {
-        await tx.execute('INSERT OR REPLACE INTO ps_kv (key, value) VALUES (?, ?)', [
-          TRIGGER_TABLE_TRACKING_KEY,
-          result.value
-        ]);
-      }
     });
 
     // The data has been deleted - reset the sync status
@@ -623,6 +609,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (this.closed) {
       return;
     }
+
+    this.triggersImpl.dispose();
 
     await this.iterateAsyncListeners(async (cb) => cb.closing?.());
 

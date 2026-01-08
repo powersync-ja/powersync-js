@@ -42,6 +42,8 @@ type TrackedTableRecord = {
 
 export const TRIGGER_TABLE_TRACKING_KEY = 'powersync_tables_to_cleanup';
 
+const TRIGGER_CLEANUP_INTERVAL_MS = 120_000; // 2 minutes
+
 /**
  * @internal
  * @experimental
@@ -50,6 +52,8 @@ export class TriggerManagerImpl implements TriggerManager {
   protected schema: Schema;
 
   protected defaultConfig: TriggerManagerImplConfiguration;
+  protected cleanupTimeout: ReturnType<typeof setTimeout> | null;
+  protected isDisposed: boolean;
 
   constructor(protected options: TriggerManagerImplOptions) {
     this.schema = options.schema;
@@ -58,7 +62,32 @@ export class TriggerManagerImpl implements TriggerManager {
         this.schema = schema;
       }
     });
+    this.isDisposed = false;
+
+    /**
+     * Configure a cleanup to run on an interval.
+     * The interval is configured using setTimeout to take the async
+     * execution time of the callback into account.
+     */
     this.defaultConfig = DEFAULT_TRIGGER_MANAGER_CONFIGURATION;
+    const cleanupCallback = async () => {
+      this.cleanupTimeout = null;
+      if (this.isDisposed) {
+        return;
+      }
+      try {
+        await this.cleanupResources();
+      } catch (ex) {
+        this.db.logger.error(`Caught error while attempting to cleanup triggers`, ex);
+      } finally {
+        // if not closed, set another timeout
+        if (this.isDisposed) {
+          return;
+        }
+        this.cleanupTimeout = setTimeout(cleanupCallback, TRIGGER_CLEANUP_INTERVAL_MS);
+      }
+    };
+    this.cleanupTimeout = setTimeout(cleanupCallback, TRIGGER_CLEANUP_INTERVAL_MS);
   }
 
   protected get db() {
@@ -81,6 +110,13 @@ export class TriggerManagerImpl implements TriggerManager {
     }
   }
 
+  dispose() {
+    this.isDisposed = true;
+    if (this.cleanupTimeout) {
+      clearTimeout(this.cleanupTimeout);
+    }
+  }
+
   /**
    * Updates default config settings for platform specific use-cases.
    */
@@ -97,22 +133,26 @@ export class TriggerManagerImpl implements TriggerManager {
   async cleanupResources() {
     // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
     await this.db.database.writeLock(async (ctx) => {
-      const storedRecords = await ctx.getOptional<{ value: string }>(
-        /* sql */ `
-          SELECT
-            value
-          FROM
-            ps_kv
-          WHERE
-            key = ?
-        `,
-        [TRIGGER_TABLE_TRACKING_KEY]
-      );
-      if (!storedRecords) {
-        // There is nothing to cleanup
-        return;
-      }
-      const trackedItems = JSON.parse(storedRecords.value) as TrackedTableRecord[];
+      // Query sqlite_master directly to find all persisted triggers and extract destination/id
+      // Trigger naming convention: ps_temp_trigger_<operation>__<destination>__<id>
+      // - Start after first '__': instr(name, '__') + 2
+      // - Length: total - start_offset - separator(2) - uuid(36) = length(name) - instr(name, '__') - 39
+      // - UUID is always last 36 chars
+      const trackedItems = await ctx.getAll<TrackedTableRecord>(/* sql */ `
+        SELECT DISTINCT
+          substr (
+            name,
+            instr (name, '__') + 2,
+            length (name) - instr (name, '__') - 39
+          ) as "table",
+          substr (name, -36) as id
+        FROM
+          sqlite_master
+        WHERE
+          type = 'trigger'
+          AND name LIKE 'ps_temp_trigger_%'
+      `);
+
       if (trackedItems.length == 0) {
         // There is nothing to cleanup
         return;
@@ -126,18 +166,17 @@ export class TriggerManagerImpl implements TriggerManager {
           continue;
         }
 
-        // We need to delete the table and triggers
+        this.db.logger.debug(`Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`);
+
+        // We need to delete the triggers and table
         const triggerNames = Object.values(DiffTriggerOperation).map(
-          (value) => `ps_temp_trigger_${value.toLowerCase()}_${trackedItem.id}`
+          (value) => `ps_temp_trigger_${value.toLowerCase()}__${trackedItem.table}__${trackedItem.id}`
         );
         for (const triggerName of triggerNames) {
           // The trigger might not actually exist, we don't track each trigger name and we test all permutations
           await ctx.execute(`DROP TRIGGER IF EXISTS ${triggerName}`);
         }
         await ctx.execute(`DROP TABLE IF EXISTS ${trackedItem.table}`);
-
-        // Also remove the tracked record for this.
-        await this.removeTriggerRecord(ctx, trackedItem);
       }
     });
   }
@@ -222,9 +261,6 @@ export class TriggerManagerImpl implements TriggerManager {
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
-        if (usePersistence) {
-          await this.removeTriggerRecord(tx, { id, table: destination });
-        }
         await releasePersistenceHold?.();
       });
     };
@@ -240,34 +276,11 @@ export class TriggerManagerImpl implements TriggerManager {
           timestamp TEXT,
           value TEXT,
           previous_value TEXT
-        );
+        )
       `);
 
-      if (usePersistence) {
-        /**
-         * Register the table for cleanup management
-         * Store objects of the form { id: string, table: string } in the JSON array.
-         */
-        await tx.execute(
-          /* sql */ `
-            INSERT INTO
-              ps_kv (key, value)
-            VALUES
-              (?, json_array (json_object ('id', ?, 'table', ?))) ON CONFLICT (key) DO
-            UPDATE
-            SET
-              value = json_insert (
-                ps_kv.value,
-                '$[' || json_array_length (ps_kv.value) || ']',
-                json_object ('id', ?, 'table', ?)
-              );
-          `,
-          [TRIGGER_TABLE_TRACKING_KEY, id, destination, id, destination]
-        );
-      }
-
       if (operations.includes(DiffTriggerOperation.INSERT)) {
-        const insertTriggerId = `ps_temp_trigger_insert_${id}`;
+        const insertTriggerId = `ps_temp_trigger_insert__${destination}__${id}`;
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
@@ -284,12 +297,12 @@ export class TriggerManagerImpl implements TriggerManager {
               ${jsonFragment('NEW')}
             );
 
-          END;
+          END
         `);
       }
 
       if (operations.includes(DiffTriggerOperation.UPDATE)) {
-        const updateTriggerId = `ps_temp_trigger_update_${id}`;
+        const updateTriggerId = `ps_temp_trigger_update__${destination}__${id}`;
         triggerIds.push(updateTriggerId);
 
         await tx.execute(/* sql */ `
@@ -311,7 +324,7 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.DELETE)) {
-        const deleteTriggerId = `ps_temp_trigger_delete_${id}`;
+        const deleteTriggerId = `ps_temp_trigger_delete__${destination}__${id}`;
         triggerIds.push(deleteTriggerId);
 
         // Create delete trigger for basic JSON
@@ -455,25 +468,5 @@ export class TriggerManagerImpl implements TriggerManager {
       }
       throw error;
     }
-  }
-
-  protected async removeTriggerRecord(ctx: LockContext, record: TrackedTableRecord) {
-    await ctx.execute(
-      /* sql */ `
-        UPDATE ps_kv AS kv
-        SET
-          value = (
-            SELECT
-              json_group_array (json_each.value)
-            FROM
-              json_each (kv.value) -- Explicitly reference kv.value
-            WHERE
-              json_extract (json_each.value, '$.id') != ?
-          )
-        WHERE
-          key = ?;
-      `,
-      [record.id, TRIGGER_TABLE_TRACKING_KEY]
-    );
   }
 }
