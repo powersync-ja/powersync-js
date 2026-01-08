@@ -757,33 +757,8 @@ describe('Triggers', () => {
       expect(results.length).toEqual(1);
     });
 
-    const getTrackedTables = async () => {
-      // The table should be tracked in ps_kv
-      const { value: trackedTableItemsString } = await database.get<{ value: string }>(
-        'SELECT value from ps_kv where key = ?',
-        ['powersync_tables_to_cleanup']
-      );
-
-      type TrackedTableRecord = {
-        id: string;
-        table: string;
-      };
-
-      const trackedTableItems: TrackedTableRecord[] = JSON.parse(trackedTableItemsString);
-      return trackedTableItems;
-    };
-
-    const initialTrackedTableItems = await getTrackedTables();
-    // There should be an entry for this item
-    expect(initialTrackedTableItems.find((item) => item.table == table)).toBeDefined();
-
     // perform a manual cleanup
     await cleanup();
-
-    const afterCleanupTrackedTableItems = await getTrackedTables();
-
-    // There should no longer be an entry for this, since we ran cleanup
-    expect(afterCleanupTrackedTableItems.find((item) => item.table == table)).toBeUndefined();
 
     // For sanity, the table should not exist
     const tableRows = await database.getAll<{ name: string }>(

@@ -155,11 +155,15 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
        */
       await this.database.init();
     }
-    const config = (this.database as WebDBAdapter).getConfiguration();
-    if (config.requiresPersistentTriggers) {
-      this.triggersImpl.updateDefaults({
-        usePersistenceByDefault: true
-      });
+
+    // In some cases, like the SQLJs adapter, we don't pass a WebDBAdapter, so we need to check.
+    if (typeof (this.database as WebDBAdapter).getConfiguration == 'function') {
+      const config = (this.database as WebDBAdapter).getConfiguration();
+      if (config.requiresPersistentTriggers) {
+        this.triggersImpl.updateDefaults({
+          usePersistenceByDefault: true
+        });
+      }
     }
   }
 
