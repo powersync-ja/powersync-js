@@ -58,29 +58,17 @@ This adapter requires expo-file-system SDK 54+. For older versions, use ExpoFile
 
   async saveFile(
     filePath: string,
-    data: AttachmentData,
-    options?: { encoding?: EncodingType; mediaType?: string }
+    data: AttachmentData
   ): Promise<number> {
     const file = new this.File(filePath);
     let size: number;
 
     if (typeof data === 'string') {
-      // Handle string data
-      const encoding = options?.encoding ?? EncodingType.Base64;
-      
-      if (encoding === EncodingType.Base64) {
-        // Decode base64 to ArrayBuffer for accurate size
-        const arrayBuffer = decodeBase64(data);
-        const bytes = new Uint8Array(arrayBuffer);
-        // write expects string | Uint8Array, pass Uint8Array
-        file.write(bytes);
-        size = bytes.byteLength;
-      } else {
-        // UTF8 string
-        file.write(data);
-        const encoder = new TextEncoder();
-        size = encoder.encode(data).byteLength;
-      }
+      // String data is assumed to be Base64 encoded
+      const arrayBuffer = decodeBase64(data);
+      const bytes = new Uint8Array(arrayBuffer);
+      file.write(bytes);
+      size = bytes.byteLength;
     } else {
       // Handle ArrayBuffer data
       const bytes = new Uint8Array(data);

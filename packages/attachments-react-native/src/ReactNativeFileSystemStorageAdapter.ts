@@ -63,22 +63,15 @@ To use the React Native File System attachment adapter please install @dr.pogodi
 
   async saveFile(
     filePath: string,
-    data: AttachmentData,
-    options?: { encoding?: EncodingType; mediaType?: string }
+    data: AttachmentData
   ): Promise<number> {
     let size: number;
 
     if (typeof data === 'string') {
-      const encoding = options?.encoding ?? EncodingType.Base64;
-      await this.rnfs.writeFile(filePath, data, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
-
-      // Calculate size based on encoding
-      if (encoding === EncodingType.Base64) {
-        size = Math.ceil((data.length / 4) * 3);
-      } else {
-        const encoder = new TextEncoder();
-        size = encoder.encode(data).byteLength;
-      }
+      // String data is assumed to be Base64 encoded
+      await this.rnfs.writeFile(filePath, data, 'base64');
+      const arrayBuffer = decodeBase64(data);
+      size = arrayBuffer.byteLength;
     } else {
       const base64 = encodeBase64(data);
       await this.rnfs.writeFile(filePath, base64, 'base64');
@@ -88,17 +81,9 @@ To use the React Native File System attachment adapter please install @dr.pogodi
     return size;
   }
 
-  async readFile(filePath: string, options?: { encoding?: EncodingType; mediaType?: string }): Promise<ArrayBuffer> {
-    const encoding = options?.encoding ?? EncodingType.Base64;
-
-    const content = await this.rnfs.readFile(filePath, encoding === EncodingType.Base64 ? 'base64' : 'utf8');
-
-    if (encoding === EncodingType.UTF8) {
-      const encoder = new TextEncoder();
-      return encoder.encode(content).buffer;
-    } else {
-      return decodeBase64(content);
-    }
+  async readFile(filePath: string): Promise<ArrayBuffer> {
+    const content = await this.rnfs.readFile(filePath, 'base64');
+    return decodeBase64(content);
   }
 
   async deleteFile(filePath: string, options?: { filename?: string }): Promise<void> {
