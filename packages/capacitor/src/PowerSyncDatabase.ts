@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import {
   DBAdapter,
-  MemoryTriggerHoldManager,
+  MemoryTriggerClaimManager,
   PowerSyncBackendConnector,
   RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation,
@@ -53,7 +53,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
        * We usually only ever have a single tab for capacitor.
        * Avoiding navigator locks allows insecure contexts (during development).
        */
-      config.holdManager = new MemoryTriggerHoldManager();
+      config.claimManager = new MemoryTriggerClaimManager();
     }
     return config;
   }

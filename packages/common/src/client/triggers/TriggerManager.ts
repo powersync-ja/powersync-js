@@ -468,16 +468,16 @@ export interface TriggerManager {
  * are actively in use. Resource which are not reported as claimed by this interface will be disposed.
  */
 
-export interface TriggerHoldManager {
+export interface TriggerClaimManager {
   /**
-   * Obtains or marks a hold on a certain identifier.
-   * @returns a callback to release the hold.
+   * Obtains or marks a claim on a certain identifier.
+   * @returns a callback to release the claim.
    */
-  obtainHold: (identifier: string) => Promise<() => Promise<void>>;
+  obtainClaim: (identifier: string) => Promise<() => Promise<void>>;
   /**
-   * Checks if a hold is present for an identifier.
+   * Checks if a claim is present for an identifier.
    */
-  checkHold: (identifier: string) => Promise<boolean>;
+  checkClaim: (identifier: string) => Promise<boolean>;
 }
 
 /**
@@ -485,5 +485,10 @@ export interface TriggerHoldManager {
  * @internal
  */
 export interface TriggerManagerConfig {
-  holdManager: TriggerHoldManager;
+  claimManager: TriggerClaimManager;
 }
+
+/**
+ * @deprecated Use {@link TriggerClaimManager} instead
+ */
+export type TriggerHoldManager = TriggerClaimManager;

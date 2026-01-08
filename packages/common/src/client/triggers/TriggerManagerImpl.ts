@@ -181,8 +181,8 @@ export class TriggerManagerImpl implements TriggerManager {
 
       for (const trackedItem of trackedItems) {
         // check if there is anything holding on to this item
-        const hasHold = await this.options.holdManager.checkHold(trackedItem.id);
-        if (hasHold) {
+        const hasClaim = await this.options.claimManager.checkClaim(trackedItem.id);
+        if (hasClaim) {
           // This does not require cleanup
           continue;
         }
@@ -246,7 +246,7 @@ export class TriggerManagerImpl implements TriggerManager {
 
     const id = await this.getUUID();
 
-    const releasePersistenceHold = usePersistence ? await this.options.holdManager.obtainHold(id) : null;
+    const releasePersistenceClaim = usePersistence ? await this.options.claimManager.obtainClaim(id) : null;
 
     /**
      * We default to replicating all columns if no columns array is provided.
@@ -282,7 +282,7 @@ export class TriggerManagerImpl implements TriggerManager {
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
-        await releasePersistenceHold?.();
+        await releasePersistenceClaim?.();
       });
     };
 
