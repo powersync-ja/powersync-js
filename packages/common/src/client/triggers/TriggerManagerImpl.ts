@@ -40,8 +40,6 @@ type TrackedTableRecord = {
   table: string;
 };
 
-export const TRIGGER_TABLE_TRACKING_KEY = 'powersync_tables_to_cleanup';
-
 const TRIGGER_CLEANUP_INTERVAL_MS = 120_000; // 2 minutes
 
 /**
@@ -137,13 +135,6 @@ export class TriggerManagerImpl implements TriggerManager {
   async cleanupResources() {
     // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
     await this.db.database.writeLock(async (ctx) => {
-      // Query sqlite_master directly to find all persisted triggers and extract destination/id
-      // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
-      // - Remove first '__' with substr(name, 3)
-      // - Find first '__' in remaining string (this is after operation)
-      // - Destination starts after that '__': instr(substr(name, 3), '__') + 4 (2 for removed '__' + 2 for found '__')
-      // - Destination length: length(name) - 39 (to exclude the last 38 chars and adjust for offset)
-      // - UUID is always last 36 chars
       // Query sqlite_master directly to find all persisted triggers and extract destination/id
       // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
       // - Compute start index after the second '__' (after operation) as a CTE for clarity

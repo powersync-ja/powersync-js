@@ -487,8 +487,3 @@ export interface TriggerClaimManager {
 export interface TriggerManagerConfig {
   claimManager: TriggerClaimManager;
 }
-
-/**
- * @deprecated Use {@link TriggerClaimManager} instead
- */
-export type TriggerHoldManager = TriggerClaimManager;
