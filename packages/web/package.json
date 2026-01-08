@@ -2,7 +2,9 @@
   "name": "@powersync/web",
   "version": "1.30.0",
   "description": "PowerSync Web SDK",
+  "type": "module",
   "main": "lib/src/index.js",
+  "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "bin": {
     "powersync-web": "bin/powersync.js"
@@ -15,21 +17,26 @@
     "src"
   ],
   "exports": {
-    ".": "./lib/src/index.js",
+    ".": {
+      "import": {
+        "types": "./lib/src/index.d.ts",
+        "default": "./lib/src/index.js"
+      }
+    },
     "./umd": {
+      "types": "./lib/src/index.d.ts",
       "import": "./dist/index.umd.js",
-      "require": "./dist/index.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "require": "./dist/index.umd.js"
     },
     "./umd/worker/db": {
+      "types": "./lib/src/index.d.ts",
       "import": "./dist/worker/WASQLiteDB.umd.js",
-      "require": "./dist/worker/WASQLiteDB.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "require": "./dist/worker/WASQLiteDB.umd.js"
     },
     "./umd/worker/sync": {
+      "types": "./lib/src/index.d.ts",
       "import": "./dist/worker/SharedSyncImplementation.umd.js",
-      "require": "./dist/worker/SharedSyncImplementation.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "require": "./dist/worker/SharedSyncImplementation.umd.js"
     }
   },
   "repository": "https://github.com/powersync-ja/powersync-js",
@@ -49,7 +56,8 @@
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack . --entrypoints . --ignore-rules cjs-resolves-to-esm"
   },
   "keywords": [
     "data sync",

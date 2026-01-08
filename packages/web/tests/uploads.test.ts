@@ -2,7 +2,7 @@ import { createBaseLogger, createLogger, WebPowerSyncDatabaseOptions } from '@po
 import p from 'p-defer';
 import { v4 } from 'uuid';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_CONNECTED_POWERSYNC_OPTIONS, generateConnectedDatabase } from './utils/generateConnectedDatabase';
+import { DEFAULT_CONNECTED_POWERSYNC_OPTIONS, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 
 // Don't want to actually export the warning string from the package
 const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still present';

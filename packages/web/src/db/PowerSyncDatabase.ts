@@ -15,22 +15,22 @@ import {
   type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { getNavigatorLocks } from '../shared/navigator';
-import { WebDBAdapter } from './adapters/WebDBAdapter';
-import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { getNavigatorLocks } from '../shared/navigator.js';
+import { WebDBAdapter } from './adapters/WebDBAdapter.js';
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
   WebSQLFlags,
   resolveWebSQLFlags
-} from './adapters/web-sql-flags';
-import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
-import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
-import { WebRemote } from './sync/WebRemote';
+} from './adapters/web-sql-flags.js';
+import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
+import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation.js';
+import { WebRemote } from './sync/WebRemote.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from './sync/WebStreamingSyncImplementation';
+} from './sync/WebStreamingSyncImplementation.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**

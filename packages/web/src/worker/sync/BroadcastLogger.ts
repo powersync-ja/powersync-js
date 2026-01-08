@@ -1,5 +1,5 @@
 import { type ILogger, type ILogLevel, LogLevel } from '@powersync/common';
-import { type WrappedSyncPort } from './SharedSyncImplementation';
+import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 
 /**
  * Broadcasts logs to all clients

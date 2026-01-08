@@ -1,6 +1,6 @@
 import { createBaseLogger } from '@powersync/common';
-import { SharedSyncImplementation } from './SharedSyncImplementation';
-import { WorkerClient } from './WorkerClient';
+import { SharedSyncImplementation } from './SharedSyncImplementation.js';
+import { WorkerClient } from './WorkerClient.js';
 
 const _self: SharedWorkerGlobalScope = self as any;
 const logger = createBaseLogger();
