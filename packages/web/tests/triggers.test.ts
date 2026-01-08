@@ -34,6 +34,54 @@ const createTriggerInIframe = () => {
 };
 
 describe('Triggers', () => {
+  it('should use temporary triggers by default with IndexedDB VFS', async () => {
+    const db = generateTestDb({
+      database: new WASQLiteOpenFactory({
+        dbFilename: 'temp-triggers.sqlite'
+        // default VFS (IndexedDB) - no vfs specified
+      }),
+      schema: TEST_SCHEMA
+    });
+
+    let _destinationName: string | null = null;
+
+    const disposeTrigger = await db.triggers.trackTableDiff({
+      source: TEST_SCHEMA.props.customers.name,
+      onChange: async (ctx) => {
+        _destinationName = ctx.destinationTable;
+      },
+      when: {
+        [DiffTriggerOperation.INSERT]: 'TRUE'
+      }
+    });
+
+    onTestFinished(disposeTrigger);
+
+    await db.execute("INSERT INTO customers (id, name) VALUES (uuid(), 'test')");
+
+    await vi.waitFor(() => {
+      expect(_destinationName).toBeTruthy();
+    });
+
+    const destinationName = _destinationName!;
+
+    // the table should NOT exist in `sqlite_master` since it's a TEMP table
+    const tableRows = await db.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
+      [destinationName]
+    );
+
+    expect(tableRows.length).toEqual(0);
+
+    // but it should exist in sqlite_temp_master for TEMP tables
+    const tempTableRows = await db.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_temp_master WHERE type='table' AND name = ?`,
+      [destinationName]
+    );
+
+    expect(tempTableRows.length).toEqual(1);
+  });
+
   it('should automatically configure persistence for OPFS triggers', async () => {
     const db = generateTestDb({
       database: new WASQLiteOpenFactory({
