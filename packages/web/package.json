@@ -7,7 +7,7 @@
   "module": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
   "bin": {
-    "powersync-web": "bin/powersync.js"
+    "powersync-web": "bin/powersync.cjs"
   },
   "files": [
     "bin",

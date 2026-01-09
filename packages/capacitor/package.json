@@ -6,6 +6,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
+  "type": "module",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -21,7 +22,19 @@
     "Package.swift",
     "PowersyncCapacitor.podspec"
   ],
-  "author": "",
+ "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./lib/src/index.d.ts",
+        "default": "./dist/plugin.cjs.js"
+      }
+    }
+  },
+  "author": "POWERSYNC",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -51,7 +64,7 @@
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
     "prepublishOnly": "pnpm build",
-    "test:exports": "attw --pack ."
+    "test:exports": "attw --pack --profile=esm-only ."
   },
   "devDependencies": {
     "@capacitor-community/sqlite": "^7.0.2",

@@ -8,8 +8,8 @@ import {
   WebPowerSyncDatabaseOptionsWithSettings,
   WebRemote
 } from '@powersync/web';
-import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter';
-import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation';
+import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
+import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
 
 /**
  * PowerSyncDatabase class for managing database connections and sync implementations.
