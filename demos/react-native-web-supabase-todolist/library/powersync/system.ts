@@ -10,7 +10,7 @@ import {
   WASQLiteOpenFactory,
   IndexDBFileSystemStorageAdapter
 } from '@powersync/web';
-import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
+import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import {
   type AttachmentRecord,
   AttachmentQueue,
@@ -92,7 +92,7 @@ export class System {
 
     if (AppConfig.supabaseBucket) {
       const isWeb = Platform.OS === 'web';
-      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ExpoFileSystemStorageAdapter();
+      const localStorage = isWeb ? new IndexDBFileSystemStorageAdapter() : new ReactNativeFileSystemStorageAdapter();
       const remoteStorage = new SupabaseRemoteStorageAdapter({
         client: this.supabaseConnector.client,
         bucket: AppConfig.supabaseBucket
