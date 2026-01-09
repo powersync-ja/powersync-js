@@ -34,8 +34,10 @@ export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
 export * from './client/Query.js';
+export { MemoryTriggerClaimManager } from './client/triggers/MemoryTriggerClaimManager.js';
 export * from './client/triggers/sanitizeSQL.js';
 export * from './client/triggers/TriggerManager.js';
+export { TriggerManagerImpl } from './client/triggers/TriggerManagerImpl.js';
 export * from './client/watched/GetAllQuery.js';
 export * from './client/watched/processors/AbstractQueryProcessor.js';
 export * from './client/watched/processors/comparators.js';

@@ -1,23 +1,57 @@
 import { LockContext } from '../../db/DBAdapter.js';
 import { Schema } from '../../db/schema/Schema.js';
-import { type AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
+import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
   CreateDiffTriggerOptions,
   DiffTriggerOperation,
   TrackDiffOptions,
   TriggerManager,
+  TriggerManagerConfig,
   TriggerRemoveCallback,
   WithDiffOptions
 } from './TriggerManager.js';
 
-export type TriggerManagerImplOptions = {
+export type TriggerManagerImplOptions = TriggerManagerConfig & {
   db: AbstractPowerSyncDatabase;
   schema: Schema;
 };
 
+export type TriggerManagerImplConfiguration = {
+  useStorageByDefault: boolean;
+};
+
+export const DEFAULT_TRIGGER_MANAGER_CONFIGURATION: TriggerManagerImplConfiguration = {
+  useStorageByDefault: false
+};
+
+/**
+ * A record of persisted table/trigger information.
+ * This is used for fail-safe cleanup.
+ */
+type TrackedTableRecord = {
+  /**
+   * The id of the trigger. This is used in the SQLite trigger name
+   */
+  id: string;
+  /**
+   * The destination table name for the trigger
+   */
+  table: string;
+};
+
+const TRIGGER_CLEANUP_INTERVAL_MS = 120_000; // 2 minutes
+
+/**
+ * @internal
+ * @experimental
+ */
 export class TriggerManagerImpl implements TriggerManager {
   protected schema: Schema;
+
+  protected defaultConfig: TriggerManagerImplConfiguration;
+  protected cleanupTimeout: ReturnType<typeof setTimeout> | null;
+  protected isDisposed: boolean;
 
   constructor(protected options: TriggerManagerImplOptions) {
     this.schema = options.schema;
@@ -26,6 +60,32 @@ export class TriggerManagerImpl implements TriggerManager {
         this.schema = schema;
       }
     });
+    this.isDisposed = false;
+
+    /**
+     * Configure a cleanup to run on an interval.
+     * The interval is configured using setTimeout to take the async
+     * execution time of the callback into account.
+     */
+    this.defaultConfig = DEFAULT_TRIGGER_MANAGER_CONFIGURATION;
+    const cleanupCallback = async () => {
+      this.cleanupTimeout = null;
+      if (this.isDisposed) {
+        return;
+      }
+      try {
+        await this.cleanupResources();
+      } catch (ex) {
+        this.db.logger.error(`Caught error while attempting to cleanup triggers`, ex);
+      } finally {
+        // if not closed, set another timeout
+        if (this.isDisposed) {
+          return;
+        }
+        this.cleanupTimeout = setTimeout(cleanupCallback, TRIGGER_CLEANUP_INTERVAL_MS);
+      }
+    };
+    this.cleanupTimeout = setTimeout(cleanupCallback, TRIGGER_CLEANUP_INTERVAL_MS);
   }
 
   protected get db() {
@@ -48,13 +108,114 @@ export class TriggerManagerImpl implements TriggerManager {
     }
   }
 
+  dispose() {
+    this.isDisposed = true;
+    if (this.cleanupTimeout) {
+      clearTimeout(this.cleanupTimeout);
+    }
+  }
+
+  /**
+   * Updates default config settings for platform specific use-cases.
+   */
+  updateDefaults(config: TriggerManagerImplConfiguration) {
+    this.defaultConfig = {
+      ...this.defaultConfig,
+      ...config
+    };
+  }
+
+  protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string) {
+    return `__ps_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
+  }
+
+  /**
+   * Cleanup any SQLite triggers or tables that are no longer in use.
+   */
+  async cleanupResources() {
+    // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
+    await this.db.database.writeLock(async (ctx) => {
+      // Query sqlite_master directly to find all persisted triggers and extract destination/id
+      // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
+      // - Compute start index after the second '__' (after operation) as a CTE for clarity
+      //   _start_index = instr(substr(name, 3), '__') + 4
+      //   (add 2 to account for removed leading '__', plus 2 to skip the '__' before destination)
+      // - Destination length excludes the trailing '__' + 36-char UUID: length(name) - _start_index - 37
+      // - UUID is always last 36 chars
+      const trackedItems = await ctx.getAll<TrackedTableRecord>(/* sql */ `
+        WITH
+          trigger_names AS (
+            SELECT
+              name,
+              instr (substr (name, 3), '__') + 4 AS _start_index
+            FROM
+              sqlite_master
+            WHERE
+              type = 'trigger'
+              AND name LIKE '__ps_temp_trigger_%'
+          )
+        SELECT DISTINCT
+          substr (
+            name,
+            _start_index,
+            length (name) - _start_index - 37
+          ) AS "table",
+          substr (name, -36) AS id
+        FROM
+          trigger_names
+      `);
+
+      if (trackedItems.length == 0) {
+        // There is nothing to cleanup
+        return;
+      }
+
+      for (const trackedItem of trackedItems) {
+        // check if there is anything holding on to this item
+        const hasClaim = await this.options.claimManager.checkClaim(trackedItem.id);
+        if (hasClaim) {
+          // This does not require cleanup
+          continue;
+        }
+
+        this.db.logger.debug(`Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`);
+
+        // We need to delete the triggers and table
+        const triggerNames = Object.values(DiffTriggerOperation).map((operation) =>
+          this.generateTriggerName(operation, trackedItem.table, trackedItem.id)
+        );
+        for (const triggerName of triggerNames) {
+          // The trigger might not actually exist, we don't track each trigger name and we test all permutations
+          await ctx.execute(`DROP TRIGGER IF EXISTS ${triggerName}`);
+        }
+        await ctx.execute(`DROP TABLE IF EXISTS ${trackedItem.table}`);
+      }
+    });
+  }
+
   async createDiffTrigger(options: CreateDiffTriggerOptions) {
     await this.db.waitForReady();
-    const { source, destination, columns, when, hooks } = options;
+    const {
+      source,
+      destination,
+      columns,
+      when,
+      hooks,
+      // Fall back to the provided default if not given on this level
+      useStorage = this.defaultConfig.useStorageByDefault
+    } = options;
     const operations = Object.keys(when) as DiffTriggerOperation[];
     if (operations.length == 0) {
       throw new Error('At least one WHEN operation must be specified for the trigger.');
     }
+
+    /**
+     * The clause to use when executing
+     * CREATE ${tableTriggerTypeClause} TABLE
+     * OR
+     * CREATE ${tableTriggerTypeClause} TRIGGER
+     */
+    const tableTriggerTypeClause = !useStorage ? 'TEMP' : '';
 
     const whenClauses = Object.fromEntries(
       Object.entries(when).map(([operation, filter]) => [operation, `WHEN ${filter}`])
@@ -75,6 +236,8 @@ export class TriggerManagerImpl implements TriggerManager {
     const triggerIds: string[] = [];
 
     const id = await this.getUUID();
+
+    const releaseStorageClaim = useStorage ? await this.options.claimManager.obtainClaim(id) : null;
 
     /**
      * We default to replicating all columns if no columns array is provided.
@@ -110,6 +273,7 @@ export class TriggerManagerImpl implements TriggerManager {
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
         await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
+        await releaseStorageClaim?.();
       });
     };
 
@@ -117,22 +281,22 @@ export class TriggerManagerImpl implements TriggerManager {
       // Allow user code to execute in this lock context before the trigger is created.
       await hooks?.beforeCreate?.(tx);
       await tx.execute(/* sql */ `
-        CREATE TEMP TABLE ${destination} (
+        CREATE ${tableTriggerTypeClause} TABLE ${destination} (
           operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
           id TEXT,
           operation TEXT,
           timestamp TEXT,
           value TEXT,
           previous_value TEXT
-        );
+        )
       `);
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
-        const insertTriggerId = `ps_temp_trigger_insert_${id}`;
+        const insertTriggerId = this.generateTriggerName(DiffTriggerOperation.INSERT, destination, id);
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenClauses[
+          CREATE ${tableTriggerTypeClause} TRIGGER ${insertTriggerId} AFTER INSERT ON ${internalSource} ${whenClauses[
             DiffTriggerOperation.INSERT
           ]} BEGIN
           INSERT INTO
@@ -145,16 +309,16 @@ export class TriggerManagerImpl implements TriggerManager {
               ${jsonFragment('NEW')}
             );
 
-          END;
+          END
         `);
       }
 
       if (operations.includes(DiffTriggerOperation.UPDATE)) {
-        const updateTriggerId = `ps_temp_trigger_update_${id}`;
+        const updateTriggerId = this.generateTriggerName(DiffTriggerOperation.UPDATE, destination, id);
         triggerIds.push(updateTriggerId);
 
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${updateTriggerId} AFTER
+          CREATE ${tableTriggerTypeClause} TRIGGER ${updateTriggerId} AFTER
           UPDATE ON ${internalSource} ${whenClauses[DiffTriggerOperation.UPDATE]} BEGIN
           INSERT INTO
             ${destination} (id, operation, timestamp, value, previous_value)
@@ -172,12 +336,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.DELETE)) {
-        const deleteTriggerId = `ps_temp_trigger_delete_${id}`;
+        const deleteTriggerId = this.generateTriggerName(DiffTriggerOperation.DELETE, destination, id);
         triggerIds.push(deleteTriggerId);
 
         // Create delete trigger for basic JSON
         await tx.execute(/* sql */ `
-          CREATE TEMP TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenClauses[
+          CREATE ${tableTriggerTypeClause} TRIGGER ${deleteTriggerId} AFTER DELETE ON ${internalSource} ${whenClauses[
             DiffTriggerOperation.DELETE
           ]} BEGIN
           INSERT INTO
@@ -227,7 +391,7 @@ export class TriggerManagerImpl implements TriggerManager {
     const contextColumns = columns ?? sourceDefinition.columns.map((col) => col.name);
 
     const id = await this.getUUID();
-    const destination = `ps_temp_track_${source}_${id}`;
+    const destination = `__ps_temp_track_${source}_${id}`;
 
     // register an onChange before the trigger is created
     const abortController = new AbortController();
