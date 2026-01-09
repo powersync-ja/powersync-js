@@ -2,9 +2,9 @@
   "name": "@powersync/web",
   "version": "1.31.0",
   "description": "PowerSync Web SDK",
-  "type": "module",
   "main": "lib/src/index.js",
   "module": "lib/src/index.js",
+  "type": "module",
   "types": "lib/src/index.d.ts",
   "bin": {
     "powersync-web": "bin/powersync.cjs"
@@ -18,15 +18,12 @@
   ],
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/src/index.d.ts",
-        "default": "./lib/src/index.js"
-      }
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
     },
     "./umd": {
-      "types": "./lib/src/index.d.ts",
-      "import": "./dist/index.umd.js",
-      "require": "./dist/index.umd.js"
+      "types": "./dist/index.umd.d.ts",
+      "default": "./dist/index.umd.js"
     },
     "./umd/worker/db": {
       "types": "./lib/src/index.d.ts",
@@ -94,6 +91,7 @@
     "vm-browserify": "^1.1.2",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "dts-bundle-webpack": "^1.0.2"
   }
 }
