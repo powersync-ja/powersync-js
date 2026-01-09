@@ -22,7 +22,7 @@
     "Package.swift",
     "PowersyncCapacitor.podspec"
   ],
- "exports": {
+  "exports": {
     ".": {
       "import": {
         "types": "./dist/esm/index.d.ts",

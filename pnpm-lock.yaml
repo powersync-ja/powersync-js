@@ -291,7 +291,7 @@ importers:
         version: 20.19.27
       drizzle-orm:
         specifier: ^0.44.7
-        version: 0.44.7(@op-engineering/op-sqlite@14.1.4)(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0)
+        version: 0.44.7(@op-engineering/op-sqlite@14.1.4(react-native@0.78.0(@babel/core@7.28.5)(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@react-native-community/cli-server-api@15.0.1)(@types/react@19.2.7)(react@19.0.0))(react@19.0.0))(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0)
       vite:
         specifier: ^6.1.0
         version: 6.4.1(@types/node@20.19.27)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2)
@@ -359,7 +359,7 @@ importers:
         version: 12.5.0
       drizzle-orm:
         specifier: ^0.44.7
-        version: 0.44.7(@op-engineering/op-sqlite@14.1.4)(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0)
+        version: 0.44.7(@op-engineering/op-sqlite@14.1.4(react-native@0.78.0(@babel/core@7.28.5)(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@react-native-community/cli-server-api@15.0.1)(@types/react@19.2.7)(react@19.0.0))(react@19.0.0))(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0)
       rollup:
         specifier: 4.14.3
         version: 4.14.3
@@ -588,13 +588,13 @@ importers:
         version: 4.0.1
       source-map-loader:
         specifier: ^5.0.0
-        version: 5.0.0(webpack@5.104.1(webpack-cli@5.1.4))
+        version: 5.0.0(webpack@5.104.1)
       stream-browserify:
         specifier: ^3.0.0
         version: 3.0.0
       terser-webpack-plugin:
         specifier: ^5.3.9
-        version: 5.3.16(webpack@5.104.1(webpack-cli@5.1.4))
+        version: 5.3.16(webpack@5.104.1)
       uuid:
         specifier: ^9.0.1
         version: 9.0.1
@@ -701,6 +701,9 @@ importers:
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
+      '@powersync/capacitor':
+        specifier: workspace:*
+        version: link:../../packages/capacitor
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../../packages/drizzle-driver
@@ -17452,7 +17455,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.72.0': {}
 
@@ -18929,17 +18934,17 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@xtuc/long': 4.2.2
 
-  '@webpack-cli/configtest@2.1.1(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))':
+  '@webpack-cli/configtest@2.1.1(webpack-cli@5.1.4)(webpack@5.104.1)':
     dependencies:
       webpack: 5.104.1(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack@5.104.1)
 
-  '@webpack-cli/info@2.0.2(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))':
+  '@webpack-cli/info@2.0.2(webpack-cli@5.1.4)(webpack@5.104.1)':
     dependencies:
       webpack: 5.104.1(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack@5.104.1)
 
-  '@webpack-cli/serve@2.0.5(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))':
+  '@webpack-cli/serve@2.0.5(webpack-cli@5.1.4)(webpack@5.104.1)':
     dependencies:
       webpack: 5.104.1(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack@5.104.1)
@@ -20745,7 +20750,7 @@ snapshots:
 
   dotenv@16.6.1: {}
 
-  drizzle-orm@0.44.7(@op-engineering/op-sqlite@14.1.4)(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0):
+  drizzle-orm@0.44.7(@op-engineering/op-sqlite@14.1.4(react-native@0.78.0(@babel/core@7.28.5)(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@react-native-community/cli-server-api@15.0.1)(@types/react@19.2.7)(react@19.0.0))(react@19.0.0))(@opentelemetry/api@1.9.0)(@types/sql.js@1.4.9)(better-sqlite3@12.5.0)(kysely@0.28.9)(sql.js@1.13.0):
     optionalDependencies:
       '@op-engineering/op-sqlite': 14.1.4(react-native@0.78.0(@babel/core@7.28.5)(@babel/preset-env@7.28.5(@babel/core@7.28.5))(@react-native-community/cli-server-api@15.0.1)(@types/react@19.2.7)(react@19.0.0))(react@19.0.0)
       '@opentelemetry/api': 1.9.0
@@ -27193,7 +27198,7 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
-  source-map-loader@5.0.0(webpack@5.104.1(webpack-cli@5.1.4)):
+  source-map-loader@5.0.0(webpack@5.104.1):
     dependencies:
       iconv-lite: 0.6.3
       source-map-js: 1.2.1
@@ -27594,7 +27599,7 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.6.13
 
-  terser-webpack-plugin@5.3.16(webpack@5.104.1(webpack-cli@5.1.4)):
+  terser-webpack-plugin@5.3.16(webpack@5.104.1):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -28356,9 +28361,9 @@ snapshots:
   webpack-cli@5.1.4(webpack@5.104.1):
     dependencies:
       '@discoveryjs/json-ext': 0.5.7
-      '@webpack-cli/configtest': 2.1.1(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))
-      '@webpack-cli/info': 2.0.2(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))
-      '@webpack-cli/serve': 2.0.5(webpack-cli@5.1.4(webpack@5.104.1))(webpack@5.104.1(webpack-cli@5.1.4))
+      '@webpack-cli/configtest': 2.1.1(webpack-cli@5.1.4)(webpack@5.104.1)
+      '@webpack-cli/info': 2.0.2(webpack-cli@5.1.4)(webpack@5.104.1)
+      '@webpack-cli/serve': 2.0.5(webpack-cli@5.1.4)(webpack@5.104.1)
       colorette: 2.0.20
       commander: 10.0.1
       cross-spawn: 7.0.6
@@ -28523,7 +28528,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(webpack@5.104.1(webpack-cli@5.1.4))
+      terser-webpack-plugin: 5.3.16(webpack@5.104.1)
       watchpack: 2.5.0
       webpack-sources: 3.3.3
     optionalDependencies:
