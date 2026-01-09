@@ -25,7 +25,7 @@ Update pods:
 
 ```sh
 cd ios
-pod update
+bundle exec pod update
 cd ..
 ```
 
