@@ -6,9 +6,12 @@ This demo app is an extension of the [Supabase Todo List App](../react-native-su
 
 To use PowerSync in your own React Native for Web project, additional config is required. This is detailed in our docs [here](https://docs.powersync.com/client-sdk-references/react-native-and-expo/react-native-web-support).
 
-To run this demo, follow these instructions:
+## Run Demo
 
-## Running this demo
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
 
 ### Install dependencies
 

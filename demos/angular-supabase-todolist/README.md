@@ -1,16 +1,15 @@
 # PowerSync + Supabase Angular Demo: Todo List
 
-## Note: Alpha Release
-
-This demo is currently in an alpha release.
-
 ## Overview
 
 Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase.
 
-A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase-+-powersync).
+## Run Demo
 
-## Quick Start
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
 
 1. Run `pnpm install`
 2. Create a `.env` file by copying the template `cp .env.template .env`
