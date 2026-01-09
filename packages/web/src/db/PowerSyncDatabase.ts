@@ -22,6 +22,7 @@ import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
   WebSQLFlags,
+  isServerSide,
   resolveWebSQLFlags
 } from './adapters/web-sql-flags.js';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
@@ -167,6 +168,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
     });
+  }
+
+  protected async loadVersion(): Promise<void> {
+    if (isServerSide()) {
+      return;
+    }
+    return super.loadVersion();
+  }
+
+  protected async resolveOfflineSyncStatus() {
+    if (isServerSide()) {
+      return;
+    }
+    return super.resolveOfflineSyncStatus();
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
