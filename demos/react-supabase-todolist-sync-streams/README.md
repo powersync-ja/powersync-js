@@ -6,7 +6,13 @@ This app is a fork of our [React Supabase Todolist Demo](../react-supabase-todol
 
 Sync streams are not a stable PowerSync feature yet, and most users should probably use the stable demo instead.
 
-To use this demo, deploy the following sync streams:
+## Run Demo
+
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+* Instead of implementing sync rules per these docs, deploy the following sync streams:
 
 ```yaml
 streams:
@@ -19,8 +25,6 @@ streams:
 config:
   edition: 2
 ```
-
-## Getting Started
 
 Switch into the demo's directory:
 
