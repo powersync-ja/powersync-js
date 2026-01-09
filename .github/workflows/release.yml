@@ -18,24 +18,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          # Pnpm 9.4 introduces this https://github.com/pnpm/pnpm/pull/7633
-          # which causes workspace:^1.2.0 to be converted to 1.2.0^1.2.0
-          version: 9.3
-          run_install: false
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version-file: '.nvmrc'
+          cache: pnpm
       - name: Install dependencies
         run: pnpm install
       - name: Create Release Pull Request or Publish to npm
