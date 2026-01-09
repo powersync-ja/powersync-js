@@ -54,7 +54,7 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
     "test": "pnpm build && vitest",
-    "test:exports": "attw --pack . --entrypoints . --ignore-rules cjs-resolves-to-esm"
+    "test:exports": "attw --pack . --entrypoints . --profile=esm-only "
   },
   "keywords": [
     "data sync",
