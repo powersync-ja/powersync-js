@@ -2,7 +2,7 @@ import { Schema, SyncStreamConnectionMethod, Table, column } from '@powersync/co
 import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
-import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory';
+import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory.js';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 

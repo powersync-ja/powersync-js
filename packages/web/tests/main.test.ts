@@ -1,7 +1,7 @@
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
-import { TestDatabase, generateTestDb, testSchema } from './utils/testDb';
+import { TestDatabase, generateTestDb, testSchema } from './utils/testDb.js';
 // TODO import tests from a common package
 
 describe(

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
-import { AsyncDatabaseConnection } from '../src/db/adapters/AsyncDatabaseConnection';
-import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption } from '../src/db/adapters/web-sql-flags';
-import { ResolvedWASQLiteOpenFactoryOptions } from '../src/db/adapters/wa-sqlite/WASQLiteOpenFactory';
-import { WASQLiteVFS } from '../src/db/adapters/wa-sqlite/WASQLiteConnection';
+import { AsyncDatabaseConnection } from '../src/db/adapters/AsyncDatabaseConnection.js';
+import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter.js';
+import { WASQLiteVFS } from '../src/db/adapters/wa-sqlite/WASQLiteConnection.js';
+import { ResolvedWASQLiteOpenFactoryOptions } from '../src/db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
+import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption } from '../src/db/adapters/web-sql-flags.js';
 
 describe('LockedAsyncDatabaseAdapter.close', () => {
   it('calls the table change disposer without binding this', async () => {
@@ -35,9 +35,9 @@ describe('LockedAsyncDatabaseAdapter.close', () => {
       markHold: async () => 'hold',
       releaseHold: async () => {},
       isAutoCommit: async () => true,
-      execute: async () => ({ rows: { _array: [], length: 0 } } as any),
+      execute: async () => ({ rows: { _array: [], length: 0 } }) as any,
       executeRaw: async () => [],
-      executeBatch: async () => ({ rows: { _array: [], length: 0 } } as any),
+      executeBatch: async () => ({ rows: { _array: [], length: 0 } }) as any,
       registerOnTableChange: async () => disposer,
       getConfig: async () => config
     };

@@ -2,7 +2,7 @@ import { Column, ColumnType, CrudEntry, Schema, Table, UpdateType } from '@power
 import pDefer from 'p-defer';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
-import { generateTestDb } from './utils/testDb';
+import { generateTestDb } from './utils/testDb.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 

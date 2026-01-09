@@ -1,5 +1,5 @@
 import { DBAdapter } from '@powersync/common';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 export type SharedConnectionWorker = {
   identifier: string;

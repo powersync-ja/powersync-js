@@ -1,6 +1,6 @@
-import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createBaseLogger } from '@powersync/common';
+import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createLogger } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
-import { getMockSyncServiceFromWorker } from './MockSyncServiceClient';
+import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.
@@ -45,9 +45,9 @@ export async function setupPowerSyncInIframe(
       : { dbFilename };
 
     // Configure verbose logging
-    const logger = createBaseLogger();
-    logger.setLevel(LogLevel.DEBUG);
-    logger.useDefaults();
+    const logger = createLogger('iFrame test', {
+      logLevel: LogLevel.DEBUG
+    });
 
     const db = new PowerSyncDatabase({
       database: databaseOptions,

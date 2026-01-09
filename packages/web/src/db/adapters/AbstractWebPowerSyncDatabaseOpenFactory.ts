@@ -9,7 +9,7 @@ import {
   WebPowerSyncDatabaseOptions,
   WebPowerSyncFlags,
   resolveWebPowerSyncFlags
-} from '../../db/PowerSyncDatabase';
+} from '../../db/PowerSyncDatabase.js';
 
 /**
  * {@link WebPowerSyncFlags}

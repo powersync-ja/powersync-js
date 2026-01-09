@@ -1,10 +1,17 @@
 const production = process.env.NODE_ENV === 'production';
-const TerserPlugin = require('terser-webpack-plugin');
-const path = require('path');
-const DeleteAssetsPlugin = require('./deletePlugin.plugin');
-const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin');
+import { createRequire } from 'module';
+import path from 'path';
+import TerserPlugin from 'terser-webpack-plugin';
+import { fileURLToPath } from 'url';
+import DeleteAssetsPlugin from './deletePlugin.plugin.js';
 
-module.exports = () => {
+import LimitChunkCountPlugin from 'webpack/lib/optimize/LimitChunkCountPlugin.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+
+export default () => {
   return {
     entry: path.join(__dirname, './lib/src/index.js'),
     output: {

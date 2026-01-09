@@ -5,11 +5,11 @@
 import '@journeyapps/wa-sqlite';
 import { createBaseLogger, createLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
-import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory';
-import { getNavigatorLocks } from '../../shared/navigator';
-import { SharedDBWorkerConnection, SharedWASQLiteConnection } from './SharedWASQLiteConnection';
-import { WorkerWASQLiteConnection } from './WorkerWASQLiteConnection';
+import { AsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
+import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
+import { getNavigatorLocks } from '../../shared/navigator.js';
+import { SharedDBWorkerConnection, SharedWASQLiteConnection } from './SharedWASQLiteConnection.js';
+import { WorkerWASQLiteConnection } from './WorkerWASQLiteConnection.js';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();

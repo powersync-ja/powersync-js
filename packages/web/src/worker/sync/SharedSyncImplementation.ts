@@ -17,18 +17,18 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
-import { WebRemote } from '../../db/sync/WebRemote';
+import { WebRemote } from '../../db/sync/WebRemote.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from '../../db/sync/WebStreamingSyncImplementation';
+} from '../../db/sync/WebStreamingSyncImplementation.js';
 
-import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection';
-import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
-import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider';
-import { BroadcastLogger } from './BroadcastLogger';
+import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
+import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter.js';
+import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
+import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
+import { BroadcastLogger } from './BroadcastLogger.js';
 
 /**
  * @internal

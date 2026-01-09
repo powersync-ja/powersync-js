@@ -11,14 +11,14 @@ import {
   WebPowerSyncOpenFactoryOptions
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
-import { TestConnector } from './utils/MockStreamOpenFactory';
-import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
-import { v4 } from 'uuid';
+import { TestConnector } from './utils/MockStreamOpenFactory.js';
+import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
-const logger = createBaseLogger();
-logger.useDefaults();
+const baseLogger = createBaseLogger();
+baseLogger.useDefaults();
+const logger = baseLogger.get('stream test');
 
 describe('Streaming', { sequential: true }, () => {
   describe(

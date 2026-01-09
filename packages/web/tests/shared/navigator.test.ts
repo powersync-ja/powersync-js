@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getNavigatorLocks } from '../../src/shared/navigator';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { getNavigatorLocks } from '../../src/shared/navigator.js';
 
 describe('getNavigationLocks', () => {
   afterEach(() => {

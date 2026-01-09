@@ -1,3 +1,4 @@
-export { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter';
-export { CapacitorSQLiteOpenFactory } from './adapter/CapacitorSQLiteOpenFactory';
-export { PowerSyncDatabase } from './PowerSyncDatabase';
+export { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
+export { CapacitorSQLiteOpenFactory } from './adapter/CapacitorSQLiteOpenFactory.js';
+export { PowerSyncDatabase } from './PowerSyncDatabase.js';
+

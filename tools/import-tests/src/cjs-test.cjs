@@ -20,4 +20,12 @@ const { wrapPowerSyncWithKysely } = require('@powersync/kysely-driver');
 assert(KyselyDriver);
 assert(wrapPowerSyncWithKysely);
 
-console.log('All CommonJS requires functioned correctly!');
+async function asyncImports() {
+  // The Web SDK is not published as CJS, it should be imported dynamically
+  const powerSyncWeb = await import('@powersync/web');
+  assert(powerSyncWeb);
+
+  console.log('All CommonJS requires functioned correctly!');
+}
+
+asyncImports();

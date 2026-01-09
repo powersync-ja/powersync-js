@@ -1,6 +1,6 @@
-import { type ILogger, createLogger, DBAdapter, SQLOpenFactory } from '@powersync/common';
-import { SSRDBAdapter } from './SSRDBAdapter';
-import { ResolvedWebSQLFlags, WebSQLOpenFactoryOptions, isServerSide, resolveWebSQLFlags } from './web-sql-flags';
+import { DBAdapter, type ILogger, SQLOpenFactory, createLogger } from '@powersync/common';
+import { SSRDBAdapter } from './SSRDBAdapter.js';
+import { ResolvedWebSQLFlags, WebSQLOpenFactoryOptions, isServerSide, resolveWebSQLFlags } from './web-sql-flags.js';
 
 export abstract class AbstractWebSQLOpenFactory implements SQLOpenFactory {
   protected resolvedFlags: ResolvedWebSQLFlags;

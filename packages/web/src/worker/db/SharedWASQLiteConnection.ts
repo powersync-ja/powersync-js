@@ -3,8 +3,8 @@ import {
   AsyncDatabaseConnection,
   OnTableChangeCallback,
   ProxiedQueryResult
-} from '../../db/adapters/AsyncDatabaseConnection';
-import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags';
+} from '../../db/adapters/AsyncDatabaseConnection.js';
+import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
 
 /**
  * Keeps track of open DB connections and the clients which

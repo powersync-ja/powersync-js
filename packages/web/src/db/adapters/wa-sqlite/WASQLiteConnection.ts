@@ -1,8 +1,8 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
 import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection';
-import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory';
+import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection.js';
+import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 /**
  * List of currently tested virtual filesystems
  */

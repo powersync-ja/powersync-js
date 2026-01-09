@@ -1,5 +1,5 @@
 import { BatchedUpdateNotification, QueryResult } from '@powersync/common';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 /**
  * @internal

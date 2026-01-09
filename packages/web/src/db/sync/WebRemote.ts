@@ -9,7 +9,7 @@ import {
   RemoteConnector
 } from '@powersync/common';
 
-import { getUserAgentInfo } from './userAgent';
+import { getUserAgentInfo } from './userAgent.js';
 
 /*
  * Depends on browser's implementation of global fetch.

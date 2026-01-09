@@ -19,8 +19,8 @@
   },
   "exclude": ["node_modules"],
   "references": [
-    {
-      "path": "../../packages/web"
-    }
+    { "path": "../../packages/common" },
+    { "path": "../../packages/web" },
+    { "path": "../../packages/react" }
   ]
 }

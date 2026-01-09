@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase';
+import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 

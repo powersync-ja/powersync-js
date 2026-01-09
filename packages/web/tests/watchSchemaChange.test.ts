@@ -2,7 +2,7 @@ import { AbstractPowerSyncDatabase, QueryResult } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
+import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema.js';
 vi.useRealTimers();
 
 /**

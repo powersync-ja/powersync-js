@@ -14,6 +14,7 @@
     "@powersync/drizzle-driver": "workspace:*",
     "@powersync/kysely-driver": "workspace:*",
     "@powersync/node": "workspace:*",
+    "@powersync/capacitor": "workspace:*",
     "@powersync/web": "workspace:*"
   }
 }

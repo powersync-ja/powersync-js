@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase, DBAdapter, PowerSyncDatabaseOptions } from '@powersync/common';
-import { PowerSyncDatabase } from '../../../db/PowerSyncDatabase';
-import { AbstractWebPowerSyncDatabaseOpenFactory } from '../AbstractWebPowerSyncDatabaseOpenFactory';
-import { WASQLiteOpenFactory } from './WASQLiteOpenFactory';
+import { PowerSyncDatabase } from '../../../db/PowerSyncDatabase.js';
+import { AbstractWebPowerSyncDatabaseOpenFactory } from '../AbstractWebPowerSyncDatabaseOpenFactory.js';
+import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
 
 /**
  * @deprecated {@link PowerSyncDatabase} can now be constructed directly
