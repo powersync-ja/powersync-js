@@ -57,6 +57,8 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
       cacheSizeKb = DEFAULT_CACHE_SIZE_KB,
       encryptionKey
     } = this.waOptions;
+    const shouldForceCloseOnPagehide =
+      vfs === WASQLiteVFS.OPFSCoopSyncVFS || vfs === WASQLiteVFS.AccessHandlePoolVFS;
 
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
@@ -80,11 +82,42 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
 
       const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WorkerDBOpenerOptions>>(workerPort);
 
-      return new WorkerWrappedAsyncDatabaseConnection({
-        remote: workerDBOpener,
-        // This tab owns the worker, so we're guaranteed to outlive it.
-        remoteCanCloseUnexpectedly: false,
-        baseConnection: await workerDBOpener({
+      let pagehideHandler: ((event: PageTransitionEvent) => void) | null = null;
+      let pagehideTriggered = false;
+      let wrapped: WorkerWrappedAsyncDatabaseConnection<WorkerDBOpenerOptions> | null = null;
+      const terminateWorker = () => {
+        if (workerPort instanceof Worker) {
+          workerPort.terminate();
+        } else {
+          workerPort.close();
+        }
+      };
+      const cleanupPagehide = () => {
+        if (pagehideHandler && typeof window !== 'undefined') {
+          window.removeEventListener('pagehide', pagehideHandler);
+          pagehideHandler = null;
+        }
+      };
+
+      if (shouldForceCloseOnPagehide && workerPort instanceof Worker && typeof window !== 'undefined') {
+        // Register early so refresh/navigation during open still releases OPFS locks.
+        pagehideHandler = (_event: PageTransitionEvent) => {
+          if (pagehideTriggered) {
+            return;
+          }
+          pagehideTriggered = true;
+          if (wrapped) {
+            void wrapped.close();
+            return;
+          }
+          // Defer termination until open completes so OPFS locks can be released.
+        };
+        window.addEventListener('pagehide', pagehideHandler);
+      }
+
+      let baseConnection: AsyncDatabaseConnection;
+      try {
+        baseConnection = await workerDBOpener({
           dbFilename: this.options.dbFilename,
           vfs,
           temporaryStorage,
@@ -92,16 +125,31 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
           flags: this.resolvedFlags,
           encryptionKey: encryptionKey,
           logLevel: this.logger.getLevel()
-        }),
+        });
+      } catch (error) {
+        cleanupPagehide();
+        terminateWorker();
+        throw error;
+      }
+
+      const connection = new WorkerWrappedAsyncDatabaseConnection<WorkerDBOpenerOptions>({
+        remote: workerDBOpener,
+        // This tab owns the worker, so we're guaranteed to outlive it.
+        remoteCanCloseUnexpectedly: false,
+        baseConnection,
         identifier: this.options.dbFilename,
         onClose: () => {
-          if (workerPort instanceof Worker) {
-            workerPort.terminate();
-          } else {
-            workerPort.close();
-          }
+          cleanupPagehide();
+          terminateWorker();
         }
       });
+      wrapped = connection;
+
+      if (pagehideTriggered) {
+        await connection.close();
+      }
+
+      return connection;
     } else {
       // Don't use a web worker
       return new WASqliteConnection({
