@@ -10,9 +10,9 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.3.2",
-    "@powersync/react": "workspace:*",
-    "@powersync/web": "workspace:*",
+    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@powersync/react": "^1.8.2",
+    "@powersync/web": "^1.31.0",
     "@supabase/supabase-js": "^2.43.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@webflow/webflow-cli": "^1.6.9",

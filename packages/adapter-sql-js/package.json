@@ -1,6 +1,6 @@
 {
   "name": "@powersync/adapter-sql-js",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -36,7 +36,7 @@
     "async-mutex": "^0.5.0"
   },
   "devDependencies": {
-    "@powersync/sql-js": "0.0.5",
+    "@powersync/sql-js": "0.0.7",
     "@powersync/web": "workspace:*",
     "@rollup/plugin-alias": "^5.1.0",
     "@types/sql.js": "^1.4.9",

@@ -224,40 +224,44 @@ function defineSyncTests(impl: SyncClientImplementation) {
       }
     }
 
-    mockSyncServiceTest('without priorities', async ({ syncService }) => {
-      const database = await syncService.createDatabase();
-      database.connect(new TestConnector(), options);
-      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    mockSyncServiceTest(
+      'without priorities',
+      async ({ syncService }) => {
+        const database = await syncService.createDatabase();
+        database.connect(new TestConnector(), options);
+        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
-      syncService.pushLine({
-        checkpoint: {
-          last_op_id: '10',
-          buckets: [bucket('a', 10)]
-        }
-      });
+        syncService.pushLine({
+          checkpoint: {
+            last_op_id: '10',
+            buckets: [bucket('a', 10)]
+          }
+        });
 
-      await waitForProgress(database, [0, 10]);
+        await waitForProgress(database, [0, 10]);
 
-      pushDataLine(syncService, 'a', 10);
-      await waitForProgress(database, [10, 10]);
+        pushDataLine(syncService, 'a', 10);
+        await waitForProgress(database, [10, 10]);
 
-      pushCheckpointComplete(syncService);
-      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+        pushCheckpointComplete(syncService);
+        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
 
-      // Emit new data, progress should be 0/2 instead of 10/12
-      syncService.pushLine({
-        checkpoint_diff: {
-          last_op_id: '12',
-          updated_buckets: [bucket('a', 12)],
-          removed_buckets: []
-        }
-      });
-      await waitForProgress(database, [0, 2]);
-      pushDataLine(syncService, 'a', 2);
-      await waitForProgress(database, [2, 2]);
-      pushCheckpointComplete(syncService);
-      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
-    });
+        // Emit new data, progress should be 0/2 instead of 10/12
+        syncService.pushLine({
+          checkpoint_diff: {
+            last_op_id: '12',
+            updated_buckets: [bucket('a', 12)],
+            removed_buckets: []
+          }
+        });
+        await waitForProgress(database, [0, 2]);
+        pushDataLine(syncService, 'a', 2);
+        await waitForProgress(database, [2, 2]);
+        pushCheckpointComplete(syncService);
+        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+      },
+      { timeout: 10000 }
+    );
 
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();
@@ -921,6 +925,35 @@ function defineSyncTests(impl: SyncClientImplementation) {
 
     expect(logMessages).not.toEqual(
       expect.arrayContaining([expect.stringContaining('Cannot enqueue data into closed stream')])
+    );
+  });
+
+  mockSyncServiceTest('passes app metadata to the sync service', async ({ syncService }) => {
+    const database = await syncService.createDatabase();
+    let connectCompleted = false;
+    database
+      .connect(new TestConnector(), {
+        ...options,
+        appMetadata: {
+          name: 'test'
+        }
+      })
+      .then(() => {
+        connectCompleted = true;
+      });
+    expect(connectCompleted).toBeFalsy();
+
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    // We want connected: true once we have a connection
+
+    await vi.waitFor(() => connectCompleted);
+    // The request should contain the app metadata
+    expect(syncService.connectedListeners[0]).toMatchObject(
+      expect.objectContaining({
+        app_metadata: {
+          name: 'test'
+        }
+      })
     );
   });
 }

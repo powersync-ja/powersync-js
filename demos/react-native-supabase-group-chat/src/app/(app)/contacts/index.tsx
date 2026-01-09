@@ -7,8 +7,8 @@ import { Button, Input, XStack, YStack } from 'tamagui';
 import { ContactRow } from '@/components/contacts/ContactRow';
 import { ProfileRow } from '@/components/contacts/ProfileRow';
 import { List } from '@/components/list';
-import { supabase } from '@/lib/supabase';
-import { uuid } from '@/lib/uuid';
+import { supabase } from '@/library/supabase';
+import { uuid } from '@/library/uuid';
 import { useAuth } from '@/providers/AuthProvider';
 
 export default function ContactsIndex() {
@@ -97,7 +97,7 @@ export default function ContactsIndex() {
           icon={<Search size="$1.5" />}
           backgroundColor="$brand1"
           borderRadius="$3"
-        // circular
+          // circular
         />
       </XStack>
 

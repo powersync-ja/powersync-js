@@ -16,7 +16,7 @@ import {
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
-import { coreStatusToJs, EstablishSyncStream, Instruction, SyncPriorityStatus } from './core-instruction.js';
+import { EstablishSyncStream, Instruction, coreStatusToJs } from './core-instruction.js';
 import {
   BucketRequest,
   CrudUploadNotification,
@@ -130,6 +130,11 @@ export interface InternalConnectionOptions extends BaseConnectionOptions, Additi
 /** @internal */
 export interface BaseConnectionOptions {
   /**
+   * A set of metadata to be included in service logs.
+   */
+  appMetadata?: Record<string, string>;
+
+  /**
    * Whether to use a JavaScript implementation to handle received sync lines from the sync
    * service, or whether this work should be offloaded to the PowerSync core extension.
    *
@@ -223,6 +228,7 @@ export const DEFAULT_STREAMING_SYNC_OPTIONS = {
 export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
 
 export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
+  appMetadata: {},
   connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
   clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   fetchStrategy: FetchStrategy.Buffered,
@@ -658,6 +664,16 @@ The next upload iteration will be delayed.`);
           ...DEFAULT_STREAM_CONNECTION_OPTIONS,
           ...(options ?? {})
         };
+
+        // Validate app metadata
+        const invalidMetadata = Object.entries(resolvedOptions.appMetadata).filter(
+          ([_, value]) => typeof value != 'string'
+        );
+        if (invalidMetadata.length > 0) {
+          throw new Error(
+            `Invalid appMetadata provided. Only string values are allowed. Invalid values: ${invalidMetadata.map(([key, value]) => `${key}: ${value}`).join(', ')}`
+          );
+        }
         const clientImplementation = resolvedOptions.clientImplementation;
         this.updateSyncStatus({ clientImplementation });
 
@@ -699,6 +715,7 @@ The next upload iteration will be delayed.`);
         include_checksum: true,
         raw_data: true,
         parameters: resolvedOptions.params,
+        app_metadata: resolvedOptions.appMetadata,
         client_id: clientId
       }
     };
@@ -1088,6 +1105,7 @@ The next upload iteration will be delayed.`);
     try {
       const options: any = {
         parameters: resolvedOptions.params,
+        app_metadata: resolvedOptions.appMetadata,
         active_streams: this.activeStreams,
         include_defaults: resolvedOptions.includeDefaultStreams
       };
@@ -1223,7 +1241,6 @@ The next upload iteration will be delayed.`);
         resolve();
         return;
       }
-
       const { retryDelayMs } = this.options;
 
       let timeoutId: ReturnType<typeof setTimeout> | undefined;

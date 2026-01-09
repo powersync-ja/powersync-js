@@ -1,5 +1,43 @@
 # @powersync/web
 
+## 1.31.0
+
+### Minor Changes
+
+- 133f376: - Fixed some edge cases where multiple tabs with OPFS can cause sync deadlocks.
+  - Fixed issue where calling `powerSync.close()` would cause a disconnect if using multiple tabs (the default should not be to disconnect if using multiple tabs)
+  - Improved shared sync implementation database delegation and opening strategy.
+
+### Patch Changes
+
+- d0c67b1: Avoid binding `this` when disposing table change listeners in the web adapter to prevent Comlink serialization errors on close.
+- Updated dependencies [133f376]
+  - @powersync/common@1.45.0
+
+## 1.30.0
+
+### Minor Changes
+
+- 299c6dc: Update PowerSync SQLite core to v0.4.10
+- 616c2a1: Added ability to specify `appMetadata` for sync/stream requests.
+
+  Note: This requires a PowerSync service version `>=1.17.0` in order for logs to display metadata.
+
+  ```javascript
+  powerSync.connect(connector, {
+    // This will be included in PowerSync service logs
+    appMetadata: {
+      app_version: MY_APP_VERSION
+    }
+  });
+  ```
+
+### Patch Changes
+
+- Updated dependencies [299c6dc]
+- Updated dependencies [616c2a1]
+  - @powersync/common@1.44.0
+
 ## 1.29.1
 
 ### Patch Changes

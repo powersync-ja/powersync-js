@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import url from 'node:url';
 import { parentPort } from 'node:worker_threads';
 import { dynamicImport, isBundledToCommonJs } from '../utils/modules.js';
-import { AsyncDatabase, AsyncDatabaseOpener, AsyncDatabaseOpenOptions } from './AsyncDatabase.js';
+import { AsyncDatabase, AsyncDatabaseOpenOptions, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { openDatabase as openBetterSqliteDatabase } from './BetterSqliteWorker.js';
 import { openDatabase as openNodeDatabase } from './NodeSqliteWorker.js';
 
@@ -42,20 +42,20 @@ export function getPowerSyncExtensionFilename() {
     }
   } else if (platform == 'linux') {
     if (arch == 'x64') {
-      extensionFile = 'libpowersync_x64.so';
+      extensionFile = 'libpowersync_x64.linux.so';
     } else if (arch == 'arm64') {
       // TODO detect armv7 as an option
-      extensionFile = 'libpowersync_aarch64.so';
+      extensionFile = 'libpowersync_aarch64.linux.so';
     } else if (arch == 'riscv64') {
-      extensionFile = 'libpowersync_riscv64gc.so';
+      extensionFile = 'libpowersync_riscv64gc.linux.so';
     } else {
       throw new Error('Linux platform only supports x64, arm64 and riscv64 architectures.');
     }
   } else if (platform == 'darwin') {
     if (arch == 'x64') {
-      extensionFile = 'libpowersync_x64.dylib';
+      extensionFile = 'libpowersync_x64.macos.dylib';
     } else if (arch == 'arm64') {
-      extensionFile = 'libpowersync_aarch64.dylib';
+      extensionFile = 'libpowersync_aarch64.macos.dylib';
     } else {
       throw new Error('macOS platform only supports x64 and arm64 architectures.');
     }
@@ -84,7 +84,8 @@ export function startPowerSyncWorker(options?: Partial<PowerSyncWorkerOptions>) 
     },
     async loadBetterSqlite3() {
       const module = await dynamicImport('better-sqlite3');
-      return module.default;
+      // require() gives us the default directly, for an ESM import() we need to use the default export.
+      return isBundledToCommonJs ? module : module.default;
     },
     ...options
   };

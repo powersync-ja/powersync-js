@@ -1,5 +1,6 @@
 import {
   BaseObserver,
+  ConnectionClosedError,
   DBAdapter,
   DBAdapterListener,
   DBGetUtils,
@@ -10,7 +11,7 @@ import {
   createLogger,
   type ILogger
 } from '@powersync/common';
-import { getNavigatorLocks } from '../..//shared/navigator';
+import { getNavigatorLocks } from '../../shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
 import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
@@ -26,10 +27,16 @@ export interface LockedAsyncDatabaseAdapterOptions {
   openConnection: () => Promise<AsyncDatabaseConnection>;
   debugMode?: boolean;
   logger?: ILogger;
+  defaultLockTimeoutMs?: number;
+  reOpenOnConnectionClosed?: boolean;
 }
 
 export type LockedAsyncDatabaseAdapterListener = DBAdapterListener & {
   initialized?: () => void;
+  /**
+   * Fired when the database is re-opened after being closed.
+   */
+  databaseReOpened?: () => void;
 };
 
 /**
@@ -51,6 +58,7 @@ export class LockedAsyncDatabaseAdapter
   private _config: ResolvedWebSQLOpenOptions | null = null;
   protected pendingAbortControllers: Set<AbortController>;
   protected requiresHolds: boolean | null;
+  protected databaseOpenPromise: Promise<void> | null = null;
 
   closing: boolean;
   closed: boolean;
@@ -105,16 +113,72 @@ export class LockedAsyncDatabaseAdapter
     return this.initPromise;
   }
 
-  protected async _init() {
-    this._db = await this.options.openConnection();
-    await this._db.init();
-    this._config = await this._db.getConfig();
-    await this.registerOnChangeListener(this._db);
-    this.iterateListeners((cb) => cb.initialized?.());
+  protected async openInternalDB() {
     /**
-     * This is only required for the long-lived shared IndexedDB connections.
+     * Execute opening of the db in a lock in order not to interfere with other operations.
      */
-    this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
+    return this._acquireLock(async () => {
+      // Dispose any previous table change listener.
+      this._disposeTableChangeListener?.();
+      this._disposeTableChangeListener = null;
+      this._db?.close().catch((ex) => this.logger.warn(`Error closing database before opening new instance`, ex));
+      const isReOpen = !!this._db;
+      this._db = null;
+
+      this._db = await this.options.openConnection();
+      await this._db.init();
+      this._config = await this._db.getConfig();
+      await this.registerOnChangeListener(this._db);
+      if (isReOpen) {
+        this.iterateListeners((cb) => cb.databaseReOpened?.());
+      }
+      /**
+       * This is only required for the long-lived shared IndexedDB connections.
+       */
+      this.requiresHolds = (this._config as ResolvedWASQLiteOpenFactoryOptions).vfs == WASQLiteVFS.IDBBatchAtomicVFS;
+    });
+  }
+
+  protected _reOpen() {
+    this.databaseOpenPromise = this.openInternalDB().finally(() => {
+      this.databaseOpenPromise = null;
+    });
+    return this.databaseOpenPromise;
+  }
+
+  /**
+   * Re-opens the underlying database.
+   * Returns a pending operation if one is already in progress.
+   */
+  async reOpenInternalDB(): Promise<void> {
+    if (!this.options.reOpenOnConnectionClosed) {
+      throw new Error(`Cannot re-open underlying database, reOpenOnConnectionClosed is not enabled`);
+    }
+    if (this.databaseOpenPromise) {
+      return this.databaseOpenPromise;
+    }
+    return this._reOpen();
+  }
+
+  protected async _init() {
+    /**
+     * For OPFS, we can see this open call sometimes fail due to NoModificationAllowedError.
+     * We should be able to recover from this by re-opening the database.
+     */
+    const maxAttempts = 3;
+    for (let count = 0; count < maxAttempts; count++) {
+      try {
+        await this.openInternalDB();
+        break;
+      } catch (ex) {
+        if (count == maxAttempts - 1) {
+          throw ex;
+        }
+        this.logger.warn(`Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`, ex);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+    this.iterateListeners((cb) => cb.initialized?.());
   }
 
   getConfiguration(): ResolvedWebSQLOpenOptions {
@@ -170,7 +234,14 @@ export class LockedAsyncDatabaseAdapter
    */
   async close() {
     this.closing = true;
-    this._disposeTableChangeListener?.();
+    /**
+     * Note that we obtain a reference to the callback to avoid calling the callback with `this` as the context.
+     * This is to avoid Comlink attempting to clone `this` when calling the method.
+     */
+    const dispose = this._disposeTableChangeListener;
+    if (dispose) {
+      dispose();
+    }
     this.pendingAbortControllers.forEach((controller) => controller.abort('Closed'));
     await this.baseDB?.close?.();
     this.closed = true;
@@ -196,7 +267,7 @@ export class LockedAsyncDatabaseAdapter
     return this.acquireLock(
       async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
       {
-        timeoutMs: options?.timeoutMs
+        timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
       }
     );
   }
@@ -206,23 +277,20 @@ export class LockedAsyncDatabaseAdapter
     return this.acquireLock(
       async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
       {
-        timeoutMs: options?.timeoutMs
+        timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
       }
     );
   }
 
-  protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
-    await this.waitForInitialized();
-
+  protected async _acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
     if (this.closing) {
       throw new Error(`Cannot acquire lock, the database is closing`);
     }
-
     const abortController = new AbortController();
     this.pendingAbortControllers.add(abortController);
     const { timeoutMs } = options ?? {};
 
-    const timoutId = timeoutMs
+    const timeoutId = timeoutMs
       ? setTimeout(() => {
           abortController.abort(`Timeout after ${timeoutMs}ms`);
           this.pendingAbortControllers.delete(abortController);
@@ -234,19 +302,52 @@ export class LockedAsyncDatabaseAdapter
       { signal: abortController.signal },
       async () => {
         this.pendingAbortControllers.delete(abortController);
-        if (timoutId) {
-          clearTimeout(timoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
-        const holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
-        try {
-          return await callback();
-        } finally {
-          if (holdId) {
-            await this.baseDB.releaseHold(holdId);
-          }
-        }
+        return await callback();
       }
     );
+  }
+
+  protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
+    await this.waitForInitialized();
+
+    // The database is being opened in the background. Wait for it here.
+    if (this.databaseOpenPromise) {
+      await this.databaseOpenPromise;
+    }
+
+    return this._acquireLock(async () => {
+      let holdId: string | null = null;
+      try {
+        /**
+         * We can't await this since it uses the same lock as we're in now.
+         * If there is a pending open, this call will throw.
+         * If there is no pending open, but there is also no database - the open
+         * might have failed. We need to re-open the database.
+         */
+        if (this.databaseOpenPromise || !this._db) {
+          throw new ConnectionClosedError('Connection is busy re-opening');
+        }
+
+        holdId = this.requiresHolds ? await this.baseDB.markHold() : null;
+        return await callback();
+      } catch (ex) {
+        if (ConnectionClosedError.MATCHES(ex)) {
+          if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
+            // Immediately re-open the database. We need to miss as little table updates as possible.
+            // Note, don't await this since it uses the same lock as we're in now.
+            this.reOpenInternalDB();
+          }
+        }
+        throw ex;
+      } finally {
+        if (holdId) {
+          await this.baseDB.releaseHold(holdId);
+        }
+      }
+    }, options);
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {

@@ -13,14 +13,12 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "types": ["vitest/globals"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
+  "include": ["src", "e2e"],
   "exclude": ["node_modules"],
-  "references": [
-    {
-      "path": "../../packages/web"
-    }
-  ]
+  "references": []
 }

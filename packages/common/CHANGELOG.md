@@ -1,5 +1,29 @@
 # @powersync/common
 
+## 1.45.0
+
+### Minor Changes
+
+- 133f376: - Improved serializing of upload and download errors for SyncStatus events. Some JS `Error`s are not cloneable, the JSON representation of a SyncStatus should now always be cloneable.
+
+## 1.44.0
+
+### Minor Changes
+
+- 299c6dc: Update PowerSync SQLite core to v0.4.10
+- 616c2a1: Added ability to specify `appMetadata` for sync/stream requests.
+
+  Note: This requires a PowerSync service version `>=1.17.0` in order for logs to display metadata.
+
+  ```javascript
+  powerSync.connect(connector, {
+    // This will be included in PowerSync service logs
+    appMetadata: {
+      app_version: MY_APP_VERSION
+    }
+  });
+  ```
+
 ## 1.43.1
 
 ### Patch Changes
@@ -602,7 +626,6 @@
 - ca458d3: Updated logic to correspond with React Native Quick SQLite concurrent transactions. Added helper methods on transaction contexts.
 
   API changes include:
-
   - Removal of synchronous DB operations in transactions: `execute`, `commit`, `rollback` are now async functions. `executeAsync`, `commitAsync` and `rollbackAsync` have been removed.
   - Transaction contexts now have `get`, `getAll` and `getOptional` helpers.
   - Added a default lock timeout of 2 minutes to aide with potential recursive lock/transaction requests.

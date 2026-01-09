@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.77.0):
     - hermes-engine/Pre-built (= 0.77.0)
   - hermes-engine/Pre-built (0.77.0)
-  - op-sqlite (14.0.2):
+  - op-sqlite (14.1.4):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -31,11 +31,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - powersync-op-sqlite (0.7.6):
+  - powersync-op-sqlite (0.7.16):
     - DoubleConversion
     - glog
     - hermes-engine
-    - powersync-sqlite-core (~> 0.4.4)
+    - powersync-sqlite-core (~> 0.4.6)
     - RCT-Folly (= 2024.11.18.00)
     - RCTRequired
     - RCTTypeSafety
@@ -55,7 +55,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - powersync-sqlite-core (0.4.4)
+  - powersync-sqlite-core (0.4.10)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -1558,7 +1558,7 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - "op-sqlite (from `../../../node_modules/@op-engineering/op-sqlite`)"
+  - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - "powersync-op-sqlite (from `../node_modules/@powersync/op-sqlite`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -1644,7 +1644,7 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2024-11-25-RNv0.77.0-d4f25d534ab744866448b36ca3bf3d97c08e638c
   op-sqlite:
-    :path: "../../../node_modules/@op-engineering/op-sqlite"
+    :path: "../node_modules/@op-engineering/op-sqlite"
   powersync-op-sqlite:
     :path: "../node_modules/@powersync/op-sqlite"
   RCT-Folly:
@@ -1774,9 +1774,9 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: eb93e2f488219332457c3c4eafd2738ddc7e80b8
   hermes-engine: 1f783c3d53940aed0d2c84586f0b7a85ab7827ef
-  op-sqlite: af963896bb0d5393f12e07189bb39b1eaa5f4ac3
-  powersync-op-sqlite: e9979d5f6b44291ef9da9048765a50e3b1a2265a
-  powersync-sqlite-core: 954b7c4f068e21e6e759a7f487f0d7da4062e858
+  op-sqlite: fc56e58316d2b8486602fe0725a1d33fae8683a0
+  powersync-op-sqlite: 097538f229c6fb5194c4ce0d2d8ba85c55d53614
+  powersync-sqlite-core: b30017e077c91915d53faebc5f7245384df78275
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
   RCTDeprecation: f5c19ebdb8804b53ed029123eb69914356192fc8
   RCTRequired: 6ae6cebe470486e0e0ce89c1c0eabb998e7c51f4
