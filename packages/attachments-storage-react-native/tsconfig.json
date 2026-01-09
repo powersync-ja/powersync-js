@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "rootDir": "src",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "es6",
+    "outDir": "./lib",
+    "strictNullChecks": true
+  },
+  "references": [
+    {
+      "path": "../common"
+    }
+  ],
+  "include": ["src/**/*"]
+}
