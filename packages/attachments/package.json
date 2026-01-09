@@ -51,7 +51,6 @@
   "devDependencies": {
     "@powersync/common": "workspace:*",
     "@types/node": "^20.17.6",
-    "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4"
+    "vite": "catalog:"
   }
 }

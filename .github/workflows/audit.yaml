@@ -12,11 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+        uses: actions/checkout@v6
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          version: 9
-          run_install: false
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
       - name: Audit for vulnerabilities
-        run: npx audit-ci@^7 --config ./audit-ci.jsonc
+        run: pnpx audit-ci@^7 --config ./audit-ci.jsonc
