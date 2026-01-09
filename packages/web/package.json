@@ -22,7 +22,7 @@
       "default": "./lib/src/index.js"
     },
     "./umd": {
-      "types": "./dist/index.umd.d.ts",
+      "types": "./lib/src/index.d.ts",
       "default": "./dist/index.umd.js"
     },
     "./umd/worker/db": {
@@ -91,7 +91,6 @@
     "vm-browserify": "^1.1.2",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0",
-    "dts-bundle-webpack": "^1.0.2"
+    "webpack-node-externals": "^3.0.0"
   }
 }

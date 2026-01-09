@@ -1,5 +1,4 @@
 const production = process.env.NODE_ENV === 'production';
-import DtsBundleWebpack from 'dts-bundle-webpack';
 import { createRequire } from 'module';
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -67,11 +66,6 @@ export default () => {
     plugins: [
       new LimitChunkCountPlugin({
         maxChunks: 1 // There are issues with loading the dynamic BSON import, it works if the bson dependency is in the index bundle file
-      }),
-      new DtsBundleWebpack({
-        name: 'sdk_web',
-        main: path.join(__dirname, 'lib/src/index.d.ts'),
-        out: path.join(__dirname, 'dist/index.umd.d.ts')
       }),
       new DeleteAssetsPlugin() // Add the custom plugin here
     ]
