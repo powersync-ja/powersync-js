@@ -27,7 +27,7 @@ jobs:
       GH_PROJECT_NAME: ${{vars.GH_PROJECT_NAME}}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Enable Corepack
         run: corepack enable
       - name: Setup Node.js
