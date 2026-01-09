@@ -54,7 +54,7 @@ pnpm android
 
 ## Supabase and background sync
 
-The `SupabaseConnector` has been configured to override the default `fetch` function that the `@supabase/supabase-js` SDK uses. By default, the `fetch` function used does not work in the background [see here](https://github.com/facebook/react-native/issues/47437), so we need to override it with a something that works in the background, like `expo/fetch`.
+The `SupabaseConnector` has been configured to override the default `fetch` function that the `@supabase/supabase-js` SDK uses. By default, the `fetch` function used does not work in the background [see here](https://github.com/facebook/react-native/issues/47437), so we need to override it with something that works in the background, like `expo/fetch`.
 
 ```typescript
 this.client = createClient(AppConfig.supabaseUrl!, AppConfig.supabaseAnonKey!, {
@@ -98,7 +98,7 @@ Background tasks are not supported on iOS simulators.
 
 ## ⚠️ Please note
 
-The app needs to be in the background for it to run and ultimately, the OS decides when to run background tasks so forcing it to run might not always work immediately. The background task should run on it's own within 20 minutes after the app is put in the background. Testing background sync seems to work better and more consistently on a physical device. If you don't see any logs after starting your background task, you may need to watch all the logs on the device using `adb logcat` (on Android).
+The app needs to be in the background for it to run and ultimately, the OS decides when to run background tasks so forcing it to run might not always work immediately. The background task should run on its own within 20 minutes after the app is put in the background. Testing background sync seems to work better and more consistently on a physical device. If you don't see any logs after starting your background task, you may need to watch all the logs on the device using `adb logcat` (on Android).
 
 When the background task starts, you will see the following logs:
 
