@@ -1,4 +1,4 @@
-# @powersync/attachments-react-native
+# @powersync/attachments-storage-react-native
 
 React Native file system storage adapters for [PowerSync](https://powersync.com) attachments.
 
@@ -7,11 +7,11 @@ This package provides `LocalStorageAdapter` implementations for React Native env
 ## Installation
 
 ```bash
-npm install @powersync/attachments-react-native
+npm install @powersync/attachments-storage-react-native
 # or
-pnpm add @powersync/attachments-react-native
+pnpm add @powersync/attachments-storage-react-native
 # or
-yarn add @powersync/attachments-react-native
+yarn add @powersync/attachments-storage-react-native
 ```
 
 You'll also need to install one of the supported file system libraries:
@@ -33,7 +33,7 @@ npm install @dr.pogodin/react-native-fs
 ### With Expo File System
 
 ```typescript
-import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import { AttachmentQueue } from '@powersync/react-native';
 
 const storageAdapter = new ExpoFileSystemStorageAdapter();
@@ -48,7 +48,7 @@ const attachmentQueue = new AttachmentQueue({
 ### With React Native FS
 
 ```typescript
-import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import { AttachmentQueue } from '@powersync/react-native';
 
 const storageAdapter = new ReactNativeFileSystemStorageAdapter();

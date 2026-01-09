@@ -1,5 +1,5 @@
 {
-  "name": "@powersync/attachments-react-native",
+  "name": "@powersync/attachments-storage-react-native",
   "version": "0.1.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -9,7 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "POWERSYNC",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",
   "bugs": {

@@ -10,7 +10,7 @@ import {
   WASQLiteOpenFactory,
   IndexDBFileSystemStorageAdapter
 } from '@powersync/web';
-import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+import { ExpoFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import {
   type AttachmentRecord,
   AttachmentQueue,

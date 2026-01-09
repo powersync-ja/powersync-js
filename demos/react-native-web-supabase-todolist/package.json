@@ -17,7 +17,7 @@
     "@journeyapps/react-native-quick-sqlite": "^2.4.9",
     "@journeyapps/wa-sqlite": "^1.3.2",
     "@powersync/attachments": "workspace:*",
-    "@powersync/attachments-react-native": "workspace:*",
+    "@powersync/attachments-storage-react-native": "workspace:*",
     "@powersync/common": "workspace:*",
     "@powersync/react": "workspace:*",
     "@powersync/react-native": "workspace:*",

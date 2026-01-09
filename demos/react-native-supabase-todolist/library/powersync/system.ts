@@ -9,7 +9,7 @@ import {
   type AttachmentRecord,
   type WatchedAttachmentItem,
 } from '@powersync/react-native';
-import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-react-native';
+import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import React from 'react';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
