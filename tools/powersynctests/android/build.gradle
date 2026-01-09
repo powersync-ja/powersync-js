@@ -26,4 +26,18 @@ buildscript {
    }
  }
 
+ subprojects {
+    afterEvaluate {project ->
+        if (project.hasProperty("android")) {
+            android {
+                packagingOptions {
+                    jniLibs {
+                        pickFirsts += ['**/libc++_shared.so', '**/libfbjni.so', '**/libjsi.so', '**/libreactnative.so', '**/libfolly_runtime.so', '**/libglog.so', '**/libreact_nativemodule_core.so', '**/libturbomodulejsijni.so', '**/libruntimeexecutor.so', '**/libhermes.so']
+                    }
+                }
+            }
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
