@@ -1,5 +1,19 @@
 # @powersync/web
 
+## 1.31.0
+
+### Minor Changes
+
+- 133f376: - Fixed some edge cases where multiple tabs with OPFS can cause sync deadlocks.
+  - Fixed issue where calling `powerSync.close()` would cause a disconnect if using multiple tabs (the default should not be to disconnect if using multiple tabs)
+  - Improved shared sync implementation database delegation and opening strategy.
+
+### Patch Changes
+
+- d0c67b1: Avoid binding `this` when disposing table change listeners in the web adapter to prevent Comlink serialization errors on close.
+- Updated dependencies [133f376]
+  - @powersync/common@1.45.0
+
 ## 1.30.0
 
 ### Minor Changes
