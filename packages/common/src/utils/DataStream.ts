@@ -117,6 +117,11 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       await this.processingPromise;
     }
 
+    // Re-check after await - stream may have closed while we were waiting
+    if (this.closed) {
+      return null;
+    }
+
     return new Promise((resolve, reject) => {
       const l = this.registerListener({
         data: async (data) => {
