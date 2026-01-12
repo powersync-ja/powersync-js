@@ -42,6 +42,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
 
   protected processingPromise: Promise<void> | null;
   protected notifyDataAdded: (() => void) | null;
+  protected needsReprocessing: boolean;
 
   protected logger: ILogger;
 
@@ -50,6 +51,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
   constructor(protected options?: DataStreamOptions<ParsedData, SourceData>) {
     super();
     this.processingPromise = null;
+    this.needsReprocessing = false;
     this.isClosed = false;
     this.dataQueue = [];
     this.mapLine = options?.mapLine ?? ((line) => line as any);
@@ -146,12 +148,19 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
 
   protected processQueue() {
     if (this.processingPromise) {
+      // Mark that we need to process again after current processing completes.
+      // This ensures calls to processQueue() aren't lost when processing is already running.
+      this.needsReprocessing = true;
       return;
     }
 
     const promise = (this.processingPromise = this._processQueue());
     promise.finally(() => {
-      return (this.processingPromise = null);
+      this.processingPromise = null;
+      if (this.needsReprocessing) {
+        this.needsReprocessing = false;
+        this.processQueue();
+      }
     });
     return promise;
   }
@@ -190,7 +199,6 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
     }
 
     if (this.dataQueue.length > 0) {
-      // Next tick
       setTimeout(() => this.processQueue());
     }
   }
