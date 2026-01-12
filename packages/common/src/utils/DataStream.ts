@@ -42,7 +42,6 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
 
   protected processingPromise: Promise<void> | null;
   protected notifyDataAdded: (() => void) | null;
-  protected needsReprocessing: boolean;
 
   protected logger: ILogger;
 
@@ -51,7 +50,6 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
   constructor(protected options?: DataStreamOptions<ParsedData, SourceData>) {
     super();
     this.processingPromise = null;
-    this.needsReprocessing = false;
     this.isClosed = false;
     this.dataQueue = [];
     this.mapLine = options?.mapLine ?? ((line) => line as any);
@@ -112,6 +110,13 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       return null;
     }
 
+    // Wait for any pending processing to complete first.
+    // This ensures we register our listener before calling processQueue(),
+    // avoiding a race where processQueue() sees no reader and returns early.
+    if (this.processingPromise) {
+      await this.processingPromise;
+    }
+
     return new Promise((resolve, reject) => {
       const l = this.registerListener({
         data: async (data) => {
@@ -148,19 +153,12 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
 
   protected processQueue() {
     if (this.processingPromise) {
-      // Mark that we need to process again after current processing completes.
-      // This ensures calls to processQueue() aren't lost when processing is already running.
-      this.needsReprocessing = true;
       return;
     }
 
     const promise = (this.processingPromise = this._processQueue());
     promise.finally(() => {
       this.processingPromise = null;
-      if (this.needsReprocessing) {
-        this.needsReprocessing = false;
-        this.processQueue();
-      }
     });
     return promise;
   }
