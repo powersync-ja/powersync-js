@@ -63,17 +63,23 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
         }
       });
 
+      // Wait for sync to complete (hasSynced becomes true) before closing the response
+      await vi.waitFor(
+        () => {
+          expect(database.currentStatus.hasSynced).toBe(true);
+        },
+        { timeout: 5000 }
+      );
+
       // Complete the response
       await mockService.completeResponse(syncRequestId);
 
-      // Wait for sync to complete and verify the data was saved
-      await vi.waitFor(async () => {
-        const rows = await database.getAll('SELECT * FROM lists WHERE id = ?', ['1']);
-        expect(rows).toHaveLength(1);
-        expect(rows[0]).toMatchObject({
-          id: '1',
-          name: 'from server'
-        });
+      // Verify the data was saved
+      const rows = await database.getAll('SELECT * FROM lists WHERE id = ?', ['1']);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        id: '1',
+        name: 'from server'
       });
 
       // Verify the data by querying the database

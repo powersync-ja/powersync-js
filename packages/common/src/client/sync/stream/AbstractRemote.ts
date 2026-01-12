@@ -9,9 +9,6 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
 
-
-
-
 export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
@@ -575,7 +572,11 @@ export abstract class AbstractRemote {
 
     const stream = new DataStream<T, string>({
       logger: this.logger,
-      mapLine: mapLine
+      mapLine: mapLine,
+      pressure: {
+        highWaterMark: 20,
+        lowWaterMark: 10
+      }
     });
 
     abortSignal?.addEventListener('abort', () => {
