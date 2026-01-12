@@ -5,7 +5,6 @@ export default defineConfig({
   test: {
     silent: false,
     // This doesn't make the tests considerably slower. It may improve reliability for GH actions.
-    fileParallelism: false,
-    testTimeout: 15000
+    fileParallelism: false
   }
 });
