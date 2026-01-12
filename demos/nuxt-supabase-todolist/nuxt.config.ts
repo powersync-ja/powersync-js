@@ -1,5 +1,4 @@
 import wasm from 'vite-plugin-wasm'
-import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
 
@@ -29,9 +28,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-07-05',
 
   vite: {
-    plugins: [topLevelAwait()],
     optimizeDeps: {
-      exclude: ['@journeyapps/wa-sqlite', '@powersync/web', '@powersync/common', '@powersync/vue', '@powersync/kysely-driver'],
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
       include: [
         '@powersync/web > js-logger',
         '@supabase/postgrest-js',
@@ -40,7 +38,7 @@ export default defineNuxtConfig({
 
     worker: {
       format: 'es',
-      plugins: () => [wasm(), topLevelAwait()],
+      plugins: () => [wasm()],
     },
   },
 
