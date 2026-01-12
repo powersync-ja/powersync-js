@@ -2,4 +2,4 @@
 '@powersync/common': minor
 ---
 
-[Internal] Add ability to override AbstractPowerSyncDatabase loadVersion method.
+[Internal] Add ability to override `AbstractPowerSyncDatabase` `loadVersion` method.
