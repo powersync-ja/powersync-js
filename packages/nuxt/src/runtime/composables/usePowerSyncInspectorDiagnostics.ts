@@ -8,18 +8,6 @@ import { ref, computed, readonly, onMounted, onUnmounted } from 'vue'
 import { computedAsync } from '@vueuse/core'
 import { usePowerSyncInspector } from './usePowerSyncInspector'
 
-type JSONValue
-  = | string
-    | number
-    | boolean
-    | null
-    | undefined
-    | JSONObject
-    | JSONArray
-interface JSONObject {
-  [key: string]: JSONValue
-}
-type JSONArray = JSONValue[]
 
 // queries
 const BUCKETS_QUERY = `

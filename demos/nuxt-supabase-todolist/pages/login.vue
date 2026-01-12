@@ -109,7 +109,7 @@ const displayError = (error: any) => {
             class="p-0"
             @click="sign = sign === 'up' ? 'in' : 'up'"
           >
-            {{ sign === "in" ? "Sign up" : "Sign in" }}
+            {{ sign === "in" ? "Sign In" : "Sign Up" }}
           </UButton>.
         </template>
       </UAuthForm>

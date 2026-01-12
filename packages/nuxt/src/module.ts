@@ -13,19 +13,6 @@ import { defu } from 'defu'
 import { setupDevToolsUI } from './devtools'
 import { addImportsFrom } from './runtime/utils/addImportsFrom'
 
-type JSONValue
-  = | string
-    | number
-    | boolean
-    | null
-    | undefined
-    | JSONObject
-    | JSONArray
-interface JSONObject {
-  [key: string]: JSONValue
-}
-type JSONArray = JSONValue[]
-
 // Module options TypeScript interface definition
 export interface PowerSyncNuxtModuleOptions {
   /**
