@@ -22,6 +22,8 @@ This demo app uses Supabase as its Postgres database and backend:
 1. [Create a new project on the Supabase dashboard](https://supabase.com/dashboard/projects).
 2. Go to the Supabase SQL Editor for your new project and execute the SQL statements in [`db/seed.sql`](db/seed.sql) to create the database schema, PowerSync replication role, and publication needed for PowerSync.
 
+**Note:** Before executing the SQL, make sure to update the `powersync_role` password in `db/seed.sql` (currently set to `'postgres_12345'`) to a secure password of your choice.
+
 **Important:** When connecting PowerSync to your Supabase database, you'll use the `powersync_role` credentials instead of the default Supabase connection string. This role has the necessary replication privileges and bypasses Row Level Security (RLS).
 
 ### 3. Auth setup
@@ -38,7 +40,7 @@ You'll need to create a user account when you first access the application.
 
 You can use either PowerSync Cloud or self-host PowerSync:
 
-- **PowerSync Cloud**: [Create a new project on the PowerSync dashboard](https://powersync.journeyapps.com/) and connect it to your Supabase database using the `powersync_role` credentials created in step 2.
+- **PowerSync Cloud**: [Create a new project on the PowerSync dashboard](https://dashboard.powersync.com) and connect it to your Supabase database using the `powersync_role` credentials created in step 2.
 - **Self-hosting**: Follow the [self-hosting guide](https://docs.powersync.com/self-hosting/getting-started) to deploy your own PowerSync instance.
 
 The sync rules for this demo are provided in [`sync-rules.yaml`](sync-rules.yaml) in this directory.
@@ -83,6 +85,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to try out
 │   └── AppHeader.vue         # Header component
 ├── db/
 │   └── seed.sql              # Database setup SQL
+├── powersync.yaml             # PowerSync server configuration
 ├── sync-rules.yaml           # PowerSync sync rules
 └── nuxt.config.ts            # Nuxt configuration
 ```
