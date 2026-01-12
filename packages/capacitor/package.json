@@ -7,7 +7,7 @@
     "access": "public"
   },
   "type": "module",
-  "main": "dist/plugin.cjs.js",
+  "main": "dist/plugin.cjs",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "unpkg": "dist/plugin.js",
@@ -29,8 +29,8 @@
         "default": "./dist/esm/index.js"
       },
       "require": {
-        "types": "./lib/src/index.d.ts",
-        "default": "./dist/plugin.cjs.js"
+        "types": "./dist/plugin.d.cts",
+        "default": "./dist/plugin.cjs"
       }
     }
   },
@@ -80,6 +80,7 @@
     "prettier-plugin-java": "^2.6.6",
     "rimraf": "^6.0.1",
     "rollup": "^4.30.1",
+    "rollup-plugin-dts": "^6.2.1",
     "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
