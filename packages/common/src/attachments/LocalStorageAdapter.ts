@@ -9,6 +9,9 @@ export enum EncodingType {
 /**
  * LocalStorageAdapter defines the interface for local file storage operations.
  * Implementations handle file I/O, directory management, and storage initialization.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
  */
 export interface LocalStorageAdapter {
   /**

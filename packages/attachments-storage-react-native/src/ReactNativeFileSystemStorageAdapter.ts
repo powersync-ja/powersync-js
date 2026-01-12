@@ -4,6 +4,9 @@ import type { AttachmentData, LocalStorageAdapter } from '@powersync/common';
 /**
  * ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter using @dr.pogodin/react-native-fs.
  * Suitable for React Native applications not using Expo, or those preferring react-native-fs.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
  */
 export class ReactNativeFileSystemStorageAdapter implements LocalStorageAdapter {
   private rnfs: typeof import('@dr.pogodin/react-native-fs');

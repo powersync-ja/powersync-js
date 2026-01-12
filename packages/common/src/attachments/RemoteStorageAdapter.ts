@@ -3,6 +3,9 @@ import { AttachmentRecord } from "./Schema.js";
 /**
  * RemoteStorageAdapter defines the interface for remote storage operations.
  * Implementations handle uploading, downloading, and deleting files from remote storage.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
  */
 export interface RemoteStorageAdapter {
     /**

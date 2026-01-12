@@ -5,6 +5,9 @@ import type { File, Directory } from 'expo-file-system';
 /**
  * ExpoFileSystemStorageAdapter implements LocalStorageAdapter using Expo's new File System API (SDK 54+).
  * Suitable for React Native applications using Expo SDK 54 or later.
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
  */
 export class ExpoFileSystemStorageAdapter implements LocalStorageAdapter {
   private File: typeof File;
