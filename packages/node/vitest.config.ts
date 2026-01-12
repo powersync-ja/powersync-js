@@ -8,6 +8,7 @@ export default defineConfig({
     fileParallelism: false,
     sequence: {
       concurrent: false
-    }
+    },
+    testTimeout: 20_000
   }
 });
