@@ -17,7 +17,7 @@
         font="bold"
       >
         <img
-          src="https://cdn.prod.website-files.com/67eea61902e19994e7054ea0/67f910109a12edc930f8ffb6_powersync-icon.svg"
+          :src="iconUrl"
           alt="Powersync"
           w="10"
           h="10"
@@ -51,6 +51,7 @@
 
 <script setup lang="ts">
 import { useRuntimeConfig } from '#imports'
+import iconUrl from './assets/powersync-icon.svg?url'
 
 const useDiagnostics = useRuntimeConfig().public.powerSyncModuleOptions.useDiagnostics ?? false
 </script>

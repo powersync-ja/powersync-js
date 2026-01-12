@@ -19,7 +19,7 @@ const logout = async () => {
         @click="navigateTo('/')"
       >
         <img
-          src="https://cdn.prod.website-files.com/67eea61902e19994e7054ea0/67f910109a12edc930f8ffb6_powersync-icon.svg"
+          src="~/assets/img/powersync-icon.svg"
           alt="Powersync"
           class="size-10 inline-flex"
         >

@@ -132,6 +132,60 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       references.push({ types: '@journeyapps/wa-sqlite' })
     })
 
+    // Make assets available to runtime files via Vite resolve alias
+    // Configure Vite to resolve ./assets/* imports from the layout to the module's assets directory
+    // This allows: import iconUrl from './assets/powersync-icon.svg?url'
+    const assetsDir = resolver.resolve('./runtime/assets')
+    
+    nuxt.options.vite = nuxt.options.vite || {}
+    nuxt.options.vite.resolve = nuxt.options.vite.resolve || {}
+    
+    const existingAlias = nuxt.options.vite.resolve.alias || []
+    const aliasArray = Array.isArray(existingAlias)
+      ? [...existingAlias]
+      : Object.entries(existingAlias).map(([find, replacement]) => ({ 
+          find, 
+          replacement: replacement as string 
+        }))
+    
+    // Add alias for assets directory - matches ./assets/* pattern from layout files
+    aliasArray.push({
+      find: /^\.\/assets\/(.+)$/,
+      replacement: `${assetsDir}/$1`,
+    })
+    
+    nuxt.options.vite.resolve.alias = aliasArray
+    
+    // making the asset available via HTTP for devtools
+    // this Add a Vite plugin to serve the asset at /assets/powersync-icon.svg
+    nuxt.hook('vite:extendConfig', async (config, { isClient }) => {
+      if (!isClient) return
+      
+      const { readFileSync } = await import('node:fs')
+      const assetPath = resolver.resolve('./runtime/assets/powersync-icon.svg')
+      const vitePlugin = {
+        name: 'powersync-assets',
+        configureServer(server: any) {
+          // Serve the asset at /assets/powersync-icon.svg
+          server.middlewares.use('/assets/powersync-icon.svg', (req: any, res: any, next: any) => {
+            try {
+              const content = readFileSync(assetPath)
+              res.setHeader('Content-Type', 'image/svg+xml')
+              res.end(content)
+            } catch {
+              next()
+            }
+          })
+        },
+      }
+      
+      // Add plugin to existing plugins array
+      const plugins = config.plugins || []
+      plugins.push(vitePlugin)
+      // @ts-ignore - plugins is read-only but we need to modify it
+      config.plugins = plugins
+    })
+
     setupDevToolsUI(nuxt)
   },
 })
