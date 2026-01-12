@@ -10,7 +10,7 @@ import {
   StreamingSyncImplementation
 } from '@powersync/common';
 import { describe, expect, it, vi } from 'vitest';
-import { testSchema } from '../../utils/testDb';
+import { TEST_SCHEMA } from '../../utils/test-schema';
 
 class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
@@ -45,7 +45,8 @@ class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
       }),
       getAll: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
-      refreshSchema: vi.fn()
+      refreshSchema: vi.fn(),
+      writeLock: vi.fn()
     } as any;
   }
   // Expose protected method for testing
@@ -58,7 +59,7 @@ describe('AbstractPowerSyncDatabase', () => {
   describe('resolvedConnectionOptions', () => {
     it('should use connect options when provided', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' }
       });
 
@@ -75,7 +76,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should fallback to constructor options when connect options not provided', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' },
         retryDelayMs: 3000,
         crudUploadThrottleMs: 4000
@@ -91,7 +92,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should convert retryDelay to retryDelayMs', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' },
         retryDelay: 5000
       });
@@ -106,7 +107,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should prioritize retryDelayMs over retryDelay in constructor options', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' },
         retryDelay: 5000,
         retryDelayMs: 6000
@@ -122,7 +123,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should prioritize connect options over constructor options', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' },
         retryDelayMs: 5000,
         crudUploadThrottleMs: 6000
@@ -141,7 +142,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should use default values when no options provided', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' }
       });
 
@@ -155,7 +156,7 @@ describe('AbstractPowerSyncDatabase', () => {
 
     it('should handle partial connect options', () => {
       const db = new TestPowerSyncDatabase({
-        schema: testSchema,
+        schema: TEST_SCHEMA,
         database: { dbFilename: 'test.db' },
         retryDelayMs: 5000,
         crudUploadThrottleMs: 6000

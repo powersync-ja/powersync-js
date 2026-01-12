@@ -13,7 +13,7 @@ import {
 } from '@powersync/common';
 import { getNavigatorLocks } from '../../shared/navigator';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
-import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
+import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
 import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
 import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
@@ -181,11 +181,15 @@ export class LockedAsyncDatabaseAdapter
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
-  getConfiguration(): ResolvedWebSQLOpenOptions {
+  getConfiguration(): WebDBAdapterConfiguration {
     if (!this._config) {
       throw new Error(`Cannot get config before initialization is completed`);
     }
-    return this._config;
+    return {
+      ...this._config,
+      // This can be overridden by the adapter later
+      requiresPersistentTriggers: false
+    };
   }
 
   protected async waitForInitialized() {
