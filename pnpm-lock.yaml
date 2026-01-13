@@ -223,9 +223,9 @@ importers:
       '@powersync/web':
         specifier: workspace:^1.30.0
         version: link:../web
-      async-lock:
-        specifier: ^1.4.0
-        version: 1.4.1
+      async-mutex:
+        specifier: ^0.5.0
+        version: 0.5.0
     devDependencies:
       '@capacitor-community/sqlite':
         specifier: ^7.0.2

@@ -11,7 +11,7 @@ import {
   QueryResult,
   Transaction
 } from '@powersync/web';
-import Lock from 'async-lock';
+import { Mutex } from 'async-mutex';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';
@@ -39,13 +39,15 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
-  protected lock: Lock;
+  protected writeMutex: Mutex;
+  protected readMutex: Mutex;
 
   constructor(protected options: CapacitorSQLiteOpenFactoryOptions) {
     super();
     this._writeConnection = null;
     this._readConnection = null;
-    this.lock = new Lock();
+    this.writeMutex = new Mutex();
+    this.readMutex = new Mutex();
     this.initializedPromise = this.init();
   }
 
@@ -237,7 +239,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.lock.acquire('read_lock', async () => {
+    return this.readMutex.runExclusive(async () => {
       await this.initializedPromise;
       return await fn(this.generateLockContext(this.readConnection));
     });
@@ -250,7 +252,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.lock.acquire('write_lock', async () => {
+    return this.writeMutex.runExclusive(async () => {
       await this.initializedPromise;
       const result = await fn(this.generateLockContext(this.writeConnection));
 
