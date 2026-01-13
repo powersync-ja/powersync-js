@@ -1,11 +1,10 @@
 /**
  * An async iterator that can't be cancelled.
  *
- * To keep data flow simple, we always pass an explicit cancellation token when subscribing to async streams.
+ * To keep data flow simple, we always pass an explicit cancellation token when subscribing to async streams. Once the
+ * {@link AbortSignal} aborts, iterators are supposed to clean up and then emit a final `{done: true}` event.
  */
-export type SimpleAsyncIterator<T> = {
-  next: () => Promise<IteratorResult<T>>;
-};
+export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
 
 export const doneResult: IteratorReturnResult<any> = { done: true, value: undefined };
 
@@ -13,6 +12,9 @@ export function valueResult<T>(value: T) {
   return { done: false, value };
 }
 
+/**
+ * A variant of {@link Array.map} for async iterators.
+ */
 export function map<T1, T2>(source: SimpleAsyncIterator<T1>, map: (source: T1) => T2): SimpleAsyncIterator<T2> {
   return {
     next: async () => {
@@ -30,27 +32,33 @@ export interface InjectableIterator<T> extends SimpleAsyncIterator<T> {
   inject(event: T);
 }
 
+/**
+ * Expands a source async iterator by allowing to inject events asynchronously.
+ *
+ * The resulting iterator will emit all events from its source. Additionally though, events can be injected. These
+ * events are dropped once the main iterator completes, but are otherwise forwarded.
+ *
+ * The iterator completes when its source completes, and it supports backpressure by only calling `next()` on the source
+ * in response to a `next()` call from downstream if no pending injected events can be dispatched.
+ */
 export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterator<T> {
   type Waiter = { resolve: (t: IteratorResult<T>) => void; reject: (e: unknown) => void };
 
   let sourceIsDone = false;
-  let waiter: Waiter | undefined = undefined;
+  let waiter: Waiter | undefined = undefined; // An active, waiting next() call.
+  // A pending upstream event that couldn't be dispatched because inject() has been called before it was resolved.
   let pendingSourceEvent: ((w: Waiter) => void) | null = null;
 
   let pendingInjectedEvents: T[] = [];
 
   const consumeWaiter = () => {
     const pending = waiter;
-    if (pending != null) {
-      waiter = undefined;
-      return pending;
-    } else {
-      return undefined;
-    }
+    waiter = undefined;
+    return pending;
   };
 
   const fetchFromSource = () => {
-    const resolve = (propagate: (w: Waiter) => void) => {
+    const resolveWaiter = (propagate: (w: Waiter) => void) => {
       const active = consumeWaiter();
       if (active) {
         propagate(active);
@@ -63,10 +71,10 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
     nextFromSource.then(
       (value) => {
         sourceIsDone = value.done == true;
-        resolve((w) => w.resolve(value));
+        resolveWaiter((w) => w.resolve(value));
       },
       (error) => {
-        resolve((w) => w.reject(error));
+        resolveWaiter((w) => w.reject(error));
       }
     );
   };

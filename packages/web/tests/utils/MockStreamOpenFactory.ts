@@ -3,13 +3,12 @@ import {
   AbstractRemote,
   AbstractStreamingSyncImplementation,
   BSONImplementation,
-  DataStream,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
   RemoteConnector,
-  SocketSyncStreamOptions,
+  SimpleAsyncIterator,
   StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
@@ -103,46 +102,20 @@ export class MockRemote extends AbstractRemote {
     return new Response(stream).body!;
   }
 
-  async socketStreamRaw<T>(): Promise<DataStream<T>> {
+  async socketStreamRaw<T>(): Promise<never> {
     throw 'Unsupported: Socket streams are not currently supported in tests';
   }
 
-  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
+  async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
     const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
     const mockReader = mockResponse.getReader();
-    const stream = new DataStream<T, string>({
-      logger: this.logger,
-      mapLine: mapLine
-    });
+    options.abortSignal?.addEventListener('abort', () => mockReader.cancel());
 
-    if (options.abortSignal?.aborted) {
-      stream.close();
-    }
-    options.abortSignal?.addEventListener('abort', () => stream.close());
-
-    const l = stream.registerListener({
-      lowWater: async () => {
-        try {
-          const { done, value } = await mockReader.read();
-          // Exit if we're done
-          if (done) {
-            stream.close();
-            l?.();
-            return;
-          }
-          stream.enqueueData(value);
-        } catch (ex) {
-          stream.close();
-          throw ex;
-        }
-      },
-      closed: () => {
-        mockReader.releaseLock();
-        l?.();
+    return {
+      async next() {
+        return await mockReader.read();
       }
-    });
-
-    return stream;
+    };
   }
 
   enqueueLine(line: StreamingSyncLine) {

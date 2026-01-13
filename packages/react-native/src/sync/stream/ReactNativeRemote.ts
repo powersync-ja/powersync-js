@@ -3,7 +3,6 @@ import {
   AbstractRemoteOptions,
   BSONImplementation,
   DEFAULT_REMOTE_LOGGER,
-  DataStream,
   FetchImplementation,
   FetchImplementationProvider,
   ILogger,
@@ -55,11 +54,11 @@ export class ReactNativeRemote extends AbstractRemote {
     return BSON;
   }
 
-  protected createTextDecoder(): TextDecoder {
+  createTextDecoder(): TextDecoder {
     return new TextDecoder();
   }
 
-  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
+  protected async fetchStreamRaw(options: SyncStreamOptions) {
     const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {
@@ -72,22 +71,19 @@ export class ReactNativeRemote extends AbstractRemote {
         : null;
 
     try {
-      return await super.postStreamRaw(
-        {
-          ...options,
-          fetchOptions: {
-            ...options.fetchOptions,
-            /**
-             * The `react-native-fetch-api` polyfill provides streaming support via
-             * this non-standard flag
-             * https://github.com/react-native-community/fetch#enable-text-streaming
-             */
-            // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
-            reactNative: { textStreaming: true }
-          }
-        },
-        mapLine
-      );
+      return await super.fetchStreamRaw({
+        ...options,
+        fetchOptions: {
+          ...options.fetchOptions,
+          /**
+           * The `react-native-fetch-api` polyfill provides streaming support via
+           * this non-standard flag
+           * https://github.com/react-native-community/fetch#enable-text-streaming
+           */
+          // @ts-expect-error https://github.com/react-native-community/fetch#enable-text-streaming
+          reactNative: { textStreaming: true }
+        }
+      });
     } finally {
       if (timeout) {
         clearTimeout(timeout);
