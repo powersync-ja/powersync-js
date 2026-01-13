@@ -1,13 +1,10 @@
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
-import topLevelAwait from 'vite-plugin-top-level-await';
-import wasm from 'vite-plugin-wasm';
-
 const config: UserConfigExport = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
     format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    plugins: () => []
   },
   optimizeDeps: {
     // Don't optimise these packages as they contain web workers and WASM files.
@@ -15,7 +12,7 @@ const config: UserConfigExport = {
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
     include: ['bson', 'async-mutex', 'comlink']
   },
-  plugins: [wasm(), topLevelAwait()],
+  plugins: [],
   test: {
     globals: true,
     include: ['tests/**/*.test.ts'],

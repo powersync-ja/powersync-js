@@ -4,7 +4,6 @@ import inject from '@rollup/plugin-inject';
 import json from '@rollup/plugin-json';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
-import terser from '@rollup/plugin-terser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -42,7 +41,6 @@ export default () => {
       }),
       alias({
         entries: [
-          { find: 'bson', replacement: path.resolve(__dirname, '../../node_modules/bson/lib/bson.rn.cjs') },
           {
             find: 'react-native/Libraries/Blob/BlobManager',
             replacement: path.resolve(__dirname, './vendor/BlobManager.js')
