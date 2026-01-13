@@ -56,21 +56,21 @@
   },
   "dependencies": {
     "async-mutex": "catalog:",
-    "event-iterator": "^2.0.0"
+    "event-iterator": "catalog:"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^29.0.0",
-    "@rollup/plugin-inject": "^5.0.5",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/node": "^20.5.9",
-    "@types/uuid": "^9.0.1",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-inject": "catalog:",
+    "@rollup/plugin-json": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@types/node": "catalog:",
+    "@types/uuid": "catalog:",
     "buffer": "^6.0.3",
-    "rollup": "^4.52.5",
+    "rollup": "catalog:",
     "cross-fetch": "^4.1.0",
-    "js-logger": "^1.6.1",
+    "js-logger": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
-    "bson": "^6.10.4"
+    "bson": "catalog:"
   }
 }
