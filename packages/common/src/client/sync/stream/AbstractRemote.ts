@@ -9,6 +9,7 @@ import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
 
+
 export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
@@ -618,9 +619,14 @@ export abstract class AbstractRemote {
         // Implement backpressure by waiting for the low water mark to be reached
         if (stream.dataQueue.length > stream.highWatermark) {
           await new Promise<void>((resolve) => {
-            stream.registerListener({
+            const dispose = stream.registerListener({
               lowWater: async () => {
                 resolve();
+                dispose();
+              },
+              closed: () => {
+                resolve();
+                dispose();
               }
             })
           })
