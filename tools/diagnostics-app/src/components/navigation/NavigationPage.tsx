@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigationPanel } from './NavigationPanelContext';
-import { Box, styled } from '@mui/material';
+import { cn } from '@/lib/utils';
 
 /**
  * Wraps a component with automatic navigation panel title management
@@ -14,11 +14,5 @@ export const NavigationPage: React.FC<React.PropsWithChildren<{ title: string }>
     return () => navigationPanel.setTitle('');
   }, [title, navigationPanel]);
 
-  return <S.Container>{children}</S.Container>;
+  return <div className={cn('m-2.5')}>{children}</div>;
 };
-
-namespace S {
-  export const Container = styled(Box)`
-    margin: 10px;
-  `;
-}

@@ -1,20 +1,17 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { getParams, setParams as setParamsGlobal } from '@/library/powersync/ConnectionManager';
-import {
-  Box,
-  Button,
-  Grid,
-  IconButton,
-  styled,
-  TextField,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl
-} from '@mui/material';
 import { FormEvent, useState } from 'react';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Trash2, Plus } from 'lucide-react';
 
 const typeForValue = (value: unknown) => {
   //when using typeof arrays are "object" so we have to have this specific case
@@ -115,72 +112,68 @@ function ClientParamsPage() {
 
   return (
     <NavigationPage title="Client Parameters">
-      <S.MainContainer>
-        <form onSubmit={onSubmit}>
+      <div className="p-5">
+        <form onSubmit={onSubmit} className="space-y-4">
           {params.map(({ key, value, type, error }, idx: number) => (
-            <S.CenteredGrid container key={idx}>
-              <S.CenteredGrid item xs={12} md={10}>
-                <TextField
-                  label="Key"
+            <div key={idx} className="flex flex-wrap items-center gap-2.5 justify-center">
+              <div className="flex-1 min-w-[200px] space-y-1.5">
+                <Label htmlFor={`key-${idx}`}>Key</Label>
+                <Input
+                  id={`key-${idx}`}
                   value={key}
-                  sx={{ margin: '10px' }}
-                  onChange={(v: { target: { value: string } }) => changeKey(idx, v.target.value, value, type)}
+                  onChange={(e) => changeKey(idx, e.target.value, value, type)}
                 />
-                {/* TODO: Potentially add an explanation here about how users should write values for a given piece of text? */}
-                <TextField
-                  label="Value"
+              </div>
+              <div className="flex-1 min-w-[200px] space-y-1.5">
+                <Label htmlFor={`value-${idx}`}>Value</Label>
+                <Input
+                  id={`value-${idx}`}
                   value={value}
-                  sx={{ margin: '10px' }}
-                  error={!!error}
+                  onChange={(e) => changeValue(idx, e.target.value, key, type)}
+                  className={error ? 'border-destructive' : ''}
                   title={error}
-                  onChange={(v: { target: { value: string } }) => changeValue(idx, v.target.value, key, type)}
                 />
-                <FormControl sx={{ margin: '10px', width: '125px', minWidth: '95px' }}>
-                  <InputLabel id="demo-simple-select-label">Type</InputLabel>
-                  <Select
-                    labelId="demo-simple-select-label"
-                    value={type}
-                    label="Type"
-                    onChange={(v: { target: { value: string } }) =>
-                      changeType(idx, key, value, v.target.value as ParameterType)
-                    }>
-                    <MenuItem value={'string'}>String</MenuItem>
-                    <MenuItem value={'number'}>Number</MenuItem>
-                    <MenuItem value={'array'}>Array</MenuItem>
-                    <MenuItem value={'object'}>Object</MenuItem>
-                    <MenuItem value={'boolean'}>Boolean</MenuItem>
-                  </Select>
-                </FormControl>
-                <IconButton sx={{ margin: '10px' }} color="error" onClick={() => removeIdx(idx)}>
-                  <DeleteIcon />
-                </IconButton>
-              </S.CenteredGrid>
-            </S.CenteredGrid>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </div>
+              <div className="w-[125px] min-w-[95px] space-y-1.5">
+                <Label htmlFor={`type-${idx}`}>Type</Label>
+                <Select
+                  value={type}
+                  onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
+                  <SelectTrigger id={`type-${idx}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="string">String</SelectItem>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="array">Array</SelectItem>
+                    <SelectItem value="object">Object</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={() => removeIdx(idx)}
+                className="mt-6">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           ))}
-          <S.CenteredGrid container>
-            <IconButton sx={{ margin: '10px' }} onClick={addRow}>
-              <AddIcon />
-            </IconButton>
-          </S.CenteredGrid>
-          <Button type="submit" sx={{ margin: '10px' }} variant="contained">
+          <div className="flex items-center justify-center">
+            <Button type="button" variant="outline" size="icon" onClick={addRow}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button type="submit" className="m-2.5">
             Save
           </Button>
         </form>
-      </S.MainContainer>
+      </div>
     </NavigationPage>
   );
-}
-
-namespace S {
-  export const MainContainer = styled(Box)`
-    padding: 20px;
-  `;
-
-  export const CenteredGrid = styled(Grid)`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `;
 }
 
 export default ClientParamsPage;

@@ -1,5 +1,6 @@
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'url';
 
 import { defineConfig } from 'vite';
@@ -25,11 +26,12 @@ export default defineConfig({
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: []
+    include: ['@powersync/web > event-iterator']
   },
   plugins: [
     wasm(),
     topLevelAwait(),
+    tailwindcss(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -40,8 +42,8 @@ export default defineConfig({
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        name: 'PowerSync React Demo',
-        short_name: 'PowerSync React',
+        name: 'PowerSync Diagnostics',
+        short_name: 'Diagnostics',
         icons: [
           {
             src: '/icons/icon-192x192.png',
