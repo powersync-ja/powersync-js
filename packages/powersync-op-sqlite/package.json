@@ -65,7 +65,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@op-engineering/op-sqlite": "^13.0.0 || ^14.0.0 || ^15.0.0",
+    "@op-engineering/op-sqlite": "^13.0.0 || ^14.0.0",
     "@powersync/common": "workspace:^1.45.0",
     "react": "*",
     "react-native": "*"
