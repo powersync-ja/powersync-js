@@ -1,12 +1,3 @@
-<!--
-Get your module up and running quickly.
-
-Find and replace all on all files (CMD+SHIFT+F):
-- Name: PowerSync Nuxt
-- Package name: @powersync/nuxt
-- Description: Powersync Nuxt module
--->
-
 <div align="center">
   <img src="./src/runtime/assets/powersync-icon.svg" alt="PowerSync Logo" width="64" height="64" />
   <h1>PowerSync Nuxt</h1>
@@ -105,9 +96,7 @@ export default defineNuxtPlugin({
 At this point, you're all set to use the module composables. The module automatically exposes all `@powersync/vue` composables, so you can use them directly:
 
 - `usePowerSync()` - Access the PowerSync database instance
-- `usePowerSyncQuery()` - Query the database reactively
-- `usePowerSyncStatus()` - Monitor sync status
-- `usePowerSyncWatchedQuery()` - Watch queries with automatic updates
+- `useQuery()` - Query the database reactively
 - And more... (see [API Reference](#api-reference))
 
 ## Setting up PowerSync
