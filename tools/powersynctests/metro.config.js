@@ -2,7 +2,6 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const path = require('node:path');
 
 const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
 
 /**
  * Metro configuration
@@ -11,13 +10,13 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
  * @type {import('@react-native/metro-config').MetroConfig}
  */
 const config = {
-  watchFolders: [workspaceRoot],
+  watchFolders: [projectRoot],
   resolver: {
     extraNodeModules: {
       stream: require.resolve('stream-browserify')
     },
-    nodeModulesPaths: [path.resolve(projectRoot, 'node_modules'), path.resolve(workspaceRoot, 'node_modules')],
-    disableHierarchicalLookup: true
+    nodeModulesPaths: [path.resolve(projectRoot, 'node_modules')],
+    disableHierarchicalLookup: false
   },
   transformer: {
     getTransformOptions: async () => ({
