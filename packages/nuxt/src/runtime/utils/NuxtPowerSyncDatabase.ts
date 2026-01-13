@@ -20,6 +20,31 @@ import { ref, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { RustClientInterceptor } from './RustClientInterceptor'
 
+/**
+ * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
+ * 
+ * This class automatically configures diagnostics when `useDiagnostics: true` is set in the module configuration.
+ * It provides enhanced VFS support, schema management, and logging capabilities for the inspector.
+ * 
+ * @example
+ * ```typescript
+ * import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
+ * 
+ * const db = new NuxtPowerSyncDatabase({
+ *   database: {
+ *     dbFilename: 'your-db-filename.sqlite',
+ *   },
+ *   schema: yourSchema,
+ * })
+ * ```
+ * 
+ * @remarks
+ * - When diagnostics are enabled, automatically uses cooperative sync VFS for improved compatibility
+ * - Stores connector internally for inspector access
+ * - Integrates with dynamic schema management for inspector features
+ * - Automatically configures logging when diagnostics are enabled
+ * - When diagnostics are disabled, behaves like a standard `PowerSyncDatabase`
+ */
 export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
   private schemaManager!: DynamicSchemaManager
   private _connector: PowerSyncBackendConnector | null = null

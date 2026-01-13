@@ -90,6 +90,96 @@ function formatBytes(bytes: number, decimals = 2) {
   }`
 }
 
+/**
+ * A comprehensive composable that provides real-time diagnostics data and sync status monitoring
+ * for your PowerSync client and local database.
+ * 
+ * This composable can be used to create your own inspector or to monitor sync status in your application.
+ * It provides reactive properties that update automatically as the sync state changes.
+ * 
+ * @returns An object containing:
+ * 
+ * **Database & Connection:**
+ * - `db` - The PowerSync database instance
+ * - `connector` - The current PowerSync backend connector (computed)
+ * - `connectionOptions` - The current connection options (computed)
+ * - `isDiagnosticSchemaSetup` - Whether the diagnostic schema is properly set up
+ * 
+ * **Sync Status:**
+ * - `syncStatus` - The current sync status object
+ * - `hasSynced` - Whether the database has completed at least one sync
+ * - `isConnected` - Whether the database is currently connected
+ * - `isSyncing` - Whether a sync operation is in progress
+ * - `isDownloading` - Whether data is currently being downloaded
+ * - `isUploading` - Whether data is currently being uploaded
+ * - `lastSyncedAt` - The timestamp of the last successful sync
+ * 
+ * **Progress & Statistics:**
+ * - `totalDownloadProgress` - Total download progress as a percentage string (computed)
+ * - `uploadQueueStats` - Statistics about the upload queue
+ * - `uploadQueueCount` - Number of items in the upload queue (computed)
+ * - `uploadQueueSize` - Size of the upload queue in human-readable format (computed)
+ * - `bucketRows` - Array of bucket data rows
+ * - `tableRows` - Array of table statistics rows
+ * - `totals` - Aggregated statistics including bucket count, row count, and data sizes (computed)
+ * 
+ * **Error Handling:**
+ * - `downloadError` - Any error that occurred during download
+ * - `uploadError` - Any error that occurred during upload
+ * - `downloadProgressDetails` - Detailed download progress information
+ * 
+ * **User Info:**
+ * - `userID` - The current user ID extracted from the authentication token (computed)
+ * 
+ * **Utilities:**
+ * - `clearData()` - Disconnects and clears all local PowerSync data, then reconnects. Useful for resetting the sync state during development or troubleshooting.
+ * - `formatBytes(bytes, decimals?)` - Formats byte counts into readable file sizes (e.g., "1.5 MiB"). Default decimals is 2.
+ * 
+ * @example
+ * ```vue
+ * <script setup lang="ts">
+ * const {
+ *   isConnected,
+ *   hasSynced,
+ *   isSyncing,
+ *   totalDownloadProgress,
+ *   uploadQueueStats,
+ *   bucketRows,
+ *   totals,
+ *   clearData,
+ * } = usePowerSyncInspectorDiagnostics()
+ * </script>
+ * 
+ * <template>
+ *   <div>
+ *     <!-- Connection Status -->
+ *     <div v-if="isConnected" class="status-connected">
+ *       Connected {{ hasSynced ? '✅' : '⏳' }}
+ *     </div>
+ *     
+ *     <!-- Sync Progress -->
+ *     <div v-if="isSyncing">
+ *       Syncing... {{ totalDownloadProgress }}%
+ *     </div>
+ *     
+ *     <!-- Statistics -->
+ *     <div v-if="totals">
+ *       <p>Buckets: {{ totals.buckets }}</p>
+ *       <p>Total Rows: {{ totals.row_count }}</p>
+ *       <p>Data Size: {{ totals.data_size }}</p>
+ *     </div>
+ *     
+ *     <!-- Upload Queue -->
+ *     <div v-if="uploadQueueStats">
+ *       Pending uploads: {{ uploadQueueStats.count }}
+ *     </div>
+ *     
+ *     <!-- Debug Actions -->
+ *     <button @click="clearData">Clear Data</button>
+ *   </div>
+ * </template>
+ * ```
+ */
 export function usePowerSyncInspectorDiagnostics() {
   const db = usePowerSync()
 

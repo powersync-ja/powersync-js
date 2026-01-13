@@ -13,12 +13,27 @@ import { defu } from 'defu'
 import { setupDevToolsUI } from './devtools'
 import { addImportsFrom } from './runtime/utils/addImportsFrom'
 
-// Module options TypeScript interface definition
+/**
+ * Configuration options for the PowerSync Nuxt module.
+ * 
+ * @example
+ * ```typescript
+ * export default defineNuxtConfig({
+ *   modules: ['@powersync/nuxt'],
+ *   powersync: {
+ *     useDiagnostics: true,
+ *   },
+ * })
+ * ```
+ */
 export interface PowerSyncNuxtModuleOptions {
   /**
-   * enable diagnostics
-   *
-   * @default "false"
+   * Enable diagnostics and the PowerSync Inspector.
+   * 
+   * When set to `true`, enables diagnostics recording and makes the PowerSync Inspector available.
+   * The inspector provides real-time monitoring, data inspection, and debugging tools.
+   * 
+   * @default false
    */
   useDiagnostics?: boolean
 }

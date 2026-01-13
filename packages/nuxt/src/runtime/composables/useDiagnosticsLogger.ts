@@ -29,6 +29,27 @@ consola.addReporter({
   },
 })
 
+/**
+ * Provides a logger configured for PowerSync diagnostics.
+ * 
+ * This composable creates a logger instance that is automatically configured for diagnostics
+ * recording. The logger stores logs in session storage and emits events for real-time log monitoring.
+ * 
+ * @param customHandler - Optional custom log handler to process log messages
+ * 
+ * @returns An object containing:
+ * - `logger` - The configured ILogHandler instance
+ * - `logsStorage` - Storage instance for log persistence
+ * - `emitter` - Event emitter for log events
+ * 
+ * @example
+ * ```typescript
+ * const { logger } = useDiagnosticsLogger()
+ * 
+ * // Logger is automatically configured for diagnostics
+ * // Use it in your PowerSync setup if needed
+ * ```
+ */
 export const useDiagnosticsLogger = (customHandler?: ILogHandler) => {
   const logger = createBaseLogger()
   logger.useDefaults()
