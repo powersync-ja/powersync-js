@@ -110,6 +110,18 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
       return null;
     }
 
+    // Wait for any pending processing to complete first.
+    // This ensures we register our listener before calling processQueue(),
+    // avoiding a race where processQueue() sees no reader and returns early.
+    if (this.processingPromise) {
+      await this.processingPromise;
+    }
+
+    // Re-check after await - stream may have closed while we were waiting
+    if (this.closed) {
+      return null;
+    }
+
     return new Promise((resolve, reject) => {
       const l = this.registerListener({
         data: async (data) => {
@@ -151,7 +163,7 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
 
     const promise = (this.processingPromise = this._processQueue());
     promise.finally(() => {
-      return (this.processingPromise = null);
+      this.processingPromise = null;
     });
     return promise;
   }
@@ -190,7 +202,6 @@ export class DataStream<ParsedData, SourceData = any> extends BaseObserver<DataS
     }
 
     if (this.dataQueue.length > 0) {
-      // Next tick
       setTimeout(() => this.processQueue());
     }
   }

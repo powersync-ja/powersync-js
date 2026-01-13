@@ -194,8 +194,7 @@ export interface RequiredAdditionalConnectionOptions extends Required<Additional
 }
 
 export interface StreamingSyncImplementation
-  extends BaseObserverInterface<StreamingSyncImplementationListener>,
-    Disposable {
+  extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable {
   /**
    * Connects to the sync service
    */
