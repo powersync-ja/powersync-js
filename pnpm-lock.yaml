@@ -266,6 +266,9 @@ importers:
       rollup:
         specifier: ^4.30.1
         version: 4.54.0
+      rollup-plugin-dts:
+        specifier: ^6.2.1
+        version: 6.3.0(rollup@4.54.0)(typescript@5.9.3)
       swiftlint:
         specifier: ^2.0.0
         version: 2.0.0(typescript@5.9.3)
@@ -746,6 +749,9 @@ importers:
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
+      '@powersync/capacitor':
+        specifier: workspace:*
+        version: link:../../packages/capacitor
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../../packages/drizzle-driver
@@ -16178,11 +16184,6 @@ snapshots:
       eslint: 8.57.1
       eslint-visitor-keys: 3.4.3
 
-  '@eslint-community/eslint-utils@4.9.0(eslint@9.39.2(jiti@1.21.7))':
-    dependencies:
-      eslint: 9.39.2(jiti@1.21.7)
-      eslint-visitor-keys: 3.4.3
-
   '@eslint-community/eslint-utils@4.9.1(eslint@9.39.2(jiti@1.21.7))':
     dependencies:
       eslint: 9.39.2(jiti@1.21.7)
@@ -21797,7 +21798,7 @@ snapshots:
 
   eslint@9.39.2(jiti@1.21.7):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.0(eslint@9.39.2(jiti@1.21.7))
+      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2(jiti@1.21.7))
       '@eslint-community/regexpp': 4.12.2
       '@eslint/config-array': 0.21.1
       '@eslint/config-helpers': 0.4.2
@@ -27398,6 +27399,14 @@ snapshots:
     dependencies:
       magic-string: 0.30.21
       rollup: 4.14.3
+      typescript: 5.9.3
+    optionalDependencies:
+      '@babel/code-frame': 7.27.1
+
+  rollup-plugin-dts@6.3.0(rollup@4.54.0)(typescript@5.9.3):
+    dependencies:
+      magic-string: 0.30.21
+      rollup: 4.54.0
       typescript: 5.9.3
     optionalDependencies:
       '@babel/code-frame': 7.27.1

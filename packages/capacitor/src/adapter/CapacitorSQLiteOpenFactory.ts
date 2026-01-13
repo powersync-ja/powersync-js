@@ -1,5 +1,5 @@
 import { DBAdapter, SQLOpenFactory, SQLOpenOptions } from '@powersync/web';
-import { CapacitorSQLiteAdapter } from './CapacitorSQLiteAdapter';
+import { CapacitorSQLiteAdapter } from './CapacitorSQLiteAdapter.js';
 
 enum SqliteSynchronous {
   normal = 'NORMAL',

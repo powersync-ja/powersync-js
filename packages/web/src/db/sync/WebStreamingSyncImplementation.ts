@@ -4,8 +4,8 @@ import {
   LockOptions,
   LockType
 } from '@powersync/common';
-import { getNavigatorLocks } from '../../shared/navigator';
-import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags';
+import { getNavigatorLocks } from '../../shared/navigator.js';
+import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags.js';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
   flags?: WebSQLFlags;
