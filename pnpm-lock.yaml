@@ -631,6 +631,9 @@ importers:
       crypto-browserify:
         specifier: ^3.12.0
         version: 3.12.1
+      glob:
+        specifier: ^11.0.0
+        version: 11.1.0
       p-defer:
         specifier: ^4.0.1
         version: 4.0.1
