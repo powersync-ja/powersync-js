@@ -7,7 +7,7 @@ import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
-import { SimpleAsyncIterator } from '../../../utils/stream_transform.js';
+import { doneResult, SimpleAsyncIterator, valueResult } from '../../../utils/stream_transform.js';
 import { EventIterator } from 'event-iterator';
 import { Queue } from 'event-iterator/lib/event-iterator.js';
 
@@ -486,7 +486,7 @@ export abstract class AbstractRemote {
    *
    * Note that this uses streaming fetch which is not available on React Native.
    */
-  async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
+  async fetchStream(options: SyncStreamOptions): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
     const { data, path, headers, abortSignal } = options;
     const request = await this.buildRequest(path);
 
@@ -518,10 +518,14 @@ export abstract class AbstractRemote {
     });
 
     let res: Response;
+    let responseIsBson = false;
     try {
+      const ndJson = 'application/x-ndjson';
+      const bson = 'application/vnd.powersync.bson-stream';
+
       res = await this.fetch(request.url, {
         method: 'POST',
-        headers: { ...headers, ...request.headers },
+        headers: { ...headers, ...request.headers, accept: `${bson};q=0.9,${ndJson};q=0.8` },
         body: JSON.stringify(data),
         signal: controller.signal,
         cache: 'no-store',
@@ -536,6 +540,9 @@ export abstract class AbstractRemote {
         error.status = res.status;
         throw error;
       }
+
+      const contentType = res.headers.get('content-type');
+      responseIsBson = contentType == bson;
     } catch (ex) {
       if (ex.name == 'AbortError') {
         throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
@@ -545,25 +552,27 @@ export abstract class AbstractRemote {
 
     reader = res.body.getReader();
 
-    return {
+    const stream: SimpleAsyncIterator<Uint8Array> = {
       next: async () => {
         try {
           controller.signal.throwIfAborted();
           const event = await reader.read();
           if (event.done) {
-            return { done: true, value: undefined };
+            return doneResult;
           } else {
-            return { value: event.value };
+            return valueResult(event.value);
           }
         } catch (ex) {
           if (controller.signal.aborted) {
             reader.cancel();
-            return { done: true, value: undefined };
+            return doneResult;
           }
 
           throw ex;
         }
       }
     };
+
+    return { isBson: responseIsBson, stream };
   }
 }

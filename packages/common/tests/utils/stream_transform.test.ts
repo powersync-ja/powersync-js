@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import {
   doneResult,
+  extractBsonObjects,
   extractJsonLines,
   injectable,
   SimpleAsyncIterator,
@@ -90,5 +91,70 @@ describe('injectible', () => {
 
       expect(await next).toStrictEqual(doneResult);
     }
+  });
+});
+
+describe('bson objects', () => {
+  test('empty stream', async () => {
+    async function* source() {}
+
+    const stream = extractBsonObjects(source());
+    expect(await stream.next()).toStrictEqual(doneResult);
+  });
+
+  test('splits bson objects', async () => {
+    async function* source() {
+      yield new Uint8Array([5, 0, 0, 0, 1]);
+
+      yield new Uint8Array([6, 0]);
+      yield new Uint8Array([0, 0]);
+      yield new Uint8Array([0, 0]);
+    }
+
+    const stream = extractBsonObjects(source());
+    expect((await stream.next()).value).toHaveLength(5);
+    expect((await stream.next()).value).toHaveLength(6);
+    expect(await stream.next()).toStrictEqual(doneResult);
+  });
+
+  test('invalid bson size', async () => {
+    async function* source() {
+      yield new Uint8Array([3, 0, 0, 0]);
+    }
+
+    const stream = extractBsonObjects(source());
+    await expect(stream.next()).rejects.toThrow('invalid length for bson: 3');
+  });
+
+  test('invalid end in length', async () => {
+    async function* source() {
+      yield new Uint8Array([5, 0, 0, 0, 1]);
+
+      yield new Uint8Array([5, 0]);
+    }
+
+    const stream = extractBsonObjects(source());
+    expect((await stream.next()).value).toHaveLength(5);
+    await expect(stream.next()).rejects.toThrow('illegal end of stream in BSON object');
+  });
+
+  test('invalid end in object', async () => {
+    async function* source() {
+      yield new Uint8Array([
+        5,
+        0,
+        0,
+        0,
+        1, // first object
+        6,
+        0,
+        0,
+        0 // header of second object
+      ]);
+    }
+
+    const stream = extractBsonObjects(source());
+    expect((await stream.next()).value).toHaveLength(5);
+    await expect(stream.next()).rejects.toThrow('illegal end of stream in BSON object');
   });
 });
