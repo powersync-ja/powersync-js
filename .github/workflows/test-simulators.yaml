@@ -17,7 +17,7 @@ jobs:
         id: check
         run: |
           git fetch origin ${{ github.base_ref }}
-          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite tools/powersynctests; then
+          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/powersync-op-sqlite isolated-tests/react-native-tests; then
             echo "should_run=false" >> $GITHUB_OUTPUT
           else
             echo "should_run=true" >> $GITHUB_OUTPUT
@@ -58,13 +58,13 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: 17
-          distribution: 'adopt'
-          cache: 'gradle'
+          distribution: "adopt"
+          cache: "gradle"
 
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
@@ -91,8 +91,12 @@ jobs:
       - name: Build
         run: pnpm build:packages
 
+      - name: Install test dependencies
+        working-directory: ./isolated-tests/react-native-tests
+        run: pnpm install
+
       - name: Setup Detox build framework cache
-        working-directory: ./tools/powersynctests
+        working-directory: ./isolated-tests/react-native-tests
         run: |
           pnpx detox clean-framework-cache && pnpx detox build-framework-cache
 
@@ -113,7 +117,7 @@ jobs:
           script: echo "Generated AVD snapshot for caching."
 
       - name: Android Emulator Build
-        working-directory: ./tools/powersynctests
+        working-directory: ./isolated-tests/react-native-tests
         run: pnpx detox build --configuration android.emu.release
 
       - name: Run connected Android tests
@@ -123,7 +127,7 @@ jobs:
           target: google_apis
           arch: x86_64
           avd-name: $AVD_NAME
-          script: cd tools/powersynctests && pnpx detox test --configuration android.emu.release --headless
+          script: cd isolated-tests/react-native-tests && pnpx detox test --configuration android.emu.release --headless
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
@@ -146,29 +150,29 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           # TODO: Update to latest-stable once GH installs iOS 26 simulators
-          xcode-version: '^16.4.0'
+          xcode-version: "^16.4.0"
 
       - name: CocoaPods Cache
         uses: actions/cache@v3
         id: cocoapods-cache
         with:
           path: |
-            tools/powersynctests/ios/Pods/*
-          key: ${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
+            isolated-tests/react-native-tests/ios/Pods/*
+          key: ${{ runner.os }}-${{ hashFiles('isolated-tests/react-native-tests/ios/Podfile.lock') }}
 
       - name: Cache Xcode Derived Data
         uses: actions/cache@v3
         with:
           path: |
-            tools/powersynctests/ios/build/*
-          key: xcode-derived-${{ runner.os }}-${{ hashFiles('tools/powersynctests/ios/Podfile.lock') }}
+            isolated-tests/react-native-tests/ios/build/*
+          key: xcode-derived-${{ runner.os }}-${{ hashFiles('isolated-tests/react-native-tests/ios/Podfile.lock') }}
           restore-keys: |
             xcode-derived-${{ runner.os }}-
 
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: ".nvmrc"
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
@@ -195,6 +199,10 @@ jobs:
       - name: Build
         run: pnpm build:packages
 
+      - name: Install test dependencies
+        working-directory: ./isolated-tests/react-native-tests
+        run: pnpm install
+
       - name: Install Detox dependencies
         run: |
           brew tap wix/brew
@@ -203,13 +211,13 @@ jobs:
           detox clean-framework-cache && detox build-framework-cache
 
       - name: Install CocoaPods dependencies
-        working-directory: tools/powersynctests/ios
+        working-directory: isolated-tests/react-native-tests/ios
         run: pod install
 
       - name: iOS Simulator Build
-        working-directory: ./tools/powersynctests
+        working-directory: ./isolated-tests/react-native-tests
         run: pnpx detox build --configuration ios.sim.release
 
       - name: iOS Simulator Test
-        working-directory: ./tools/powersynctests
+        working-directory: ./isolated-tests/react-native-tests
         run: pnpx detox test --configuration ios.sim.release --cleanup

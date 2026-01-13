@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+pnpmfileChecksum: nb5cvprcew6ci5ysjegtiqsb6i
+
 importers:
 
   .:
@@ -15,17 +17,17 @@ importers:
         specifier: ^15.2.0
         version: 15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
       '@powersync/common':
-        specifier: 1.45.0
-        version: 1.45.0
+        specifier: file:../../packages/common
+        version: file:../../packages/common
       '@powersync/op-sqlite':
-        specifier: 0.7.18
-        version: 0.7.18(@op-engineering/op-sqlite@15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0))(@powersync/common@1.45.0)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
+        specifier: file:../../packages/powersync-op-sqlite
+        version: file:../../packages/powersync-op-sqlite(@op-engineering/op-sqlite@15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0))(@powersync/common@file:../../packages/common)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
       '@powersync/react':
-        specifier: 1.8.2
-        version: 1.8.2(@powersync/common@1.45.0)(react@19.2.0)
+        specifier: file:../../packages/react
+        version: file:../../packages/react(@powersync/common@file:../../packages/common)(react@19.2.0)
       '@powersync/react-native':
-        specifier: 1.28.1
-        version: 1.28.1(@powersync/common@1.45.0)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
+        specifier: file:../../packages/react-native
+        version: file:../../packages/react-native(@powersync/common@file:../../packages/common)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
       '@react-native-vector-icons/evil-icons':
         specifier: ^1.10.1
         version: 1.10.1(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
@@ -1010,32 +1012,32 @@ packages:
       react: '*'
       react-native: '*'
 
-  '@powersync/common@1.45.0':
-    resolution: {integrity: sha512-C0r0Lago5MPcGiXSQhX6CDEqmHuMLjHZJzHjk61un1cvn+7SDoJrX1KTln+HuvoLovBTKK/DUJoAGzpTCIFF5Q==}
+  '@powersync/common@file:../../packages/common':
+    resolution: {directory: ../../packages/common, type: directory}
 
-  '@powersync/op-sqlite@0.7.18':
-    resolution: {integrity: sha512-25d+Wm/qeB6o4gButieNm372frPwLCHzmgp3jf4CSWmm+PMeu2FPTFsv+x2jsF4aVPy7fkTItCRXlvqZS3t2fQ==}
+  '@powersync/op-sqlite@file:../../packages/powersync-op-sqlite':
+    resolution: {directory: ../../packages/powersync-op-sqlite, type: directory}
     peerDependencies:
-      '@op-engineering/op-sqlite': ^13.0.0 || ^14.0.0
-      '@powersync/common': ^1.45.0
+      '@op-engineering/op-sqlite': ^13.0.0 || ^14.0.0 || ^15.0.0
+      '@powersync/common': workspace:^1.45.0
       react: '*'
       react-native: '*'
 
-  '@powersync/react-native@1.28.1':
-    resolution: {integrity: sha512-CPxuxla0uVPHn5x8Bq7eZ/hfUDurEodFVhstQMUCcyeaHSgNP7xA/CuLgY9G9gabXiXwaAvKXQPojNU9pxZlkQ==}
+  '@powersync/react-native@file:../../packages/react-native':
+    resolution: {directory: ../../packages/react-native, type: directory}
     peerDependencies:
       '@journeyapps/react-native-quick-sqlite': ^2.5.0
-      '@powersync/common': ^1.45.0
+      '@powersync/common': workspace:^1.45.0
       react: '*'
       react-native: '*'
     peerDependenciesMeta:
       '@journeyapps/react-native-quick-sqlite':
         optional: true
 
-  '@powersync/react@1.8.2':
-    resolution: {integrity: sha512-15z8JKt66dq2bqX2P7QQ71eUIx3DWLc5WMdB/PDc9MIAHf1SERqKfzbzWGxKplQGHC/GogDA7G8IDoRadhNXOA==}
+  '@powersync/react@file:../../packages/react':
+    resolution: {directory: ../../packages/react, type: directory}
     peerDependencies:
-      '@powersync/common': ^1.41.1
+      '@powersync/common': workspace:^1.45.0
       react: '*'
 
   '@react-native-community/cli-clean@20.0.1':
@@ -5370,30 +5372,30 @@ snapshots:
       react: 19.2.0
       react-native: 0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0)
 
-  '@powersync/common@1.45.0':
+  '@powersync/common@file:../../packages/common':
     dependencies:
       async-mutex: 0.5.0
       event-iterator: 2.0.0
 
-  '@powersync/op-sqlite@0.7.18(@op-engineering/op-sqlite@15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0))(@powersync/common@1.45.0)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)':
+  '@powersync/op-sqlite@file:../../packages/powersync-op-sqlite(@op-engineering/op-sqlite@15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0))(@powersync/common@file:../../packages/common)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@op-engineering/op-sqlite': 15.2.2(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)
-      '@powersync/common': 1.45.0
+      '@powersync/common': file:../../packages/common
       async-lock: 1.4.1
       react: 19.2.0
       react-native: 0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0)
 
-  '@powersync/react-native@1.28.1(@powersync/common@1.45.0)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)':
+  '@powersync/react-native@file:../../packages/react-native(@powersync/common@file:../../packages/common)(react-native@0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@powersync/common': 1.45.0
-      '@powersync/react': 1.8.2(@powersync/common@1.45.0)(react@19.2.0)
+      '@powersync/common': file:../../packages/common
+      '@powersync/react': file:../../packages/react(@powersync/common@file:../../packages/common)(react@19.2.0)
       async-mutex: 0.5.0
       react: 19.2.0
       react-native: 0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.1(typescript@5.0.4))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.2.0)
 
-  '@powersync/react@1.8.2(@powersync/common@1.45.0)(react@19.2.0)':
+  '@powersync/react@file:../../packages/react(@powersync/common@file:../../packages/common)(react@19.2.0)':
     dependencies:
-      '@powersync/common': 1.45.0
+      '@powersync/common': file:../../packages/common
       react: 19.2.0
 
   '@react-native-community/cli-clean@20.0.1':
