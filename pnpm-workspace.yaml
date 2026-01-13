@@ -9,19 +9,21 @@ onlyBuiltDependencies:
 
 catalog:
   async-lock: ^1.4.1
-  "@types/async-lock": ^1.4.0
+  '@types/async-lock': ^1.4.0
+  '@types/node': ^24.0.0
 
   react: ^19.2.3
-  "@types/react": ^19.2.7
+  '@types/react': ^19.2.7
   react-native: ^0.83.0
-  "@react-native/eslint-config": ^0.83.1
+  '@react-native/eslint-config': ^0.83.1
   react-native-builder-bob: ^0.40.17
-  "@op-engineering/op-sqlite": ^15.2.2
+  '@op-engineering/op-sqlite': ^15.2.2
 
   del-cli: ^7.0.0
   eslint: ^9.39.2
   eslint-config-prettier: ^10.1.8
   eslint-plugin-prettier: ^5.5.4
+  glob: ^11.0.0
   prettier: ^3.7.4
   turbo: ^2.7.3
   vite: ^7.3.1

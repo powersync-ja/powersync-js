@@ -80,7 +80,7 @@
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@types/uuid": "^9.0.6",
     "crypto-browserify": "^3.12.0",
-    "glob": "^11.0.0",
+    "glob": "catalog:",
     "p-defer": "^4.0.1",
     "source-map-loader": "^5.0.0",
     "stream-browserify": "^3.0.0",
