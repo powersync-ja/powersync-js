@@ -17,7 +17,7 @@ function defineBuild(isNode) {
     })
   ];
   if (!isNode) {
-    plugins.unshift(applyAsyncIteratorPonyfill());
+    plugins.push(applyAsyncIteratorPolyfill());
   }
 
   return {
@@ -35,14 +35,16 @@ function defineBuild(isNode) {
       }
     ],
     plugins: [plugins],
-    external: ['async-mutex', 'bson', isNode ? 'event-iterator' : undefined]
+    external: ['async-mutex', 'bson']
   };
 }
 
 /**
- * Replaces `Symbol.asyncIterator` with a ponyfill in bundled dependencies (specifically `EventIterator`).
+ * Replaces `Symbol.asyncIterator` with a polyfill in bundled dependencies (specifically `EventIterator`).
+ *
+ * This is derived from an example in Rollup docs: https://rollupjs.org/plugin-development/#resolveid
  */
-function applyAsyncIteratorPonyfill() {
+function applyAsyncIteratorPolyfill() {
   // A fake file we import into every file using SymbolasyncIterator
   const POLYFILL_ID = '\0symbol-async-iterator';
 
@@ -59,6 +61,8 @@ function applyAsyncIteratorPonyfill() {
         // Outside of Node.JS, we replace Symbol.asyncIterator with an import to this symbol. This allows us to use
         // Symbol.asyncIterator internally. If users install the recommended polyfill, https://github.com/Azure/azure-sdk-for-js/blob/%40azure/core-asynciterator-polyfill_1.0.2/sdk/core/core-asynciterator-polyfill/src/index.ts#L4-L6
         // they can also use our async iterables on React Native.
+        // Of course, we could also inline this definition with a simple replacement. But putting this in a fake module
+        // de-duplicates it.
         return `
 export const symbolAsyncIterator = Symbol.asyncIterator ?? Symbol.for('Symbol.asyncIterator');
         `;
@@ -72,7 +76,6 @@ export const symbolAsyncIterator = Symbol.asyncIterator ?? Symbol.for('Symbol.as
       const s = new MagicString(code);
 
       let replaced = false;
-
       const symbolName = 'symbolAsyncIterator';
 
       walk(ast, {

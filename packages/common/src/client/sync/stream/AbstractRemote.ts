@@ -14,7 +14,7 @@ import {
   SimpleAsyncIterator
 } from '../../../utils/stream_transform.js';
 import { EventIterator } from 'event-iterator';
-import { Queue } from 'event-iterator/lib/event-iterator.js';
+import type { Queue } from 'event-iterator/lib/event-iterator.js';
 
 export type BSONImplementation = typeof BSON;
 
@@ -466,6 +466,7 @@ export abstract class AbstractRemote {
               resolve(events);
             }
             const { data } = payload;
+            requestMore(); // Immediately request another event (unless the downstream consumer is paused).
             // Less events are now pending
             pendingEventsCount--;
             if (!data) {
