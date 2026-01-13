@@ -29,6 +29,7 @@ import {
   isStreamingSyncData
 } from './streaming-sync-types.js';
 import {
+  extractBsonObjects,
   extractJsonLines,
   injectable,
   InjectableIterator,
@@ -697,8 +698,12 @@ The next upload iteration will be delayed.`);
     const remote = this.options.remote;
 
     if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-      const responseStream = await remote.fetchStream(options);
-      return extractJsonLines(responseStream, remote.createTextDecoder());
+      const { isBson, stream } = await remote.fetchStream(options);
+      if (isBson) {
+        return extractBsonObjects(stream);
+      } else {
+        return extractJsonLines(stream, remote.createTextDecoder());
+      }
     } else {
       const stream = await this.options.remote.socketStreamRaw(
         {

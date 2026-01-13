@@ -105,6 +105,9 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
   };
 }
 
+/**
+ * Splits a byte stream at line endings, emitting each line as a string.
+ */
 export function extractJsonLines(
   source: SimpleAsyncIterator<Uint8Array>,
   decoder: TextDecoder
@@ -149,6 +152,86 @@ export function extractJsonLines(
         }
 
         buffer = lines[lines.length - 1];
+      }
+    }
+  };
+}
+
+/**
+ * Splits a concatenated stream of BSON objects by emitting individual objects.
+ */
+export function extractBsonObjects(source: SimpleAsyncIterator<Uint8Array>): SimpleAsyncIterator<Uint8Array> {
+  const completedObjects: Uint8Array[] = []; // Fully read but not emitted yet.
+  let isDone = false;
+
+  const lengthBuffer = new DataView(new ArrayBuffer(4));
+  let objectBody: Uint8Array | null = null;
+  let remainingLength = 4;
+
+  return {
+    async next(): Promise<IteratorResult<Uint8Array>> {
+      while (true) {
+        if (completedObjects.length) {
+          return valueResult(completedObjects.shift()!);
+        }
+        if (isDone) {
+          return doneResult;
+        }
+
+        const upstreamEvent = await source.next();
+        if (upstreamEvent.done) {
+          isDone = true;
+          if (objectBody || remainingLength != 4) {
+            throw new Error('illegal end of stream in BSON object');
+          }
+          return doneResult;
+        }
+
+        const chunk = upstreamEvent.value;
+        for (let i = 0; i < chunk.length; ) {
+          const availableInData = chunk.length - i;
+
+          if (objectBody) {
+            // We're in the middle of reading a BSON document.
+            const bytesToRead = Math.min(availableInData, remainingLength);
+            const copySource = new Uint8Array(chunk.buffer, chunk.byteOffset + i, bytesToRead);
+            objectBody.set(copySource, 4 + copySource.length - remainingLength);
+            i += bytesToRead;
+            remainingLength -= bytesToRead;
+
+            if (remainingLength == 0) {
+              completedObjects.push(objectBody);
+
+              // Prepare reading another document, starting with its length
+              objectBody = null;
+              remainingLength = 4;
+            }
+          } else {
+            // Copy up to 4 bytes into lengthBuffer, depending on how many we still need.
+            const bytesToRead = Math.min(availableInData, remainingLength);
+            for (let j = 0; j < bytesToRead; j++) {
+              lengthBuffer.setUint8(4 - remainingLength + j, chunk[i + j]);
+            }
+            i += bytesToRead;
+            remainingLength -= bytesToRead;
+
+            if (remainingLength == 0) {
+              // Transition from reading length header to reading document. Subtracting 4 because the length of the
+              // header is included in length.
+              const length = lengthBuffer.getInt32(0, true /* little endian */);
+              remainingLength = length - 4;
+              if (remainingLength < 1) {
+                throw new Error(`invalid length for bson: ${length}`);
+              }
+
+              objectBody = new Uint8Array(length);
+              for (let j = 0; j < 4; j++) {
+                objectBody[j] = lengthBuffer.getUint8(j);
+                lengthBuffer.setUint8(j, 0);
+              }
+            }
+          }
+        }
       }
     }
   };
