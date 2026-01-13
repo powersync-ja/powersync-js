@@ -4,7 +4,7 @@ import type {
   MockSyncServiceMessage,
   MockSyncServiceResponse,
   PendingRequest
-} from './MockSyncServiceTypes';
+} from './MockSyncServiceTypes.js';
 
 /**
  * Interface for mocking sync service responses in shared worker environments.

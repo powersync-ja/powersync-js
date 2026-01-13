@@ -1,10 +1,10 @@
-import type { MockSyncServiceMessage, MockSyncServiceResponse } from './MockSyncServiceTypes';
+import type { MockSyncServiceMessage, MockSyncServiceResponse } from './MockSyncServiceTypes.js';
 import {
   ActiveResponse,
   AutomaticResponseConfig,
   PendingRequest,
   PendingRequestInternal
-} from './MockSyncServiceTypes';
+} from './MockSyncServiceTypes.js';
 
 /**
  * Mock sync service implementation for shared worker environments.

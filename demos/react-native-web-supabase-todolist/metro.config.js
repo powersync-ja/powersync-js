@@ -1,8 +1,6 @@
 // Learn more https://docs.expo.dev/guides/monorepos
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('node:path');
-
-const config = getDefaultConfig(projectRoot);
+const config = getDefaultConfig(__dirname);
 
 // Needed to make `@powersync/web/umd` imports work
 config.resolver.unstable_enablePackageExports = true;
