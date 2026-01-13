@@ -9,6 +9,7 @@ onlyBuiltDependencies:
 
 catalog:
   async-lock: ^1.4.1
+  async-mutex: ^0.5.0
   '@types/async-lock': ^1.4.0
   '@types/node': ^24.0.0
 
