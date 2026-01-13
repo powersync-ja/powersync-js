@@ -24,6 +24,9 @@ catalogs:
     async-lock:
       specifier: ^1.4.1
       version: 1.4.1
+    async-mutex:
+      specifier: ^0.5.0
+      version: 0.5.0
     del-cli:
       specifier: ^7.0.0
       version: 7.0.0
@@ -187,7 +190,7 @@ importers:
         specifier: workspace:^
         version: link:../common
       async-mutex:
-        specifier: ^0.5.0
+        specifier: 'catalog:'
         version: 0.5.0
     devDependencies:
       '@powersync/sql-js':
@@ -229,28 +232,28 @@ importers:
 
   packages/capacitor:
     dependencies:
+      '@capacitor/core':
+        specifier: ^6.0.0
+        version: 6.2.1
       '@powersync/web':
-        specifier: workspace:^1.30.0
+        specifier: workspace:*
         version: link:../web
-      async-mutex:
-        specifier: ^0.5.0
-        version: 0.5.0
+      async-lock:
+        specifier: 'catalog:'
+        version: 1.4.1
     devDependencies:
       '@capacitor-community/sqlite':
         specifier: ^7.0.2
-        version: 7.0.2(@capacitor/core@7.4.4)
+        version: 7.0.2(@capacitor/core@6.2.1)
       '@capacitor/android':
         specifier: ^7.0.0
-        version: 7.4.4(@capacitor/core@7.4.4)
-      '@capacitor/core':
-        specifier: ^7.0.0
-        version: 7.4.4
+        version: 7.4.4(@capacitor/core@6.2.1)
       '@capacitor/docgen':
         specifier: ^0.3.0
         version: 0.3.1
       '@capacitor/ios':
         specifier: ^7.0.0
-        version: 7.4.4(@capacitor/core@7.4.4)
+        version: 7.4.4(@capacitor/core@6.2.1)
       '@ionic/eslint-config':
         specifier: ^0.4.0
         version: 0.4.0(eslint@8.57.1)(typescript@5.9.3)
@@ -260,6 +263,9 @@ importers:
       '@ionic/swiftlint-config':
         specifier: ^2.0.0
         version: 2.0.0
+      '@types/async-lock':
+        specifier: 'catalog:'
+        version: 1.4.2
       eslint:
         specifier: ^8.57.0
         version: 8.57.1
@@ -268,7 +274,7 @@ importers:
         version: 3.7.4
       prettier-plugin-java:
         specifier: ^2.6.6
-        version: 2.7.7(prettier@3.7.4)
+        version: 2.8.1(prettier@3.7.4)
       rimraf:
         specifier: ^6.0.1
         version: 6.1.2
@@ -285,7 +291,7 @@ importers:
   packages/common:
     dependencies:
       async-mutex:
-        specifier: ^0.5.0
+        specifier: 'catalog:'
         version: 0.5.0
       event-iterator:
         specifier: ^2.0.0
@@ -393,7 +399,7 @@ importers:
         specifier: workspace:*
         version: link:../common
       async-mutex:
-        specifier: ^0.5.0
+        specifier: 'catalog:'
         version: 0.5.0
       bson:
         specifier: ^6.10.4
@@ -518,7 +524,7 @@ importers:
         specifier: workspace:*
         version: link:../react
       async-mutex:
-        specifier: ^0.5.0
+        specifier: 'catalog:'
         version: 0.5.0
     devDependencies:
       '@craftzdog/react-native-buffer':
@@ -619,7 +625,7 @@ importers:
         specifier: workspace:*
         version: link:../common
       async-mutex:
-        specifier: ^0.5.0
+        specifier: 'catalog:'
         version: 0.5.0
       bson:
         specifier: ^6.10.4
@@ -1860,8 +1866,8 @@ packages:
     peerDependencies:
       '@capacitor/core': ^7.4.0
 
-  '@capacitor/core@7.4.4':
-    resolution: {integrity: sha512-xzjxpr+d2zwTpCaN0k+C6wKSZzWFAb9OVEUtmO72ihjr/NEDoLvsGl4WLfjWPcCO2zOy0b2X52tfRWjECFUjtw==}
+  '@capacitor/core@6.2.1':
+    resolution: {integrity: sha512-urZwxa7hVE/BnA18oCFAdizXPse6fCKanQyEqpmz6cBJ2vObwMpyJDG5jBeoSsgocS9+Ax+9vb4ducWJn0y2qQ==}
 
   '@capacitor/docgen@0.3.1':
     resolution: {integrity: sha512-WBdAUquQC4hiZOVk1YbY5Rs3vlDrNdCGt3KGnMa2dc2UBa91Q7PQ/jLW/oZyfVIfiXWu7t1KUhhM3MyiZepUrQ==}
@@ -10872,8 +10878,8 @@ packages:
   prettier-plugin-embed@0.4.15:
     resolution: {integrity: sha512-9pZVIp3bw2jw+Ge+iAMZ4j+sIVC9cPruZ93H2tj5Wa/3YDFDJ/uYyVWdUGfcFUnv28drhW2Bmome9xSGXsPKOw==}
 
-  prettier-plugin-java@2.7.7:
-    resolution: {integrity: sha512-K3N2lrdKzx2FAi67E0UOTLKybX6iitAxYGuiv/emY8v6TzzGzoaKjmhaAyDKIH5iakFqdN+xUwWoauXnE2JZPA==}
+  prettier-plugin-java@2.8.1:
+    resolution: {integrity: sha512-tkteH5OSCEb0E7wKnhhUSitr1pGUCUt9M//CwerSNhoalL/qv0jXTeSVBPZ36KC+kZl3nbq4dxh144NuGchACg==}
     peerDependencies:
       prettier: ^3.0.0
 
@@ -14526,16 +14532,16 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.0.0
 
-  '@capacitor-community/sqlite@7.0.2(@capacitor/core@7.4.4)':
+  '@capacitor-community/sqlite@7.0.2(@capacitor/core@6.2.1)':
     dependencies:
-      '@capacitor/core': 7.4.4
+      '@capacitor/core': 6.2.1
       jeep-sqlite: 2.8.0
 
-  '@capacitor/android@7.4.4(@capacitor/core@7.4.4)':
+  '@capacitor/android@7.4.4(@capacitor/core@6.2.1)':
     dependencies:
-      '@capacitor/core': 7.4.4
+      '@capacitor/core': 6.2.1
 
-  '@capacitor/core@7.4.4':
+  '@capacitor/core@6.2.1':
     dependencies:
       tslib: 2.8.1
 
@@ -14546,9 +14552,9 @@ snapshots:
       minimist: 1.2.8
       typescript: 4.2.4
 
-  '@capacitor/ios@7.4.4(@capacitor/core@7.4.4)':
+  '@capacitor/ios@7.4.4(@capacitor/core@6.2.1)':
     dependencies:
-      '@capacitor/core': 7.4.4
+      '@capacitor/core': 6.2.1
 
   '@changesets/apply-release-plan@7.0.14':
     dependencies:
@@ -26552,7 +26558,7 @@ snapshots:
     transitivePeerDependencies:
       - babel-plugin-macros
 
-  prettier-plugin-java@2.7.7(prettier@3.7.4):
+  prettier-plugin-java@2.8.1(prettier@3.7.4):
     dependencies:
       java-parser: 3.0.1
       prettier: 3.7.4

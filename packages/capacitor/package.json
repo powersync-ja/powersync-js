@@ -75,6 +75,7 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
+    "@types/async-lock": "catalog:",
     "eslint": "^8.57.0",
     "prettier": "^3.4.2",
     "prettier-plugin-java": "^2.6.6",
@@ -99,6 +100,8 @@
     }
   },
   "dependencies": {
-    "async-mutex": "catalog:"
+    "@capacitor/core": "^6.0.0",
+    "@powersync/web": "workspace:*",
+    "async-lock": "catalog:"
   }
 }
