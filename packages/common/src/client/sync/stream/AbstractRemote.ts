@@ -7,7 +7,12 @@ import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
-import { doneResult, SimpleAsyncIterator, valueResult } from '../../../utils/stream_transform.js';
+import {
+  doneResult,
+  extractBsonObjects,
+  extractJsonLines,
+  SimpleAsyncIterator
+} from '../../../utils/stream_transform.js';
 import { EventIterator } from 'event-iterator';
 import { Queue } from 'event-iterator/lib/event-iterator.js';
 
@@ -483,10 +488,10 @@ export abstract class AbstractRemote {
    * async iterator of byte blobs.
    *
    * To cancel the async iterator, use the abort signal from {@link SyncStreamOptions} passed to this method.
-   *
-   * Note that this uses streaming fetch which is not available on React Native.
    */
-  async fetchStream(options: SyncStreamOptions): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
+  protected async fetchStreamRaw(
+    options: SyncStreamOptions
+  ): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
     const { data, path, headers, abortSignal } = options;
     const request = await this.buildRequest(path);
 
@@ -500,7 +505,7 @@ export abstract class AbstractRemote {
      *  an unhandled exception on the window level.
      */
     if (abortSignal?.aborted) {
-      throw new AbortOperation('Abort request received before making postStreamRaw request');
+      throw new AbortOperation('Abort request received before making fetchStreamRaw request');
     }
 
     const controller = new AbortController();
@@ -556,12 +561,7 @@ export abstract class AbstractRemote {
       next: async () => {
         try {
           controller.signal.throwIfAborted();
-          const event = await reader.read();
-          if (event.done) {
-            return doneResult;
-          } else {
-            return valueResult(event.value);
-          }
+          return await reader.read();
         } catch (ex) {
           if (controller.signal.aborted) {
             reader.cancel();
@@ -574,5 +574,20 @@ export abstract class AbstractRemote {
     };
 
     return { isBson: responseIsBson, stream };
+  }
+
+  /**
+   * Posts a `/sync/stream` request.
+   *
+   * Depending on the `Content-Type` of the response, this returns strings for sync lines or encoded BSON documents as
+   * {@link Uint8Array}s.
+   */
+  async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
+    const { isBson, stream } = await this.fetchStreamRaw(options);
+    if (isBson) {
+      return extractBsonObjects(stream);
+    } else {
+      return extractJsonLines(stream, this.createTextDecoder());
+    }
   }
 }
