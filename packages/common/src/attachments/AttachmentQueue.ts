@@ -14,12 +14,11 @@ import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
  * between local and remote storage.
+ * Provides automatic synchronization, upload/download queuing, attachment monitoring,
+ * verification and repair of local files, and cleanup of archived attachments.
  *
  * @experimental
  * @alpha This is currently experimental and may change without a major version bump.
- *
- * Provides automatic synchronization, upload/download queuing, attachment monitoring,
- * verification and repair of local files, and cleanup of archived attachments.
  */
 export class AttachmentQueue {
   /** Timer for periodic synchronization operations */

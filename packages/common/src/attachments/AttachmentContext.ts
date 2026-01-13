@@ -8,6 +8,8 @@ import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.j
  * 
  * Provides methods to query, insert, update, and delete attachment records with
  * proper transaction management through PowerSync.
+ * 
+ * @internal
  */
 export class AttachmentContext {
   /** PowerSync database instance for executing queries */

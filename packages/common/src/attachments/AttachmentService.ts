@@ -9,8 +9,7 @@ import { AttachmentRecord, AttachmentState } from './Schema.js';
 /**
  * Service for querying and watching attachment records in the database.
  *
- * @experimental
- * @alpha This is currently experimental and may change without a major version bump.
+ * @internal
  */
 export class AttachmentService {
   private mutex = new Mutex();

@@ -3,6 +3,9 @@ import { AttachmentRecord } from './Schema.js';
 /**
  * SyncErrorHandler provides custom error handling for attachment sync operations.
  * Implementations determine whether failed operations should be retried or archived.
+ * 
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
  */
 export interface AttachmentErrorHandler {
   /**

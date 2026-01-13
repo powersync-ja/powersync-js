@@ -9,6 +9,8 @@ import { AttachmentContext } from './AttachmentContext.js';
 /**
  * Orchestrates attachment synchronization between local and remote storage.
  * Handles uploads, downloads, deletions, and state transitions.
+ * 
+ * @internal
  */
 export class SyncingService {
   private attachmentService: AttachmentService;
