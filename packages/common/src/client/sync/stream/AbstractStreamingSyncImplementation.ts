@@ -4,7 +4,6 @@ import { InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
-import { DataStream } from '../../../utils/DataStream.js';
 import { throttleLeadingTrailing } from '../../../utils/async.js';
 import {
   BucketChecksum,
@@ -19,7 +18,6 @@ import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemo
 import { EstablishSyncStream, Instruction, coreStatusToJs } from './core-instruction.js';
 import {
   BucketRequest,
-  CrudUploadNotification,
   StreamingSyncLine,
   StreamingSyncLineOrCrudUploadComplete,
   StreamingSyncRequestParameterType,
@@ -30,6 +28,14 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
+import {
+  extractJsonLines,
+  injectable,
+  InjectableIterator,
+  map,
+  SimpleAsyncIterator
+} from '../../../utils/stream_transform.js';
+import type { BSON } from 'bson';
 
 export enum LockType {
   CRUD = 'crud',
@@ -682,6 +688,37 @@ The next upload iteration will be delayed.`);
     });
   }
 
+  async receiveSyncLines(data: {
+    options: SyncStreamOptions;
+    connection: RequiredPowerSyncConnectionOptions;
+    bson?: typeof BSON;
+  }): Promise<SimpleAsyncIterator<Uint8Array | string>> {
+    const { options, connection, bson } = data;
+    const remote = this.options.remote;
+
+    if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
+      const responseStream = await remote.fetchStream(options);
+      return extractJsonLines(responseStream, remote.createTextDecoder());
+    } else {
+      const stream = await this.options.remote.socketStreamRaw(
+        {
+          ...options,
+          ...{ fetchStrategy: connection.fetchStrategy }
+        },
+        bson
+      );
+
+      // The stream will emit buffers. We keep those unchanged to allow consumers to parse bson, if they're in text form
+      // we need to decode them though.
+      if (!bson) {
+        const decoder = remote.createTextDecoder();
+        return map(stream, (buffer) => decoder.decode(buffer));
+      } else {
+        return stream;
+      }
+    }
+  }
+
   private async legacyStreamingSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
     const rawTables = resolvedOptions.serializedSchema?.raw_tables;
     if (rawTables != null && rawTables.length) {
@@ -717,46 +754,31 @@ The next upload iteration will be delayed.`);
       }
     };
 
-    let stream: DataStream<StreamingSyncLineOrCrudUploadComplete>;
-    if (resolvedOptions?.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-      stream = await this.options.remote.postStreamRaw(syncOptions, (line: string | CrudUploadNotification) => {
+    const bson = await this.options.remote.getBSON();
+    const source = await this.receiveSyncLines({
+      options: syncOptions,
+      connection: resolvedOptions,
+      bson
+    });
+    const stream: InjectableIterator<StreamingSyncLineOrCrudUploadComplete> = injectable(
+      map(source, (line) => {
         if (typeof line == 'string') {
           return JSON.parse(line) as StreamingSyncLine;
         } else {
-          // Directly enqueued by us
-          return line;
+          return bson.deserialize(line) as StreamingSyncLine;
         }
-      });
-    } else {
-      const bson = await this.options.remote.getBSON();
-      stream = await this.options.remote.socketStreamRaw(
-        {
-          ...syncOptions,
-          ...{ fetchStrategy: resolvedOptions.fetchStrategy }
-        },
-        (payload: Uint8Array | CrudUploadNotification) => {
-          if (payload instanceof Uint8Array) {
-            return bson.deserialize(payload) as StreamingSyncLine;
-          } else {
-            // Directly enqueued by us
-            return payload;
-          }
-        },
-        bson
-      );
-    }
+      })
+    );
 
     this.logger.debug('Stream established. Processing events');
 
     this.notifyCompletedUploads = () => {
-      if (!stream.closed) {
-        stream.enqueueData({ crud_upload_completed: null });
-      }
+      stream.inject({ crud_upload_completed: null });
     };
 
-    while (!stream.closed) {
-      const line = await stream.read();
-      if (!line) {
+    while (true) {
+      const { value: line, done } = await stream.next();
+      if (done) {
         // The stream has closed while waiting
         return;
       }
@@ -942,6 +964,9 @@ The next upload iteration will be delayed.`);
     const syncImplementation = this;
     const adapter = this.options.adapter;
     const remote = this.options.remote;
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    signal.addEventListener('abort', abort);
     let receivingLines: Promise<void> | null = null;
     let hadSyncLine = false;
     let hideDisconnectOnRestart = false;
@@ -949,64 +974,53 @@ The next upload iteration will be delayed.`);
     if (signal.aborted) {
       throw new AbortOperation('Connection request has been aborted');
     }
-    const abortController = new AbortController();
-    signal.addEventListener('abort', () => abortController.abort());
 
     // Pending sync lines received from the service, as well as local events that trigger a powersync_control
     // invocation (local events include refreshed tokens and completed uploads).
     // This is a single data stream so that we can handle all control calls from a single place.
-    let controlInvocations: DataStream<EnqueuedCommand, Uint8Array | EnqueuedCommand> | null = null;
+    let controlInvocations: InjectableIterator<EnqueuedCommand> | null = null;
 
     async function connect(instr: EstablishSyncStream) {
       const syncOptions: SyncStreamOptions = {
         path: '/sync/stream',
-        abortSignal: abortController.signal,
+        abortSignal: controller.signal,
         data: instr.request
       };
 
-      if (resolvedOptions.connectionMethod == SyncStreamConnectionMethod.HTTP) {
-        controlInvocations = await remote.postStreamRaw(syncOptions, (line: string | EnqueuedCommand) => {
-          if (typeof line == 'string') {
-            return {
-              command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
-              payload: line
-            };
-          } else {
-            // Directly enqueued by us
-            return line;
-          }
-        });
-      } else {
-        controlInvocations = await remote.socketStreamRaw(
-          {
-            ...syncOptions,
-            fetchStrategy: resolvedOptions.fetchStrategy
-          },
-          (payload: Uint8Array | EnqueuedCommand) => {
-            if (payload instanceof Uint8Array) {
+      controlInvocations = injectable(
+        map(
+          await syncImplementation.receiveSyncLines({
+            options: syncOptions,
+            connection: resolvedOptions
+          }),
+          (line) => {
+            if (typeof line == 'string') {
               return {
-                command: PowerSyncControlCommand.PROCESS_BSON_LINE,
-                payload: payload
+                command: PowerSyncControlCommand.PROCESS_TEXT_LINE,
+                payload: line
               };
             } else {
-              // Directly enqueued by us
-              return payload;
+              return {
+                command: PowerSyncControlCommand.PROCESS_BSON_LINE,
+                payload: line
+              };
             }
           }
-        );
-      }
+        )
+      );
 
       // The rust client will set connected: true after the first sync line because that's when it gets invoked, but
       // we're already connected here and can report that.
       syncImplementation.updateSyncStatus({ connected: true });
 
       try {
-        while (!controlInvocations.closed) {
-          const line = await controlInvocations.read();
-          if (line == null) {
-            return;
+        while (true) {
+          let event = await controlInvocations.next();
+          if (event.done) {
+            break;
           }
 
+          const line = event.value;
           await control(line.command, line.payload);
 
           if (!hadSyncLine) {
@@ -1015,12 +1029,8 @@ The next upload iteration will be delayed.`);
           }
         }
       } finally {
-        const activeInstructions = controlInvocations;
-        // We concurrently add events to the active data stream when e.g. a CRUD upload is completed or a token is
-        // refreshed. That would throw after closing (and we can't handle those events either way), so set this back
-        // to null.
-        controlInvocations = null;
-        await activeInstructions.close();
+        abort();
+        signal.removeEventListener('abort', abort);
       }
     }
 
@@ -1072,7 +1082,7 @@ The next upload iteration will be delayed.`);
           // Restart iteration after the credentials have been refreshed.
           remote.fetchCredentials().then(
             (_) => {
-              controlInvocations?.enqueueData({ command: PowerSyncControlCommand.NOTIFY_TOKEN_REFRESHED });
+              controlInvocations?.inject({ command: PowerSyncControlCommand.NOTIFY_TOKEN_REFRESHED });
             },
             (err) => {
               syncImplementation.logger.warn('Could not prefetch credentials', err);
@@ -1080,7 +1090,7 @@ The next upload iteration will be delayed.`);
           );
         }
       } else if ('CloseSyncStream' in instruction) {
-        abortController.abort();
+        controller.abort();
         hideDisconnectOnRestart = instruction.CloseSyncStream.hide_disconnect;
       } else if ('FlushFileSystem' in instruction) {
         // Not necessary on JS platforms.
@@ -1113,17 +1123,13 @@ The next upload iteration will be delayed.`);
       await control(PowerSyncControlCommand.START, JSON.stringify(options));
 
       this.notifyCompletedUploads = () => {
-        if (controlInvocations && !controlInvocations?.closed) {
-          controlInvocations.enqueueData({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
-        }
+        controlInvocations?.inject({ command: PowerSyncControlCommand.NOTIFY_CRUD_UPLOAD_COMPLETED });
       };
       this.handleActiveStreamsChange = () => {
-        if (controlInvocations && !controlInvocations?.closed) {
-          controlInvocations.enqueueData({
-            command: PowerSyncControlCommand.UPDATE_SUBSCRIPTIONS,
-            payload: JSON.stringify(this.activeStreams)
-          });
-        }
+        controlInvocations?.inject({
+          command: PowerSyncControlCommand.UPDATE_SUBSCRIPTIONS,
+          payload: JSON.stringify(this.activeStreams)
+        });
       };
       await receivingLines;
     } finally {
