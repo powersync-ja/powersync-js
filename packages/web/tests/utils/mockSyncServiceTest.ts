@@ -10,7 +10,7 @@ import {
 } from '@powersync/common';
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
-import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient';
+import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
 
 // Define schema similar to node tests
 const lists = new Table({
@@ -67,9 +67,12 @@ export const sharedMockSyncServiceTest = test.extend<{
 }>({
   context: async ({}, use) => {
     const dbFilename = `test-${crypto.randomUUID()}.db`;
-    const logger = createBaseLogger();
-    logger.setLevel(LogLevel.DEBUG);
-    logger.useDefaults();
+    const globalLogger = createBaseLogger();
+    globalLogger.useDefaults({
+      defaultLevel: LogLevel.DEBUG
+    });
+
+    const logger = globalLogger.get('mocked sync');
 
     const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
       const db = new PowerSyncDatabase({

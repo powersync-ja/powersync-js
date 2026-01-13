@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
+import { SystemProvider } from '@/components/providers/SystemProvider';
 import { CssBaseline } from '@mui/material';
+import React from 'react';
 
-import { DynamicSystemProvider } from '@/components/providers/DynamicSystemProvider';
-
-import './globals.scss';
 import 'lato-font';
+import './globals.scss';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <CssBaseline />
-        <DynamicSystemProvider>{children}</DynamicSystemProvider>
+        <SystemProvider>{children}</SystemProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
-import { OnTableChangeCallback } from '../../db/adapters/AsyncDatabaseConnection';
-import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection';
+import { OnTableChangeCallback } from '../../db/adapters/AsyncDatabaseConnection.js';
+import { WASqliteConnection } from '../../db/adapters/wa-sqlite/WASQLiteConnection.js';
 
 /**
  * A Small proxy wrapper around the WASqliteConnection.

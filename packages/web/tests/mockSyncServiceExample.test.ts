@@ -11,7 +11,7 @@
 
 import { StreamingSyncCheckpoint } from '@powersync/common';
 import { describe, expect, vi } from 'vitest';
-import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
+import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
 
 describe('Mock Sync Service Example', { timeout: 100000 }, () => {
   sharedMockSyncServiceTest(

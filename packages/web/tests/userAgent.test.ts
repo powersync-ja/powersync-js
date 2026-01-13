@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getUserAgentInfo } from '../src/db/sync/userAgent';
+import { getUserAgentInfo } from '../src/db/sync/userAgent.js';
 
 describe('userAgent', () => {
   it('should get browser info from userAgent', function () {
