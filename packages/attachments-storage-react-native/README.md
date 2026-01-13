@@ -1,5 +1,10 @@
 # @powersync/attachments-storage-react-native
 
+> [!NOTE]
+> Attachment helpers are currently in an **alpha** state, intended strictly for testing. Expect breaking changes and instability as development continues.
+>
+> Do not rely on this package for production use.
+
 React Native file system storage adapters for [PowerSync](https://powersync.com) attachments.
 
 This package provides `LocalStorageAdapter` implementations for React Native environments, allowing you to store and retrieve attachment files on device.

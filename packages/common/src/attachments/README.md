@@ -1,5 +1,10 @@
 # Attachments utilities and functions
 
+> [!NOTE]
+> Attachment helpers are currently in an **alpha** state, intended strictly for testing. Expect breaking changes and instability as development continues.
+>
+> Do not rely on this package for production use.
+
 PowerSync utilities and classes managing file attachments in JavaScript/TypeScript applications. Automatically handles synchronization of files between local storage and remote storage (S3, Supabase Storage, etc.), with support for upload/download queuing, offline functionality, and cache management.
 
 For detailed concepts and guides, see the [PowerSync documentation](https://docs.powersync.com/usage/use-case-examples/attachments-files).
