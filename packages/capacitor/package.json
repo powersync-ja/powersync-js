@@ -100,8 +100,6 @@
     }
   },
   "dependencies": {
-    "@capacitor/core": "^6.0.0",
-    "@powersync/web": "workspace:*",
     "async-lock": "catalog:"
   }
 }

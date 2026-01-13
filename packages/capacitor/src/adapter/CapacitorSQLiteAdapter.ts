@@ -39,13 +39,13 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
-  protected locks: Lock;
+  protected lock: Lock;
 
   constructor(protected options: CapacitorSQLiteOpenFactoryOptions) {
     super();
     this._writeConnection = null;
     this._readConnection = null;
-    this.locks = new Lock();
+    this.lock = new Lock();
     this.initializedPromise = this.init();
   }
 
@@ -237,7 +237,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.locks.acquire('read', async () => {
+    return this.lock.acquire('read_lock', async () => {
       await this.initializedPromise;
       return await fn(this.generateLockContext(this.readConnection));
     });
@@ -250,7 +250,7 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.locks.acquire('write', async () => {
+    return this.lock.acquire('write_lock', async () => {
       await this.initializedPromise;
       const result = await fn(this.generateLockContext(this.writeConnection));
 
