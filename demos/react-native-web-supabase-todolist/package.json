@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
+    "@dr.pogodin/react-native-fs": "^2.36.1",
     "@expo/metro-runtime": "^4.0.1",
+    "@powersync/attachments-storage-react-native": "^0.1.0",
     "@expo/vector-icons": "^14.0.4",
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
     "@journeyapps/wa-sqlite": "^1.4.1",
@@ -32,6 +34,7 @@
     "expo-camera": "~16.0.18",
     "expo-constants": "~17.0.5",
     "expo-crypto": "~14.0.2",
+    "expo-file-system": "~18.0.12",
     "expo-font": "~13.0.3",
     "expo-haptics": "~14.0.1",
     "expo-linking": "~7.0.5",

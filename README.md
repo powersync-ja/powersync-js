@@ -36,7 +36,11 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/attachments](./packages/attachments/README.md)
 
-  - Attachments helper package for React Native and JavaScript/TypeScript projects.
+  - Attachments helper package for React Native and JavaScript/TypeScript projects (deprecated).
+
+- [packages/attachments-storage-react-native](./packages/attachments-storage-react-native/README.md)
+
+  - React Native file system storage adapters for PowerSync attachments (alpha).
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 

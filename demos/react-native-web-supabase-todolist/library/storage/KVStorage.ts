@@ -1,8 +1,7 @@
 import * as ExpoStorage from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
-class ExpoKVStorage {
+export class ExpoKVStorage {
   async getItem(key: string): Promise<string | null> {
     try {
       const session = await ExpoStorage.getItemAsync(key);
@@ -22,7 +21,7 @@ class ExpoKVStorage {
   }
 }
 
-class WebKVStorage {
+export class WebKVStorage {
   async getItem(key: string): Promise<string | null> {
     try {
       const value = await AsyncStorage.getItem(key);
@@ -41,6 +40,3 @@ class WebKVStorage {
     await AsyncStorage.removeItem(key);
   }
 }
-
-const isWeb = Platform.OS === 'web';
-export const KVStorage = isWeb ? WebKVStorage : ExpoKVStorage;
