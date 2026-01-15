@@ -1,6 +1,9 @@
 import { column, Schema, Table } from '@powersync/web'
 
-export const LOCAL_BUCKET_DATA = new Table(
+export const LOCAL_BUCKET_DATA_TABLE_NAME = 'local_bucket_data'
+export const LOCAL_SCHEMA_TABLE_NAME = 'local_schema'
+
+export const local_bucket_data = new Table(
   {
     total_operations: column.integer,
     last_op: column.text,
@@ -11,7 +14,7 @@ export const LOCAL_BUCKET_DATA = new Table(
   { localOnly: true },
 )
 
-export const LOCAL_SCHEMA = new Table(
+export const local_schema = new Table(
   {
     data: column.text,
   },
@@ -19,9 +22,9 @@ export const LOCAL_SCHEMA = new Table(
 )
 
 export const DiagnosticsAppSchema = new Schema({
-  LOCAL_BUCKET_DATA,
-  LOCAL_SCHEMA,
+  local_bucket_data,
+  local_schema,
 })
 
 export type Database = (typeof DiagnosticsAppSchema)['types']
-export type LocalBucketData = Database['LOCAL_BUCKET_DATA']
+export type LocalBucketData = Database['local_bucket_data']

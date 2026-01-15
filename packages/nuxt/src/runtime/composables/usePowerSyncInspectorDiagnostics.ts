@@ -43,7 +43,7 @@ SELECT
   local.downloaded_operations,
   local.total_operations,
   local.downloading
-FROM LOCAL_BUCKET_DATA local
+FROM local_bucket_data local
 LEFT JOIN ps_buckets ON ps_buckets.name = local.id
 LEFT JOIN oplog_stats stats ON stats.bucket_id = ps_buckets.id`
 
@@ -59,7 +59,7 @@ SELECT
   local.downloaded_operations,
   local.total_operations,
   local.downloading
-FROM LOCAL_BUCKET_DATA local
+FROM local_bucket_data local
 LEFT JOIN ps_buckets ON ps_buckets.name = local.id`
 
 const TABLES_QUERY = `
@@ -363,7 +363,7 @@ export function usePowerSyncInspectorDiagnostics() {
         tables: [
           'ps_oplog',
           'ps_buckets',
-          'ps_data_local__LOCAL_BUCKET_DATA',
+          'ps_data_local__local_bucket_data',
           'ps_crud',
         ],
         throttleMs: 500,
@@ -374,7 +374,7 @@ export function usePowerSyncInspectorDiagnostics() {
       await refreshState()
     }
     catch (error: any) {
-      if (error.message === 'no such table: LOCAL_BUCKET_DATA') {
+      if (error.message === 'no such table: local_bucket_data') {
         isDiagnosticSchemaSetup.value = false
       }
     }
