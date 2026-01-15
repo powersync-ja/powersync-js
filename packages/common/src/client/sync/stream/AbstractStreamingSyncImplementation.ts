@@ -678,23 +678,12 @@ The next upload iteration will be delayed.`);
         const clientImplementation = resolvedOptions.clientImplementation;
         this.updateSyncStatus({ clientImplementation });
 
-        const controller = new AbortController();
-        const abort = () => controller.abort();
-        signal.addEventListener('abort', abort);
-
-        // Scope a sync iteration to an abort controller. Long-running network streams from AbstractRemote can only be
-        // cancelled by an abort signal, and we want to ensure all streams are closed when the iteration completes.
-        try {
-          if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
-            await this.legacyStreamingSyncIteration(controller.signal, resolvedOptions);
-            return null;
-          } else {
-            await this.requireKeyFormat(true);
-            return await this.rustSyncIteration(controller.signal, resolvedOptions);
-          }
-        } finally {
-          signal.removeEventListener('abort', abort);
-          controller.abort();
+        if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
+          await this.legacyStreamingSyncIteration(signal, resolvedOptions);
+          return null;
+        } else {
+          await this.requireKeyFormat(true);
+          return await this.rustSyncIteration(signal, resolvedOptions);
         }
       }
     });
@@ -711,22 +700,13 @@ The next upload iteration will be delayed.`);
     if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
       return await remote.fetchStream(options);
     } else {
-      const stream = await this.options.remote.socketStreamRaw(
+      return await this.options.remote.socketStreamRaw(
         {
           ...options,
           ...{ fetchStrategy: connection.fetchStrategy }
         },
         bson
       );
-
-      // The stream will emit buffers. We keep those unchanged to allow consumers to parse bson, if they're in text form
-      // we need to decode utf8.
-      if (!bson) {
-        const decoder = remote.createTextDecoder();
-        return map(stream, (buffer) => decoder.decode(buffer));
-      } else {
-        return stream;
-      }
     }
   }
 
