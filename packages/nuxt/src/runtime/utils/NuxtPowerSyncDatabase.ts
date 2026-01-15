@@ -2,6 +2,7 @@ import {
   DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   PowerSyncDatabase,
   Schema,
+  SharedWebStreamingSyncImplementation,
   SyncClientImplementation,
   WASQLiteVFS,
   WebRemote,
@@ -12,6 +13,7 @@ import {
   type RequiredAdditionalConnectionOptions,
   type StreamingSyncImplementation,
   type WebPowerSyncDatabaseOptions,
+  type WebDBAdapter,
 } from '@powersync/web'
 import { RecordingStorageAdapter } from './RecordingStorageAdapter'
 import type { DynamicSchemaManager } from './DynamicSchemaManager'
@@ -20,7 +22,6 @@ import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger'
 import { ref, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { RustClientInterceptor } from './RustClientInterceptor'
-import { DiagnosticsAppSchema } from './AppSchema'
 
 /**
  * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
@@ -69,21 +70,21 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
     const useDiagnostics = useRuntimeConfig().public.powerSyncModuleOptions.useDiagnostics ?? false
     if (useDiagnostics) {
       const { logger } = useDiagnosticsLogger()
-      const { getCurrentSchemaManager } = usePowerSyncInspector()
+      const { getCurrentSchemaManager, diagnosticsSchema } = usePowerSyncInspector()
       // Create schema manager before calling super
       const currentSchemaManager = getCurrentSchemaManager()
 
-      // override settings to disable multitab as we can't use it right now
-      // options.flags = {
-      //   ...options.flags,
-      //   enableMultiTabs: true, // to support multitabe we need to write our won worker implementation
-      //   broadcastLogs: true, // need to be enabled for multitab support
-      // }
+      // we need to force multitabe as the devtools is basically another tab running in the same browser context
+      options.flags = {
+        ...options.flags,
+        enableMultiTabs: true,
+        broadcastLogs: true,
+      }
 
       // override logger to use the logger from the utils/Logger.ts file
       options.logger = logger
       // add diagnostics schema to the app schema
-      options.schema = new Schema([...options.schema.tables, ...DiagnosticsAppSchema.tables])
+      options.schema = new Schema([...options.schema.tables, ...diagnosticsSchema.tables])
       super(options)
 
       // Set instance property and clear global
@@ -108,44 +109,54 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const currentSchemaManager = getCurrentSchemaManager()
       const schemaManager = currentSchemaManager || this.schemaManager
 
-      let adapter: RecordingStorageAdapter | RustClientInterceptor
-      if (this.connectionOptions?.clientImplementation) { 
-        adapter = this.connectionOptions?.clientImplementation === SyncClientImplementation.JAVASCRIPT
-        ? new RecordingStorageAdapter(
-          ref(this) as Ref<PowerSyncDatabase>,
-          ref(schemaManager) as Ref<DynamicSchemaManager>,
-        )
-        : new RustClientInterceptor(
+      const clientImplementation = this.connectionOptions?.clientImplementation ?? DEFAULT_SYNC_CLIENT_IMPLEMENTATION
+      const adapter = clientImplementation === SyncClientImplementation.RUST
+        ? new RustClientInterceptor(
           ref(this) as Ref<PowerSyncDatabase>,
           new WebRemote(connector, logger),
           ref(schemaManager) as Ref<DynamicSchemaManager>,
+        ) : new RecordingStorageAdapter(
+          ref(this) as Ref<PowerSyncDatabase>,
+          ref(schemaManager) as Ref<DynamicSchemaManager>,
         )
-      } else {
-        // @ts-ignore - eventually the default will be Rust
-        adapter = DEFAULT_SYNC_CLIENT_IMPLEMENTATION === SyncClientImplementation.RUST ? new RustClientInterceptor(
-            ref(this) as Ref<PowerSyncDatabase>,
-            new WebRemote(connector, logger),
-            ref(schemaManager) as Ref<DynamicSchemaManager>,
-          ) : new RecordingStorageAdapter(
-            ref(this) as Ref<PowerSyncDatabase>,
-            ref(schemaManager) as Ref<DynamicSchemaManager>,
-          )
-        }
 
-      return new WebStreamingSyncImplementation({
-        adapter,
-        remote: new WebRemote(connector, logger),
-        uploadCrud: async () => {
-          await this.waitForReady()
-          await connector.uploadData(this)
-        },
-        identifier:
-        'dbFilename' in this.options.database
-          ? this.options.database.dbFilename
-          : 'diagnostics-sync',
-        logger,
-        ...options,
-      })
+      if (this.options.flags?.enableMultiTabs) {
+        console.log('enableMultiTabs is true')
+        if (!this.resolvedFlags.broadcastLogs) {
+          const warning = `
+            Multiple tabs are enabled, but broadcasting of logs is disabled.
+            Logs for shared sync worker will only be available in the shared worker context
+          `;
+          logger ? logger.warn(warning) : console.warn(warning);
+        }
+        return new SharedWebStreamingSyncImplementation({
+          ...options,
+          adapter,
+          remote: new WebRemote(connector, logger),
+          uploadCrud: async () => {
+            await this.waitForReady()
+            await connector.uploadData(this)
+          },
+          logger,
+          db: this.database as WebDBAdapter,
+        })
+      } else {
+        console.log('enableMultiTabs is false')
+        return new WebStreamingSyncImplementation({
+          ...options,
+          adapter,
+          remote: new WebRemote(connector, logger),
+          uploadCrud: async () => {
+            await this.waitForReady()
+            await connector.uploadData(this)
+          },
+          identifier:
+          'dbFilename' in this.options.database
+            ? this.options.database.dbFilename
+            : 'diagnostics-sync',
+          logger,
+        })
+      }
     }
     else {
       return super.generateSyncStreamImplementation(connector, options)
