@@ -255,6 +255,9 @@ importers:
       rollup:
         specifier: ^4.30.1
         version: 4.54.0
+      rollup-plugin-dts:
+        specifier: ^6.2.1
+        version: 6.3.0(rollup@4.54.0)(typescript@5.9.3)
       swiftlint:
         specifier: ^2.0.0
         version: 2.0.0(typescript@5.9.3)
@@ -735,6 +738,9 @@ importers:
       '@powersync/attachments':
         specifier: workspace:*
         version: link:../../packages/attachments
+      '@powersync/capacitor':
+        specifier: workspace:*
+        version: link:../../packages/capacitor
       '@powersync/drizzle-driver':
         specifier: workspace:*
         version: link:../../packages/drizzle-driver
@@ -28247,6 +28253,14 @@ snapshots:
     dependencies:
       magic-string: 0.30.21
       rollup: 4.14.3
+      typescript: 5.9.3
+    optionalDependencies:
+      '@babel/code-frame': 7.27.1
+
+  rollup-plugin-dts@6.3.0(rollup@4.54.0)(typescript@5.9.3):
+    dependencies:
+      magic-string: 0.30.21
+      rollup: 4.54.0
       typescript: 5.9.3
     optionalDependencies:
       '@babel/code-frame': 7.27.1

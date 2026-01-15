@@ -12,9 +12,9 @@ import {
   Transaction
 } from '@powersync/web';
 import Lock from 'async-lock';
-import { PowerSyncCore } from '../plugin/PowerSyncCore';
-import { messageForErrorCode } from '../plugin/PowerSyncPlugin';
-import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory';
+import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
+import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
+import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';
 /**
  * Monitors the execution time of a query and logs it to the performance timeline.
  */

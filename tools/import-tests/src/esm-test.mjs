@@ -5,6 +5,17 @@ import { ControlledExecutor } from '@powersync/node';
 assert(NodeSDK);
 assert(ControlledExecutor);
 
+// Simulates SSR environment
+import * as WebSDK from '@powersync/web';
+import { PowerSyncDatabase as WebPowerSyncDatabase } from '@powersync/web';
+assert(WebSDK);
+assert(WebPowerSyncDatabase);
+
+import * as CapacitorSDK from '@powersync/capacitor';
+import { PowerSyncDatabase as CapacitorPowerSyncDatabase } from '@powersync/capacitor';
+assert(CapacitorSDK);
+assert(CapacitorPowerSyncDatabase);
+
 import * as Attachments from '@powersync/attachments';
 import { AttachmentState } from '@powersync/attachments';
 assert(Attachments);

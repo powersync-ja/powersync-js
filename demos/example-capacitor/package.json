@@ -22,9 +22,9 @@
   "dependencies": {
     "@capacitor-community/sqlite": "^7.0.2",
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "latest",
+    "@capacitor/core": "7.4.3",
     "@capacitor/ios": "^7.4.3",
-    "@capacitor/splash-screen": "latest",
+    "@capacitor/splash-screen": "7.0.0",
     "@powersync/capacitor": "^0.2.0",
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/react": "^1.8.2",
