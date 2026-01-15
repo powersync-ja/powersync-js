@@ -2,7 +2,9 @@
  * An async iterator that can't be cancelled.
  *
  * To keep data flow simple, we always pass an explicit cancellation token when subscribing to async streams. Once the
- * {@link AbortSignal} aborts, iterators are supposed to clean up and then emit a final `{done: true}` event.
+ * {@link AbortSignal} aborts, iterators are supposed to clean up and then emit a final `{done: true}` event. This means
+ * that there's no way to distinguish between streams that have completed normally and streams that have been cancelled,
+ * but that is acceptable for our uses of this.
  */
 export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
 
@@ -131,10 +133,11 @@ export function extractJsonLines(
           return doneResult;
         }
 
-        if (pendingLines.length) {
-          const first = pendingLines[0];
-          pendingLines.splice(0, 1);
-          return { done: false, value: first };
+        {
+          const first = pendingLines.shift();
+          if (first) {
+            return { done: false, value: first };
+          }
         }
 
         const { done, value } = await source.next();
@@ -169,16 +172,22 @@ export function extractJsonLines(
  * Splits a concatenated stream of BSON objects by emitting individual objects.
  */
 export function extractBsonObjects(source: SimpleAsyncIterator<Uint8Array>): SimpleAsyncIterator<Uint8Array> {
-  const completedObjects: Uint8Array[] = []; // Fully read but not emitted yet.
+  // Fully read but not emitted yet.
+  const completedObjects: Uint8Array[] = [];
+
+  // Whether source has returned { done: true }. We do the same once completed objects have been emitted.
   let isDone = false;
 
   const lengthBuffer = new DataView(new ArrayBuffer(4));
   let objectBody: Uint8Array | null = null;
+  // If we're parsing the length field, a number between 1 and 4 (inclusive) describing remaining bytes in the header.
+  // If we're consuming a document, the bytes remaining.
   let remainingLength = 4;
 
   return {
     async next(): Promise<IteratorResult<Uint8Array>> {
       while (true) {
+        // Before fetching new data from upstream, return completed objects.
         if (completedObjects.length) {
           return valueResult(completedObjects.shift()!);
         }
@@ -210,7 +219,7 @@ export function extractBsonObjects(source: SimpleAsyncIterator<Uint8Array>): Sim
             if (remainingLength == 0) {
               completedObjects.push(objectBody);
 
-              // Prepare reading another document, starting with its length
+              // Prepare to read another document, starting with its length
               objectBody = null;
               remainingLength = 4;
             }
