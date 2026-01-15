@@ -122,6 +122,7 @@ function ClientParamsPage() {
                   id={`key-${idx}`}
                   value={key}
                   onChange={(e) => changeKey(idx, e.target.value, value, type)}
+                  className={'mt-1'}
                 />
               </div>
               <div className="flex-1 min-w-[200px] space-y-1.5">
@@ -130,7 +131,7 @@ function ClientParamsPage() {
                   id={`value-${idx}`}
                   value={value}
                   onChange={(e) => changeValue(idx, e.target.value, key, type)}
-                  className={error ? 'border-destructive' : ''}
+                  className={error ? 'border-destructive' : 'mt-1'}
                   title={error}
                 />
                 {error && <p className="text-sm text-destructive">{error}</p>}
@@ -140,7 +141,7 @@ function ClientParamsPage() {
                 <Select
                   value={type}
                   onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
-                  <SelectTrigger id={`type-${idx}`}>
+                  <SelectTrigger id={`type-${idx}`} className={'mt-1'}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

@@ -50,7 +50,7 @@ export default function SQLConsolePage() {
                   setQuery(inputValue);
                 }
               }}
-              className={error ? 'border-destructive' : ''}
+              className={error ? 'border-destructive' : 'mt-1'}
             />
             {error && <p className="text-sm text-destructive">{errorMessage}</p>}
           </div>
