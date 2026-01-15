@@ -1,6 +1,7 @@
 import {
   DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   PowerSyncDatabase,
+  Schema,
   SyncClientImplementation,
   WASQLiteVFS,
   WebRemote,
@@ -19,6 +20,7 @@ import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger'
 import { ref, type Ref } from 'vue'
 import { useRuntimeConfig } from '#app'
 import { RustClientInterceptor } from './RustClientInterceptor'
+import { DiagnosticsAppSchema } from './AppSchema'
 
 /**
  * An extended PowerSync database class that includes diagnostic capabilities for use with the PowerSync Inspector.
@@ -78,15 +80,16 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       //   broadcastLogs: true, // need to be enabled for multitab support
       // }
 
-      // @ts-expect-error - type error because we are forcing the vfs to be the OPFSCoopSyncVFS
-      options.vfs = WASQLiteVFS.OPFSCoopSyncVFS
       // override logger to use the logger from the utils/Logger.ts file
       options.logger = logger
+      // add diagnostics schema to the app schema
+      options.schema = new Schema([...options.schema.tables, ...DiagnosticsAppSchema.tables])
       super(options)
 
       // Set instance property and clear global
       this.schemaManager = currentSchemaManager
       this.useDiagnostics = true
+
     }
     else {
       super(options)

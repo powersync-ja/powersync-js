@@ -33,14 +33,14 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
     await this.rdb.writeTransaction(async (tx) => {
       for (const bucket of checkpoint.buckets) {
         await tx.execute(
-          `INSERT OR REPLACE INTO local_bucket_data(id, total_operations, last_op, download_size, downloading, downloaded_operations)
+          `INSERT OR REPLACE INTO LOCAL_BUCKET_DATA(id, total_operations, last_op, download_size, downloading, downloaded_operations)
              VALUES (
               ?,
               ?,
-              IFNULL((SELECT last_op FROM local_bucket_data WHERE id = ?), '0'),
-              IFNULL((SELECT download_size FROM local_bucket_data WHERE id = ?), 0),
-              IFNULL((SELECT downloading FROM local_bucket_data WHERE id = ?), TRUE),
-              IFNULL((SELECT downloaded_operations FROM local_bucket_data WHERE id = ?), TRUE)
+              IFNULL((SELECT last_op FROM LOCAL_BUCKET_DATA WHERE id = ?), '0'),
+              IFNULL((SELECT download_size FROM LOCAL_BUCKET_DATA WHERE id = ?), 0),
+              IFNULL((SELECT downloading FROM LOCAL_BUCKET_DATA WHERE id = ?), TRUE),
+              IFNULL((SELECT downloaded_operations FROM LOCAL_BUCKET_DATA WHERE id = ?), TRUE)
               )`,
           [
             bucket.bucket,
@@ -63,7 +63,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
     }, 60)
     if (r.checkpointValid) {
       await this.rdb.execute(
-        'UPDATE local_bucket_data SET downloading = FALSE',
+        'UPDATE LOCAL_BUCKET_DATA SET downloading = FALSE',
       )
     }
     return r
@@ -77,7 +77,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
         // Record metrics
         const size = JSON.stringify(bucket.data).length
         await tx.execute(
-          `UPDATE local_bucket_data SET
+          `UPDATE LOCAL_BUCKET_DATA SET
                 download_size = IFNULL(download_size, 0) + ?,
                 last_op = ?,
                 downloading = ?,
