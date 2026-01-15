@@ -1,5 +1,6 @@
 node_modules
 lib
+!tools/diagnostics-app/src/lib/
 dist
 *.tsbuildinfo
 .vscode
