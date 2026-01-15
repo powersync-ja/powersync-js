@@ -109,7 +109,14 @@ export class MockRemote extends AbstractRemote {
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
     const mockResponse = await this.postStreaming(options.path, options.data, options.headers, options.abortSignal);
     const mockReader = mockResponse.getReader();
-    options.abortSignal?.addEventListener('abort', () => mockReader.cancel());
+    options.abortSignal?.addEventListener('abort', async () => {
+      try {
+        await mockReader.cancel();
+      } catch (ex) {
+        // This rethrows an error set on the controller. We've already handled that by rethrowing in next() and we don't
+        // need tests to treat this as an unhandled error.
+      }
+    });
 
     return {
       async next() {

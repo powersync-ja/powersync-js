@@ -519,7 +519,10 @@ export abstract class AbstractRemote {
             new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.')
         );
       } else {
-        reader.cancel();
+        reader.cancel().catch(() => {
+          // Cancelling the reader might rethrow an exception we would have handled by throwing in next(). So we can
+          // ignore it here.
+        });
       }
     });
 
@@ -565,7 +568,6 @@ export abstract class AbstractRemote {
           return await reader.read();
         } catch (ex) {
           if (controller.signal.aborted) {
-            reader.cancel();
             return doneResult;
           }
 
