@@ -72,7 +72,7 @@ export function DataTable<T extends { id: string | number }>({
     return sortedRows.slice(start, start + pageSize);
   }, [sortedRows, page, pageSize]);
 
-  const totalPages = Math.ceil(rows.length / pageSize);
+  const totalPages = Math.ceil(sortedRows.length / pageSize);
 
   const handleSort = (field: keyof T | string) => {
     if (sortField === field) {
@@ -198,7 +198,7 @@ export function DataTable<T extends { id: string | number }>({
         </Table>
       </div>
 
-      {rows.length > 0 && (
+      {sortedRows.length > 0 && (
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page:</span>
@@ -218,7 +218,7 @@ export function DataTable<T extends { id: string | number }>({
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {page * pageSize + 1}-{Math.min((page + 1) * pageSize, rows.length)} of {rows.length}
+              {page * pageSize + 1}-{Math.min((page + 1) * pageSize, sortedRows.length)} of {sortedRows.length}
             </span>
             <div className="flex items-center gap-1">
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage(0)} disabled={page === 0}>
