@@ -44,19 +44,17 @@ npm install --save-dev @powersync/nuxt vite-plugin-top-level-await vite-plugin-w
 
 ```typescript
 import wasm from 'vite-plugin-wasm'
-import topLevelAwait from 'vite-plugin-top-level-await'
 
 export default defineNuxtConfig({
   modules: ['@powersync/nuxt'],
   vite: {
-    plugins: [topLevelAwait()],
     optimizeDeps: {
       exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
       include: ['@powersync/web > js-logger'], // <-- Include `js-logger` when it isn't installed and imported.
     },
     worker: {
       format: 'es',
-      plugins: () => [wasm(), topLevelAwait()],
+      plugins: () => [wasm()],
     },
   },
 })
@@ -235,42 +233,26 @@ export default defineNuxtConfig({
     useDiagnostics: true, // <- Add this
   },
   vite: {
-    plugins: [topLevelAwait()],
     optimizeDeps: {
       exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
       include: ['@powersync/web > js-logger'],
     },
     worker: {
       format: 'es',
-      plugins: () => [wasm(), topLevelAwait()],
+      plugins: () => [wasm()],
     },
   },
 })
 ```
 
 When `useDiagnostics: true` is set, `NuxtPowerSyncDatabase` automatically:
+- Extend your schema with diagnostics schema
 - Sets up diagnostics recording
 - Stores the connector internally (accessible via diagnostics)
 - Configures logging for diagnostics
 
-2. **Extend your schema**:
 
-If you're using diagnostics, you need to extend your schema with the diagnostics schema to collect diagnostics data:
-
-```typescript
-import { usePowerSyncInspector } from '@powersync/nuxt'
-import { Schema } from '@powersync/web'
-
-const { diagnosticsSchema } = usePowerSyncInspector()
-
-// Combine with your app schema
-const combinedSchema = new Schema([
-  ...yourSchema.tables,
-  ...diagnosticsSchema.tables,
-])
-```
-
-3. **Accessing PowerSync Inspector**:
+2. **Accessing PowerSync Inspector**:
 
 Once diagnostics are enabled, you can access the [PowerSync Inspector](#powersync-inspector):
 
