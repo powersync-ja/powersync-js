@@ -1,5 +1,15 @@
 # @powersync/kysely-driver
 
+## 1.3.2
+
+### Patch Changes
+
+- 25ece59: Updated order of `types` and `default` package exports.
+- Updated dependencies [e39359d]
+- Updated dependencies [41953bc]
+- Updated dependencies [25ece59]
+  - @powersync/common@1.46.0
+
 ## 1.3.1
 
 ### Patch Changes

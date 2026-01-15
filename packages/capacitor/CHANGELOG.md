@@ -1,5 +1,16 @@
 # @powersync/capacitor
 
+## 0.3.0
+
+### Minor Changes
+
+- 25ece59: Improved ESM exports and module declarations. Importing these packages in SSR environments should no longer throw errors.
+
+### Patch Changes
+
+- Updated dependencies [25ece59]
+  - @powersync/web@1.32.0
+
 ## 0.2.0
 
 ### Minor Changes
