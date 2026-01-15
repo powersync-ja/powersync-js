@@ -323,8 +323,14 @@ export abstract class AbstractRemote {
     let keepAliveTimeout: any;
     let rsocket: RSocket | null = null;
     let queue: Queue<Uint8Array> | null = null;
+    let didClose = false;
 
     const abortRequest = () => {
+      if (didClose) {
+        return;
+      }
+      didClose = true;
+
       clearTimeout(keepAliveTimeout);
 
       if (pendingSocket) {
@@ -466,14 +472,16 @@ export abstract class AbstractRemote {
               resolve(events);
             }
             const { data } = payload;
-            requestMore(); // Immediately request another event (unless the downstream consumer is paused).
-            // Less events are now pending
-            pendingEventsCount--;
-            if (!data) {
-              return;
+
+            if (data) {
+              queue!.push(data);
             }
 
-            queue!.push(data);
+            // Less events are now pending
+            pendingEventsCount--;
+
+            // Request another event (unless the downstream consumer is paused).
+            requestMore();
           },
           onComplete: () => {
             abortRequest(); // this will also emit a done event
@@ -482,6 +490,16 @@ export abstract class AbstractRemote {
         }
       );
     });
+  }
+
+  /**
+   * @returns Whether the HTTP implementation on this platform can receive streamed binary responses. This is true on
+   * all platforms except React Native (who would have guessed...), where we must not request BSON responses.
+   *
+   * @see https://github.com/react-native-community/fetch?tab=readme-ov-file#motivation
+   */
+  protected get supportsStreamingBinaryResponses(): boolean {
+    return true;
   }
 
   /**
@@ -512,14 +530,15 @@ export abstract class AbstractRemote {
     const controller = new AbortController();
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     abortSignal?.addEventListener('abort', () => {
+      const reason =
+        abortSignal.reason ??
+        new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.');
+
       if (reader == null) {
         // Only abort via the abort controller if the request has not resolved yet
-        controller.abort(
-          abortSignal.reason ??
-            new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.')
-        );
+        controller.abort(reason);
       } else {
-        reader.cancel().catch(() => {
+        reader.cancel(reason).catch(() => {
           // Cancelling the reader might rethrow an exception we would have handled by throwing in next(). So we can
           // ignore it here.
         });
@@ -534,7 +553,11 @@ export abstract class AbstractRemote {
 
       res = await this.fetch(request.url, {
         method: 'POST',
-        headers: { ...headers, ...request.headers, accept: `${bson};q=0.9,${ndJson};q=0.8` },
+        headers: {
+          ...headers,
+          ...request.headers,
+          accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
+        },
         body: JSON.stringify(data),
         signal: controller.signal,
         cache: 'no-store',
@@ -563,11 +586,16 @@ export abstract class AbstractRemote {
 
     const stream: SimpleAsyncIterator<Uint8Array> = {
       next: async () => {
+        if (controller.signal.aborted) {
+          return doneResult;
+        }
+
         try {
-          controller.signal.throwIfAborted();
           return await reader.read();
         } catch (ex) {
           if (controller.signal.aborted) {
+            // .read() completes with an error if we cancel the reader, which we do to disconnect. So this is just
+            // things working as intended, we can return a done event and consider the exception handled.
             return doneResult;
           }
 

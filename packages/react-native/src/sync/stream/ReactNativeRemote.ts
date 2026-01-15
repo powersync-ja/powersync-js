@@ -58,6 +58,11 @@ export class ReactNativeRemote extends AbstractRemote {
     return new TextDecoder();
   }
 
+  protected get supportsStreamingBinaryResponses(): boolean {
+    // We have to pass textStreaming: true to get streamed responses at all, and those don't support binary data.
+    return false;
+  }
+
   protected async fetchStreamRaw(options: SyncStreamOptions) {
     const timeout =
       Platform.OS == 'android'

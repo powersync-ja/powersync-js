@@ -956,7 +956,9 @@ The next upload iteration will be delayed.`);
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     const controller = new AbortController();
-    const abort = () => controller.abort();
+    const abort = () => {
+      return controller.abort(signal.reason);
+    };
     signal.addEventListener('abort', abort);
     let receivingLines: Promise<void> | null = null;
     let hadSyncLine = false;
