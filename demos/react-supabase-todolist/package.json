@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.31.0",
+    "@powersync/web": "^1.32.0",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",
     "@journeyapps/wa-sqlite": "^1.4.1",

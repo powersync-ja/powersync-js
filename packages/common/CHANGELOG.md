@@ -1,5 +1,16 @@
 # @powersync/common
 
+## 1.46.0
+
+### Minor Changes
+
+- 25ece59: [Internal] Add ability to override `AbstractPowerSyncDatabase` `loadVersion` method.
+
+### Patch Changes
+
+- e39359d: Fixed delayed streaming processing, due to a race condition, when connecting via the HTTP connection method (could potentially also affect WebSockets).
+- 41953bc: Exported raw tables types
+
 ## 1.45.0
 
 ### Minor Changes

@@ -1,5 +1,18 @@
 # @powersync/web
 
+## 1.32.0
+
+### Minor Changes
+
+- 25ece59: Improved ESM exports and module declarations. Importing these packages in SSR environments should no longer throw errors.
+
+### Patch Changes
+
+- Updated dependencies [e39359d]
+- Updated dependencies [41953bc]
+- Updated dependencies [25ece59]
+  - @powersync/common@1.46.0
+
 ## 1.31.0
 
 ### Minor Changes

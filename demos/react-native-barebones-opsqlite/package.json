@@ -11,9 +11,9 @@
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
     "@op-engineering/op-sqlite": "^14.0.2",
-    "@powersync/op-sqlite": "^0.7.18",
+    "@powersync/op-sqlite": "^0.7.19",
     "@powersync/react": "^1.8.2",
-    "@powersync/react-native": "^1.28.1",
+    "@powersync/react-native": "^1.28.2",
     "react": "18.3.1",
     "react-native": "0.77.0"
   },
