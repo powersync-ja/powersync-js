@@ -23,6 +23,9 @@ You'll also need to install one of the supported file system libraries:
 
 ### For Expo projects
 
+> [!IMPORTANT]
+> Requires Expo 54+
+
 ```bash
 npx expo install expo-file-system
 ```
@@ -91,7 +94,7 @@ Both adapters implement the `LocalStorageAdapter` interface from `@powersync/com
 
 | Adapter                               | Library                       | Supported Versions |
 | ------------------------------------- | ----------------------------- | ------------------ |
-| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0           |
+| `ExpoFileSystemStorageAdapter`        | `expo-file-system`            | >=19.0.0 (Expo 54+)|
 | `ReactNativeFileSystemStorageAdapter` | `@dr.pogodin/react-native-fs` | ^2.25.0            |
 
 ## License
