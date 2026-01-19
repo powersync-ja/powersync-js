@@ -30,7 +30,9 @@ export default (commandLineArgs) => {
            * The Typescript plugin complains about internal Drizzle types not matching when selecting
            * other moduleResolution settings.
            */
-          moduleResolution: 'bundler'
+          moduleResolution: 'bundler',
+          // ES2017+ has native async/await, so no __awaiter helper needed (avoids tslib dependency)
+          target: 'ES2017'
         })
       ],
       external: ['@powersync/common', /^drizzle-orm(\/.*)?$/]
