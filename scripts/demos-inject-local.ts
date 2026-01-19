@@ -1,75 +1,32 @@
-import { findWorkspacePackages } from '@pnpm/workspace.find-packages';
 import { Command, type OptionValues } from 'commander';
 import inquirer from 'inquirer';
 import { execSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-// Get workspace packages and create a mapping from package name to local path
-const workspacePackages = await findWorkspacePackages(path.resolve('.'), {
-  patterns: ['./packages/*']
-});
-const packagePaths = {};
-workspacePackages.forEach((pkg) => {
-  const pkgName = pkg.manifest.name!;
-  if (pkgName.startsWith('@powersync/')) {
-    packagePaths[pkgName] = pkg.rootDirRealPath;
+// Paths for the pnpmfile build
+// Note: import.meta.dirname resolves to scripts/dist/ when compiled, so we go up one level
+const LINKING_DIR = path.resolve(import.meta.dirname, '../linking');
+const PNPMFILE_PATH = path.resolve(LINKING_DIR, 'dist/.pnpmfile.cjs');
+
+/**
+ * We compile the pnpmfile using Rollup to avoid the chicken-egg problem when doing the first install in a linked workspace.
+ * The install script can't depend on other packages since they wont be available in the first install.
+ */
+const buildPnpmfile = () => {
+  console.log('Building pnpmfile...');
+  try {
+    execSync('npx rollup -c rollup.pnpmfile.config.mjs', {
+      cwd: LINKING_DIR,
+      stdio: 'pipe'
+    });
+  } catch (e) {
+    console.error('Rollup build failed:');
+    console.error(e.stdout?.toString() || '');
+    console.error(e.stderr?.toString() || '');
+    throw e;
   }
-});
-
-// Intercepts the resolution of `@powersync/*` packages (plus peer dependencies) and
-// replaces them with local versions.
-const PNPMFILE_CJS = `const fs = require("fs");
-const path = require("path");
-
-const localPaths = ${JSON.stringify(packagePaths)};
-const localPackages = Object.keys(localPaths);
-const getLocalPath = (name) => localPaths[name];
-
-module.exports = {
-  hooks: {
-    readPackage(pkg) {
-      const injectPeers = (manifestPath) => {
-        try {
-          const content = fs.readFileSync(manifestPath, "utf-8");
-          const localPkg = JSON.parse(content);
-          if (localPkg.peerDependencies) {
-            pkg.dependencies = pkg.dependencies || {};
-            Object.keys(localPkg.peerDependencies).forEach((peer) => {
-              if (localPackages.includes(peer)) {
-                // Force install the peer dependency pointing to local
-                pkg.dependencies[peer] = \`file:\${getLocalPath(peer)}\`;
-              }
-            });
-          }
-        } catch (e) {
-          // Ignore missing files or parse errors
-        }
-      };
-
-      const scanDeps = (deps) => {
-        if (!deps) return;
-        Object.keys(deps).forEach((dep) => {
-          if (localPackages.includes(dep)) {
-            const relPath = getLocalPath(dep);
-            
-            // 1. Point the direct dependency to the local file
-            deps[dep] = \`file:\${relPath}\`;
-
-            // 2. Read that local file to find and install its peers
-            injectPeers(path.resolve(process.cwd(), relPath, "package.json"));
-          }
-        });
-      };
-
-      scanDeps(pkg.dependencies);
-      scanDeps(pkg.devDependencies);
-
-      return pkg;
-    },
-  },
 };
-`;
 
 const getDemosAll = async (options: OptionValues): Promise<string[]> => {
   const demos = await fs.readdir(path.resolve(options.directory));
@@ -106,18 +63,10 @@ const injectPackages = async (demo: string, options: OptionValues) => {
   const pnpmFilePath = path.join(demoSrc, '.pnpmfile.cjs');
 
   try {
-    // Default to 'wx' to prevent overwriting existing files
-    const writeFileOpts = options.force ? undefined : { flag: 'wx' };
-    await fs.writeFile(pnpmFilePath, PNPMFILE_CJS, writeFileOpts);
+    const pnpmfileContent = await fs.readFile(PNPMFILE_PATH, 'utf-8');
+    await fs.writeFile(pnpmFilePath, pnpmfileContent);
   } catch (e) {
-    if (e.code) {
-      if (e.code === 'EEXIST') {
-        console.warn(`Warning: File '${pnpmFilePath}' exists, skipping write.`);
-        return;
-      }
-    }
-
-    throw new Error('Unknown error:', e);
+    throw new Error(`Failed to copy pnpmfile to ${pnpmFilePath}: ${e.message}`);
   }
 };
 const installDemosAll = async (demos: string[], options: OptionValues) => {
@@ -151,8 +100,7 @@ const main = async () => {
     .option('-p, --pattern <pattern>', 'specify a pattern matching which demos to select')
     .option('-d, --directory <path>', 'specify directory to search for demos in', 'demos')
     .option('-a, --all', 'run for all demos non-interactively', false)
-    .option('-i, --install', 'run `pnpm install` after injecting', false)
-    .option('-f, --force', 'overwrite existing `.pnpmfile.cjs` files if found', false);
+    .option('-i, --install', 'run `pnpm install` after injecting', false);
 
   program.parse();
 
@@ -172,6 +120,9 @@ const main = async () => {
   } else {
     demos = await filterDemosUser(allDemos, options);
   }
+
+  // Build the pnpmfile before injecting
+  buildPnpmfile();
 
   await injectPackagesAll(demos, options);
   if (options.install) {

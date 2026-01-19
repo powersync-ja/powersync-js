@@ -3,48 +3,9 @@ packages:
   - tools/*
   - docs/
 
-onlyBuiltDependencies:
-  - better-sqlite3
-  - better-sqlite3-multiple-ciphers
-
 catalog:
-  # Core dependencies
-  async-lock: ^1.4.1
-  async-mutex: ^0.5.0
-  '@types/async-lock': ^1.4.0
-  '@types/node': ^24.0.0
-
-  # PowerSync core
-  js-logger: ^1.6.1
-  bson: ^6.10.4
-  comlink: ^4.4.2
-  undici: ^7.11.0
-  event-iterator: ^2.0.0
-
-  # React ecosystem
-  react: ^18.3.1
-  '@types/react': ^18.3.1
-  react-dom: ^18.3.1
-  react-native: ^0.83.0
-  '@react-native/eslint-config': ^0.83.1
-  react-native-builder-bob: ^0.40.17
   '@op-engineering/op-sqlite': ^15.2.2
-
-  # Database drivers
-  drizzle-orm: ^0.44.7
-  kysely: ^0.28.0
-
-  # Utilities
-  p-defer: ^4.0.1
-  uuid: ^11.1.0
-  '@types/uuid': ^9.0.6
-
-  # Build tools
-  rollup: ^4.52.5
-  rollup-plugin-dts: ^6.2.1
-  typescript: ^5.5.3
-
-  # Rollup plugins
+  '@react-native/eslint-config': ^0.83.1
   '@rollup/plugin-alias': ^5.1.0
   '@rollup/plugin-commonjs': ^29.0.0
   '@rollup/plugin-inject': ^5.0.5
@@ -52,22 +13,42 @@ catalog:
   '@rollup/plugin-node-resolve': ^16.0.3
   '@rollup/plugin-replace': ^5.0.7
   '@rollup/plugin-terser': ^0.4.4
-
-  # Vite and plugins
-  vite: ^7.3.1
-  vite-plugin-top-level-await: ^1.4.4
-  vite-plugin-wasm: ^3.3.0
-
-  # Testing
-  vitest: ^3.2.4
-  jsdom: ^24.0.0
   '@testing-library/react': ^15.0.2
-
-  # Linting and formatting
+  '@types/async-lock': ^1.4.0
+  '@types/node': ^24.0.0
+  '@types/react': ^18.3.1
+  '@types/uuid': ^9.0.6
+  async-lock: ^1.4.1
+  async-mutex: ^0.5.0
+  bson: ^6.10.4
+  comlink: ^4.4.2
   del-cli: ^7.0.0
+  drizzle-orm: ^0.44.7
   eslint: ^9.39.2
   eslint-config-prettier: ^10.1.8
   eslint-plugin-prettier: ^5.5.4
+  event-iterator: ^2.0.0
   glob: ^11.0.0
+  js-logger: ^1.6.1
+  jsdom: ^24.0.0
+  kysely: ^0.28.0
+  p-defer: ^4.0.1
   prettier: ^3.7.4
+  react: ^18.3.1
+  react-dom: ^18.3.1
+  react-native: ^0.83.0
+  react-native-builder-bob: ^0.40.17
+  rollup: ^4.52.5
+  rollup-plugin-dts: ^6.2.1
   turbo: ^2.7.3
+  typescript: ^5.5.3
+  undici: ^7.11.0
+  uuid: ^11.1.0
+  vite: ^7.3.1
+  vite-plugin-top-level-await: ^1.4.4
+  vite-plugin-wasm: ^3.3.0
+  vitest: ^3.2.4
+
+onlyBuiltDependencies:
+  - better-sqlite3
+  - better-sqlite3-multiple-ciphers
