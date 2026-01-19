@@ -28,7 +28,12 @@ export default () => {
       }),
       json(),
       nodeResolve({
-        preferBuiltins: false
+        preferBuiltins: false,
+        /**
+         * This allows the bundler to use packages' React Native specific exports when building for React Native.
+         * One example of this is the BSON package, which exports a CommonJS export for react-native.
+         */
+        exportConditions: ['react-native']
       }),
       commonjs({}),
       inject({
