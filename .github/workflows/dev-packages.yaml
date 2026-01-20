@@ -19,6 +19,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
       - name: Install dependencies
         run: pnpm install
       - name: Build
@@ -27,3 +28,5 @@ jobs:
         run: |
           pnpm changeset version --no-git-tag --snapshot dev
           pnpm changeset publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
