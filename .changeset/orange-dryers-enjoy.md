@@ -1,5 +1,5 @@
 ---
-'@powersync/drizzle-driver': minor
+'@powersync/drizzle-driver': patch
 ---
 
-Removed the requirement for tslib when importing CommonJS variant.
+Fixed CommonJS issue where `tslib` could not be found (for some package hoisting configurations)
