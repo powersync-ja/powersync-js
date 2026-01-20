@@ -127,7 +127,13 @@ export class AttachmentQueue {
     this.downloadAttachments = downloadAttachments;
     this.logger = logger ?? db.logger;
     this.attachmentService = new AttachmentService(db, this.logger, tableName, archivedCacheLimit);
-    this.syncingService = new SyncingService(this.attachmentService, localStorage, remoteStorage, this.logger, errorHandler);
+    this.syncingService = new SyncingService(
+      this.attachmentService,
+      localStorage,
+      remoteStorage,
+      this.logger,
+      errorHandler
+    );
   }
 
   /**
@@ -390,7 +396,7 @@ export class AttachmentQueue {
     while (!isDone) {
       await this.attachmentService.withContext(async (ctx) => {
         isDone = await this.syncingService.deleteArchivedAttachments(ctx);
-      })
+      });
     }
   }
 

@@ -9,7 +9,7 @@ import { AttachmentContext } from './AttachmentContext.js';
 /**
  * Orchestrates attachment synchronization between local and remote storage.
  * Handles uploads, downloads, deletions, and state transitions.
- * 
+ *
  * @internal
  */
 export class SyncingService {
@@ -36,7 +36,7 @@ export class SyncingService {
   /**
    * Processes attachments based on their state (upload, download, or delete).
    * All updates are saved in a single batch after processing.
-   * 
+   *
    * @param attachments - Array of attachment records to process
    * @param context - Attachment context for database operations
    * @returns Promise that resolves when all attachments have been processed and saved
@@ -69,7 +69,7 @@ export class SyncingService {
   /**
    * Uploads an attachment from local storage to remote storage.
    * On success, marks as SYNCED. On failure, defers to error handler or archives.
-   * 
+   *
    * @param attachment - The attachment record to upload
    * @returns Updated attachment record with new state
    * @throws Error if the attachment has no localUri
@@ -90,7 +90,7 @@ export class SyncingService {
         hasSynced: true
       };
     } catch (error) {
-      const shouldRetry = await this.errorHandler?.onUploadError(attachment, error) ?? true;
+      const shouldRetry = (await this.errorHandler?.onUploadError(attachment, error)) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,
@@ -106,7 +106,7 @@ export class SyncingService {
    * Downloads an attachment from remote storage to local storage.
    * Retrieves the file, converts to base64, and saves locally.
    * On success, marks as SYNCED. On failure, defers to error handler or archives.
-   * 
+   *
    * @param attachment - The attachment record to download
    * @returns Updated attachment record with local URI and new state
    */
@@ -125,7 +125,7 @@ export class SyncingService {
         hasSynced: true
       };
     } catch (error) {
-      const shouldRetry = await this.errorHandler?.onDownloadError(attachment, error) ?? true;
+      const shouldRetry = (await this.errorHandler?.onDownloadError(attachment, error)) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,
@@ -141,7 +141,7 @@ export class SyncingService {
    * Deletes an attachment from both remote and local storage.
    * Removes the remote file, local file (if exists), and the attachment record.
    * On failure, defers to error handler or archives.
-   * 
+   *
    * @param attachment - The attachment record to delete
    * @returns Updated attachment record
    */
@@ -161,7 +161,7 @@ export class SyncingService {
         state: AttachmentState.ARCHIVED
       };
     } catch (error) {
-      const shouldRetry = await this.errorHandler?.onDeleteError(attachment, error) ?? true;
+      const shouldRetry = (await this.errorHandler?.onDeleteError(attachment, error)) ?? true;
       if (!shouldRetry) {
         return {
           ...attachment,

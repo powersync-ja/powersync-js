@@ -5,7 +5,6 @@ export enum EncodingType {
   Base64 = 'base64'
 }
 
-
 /**
  * LocalStorageAdapter defines the interface for local file storage operations.
  * Implementations handle file I/O, directory management, and storage initialization.

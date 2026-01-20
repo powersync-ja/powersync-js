@@ -6,7 +6,7 @@ export const ATTACHMENT_TABLE = 'attachments';
 
 /**
  * AttachmentRecord represents an attachment in the local database.
- * 
+ *
  * @experimental
  */
 export interface AttachmentRecord {
@@ -23,10 +23,10 @@ export interface AttachmentRecord {
 
 /**
  * Maps a database row to an AttachmentRecord.
- * 
+ *
  * @param row - The database row object
  * @returns The corresponding AttachmentRecord
- * 
+ *
  * @experimental
  */
 export function attachmentFromSql(row: any): AttachmentRecord {
@@ -45,7 +45,7 @@ export function attachmentFromSql(row: any): AttachmentRecord {
 
 /**
  * AttachmentState represents the current synchronization state of an attachment.
- * 
+ *
  * @experimental
  */
 export enum AttachmentState {
@@ -60,7 +60,7 @@ export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'c
 
 /**
  * AttachmentTable defines the schema for the attachment queue table.
- * 
+ *
  * @internal
  */
 export class AttachmentTable extends Table {

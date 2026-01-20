@@ -1,7 +1,7 @@
 /**
  * WatchedAttachmentItem represents an attachment reference in your application's data model.
  * Use either filename OR fileExtension (not both).
- * 
+ *
  * @experimental
  */
 export type WatchedAttachmentItem =
