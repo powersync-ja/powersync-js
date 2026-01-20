@@ -52,7 +52,7 @@ const CONVERTERS = {
 };
 
 function ClientParamsPage() {
-  const [params, setParams] = useState(jsonToObjectArray(getParams()));
+  const [params, setParams] = useState<ParameterEntry[]>(() => jsonToObjectArray(getParams()));
 
   const convertValueForSave = (t: ParameterType, stringValue: string) => CONVERTERS[t](stringValue);
 
@@ -61,6 +61,7 @@ function ClientParamsPage() {
     e.stopPropagation();
 
     try {
+      console.log('Saving params:', params);
       const newParams = params.reduce<Record<string, any>>(
         (curr: any, item: { key: string; type: string; value: string }) => ({
           ...curr,
@@ -68,8 +69,11 @@ function ClientParamsPage() {
         }),
         {}
       );
+      console.log('Converted to:', newParams);
       setParamsGlobal(newParams);
-    } catch (e) {}
+    } catch (e) {
+      console.error('Save error:', e);
+    }
   };
 
   const validate = (val: ParameterEntry) => {
@@ -92,8 +96,20 @@ function ClientParamsPage() {
     setParams((a: any[]) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
   };
 
-  const removeIdx = (idx: number) =>
-    setParams((a: any[]) => a.map((entity, i) => i !== idx && entity).filter((entity) => entity !== false));
+  const removeIdx = (idx: number) => {
+    const newParams = params.filter((_, i) => i !== idx);
+    setParams(newParams);
+
+    // Auto-save after deletion
+    const paramsToSave = newParams.reduce<Record<string, any>>(
+      (curr, item) => ({
+        ...curr,
+        [item.key]: convertValueForSave(item.type, item.value)
+      }),
+      {}
+    );
+    setParamsGlobal(paramsToSave);
+  };
 
   const addRow = () => {
     setParams((a: any[]) => [...a, { key: '', value: '', type: 'string' }]);
@@ -178,14 +194,12 @@ function ClientParamsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="icon"
                         onClick={() => removeIdx(idx)}
-                        className="text-muted-foreground hover:text-destructive">
+                        className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent">
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </div>
                   ))}
                 </div>
