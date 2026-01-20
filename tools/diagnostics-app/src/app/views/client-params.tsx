@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus } from 'lucide-react';
 
 const typeForValue = (value: unknown) => {
@@ -112,65 +113,93 @@ function ClientParamsPage() {
 
   return (
     <NavigationPage title="Client Parameters">
-      <div className="p-5">
-        <form onSubmit={onSubmit} className="space-y-4">
-          {params.map(({ key, value, type, error }, idx: number) => (
-            <div key={idx} className="flex flex-wrap items-end gap-2.5 justify-center">
-              <div className="flex-1 min-w-[200px]">
-                <Label htmlFor={`key-${idx}`}>Key</Label>
-                <Input
-                  id={`key-${idx}`}
-                  value={key}
-                  onChange={(e) => changeKey(idx, e.target.value, value, type)}
-                  className="mt-1.5"
-                />
-              </div>
-              <div className="flex-1 min-w-[200px]">
-                <Label htmlFor={`value-${idx}`}>Value</Label>
-                <Input
-                  id={`value-${idx}`}
-                  value={value}
-                  onChange={(e) => changeValue(idx, e.target.value, key, type)}
-                  className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
-                  title={error}
-                />
-                {error && <p className="text-sm text-destructive">{error}</p>}
-              </div>
-              <div className="w-[125px] min-w-[95px]">
-                <Label htmlFor={`type-${idx}`}>Type</Label>
-                <Select
-                  value={type}
-                  onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
-                  <SelectTrigger id={`type-${idx}`} className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="string">String</SelectItem>
-                    <SelectItem value="number">Number</SelectItem>
-                    <SelectItem value="array">Array</SelectItem>
-                    <SelectItem value="object">Object</SelectItem>
-                    <SelectItem value="boolean">Boolean</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                onClick={() => removeIdx(idx)}>
-                <Trash2 className="h-4 w-4" />
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Parameters</CardTitle>
+            <CardDescription>
+              Configure key-value parameters that will be sent with sync requests.
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={onSubmit}>
+            <CardContent className="space-y-4">
+              {params.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No parameters configured. Click the button below to add one.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {params.map(({ key, value, type, error }, idx: number) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <Label htmlFor={`key-${idx}`} className="text-xs text-muted-foreground">
+                          Key
+                        </Label>
+                        <Input
+                          id={`key-${idx}`}
+                          value={key}
+                          onChange={(e) => changeKey(idx, e.target.value, value, type)}
+                          placeholder="parameter_name"
+                          className="mt-1.5"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`value-${idx}`} className="text-xs text-muted-foreground">
+                          Value
+                        </Label>
+                        <Input
+                          id={`value-${idx}`}
+                          value={value}
+                          onChange={(e) => changeValue(idx, e.target.value, key, type)}
+                          placeholder="value"
+                          className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
+                          title={error}
+                        />
+                        {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor={`type-${idx}`} className="text-xs text-muted-foreground">
+                          Type
+                        </Label>
+                        <Select
+                          value={type}
+                          onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
+                          <SelectTrigger id={`type-${idx}`} className="mt-1.5">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="string">String</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="boolean">Boolean</SelectItem>
+                            <SelectItem value="array">Array</SelectItem>
+                            <SelectItem value="object">Object</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeIdx(idx)}
+                        className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button type="button" variant="outline" onClick={addRow} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Parameter
               </Button>
-            </div>
-          ))}
-          <div className="flex items-center justify-center">
-            <Button type="button" variant="outline" size="icon" onClick={addRow}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button type="submit" className="m-2.5">
-            Save
-          </Button>
-        </form>
+            </CardContent>
+            <CardFooter className="border-t pt-6">
+              <Button type="submit">Save Parameters</Button>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
     </NavigationPage>
   );
