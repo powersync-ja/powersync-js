@@ -4,29 +4,10 @@ import { execSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-// Paths for the pnpmfile build
-// Note: import.meta.dirname resolves to scripts/dist/ when compiled, so we go up one level
-const LINKING_DIR = path.resolve(import.meta.dirname, '../linking');
-const PNPMFILE_PATH = path.resolve(LINKING_DIR, 'dist/.pnpmfile.cjs');
-
-/**
- * We compile the pnpmfile using Rollup to avoid the chicken-egg problem when doing the first install in a linked workspace.
- * The install script can't depend on other packages since they wont be available in the first install.
- */
-const buildPnpmfile = () => {
-  console.log('Building pnpmfile...');
-  try {
-    execSync('npx rollup -c rollup.pnpmfile.config.mjs', {
-      cwd: LINKING_DIR,
-      stdio: 'pipe'
-    });
-  } catch (e) {
-    console.error('Rollup build failed:');
-    console.error(e.stdout?.toString() || '');
-    console.error(e.stderr?.toString() || '');
-    throw e;
-  }
-};
+// dist output lives at tools/local-linking/dist relative to repo root.
+// When this script runs from scripts/dist, go two levels up to repo root first.
+const LOCAL_LINKING_ROOT = path.resolve(import.meta.dirname, '../../tools/local-linking');
+const PNPMFILE_DIST_PATH = path.join(LOCAL_LINKING_ROOT, 'dist/pnpmfile.js');
 
 const getDemosAll = async (options: OptionValues): Promise<string[]> => {
   const demos = await fs.readdir(path.resolve(options.directory));
@@ -50,6 +31,22 @@ const filterDemosPattern = (demos: string[], options: OptionValues): string[] =>
   return demos.filter((demo) => demo.includes(options.pattern));
 };
 
+const ensureLocalLinkingBuilt = async () => {
+  try {
+    await fs.access(PNPMFILE_DIST_PATH);
+    return;
+  } catch {}
+
+  console.log('Building @powersync/local-linking ...');
+  // Run build from repo root
+  execSync('pnpm -C tools/local-linking build', {
+    cwd: path.resolve(import.meta.dirname, '..', '..'),
+    stdio: 'inherit'
+  });
+
+  await fs.access(PNPMFILE_DIST_PATH);
+};
+
 const injectPackagesAll = async (demos: string[], options: OptionValues) => {
   for (const demo of demos) {
     console.log(`Processing ${demo}`);
@@ -63,7 +60,7 @@ const injectPackages = async (demo: string, options: OptionValues) => {
   const pnpmFilePath = path.join(demoSrc, '.pnpmfile.cjs');
 
   try {
-    const pnpmfileContent = await fs.readFile(PNPMFILE_PATH, 'utf-8');
+    const pnpmfileContent = await fs.readFile(PNPMFILE_DIST_PATH, 'utf-8');
     await fs.writeFile(pnpmFilePath, pnpmfileContent);
   } catch (e) {
     throw new Error(`Failed to copy pnpmfile to ${pnpmFilePath}: ${e.message}`);
@@ -110,6 +107,8 @@ const main = async () => {
   }
   const options = program.opts();
 
+  await ensureLocalLinkingBuilt();
+
   const allDemos = await getDemosAll(options);
   let demos: string[];
 
@@ -120,9 +119,6 @@ const main = async () => {
   } else {
     demos = await filterDemosUser(allDemos, options);
   }
-
-  // Build the pnpmfile before injecting
-  buildPnpmfile();
 
   await injectPackagesAll(demos, options);
   if (options.install) {
