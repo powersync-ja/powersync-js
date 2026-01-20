@@ -233,9 +233,16 @@ export class AttachmentContext {
     await this.db.execute(
       /* sql */
       `
-        DELETE FROM ${this.tableName} WHERE id IN (SELECT value FROM json_each(?));
+        DELETE FROM ${this.tableName}
+        WHERE
+          id IN (
+            SELECT
+              json_each.value
+            FROM
+              json_each (?)
+          );
       `,
-      [ids]
+      [JSON.stringify(ids)]
     );
 
     this.logger.info(`Deleted ${archivedAttachments.length} archived attachments`);
