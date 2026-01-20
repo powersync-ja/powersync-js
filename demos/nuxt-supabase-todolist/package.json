@@ -10,6 +10,7 @@
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/supabase": "2.0.1",
     "@powersync/nuxt": "workspace:*",
+    "@powersync/web": "workspace:*",
     "@supabase/supabase-js": "2.75.0"
   },
   "devDependencies": {

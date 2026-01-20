@@ -5,7 +5,7 @@
   "description": "monorepo for powersync javascript sdks",
   "main": "index.js",
   "scripts": {
-    "reset:repo": "tsx ./scripts/reset-repo.ts",
+    "reset:repo": "tsc -b scripts && node scripts/dist/reset-repo.js",
     "build:packages": "pnpm run --filter {./packages/**} -r build",
     "build:packages:prod": "pnpm run --filter {./packages/**} -r build:prod",
     "clean:packages": "pnpm run --filter {./packages/**} -r clean",

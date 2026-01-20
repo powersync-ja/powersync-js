@@ -1,4 +1,5 @@
 packages:
+  - demos/nuxt-supabase-todolist
   - packages/*
   - tools/*
   - docs/

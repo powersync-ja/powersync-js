@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.join(__dirname, '..');
+const projectRoot = path.join(__dirname, '../..');
 
 const PNPM_LOCK_FILE = 'pnpm-lock.yaml';
 
