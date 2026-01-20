@@ -21,6 +21,7 @@ export * from './client/sync/stream/streaming-sync-types.js';
 export * from './client/sync/sync-streams.js';
 
 export * from './client/ConnectionManager.js';
+export * from './db/ConnectionClosedError.js';
 export { ProgressWithOperations, SyncProgress } from './db/crud/SyncProgress.js';
 export * from './db/crud/SyncStatus.js';
 export * from './db/crud/UploadQueueStatus.js';
@@ -31,6 +32,7 @@ export * from './db/schema/IndexedColumn.js';
 export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
+export * from './db/schema/RawTable.js';
 
 export * from './client/Query.js';
 export * from './client/triggers/sanitizeSQL.js';

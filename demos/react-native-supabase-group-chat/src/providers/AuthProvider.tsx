@@ -1,17 +1,18 @@
-import type { AuthUser, AuthSession } from '@supabase/supabase-js';
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-
+import { createContext, type ReactNode, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/library/supabase';
+import { AuthUser, AuthSession } from '@supabase/supabase-js';
 import { Loading } from '@/components/loading/Loading';
-import { supabase } from '@/lib/supabase';
 
-export const AuthContext = createContext<{
+export type AuthState = {
   session: AuthSession | null;
   user: AuthUser | null;
   signIn: ({ session, user }: { session: AuthSession | null; user: AuthUser | null }) => void;
   signOut: () => void;
   isSyncEnabled: boolean;
   setIsSyncEnabled: (isSyncEnabled: boolean) => void;
-}>({
+};
+
+export const AuthContext = createContext<AuthState>({
   session: null,
   user: null,
   signIn: () => {},
@@ -20,11 +21,11 @@ export const AuthContext = createContext<{
   setIsSyncEnabled: () => {}
 });
 
-export function useAuth() {
+export const useAuth = () => {
   return useContext(AuthContext);
-}
+};
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,10 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }
 
-  useEffect(() => {
-    if (!session) getSession();
-    // if (session && !user) getUser();
-  }, [session, user]);
+  useEffect(
+    () => {
+      if (!session) getSession();
+    },
+    [session]
+  );
 
   if (isLoading) {
     return <Loading />;
@@ -82,4 +85,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};

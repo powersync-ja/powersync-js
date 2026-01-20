@@ -1,0 +1,11 @@
+// Gets linked into the demos' local tsconfig files when doing local development.
+{
+  "references": [
+    {
+      "path": "./packages/web"
+    },
+    {
+      "path": "./packages/node"
+    }
+  ]
+}

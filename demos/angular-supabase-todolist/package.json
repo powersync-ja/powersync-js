@@ -15,7 +15,6 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^19.2.4",
-    "@angular/common": "^19.2.4",
     "@angular/compiler": "^19.2.4",
     "@angular/core": "^19.2.4",
     "@angular/forms": "^19.2.4",
@@ -23,8 +22,8 @@
     "@angular/platform-browser-dynamic": "^19.2.4",
     "@angular/router": "^19.2.4",
     "@angular/service-worker": "^19.2.4",
-    "@journeyapps/wa-sqlite": "^1.4.0",
-    "@powersync/web": "workspace:*",
+    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@powersync/web": "^1.31.0",
     "@supabase/supabase-js": "^2.44.4",
     "rxjs": "~7.8.1",
     "tslib": "^2.6.3",

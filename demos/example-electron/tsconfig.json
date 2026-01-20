@@ -12,10 +12,5 @@
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "jsx": "preserve"
-  },
-  "references": [
-    {
-      "path": "../../packages/web"
-    }
-  ]
+  }
 }

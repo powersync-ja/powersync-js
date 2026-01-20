@@ -9,6 +9,13 @@ dist
 .DS_STORE
 .idea
 .fleet
+
 # Useful if running repository in VSCode dev container
 .pnpm-store
 __screenshots__
+
+# Adds a lot of noise to commits
+demos/**/pnpm-lock.yaml
+
+# Useful for local development
+demos/**/.pnpmfile.cjs

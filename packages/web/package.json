@@ -1,11 +1,13 @@
 {
   "name": "@powersync/web",
-  "version": "1.29.1",
-  "description": "PowerSync web SDK. Sync Postgres, MongoDB or MySQL with SQLite in your web app",
+  "version": "1.31.0",
+  "description": "PowerSync Web SDK",
   "main": "lib/src/index.js",
+  "module": "lib/src/index.js",
+  "type": "module",
   "types": "lib/src/index.d.ts",
   "bin": {
-    "powersync-web": "bin/powersync.js"
+    "powersync-web": "bin/powersync.cjs"
   },
   "files": [
     "bin",
@@ -15,21 +17,23 @@
     "src"
   ],
   "exports": {
-    ".": "./lib/src/index.js",
+    ".": {
+      "types": "./lib/src/index.d.ts",
+      "default": "./lib/src/index.js"
+    },
     "./umd": {
-      "import": "./dist/index.umd.js",
-      "require": "./dist/index.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "types": "./lib/src/index.d.ts",
+      "default": "./dist/index.umd.js"
     },
     "./umd/worker/db": {
+      "types": "./lib/src/index.d.ts",
       "import": "./dist/worker/WASQLiteDB.umd.js",
-      "require": "./dist/worker/WASQLiteDB.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "require": "./dist/worker/WASQLiteDB.umd.js"
     },
     "./umd/worker/sync": {
+      "types": "./lib/src/index.d.ts",
       "import": "./dist/worker/SharedSyncImplementation.umd.js",
-      "require": "./dist/worker/SharedSyncImplementation.umd.js",
-      "types": "./lib/src/index.d.ts"
+      "require": "./dist/worker/SharedSyncImplementation.umd.js"
     }
   },
   "repository": "https://github.com/powersync-ja/powersync-js",
@@ -49,7 +53,8 @@
     "build:prod": "pnpm run build:tsc --sourceMap false && pnpm run build:webpack-main && pnpm run build:webpack-workers",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc --build -w",
-    "test": "pnpm build && vitest"
+    "test": "pnpm build && vitest",
+    "test:exports": "attw --pack . --entrypoints . --profile=esm-only "
   },
   "keywords": [
     "data sync",
@@ -61,8 +66,8 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.0",
-    "@powersync/common": "workspace:^1.43.1"
+    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@powersync/common": "workspace:^1.45.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
@@ -72,7 +77,7 @@
     "commander": "^12.1.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.0",
+    "@journeyapps/wa-sqlite": "^1.4.1",
     "@types/uuid": "^9.0.6",
     "crypto-browserify": "^3.12.0",
     "p-defer": "^4.0.1",

@@ -12,5 +12,9 @@
 **/assets/**
 **/bin/**
 **/ios/**
+**/coverage/**
+**/routeTree.gen.ts
+
+demos/**/.pnpmfile.cjs
 
 pnpm-lock.yaml

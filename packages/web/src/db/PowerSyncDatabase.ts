@@ -1,37 +1,37 @@
 import {
-  type BucketStorageAdapter,
-  type PowerSyncBackendConnector,
-  type PowerSyncCloseOptions,
-  type RequiredAdditionalConnectionOptions,
   AbstractPowerSyncDatabase,
   DBAdapter,
-  DEFAULT_POWERSYNC_CLOSE_OPTIONS,
-  isDBAdapter,
-  isSQLOpenFactory,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithDBAdapter,
   PowerSyncDatabaseOptionsWithOpenFactory,
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  isDBAdapter,
+  isSQLOpenFactory,
+  type BucketStorageAdapter,
+  type PowerSyncBackendConnector,
+  type PowerSyncCloseOptions,
+  type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { getNavigatorLocks } from '../shared/navigator';
-import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { getNavigatorLocks } from '../shared/navigator.js';
+import { WebDBAdapter } from './adapters/WebDBAdapter.js';
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
-  resolveWebSQLFlags,
-  WebSQLFlags
-} from './adapters/web-sql-flags';
-import { WebDBAdapter } from './adapters/WebDBAdapter';
-import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
-import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
-import { WebRemote } from './sync/WebRemote';
+  WebSQLFlags,
+  isServerSide,
+  resolveWebSQLFlags
+} from './adapters/web-sql-flags.js';
+import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
+import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation.js';
+import { WebRemote } from './sync/WebRemote.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from './sync/WebStreamingSyncImplementation';
+} from './sync/WebStreamingSyncImplementation.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -160,15 +160,28 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * By default the sync stream client is only disconnected if
    * multiple tabs are not enabled.
    */
-  close(options: PowerSyncCloseOptions = DEFAULT_POWERSYNC_CLOSE_OPTIONS): Promise<void> {
+  close(options?: PowerSyncCloseOptions): Promise<void> {
     if (this.unloadListener) {
       window.removeEventListener('unload', this.unloadListener);
     }
-
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
-      disconnect: options.disconnect ?? !this.resolvedFlags.enableMultiTabs
+      disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
     });
+  }
+
+  protected async loadVersion(): Promise<void> {
+    if (isServerSide()) {
+      return;
+    }
+    return super.loadVersion();
+  }
+
+  protected async resolveOfflineSyncStatus() {
+    if (isServerSide()) {
+      return;
+    }
+    return super.resolveOfflineSyncStatus();
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {

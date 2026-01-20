@@ -14,11 +14,10 @@ Note that this setup guide has minor deviations from the [Supabase + PowerSync i
 
 ### 1. Install dependencies
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+In the demo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
 
 ```bash
 pnpm install
-pnpm build:packages
 ```
 
 ### 2. Create project on Supabase and set up Postgres

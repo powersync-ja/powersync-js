@@ -4,22 +4,24 @@
 
 Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase.
 
-A step-by-step guide on Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase-+-powersync).
-Follow all the steps until, but not including, [Test Everything (Using Our Demo App)](https://docs.powersync.com/integration-guides/supabase-+-powersync#test-everything-using-our-demo-app).
+## Run Demo
 
-## Getting Started
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
+* Follow all the steps until, but not including, [Test Everything (Using Our Demo App)](https://docs.powersync.com/integration-guides/supabase-+-powersync#test-everything-using-our-demo-app).
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
-
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/react-native-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
 ```
 
 Set up the Environment variables: Copy the `.env` file:

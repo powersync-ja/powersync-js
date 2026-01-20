@@ -1,6 +1,6 @@
-import { Worker } from 'node:worker_threads';
-import { LockContext, QueryResult } from '@powersync/common';
+import { ConnectionClosedError, LockContext, QueryResult } from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
+import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncDatabase.js';
 
 /**
@@ -36,11 +36,11 @@ export class RemoteConnection implements LockContext {
 
     return new Promise((resolve, reject) => {
       if (controller.signal.aborted) {
-        reject(new Error('Called operation on closed remote'));
+        reject(new ConnectionClosedError('Called operation on closed remote'));
       }
 
       function handleAbort() {
-        reject(new Error('Remote peer closed with request in flight'));
+        reject(new ConnectionClosedError('Remote peer closed with request in flight'));
       }
 
       function completePromise(action: () => void) {

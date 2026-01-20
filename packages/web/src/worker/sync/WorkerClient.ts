@@ -1,13 +1,13 @@
+import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
+import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation,
   SharedSyncInitOptions,
   WrappedSyncPort
-} from './SharedSyncImplementation';
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream, SyncStatusOptions } from '@powersync/common';
-import { getNavigatorLocks } from '../../shared/navigator';
+} from './SharedSyncImplementation.js';
 
 /**
  * A client to the shared sync worker.
@@ -17,13 +17,13 @@ import { getNavigatorLocks } from '../../shared/navigator';
  */
 export class WorkerClient {
   private resolvedPort: WrappedSyncPort | null = null;
+  protected resolvedPortPromise: Promise<WrappedSyncPort> | null = null;
 
   constructor(
     private readonly sync: SharedSyncImplementation,
     private readonly port: MessagePort
-  ) {}
-
-  async initialize() {
+  ) {
+    Comlink.expose(this, this.port);
     /**
      * Adds an extra listener which can remove this port
      * from the list of monitored ports.
@@ -34,9 +34,6 @@ export class WorkerClient {
         await this.removePort();
       }
     });
-
-    this.resolvedPort = await this.sync.addPort(this.port);
-    Comlink.expose(this, this.port);
   }
 
   private async removePort() {
@@ -59,7 +56,10 @@ export class WorkerClient {
    * When the client tab is closed, its lock will be returned. So when the shared worker attempts to acquire the lock,
    * it can consider the connection to be closed.
    */
-  addLockBasedCloseSignal(name: string) {
+  async addLockBasedCloseSignal(name: string) {
+    // Only add the port once the lock has been obtained on the client.
+    this.resolvedPort = await this.sync.addPort(this.port);
+    // Don't await this lock request
     getNavigatorLocks().request(name, async () => {
       await this.removePort();
     });
@@ -98,9 +98,5 @@ export class WorkerClient {
 
   disconnect() {
     return this.sync.disconnect();
-  }
-
-  async _testUpdateAllStatuses(status: SyncStatusOptions) {
-    return this.sync._testUpdateAllStatuses(status);
   }
 }

@@ -1,14 +1,8 @@
 # PowerSync + Supabase Vue Demo: Todo List (TypeScript)
 
-## Note: Beta Release
-
-The `powersync/vue` package is currently in a beta release.
-
 ## Overview
 
 Demo app demonstrating use of the [PowerSync Vue](https://www.npmjs.com/package/@powersync/vue) together with Supabase.
-
-A step-by-step guide through the Supabase<>PowerSync integration is available [here](https://docs.powersync.com/integration-guides/supabase-+-powersync).
 
 ## Recommended Setup
 
@@ -16,19 +10,23 @@ A step-by-step guide through the Supabase<>PowerSync integration is available [h
 
 - Use [vue-tsc](https://github.com/vuejs/language-tools/tree/master/packages/tsc) for performing the same type checking from the command line, or for generating d.ts files for SFCs.
 
-## Getting Started
+## Run Demo
 
-In the repo directory, use [pnpm](https://pnpm.io/installation) to install dependencies:
+Prerequisites:
+* To run this demo, you need to have properly configured Supabase and PowerSync projects. Follow the instructions in our Supabase<>PowerSync integration guide:
+  * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
+  * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
 
-```bash
-pnpm install
-pnpm build:packages
-```
-
-Then switch into the demo's directory:
+Switch into the demo's directory:
 
 ```bash
 cd demos/vue-supabase-todolist
+```
+
+Use [pnpm](https://pnpm.io/installation) to install dependencies:
+
+```bash
+pnpm install
 ```
 
 Set up the Environment variables: Copy the `.env.local.template` file:

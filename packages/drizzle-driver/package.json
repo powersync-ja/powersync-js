@@ -1,6 +1,6 @@
 {
   "name": "@powersync/drizzle-driver",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Drizzle driver for PowerSync",
   "type": "module",
   "main": "dist/index.cjs",
@@ -9,12 +9,12 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./lib/src/index.js",
-        "types": "./lib/src/index.d.ts"
+        "types": "./lib/src/index.d.ts",
+        "default": "./lib/src/index.js"
       },
       "require": {
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.cts"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
@@ -43,11 +43,11 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.43.1",
+    "@powersync/common": "workspace:^1.45.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.0",
+    "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/web": "workspace:*",
     "@types/node": "^20.17.6",
     "drizzle-orm": "^0.44.7",

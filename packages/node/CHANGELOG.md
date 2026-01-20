@@ -1,5 +1,43 @@
 # @powersync/node
 
+## 0.15.2
+
+### Patch Changes
+
+- 133f376: DB operations will now throw a dedicated `ConnectionClosed` error when an attempt to perform an operation on a closed connection is made.
+- Updated dependencies [133f376]
+  - @powersync/common@1.45.0
+
+## 0.15.1
+
+### Patch Changes
+
+- 84239b7: Fix loading `better-sqlite3` on CommonJS builds.
+
+## 0.15.0
+
+### Minor Changes
+
+- 299c6dc: Update PowerSync SQLite core to v0.4.10
+- 616c2a1: Added ability to specify `appMetadata` for sync/stream requests.
+
+  Note: This requires a PowerSync service version `>=1.17.0` in order for logs to display metadata.
+
+  ```javascript
+  powerSync.connect(connector, {
+    // This will be included in PowerSync service logs
+    appMetadata: {
+      app_version: MY_APP_VERSION
+    }
+  });
+  ```
+
+### Patch Changes
+
+- Updated dependencies [299c6dc]
+- Updated dependencies [616c2a1]
+  - @powersync/common@1.44.0
+
 ## 0.14.3
 
 ### Patch Changes
@@ -82,7 +120,6 @@
 - 688265f: Use upstream better-sqlite3 dependency instead of the PowerSync fork.
 
   After upgrading:
-
   1. Ensure you no longer depend on the `@powersync/better-sqlite3` package: `npm uninstall @powersync/better-sqlite3`.
   2. Unlike in older versions, the upstream `better-sqlite3` dependency is marked as optional since custom forks
      are supported too.

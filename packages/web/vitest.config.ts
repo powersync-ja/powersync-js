@@ -20,7 +20,9 @@ const config: UserConfigExport = {
        */
       '@powersync/web': path.resolve(__dirname, './lib/src'),
       // https://jira.mongodb.org/browse/NODE-5773
-      bson: require.resolve('bson')
+      bson: import.meta.resolve('bson'),
+      // Mock WebRemote to throw 401 errors for all HTTP requests in tests
+      '../../db/sync/WebRemote.js': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts')
     }
   },
   worker: {
@@ -31,7 +33,7 @@ const config: UserConfigExport = {
     // Don't optimise these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: ['bson', 'comlink', 'async-mutex']
+    include: []
   },
   plugins: [wasm(), topLevelAwait()],
   test: {
