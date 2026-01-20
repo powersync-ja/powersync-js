@@ -323,7 +323,6 @@ export default function SyncDiagnosticsPage() {
               pageSizeOptions={[10, 50, 100]}
               initialSortField="total_operations"
               initialSortDirection="desc"
-              rowHeight={2}
             />
           )}
         </div>

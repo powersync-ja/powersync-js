@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { Button } from './button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export interface DataTableColumn<T> {
@@ -24,7 +24,6 @@ interface DataTableProps<T extends { id: string | number }> {
   initialSortField?: keyof T | string;
   initialSortDirection?: 'asc' | 'desc';
   emptyMessage?: string;
-  rowHeight?: number;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -36,8 +35,7 @@ export function DataTable<T extends { id: string | number }>({
   pageSizeOptions = [10, 20, 50, 100],
   initialSortField,
   initialSortDirection = 'desc',
-  emptyMessage = 'No data available',
-  rowHeight
+  emptyMessage = 'No data available'
 }: DataTableProps<T>) {
   const [page, setPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
@@ -129,8 +127,6 @@ export function DataTable<T extends { id: string | number }>({
     return 'left';
   };
 
-  const rowHeightStyle = rowHeight ? { height: `${rowHeight * 2.5}rem` } : undefined;
-
   return (
     <div className="w-full space-y-4">
       <div className="rounded-md border overflow-x-auto">
@@ -178,7 +174,7 @@ export function DataTable<T extends { id: string | number }>({
               </TableRow>
             ) : (
               paginatedRows.map((row) => (
-                <TableRow key={row.id} style={rowHeightStyle}>
+                <TableRow key={row.id}>
                   {columns.map((column) => (
                     <TableCell
                       key={`${row.id}-${String(column.field)}`}
