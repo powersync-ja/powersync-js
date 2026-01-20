@@ -69,8 +69,8 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
             }}>
             {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2.5">
-                  <Label htmlFor="token-input" className="mb-6">PowerSync Token</Label>
+                <div>
+                  <Label htmlFor="token-input">PowerSync Token</Label>
                   <Input
                     id="token-input"
                     name="token"
@@ -79,11 +79,11 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                     onChange={handleChange}
                     onBlur={handleBlur}
                     value={values.token}
-                    className={errors.token ? 'border-destructive' : 'mt-1'}
+                    className={`mt-1.5 ${errors.token ? 'border-destructive' : ''}`}
                   />
                   {errors.token && <p className="text-sm text-destructive">{errors.token}</p>}
                 </div>
-                <div className="space-y-2.5">
+                <div>
                   <Label htmlFor="endpoint-input">PowerSync Endpoint</Label>
                   <Input
                     id="endpoint-input"
@@ -94,7 +94,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                     onBlur={handleBlur}
                     value={values.endpoint}
                     placeholder={getTokenEndpoint(values.token) ?? ''}
-                    className={errors.endpoint ? 'border-destructive' : 'mt-1'}
+                    className={`mt-1.5 ${errors.endpoint ? 'border-destructive' : ''}`}
                   />
                   {errors.endpoint && <p className="text-sm text-destructive">{errors.endpoint}</p>}
                 </div>

@@ -115,33 +115,33 @@ function ClientParamsPage() {
       <div className="p-5">
         <form onSubmit={onSubmit} className="space-y-4">
           {params.map(({ key, value, type, error }, idx: number) => (
-            <div key={idx} className="flex flex-wrap items-center gap-2.5 justify-center">
-              <div className="flex-1 min-w-[200px] space-y-1.5">
+            <div key={idx} className="flex flex-wrap items-end gap-2.5 justify-center">
+              <div className="flex-1 min-w-[200px]">
                 <Label htmlFor={`key-${idx}`}>Key</Label>
                 <Input
                   id={`key-${idx}`}
                   value={key}
                   onChange={(e) => changeKey(idx, e.target.value, value, type)}
-                  className={'mt-1'}
+                  className="mt-1.5"
                 />
               </div>
-              <div className="flex-1 min-w-[200px] space-y-1.5">
+              <div className="flex-1 min-w-[200px]">
                 <Label htmlFor={`value-${idx}`}>Value</Label>
                 <Input
                   id={`value-${idx}`}
                   value={value}
                   onChange={(e) => changeValue(idx, e.target.value, key, type)}
-                  className={error ? 'border-destructive' : 'mt-1'}
+                  className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
                   title={error}
                 />
                 {error && <p className="text-sm text-destructive">{error}</p>}
               </div>
-              <div className="w-[125px] min-w-[95px] space-y-1.5">
+              <div className="w-[125px] min-w-[95px]">
                 <Label htmlFor={`type-${idx}`}>Type</Label>
                 <Select
                   value={type}
                   onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
-                  <SelectTrigger id={`type-${idx}`} className={'mt-1'}>
+                  <SelectTrigger id={`type-${idx}`} className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -157,8 +157,7 @@ function ClientParamsPage() {
                 type="button"
                 variant="destructive"
                 size="icon"
-                onClick={() => removeIdx(idx)}
-                className="mt-6">
+                onClick={() => removeIdx(idx)}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
