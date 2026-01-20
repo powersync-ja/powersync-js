@@ -17,9 +17,6 @@ import {
   AttachmentErrorHandler
 } from '../../node';
 
-// import {
-// } from '@powersync/common';
-
 const MOCK_JPEG_U8A = [
   0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x01, 0x00, 0x01,
   0x00, 0x00, 0xff, 0xd9
@@ -290,8 +287,6 @@ describe('attachment queue', () => {
         5
       );
 
-      // await new Promise(resolve => setTimeout(resolve, 1500));
-
       // File should be deleted too
       expect(await mockLocalStorage.fileExists(record.localUri!)).toBe(false);
 
@@ -343,6 +338,8 @@ describe('attachment queue', () => {
   });
 
   it('should recover from deleted local file', async () => {
+    const id = 'test-attachment-id';
+
     // create an attachment record that has an invalid localUri
     await db.execute(
       /* sql */ `
@@ -358,23 +355,36 @@ describe('attachment queue', () => {
           state
         )
         VALUES
-          (uuid (), current_timestamp, ?, ?, ?, ?, ?, ?)
+          (?, current_timestamp, ?, ?, ?, ?, ?, ?)
       `,
-      ['test.jpg', 'invalid/dir/test.jpg', 100, 'image/jpeg', 1, AttachmentState.SYNCED]
+      [id, `${id}.jpg`, 'invalid/dir/test.jpg', 100, 'image/jpeg', 1, AttachmentState.SYNCED]
     );
+
+    // Create a user that references this attachment so it stays watched
+    await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+      'testuser',
+      'testuser@test.com',
+      id
+    ]);
 
     await queue.startSync();
 
-    const attachmentRecord = await waitForMatchCondition(
+    // Wait for the attachment to be re-downloaded and synced
+    const attachments = await waitForMatchCondition(
       () => watchAttachmentsTable(),
-      (results) => results.some((r) => r.state === AttachmentState.ARCHIVED),
+      (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED && r.localUri !== null),
       5
     );
 
-    expect(attachmentRecord[0].filename).toBe('test.jpg');
-    // it seems that the localUri is not set to null
-    expect(attachmentRecord[0].localUri).toBe(null);
-    expect(attachmentRecord[0].state).toBe(AttachmentState.ARCHIVED);
+    const attachmentRecord = attachments.find((r) => r.id === id);
+    expect(attachmentRecord?.state).toBe(AttachmentState.SYNCED);
+    expect(attachmentRecord?.localUri).not.toBe('invalid/dir/test.jpg'); // Should have new valid path
+
+    // Verify the file was actually re-downloaded
+    expect(mockDownloadFile).toHaveBeenCalled();
+
+    // Verify the file exists at the new localUri
+    expect(await mockLocalStorage.fileExists(attachmentRecord!.localUri!)).toBe(true);
 
     await queue.stopSync();
   });
@@ -405,7 +415,7 @@ describe('attachment queue', () => {
       metaData: null,
       size: null,
       state: AttachmentState.QUEUED_DOWNLOAD,
-      timestamp: null
+      timestamp: expect.any(Number)
     });
 
     // Archive attachment by not referencing it anymore.
@@ -437,7 +447,7 @@ describe('attachment queue', () => {
       metaData: null,
       size: null,
       state: AttachmentState.QUEUED_DOWNLOAD,
-      timestamp: null
+      timestamp: expect.any(Number)
     });
 
     await queue.stopSync();
