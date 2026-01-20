@@ -137,9 +137,6 @@ importers:
       '@pnpm/workspace.read-manifest':
         specifier: 'catalog:'
         version: 1000.2.9
-      '@rollup/plugin-typescript':
-        specifier: ^12.1.4
-        version: 12.3.0(rollup@4.54.0)(tslib@2.8.1)(typescript@5.9.3)
       '@types/inquirer':
         specifier: ^8.2.12
         version: 8.2.12

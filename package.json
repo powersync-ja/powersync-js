@@ -38,7 +38,6 @@
     "@changesets/cli": "2.27.2",
     "@pnpm/workspace.find-packages": "catalog:",
     "@pnpm/workspace.read-manifest": "catalog:",
-    "@rollup/plugin-typescript": "^12.1.4",
     "@types/inquirer": "^8.2.12",
     "@vitest/browser": "^3.2.4",
     "commander": "^12.1.0",
