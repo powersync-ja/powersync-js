@@ -160,7 +160,7 @@ export default function SyncDiagnosticsPage() {
   ];
 
   const rows = (bucketRows ?? []).map((r) => {
-    const isReady = r.downloading == 0 || r.downloaded_operations >= r.total_operations;
+    const isReady = r.downloading == 0;
     return {
       id: r.name,
       name: r.name,
