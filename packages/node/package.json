@@ -70,7 +70,7 @@
     "async-mutex": "catalog:",
     "bson": "catalog:",
     "comlink": "catalog:",
-    "undici": "catalog:"
+    "undici": "^7.11.0"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
@@ -79,6 +79,7 @@
     "drizzle-orm": "catalog:",
     "js-logger": "catalog:",
     "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

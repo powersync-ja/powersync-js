@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "async-mutex": "catalog:",
-    "event-iterator": "catalog:"
+    "event-iterator": "^2.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",
@@ -67,6 +67,7 @@
     "@types/uuid": "catalog:",
     "buffer": "^6.0.3",
     "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
     "cross-fetch": "^4.1.0",
     "js-logger": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",

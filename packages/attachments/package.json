@@ -50,7 +50,12 @@
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
   }
 }

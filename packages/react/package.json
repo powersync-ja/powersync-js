@@ -40,14 +40,15 @@
     "@powersync/common": "workspace:*",
     "@powersync/drizzle-driver": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@testing-library/react": "catalog:",
-    "@types/react": "catalog:",
-    "chart.js": "^4.5.0",
+    "@testing-library/react": "^16.0.0",
     "drizzle-orm": "catalog:",
-    "jsdom": "catalog:",
     "p-defer": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
+    "chart.js": "^4.5.0",
+    "jsdom": "catalog:",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-error-boundary": "^4.1.0"
   }
 }

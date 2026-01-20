@@ -47,10 +47,15 @@
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@journeyapps/wa-sqlite": "catalog:",
     "@powersync/web": "workspace:*",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
     "drizzle-orm": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
     "vite": "catalog:",
     "vite-plugin-top-level-await": "catalog:",
     "vite-plugin-wasm": "catalog:"

@@ -39,6 +39,8 @@
     "@powersync/sql-js": "0.0.7",
     "@powersync/web": "workspace:*",
     "@rollup/plugin-alias": "catalog:",
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/sql.js": "^1.4.9",
     "chance": "^1.1.9",
