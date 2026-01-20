@@ -49,8 +49,12 @@ export function DataTable<T extends { id: string | number }>({
       const aValue = getNestedValue(a, sortField as string);
       const bValue = getNestedValue(b, sortField as string);
 
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
+      // Handle null/undefined - push to end regardless of sort direction
+      const aIsNull = aValue === null || aValue === undefined;
+      const bIsNull = bValue === null || bValue === undefined;
+      if (aIsNull && bIsNull) return 0;
+      if (aIsNull) return 1;
+      if (bIsNull) return -1;
 
       let comparison = 0;
       if (typeof aValue === 'number' && typeof bValue === 'number') {
