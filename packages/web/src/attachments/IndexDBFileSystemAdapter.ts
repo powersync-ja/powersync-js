@@ -5,7 +5,7 @@ import { AttachmentData, EncodingType, LocalStorageAdapter } from '@powersync/co
  * Suitable for web browsers and web-based environments.
  */
 export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
-  private dbPromise!: Promise<IDBDatabase>; 
+  private dbPromise!: Promise<IDBDatabase>;
 
   constructor(private databaseName: string = 'PowerSyncFiles') {}
 
@@ -122,9 +122,9 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
 
   async rmDir(path: string): Promise<void> {
     const store = await this.getStore('readwrite');
-    // TODO: Test this to ensure it deletes all files under the directory
+    const range = IDBKeyRange.bound(path + '/', path + '/\uffff', false, false);
     await new Promise<void>((resolve, reject) => {
-      const req = store.delete(path);
+      const req = store.delete(range);
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
