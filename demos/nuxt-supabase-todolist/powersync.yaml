@@ -3,15 +3,15 @@ replication:
   connections:
     - type: postgresql
       uri: !env PS_POSTGRESQL_URI
-      # sslmode: disable
-      sslmode: verify-full
+      sslmode: disable
+      # sslmode: verify-full
       debug_api: true
 
 storage:
   type: postgresql
   uri: !env PS_POSTGRESQL_URI
-  # sslmode: disable
-  sslmode: verify-full
+  sslmode: disable
+  # sslmode: verify-full
 
 sync_rules:
   path: ./sync-rules.yaml

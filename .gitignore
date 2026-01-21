@@ -19,3 +19,6 @@ demos/**/pnpm-lock.yaml
 
 # Useful for local development
 demos/**/.pnpmfile.cjs
+demos/**/.branches
+demos/**/.temp
+

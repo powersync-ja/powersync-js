@@ -15,6 +15,44 @@ pnpm install
 pnpm build:packages
 ```
 
+### Quick Start: Local Development
+
+This demo can be started with local PowerSync and Supabase services.
+
+1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)
+
+2. Copy the environment template:
+   ```bash
+   cp .env.template .env
+   ```
+
+3. Start Supabase:
+   ```bash
+   supabase start
+   ```
+
+4. Copy the values from the `supabase start` output into `.env`:
+   - `NUXT_PUBLIC_SUPABASE_ANON_KEY`: Use the **Publishable** key value
+   - `PS_SUPABASE_JWT_SECRET`: Use `super-secret-jwt-token-with-at-least-32-characters-long` (default for local dev)
+
+5. Start PowerSync:
+   ```bash
+   docker run \
+     -p 6060:6060 \
+     -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
+     -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-rules.yaml) \
+     --env-file ./.env \
+     --network supabase_network_nuxt-supabase-todolist \
+     --name powersync-nuxt journeyapps/powersync-service:latest
+   ```
+
+6. Run the demo:
+   ```bash
+   pnpm dev
+   ```
+
+Open [http://localhost:3000](http://localhost:3000) to use the app.
+
 ### 2. Create project on Supabase and set up Postgres
 
 This demo app uses Supabase as its Postgres database and backend:
