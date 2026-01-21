@@ -1,7 +1,7 @@
 import { fileURLToPath, URL } from 'url';
 
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
@@ -22,8 +22,7 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: ['comlink', 'bson']
+    exclude: ['@powersync/web']
   },
   plugins: [
     react(),
