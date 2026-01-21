@@ -429,7 +429,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   protected async initialize() {
     await this._initialize();
     await this.bucketStorageAdapter.init();
-    await this._loadVersion();
+    await this.loadVersion();
     await this.updateSchema(this.options.schema);
     await this.resolveOfflineSyncStatus();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
@@ -438,7 +438,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
-  private async _loadVersion() {
+  protected async loadVersion() {
     try {
       const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
       this.sdkVersion = version;

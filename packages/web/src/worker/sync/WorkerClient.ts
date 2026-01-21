@@ -1,13 +1,13 @@
 import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator';
+import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
   ManualSharedSyncPayload,
   SharedSyncClientEvent,
   SharedSyncImplementation,
   SharedSyncInitOptions,
   WrappedSyncPort
-} from './SharedSyncImplementation';
+} from './SharedSyncImplementation.js';
 
 /**
  * A client to the shared sync worker.

@@ -10,7 +10,7 @@ import {
   StreamingSyncImplementation
 } from '@powersync/common';
 import { describe, expect, it, vi } from 'vitest';
-import { TEST_SCHEMA } from '../../utils/test-schema';
+import { TEST_SCHEMA } from '../../utils/test-schema.js';
 
 class TestPowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {

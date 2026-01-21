@@ -9,7 +9,7 @@ import {
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { TEST_SCHEMA, TestDatabase } from './utils/test-schema';
+import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
 vi.useRealTimers();
 
 /**

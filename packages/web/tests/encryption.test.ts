@@ -7,7 +7,7 @@ import {
 } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema';
+import { TEST_SCHEMA } from './utils/test-schema.js';
 
 describe('Encryption Tests', { sequential: true }, () => {
   it('IDBBatchAtomicVFS encryption', async () => {

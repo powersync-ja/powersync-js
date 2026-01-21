@@ -2,7 +2,7 @@ import { AbstractPowerSyncDatabase, WatchOnChangeEvent } from '@powersync/common
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema';
+import { TEST_SCHEMA } from './utils/test-schema.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 

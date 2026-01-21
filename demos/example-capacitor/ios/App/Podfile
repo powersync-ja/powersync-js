@@ -1,4 +1,4 @@
-require_relative '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios/scripts/pods_helpers'
+require_relative '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.3/node_modules/@capacitor/ios/scripts/pods_helpers'
 
 platform :ios, '14.0'
 use_frameworks!
@@ -9,11 +9,11 @@ use_frameworks!
 install! 'cocoapods', :disable_input_output_paths => true
 
 def capacitor_pods
-  pod 'Capacitor', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios'
-  pod 'CapacitorCordova', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios'
-  pod 'CapacitorCommunitySqlite', :path => '../../node_modules/.pnpm/@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor-community/sqlite'
-  pod 'CapacitorSplashScreen', :path => '../../node_modules/.pnpm/@capacitor+splash-screen@7.0.3_@capacitor+core@7.4.4/node_modules/@capacitor/splash-screen'
-  pod 'PowersyncCapacitor', :path => '../../node_modules/.pnpm/@powersync+capacitor@0.1.3_@capacitor-community+sqlite@7.0.2_@capacitor+core@7.4.4__@powersyn_smncg5wuctchvueg7u47nvgl4i/node_modules/@powersync/capacitor'
+  pod 'Capacitor', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.3/node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.3/node_modules/@capacitor/ios'
+  pod 'CapacitorCommunitySqlite', :path => '../../node_modules/.pnpm/@capacitor-community+sqlite@7.0.3_@capacitor+core@7.4.3/node_modules/@capacitor-community/sqlite'
+  pod 'CapacitorSplashScreen', :path => '../../node_modules/.pnpm/@capacitor+splash-screen@7.0.0_@capacitor+core@7.4.3/node_modules/@capacitor/splash-screen'
+  pod 'PowersyncCapacitor', :path => '../../node_modules/.pnpm/@powersync+capacitor@file+..+..+packages+capacitor_@capacitor-community+sqlite@7.0.3_@c_0abc1a37c113f3d275f15aa18c563673/node_modules/@powersync/capacitor'
 end
 
 target 'App' do

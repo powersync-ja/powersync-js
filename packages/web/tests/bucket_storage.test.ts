@@ -12,7 +12,7 @@ import {
 } from '@powersync/common';
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema';
+import { TEST_SCHEMA } from './utils/test-schema.js';
 
 const putAsset1_1 = OplogEntry.fromRow({
   op_id: '1',

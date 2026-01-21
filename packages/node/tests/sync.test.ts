@@ -257,6 +257,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
         await waitForProgress(database, [0, 2]);
         pushDataLine(syncService, 'a', 2);
         await waitForProgress(database, [2, 2]);
+
         pushCheckpointComplete(syncService);
         await waitForSyncStatus(database, (s) => s.downloadProgress == null);
       },
@@ -973,8 +974,6 @@ async function waitForProgress(
       return false;
     }
 
-    //console.log('checking', progress);
-
     const check = (expected: [number, number], actual: ProgressWithOperations): boolean => {
       return actual.downloadedOperations == expected[0] && actual.totalOperations == expected[1];
     };
@@ -985,7 +984,6 @@ async function waitForProgress(
 
     for (const [priority, expected] of forPriorities) {
       if (!check(expected, progress.untilPriority(priority))) {
-        //console.log('failed for', priority, expected, progress);
         return false;
       }
     }

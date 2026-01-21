@@ -1,5 +1,13 @@
 # @powersync/react-native
 
+## 1.28.1
+
+### Patch Changes
+
+- Updated dependencies [133f376]
+  - @powersync/common@1.45.0
+  - @powersync/react@1.8.2
+
 ## 1.28.0
 
 ### Minor Changes
@@ -958,7 +966,6 @@
 - ca458d3: Updated logic to correspond with React Native Quick SQLite concurrent transactions. Added helper methods on transaction contexts.
 
   API changes include:
-
   - Removal of synchronous DB operations in transactions: `execute`, `commit`, `rollback` are now async functions. `executeAsync`, `commitAsync` and `rollbackAsync` have been removed.
   - Transaction contexts now have `get`, `getAll` and `getOptional` helpers.
   - Added a default lock timeout of 2 minutes to aide with potential recursive lock/transaction requests.

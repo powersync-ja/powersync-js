@@ -1,17 +1,17 @@
 import { type PowerSyncOpenFactoryOptions } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { resolveWebPowerSyncFlags } from '../../PowerSyncDatabase';
-import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
+import { resolveWebPowerSyncFlags } from '../../PowerSyncDatabase.js';
+import { OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection.js';
 import {
   DEFAULT_CACHE_SIZE_KB,
   ResolvedWebSQLOpenOptions,
   TemporaryStorageOption,
   WebSQLFlags
-} from '../web-sql-flags';
-import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
-import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter';
-import { WASQLiteVFS } from './WASQLiteConnection';
-import { WASQLiteOpenFactory } from './WASQLiteOpenFactory';
+} from '../web-sql-flags.js';
+import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection.js';
+import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
+import { WASQLiteVFS } from './WASQLiteConnection.js';
+import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.

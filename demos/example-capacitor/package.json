@@ -22,13 +22,13 @@
   "dependencies": {
     "@capacitor-community/sqlite": "^7.0.2",
     "@capacitor/android": "^7.4.3",
-    "@capacitor/core": "latest",
+    "@capacitor/core": "7.4.3",
     "@capacitor/ios": "^7.4.3",
-    "@capacitor/splash-screen": "latest",
+    "@capacitor/splash-screen": "7.0.0",
     "@powersync/capacitor": "^0.2.0",
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.30.0",
+    "@powersync/web": "^1.31.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"

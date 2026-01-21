@@ -6,7 +6,7 @@ import {
   WASQLitePowerSyncDatabaseOpenFactory
 } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema';
+import { TEST_SCHEMA } from './utils/test-schema.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 

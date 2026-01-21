@@ -11,13 +11,13 @@ import {
   createLogger,
   type ILogger
 } from '@powersync/common';
-import { getNavigatorLocks } from '../../shared/navigator';
-import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
-import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
-import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
-import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+import { getNavigatorLocks } from '../../shared/navigator.js';
+import { AsyncDatabaseConnection } from './AsyncDatabaseConnection.js';
+import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
+import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection.js';
+import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection.js';
+import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory.js';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 /**
  * @internal
