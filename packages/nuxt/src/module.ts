@@ -8,6 +8,7 @@ import {
   addLayout,
   addComponentsDir,
   installModule,
+  findPath,
 } from '@nuxt/kit'
 import { defu } from 'defu'
 import { setupDevToolsUI } from './devtools'
@@ -36,6 +37,15 @@ export interface PowerSyncNuxtModuleOptions {
    * @default false
    */
   useDiagnostics?: boolean
+  /**
+   * Enable Kysely integration.
+   * 
+   * When set to `true`, enables the `usePowerSyncKysely` composable for type-safe database queries.
+   * Requires `@powersync/kysely-driver` to be installed.
+   * 
+   * @default false
+   */
+  kysely?: boolean
 }
 
 export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
@@ -46,6 +56,7 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
   // Default configuration options of the Nuxt module
   defaults: {
     useDiagnostics: false,
+    kysely: false,
   },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
@@ -55,8 +66,20 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       nuxt.options.runtimeConfig.public.powerSyncModuleOptions as any,
       {
         useDiagnostics: options.useDiagnostics,
+        kysely: options.kysely,
       },
     )
+
+    if (options.kysely) {
+      const kyselyDriverPath = await findPath('@powersync/kysely-driver')
+
+      if (!kyselyDriverPath) {
+        throw new Error(
+          '[@powersync/nuxt] The `kysely` option requires @powersync/kysely-driver to be installed.\n' +
+          'Run: npm install @powersync/kysely-driver'
+        )
+      }
+    }
 
     await installModule('@nuxt/devtools-ui-kit')
     await installModule('@vueuse/nuxt')
@@ -83,10 +106,13 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
       ),
     })
 
-    addImports({
-      name: 'usePowerSyncKysely',
-      from: resolver.resolve('./runtime/composables/usePowerSyncKysely'),
-    })
+    // Conditionally add Kysely composable if enabled
+    if (options.kysely) {
+      addImports({
+        name: 'usePowerSyncKysely',
+        from: resolver.resolve('./runtime/composables/usePowerSyncKysely'),
+      })
+    }
 
     addImports({
       name: 'useDiagnosticsLogger',
@@ -126,12 +152,21 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
 
     // Ensure the packages are transpiled
     nuxt.options.build.transpile = nuxt.options.build.transpile || []
-    nuxt.options.build.transpile.push('reka-ui', '@tanstack/vue-table', '@powersync/web', '@powersync/kysely-driver', '@journeyapps/wa-sqlite')
+    nuxt.options.build.transpile.push('reka-ui', '@tanstack/vue-table', '@powersync/web', '@journeyapps/wa-sqlite')
+    
+    // Conditionally add Kysely driver to transpile list if enabled
+    if (options.kysely) {
+      nuxt.options.build.transpile.push('@powersync/kysely-driver')
+    }
 
     nuxt.hooks.hook('prepare:types', ({ references }: { references: any[] }) => {
       references.push({ types: '@powersync/web' })
-      references.push({ types: '@powersync/kysely-driver' })
       references.push({ types: '@journeyapps/wa-sqlite' })
+      
+      // Conditionally add Kysely types if enabled
+      if (options.kysely) {
+        references.push({ types: '@powersync/kysely-driver' })
+      }
     })
 
     // Make assets available to runtime files via Vite resolve alias

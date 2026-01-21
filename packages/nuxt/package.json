@@ -63,6 +63,11 @@
       "@powersync/vue": "workspace:*",
       "@powersync/web": "workspace:*"
     },
+    "peerDependenciesMeta": {
+      "@powersync/kysely-driver": {
+        "optional": true
+      }
+    },
     "devDependencies": {
       "@journeyapps/wa-sqlite": "^1.4.0",
       "@nuxt/module-builder": "^1.0.2",

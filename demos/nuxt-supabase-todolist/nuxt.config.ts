@@ -54,6 +54,7 @@ export default defineNuxtConfig({
 
   powersync: {
     useDiagnostics: true,
+    kysely: true,
   },
 
   supabase: {
