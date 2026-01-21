@@ -6,6 +6,7 @@ import { fileURLToPath, URL } from 'url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -28,6 +29,12 @@ export default defineConfig({
     exclude: ['@journeyapps/wa-sqlite'],
   },
   plugins: [
+    tanstackRouter({
+      generatedRouteTree: './routeTree.gen.ts',
+      routesDirectory: './routes',
+      quoteStyle: 'single',
+      autoCodeSplitting: true
+    }),
     wasm(),
     topLevelAwait(),
     tailwindcss(),
