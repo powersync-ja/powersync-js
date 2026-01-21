@@ -55,7 +55,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
   - [OP-SQLite](https://github.com/OP-Engineering/op-sqlite) integration for React Native projects. Alternative to the default usage of [react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite).
 
 - [packages/common](./packages/common/README.md)
-  - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
+  - Shared package: TypeScript implementation of a PowerSync database connector, streaming sync bucket implementation and attachment utilities.
 
 ## Demo Apps / Example Projects
 
