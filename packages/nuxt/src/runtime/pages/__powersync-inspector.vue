@@ -39,13 +39,13 @@
         {{ isSyncing ? "Syncing" : hasSynced ? "Synced" : "Not Synced" }}
       </NTip>
       <NTip
-        :n="isUploading ? 'green' : 'gray' + ' xs'"
+        :n="`${isUploading ? 'green' : 'gray'} xs`"
         :icon="isUploading ? 'carbon:cloud-upload' : 'carbon:pause-outline'"
       >
         {{ isUploading ? "Uploading" : "Upload Idle" }}
       </NTip>
       <NTip
-        :n="isDownloading ? 'green' : 'gray' + ' xs'"
+        :n="`${isDownloading ? 'green' : 'gray'} xs`"
         :icon="isDownloading ? 'carbon:cloud-download' : 'carbon:pause-outline'"
       >
         {{ isDownloading ? "Downloading" : "Download Idle" }}
