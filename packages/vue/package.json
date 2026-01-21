@@ -39,7 +39,7 @@
     "@powersync/common": "workspace:*",
     "@powersync/web": "workspace:*",
     "flush-promises": "^1.0.2",
-    "jsdom": "^24.0.0",
+    "jsdom": "catalog:",
     "vue": "3.4.21"
   }
 }

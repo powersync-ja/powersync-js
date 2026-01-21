@@ -19,8 +19,6 @@ const config: UserConfigExport = {
        * they link to `.js` files.
        */
       '@powersync/web': path.resolve(__dirname, './lib/src'),
-      // https://jira.mongodb.org/browse/NODE-5773
-      bson: import.meta.resolve('bson'),
       // Mock WebRemote to throw 401 errors for all HTTP requests in tests
       '../../db/sync/WebRemote.js': path.resolve(__dirname, './tests/mocks/MockWebRemote.ts')
     }

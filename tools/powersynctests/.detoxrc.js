@@ -2,7 +2,7 @@
 module.exports = {
   testRunner: {
     args: {
-      $0: 'jest',
+      $0: 'pnpm exec jest',
       config: 'e2e/jest.config.js',
     },
     jest: {
