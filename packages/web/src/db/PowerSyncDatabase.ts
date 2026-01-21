@@ -7,6 +7,7 @@ import {
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
   StreamingSyncImplementation,
+  TriggerManagerConfig,
   isDBAdapter,
   isSQLOpenFactory,
   type BucketStorageAdapter,
@@ -16,6 +17,8 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator.js';
+import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
+import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
@@ -144,7 +147,33 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     }
   }
 
-  async _initialize(): Promise<void> {}
+  async _initialize(): Promise<void> {
+    if (this.database instanceof LockedAsyncDatabaseAdapter) {
+      /**
+       * While init is done automatically,
+       * LockedAsyncDatabaseAdapter only exposes config after init.
+       * We can explicitly wait for init here in order to access config.
+       */
+      await this.database.init();
+    }
+
+    // In some cases, like the SQLJs adapter, we don't pass a WebDBAdapter, so we need to check.
+    if (typeof (this.database as WebDBAdapter).getConfiguration == 'function') {
+      const config = (this.database as WebDBAdapter).getConfiguration();
+      if (config.requiresPersistentTriggers) {
+        this.triggersImpl.updateDefaults({
+          useStorageByDefault: true
+        });
+      }
+    }
+  }
+
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    return {
+      // We need to share hold information between tabs for web
+      claimManager: NAVIGATOR_TRIGGER_CLAIM_MANAGER
+    };
+  }
 
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
