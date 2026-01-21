@@ -165,11 +165,6 @@ export class TriggerManagerImpl implements TriggerManager {
           trigger_names
       `);
 
-      if (trackedItems.length == 0) {
-        // There is nothing to cleanup
-        return;
-      }
-
       for (const trackedItem of trackedItems) {
         // check if there is anything holding on to this item
         const hasClaim = await this.options.claimManager.checkClaim(trackedItem.id);
