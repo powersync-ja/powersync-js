@@ -29,13 +29,13 @@ export * from './db/DBAdapter.js';
 export * from './db/schema/Column.js';
 export * from './db/schema/Index.js';
 export * from './db/schema/IndexedColumn.js';
+export * from './db/schema/RawTable.js';
 export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
-export * from './db/schema/RawTable.js';
 
 export * from './client/Query.js';
-export { MemoryTriggerClaimManager } from './client/triggers/MemoryTriggerClaimManager.js';
+export { MEMORY_TRIGGER_CLAIM_MANAGER } from './client/triggers/MemoryTriggerClaimManager.js';
 export * from './client/triggers/sanitizeSQL.js';
 export * from './client/triggers/TriggerManager.js';
 export { TriggerManagerImpl } from './client/triggers/TriggerManagerImpl.js';

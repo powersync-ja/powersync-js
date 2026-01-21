@@ -40,7 +40,7 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.js';
 import { SyncStream } from './sync/sync-streams.js';
-import { MemoryTriggerClaimManager } from './triggers/MemoryTriggerClaimManager.js';
+import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManager.js';
 import { TriggerManager, TriggerManagerConfig } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
@@ -343,7 +343,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   protected generateTriggerManagerConfig(): TriggerManagerConfig {
     return {
-      claimManager: new MemoryTriggerClaimManager()
+      claimManager: MEMORY_TRIGGER_CLAIM_MANAGER
     };
   }
 

@@ -17,7 +17,7 @@ import {
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator.js';
-import { NavigatorTriggerClaimManager } from './NavigatorTriggerClaimManager.js';
+import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
@@ -171,7 +171,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   protected generateTriggerManagerConfig(): TriggerManagerConfig {
     return {
       // We need to share hold information between tabs for web
-      claimManager: new NavigatorTriggerClaimManager()
+      claimManager: NAVIGATOR_TRIGGER_CLAIM_MANAGER
     };
   }
 
