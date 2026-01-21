@@ -1,8 +1,8 @@
 import { DiffTriggerOperation } from '@powersync/common';
 import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema';
-import { generateTestDb } from './utils/testDb';
+import { TEST_SCHEMA } from './utils/test-schema.js';
+import { generateTestDb } from './utils/testDb.js';
 
 // Shared helper to spin up an iframe that creates a persisted trigger table
 const createTriggerInIframe = () => {

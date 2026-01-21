@@ -1,7 +1,7 @@
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { onTestFinished } from 'vitest';
-import { TEST_SCHEMA } from './test-schema';
+import { TEST_SCHEMA } from './test-schema.js';
 
 export const generateTestDb = (options?: WebPowerSyncDatabaseOptions) => {
   const resolvedOptions = options ?? {

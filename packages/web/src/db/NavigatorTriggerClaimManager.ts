@@ -1,5 +1,5 @@
 import { TriggerClaimManager } from '@powersync/common';
-import { getNavigatorLocks } from '../shared/navigator';
+import { getNavigatorLocks } from '../shared/navigator.js';
 
 export class NavigatorTriggerClaimManager implements TriggerClaimManager {
   async obtainClaim(identifier: string): Promise<() => Promise<void>> {
