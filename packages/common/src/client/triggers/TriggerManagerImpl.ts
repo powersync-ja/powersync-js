@@ -38,6 +38,10 @@ type TrackedTableRecord = {
    * The destination table name for the trigger
    */
   table: string;
+  /**
+   * Array of actual trigger names found for this table/id combo
+   */
+  triggerNames: string[];
 };
 
 const TRIGGER_CLEANUP_INTERVAL_MS = 120_000; // 2 minutes
@@ -135,37 +139,42 @@ export class TriggerManagerImpl implements TriggerManager {
   async cleanupResources() {
     // we use the database here since cleanupResources is called during the PowerSyncDatabase initialization
     await this.db.database.writeLock(async (ctx) => {
-      // Query sqlite_master directly to find all persisted triggers and extract destination/id
-      // Trigger naming convention: __ps_temp_trigger_<operation>__<destination>__<id>
-      // - Compute start index after the second '__' (after operation) as a CTE for clarity
-      //   _start_index = instr(substr(name, 3), '__') + 4
-      //   (add 2 to account for removed leading '__', plus 2 to skip the '__' before destination)
-      // - Destination length excludes the trailing '__' + 36-char UUID: length(name) - _start_index - 37
-      // - UUID is always last 36 chars
-      const trackedItems = await ctx.getAll<TrackedTableRecord>(/* sql */ `
-        WITH
-          trigger_names AS (
-            SELECT
-              name,
-              instr (substr (name, 3), '__') + 4 AS _start_index
-            FROM
-              sqlite_master
-            WHERE
-              type = 'trigger'
-              AND name LIKE '__ps_temp_trigger_%'
-          )
-        SELECT DISTINCT
-          substr (
-            name,
-            _start_index,
-            length (name) - _start_index - 37
-          ) AS "table",
-          substr (name, -36) AS id
+      /**
+       * Note: We only cleanup persisted triggers. These are tracked in the sqlite_master table.
+       * temporary triggers will not be affected by this.
+       * Query all triggers that match our naming pattern
+       */
+      const triggers = await ctx.getAll<{ name: string }>(/* sql */ `
+        SELECT
+          name
         FROM
-          trigger_names
+          sqlite_master
+        WHERE
+          type = 'trigger'
+          AND name LIKE '__ps_temp_trigger_%'
       `);
 
-      for (const trackedItem of trackedItems) {
+      /** Use regex to extract table names and IDs from trigger names
+       * Trigger naming convention: __ps_temp_trigger_<operation>__<destination_table>__<id>
+       */
+      const triggerPattern = /^__ps_temp_trigger_(?:insert|update|delete)__(.+)__([a-f0-9_]{36})$/i;
+      const trackedItems = new Map<string, TrackedTableRecord>();
+
+      for (const trigger of triggers) {
+        const match = trigger.name.match(triggerPattern);
+        if (match) {
+          const [, table, id] = match;
+          // Collect all trigger names for each id combo
+          const existing = trackedItems.get(id);
+          if (existing) {
+            existing.triggerNames.push(trigger.name);
+          } else {
+            trackedItems.set(id, { table, id, triggerNames: [trigger.name] });
+          }
+        }
+      }
+
+      for (const trackedItem of trackedItems.values()) {
         // check if there is anything holding on to this item
         const hasClaim = await this.options.claimManager.checkClaim(trackedItem.id);
         if (hasClaim) {
@@ -176,11 +185,7 @@ export class TriggerManagerImpl implements TriggerManager {
         this.db.logger.debug(`Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`);
 
         // We need to delete the triggers and table
-        const triggerNames = Object.values(DiffTriggerOperation).map((operation) =>
-          this.generateTriggerName(operation, trackedItem.table, trackedItem.id)
-        );
-        for (const triggerName of triggerNames) {
-          // The trigger might not actually exist, we don't track each trigger name and we test all permutations
+        for (const triggerName of trackedItem.triggerNames) {
           await ctx.execute(`DROP TRIGGER IF EXISTS ${triggerName}`);
         }
         await ctx.execute(`DROP TABLE IF EXISTS ${trackedItem.table}`);
