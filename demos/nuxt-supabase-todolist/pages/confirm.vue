@@ -1,3 +1,7 @@
+<template>
+  <div>Waiting for login...</div>
+</template>
+
 <script setup lang="ts">
 const user = useSupabaseUser()
 
@@ -11,7 +15,3 @@ watch(
   { immediate: true },
 )
 </script>
-
-<template>
-  <div>Waiting for login...</div>
-</template>

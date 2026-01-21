@@ -1,77 +1,3 @@
-<script setup lang="ts">
-import type { Database, TaskRecord } from '~/powersync/AppSchema'
-
-const client = useSupabaseClient()
-const user = asyncComputed(async () => await client.auth.getUser().then(res => res.data.user))
-const toast = useToast()
-
-const db = usePowerSyncKysely<Database>()
-const { clearData } = usePowerSyncInspectorDiagnostics()
-
-const taskQuery = computed(() => db.selectFrom('tasks')
-  .where('user_id', '=', user.value?.id ?? '')
-  .orderBy('created_at')
-  .selectAll(),
-)
-
-const { data: tasks, isLoading } = await useQuery(taskQuery)
-
-console.log('tasks', tasks.value)
-
-const newTask = ref('')
-
-async function addTask() {
-  if (newTask.value.trim().length === 0) return
-  try {
-    if (user.value) {
-      await db.insertInto('tasks').values({
-        user_id: user.value.id,
-        description: newTask.value,
-        completed: 0,
-        id: crypto.randomUUID(),
-      }).execute()
-    }
-  }
-  catch (error: any) {
-    toast.add({
-      title: 'Error',
-      description: error.message,
-      color: 'error',
-    })
-  }
-  newTask.value = ''
-}
-
-const completeTask = async (
-  task: TaskRecord,
-) => {
-  await db.updateTable('tasks').set({ completed: task.completed, completed_at: task.completed ? new Date().toISOString() : null }).where('id', '=', task.id).execute()
-}
-
-const removeTask = async (
-  task: TaskRecord,
-) => {
-  await db.deleteFrom('tasks').where('id', '=', task.id).execute()
-}
-
-const links = [
-  {
-    label: 'PowerSync Inspector',
-    to: '/__powersync-inspector',
-    icon: 'lucide:binoculars',
-    color: 'neutral' as const,
-  },
-  {
-    label: 'PowerSync Documentation',
-    to: 'https://docs.powersync.com/intro/powersync-overview',
-    color: 'neutral' as const,
-    variant: 'subtle' as const,
-    trailingIcon: 'i-lucide-arrow-right',
-    target: '_blank',
-  },
-]
-</script>
-
 <template>
   <UContainer>
     <UPageSection
@@ -151,3 +77,77 @@ const links = [
     </UPageSection>
   </UContainer>
 </template>
+
+<script setup lang="ts">
+import type { Database, TaskRecord } from '~/powersync/AppSchema'
+
+const client = useSupabaseClient()
+const user = asyncComputed(async () => await client.auth.getUser().then(res => res.data.user))
+const toast = useToast()
+
+const db = usePowerSyncKysely<Database>()
+const { clearData } = usePowerSyncInspectorDiagnostics()
+
+const taskQuery = computed(() => db.selectFrom('tasks')
+  .where('user_id', '=', user.value?.id ?? '')
+  .orderBy('created_at')
+  .selectAll(),
+)
+
+const { data: tasks, isLoading } = await useQuery(taskQuery)
+
+console.log('tasks', tasks.value)
+
+const newTask = ref('')
+
+async function addTask() {
+  if (newTask.value.trim().length === 0) return
+  try {
+    if (user.value) {
+      await db.insertInto('tasks').values({
+        user_id: user.value.id,
+        description: newTask.value,
+        completed: 0,
+        id: crypto.randomUUID(),
+      }).execute()
+    }
+  }
+  catch (error: any) {
+    toast.add({
+      title: 'Error',
+      description: error.message,
+      color: 'error',
+    })
+  }
+  newTask.value = ''
+}
+
+const completeTask = async (
+  task: TaskRecord,
+) => {
+  await db.updateTable('tasks').set({ completed: task.completed, completed_at: task.completed ? new Date().toISOString() : null }).where('id', '=', task.id).execute()
+}
+
+const removeTask = async (
+  task: TaskRecord,
+) => {
+  await db.deleteFrom('tasks').where('id', '=', task.id).execute()
+}
+
+const links = [
+  {
+    label: 'PowerSync Inspector',
+    to: '/__powersync-inspector',
+    icon: 'lucide:binoculars',
+    color: 'neutral' as const,
+  },
+  {
+    label: 'PowerSync Documentation',
+    to: 'https://docs.powersync.com/intro/powersync-overview',
+    color: 'neutral' as const,
+    variant: 'subtle' as const,
+    trailingIcon: 'i-lucide-arrow-right',
+    target: '_blank',
+  },
+]
+</script>

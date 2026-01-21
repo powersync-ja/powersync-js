@@ -121,7 +121,6 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
         )
 
       if (this.options.flags?.enableMultiTabs) {
-        console.log('enableMultiTabs is true')
         if (!this.resolvedFlags.broadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
@@ -141,7 +140,6 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
           db: this.database as WebDBAdapter,
         })
       } else {
-        console.log('enableMultiTabs is false')
         return new WebStreamingSyncImplementation({
           ...options,
           adapter,

@@ -1,3 +1,33 @@
+<template>
+  <UContainer
+    class="h-[calc(100vh-var(--ui-header-height))] flex items-center justify-center px-4"
+  >
+    <UPageCard class="max-w-sm w-full">
+      <UAuthForm
+        :title="sign === 'in' ? 'Login' : 'Sign up'"
+        icon="i-lucide-user"
+        :fields="fields"
+        @submit="onSubmit"
+      >
+        <template #description>
+          {{
+            sign === "up"
+              ? "Already have an account?"
+              : "Don't have an account?"
+          }}
+          <UButton
+            variant="link"
+            class="p-0"
+            @click="sign = sign === 'up' ? 'in' : 'up'"
+          >
+            {{ sign === "in" ? "Sign In" : "Sign Up" }}
+          </UButton>.
+        </template>
+      </UAuthForm>
+    </UPageCard>
+  </UContainer>
+</template>
+
 <script setup lang="ts">
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
@@ -86,33 +116,3 @@ const displayError = (error: any) => {
   })
 }
 </script>
-
-<template>
-  <UContainer
-    class="h-[calc(100vh-var(--ui-header-height))] flex items-center justify-center px-4"
-  >
-    <UPageCard class="max-w-sm w-full">
-      <UAuthForm
-        :title="sign === 'in' ? 'Login' : 'Sign up'"
-        icon="i-lucide-user"
-        :fields="fields"
-        @submit="onSubmit"
-      >
-        <template #description>
-          {{
-            sign === "up"
-              ? "Already have an account?"
-              : "Don't have an account?"
-          }}
-          <UButton
-            variant="link"
-            class="p-0"
-            @click="sign = sign === 'up' ? 'in' : 'up'"
-          >
-            {{ sign === "in" ? "Sign In" : "Sign Up" }}
-          </UButton>.
-        </template>
-      </UAuthForm>
-    </UPageCard>
-  </UContainer>
-</template>
