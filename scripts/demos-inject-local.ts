@@ -32,19 +32,12 @@ const filterDemosPattern = (demos: string[], options: OptionValues): string[] =>
 };
 
 const ensureLocalLinkingBuilt = async () => {
-  try {
-    await fs.access(PNPMFILE_DIST_PATH);
-    return;
-  } catch {}
-
   console.log('Building @powersync/local-linking ...');
   // Run build from repo root
   execSync('pnpm -C tools/local-linking build', {
     cwd: path.resolve(import.meta.dirname, '..', '..'),
     stdio: 'inherit'
   });
-
-  await fs.access(PNPMFILE_DIST_PATH);
 };
 
 const injectPackagesAll = async (demos: string[], options: OptionValues) => {

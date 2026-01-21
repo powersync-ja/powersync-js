@@ -91,7 +91,7 @@ export = {
 
       scanDeps(pkg.dependencies);
       scanDeps(pkg.devDependencies);
-
+      scanDeps(pkg.peerDependencies);
       return pkg;
     }
   }

@@ -16,10 +16,8 @@ export default defineConfig({
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web']
   },
-  plugins: [],
   worker: {
-    format: 'es',
-    plugins: () => []
+    format: 'es'
   },
   test: {
     globals: true,
