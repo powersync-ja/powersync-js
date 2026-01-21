@@ -1,6 +1,4 @@
 // Plugins
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import Vue from '@vitejs/plugin-vue';
 import ViteFonts from 'unplugin-fonts/vite';
 import Components from 'unplugin-vue-components/vite';
@@ -14,8 +12,6 @@ import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    wasm(),
-    topLevelAwait(),
     Vue({
       template: { transformAssetUrls }
     }),
@@ -80,7 +76,6 @@ export default defineConfig({
     include: []
   },
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   }
 });

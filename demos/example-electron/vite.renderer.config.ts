@@ -2,8 +2,6 @@ import type { ConfigEnv, UserConfig } from 'vite';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { pluginExposeRenderer } from './vite.base.config.js';
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import vitePluginRequire from 'vite-plugin-require';
 
 // https://vitejs.dev/config
@@ -27,19 +25,9 @@ export default defineConfig((env) => {
       exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
       include: []
     },
-    plugins: [
-      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
-      wasm(),
-      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
-      topLevelAwait(),
-      react(),
-      vitePluginRequire.default(),
-      pluginExposeRenderer(name)
-    ],
+    plugins: [react(), vitePluginRequire.default(), pluginExposeRenderer(name)],
     worker: {
-      format: 'es',
-      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
-      plugins: () => [wasm(), topLevelAwait()]
+      format: 'es'
     },
     resolve: {
       preserveSymlinks: true

@@ -1,6 +1,4 @@
 import { fileURLToPath, URL } from 'url';
-import topLevelAwait from 'vite-plugin-top-level-await';
-import wasm from 'vite-plugin-wasm';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -31,8 +29,6 @@ export default defineConfig({
     include: []
   },
   plugins: [
-    wasm(),
-    topLevelAwait(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -71,7 +67,6 @@ export default defineConfig({
     })
   ],
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   }
 });
