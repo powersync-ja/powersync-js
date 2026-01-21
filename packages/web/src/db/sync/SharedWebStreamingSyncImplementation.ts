@@ -5,16 +5,16 @@ import {
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator';
-import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider';
-import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation';
-import { WorkerClient } from '../../worker/sync/WorkerClient';
-import { WebDBAdapter } from '../adapters/WebDBAdapter';
-import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags';
+import { getNavigatorLocks } from '../../shared/navigator.js';
+import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
+import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
+import { WorkerClient } from '../../worker/sync/WorkerClient.js';
+import { WebDBAdapter } from '../adapters/WebDBAdapter.js';
+import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from './WebStreamingSyncImplementation';
+} from './WebStreamingSyncImplementation.js';
 
 /**
  * The shared worker will trigger methods on this side of the message port

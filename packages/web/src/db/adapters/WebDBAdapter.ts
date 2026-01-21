@@ -1,9 +1,13 @@
 import { DBAdapter } from '@powersync/common';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 export type SharedConnectionWorker = {
   identifier: string;
   port: MessagePort;
+};
+
+export type WebDBAdapterConfiguration = ResolvedWebSQLOpenOptions & {
+  requiresPersistentTriggers: boolean;
 };
 
 export interface WebDBAdapter extends DBAdapter {
@@ -16,5 +20,5 @@ export interface WebDBAdapter extends DBAdapter {
    * Get the config options used to open this connection.
    * This is useful for sharing connections.
    */
-  getConfiguration(): ResolvedWebSQLOpenOptions;
+  getConfiguration(): WebDBAdapterConfiguration;
 }

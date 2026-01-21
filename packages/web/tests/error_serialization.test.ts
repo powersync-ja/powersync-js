@@ -1,6 +1,6 @@
 import { SyncStreamConnectionMethod } from '@powersync/common';
 import { describe, expect } from 'vitest';
-import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
+import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
 
 /**
  * Test to verify that Error instances are properly serialized when passed through MessagePorts.

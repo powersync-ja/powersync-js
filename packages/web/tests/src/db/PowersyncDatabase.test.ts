@@ -1,6 +1,6 @@
-import { createBaseLogger, PowerSyncDatabase } from '@powersync/web';
+import { createLogger, PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { testSchema } from '../../utils/testDb';
+import { TEST_SCHEMA } from '../../utils/test-schema.js';
 
 describe('PowerSyncDatabase', () => {
   let db: PowerSyncDatabase;
@@ -9,7 +9,7 @@ describe('PowerSyncDatabase', () => {
   let mockSyncImplementation: any;
 
   beforeEach(() => {
-    const logger = createBaseLogger();
+    const logger = createLogger('test');
     mockLogger = {
       debug: vi.spyOn(logger, 'debug'),
       warn: vi.spyOn(logger, 'warn')
@@ -17,7 +17,7 @@ describe('PowerSyncDatabase', () => {
 
     // Initialize with minimal required options
     db = new PowerSyncDatabase({
-      schema: testSchema,
+      schema: TEST_SCHEMA,
       database: {
         dbFilename: 'test.db'
       },

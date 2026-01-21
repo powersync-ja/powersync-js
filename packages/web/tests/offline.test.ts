@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema';
+import { makeOptionalSyncSchema } from './utils/optionalSyncTestSchema.js';
 
 const assetId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 const userId = '3390de4f-0488-4e50-abed-f8e8eb1d0b42';

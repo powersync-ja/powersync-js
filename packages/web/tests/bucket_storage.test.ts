@@ -12,7 +12,7 @@ import {
 } from '@powersync/common';
 import { PowerSyncDatabase, WASQLitePowerSyncDatabaseOpenFactory } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { testSchema } from './utils/testDb';
+import { TEST_SCHEMA } from './utils/test-schema.js';
 
 const putAsset1_1 = OplogEntry.fromRow({
   op_id: '1',
@@ -69,7 +69,7 @@ describe('Bucket Storage', { sequential: true }, () => {
       flags: {
         enableMultiTabs: false
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
     await db.waitForReady();
     bucketStorage = new SqliteBucketStorage(db.database);
@@ -437,7 +437,7 @@ describe('Bucket Storage', { sequential: true }, () => {
       flags: {
         enableMultiTabs: false
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
 
     powersync = factory2.getInstance();
@@ -456,7 +456,7 @@ describe('Bucket Storage', { sequential: true }, () => {
       flags: {
         enableMultiTabs: false
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
 
     let powersync = factory.getInstance();

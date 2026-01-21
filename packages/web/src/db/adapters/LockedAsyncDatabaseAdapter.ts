@@ -11,13 +11,13 @@ import {
   createLogger,
   type ILogger
 } from '@powersync/common';
-import { getNavigatorLocks } from '../../shared/navigator';
-import { AsyncDatabaseConnection } from './AsyncDatabaseConnection';
-import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection';
-import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection';
-import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+import { getNavigatorLocks } from '../../shared/navigator.js';
+import { AsyncDatabaseConnection } from './AsyncDatabaseConnection.js';
+import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
+import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection.js';
+import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection.js';
+import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory.js';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 /**
  * @internal
@@ -181,11 +181,15 @@ export class LockedAsyncDatabaseAdapter
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
-  getConfiguration(): ResolvedWebSQLOpenOptions {
+  getConfiguration(): WebDBAdapterConfiguration {
     if (!this._config) {
       throw new Error(`Cannot get config before initialization is completed`);
     }
-    return this._config;
+    return {
+      ...this._config,
+      // This can be overridden by the adapter later
+      requiresPersistentTriggers: false
+    };
   }
 
   protected async waitForInitialized() {

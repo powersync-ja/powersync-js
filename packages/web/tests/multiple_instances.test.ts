@@ -2,11 +2,12 @@ import { AbstractPowerSyncDatabase, createBaseLogger, createLogger } from '@powe
 import { OpenAsyncDatabaseConnection, WASqliteConnection } from '@powersync/web';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter';
-import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection';
-import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest';
-import { generateTestDb, testSchema } from './utils/testDb';
+import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter.js';
+import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
+import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
+import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
+import { TEST_SCHEMA } from './utils/test-schema.js';
+import { generateTestDb } from './utils/testDb.js';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -16,7 +17,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       database: {
         dbFilename: DB_FILENAME
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
 
   beforeAll(() => createBaseLogger().useDefaults());

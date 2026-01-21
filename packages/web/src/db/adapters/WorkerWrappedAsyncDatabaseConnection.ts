@@ -5,8 +5,8 @@ import {
   OnTableChangeCallback,
   OpenAsyncDatabaseConnection,
   ProxiedQueryResult
-} from './AsyncDatabaseConnection';
-import { ResolvedWebSQLOpenOptions } from './web-sql-flags';
+} from './AsyncDatabaseConnection.js';
+import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
 
 export type SharedConnectionWorker = {
   identifier: string;

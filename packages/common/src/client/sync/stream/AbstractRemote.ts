@@ -573,7 +573,11 @@ export abstract class AbstractRemote {
 
     const stream = new DataStream<T, string>({
       logger: this.logger,
-      mapLine: mapLine
+      mapLine: mapLine,
+      pressure: {
+        highWaterMark: 20,
+        lowWaterMark: 10
+      }
     });
 
     abortSignal?.addEventListener('abort', () => {
@@ -585,46 +589,54 @@ export abstract class AbstractRemote {
     let buffer = '';
 
 
+    const consumeStream = async () => {
+      while (!stream.closed && !abortSignal?.aborted && !readerReleased) {
+        const { done, value } = await reader.read();
+        if (done) {
+          const remaining = buffer.trim();
+          if (remaining.length != 0) {
+            stream.enqueueData(remaining);
+          }
+
+          stream.close();
+          await closeReader();
+          return;
+        }
+
+        const data = decoder.decode(value, { stream: true });
+        buffer += data;
+
+        const lines = buffer.split('\n');
+        for (var i = 0; i < lines.length - 1; i++) {
+          var l = lines[i].trim();
+          if (l.length > 0) {
+            stream.enqueueData(l);
+          }
+        }
+
+        buffer = lines[lines.length - 1];
+
+        // Implement backpressure by waiting for the low water mark to be reached
+        if (stream.dataQueue.length > stream.highWatermark) {
+          await new Promise<void>((resolve) => {
+            const dispose = stream.registerListener({
+              lowWater: async () => {
+                resolve();
+                dispose();
+              },
+              closed: () => {
+                resolve();
+                dispose();
+              }
+            })
+          })
+        }
+      }
+    }
+
+    consumeStream().catch(ex => this.logger.error('Error consuming stream', ex));
 
     const l = stream.registerListener({
-      lowWater: async () => {
-        if (stream.closed || abortSignal?.aborted || readerReleased) {
-          return
-        } 
-        try {
-          let didCompleteLine = false;
-          while (!didCompleteLine) {
-            const { done, value } = await reader.read();
-            if (done) {
-              const remaining = buffer.trim();
-              if (remaining.length != 0) {
-                stream.enqueueData(remaining);
-              }
-
-              stream.close();
-              await closeReader();
-              return;
-            }
-
-            const data = decoder.decode(value, { stream: true });
-            buffer += data;
-
-            const lines = buffer.split('\n');
-            for (var i = 0; i < lines.length - 1; i++) {
-              var l = lines[i].trim();
-              if (l.length > 0) {
-                stream.enqueueData(l);
-                didCompleteLine = true;
-              }
-            }
-
-            buffer = lines[lines.length - 1];
-          }
-        } catch (ex) {
-          stream.close();
-          throw ex;
-        }
-      },
       closed: () => {
         closeReader();
         l?.();

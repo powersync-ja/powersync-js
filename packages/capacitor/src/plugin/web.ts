@@ -1,6 +1,6 @@
 import { WebPlugin } from '@capacitor/core';
 
-import type { PowerSyncPlugin, RegistrationResponse } from './PowerSyncPlugin';
+import type { PowerSyncPlugin, RegistrationResponse } from './PowerSyncPlugin.js';
 
 export class PowerSyncWeb extends WebPlugin implements PowerSyncPlugin {
   async registerCore(): Promise<RegistrationResponse> {

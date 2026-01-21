@@ -1,17 +1,17 @@
 import { DBAdapter, type ILogLevel } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database';
-import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory';
-import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection';
-import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter';
-import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection';
+import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
+import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory.js';
+import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection.js';
+import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection.js';
 import {
   DEFAULT_CACHE_SIZE_KB,
   ResolvedWebSQLOpenOptions,
   TemporaryStorageOption,
   WebSQLOpenFactoryOptions
-} from '../web-sql-flags';
-import { WASQLiteVFS, WASqliteConnection } from './WASQLiteConnection';
+} from '../web-sql-flags.js';
+import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
+import { WASQLiteVFS, WASqliteConnection } from './WASQLiteConnection.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -41,7 +41,7 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
   }
 
   protected openAdapter(): DBAdapter {
-    return new LockedAsyncDatabaseAdapter({
+    return new InternalWASQLiteDBAdapter({
       name: this.options.dbFilename,
       openConnection: () => this.openConnection(),
       debugMode: this.options.debugMode,

@@ -72,22 +72,22 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-lock": "^1.4.0"
+    "async-lock": "catalog:"
   },
   "devDependencies": {
-    "@op-engineering/op-sqlite": "^15.2.1",
-    "@react-native/eslint-config": "^0.73.1",
-    "@types/async-lock": "^1.4.0",
-    "@types/react": "^18.2.44",
-    "del-cli": "^5.1.0",
-    "eslint": "^8.51.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.0.3",
-    "react": "18.3.1",
-    "react-native": "0.75.3",
-    "react-native-builder-bob": "^0.30.2",
-    "turbo": "^1.10.7"
+    "@op-engineering/op-sqlite": "catalog:",
+    "@react-native/eslint-config": "^0.83.1",
+    "@types/async-lock": "catalog:",
+    "@types/react": "^19.1.1",
+    "del-cli": "^7.0.0",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "catalog:",
+    "prettier": "catalog:",
+    "react": "^19.2.0",
+    "react-native": "catalog:",
+    "react-native-builder-bob": "^0.40.17",
+    "turbo": "^2.7.3"
   },
   "eslintIgnore": [
     "node_modules/",
@@ -114,7 +114,6 @@
         "typescript",
         {
           "project": "tsconfig.build.json",
-          "esm": true,
           "tsc": "../../node_modules/.bin/tsc"
         }
       ]

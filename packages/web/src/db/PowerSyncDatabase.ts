@@ -7,6 +7,7 @@ import {
   PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
   StreamingSyncImplementation,
+  TriggerManagerConfig,
   isDBAdapter,
   isSQLOpenFactory,
   type BucketStorageAdapter,
@@ -15,22 +16,25 @@ import {
   type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
 import { Mutex } from 'async-mutex';
-import { getNavigatorLocks } from '../shared/navigator';
-import { WebDBAdapter } from './adapters/WebDBAdapter';
-import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory';
+import { getNavigatorLocks } from '../shared/navigator.js';
+import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
+import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter.js';
+import { WebDBAdapter } from './adapters/WebDBAdapter.js';
+import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
   DEFAULT_WEB_SQL_FLAGS,
   ResolvedWebSQLOpenOptions,
   WebSQLFlags,
+  isServerSide,
   resolveWebSQLFlags
-} from './adapters/web-sql-flags';
-import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation';
-import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation';
-import { WebRemote } from './sync/WebRemote';
+} from './adapters/web-sql-flags.js';
+import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
+import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation.js';
+import { WebRemote } from './sync/WebRemote.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
-} from './sync/WebStreamingSyncImplementation';
+} from './sync/WebStreamingSyncImplementation.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -143,7 +147,33 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     }
   }
 
-  async _initialize(): Promise<void> {}
+  async _initialize(): Promise<void> {
+    if (this.database instanceof LockedAsyncDatabaseAdapter) {
+      /**
+       * While init is done automatically,
+       * LockedAsyncDatabaseAdapter only exposes config after init.
+       * We can explicitly wait for init here in order to access config.
+       */
+      await this.database.init();
+    }
+
+    // In some cases, like the SQLJs adapter, we don't pass a WebDBAdapter, so we need to check.
+    if (typeof (this.database as WebDBAdapter).getConfiguration == 'function') {
+      const config = (this.database as WebDBAdapter).getConfiguration();
+      if (config.requiresPersistentTriggers) {
+        this.triggersImpl.updateDefaults({
+          useStorageByDefault: true
+        });
+      }
+    }
+  }
+
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    return {
+      // We need to share hold information between tabs for web
+      claimManager: NAVIGATOR_TRIGGER_CLAIM_MANAGER
+    };
+  }
 
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
@@ -167,6 +197,20 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
     });
+  }
+
+  protected async loadVersion(): Promise<void> {
+    if (isServerSide()) {
+      return;
+    }
+    return super.loadVersion();
+  }
+
+  protected async resolveOfflineSyncStatus() {
+    if (isServerSide()) {
+      return;
+    }
+    return super.resolveOfflineSyncStatus();
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
