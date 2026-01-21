@@ -1,6 +1,5 @@
 import { TriggerClaimManager } from './TriggerManager.js';
 
-// Uses a global store to share the state between potentially multiple instances
 const CLAIM_STORE = new Map<string, () => Promise<void>>();
 
 /**
