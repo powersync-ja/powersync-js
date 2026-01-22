@@ -47,18 +47,17 @@ export enum SyncClientImplementation {
    *
    * This is the default option.
    *
-   * @deprecated Don't use {@link SyncClientImplementation.JAVASCRIPT} directly. Instead, use
-   * {@link DEFAULT_SYNC_CLIENT_IMPLEMENTATION} or omit the option. The explicit choice to use
-   * the JavaScript-based sync implementation will be removed from a future version of the SDK.
+   * @deprecated We recommend the {@link RUST} client implementation for all apps. If you have issues with
+   * the Rust client, please file an issue or reach out to us. The JavaScript client will be removed in a future
+   * version of the PowerSync SDK.
    */
   JAVASCRIPT = 'js',
   /**
    * This implementation offloads the sync line decoding and handling into the PowerSync
    * core extension.
    *
-   * @experimental
-   * While this implementation is more performant than {@link SyncClientImplementation.JAVASCRIPT},
-   * it has seen less real-world testing and is marked as __experimental__ at the moment.
+   * This option is more performant than the {@link JAVASCRIPT} client, enabled by default and the
+   * recommended client implementation for all apps.
    *
    * ## Compatibility warning
    *
@@ -77,13 +76,9 @@ export enum SyncClientImplementation {
 }
 
 /**
- * The default {@link SyncClientImplementation} to use.
- *
- * Please use this field instead of {@link SyncClientImplementation.JAVASCRIPT} directly. A future version
- * of the PowerSync SDK will enable {@link SyncClientImplementation.RUST} by default and remove the JavaScript
- * option.
+ * The default {@link SyncClientImplementation} to use, {@link SyncClientImplementation.RUST}.
  */
-export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.JAVASCRIPT;
+export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.RUST;
 
 /**
  * Abstract Lock to be implemented by various JS environments
@@ -691,6 +686,9 @@ The next upload iteration will be delayed.`);
     const rawTables = resolvedOptions.serializedSchema?.raw_tables;
     if (rawTables != null && rawTables.length) {
       this.logger.warn('Raw tables require the Rust-based sync client. The JS client will ignore them.');
+    }
+    if (this.activeStreams.length) {
+      this.logger.error('Sync streams require `clientImplementation: SyncClientImplementation.RUST` when connecting.');
     }
 
     this.logger.debug('Streaming sync iteration started');

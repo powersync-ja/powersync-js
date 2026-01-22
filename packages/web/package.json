@@ -87,8 +87,6 @@
     "terser-webpack-plugin": "^5.3.9",
     "uuid": "catalog:",
     "vite": "catalog:",
-    "vite-plugin-top-level-await": "catalog:",
-    "vite-plugin-wasm": "catalog:",
     "vm-browserify": "^1.1.2",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4",
