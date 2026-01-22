@@ -14,7 +14,7 @@ import { SuitWidget } from './widgets/SuitWidget';
 // Colors previously from react-native/Libraries/NewAppScreen (deprecated)
 const Colors = {
   darker: '#121212',
-  lighter: '#F3F3F3',
+  lighter: '#F3F3F3'
 };
 
 function App(): React.JSX.Element {

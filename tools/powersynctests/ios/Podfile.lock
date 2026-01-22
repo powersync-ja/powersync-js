@@ -8,7 +8,7 @@ PODS:
   - hermes-engine (0.14.0):
     - hermes-engine/Pre-built (= 0.14.0)
   - hermes-engine/Pre-built (0.14.0)
-  - op-sqlite (14.1.4):
+  - op-sqlite (15.2.2):
     - boost
     - DoubleConversion
     - fast_float
@@ -19,8 +19,6 @@ PODS:
     - RCT-Folly/Fabric
     - RCTRequired
     - RCTTypeSafety
-    - React
-    - React-callinvoker
     - React-Core
     - React-debug
     - React-Fabric
@@ -2807,7 +2805,7 @@ SPEC CHECKSUMS:
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 1b545cafaf3b04eef470a6d9a06d93d44c8479fd
-  op-sqlite: aa799a772d91c3accbe4b8ffb7289844d8feb08b
+  op-sqlite: 700395e663b6e706fc24c632fa226db9413d6428
   powersync-op-sqlite: 99c78a987b3cade151ee4beb1ff73673ed69884b
   powersync-sqlite-core: b30017e077c91915d53faebc5f7245384df78275
   RCT-Folly: 59ec0ac1f2f39672a0c6e6cecdd39383b764646f
