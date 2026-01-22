@@ -140,6 +140,9 @@ importers:
       '@types/inquirer':
         specifier: ^8.2.12
         version: 8.2.12
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.10.4
       '@vitest/browser':
         specifier: ^3.2.4
         version: 3.2.4(playwright@1.57.0)(vite@6.4.1(@types/node@24.10.4)(jiti@1.21.7)(lightningcss@1.30.2)(terser@5.44.1)(yaml@2.8.2))(vitest@3.2.4)
