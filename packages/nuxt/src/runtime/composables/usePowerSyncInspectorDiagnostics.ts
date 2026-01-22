@@ -66,6 +66,25 @@ const TABLES_QUERY = `
 SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
 `
 
+export type BucketRow = {
+  name: string
+  id: number
+  tables: string[]
+  data_size: number
+  metadata_size: number
+  row_count: number
+  download_size: number
+  downloaded_operations: number
+  total_operations: number
+  downloading: number
+}
+
+export type TableRow = {
+  name: string
+  count: number
+  size: number
+}
+
 function formatBytes(bytes: number, decimals = 2) {
   if (!+bytes) return '0 Bytes'
 
@@ -205,8 +224,8 @@ export function usePowerSyncInspectorDiagnostics() {
   const downloadProgressDetails = ref(
     syncStatus.value?.dataFlowStatus.downloadProgress || null,
   )
-  const bucketRows = ref<null | any[]>(null)
-  const tableRows = ref<null | any[]>(null)
+  const bucketRows = ref<null | BucketRow[]>(null)
+  const tableRows = ref<null | TableRow[]>(null)
 
   const uploadQueueStats = ref<null | UploadQueueStats>(null)
 
