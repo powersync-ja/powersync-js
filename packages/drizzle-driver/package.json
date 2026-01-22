@@ -59,8 +59,6 @@
     "drizzle-orm": "catalog:",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
-    "vite": "catalog:",
-    "vite-plugin-top-level-await": "catalog:",
-    "vite-plugin-wasm": "catalog:"
+    "vite": "catalog:"
   }
 }

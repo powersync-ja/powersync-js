@@ -1,12 +1,10 @@
 // Plugins
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import Vue from '@vitejs/plugin-vue';
+import { createRequire } from 'node:module';
 import ViteFonts from 'unplugin-fonts/vite';
 import Components from 'unplugin-vue-components/vite';
-import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 import { VitePWA } from 'vite-plugin-pwa';
-import { createRequire } from 'node:module';
+import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 const require = createRequire(import.meta.url); // Needed since the config file is also an ES module
 // Utilities
 import { fileURLToPath, URL } from 'node:url';
@@ -14,8 +12,6 @@ import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    wasm(),
-    topLevelAwait(),
     Vue({
       template: { transformAssetUrls }
     }),
@@ -76,11 +72,9 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: []
+    exclude: ['@powersync/web']
   },
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   }
 });
