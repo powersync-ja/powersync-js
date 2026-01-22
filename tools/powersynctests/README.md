@@ -20,6 +20,9 @@ pnpm start
 3. Run the app:
 
 ### For iOS
+A couple of pro-tips:
+1. Be sure to install your XCode updates, since it can generate very cryptic errors if you don't.
+2. Be sure to use the right ruby version. You can use `rbenv` or `rvm` to switch versions. Check the Gemfile for which version to use.
 
 Update pods:
 
