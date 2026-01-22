@@ -1,6 +1,4 @@
 import path from 'path';
-import topLevelAwait from 'vite-plugin-top-level-await';
-import wasm from 'vite-plugin-wasm';
 import { defineConfig, UserConfigExport } from 'vitest/config';
 
 const config: UserConfigExport = {
@@ -24,16 +22,11 @@ const config: UserConfigExport = {
     }
   },
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   },
   optimizeDeps: {
-    // Don't optimise these packages as they contain web workers and WASM files.
-    // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: []
+    exclude: ['@journeyapps/wa-sqlite']
   },
-  plugins: [wasm(), topLevelAwait()],
   test: {
     globals: true,
     include: ['tests/**/*.test.ts'],

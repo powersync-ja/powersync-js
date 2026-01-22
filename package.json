@@ -39,6 +39,7 @@
     "@pnpm/workspace.find-packages": "catalog:",
     "@pnpm/workspace.read-manifest": "catalog:",
     "@types/inquirer": "^8.2.12",
+    "@types/node": "catalog:",
     "@vitest/browser": "^3.2.4",
     "commander": "^12.1.0",
     "husky": "^9.0.11",

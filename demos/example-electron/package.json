@@ -55,8 +55,6 @@
     "ts-node": "^10.9.2",
     "typescript": "~4.5.5",
     "vite": "^5.2.11",
-    "vite-plugin-require": "^1.1.14",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-require": "^1.1.14"
   }
 }
