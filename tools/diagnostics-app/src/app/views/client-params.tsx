@@ -61,7 +61,6 @@ function ClientParamsPage() {
     e.stopPropagation();
 
     try {
-      console.log('Saving params:', params);
       const newParams = params.reduce<Record<string, any>>(
         (curr: any, item: { key: string; type: string; value: string }) => ({
           ...curr,
@@ -69,10 +68,9 @@ function ClientParamsPage() {
         }),
         {}
       );
-      console.log('Converted to:', newParams);
       setParamsGlobal(newParams);
     } catch (e) {
-      console.error('Save error:', e);
+      // Validation errors are shown inline on the form
     }
   };
 
@@ -97,18 +95,21 @@ function ClientParamsPage() {
   };
 
   const removeIdx = (idx: number) => {
-    const newParams = params.filter((_, i) => i !== idx);
-    setParams(newParams);
+    setParams((currentParams) => {
+      const newParams = currentParams.filter((_, i) => i !== idx);
 
-    // Auto-save after deletion
-    const paramsToSave = newParams.reduce<Record<string, any>>(
-      (curr, item) => ({
-        ...curr,
-        [item.key]: convertValueForSave(item.type, item.value)
-      }),
-      {}
-    );
-    setParamsGlobal(paramsToSave);
+      // Auto-save after deletion
+      const paramsToSave = newParams.reduce<Record<string, any>>(
+        (curr, item) => ({
+          ...curr,
+          [item.key]: convertValueForSave(item.type, item.value)
+        }),
+        {}
+      );
+      setParamsGlobal(paramsToSave);
+
+      return newParams;
+    });
   };
 
   const addRow = () => {
@@ -147,7 +148,7 @@ function ClientParamsPage() {
                 <div className="space-y-3">
                   {params.map(({ key, value, type, error }, idx: number) => (
                     <div
-                      key={idx}
+                      key={`${idx}-${key}-${type}`}
                       className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
                       <div>
                         <Label htmlFor={`key-${idx}`} className="text-xs text-muted-foreground">

@@ -878,6 +878,12 @@ importers:
       vite-plugin-pwa:
         specifier: ^0.19.2
         version: 0.19.8(vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0)
+      vite-plugin-top-level-await:
+        specifier: ^1.4.1
+        version: 1.6.0(rollup@2.79.2)(vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1))
+      vite-plugin-wasm:
+        specifier: ^3.3.0
+        version: 3.5.0(vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1))
 
   tools/import-tests:
     devDependencies:
@@ -4368,6 +4374,15 @@ packages:
       tslib:
         optional: true
 
+  '@rollup/plugin-virtual@3.0.2':
+    resolution: {integrity: sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   '@rollup/pluginutils@3.1.0':
     resolution: {integrity: sha512-GksZ6pr6TpIjHm8h9lSQ8pi8BE9VeubNT0OMJ3B5uZJ8pz73NPiqOtCog/x2/QzM1ENChPKxMDhiQuRHsqc+lg==}
     engines: {node: '>= 8.0.0'}
@@ -4955,6 +4970,9 @@ packages:
 
   '@swc/types@0.1.25':
     resolution: {integrity: sha512-iAoY/qRhNH8a/hBvm3zKj9qQ4oc2+3w1unPJa2XvTK3XjeLXtzcCingVPw/9e5mn1+0yPqxcBGp9Jf0pkfMb1g==}
+
+  '@swc/wasm@1.15.10':
+    resolution: {integrity: sha512-kVTb346oP16MOwDibhLr/nv+swrw/M8dcim6VjsWKZR5ZVOCZU9RrzrT5gMh72v4Y37Agilb8SCzEZ4wTvQGpQ==}
 
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
@@ -12942,6 +12960,10 @@ packages:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
+  uuid@10.0.0:
+    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    hasBin: true
+
   uuid@11.1.0:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
@@ -13005,6 +13027,16 @@ packages:
     peerDependenciesMeta:
       '@vite-pwa/assets-generator':
         optional: true
+
+  vite-plugin-top-level-await@1.6.0:
+    resolution: {integrity: sha512-bNhUreLamTIkoulCR9aDXbTbhLk6n1YE8NJUTTxl5RYskNRtzOR0ASzSjBVRtNdjIfngDXo11qOsybGLNsrdww==}
+    peerDependencies:
+      vite: '>=2.8'
+
+  vite-plugin-wasm@3.5.0:
+    resolution: {integrity: sha512-X5VWgCnqiQEGb+omhlBVsvTfxikKtoOgAzQ95+BZ8gQ+VfMHIjSHr0wyvXFQCa0eKQ0fKyaL0kWcEnYqBac4lQ==}
+    peerDependencies:
+      vite: ^2 || ^3 || ^4 || ^5 || ^6 || ^7
 
   vite@5.4.21:
     resolution: {integrity: sha512-o5a9xKjbtuhY6Bi5S3+HvbRERmouabWbyUcpXXUA1u+GNUKoROi9byOJ8M0nHbHYHkYICiMlqxkg1KkYmm25Sw==}
@@ -18408,9 +18440,7 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.83.1': {}
 
@@ -18582,6 +18612,10 @@ snapshots:
     optionalDependencies:
       rollup: 4.54.0
       tslib: 2.8.1
+
+  '@rollup/plugin-virtual@3.0.2(rollup@2.79.2)':
+    optionalDependencies:
+      rollup: 2.79.2
 
   '@rollup/pluginutils@3.1.0(rollup@2.79.2)':
     dependencies:
@@ -19067,6 +19101,8 @@ snapshots:
   '@swc/types@0.1.25':
     dependencies:
       '@swc/counter': 0.1.3
+
+  '@swc/wasm@1.15.10': {}
 
   '@szmarczak/http-timer@5.0.1':
     dependencies:
@@ -28817,6 +28853,8 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
+  uuid@10.0.0: {}
+
   uuid@11.1.0: {}
 
   uuid@8.3.2: {}
@@ -28891,6 +28929,21 @@ snapshots:
       workbox-window: 7.4.0
     transitivePeerDependencies:
       - supports-color
+
+  vite-plugin-top-level-await@1.6.0(rollup@2.79.2)(vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1)):
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@2.79.2)
+      '@swc/core': 1.15.8
+      '@swc/wasm': 1.15.10
+      uuid: 10.0.0
+      vite: 5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+
+  vite-plugin-wasm@3.5.0(vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1)):
+    dependencies:
+      vite: 5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1)
 
   vite@5.4.21(@types/node@22.19.3)(lightningcss@1.30.2)(terser@5.44.1):
     dependencies:
