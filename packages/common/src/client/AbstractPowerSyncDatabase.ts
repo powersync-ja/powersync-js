@@ -40,7 +40,8 @@ import {
 } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import { CoreSyncStatus, coreStatusToJs } from './sync/stream/core-instruction.js';
 import { SyncStream } from './sync/sync-streams.js';
-import { TriggerManager } from './triggers/TriggerManager.js';
+import { MEMORY_TRIGGER_CLAIM_MANAGER } from './triggers/MemoryTriggerClaimManager.js';
+import { TriggerManager, TriggerManagerConfig } from './triggers/TriggerManager.js';
 import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
@@ -222,6 +223,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Allows creating SQLite triggers which can be used to track various operations on SQLite tables.
    */
   readonly triggers: TriggerManager;
+  protected triggersImpl: TriggerManagerImpl;
 
   logger: ILogger;
 
@@ -296,9 +298,10 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     this._isReadyPromise = this.initialize();
 
-    this.triggers = new TriggerManagerImpl({
+    this.triggers = this.triggersImpl = new TriggerManagerImpl({
       db: this,
-      schema: this.schema
+      schema: this.schema,
+      ...this.generateTriggerManagerConfig()
     });
   }
 
@@ -333,6 +336,16 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * Opens the DBAdapter given open options using a default open factory
    */
   protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
+
+  /**
+   * Generates a base configuration for {@link TriggerManagerImpl}.
+   * Implementations should override this if necessary.
+   */
+  protected generateTriggerManagerConfig(): TriggerManagerConfig {
+    return {
+      claimManager: MEMORY_TRIGGER_CLAIM_MANAGER
+    };
+  }
 
   protected abstract generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
@@ -420,6 +433,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     await this.updateSchema(this.options.schema);
     await this.resolveOfflineSyncStatus();
     await this.database.execute('PRAGMA RECURSIVE_TRIGGERS=TRUE');
+    await this.triggersImpl.cleanupResources();
     this.ready = true;
     this.iterateListeners((cb) => cb.initialized?.());
   }
@@ -560,7 +574,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
     const { clearLocal } = options;
 
-    // TODO DB name, verify this is necessary with extension
     await this.database.writeTransaction(async (tx) => {
       await tx.execute('SELECT powersync_clear(?)', [clearLocal ? 1 : 0]);
     });
@@ -596,6 +609,8 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     if (this.closed) {
       return;
     }
+
+    this.triggersImpl.dispose();
 
     await this.iterateAsyncListeners(async (cb) => cb.closing?.());
 

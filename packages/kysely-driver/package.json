@@ -46,14 +46,17 @@
     "@powersync/common": "workspace:^1.45.0"
   },
   "dependencies": {
-    "kysely": "^0.28.0"
+    "kysely": "catalog:"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@journeyapps/wa-sqlite": "catalog:",
     "@powersync/web": "workspace:*",
-    "@types/node": "^20.17.6",
-    "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0"
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
+    "@types/node": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "vite": "catalog:"
   }
 }

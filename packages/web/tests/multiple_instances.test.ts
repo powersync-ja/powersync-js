@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, createBaseLogger, createLogger } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createBaseLogger, createLogger, LogLevel } from '@powersync/common';
 import { OpenAsyncDatabaseConnection, WASqliteConnection } from '@powersync/web';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -6,7 +6,8 @@ import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDataba
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
-import { generateTestDb, testSchema } from './utils/testDb.js';
+import { TEST_SCHEMA } from './utils/test-schema.js';
+import { generateTestDb } from './utils/testDb.js';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -16,7 +17,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       database: {
         dbFilename: DB_FILENAME
       },
-      schema: testSchema
+      schema: TEST_SCHEMA
     });
 
   beforeAll(() => createBaseLogger().useDefaults());
@@ -42,8 +43,9 @@ describe('Multiple Instances', { sequential: true }, () => {
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
       const logger = createLogger('test-logger');
+      logger.setLevel(LogLevel.TRACE);
       const spiedErrorLogger = vi.spyOn(logger, 'error');
-      const spiedDebugLogger = vi.spyOn(logger, 'debug');
+      const spiedTraceLogger = vi.spyOn(logger, 'trace');
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
@@ -72,14 +74,13 @@ describe('Multiple Instances', { sequential: true }, () => {
         { timeout: 3_000 }
       );
 
-      // Should log that a connection attempt has been made
-      const message = 'Streaming sync iteration started';
+      // Asserting that powersync_control logs exists verifies that some connection attempt was made.
       await vi.waitFor(
         () =>
           expect(
-            spiedDebugLogger.mock.calls
+            spiedTraceLogger.mock.calls
               .flat(1)
-              .find((argument) => typeof argument == 'string' && argument.includes(message))
+              .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
           ).exist,
         { timeout: 2000 }
       );

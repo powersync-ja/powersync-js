@@ -36,11 +36,10 @@
     "@actions/core": "^1.10.1",
     "@arethetypeswrong/cli": "^0.18.2",
     "@changesets/cli": "2.27.2",
-    "@pnpm/workspace.find-packages": "^4.0.2",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-typescript": "^12.1.4",
+    "@pnpm/workspace.find-packages": "catalog:",
+    "@pnpm/workspace.read-manifest": "catalog:",
     "@types/inquirer": "^8.2.12",
+    "@types/node": "catalog:",
     "@vitest/browser": "^3.2.4",
     "commander": "^12.1.0",
     "husky": "^9.0.11",
@@ -50,9 +49,8 @@
     "prettier": "^3.2.5",
     "prettier-plugin-embed": "^0.4.15",
     "prettier-plugin-sql": "^0.18.1",
-    "rollup": "4.14.3",
-    "rollup-plugin-dts": "^6.2.1",
-    "typescript": "^5.7.2",
-    "vitest": "^3.2.4"
-  }
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "packageManager": "pnpm@10.27.0+sha512.72d699da16b1179c14ba9e64dc71c9a40988cbdc65c264cb0e489db7de917f20dcf4d64d8723625f2969ba52d4b7e2a1170682d9ac2a5dcaeaab732b7e16f04a"
 }
