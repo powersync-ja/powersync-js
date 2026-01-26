@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsr generate && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
     "start": "pnpm build && pnpm preview"
   },
@@ -34,7 +34,6 @@
   "devDependencies": {
     "@swc/core": "~1.6.0",
     "@tailwindcss/vite": "^4.1.17",
-    "@tanstack/router-cli": "^1.153.2",
     "@tanstack/router-plugin": "^1.153.2",
     "@types/node": "^22.18.1",
     "@types/react": "^18.2.64",
