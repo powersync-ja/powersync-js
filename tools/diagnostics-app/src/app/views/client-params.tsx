@@ -20,11 +20,14 @@ const typeForValue = (value: unknown) => {
   return typeof value;
 };
 
+let nextId = 0;
+
 const jsonToObjectArray = (json: Object): ParameterEntry[] => {
   const entrySet = Object.entries(json);
   return entrySet.map(([key, value]) => {
     const type = typeForValue(value) as ParameterType;
     return {
+      id: nextId++,
       key,
       // Only arrays and objects need special cases here since JS will take care of the rest.
       value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
@@ -36,6 +39,7 @@ const jsonToObjectArray = (json: Object): ParameterEntry[] => {
 type ParameterType = 'string' | 'number' | 'boolean' | 'array' | 'object';
 
 interface ParameterEntry {
+  id: number;
   key: string;
   type: ParameterType;
   value: string;
@@ -113,19 +117,19 @@ function ClientParamsPage() {
   };
 
   const addRow = () => {
-    setParams((a: any[]) => [...a, { key: '', value: '', type: 'string' }]);
+    setParams((a) => [...a, { id: nextId++, key: '', value: '', type: 'string' }]);
   };
 
-  const changeValue = (idx: number, value: string, currKey: string, type: ParameterType) => {
-    replace(idx, { key: currKey, value, type });
+  const changeValue = (idx: number, id: number, value: string, currKey: string, type: ParameterType) => {
+    replace(idx, { id, key: currKey, value, type });
   };
 
-  const changeKey = (idx: number, key: string, currValue: string, type: ParameterType) => {
-    replace(idx, { key, value: currValue, type });
+  const changeKey = (idx: number, id: number, key: string, currValue: string, type: ParameterType) => {
+    replace(idx, { id, key, value: currValue, type });
   };
 
-  const changeType = (idx: number, key: string, value: string, newType: ParameterType) => {
-    replace(idx, { key, value, type: newType });
+  const changeType = (idx: number, id: number, key: string, value: string, newType: ParameterType) => {
+    replace(idx, { id, key, value, type: newType });
   };
 
   return (
@@ -146,30 +150,30 @@ function ClientParamsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {params.map(({ key, value, type, error }, idx: number) => (
+                  {params.map(({ id, key, value, type, error }, idx: number) => (
                     <div
-                      key={`${idx}-${key}-${type}`}
+                      key={id}
                       className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
                       <div>
-                        <Label htmlFor={`key-${idx}`} className="text-xs text-muted-foreground">
+                        <Label htmlFor={`key-${id}`} className="text-xs text-muted-foreground">
                           Key
                         </Label>
                         <Input
-                          id={`key-${idx}`}
+                          id={`key-${id}`}
                           value={key}
-                          onChange={(e) => changeKey(idx, e.target.value, value, type)}
+                          onChange={(e) => changeKey(idx, id, e.target.value, value, type)}
                           placeholder="parameter_name"
                           className="mt-1.5"
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`value-${idx}`} className="text-xs text-muted-foreground">
+                        <Label htmlFor={`value-${id}`} className="text-xs text-muted-foreground">
                           Value
                         </Label>
                         <Input
-                          id={`value-${idx}`}
+                          id={`value-${id}`}
                           value={value}
-                          onChange={(e) => changeValue(idx, e.target.value, key, type)}
+                          onChange={(e) => changeValue(idx, id, e.target.value, key, type)}
                           placeholder="value"
                           className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
                           title={error}
@@ -177,13 +181,13 @@ function ClientParamsPage() {
                         {error && <p className="text-xs text-destructive mt-1">{error}</p>}
                       </div>
                       <div>
-                        <Label htmlFor={`type-${idx}`} className="text-xs text-muted-foreground">
+                        <Label htmlFor={`type-${id}`} className="text-xs text-muted-foreground">
                           Type
                         </Label>
                         <Select
                           value={type}
-                          onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
-                          <SelectTrigger id={`type-${idx}`} className="mt-1.5">
+                          onValueChange={(newType) => changeType(idx, id, key, value, newType as ParameterType)}>
+                          <SelectTrigger id={`type-${id}`} className="mt-1.5">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
