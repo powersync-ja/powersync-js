@@ -1,5 +1,24 @@
 # @powersync/common
 
+## 1.46.0
+
+### Minor Changes
+
+- aaf6037: Add support for storage-backed (non-TEMP) SQLite triggers and tables for managed triggers. These resources persist on disk while in use and are automatically cleaned up when no longer claimed or needed. They should not be considered permanent triggers; PowerSync manages their lifecycle.
+- acf6b70: The [Rust sync client](https://www.powersync.com/blog/speeding-up-powersync-with-a-sqlite-extension-written-in-rust) is now enabled by default.
+  To keep using the JavaScript client implementation, pass `clientImplementation: SyncClientImplementation.JAVASCRIPT` in `options` when calling
+  `PowerSync.connect`.
+
+  Note that the JavaScript client will be removed in a future version of the SDK. If you choose to it due to issues with the Rust client, please
+  file an issue or reach out to us.
+
+- 25ece59: [Internal] Add ability to override `AbstractPowerSyncDatabase` `loadVersion` method.
+
+### Patch Changes
+
+- e39359d: Fixed delayed streaming processing, due to a race condition, when connecting via the HTTP connection method (could potentially also affect WebSockets).
+- 41953bc: Exported raw tables types
+
 ## 1.45.0
 
 ### Minor Changes

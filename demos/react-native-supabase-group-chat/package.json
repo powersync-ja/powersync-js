@@ -23,7 +23,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@faker-js/faker": "^10.1.0",
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
-    "@powersync/react-native": "^1.28.1",
+    "@powersync/react-native": "^1.29.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

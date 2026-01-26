@@ -296,7 +296,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.30.0
+        specifier: workspace:^1.32.0
         version: link:../web
       async-lock:
         specifier: 'catalog:'
@@ -406,7 +406,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.45.0
+        specifier: workspace:^1.46.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -446,7 +446,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.45.0
+        specifier: workspace:^1.46.0
         version: link:../common
       kysely:
         specifier: 'catalog:'

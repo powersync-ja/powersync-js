@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -46,7 +46,7 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.45.0"
+    "@powersync/common": "workspace:^1.46.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",

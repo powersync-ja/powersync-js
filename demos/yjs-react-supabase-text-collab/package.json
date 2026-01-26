@@ -15,7 +15,7 @@
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.31.0",
+    "@powersync/web": "^1.32.0",
     "@supabase/supabase-js": "^2.39.8",
     "@tiptap/extension-collaboration": "2.2.2",
     "@tiptap/extension-collaboration-cursor": "2.2.2",
