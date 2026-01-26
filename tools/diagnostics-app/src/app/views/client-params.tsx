@@ -14,39 +14,31 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus } from 'lucide-react';
 
-const typeForValue = (value: unknown) => {
-  //when using typeof arrays are "object" so we have to have this specific case
-  if (Array.isArray(value)) return 'array';
-  return typeof value;
-};
-
-let nextId = 0;
-
-const jsonToObjectArray = (json: Object): ParameterEntry[] => {
-  const entrySet = Object.entries(json);
-  return entrySet.map(([key, value]) => {
-    const type = typeForValue(value) as ParameterType;
-    return {
-      id: nextId++,
-      key,
-      // Only arrays and objects need special cases here since JS will take care of the rest.
-      value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
-      type
-    };
-  });
-};
-
 type ParameterType = 'string' | 'number' | 'boolean' | 'array' | 'object';
 
 interface ParameterEntry {
-  id: number;
   key: string;
   type: ParameterType;
   value: string;
   error?: string;
 }
 
-// A simple set of mappers for converting a string to the correct value for saving
+const typeForValue = (value: unknown): ParameterType => {
+  if (Array.isArray(value)) return 'array';
+  return typeof value as ParameterType;
+};
+
+const jsonToObjectArray = (json: object): ParameterEntry[] => {
+  return Object.entries(json).map(([key, value]) => {
+    const type = typeForValue(value);
+    return {
+      key,
+      value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
+      type
+    };
+  });
+};
+
 const CONVERTERS = {
   string: (v: string) => v,
   number: (v: string) => Number(v),
@@ -65,71 +57,53 @@ function ClientParamsPage() {
     e.stopPropagation();
 
     try {
-      const newParams = params.reduce<Record<string, any>>(
-        (curr: any, item: { key: string; type: string; value: string }) => ({
-          ...curr,
-          [`${item.key}`]: convertValueForSave(item.type as ParameterType, item.value)
-        }),
-        {}
-      );
-      setParamsGlobal(newParams);
-    } catch (e) {
-      // Validation errors are shown inline on the form
-    }
-  };
-
-  const validate = (val: ParameterEntry) => {
-    if (val.type == 'object' || val.type == 'array') {
-      try {
-        JSON.parse(val.value);
-        return val;
-      } catch (e: any) {
-        return {
-          ...val,
-          error: e.message
-        };
-      }
-    } else {
-      return val;
-    }
-  };
-
-  const replace = (idx: number, val: ParameterEntry) => {
-    setParams((a: any[]) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
-  };
-
-  const removeIdx = (idx: number) => {
-    setParams((currentParams) => {
-      const newParams = currentParams.filter((_, i) => i !== idx);
-
-      // Auto-save after deletion
-      const paramsToSave = newParams.reduce<Record<string, any>>(
+      const newParams = params.reduce<Record<string, unknown>>(
         (curr, item) => ({
           ...curr,
           [item.key]: convertValueForSave(item.type, item.value)
         }),
         {}
       );
-      setParamsGlobal(paramsToSave);
+      setParamsGlobal(newParams);
+    } catch (e) {
+      // Validation errors shown inline
+    }
+  };
 
-      return newParams;
-    });
+  const validate = (val: ParameterEntry): ParameterEntry => {
+    if (val.type === 'object' || val.type === 'array') {
+      try {
+        JSON.parse(val.value);
+        return val;
+      } catch (e: any) {
+        return { ...val, error: e.message };
+      }
+    }
+    return val;
+  };
+
+  const replace = (idx: number, val: ParameterEntry) => {
+    setParams((a) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
+  };
+
+  const removeIdx = (idx: number) => {
+    setParams((a) => a.filter((_, i) => i !== idx));
   };
 
   const addRow = () => {
-    setParams((a) => [...a, { id: nextId++, key: '', value: '', type: 'string' }]);
+    setParams((a) => [...a, { key: '', value: '', type: 'string' }]);
   };
 
-  const changeValue = (idx: number, id: number, value: string, currKey: string, type: ParameterType) => {
-    replace(idx, { id, key: currKey, value, type });
+  const changeValue = (idx: number, value: string, currKey: string, type: ParameterType) => {
+    replace(idx, { key: currKey, value, type });
   };
 
-  const changeKey = (idx: number, id: number, key: string, currValue: string, type: ParameterType) => {
-    replace(idx, { id, key, value: currValue, type });
+  const changeKey = (idx: number, key: string, currValue: string, type: ParameterType) => {
+    replace(idx, { key, value: currValue, type });
   };
 
-  const changeType = (idx: number, id: number, key: string, value: string, newType: ParameterType) => {
-    replace(idx, { id, key, value, type: newType });
+  const changeType = (idx: number, key: string, value: string, newType: ParameterType) => {
+    replace(idx, { key, value, type: newType });
   };
 
   return (
@@ -138,9 +112,7 @@ function ClientParamsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Parameters</CardTitle>
-            <CardDescription>
-              Configure key-value parameters that will be sent with sync requests.
-            </CardDescription>
+            <CardDescription>Configure key-value parameters that will be sent with sync requests.</CardDescription>
           </CardHeader>
           <form onSubmit={onSubmit}>
             <CardContent className="space-y-4">
@@ -150,30 +122,24 @@ function ClientParamsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {params.map(({ id, key, value, type, error }, idx: number) => (
+                  {params.map(({ key, value, type, error }, idx) => (
                     <div
-                      key={id}
+                      key={idx}
                       className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
                       <div>
-                        <Label htmlFor={`key-${id}`} className="text-xs text-muted-foreground">
-                          Key
-                        </Label>
+                        <Label className="text-xs text-muted-foreground">Key</Label>
                         <Input
-                          id={`key-${id}`}
                           value={key}
-                          onChange={(e) => changeKey(idx, id, e.target.value, value, type)}
+                          onChange={(e) => changeKey(idx, e.target.value, value, type)}
                           placeholder="parameter_name"
                           className="mt-1.5"
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`value-${id}`} className="text-xs text-muted-foreground">
-                          Value
-                        </Label>
+                        <Label className="text-xs text-muted-foreground">Value</Label>
                         <Input
-                          id={`value-${id}`}
                           value={value}
-                          onChange={(e) => changeValue(idx, id, e.target.value, key, type)}
+                          onChange={(e) => changeValue(idx, e.target.value, key, type)}
                           placeholder="value"
                           className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
                           title={error}
@@ -181,13 +147,9 @@ function ClientParamsPage() {
                         {error && <p className="text-xs text-destructive mt-1">{error}</p>}
                       </div>
                       <div>
-                        <Label htmlFor={`type-${id}`} className="text-xs text-muted-foreground">
-                          Type
-                        </Label>
-                        <Select
-                          value={type}
-                          onValueChange={(newType) => changeType(idx, id, key, value, newType as ParameterType)}>
-                          <SelectTrigger id={`type-${id}`} className="mt-1.5">
+                        <Label className="text-xs text-muted-foreground">Type</Label>
+                        <Select value={type} onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
+                          <SelectTrigger className="mt-1.5">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
