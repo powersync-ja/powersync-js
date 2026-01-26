@@ -1,31 +1,33 @@
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import MenuIcon from '@mui/icons-material/Menu';
-import NorthIcon from '@mui/icons-material/North';
-import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
-import SouthIcon from '@mui/icons-material/South';
-import StorageIcon from '@mui/icons-material/Storage';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import TerminalIcon from '@mui/icons-material/Terminal';
-import UserIcon from '@mui/icons-material/VerifiedUser';
-import WifiIcon from '@mui/icons-material/Wifi';
+import {
+  LogOut,
+  ArrowUp,
+  ArrowDown,
+  Wifi,
+  WifiOff,
+  Database,
+  Table2,
+  Terminal,
+  User
+} from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 import {
-  Alert,
-  AppBar,
-  Box,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-  styled
-} from '@mui/material';
-import React, { useMemo } from 'react';
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar
+} from '@/components/ui/sidebar';
 
 import {
   CLIENT_PARAMETERS_ROUTE,
@@ -36,173 +38,133 @@ import {
 } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { signOut, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { usePowerSync } from '@powersync/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Separator } from '@/components/ui/separator';
+
+function AppSidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { open } = useSidebar();
+
+  const NAVIGATION_ITEMS = [
+    { path: SYNC_DIAGNOSTICS_ROUTE, title: 'Sync Overview', icon: Table2 },
+    { path: SCHEMA_ROUTE, title: 'Dynamic Schema', icon: Database },
+    { path: SQL_CONSOLE_ROUTE, title: 'SQL Console', icon: Terminal },
+    { path: CLIENT_PARAMETERS_ROUTE, title: 'Client Parameters', icon: User },
+    {
+      path: LOGIN_ROUTE,
+      title: 'Sign Out',
+      beforeNavigate: async () => {
+        await signOut();
+      },
+      icon: LogOut
+    }
+  ];
+
+  return (
+    <Sidebar variant="inset" collapsible="icon">
+      <SidebarHeader className={cn('p-4', !open && 'p-2')}>
+        {open ? (
+          <img
+            alt="PowerSync Logo"
+            className="w-full max-w-[180px] object-contain"
+            src="/powersync-logo.svg"
+          />
+        ) : (
+          <img
+            alt="PowerSync"
+            className="w-8 h-8 object-contain rounded-[20%]"
+            src="/icons/icon-192x192.png"
+          />
+        )}
+      </SidebarHeader>
+      <Separator className={cn('bg-sidebar-border', !open ? 'mx-1' : 'mx-2')} />
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {NAVIGATION_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      tooltip={!open ? item.title : undefined}
+                      onClick={async () => {
+                        await item.beforeNavigate?.();
+                        navigate(item.path);
+                      }}>
+                      <Icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarTrigger />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
-  const powerSync = usePowerSync();
-  const navigate = useNavigate();
-
   const syncStatus = useSyncStatus();
   const syncError = useMemo(() => syncStatus?.dataFlowStatus?.downloadError, [syncStatus]);
   const { title } = useNavigationPanel();
 
-  const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [isClosing, setIsClosing] = React.useState(false);
-
-  const handleDrawerClose = () => {
-    setIsClosing(true);
-    setMobileOpen(false);
-  };
-
-  const handleDrawerTransitionEnd = () => {
-    setIsClosing(false);
-  };
-
-  const handleDrawerToggle = () => {
-    if (!isClosing) {
-      setMobileOpen(!mobileOpen);
-    }
-  };
-
-  const NAVIGATION_ITEMS = React.useMemo(
-    () => [
-      {
-        path: SYNC_DIAGNOSTICS_ROUTE,
-        title: 'Sync Overview',
-        icon: () => <TableChartIcon />
-      },
-      {
-        path: SCHEMA_ROUTE,
-        title: 'Dynamic Schema',
-        icon: () => <StorageIcon />
-      },
-      {
-        path: SQL_CONSOLE_ROUTE,
-        title: 'SQL Console',
-        icon: () => <TerminalIcon />
-      },
-      {
-        path: CLIENT_PARAMETERS_ROUTE,
-        title: 'Client Parameters',
-        icon: () => <UserIcon />
-      },
-      {
-        path: LOGIN_ROUTE,
-        title: 'Sign Out',
-        beforeNavigate: async () => {
-          await signOut();
-        },
-        icon: () => <ExitToAppIcon />
-      }
-    ],
-    [powerSync]
-  );
-
-  const drawerWidth = 320;
-
-  const drawer = (
-    <>
-      <S.PowerSyncLogo alt="PowerSync Logo" width={250} height={100} src="/powersync-logo.svg" />
-      <Divider />
-      <List>
-        {NAVIGATION_ITEMS.map((item) => (
-          <ListItem key={item.path}>
-            <ListItemButton
-              onClick={async () => {
-                await item.beforeNavigate?.();
-                navigate(item.path);
-                setMobileOpen(false);
-              }}>
-              <ListItemIcon>{item.icon()}</ListItemIcon>
-              <ListItemText primary={item.title} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </>
-  );
-
   return (
-    <S.MainBox sx={{ display: 'flex' }}>
-      <S.TopBar
-        position="absolute"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` }
-        }}>
-        <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2, display: { md: 'none' } }}
-            onClick={handleDrawerToggle}>
-            <MenuIcon />
-          </IconButton>
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography>{title}</Typography>
-          </Box>
-          {syncStatus?.clientImplementation && <Typography>Client: {syncStatus?.clientImplementation}</Typography>}
-          <NorthIcon
-            sx={{ marginRight: '-10px' }}
-            color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}
-          />
-          <SouthIcon color={syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
-          {syncStatus?.connected ? (
-            <WifiIcon />
-          ) : (
-            <SignalWifiOffIcon titleAccess={syncError?.message ?? 'Not connected'} />
-          )}
-        </Toolbar>
-      </S.TopBar>
-      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onTransitionEnd={handleDrawerTransitionEnd}
-          onClose={handleDrawerClose}
-          ModalProps={{
-            keepMounted: true // Better open performance on mobile.
-          }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
-          }}>
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth }
-          }}
-          open>
-          {drawer}
-        </Drawer>
-      </Box>
-      <S.MainBox sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, marginTop: '50px' }}>
-        {syncError ? <Alert severity="error">Sync error detected: {syncError.message}</Alert> : null}
-        {children}
-      </S.MainBox>
-    </S.MainBox>
+    <SidebarProvider>
+      <AppSidebar />
+
+      <SidebarInset>
+        {/* Top Bar */}
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-semibold truncate">{title}</h1>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {syncStatus?.clientImplementation && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                Client: {syncStatus?.clientImplementation}
+              </span>
+            )}
+            <ArrowUp
+              className={cn(
+                'h-5 w-5 -mr-2.5',
+                syncStatus?.dataFlowStatus.uploading ? 'text-primary' : 'text-muted-foreground'
+              )}
+            />
+            <ArrowDown
+              className={cn(
+                'h-5 w-5',
+                syncStatus?.dataFlowStatus.downloading ? 'text-primary' : 'text-muted-foreground'
+              )}
+            />
+            {syncStatus?.connected ? (
+              <Wifi className="h-5 w-5" />
+            ) : (
+              <span title={syncError?.message ?? 'Not connected'}>
+                <WifiOff className="h-5 w-5" />
+              </span>
+            )}
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+          {syncError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>
+            </Alert>
+          ) : null}
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
-}
-
-namespace S {
-  export const MainBox = styled(Box)`
-    flex-grow: 1;
-  `;
-
-  export const TopBar = styled(AppBar)`
-    margin-bottom: 20px;
-  `;
-
-  export const PowerSyncLogo = styled('img')`
-    max-width: 250px;
-    max-height: 250px;
-    object-fit: contain;
-    padding: 20px;
-  `;
 }

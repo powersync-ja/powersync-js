@@ -1,23 +1,14 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
 import { clearData, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Typography,
-  styled
-} from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { SyncStreamStatus } from '@powersync/web';
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -126,42 +117,50 @@ export default function SyncDiagnosticsPage() {
     };
   }, []);
 
-  const columns: GridColDef[] = [
+  const bucketsColumns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
-    { field: 'tables', headerName: 'Table(s)', flex: 1, type: 'text' },
-    { field: 'row_count', headerName: 'Row Count', flex: 1, type: 'number' },
-    { field: 'downloaded_operations', headerName: 'Downloaded Operations', flex: 1, type: 'number' },
-    { field: 'total_operations', headerName: 'Total Operations', flex: 1, type: 'number' },
+    {
+      field: 'tables',
+      headerName: 'Table(s)',
+      flex: 1,
+      renderCell: ({ value }) => <TruncatedTablesList tables={value} />
+    },
+    { field: 'row_count', headerName: 'Row Count', flex: 1, type: 'number', hideOnMobile: true },
+    { field: 'downloaded_operations', headerName: 'Downloaded Ops', flex: 1, type: 'number', hideOnMobile: true },
+    { field: 'total_operations', headerName: 'Total Ops', flex: 1, type: 'number' },
     {
       field: 'data_size',
       headerName: 'Data Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: ({ value }) => formatBytes(value),
+      hideOnMobile: true
     },
     {
       field: 'metadata_size',
       headerName: 'Metadata Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: ({ value }) => formatBytes(value),
+      hideOnMobile: true
     },
     {
       field: 'download_size',
       headerName: 'Downloaded Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: ({ value }) => formatBytes(value),
+      hideOnMobile: true
     },
     {
       field: 'status',
       headerName: 'Status',
-      flex: 1,
-      type: 'text'
+      flex: 1
     }
   ];
 
   const rows = (bucketRows ?? []).map((r) => {
+    const isReady = r.downloading == 0;
     return {
       id: r.name,
       name: r.name,
@@ -172,7 +171,7 @@ export default function SyncDiagnosticsPage() {
       data_size: r.data_size,
       metadata_size: r.metadata_size,
       download_size: r.download_size,
-      status: r.downloading == 0 ? 'Ready' : 'Downloading...'
+      status: isReady ? 'Ready' : 'Downloading...'
     };
   });
 
@@ -186,15 +185,16 @@ export default function SyncDiagnosticsPage() {
     download_size: rows.reduce((total, row) => total + row.download_size, 0)
   };
 
-  const tablesColumns: GridColDef[] = [
+  const tablesColumns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
-    { field: 'count', headerName: 'Row Count', flex: 1 },
+    { field: 'count', headerName: 'Row Count', flex: 1, type: 'number' },
     {
       field: 'size',
       headerName: 'Data Size',
       flex: 1,
       type: 'number',
-      valueFormatter: (v) => formatBytes(v.value)
+      valueFormatter: ({ value }) => formatBytes(value),
+      hideOnMobile: true
     }
   ];
 
@@ -206,99 +206,129 @@ export default function SyncDiagnosticsPage() {
   });
 
   const totalsTable = (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }}>
-        <TableBody>
-          <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-            <TableCell component="th" scope="row">
-              Number of buckets
-            </TableCell>
-            <TableCell component="th">Total Rows</TableCell>
-            <TableCell component="th">Downloaded Operations</TableCell>
-            <TableCell component="th">Total Operations</TableCell>
-            <TableCell component="th">Total Data Size</TableCell>
-            <TableCell component="th">Total Metadata Size</TableCell>
-            <TableCell component="th">Total Downloaded Size</TableCell>
-            <TableCell component="th">Last Synced At</TableCell>
-          </TableRow>
-          <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-            <TableCell align="right">{totals.buckets}</TableCell>
-            <TableCell align="right">{totals.row_count}</TableCell>
-            <TableCell align="right">{totals.downloaded_operations}</TableCell>
-            <TableCell align="right">{totals.total_operations}</TableCell>
-            <TableCell align="right">{formatBytes(totals.data_size)}</TableCell>
-            <TableCell align="right">{formatBytes(totals.metadata_size)}</TableCell>
-            <TableCell align="right">{formatBytes(totals.download_size)}</TableCell>
-            <TableCell align="right">{lastSyncedAt?.toLocaleTimeString()}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
-  const tablesTable = (
-    <DataGrid
-      autoHeight={true}
-      rows={tablesRows}
-      columns={tablesColumns}
-      initialState={{
-        pagination: {
-          paginationModel: {
-            pageSize: 10
-          }
-        }
-      }}
-      pageSizeOptions={[10, 50, 100]}
-      disableRowSelectionOnClick
-    />
-  );
-
-  const bucketsTable = (
-    <DataGrid
-      autoHeight={true}
-      rows={rows}
-      columns={columns}
-      initialState={{
-        pagination: {
-          paginationModel: {
-            pageSize: 50
-          }
-        },
-        sorting: {
-          sortModel: [{ field: 'total_operations', sort: 'desc' }]
-        }
-      }}
-      pageSizeOptions={[10, 50, 100]}
-      disableRowSelectionOnClick
-    />
+    <Card>
+      <CardContent className="p-0">
+        {/* Desktop table view */}
+        <div className="hidden md:block overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Buckets</TableHead>
+                <TableHead className="text-right">Total Rows</TableHead>
+                <TableHead className="text-right">Downloaded Ops</TableHead>
+                <TableHead className="text-right">Total Ops</TableHead>
+                <TableHead className="text-right">Data Size</TableHead>
+                <TableHead className="text-right">Metadata Size</TableHead>
+                <TableHead className="text-right">Downloaded Size</TableHead>
+                <TableHead className="text-right">Last Synced</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">{totals.buckets}</TableCell>
+                <TableCell className="text-right">{totals.row_count.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{totals.downloaded_operations.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{totals.total_operations.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{formatBytes(totals.data_size)}</TableCell>
+                <TableCell className="text-right">{formatBytes(totals.metadata_size)}</TableCell>
+                <TableCell className="text-right">{formatBytes(totals.download_size)}</TableCell>
+                <TableCell className="text-right">{lastSyncedAt?.toLocaleTimeString() ?? '-'}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+        {/* Mobile grid view */}
+        <div className="md:hidden p-4 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div className="text-muted-foreground">Buckets</div>
+            <div className="font-medium">{totals.buckets}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Total Rows</div>
+            <div className="font-medium">{totals.row_count.toLocaleString()}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Downloaded Ops</div>
+            <div className="font-medium">{totals.downloaded_operations.toLocaleString()}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Total Ops</div>
+            <div className="font-medium">{totals.total_operations.toLocaleString()}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Data Size</div>
+            <div className="font-medium">{formatBytes(totals.data_size)}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Metadata Size</div>
+            <div className="font-medium">{formatBytes(totals.metadata_size)}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Downloaded Size</div>
+            <div className="font-medium">{formatBytes(totals.download_size)}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Last Synced</div>
+            <div className="font-medium">{lastSyncedAt?.toLocaleTimeString() ?? '-'}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
     <NavigationPage title="Sync Diagnostics">
-      <S.MainContainer>
-        {bucketRowsLoading ? <CircularProgress /> : totalsTable}
-        <Button
-          sx={{ margin: '10px' }}
-          variant="contained"
-          onClick={() => {
-            clearData();
-          }}>
-          Clear & Redownload
-        </Button>
-        <S.QueryResultContainer>
-          <Typography variant="h4" gutterBottom>
-            Tables
-          </Typography>
-          {tableRowsLoading ? <CircularProgress /> : tablesTable}
-        </S.QueryResultContainer>
-        <S.QueryResultContainer>
-          <Typography variant="h4" gutterBottom>
-            Buckets
-          </Typography>
-          {bucketRowsLoading ? <CircularProgress /> : bucketsTable}
-        </S.QueryResultContainer>
+      <div className="p-5 space-y-8">
+        <div>
+          {bucketRowsLoading ? (
+            <div className="flex justify-center items-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            totalsTable
+          )}
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                clearData();
+              }}>
+              Clear & Redownload
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Tables</h2>
+          {tableRowsLoading ? (
+            <div className="flex justify-center items-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <DataTable rows={tablesRows} columns={tablesColumns} pageSize={10} pageSizeOptions={[10, 50, 100]} />
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Buckets</h2>
+          {bucketRowsLoading ? (
+            <div className="flex justify-center items-center py-10">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <DataTable
+              rows={rows}
+              columns={bucketsColumns}
+              pageSize={50}
+              pageSizeOptions={[10, 50, 100]}
+              initialSortField="total_operations"
+              initialSortDirection="desc"
+            />
+          )}
+        </div>
+
         <StreamsState />
-      </S.MainContainer>
+      </div>
     </NavigationPage>
   );
 }
@@ -309,29 +339,33 @@ function StreamsState() {
   const syncStreamsLoading = syncStreams == null;
 
   return (
-    <S.QueryResultContainer>
-      <Typography variant="h4" gutterBottom>
-        Sync stream subscriptions
-      </Typography>
-      {syncStreamsLoading ? <CircularProgress /> : <StreamsGrid streams={syncStreams} />}
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Sync Stream Subscriptions</h2>
+      {syncStreamsLoading ? (
+        <div className="flex justify-center items-center py-10">
+          <Spinner size="lg" />
+        </div>
+      ) : (
+        <StreamsTable streams={syncStreams} />
+      )}
       <NewStreamSubscription open={dialogOpen} close={() => setDialogOpen(false)} />
-      <Button sx={{ margin: '10px' }} variant="contained" onClick={() => setDialogOpen(true)}>
-        Add subscription
+      <Button variant="outline" onClick={() => setDialogOpen(true)}>
+        Add Subscription
       </Button>
-    </S.QueryResultContainer>
+    </div>
   );
 }
 
-function StreamsGrid(props: { streams: SyncStreamStatus[] }) {
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Stream name', flex: 2 },
-    { field: 'parameters', headerName: 'Parameters', flex: 3, type: 'text' },
-    { field: 'default', headerName: 'Default', flex: 1, type: 'boolean' },
+function StreamsTable(props: { streams: SyncStreamStatus[] }) {
+  const columns: DataTableColumn<any>[] = [
+    { field: 'name', headerName: 'Stream Name', flex: 2 },
+    { field: 'parameters', headerName: 'Parameters', flex: 3, hideOnMobile: true },
+    { field: 'default', headerName: 'Default', flex: 1, type: 'boolean', hideOnMobile: true },
     { field: 'active', headerName: 'Active', flex: 1, type: 'boolean' },
-    { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean' },
-    { field: 'priority', headerName: 'Priority', flex: 1, type: 'number' },
-    { field: 'last_synced_at', headerName: 'Last synced at', flex: 2, type: 'dateTime' },
-    { field: 'expires', headerName: 'Eviction time', flex: 2, type: 'dateTime' }
+    { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean', hideOnMobile: true },
+    { field: 'priority', headerName: 'Priority', flex: 1, type: 'number', hideOnMobile: true },
+    { field: 'last_synced_at', headerName: 'Last Synced', flex: 2, type: 'dateTime', hideOnMobile: true },
+    { field: 'expires', headerName: 'Eviction Time', flex: 2, type: 'dateTime', hideOnMobile: true }
   ];
 
   const rows = props.streams.map((stream) => {
@@ -351,43 +385,49 @@ function StreamsGrid(props: { streams: SyncStreamStatus[] }) {
     };
   });
 
-  return (
-    <DataGrid
-      autoHeight={true}
-      rows={rows}
-      columns={columns}
-      initialState={{
-        pagination: {
-          paginationModel: {
-            pageSize: 10
-          }
-        }
-      }}
-      pageSizeOptions={[10, 50, 100]}
-      disableRowSelectionOnClick
-    />
-  );
+  return <DataTable rows={rows} columns={columns} pageSize={10} pageSizeOptions={[10, 50, 100]} />;
 }
 
-namespace S {
-  export const MainPaper = styled(Paper)`
-    margin-bottom: 10px;
-  `;
+const MAX_VISIBLE_TABLES = 3;
 
-  export const MainContainer = styled(Box)`
-    padding: 20px;
-  `;
+function TruncatedTablesList({ tables }: { tables: string }) {
+  const [expanded, setExpanded] = useState(false);
 
-  export const QueryResultContainer = styled(Box)`
-    margin-top: 40px;
-    width: 100%;
-  `;
+  if (!tables) return <span className="text-muted-foreground">-</span>;
 
-  export const CenteredGrid = styled(Grid)`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `;
+  const tableList = tables.split(', ').filter(Boolean);
+  const tableCount = tableList.length;
+
+  if (tableCount <= MAX_VISIBLE_TABLES) {
+    return <span>{tables}</span>;
+  }
+
+  const visibleTables = expanded ? tableList : tableList.slice(0, MAX_VISIBLE_TABLES);
+  const hiddenCount = tableCount - MAX_VISIBLE_TABLES;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <span>{visibleTables.join(', ')}</span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setExpanded(!expanded);
+        }}
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+        {expanded ? (
+          <>
+            <ChevronUp className="h-3 w-3" />
+            Show less
+          </>
+        ) : (
+          <>
+            <ChevronDown className="h-3 w-3" />
+            +{hiddenCount} more
+          </>
+        )}
+      </button>
+    </div>
+  );
 }
 
 // Source: https://stackoverflow.com/a/18650828/214837
