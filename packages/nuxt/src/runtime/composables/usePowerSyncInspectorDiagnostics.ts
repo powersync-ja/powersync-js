@@ -1,9 +1,12 @@
 import { usePowerSync, useStatus } from '@powersync/vue'
 import type {
+  AbstractPowerSyncDatabase,
   PowerSyncBackendConnector,
   PowerSyncConnectionOptions,
+  SyncStatus,
   UploadQueueStats,
 } from '@powersync/web'
+import type { ComputedRef, Ref } from 'vue'
 import { ref, computed, readonly, onMounted, onUnmounted } from 'vue'
 import { computedAsync } from '@vueuse/core'
 import { usePowerSyncInspector } from './usePowerSyncInspector'
@@ -83,6 +86,51 @@ export type TableRow = {
   name: string
   count: number
   size: number
+}
+
+/** Aggregated statistics from the diagnostics composable. */
+export type UsePowerSyncInspectorDiagnosticsTotals = {
+  buckets: number
+  row_count: number
+  downloaded_operations: number | undefined
+  total_operations: number
+  data_size: string
+  metadata_size: string
+  download_size: string
+}
+
+type ReadonlyRef<T> = Readonly<Ref<T>>
+
+/**
+ * Return type of {@link usePowerSyncInspectorDiagnostics}.
+ * Uses named types so the signature stays readable in docs and IDE.
+ */
+export interface UsePowerSyncInspectorDiagnosticsReturn {
+  db: Ref<AbstractPowerSyncDatabase> | undefined
+  connector: ComputedRef<PowerSyncBackendConnector | null>
+  connectionOptions: ComputedRef<PowerSyncConnectionOptions | null>
+  isDiagnosticSchemaSetup: ReadonlyRef<boolean>
+  /** Current sync status. Typed as SyncStatus for a concise doc signature; at runtime it may be a readonly proxy. */
+  syncStatus: ReadonlyRef<SyncStatus>
+  hasSynced: ReadonlyRef<boolean>
+  isConnected: ReadonlyRef<boolean>
+  isSyncing: ReadonlyRef<boolean>
+  isDownloading: ReadonlyRef<boolean>
+  isUploading: ReadonlyRef<boolean>
+  downloadError: ReadonlyRef<unknown>
+  uploadError: ReadonlyRef<unknown>
+  downloadProgressDetails: ReadonlyRef<unknown>
+  lastSyncedAt: ReadonlyRef<Date | null>
+  totalDownloadProgress: ReadonlyRef<string>
+  uploadQueueStats: ReadonlyRef<UploadQueueStats | null>
+  uploadQueueCount: ReadonlyRef<number>
+  uploadQueueSize: ReadonlyRef<string>
+  userID: ReadonlyRef<string | null>
+  bucketRows: ReadonlyRef<BucketRow[] | null>
+  tableRows: ReadonlyRef<TableRow[] | null>
+  totals: ReadonlyRef<UsePowerSyncInspectorDiagnosticsTotals>
+  clearData: () => Promise<void>
+  formatBytes: (bytes: number, decimals?: number) => string
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -199,7 +247,7 @@ function formatBytes(bytes: number, decimals = 2) {
  * </template>
  * ```
  */
-export function usePowerSyncInspectorDiagnostics() {
+export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnosticsReturn {
   const db = usePowerSync()
 
   const syncStatus = useStatus()
@@ -278,7 +326,7 @@ export function usePowerSyncInspectorDiagnostics() {
         (syncStatus.value?.downloadProgress?.downloadedFraction ?? 0) * 100
       ).toFixed(1)
     }
-    return 100
+    return '100'
   })
 
   const uploadQueueSize = computed(() =>
@@ -410,7 +458,7 @@ export function usePowerSyncInspectorDiagnostics() {
     connector,
     connectionOptions,
     isDiagnosticSchemaSetup: readonly(isDiagnosticSchemaSetup),
-    syncStatus: readonly(syncStatus),
+    syncStatus: readonly(syncStatus) as ReadonlyRef<SyncStatus>,
     hasSynced: readonly(hasSynced),
     isConnected: readonly(isConnected),
     isSyncing: readonly(isSyncing),
@@ -425,8 +473,8 @@ export function usePowerSyncInspectorDiagnostics() {
     uploadQueueCount: readonly(uploadQueueCount),
     uploadQueueSize: readonly(uploadQueueSize),
     userID: readonly(userID),
-    bucketRows: readonly(bucketRows),
-    tableRows: readonly(tableRows),
+    bucketRows: readonly(bucketRows) as ReadonlyRef<BucketRow[] | null>,
+    tableRows: readonly(tableRows) as ReadonlyRef<TableRow[] | null>,
     totals: readonly(totals),
     clearData,
     formatBytes,

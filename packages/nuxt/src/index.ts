@@ -18,3 +18,7 @@ export { usePowerSyncKysely } from './runtime/composables/usePowerSyncKysely.js'
 export { useDiagnosticsLogger } from './runtime/composables/useDiagnosticsLogger.js'
 export { usePowerSyncInspector } from './runtime/composables/usePowerSyncInspector.js'
 export { usePowerSyncInspectorDiagnostics } from './runtime/composables/usePowerSyncInspectorDiagnostics.js'
+export type {
+  UsePowerSyncInspectorDiagnosticsReturn,
+  UsePowerSyncInspectorDiagnosticsTotals,
+} from './runtime/composables/usePowerSyncInspectorDiagnostics.js'
