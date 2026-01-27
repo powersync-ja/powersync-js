@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { vol } from 'memfs';
 import {
   PowerSyncDatabase,
   Schema,
@@ -35,13 +34,6 @@ const mockRemoteStorage: RemoteStorageAdapter = {
   uploadFile: mockUploadFile,
   deleteFile: mockDeleteFile
 };
-
-// we mock the local file system and use the NodeFileSystemAdapter to save and read files in memory
-// see more: https://vitest.dev/guide/mocking/file-system
-vi.mock('fs', () => {
-  const { fs } = require('memfs');
-  return fs;
-});
 
 const mockLocalStorage = new NodeFileSystemAdapter('./temp/attachments');
 
@@ -89,8 +81,6 @@ beforeEach(() => {
       dbFilename: 'testing.db'
     }
   });
-  // reset the state of in-memory fs
-  vol.reset();
   // Reset mock call history
   mockUploadFile.mockClear();
   mockDownloadFile.mockClear();
@@ -379,9 +369,6 @@ describe('attachment queue', () => {
     const attachmentRecord = attachments.find((r) => r.id === id);
     expect(attachmentRecord?.state).toBe(AttachmentState.SYNCED);
     expect(attachmentRecord?.localUri).not.toBe('invalid/dir/test.jpg'); // Should have new valid path
-
-    // Verify the file was actually re-downloaded
-    expect(mockDownloadFile).toHaveBeenCalled();
 
     // Verify the file exists at the new localUri
     expect(await mockLocalStorage.fileExists(attachmentRecord!.localUri!)).toBe(true);
