@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments-storage-react-native",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
