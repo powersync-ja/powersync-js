@@ -1,1 +1,1 @@
-export { PowerSyncDatabaseWithDiagnostics } from './NuxtPowerSyncDatabase'
+export { NuxtPowerSyncDatabase } from './NuxtPowerSyncDatabase'

@@ -1,5 +1,5 @@
 import { createBaseLogger, LogLevel, type ILogHandler } from '@powersync/web'
-import { createConsola, type LogType } from 'consola'
+import { createConsola, type ConsolaOptions, type LogType } from 'consola'
 import { createStorage } from 'unstorage'
 import localStorageDriver from 'unstorage/drivers/session-storage'
 import mitt from 'mitt'
@@ -19,7 +19,7 @@ const consola = createConsola({
     compact: false,
     date: true,
   },
-})
+} as Partial<ConsolaOptions> & { fancy?: boolean }) // this type casting is only necessary for docs generation
 
 consola.addReporter({
   log: async (logObject) => {
