@@ -1,4 +1,5 @@
-import { column, Schema, Table, AttachmentTable } from '@powersync/react-native';
+import { column, Schema, Table } from '@powersync/react-native';
+import { AttachmentTable } from '@powersync/common';
 
 export const LIST_TABLE = 'lists';
 export const TODO_TABLE = 'todos';

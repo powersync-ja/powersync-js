@@ -41,9 +41,9 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
       if (Platform.OS === 'web' && photoAttachment.localUri.startsWith('indexeddb://')) {
         try {
           const localStorage = system.photoAttachmentQueue?.localStorage;
-          if (localStorage && typeof localStorage === 'object' && 'downloadFile' in localStorage) {
-            const downloadFile = (localStorage.downloadFile as (path: string) => Promise<Blob>).bind(localStorage);
-            const blob = await downloadFile(photoAttachment.localUri);
+          if (localStorage) {
+            const arrayBuffer = await localStorage.readFile(photoAttachment.localUri);
+            const blob = new Blob([arrayBuffer], { type: photoAttachment.mediaType || 'image/jpeg' });
             blobUrl = URL.createObjectURL(blob);
             setImageUri(blobUrl);
           }
