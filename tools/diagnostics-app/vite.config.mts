@@ -1,9 +1,10 @@
 import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'url';
 
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
@@ -24,12 +25,12 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: []
+    exclude: ['@journeyapps/wa-sqlite'],
   },
   plugins: [
     wasm(),
     topLevelAwait(),
+    tailwindcss(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -40,8 +41,8 @@ export default defineConfig({
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        name: 'PowerSync React Demo',
-        short_name: 'PowerSync React',
+        name: 'PowerSync Diagnostics',
+        short_name: 'Diagnostics',
         icons: [
           {
             src: '/icons/icon-192x192.png',
@@ -68,7 +69,6 @@ export default defineConfig({
     })
   ],
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   }
 });

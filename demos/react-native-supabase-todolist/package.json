@@ -16,7 +16,7 @@
     "@powersync/attachments-storage-react-native": "^0.0.1",
     "@powersync/common": "^1.4.6",
     "@powersync/react": "^1.8.2",
-    "@powersync/react-native": "^1.28.1",
+    "@powersync/react-native": "^1.29.0",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^7.1.1",
     "@react-navigation/native": "^7.0.14",

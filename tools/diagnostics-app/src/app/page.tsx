@@ -1,10 +1,10 @@
 import React from 'react';
-import { CircularProgress, Grid, styled } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DEFAULT_ENTRY_ROUTE, LOGIN_ROUTE } from './router';
 import { connector } from '@/library/powersync/ConnectionManager';
 import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
 import { SyncClientImplementation } from '@powersync/web';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function EntryPage() {
   const navigate = useNavigate();
@@ -35,22 +35,10 @@ export default function EntryPage() {
   }, []);
 
   return (
-    <S.MainGrid container>
-      <S.CenteredGrid item xs={12} md={6} lg={5}>
-        <CircularProgress />
-      </S.CenteredGrid>
-    </S.MainGrid>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    </div>
   );
-}
-
-namespace S {
-  export const CenteredGrid = styled(Grid)`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `;
-
-  export const MainGrid = styled(CenteredGrid)`
-    min-height: 100vh;
-  `;
 }

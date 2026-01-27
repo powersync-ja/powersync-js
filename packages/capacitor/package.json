@@ -1,6 +1,6 @@
 {
   "name": "@powersync/capacitor",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Adds PowerSync Capacitor support for iOS/Android",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -75,17 +75,18 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
+    "@types/async-lock": "catalog:",
     "eslint": "^8.57.0",
-    "prettier": "^3.4.2",
+    "prettier": "catalog:",
     "prettier-plugin-java": "^2.6.6",
     "rimraf": "^6.0.1",
-    "rollup": "^4.30.1",
-    "rollup-plugin-dts": "^6.2.1",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
     "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
     "@capacitor-community/sqlite": "^7.0.2",
-    "@powersync/web": "workspace:^1.30.0"
+    "@powersync/web": "workspace:^1.32.0"
   },
   "swiftlint": "@ionic/swiftlint-config",
   "capacitor": {
@@ -99,6 +100,6 @@
     }
   },
   "dependencies": {
-    "async-lock": "^1.4.0"
+    "async-lock": "catalog:"
   }
 }

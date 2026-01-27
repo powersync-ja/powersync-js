@@ -3,6 +3,64 @@ packages:
   - tools/*
   - docs/
 
+catalog:
+  # Database adapters
+  '@journeyapps/wa-sqlite': ^1.4.1
+  '@op-engineering/op-sqlite': ^15.2.2
+
+  # React Native
+  react-native: ^0.83.0
+
+  # Rollup plugins
+  '@rollup/plugin-alias': ^5.1.0
+  '@rollup/plugin-commonjs': ^29.0.0
+  '@rollup/plugin-inject': ^5.0.5
+  '@rollup/plugin-json': ^6.1.0
+  '@rollup/plugin-node-resolve': ^16.0.3
+  '@rollup/plugin-replace': ^5.0.7
+  '@rollup/plugin-terser': ^0.4.4
+  '@rollup/plugin-typescript': ^12.1.4
+
+  # PNPM workspace tools
+  '@pnpm/workspace.find-packages': ^1000.0.55
+  '@pnpm/workspace.read-manifest': ^1000.2.9
+
+  # TypeScript types
+  '@types/async-lock': ^1.4.0
+  '@types/node': ^24.0.0
+  '@types/uuid': ^9.0.6
+
+  # Async utilities
+  async-lock: ^1.4.1
+  async-mutex: ^0.5.0
+
+  # Database libraries
+  bson: ^6.10.4
+  drizzle-orm: ^0.44.7
+  kysely: ^0.28.0
+
+  # Build tools
+  rollup: ^4.52.5
+  rollup-plugin-dts: ^6.2.1
+  typescript: ^5.5.3
+  vite: ^7.3.1
+
+  # Testing
+  jsdom: ^24.0.0
+  vitest: ^3.2.4
+
+  # Code quality
+  eslint: ^8.57.1
+  eslint-plugin-prettier: ^5.5.4
+  prettier: ^3.7.4
+
+  # Utilities
+  comlink: ^4.4.2
+  glob: ^11.0.0
+  js-logger: ^1.6.1
+  p-defer: ^4.0.1
+  uuid: ^11.1.0
+
 onlyBuiltDependencies:
   - better-sqlite3
   - better-sqlite3-multiple-ciphers

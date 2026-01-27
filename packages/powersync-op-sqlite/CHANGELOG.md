@@ -1,5 +1,20 @@
 # @powersync/op-sqlite
 
+## 0.8.0
+
+### Minor Changes
+
+- 6a61aaf: Updated op-sqlite upstream peer dependency to support ^15.x.x
+
+### Patch Changes
+
+- Updated dependencies [aaf6037]
+- Updated dependencies [acf6b70]
+- Updated dependencies [e39359d]
+- Updated dependencies [41953bc]
+- Updated dependencies [25ece59]
+  - @powersync/common@1.46.0
+
 ## 0.7.18
 
 ### Patch Changes
