@@ -20,9 +20,9 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
     });
   }
 
-  clear(): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      const db = await this.dbPromise;
+  async clear(): Promise<void> {
+    const db = await this.dbPromise;
+    return new Promise((resolve, reject) => {
       const tx = db.transaction('files', 'readwrite');
       const store = tx.objectStore('files');
       const req = store.clear();
@@ -63,21 +63,6 @@ export class IndexDBFileSystemStorageAdapter implements LocalStorageAdapter {
     return await new Promise<number>((resolve, reject) => {
       const req = store.put(dataToStore, filePath);
       req.onsuccess = () => resolve(size);
-      req.onerror = () => reject(req.error);
-    });
-  }
-
-  async downloadFile(filePath: string): Promise<Blob> {
-    const store = await this.getStore();
-    return new Promise<Blob>((resolve, reject) => {
-      const req = store.get(filePath);
-      req.onsuccess = () => {
-        if (req.result) {
-          resolve(new Blob([req.result]));
-        } else {
-          reject(new Error('File not found'));
-        }
-      };
       req.onerror = () => reject(req.error);
     });
   }
