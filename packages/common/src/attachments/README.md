@@ -522,12 +522,11 @@ Enum representing attachment synchronization states.
 
 ```typescript
 enum AttachmentState {
-  QUEUED_SYNC = 0,      // Check if upload or download needed
-  QUEUED_UPLOAD = 1,    // Queued for upload
-  QUEUED_DOWNLOAD = 2,  // Queued for download
-  QUEUED_DELETE = 3,    // Queued for deletion
-  SYNCED = 4,           // Successfully synced
-  ARCHIVED = 5          // No longer referenced (orphaned)
+  QUEUED_UPLOAD = 0,    // Queued for upload
+  QUEUED_DOWNLOAD = 1,  // Queued for download
+  QUEUED_DELETE = 2,    // Queued for deletion
+  SYNCED = 3,           // Successfully synced
+  ARCHIVED = 4          // No longer referenced (orphaned)
 }
 ```
 
