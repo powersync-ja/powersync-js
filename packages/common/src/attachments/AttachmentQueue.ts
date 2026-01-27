@@ -191,9 +191,15 @@ export class AttachmentQueue {
     });
 
     this.watchAttachmentsAbortController = new AbortController();
+    const signal = this.watchAttachmentsAbortController.signal;
 
     // Process attachments when there is a change in watched attachments
     this.watchAttachments(async (watchedAttachments) => {
+      // Skip processing if sync has been stopped
+      if (signal.aborted) {
+        return;
+      }
+
       await this.attachmentService.withContext(async (ctx) => {
         // Need to get all the attachments which are tracked in the DB.
         // We might need to restore an archived attachment.
@@ -273,7 +279,7 @@ export class AttachmentQueue {
           await ctx.saveAttachments(attachmentUpdates);
         }
       });
-    }, this.watchAttachmentsAbortController.signal);
+    }, signal);
   }
 
   /**
