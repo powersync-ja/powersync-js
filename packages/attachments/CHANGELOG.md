@@ -1,5 +1,13 @@
 # @powersync/attachments
 
+## 2.4.3
+
+### Patch Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+- Updated dependencies [d86799a]
+  - @powersync/common@1.47.0
+
 ## 2.4.2
 
 ### Patch Changes

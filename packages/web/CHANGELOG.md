@@ -1,5 +1,16 @@
 # @powersync/web
 
+## 1.33.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- Updated dependencies [d86799a]
+  - @powersync/common@1.47.0
+
 ## 1.32.0
 
 ### Minor Changes
