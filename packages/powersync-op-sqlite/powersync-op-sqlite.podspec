@@ -4,6 +4,7 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
   s.name         = "powersync-op-sqlite"
+  version = package['version']
   if version.include?('-dev')
     s.version = '0.0.0'
   else
