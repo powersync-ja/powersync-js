@@ -18,7 +18,7 @@
     "@mui/material": "^5.15.12",
     "@mui/x-data-grid": "^6.19.6",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.31.0",
+    "@powersync/web": "^1.32.0",
     "@supabase/supabase-js": "^2.39.7",
     "@tanstack/db": "^0.5.11",
     "@tanstack/powersync-db-collection": "^0.1.15",
@@ -45,8 +45,6 @@
     "typescript": "^5.4.2",
     "vite": "^5.1.5",
     "vite-plugin-pwa": "^0.19.2",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0",
     "vitest": "^3.2.4"
   }
 }

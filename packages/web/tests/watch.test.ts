@@ -9,7 +9,7 @@ import {
 import { PowerSyncDatabase } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { TestDatabase, testSchema } from './utils/testDb.js';
+import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
 vi.useRealTimers();
 
 /**
@@ -28,7 +28,7 @@ describe('Watch Tests', { sequential: true }, () => {
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
       database: { dbFilename: 'test-watch.db' },
-      schema: testSchema,
+      schema: TEST_SCHEMA,
       flags: {
         enableMultiTabs: false
       }

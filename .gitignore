@@ -1,6 +1,7 @@
 node_modules
 .env
 lib
+!tools/diagnostics-app/src/lib/
 dist
 .nuxt
 .output

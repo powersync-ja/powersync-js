@@ -39,9 +39,7 @@ export default () => {
         stream: require.resolve('stream-browserify'),
         vm: require.resolve('vm-browserify')
       },
-      alias: {
-        bson: path.resolve(__dirname, '../../node_modules/bson/lib/bson.cjs')
-      }
+      alias: {}
     },
 
     externals: {

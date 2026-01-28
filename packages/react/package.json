@@ -33,19 +33,22 @@
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.45.0",
+    "@powersync/common": "workspace:^1.46.0",
     "react": "*"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
+    "@powersync/drizzle-driver": "workspace:*",
     "@powersync/web": "workspace:*",
-    "@testing-library/react": "^15.0.2",
+    "@testing-library/react": "^16.0.0",
+    "drizzle-orm": "catalog:",
+    "p-defer": "catalog:",
     "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.0",
     "chart.js": "^4.5.0",
-    "jsdom": "^24.0.0",
+    "jsdom": "catalog:",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-error-boundary": "^4.1.0",
-    "@powersync/drizzle-driver": "workspace:*"
+    "react-error-boundary": "^4.1.0"
   }
 }

@@ -7,11 +7,15 @@
 import '@azure/core-asynciterator-polyfill';
 import React from 'react';
 import { SafeAreaView, ScrollView, StatusBar, useColorScheme } from 'react-native';
-
-import { Colors } from 'react-native/Libraries/NewAppScreen';
 import { rootSuite } from './mocha/MochaRNAdapter';
 import { registerBaseTests } from './tests/queries.test';
 import { SuitWidget } from './widgets/SuitWidget';
+
+// Colors previously from react-native/Libraries/NewAppScreen (deprecated)
+const Colors = {
+  darker: '#121212',
+  lighter: '#F3F3F3'
+};
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';

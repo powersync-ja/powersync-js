@@ -12,7 +12,7 @@
   "dependencies": {
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.31.0",
+    "@powersync/web": "^1.32.0",
     "@supabase/supabase-js": "^2.43.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@webflow/webflow-cli": "^1.6.9",
@@ -34,8 +34,6 @@
     "supabase": "^1.165.0",
     "typescript": "^5.3.2",
     "vite": "^5.1.5",
-    "vite-plugin-pwa": "^0.19.2",
-    "vite-plugin-top-level-await": "^1.4.1",
-    "vite-plugin-wasm": "^3.3.0"
+    "vite-plugin-pwa": "^0.19.2"
   }
 }

@@ -1,5 +1,27 @@
 # @powersync/react-native
 
+## 1.29.0
+
+### Minor Changes
+
+- 8db47f3: [Internal] Improved BSON bundling process.
+- acf6b70: The [Rust sync client](https://www.powersync.com/blog/speeding-up-powersync-with-a-sqlite-extension-written-in-rust) is now enabled by default.
+  To keep using the JavaScript client implementation, pass `clientImplementation: SyncClientImplementation.JAVASCRIPT` in `options` when calling
+  `PowerSync.connect`.
+
+  Note that the JavaScript client will be removed in a future version of the SDK. If you choose to it due to issues with the Rust client, please
+  file an issue or reach out to us.
+
+### Patch Changes
+
+- Updated dependencies [aaf6037]
+- Updated dependencies [acf6b70]
+- Updated dependencies [e39359d]
+- Updated dependencies [41953bc]
+- Updated dependencies [25ece59]
+  - @powersync/common@1.46.0
+  - @powersync/react@1.8.2
+
 ## 1.28.1
 
 ### Patch Changes

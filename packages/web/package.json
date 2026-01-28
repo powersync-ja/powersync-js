@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.31.0",
+  "version": "1.32.0",
   "description": "PowerSync Web SDK",
   "main": "lib/src/index.js",
   "module": "lib/src/index.js",
@@ -66,28 +66,27 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.1",
-    "@powersync/common": "workspace:^1.45.0"
+    "@journeyapps/wa-sqlite": "catalog:",
+    "@powersync/common": "workspace:^1.46.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-mutex": "^0.5.0",
-    "bson": "^6.10.4",
-    "comlink": "^4.4.2",
+    "async-mutex": "catalog:",
+    "bson": "catalog:",
+    "comlink": "catalog:",
     "commander": "^12.1.0"
   },
   "devDependencies": {
     "@journeyapps/wa-sqlite": "^1.4.1",
-    "@types/uuid": "^9.0.6",
+    "@types/uuid": "catalog:",
     "crypto-browserify": "^3.12.0",
-    "p-defer": "^4.0.1",
+    "glob": "catalog:",
+    "p-defer": "catalog:",
     "source-map-loader": "^5.0.0",
     "stream-browserify": "^3.0.0",
     "terser-webpack-plugin": "^5.3.9",
-    "uuid": "^9.0.1",
-    "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4",
-    "vite-plugin-wasm": "^3.3.0",
+    "uuid": "catalog:",
+    "vite": "catalog:",
     "vm-browserify": "^1.1.2",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4",
