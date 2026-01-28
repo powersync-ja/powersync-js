@@ -1,4 +1,4 @@
-import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
 import Lock from 'async-lock';
 import { Platform } from 'react-native';
@@ -38,7 +38,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     super();
     this.name = this.options.name;
 
-    this.locks = new Lock();
+    this.locks = new Lock({ maxPending: Infinity });
     this.readConnections = null;
     this.writeConnection = null;
     this.abortController = new AbortController();
