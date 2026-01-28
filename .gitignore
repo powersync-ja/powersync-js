@@ -1,7 +1,10 @@
 node_modules
+.env
 lib
 !tools/diagnostics-app/src/lib/
 dist
+.nuxt
+.output
 *.tsbuildinfo
 .vscode
 .DS_STORE
@@ -17,3 +20,6 @@ demos/**/pnpm-lock.yaml
 
 # Useful for local development
 demos/**/.pnpmfile.cjs
+demos/**/.branches
+demos/**/.temp
+
