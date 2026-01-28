@@ -4,10 +4,8 @@ import {
   addPlugin,
   addImports,
   extendPages,
-  // installModule,
   addLayout,
   addComponentsDir,
-  installModule,
   findPath,
 } from '@nuxt/kit'
 import { defu } from 'defu'
@@ -58,6 +56,10 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
     useDiagnostics: false,
     kysely: false,
   },
+  moduleDependencies: {
+    '@nuxt/devtools-ui-kit': {},
+    '@vueuse/nuxt': {},
+  },
   async setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
@@ -80,9 +82,6 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
         )
       }
     }
-
-    await installModule('@nuxt/devtools-ui-kit')
-    await installModule('@vueuse/nuxt')
 
     addPlugin(resolver.resolve('./runtime/plugin.client'))
 
