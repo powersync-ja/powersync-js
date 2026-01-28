@@ -1,0 +1,82 @@
+{
+  "name": "@powersync/attachments-storage-react-native",
+  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "POWERSYNC",
+  "license": "Apache-2.0",
+  "homepage": "https://docs.powersync.com",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "description": "React Native file system storage adapters for PowerSync attachments",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./lib/index.js",
+        "types": "./lib/index.d.ts"
+      },
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
+    }
+  },
+  "files": [
+    "lib",
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -b && rollup --config",
+    "build:prod": "tsc -b --sourceMap false && rollup --config",
+    "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "watch": "tsc -b -w",
+    "test:exports": "attw --pack ."
+  },
+  "peerDependencies": {
+    "@powersync/common": "workspace:^1.43.1",
+    "expo-file-system": ">=19.0.0",
+    "@dr.pogodin/react-native-fs": "^2.25.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-file-system": {
+      "optional": true
+    },
+    "@dr.pogodin/react-native-fs": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "base64-arraybuffer": "^1.0.2"
+  },
+  "devDependencies": {
+    "@powersync/common": "workspace:*",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@dr.pogodin/react-native-fs": "^2.36.1",
+    "expo-file-system": "^19.0.21",
+    "rollup": "4.14.3",
+    "rollup-plugin-dts": "^6.1.0",
+    "typescript": "^5.5.0"
+  },
+  "keywords": [
+    "powersync",
+    "attachments",
+    "react-native",
+    "expo",
+    "file-system",
+    "offline-first"
+  ]
+}
