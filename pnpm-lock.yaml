@@ -601,9 +601,21 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
+      async-mutex:
+        specifier: 'catalog:'
+        version: 0.5.0
+      bson:
+        specifier: 'catalog:'
+        version: 6.10.4
+      comlink:
+        specifier: 'catalog:'
+        version: 4.4.2
       nuxt:
         specifier: ^4.1.2
         version: 4.3.0(4e3fd394f6454ec609ec865f097106de)
+      vite-plugin-top-level-await:
+        specifier: ^1.6.0
+        version: 1.6.0(@swc/helpers@0.5.18)(rollup@4.57.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))
       vite-plugin-wasm:
         specifier: ^3.5.0
         version: 3.5.0(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2))
@@ -22263,6 +22275,10 @@ snapshots:
     optionalDependencies:
       rollup: 2.79.2
 
+  '@rollup/plugin-virtual@3.0.2(rollup@4.57.0)':
+    optionalDependencies:
+      rollup: 4.57.0
+
   '@rollup/pluginutils@3.1.0(rollup@2.79.2)':
     dependencies:
       '@types/estree': 0.0.39
@@ -34635,6 +34651,17 @@ snapshots:
       '@swc/wasm': 1.15.11
       uuid: 10.0.0
       vite: 5.4.21(@types/node@22.19.7)(lightningcss@1.31.1)(terser@5.46.0)
+    transitivePeerDependencies:
+      - '@swc/helpers'
+      - rollup
+
+  vite-plugin-top-level-await@1.6.0(@swc/helpers@0.5.18)(rollup@4.57.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2)):
+    dependencies:
+      '@rollup/plugin-virtual': 3.0.2(rollup@4.57.0)
+      '@swc/core': 1.15.11(@swc/helpers@0.5.18)
+      '@swc/wasm': 1.15.11
+      uuid: 10.0.0
+      vite: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@swc/helpers'
       - rollup
