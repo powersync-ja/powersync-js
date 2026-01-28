@@ -31,9 +31,9 @@ This demo can be started with local PowerSync and Supabase services.
    supabase start
    ```
 
-4. Copy the values from the `supabase start` output into `.env`:
+4. Copy the values from the `supabase start` output into `.env`. Local Supabase uses JWKS for auth, so this demo configures PowerSync with `jwks_uri` and `audience: authenticated`:
    - `NUXT_PUBLIC_SUPABASE_ANON_KEY`: Use the **Publishable** key value
-   - `PS_SUPABASE_JWT_SECRET`: Use `super-secret-jwt-token-with-at-least-32-characters-long` (default for local dev)
+   - `PS_JWKS_URI`: Use `http://kong:8000/auth/v1/.well-known/jwks.json` when PowerSync runs in Docker on the Supabase network (default in step 5). This points PowerSync at local Supabase's JWKS so it can verify tokens. If Kong is not reachable from the container (e.g. custom network), try `http://host.docker.internal:54321/auth/v1/.well-known/jwks.json` on Docker Desktop for Mac/Windows.
 
 5. Start PowerSync:
    ```bash

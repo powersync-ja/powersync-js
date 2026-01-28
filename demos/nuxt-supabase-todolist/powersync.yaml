@@ -19,8 +19,9 @@ sync_rules:
 port: !env PS_PORT
 
 client_auth:
-  supabase: true
-  supabase_jwt_secret: !env PS_SUPABASE_JWT_SECRET
+  jwks_uri: !env PS_JWKS_URI
+  audience:
+    - authenticated
 
 telemetry:
   prometheus_port: 9090

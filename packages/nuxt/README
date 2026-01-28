@@ -23,22 +23,24 @@ PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nux
 
 ## Installation
 
-This module exposes all `@powersync/vue` composables, so you only need to install `@powersync/nuxt`:
+This module re-exports all `@powersync/vue` composables. With **npm** (v7+), installing `@powersync/nuxt` is enough; with **pnpm**, install peer dependencies explicitly.
 
 ```bash
-# Using pnpm
-pnpm add -D @powersync/nuxt vite-plugin-top-level-await vite-plugin-wasm
-
-# Using yarn
-yarn add --dev @powersync/nuxt vite-plugin-top-level-await vite-plugin-wasm
-
 # Using npm
-npm install --save-dev @powersync/nuxt vite-plugin-top-level-await vite-plugin-wasm
+npm install @powersync/nuxt
+npm install --save-dev vite-plugin-top-level-await vite-plugin-wasm
+
+# Using pnpm (peer deps are not auto-installed)
+pnpm add @powersync/nuxt @powersync/vue @powersync/web
+pnpm add -D vite-plugin-top-level-await vite-plugin-wasm
 ```
+
 > [!NOTE]
 > This module works with `Nuxt 4` and should work with `Nuxt 3` but has not been tested. Support for Nuxt 2 is not guaranteed or planned.
 
 ## Quick Start
+
+For a complete working app, see the [Nuxt + Supabase Todo List demo](https://github.com/powersync-ja/powersync-js/tree/main/demos/nuxt-supabase-todolist). To set up from scratch:
 
 1. Add `@powersync/nuxt` to the `modules` section of `nuxt.config.ts`:
 
@@ -207,7 +209,35 @@ export default defineNuxtPlugin({
 
 ### Kysely ORM (Optional)
 
-You can use Kysely as your ORM to interact with the database. The module provides a `usePowerSyncKysely()` composable:
+You can use Kysely as your ORM to interact with the database. The module optionally provides a `usePowerSyncKysely()` composable. To keep the bundle small, you must install the driver yourself and enable it in config.
+
+Install the driver:
+
+```
+pnpm add @powersync/kysely-driver
+```
+In your existing `nuxt.config.ts`, set:
+
+```typescript
+export default defineNuxtConfig({
+  modules: ['@powersync/nuxt'],
+  powersync: {
+    kysely: true // <- opt-in
+  },
+  vite: {
+    optimizeDeps: {
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+      include: ['@powersync/web > js-logger'],
+    },
+    worker: {
+      format: 'es',
+      plugins: () => [wasm()],
+    },
+  },
+})
+```
+
+When enabled, the module exposes `usePowerSyncKysely`. Use your schema’s `Database` type to get proper typings:
 
 ```typescript
 import { usePowerSyncKysely } from '@powersync/nuxt'
@@ -256,14 +286,18 @@ When `useDiagnostics: true` is set, `NuxtPowerSyncDatabase` automatically:
 
 Once diagnostics are enabled, you can access the [PowerSync Inspector](#powersync-inspector):
 
+- **Via Nuxt Devtools**: Open Devtools and look for the PowerSync tab
 - **Direct URL**: `http://localhost:3000/__powersync-inspector`
-- **Via Nuxt Devtools**: Open Devtools and look for the PowerSync tab (Instable until proper multitab support for diagnostics in implemented)
 
 
 
 ## PowerSync Inspector
 
 PowerSync Inspector is a tool that helps inspect and diagnose the state of your PowerSync client directly from your app in real-time.
+
+<div align="center">
+  <img src="./img/inspector.png" alt="PowerSync Logo" />
+</div>
 
 ### Setup
 
@@ -297,34 +331,16 @@ Real-time logging of PowerSync operations with syntax highlighting and search fu
 
 The inspector is also available in the Nuxt Devtools as a tab, providing seamless integration with your development workflow.
 
-> [!WARNING]  
-> Multitab support is still not fully supported when diagnostics are enabled which causes the inspector to malfunction in the devtool. see [Known Issues section](#known-issues)
-
 ## Known Issues
 
-1. Enabling diagnostics makes your app glitch when operating in a multi-tab environment. You can observe this issue when you open the inspector in the devtools, for example.
-
-2. PowerSync Inspector relies on `unocss` as a transitive dependency. It might clash with your existing setup, for example if you use Tailwind CSS.
+1. PowerSync Inspector relies on `unocss` as a transitive dependency. It might clash with your existing setup, for example if you use Tailwind CSS.
 
 To fix this, you can add the following to your `nuxt.config.ts`:
 
 ```typescript
 export default defineNuxtConfig({
   unocss: {
-    icons: true,
-    blocklist: [/\$\{.*\}/],
-    content: {
-      pipeline: {
-        exclude: [
-          './layouts/*/**',
-          './pages/*/**',
-          './components/*/**',
-          './composables/*/**',
-          './utils/*/**',
-          './types/*/**',
-        ],
-      },
-    },
+    autoImport: false
   },
 })
 ```
