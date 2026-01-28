@@ -32,6 +32,7 @@
     "scripts": {
       "prebuild": "nuxt-module-build prepare",
       "build": "nuxt-module-build build",
+      "prebuild:prod": "nuxt-module-build prepare",
       "build:prod": "nuxt-module-build build",
       "clean": "rm -rf dist .nuxt",
       "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare",
