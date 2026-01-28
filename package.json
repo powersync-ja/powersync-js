@@ -27,7 +27,9 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "@powersync/better-sqlite3"
+      "@powersync/better-sqlite3",
+      "better-sqlite3",
+      "better-sqlite3-multiple-ciphers"
     ]
   },
   "keywords": [],
