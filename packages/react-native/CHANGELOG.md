@@ -1,5 +1,17 @@
 # @powersync/react-native
 
+## 1.30.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- Updated dependencies [d86799a]
+  - @powersync/common@1.47.0
+  - @powersync/react@1.8.2
+
 ## 1.29.0
 
 ### Minor Changes
