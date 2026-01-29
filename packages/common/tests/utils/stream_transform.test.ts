@@ -117,6 +117,24 @@ describe('bson objects', () => {
     expect(await stream.next()).toStrictEqual(doneResult);
   });
 
+  test('splits bson objects (2)', async () => {
+    async function* source() {
+      yield new Uint8Array([5, 0, 0, 0, 1]);
+
+      yield new Uint8Array([6, 0, 0, 0, 2]);
+      yield new Uint8Array([3]);
+    }
+
+    const stream = extractBsonObjects(source());
+    const a = (await stream.next()).value;
+    const b = (await stream.next()).value;
+    expect(a).toHaveLength(5);
+    expect(b).toHaveLength(6);
+    expect(Array.from(a)).toEqual([5, 0, 0, 0, 1]);
+    expect(Array.from(b)).toEqual([6, 0, 0, 0, 2, 3]);
+    expect(await stream.next()).toStrictEqual(doneResult);
+  });
+
   test('invalid bson size', async () => {
     async function* source() {
       yield new Uint8Array([3, 0, 0, 0]);

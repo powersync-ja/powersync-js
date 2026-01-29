@@ -212,7 +212,7 @@ export function extractBsonObjects(source: SimpleAsyncIterator<Uint8Array>): Sim
             // We're in the middle of reading a BSON document.
             const bytesToRead = Math.min(availableInData, remainingLength);
             const copySource = new Uint8Array(chunk.buffer, chunk.byteOffset + i, bytesToRead);
-            objectBody.set(copySource, 4 + copySource.length - remainingLength);
+            objectBody.set(copySource, objectBody.length - remainingLength);
             i += bytesToRead;
             remainingLength -= bytesToRead;
 
@@ -242,10 +242,7 @@ export function extractBsonObjects(source: SimpleAsyncIterator<Uint8Array>): Sim
               }
 
               objectBody = new Uint8Array(length);
-              for (let j = 0; j < 4; j++) {
-                objectBody[j] = lengthBuffer.getUint8(j);
-                lengthBuffer.setUint8(j, 0);
-              }
+              new DataView(objectBody.buffer).setInt32(0, length, true);
             }
           }
         }
