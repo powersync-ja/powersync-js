@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.47.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+- 8dee8d7: Exported common Mutex helper functions
+
 ## 1.46.0
 
 ### Minor Changes
