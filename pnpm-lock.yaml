@@ -42,18 +42,12 @@ catalogs:
     '@rollup/plugin-typescript':
       specifier: ^12.1.4
       version: 12.3.0
-    '@types/async-lock':
-      specifier: ^1.4.0
-      version: 1.4.2
     '@types/node':
       specifier: ^24.0.0
       version: 24.10.9
     '@types/uuid':
       specifier: ^9.0.6
       version: 9.0.8
-    async-lock:
-      specifier: ^1.4.1
-      version: 1.4.1
     async-mutex:
       specifier: ^0.5.0
       version: 0.5.0
@@ -332,9 +326,9 @@ importers:
       '@powersync/web':
         specifier: workspace:^1.32.0
         version: link:../web
-      async-lock:
+      async-mutex:
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 0.5.0
     devDependencies:
       '@capacitor-community/sqlite':
         specifier: ^7.0.2
@@ -360,9 +354,6 @@ importers:
       '@ionic/swiftlint-config':
         specifier: ^2.0.0
         version: 2.0.0
-      '@types/async-lock':
-        specifier: 'catalog:'
-        version: 1.4.2
       eslint:
         specifier: ^8.57.0
         version: 8.57.1
@@ -565,9 +556,9 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      async-lock:
+      async-mutex:
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 0.5.0
     devDependencies:
       '@op-engineering/op-sqlite':
         specifier: 'catalog:'
@@ -575,9 +566,6 @@ importers:
       '@react-native/eslint-config':
         specifier: ^0.83.1
         version: 0.83.1(eslint@8.57.1)(jest@29.7.0(@types/node@24.10.9))(prettier@3.8.1)(typescript@5.9.3)
-      '@types/async-lock':
-        specifier: 'catalog:'
-        version: 1.4.2
       '@types/react':
         specifier: ^19.1.1
         version: 19.2.10
@@ -5503,9 +5491,6 @@ packages:
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
-  '@types/async-lock@1.4.2':
-    resolution: {integrity: sha512-HlZ6Dcr205BmNhwkdXqrg2vkFMN2PluI7Lgr8In3B3wE5PiQHhjRqtW/lGdVU9gw+sM0JcIDx2AN+cW8oSWIcw==}
-
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
 
@@ -6372,9 +6357,6 @@ packages:
 
   async-limiter@1.0.1:
     resolution: {integrity: sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==}
-
-  async-lock@1.4.1:
-    resolution: {integrity: sha512-Az2ZTpuytrtqENulXwO3GGv1Bztugx6TT37NIo7imr/Qo0gsYiGtSdBa2B6fsXhTpVZDNfu1Qn3pk531e3q+nQ==}
 
   async-mutex@0.5.0:
     resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
@@ -19683,7 +19665,9 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
@@ -20565,8 +20549,6 @@ snapshots:
     optional: true
 
   '@types/aria-query@5.0.4': {}
-
-  '@types/async-lock@1.4.2': {}
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -21702,8 +21684,6 @@ snapshots:
   async-function@1.0.0: {}
 
   async-limiter@1.0.1: {}
-
-  async-lock@1.4.1: {}
 
   async-mutex@0.5.0:
     dependencies:
@@ -23224,7 +23204,7 @@ snapshots:
 
   dotenv-expand@11.0.7:
     dependencies:
-      dotenv: 16.4.7
+      dotenv: 16.6.1
 
   dotenv@16.4.7: {}
 

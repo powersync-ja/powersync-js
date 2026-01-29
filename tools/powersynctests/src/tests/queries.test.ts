@@ -619,54 +619,71 @@ export function registerBaseTests() {
       expect(duration).lessThan(2000);
     });
 
-       it('should compare results with old watch method', async () => {
-    const controller = new AbortController();
+    it('should compare results with old watch method', async () => {
+      const controller = new AbortController();
 
-    const resultSets: QueryResult[] = [];
+      const resultSets: QueryResult[] = [];
 
-    // Wait for the first query load
-    const donePromise = new Promise<void>((resolve) => {
-      db.watch(
-        'SELECT * FROM users WHERE name = ?',
-        ['test'],
-        {
-          onResult: (result) => {
-            // Mark that we received the first result, this helps with counting events.
-            if (result.rows?._array?.length == 2) { 
-              resolve();
+      // Wait for the first query load
+      const donePromise = new Promise<void>((resolve) => {
+        db.watch(
+          'SELECT * FROM users WHERE name = ?',
+          ['test'],
+          {
+            onResult: (result) => {
+              // Mark that we received the first result, this helps with counting events.
+              if (result.rows?._array?.length == 2) {
+                resolve();
+              }
+              resultSets.push(result);
             }
-            resultSets.push(result);
-          }
-        },
-        {
-          signal: controller.signal,
-          comparator: {
-            checkEquality: (current, previous) => {
-              return JSON.stringify(current) === JSON.stringify(previous);
+          },
+          {
+            signal: controller.signal,
+            comparator: {
+              checkEquality: (current, previous) => {
+                return JSON.stringify(current) === JSON.stringify(previous);
+              }
             }
           }
-        }
-      );
+        );
+      });
+
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
+      await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+
+      await donePromise;
+
+      expect(resultSets[resultSets.length - 1]?.rows?._array?.map((r) => r.name)).deep.eq(['test', 'test']);
+      // We should only have updated less than or equal 3 times
+      expect(resultSets.length).lessThanOrEqual(3);
     });
 
+    it('Should handle many writeLock requests', async () => {
+      // Take a writeLock and returns a method to release it
+      const releaseLock = await new Promise<() => void>((resolveReleaser) => {
+        db.writeLock(async () => {
+          // Wait for this promise, it's resolver is exposed as releaseLock
+          await new Promise<void>((resolve) => resolveReleaser(resolve));
+        });
+      });
 
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['nottest']);
-    await db.execute('INSERT INTO users(id, name) VALUES (uuid(), ?)', ['test']);
+      // Try and obtian many writeLocks, these will be queued due to the above
+      const promises = Array.from({ length: 5000 }).map(() => db.writeLock(async () => {}));
 
+      // Now release the current lock
+      releaseLock();
 
-    await donePromise;
-
-    expect(resultSets[resultSets.length - 1]?.rows?._array?.map((r) => r.name)).deep.eq(['test', 'test']);
-    // We should only have updated less than or equal 3 times
-    expect(resultSets.length).lessThanOrEqual(3);
-  });
+      // All the requests should have been processed
+      await Promise.all(promises);
+    });
 
     it('Should handle multiple closes', async () => {
       // Bulk insert 10000 rows without using a transaction
@@ -703,7 +720,5 @@ export function registerBaseTests() {
         expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
       }
     });
-
-  
   });
 }
