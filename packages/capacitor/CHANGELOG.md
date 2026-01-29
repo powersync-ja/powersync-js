@@ -1,5 +1,17 @@
 # @powersync/capacitor
 
+## 0.4.0
+
+### Minor Changes
+
+- 8dee8d7: Removed `async-lock` dependency in favor of `async-mutex`.
+
+### Patch Changes
+
+- 8dee8d7: Fixed potential issue where extreme amounts of concurrent calls to `writeLock` could reject with the error "Too many pending tasks in queue"
+- Updated dependencies [d86799a]
+  - @powersync/web@1.33.0
+
 ## 0.3.0
 
 ### Minor Changes
