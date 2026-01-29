@@ -10,11 +10,9 @@
   },
   "dependencies": {
     "@azure/core-asynciterator-polyfill": "^1.0.2",
-    "@dr.pogodin/react-native-fs": "2.30.3",
     "@expo/vector-icons": "^14.0.3",
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
-    "@powersync/attachments-storage-react-native": "^0.0.1",
-    "@powersync/common": "^1.4.6",
+    "@powersync/attachments": "^2.4.2",
     "@powersync/react": "^1.8.2",
     "@powersync/react-native": "^1.29.0",
     "@react-native-community/masked-view": "^0.1.11",

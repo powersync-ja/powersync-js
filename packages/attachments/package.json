@@ -9,7 +9,6 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "deprecated": "Attachment support is now built into the PowerSync SDKs. Please import from your platform-specific SDK instead (e.g. @powersync/react-native, @powersync/web, or @powersync/node).",
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",

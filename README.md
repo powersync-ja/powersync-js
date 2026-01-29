@@ -36,11 +36,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/attachments](./packages/attachments/README.md)
 
-  - Attachments helper package for React Native and JavaScript/TypeScript projects (deprecated).
-
-- [packages/attachments-storage-react-native](./packages/attachments-storage-react-native/README.md)
-
-  - React Native file system storage adapters for PowerSync attachments (alpha).
+  - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
@@ -55,7 +51,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
   - [OP-SQLite](https://github.com/OP-Engineering/op-sqlite) integration for React Native projects. Alternative to the default usage of [react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite).
 
 - [packages/common](./packages/common/README.md)
-  - Shared package: TypeScript implementation of a PowerSync database connector, streaming sync bucket implementation and attachment utilities.
+  - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
 ## Demo Apps / Example Projects
 

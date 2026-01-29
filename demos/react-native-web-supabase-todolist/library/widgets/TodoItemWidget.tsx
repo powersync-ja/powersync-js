@@ -1,13 +1,13 @@
 import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react';
-import { ActivityIndicator, View, Modal, StyleSheet, Platform } from 'react-native';
+import { ActivityIndicator, View, Modal, StyleSheet } from 'react-native';
 import { ListItem, Button, Icon, Image } from 'react-native-elements';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
+import { AttachmentRecord } from '@powersync/attachments';
 import { AppConfig } from '../supabase/AppConfig';
 import { useSystem } from '../powersync/system';
 import { alert } from '../utils/alert';
-import { AttachmentRecord } from '@powersync/react-native';
 
 export interface TodoItemWidgetProps {
   record: TodoRecord;
@@ -21,51 +21,11 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
   const { record, photoAttachment, onDelete, onToggleCompletion, onSavePhoto } = props;
   const [loading, setLoading] = React.useState(false);
   const [isCameraVisible, setCameraVisible] = React.useState(false);
-  const [imageUri, setImageUri] = React.useState<string | null>(null);
   const system = useSystem();
 
   const handleCancel = React.useCallback(() => {
     setCameraVisible(false);
   }, []);
-
-  React.useEffect(() => {
-    let blobUrl: string | null = null;
-
-    const loadImage = async () => {
-      if (!photoAttachment?.localUri) {
-        setImageUri(null);
-        return;
-      }
-
-      // On web, convert IndexedDB URI to blob URL
-      if (Platform.OS === 'web' && photoAttachment.localUri.startsWith('indexeddb://')) {
-        try {
-          const localStorage = system.photoAttachmentQueue?.localStorage;
-          if (localStorage) {
-            const arrayBuffer = await localStorage.readFile(photoAttachment.localUri);
-            const blob = new Blob([arrayBuffer], { type: photoAttachment.mediaType || 'image/jpeg' });
-            blobUrl = URL.createObjectURL(blob);
-            setImageUri(blobUrl);
-          }
-        } catch (error) {
-          console.error('Failed to load image from IndexedDB:', error);
-          setImageUri(null);
-        }
-      } else {
-        // On native, use the URI directly
-        setImageUri(photoAttachment.localUri!);
-      }
-    };
-
-    loadImage();
-
-    // Cleanup blob URL on unmount or when photoAttachment changes
-    return () => {
-      if (blobUrl) {
-        URL.revokeObjectURL(blobUrl);
-      }
-    };
-  }, [photoAttachment?.localUri, system.photoAttachmentQueue]);
 
   return (
     <View key={`todo-item-${record.id}`} style={{ padding: 10 }}>
@@ -98,7 +58,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             iconType="material-community"
             checkedIcon="checkbox-marked"
             uncheckedIcon="checkbox-blank-outline"
-            checked={Boolean(record.completed)}
+            checked={record.completed}
             onPress={async () => {
               setLoading(true);
               await onToggleCompletion(!record.completed);
@@ -112,9 +72,9 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
         {AppConfig.supabaseBucket &&
           (record.photo_id == null ? (
             <Icon name={'camera'} type="font-awesome" onPress={() => setCameraVisible(true)} />
-          ) : photoAttachment?.localUri != null ? (
+          ) : photoAttachment?.local_uri != null ? (
             <Image
-              source={{ uri: imageUri || undefined }}
+              source={{ uri: system.attachmentQueue.getLocalUri(photoAttachment.local_uri) }}
               containerStyle={styles.item}
               PlaceholderContent={<ActivityIndicator />}
             />
