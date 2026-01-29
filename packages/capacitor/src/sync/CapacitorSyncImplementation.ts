@@ -52,7 +52,9 @@ export class CapacitorStreamingSyncImplementation extends AbstractStreamingSyncI
       });
     }
 
-    const mutex = GLOBAL_MUTEX_STORE.get(baseIdentifier)!.locks[lockOptions.type];
+    const mutexRecord = GLOBAL_MUTEX_STORE.get(baseIdentifier)!;
+    mutexRecord.tracking.add(this.instanceId);
+    const mutex = mutexRecord.locks[lockOptions.type];
 
     return mutexRunExclusive(mutex, async () => {
       if (lockOptions.signal?.aborted) {
