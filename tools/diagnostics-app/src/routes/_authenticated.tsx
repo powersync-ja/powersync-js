@@ -12,7 +12,7 @@ import {
   Database,
   Table2,
   Terminal,
-  User
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   Sidebar,
@@ -50,7 +50,7 @@ function AppSidebar() {
     { path: '/sync-diagnostics', title: 'Sync Overview', icon: Table2 },
     { path: '/schema', title: 'Dynamic Schema', icon: Database },
     { path: '/sql-console', title: 'SQL Console', icon: Terminal },
-    { path: '/client-parameters', title: 'Client Parameters', icon: User },
+    { path: '/client-parameters', title: 'Client Parameters', icon: SlidersHorizontal },
     {
       path: '/login',
       title: 'Sign Out',
