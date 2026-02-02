@@ -90,6 +90,35 @@ describe('Multiple Instances', { sequential: true }, () => {
     }
   );
 
+  sharedMockSyncServiceTest('should re-open database immediately on reconnect', async ({ context }) => {
+    // Connect the database
+    const { database, mockService } = context;
+    await context.connect();
+    expect(database.currentStatus.connected).true;
+
+    // Disconnect after connecting
+    await database.disconnect();
+
+    const pendingRequests = await mockService.getPendingRequests();
+    expect(pendingRequests.length).eq(0);
+
+    // Reconnect
+    database.connect(context.connector);
+
+    // A pending request should be made quickly. There should not be any retry delay
+    await vi.waitFor(
+      async () => {
+        const pendingRequests = await mockService.getPendingRequests();
+        expect(pendingRequests.length).eq(1);
+        // Once we get the request, we can reject it
+        await mockService.createResponse(pendingRequests[0].id, 401, {});
+        await mockService.completeResponse(pendingRequests[0].id);
+      },
+      // The timeout here is shorter than the retry delay, we must get a request before the retry delay
+      { timeout: 500 }
+    );
+  });
+
   it('should maintain DB connections if instances call close', async () => {
     /**
      * The shared webworker should use the same DB connection for both instances.
