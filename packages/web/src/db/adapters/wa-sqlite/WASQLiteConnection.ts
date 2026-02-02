@@ -3,13 +3,31 @@ import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
 import { Mutex } from 'async-mutex';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
+
 /**
  * List of currently tested virtual filesystems
  */
 export enum WASQLiteVFS {
   IDBBatchAtomicVFS = 'IDBBatchAtomicVFS',
   OPFSCoopSyncVFS = 'OPFSCoopSyncVFS',
-  AccessHandlePoolVFS = 'AccessHandlePoolVFS'
+  AccessHandlePoolVFS = 'AccessHandlePoolVFS',
+  OPFSWriteAheadVFS = 'OPFSWriteAheadVFS'
+}
+
+/**
+ * Whether the given `vfs` needs to be hosted by a dedicated worker.
+ */
+export function needsDedicatedWorker(vfs: WASQLiteVFS) {
+  vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
+
+  switch (vfs) {
+    case WASQLiteVFS.OPFSCoopSyncVFS:
+    case WASQLiteVFS.AccessHandlePoolVFS:
+    case WASQLiteVFS.OPFSWriteAheadVFS:
+      return true;
+    default:
+      return false;
+  }
 }
 
 /**
@@ -89,12 +107,7 @@ export const MultiCipherSyncWASQLiteModuleFactory = async () => {
  */
 export const DEFAULT_MODULE_FACTORIES = {
   [WASQLiteVFS.IDBBatchAtomicVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherAsyncWASQLiteModuleFactory();
-    } else {
-      module = await AsyncWASQLiteModuleFactory();
-    }
+    const module = await loadModule(true, options);
     const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
     return {
       module,
@@ -103,12 +116,7 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.AccessHandlePoolVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherSyncWASQLiteModuleFactory();
-    } else {
-      module = await SyncWASQLiteModuleFactory();
-    }
+    const module = await loadModule(false, options);
     // @ts-expect-error The types for this static method are missing upstream
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
     return {
@@ -117,12 +125,7 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.OPFSCoopSyncVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherSyncWASQLiteModuleFactory();
-    } else {
-      module = await SyncWASQLiteModuleFactory();
-    }
+    const module = await loadModule(false, options);
     // @ts-expect-error The types for this static method are missing upstream
     const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
     const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
@@ -130,8 +133,27 @@ export const DEFAULT_MODULE_FACTORIES = {
       module,
       vfs
     };
+  },
+  [WASQLiteVFS.OPFSWriteAheadVFS]: async (options: WASQLiteModuleFactoryOptions) => {
+    const module = await loadModule(false, options);
+    // @ts-expect-error The types for this static method are missing upstream
+    const { OPFSWriteAheadVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSWriteAheadVFS.js');
+    const vfs = await OPFSWriteAheadVFS.create(options.dbFileName, module, {
+      // TODO: The asyncErrorHandler callback might be interesting to handle IDB failures, but it's not clear how we'd
+      // do that from here.
+    });
+
+    return { module, vfs };
   }
 };
+
+async function loadModule(async: boolean, options: WASQLiteModuleFactoryOptions) {
+  if (async) {
+    return await (options.encryptionKey ? MultiCipherAsyncWASQLiteModuleFactory() : AsyncWASQLiteModuleFactory());
+  } else {
+    return await (options.encryptionKey ? MultiCipherSyncWASQLiteModuleFactory() : SyncWASQLiteModuleFactory());
+  }
+}
 
 /**
  * @internal

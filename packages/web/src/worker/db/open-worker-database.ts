@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
-import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/WASQLiteConnection.js';
+import { needsDedicatedWorker, WASQLiteVFS } from '../../db/adapters/wa-sqlite/WASQLiteConnection.js';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
@@ -11,7 +11,7 @@ export function openWorkerDatabasePort(
   worker: string | URL = '',
   vfs?: WASQLiteVFS
 ) {
-  const needsDedicated = vfs == WASQLiteVFS.AccessHandlePoolVFS || vfs == WASQLiteVFS.OPFSCoopSyncVFS;
+  const needsDedicated = vfs && needsDedicatedWorker(vfs);
 
   if (worker) {
     return !needsDedicated && multipleTabs
