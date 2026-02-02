@@ -4,7 +4,8 @@ packages:
   - docs/
 
 catalog:
-  '@journeyapps/wa-sqlite': ^1.5.0
+  # Database adapters
+  '@journeyapps/wa-sqlite': 0.0.0-dev-20260225162137
   '@op-engineering/op-sqlite': ^15.2.2
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9

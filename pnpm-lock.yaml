@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: ^1.5.0
-      version: 1.5.0
+      specifier: 0.0.0-dev-20260225162137
+      version: 0.0.0-dev-20260225162137
     '@op-engineering/op-sqlite':
       specifier: ^15.2.2
       version: 15.2.5
@@ -451,7 +451,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.5.0
+        version: 0.0.0-dev-20260225162137
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -491,7 +491,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.5.0
+        version: 0.0.0-dev-20260225162137
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -3564,6 +3564,9 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260225162137':
+    resolution: {integrity: sha512-wbPEaHemG7ZcK/Bt1UJNY1runSFzf/ucdYG3eznwvo83oQZv8QBNrKCpXRlcllwdTq5L5KUKkpGzZEYHhUM27g==}
 
   '@journeyapps/wa-sqlite@1.5.0':
     resolution: {integrity: sha512-oASXW/9Ktbhn6kJjxCJzRKxNnlOyj7GKBLF/59dkz1kbOLw7kAXBTwWTUvqfT97OEshtrK/J8bJUYbpggdCZ9Q==}
@@ -20350,6 +20353,8 @@ snapshots:
     dependencies:
       react: 19.2.4
       react-native: 0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
+
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260225162137': {}
 
   '@journeyapps/wa-sqlite@1.5.0': {}
 
