@@ -1,6 +1,6 @@
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapterConfiguration } from '../WebDBAdapter.js';
-import { WASQLiteVFS } from './WASQLiteConnection.js';
+import { needsDedicatedWorker, WASQLiteVFS } from './WASQLiteConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
 /**
@@ -16,8 +16,9 @@ export class InternalWASQLiteDBAdapter extends LockedAsyncDatabaseAdapter {
     const baseConfig = super.getConfiguration() as unknown as ResolvedWASQLiteOpenFactoryOptions;
     return {
       ...super.getConfiguration(),
-      requiresPersistentTriggers:
-        baseConfig.vfs == WASQLiteVFS.OPFSCoopSyncVFS || baseConfig.vfs == WASQLiteVFS.AccessHandlePoolVFS
+      // If the database is hosted in a dedicated worker, we can't expect in-memory triggers to be shared across tabs
+      // (since each tab has its own independent connection).
+      requiresPersistentTriggers: needsDedicatedWorker(baseConfig.vfs)
     };
   }
 }
