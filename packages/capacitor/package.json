@@ -63,7 +63,6 @@
     "build:prod": "pnpm build",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
-    "prepublishOnly": "pnpm build",
     "test:exports": "attw --pack --profile=esm-only ."
   },
   "devDependencies": {
