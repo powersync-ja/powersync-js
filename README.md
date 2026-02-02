@@ -129,7 +129,10 @@ pnpm exec playwright install
 
 ### Development Packages
 
-Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
+Development packages can be published by manually triggering the `release` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
+
+For technical npm reasons, publishing dev and release packages needs to happen from within a single workflow. `release.yml` contains checks to only release
+dev packages when triggered by `workflow_dispatch`.
 
 ### Production Packages
 
