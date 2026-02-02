@@ -323,8 +323,12 @@ export class LockedAsyncDatabaseAdapter
     if (this.databaseOpenPromise) {
       await this.databaseOpenPromise;
     } else if (!this._db) {
-      // The database is not open anymore, we might need to re-open it
-      // Note: It is safe to re-enter this method multiple times
+      /**
+       * The database is not open anymore, we might need to re-open it.
+       * Typically, _db, can be `null` if we tried to reOpen the database, but failed to succeed in re-opening.
+       * This can happen when disconnecting the client.
+       * Note: It is safe to re-enter this method multiple times.
+       */
       await this.reOpenInternalDB();
     }
 
