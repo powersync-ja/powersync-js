@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
-import { ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -95,12 +95,7 @@ async function fetchSyncStats(): Promise<SyncStats> {
 
 export default function SyncDiagnosticsPage() {
   const queryClient = useQueryClient();
-  const {
-    data: stats,
-    isLoading,
-    isFetching,
-    refetch
-  } = useTanstackQuery({
+  const { data: stats, isLoading } = useTanstackQuery({
     queryKey: syncDiagnosticsKeys.stats(),
     queryFn: fetchSyncStats,
     staleTime: 30000,
@@ -297,15 +292,7 @@ export default function SyncDiagnosticsPage() {
           ) : (
             totalsTable
           )}
-          <div className="mt-4 flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="flex items-center gap-2">
-              <RefreshCw className={isFetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
-              Refresh
-            </Button>
+          <div className="mt-4">
             <Button
               variant="outline"
               onClick={() => {
