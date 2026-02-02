@@ -14,25 +14,6 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, Plus } from 'lucide-react';
 
-const typeForValue = (value: unknown) => {
-  //when using typeof arrays are "object" so we have to have this specific case
-  if (Array.isArray(value)) return 'array';
-  return typeof value;
-};
-
-const jsonToObjectArray = (json: Object): ParameterEntry[] => {
-  const entrySet = Object.entries(json);
-  return entrySet.map(([key, value]) => {
-    const type = typeForValue(value) as ParameterType;
-    return {
-      key,
-      // Only arrays and objects need special cases here since JS will take care of the rest.
-      value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
-      type
-    };
-  });
-};
-
 type ParameterType = 'string' | 'number' | 'boolean' | 'array' | 'object';
 
 interface ParameterEntry {
@@ -42,7 +23,22 @@ interface ParameterEntry {
   error?: string;
 }
 
-// A simple set of mappers for converting a string to the correct value for saving
+const typeForValue = (value: unknown): ParameterType => {
+  if (Array.isArray(value)) return 'array';
+  return typeof value as ParameterType;
+};
+
+const jsonToObjectArray = (json: object): ParameterEntry[] => {
+  return Object.entries(json).map(([key, value]) => {
+    const type = typeForValue(value);
+    return {
+      key,
+      value: type === 'array' || type === 'object' ? JSON.stringify(value) : String(value),
+      type
+    };
+  });
+};
+
 const CONVERTERS = {
   string: (v: string) => v,
   number: (v: string) => Number(v),
@@ -61,58 +57,41 @@ function ClientParamsPage() {
     e.stopPropagation();
 
     try {
-      console.log('Saving params:', params);
-      const newParams = params.reduce<Record<string, any>>(
-        (curr: any, item: { key: string; type: string; value: string }) => ({
+      const newParams = params.reduce<Record<string, unknown>>(
+        (curr, item) => ({
           ...curr,
-          [`${item.key}`]: convertValueForSave(item.type as ParameterType, item.value)
+          [item.key]: convertValueForSave(item.type, item.value)
         }),
         {}
       );
-      console.log('Converted to:', newParams);
       setParamsGlobal(newParams);
     } catch (e) {
-      console.error('Save error:', e);
+      // Validation errors shown inline
     }
   };
 
-  const validate = (val: ParameterEntry) => {
-    if (val.type == 'object' || val.type == 'array') {
+  const validate = (val: ParameterEntry): ParameterEntry => {
+    if (val.type === 'object' || val.type === 'array') {
       try {
         JSON.parse(val.value);
         return val;
       } catch (e: any) {
-        return {
-          ...val,
-          error: e.message
-        };
+        return { ...val, error: e.message };
       }
-    } else {
-      return val;
     }
+    return val;
   };
 
   const replace = (idx: number, val: ParameterEntry) => {
-    setParams((a: any[]) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
+    setParams((a) => a.map((entity, i) => (i === idx ? validate(val) : entity)));
   };
 
   const removeIdx = (idx: number) => {
-    const newParams = params.filter((_, i) => i !== idx);
-    setParams(newParams);
-
-    // Auto-save after deletion
-    const paramsToSave = newParams.reduce<Record<string, any>>(
-      (curr, item) => ({
-        ...curr,
-        [item.key]: convertValueForSave(item.type, item.value)
-      }),
-      {}
-    );
-    setParamsGlobal(paramsToSave);
+    setParams((a) => a.filter((_, i) => i !== idx));
   };
 
   const addRow = () => {
-    setParams((a: any[]) => [...a, { key: '', value: '', type: 'string' }]);
+    setParams((a) => [...a, { key: '', value: '', type: 'string' }]);
   };
 
   const changeValue = (idx: number, value: string, currKey: string, type: ParameterType) => {
@@ -133,9 +112,7 @@ function ClientParamsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Parameters</CardTitle>
-            <CardDescription>
-              Configure key-value parameters that will be sent with sync requests.
-            </CardDescription>
+            <CardDescription>Configure key-value parameters that will be sent with sync requests.</CardDescription>
           </CardHeader>
           <form onSubmit={onSubmit}>
             <CardContent className="space-y-4">
@@ -145,16 +122,13 @@ function ClientParamsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {params.map(({ key, value, type, error }, idx: number) => (
+                  {params.map(({ key, value, type, error }, idx) => (
                     <div
                       key={idx}
                       className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
                       <div>
-                        <Label htmlFor={`key-${idx}`} className="text-xs text-muted-foreground">
-                          Key
-                        </Label>
+                        <Label className="text-xs text-muted-foreground">Key</Label>
                         <Input
-                          id={`key-${idx}`}
                           value={key}
                           onChange={(e) => changeKey(idx, e.target.value, value, type)}
                           placeholder="parameter_name"
@@ -162,11 +136,8 @@ function ClientParamsPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`value-${idx}`} className="text-xs text-muted-foreground">
-                          Value
-                        </Label>
+                        <Label className="text-xs text-muted-foreground">Value</Label>
                         <Input
-                          id={`value-${idx}`}
                           value={value}
                           onChange={(e) => changeValue(idx, e.target.value, key, type)}
                           placeholder="value"
@@ -176,13 +147,9 @@ function ClientParamsPage() {
                         {error && <p className="text-xs text-destructive mt-1">{error}</p>}
                       </div>
                       <div>
-                        <Label htmlFor={`type-${idx}`} className="text-xs text-muted-foreground">
-                          Type
-                        </Label>
-                        <Select
-                          value={type}
-                          onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
-                          <SelectTrigger id={`type-${idx}`} className="mt-1.5">
+                        <Label className="text-xs text-muted-foreground">Type</Label>
+                        <Select value={type} onValueChange={(newType) => changeType(idx, key, value, newType as ParameterType)}>
+                          <SelectTrigger className="mt-1.5">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
