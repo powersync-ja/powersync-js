@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: ^1.4.1
-      version: 1.4.1
+      specifier: 0.0.0-dev-20260202134021
+      version: 0.0.0-dev-20260202134021
     '@op-engineering/op-sqlite':
       specifier: ^15.2.2
       version: 15.2.5
@@ -439,7 +439,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 0.0.0-dev-20260202134021
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -479,7 +479,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 1.4.1
+        version: 0.0.0-dev-20260202134021
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -3195,6 +3195,9 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260202134021':
+    resolution: {integrity: sha512-CFcool4rkqlog5sl8n4Oh5WF7kFF0WVL6C0a7g9nXtzOzarJt+qL7le0J7xepLLQUXoFdPE6cX24sq2epccCNA==}
 
   '@journeyapps/wa-sqlite@1.4.1':
     resolution: {integrity: sha512-xAWys6opteBpWaKmHG1pZvBmQViEKFK/46YVEkYlWxa4F9VAG0gIjCpfIdcQvXdqZf7X3ByADGmNBcR/cJ1DqQ==}
@@ -17498,6 +17501,8 @@ snapshots:
       react: 19.2.4
       react-native: 0.83.1(@babel/core@7.28.6)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.28.6))(@types/react@19.2.10)(react@19.2.4)
 
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260202134021': {}
+
   '@journeyapps/wa-sqlite@1.4.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -19665,9 +19670,7 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
