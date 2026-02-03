@@ -91,12 +91,16 @@ function ClientParamsContent() {
     setSaveStatus('saving');
 
     saveTimeoutRef.current = setTimeout(async () => {
-      connect();
-      setSaveStatus('saved');
-
-      statusTimeoutRef.current = setTimeout(() => {
+      try {
+        await connect();
+        setSaveStatus('saved');
+        statusTimeoutRef.current = setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+      } catch (err) {
         setSaveStatus('idle');
-      }, 2000);
+        console.error('Failed to connect after saving parameters', err);
+      }
     }, 500);
   };
 
@@ -108,9 +112,9 @@ function ClientParamsContent() {
   }, []);
 
   const updateParam = async (id: string, key: string, type: ParameterType, value: string) => {
-    const error = validate(type, value);
-    if (error) {
-      setLocalErrors((prev) => ({ ...prev, [id]: error }));
+    const validationError = validate(type, value);
+    if (validationError) {
+      setLocalErrors((prev) => ({ ...prev, [id]: validationError }));
     } else {
       setLocalErrors((prev) => {
         const next = { ...prev };
@@ -119,28 +123,40 @@ function ClientParamsContent() {
       });
     }
 
-    const paramData = JSON.stringify({ type, value });
-    await localDb.execute(`UPDATE client_parameters SET key = ?, value = ? WHERE id = ?`, [key, paramData, id]);
-
-    if (!error) triggerSave();
+    try {
+      const paramData = JSON.stringify({ type, value });
+      await localDb.execute(`UPDATE client_parameters SET key = ?, value = ? WHERE id = ?`, [key, paramData, id]);
+      if (!validationError) triggerSave();
+    } catch (err) {
+      console.error('Failed to update parameter', err);
+      setLocalErrors((prev) => ({ ...prev, [id]: 'Failed to save' }));
+    }
   };
 
   const addRow = async () => {
-    const paramData = JSON.stringify({ type: 'string', value: '' });
-    await localDb.execute(
-      `INSERT INTO client_parameters (id, key, value, created_at) VALUES (uuid(), '', ?, datetime('now'))`,
-      [paramData]
-    );
+    try {
+      const paramData = JSON.stringify({ type: 'string', value: '' });
+      await localDb.execute(
+        `INSERT INTO client_parameters (id, key, value, created_at) VALUES (uuid(), '', ?, datetime('now'))`,
+        [paramData]
+      );
+    } catch (err) {
+      console.error('Failed to add parameter', err);
+    }
   };
 
   const removeParam = async (id: string) => {
-    await localDb.execute(`DELETE FROM client_parameters WHERE id = ?`, [id]);
-    setLocalErrors((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-    triggerSave();
+    try {
+      await localDb.execute(`DELETE FROM client_parameters WHERE id = ?`, [id]);
+      setLocalErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      triggerSave();
+    } catch (err) {
+      console.error('Failed to remove parameter', err);
+    }
   };
 
   return (
