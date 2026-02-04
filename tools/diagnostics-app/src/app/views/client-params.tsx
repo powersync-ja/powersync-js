@@ -21,7 +21,8 @@ interface ParameterEntry {
   key: string;
   type: ParameterType;
   value: string;
-  error?: string;
+  keyError?: string;
+  valueError?: string;
 }
 
 interface StoredParam {
@@ -30,7 +31,7 @@ interface StoredParam {
   value: string;
 }
 
-const validate = (type: ParameterType, value: string): string | undefined => {
+const validateType = (type: ParameterType, value: string): string | undefined => {
   if (type === 'object' || type === 'array') {
     try {
       if (value) JSON.parse(value);
@@ -42,6 +43,10 @@ const validate = (type: ParameterType, value: string): string | undefined => {
   return undefined;
 };
 
+const hasLeadingOrTrailingWhitespace = (value: string): boolean => {
+  return value !== value.trim();
+};
+
 /**
  * Inner component that uses the local state database via PowerSyncContext.
  * useQuery and usePowerSync will read from localStateDb provided by the wrapper.
@@ -50,7 +55,8 @@ function ClientParamsContent() {
   // Non-null assertion safe here - component is always wrapped in PowerSyncContext.Provider
   const localDb = usePowerSync()!;
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [keyErrors, setKeyErrors] = useState<Record<string, string>>({});
+  const [valueErrors, setValueErrors] = useState<Record<string, string>>({});
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,7 +73,8 @@ function ClientParamsContent() {
         key: p.key,
         type: parsed.type as ParameterType,
         value: parsed.value,
-        error: localErrors[p.id]
+        keyError: keyErrors[p.id],
+        valueError: valueErrors[p.id]
       };
     } catch {
       return {
@@ -75,12 +82,13 @@ function ClientParamsContent() {
         key: p.key,
         type: 'string' as ParameterType,
         value: p.value,
-        error: localErrors[p.id]
+        keyError: keyErrors[p.id],
+        valueError: valueErrors[p.id]
       };
     }
   });
 
-  const hasErrors = Object.keys(localErrors).length > 0;
+  const hasErrors = Object.keys(keyErrors).length > 0 || Object.keys(valueErrors).length > 0;
 
   const triggerSave = () => {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -112,24 +120,41 @@ function ClientParamsContent() {
   }, []);
 
   const updateParam = async (id: string, key: string, type: ParameterType, value: string) => {
-    const validationError = validate(type, value);
-    if (validationError) {
-      setLocalErrors((prev) => ({ ...prev, [id]: validationError }));
+    // Validate key for whitespace
+    const keyHasWhitespace = hasLeadingOrTrailingWhitespace(key);
+    if (keyHasWhitespace) {
+      setKeyErrors((prev) => ({ ...prev, [id]: 'No leading/trailing spaces allowed' }));
     } else {
-      setLocalErrors((prev) => {
+      setKeyErrors((prev) => {
         const next = { ...prev };
         delete next[id];
         return next;
       });
     }
 
+    // Validate value for whitespace and type
+    const valueHasWhitespace = hasLeadingOrTrailingWhitespace(value);
+    const typeError = validateType(type, value);
+    const valueError = valueHasWhitespace ? 'No leading/trailing spaces allowed' : typeError;
+    if (valueError) {
+      setValueErrors((prev) => ({ ...prev, [id]: valueError }));
+    } else {
+      setValueErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+
+    const hasValidationErrors = keyHasWhitespace || !!valueError;
+
     try {
       const paramData = JSON.stringify({ type, value });
       await localDb.execute(`UPDATE client_parameters SET key = ?, value = ? WHERE id = ?`, [key, paramData, id]);
-      if (!validationError) triggerSave();
+      if (!hasValidationErrors) triggerSave();
     } catch (err) {
       console.error('Failed to update parameter', err);
-      setLocalErrors((prev) => ({ ...prev, [id]: 'Failed to save' }));
+      setValueErrors((prev) => ({ ...prev, [id]: 'Failed to save' }));
     }
   };
 
@@ -148,7 +173,12 @@ function ClientParamsContent() {
   const removeParam = async (id: string) => {
     try {
       await localDb.execute(`DELETE FROM client_parameters WHERE id = ?`, [id]);
-      setLocalErrors((prev) => {
+      setKeyErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setValueErrors((prev) => {
         const next = { ...prev };
         delete next[id];
         return next;
@@ -188,7 +218,7 @@ function ClientParamsContent() {
               </div>
             ) : (
               <div className="space-y-3">
-                {params.map(({ id, key, value, type, error }) => (
+                {params.map(({ id, key, value, type, keyError, valueError }) => (
                   <div key={id} className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-end p-3 rounded-lg bg-muted/50">
                     <div>
                       <Label htmlFor={`key-${id}`} className="text-xs text-muted-foreground">
@@ -199,8 +229,10 @@ function ClientParamsContent() {
                         value={key}
                         onChange={(e) => updateParam(id, e.target.value, type, value)}
                         placeholder="parameter_name"
-                        className="mt-1.5"
+                        className={`mt-1.5 ${keyError ? 'border-destructive' : ''}`}
+                        title={keyError}
                       />
+                      {keyError && <p className="text-xs text-destructive mt-1">{keyError}</p>}
                     </div>
                     <div>
                       <Label htmlFor={`value-${id}`} className="text-xs text-muted-foreground">
@@ -211,10 +243,10 @@ function ClientParamsContent() {
                         value={value}
                         onChange={(e) => updateParam(id, key, type, e.target.value)}
                         placeholder="value"
-                        className={`mt-1.5 ${error ? 'border-destructive' : ''}`}
-                        title={error}
+                        className={`mt-1.5 ${valueError ? 'border-destructive' : ''}`}
+                        title={valueError}
                       />
-                      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+                      {valueError && <p className="text-xs text-destructive mt-1">{valueError}</p>}
                     </div>
                     <div>
                       <Label htmlFor={`type-${id}`} className="text-xs text-muted-foreground">
