@@ -1,3 +1,8 @@
+import { createFileRoute, redirect, Outlet, useNavigate, useLocation } from '@tanstack/react-router';
+import { connector, signOut, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { useMemo } from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 import {
   LogOut,
   ArrowUp,
@@ -7,12 +12,8 @@ import {
   Database,
   Table2,
   Terminal,
-  User
+  SlidersHorizontal
 } from 'lucide-react';
-import React, { useMemo } from 'react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
-
 import {
   Sidebar,
   SidebarContent,
@@ -28,18 +29,17 @@ import {
   SidebarTrigger,
   useSidebar
 } from '@/components/ui/sidebar';
-
-import {
-  CLIENT_PARAMETERS_ROUTE,
-  LOGIN_ROUTE,
-  SCHEMA_ROUTE,
-  SQL_CONSOLE_ROUTE,
-  SYNC_DIAGNOSTICS_ROUTE
-} from '@/app/router';
-import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
-import { signOut, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
+import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
+
+export const Route = createFileRoute('/_authenticated')({
+  beforeLoad: () => {
+    if (!connector.hasCredentials()) {
+      throw redirect({ to: '/login' });
+    }
+  },
+  component: AuthenticatedLayout
+});
 
 function AppSidebar() {
   const navigate = useNavigate();
@@ -47,12 +47,12 @@ function AppSidebar() {
   const { open } = useSidebar();
 
   const NAVIGATION_ITEMS = [
-    { path: SYNC_DIAGNOSTICS_ROUTE, title: 'Sync Overview', icon: Table2 },
-    { path: SCHEMA_ROUTE, title: 'Dynamic Schema', icon: Database },
-    { path: SQL_CONSOLE_ROUTE, title: 'SQL Console', icon: Terminal },
-    { path: CLIENT_PARAMETERS_ROUTE, title: 'Client Parameters', icon: User },
+    { path: '/sync-diagnostics', title: 'Sync Overview', icon: Table2 },
+    { path: '/schema', title: 'Dynamic Schema', icon: Database },
+    { path: '/sql-console', title: 'SQL Console', icon: Terminal },
+    { path: '/client-parameters', title: 'Client Parameters', icon: SlidersHorizontal },
     {
-      path: LOGIN_ROUTE,
+      path: '/login',
       title: 'Sign Out',
       beforeNavigate: async () => {
         await signOut();
@@ -93,7 +93,7 @@ function AppSidebar() {
                       tooltip={!open ? item.title : undefined}
                       onClick={async () => {
                         await item.beforeNavigate?.();
-                        navigate(item.path);
+                        navigate({ to: item.path });
                       }}>
                       <Icon />
                       <span>{item.title}</span>
@@ -112,7 +112,7 @@ function AppSidebar() {
   );
 }
 
-export default function ViewsLayout({ children }: { children: React.ReactNode }) {
+function AuthenticatedLayout() {
   const syncStatus = useSyncStatus();
   const syncError = useMemo(() => syncStatus?.dataFlowStatus?.downloadError, [syncStatus]);
   const { title } = useNavigationPanel();
@@ -162,7 +162,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>
             </Alert>
           ) : null}
-          {children}
+          <Outlet />
         </main>
       </SidebarInset>
     </SidebarProvider>
