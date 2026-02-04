@@ -25,7 +25,6 @@ export class DynamicSchemaManager {
 
   /**
    * Load dynamic schema from local DB. Call after localStateDb is initialized (e.g. before connect).
-   * One-time migration: if no row in app_settings, try localStorage (legacy) and persist to DB.
    */
   async loadFromDb(): Promise<void> {
     const rows = await localStateDb.getAll<{ value: string }>(
@@ -36,19 +35,6 @@ export class DynamicSchemaManager {
     if (row?.value) {
       this.tables = JSON.parse(row.value);
       this.dirty = true;
-      return;
-    }
-    // One-time migration from localStorage (schema was stored there before)
-    try {
-      const legacy = typeof localStorage !== 'undefined' && localStorage.getItem('powersync_dynamic_schema');
-      if (legacy) {
-        this.tables = JSON.parse(legacy);
-        this.dirty = true;
-        await this.persistSchema();
-        localStorage.removeItem('powersync_dynamic_schema');
-      }
-    } catch {
-      // ignore
     }
   }
 

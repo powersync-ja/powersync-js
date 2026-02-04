@@ -40,11 +40,10 @@ function QueryHistoryContent({
 }: QueryHistoryDropdownProps) {
   const hasRestoredRef = React.useRef(false);
 
-  // useQuery reads from localStateDb (nested PowerSyncContext.Provider). runQueryOnce for local-only table.
+  // useQuery reads from localStateDb (nested PowerSyncContext.Provider)
   const { data: historyData, isLoading } = useQuery<QueryHistoryEntry>(
     `SELECT id, query, executed_at FROM query_history ORDER BY executed_at DESC LIMIT ?`,
-    [MAX_HISTORY],
-    { runQueryOnce: true }
+    [MAX_HISTORY]
   );
   const queryHistory = historyData ?? [];
 
