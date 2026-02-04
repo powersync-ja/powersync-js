@@ -1,5 +1,15 @@
 # @powersync/vue
 
+## 0.4.2
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 0.4.1
 
 ### Patch Changes
@@ -26,7 +36,6 @@
 ### Minor Changes
 
 - c7d2b53: [Potentially breaking change] The `useQuery` hook results are now explicitly defined as readonly. These values should not be mutated.
-
   - Added the ability to limit re-renders by specifying a `rowComparator` for query results. The `useQuery` hook will only emit `data` changes when the data has changed.
 
   ```javascript
