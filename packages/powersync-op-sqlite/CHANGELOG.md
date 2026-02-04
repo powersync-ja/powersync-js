@@ -1,5 +1,20 @@
 # @powersync/op-sqlite
 
+## 0.9.0
+
+### Minor Changes
+
+- 8dee8d7: Removed `async-lock` dependency in favor of `async-mutex`.
+
+### Patch Changes
+
+- 8dee8d7: Fixed potential issue where extreme amounts of concurrent calls to `writeLock` could reject with the error "Too many pending tasks in queue"
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 0.8.0
 
 ### Minor Changes
