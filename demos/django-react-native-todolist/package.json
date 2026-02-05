@@ -13,7 +13,7 @@
     "@expo/vector-icons": "^14.0.0",
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
     "@powersync/react": "^1.8.2",
-    "@powersync/react-native": "^1.28.1",
+    "@powersync/react-native": "^1.29.0",
     "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/drawer": "^7.1.1",

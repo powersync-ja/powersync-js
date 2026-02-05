@@ -1,5 +1,25 @@
 # @powersync/node
 
+## 0.16.0
+
+### Minor Changes
+
+- acf6b70: The [Rust sync client](https://www.powersync.com/blog/speeding-up-powersync-with-a-sqlite-extension-written-in-rust) is now enabled by default.
+  To keep using the JavaScript client implementation, pass `clientImplementation: SyncClientImplementation.JAVASCRIPT` in `options` when calling
+  `PowerSync.connect`.
+
+  Note that the JavaScript client will be removed in a future version of the SDK. If you choose to it due to issues with the Rust client, please
+  file an issue or reach out to us.
+
+### Patch Changes
+
+- Updated dependencies [aaf6037]
+- Updated dependencies [acf6b70]
+- Updated dependencies [e39359d]
+- Updated dependencies [41953bc]
+- Updated dependencies [25ece59]
+  - @powersync/common@1.46.0
+
 ## 0.15.2
 
 ### Patch Changes

@@ -4,7 +4,13 @@ package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 Pod::Spec.new do |s|
   s.name         = "powersync-op-sqlite"
-  s.version      = package["version"]
+  # Our development versions are not recognized by Cocoapods
+  version = package['version']
+  if version.include?('-dev')
+    s.version = '0.0.0'
+  else
+    s.version = version
+  end
   s.summary      = package["description"]
   s.homepage     = package["homepage"]
   s.license      = package["license"]

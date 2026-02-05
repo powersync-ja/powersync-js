@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -9,6 +9,7 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
+  "deprecated": "Attachment support is now built into the PowerSync SDKs. Please import from your platform-specific SDK instead (e.g. @powersync/react-native, @powersync/web, or @powersync/node).",
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "homepage": "https://docs.powersync.com",
@@ -23,12 +24,12 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./lib/index.js",
-        "types": "./lib/index.d.ts"
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
       },
       "require": {
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.cts"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
@@ -46,12 +47,16 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.45.0"
+    "@powersync/common": "workspace:^1.46.0"
   },
   "devDependencies": {
     "@powersync/common": "workspace:*",
-    "@types/node": "^20.17.6",
-    "vite": "^6.1.0",
-    "vite-plugin-top-level-await": "^1.4.4"
+    "@rollup/plugin-commonjs": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-typescript": "catalog:",
+    "@types/node": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-dts": "catalog:",
+    "vite": "catalog:"
   }
 }
