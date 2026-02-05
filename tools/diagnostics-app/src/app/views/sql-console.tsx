@@ -257,7 +257,9 @@ export default function SQLConsolePage() {
           <div className="mt-6 min-w-0">
             {columns.length > 0 ? (
               <DataTable rows={rows} columns={columns} pageSize={20} pageSizeOptions={[10, 20, 50, 100]} />
-            ) : null}
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">No results</div>
+            )}
           </div>
         ) : (
           <div className="flex justify-center items-center py-10">
