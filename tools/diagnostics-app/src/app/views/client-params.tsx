@@ -72,6 +72,7 @@ function ClientParamsContent() {
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const savedTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const connectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: storedParams } = useQuery<StoredParam & { created_at?: string | null }>(
     `SELECT id, key, value, created_at FROM client_parameters ORDER BY created_at ASC`
@@ -80,8 +81,39 @@ function ClientParamsContent() {
   useEffect(() => {
     return () => {
       Object.values(savedTimeouts.current).forEach(clearTimeout);
+      if (connectTimeout.current) clearTimeout(connectTimeout.current);
     };
   }, []);
+
+  // Clean up stale edits once DB catches up
+  useEffect(() => {
+    if (!storedParams || Object.keys(localEdits).length === 0) return;
+    const staleIds = Object.keys(localEdits).filter((id) => {
+      const p = storedParams.find((sp) => sp.id === id);
+      if (!p) return true; // deleted
+      const stored = parseStored(p.value);
+      const edit = localEdits[id];
+      return edit.key === p.key && edit.type === stored.type && edit.value === stored.value;
+    });
+    if (staleIds.length > 0) {
+      setLocalEdits((prev) => {
+        const next = { ...prev };
+        staleIds.forEach((id) => delete next[id]);
+        return next;
+      });
+    }
+  }, [storedParams, localEdits]);
+
+  const debouncedConnect = () => {
+    if (connectTimeout.current) clearTimeout(connectTimeout.current);
+    connectTimeout.current = setTimeout(async () => {
+      try {
+        await connect();
+      } catch (err) {
+        console.error('Failed to connect after parameter change', err);
+      }
+    }, 500);
+  };
 
   const getDisplayValues = (p: StoredParam) => {
     const edit = localEdits[p.id];
@@ -113,12 +145,7 @@ function ClientParamsContent() {
     try {
       const paramData = JSON.stringify({ type: edit.type, value: edit.value });
       await localDb.execute(`UPDATE client_parameters SET key = ?, value = ? WHERE id = ?`, [edit.key, paramData, id]);
-      setLocalEdits((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-      await connect();
+      debouncedConnect();
 
       setSavedIds((prev) => new Set(prev).add(id));
       if (savedTimeouts.current[id]) clearTimeout(savedTimeouts.current[id]);
@@ -160,7 +187,7 @@ function ClientParamsContent() {
         delete next[id];
         return next;
       });
-      await connect();
+      debouncedConnect();
     } catch (err) {
       console.error('Failed to remove parameter', err);
     }
