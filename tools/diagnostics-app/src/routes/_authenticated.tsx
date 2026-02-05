@@ -12,7 +12,8 @@ import {
   Database,
   Table2,
   Terminal,
-  SlidersHorizontal
+  SlidersHorizontal,
+  User
 } from 'lucide-react';
 import {
   Sidebar,
