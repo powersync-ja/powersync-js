@@ -2,5 +2,3 @@
 export * from '@powersync/common';
 
 export * from './db/PowerSyncDatabase.js';
-
-export * from './attachments/NodeFileSystemAdapter.js';

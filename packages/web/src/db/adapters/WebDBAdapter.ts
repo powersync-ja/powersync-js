@@ -6,10 +6,6 @@ export type SharedConnectionWorker = {
   port: MessagePort;
 };
 
-export type WebDBAdapterConfiguration = ResolvedWebSQLOpenOptions & {
-  requiresPersistentTriggers: boolean;
-};
-
 export interface WebDBAdapter extends DBAdapter {
   /**
    * Get a MessagePort which can be used to share the internals of this connection.
@@ -20,5 +16,5 @@ export interface WebDBAdapter extends DBAdapter {
    * Get the config options used to open this connection.
    * This is useful for sharing connections.
    */
-  getConfiguration(): WebDBAdapterConfiguration;
+  getConfiguration(): ResolvedWebSQLOpenOptions;
 }

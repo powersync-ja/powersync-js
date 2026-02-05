@@ -36,11 +36,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
 
 - [packages/attachments](./packages/attachments/README.md)
 
-  - Attachments helper package for React Native and JavaScript/TypeScript projects (deprecated).
-
-- [packages/attachments-storage-react-native](./packages/attachments-storage-react-native/README.md)
-
-  - React Native file system storage adapters for PowerSync attachments (alpha).
+  - Attachments helper package for React Native and JavaScript/TypeScript projects.
 
 - [packages/kysely-driver](./packages/kysely-driver/README.md)
 
@@ -55,7 +51,7 @@ _[PowerSync](https://www.powersync.com) is a sync engine for building local-firs
   - [OP-SQLite](https://github.com/OP-Engineering/op-sqlite) integration for React Native projects. Alternative to the default usage of [react-native-quick-sqlite](https://github.com/powersync-ja/react-native-quick-sqlite).
 
 - [packages/common](./packages/common/README.md)
-  - Shared package: TypeScript implementation of a PowerSync database connector, streaming sync bucket implementation and attachment utilities.
+  - Shared package: TypeScript implementation of a PowerSync database connector and streaming sync bucket implementation.
 
 ## Demo Apps / Example Projects
 
@@ -65,7 +61,6 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/react-native-supabase-todolist](./demos/react-native-supabase-todolist/README.md): A React Native to-do list example app using a Supabase backend.
 - [demos/react-native-supabase-group-chat](./demos/react-native-supabase-group-chat/README.md): A React Native group chat example app using a Supabase backend.
-- [demos/react-native-supabase-background-sync](./demos/react-native-supabase-background-sync/README.md): A React Native example app demonstrating background sync using PowerSync, Expo and Supabase.
 - [demos/react-native-web-supabase-todolist](./demos/react-native-web-supabase-todolist/README.md) A React Native to-do list example app using a Supabase backend that's compatible with React Native for Web.
 - [demos/django-react-native-todolist](./demos/django-react-native-todolist/README.md) A React Native to-do list example app using a Django backend.
 
@@ -129,10 +124,7 @@ pnpm exec playwright install
 
 ### Development Packages
 
-Development packages can be published by manually triggering the `release` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
-
-For technical npm reasons, publishing dev and release packages needs to happen from within a single workflow. `release.yml` contains checks to only release
-dev packages when triggered by `workflow_dispatch`.
+Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
 
 ### Production Packages
 

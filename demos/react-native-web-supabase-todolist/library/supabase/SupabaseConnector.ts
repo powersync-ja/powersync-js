@@ -1,7 +1,10 @@
-import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType, type PowerSyncCredentials } from '@powersync/react-native';
+import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector, UpdateType } from '@powersync/common';
+import { type PowerSyncCredentials } from '@powersync/react-native';
+
 import { SupabaseClient, createClient } from '@supabase/supabase-js';
-import type { SupportedStorage } from '@supabase/auth-js';
 import { AppConfig } from './AppConfig';
+import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
+import { System } from '../powersync/system';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -17,22 +20,16 @@ const FATAL_RESPONSE_CODES = [
 
 export class SupabaseConnector implements PowerSyncBackendConnector {
   client: SupabaseClient;
+  storage: SupabaseStorageAdapter;
 
-  constructor({ 
-    kvStorage, 
-    supabaseUrl, 
-    supabaseAnonKey 
-  }: { 
-    kvStorage: SupportedStorage; 
-    supabaseUrl: string; 
-    supabaseAnonKey: string;
-  }) {
-    this.client = createClient(supabaseUrl, supabaseAnonKey, {
+  constructor(protected system: System) {
+    this.client = createClient(AppConfig.supabaseUrl, AppConfig.supabaseAnonKey, {
       auth: {
         persistSession: true,
-        storage: kvStorage
+        storage: this.system.kvStorage
       }
     });
+    this.storage = new SupabaseStorageAdapter({ client: this.client });
   }
 
   async login(username: string, password: string) {

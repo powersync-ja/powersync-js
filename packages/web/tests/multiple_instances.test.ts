@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, createBaseLogger, createLogger, LogLevel } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createBaseLogger, createLogger } from '@powersync/common';
 import { OpenAsyncDatabaseConnection, WASqliteConnection } from '@powersync/web';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -6,8 +6,7 @@ import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDataba
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
 import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
-import { TEST_SCHEMA } from './utils/test-schema.js';
-import { generateTestDb } from './utils/testDb.js';
+import { generateTestDb, testSchema } from './utils/testDb.js';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -17,7 +16,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       database: {
         dbFilename: DB_FILENAME
       },
-      schema: TEST_SCHEMA
+      schema: testSchema
     });
 
   beforeAll(() => createBaseLogger().useDefaults());
@@ -43,9 +42,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
       const logger = createLogger('test-logger');
-      logger.setLevel(LogLevel.TRACE);
       const spiedErrorLogger = vi.spyOn(logger, 'error');
-      const spiedTraceLogger = vi.spyOn(logger, 'trace');
+      const spiedDebugLogger = vi.spyOn(logger, 'debug');
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
@@ -74,13 +72,14 @@ describe('Multiple Instances', { sequential: true }, () => {
         { timeout: 3_000 }
       );
 
-      // Asserting that powersync_control logs exists verifies that some connection attempt was made.
+      // Should log that a connection attempt has been made
+      const message = 'Streaming sync iteration started';
       await vi.waitFor(
         () =>
           expect(
-            spiedTraceLogger.mock.calls
+            spiedDebugLogger.mock.calls
               .flat(1)
-              .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
+              .find((argument) => typeof argument == 'string' && argument.includes(message))
           ).exist,
         { timeout: 2000 }
       );
@@ -89,35 +88,6 @@ describe('Multiple Instances', { sequential: true }, () => {
       await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
     }
   );
-
-  sharedMockSyncServiceTest('should re-open database immediately on reconnect', async ({ context }) => {
-    // Connect the database
-    const { database, mockService } = context;
-    await context.connect();
-    expect(database.currentStatus.connected).true;
-
-    // Disconnect after connecting
-    await database.disconnect();
-
-    const pendingRequests = await mockService.getPendingRequests();
-    expect(pendingRequests.length).eq(0);
-
-    // Reconnect
-    database.connect(context.connector);
-
-    // A pending request should be made quickly. There should not be any retry delay
-    await vi.waitFor(
-      async () => {
-        const pendingRequests = await mockService.getPendingRequests();
-        expect(pendingRequests.length).eq(1);
-        // Once we get the request, we can reject it
-        await mockService.createResponse(pendingRequests[0].id, 401, {});
-        await mockService.completeResponse(pendingRequests[0].id);
-      },
-      // The timeout here is shorter than the retry delay, we must get a request before the retry delay
-      { timeout: 500 }
-    );
-  });
 
   it('should maintain DB connections if instances call close', async () => {
     /**

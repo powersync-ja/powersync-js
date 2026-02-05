@@ -7,12 +7,12 @@ import {
 } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
-import { TEST_SCHEMA } from './utils/test-schema.js';
+import { testSchema } from './utils/testDb.js';
 
 describe('Encryption Tests', { sequential: true }, () => {
   it('IDBBatchAtomicVFS encryption', async () => {
     await testEncryption({
-      schema: TEST_SCHEMA,
+      schema: testSchema,
       database: { dbFilename: 'iddb-file.db' },
       encryptionKey: 'iddb-key'
     });
@@ -20,7 +20,7 @@ describe('Encryption Tests', { sequential: true }, () => {
 
   it('OPFSCoopSyncVFS encryption', async () => {
     await testEncryption({
-      schema: TEST_SCHEMA,
+      schema: testSchema,
       database: new WASQLiteOpenFactory({
         dbFilename: 'opfs-file.db',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS,
@@ -31,7 +31,7 @@ describe('Encryption Tests', { sequential: true }, () => {
 
   it('AccessHandlePoolVFS encryption', async () => {
     await testEncryption({
-      schema: TEST_SCHEMA,
+      schema: testSchema,
       database: new WASQLiteOpenFactory({
         dbFilename: 'ahp-file.db',
         vfs: WASQLiteVFS.AccessHandlePoolVFS,

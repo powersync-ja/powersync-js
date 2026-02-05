@@ -2,7 +2,7 @@
 module.exports = {
   testRunner: {
     args: {
-      $0: 'pnpm exec jest',
+      $0: 'jest',
       config: 'e2e/jest.config.js',
     },
     jest: {
@@ -54,7 +54,7 @@ module.exports = {
     emulator: {
       type: 'android.emulator',
       device: {
-        avdName: process.env.DETOX_AVD_NAME || 'ubuntu-avd-x86_64-31',
+        avdName: 'ubuntu-avd-x86_64-31',
       },
     },
   },

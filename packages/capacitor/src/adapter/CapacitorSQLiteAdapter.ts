@@ -8,11 +8,10 @@ import {
   DBAdapterListener,
   DBLockOptions,
   LockContext,
-  mutexRunExclusive,
   QueryResult,
   Transaction
 } from '@powersync/web';
-import { Mutex } from 'async-mutex';
+import Lock from 'async-lock';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';
@@ -40,15 +39,13 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
-  protected writeMutex: Mutex;
-  protected readMutex: Mutex;
+  protected lock: Lock;
 
   constructor(protected options: CapacitorSQLiteOpenFactoryOptions) {
     super();
     this._writeConnection = null;
     this._readConnection = null;
-    this.writeMutex = new Mutex();
-    this.readMutex = new Mutex();
+    this.lock = new Lock();
     this.initializedPromise = this.init();
   }
 
@@ -240,14 +237,10 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return mutexRunExclusive(
-      this.readMutex,
-      async () => {
-        await this.initializedPromise;
-        return await fn(this.generateLockContext(this.readConnection));
-      },
-      options
-    );
+    return this.lock.acquire('read_lock', async () => {
+      await this.initializedPromise;
+      return await fn(this.generateLockContext(this.readConnection));
+    });
   }
 
   readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -257,28 +250,24 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return mutexRunExclusive(
-      this.writeMutex,
-      async () => {
-        await this.initializedPromise;
-        const result = await fn(this.generateLockContext(this.writeConnection));
+    return this.lock.acquire('write_lock', async () => {
+      await this.initializedPromise;
+      const result = await fn(this.generateLockContext(this.writeConnection));
 
-        // Fetch table updates
-        const updates = await this.writeConnection.query("SELECT powersync_update_hooks('get') AS table_name");
-        const jsonUpdates = updates.values?.[0];
-        if (!jsonUpdates || !jsonUpdates.table_name) {
-          throw new Error('Could not fetch table updates');
-        }
-        const notification: BatchedUpdateNotification = {
-          rawUpdates: [],
-          tables: JSON.parse(jsonUpdates.table_name),
-          groupedUpdates: {}
-        };
-        this.iterateListeners((l) => l.tablesUpdated?.(notification));
-        return result;
-      },
-      options
-    );
+      // Fetch table updates
+      const updates = await this.writeConnection.query("SELECT powersync_update_hooks('get') AS table_name");
+      const jsonUpdates = updates.values?.[0];
+      if (!jsonUpdates || !jsonUpdates.table_name) {
+        throw new Error('Could not fetch table updates');
+      }
+      const notification: BatchedUpdateNotification = {
+        rawUpdates: [],
+        tables: JSON.parse(jsonUpdates.table_name),
+        groupedUpdates: {}
+      };
+      this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      return result;
+    });
   }
 
   writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {

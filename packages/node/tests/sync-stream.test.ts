@@ -1,5 +1,5 @@
 import { describe, vi, expect, onTestFinished } from 'vitest';
-import { PowerSyncConnectionOptions, SyncStreamConnectionMethod } from '@powersync/common';
+import { PowerSyncConnectionOptions, SyncClientImplementation, SyncStreamConnectionMethod } from '@powersync/common';
 import Logger from 'js-logger';
 import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils';
 
@@ -7,6 +7,7 @@ Logger.useDefaults({ defaultLevel: Logger.WARN });
 
 describe('Sync streams', () => {
   const defaultOptions = {
+    clientImplementation: SyncClientImplementation.RUST,
     connectionMethod: SyncStreamConnectionMethod.HTTP
   } satisfies PowerSyncConnectionOptions;
 

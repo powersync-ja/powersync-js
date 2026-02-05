@@ -1,8 +1,7 @@
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
-import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
-import { generateTestDb } from './utils/testDb.js';
+import { TestDatabase, generateTestDb, testSchema } from './utils/testDb.js';
 // TODO import tests from a common package
 
 describe(
@@ -22,7 +21,7 @@ describe(
       flags: {
         useWebWorker: false
       },
-      schema: TEST_SCHEMA
+      schema: testSchema
     })
   )
 );
@@ -36,7 +35,7 @@ describe(
         dbFilename: 'basic-opfs.sqlite',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS
       }),
-      schema: TEST_SCHEMA
+      schema: testSchema
     })
   )
 );

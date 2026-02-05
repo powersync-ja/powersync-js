@@ -1,14 +1,6 @@
-import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
-import {
-  BaseObserver,
-  DBAdapter,
-  DBAdapterListener,
-  DBLockOptions,
-  QueryResult,
-  Transaction,
-  mutexRunExclusive
-} from '@powersync/common';
-import { Mutex } from 'async-mutex';
+import { ANDROID_DATABASE_PATH, getDylibPath, IOS_LIBRARY_PATH, open, type DB } from '@op-engineering/op-sqlite';
+import { BaseObserver, DBAdapter, DBAdapterListener, DBLockOptions, QueryResult, Transaction } from '@powersync/common';
+import Lock from 'async-lock';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';
@@ -22,11 +14,16 @@ export type OPSQLiteAdapterOptions = {
   sqliteOptions?: SqliteOptions;
 };
 
+enum LockType {
+  READ = 'read',
+  WRITE = 'write'
+}
+
 const READ_CONNECTIONS = 5;
 
 export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
   name: string;
-  protected writeMutex: Mutex;
+  protected locks: Lock;
 
   protected initialized: Promise<void>;
 
@@ -41,7 +38,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     super();
     this.name = this.options.name;
 
-    this.writeMutex = new Mutex();
+    this.locks = new Lock();
     this.readConnections = null;
     this.writeConnection = null;
     this.abortController = new AbortController();
@@ -201,30 +198,34 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
 
     return new Promise(async (resolve, reject) => {
-      // Set up abort signal listener
-      const abortListener = () => {
-        reject(new Error('Database connection was closed'));
-      };
-      this.abortController.signal.addEventListener('abort', abortListener);
-
       try {
-        await mutexRunExclusive(
-          this.writeMutex,
-          async () => {
-            // Check if operation was aborted before executing
-            if (this.abortController.signal.aborted) {
-              reject(new Error('Database connection was closed'));
-            }
-            resolve(await fn(this.writeConnection!));
-          },
-          options
-        );
-        // flush updates once a write lock has been released
-        this.writeConnection!.flushUpdates();
+        // Set up abort signal listener
+        const abortListener = () => {
+          reject(new Error('Database connection was closed'));
+        };
+        this.abortController.signal.addEventListener('abort', abortListener);
+
+        await this.locks
+          .acquire(
+            LockType.WRITE,
+            async () => {
+              // Check if operation was aborted before executing
+              if (this.abortController.signal.aborted) {
+                reject(new Error('Database connection was closed'));
+              }
+              resolve(await fn(this.writeConnection!));
+            },
+            { timeout: options?.timeoutMs }
+          )
+          .then(() => {
+            // flush updates once a write lock has been released
+            this.writeConnection!.flushUpdates();
+          })
+          .finally(() => {
+            this.abortController.signal.removeEventListener('abort', abortListener);
+          });
       } catch (ex) {
         reject(ex);
-      } finally {
-        this.abortController.signal.removeEventListener('abort', abortListener);
       }
     });
   }

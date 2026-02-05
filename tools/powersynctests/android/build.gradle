@@ -21,33 +21,9 @@ buildscript {
  allprojects {
    repositories {
         maven {
-        url("$rootDir/../node_modules/detox/Detox-android")
+        url("$rootDir/../../../node_modules/detox/Detox-android")
         }
    }
  }
-
- subprojects { subproject ->
-    afterEvaluate {
-        if (subproject.name == 'op-engineering_op-sqlite' && subproject.hasProperty('android')) {
-            subproject.android {
-                packagingOptions {
-                    jniLibs {
-                        // Fix for duplicate native library conflicts when running Android test builds
-                        // OP-SQLite v15+ requires native libraries (libc++_shared.so, libfbjni.so, etc.) 
-                        // that are also provided by React Native, causing "2 files found with path" errors
-                        // during assembleAndroidTest. Since we use a fixed NDK version (27.1.12297006),
-                        // the duplicate binaries are identical and safe to deduplicate.
-                        pickFirsts += [
-                            '**/libc++_shared.so',
-                            '**/libfbjni.so',
-                            '**/libjsi.so',
-                            '**/libreactnative.so'
-                        ]
-                    }
-                }
-            }
-        }
-    }
-}
 
 apply plugin: "com.facebook.react.rootproject"

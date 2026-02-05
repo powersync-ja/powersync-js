@@ -47,9 +47,8 @@ export interface BaseTriggerDiffRecord<TOperationId extends string | number = nu
  * This record contains the new value and optionally the previous value.
  * Values are stored as JSON strings.
  */
-export interface TriggerDiffUpdateRecord<
-  TOperationId extends string | number = number
-> extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffUpdateRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.UPDATE;
   /**
    * The updated state of the row in JSON string format.
@@ -66,9 +65,8 @@ export interface TriggerDiffUpdateRecord<
  * Represents a diff record for a SQLite INSERT operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffInsertRecord<
-  TOperationId extends string | number = number
-> extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffInsertRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.INSERT;
   /**
    * The value of the row, at the time of INSERT, in JSON string format.
@@ -81,9 +79,8 @@ export interface TriggerDiffInsertRecord<
  * Represents a diff record for a SQLite DELETE operation.
  * This record contains the new value represented as a JSON string.
  */
-export interface TriggerDiffDeleteRecord<
-  TOperationId extends string | number = number
-> extends BaseTriggerDiffRecord<TOperationId> {
+export interface TriggerDiffDeleteRecord<TOperationId extends string | number = number>
+  extends BaseTriggerDiffRecord<TOperationId> {
   operation: DiffTriggerOperation.DELETE;
   /**
    * The value of the row, before the DELETE operation, in JSON string format.
@@ -204,12 +201,6 @@ interface BaseCreateDiffTriggerOptions {
    * Hooks which allow execution during the trigger creation process.
    */
   hooks?: TriggerCreationHooks;
-
-  /**
-   * Use storage-backed (non-TEMP) tables and triggers that persist across sessions.
-   * These resources are still automatically disposed when no longer claimed.
-   */
-  useStorage?: boolean;
 }
 
 /**
@@ -457,39 +448,4 @@ export interface TriggerManager {
    * ```
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
-}
-
-/**
- * @experimental
- * @internal
- * Manages claims on persisted SQLite triggers and destination tables to enable proper cleanup
- * when they are no longer actively in use.
- *
- * When using persisted triggers (especially for OPFS multi-tab scenarios), we need a reliable way to determine which resources are still actively in use across different connections/tabs so stale resources can be safely cleaned up without interfering with active triggers.
- *
- * A cleanup process runs
- * on database creation (and every 2 minutes) that:
- * 1. Queries for existing managed persisted resources
- * 2. Checks with the claim manager if any consumer is actively using those resources
- * 3. Deletes unused resources
- */
-
-export interface TriggerClaimManager {
-  /**
-   * Obtains or marks a claim on a certain identifier.
-   * @returns a callback to release the claim.
-   */
-  obtainClaim: (identifier: string) => Promise<() => Promise<void>>;
-  /**
-   * Checks if a claim is present for an identifier.
-   */
-  checkClaim: (identifier: string) => Promise<boolean>;
-}
-
-/**
- * @experimental
- * @internal
- */
-export interface TriggerManagerConfig {
-  claimManager: TriggerClaimManager;
 }

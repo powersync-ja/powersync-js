@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.16.0",
+  "version": "0.15.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -57,7 +57,7 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.46.0",
+    "@powersync/common": "workspace:^1.45.0",
     "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {
@@ -67,21 +67,19 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "async-mutex": "catalog:",
-    "bson": "catalog:",
-    "comlink": "catalog:",
-    "undici": "^7.11.0"
+    "async-mutex": "^0.5.0",
+    "comlink": "^4.4.2",
+    "undici": "^7.11.0",
+    "bson": "^6.10.4"
   },
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
-    "@types/node": "catalog:",
+    "@types/node": "^24.2.0",
     "better-sqlite3": "^12.2.0",
-    "drizzle-orm": "catalog:",
-    "js-logger": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "drizzle-orm": "^0.44.7",
+    "rollup": "4.14.3",
+    "typescript": "^5.5.3",
+    "vitest": "^3.2.4"
   },
   "keywords": [
     "data sync",

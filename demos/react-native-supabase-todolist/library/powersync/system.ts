@@ -1,22 +1,16 @@
 import '@azure/core-asynciterator-polyfill';
 
-import {
-  createBaseLogger,
-  LogLevel,
-  PowerSyncDatabase,
-  SyncClientImplementation,
-  AttachmentQueue,
-  type AttachmentRecord,
-  type WatchedAttachmentItem,
-} from '@powersync/react-native';
-import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
+import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
 import React from 'react';
+import { SupabaseStorageAdapter } from '../storage/SupabaseStorageAdapter';
+
+import { type AttachmentRecord } from '@powersync/attachments';
 import { configureFts } from '../fts/fts_setup';
 import { KVStorage } from '../storage/KVStorage';
-import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAdapter';
 import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
-import { AppSchema, TODO_TABLE } from './AppSchema';
+import { AppSchema } from './AppSchema';
+import { PhotoAttachmentQueue } from './PhotoAttachmentQueue';
 
 const logger = createBaseLogger();
 logger.useDefaults();
@@ -24,18 +18,15 @@ logger.setLevel(LogLevel.DEBUG);
 
 export class System {
   kvStorage: KVStorage;
+  storage: SupabaseStorageAdapter;
   supabaseConnector: SupabaseConnector;
   powersync: PowerSyncDatabase;
-  photoAttachmentQueue: AttachmentQueue | undefined = undefined;
+  attachmentQueue: PhotoAttachmentQueue | undefined = undefined;
 
   constructor() {
     this.kvStorage = new KVStorage();
-    this.supabaseConnector = new SupabaseConnector({
-      kvStorage: this.kvStorage,
-      supabaseUrl: AppConfig.supabaseUrl,
-      supabaseAnonKey: AppConfig.supabaseAnonKey
-    });
-
+    this.supabaseConnector = new SupabaseConnector(this);
+    this.storage = this.supabaseConnector.storage;
     this.powersync = new PowerSyncDatabase({
       schema: AppSchema,
       database: {
@@ -59,48 +50,18 @@ export class System {
      */
 
     if (AppConfig.supabaseBucket) {
-      const localStorage = new ReactNativeFileSystemStorageAdapter();
-      const remoteStorage = new SupabaseRemoteStorageAdapter({
-        client: this.supabaseConnector.client,
-        bucket: AppConfig.supabaseBucket
-      });
-
-      this.photoAttachmentQueue = new AttachmentQueue({
-        db: this.powersync,
-        localStorage,
-        remoteStorage,
-        watchAttachments: async (onUpdate, signal) => {
-          const watcher = this.powersync.watch(
-            `SELECT photo_id as id FROM ${TODO_TABLE} WHERE photo_id IS NOT NULL`,
-            [],
-            {
-              signal
-            }
-          );
-
-          for await (const result of watcher) {
-            const attachments: WatchedAttachmentItem[] = (result.rows?._array ?? []).map((row: any) => ({
-              id: row.id,
-              fileExtension: 'jpg'
-            }));
-            await onUpdate(attachments);
+      this.attachmentQueue = new PhotoAttachmentQueue({
+        powersync: this.powersync,
+        storage: this.storage,
+        // Use this to handle download errors where you can use the attachment
+        // and/or the exception to decide if you want to retry the download
+        onDownloadError: async (attachment: AttachmentRecord, exception: any) => {
+          if (exception.toString() === 'StorageApiError: Object not found') {
+            return { retry: false };
           }
-        },
-        errorHandler: {
-          onDownloadError: async (attachment: AttachmentRecord, error: Error) => {
-            if (error.toString() === 'StorageApiError: Object not found') {
-              return false; // Don't retry
-            }
-            return true; // Retry
-          },
-          onUploadError: async (attachment: AttachmentRecord, error: Error) => {
-            return true; // Retry uploads by default
-          },
-          onDeleteError: async (attachment: AttachmentRecord, error: Error) => {
-            return true; // Retry deletes by default
-          }
-        },
-        logger
+
+          return { retry: true };
+        }
       });
     }
   }
@@ -109,8 +70,8 @@ export class System {
     await this.powersync.init();
     await this.powersync.connect(this.supabaseConnector, { clientImplementation: SyncClientImplementation.RUST });
 
-    if (this.photoAttachmentQueue) {
-      await this.photoAttachmentQueue.startSync();
+    if (this.attachmentQueue) {
+      await this.attachmentQueue.init();
     }
 
     // Demo using SQLite Full-Text Search with PowerSync.

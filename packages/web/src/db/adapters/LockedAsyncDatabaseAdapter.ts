@@ -13,7 +13,7 @@ import {
 } from '@powersync/common';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection.js';
-import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
+import { SharedConnectionWorker, WebDBAdapter } from './WebDBAdapter.js';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection.js';
 import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory.js';
@@ -151,15 +151,13 @@ export class LockedAsyncDatabaseAdapter
    * Returns a pending operation if one is already in progress.
    */
   async reOpenInternalDB(): Promise<void> {
-    if (this.closing || !this.options.reOpenOnConnectionClosed) {
-      // No-op
-      return;
-    } else if (this.databaseOpenPromise) {
-      // Already busy opening
-      return this.databaseOpenPromise;
-    } else {
-      return this._reOpen();
+    if (!this.options.reOpenOnConnectionClosed) {
+      throw new Error(`Cannot re-open underlying database, reOpenOnConnectionClosed is not enabled`);
     }
+    if (this.databaseOpenPromise) {
+      return this.databaseOpenPromise;
+    }
+    return this._reOpen();
   }
 
   protected async _init() {
@@ -183,15 +181,11 @@ export class LockedAsyncDatabaseAdapter
     this.iterateListeners((cb) => cb.initialized?.());
   }
 
-  getConfiguration(): WebDBAdapterConfiguration {
+  getConfiguration(): ResolvedWebSQLOpenOptions {
     if (!this._config) {
       throw new Error(`Cannot get config before initialization is completed`);
     }
-    return {
-      ...this._config,
-      // This can be overridden by the adapter later
-      requiresPersistentTriggers: false
-    };
+    return this._config;
   }
 
   protected async waitForInitialized() {
@@ -319,17 +313,9 @@ export class LockedAsyncDatabaseAdapter
   protected async acquireLock(callback: () => Promise<any>, options?: { timeoutMs?: number }): Promise<any> {
     await this.waitForInitialized();
 
-    // The database is being (re)opened in the background. Wait for it here.
+    // The database is being opened in the background. Wait for it here.
     if (this.databaseOpenPromise) {
       await this.databaseOpenPromise;
-    } else if (!this._db) {
-      /**
-       * The database is not open anymore, we might need to re-open it.
-       * Typically, _db, can be `null` if we tried to reOpen the database, but failed to succeed in re-opening.
-       * This can happen when disconnecting the client.
-       * Note: It is safe to re-enter this method multiple times.
-       */
-      await this.reOpenInternalDB();
     }
 
     return this._acquireLock(async () => {
@@ -349,9 +335,11 @@ export class LockedAsyncDatabaseAdapter
         return await callback();
       } catch (ex) {
         if (ConnectionClosedError.MATCHES(ex)) {
-          // Immediately re-open the database. We need to miss as little table updates as possible.
-          // Note, don't await this since it uses the same lock as we're in now.
-          this.reOpenInternalDB();
+          if (this.options.reOpenOnConnectionClosed && !this.databaseOpenPromise && !this.closing) {
+            // Immediately re-open the database. We need to miss as little table updates as possible.
+            // Note, don't await this since it uses the same lock as we're in now.
+            this.reOpenInternalDB();
+          }
         }
         throw ex;
       } finally {

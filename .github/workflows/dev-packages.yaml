@@ -1,0 +1,44 @@
+# Action to publish packages under the `next` tag for testing
+# Packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`
+name: Create Dev Release
+
+on: workflow_dispatch
+
+jobs:
+  publish:
+    name: Publish Dev Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: 9
+          run_install: false
+      - name: Add NPM auth
+        run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" >> ~/.npmrc
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build
+        run: pnpm build:packages:prod
+      - name: Publish
+        run: |
+          pnpm changeset version --no-git-tag --snapshot dev
+          pnpm changeset publish --tag dev

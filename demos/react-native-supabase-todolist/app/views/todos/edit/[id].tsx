@@ -1,4 +1,5 @@
-import { usePowerSync, useQuery, ATTACHMENT_TABLE, attachmentFromSql, AttachmentRecord } from '@powersync/react-native';
+import { ATTACHMENT_TABLE, AttachmentRecord } from '@powersync/attachments';
+import { usePowerSync, useQuery } from '@powersync/react-native';
 import { CameraCapturedPicture } from 'expo-camera';
 import _ from 'lodash';
 import * as React from 'react';
@@ -11,7 +12,21 @@ import { TODO_TABLE, TodoRecord, LIST_TABLE } from '../../../../library/powersyn
 import { useSystem } from '../../../../library/powersync/system';
 import { TodoItemWidget } from '../../../../library/widgets/TodoItemWidget';
 
-type TodoEntry = TodoRecord & { todo_id: string; attachment_id: string | null };
+type TodoEntry = TodoRecord & Partial<Omit<AttachmentRecord, 'id'>> & { todo_id: string; attachment_id: string | null };
+
+const toAttachmentRecord = _.memoize((entry: TodoEntry): AttachmentRecord | null => {
+  return entry.attachment_id == null
+    ? null
+    : {
+      id: entry.attachment_id,
+      filename: entry.filename!,
+      state: entry.state!,
+      timestamp: entry.timestamp,
+      local_uri: entry.local_uri,
+      media_type: entry.media_type,
+      size: entry.size
+    };
+});
 
 const TodoView: React.FC = () => {
   const system = useSystem();
@@ -46,10 +61,10 @@ const TodoView: React.FC = () => {
     if (completed) {
       const userID = await system.supabaseConnector.userId();
       updatedRecord.completed_at = new Date().toISOString();
-      updatedRecord.completed_by = userID!;
+      updatedRecord.completed_by = userID;
     } else {
-      updatedRecord.completed_at = null;
-      updatedRecord.completed_by = null;
+      updatedRecord.completed_at = undefined;
+      updatedRecord.completed_by = undefined;
     }
     await system.powersync.execute(
       `UPDATE ${TODO_TABLE}
@@ -62,13 +77,9 @@ const TodoView: React.FC = () => {
   };
 
   const savePhoto = async (id: string, data: CameraCapturedPicture) => {
-    if (system.photoAttachmentQueue) {
+    if (system.attachmentQueue) {
       // We are sure the base64 is not null, as we are using the base64 option in the CameraWidget
-      const { id: photoId } = await system.photoAttachmentQueue.saveFile({
-        data: data.base64!,
-        fileExtension: 'jpg',
-        mediaType: 'image/jpeg'
-      });
+      const { id: photoId } = await system.attachmentQueue.savePhoto(data.base64!);
 
       await system.powersync.execute(`UPDATE ${TODO_TABLE} SET photo_id = ? WHERE id = ?`, [photoId, id]);
     }
@@ -88,16 +99,12 @@ const TodoView: React.FC = () => {
   };
 
   const deleteTodo = async (id: string, photoRecord?: AttachmentRecord) => {
-    if (system.photoAttachmentQueue && photoRecord != null) {
-      await system.photoAttachmentQueue.deleteFile({
-        id: photoRecord.id,
-        updateHook: async (tx) => {
-          await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
-        }
-      });
-    } else {
-      await system.powersync.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
-    }
+    await system.powersync.writeTransaction(async (tx) => {
+      if (system.attachmentQueue && photoRecord != null) {
+        await system.attachmentQueue.delete(photoRecord, tx);
+      }
+      await tx.execute(`DELETE FROM ${TODO_TABLE} WHERE id = ?`, [id]);
+    });
   };
 
   if (isLoading) {
@@ -150,7 +157,7 @@ const TodoView: React.FC = () => {
       <ScrollView style={{ maxHeight: '90%' }}>
         {todos.map((r) => {
           const record = { ...r, id: r.todo_id };
-          const photoRecord = attachmentFromSql(r);
+          const photoRecord = toAttachmentRecord(r);
           return (
             <TodoItemWidget
               key={r.todo_id}

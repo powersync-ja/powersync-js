@@ -3,8 +3,9 @@
   "compilerOptions": {
     "baseUrl": "./",
     "rootDir": "src",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "es6",
     "outDir": "./lib"
   },
   "references": [

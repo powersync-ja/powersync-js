@@ -14,9 +14,8 @@ import {
   WebStreamingSyncImplementationOptions
 } from '@powersync/web';
 import React from 'react';
-import { safeParse } from '../safeParse/safeParse';
+import { ClientParameterRow, localStateDb } from './LocalStateManager';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
-import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import { RustClientInterceptor } from './RustClientInterceptor';
 import { TokenConnector } from './TokenConnector';
 
@@ -24,12 +23,34 @@ const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
 baseLogger.setLevel(LogLevel.DEBUG);
 
-export const PARAMS_STORE = 'currentParams';
+export type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[];
 
-export const getParams = () => {
-  const stringifiedParams = localStorage.getItem(PARAMS_STORE);
-  const params = safeParse(stringifiedParams);
-  return params;
+export type ParameterType = 'string' | 'number' | 'boolean' | 'array' | 'object';
+
+export const CONVERTERS: Record<ParameterType, (v: string) => unknown> = {
+  string: (v: string) => v,
+  number: (v: string) => Number(v),
+  boolean: (v: string) => v === 'true',
+  array: (v: string) => (v ? JSON.parse(v) : []),
+  object: (v: string) => (v ? JSON.parse(v) : {})
+};
+
+export const getParams = async (): Promise<Record<string, JSONValue>> => {
+  const currentParams = await localStateDb.getAll<ClientParameterRow>(
+    `SELECT key, value FROM client_parameters WHERE key != ''`
+  );
+  const paramsObject: Record<string, JSONValue> = {};
+
+  for (const p of currentParams) {
+    try {
+      const parsed = JSON.parse(p.value);
+      paramsObject[p.key] = CONVERTERS[parsed.type as ParameterType](parsed.value) as JSONValue;
+    } catch {
+      paramsObject[p.key] = p.value;
+    }
+  }
+
+  return paramsObject;
 };
 
 export const schemaManager = new DynamicSchemaManager();
@@ -52,28 +73,40 @@ export const activeSubscriptions: SyncStreamSubscription[] = [];
 
 export let sync: WebStreamingSyncImplementation | undefined;
 
+// Track the last connection error separately (persists even after disconnect)
+let lastConnectionError: Error | undefined;
+// Listeners for sync object changes (when sync is recreated)
+const syncChangeListeners = new Set<() => void>();
+
 export interface SyncErrorListener extends BaseListener {
   lastErrorUpdated?: ((error: Error) => void) | undefined;
 }
 
-if (connector.hasCredentials()) {
-  connect();
+function notifySyncChange() {
+  syncChangeListeners.forEach((listener) => listener());
+}
+
+/**
+ * Call after localStateDb is initialized to connect if credentials exist.
+ * Loads dynamic schema from local DB before connecting.
+ */
+export async function tryConnectIfCredentials(): Promise<void> {
+  await schemaManager.loadFromDb();
+  if (await connector.hasCredentials()) {
+    await connect();
+  }
 }
 
 export async function connect() {
   activeSubscriptions.length = 0;
-  const client =
-    localStorage.getItem('preferred_client_implementation') == SyncClientImplementation.RUST
-      ? SyncClientImplementation.RUST
-      : SyncClientImplementation.JAVASCRIPT;
+  lastConnectionError = undefined;
+  const client = SyncClientImplementation.RUST;
 
-  const params = getParams();
+  await schemaManager.loadFromDb();
+  const params = await getParams();
   await sync?.disconnect();
   const remote = new WebRemote(connector);
-  const adapter =
-    client == SyncClientImplementation.JAVASCRIPT
-      ? new RecordingStorageAdapter(db, schemaManager)
-      : new RustClientInterceptor(db, remote, schemaManager);
+  const adapter = new RustClientInterceptor(db, remote, schemaManager);
 
   const syncOptions: WebStreamingSyncImplementationOptions = {
     adapter,
@@ -86,23 +119,26 @@ export async function connect() {
     subscriptions: []
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
+  notifySyncChange();
   await sync.connect({ params, clientImplementation: client });
+  await schemaManager.refreshSchemaNow(db);
   if (!sync.syncStatus.connected) {
     const error = sync.syncStatus.dataFlowStatus.downloadError ?? new Error('Failed to connect');
-    // Disconnect but don't wait for it
+    lastConnectionError = error;
+    notifySyncChange();
     await sync.disconnect();
     throw error;
   }
 }
 
 export async function clearData() {
+  lastConnectionError = undefined;
   await sync?.disconnect();
   await db.disconnectAndClear();
   await schemaManager.clear();
-  await schemaManager.refreshSchema(db);
-  if (connector.hasCredentials()) {
-    const params = getParams();
-    await sync?.connect({ params });
+  await schemaManager.refreshSchemaNow(db);
+  if (await connector.hasCredentials()) {
+    await connect();
   }
 }
 
@@ -111,31 +147,59 @@ export async function disconnect() {
 }
 
 export async function signOut() {
-  connector.clearCredentials();
+  lastConnectionError = undefined;
+  await connector.clearCredentials();
   await disconnect();
   await db.disconnectAndClear();
   await schemaManager.clear();
+  notifySyncChange();
 }
-
-export const setParams = (p: object) => {
-  const stringified = JSON.stringify(p);
-  localStorage.setItem(PARAMS_STORE, stringified);
-  connect();
-};
 
 /**
  * The current sync status - we can't use `useStatus()` since we're not using the default sync implementation.
+ * This hook properly handles sync object recreation and persisted connection errors.
  */
 export function useSyncStatus() {
   const [current, setCurrent] = React.useState(sync?.syncStatus);
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  // Re-register listener when sync object changes
   React.useEffect(() => {
-    const l = sync?.registerListener({
+    const handleSyncChange = () => {
+      setCurrent(sync?.syncStatus);
+      forceUpdate();
+    };
+
+    syncChangeListeners.add(handleSyncChange);
+    return () => {
+      syncChangeListeners.delete(handleSyncChange);
+    };
+  }, []);
+
+  // Listen to status changes on the current sync object
+  React.useEffect(() => {
+    if (!sync) return;
+
+    setCurrent(sync.syncStatus);
+    const l = sync.registerListener({
       statusChanged: (status) => {
         setCurrent(status);
       }
     });
     return () => l?.();
-  }, []);
+  }, [current]); // Re-run when current changes (triggered by sync recreation)
+
+  // Return status with persisted error if available
+  if (current && lastConnectionError && !current.dataFlowStatus?.downloadError) {
+    // Use type assertion to preserve the full SyncStatus type after spread
+    return {
+      ...current,
+      dataFlowStatus: {
+        ...current.dataFlowStatus,
+        downloadError: lastConnectionError
+      }
+    } as typeof current;
+  }
 
   return current;
 }

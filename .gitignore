@@ -8,9 +8,6 @@ dist
 .idea
 .fleet
 
-# TanStack Router generated files
-routeTree.gen.ts
-
 # Useful if running repository in VSCode dev container
 .pnpm-store
 __screenshots__

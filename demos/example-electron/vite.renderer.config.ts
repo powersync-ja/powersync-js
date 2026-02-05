@@ -1,8 +1,10 @@
-import react from '@vitejs/plugin-react';
 import type { ConfigEnv, UserConfig } from 'vite';
 import { defineConfig } from 'vite';
-import vitePluginRequire from 'vite-plugin-require';
+import react from '@vitejs/plugin-react';
 import { pluginExposeRenderer } from './vite.base.config.js';
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import vitePluginRequire from 'vite-plugin-require';
 
 // https://vitejs.dev/config
 export default defineConfig((env) => {
@@ -22,11 +24,22 @@ export default defineConfig((env) => {
     optimizeDeps: {
       // Don't optimize these packages as they contain web workers and WASM files.
       // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-      exclude: ['@powersync/web']
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+      include: []
     },
-    plugins: [react(), vitePluginRequire.default(), pluginExposeRenderer(name)],
+    plugins: [
+      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
+      wasm(),
+      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
+      topLevelAwait(),
+      react(),
+      vitePluginRequire.default(),
+      pluginExposeRenderer(name)
+    ],
     worker: {
-      format: 'es'
+      format: 'es',
+      // @ts-expect-error there is TS issue that doesn't actually affect the runtime
+      plugins: () => [wasm(), topLevelAwait()]
     },
     resolve: {
       preserveSymlinks: true

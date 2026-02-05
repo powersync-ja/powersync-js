@@ -1,6 +1,6 @@
 {
   "name": "@powersync/kysely-driver",
-  "version": "1.3.2",
+  "version": "1.3.1",
   "description": "Kysely driver for PowerSync",
   "type": "module",
   "main": "dist/index.cjs",
@@ -43,20 +43,17 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.46.0"
+    "@powersync/common": "workspace:^1.45.0"
   },
   "dependencies": {
-    "kysely": "catalog:"
+    "kysely": "^0.28.0"
   },
   "devDependencies": {
-    "@journeyapps/wa-sqlite": "catalog:",
+    "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/web": "workspace:*",
-    "@rollup/plugin-commonjs": "catalog:",
-    "@rollup/plugin-node-resolve": "catalog:",
-    "@rollup/plugin-typescript": "catalog:",
-    "@types/node": "catalog:",
-    "rollup": "catalog:",
-    "rollup-plugin-dts": "catalog:",
-    "vite": "catalog:"
+    "@types/node": "^20.17.6",
+    "vite": "^6.1.0",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.3.0"
   }
 }

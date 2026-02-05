@@ -13,15 +13,11 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 const config = {
   watchFolders: [workspaceRoot],
   resolver: {
-    unstable_enablePackageExports: true,
+    extraNodeModules: {
+      stream: require.resolve('stream-browserify')
+    },
     nodeModulesPaths: [path.resolve(projectRoot, 'node_modules'), path.resolve(workspaceRoot, 'node_modules')],
-    // Block React 18.x versions from other workspace packages to prevent duplicate React
-    blockList: [
-      /node_modules\/\.pnpm\/react@18\..*/,
-      /node_modules\/\.pnpm\/react-dom@18\..*/,
-      /packages\/.*\/node_modules\/react\//,
-      /packages\/.*\/node_modules\/react-dom\//,
-    ],
+    disableHierarchicalLookup: true
   },
   transformer: {
     getTransformOptions: async () => ({

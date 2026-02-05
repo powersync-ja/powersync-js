@@ -20,15 +20,12 @@ pnpm start
 3. Run the app:
 
 ### For iOS
-A couple of pro-tips:
-1. Be sure to install your XCode updates, since it can generate very cryptic errors if you don't.
-2. Be sure to use the right ruby version. You can use `rbenv` or `rvm` to switch versions. Check the Gemfile for which version to use.
 
 Update pods:
 
 ```sh
 cd ios
-bundle exec pod update
+pod update
 cd ..
 ```
 
@@ -49,14 +46,24 @@ pnpm android
 ### iOS
 
 ```sh
-pnpm detox build --configuration ios.sim.debug
 pnpm detox test --configuration ios.sim.debug
 ```
 
 ### Android
 
 ````sh
+pnpm detox test --configuration android.emu.debug
+
+5. Building
+
+### iOS
+
+```sh
+pnpm detox build --configuration ios.sim.debug
+````
+
+### Android
+
+```sh
 pnpm detox build --configuration android.emu.debug
-# replace Pixel_3a_API_34 with your desired AVD name, defaults to "ubuntu-avd-x86_64-31" for AVD via GitHub CI KVM
-DETOX_AVD_NAME=Pixel_3a_API_34 pnpm detox test --configuration android.emu.debug 
 ```

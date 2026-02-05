@@ -1,6 +1,2 @@
 packages:
   - .
-
-onlyBuiltDependencies:
-  # Electron has a postinstall script which populates the path to the electron bin.
-  - electron

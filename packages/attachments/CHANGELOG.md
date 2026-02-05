@@ -1,17 +1,5 @@
 # @powersync/attachments
 
-## 2.4.2
-
-### Patch Changes
-
-- 8db47f3: Re-ordered the `types` export before the `default` export. This should allow types to be resolved correctly without warnings.
-- Updated dependencies [aaf6037]
-- Updated dependencies [acf6b70]
-- Updated dependencies [e39359d]
-- Updated dependencies [41953bc]
-- Updated dependencies [25ece59]
-  - @powersync/common@1.46.0
-
 ## 2.4.1
 
 ### Patch Changes

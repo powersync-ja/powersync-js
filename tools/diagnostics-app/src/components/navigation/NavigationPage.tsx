@@ -13,5 +13,5 @@ export const NavigationPage: React.FC<React.PropsWithChildren<{ title: string }>
     return () => navigationPanel.setTitle('');
   }, [title, navigationPanel]);
 
-  return <>{children}</>;
+  return <div className="min-w-0 max-w-full overflow-x-hidden">{children}</div>;
 };

@@ -1,17 +1,5 @@
 # @powersync/drizzle-driver
 
-## 0.7.2
-
-### Patch Changes
-
-- 8db47f3: Fixed CommonJS issue where `tslib` could not be found (for some package hoisting configurations)
-- Updated dependencies [aaf6037]
-- Updated dependencies [acf6b70]
-- Updated dependencies [e39359d]
-- Updated dependencies [41953bc]
-- Updated dependencies [25ece59]
-  - @powersync/common@1.46.0
-
 ## 0.7.1
 
 ### Patch Changes

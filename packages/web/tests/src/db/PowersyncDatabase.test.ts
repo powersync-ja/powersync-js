@@ -1,6 +1,6 @@
 import { createLogger, PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TEST_SCHEMA } from '../../utils/test-schema.js';
+import { testSchema } from '../../utils/testDb.js';
 
 describe('PowerSyncDatabase', () => {
   let db: PowerSyncDatabase;
@@ -17,7 +17,7 @@ describe('PowerSyncDatabase', () => {
 
     // Initialize with minimal required options
     db = new PowerSyncDatabase({
-      schema: TEST_SCHEMA,
+      schema: testSchema,
       database: {
         dbFilename: 'test.db'
       },

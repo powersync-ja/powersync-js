@@ -1,13 +1,3 @@
-export * from './attachments/AttachmentContext.js';
-export * from './attachments/AttachmentErrorHandler.js';
-export * from './attachments/AttachmentQueue.js';
-export * from './attachments/AttachmentService.js';
-export * from './attachments/LocalStorageAdapter.js';
-export * from './attachments/RemoteStorageAdapter.js';
-export * from './attachments/Schema.js';
-export * from './attachments/SyncingService.js';
-export * from './attachments/WatchedAttachmentItem.js';
-
 export * from './client/AbstractPowerSyncDatabase.js';
 export * from './client/AbstractPowerSyncOpenFactory.js';
 export { compilableQueryWatch, CompilableQueryWatchHandler } from './client/compilableQueryWatch.js';
@@ -39,16 +29,13 @@ export * from './db/DBAdapter.js';
 export * from './db/schema/Column.js';
 export * from './db/schema/Index.js';
 export * from './db/schema/IndexedColumn.js';
-export * from './db/schema/RawTable.js';
 export * from './db/schema/Schema.js';
 export * from './db/schema/Table.js';
 export * from './db/schema/TableV2.js';
 
 export * from './client/Query.js';
-export { MEMORY_TRIGGER_CLAIM_MANAGER } from './client/triggers/MemoryTriggerClaimManager.js';
 export * from './client/triggers/sanitizeSQL.js';
 export * from './client/triggers/TriggerManager.js';
-export { TriggerManagerImpl } from './client/triggers/TriggerManagerImpl.js';
 export * from './client/watched/GetAllQuery.js';
 export * from './client/watched/processors/AbstractQueryProcessor.js';
 export * from './client/watched/processors/comparators.js';
@@ -61,7 +48,6 @@ export * from './utils/BaseObserver.js';
 export * from './utils/ControlledExecutor.js';
 export * from './utils/DataStream.js';
 export * from './utils/Logger.js';
-export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';
 
 export * from './types/types.js';

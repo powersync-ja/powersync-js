@@ -1,5 +1,7 @@
 /// <reference types="vitest" />
 import { fileURLToPath, URL } from 'url';
+import topLevelAwait from 'vite-plugin-top-level-await';
+import wasm from 'vite-plugin-wasm';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -23,9 +25,12 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@powersync/web']
+    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+    include: []
   },
   plugins: [
+    wasm(),
+    topLevelAwait(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -64,7 +69,8 @@ export default defineConfig({
     })
   ],
   worker: {
-    format: 'es'
+    format: 'es',
+    plugins: () => [wasm(), topLevelAwait()]
   },
   test: {
     globals: true,

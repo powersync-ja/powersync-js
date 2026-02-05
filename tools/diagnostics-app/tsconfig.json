@@ -14,13 +14,10 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/@types/react"],
+      "@types/react": ["./node_modules/@types/react"]
     }
   },
-  "exclude": ["node_modules"],
-  "references": [
-    { "path": "../../packages/common" },
-    { "path": "../../packages/web" },
-    { "path": "../../packages/react" }
-  ]
+  "exclude": ["node_modules"]
 }

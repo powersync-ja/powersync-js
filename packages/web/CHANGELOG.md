@@ -1,30 +1,5 @@
 # @powersync/web
 
-## 1.32.0
-
-### Minor Changes
-
-- 25ece59: Improved ESM exports and module declarations. Importing these packages in SSR environments should no longer throw errors.
-- 8db47f3: [Internal] Improved BSON bundling process.
-- aaf6037: Add support for storage-backed (non-TEMP) SQLite triggers and tables for managed triggers. These resources persist on disk while in use and are automatically cleaned up when no longer claimed or needed. They should not be considered permanent triggers; PowerSync manages their lifecycle.
-- acf6b70: The [Rust sync client](https://www.powersync.com/blog/speeding-up-powersync-with-a-sqlite-extension-written-in-rust) is now enabled by default.
-  To keep using the JavaScript client implementation, pass `clientImplementation: SyncClientImplementation.JAVASCRIPT` in `options` when calling
-  `PowerSync.connect`.
-
-  Note that the JavaScript client will be removed in a future version of the SDK. If you choose to it due to issues with the Rust client, please
-  file an issue or reach out to us.
-
-- aaf6037: Managed triggers now use storage-backed (non-TEMP) SQLite triggers and tables when OPFS is the VFS. Resources persist across tabs and connection cycles to detect cross‑tab changes, and are automatically cleaned up when no longer in use. These should not be treated as permanent triggers; their lifecycle is managed by PowerSync.
-
-### Patch Changes
-
-- Updated dependencies [aaf6037]
-- Updated dependencies [acf6b70]
-- Updated dependencies [e39359d]
-- Updated dependencies [41953bc]
-- Updated dependencies [25ece59]
-  - @powersync/common@1.46.0
-
 ## 1.31.0
 
 ### Minor Changes

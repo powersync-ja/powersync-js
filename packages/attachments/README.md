@@ -1,8 +1,5 @@
 # @powersync/attachments
 
-> [!WARNING]  
-> This package is deprecated in favor of using the built in attachments functionality in each web, node and react-native SDKs. For more information [see the documentation](https://docs.powersync.com/usage/use-case-examples/attachments-files)
-
 A [PowerSync](https://powersync.com) library to manage attachments in React Native and JavaScript/TypeScript apps.
 
 ## Installation

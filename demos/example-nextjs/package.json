@@ -21,7 +21,7 @@
     "@mui/icons-material": "^5.15.18",
     "@mui/material": "^5.15.18",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.32.0",
+    "@powersync/web": "^1.31.0",
     "lato-font": "^3.0.0",
     "lexical": "^0.15.0",
     "next": "^16.1.1",

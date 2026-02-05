@@ -27,7 +27,7 @@
     "@mui/x-data-grid": "^6.19.11",
     "express": "^4.19.2",
     "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.32.0",
+    "@powersync/web": "^1.31.0",
     "electron-squirrel-startup": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -55,6 +55,8 @@
     "ts-node": "^10.9.2",
     "typescript": "~4.5.5",
     "vite": "^5.2.11",
-    "vite-plugin-require": "^1.1.14"
+    "vite-plugin-require": "^1.1.14",
+    "vite-plugin-top-level-await": "^1.4.1",
+    "vite-plugin-wasm": "^3.3.0"
   }
 }
