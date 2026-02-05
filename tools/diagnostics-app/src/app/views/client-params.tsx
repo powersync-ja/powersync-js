@@ -33,30 +33,20 @@ const validateType = (type: ParameterType, value: string): string | undefined =>
   if (!value) return undefined;
   try {
     const converted = CONVERTERS[type](value);
-    if (type === 'number' && isNaN(converted as number)) {
-      return 'Invalid number';
-    }
-    if (type === 'boolean' && value !== 'true' && value !== 'false') {
-      return 'Must be "true" or "false"';
-    }
+    if (type === 'number' && isNaN(converted as number)) return 'Invalid number';
+    if (type === 'boolean' && value !== 'true' && value !== 'false') return 'Must be "true" or "false"';
     return undefined;
   } catch (e: any) {
     return e.message;
   }
 };
 
-const hasLeadingOrTrailingWhitespace = (value: string): boolean => {
-  return value !== value.trim();
-};
-
-const getValidationErrors = (key: string, type: ParameterType, value: string) => {
-  const keyError = hasLeadingOrTrailingWhitespace(key) ? 'No leading/trailing spaces allowed' : undefined;
-  const valueWhitespace = hasLeadingOrTrailingWhitespace(value) ? 'No leading/trailing spaces allowed' : undefined;
-  const valueError = valueWhitespace || validateType(type, value);
+const validate = (key: string, type: ParameterType, value: string) => {
+  const keyError = key !== key.trim() ? 'No leading/trailing spaces allowed' : undefined;
+  const valueError = (value !== value.trim() ? 'No leading/trailing spaces allowed' : undefined) || validateType(type, value);
   return { keyError, valueError };
 };
 
-/** Parse stored DB value into type + value */
 const parseStored = (raw: string): { type: ParameterType; value: string } => {
   try {
     const parsed = JSON.parse(raw);
@@ -69,7 +59,6 @@ const parseStored = (raw: string): { type: ParameterType; value: string } => {
 function ClientParamsContent() {
   const localDb = usePowerSync()!;
   const [localEdits, setLocalEdits] = useState<Record<string, LocalEdit>>({});
-  const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const savedTimeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const connectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -85,25 +74,6 @@ function ClientParamsContent() {
     };
   }, []);
 
-  // Clean up stale edits once DB catches up
-  useEffect(() => {
-    if (!storedParams || Object.keys(localEdits).length === 0) return;
-    const staleIds = Object.keys(localEdits).filter((id) => {
-      const p = storedParams.find((sp) => sp.id === id);
-      if (!p) return true; // deleted
-      const stored = parseStored(p.value);
-      const edit = localEdits[id];
-      return edit.key === p.key && edit.type === stored.type && edit.value === stored.value;
-    });
-    if (staleIds.length > 0) {
-      setLocalEdits((prev) => {
-        const next = { ...prev };
-        staleIds.forEach((id) => delete next[id]);
-        return next;
-      });
-    }
-  }, [storedParams, localEdits]);
-
   const debouncedConnect = () => {
     if (connectTimeout.current) clearTimeout(connectTimeout.current);
     connectTimeout.current = setTimeout(async () => {
@@ -115,55 +85,41 @@ function ClientParamsContent() {
     }, 500);
   };
 
-  const getDisplayValues = (p: StoredParam) => {
-    const edit = localEdits[p.id];
-    if (edit) return edit;
+  const getRowState = (p: StoredParam) => {
     const stored = parseStored(p.value);
-    return { key: p.key, ...stored };
+    const edit = localEdits[p.id];
+    const key = edit?.key ?? p.key;
+    const type = edit?.type ?? stored.type;
+    const value = edit?.value ?? stored.value;
+    const dirty = edit ? (key !== p.key || type !== stored.type || value !== stored.value) : false;
+    return { key, type, value, dirty };
   };
 
-  const isDirty = (p: StoredParam) => {
-    const edit = localEdits[p.id];
-    if (!edit) return false;
-    const stored = parseStored(p.value);
-    return edit.key !== p.key || edit.type !== stored.type || edit.value !== stored.value;
-  };
-
-  const updateLocal = (id: string, key: string, type: ParameterType, value: string) => {
-    setLocalEdits((prev) => ({ ...prev, [id]: { key, type, value } }));
+  const showSaved = (id: string) => {
+    setSavedIds((prev) => new Set(prev).add(id));
+    if (savedTimeouts.current[id]) clearTimeout(savedTimeouts.current[id]);
+    savedTimeouts.current[id] = setTimeout(() => {
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 2000);
   };
 
   const saveParam = async (id: string) => {
     const edit = localEdits[id];
     if (!edit) return;
-
-    const { keyError, valueError } = getValidationErrors(edit.key, edit.type, edit.value);
+    const { keyError, valueError } = validate(edit.key, edit.type, edit.value);
     if (keyError || valueError) return;
-
-    setSavingIds((prev) => new Set(prev).add(id));
 
     try {
       const paramData = JSON.stringify({ type: edit.type, value: edit.value });
       await localDb.execute(`UPDATE client_parameters SET key = ?, value = ? WHERE id = ?`, [edit.key, paramData, id]);
       debouncedConnect();
-
-      setSavedIds((prev) => new Set(prev).add(id));
-      if (savedTimeouts.current[id]) clearTimeout(savedTimeouts.current[id]);
-      savedTimeouts.current[id] = setTimeout(() => {
-        setSavedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-      }, 2000);
+      showSaved(id);
     } catch (err) {
       console.error('Failed to save parameter', err);
-    } finally {
-      setSavingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
     }
   };
 
@@ -209,11 +165,9 @@ function ClientParamsContent() {
             ) : (
               <div className="space-y-3">
                 {(storedParams ?? []).map((p) => {
-                  const { key, type, value } = getDisplayValues(p);
-                  const dirty = isDirty(p);
-                  const { keyError, valueError } = dirty ? getValidationErrors(key, type, value) : { keyError: undefined, valueError: undefined };
+                  const { key, type, value, dirty } = getRowState(p);
+                  const { keyError, valueError } = dirty ? validate(key, type, value) : {};
                   const hasErrors = !!keyError || !!valueError;
-                  const saving = savingIds.has(p.id);
                   const saved = savedIds.has(p.id);
 
                   return (
@@ -225,7 +179,7 @@ function ClientParamsContent() {
                         <Input
                           id={`key-${p.id}`}
                           value={key}
-                          onChange={(e) => updateLocal(p.id, e.target.value, type, value)}
+                          onChange={(e) => setLocalEdits((prev) => ({ ...prev, [p.id]: { key: e.target.value, type, value } }))}
                           placeholder="parameter_name"
                           className={`mt-1.5 ${keyError ? 'border-destructive' : ''}`}
                           title={keyError}
@@ -256,7 +210,7 @@ function ClientParamsContent() {
                         <Input
                           id={`value-${p.id}`}
                           value={value}
-                          onChange={(e) => updateLocal(p.id, key, type, e.target.value)}
+                          onChange={(e) => setLocalEdits((prev) => ({ ...prev, [p.id]: { key, type, value: e.target.value } }))}
                           placeholder="value"
                           className={`mt-1.5 ${valueError ? 'border-destructive' : ''}`}
                           title={valueError}
@@ -267,7 +221,7 @@ function ClientParamsContent() {
                         <Label htmlFor={`type-${p.id}`} className="text-xs text-muted-foreground">
                           Type
                         </Label>
-                        <Select value={type} onValueChange={(newType) => updateLocal(p.id, key, newType as ParameterType, value)}>
+                        <Select value={type} onValueChange={(newType) => setLocalEdits((prev) => ({ ...prev, [p.id]: { key, type: newType as ParameterType, value } }))}>
                           <SelectTrigger id={`type-${p.id}`} className="mt-1.5">
                             <SelectValue />
                           </SelectTrigger>
@@ -286,7 +240,7 @@ function ClientParamsContent() {
                             <button
                               type="button"
                               onClick={() => saveParam(p.id)}
-                              disabled={hasErrors || saving}
+                              disabled={hasErrors}
                               className="h-9 w-9 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-accent disabled:opacity-50 disabled:pointer-events-none"
                               title={hasErrors ? 'Fix errors before saving' : 'Save parameter'}>
                               <Save className="h-4 w-4" />
@@ -318,10 +272,6 @@ function ClientParamsContent() {
   );
 }
 
-/**
- * Wrapper that provides localStateDb context for the entire page.
- * This allows useQuery and usePowerSync inside to use the local state database.
- */
 export default function ClientParamsPage() {
   return (
     <PowerSyncContext.Provider value={localStateDb}>
