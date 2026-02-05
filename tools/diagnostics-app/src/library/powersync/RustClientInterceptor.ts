@@ -102,10 +102,11 @@ export class RustClientInterceptor extends SqliteBucketStorage {
         }
       });
 
-      await this.schemaManager.updateFromOperations(batch);
+      const schemaUpdated = await this.schemaManager.updateFromOperations(batch);
+      if (schemaUpdated) {
+        await this.schemaManager.refreshSchema(this.rdb);
+      }
     } else if (isStreamingSyncCheckpointPartiallyComplete(line) || isStreamingSyncCheckpointComplete(line)) {
-      // Refresh schema asynchronously, to allow us to better measure
-      // performance of initial sync.
       setTimeout(() => {
         this.schemaManager.refreshSchema(this.rdb);
       }, 60);

@@ -845,6 +845,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@18.3.7(@types/react@18.3.1))(@types/react@18.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-query':
+        specifier: ^5.64.1
+        version: 5.90.20(react@18.3.1)
       '@tanstack/react-router':
         specifier: ^1.153.2
         version: 1.158.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -19785,9 +19788,7 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 

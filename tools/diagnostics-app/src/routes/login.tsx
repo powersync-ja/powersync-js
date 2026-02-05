@@ -3,8 +3,8 @@ import { LoginDetailsWidget } from '@/components/widgets/LoginDetailsWidget';
 import { connector } from '@/library/powersync/ConnectionManager';
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: () => {
-    if (connector.hasCredentials()) {
+  beforeLoad: async () => {
+    if (await connector.hasCredentials()) {
       throw redirect({ to: '/sync-diagnostics' });
     }
   },
