@@ -3,6 +3,7 @@ import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscriptio
 import { clearData, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
 import { SyncStreamStatus } from '@powersync/web';
 import React, { useState } from 'react';
+import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,59 +64,61 @@ SELECT
   local.downloading
 FROM local_bucket_data local`;
 
+const syncDiagnosticsKeys = {
+  all: ['syncDiagnostics'] as const,
+  stats: () => [...syncDiagnosticsKeys.all, 'stats'] as const
+};
+
+interface SyncStats {
+  bucketRows: any[] | null;
+  tableRows: any[] | null;
+  lastSyncedAt: Date | null;
+}
+
+async function fetchSyncStats(): Promise<SyncStats> {
+  const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
+  const lastSyncedAt = synced_at ? new Date(synced_at + 'Z') : null;
+
+  if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
+    const bucketRows = await db.getAll(BUCKETS_QUERY);
+    const tableRows = await db.getAll(TABLES_QUERY);
+    return { bucketRows, tableRows, lastSyncedAt };
+  }
+  if (synced_at != null) {
+    const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
+    const tableRows = await db.getAll(TABLES_QUERY);
+    return { bucketRows, tableRows, lastSyncedAt };
+  }
+  const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
+  return { bucketRows, tableRows: null, lastSyncedAt };
+}
+
 export default function SyncDiagnosticsPage() {
-  const [bucketRows, setBucketRows] = React.useState<null | any[]>(null);
-  const [tableRows, setTableRows] = React.useState<null | any[]>(null);
-  const [lastSyncedAt, setlastSyncedAt] = React.useState<Date | null>(null);
-
-  const bucketRowsLoading = bucketRows == null;
-  const tableRowsLoading = tableRows == null;
-
-  const refreshStats = async () => {
-    // Similar to db.currentState.hasSynced, but synchronized to the onChange events
-    const { synced_at } = await db.get<{ synced_at: string | null }>('SELECT powersync_last_synced_at() as synced_at');
-    setlastSyncedAt(synced_at ? new Date(synced_at + 'Z') : null);
-    if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
-      // These are potentially expensive queries - do not run during initial sync
-      const bucketRows = await db.getAll(BUCKETS_QUERY);
-      const tableRows = await db.getAll(TABLES_QUERY);
-      setBucketRows(bucketRows);
-      setTableRows(tableRows);
-    } else if (synced_at != null) {
-      // Busy downloading, but have already synced once
-      const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
-      setBucketRows(bucketRows);
-      // Load tables if we haven't yet
-      if (tableRows == null) {
-        const tableRows = await db.getAll(TABLES_QUERY);
-        setTableRows(tableRows);
-      }
-    } else {
-      // Fast query to show progress during initial sync / while downloading bulk data
-      const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
-      setBucketRows(bucketRows);
-      setTableRows(null);
-    }
-  };
+  const queryClient = useQueryClient();
+  const { data: stats, isLoading } = useTanstackQuery({
+    queryKey: syncDiagnosticsKeys.stats(),
+    queryFn: fetchSyncStats,
+    staleTime: 30000,
+    refetchOnWindowFocus: false
+  });
 
   React.useEffect(() => {
-    const controller = new AbortController();
-
-    db.onChangeWithCallback(
+    const dispose = db.onChangeWithCallback(
       {
-        async onChange(event) {
-          await refreshStats();
+        async onChange() {
+          queryClient.invalidateQueries({ queryKey: syncDiagnosticsKeys.stats() });
         }
       },
       { rawTableNames: true, tables: ['ps_oplog', 'ps_buckets', 'ps_data_local__local_bucket_data'], throttleMs: 500 }
     );
+    return () => dispose?.();
+  }, [queryClient]);
 
-    refreshStats();
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
+  const bucketRows = stats?.bucketRows ?? null;
+  const tableRows = stats?.tableRows ?? null;
+  const lastSyncedAt = stats?.lastSyncedAt ?? null;
+  const bucketRowsLoading = isLoading && bucketRows == null;
+  const tableRowsLoading = isLoading && tableRows == null;
 
   const bucketsColumns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
@@ -160,7 +163,9 @@ export default function SyncDiagnosticsPage() {
   ];
 
   const rows = (bucketRows ?? []).map((r) => {
-    const isReady = r.downloading == 0;
+    // Bucket is ready if not actively downloading OR if there are no operations to download
+    // (handles edge case where bucket was removed/cleared but still has historical stats)
+    const isReady = r.downloading == 0 || r.total_operations === 0;
     return {
       id: r.name,
       name: r.name,
@@ -278,7 +283,7 @@ export default function SyncDiagnosticsPage() {
 
   return (
     <NavigationPage title="Sync Diagnostics">
-      <div className="p-5 space-y-8">
+      <div className="min-w-0 max-w-full overflow-x-hidden p-5 space-y-8">
         <div>
           {bucketRowsLoading ? (
             <div className="flex justify-center items-center py-10">

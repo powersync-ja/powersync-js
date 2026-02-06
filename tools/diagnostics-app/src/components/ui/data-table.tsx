@@ -132,28 +132,31 @@ export function DataTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="w-full space-y-4">
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+    <div className="w-full min-w-0 space-y-4">
+      <div className="rounded-md border min-w-0 max-w-full">
+        <div className="overflow-x-auto">
+          <Table className="min-w-max">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              {columns.map((column) => (
-                <TableHead
-                  key={String(column.field)}
-                  className={cn(
-                    'cursor-pointer select-none whitespace-nowrap',
-                    getCellAlignment(column) === 'right' && 'text-right',
-                    getCellAlignment(column) === 'center' && 'text-center',
-                    column.hideOnMobile && 'hidden md:table-cell'
-                  )}
-                  style={{ width: column.flex ? `${column.flex * 100}px` : undefined }}
-                  onClick={() => handleSort(column.field)}>
-                  <div
+              {columns.map((column) => {
+                const align = getCellAlignment(column);
+                return (
+                  <TableHead
+                    key={String(column.field)}
                     className={cn(
-                      'flex items-center gap-1',
-                      getCellAlignment(column) === 'right' && 'justify-end',
-                      getCellAlignment(column) === 'center' && 'justify-center'
-                    )}>
+                      'cursor-pointer select-none whitespace-nowrap',
+                      align === 'right' && 'text-right',
+                      align === 'center' && 'text-center',
+                      column.hideOnMobile && 'hidden md:table-cell'
+                    )}
+                    style={{ width: column.flex ? `${column.flex * 100}px` : undefined }}
+                    onClick={() => handleSort(column.field)}>
+                    <div
+                      className={cn(
+                        'flex items-center gap-1',
+                        align === 'right' && 'justify-end',
+                        align === 'center' && 'justify-center'
+                      )}>
                     <span>{column.headerName}</span>
                     {sortField === column.field ? (
                       sortDirection === 'asc' ? (
@@ -166,7 +169,8 @@ export function DataTable<T extends { id: string | number }>({
                     )}
                   </div>
                 </TableHead>
-              ))}
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,27 +183,31 @@ export function DataTable<T extends { id: string | number }>({
             ) : (
               paginatedRows.map((row) => (
                 <TableRow key={row.id}>
-                  {columns.map((column) => (
-                    <TableCell
-                      key={`${row.id}-${String(column.field)}`}
-                      className={cn(
-                        'align-top',
-                        getCellAlignment(column) === 'right' && 'text-right',
-                        getCellAlignment(column) === 'center' && 'text-center',
-                        column.hideOnMobile && 'hidden md:table-cell'
-                      )}>
-                      {getCellValue(row, column)}
-                    </TableCell>
-                  ))}
+                  {columns.map((column) => {
+                    const align = getCellAlignment(column);
+                    return (
+                      <TableCell
+                        key={`${row.id}-${String(column.field)}`}
+                        className={cn(
+                          'align-top',
+                          align === 'right' && 'text-right',
+                          align === 'center' && 'text-center',
+                          column.hideOnMobile && 'hidden md:table-cell'
+                        )}>
+                        {getCellValue(row, column)}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {sortedRows.length > 0 && (
-        <div className="flex items-center justify-between px-2">
+        <div className="flex flex-shrink-0 items-center justify-between px-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page:</span>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>

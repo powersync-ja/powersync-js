@@ -33,8 +33,8 @@ import { Separator } from '@/components/ui/separator';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: () => {
-    if (!connector.hasCredentials()) {
+  beforeLoad: async () => {
+    if (!(await connector.hasCredentials())) {
       throw redirect({ to: '/login' });
     }
   },
@@ -128,11 +128,6 @@ function AuthenticatedLayout() {
             <h1 className="text-lg font-semibold truncate">{title}</h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {syncStatus?.clientImplementation && (
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                Client: {syncStatus?.clientImplementation}
-              </span>
-            )}
             <ArrowUp
               className={cn(
                 'h-5 w-5 -mr-2.5',
@@ -155,8 +150,8 @@ function AuthenticatedLayout() {
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+        {/* Main Content Area - min-w-0 so wide table content scrolls inside DataTable, not the whole page */}
+        <main className="flex-1 min-w-0 overflow-x-hidden p-4 md:p-6">
           {syncError ? (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>

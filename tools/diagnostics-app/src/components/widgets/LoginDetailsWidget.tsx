@@ -5,7 +5,6 @@ import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type LoginDetailsFormValues = {
@@ -67,7 +66,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                 setFieldError('endpoint', ex.message);
               }
             }}>
-            {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
+            {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit }) => (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <Label htmlFor="token-input">PowerSync Token</Label>
@@ -98,29 +97,7 @@ export const LoginDetailsWidget: React.FC<LoginDetailsWidgetProps> = (props) => 
                   />
                   {errors.endpoint && <p className="text-sm text-destructive">{errors.endpoint}</p>}
                 </div>
-                <div className="flex items-center justify-between mt-5">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={values.clientImplementation == SyncClientImplementation.RUST}
-                      onCheckedChange={(checked) =>
-                        setFieldValue(
-                          'clientImplementation',
-                          checked ? SyncClientImplementation.RUST : SyncClientImplementation.JAVASCRIPT
-                        )
-                      }
-                    />
-                    <Label htmlFor="rust-client" className="cursor-pointer">
-                      Rust sync client (
-                      <a
-                        className="text-info hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        href="https://releases.powersync.com/announcements/improved-sync-performance-in-our-client-sdks">
-                        what's that?
-                      </a>
-                      )
-                    </Label>
-                  </div>
+                <div className="flex items-center justify-end mt-5">
                   <Button type="submit" variant="outline" disabled={isSubmitting}>
                     Proceed
                   </Button>

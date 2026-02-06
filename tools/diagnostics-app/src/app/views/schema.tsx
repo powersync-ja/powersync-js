@@ -7,7 +7,7 @@ export default function SchemaPage() {
 
   return (
     <NavigationPage title="Dynamic Schema">
-      <div className="p-5">
+      <div className="min-w-0 max-w-full overflow-x-hidden p-5">
         <Card>
           <CardHeader>
             <CardTitle>Inferred Schema</CardTitle>
