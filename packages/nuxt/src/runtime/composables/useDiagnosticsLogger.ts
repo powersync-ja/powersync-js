@@ -1,5 +1,4 @@
 import { createBaseLogger, LogLevel, type ILogHandler } from '@powersync/web';
-import { createConsola, type ConsolaOptions, type LogType } from 'consola';
 import { createStorage } from 'unstorage';
 import localStorageDriver from 'unstorage/drivers/session-storage';
 import mitt from 'mitt';
@@ -8,25 +7,6 @@ const emitter = mitt();
 
 const logsStorage = createStorage({
   driver: localStorageDriver({ base: 'powersync:' })
-});
-
-const consola = createConsola({
-  level: 5, // trace
-  fancy: true,
-  formatOptions: {
-    columns: 80,
-    colors: true,
-    compact: false,
-    date: true
-  }
-} as Partial<ConsolaOptions> & { fancy?: boolean }); // this type casting is only necessary for docs generation
-
-consola.addReporter({
-  log: async (logObject) => {
-    const key = `log:${logObject.date.toISOString()}`;
-    await logsStorage.set(key, logObject);
-    emitter.emit('log', { key, value: logObject });
-  }
 });
 
 /**
@@ -52,24 +32,34 @@ consola.addReporter({
  */
 export const useDiagnosticsLogger = (customHandler?: ILogHandler) => {
   const logger = createBaseLogger();
-  logger.useDefaults();
+
+  // Console output: use js-logger's default handler (optional formatter for [PowerSync] prefix)
+  const consoleHandler = logger.createDefaultHandler({
+    formatter: (messages, context) => {
+      messages.unshift(`[PowerSync]${context.name ? ` [${context.name}]` : ''}`);
+    }
+  });
+
   logger.setLevel(LogLevel.DEBUG);
-
   logger.setHandler(async (messages, context) => {
-    const level = context.level.name;
-    const messageArray = Array.from(messages);
-    const mainMessage = String(messageArray[0] || 'Empty log message');
-    const extraData = messageArray
-      .slice(1)
-      .map((item) => item.toString())
-      .join(' ');
+    consoleHandler(messages, context);
 
-    consola[level.toLowerCase() as LogType](
-      `[PowerSync] ${context.name ? `[${context.name}]` : ''} ${mainMessage}`,
-      extraData,
-      context
-    );
-    // user defined callback
+    // Storage + emitter
+    const messageArray = Array.from(messages);
+    const mainMessage = String(messageArray[0] ?? 'Empty log message');
+    // Store extra args as-is so objects are shown as JSON in LogsTab
+    const extra =
+      messageArray.length > 1 ? (messageArray.length === 2 ? messageArray[1] : messageArray.slice(1)) : undefined;
+    const logObject = {
+      date: new Date(),
+      type: context.level.name.toLowerCase(),
+      args: [mainMessage, extra, context]
+    };
+    const key = `log:${logObject.date.toISOString()}`;
+    await logsStorage.set(key, logObject);
+    emitter.emit('log', { key, value: logObject });
+
+    // User callback
     await customHandler?.(messages, context);
   });
 

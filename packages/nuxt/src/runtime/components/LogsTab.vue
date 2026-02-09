@@ -20,6 +20,7 @@
           <option value="warn">Warning</option>
           <option value="info">Info</option>
           <option value="debug">Debug</option>
+          <option value="trace">Trace</option>
         </select>
       </div>
 
@@ -97,7 +98,7 @@
                   <div
                     class="bg-white dark:bg-neutral-800 p-3 rounded border border-gray-200 dark:border-neutral-700 overflow-x-auto"
                   >
-                    <div class="json-code-block text-xs" v-html="highlightedJson.get(log.key)" />
+                    <div class="json-code-block text-xs" v-html="highlightedJson.get(log.key) ?? ''" />
                   </div>
                 </div>
               </td>
@@ -113,12 +114,18 @@
 import { useDiagnosticsLogger } from '#imports';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Fuse from 'fuse.js';
-import type { LogObject } from 'consola';
 import { codeToHtml } from 'shiki';
+
+/** Stored log entry shape (from useDiagnosticsLogger): date, type, args: [message, extraData?, context] */
+interface StoredLogEntry {
+  date: Date | string;
+  type: string;
+  args: unknown[];
+}
 
 interface LogItem {
   key: string;
-  value: LogObject | null;
+  value: StoredLogEntry | null;
 }
 
 const { logsStorage, emitter } = useDiagnosticsLogger();
@@ -207,14 +214,14 @@ async function toggleExpand(key: string) {
       const log = logs.value.find((l) => l.key === key);
       if (log) {
         const jsonStr = formatExtraData(log);
-        const html = await codeToHtml(jsonStr, {
+        const html = await codeToHtml(jsonStr || '""', {
           lang: 'json',
           themes: {
             light: 'catppuccin-latte',
             dark: 'catppuccin-frappe'
           }
         });
-        highlightedJson.value.set(key, html);
+        highlightedJson.value.set(key, typeof html === 'string' ? html : '');
       }
     }
   }
@@ -227,7 +234,8 @@ function getLogMessage(log: LogItem): string {
 }
 
 function getLogSource(log: LogItem): string {
-  return log.value?.args[2]?.name || '';
+  const context = log.value?.args[2] as { name?: string } | undefined;
+  return context?.name ?? '';
 }
 
 function hasExtraData(log: LogItem): boolean {
@@ -245,7 +253,11 @@ function hasExtraData(log: LogItem): boolean {
 
 function formatExtraData(log: LogItem): string {
   if (!log.value?.args || log.value.args.length <= 1) return '';
-  return JSON.stringify(log.value.args[1], null, 2);
+  const data = log.value.args[1];
+  if (data === undefined || data === null) return '';
+  // Always return a string: JSON.stringify(undefined) returns the value undefined, not the string "undefined"
+  const str = JSON.stringify(data, null, 2);
+  return typeof str === 'string' ? str : '';
 }
 
 // Extract searchable text from extra data
@@ -289,7 +301,8 @@ function getLogDotClass(log: LogItem): string {
     error: 'bg-red-500',
     warn: 'bg-yellow-500',
     info: 'bg-blue-500',
-    debug: 'bg-gray-400'
+    debug: 'bg-gray-400',
+    trace: 'bg-gray-300 dark:bg-gray-500'
   };
   return classes[type as keyof typeof classes] || classes.info;
 }
@@ -300,7 +313,8 @@ function getLogBadgeColor(log: LogItem): string {
     error: 'red',
     warn: 'yellow',
     info: 'blue',
-    debug: 'gray'
+    debug: 'gray',
+    trace: 'slate'
   };
   return colors[type as keyof typeof colors] || colors.info;
 }
