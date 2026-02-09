@@ -4,8 +4,14 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # For dev publishing
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  id-token: write # Required for OIDC / trusted publishing
+  contents: write # Required for changesets pushing commits
+  pull-requests: write # Required for changesets creating PRs
 
 jobs:
   release:
@@ -21,11 +27,17 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
+      - name: Update npm
+        run: |
+          npm install -g npm@latest
+          npm --version
       - name: Install dependencies
         run: pnpm install
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
+        if: ${{ github.event_name == 'push' }}
         with:
           # Update the monorepo lockfile after versioning
           version: pnpm changeset:version
@@ -33,4 +45,12 @@ jobs:
           publish: pnpm release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Dev publish
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          pnpm build:packages:prod
+          pnpm changeset version --no-git-tag --snapshot dev
+          pnpm changeset publish --tag dev
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

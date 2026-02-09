@@ -1,12 +1,11 @@
 import { CameraCapturedPicture } from 'expo-camera';
 import React from 'react';
-import { ActivityIndicator, Alert, View, Modal, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, View, Modal, StyleSheet, Text } from 'react-native';
 import { ListItem, Button, Icon, Image } from '@rneui/themed';
 import { CameraWidget } from './CameraWidget';
 import { TodoRecord } from '../powersync/AppSchema';
-import { AttachmentRecord } from '@powersync/attachments';
+import { AttachmentRecord } from '@powersync/react-native';
 import { AppConfig } from '../supabase/AppConfig';
-import { useSystem } from '../powersync/system';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export interface TodoItemWidgetProps {
@@ -21,7 +20,6 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
   const { record, photoAttachment, onDelete, onToggleCompletion, onSavePhoto } = props;
   const [loading, setLoading] = React.useState(false);
   const [isCameraVisible, setCameraVisible] = React.useState(false);
-  const system = useSystem();
 
   const handleCancel = React.useCallback(() => {
     setCameraVisible(false);
@@ -72,7 +70,7 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             iconType="material-community"
             checkedIcon="checkbox-marked"
             uncheckedIcon="checkbox-blank-outline"
-            checked={record.completed}
+            checked={!!record.completed}
             onPress={async () => {
               setLoading(true);
               await onToggleCompletion(!record.completed);
@@ -97,9 +95,9 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
               }}>
               {/* <Icon name={'camera'} type="material" color={'black'} size={32} /> */}
             </Button>
-          ) : photoAttachment?.local_uri != null ? (
+          ) : photoAttachment?.localUri != null ? (
             <Image
-              source={{ uri: system.attachmentQueue?.getLocalUri(photoAttachment.local_uri) }}
+              source={{ uri: photoAttachment.localUri }}
               containerStyle={styles.item}
               PlaceholderContent={<ActivityIndicator />}
             />

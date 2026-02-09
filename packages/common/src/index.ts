@@ -1,3 +1,13 @@
+export * from './attachments/AttachmentContext.js';
+export * from './attachments/AttachmentErrorHandler.js';
+export * from './attachments/AttachmentQueue.js';
+export * from './attachments/AttachmentService.js';
+export * from './attachments/LocalStorageAdapter.js';
+export * from './attachments/RemoteStorageAdapter.js';
+export * from './attachments/Schema.js';
+export * from './attachments/SyncingService.js';
+export * from './attachments/WatchedAttachmentItem.js';
+
 export * from './client/AbstractPowerSyncDatabase.js';
 export * from './client/AbstractPowerSyncOpenFactory.js';
 export { compilableQueryWatch, CompilableQueryWatchHandler } from './client/compilableQueryWatch.js';
@@ -51,6 +61,7 @@ export * from './utils/BaseObserver.js';
 export * from './utils/ControlledExecutor.js';
 export * from './utils/DataStream.js';
 export * from './utils/Logger.js';
+export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';
 
 export * from './types/types.js';

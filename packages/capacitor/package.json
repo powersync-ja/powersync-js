@@ -63,7 +63,6 @@
     "build:prod": "pnpm build",
     "clean": "rimraf ./dist",
     "watch": "tsc --watch",
-    "prepublishOnly": "pnpm build",
     "test:exports": "attw --pack --profile=esm-only ."
   },
   "devDependencies": {
@@ -75,7 +74,6 @@
     "@ionic/eslint-config": "^0.4.0",
     "@ionic/prettier-config": "^4.0.0",
     "@ionic/swiftlint-config": "^2.0.0",
-    "@types/async-lock": "catalog:",
     "eslint": "^8.57.0",
     "prettier": "catalog:",
     "prettier-plugin-java": "^2.6.6",
@@ -100,6 +98,6 @@
     }
   },
   "dependencies": {
-    "async-lock": "catalog:"
+    "async-mutex": "catalog:"
   }
 }

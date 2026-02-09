@@ -6,7 +6,7 @@ import { Mutex } from 'async-mutex';
 export async function mutexRunExclusive<T>(
   mutex: Mutex,
   callback: () => Promise<T>,
-  options?: { timeoutMs: number }
+  options?: { timeoutMs?: number }
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = options?.timeoutMs;
