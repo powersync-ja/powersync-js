@@ -1,13 +1,12 @@
-import type { Nuxt } from 'nuxt/schema'
-import { createResolver } from '@nuxt/kit'
+import type { Nuxt } from 'nuxt/schema';
+import { createResolver } from '@nuxt/kit';
 
 export function setupDevToolsUI(nuxt: Nuxt) {
-  const port = nuxt.options.devServer?.port || 3000
-  const DEVTOOLS_UI_ROUTE = `http://localhost:${port}/__powersync-inspector`
-  
+  const port = nuxt.options.devServer?.port || 3000;
+  const DEVTOOLS_UI_ROUTE = `http://localhost:${port}/__powersync-inspector`;
 
   // Devtools requires a URL starting with http:// or https:// to recognize it as an image otherwise it will be inferred as an Iconify icon
-  const iconUrl = `http://localhost:${port}/assets/powersync-icon.svg`
+  const iconUrl = `http://localhost:${port}/assets/powersync-icon.svg`;
 
   nuxt.hook('devtools:customTabs', (tabs: any[]) => {
     tabs.push({
@@ -21,8 +20,8 @@ export function setupDevToolsUI(nuxt: Nuxt) {
       // iframe view
       view: {
         type: 'iframe',
-        src: DEVTOOLS_UI_ROUTE,
-      },
-    })
-  })
+        src: DEVTOOLS_UI_ROUTE
+      }
+    });
+  });
 }
