@@ -1,5 +1,3 @@
-import wasm from 'vite-plugin-wasm'
-
 export default defineNuxtConfig({
 
   modules: [
@@ -31,14 +29,12 @@ export default defineNuxtConfig({
     optimizeDeps: {
       exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
       include: [
-        '@powersync/web > js-logger',
         '@supabase/postgrest-js',
       ],
     },
 
     worker: {
       format: 'es',
-      plugins: () => [wasm()],
     },
   },
 
@@ -63,7 +59,6 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      // include: ['/protected'],
       exclude: ['/unprotected', '/public/*'],
     },
     clientOptions: {

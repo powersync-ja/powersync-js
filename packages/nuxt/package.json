@@ -86,8 +86,6 @@
     "@powersync/vue": "workspace:*",
     "@powersync/web": "workspace:*",
     "nuxt": "^4.1.2",
-    "vite-plugin-top-level-await": "^1.6.0",
-    "vite-plugin-wasm": "^3.5.0",
     "vitest": "^3.2.4",
     "vue": "^3.5.20",
     "vue-tsc": "^3.0.8"
