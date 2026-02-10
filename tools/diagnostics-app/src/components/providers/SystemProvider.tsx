@@ -8,23 +8,22 @@ import { localStateDb } from '@/library/powersync/LocalStateManager';
 import { queryClient } from '@/lib/queryClient';
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLocalDbInitialized, setIsLocalDbInitialized] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const initializeLocalStateDb = async () => {
+    const initialize = async () => {
       try {
         await localStateDb.init();
-        setIsLocalDbInitialized(true);
         await tryConnectIfCredentials();
       } catch (error) {
-        console.error('Failed to initialize local state database:', error);
-        setIsLocalDbInitialized(true);
+        console.error('Failed to initialize:', error);
       }
+      setIsReady(true);
     };
-    initializeLocalStateDb();
+    initialize();
   }, []);
 
-  if (!isLocalDbInitialized) {
+  if (!isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
