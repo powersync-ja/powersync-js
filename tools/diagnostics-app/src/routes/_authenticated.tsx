@@ -12,7 +12,8 @@ import {
   Database,
   Table2,
   Terminal,
-  SlidersHorizontal
+  SlidersHorizontal,
+  FileSearch
 } from 'lucide-react';
 import {
   Sidebar,
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
+import { InspectorProvider } from '@/library/inspector/InspectorContext';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async () => {
@@ -51,6 +53,7 @@ function AppSidebar() {
     { path: '/schema', title: 'Dynamic Schema', icon: Database },
     { path: '/sql-console', title: 'SQL Console', icon: Terminal },
     { path: '/client-parameters', title: 'Client Parameters', icon: SlidersHorizontal },
+    { path: '/file-inspector', title: 'File Inspector', icon: FileSearch },
     {
       path: '/login',
       title: 'Sign Out',
@@ -85,7 +88,8 @@ function AppSidebar() {
             <SidebarMenu>
               {NAVIGATION_ITEMS.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path;
+                const isActive =
+                  location.pathname === item.path || location.pathname.startsWith(item.path + '/');
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
@@ -118,10 +122,11 @@ function AuthenticatedLayout() {
   const { title } = useNavigationPanel();
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    <InspectorProvider>
+      <SidebarProvider>
+        <AppSidebar />
 
-      <SidebarInset>
+        <SidebarInset>
         {/* Top Bar */}
         <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
           <div className="flex-1 min-w-0">
@@ -160,6 +165,7 @@ function AuthenticatedLayout() {
           <Outlet />
         </main>
       </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
+    </InspectorProvider>
   );
 }
