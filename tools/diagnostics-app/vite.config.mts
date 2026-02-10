@@ -1,10 +1,8 @@
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath, URL } from 'url';
 
-import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
@@ -26,7 +24,7 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite'],
+    exclude: ['@journeyapps/wa-sqlite', '@powersync/web']
   },
   plugins: [
     tanstackRouter({
@@ -35,8 +33,6 @@ export default defineConfig({
       quoteStyle: 'single',
       autoCodeSplitting: true
     }),
-    wasm(),
-    topLevelAwait(),
     tailwindcss(),
     react(),
     VitePWA({
