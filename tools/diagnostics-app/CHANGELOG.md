@@ -1,5 +1,21 @@
 # diagnostics-app
 
+## 0.10.0
+
+### Minor Changes
+
+- 9a1970c: Migrate from Material UI to shadcn/ui with Tailwind CSS for consistency with PowerSync Dashboard
+
+### Patch Changes
+
+- Updated dependencies [25ece59]
+- Updated dependencies [8db47f3]
+- Updated dependencies [aaf6037]
+- Updated dependencies [acf6b70]
+- Updated dependencies [aaf6037]
+  - @powersync/web@1.32.0
+  - @powersync/react@1.8.2
+
 ## 0.9.21
 
 ### Patch Changes

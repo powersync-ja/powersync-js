@@ -26,8 +26,7 @@ export default defineConfig({
   optimizeDeps: {
     // Don't optimize these packages as they contain web workers and WASM files.
     // https://github.com/vitejs/vite/issues/11672#issuecomment-1415820673
-    exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: []
+    exclude: ['@powersync/web']
   },
   plugins: [
     tanstackRouter({
@@ -77,7 +76,6 @@ export default defineConfig({
     })
   ],
   worker: {
-    format: 'es',
-    plugins: () => [wasm(), topLevelAwait()]
+    format: 'es'
   }
 });
