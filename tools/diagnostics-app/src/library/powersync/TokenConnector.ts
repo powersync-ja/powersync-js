@@ -93,6 +93,16 @@ function checkJWT(token: string) {
   }
 }
 
+export function getTokenUserId(token: string): string | null {
+  try {
+    const [, body] = token.split('.');
+    const payload = JSON.parse(atob(body));
+    return payload.sub ?? payload.user_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function getTokenEndpoint(token: string): string | null {
   try {
     const [head, body, signature] = token.split('.');

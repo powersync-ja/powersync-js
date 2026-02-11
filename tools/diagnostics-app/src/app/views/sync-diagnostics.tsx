@@ -1,6 +1,7 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
-import { clearData, connect, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { clearData, connect, connector, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { getTokenUserId } from '@/library/powersync/TokenConnector';
 import { SyncStreamStatus } from '@powersync/web';
 import React, { useState } from 'react';
 import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
@@ -97,6 +98,20 @@ async function fetchSyncStats(): Promise<SyncStats> {
 
 export default function SyncDiagnosticsPage() {
   const queryClient = useQueryClient();
+
+  const { data: connectionInfo } = useTanstackQuery({
+    queryKey: ['connectionInfo'],
+    queryFn: async () => {
+      const credentials = await connector.fetchCredentials();
+      if (!credentials) return null;
+      return {
+        endpoint: credentials.endpoint,
+        userId: getTokenUserId(credentials.token)
+      };
+    },
+    staleTime: Infinity
+  });
+
   const { data: stats, isLoading } = useTanstackQuery({
     queryKey: syncDiagnosticsKeys.stats(),
     queryFn: fetchSyncStats,
@@ -286,6 +301,22 @@ export default function SyncDiagnosticsPage() {
   return (
     <NavigationPage title="Sync Diagnostics">
       <div className="min-w-0 max-w-full overflow-x-hidden p-5 space-y-8">
+        {connectionInfo && (
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
+            {connectionInfo.endpoint && (
+              <span>
+                <span className="font-medium text-foreground">Service URL:</span>{' '}
+                <span className="font-mono">{connectionInfo.endpoint}</span>
+              </span>
+            )}
+            {connectionInfo.userId && (
+              <span>
+                <span className="font-medium text-foreground">User ID:</span>{' '}
+                <span className="font-mono">{connectionInfo.userId}</span>
+              </span>
+            )}
+          </div>
+        )}
         <div>
           {bucketRowsLoading ? (
             <div className="flex justify-center items-center py-10">

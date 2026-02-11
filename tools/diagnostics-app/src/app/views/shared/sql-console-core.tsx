@@ -304,19 +304,27 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
     [runQuery, historySource]
   );
 
+  // Execute pending query once the database becomes ready
+  React.useEffect(() => {
+    if (ready && pendingQueryRef.current) {
+      const pending = pendingQueryRef.current;
+      pendingQueryRef.current = null;
+      runQuery(pending);
+    }
+  }, [ready, runQuery]);
+
   // Execute default query on mount if no history restores a query
   React.useEffect(() => {
-    if (defaultQuery && !hasExecutedRef.current) {
-      // Give history a moment to restore; if it doesn't, run the default
-      const timeout = setTimeout(() => {
-        if (!hasExecutedRef.current) {
-          hasExecutedRef.current = true;
-          runQuery(defaultQuery);
-        }
-      }, 300);
-      return () => clearTimeout(timeout);
-    }
-  }, [defaultQuery, runQuery]);
+    if (!ready || !defaultQuery || hasExecutedRef.current) return;
+    // Give history a moment to restore; if it doesn't, run the default
+    const timeout = setTimeout(() => {
+      if (!hasExecutedRef.current) {
+        hasExecutedRef.current = true;
+        runQuery(defaultQuery);
+      }
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [ready, defaultQuery, runQuery]);
 
   const columns = React.useMemo<DataTableColumn<any>[]>(() => {
     const firstItem = results?.[0];

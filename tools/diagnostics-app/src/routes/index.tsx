@@ -145,7 +145,7 @@ function LandingPage() {
                 <CardTitle className="text-lg">Inspect SQLite File</CardTitle>
               </div>
               <CardDescription>
-                Open a local .sqlite or .db file for offline inspection. View tables, indexes, run read-only queries.
+                Open a local SQLite database file for offline inspection. View tables, indexes, run read-only queries.
                 No authentication required.
               </CardDescription>
             </CardHeader>

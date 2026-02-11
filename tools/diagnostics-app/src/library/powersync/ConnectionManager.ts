@@ -98,6 +98,9 @@ const _schemaReadyPromise = new Promise<void>((resolve) => {
  */
 export async function tryConnectIfCredentials(): Promise<void> {
   await schemaManager.loadFromDb();
+  // Ensure db initialization (including its own updateSchema) completes first,
+  // so refreshSchemaNow doesn't race with the initial schema application.
+  await db.waitForReady();
   await schemaManager.refreshSchemaNow(db);
   _schemaReadyResolve();
   if (await connector.hasCredentials()) {
