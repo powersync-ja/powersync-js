@@ -35,8 +35,6 @@ interface QueryHistoryDropdownProps {
 
 /**
  * History dropdown content - uses useQuery inside the local provider context.
- * Renders the dropdown panel via a portal to document.body with position:fixed
- * so it floats over all content regardless of parent overflow settings.
  */
 function QueryHistoryContent({
   source,
