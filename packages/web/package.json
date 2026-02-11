@@ -66,8 +66,7 @@
   "author": "JOURNEYAPPS",
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@journeyapps/wa-sqlite": "catalog:",
-    "@powersync/common": "workspace:^1.46.0"
+    "@journeyapps/wa-sqlite": "catalog:"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",

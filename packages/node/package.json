@@ -57,7 +57,6 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.46.0",
     "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {
