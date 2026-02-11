@@ -13,6 +13,7 @@
     "@journeyapps/wa-sqlite": "^1.4.1",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",

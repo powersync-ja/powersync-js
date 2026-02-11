@@ -1,7 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { connector } from '@/library/powersync/ConnectionManager';
 import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
-import { SyncClientImplementation } from '@powersync/web';
 import { z } from 'zod';
 import { Formik, FormikErrors } from 'formik';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,11 +29,7 @@ export const Route = createFileRoute('/')({
         throw new Error('endpoint is required');
       }
 
-      await connector.signIn({
-        token: search.token,
-        endpoint,
-        clientImplementation: SyncClientImplementation.RUST
-      });
+      await connector.signIn({ token: search.token, endpoint });
 
       throw redirect({ to: '/sync-diagnostics' });
     }
@@ -91,11 +86,7 @@ function LandingPage() {
                     if (endpoint == null) {
                       throw new Error('endpoint is required');
                     }
-                    await connector.signIn({
-                      token: values.token,
-                      endpoint,
-                      clientImplementation: SyncClientImplementation.RUST
-                    });
+                    await connector.signIn({ token: values.token, endpoint });
                     navigate({ to: '/sync-diagnostics' });
                   } catch (ex: any) {
                     console.error(ex);
@@ -154,8 +145,8 @@ function LandingPage() {
                 <CardTitle className="text-lg">Inspect SQLite File</CardTitle>
               </div>
               <CardDescription>
-                Open a local .sqlite or .db file for offline inspection. View tables, indexes, run read-only queries —
-                no authentication required.
+                Open a local .sqlite or .db file for offline inspection. View tables, indexes, run read-only queries.
+                No authentication required.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-end">

@@ -1,6 +1,5 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
-import { LoginDetailsFormValues } from '@/components/widgets/LoginDetailsWidget';
 import { localStateDb } from './LocalStateManager';
 
 const APP_SETTINGS_KEY_CREDENTIALS = 'powersync_credential';
@@ -27,7 +26,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
     await tx?.complete();
   }
 
-  async signIn(credentials: LoginDetailsFormValues) {
+  async signIn(credentials: Credentials) {
     validateSecureContext(credentials.endpoint);
     checkJWT(credentials.token);
     try {
@@ -47,7 +46,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
     return rows.length > 0;
   }
 
-  async saveCredentials(credentials: LoginDetailsFormValues): Promise<void> {
+  async saveCredentials(credentials: Credentials): Promise<void> {
     const value = JSON.stringify({ token: credentials.token, endpoint: credentials.endpoint });
     await localStateDb.execute(
       'INSERT OR REPLACE INTO app_settings (id, key, value) VALUES (?, ?, ?)',

@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as InspectorRouteImport } from './routes/inspector'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,11 +24,6 @@ import { Route as AuthenticatedFileInspectorIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedFileInspectorSqlConsoleRouteImport } from './routes/_authenticated/file-inspector/sql-console'
 import { Route as AuthenticatedFileInspectorOverviewRouteImport } from './routes/_authenticated/file-inspector/overview'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InspectorRoute = InspectorRouteImport.update({
   id: '/inspector',
   path: '/inspector',
@@ -109,7 +103,6 @@ const AuthenticatedFileInspectorOverviewRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/inspector': typeof InspectorRouteWithChildren
-  '/login': typeof LoginRoute
   '/client-parameters': typeof AuthenticatedClientParametersRoute
   '/file-inspector': typeof AuthenticatedFileInspectorRouteWithChildren
   '/schema': typeof AuthenticatedSchemaRoute
@@ -124,7 +117,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/client-parameters': typeof AuthenticatedClientParametersRoute
   '/schema': typeof AuthenticatedSchemaRoute
   '/sql-console': typeof AuthenticatedSqlConsoleRoute
@@ -141,7 +133,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/inspector': typeof InspectorRouteWithChildren
-  '/login': typeof LoginRoute
   '/_authenticated/client-parameters': typeof AuthenticatedClientParametersRoute
   '/_authenticated/file-inspector': typeof AuthenticatedFileInspectorRouteWithChildren
   '/_authenticated/schema': typeof AuthenticatedSchemaRoute
@@ -159,7 +150,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/inspector'
-    | '/login'
     | '/client-parameters'
     | '/file-inspector'
     | '/schema'
@@ -174,7 +164,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
     | '/client-parameters'
     | '/schema'
     | '/sql-console'
@@ -190,7 +179,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/inspector'
-    | '/login'
     | '/_authenticated/client-parameters'
     | '/_authenticated/file-inspector'
     | '/_authenticated/schema'
@@ -208,18 +196,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   InspectorRoute: typeof InspectorRouteWithChildren
-  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/inspector': {
       id: '/inspector'
       path: '/inspector'
@@ -381,7 +361,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   InspectorRoute: InspectorRouteWithChildren,
-  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
