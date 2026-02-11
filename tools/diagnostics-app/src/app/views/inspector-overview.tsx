@@ -1,20 +1,15 @@
 import React from 'react';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { useInspector } from '@/library/inspector/InspectorContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery as useTanstackQuery } from '@tanstack/react-query';
-
-function formatBytes(bytes: number, decimals = 2) {
-  if (!+bytes) return '0 Bytes';
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-}
+import { AlertTriangle, Info } from 'lucide-react';
+import { formatBytes } from '@/lib/utils';
+import { fetchPowerSyncStats, type PowerSyncStats } from '@/library/powersync/PowerSyncStats';
 
 interface SchemaObject {
   type: string;
@@ -28,14 +23,17 @@ interface TableWithCount extends SchemaObject {
   isPowerSync: boolean;
 }
 
-async function fetchDatabaseStructure(
-  getAll: (sql: string, params?: any[]) => Promise<Record<string, any>[]>
-): Promise<{
+interface DatabaseStructure {
   tables: TableWithCount[];
   views: SchemaObject[];
   indexes: SchemaObject[];
   triggers: SchemaObject[];
-}> {
+  powerSyncStats: PowerSyncStats | null;
+}
+
+async function fetchDatabaseStructure(
+  getAll: (sql: string, params?: any[]) => Promise<Record<string, any>[]>
+): Promise<DatabaseStructure> {
   const objects = (await getAll(
     `SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY type, name`
   )) as SchemaObject[];
@@ -62,7 +60,6 @@ async function fetchDatabaseStructure(
     }
   }
 
-  // Get row counts for each table
   const tablesWithCounts: TableWithCount[] = [];
   for (const table of tables) {
     let rowCount = 0;
@@ -70,7 +67,7 @@ async function fetchDatabaseStructure(
       const result = await getAll(`SELECT count(*) as count FROM "${table.name}"`);
       rowCount = (result[0]?.count as number) ?? 0;
     } catch {
-      // Table might be inaccessible (e.g., virtual tables)
+      // Table might be inaccessible (e.g. virtual tables)
     }
     tablesWithCounts.push({
       ...table,
@@ -79,7 +76,11 @@ async function fetchDatabaseStructure(
     });
   }
 
-  return { tables: tablesWithCounts, views, indexes, triggers };
+  // Include both tables and views since some PowerSync objects (e.g. local_bucket_data) may be views
+  const allObjectNames = new Set([...tablesWithCounts.map((t) => t.name), ...views.map((v) => v.name)]);
+  const powerSyncStats = await fetchPowerSyncStats(getAll, allObjectNames);
+
+  return { tables: tablesWithCounts, views, indexes, triggers, powerSyncStats };
 }
 
 export default function InspectorOverviewPage() {
@@ -89,7 +90,7 @@ export default function InspectorOverviewPage() {
     queryKey: ['inspector-structure', fileInfo?.name],
     queryFn: () => fetchDatabaseStructure(database!.getAll),
     enabled: !!database,
-    staleTime: Infinity // Data doesn't change for a static file
+    staleTime: Infinity
   });
 
   if (isLoading || !data) {
@@ -102,9 +103,11 @@ export default function InspectorOverviewPage() {
     );
   }
 
-  const { tables, views, indexes, triggers } = data;
-  const totalRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
+  const { tables, views, indexes, triggers, powerSyncStats } = data;
+  const totalTableRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
   const hasPowerSyncTables = tables.some((t) => t.isPowerSync);
+  const hasSyncEngineStats =
+    powerSyncStats != null && (powerSyncStats.totalOps > 0 || powerSyncStats.downloadedOps > 0);
 
   return (
     <NavigationPage title="Database Overview">
@@ -135,7 +138,7 @@ export default function InspectorOverviewPage() {
                     <TableCell className="text-right">{tables.length}</TableCell>
                     <TableCell className="text-right">{views.length}</TableCell>
                     <TableCell className="text-right">{indexes.length}</TableCell>
-                    <TableCell className="text-right">{totalRows.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{totalTableRows.toLocaleString()}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -160,7 +163,7 @@ export default function InspectorOverviewPage() {
               </div>
               <div>
                 <div className="text-muted-foreground">Total Rows</div>
-                <div className="font-medium">{totalRows.toLocaleString()}</div>
+                <div className="font-medium">{totalTableRows.toLocaleString()}</div>
               </div>
             </div>
           </CardContent>
@@ -168,7 +171,61 @@ export default function InspectorOverviewPage() {
 
         {hasPowerSyncTables && (
           <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-            This appears to be a PowerSync database. Tables prefixed with <code className="text-xs bg-muted px-1 py-0.5 rounded">ps_</code> are PowerSync internal tables.
+            This appears to be a PowerSync database. Tables prefixed with{' '}
+            <code className="text-xs bg-muted px-1 py-0.5 rounded">ps_</code> are PowerSync internal tables.
+          </div>
+        )}
+
+        {powerSyncStats && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">PowerSync Stats</h2>
+            <div
+              className={`grid grid-cols-2 gap-4 ${hasSyncEngineStats ? 'md:grid-cols-4' : 'md:grid-cols-5'}`}>
+              <StatCard label="Total Rows" value={powerSyncStats.totalRows.toLocaleString()} />
+              <StatCard label="Data Size" value={formatBytes(powerSyncStats.dataSize)} />
+              <StatCard label="Metadata Size" value={formatBytes(powerSyncStats.metadataSize)} />
+              <StatCard
+                label="CRUD Queue"
+                value={powerSyncStats.crudCount.toLocaleString()}
+                warning={powerSyncStats.crudCount > 0}
+              />
+              <StatCard label="Buckets" value={powerSyncStats.bucketCount.toLocaleString()} />
+              {hasSyncEngineStats && (
+                <>
+                  <StatCard label="Downloaded Ops" value={powerSyncStats.downloadedOps.toLocaleString()} />
+                  <StatCard label="Total Ops" value={powerSyncStats.totalOps.toLocaleString()} />
+                  <StatCard label="Download Size" value={formatBytes(powerSyncStats.downloadSize)} />
+                </>
+              )}
+            </div>
+            {powerSyncStats.crudCount > 0 && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  The CRUD queue contains {powerSyncStats.crudCount.toLocaleString()} pending{' '}
+                  {powerSyncStats.crudCount === 1 ? 'operation' : 'operations'} that likely failed to upload to the
+                  backend. This may indicate an issue with the upload implementation or backend connectivity at the time
+                  the database was captured.
+                </AlertDescription>
+              </Alert>
+            )}
+            {powerSyncStats.totalOps > powerSyncStats.totalRows * 3 && powerSyncStats.totalRows > 0 && (
+              <Alert className="mt-4">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Total operations ({powerSyncStats.totalOps.toLocaleString()}) significantly exceeds total rows (
+                  {powerSyncStats.totalRows.toLocaleString()}). This indicates bucket history has accumulated and
+                  compacting or defragmentation could reduce sync times for new clients.{' '}
+                  <a
+                    href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground">
+                    Learn about compacting
+                  </a>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
@@ -248,6 +305,26 @@ export default function InspectorOverviewPage() {
   );
 }
 
+function StatCard({ label, value, warning }: { label: string; value: string; warning?: boolean }) {
+  return (
+    <Card className={warning ? 'border-amber-500/50' : undefined}>
+      <CardContent className="p-4">
+        <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+          {label}
+          {warning && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+        </div>
+        <div className="text-2xl font-semibold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const sqlCellRenderer = ({ value }: { value: string }) => (
+  <span className="font-mono text-xs truncate block max-w-[500px]" title={value}>
+    {value}
+  </span>
+);
+
 const tablesColumns: DataTableColumn<any>[] = [
   {
     field: 'name',
@@ -263,62 +340,22 @@ const tablesColumns: DataTableColumn<any>[] = [
     )
   },
   { field: 'rowCount', headerName: 'Row Count', flex: 1, type: 'number' },
-  {
-    field: 'sql',
-    headerName: 'SQL Definition',
-    flex: 3,
-    hideOnMobile: true,
-    renderCell: ({ value }) => (
-      <span className="font-mono text-xs truncate block max-w-[500px]" title={value}>
-        {value}
-      </span>
-    )
-  }
+  { field: 'sql', headerName: 'SQL Definition', flex: 3, hideOnMobile: true, renderCell: sqlCellRenderer }
 ];
 
 const viewsColumns: DataTableColumn<any>[] = [
   { field: 'name', headerName: 'Name', flex: 1 },
-  {
-    field: 'sql',
-    headerName: 'SQL Definition',
-    flex: 3,
-    hideOnMobile: true,
-    renderCell: ({ value }) => (
-      <span className="font-mono text-xs truncate block max-w-[500px]" title={value}>
-        {value}
-      </span>
-    )
-  }
+  { field: 'sql', headerName: 'SQL Definition', flex: 3, hideOnMobile: true, renderCell: sqlCellRenderer }
 ];
 
 const indexesColumns: DataTableColumn<any>[] = [
   { field: 'name', headerName: 'Name', flex: 2 },
   { field: 'table', headerName: 'Table', flex: 1 },
-  {
-    field: 'sql',
-    headerName: 'SQL Definition',
-    flex: 3,
-    hideOnMobile: true,
-    renderCell: ({ value }) => (
-      <span className="font-mono text-xs truncate block max-w-[500px]" title={value}>
-        {value}
-      </span>
-    )
-  }
+  { field: 'sql', headerName: 'SQL Definition', flex: 3, hideOnMobile: true, renderCell: sqlCellRenderer }
 ];
 
 const triggersColumns: DataTableColumn<any>[] = [
   { field: 'name', headerName: 'Name', flex: 2 },
   { field: 'table', headerName: 'Table', flex: 1 },
-  {
-    field: 'sql',
-    headerName: 'SQL Definition',
-    flex: 3,
-    hideOnMobile: true,
-    renderCell: ({ value }) => (
-      <span className="font-mono text-xs truncate block max-w-[500px]" title={value}>
-        {value}
-      </span>
-    )
-  }
+  { field: 'sql', headerName: 'SQL Definition', flex: 3, hideOnMobile: true, renderCell: sqlCellRenderer }
 ];
