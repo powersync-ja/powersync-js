@@ -65,7 +65,7 @@
     }
   },
   "dependencies": {
-    "@powersync/common": "workspace:*",
+    "@powersync/common": "workspace:^",
     "async-mutex": "catalog:",
     "bson": "catalog:",
     "comlink": "catalog:",

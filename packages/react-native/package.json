@@ -42,7 +42,7 @@
     }
   },
   "dependencies": {
-    "@powersync/common": "workspace:*",
+    "@powersync/common": "workspace:^",
     "@powersync/react": "workspace:*",
     "async-mutex": "catalog:"
   },
