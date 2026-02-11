@@ -214,6 +214,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   const [totalRowCount, setTotalRowCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [autoLimited, setAutoLimited] = React.useState(false);
   const [showHistory, setShowHistory] = React.useState(false);
   const hasExecutedRef = React.useRef(false);
 
@@ -240,19 +241,27 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
     async (sql: string) => {
       setIsLoading(true);
       setError(null);
+      // Yield to allow React to render the loading spinner before the query blocks the main thread
+      await new Promise((resolve) => setTimeout(resolve, 0));
       try {
-        const data = await executeQuery(sql);
+        // Auto-limit queries without an explicit LIMIT to avoid fetching hundreds of thousands of rows
+        const hasLimit = /\bLIMIT\s+\d+/i.test(sql);
+        const effectiveSql = hasLimit ? sql : `${sql.replace(/;\s*$/, '')} LIMIT ${MAX_RESULT_ROWS + 1}`;
+        const data = await executeQuery(effectiveSql);
+        const wasAutoLimited = !hasLimit && data.length > MAX_RESULT_ROWS;
         setTotalRowCount(data.length);
         if (data.length > MAX_RESULT_ROWS) {
           setResults(data.slice(0, MAX_RESULT_ROWS));
         } else {
           setResults(data);
         }
+        setAutoLimited(wasAutoLimited);
       } catch (err: any) {
         const message = (err?.cause as any)?.message ?? err?.message ?? 'Query failed';
         setError(message);
         setResults(null);
         setTotalRowCount(0);
+        setAutoLimited(false);
       } finally {
         setIsLoading(false);
       }
@@ -324,7 +333,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
     }));
   }, [results]);
 
-  const isTruncated = totalRowCount > MAX_RESULT_ROWS;
+  const isTruncated = totalRowCount > MAX_RESULT_ROWS || autoLimited;
 
   return (
     <div className="min-w-0 max-w-full p-5">
@@ -372,8 +381,9 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
         <div className="mt-6 min-w-0">
           {isTruncated && (
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-3">
-              Showing first {MAX_RESULT_ROWS.toLocaleString()} of {totalRowCount.toLocaleString()} rows. Add a LIMIT
-              clause to your query for better performance.
+              {autoLimited
+                ? `Results limited to ${MAX_RESULT_ROWS.toLocaleString()} rows. Add a LIMIT clause to your query to control the result size.`
+                : `Showing first ${MAX_RESULT_ROWS.toLocaleString()} of ${totalRowCount.toLocaleString()} rows.`}
             </p>
           )}
           {columns.length > 0 ? (

@@ -1,8 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
-import { Upload, FileSearch, ExternalLink } from 'lucide-react';
+import { Upload, FileSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isValidSQLiteFile } from '@/library/inspector/InspectorDatabaseManager';
 
@@ -85,13 +84,13 @@ export function FileDropZone({ onFileSelected, isLoading, error }: FileDropZoneP
   const displayError = validationError || error;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] p-6">
-      <div className="w-full max-w-2xl space-y-6">
+    <div className="fixed inset-0 flex flex-col items-center justify-center p-6 overflow-hidden">
+      <div className="w-full max-w-2xl space-y-5">
         {/* Logo & title */}
-        <div className="flex flex-col items-center gap-3 mb-2">
-          <FileSearch className="h-12 w-12 text-muted-foreground" />
+        <div className="flex flex-col items-center gap-2">
+          <FileSearch className="h-10 w-10 text-muted-foreground" />
           <h1 className="text-2xl font-semibold">SQLite File Inspector</h1>
-          <p className="text-muted-foreground text-center max-w-md">
+          <p className="text-muted-foreground text-center max-w-md text-sm">
             Drag and drop a SQLite database file to inspect its tables, views, indexes, and run read-only queries.
           </p>
         </div>
@@ -103,7 +102,7 @@ export function FileDropZone({ onFileSelected, isLoading, error }: FileDropZoneP
           onDragLeave={handleDragLeave}
           onClick={() => fileInputRef.current?.click()}
           className={cn(
-            'flex flex-col items-center justify-center gap-4 p-12 rounded-lg border-2 border-dashed cursor-pointer transition-colors',
+            'flex flex-col items-center justify-center gap-4 p-10 rounded-lg border-2 border-dashed cursor-pointer transition-colors',
             isDragOver
               ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50'
@@ -140,32 +139,13 @@ export function FileDropZone({ onFileSelected, isLoading, error }: FileDropZoneP
           </Alert>
         )}
 
-        {/* Documentation links */}
-        <div className="rounded-lg border bg-card p-5 space-y-3">
-          <h3 className="text-sm font-medium">How to extract SQLite files from your app</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium text-foreground">Android:</span>{' '}
-              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">adb pull</code> from device storage
-            </div>
-            <div>
-              <span className="font-medium text-foreground">iOS:</span> Xcode Devices &amp; Simulators → Download
-              Container
-            </div>
-            <div>
-              <span className="font-medium text-foreground">Web (OPFS):</span> OPFS Explorer browser extension
-            </div>
-            <div>
-              <span className="font-medium text-foreground">React Native:</span> Device file browser or expo-file-system
-            </div>
-          </div>
-          <Button variant="link" className="p-0 h-auto text-sm" asChild>
-            <a href={DOCS_URL} target="_blank" rel="noopener noreferrer">
-              View full documentation
-              <ExternalLink className="h-3.5 w-3.5 ml-1" />
-            </a>
-          </Button>
-        </div>
+        {/* Documentation link */}
+        <p className="text-center text-sm text-muted-foreground">
+          Need help extracting a SQLite file?{' '}
+          <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+            View documentation
+          </a>
+        </p>
       </div>
     </div>
   );

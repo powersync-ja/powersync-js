@@ -1,6 +1,6 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
-import { clearData, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { clearData, connect, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
 import { SyncStreamStatus } from '@powersync/web';
 import React, { useState } from 'react';
 import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
@@ -9,7 +9,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatBytes } from '@/lib/utils';
+import { ChevronDown, ChevronUp, Trash2, Info } from 'lucide-react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -292,7 +294,7 @@ export default function SyncDiagnosticsPage() {
           ) : (
             totalsTable
           )}
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <Button
               variant="outline"
               onClick={() => {
@@ -300,7 +302,27 @@ export default function SyncDiagnosticsPage() {
               }}>
               Clear & Redownload
             </Button>
+            <span className="text-sm text-muted-foreground">
+              Clears all local data and re-syncs. This will also remove any manually added stream subscriptions.
+            </span>
           </div>
+          {totals.total_operations > totals.row_count * 3 && totals.row_count > 0 && (
+            <Alert className="mt-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Total operations ({totals.total_operations.toLocaleString()}) significantly exceeds total rows (
+                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated and compacting or
+                defragmentation could reduce sync times for new clients.{' '}
+                <a
+                  href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground">
+                  Learn about compacting
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -362,6 +384,24 @@ function StreamsState() {
 }
 
 function StreamsTable(props: { streams: SyncStreamStatus[] }) {
+  const [unsubscribing, setUnsubscribing] = useState<string | null>(null);
+
+  const handleUnsubscribe = async (name: string, parameters: string) => {
+    const id = `${name}-${parameters}`;
+    setUnsubscribing(id);
+    try {
+      const params = parameters === 'null' ? null : JSON.parse(parameters);
+      await db.syncStream(name, params).unsubscribeAll();
+      try {
+        await connect();
+      } catch {
+        // Reconnection may fail if credentials have expired
+      }
+    } finally {
+      setUnsubscribing(null);
+    }
+  };
+
   const columns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Stream Name', flex: 2 },
     { field: 'parameters', headerName: 'Parameters', flex: 3, hideOnMobile: true },
@@ -370,7 +410,24 @@ function StreamsTable(props: { streams: SyncStreamStatus[] }) {
     { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean', hideOnMobile: true },
     { field: 'priority', headerName: 'Priority', flex: 1, type: 'number', hideOnMobile: true },
     { field: 'last_synced_at', headerName: 'Last Synced', flex: 2, type: 'dateTime', hideOnMobile: true },
-    { field: 'expires', headerName: 'Eviction Time', flex: 2, type: 'dateTime', hideOnMobile: true }
+    { field: 'expires', headerName: 'Eviction Time', flex: 2, type: 'dateTime', hideOnMobile: true },
+    {
+      field: 'actions',
+      headerName: '',
+      flex: 0.5,
+      renderCell: ({ row }) =>
+        row.has_explicit_subscription ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            disabled={unsubscribing === row.id}
+            onClick={() => handleUnsubscribe(row.name, row.parameters)}
+            title="Unsubscribe">
+            {unsubscribing === row.id ? <Spinner size="sm" /> : <Trash2 className="h-4 w-4" />}
+          </Button>
+        ) : null
+    }
   ];
 
   const rows = props.streams.map((stream) => {
@@ -433,17 +490,4 @@ function TruncatedTablesList({ tables }: { tables: string }) {
       </button>
     </div>
   );
-}
-
-// Source: https://stackoverflow.com/a/18650828/214837
-function formatBytes(bytes: number, decimals = 2) {
-  if (!+bytes) return '0 Bytes';
-
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }

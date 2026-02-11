@@ -1,4 +1,4 @@
-import { activeSubscriptions, db } from '@/library/powersync/ConnectionManager';
+import { connect, db } from '@/library/powersync/ConnectionManager';
 import { Formik, FormikErrors } from 'formik';
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface NewStreamSubscriptionValues {
   stream: string;
@@ -31,7 +32,7 @@ export function NewStreamSubscription(props: { open: boolean; close: () => void 
   const validate = (values: NewStreamSubscriptionValues) => {
     const errors: FormikErrors<NewStreamSubscriptionValues> = {};
 
-    if (values.stream.length == 0) {
+    if (values.stream.length === 0) {
       errors.stream = 'Stream is required';
     }
 
@@ -47,92 +48,101 @@ export function NewStreamSubscription(props: { open: boolean; close: () => void 
   };
 
   const addSubscription = async (values: NewStreamSubscriptionValues) => {
-    const parameters = values.parameters == '' ? null : JSON.parse(values.parameters);
+    const parameters = values.parameters === '' ? null : JSON.parse(values.parameters);
 
-    const subscription = await db
+    await db
       .syncStream(values.stream, parameters)
       .subscribe({ priority: values.override_priority ?? undefined });
 
-    // We need to store subscriptions globally, because they have a finalizer set on them that would eventually clear
-    // them otherwise.
-    activeSubscriptions.push(subscription);
     close();
+
+    // Reconnect so the sync engine picks up the new subscription.
+    // The Rust client persists subscription state across reconnects.
+    try {
+      await connect();
+    } catch {
+      // Reconnection may fail if credentials have expired
+    }
   };
 
   return (
-    <Formik<NewStreamSubscriptionValues>
-      initialValues={{ stream: '', parameters: '', override_priority: null }}
-      validateOnChange={true}
-      onSubmit={addSubscription}
-      validate={validate}>
-      {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
-        <Dialog open={open} onOpenChange={(open) => !open && close()}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Subscribe to sync stream</DialogTitle>
-              <DialogDescription>
-                Enter stream name and parameters (as a JSON object or an empty string for null) to subscribe to a
-                stream.
-              </DialogDescription>
-            </DialogHeader>
-            <form id="subscription-form" onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex flex-wrap gap-2.5">
-                <div className="flex-[2] min-w-[120px] space-y-1.5">
-                  <Label htmlFor="stream-name">Stream name</Label>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && close()}>
+      <DialogContent className="sm:max-w-md">
+        <Formik<NewStreamSubscriptionValues>
+          initialValues={{ stream: '', parameters: '', override_priority: null }}
+          validateOnChange={true}
+          onSubmit={addSubscription}
+          validate={validate}>
+          {({ values, errors, handleChange, handleBlur, isSubmitting, handleSubmit, setFieldValue }) => (
+            <form onSubmit={handleSubmit}>
+              <DialogHeader>
+                <DialogTitle>Subscribe to sync stream</DialogTitle>
+                <DialogDescription>
+                  Add a stream subscription with optional parameters and priority override.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <Label htmlFor="stream-name">Stream name</Label>
+                    <Input
+                      id="stream-name"
+                      autoFocus
+                      placeholder="e.g. my-stream"
+                      name="stream"
+                      value={values.stream}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={cn('mt-1.5', errors.stream && 'border-destructive')}
+                    />
+                    {errors.stream && <p className="text-xs text-destructive mt-1">{errors.stream}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="new-stream-priority">Priority</Label>
+                    <Select
+                      value={values.override_priority === null ? 'null' : `${values.override_priority}`}
+                      onValueChange={(value) =>
+                        setFieldValue('override_priority', value === 'null' ? null : Number(value))
+                      }>
+                      <SelectTrigger id="new-stream-priority" className="mt-1.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="null">Default</SelectItem>
+                        <SelectItem value="0">0</SelectItem>
+                        <SelectItem value="1">1</SelectItem>
+                        <SelectItem value="2">2</SelectItem>
+                        <SelectItem value="3">3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="parameters">Parameters (JSON)</Label>
                   <Input
-                    id="stream-name"
-                    autoFocus
-                    required
-                    name="stream"
-                    value={values.stream}
+                    id="parameters"
+                    name="parameters"
+                    placeholder='e.g. {"key": "value"}'
+                    value={values.parameters}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    className={errors.stream ? 'border-destructive' : ''}
+                    className={cn('mt-1.5 font-mono text-sm', errors.parameters && 'border-destructive')}
                   />
-                  {errors.stream && <p className="text-sm text-destructive">{errors.stream}</p>}
-                </div>
-                <div className="flex-1 min-w-[120px] space-y-1.5">
-                  <Label htmlFor="new-stream-priority">Override priority</Label>
-                  <Select
-                    value={values.override_priority === null ? 'null' : `${values.override_priority}`}
-                    onValueChange={(value) => setFieldValue('override_priority', value === 'null' ? null : Number(value))}>
-                    <SelectTrigger id="new-stream-priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="null">Use default</SelectItem>
-                      <SelectItem value="0">0</SelectItem>
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {errors.parameters && <p className="text-xs text-destructive mt-1">{errors.parameters}</p>}
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="parameters">Parameters</Label>
-                <Input
-                  id="parameters"
-                  name="parameters"
-                  value={values.parameters}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={errors.parameters ? 'border-destructive' : ''}
-                />
-                {errors.parameters && <p className="text-sm text-destructive">{errors.parameters}</p>}
-              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={close}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  Subscribe
+                </Button>
+              </DialogFooter>
             </form>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={close}>
-                Cancel
-              </Button>
-              <Button type="submit" form="subscription-form" disabled={isSubmitting}>
-                Subscribe
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </Formik>
+          )}
+        </Formik>
+      </DialogContent>
+    </Dialog>
   );
 }
