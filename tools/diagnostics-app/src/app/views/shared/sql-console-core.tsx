@@ -203,9 +203,11 @@ export interface SQLConsoleCoreProps {
   defaultQuery?: string;
   /** History source identifier (e.g. 'powersync' or 'inspector') */
   historySource?: string;
+  /** Whether the target database is ready for queries. Auto-execution is deferred until true. Defaults to true. */
+  ready?: boolean;
 }
 
-export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync' }: SQLConsoleCoreProps) {
+export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true }: SQLConsoleCoreProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const inputWrapperRef = React.useRef<HTMLDivElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -217,6 +219,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   const [autoLimited, setAutoLimited] = React.useState(false);
   const [showHistory, setShowHistory] = React.useState(false);
   const hasExecutedRef = React.useRef(false);
+  const pendingQueryRef = React.useRef<string | null>(null);
 
   // Close dropdown when clicking outside (check both inline ref and portalled dropdown)
   React.useEffect(() => {
@@ -283,13 +286,14 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
       if (inputRef.current) {
         inputRef.current.value = lastQuery;
       }
-      // Execute the restored query on first load
-      if (!hasExecutedRef.current) {
-        hasExecutedRef.current = true;
+      hasExecutedRef.current = true;
+      if (ready) {
         runQuery(lastQuery);
+      } else {
+        pendingQueryRef.current = lastQuery;
       }
     },
-    [runQuery]
+    [ready, runQuery]
   );
 
   const handleSelectQuery = React.useCallback(
