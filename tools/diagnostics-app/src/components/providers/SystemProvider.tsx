@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import React, { Suspense, useEffect, useState } from 'react';
 import { localStateDb } from '@/library/powersync/LocalStateManager';
 import { queryClient } from '@/lib/queryClient';
+import { MonacoThemeProvider } from '@/components/providers/MonacoThemeProvider';
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLocalDbInitialized, setIsLocalDbInitialized] = useState(false);
@@ -56,6 +57,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
           </div>
         }>
         <PowerSyncContext.Provider value={db}>
+          <MonacoThemeProvider />
           <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
         </PowerSyncContext.Provider>
       </Suspense>

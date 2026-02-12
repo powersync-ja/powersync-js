@@ -1,5 +1,6 @@
 import { connect, db } from '@/library/powersync/ConnectionManager';
 import { Formik, FormikErrors } from 'formik';
+import Editor from '@monaco-editor/react';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { POWERSYNC_MONACO_THEME } from '@/components/providers/MonacoThemeProvider';
 
 interface NewStreamSubscriptionValues {
   stream: string;
@@ -28,7 +30,6 @@ interface NewStreamSubscriptionValues {
 
 export function NewStreamSubscription(props: { open: boolean; close: () => void }) {
   const { open, close } = props;
-
   const validate = (values: NewStreamSubscriptionValues) => {
     const errors: FormikErrors<NewStreamSubscriptionValues> = {};
 
@@ -118,16 +119,41 @@ export function NewStreamSubscription(props: { open: boolean; close: () => void 
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="parameters">Parameters (JSON)</Label>
-                  <Input
-                    id="parameters"
-                    name="parameters"
-                    placeholder='e.g. {"key": "value"}'
-                    value={values.parameters}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={cn('mt-1.5 font-mono text-sm', errors.parameters && 'border-destructive')}
-                  />
+                  <Label>Parameters (JSON)</Label>
+                  <div
+                    className={cn(
+                      'mt-1.5 rounded-md border overflow-hidden relative',
+                      errors.parameters && 'border-destructive'
+                    )}>
+                    {!values.parameters && (
+                      <div className="absolute top-2 left-2 text-muted-foreground/50 text-[13px] pointer-events-none z-10 font-mono">
+                        {'{ "key": "value" }'}
+                      </div>
+                    )}
+                    <Editor
+                      height="100px"
+                      language="json"
+                      theme={POWERSYNC_MONACO_THEME}
+                      value={values.parameters}
+                      onChange={(value) => setFieldValue('parameters', value ?? '')}
+                      options={{
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        lineNumbers: 'off',
+                        glyphMargin: false,
+                        folding: false,
+                        lineDecorationsWidth: 8,
+                        lineNumbersMinChars: 0,
+                        overviewRulerLanes: 0,
+                        overviewRulerBorder: false,
+                        hideCursorInOverviewRuler: true,
+                        padding: { top: 8, bottom: 8 },
+                        fontSize: 13,
+                        tabSize: 2,
+                        automaticLayout: true
+                      }}
+                    />
+                  </div>
                   {errors.parameters && <p className="text-xs text-destructive mt-1">{errors.parameters}</p>}
                 </div>
               </div>
