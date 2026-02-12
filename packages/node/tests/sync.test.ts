@@ -13,16 +13,28 @@ import {
   SyncStreamConnectionMethod
 } from '@powersync/common';
 import Logger from 'js-logger';
-import { bucket, MockSyncService, mockSyncServiceTest, TestConnector, waitForSyncStatus } from './utils';
+import {
+  bucket,
+  MockSyncService,
+  createMockSyncServiceTest,
+  mockSyncServiceTest,
+  TestConnector,
+  waitForSyncStatus
+} from './utils';
 
 describe('Sync', () => {
-  describe('js client', () => {
-    defineSyncTests(SyncClientImplementation.JAVASCRIPT);
-  });
+  function configureLegacyAndRustClient(bson: boolean) {
+    describe('js client', () => {
+      defineSyncTests(SyncClientImplementation.JAVASCRIPT, bson);
+    });
 
-  describe('rust client', () => {
-    defineSyncTests(SyncClientImplementation.RUST);
-  });
+    describe('rust client', () => {
+      defineSyncTests(SyncClientImplementation.RUST, bson);
+    });
+  }
+
+  describe('json', () => configureLegacyAndRustClient(false));
+  describe('bson', () => configureLegacyAndRustClient(true));
 
   mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
     function addData(id: string) {
@@ -107,11 +119,13 @@ describe('Sync', () => {
   });
 });
 
-function defineSyncTests(impl: SyncClientImplementation) {
+function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
   const options: PowerSyncConnectionOptions = {
     clientImplementation: impl,
     connectionMethod: SyncStreamConnectionMethod.HTTP
   };
+
+  const mockSyncServiceTest = createMockSyncServiceTest(bson);
 
   mockSyncServiceTest('sets last sync time', async ({ syncService }) => {
     const db = await syncService.createDatabase();
