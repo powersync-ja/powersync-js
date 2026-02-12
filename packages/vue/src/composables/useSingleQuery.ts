@@ -7,6 +7,7 @@ import {
 } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync.js';
+import { QuerySyncStreamOptions } from './useAllSyncStreamsHaveSynced.js';
 
 export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOptions, 'signal'> {
   runQueryOnce?: boolean;
@@ -31,6 +32,28 @@ export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOp
    * ```
    */
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
+  /**
+   * An optional array of sync streams (with names and parameters) backing the query.
+   *
+   * When set, `useQuery` will subscribe to those streams (and automatically handle unsubscribing from them, too).
+   *
+   * If {@link QuerySyncStreamOptions} is set on a stream, `useQuery` will remain in a loading state until that stream
+   * is marked as {@link SyncSubscriptionDescription.hasSynced}. This ensures the query is not missing rows that haven't
+   * been downloaded.
+   * Note however that after an initial sync, the query will not block itself while new rows are downloading. Instead,
+   * consistent sync snapshots will be made available as they've been processed by PowerSync.
+   *
+   * @experimental Sync streams are currently in alpha.
+   */
+  streams?: QuerySyncStreamOptions[];
+
+  /**
+   * If true (default) the watched query will update its state to report
+   * on the fetching state of the query.
+   * Setting to false reduces the number of state changes if the fetch status
+   * is not relevant to the consumer.
+   */
+  reportFetching?: boolean;
 }
 
 export type WatchedQueryResult<T> = {
@@ -53,7 +76,7 @@ export type WatchedQueryResult<T> = {
 export const useSingleQuery = <T = any>(
   query: MaybeRef<string | CompilableQuery<T>>,
   sqlParameters: MaybeRef<any[]> = [],
-  options: AdditionalOptions<T> = {}
+  options: AdditionalOptions<T> & { active?: MaybeRef<boolean> } = {}
 ): WatchedQueryResult<T> => {
   const data = ref<ReadonlyArray<Readonly<T>>>([]) as Ref<ReadonlyArray<Readonly<T>>>;
   const error = ref<Error | undefined>(undefined);
@@ -94,6 +117,12 @@ export const useSingleQuery = <T = any>(
   };
 
   watchEffect(async (onCleanup) => {
+    const isActive = toValue(options.active ?? true);
+    if (!isActive) {
+      fetchData = undefined;
+      return; // Don't run if not active
+    }
+
     const abortController = new AbortController();
     // Abort any previous watches when the effect triggers again, or when the component is unmounted
     onCleanup(() => abortController.abort());
@@ -133,6 +162,11 @@ export const useSingleQuery = <T = any>(
     isLoading,
     isFetching,
     error,
-    refresh: () => fetchData?.()
+    refresh: () => {
+      if (!toValue(options.active ?? true)) {
+        return Promise.resolve();
+      }
+      return fetchData?.();
+    }
   };
 };

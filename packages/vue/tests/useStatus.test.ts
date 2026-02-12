@@ -1,6 +1,6 @@
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { createPowerSyncPlugin } from '../src/composables/powerSync';
 import { useStatus } from '../src/composables/useStatus';
 import { withSetup } from './utils';
@@ -44,5 +44,22 @@ describe('useStatus', () => {
   it('should load the status of PowerSync', async () => {
     const [status] = withPowerSyncSetup(() => useStatus());
     expect(status.value.connected).toBe(false);
+  });
+
+  it('should run the listener cleanup on unmount', () => {
+    const unsubscribe = vi.fn();
+    const mockDb = {
+      currentStatus: { connected: false },
+      registerListener: vi.fn(() => unsubscribe)
+    } as any;
+
+    const [, app] = withSetup(() => useStatus(), (application) => {
+      const { install } = createPowerSyncPlugin({ database: mockDb });
+      install(application);
+    });
+
+    expect(mockDb.registerListener).toHaveBeenCalled();
+    app.unmount();
+    expect(unsubscribe).toHaveBeenCalled();
   });
 });
