@@ -6,24 +6,41 @@ import { Spinner } from '@/components/ui/spinner';
 import React, { Suspense, useEffect, useState } from 'react';
 import { localStateDb } from '@/library/powersync/LocalStateManager';
 import { queryClient } from '@/lib/queryClient';
+import { MonacoThemeProvider } from '@/components/providers/MonacoThemeProvider';
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isReady, setIsReady] = useState(false);
+  const [isLocalDbInitialized, setIsLocalDbInitialized] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const initialize = async () => {
+    const initializeLocalStateDb = async () => {
       try {
         await localStateDb.init();
+        setIsLocalDbInitialized(true);
         await tryConnectIfCredentials();
       } catch (error) {
-        console.error('Failed to initialize:', error);
+        console.error('Failed to initialize local state database:', error);
+        setInitError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
-      setIsReady(true);
     };
-    initialize();
+    initializeLocalStateDb();
   }, []);
 
-  if (!isReady) {
+  if (initError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-8">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-lg font-semibold text-destructive">Failed to initialize</h1>
+          <p className="text-sm text-muted-foreground">The local state database could not be initialized.</p>
+          <pre className="rounded-md bg-muted p-4 text-sm font-mono text-left whitespace-pre-wrap break-all">
+            {initError}
+          </pre>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLocalDbInitialized) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
@@ -40,6 +57,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
           </div>
         }>
         <PowerSyncContext.Provider value={db}>
+          <MonacoThemeProvider />
           <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
         </PowerSyncContext.Provider>
       </Suspense>

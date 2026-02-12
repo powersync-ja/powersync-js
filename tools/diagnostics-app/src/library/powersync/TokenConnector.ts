@@ -1,6 +1,5 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
-import { LoginDetailsFormValues } from '@/components/widgets/LoginDetailsWidget';
 import { localStateDb } from './LocalStateManager';
 
 const APP_SETTINGS_KEY_CREDENTIALS = 'powersync_credential';
@@ -27,7 +26,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
     await tx?.complete();
   }
 
-  async signIn(credentials: LoginDetailsFormValues) {
+  async signIn(credentials: Credentials) {
     validateSecureContext(credentials.endpoint);
     checkJWT(credentials.token);
     try {
@@ -47,7 +46,7 @@ export class TokenConnector implements PowerSyncBackendConnector {
     return rows.length > 0;
   }
 
-  async saveCredentials(credentials: LoginDetailsFormValues): Promise<void> {
+  async saveCredentials(credentials: Credentials): Promise<void> {
     const value = JSON.stringify({ token: credentials.token, endpoint: credentials.endpoint });
     await localStateDb.execute(
       'INSERT OR REPLACE INTO app_settings (id, key, value) VALUES (?, ?, ?)',
@@ -91,6 +90,25 @@ function checkJWT(token: string) {
   const isBase64 = parts.every((part) => base64UrlRegex.test(part));
   if (!isBase64) {
     throw new Error(`Token must be a JWT: Not all parts are base64 encoded`);
+  }
+}
+
+export function getTokenUserId(token: string): string | null {
+  try {
+    const [, body] = token.split('.');
+    const payload = JSON.parse(atob(body));
+    return payload.sub ?? payload.user_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const [, body] = token.split('.');
+    return JSON.parse(atob(body));
+  } catch {
+    return null;
   }
 }
 
