@@ -7,7 +7,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery as useTanstackQuery } from '@tanstack/react-query';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Info, HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatBytes } from '@/lib/utils';
 import { fetchPowerSyncStats, type PowerSyncStats } from '@/library/powersync/PowerSyncStats';
 
@@ -106,8 +107,8 @@ export default function InspectorOverviewPage() {
   const { tables, views, indexes, triggers, powerSyncStats } = data;
   const totalTableRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
   const hasPowerSyncTables = tables.some((t) => t.isPowerSync);
-  const hasSyncEngineStats =
-    powerSyncStats != null && (powerSyncStats.totalOps > 0 || powerSyncStats.downloadedOps > 0);
+  const hasSyncEngineDownloadStats =
+    powerSyncStats != null && (powerSyncStats.downloadedOps > 0 || powerSyncStats.downloadSize > 0);
 
   return (
     <NavigationPage title="Database Overview">
@@ -125,7 +126,7 @@ export default function InspectorOverviewPage() {
                     <TableHead className="text-right">Tables</TableHead>
                     <TableHead className="text-right">Views</TableHead>
                     <TableHead className="text-right">Indexes</TableHead>
-                    <TableHead className="text-right">Total Rows</TableHead>
+                    <TableHead className="text-right">All Table Rows</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -162,7 +163,7 @@ export default function InspectorOverviewPage() {
                 <div className="font-medium">{tables.length}</div>
               </div>
               <div>
-                <div className="text-muted-foreground">Total Rows</div>
+                <div className="text-muted-foreground">All Table Rows</div>
                 <div className="font-medium">{totalTableRows.toLocaleString()}</div>
               </div>
             </div>
@@ -179,22 +180,22 @@ export default function InspectorOverviewPage() {
         {powerSyncStats && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">PowerSync Stats</h2>
-            <div
-              className={`grid grid-cols-2 gap-4 ${hasSyncEngineStats ? 'md:grid-cols-4' : 'md:grid-cols-5'}`}>
-              <StatCard label="Total Rows" value={powerSyncStats.totalRows.toLocaleString()} />
-              <StatCard label="Data Size" value={formatBytes(powerSyncStats.dataSize)} />
-              <StatCard label="Metadata Size" value={formatBytes(powerSyncStats.metadataSize)} />
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <StatCard label="Buckets" value={powerSyncStats.bucketCount.toLocaleString()} tooltip="Number of sync buckets defined by your sync rules" />
+              <StatCard label="Total Rows" value={powerSyncStats.totalRows.toLocaleString()} tooltip="Total synced data rows across all ps_data__ tables" />
+              <StatCard label="Total Ops" value={powerSyncStats.totalOps.toLocaleString()} tooltip="Total sync operations processed. When this significantly exceeds total rows, compacting may help." />
+              <StatCard label="Data Size" value={formatBytes(powerSyncStats.dataSize)} tooltip="Sum of all column data sizes across synced rows" />
+              <StatCard label="Metadata Size" value={formatBytes(powerSyncStats.metadataSize)} tooltip="Estimated size of row metadata (type, id, and key overhead)" />
               <StatCard
                 label="CRUD Queue"
                 value={powerSyncStats.crudCount.toLocaleString()}
                 warning={powerSyncStats.crudCount > 0}
+                tooltip="Pending local write operations waiting to be uploaded to the backend"
               />
-              <StatCard label="Buckets" value={powerSyncStats.bucketCount.toLocaleString()} />
-              {hasSyncEngineStats && (
+              {hasSyncEngineDownloadStats && (
                 <>
-                  <StatCard label="Downloaded Ops" value={powerSyncStats.downloadedOps.toLocaleString()} />
-                  <StatCard label="Total Ops" value={powerSyncStats.totalOps.toLocaleString()} />
-                  <StatCard label="Download Size" value={formatBytes(powerSyncStats.downloadSize)} />
+                  <StatCard label="Downloaded Ops" value={powerSyncStats.downloadedOps.toLocaleString()} tooltip="Number of operations downloaded from the PowerSync service" />
+                  <StatCard label="Download Size" value={formatBytes(powerSyncStats.downloadSize)} tooltip="Total bytes downloaded from the PowerSync service" />
                 </>
               )}
             </div>
@@ -305,13 +306,25 @@ export default function InspectorOverviewPage() {
   );
 }
 
-function StatCard({ label, value, warning }: { label: string; value: string; warning?: boolean }) {
+function StatCard({ label, value, warning, tooltip }: { label: string; value: string; warning?: boolean; tooltip?: string }) {
   return (
     <Card className={warning ? 'border-amber-500/50' : undefined}>
       <CardContent className="p-4">
         <div className="text-sm text-muted-foreground flex items-center gap-1.5">
           {label}
           {warning && <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+          {tooltip && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {tooltip}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
         <div className="text-2xl font-semibold">{value}</div>
       </CardContent>
