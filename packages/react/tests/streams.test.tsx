@@ -52,6 +52,18 @@ describe('stream hooks', () => {
         expect(currentStreams()).toStrictEqual([]);
       });
 
+      it('useSyncStream with cached instance', async () => {
+        const existingSubscription = await db.syncStream('a').subscribe();
+        await existingSubscription.unsubscribe();
+        // The stream is still active at this point due to the TTL.
+
+        // This means that useSyncStream should have a result available on the first render.
+        const { result } = renderHook(() => useSyncStream({ name: 'a' }), {
+          wrapper: testWrapper
+        });
+        expect(result.current).not.toBeNull();
+      });
+
       it('useQuery can take syncStream instance', async () => {
         const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [db.syncStream('a')] }), {
           wrapper: testWrapper
