@@ -51,9 +51,10 @@ export async function openInspectorDatabase(file: File): Promise<InspectorDataba
   const vfs = await (MemoryAsyncVFS as any).create(vfsName, module);
   sqlite3.vfs_register(vfs, false);
 
-  // Inject the uploaded file bytes into the VFS before opening
-  const dbFilename = file.name || 'inspector.db';
-  const url = new URL(dbFilename, 'file://');
+  // Use a fixed internal filename to avoid issues with special characters in the
+  // original file name (spaces, parentheses, etc.) causing VFS pathname mismatches.
+  const internalFilename = 'inspector.db';
+  const url = new URL(internalFilename, 'file://');
   const pathname = url.pathname;
 
   vfs.mapNameToFile.set(pathname, {
@@ -63,10 +64,12 @@ export async function openInspectorDatabase(file: File): Promise<InspectorDataba
     data: arrayBuffer
   });
 
-  // Open the database (read-write needed for SQLite to function, but we won't modify)
+  // Open with URI filename in immutable mode. This tells SQLite the file will never
+  // change, bypassing WAL recovery and journal handling that would fail in the VFS
+  // (the WAL/shm files don't exist in the in-memory VFS).
   const dbPointer = await sqlite3.open_v2(
-    dbFilename,
-    SQLite.SQLITE_OPEN_READWRITE,
+    `file:${internalFilename}?immutable=1`,
+    SQLite.SQLITE_OPEN_READONLY | SQLite.SQLITE_OPEN_URI,
     vfsName
   );
 

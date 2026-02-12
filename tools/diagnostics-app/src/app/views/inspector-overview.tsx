@@ -32,9 +32,27 @@ interface DatabaseStructure {
   powerSyncStats: PowerSyncStats | null;
 }
 
+/** Wraps a getAll executor with a per-query timeout. If a query hangs (e.g. virtual tables
+ *  without the native extension), it rejects instead of blocking forever. */
+function withQueryTimeout(
+  getAll: (sql: string, params?: any[]) => Promise<Record<string, any>[]>,
+  timeoutMs = 5000
+): (sql: string, params?: any[]) => Promise<Record<string, any>[]> {
+  return (sql, params) => {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`Query timed out after ${timeoutMs}ms`)), timeoutMs);
+      getAll(sql, params).then(
+        (result) => { clearTimeout(timer); resolve(result); },
+        (err) => { clearTimeout(timer); reject(err); }
+      );
+    });
+  };
+}
+
 async function fetchDatabaseStructure(
-  getAll: (sql: string, params?: any[]) => Promise<Record<string, any>[]>
+  rawGetAll: (sql: string, params?: any[]) => Promise<Record<string, any>[]>
 ): Promise<DatabaseStructure> {
+  const getAll = withQueryTimeout(rawGetAll);
   const objects = (await getAll(
     `SELECT type, name, tbl_name, sql FROM sqlite_master ORDER BY type, name`
   )) as SchemaObject[];
@@ -87,18 +105,34 @@ async function fetchDatabaseStructure(
 export default function InspectorOverviewPage() {
   const { database, fileInfo } = useInspector();
 
-  const { data, isLoading } = useTanstackQuery({
+  const { data, isLoading, error } = useTanstackQuery({
     queryKey: ['inspector-structure', fileInfo?.name],
     queryFn: () => fetchDatabaseStructure(database!.getAll),
     enabled: !!database,
-    staleTime: Infinity
+    staleTime: Infinity,
+    retry: false
   });
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <NavigationPage title="Database Overview">
         <div className="flex justify-center items-center py-20">
           <Spinner size="lg" />
+        </div>
+      </NavigationPage>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <NavigationPage title="Database Overview">
+        <div className="p-5">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to read database structure: {error?.message || 'Unknown error'}
+            </AlertDescription>
+          </Alert>
         </div>
       </NavigationPage>
     );
