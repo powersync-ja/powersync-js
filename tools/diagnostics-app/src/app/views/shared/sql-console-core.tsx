@@ -26,8 +26,6 @@ export interface SQLConsoleCoreProps {
 export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true }: SQLConsoleCoreProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const inputWrapperRef = React.useRef<HTMLDivElement>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const portalRef = React.useRef<HTMLDivElement>(null);
   const [results, setResults] = React.useState<Record<string, any>[] | null>(null);
   const [totalRowCount, setTotalRowCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -36,25 +34,6 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   const [showHistory, setShowHistory] = React.useState(false);
   const hasExecutedRef = React.useRef(false);
   const pendingQueryRef = React.useRef<string | null>(null);
-
-  // Close dropdown when clicking outside (check both inline ref and portalled dropdown)
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(target) &&
-        (!portalRef.current || !portalRef.current.contains(target))
-      ) {
-        setShowHistory(false);
-      }
-    };
-
-    if (showHistory) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showHistory]);
 
   const runQuery = React.useCallback(
     async (sql: string) => {
@@ -166,7 +145,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   return (
     <div className="min-w-0 max-w-full p-5">
       <div className="flex flex-wrap items-end gap-2.5 mb-4">
-        <div className="min-w-0 flex-1 basis-0 space-y-1.5 relative" ref={dropdownRef}>
+        <div className="min-w-0 flex-1 basis-0 space-y-1.5 relative">
           <Label htmlFor="query-input">Query</Label>
           <div className="flex gap-2 items-center">
             <div className="relative flex-1" ref={inputWrapperRef}>
@@ -184,7 +163,6 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
               <QueryHistoryDropdown
                 source={historySource}
                 anchorRef={inputWrapperRef}
-                portalRef={portalRef}
                 onSelectQuery={handleSelectQuery}
                 onInitialQuery={handleInitialQuery}
                 onRemoveEntry={removeFromQueryHistory}

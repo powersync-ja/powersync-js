@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import ClickAwayListener from 'react-click-away-listener';
 import { PowerSyncContext, useQuery } from '@powersync/react';
 import { Button } from '@/components/ui/button';
 import { History, X, ChevronDown } from 'lucide-react';
@@ -20,7 +21,6 @@ interface QueryHistoryEntry {
 export interface QueryHistoryDropdownProps {
   source: string;
   anchorRef: React.RefObject<HTMLDivElement | null>;
-  portalRef: React.RefObject<HTMLDivElement>;
   onSelectQuery: (query: string) => void;
   onInitialQuery: (query: string) => void;
   onRemoveEntry: (id: string) => void;
@@ -35,7 +35,6 @@ export interface QueryHistoryDropdownProps {
 function QueryHistoryContent({
   source,
   anchorRef,
-  portalRef,
   onSelectQuery,
   onInitialQuery,
   onRemoveEntry,
@@ -112,38 +111,44 @@ function QueryHistoryContent({
       {showHistory &&
         queryHistory.length > 0 &&
         ReactDOM.createPortal(
-          <div
-            ref={portalRef}
-            style={dropdownStyle}
-            className="border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
-            <div className="p-2 border-b bg-muted/50 flex items-center justify-between sticky top-0">
-              <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                <History className="h-3.5 w-3.5" />
-                Recent Queries
-              </span>
-              <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
-                <X className="h-4 w-4" />
-              </Button>
+          <ClickAwayListener
+            onClickAway={(e) => {
+              // Don't close when clicking the anchor area (e.g. toggle button)
+              if (anchorRef.current?.contains(e.target as Node)) return;
+              onClose();
+            }}>
+            <div
+              style={dropdownStyle}
+              className="border rounded-lg bg-popover shadow-lg max-h-64 overflow-y-auto">
+              <div className="p-2 border-b bg-muted/50 flex items-center justify-between sticky top-0">
+                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  <History className="h-3.5 w-3.5" />
+                  Recent Queries
+                </span>
+                <Button variant="ghost" size="sm" onClick={onClose} className="h-6 w-6 p-0">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="py-1">
+                {queryHistory.map((entry) => (
+                  <div
+                    key={entry.id}
+                    onClick={() => onSelectQuery(entry.query)}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-accent cursor-pointer group">
+                    <span className="flex-1 text-sm font-mono truncate">{entry.query}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleRemove(entry.id, e)}
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0">
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="py-1">
-              {queryHistory.map((entry) => (
-                <div
-                  key={entry.id}
-                  onClick={() => onSelectQuery(entry.query)}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-accent cursor-pointer group">
-                  <span className="flex-1 text-sm font-mono truncate">{entry.query}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleRemove(entry.id, e)}
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0">
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>,
+          </ClickAwayListener>,
           document.body
         )}
     </>
