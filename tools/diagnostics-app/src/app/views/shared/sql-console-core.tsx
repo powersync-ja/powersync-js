@@ -1,10 +1,8 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
-import { QueryHistoryDropdown, addToQueryHistory, removeFromQueryHistory } from './query-history';
+import { QueryHistoryDropdown } from './query-history';
 
 // ---------------------------------------------------------------------------
 // SQLConsoleCore - the reusable SQL console UI
@@ -24,16 +22,11 @@ export interface SQLConsoleCoreProps {
 }
 
 export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true }: SQLConsoleCoreProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-  const inputWrapperRef = React.useRef<HTMLDivElement>(null);
   const [results, setResults] = React.useState<Record<string, any>[] | null>(null);
   const [totalRowCount, setTotalRowCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [autoLimited, setAutoLimited] = React.useState(false);
-  const [showHistory, setShowHistory] = React.useState(false);
-  const hasExecutedRef = React.useRef(false);
-  const pendingQueryRef = React.useRef<string | null>(null);
 
   const runQuery = React.useCallback(
     async (sql: string) => {
@@ -67,61 +60,10 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
     [executeQuery]
   );
 
-  const handleExecute = React.useCallback(() => {
-    const queryInput = inputRef.current?.value;
-    if (queryInput) {
-      runQuery(queryInput);
-      addToQueryHistory(queryInput, historySource);
-      setShowHistory(false);
-    }
-  }, [runQuery, historySource]);
-
-  const handleInitialQuery = React.useCallback(
-    (lastQuery: string) => {
-      if (inputRef.current) {
-        inputRef.current.value = lastQuery;
-      }
-      hasExecutedRef.current = true;
-      if (ready) {
-        runQuery(lastQuery);
-      } else {
-        pendingQueryRef.current = lastQuery;
-      }
-    },
-    [ready, runQuery]
+  const handleQueryChanged = React.useCallback(
+    ({ query }: { query: string }) => runQuery(query),
+    [runQuery]
   );
-
-  const handleSelectQuery = React.useCallback(
-    (historyQuery: string) => {
-      if (inputRef.current) inputRef.current.value = historyQuery;
-      runQuery(historyQuery);
-      addToQueryHistory(historyQuery, historySource);
-      setShowHistory(false);
-    },
-    [runQuery, historySource]
-  );
-
-  // Execute pending query once the database becomes ready
-  React.useEffect(() => {
-    if (ready && pendingQueryRef.current) {
-      const pending = pendingQueryRef.current;
-      pendingQueryRef.current = null;
-      runQuery(pending);
-    }
-  }, [ready, runQuery]);
-
-  // Execute default query on mount if no history restores a query
-  React.useEffect(() => {
-    if (!ready || !defaultQuery || hasExecutedRef.current) return;
-    // Give history a moment to restore; if it doesn't, run the default
-    const timeout = setTimeout(() => {
-      if (!hasExecutedRef.current) {
-        hasExecutedRef.current = true;
-        runQuery(defaultQuery);
-      }
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [ready, defaultQuery, runQuery]);
 
   const columns = React.useMemo<DataTableColumn<any>[]>(() => {
     const firstItem = results?.[0];
@@ -147,34 +89,13 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
       <div className="flex flex-wrap items-end gap-2.5 mb-4">
         <div className="min-w-0 flex-1 basis-0 space-y-1.5 relative">
           <Label htmlFor="query-input">Query</Label>
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1" ref={inputWrapperRef}>
-              <Input
-                id="query-input"
-                ref={inputRef}
-                defaultValue={defaultQuery}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleExecute();
-                  }
-                }}
-                className={error ? 'border-destructive pr-10' : 'pr-10'}
-              />
-              <QueryHistoryDropdown
-                source={historySource}
-                anchorRef={inputWrapperRef}
-                onSelectQuery={handleSelectQuery}
-                onInitialQuery={handleInitialQuery}
-                onRemoveEntry={removeFromQueryHistory}
-                showHistory={showHistory}
-                onToggleHistory={() => setShowHistory(!showHistory)}
-                onClose={() => setShowHistory(false)}
-              />
-            </div>
-            <Button onClick={handleExecute} className="h-10">
-              Execute
-            </Button>
-          </div>
+          <QueryHistoryDropdown
+            source={historySource}
+            defaultQuery={defaultQuery}
+            ready={ready}
+            error={error}
+            onQueryChanged={handleQueryChanged}
+          />
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
       </div>
