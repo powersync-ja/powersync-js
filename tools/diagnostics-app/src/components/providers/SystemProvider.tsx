@@ -9,6 +9,7 @@ import { queryClient } from '@/lib/queryClient';
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLocalDbInitialized, setIsLocalDbInitialized] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeLocalStateDb = async () => {
@@ -18,11 +19,25 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
         await tryConnectIfCredentials();
       } catch (error) {
         console.error('Failed to initialize local state database:', error);
-        setIsLocalDbInitialized(true);
+        setInitError(error instanceof Error ? error.message : 'An unknown error occurred');
       }
     };
     initializeLocalStateDb();
   }, []);
+
+  if (initError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-8">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-lg font-semibold text-destructive">Failed to initialize</h1>
+          <p className="text-sm text-muted-foreground">The local state database could not be initialized.</p>
+          <pre className="rounded-md bg-muted p-4 text-sm font-mono text-left whitespace-pre-wrap break-all">
+            {initError}
+          </pre>
+        </div>
+      </div>
+    );
+  }
 
   if (!isLocalDbInitialized) {
     return (
