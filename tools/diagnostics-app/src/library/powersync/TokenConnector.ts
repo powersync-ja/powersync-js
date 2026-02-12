@@ -103,6 +103,15 @@ export function getTokenUserId(token: string): string | null {
   }
 }
 
+export function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const [, body] = token.split('.');
+    return JSON.parse(atob(body));
+  } catch {
+    return null;
+  }
+}
+
 export function getTokenEndpoint(token: string): string | null {
   try {
     const [head, body, signature] = token.split('.');

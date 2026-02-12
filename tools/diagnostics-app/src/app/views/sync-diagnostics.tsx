@@ -1,7 +1,7 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
 import { clearData, connect, connector, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { getTokenUserId } from '@/library/powersync/TokenConnector';
+import { getTokenUserId, decodeTokenPayload } from '@/library/powersync/TokenConnector';
 import { SyncStreamStatus } from '@powersync/web';
 import React, { useState } from 'react';
 import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatBytes } from '@/lib/utils';
-import { ChevronDown, ChevronUp, Trash2, Info } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ChevronDown, ChevronUp, Trash2, Info, Eye } from 'lucide-react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -99,6 +100,8 @@ async function fetchSyncStats(): Promise<SyncStats> {
 export default function SyncDiagnosticsPage() {
   const queryClient = useQueryClient();
 
+  const [showTokenDialog, setShowTokenDialog] = useState(false);
+
   const { data: connectionInfo } = useTanstackQuery({
     queryKey: ['connectionInfo'],
     queryFn: async () => {
@@ -106,7 +109,9 @@ export default function SyncDiagnosticsPage() {
       if (!credentials) return null;
       return {
         endpoint: credentials.endpoint,
-        userId: getTokenUserId(credentials.token)
+        userId: getTokenUserId(credentials.token),
+        token: credentials.token,
+        tokenPayload: decodeTokenPayload(credentials.token)
       };
     },
     staleTime: Infinity
@@ -302,7 +307,7 @@ export default function SyncDiagnosticsPage() {
     <NavigationPage title="Sync Diagnostics">
       <div className="min-w-0 max-w-full overflow-x-hidden p-5 space-y-8">
         {connectionInfo && (
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
             {connectionInfo.endpoint && (
               <span>
                 <span className="font-medium text-foreground">Service URL:</span>{' '}
@@ -314,6 +319,40 @@ export default function SyncDiagnosticsPage() {
                 <span className="font-medium text-foreground">User ID:</span>{' '}
                 <span className="font-mono">{connectionInfo.userId}</span>
               </span>
+            )}
+            {connectionInfo.tokenPayload && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 text-muted-foreground"
+                  onClick={() => setShowTokenDialog(true)}>
+                  <Eye className="h-3.5 w-3.5" />
+                  View Token
+                </Button>
+                <Dialog open={showTokenDialog} onOpenChange={setShowTokenDialog}>
+                  <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>JWT Token</DialogTitle>
+                      <DialogDescription>The current authentication token and its decoded payload.</DialogDescription>
+                    </DialogHeader>
+                    <div className="overflow-auto space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-1.5">Raw Token</h4>
+                        <pre className="rounded-md bg-muted p-4 text-sm font-mono whitespace-pre-wrap break-all">
+                          {connectionInfo.token}
+                        </pre>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium mb-1.5">Decoded Payload</h4>
+                        <pre className="rounded-md bg-muted p-4 text-sm font-mono whitespace-pre-wrap break-all">
+                          {JSON.stringify(connectionInfo.tokenPayload, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
             )}
           </div>
         )}
