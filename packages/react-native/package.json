@@ -33,7 +33,6 @@
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
     "@journeyapps/react-native-quick-sqlite": "^2.5.0",
-    "@powersync/common": "workspace:^1.46.0",
     "react": "*",
     "react-native": "*"
   },
@@ -43,7 +42,7 @@
     }
   },
   "dependencies": {
-    "@powersync/common": "workspace:*",
+    "@powersync/common": "workspace:^",
     "@powersync/react": "workspace:*",
     "async-mutex": "catalog:"
   },
