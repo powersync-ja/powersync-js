@@ -11,7 +11,7 @@
     "test:build": "pnpm build"
   },
   "dependencies": {
-    "@powersync/web": "^1.32.0"
+    "@powersync/web": "^1.33.0"
   },
   "devDependencies": {
     "@swc/core": "~1.6.0",
