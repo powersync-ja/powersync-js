@@ -1,6 +1,6 @@
 {
   "name": "@powersync/web",
-  "version": "1.32.0",
+  "version": "1.33.0",
   "description": "PowerSync Web SDK",
   "main": "lib/src/index.js",
   "module": "lib/src/index.js",
@@ -67,7 +67,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
-    "@powersync/common": "workspace:^1.46.0"
+    "@powersync/common": "workspace:^1.47.0"
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
