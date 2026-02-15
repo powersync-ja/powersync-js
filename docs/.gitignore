@@ -27,5 +27,6 @@ docs/vue-sdk/
 docs/web-sdk/
 docs/tanstack-react-query-sdk
 docs/node-sdk
+docs/nuxt-sdk
 
 .env

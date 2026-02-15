@@ -12,3 +12,4 @@ export * from './db/PowerSyncDatabase.js';
 export * from './db/sync/SharedWebStreamingSyncImplementation.js';
 export * from './db/sync/WebRemote.js';
 export * from './db/sync/WebStreamingSyncImplementation.js';
+export * from './db/adapters/WebDBAdapter.js';
