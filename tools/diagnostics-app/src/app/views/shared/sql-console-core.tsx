@@ -39,9 +39,10 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
         const hasLimit = /\bLIMIT\s+\d+/i.test(sql);
         const effectiveSql = hasLimit ? sql : `${sql.replace(/;\s*$/, '')} LIMIT ${MAX_RESULT_ROWS + 1}`;
         const data = await executeQuery(effectiveSql);
-        const wasAutoLimited = !hasLimit && data.length > MAX_RESULT_ROWS;
+        const overRowLimit = data.length > MAX_RESULT_ROWS;
+        const wasAutoLimited = !hasLimit && overRowLimit;
         setTotalRowCount(data.length);
-        if (data.length > MAX_RESULT_ROWS) {
+        if (overRowLimit) {
           setResults(data.slice(0, MAX_RESULT_ROWS));
         } else {
           setResults(data);
