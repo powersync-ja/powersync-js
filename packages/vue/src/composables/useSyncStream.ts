@@ -25,38 +25,38 @@ export const useSyncStream = (
 ): { status: ComputedRef<SyncStreamStatus | null> } => {
   const db = usePowerSync();
   const status = useStatus();
-  const subscription = ref<SyncStreamSubscription | null>(null);
 
   if (!db || !db.value) {
     return { status: computed(() => null) };
   }
 
+  const stream = computed(() => {
+    const { parameters } = toValue(options);
+    return db.value.syncStream(toValue(name), parameters);
+  });
+
   watchEffect((onCleanup) => {
     const { parameters, ...subscribeOptions } = toValue(options);
-    let currentSub: SyncStreamSubscription | null = null;
+    let subscription: SyncStreamSubscription | null = null;
     let active = true;
 
-    db.value
-      .syncStream(toValue(name), parameters)
-      .subscribe(subscribeOptions)
-      .then((sub) => {
-        if (active) {
-          currentSub = sub;
-          subscription.value = sub;
-        } else {
-          // The cleanup function already ran, unsubscribe immediately.
-          sub.unsubscribe();
-        }
-      });
+    stream.value.subscribe(subscribeOptions).then((sub) => {
+      if (active) {
+        subscription = sub;
+      } else {
+        // The cleanup function already ran, unsubscribe immediately.
+        sub.unsubscribe();
+      }
+    });
 
     onCleanup(() => {
       active = false;
-      currentSub?.unsubscribe();
-      subscription.value = null;
+      // If we don't have a subscription yet, it'll still get cleaned up once the promise resolves
+      subscription?.unsubscribe();
     });
   });
 
-  const syncStreamStatus = computed(() => subscription.value && status.value.forStream(subscription.value));
+  const syncStreamStatus = computed(() => status.value.forStream(stream.value) ?? null);
 
   return {
     status: syncStreamStatus
