@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Wifi, FileSearch, ArrowRight } from 'lucide-react';
 import React from 'react';
+import { useInitError } from '@/components/providers/SystemProvider';
 
 const searchSchema = z.object({
   token: z.string().optional()
@@ -39,6 +40,7 @@ export const Route = createFileRoute('/')({
 
 function LandingPage() {
   const navigate = useNavigate();
+  const initError = useInitError();
   const [hasCredentials, setHasCredentials] = React.useState(false);
 
   React.useEffect(() => {
@@ -127,6 +129,11 @@ function LandingPage() {
                     Connect
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
+                  {initError && (
+                    <pre className="text-sm text-destructive rounded-md bg-destructive/10 p-3 whitespace-pre-wrap break-all max-h-40 overflow-y-auto">
+                      {initError}
+                    </pre>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"

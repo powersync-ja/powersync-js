@@ -3,10 +3,14 @@ import { db, tryConnectIfCredentials } from '@/library/powersync/ConnectionManag
 import { PowerSyncContext } from '@powersync/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Spinner } from '@/components/ui/spinner';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { createContext, Suspense, useContext, useEffect, useState } from 'react';
 import { localStateDb } from '@/library/powersync/LocalStateManager';
 import { queryClient } from '@/lib/queryClient';
 import { MonacoThemeProvider } from '@/components/providers/MonacoThemeProvider';
+
+export const InitErrorContext = createContext<string | null>(null);
+
+export const useInitError = () => useContext(InitErrorContext);
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLocalDbInitialized, setIsLocalDbInitialized] = useState(false);
@@ -20,25 +24,16 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
         await tryConnectIfCredentials();
       } catch (error) {
         console.error('Failed to initialize local state database:', error);
-        setInitError(error instanceof Error ? error.message : 'An unknown error occurred');
+        const fullMessage =
+          error instanceof Error
+            ? [error.message, error.cause ? String(error.cause) : null].filter(Boolean).join('\n')
+            : String(error);
+        setInitError(fullMessage);
+        setIsLocalDbInitialized(true); // Non-blocking: allow app to load despite init error
       }
     };
     initializeLocalStateDb();
   }, []);
-
-  if (initError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen p-8">
-        <div className="max-w-md text-center space-y-3">
-          <h1 className="text-lg font-semibold text-destructive">Failed to initialize</h1>
-          <p className="text-sm text-muted-foreground">The local state database could not be initialized.</p>
-          <pre className="rounded-md bg-muted p-4 text-sm font-mono text-left whitespace-pre-wrap break-all">
-            {initError}
-          </pre>
-        </div>
-      </div>
-    );
-  }
 
   if (!isLocalDbInitialized) {
     return (
@@ -57,8 +52,10 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
           </div>
         }>
         <PowerSyncContext.Provider value={db}>
-          <MonacoThemeProvider />
-          <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
+          <InitErrorContext.Provider value={initError}>
+            <MonacoThemeProvider />
+            <NavigationPanelContextProvider>{children}</NavigationPanelContextProvider>
+          </InitErrorContext.Provider>
         </PowerSyncContext.Provider>
       </Suspense>
     </QueryClientProvider>
