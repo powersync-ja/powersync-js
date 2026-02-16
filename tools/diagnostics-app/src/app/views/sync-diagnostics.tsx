@@ -73,6 +73,9 @@ const syncDiagnosticsKeys = {
   stats: () => [...syncDiagnosticsKeys.all, 'stats'] as const
 };
 
+/** When total_operations exceeds row_count by this factor, we show a warning that bucket history has accumulated and compacting may help. This is an abritrary threshold and indicates significant history buildup.*/
+const BUCKET_HISTORY_THRESHOLD = 3;
+
 interface SyncStats {
   bucketRows: any[] | null;
   tableRows: any[] | null;
@@ -376,7 +379,7 @@ export default function SyncDiagnosticsPage() {
               Clears all local data and re-syncs. This will also remove any manually added stream subscriptions.
             </span>
           </div>
-          {totals.total_operations > totals.row_count * 3 && totals.row_count > 0 && (
+          {totals.total_operations > totals.row_count * BUCKET_HISTORY_THRESHOLD && totals.row_count > 0 && (
             <Alert className="mt-4">
               <Info className="h-4 w-4" />
               <AlertDescription>
