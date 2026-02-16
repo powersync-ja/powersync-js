@@ -93,16 +93,6 @@ function checkJWT(token: string) {
   }
 }
 
-export function getTokenUserId(token: string): string | null {
-  try {
-    const [, body] = token.split('.');
-    const payload = JSON.parse(atob(body));
-    return payload.sub ?? payload.user_id ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export function decodeTokenPayload(token: string): Record<string, unknown> | null {
   try {
     const [, body] = token.split('.');
@@ -112,10 +102,16 @@ export function decodeTokenPayload(token: string): Record<string, unknown> | nul
   }
 }
 
+export function getTokenUserId(token: string): string | null {
+  const payload = decodeTokenPayload(token);
+  if (!payload) return null;
+  return (payload.sub ?? payload.user_id ?? null) as string | null;
+}
+
 export function getTokenEndpoint(token: string): string | null {
   try {
-    const [head, body, signature] = token.split('.');
-    const payload = JSON.parse(atob(body));
+    const payload = decodeTokenPayload(token);
+    if (!payload) return null;
     const aud = payload.aud as string | string[] | undefined;
     const audiences = Array.isArray(aud) ? aud : [aud];
 
