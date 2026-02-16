@@ -59,7 +59,7 @@ function LandingPage() {
           <CardHeader>
             <div className="flex items-center gap-2 mb-2">
               <Wifi className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">Connect to PowerSync</CardTitle>
+              <CardTitle className="text-lg">Connect to a PowerSync Instance</CardTitle>
             </div>
             <CardDescription>
               Live sync diagnostics with JWT token. View real-time sync status, bucket data, and manage client
