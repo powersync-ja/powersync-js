@@ -41,7 +41,7 @@
     "webpack": "^5.90.1"
   },
   "dependencies": {
-    "@powersync/node": "^0.16.0",
+    "@powersync/node": "^0.17.0",
     "better-sqlite3": "^12.2.0",
     "electron-squirrel-startup": "^1.0.1"
   }

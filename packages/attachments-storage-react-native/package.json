@@ -1,6 +1,6 @@
 {
   "name": "@powersync/attachments-storage-react-native",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -45,7 +45,7 @@
     "test:exports": "attw --pack ."
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.43.1",
+    "@powersync/common": "workspace:^1.47.0",
     "expo-file-system": ">=19.0.0",
     "@dr.pogodin/react-native-fs": "^2.25.0"
   },

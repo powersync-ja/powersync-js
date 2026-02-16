@@ -23,7 +23,7 @@
     "@angular/router": "^19.2.4",
     "@angular/service-worker": "^19.2.4",
     "@journeyapps/wa-sqlite": "^1.4.1",
-    "@powersync/web": "^1.32.0",
+    "@powersync/web": "^1.33.0",
     "@supabase/supabase-js": "^2.44.4",
     "rxjs": "~7.8.1",
     "tslib": "^2.6.3",
