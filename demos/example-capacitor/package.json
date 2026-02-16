@@ -26,7 +26,7 @@
     "@capacitor/ios": "^7.4.3",
     "@capacitor/splash-screen": "7.0.0",
     "@powersync/capacitor": "^0.4.0",
-    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@journeyapps/wa-sqlite": "^1.5.0",
     "@powersync/react": "^1.8.3",
     "@powersync/web": "^1.33.0",
     "react": "^18.2.0",

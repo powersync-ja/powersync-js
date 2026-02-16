@@ -13,7 +13,7 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@journeyapps/wa-sqlite": "^1.5.0",
     "@neondatabase/neon-js": "^0.1.0-alpha.6",
     "@neondatabase/serverless": "^1.0.2",
     "@powersync/drizzle-driver": "^0.7.3",
