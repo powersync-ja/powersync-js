@@ -384,8 +384,9 @@ export default function SyncDiagnosticsPage() {
               <Info className="h-4 w-4" />
               <AlertDescription>
                 Total operations ({totals.total_operations.toLocaleString()}) significantly exceeds total rows (
-                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated and compacting or
-                defragmentation could reduce sync times for new clients.{' '}
+                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated which negatively 
+                affects sync times for new clients. Performing a Compact or Defragment operation on your instance, 
+                could improve this.{' '}
                 <a
                   href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
                   target="_blank"
