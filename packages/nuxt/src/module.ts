@@ -139,7 +139,12 @@ export default defineNuxtModule<PowerSyncNuxtModuleOptions>({
         'usePowerSyncWatchedQuery',
         'useQuery',
         'useStatus',
-        'useWatchedQuerySubscription'
+        'useWatchedQuerySubscription',
+        'useSyncStream',
+        {
+          name: 'AdditionalOptions',
+          type: true
+        }
       ],
       '@powersync/vue'
     );
