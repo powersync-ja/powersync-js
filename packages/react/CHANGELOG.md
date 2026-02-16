@@ -1,5 +1,16 @@
 # @powersync/react
 
+## 1.8.3
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- 569cb41: Return cached information from `useSyncStream` if available, potentially reducing flicker.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 1.8.2
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # diagnostics-app
 
+## 0.11.0
+
+### Minor Changes
+
+- 2a7e8d3: Added state tracking and improved UX around client parameters
+- a7af6c1: Migrate routing to @tanstack/react-router and simplify client parameters UI
+
+### Patch Changes
+
+- Updated dependencies [d86799a]
+- Updated dependencies [ae3b188]
+- Updated dependencies [c506299]
+- Updated dependencies [569cb41]
+  - @powersync/web@1.33.0
+  - @powersync/react@1.8.3
+
 ## 0.10.0
 
 ### Minor Changes
