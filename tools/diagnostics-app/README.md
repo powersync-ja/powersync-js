@@ -37,7 +37,7 @@ The app is now available on [http://localhost:5173/](http://localhost:5173/).
 
 The landing page offers two paths:
 
-![](public/images/landing-page-new.png)
+![](public/images/landing-page.png)
 
 - **Connect to PowerSync**: Live sync diagnostics using a JWT token. View real-time sync status, bucket data, and manage client parameters.
 - **Inspect SQLite File**: Offline inspection of a local `SQLite` file. No authentication required.
