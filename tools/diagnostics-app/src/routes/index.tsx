@@ -24,7 +24,7 @@ export const Route = createFileRoute('/')({
       });
 
       throw redirect({ to: '/sync-diagnostics' });
-    } else if (connector.hasCredentials()) {
+    } else if (await connector.hasCredentials()) {
       throw redirect({ to: '/sync-diagnostics' });
     } else {
       throw redirect({ to: '/login' });
