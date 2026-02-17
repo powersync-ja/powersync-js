@@ -1,0 +1,390 @@
+<div align="center">
+  <img src="./src/runtime/assets/powersync-icon.svg" alt="PowerSync Logo" width="64" height="64" />
+  <h1>PowerSync Nuxt</h1>
+  <p>Local-first apps made simple</p>
+  <p>Effortless offline-first development with PowerSync integration for Nuxt applications.</p>
+</div>
+
+[![npm version][npm-version-src]][npm-version-href]
+[![npm downloads][npm-downloads-src]][npm-downloads-href]
+[![License][license-src]][license-href]
+[![Nuxt][nuxt-src]][nuxt-href]
+
+PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nuxt/devtools).
+
+- [✨ &nbsp;Release Notes](/CHANGELOG.md)
+
+## Features
+
+- 🔍 **Built-in Diagnostics** - Direct access to PowerSync instance monitoring and real-time connection insights
+- 🗄️ **Data Inspection** - Seamless local data browsing with powerful debugging and troubleshooting tools
+- ⚡ **Useful Composables** - Ready-to-use Vue composables for rapid offline-first application development
+- 📦 **All-in-One** - Exposes all `@powersync/vue` composables, making this the only required dependency
+
+## Installation
+
+This module re-exports all `@powersync/vue` composables. With **npm** (v7+), installing `@powersync/nuxt` is enough; with **pnpm**, install peer dependencies explicitly.
+
+```bash
+# Using npm
+npm install @powersync/nuxt
+npm install --save-dev vite-plugin-top-level-await vite-plugin-wasm
+
+# Using pnpm (peer deps are not auto-installed)
+pnpm add @powersync/nuxt @powersync/vue @powersync/web
+pnpm add -D vite-plugin-top-level-await vite-plugin-wasm
+```
+
+> [!NOTE]
+> This module works with `Nuxt 4` and should work with `Nuxt 3` but has not been tested. Support for Nuxt 2 is not guaranteed or planned.
+
+## Quick Start
+
+For a complete working app, see the [Nuxt + Supabase Todo List demo](https://github.com/powersync-ja/powersync-js/tree/main/demos/nuxt-supabase-todolist). To set up from scratch:
+
+1. Add `@powersync/nuxt` to the `modules` section of `nuxt.config.ts`:
+
+```typescript
+import wasm from 'vite-plugin-wasm'
+
+export default defineNuxtConfig({
+  modules: ['@powersync/nuxt'],
+  vite: {
+    optimizeDeps: {
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+      include: ['@powersync/web > js-logger'], // <-- Include `js-logger` when it isn't installed and imported.
+    },
+    worker: {
+      format: 'es',
+      plugins: () => [wasm()],
+    },
+  },
+})
+```
+
+> [!WARNING]  
+> If you are using Tailwind in your project see [Known Issues section](#known-issues)
+
+2. Create a PowerSync plugin (e.g., `plugins/powersync.client.ts`):
+
+```typescript
+import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
+import { createPowerSyncPlugin } from '@powersync/nuxt'
+import { AppSchema } from '~/powersync/AppSchema'
+import { PowerSyncConnector } from '~/powersync/PowerSyncConnector'
+
+export default defineNuxtPlugin({
+  async setup(nuxtApp) {
+    const db = new NuxtPowerSyncDatabase({
+      database: {
+        dbFilename: 'your-db-filename.sqlite',
+      },
+      schema: AppSchema,
+    })
+
+    const connector = new PowerSyncConnector()
+
+    await db.init()
+    await db.connect(connector)
+
+    const plugin = createPowerSyncPlugin({ database: db })
+    nuxtApp.vueApp.use(plugin)
+  },
+})
+```
+
+At this point, you're all set to use the module composables. The module automatically exposes all `@powersync/vue` composables, so you can use them directly:
+
+- `usePowerSync()` - Access the PowerSync database instance
+- `useQuery()` - Query the database reactively
+- And more... (see [API Reference](#api-reference))
+
+## Setting up PowerSync
+
+This guide will walk you through the steps to set up PowerSync in your Nuxt project.
+
+### Create your Schema
+
+Create a file called `AppSchema.ts` and add your schema to it.
+
+```typescript
+import { column, Schema, Table } from '@powersync/web'
+
+const lists = new Table({
+  created_at: column.text,
+  name: column.text,
+  owner_id: column.text,
+})
+
+const todos = new Table(
+  {
+    list_id: column.text,
+    created_at: column.text,
+    completed_at: column.text,
+    description: column.text,
+    created_by: column.text,
+    completed_by: column.text,
+    completed: column.integer,
+  },
+  { indexes: { list: ['list_id'] } },
+)
+
+export const AppSchema = new Schema({
+  todos,
+  lists,
+})
+
+// For types
+export type Database = (typeof AppSchema)['types']
+export type TodoRecord = Database['todos']
+export type ListRecord = Database['lists']
+```
+
+> **Tip**: Learn more about how to create your schema [here](https://docs.powersync.com/client-sdk-references/javascript-web#1-define-the-schema).
+
+### Create your Connector
+
+Create a file called `PowerSyncConnector.ts` and add your connector to it.
+
+```typescript
+import { UpdateType, type PowerSyncBackendConnector } from '@powersync/web'
+
+export class PowerSyncConnector implements PowerSyncBackendConnector {
+  async fetchCredentials() {
+    // Implement fetchCredentials to obtain a JWT from your authentication service.
+    // See https://docs.powersync.com/installation/authentication-setup
+    // If you're using Supabase or Firebase, you can re-use the JWT from those clients, see
+    // - https://docs.powersync.com/installation/authentication-setup/supabase-auth
+    // - https://docs.powersync.com/installation/authentication-setup/firebase-auth
+    return {
+      endpoint: '[Your PowerSync instance URL or self-hosted endpoint]',
+      // Use a development token (see Authentication Setup https://docs.powersync.com/installation/authentication-setup/development-tokens) to get up and running quickly
+      token: 'An authentication token',
+    }
+  }
+
+  async uploadData(db: any) {
+    // Implement uploadData to send local changes to your backend service.
+    // You can omit this method if you only want to sync data from the database to the client
+
+    // See example implementation here: https://docs.powersync.com/client-sdk-references/javascript-web#3-integrate-with-your-backend
+    // see demos here: https://github.com/powersync-ja/powersync-js/tree/main/demos
+    return
+  }
+}
+```
+
+> **Tip**: Learn more about how to create your connector [here](https://docs.powersync.com/client-sdk-references/javascript-web#3-integrate-with-your-backend).
+
+### Create your PowerSync Plugin
+
+Finally, putting everything together, create a [plugin](https://nuxt.com/docs/4.x/guide/directory-structure/app/plugins) called `powersync.client.ts` to setup PowerSync.
+
+```typescript
+import { createPowerSyncPlugin } from '@powersync/nuxt'
+import { NuxtPowerSyncDatabase } from '@powersync/nuxt'
+import { AppSchema } from '~/powersync/AppSchema'
+import { PowerSyncConnector } from '~/powersync/PowerSyncConnector'
+
+export default defineNuxtPlugin({
+  async setup(nuxtApp) {
+    const db = new NuxtPowerSyncDatabase({
+      database: {
+        dbFilename: 'a-db-name.sqlite',
+      },
+      schema: AppSchema,
+    })
+
+    const connector = new PowerSyncConnector()
+
+    await db.init()
+    await db.connect(connector)
+
+    const plugin = createPowerSyncPlugin({ database: db })
+
+    nuxtApp.vueApp.use(plugin)
+  },
+})
+```
+
+### Kysely ORM (Optional)
+
+You can use Kysely as your ORM to interact with the database. The module optionally provides a `usePowerSyncKysely()` composable. To keep the bundle small, you must install the driver yourself and enable it in config.
+
+Install the driver:
+
+```
+pnpm add @powersync/kysely-driver
+```
+In your existing `nuxt.config.ts`, set:
+
+```typescript
+export default defineNuxtConfig({
+  modules: ['@powersync/nuxt'],
+  powersync: {
+    kysely: true // <- opt-in
+  },
+  vite: {
+    optimizeDeps: {
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+      include: ['@powersync/web > js-logger'],
+    },
+    worker: {
+      format: 'es',
+      plugins: () => [wasm()],
+    },
+  },
+})
+```
+
+When enabled, the module exposes `usePowerSyncKysely`. Use your schema’s `Database` type to get proper typings:
+
+```typescript
+import { usePowerSyncKysely } from '@powersync/nuxt'
+import { type Database } from '../powersync/AppSchema'
+
+// In your component or composable
+const db = usePowerSyncKysely<Database>()
+
+// Use the db object to interact with the database
+const users = await db.selectFrom('users').selectAll().execute()
+```
+
+### Enabling Diagnostics
+
+To enable the PowerSync Inspector with diagnostics capabilities:
+
+1. **Enable diagnostics in your config**:
+
+```typescript
+export default defineNuxtConfig({
+  modules: ['@powersync/nuxt'],
+  powersync: {
+    useDiagnostics: true, // <- Add this
+  },
+  vite: {
+    optimizeDeps: {
+      exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
+      include: ['@powersync/web > js-logger'],
+    },
+    worker: {
+      format: 'es',
+      plugins: () => [wasm()],
+    },
+  },
+})
+```
+
+When `useDiagnostics: true` is set, `NuxtPowerSyncDatabase` automatically:
+- Extend your schema with diagnostics schema
+- Sets up diagnostics recording
+- Stores the connector internally (accessible via diagnostics)
+- Configures logging for diagnostics
+
+
+2. **Accessing PowerSync Inspector**:
+
+Once diagnostics are enabled, you can access the [PowerSync Inspector](#powersync-inspector):
+
+- **Via Nuxt Devtools**: Open Devtools and look for the PowerSync tab
+- **Direct URL**: `http://localhost:3000/__powersync-inspector`
+
+
+
+## PowerSync Inspector
+
+PowerSync Inspector is a tool that helps inspect and diagnose the state of your PowerSync client directly from your app in real-time.
+
+<div align="center">
+  <img src="./img/inspector.png" alt="PowerSync Logo" />
+</div>
+
+### Setup
+
+To setup the PowerSync inspector, you need to follow the steps in the [Enabling Diagnostics](#enabling-diagnostics) section.
+
+Once setup, the inspector can be accessed on the `http://localhost:3000/__powersync-inspector` route or via the [Nuxt Devtools](#nuxt-devtools).
+
+### Features
+
+#### Sync Status
+
+The `Sync Status` tab provides a real-time view of the sync status of your PowerSync client, including:
+- Connection status
+- Sync progress
+- Upload queue statistics
+- Error monitoring
+
+#### Data Inspector
+
+Browse and inspect your local database tables and data with powerful filtering and search capabilities.
+
+#### Config Inspector
+
+View and inspect your PowerSync configuration, connection options, and schema information.
+
+#### Logs
+
+Real-time logging of PowerSync operations with syntax highlighting and search functionality.
+
+#### Nuxt Devtools
+
+The inspector is also available in the Nuxt Devtools as a tab, providing seamless integration with your development workflow.
+
+## Known Issues
+
+1. PowerSync Inspector relies on `unocss` as a transitive dependency. It might clash with your existing setup, for example if you use Tailwind CSS.
+
+To fix this, you can add the following to your `nuxt.config.ts`:
+
+```typescript
+export default defineNuxtConfig({
+  unocss: {
+    autoImport: false
+  },
+})
+```
+
+## Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Generate type stubs
+pnpm run dev:prepare
+
+# Run Vitest
+pnpm run test
+pnpm run test:watch
+```
+
+## Local Testing
+
+If the playground is not enough for you, you can test the module locally by cloning this repo and pointing the nuxt app you want to test to the local module.
+
+Don't forget to add a watcher for the module for hot reloading.
+
+Example (in your nuxt app):
+
+```typescript
+import { defineNuxtConfig } from 'nuxt/config'
+
+export default defineNuxtConfig({
+  modules: ['../../my-location/@powersync/nuxt/src/*'],
+  watch: ['../../my-location/@powersync/nuxt/src/*'],
+})
+```
+
+<!-- Badges -->
+[npm-version-src]: https://img.shields.io/npm/v/@powersync/nuxt/latest.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-version-href]: https://npmjs.com/package/@powersync/nuxt
+
+[npm-downloads-src]: https://img.shields.io/npm/dm/@powersync/nuxt.svg?style=flat&colorA=18181B&colorB=28CF8D
+[npm-downloads-href]: https://npmjs.com/package/@powersync/nuxt
+
+[license-src]: https://img.shields.io/npm/l/@powersync/nuxt.svg?style=flat&colorA=18181B&colorB=28CF8D
+[license-href]: https://npmjs.com/package/@powersync/nuxt
+
+[nuxt-src]: https://img.shields.io/badge/Nuxt-18181B?logo=nuxt.js
+[nuxt-href]: https://nuxt.com
