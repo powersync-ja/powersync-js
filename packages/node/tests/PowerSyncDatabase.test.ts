@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 
-import { LockContext } from '@powersync/common';
+import { LockContext, Schema } from '@powersync/common';
 import { randomUUID } from 'node:crypto';
 import { expect, test, vi } from 'vitest';
 import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
@@ -227,3 +227,21 @@ tempDirectoryTest.skipIf(process.versions.node < '22.5.0')(
     }
   }
 );
+
+databaseTest('clear raw tables', async ({ database }) => {
+  await database.init();
+  const schema = new Schema({});
+  schema.withRawTables({
+    users: {
+      table_name: 'lists',
+      clear: 'DELETE FROM lists'
+    }
+  });
+  await database.updateSchema(schema);
+  await database.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT)');
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['list']);
+
+  expect(await database.getAll('SELECT * FROM lists')).toHaveLength(1);
+  await database.disconnectAndClear();
+  expect(await database.getAll('SELECT * FROM lists')).toHaveLength(0);
+});
