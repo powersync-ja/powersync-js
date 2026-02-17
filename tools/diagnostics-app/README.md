@@ -1,17 +1,14 @@
 # Sync Diagnostics Client
 
-The Sync Diagnostics Client presents data from the perspective of a specific user (no server-side stats) and can be used to:
+A browser-based tool for inspecting PowerSync databases. Both live (via sync) and offline (via SQLite file upload).
 
-- See stats about the user's local database.
-- Inspect tables and sync buckets on the device.
-- Get started quickly - play around with a SQLite database without creating an app.
-- Serve as a baseline to compare your own apps against if you run into issues.
+The app is available at [https://diagnostics-app.powersync.com/](https://diagnostics-app.powersync.com/)
 
-The app is currently available at [https://diagnostics-app.powersync.com/](https://diagnostics-app.powersync.com/)
+It can also be run as a local standalone web app, and is based on the [web SDK](/packages/web/).
 
-It can also be run as a local standalone web app, and is largely based on the [web SDK](/packages/web/).
+## Running the App
 
-## Running the app with Docker
+### Docker
 
 ```sh
 docker run --pull always -p 8082:80 journeyapps/powersync-diagnostics-app
@@ -19,7 +16,7 @@ docker run --pull always -p 8082:80 journeyapps/powersync-diagnostics-app
 
 The app will be available on http://localhost:8082.
 
-## Running the app locally
+### Local Development
 
 In the root of the repository, run:
 
@@ -28,69 +25,121 @@ pnpm install
 pnpm build:packages
 ```
 
-Then in this directory run:
+Then in this directory:
 
-```
+```sh
 pnpm dev
 ```
 
 The app is now available on [http://localhost:5173/](http://localhost:5173/).
 
-## Sign in
+## Getting Started
 
-Signing in as a user requires a PowerSync Token (JWT) and Endpoint.
+The landing page offers two paths:
 
-**PowerSync Token**:
+![](public/images/landing-page.png)
+
+- **Connect to PowerSync**: Live sync diagnostics using a JWT token. View real-time sync status, bucket data, and manage client parameters.
+- **Inspect SQLite File**: Offline inspection of a local `SQLite` file. No authentication required.
+
+---
+
+## Connect to PowerSync
+
+Connecting as a user requires a **PowerSync Token (JWT)** and **Endpoint**.
+
+### PowerSync Token
 
 Generate a [development token](https://docs.powersync.com/usage/installation/authentication-setup/development-tokens) for the user.
 
-**PowerSync Endpoint**: For PowerSync development tokens, the endpoint should be populated automatically. For other JWTs, e.g. Supabase tokens, it needs to be entered manually. For PowerSync Cloud, this is your instance URL. For self-hosted setups (running the PowerSync service inside Docker) the returned instance URL is internal to the Docker network and will be unreachable outside of it. Since we run the diagnostics app outside of docker, you can then connect to the endpoint as exposed by docker-proxy, e.g. `http://localhost:8080`.
+### PowerSync Endpoint
 
-## Functionality
+For PowerSync development tokens, the endpoint is populated automatically from the JWT. For other JWTs (e.g. Supabase tokens), enter it manually.
 
-### Database stats
+- **PowerSync Cloud**: Use your instance URL.
+- **Self-hosted (Docker)**: The internal Docker URL won't be reachable from outside the network. Use the endpoint as exposed by docker-proxy, e.g. `http://localhost:8080`.
 
-Details about the user's local database:
+You can also deep-link directly with a `?token=` query parameter to auto-sign-in.
 
-![](public/images/diagnostics-app-stats.png)
+### Sync Overview
 
-### Detected tables
+The main dashboard after connecting:
 
-This only includes tables with synced data (tables with 0 synced rows won’t be present):
+![](public/images/sync-overview.png)
 
-![](public/images/diagnostics-app-detected-tables.png)
+- **Summary stats**: Bucket count, total rows, downloaded/total operations, data size, metadata size, last synced time.
+- **Tables**: All synced tables with row count and data size.
+- **Buckets**: Per-bucket breakdown including download progress, operation counts, and status.
+- **Clear & Redownload**: Clears all local data and re-syncs from the server.
+- **Compacting alert**: Shown when total operations significantly exceed total rows, indicating bucket history has accumulated.
 
-### Sync buckets
+### Sync Stream Subscriptions
 
-![](public/images/diagnostics-app-buckets.png)
+![](public/images/sync-streams.png)
 
-Similar to tables above, this only includes buckets with synced data.
-When syncing large amounts of data:
+Manage sync stream subscriptions directly from the Sync Overview page:
 
-- Total operations is calculated from the checkpoint, will be populated quickly.
-- Other stats are populated as the data is downloaded, so this may take a while.
+- View all active stream subscriptions with their parameters, priority, sync time, and eviction time.
+- **Add Subscription**: Subscribe to a new stream with optional parameters and priority.
+- **Unsubscribe**: Remove explicit subscriptions (triggers a reconnect to apply the change).
 
-### SQL console
+### SQL Console
 
-Same functionality as in the other demo apps:
+![](public/images/sql-console.png)
 
-![](public/images/diagnostics-app-sql-console.png)
+Execute read-only SQL queries against the live PowerSync database:
 
-### Dynamic schema [internal]
+- Query history is persisted across sessions.
+- Large result sets are automatically limited to 10,000 rows to prevent UI freezes.
+- Results are displayed in a searchable, sortable, paginated table.
 
-The schema is required for some functionality, and is dynamically generated and automatically updated from downloaded data. The schema used is displayed in a separate page:
+### Dynamic Schema
 
-![](public/images/diagnostics-app-schema.png)
+![](public/images/dynamic-schema.png)
 
-If a table has 0 synced rows, it won’t be present in the schema, and queries referencing it will fail.
+The schema is dynamically inferred from downloaded data and automatically updated as new data arrives. This page displays the current inferred schema for reference.
 
-Tables and columns are only added to this schema - nothing is automatically removed when removed from sync rules. To refresh the schema, use the “Clear & Redownload” button on the main page.
+Note: Tables with 0 synced rows won't appear in the schema. To refresh after sync rule changes, use "Clear & Redownload" on the Sync Overview page.
 
-## Known issues
+### Client Parameters
 
-At this stage, we recommend running the app with the dev console open, as some errors are currently not being surfaced to the UI.
+![](public/images/client-parameters.png)
 
-Other known issues:
+Manage client parameters that are sent with sync requests:
+
+- Add, edit, and delete key-value parameters.
+- Supports string, number, boolean, array, and object types.
+- Changes trigger an automatic reconnect after a short debounce.
+
+---
+
+## SQLite File Inspector
+
+The File Inspector allows offline inspection of SQLite database files. It is useful for post-mortem analysis of database files extracted from devices. No authentication is required.
+
+### Opening a File
+
+![](public/images/inspector-drop-zone.png)
+
+Drag and drop a `SQLite` file, or click to browse. The file is opened in-browser using wa-sqlite - nothing is uploaded to a server.
+
+### Database Overview
+
+![](public/images/inspector-overview.png)
+
+- **File info**: File name, size, last modified date.
+- **Database structure**: Tables, views, indexes, and triggers with their SQL definitions and row counts.
+- **PowerSync stats**: If the file is a PowerSync database (contains `ps_` tables), aggregate stats are shown: total rows, data/metadata size, CRUD queue, bucket count. Warnings are shown for pending CRUD entries (failed uploads) or when compacting is recommended.
+
+### SQL Console
+
+![](public/images/inspector-sql-console.png)
+
+Execute read-only SQL queries against the uploaded file. Works the same as the sync SQL console, with separate query history.
+
+---
+
+## Known Issues
 
 - Having the app open in multiple tabs may cause issues.
-- When a lot of data is synced, the main dashboard may be slow.
+- When syncing large amounts of data, the dashboard may be slow while operations are being downloaded.

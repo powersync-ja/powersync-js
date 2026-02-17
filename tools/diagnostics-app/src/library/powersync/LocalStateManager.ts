@@ -11,7 +11,8 @@ import {
 const query_history = new Table(
   {
     query: column.text,
-    executed_at: column.text
+    executed_at: column.text,
+    source: column.text
   },
   { localOnly: true }
 );

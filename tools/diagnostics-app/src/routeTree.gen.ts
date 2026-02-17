@@ -9,17 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LoginRouteImport } from './routes/login'
+import { Route as InspectorRouteImport } from './routes/inspector'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InspectorIndexRouteImport } from './routes/inspector/index'
+import { Route as InspectorSqlConsoleRouteImport } from './routes/inspector/sql-console'
+import { Route as InspectorOverviewRouteImport } from './routes/inspector/overview'
 import { Route as AuthenticatedSyncDiagnosticsRouteImport } from './routes/_authenticated/sync-diagnostics'
 import { Route as AuthenticatedSqlConsoleRouteImport } from './routes/_authenticated/sql-console'
 import { Route as AuthenticatedSchemaRouteImport } from './routes/_authenticated/schema'
+import { Route as AuthenticatedFileInspectorRouteImport } from './routes/_authenticated/file-inspector'
 import { Route as AuthenticatedClientParametersRouteImport } from './routes/_authenticated/client-parameters'
+import { Route as AuthenticatedFileInspectorIndexRouteImport } from './routes/_authenticated/file-inspector/index'
+import { Route as AuthenticatedFileInspectorSqlConsoleRouteImport } from './routes/_authenticated/file-inspector/sql-console'
+import { Route as AuthenticatedFileInspectorOverviewRouteImport } from './routes/_authenticated/file-inspector/overview'
 
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const InspectorRoute = InspectorRouteImport.update({
+  id: '/inspector',
+  path: '/inspector',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -30,6 +37,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const InspectorIndexRoute = InspectorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => InspectorRoute,
+} as any)
+const InspectorSqlConsoleRoute = InspectorSqlConsoleRouteImport.update({
+  id: '/sql-console',
+  path: '/sql-console',
+  getParentRoute: () => InspectorRoute,
+} as any)
+const InspectorOverviewRoute = InspectorOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => InspectorRoute,
 } as any)
 const AuthenticatedSyncDiagnosticsRoute =
   AuthenticatedSyncDiagnosticsRouteImport.update({
@@ -47,80 +69,142 @@ const AuthenticatedSchemaRoute = AuthenticatedSchemaRouteImport.update({
   path: '/schema',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFileInspectorRoute =
+  AuthenticatedFileInspectorRouteImport.update({
+    id: '/file-inspector',
+    path: '/file-inspector',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedClientParametersRoute =
   AuthenticatedClientParametersRouteImport.update({
     id: '/client-parameters',
     path: '/client-parameters',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFileInspectorIndexRoute =
+  AuthenticatedFileInspectorIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFileInspectorRoute,
+  } as any)
+const AuthenticatedFileInspectorSqlConsoleRoute =
+  AuthenticatedFileInspectorSqlConsoleRouteImport.update({
+    id: '/sql-console',
+    path: '/sql-console',
+    getParentRoute: () => AuthenticatedFileInspectorRoute,
+  } as any)
+const AuthenticatedFileInspectorOverviewRoute =
+  AuthenticatedFileInspectorOverviewRouteImport.update({
+    id: '/overview',
+    path: '/overview',
+    getParentRoute: () => AuthenticatedFileInspectorRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/inspector': typeof InspectorRouteWithChildren
   '/client-parameters': typeof AuthenticatedClientParametersRoute
+  '/file-inspector': typeof AuthenticatedFileInspectorRouteWithChildren
   '/schema': typeof AuthenticatedSchemaRoute
   '/sql-console': typeof AuthenticatedSqlConsoleRoute
   '/sync-diagnostics': typeof AuthenticatedSyncDiagnosticsRoute
+  '/inspector/overview': typeof InspectorOverviewRoute
+  '/inspector/sql-console': typeof InspectorSqlConsoleRoute
+  '/inspector/': typeof InspectorIndexRoute
+  '/file-inspector/overview': typeof AuthenticatedFileInspectorOverviewRoute
+  '/file-inspector/sql-console': typeof AuthenticatedFileInspectorSqlConsoleRoute
+  '/file-inspector/': typeof AuthenticatedFileInspectorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
   '/client-parameters': typeof AuthenticatedClientParametersRoute
   '/schema': typeof AuthenticatedSchemaRoute
   '/sql-console': typeof AuthenticatedSqlConsoleRoute
   '/sync-diagnostics': typeof AuthenticatedSyncDiagnosticsRoute
+  '/inspector/overview': typeof InspectorOverviewRoute
+  '/inspector/sql-console': typeof InspectorSqlConsoleRoute
+  '/inspector': typeof InspectorIndexRoute
+  '/file-inspector/overview': typeof AuthenticatedFileInspectorOverviewRoute
+  '/file-inspector/sql-console': typeof AuthenticatedFileInspectorSqlConsoleRoute
+  '/file-inspector': typeof AuthenticatedFileInspectorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
+  '/inspector': typeof InspectorRouteWithChildren
   '/_authenticated/client-parameters': typeof AuthenticatedClientParametersRoute
+  '/_authenticated/file-inspector': typeof AuthenticatedFileInspectorRouteWithChildren
   '/_authenticated/schema': typeof AuthenticatedSchemaRoute
   '/_authenticated/sql-console': typeof AuthenticatedSqlConsoleRoute
   '/_authenticated/sync-diagnostics': typeof AuthenticatedSyncDiagnosticsRoute
+  '/inspector/overview': typeof InspectorOverviewRoute
+  '/inspector/sql-console': typeof InspectorSqlConsoleRoute
+  '/inspector/': typeof InspectorIndexRoute
+  '/_authenticated/file-inspector/overview': typeof AuthenticatedFileInspectorOverviewRoute
+  '/_authenticated/file-inspector/sql-console': typeof AuthenticatedFileInspectorSqlConsoleRoute
+  '/_authenticated/file-inspector/': typeof AuthenticatedFileInspectorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
+    | '/inspector'
     | '/client-parameters'
+    | '/file-inspector'
     | '/schema'
     | '/sql-console'
     | '/sync-diagnostics'
+    | '/inspector/overview'
+    | '/inspector/sql-console'
+    | '/inspector/'
+    | '/file-inspector/overview'
+    | '/file-inspector/sql-console'
+    | '/file-inspector/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
     | '/client-parameters'
     | '/schema'
     | '/sql-console'
     | '/sync-diagnostics'
+    | '/inspector/overview'
+    | '/inspector/sql-console'
+    | '/inspector'
+    | '/file-inspector/overview'
+    | '/file-inspector/sql-console'
+    | '/file-inspector'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/login'
+    | '/inspector'
     | '/_authenticated/client-parameters'
+    | '/_authenticated/file-inspector'
     | '/_authenticated/schema'
     | '/_authenticated/sql-console'
     | '/_authenticated/sync-diagnostics'
+    | '/inspector/overview'
+    | '/inspector/sql-console'
+    | '/inspector/'
+    | '/_authenticated/file-inspector/overview'
+    | '/_authenticated/file-inspector/sql-console'
+    | '/_authenticated/file-inspector/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  InspectorRoute: typeof InspectorRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/inspector': {
+      id: '/inspector'
+      path: '/inspector'
+      fullPath: '/inspector'
+      preLoaderRoute: typeof InspectorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -136,6 +220,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/inspector/': {
+      id: '/inspector/'
+      path: '/'
+      fullPath: '/inspector/'
+      preLoaderRoute: typeof InspectorIndexRouteImport
+      parentRoute: typeof InspectorRoute
+    }
+    '/inspector/sql-console': {
+      id: '/inspector/sql-console'
+      path: '/sql-console'
+      fullPath: '/inspector/sql-console'
+      preLoaderRoute: typeof InspectorSqlConsoleRouteImport
+      parentRoute: typeof InspectorRoute
+    }
+    '/inspector/overview': {
+      id: '/inspector/overview'
+      path: '/overview'
+      fullPath: '/inspector/overview'
+      preLoaderRoute: typeof InspectorOverviewRouteImport
+      parentRoute: typeof InspectorRoute
     }
     '/_authenticated/sync-diagnostics': {
       id: '/_authenticated/sync-diagnostics'
@@ -158,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSchemaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/file-inspector': {
+      id: '/_authenticated/file-inspector'
+      path: '/file-inspector'
+      fullPath: '/file-inspector'
+      preLoaderRoute: typeof AuthenticatedFileInspectorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/client-parameters': {
       id: '/_authenticated/client-parameters'
       path: '/client-parameters'
@@ -165,11 +277,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientParametersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/file-inspector/': {
+      id: '/_authenticated/file-inspector/'
+      path: '/'
+      fullPath: '/file-inspector/'
+      preLoaderRoute: typeof AuthenticatedFileInspectorIndexRouteImport
+      parentRoute: typeof AuthenticatedFileInspectorRoute
+    }
+    '/_authenticated/file-inspector/sql-console': {
+      id: '/_authenticated/file-inspector/sql-console'
+      path: '/sql-console'
+      fullPath: '/file-inspector/sql-console'
+      preLoaderRoute: typeof AuthenticatedFileInspectorSqlConsoleRouteImport
+      parentRoute: typeof AuthenticatedFileInspectorRoute
+    }
+    '/_authenticated/file-inspector/overview': {
+      id: '/_authenticated/file-inspector/overview'
+      path: '/overview'
+      fullPath: '/file-inspector/overview'
+      preLoaderRoute: typeof AuthenticatedFileInspectorOverviewRouteImport
+      parentRoute: typeof AuthenticatedFileInspectorRoute
+    }
   }
 }
 
+interface AuthenticatedFileInspectorRouteChildren {
+  AuthenticatedFileInspectorOverviewRoute: typeof AuthenticatedFileInspectorOverviewRoute
+  AuthenticatedFileInspectorSqlConsoleRoute: typeof AuthenticatedFileInspectorSqlConsoleRoute
+  AuthenticatedFileInspectorIndexRoute: typeof AuthenticatedFileInspectorIndexRoute
+}
+
+const AuthenticatedFileInspectorRouteChildren: AuthenticatedFileInspectorRouteChildren =
+  {
+    AuthenticatedFileInspectorOverviewRoute:
+      AuthenticatedFileInspectorOverviewRoute,
+    AuthenticatedFileInspectorSqlConsoleRoute:
+      AuthenticatedFileInspectorSqlConsoleRoute,
+    AuthenticatedFileInspectorIndexRoute: AuthenticatedFileInspectorIndexRoute,
+  }
+
+const AuthenticatedFileInspectorRouteWithChildren =
+  AuthenticatedFileInspectorRoute._addFileChildren(
+    AuthenticatedFileInspectorRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedClientParametersRoute: typeof AuthenticatedClientParametersRoute
+  AuthenticatedFileInspectorRoute: typeof AuthenticatedFileInspectorRouteWithChildren
   AuthenticatedSchemaRoute: typeof AuthenticatedSchemaRoute
   AuthenticatedSqlConsoleRoute: typeof AuthenticatedSqlConsoleRoute
   AuthenticatedSyncDiagnosticsRoute: typeof AuthenticatedSyncDiagnosticsRoute
@@ -177,6 +331,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClientParametersRoute: AuthenticatedClientParametersRoute,
+  AuthenticatedFileInspectorRoute: AuthenticatedFileInspectorRouteWithChildren,
   AuthenticatedSchemaRoute: AuthenticatedSchemaRoute,
   AuthenticatedSqlConsoleRoute: AuthenticatedSqlConsoleRoute,
   AuthenticatedSyncDiagnosticsRoute: AuthenticatedSyncDiagnosticsRoute,
@@ -186,10 +341,26 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface InspectorRouteChildren {
+  InspectorOverviewRoute: typeof InspectorOverviewRoute
+  InspectorSqlConsoleRoute: typeof InspectorSqlConsoleRoute
+  InspectorIndexRoute: typeof InspectorIndexRoute
+}
+
+const InspectorRouteChildren: InspectorRouteChildren = {
+  InspectorOverviewRoute: InspectorOverviewRoute,
+  InspectorSqlConsoleRoute: InspectorSqlConsoleRoute,
+  InspectorIndexRoute: InspectorIndexRoute,
+}
+
+const InspectorRouteWithChildren = InspectorRoute._addFileChildren(
+  InspectorRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
+  InspectorRoute: InspectorRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
