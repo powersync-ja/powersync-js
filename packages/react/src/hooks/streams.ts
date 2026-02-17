@@ -39,23 +39,20 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
   const { name, parameters } = options;
   const db = usePowerSync();
   const status = useStatus();
-  const [subscription, setSubscription] = useState<SyncStreamSubscription | null>(null);
+  const stream = useMemo(() => db.syncStream(name, parameters), [name, parameters]);
 
   useEffect(() => {
     let active = true;
     let subscription: SyncStreamSubscription | null = null;
 
-    db.syncStream(name, parameters)
-      .subscribe(options)
-      .then((sub) => {
-        if (active) {
-          subscription = sub;
-          setSubscription(sub);
-        } else {
-          // The cleanup function already ran, unsubscribe immediately.
-          sub.unsubscribe();
-        }
-      });
+    stream.subscribe(options).then((sub) => {
+      if (active) {
+        subscription = sub;
+      } else {
+        // The cleanup function already ran, unsubscribe immediately.
+        sub.unsubscribe();
+      }
+    });
 
     return () => {
       active = false;
@@ -63,9 +60,9 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
       // active to false.
       subscription?.unsubscribe();
     };
-  }, [name, parameters]);
+  }, [stream]);
 
-  return subscription && status.forStream(subscription);
+  return status.forStream(stream) ?? null;
 }
 
 /**
