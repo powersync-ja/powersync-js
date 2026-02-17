@@ -79,6 +79,12 @@ export class Schema<S extends SchemaType = SchemaType> {
     };
   }
 
+  /**
+   * Returns a representation of the raw table that is understood by the PowerSync SQLite core extension.
+   *
+   * The output of this can be passed through `JSON.serialize` and then used in `powersync_create_raw_table_crud_trigger`
+   * to define triggers for this table.
+   */
   static rawTableToJson(table: RawTable): unknown {
     const serialized: any = {
       name: table.name,
