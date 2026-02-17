@@ -10,7 +10,7 @@
     "start": "pnpm build && pnpm preview"
   },
   "dependencies": {
-    "@journeyapps/wa-sqlite": "^1.4.1",
+    "@journeyapps/wa-sqlite": "^1.5.0",
     "@powersync/react": "workspace:*",
     "@powersync/web": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.15",
