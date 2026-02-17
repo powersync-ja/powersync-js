@@ -5,6 +5,7 @@
 '@powersync/react-native': patch
 '@powersync/diagnostics-app': patch
 '@powersync/node': patch
+'@powersync/capacitor': patch
 ---
 
 Update PowerSync SQLite core extension to version 0.4.11.
