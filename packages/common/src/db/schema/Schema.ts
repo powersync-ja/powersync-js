@@ -1,3 +1,4 @@
+import { encodeTableOptions } from './internal.js';
 import { RawTable, RawTableType } from './RawTable.js';
 import { RowType, Table } from './Table.js';
 
@@ -57,7 +58,11 @@ export class Schema<S extends SchemaType = SchemaType> {
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {
-      this.rawTables.push(new RawTable(name, rawTableDefinition));
+      if ('name' in rawTableDefinition) {
+        this.rawTables.push(rawTableDefinition as RawTable);
+      } else {
+        this.rawTables.push({ name, ...rawTableDefinition });
+      }
     }
   }
 
@@ -70,7 +75,24 @@ export class Schema<S extends SchemaType = SchemaType> {
   toJSON() {
     return {
       tables: this.tables.map((t) => t.toJSON()),
-      raw_tables: this.rawTables
+      raw_tables: this.rawTables.map(Schema.rawTableToJson)
     };
+  }
+
+  static rawTableToJson(table: RawTable): unknown {
+    const serialized: any = {
+      name: table.name,
+      put: table.put,
+      delete: table.delete,
+      clear: table.clear
+    };
+    if ('tableName' in table) {
+      // We have schema options
+      serialized.table_name = table.tableName;
+      serialized.synced_columns = table.syncedColumns;
+      Object.assign(serialized, encodeTableOptions(table));
+    }
+
+    return serialized;
   }
 }

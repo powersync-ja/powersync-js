@@ -725,18 +725,11 @@ function defineSyncTests(impl: SyncClientImplementation) {
   });
 
   if (impl == SyncClientImplementation.RUST) {
-    mockSyncServiceTest('raw tables', async ({ syncService }) => {
+    mockSyncServiceTest('raw tables with inferred statements', async ({ syncService }) => {
       const customSchema = new Schema({});
       customSchema.withRawTables({
         lists: {
-          put: {
-            sql: 'INSERT OR REPLACE INTO lists (id, name) VALUES (?, ?)',
-            params: ['Id', { Column: 'name' }]
-          },
-          delete: {
-            sql: 'DELETE FROM lists WHERE id = ?',
-            params: ['Id']
-          }
+          tableName: 'lists'
         }
       });
 
@@ -774,6 +767,85 @@ function defineSyncTests(impl: SyncClientImplementation) {
       await powersync.waitForFirstSync();
 
       expect((await query.next()).value.rows._array).toStrictEqual([{ id: 'my_list', name: 'custom list' }]);
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '2',
+          buckets: [bucket('a', 2)]
+        }
+      });
+      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == true);
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '2',
+              op: 'REMOVE',
+              object_id: 'my_list',
+              object_type: 'lists'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '2' } });
+      await vi.waitFor(() => powersync.currentStatus.dataFlowStatus.downloading == false);
+
+      expect((await query.next()).value.rows._array).toStrictEqual([]);
+    });
+
+    mockSyncServiceTest('raw tables with explicit statements', async ({ syncService }) => {
+      const customSchema = new Schema({});
+      customSchema.withRawTables({
+        lists: {
+          put: {
+            sql: 'INSERT OR REPLACE INTO lists (id, name, _rest) VALUES (?, ?, ?)',
+            params: ['Id', { Column: 'name' }, 'Rest']
+          },
+          delete: {
+            sql: 'DELETE FROM lists WHERE id = ?',
+            params: ['Id']
+          }
+        }
+      });
+
+      const powersync = await syncService.createDatabase({ schema: customSchema });
+      await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT, _rest TEXT);');
+
+      const query = powersync.watchWithAsyncGenerator('SELECT * FROM lists')[Symbol.asyncIterator]();
+      expect((await query.next()).value.rows._array).toStrictEqual([]);
+
+      powersync.connect(new TestConnector(), options);
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '1',
+          buckets: [bucket('a', 1)]
+        }
+      });
+      syncService.pushLine({
+        data: {
+          bucket: 'a',
+          data: [
+            {
+              checksum: 0,
+              op_id: '1',
+              op: 'PUT',
+              object_id: 'my_list',
+              object_type: 'lists',
+              data: '{"name": "custom list", "additional": "foo"}'
+            }
+          ]
+        }
+      });
+      syncService.pushLine({ checkpoint_complete: { last_op_id: '1' } });
+      await powersync.waitForFirstSync();
+
+      expect((await query.next()).value.rows._array).toStrictEqual([
+        { id: 'my_list', name: 'custom list', _rest: '{"additional":"foo"}' }
+      ]);
 
       syncService.pushLine({
         checkpoint: {
