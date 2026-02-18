@@ -58,11 +58,7 @@ export class Schema<S extends SchemaType = SchemaType> {
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {
-      if ('name' in rawTableDefinition) {
-        this.rawTables.push(rawTableDefinition as RawTable);
-      } else {
-        this.rawTables.push({ name, ...rawTableDefinition });
-      }
+      this.rawTables.push({ name, ...rawTableDefinition });
     }
   }
 
