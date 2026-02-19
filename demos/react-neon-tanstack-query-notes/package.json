@@ -19,7 +19,7 @@
     "@powersync/drizzle-driver": "^0.7.3",
     "@powersync/react": "^1.8.3",
     "@powersync/tanstack-react-query": "^0.1.15",
-    "@powersync/web": "^1.33.0",
+    "@powersync/web": "^1.34.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toggle": "^1.1.10",
     "@tailwindcss/vite": "^4.1.17",

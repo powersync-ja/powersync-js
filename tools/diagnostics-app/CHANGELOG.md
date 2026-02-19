@@ -4,6 +4,19 @@
 
 ### Minor Changes
 
+- 062af45: Added a SQLite File Inspector page with drag-and-drop support. Added search and sorting to the DataTable. Added the ability to unsubscribe from sync streams.
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+- Updated dependencies [f0a36c9]
+  - @powersync/web@1.34.0
+  - @powersync/react@1.8.3
+
+## 0.11.0
+
+### Minor Changes
+
 - 2a7e8d3: Added state tracking and improved UX around client parameters
 - a7af6c1: Migrate routing to @tanstack/react-router and simplify client parameters UI
 

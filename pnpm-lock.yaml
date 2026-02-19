@@ -327,7 +327,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.33.0
+        specifier: workspace:^1.34.0
         version: link:../web
       async-mutex:
         specifier: 'catalog:'
@@ -19751,9 +19751,7 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
