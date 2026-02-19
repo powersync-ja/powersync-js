@@ -86,15 +86,38 @@ function notifySyncChange() {
   syncChangeListeners.forEach((listener) => listener());
 }
 
+let _schemaReadyResolve: () => void;
+const _schemaReadyPromise = new Promise<void>((resolve) => {
+  _schemaReadyResolve = resolve;
+});
+
 /**
  * Call after localStateDb is initialized to connect if credentials exist.
- * Loads dynamic schema from local DB before connecting.
+ * Loads dynamic schema from local DB and applies it immediately (so views
+ * exist before sync starts), then connects if credentials are available.
  */
 export async function tryConnectIfCredentials(): Promise<void> {
   await schemaManager.loadFromDb();
+  // Ensure db initialization (including its own updateSchema) completes first,
+  // so refreshSchemaNow doesn't race with the initial schema application.
+  await db.waitForReady();
+  await schemaManager.refreshSchemaNow(db);
+  _schemaReadyResolve();
   if (await connector.hasCredentials()) {
     await connect();
   }
+}
+
+/**
+ * Returns true once the persisted dynamic schema has been applied to the database.
+ * Use this to gate operations that depend on user tables existing (e.g. auto-executing queries).
+ */
+export function useSchemaReady(): boolean {
+  const [ready, setReady] = React.useState(false);
+  React.useEffect(() => {
+    _schemaReadyPromise.then(() => setReady(true));
+  }, []);
+  return ready;
 }
 
 export async function connect() {
