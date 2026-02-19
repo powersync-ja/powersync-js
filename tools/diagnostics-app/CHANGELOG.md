@@ -1,5 +1,11 @@
 # diagnostics-app
 
+## 0.12.0
+
+### Minor Changes
+
+- feb5ed0: Fixed redirect for removed /login route to go to home page. Fixed token query parameter deep-link and stale credential display after re-login.
+
 ## 0.11.0
 
 ### Minor Changes
