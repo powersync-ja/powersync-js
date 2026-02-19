@@ -65,9 +65,6 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
   return status.forStream(stream) ?? null;
 }
 
-/**
- * @internal
- */
 export function useAllSyncStreamsHaveSynced(
   db: AbstractPowerSyncDatabase,
   streams: QuerySyncStreamOptions[] | undefined
