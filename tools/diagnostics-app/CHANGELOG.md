@@ -1,5 +1,11 @@
 # diagnostics-app
 
+## 0.13.0
+
+### Minor Changes
+
+- b614307: Fixed the height of the schema editor on the Dynamic Schema page to fill the available viewport height
+
 ## 0.12.0
 
 ### Minor Changes
