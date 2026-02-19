@@ -1,5 +1,11 @@
 # @powersync/op-sqlite
 
+## 0.9.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
 ## 0.9.0
 
 ### Minor Changes

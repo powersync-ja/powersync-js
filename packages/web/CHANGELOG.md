@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.34.0
+
+### Minor Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
 ## 1.33.0
 
 ### Minor Changes
