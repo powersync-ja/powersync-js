@@ -1,3 +1,4 @@
+import { encodeTableOptions } from './internal.js';
 import { RawTable, RawTableType } from './RawTable.js';
 import { RowType, Table } from './Table.js';
 
@@ -57,7 +58,7 @@ export class Schema<S extends SchemaType = SchemaType> {
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {
-      this.rawTables.push(new RawTable(name, rawTableDefinition));
+      this.rawTables.push({ name, ...rawTableDefinition });
     }
   }
 
@@ -70,7 +71,30 @@ export class Schema<S extends SchemaType = SchemaType> {
   toJSON() {
     return {
       tables: this.tables.map((t) => t.toJSON()),
-      raw_tables: this.rawTables
+      raw_tables: this.rawTables.map(Schema.rawTableToJson)
     };
+  }
+
+  /**
+   * Returns a representation of the raw table that is understood by the PowerSync SQLite core extension.
+   *
+   * The output of this can be passed through `JSON.serialize` and then used in `powersync_create_raw_table_crud_trigger`
+   * to define triggers for this table.
+   */
+  static rawTableToJson(table: RawTable): unknown {
+    const serialized: any = {
+      name: table.name,
+      put: table.put,
+      delete: table.delete,
+      clear: table.clear
+    };
+    if ('tableName' in table) {
+      // We have schema options
+      serialized.table_name = table.tableName;
+      serialized.synced_columns = table.syncedColumns;
+      Object.assign(serialized, encodeTableOptions(table));
+    }
+
+    return serialized;
   }
 }
