@@ -1,5 +1,6 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
-import { connector } from '@/library/powersync/ConnectionManager';
+import { connector, connect } from '@/library/powersync/ConnectionManager';
+import { localStateDb } from '@/library/powersync/LocalStateManager';
 import { getTokenEndpoint } from '@/library/powersync/TokenConnector';
 import { z } from 'zod';
 import { Formik, FormikErrors } from 'formik';
@@ -30,7 +31,9 @@ export const Route = createFileRoute('/')({
         throw new Error('endpoint is required');
       }
 
-      await connector.signIn({ token: search.token, endpoint });
+      await localStateDb.init();
+      await connector.saveCredentials({ token: search.token, endpoint });
+      await connect();
 
       throw redirect({ to: '/sync-diagnostics' });
     }
@@ -86,7 +89,8 @@ function LandingPage() {
                   if (endpoint == null) {
                     throw new Error('endpoint is required');
                   }
-                  await connector.signIn({ token: values.token, endpoint });
+                  await connector.saveCredentials({ token: values.token, endpoint });
+                  await connect();
                   navigate({ to: '/sync-diagnostics' });
                 } catch (ex: any) {
                   console.error(ex);

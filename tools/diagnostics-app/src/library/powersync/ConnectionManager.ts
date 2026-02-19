@@ -145,13 +145,6 @@ export async function connect() {
   notifySyncChange();
   await sync.connect({ params, clientImplementation: client });
   await schemaManager.refreshSchemaNow(db);
-  if (!sync.syncStatus.connected) {
-    const error = sync.syncStatus.dataFlowStatus.downloadError ?? new Error('Failed to connect');
-    lastConnectionError = error;
-    notifySyncChange();
-    await sync.disconnect();
-    throw error;
-  }
 }
 
 export async function clearData() {

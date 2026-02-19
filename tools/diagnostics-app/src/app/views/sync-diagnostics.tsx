@@ -117,7 +117,8 @@ export default function SyncDiagnosticsPage() {
         tokenPayload: decodeTokenPayload(credentials.token)
       };
     },
-    staleTime: Infinity
+    staleTime: 0,
+    refetchOnMount: 'always'
   });
 
   const { data: stats, isLoading } = useTanstackQuery({
