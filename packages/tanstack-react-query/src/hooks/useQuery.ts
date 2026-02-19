@@ -1,11 +1,23 @@
 import { type CompilableQuery } from '@powersync/common';
-import { usePowerSync } from '@powersync/react';
+import { QuerySyncStreamOptions, usePowerSync } from '@powersync/react';
 import * as Tanstack from '@tanstack/react-query';
 import { usePowerSyncQueries } from './usePowerSyncQueries.js';
 
 export type PowerSyncQueryOptions<T> = {
   query?: string | CompilableQuery<T>;
   parameters?: any[];
+  /**
+   * An optional array of sync streams (with names and parameters) backing the query.
+   *
+   * When set, `useQuery` will subscribe to those streams (and automatically handle unsubscribing from them, too).
+   *
+   * If {@link QuerySyncStreamOptions} is set on a stream, `useQuery` will remain in a loading state until that stream
+   * is marked as {@link SyncSubscriptionDescription.hasSynced}. This ensures the query is not missing rows that haven't
+   * been downloaded.
+   * Note however that after an initial sync, the query will not block itself while new rows are downloading. Instead,
+   * consistent sync snapshots will be made available as they've been processed by PowerSync.
+   **/
+  streams?: QuerySyncStreamOptions[];
 };
 
 export type UseBaseQueryOptions<TQueryOptions> = TQueryOptions & PowerSyncQueryOptions<any>;
@@ -120,14 +132,15 @@ function useQueryCore<
     throw new Error('PowerSync is not available');
   }
 
-  const { query, parameters, queryKey, ...resolvedOptions } = options;
+  const { query, parameters, queryKey, streams, ...resolvedOptions } = options;
 
-  const [{ queryFn }] = usePowerSyncQueries(
+  const { queries: [{ queryFn }], streamsHaveSynced } = usePowerSyncQueries(
     [
       {
         query,
         parameters,
-        queryKey
+        queryKey,
+        streams
       }
     ],
     queryClient
@@ -137,7 +150,8 @@ function useQueryCore<
     {
       ...(resolvedOptions as TQueryOptions),
       queryKey,
-      queryFn: query ? queryFn : resolvedOptions.queryFn
+      queryFn: query ? queryFn : resolvedOptions.queryFn,
+      enabled: streamsHaveSynced
     } as TQueryOptions,
     queryClient
   );
