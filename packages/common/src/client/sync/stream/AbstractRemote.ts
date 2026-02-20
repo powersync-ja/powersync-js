@@ -1,14 +1,20 @@
 import type { BSON } from 'bson';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
-import { RSocket, RSocketConnector, Requestable } from 'rsocket-core';
+import { Requestable, RSocket, RSocketConnector } from 'rsocket-core';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
-import { DataStream } from '../../../utils/DataStream.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import { StreamingSyncRequest } from './streaming-sync-types.js';
-
+import {
+  doneResult,
+  extractBsonObjects,
+  extractJsonLines,
+  SimpleAsyncIterator
+} from '../../../utils/stream_transform.js';
+import { EventIterator } from 'event-iterator';
+import type { Queue } from 'event-iterator/lib/event-iterator.js';
 
 export type BSONImplementation = typeof BSON;
 
@@ -20,6 +26,7 @@ export type RemoteConnector = {
 const POWERSYNC_TRAILING_SLASH_MATCH = /\/+$/;
 const POWERSYNC_JS_VERSION = PACKAGE.version;
 
+const SYNC_QUEUE_REQUEST_HIGH_WATER = 10;
 const SYNC_QUEUE_REQUEST_LOW_WATER = 5;
 
 // Keep alive message is sent every period
@@ -39,7 +46,7 @@ export type SyncStreamOptions = {
   path: string;
   data: StreamingSyncRequest;
   headers?: Record<string, string>;
-  abortSignal?: AbortSignal;
+  abortSignal: AbortSignal;
   fetchOptions?: Request;
 };
 
@@ -267,7 +274,7 @@ export abstract class AbstractRemote {
    * @returns A text decoder decoding UTF-8. This is a method to allow patching it for Hermes which doesn't support the
    * builtin, without forcing us to bundle a polyfill with `@powersync/common`.
    */
-  protected createTextDecoder(): TextDecoder {
+  createTextDecoder(): TextDecoder {
     return new TextDecoder();
   }
 
@@ -276,17 +283,17 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Returns a data stream of sync line data.
+   * Returns a data stream of sync line data, fetched via RSocket-over-WebSocket.
    *
-   * @param map Maps received payload frames to the typed event value.
+   * The only mechanism to abort the returned stream is to use the abort signal in {@link SocketSyncStreamOptions}.
+   *
    * @param bson A BSON encoder and decoder. When set, the data stream will be requested with a BSON payload
    * (required for compatibility with older sync services).
    */
-  async socketStreamRaw<T>(
+  async socketStreamRaw(
     options: SocketSyncStreamOptions,
-    map: (buffer: Uint8Array) => T,
     bson?: typeof BSON
-  ): Promise<DataStream<T>> {
+  ): Promise<SimpleAsyncIterator<Uint8Array>> {
     const { path, fetchStrategy = FetchStrategy.Buffered } = options;
     const mimeType = bson == null ? 'application/json' : 'application/bson';
 
@@ -303,65 +310,67 @@ export abstract class AbstractRemote {
 
     const syncQueueRequestSize = fetchStrategy == FetchStrategy.Buffered ? 10 : 1;
     const request = await this.buildRequest(path);
+    const url = this.options.socketUrlTransformer(request.url);
 
     // Add the user agent in the setup payload - we can't set custom
     // headers with websockets on web. The browser userAgent is however added
     // automatically as a header.
     const userAgent = this.getUserAgent();
 
-    const stream = new DataStream<T, Uint8Array>({
-      logger: this.logger,
-      pressure: {
-        lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER
-      },
-      mapLine: map
-    });
+    // While we're connecting (a process that can't be aborted in RSocket), the WebSocket instance to close if we wanted
+    // to abort the connection.
+    let pendingSocket: WebSocket | null = null;
+    let keepAliveTimeout: any;
+    let rsocket: RSocket | null = null;
+    let queue: Queue<Uint8Array> | null = null;
+    let didClose = false;
+
+    const abortRequest = () => {
+      if (didClose) {
+        return;
+      }
+      didClose = true;
+
+      clearTimeout(keepAliveTimeout);
+
+      if (pendingSocket) {
+        pendingSocket.close();
+      }
+
+      if (rsocket) {
+        rsocket.close();
+      }
+
+      if (queue) {
+        queue.stop();
+      }
+    };
 
     // Handle upstream abort
-    if (options.abortSignal?.aborted) {
+    if (options.abortSignal.aborted) {
       throw new AbortOperation('Connection request aborted');
     } else {
-      options.abortSignal?.addEventListener(
-        'abort',
-        () => {
-          stream.close();
-        },
-        { once: true }
-      );
+      options.abortSignal.addEventListener('abort', abortRequest);
     }
 
-    let keepAliveTimeout: any;
     const resetTimeout = () => {
       clearTimeout(keepAliveTimeout);
       keepAliveTimeout = setTimeout(() => {
         this.logger.error(`No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`);
-        stream.close();
+        abortRequest();
       }, SOCKET_TIMEOUT_MS);
     };
     resetTimeout();
 
-    // Typescript complains about this being `never` if it's not assigned here.
-    // This is assigned in `wsCreator`.
-    let disposeSocketConnectionTimeout = () => {};
-
-    const url = this.options.socketUrlTransformer(request.url);
     const connector = new RSocketConnector({
       transport: new WebsocketClientTransport({
         url,
         wsCreator: (url) => {
-          const socket = this.createSocket(url);
-          disposeSocketConnectionTimeout = stream.registerListener({
-            closed: () => {
-              // Allow closing the underlying WebSocket if the stream was closed before the
-              // RSocket connect completed. This should effectively abort the request.
-              socket.close();
-            }
-          });
+          const socket = (pendingSocket = this.createSocket(url));
 
-          socket.addEventListener('message', (event) => {
+          socket.addEventListener('message', () => {
             resetTimeout();
           });
-
           return socket;
         }
       }),
@@ -380,47 +389,50 @@ export abstract class AbstractRemote {
       }
     });
 
-    let rsocket: RSocket;
     try {
       rsocket = await connector.connect();
       // The connection is established, we no longer need to monitor the initial timeout
-      disposeSocketConnectionTimeout();
+      pendingSocket = null;
     } catch (ex) {
       this.logger.error(`Failed to connect WebSocket`, ex);
-      clearTimeout(keepAliveTimeout);
-      if (!stream.closed) {
-        await stream.close();
-      }
+      abortRequest();
+
       throw ex;
     }
 
     resetTimeout();
 
-    let socketIsClosed = false;
-    const closeSocket = () => {
-      clearTimeout(keepAliveTimeout);
-      if (socketIsClosed) {
-        return;
-      }
-      socketIsClosed = true;
-      rsocket.close();
-    };
     // Helps to prevent double close scenarios
-    rsocket.onClose(() => (socketIsClosed = true));
-    // We initially request this amount and expect these to arrive eventually
-    let pendingEventsCount = syncQueueRequestSize;
+    rsocket.onClose(() => (rsocket = null));
 
-    const disposeClosedListener = stream.registerListener({
-      closed: () => {
-        closeSocket();
-        disposeClosedListener();
-      }
-    });
-
-    const socket = await new Promise<Requestable>((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       let connectionEstablished = false;
+      let pendingEventsCount = syncQueueRequestSize;
+      let paused = false;
+      let res: Requestable | null = null;
 
-      const res = rsocket.requestStream(
+      function requestMore() {
+        const delta = syncQueueRequestSize - pendingEventsCount;
+        if (!paused && delta > 0) {
+          res?.request(delta);
+          pendingEventsCount = syncQueueRequestSize;
+        }
+      }
+
+      const events = new EventIterator<Uint8Array>(
+        (q) => {
+          queue = q;
+
+          q.on('highWater', () => (paused = true));
+          q.on('lowWater', () => {
+            paused = false;
+            requestMore();
+          });
+        },
+        { highWaterMark: SYNC_QUEUE_REQUEST_HIGH_WATER, lowWaterMark: SYNC_QUEUE_REQUEST_LOW_WATER }
+      )[Symbol.asyncIterator]();
+
+      res = rsocket!.requestStream(
         {
           data: toBuffer(options.data),
           metadata: toBuffer({
@@ -447,7 +459,7 @@ export abstract class AbstractRemote {
             }
             // RSocket will close the RSocket stream automatically
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
-            stream.close();
+            abortRequest();
             // Handles cases where the connection failed e.g. auth error or connection error
             if (!connectionEstablished) {
               reject(e);
@@ -457,48 +469,49 @@ export abstract class AbstractRemote {
             // The connection is active
             if (!connectionEstablished) {
               connectionEstablished = true;
-              resolve(res);
+              resolve(events);
             }
             const { data } = payload;
-            // Less events are now pending
-            pendingEventsCount--;
-            if (!data) {
-              return;
+
+            if (data) {
+              queue!.push(data);
             }
 
-            stream.enqueueData(data);
+            // Less events are now pending
+            pendingEventsCount--;
+
+            // Request another event (unless the downstream consumer is paused).
+            requestMore();
           },
           onComplete: () => {
-            stream.close();
+            abortRequest(); // this will also emit a done event
           },
           onExtension: () => {}
         }
       );
     });
-
-    const l = stream.registerListener({
-      lowWater: async () => {
-        // Request to fill up the queue
-        const required = syncQueueRequestSize - pendingEventsCount;
-        if (required > 0) {
-          socket.request(syncQueueRequestSize - pendingEventsCount);
-          pendingEventsCount = syncQueueRequestSize;
-        }
-      },
-      closed: () => {
-        l();
-      }
-    });
-
-    return stream;
   }
 
   /**
-   * Connects to the sync/stream http endpoint, mapping and emitting each received string line.
+   * @returns Whether the HTTP implementation on this platform can receive streamed binary responses. This is true on
+   * all platforms except React Native (who would have guessed...), where we must not request BSON responses.
+   *
+   * @see https://github.com/react-native-community/fetch?tab=readme-ov-file#motivation
    */
-  async postStreamRaw<T>(options: SyncStreamOptions, mapLine: (line: string) => T): Promise<DataStream<T>> {
-    const { data, path, headers, abortSignal } = options;
+  protected get supportsStreamingBinaryResponses(): boolean {
+    return true;
+  }
 
+  /**
+   * Posts a `/sync/stream` request, asserts that it completes successfully and returns the streaming response as an
+   * async iterator of byte blobs.
+   *
+   * To cancel the async iterator, use the abort signal from {@link SyncStreamOptions} passed to this method.
+   */
+  protected async fetchStreamRaw(
+    options: SyncStreamOptions
+  ): Promise<{ isBson: boolean; stream: SimpleAsyncIterator<Uint8Array> }> {
+    const { data, path, headers, abortSignal } = options;
     const request = await this.buildRequest(path);
 
     /**
@@ -511,138 +524,101 @@ export abstract class AbstractRemote {
      *  an unhandled exception on the window level.
      */
     if (abortSignal?.aborted) {
-      throw new AbortOperation('Abort request received before making postStreamRaw request');
+      throw new AbortOperation('Abort request received before making fetchStreamRaw request');
     }
 
     const controller = new AbortController();
-    let requestResolved = false;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     abortSignal?.addEventListener('abort', () => {
-      if (!requestResolved) {
+      const reason =
+        abortSignal.reason ??
+        new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.');
+
+      if (reader == null) {
         // Only abort via the abort controller if the request has not resolved yet
-        controller.abort(
-          abortSignal.reason ??
-            new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.')
-        );
+        controller.abort(reason);
+      } else {
+        reader.cancel(reason).catch(() => {
+          // Cancelling the reader might rethrow an exception we would have handled by throwing in next(). So we can
+          // ignore it here.
+        });
       }
     });
 
-    const res = await this.fetch(request.url, {
-      method: 'POST',
-      headers: { ...headers, ...request.headers },
-      body: JSON.stringify(data),
-      signal: controller.signal,
-      cache: 'no-store',
-      ...(this.options.fetchOptions ?? {}),
-      ...options.fetchOptions
-    }).catch((ex) => {
+    let res: Response;
+    let responseIsBson = false;
+    try {
+      const ndJson = 'application/x-ndjson';
+      const bson = 'application/vnd.powersync.bson-stream';
+
+      res = await this.fetch(request.url, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          ...request.headers,
+          accept: this.supportsStreamingBinaryResponses ? `${bson};q=0.9,${ndJson};q=0.8` : ndJson
+        },
+        body: JSON.stringify(data),
+        signal: controller.signal,
+        cache: 'no-store',
+        ...(this.options.fetchOptions ?? {}),
+        ...options.fetchOptions
+      });
+
+      if (!res.ok || !res.body) {
+        const text = await res.text();
+        this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
+        const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
+        error.status = res.status;
+        throw error;
+      }
+
+      const contentType = res.headers.get('content-type');
+      responseIsBson = contentType == bson;
+    } catch (ex) {
       if (ex.name == 'AbortError') {
         throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
       }
       throw ex;
-    });
-
-    if (!res) {
-      throw new Error('Fetch request was aborted');
     }
 
-    requestResolved = true;
+    reader = res.body.getReader();
 
-    if (!res.ok || !res.body) {
-      const text = await res.text();
-      this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
-      const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
-      error.status = res.status;
-      throw error;
-    }
+    const stream: SimpleAsyncIterator<Uint8Array> = {
+      next: async () => {
+        if (controller.signal.aborted) {
+          return doneResult;
+        }
 
-    // Create a new stream splitting the response at line endings while also handling cancellations
-    // by closing the reader.
-    const reader = res.body.getReader();
-    let readerReleased = false;
-    // This will close the network request and read stream
-    const closeReader = async () => {
-      try {
-        readerReleased = true;
-        await reader.cancel();
-      } catch (ex) {
-        // an error will throw if the reader hasn't been used yet
+        try {
+          return await reader.read();
+        } catch (ex) {
+          if (controller.signal.aborted) {
+            // .read() completes with an error if we cancel the reader, which we do to disconnect. So this is just
+            // things working as intended, we can return a done event and consider the exception handled.
+            return doneResult;
+          }
+
+          throw ex;
+        }
       }
-      reader.releaseLock();
     };
 
+    return { isBson: responseIsBson, stream };
+  }
 
-    const stream = new DataStream<T, string>({
-      logger: this.logger,
-      mapLine: mapLine,
-      pressure: {
-        highWaterMark: 20,
-        lowWaterMark: 10
-      }
-    });
-
-    abortSignal?.addEventListener('abort', () => {
-      closeReader();
-      stream.close();
-    });
-
-    const decoder = this.createTextDecoder();
-    let buffer = '';
-
-
-    const consumeStream = async () => {
-      while (!stream.closed && !abortSignal?.aborted && !readerReleased) {
-        const { done, value } = await reader.read();
-        if (done) {
-          const remaining = buffer.trim();
-          if (remaining.length != 0) {
-            stream.enqueueData(remaining);
-          }
-
-          stream.close();
-          await closeReader();
-          return;
-        }
-
-        const data = decoder.decode(value, { stream: true });
-        buffer += data;
-
-        const lines = buffer.split('\n');
-        for (var i = 0; i < lines.length - 1; i++) {
-          var l = lines[i].trim();
-          if (l.length > 0) {
-            stream.enqueueData(l);
-          }
-        }
-
-        buffer = lines[lines.length - 1];
-
-        // Implement backpressure by waiting for the low water mark to be reached
-        if (stream.dataQueue.length > stream.highWatermark) {
-          await new Promise<void>((resolve) => {
-            const dispose = stream.registerListener({
-              lowWater: async () => {
-                resolve();
-                dispose();
-              },
-              closed: () => {
-                resolve();
-                dispose();
-              }
-            })
-          })
-        }
-      }
+  /**
+   * Posts a `/sync/stream` request.
+   *
+   * Depending on the `Content-Type` of the response, this returns strings for sync lines or encoded BSON documents as
+   * {@link Uint8Array}s.
+   */
+  async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
+    const { isBson, stream } = await this.fetchStreamRaw(options);
+    if (isBson) {
+      return extractBsonObjects(stream);
+    } else {
+      return extractJsonLines(stream, this.createTextDecoder());
     }
-
-    consumeStream().catch(ex => this.logger.error('Error consuming stream', ex));
-
-    const l = stream.registerListener({
-      closed: () => {
-        closeReader();
-        l?.();
-      }
-    });
-
-    return stream;
   }
 }
