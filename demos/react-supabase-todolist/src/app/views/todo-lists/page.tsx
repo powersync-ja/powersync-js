@@ -1,9 +1,10 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { useSupabase } from '@/components/providers/SystemProvider';
+import { drizzleDb, useSupabase } from '@/components/providers/SystemProvider';
 import { GuardBySync } from '@/components/widgets/GuardBySync';
 import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
 import { LISTS_TABLE } from '@/library/powersync/AppSchema';
+import { lists } from '@/library/powersync/drizzle';
 import AddIcon from '@mui/icons-material/Add';
 import {
   Box,
@@ -17,7 +18,9 @@ import {
   styled
 } from '@mui/material';
 import Fab from '@mui/material/Fab';
-import { usePowerSync } from '@powersync/react';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+import { usePowerSync, useQuery } from '@powersync/react';
+import { asc } from 'drizzle-orm';
 import React from 'react';
 
 export default function TodoListsPage() {
@@ -49,6 +52,17 @@ export default function TodoListsPage() {
       throw new Error('Could not create list');
     }
   };
+
+  const query = drizzleDb.select().from(lists).orderBy(asc(lists.name));
+  drizzleDb.watch(query, {
+    onResult(results) {
+      console.log("db.watch output", results);
+    },
+  });
+
+
+  const { data: listRecords, isLoading } = useQuery(toCompilableQuery(query));
+  console.log('useQuery output', listRecords);
 
   return (
     <NavigationPage title="Todo Lists">

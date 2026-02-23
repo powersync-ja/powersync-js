@@ -13,6 +13,8 @@ import {
 } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
+import { drizzleSchema } from '@/library/powersync/drizzle';
+import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 
 declare const APP_VERSION: string;
 
@@ -31,6 +33,10 @@ export const db = new PowerSyncDatabase({
   flags: {
     enableMultiTabs: typeof SharedWorker !== 'undefined'
   }
+});
+
+export const drizzleDb = wrapPowerSyncWithDrizzle(db, {
+  schema: drizzleSchema
 });
 
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
@@ -82,7 +88,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
 
     powerSync.init();
     const l = connector.registerListener({
-      initialized: () => {},
+      initialized: () => { },
       sessionStarted: () => {
         powerSync.connect(connector, {
           appMetadata: {
