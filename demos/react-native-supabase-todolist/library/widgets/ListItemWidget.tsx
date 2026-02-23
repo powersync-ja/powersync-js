@@ -44,13 +44,14 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, descripti
             }}
           />
         }>
-        <Icon name="format-list-checks" type="material-community" color="grey" />
-        <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
-          <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
-        </ListItem.Content>
-
-        <ListItem.Chevron />
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          <Icon name="format-list-checks" type="material-community" color="grey" />
+          <ListItem.Content style={{ minHeight: 80, flex: 1 }}>
+            <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
+            <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
+          </ListItem.Content>
+          <ListItem.Chevron />
+        </View>
       </ListItem.Swipeable>
     </View>
   );

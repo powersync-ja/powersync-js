@@ -63,47 +63,49 @@ export const TodoItemWidget: React.FC<TodoItemWidgetProps> = (props) => {
             }}
           />
         }>
-        {loading ? (
-          <ActivityIndicator />
-        ) : (
-          <ListItem.CheckBox
-            iconType="material-community"
-            checkedIcon="checkbox-marked"
-            uncheckedIcon="checkbox-blank-outline"
-            checked={!!record.completed}
-            onPress={async () => {
-              setLoading(true);
-              await onToggleCompletion(!record.completed);
-              setLoading(false);
-            }}
-          />
-        )}
-        <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title style={{ fontSize: 20 }}>{record.description}</ListItem.Title>
-        </ListItem.Content>
-        {AppConfig.supabaseBucket &&
-          (record.photo_id == null ? (
-            <Button
-              type="outline"
-              buttonStyle={{ borderColor: 'transparent' }}
-              onPress={() => setCameraVisible(true)}
-              icon={{
-                name: 'camera',
-                type: 'font-awesome',
-                color: 'black',
-                size: 28
-              }}>
-              {/* <Icon name={'camera'} type="material" color={'black'} size={32} /> */}
-            </Button>
-          ) : photoAttachment?.localUri != null ? (
-            <Image
-              source={{ uri: photoAttachment.localUri }}
-              containerStyle={styles.item}
-              PlaceholderContent={<ActivityIndicator />}
-            />
-          ) : (
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          {loading ? (
             <ActivityIndicator />
-          ))}
+          ) : (
+            <ListItem.CheckBox
+              iconType="material-community"
+              checkedIcon="checkbox-marked"
+              uncheckedIcon="checkbox-blank-outline"
+              checked={!!record.completed}
+              onPress={async () => {
+                setLoading(true);
+                await onToggleCompletion(!record.completed);
+                setLoading(false);
+              }}
+            />
+          )}
+          <ListItem.Content style={{ minHeight: 80, flex: 1 }}>
+            <ListItem.Title style={{ fontSize: 20 }}>{record.description}</ListItem.Title>
+          </ListItem.Content>
+          {AppConfig.supabaseBucket &&
+            (record.photo_id == null ? (
+              <Button
+                type="outline"
+                buttonStyle={{ borderColor: 'transparent' }}
+                onPress={() => setCameraVisible(true)}
+                icon={{
+                  name: 'camera',
+                  type: 'font-awesome',
+                  color: 'black',
+                  size: 28
+                }}>
+                {/* <Icon name={'camera'} type="material" color={'black'} size={32} /> */}
+              </Button>
+            ) : photoAttachment?.localUri != null ? (
+              <Image
+                source={{ uri: photoAttachment.localUri }}
+                containerStyle={styles.item}
+                PlaceholderContent={<ActivityIndicator />}
+              />
+            ) : (
+              <ActivityIndicator />
+            ))}
+        </View>
       </ListItem.Swipeable>
     </View>
   );
