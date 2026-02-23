@@ -1,6 +1,8 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { schemaManager } from '@/library/powersync/ConnectionManager';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Editor from '@monaco-editor/react';
+import { POWERSYNC_MONACO_THEME } from '@/components/providers/MonacoThemeProvider';
 
 export default function SchemaPage() {
   const schema = schemaManager.schemaToString();
@@ -18,7 +20,28 @@ export default function SchemaPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm font-mono">{schema}</pre>
+            <div className="rounded-lg overflow-hidden border">
+              <Editor
+                height="calc(100vh - 300px)"
+                language="typescript"
+                theme={POWERSYNC_MONACO_THEME}
+                value={schema}
+                options={{
+                  readOnly: true,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  lineNumbersMinChars: 3,
+                  lineDecorationsWidth: 0,
+                  overviewRulerLanes: 0,
+                  overviewRulerBorder: false,
+                  hideCursorInOverviewRuler: true,
+                  padding: { top: 12, bottom: 12 },
+                  fontSize: 13,
+                  tabSize: 2,
+                  automaticLayout: true
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>

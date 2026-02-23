@@ -1,7 +1,8 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
-import { clearData, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { SyncStreamStatus } from '@powersync/web';
+import { StreamsTable } from '@/components/widgets/StreamsTable';
+import { clearData, connector, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { getTokenUserId, decodeTokenPayload } from '@/library/powersync/TokenConnector';
 import React, { useState } from 'react';
 import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,10 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatBytes } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ChevronDown, ChevronUp, Info, Eye } from 'lucide-react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -69,6 +73,9 @@ const syncDiagnosticsKeys = {
   stats: () => [...syncDiagnosticsKeys.all, 'stats'] as const
 };
 
+/** When total_operations exceeds row_count by this factor, we show a warning that bucket history has accumulated and compacting may help. This is an abritrary threshold and indicates significant history buildup.*/
+const BUCKET_HISTORY_THRESHOLD = 3;
+
 interface SyncStats {
   bucketRows: any[] | null;
   tableRows: any[] | null;
@@ -95,6 +102,25 @@ async function fetchSyncStats(): Promise<SyncStats> {
 
 export default function SyncDiagnosticsPage() {
   const queryClient = useQueryClient();
+
+  const [showTokenDialog, setShowTokenDialog] = useState(false);
+
+  const { data: connectionInfo } = useTanstackQuery({
+    queryKey: ['connectionInfo'],
+    queryFn: async () => {
+      const credentials = await connector.fetchCredentials();
+      if (!credentials) return null;
+      return {
+        endpoint: credentials.endpoint,
+        userId: getTokenUserId(credentials.token),
+        token: credentials.token,
+        tokenPayload: decodeTokenPayload(credentials.token)
+      };
+    },
+    staleTime: 0,
+    refetchOnMount: 'always'
+  });
+
   const { data: stats, isLoading } = useTanstackQuery({
     queryKey: syncDiagnosticsKeys.stats(),
     queryFn: fetchSyncStats,
@@ -284,6 +310,56 @@ export default function SyncDiagnosticsPage() {
   return (
     <NavigationPage title="Sync Diagnostics">
       <div className="min-w-0 max-w-full overflow-x-hidden p-5 space-y-8">
+        {connectionInfo && (
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
+            {connectionInfo.endpoint && (
+              <span>
+                <span className="font-medium text-foreground">Service URL:</span>{' '}
+                <span className="font-mono">{connectionInfo.endpoint}</span>
+              </span>
+            )}
+            {connectionInfo.userId && (
+              <span>
+                <span className="font-medium text-foreground">User ID:</span>{' '}
+                <span className="font-mono">{connectionInfo.userId}</span>
+              </span>
+            )}
+            {connectionInfo.tokenPayload && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1.5 text-muted-foreground"
+                  onClick={() => setShowTokenDialog(true)}>
+                  <Eye className="h-3.5 w-3.5" />
+                  View Token
+                </Button>
+                <Dialog open={showTokenDialog} onOpenChange={setShowTokenDialog}>
+                  <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>JWT Token</DialogTitle>
+                      <DialogDescription>The current authentication token and its decoded payload.</DialogDescription>
+                    </DialogHeader>
+                    <div className="overflow-auto space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium mb-1.5">Raw Token</h4>
+                        <pre className="rounded-md bg-muted p-4 text-sm font-mono whitespace-pre-wrap break-all">
+                          {connectionInfo.token}
+                        </pre>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium mb-1.5">Decoded Payload</h4>
+                        <pre className="rounded-md bg-muted p-4 text-sm font-mono whitespace-pre-wrap break-all">
+                          {JSON.stringify(connectionInfo.tokenPayload, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+          </div>
+        )}
         <div>
           {bucketRowsLoading ? (
             <div className="flex justify-center items-center py-10">
@@ -292,7 +368,7 @@ export default function SyncDiagnosticsPage() {
           ) : (
             totalsTable
           )}
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-3">
             <Button
               variant="outline"
               onClick={() => {
@@ -300,7 +376,28 @@ export default function SyncDiagnosticsPage() {
               }}>
               Clear & Redownload
             </Button>
+            <span className="text-sm text-muted-foreground">
+              Clears all local data and re-syncs. This will also remove any manually added stream subscriptions.
+            </span>
           </div>
+          {totals.total_operations > totals.row_count * BUCKET_HISTORY_THRESHOLD && totals.row_count > 0 && (
+            <Alert className="mt-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Total operations ({totals.total_operations.toLocaleString()}) significantly exceeds total rows (
+                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated which negatively 
+                affects sync times for new clients. Performing a Compact or Defragment operation on your instance, 
+                could improve this.{' '}
+                <a
+                  href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground">
+                  Learn about compacting
+                </a>
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -361,38 +458,6 @@ function StreamsState() {
   );
 }
 
-function StreamsTable(props: { streams: SyncStreamStatus[] }) {
-  const columns: DataTableColumn<any>[] = [
-    { field: 'name', headerName: 'Stream Name', flex: 2 },
-    { field: 'parameters', headerName: 'Parameters', flex: 3, hideOnMobile: true },
-    { field: 'default', headerName: 'Default', flex: 1, type: 'boolean', hideOnMobile: true },
-    { field: 'active', headerName: 'Active', flex: 1, type: 'boolean' },
-    { field: 'has_explicit_subscription', headerName: 'Explicit', flex: 1, type: 'boolean', hideOnMobile: true },
-    { field: 'priority', headerName: 'Priority', flex: 1, type: 'number', hideOnMobile: true },
-    { field: 'last_synced_at', headerName: 'Last Synced', flex: 2, type: 'dateTime', hideOnMobile: true },
-    { field: 'expires', headerName: 'Eviction Time', flex: 2, type: 'dateTime', hideOnMobile: true }
-  ];
-
-  const rows = props.streams.map((stream) => {
-    const name = stream.subscription.name;
-    const parameters = JSON.stringify(stream.subscription.parameters);
-
-    return {
-      id: `${name}-${parameters}`,
-      name,
-      parameters,
-      default: stream.subscription.isDefault,
-      has_explicit_subscription: stream.subscription.hasExplicitSubscription,
-      active: stream.subscription.active,
-      last_synced_at: stream.subscription.lastSyncedAt,
-      expires: stream.subscription.expiresAt,
-      priority: stream.priority
-    };
-  });
-
-  return <DataTable rows={rows} columns={columns} pageSize={10} pageSizeOptions={[10, 50, 100]} />;
-}
-
 const MAX_VISIBLE_TABLES = 3;
 
 function TruncatedTablesList({ tables }: { tables: string }) {
@@ -433,17 +498,4 @@ function TruncatedTablesList({ tables }: { tables: string }) {
       </button>
     </div>
   );
-}
-
-// Source: https://stackoverflow.com/a/18650828/214837
-function formatBytes(bytes: number, decimals = 2) {
-  if (!+bytes) return '0 Bytes';
-
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }

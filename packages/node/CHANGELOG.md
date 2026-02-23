@@ -1,5 +1,11 @@
 # @powersync/node
 
+## 0.17.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
 ## 0.17.0
 
 ### Minor Changes
