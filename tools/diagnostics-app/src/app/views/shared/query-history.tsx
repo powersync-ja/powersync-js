@@ -21,7 +21,7 @@ export interface QueryHistoryDropdownProps {
   ready?: boolean;
   error?: string | null;
   onQueryChanged: (params: { query: string }) => void;
-  inputRef?: React.RefObject<HTMLInputElement | null>;
+  inputRef?: React.RefObject<HTMLInputElement>;
 }
 
 /**
