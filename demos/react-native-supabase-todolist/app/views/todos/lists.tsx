@@ -10,6 +10,9 @@ import { useSystem } from '../../../library/powersync/system';
 import { useQuery } from '@powersync/react-native';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 import { GuardBySync } from '../../../library/widgets/GuardBySync';
+import { toCompilableQuery } from '@powersync/drizzle-driver';
+import { lists } from '../../../library/powersync/drizzle';
+import { asc } from 'drizzle-orm';
 
 const description = (total: number, completed: number = 0) => {
   return `${total - completed} pending, ${completed} completed`;
@@ -27,6 +30,17 @@ const ListsViewWidget: React.FC = () => {
       GROUP BY
         ${LIST_TABLE}.id;
       `);
+
+  const query = system.drizzleDb.select().from(lists).orderBy(asc(lists.name));
+
+  system.drizzleDb.watch(query, {
+    onResult(results) {
+      console.log("db.watch output", results);
+    },
+  });
+
+  const { data: listRecordsDrizzle, isLoading } = useQuery(toCompilableQuery(query));
+  console.log('useQuery output', listRecordsDrizzle);
 
   const createNewList = async (name: string) => {
     const userID = await system.supabaseConnector.userId();

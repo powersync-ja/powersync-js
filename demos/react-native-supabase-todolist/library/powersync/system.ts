@@ -7,7 +7,7 @@ import {
   SyncClientImplementation,
   AttachmentQueue,
   type AttachmentRecord,
-  type WatchedAttachmentItem,
+  type WatchedAttachmentItem
 } from '@powersync/react-native';
 import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import React from 'react';
@@ -17,6 +17,8 @@ import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAd
 import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
+import { PowerSyncSQLiteDatabase, wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
+import { drizzleSchema } from './drizzle';
 
 const logger = createBaseLogger();
 logger.useDefaults();
@@ -27,6 +29,7 @@ export class System {
   supabaseConnector: SupabaseConnector;
   powersync: PowerSyncDatabase;
   photoAttachmentQueue: AttachmentQueue | undefined = undefined;
+  drizzleDb: PowerSyncSQLiteDatabase<typeof drizzleSchema>;
 
   constructor() {
     this.kvStorage = new KVStorage();
@@ -43,6 +46,11 @@ export class System {
       },
       logger
     });
+
+    this.drizzleDb = wrapPowerSyncWithDrizzle(this.powersync, {
+      schema: drizzleSchema
+    });
+
     /**
      * The snippet below uses OP-SQLite as the default database adapter.
      * You will have to uninstall `@journeyapps/react-native-quick-sqlite` and
