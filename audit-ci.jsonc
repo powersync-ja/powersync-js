@@ -1,5 +1,6 @@
 {
   "critical": true,
   "package-manager": "auto",
-  "registry": "https://registry.npmjs.org"
+  "registry": "https://registry.npmjs.org",
+  "allowlist": ["GHSA-m7jm-9gc2-mpf2"] // CLI-only dev tooling (cli-doctor), never processes untrusted XML
 }
