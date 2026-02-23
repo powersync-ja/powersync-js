@@ -1,7 +1,9 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { QueryHistoryDropdown } from './query-history';
 
 // ---------------------------------------------------------------------------
@@ -9,6 +11,44 @@ import { QueryHistoryDropdown } from './query-history';
 // ---------------------------------------------------------------------------
 
 const MAX_RESULT_ROWS = 10_000;
+
+export interface TemplateQuery {
+  label: string;
+  query: string;
+  tooltip: string;
+  docsUrl?: string;
+}
+
+const DOCS_URL =
+  'https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure';
+
+export const POWERSYNC_TEMPLATE_QUERIES: TemplateQuery[] = [
+  {
+    label: 'ps_untyped',
+    query: 'SELECT * FROM ps_untyped',
+    tooltip:
+      'Any synced table not defined in the client-side schema is placed here. Data is migrated to ps_data__<table> once the table is added to the schema.',
+    docsUrl: DOCS_URL
+  },
+  {
+    label: 'ps_oplog',
+    query: 'SELECT * FROM ps_oplog',
+    tooltip: 'Operation history data as received from the PowerSync Service, grouped per bucket.',
+    docsUrl: DOCS_URL
+  },
+  {
+    label: 'ps_crud',
+    query: 'SELECT * FROM ps_crud',
+    tooltip: 'The client-side upload queue.',
+    docsUrl: DOCS_URL
+  },
+  {
+    label: 'ps_buckets',
+    query: 'SELECT * FROM ps_buckets',
+    tooltip: 'A small amount of metadata for each bucket.',
+    docsUrl: DOCS_URL
+  }
+];
 
 export interface SQLConsoleCoreProps {
   /** Execute a query and return the results as an array of row objects */
@@ -19,9 +59,12 @@ export interface SQLConsoleCoreProps {
   historySource?: string;
   /** Whether the target database is ready for queries. Auto-execution is deferred until true. Defaults to true. */
   ready?: boolean;
+  /** Predefined queries shown as quick-select buttons. These don't save to history. */
+  templateQueries?: TemplateQuery[];
 }
 
-export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true }: SQLConsoleCoreProps) {
+export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true, templateQueries }: SQLConsoleCoreProps) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const [results, setResults] = React.useState<Record<string, any>[] | null>(null);
   const [totalRowCount, setTotalRowCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -87,6 +130,39 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
 
   return (
     <div className="min-w-0 max-w-full p-5">
+      {templateQueries && templateQueries.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          <TooltipProvider delayDuration={200}>
+            {templateQueries.map((tq) => (
+              <Tooltip key={tq.label}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (inputRef.current) inputRef.current.value = tq.query;
+                      runQuery(tq.query);
+                    }}>
+                    {tq.label}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>{tq.tooltip}</p>
+                  {tq.docsUrl && (
+                    <a
+                      href={tq.docsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline text-primary-foreground/80 hover:text-primary-foreground mt-1 inline-block text-xs">
+                      View docs
+                    </a>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
+        </div>
+      )}
       <div className="flex flex-wrap items-end gap-2.5 mb-4">
         <div className="min-w-0 flex-1 basis-0 space-y-1.5 relative">
           <Label htmlFor="query-input">Query</Label>
@@ -96,6 +172,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
             ready={ready}
             error={error}
             onQueryChanged={handleQueryChanged}
+            inputRef={inputRef}
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>

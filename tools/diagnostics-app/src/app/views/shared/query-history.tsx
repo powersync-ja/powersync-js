@@ -21,14 +21,16 @@ export interface QueryHistoryDropdownProps {
   ready?: boolean;
   error?: string | null;
   onQueryChanged: (params: { query: string }) => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
  * Inner component that renders the query input, execute button, and history dropdown.
  * Must be rendered inside a PowerSyncContext provider for useQuery to work.
  */
-function QueryHistoryInput({ source, defaultQuery = '', ready = true, error, onQueryChanged }: QueryHistoryDropdownProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
+function QueryHistoryInput({ source, defaultQuery = '', ready = true, error, onQueryChanged, inputRef: externalInputRef }: QueryHistoryDropdownProps) {
+  const internalInputRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = externalInputRef ?? internalInputRef;
   const inputWrapperRef = React.useRef<HTMLDivElement>(null);
   const [showHistory, setShowHistory] = React.useState(false);
   const [dropdownStyle, setDropdownStyle] = React.useState<React.CSSProperties>({});
