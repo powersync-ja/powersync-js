@@ -61,6 +61,8 @@ describe('stream hooks', () => {
         });
 
         it('waiting on stream', async () => {
+          const getAllSpy = vi.spyOn(db, 'getAll');
+
           const { result } = renderHook(
             () => useQuery({ queryKey: ['test'], query: 'SELECT 1', streams: [{ name: 'a', waitForStream: true }] }),
             {
@@ -72,6 +74,9 @@ describe('stream hooks', () => {
           // Including the stream should subscribe.
           await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
           expect(result.current).toMatchObject({ isPending: true });
+          // The query executor should not have been called while waiting for the stream.
+          // (getAll is also used internally for EXPLAIN/resolveTables, so check specifically for the user query)
+          expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 1', expect.anything());
 
           // Set last_synced_at for the subscription
           db.currentStatus = _testStatus;
@@ -80,6 +85,7 @@ describe('stream hooks', () => {
           // Which should eventually run the query.
           await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
           expect(result.current).toMatchObject({ isPending: false });
+          expect(getAllSpy).toHaveBeenCalledWith('SELECT 1', expect.anything());
         });
 
         it('not waiting on stream', async () => {
@@ -175,6 +181,8 @@ describe('stream hooks', () => {
         });
 
         it('waiting on stream blocks all queries', async () => {
+          const getAllSpy = vi.spyOn(db, 'getAll');
+
           const { result } = renderHook(
             () =>
               useQueries({
@@ -194,6 +202,9 @@ describe('stream hooks', () => {
           await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
           expect(result.current[0]).toMatchObject({ isPending: true });
           expect(result.current[1]).toMatchObject({ isPending: true });
+          // Neither query executor should have been called while waiting for the stream.
+          expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 1', expect.anything());
+          expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 2', expect.anything());
 
           // Set last_synced_at for the subscription
           db.currentStatus = _testStatus;
@@ -209,6 +220,8 @@ describe('stream hooks', () => {
           );
           expect(result.current[0]).toMatchObject({ isPending: false });
           expect(result.current[1]).toMatchObject({ isPending: false });
+          expect(getAllSpy).toHaveBeenCalledWith('SELECT 1', expect.anything());
+          expect(getAllSpy).toHaveBeenCalledWith('SELECT 2', expect.anything());
         });
 
         it('not waiting on stream', async () => {
