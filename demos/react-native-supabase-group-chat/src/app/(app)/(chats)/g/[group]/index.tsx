@@ -37,7 +37,6 @@ export default function ChatsChatIndex() {
   return group ? (
     <>
       <Stack.Screen
-        name="../../../"
         options={{
           title: group.name
         }}

@@ -16,18 +16,11 @@ export default function ChatsChatIndex() {
   const { data: profiles } = useQuery('SELECT id, name, handle, demo FROM profiles WHERE id = ?', [profileId]);
   const profile = profiles.length ? profiles[0] : undefined;
   const [draftId, setDraftId] = useState<string>();
-  const [listMessages, setListMessages] = useState<any[]>([]);
 
   const { data: messages } = useQuery(
     'SELECT sender_id, content, created_at FROM messages WHERE (((sender_id = ?1 AND recipient_id = ?2) OR (sender_id = ?2 AND recipient_id = ?1)) AND NOT (sender_id = ?1 AND sent_at IS NULL)) ORDER BY created_at ASC',
     [user?.id, profile?.id]
   );
-
-  useEffect(() => {
-    if (messages.length > 0) {
-      setListMessages(messages);
-    }
-  }, [messages]);
 
   const [message, setMessage] = useState('');
 
@@ -115,7 +108,7 @@ export default function ChatsChatIndex() {
     <>
       <YStack fullscreen>
         <YStack flexGrow={1}>
-          <FlashList data={listMessages} renderItem={({ item }) => <Message message={item} />} />
+          <FlashList data={messages} extraData={messages.length} renderItem={({ item }) => <Message message={item} />} />
         </YStack>
         <YStack padding="$3" gap="$3">
           {profile.demo === 1 && <Button onPress={handleDemoMessage}>Receive demo message</Button>}

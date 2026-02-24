@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@latest/json-schema/powersync-config.json
+
+port: !env PS_PORT
+
+replication:
+  connections:
+    - type: !env PS_DATA_SOURCE_TYPE
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable
+
+storage:
+  type: !env PS_SYNC_BUCKET_TYPE
+  uri: !env PS_SYNC_BUCKET_URI
+  sslmode: disable
+
+sync_rules:
+  path: sync-rules.yml
+
+client_auth:
+  jwks:
+    keys:
+      - kty: 'oct'
+        k: !env PS_HS256_KEY
+        alg: 'HS256'
+  audience: ["powersync-dev", "powersync", "authenticated"]
+
+api:
+  tokens:
+    - !env PS_API_TOKEN
+
+telemetry:
+  disable_telemetry_sharing: true
+  prometheus_port: !env PS_TELEMETRY_PORT
