@@ -14,8 +14,9 @@
     "@powersync/op-sqlite": "^0.9.1",
     "@powersync/react": "^1.9.0",
     "@powersync/react-native": "^1.30.2",
-    "react": "18.3.1",
-    "react-native": "0.77.0"
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "5.6.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -24,15 +25,15 @@
     "@react-native-community/cli": "15.0.1",
     "@react-native-community/cli-platform-android": "15.0.1",
     "@react-native-community/cli-platform-ios": "15.0.1",
-    "@react-native/babel-preset": "0.77.0",
-    "@react-native/eslint-config": "0.77.0",
-    "@react-native/metro-config": "0.77.0",
-    "@react-native/typescript-config": "0.77.0",
-    "@types/react": "^18.2.6",
+    "@react-native/babel-preset": "0.81.5",
+    "@react-native/eslint-config": "0.81.5",
+    "@react-native/metro-config": "0.81.5",
+    "@react-native/typescript-config": "0.81.5",
+    "@types/react": "^19.1.17",
     "@types/react-test-renderer": "^18.0.0",
     "eslint": "^8.19.0",
     "react-test-renderer": "18.3.1",
-    "typescript": "5.0.4"
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=18"

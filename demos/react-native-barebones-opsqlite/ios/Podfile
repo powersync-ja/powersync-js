@@ -8,6 +8,18 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# Force op-sqlite to static library to avoid native crashes (e.g. on simulator)
+# https://github.com/OP-Engineering/op-sqlite/issues/76
+pre_install do |installer|
+  installer.pod_targets.each do |pod|
+    if pod.name.eql?('op-sqlite')
+      def pod.build_type
+        Pod::BuildType.static_library
+      end
+    end
+  end
+end
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
