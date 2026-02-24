@@ -718,6 +718,9 @@ importers:
         specifier: ^5.70.0
         version: 5.90.15(react@18.3.1)
     devDependencies:
+      '@powersync/web':
+        specifier: workspace:*
+        version: link:../web
       '@testing-library/react':
         specifier: ^15.0.2
         version: 15.0.7(@types/react@18.3.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -19751,7 +19754,9 @@ snapshots:
       metro-runtime: 0.83.3
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
