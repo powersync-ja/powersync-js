@@ -16,10 +16,9 @@ export interface TemplateQuery {
   label: string;
   query: string;
   tooltip: string;
-  docsUrl?: string;
 }
 
-const DOCS_URL =
+export const CLIENT_ARCH_DOCS_URL =
   'https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure';
 
 export const POWERSYNC_TEMPLATE_QUERIES: TemplateQuery[] = [
@@ -27,26 +26,25 @@ export const POWERSYNC_TEMPLATE_QUERIES: TemplateQuery[] = [
     label: 'ps_untyped',
     query: 'SELECT * FROM ps_untyped',
     tooltip:
-      'Any synced table not defined in the client-side schema is placed here. Data is migrated to ps_data__<table> once the table is added to the schema.',
-    docsUrl: DOCS_URL
+      'Synced data not matching any table in the client-side schema. Rows migrate to ps_data__<table> once the table is added to the schema.'
   },
   {
     label: 'ps_oplog',
     query: 'SELECT * FROM ps_oplog',
-    tooltip: 'Operation history data as received from the PowerSync Service, grouped per bucket.',
-    docsUrl: DOCS_URL
+    tooltip:
+      'Operation log received from the PowerSync Service, grouped per bucket. Useful for debugging sync state and inspecting individual operations.'
   },
   {
     label: 'ps_crud',
     query: 'SELECT * FROM ps_crud',
-    tooltip: 'The client-side upload queue.',
-    docsUrl: DOCS_URL
+    tooltip:
+      'Pending local changes waiting to be uploaded. If rows are stuck here, the upload queue may be blocked by a failing operation.'
   },
   {
     label: 'ps_buckets',
     query: 'SELECT * FROM ps_buckets',
-    tooltip: 'A small amount of metadata for each bucket.',
-    docsUrl: DOCS_URL
+    tooltip:
+      'Metadata for each sync bucket including last applied op and checkpoint. Helpful for verifying which buckets are actively syncing.'
   }
 ];
 
@@ -61,9 +59,11 @@ export interface SQLConsoleCoreProps {
   ready?: boolean;
   /** Predefined queries shown as quick-select buttons. These don't save to history. */
   templateQueries?: TemplateQuery[];
+  /** URL shown below the Quick Queries heading as a "Learn more" link */
+  templateDocsUrl?: string;
 }
 
-export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true, templateQueries }: SQLConsoleCoreProps) {
+export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true, templateQueries, templateDocsUrl }: SQLConsoleCoreProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [results, setResults] = React.useState<Record<string, any>[] | null>(null);
   const [totalRowCount, setTotalRowCount] = React.useState(0);
@@ -131,36 +131,39 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   return (
     <div className="min-w-0 max-w-full p-5">
       {templateQueries && templateQueries.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <TooltipProvider delayDuration={200}>
-            {templateQueries.map((tq) => (
-              <Tooltip key={tq.label}>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (inputRef.current) inputRef.current.value = tq.query;
-                      runQuery(tq.query);
-                    }}>
-                    {tq.label}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p>{tq.tooltip}</p>
-                  {tq.docsUrl && (
-                    <a
-                      href={tq.docsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline text-primary-foreground/80 hover:text-primary-foreground mt-1 inline-block text-xs">
-                      View docs
-                    </a>
-                  )}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
+        <div className="mb-4">
+          <Label className="mb-1 block">Quick Queries</Label>
+          {templateDocsUrl && (
+            <a
+              href={templateDocsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground underline mb-2 inline-block">
+              Learn more about client architecture
+            </a>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <TooltipProvider delayDuration={200}>
+              {templateQueries.map((tq) => (
+                <Tooltip key={tq.label}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (inputRef.current) inputRef.current.value = tq.query;
+                        runQuery(tq.query);
+                      }}>
+                      {tq.label}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>{tq.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+          </div>
         </div>
       )}
       <div className="flex flex-wrap items-end gap-2.5 mb-4">
