@@ -19,7 +19,6 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.powersyncreactnativebackgroundsync",
-      "usesCleartextTraffic": true,
       "permissions": [
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED"
@@ -41,7 +40,9 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-background-task"
+      "expo-background-task",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
