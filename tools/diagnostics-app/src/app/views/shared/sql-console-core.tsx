@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { QueryHistoryDropdown } from './query-history';
+import { QueryHistoryDropdown, QueryHistoryHandle } from './query-history';
 
 // ---------------------------------------------------------------------------
 // SQLConsoleCore - the reusable SQL console UI
@@ -64,7 +64,7 @@ export interface SQLConsoleCoreProps {
 }
 
 export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource = 'powersync', ready = true, templateQueries, templateDocsUrl }: SQLConsoleCoreProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const historyHandleRef = React.useRef<QueryHistoryHandle | null>(null);
   const [results, setResults] = React.useState<Record<string, any>[] | null>(null);
   const [totalRowCount, setTotalRowCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -151,7 +151,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        if (inputRef.current) inputRef.current.value = tq.query;
+                        historyHandleRef.current?.setQuery(tq.query);
                         runQuery(tq.query);
                       }}>
                       {tq.label}
@@ -175,7 +175,7 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
             ready={ready}
             error={error}
             onQueryChanged={handleQueryChanged}
-            inputRef={inputRef}
+            onReady={(handle) => { historyHandleRef.current = handle; }}
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
