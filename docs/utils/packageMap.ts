@@ -8,7 +8,8 @@ enum Packages {
   AttachmentsSdk = 'attachments-sdk',
   WebSdk = 'web-sdk',
   TanstackReactQuerySdk = 'tanstack-react-query-sdk',
-  NodeSdk = 'node-sdk'
+  NodeSdk = 'node-sdk',
+  NuxtSdk = 'nuxt-sdk'
 }
 
 interface Package {
@@ -79,5 +80,12 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/node/src/index.ts'],
     tsconfig: '../packages/node/tsconfig.json',
     id: Packages.NodeSdk
+  },
+  [Packages.NuxtSdk]: {
+    name: 'Nuxt Module',
+    dirName: Packages.NuxtSdk,
+    entryPoints: ['../packages/nuxt/src/index.ts'],
+    tsconfig: '../packages/nuxt/tsconfig.json',
+    id: Packages.NuxtSdk
   }
 };
