@@ -1,27 +1,12 @@
 <template>
-  <UContainer
-    class="h-[calc(100vh-var(--ui-header-height))] flex items-center justify-center px-4"
-  >
+  <UContainer class="h-[calc(100vh-var(--ui-header-height))] flex items-center justify-center px-4">
     <UPageCard class="max-w-sm w-full">
-      <UAuthForm
-        :title="sign === 'in' ? 'Login' : 'Sign up'"
-        icon="i-lucide-user"
-        :fields="fields"
-        @submit="onSubmit"
-      >
+      <UAuthForm :title="sign === 'in' ? 'Login' : 'Sign up'" icon="i-lucide-user" :fields="fields" @submit="onSubmit">
         <template #description>
-          {{
-            sign === "up"
-              ? "Already have an account?"
-              : "Don't have an account?"
-          }}
-          <UButton
-            variant="link"
-            class="p-0"
-            @click="sign = sign === 'up' ? 'in' : 'up'"
-          >
-            {{ sign === "in" ? "Sign In" : "Sign Up" }}
-          </UButton>.
+          {{ sign === 'up' ? "Don't have an account?" : 'Already have an account?' }}
+          <UButton variant="link" class="p-0" @click="sign = sign === 'up' ? 'in' : 'up'">
+            {{ sign === 'in' ? 'Sign In' : 'Sign Up' }} </UButton
+          >.
         </template>
       </UAuthForm>
     </UPageCard>
@@ -29,18 +14,18 @@
 </template>
 
 <script setup lang="ts">
-const supabase = useSupabaseClient()
-const user = useSupabaseUser()
+const supabase = useSupabaseClient();
+const user = useSupabaseUser();
 
-const toast = useToast()
+const toast = useToast();
 
-const sign = ref<'in' | 'up'>('in')
+const sign = ref<'in' | 'up'>('in');
 
 watchEffect(() => {
   if (user.value) {
-    return navigateTo('/')
+    return navigateTo('/');
   }
-})
+});
 
 const fields = [
   {
@@ -48,15 +33,15 @@ const fields = [
     type: 'text' as const,
     label: 'Email',
     placeholder: 'Enter your email',
-    required: true,
+    required: true
   },
   {
     name: 'password',
     label: 'Password',
     type: 'password' as const,
-    placeholder: 'Enter your password',
-  },
-]
+    placeholder: 'Enter your password'
+  }
+];
 
 // Use this if you want to add more providers
 // const providers = [
@@ -78,33 +63,33 @@ const fields = [
 const signIn = async (email: string, password: string) => {
   const { error } = await supabase.auth.signInWithPassword({
     email,
-    password,
-  })
-  if (error) displayError(error)
-}
+    password
+  });
+  if (error) displayError(error);
+};
 
 const signUp = async (email: string, password: string) => {
   const { error } = await supabase.auth.signUp({
     email,
-    password,
-  })
-  if (error) displayError(error)
+    password
+  });
+  if (error) displayError(error);
   else {
     toast.add({
       title: 'Sign up successful',
       icon: 'i-lucide-check-circle',
-      color: 'success',
-    })
-    await signIn(email, password)
+      color: 'success'
+    });
+    await signIn(email, password);
   }
-}
+};
 
-async function onSubmit(payload: { data: { email: string, password: string } }) {
-  const email = payload.data.email
-  const password = payload.data.password
+async function onSubmit(payload: { data: { email: string; password: string } }) {
+  const email = payload.data.email;
+  const password = payload.data.password;
 
-  if (sign.value === 'in') await signIn(email, password)
-  else await signUp(email, password)
+  if (sign.value === 'in') await signIn(email, password);
+  else await signUp(email, password);
 }
 
 const displayError = (error: any) => {
@@ -112,7 +97,7 @@ const displayError = (error: any) => {
     title: 'Error',
     description: error.message,
     icon: 'i-lucide-alert-circle',
-    color: 'error',
-  })
-}
+    color: 'error'
+  });
+};
 </script>

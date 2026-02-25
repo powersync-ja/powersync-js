@@ -22,11 +22,13 @@ This demo can be started with local PowerSync and Supabase services.
 1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)
 
 2. Copy the environment template:
+
    ```bash
    cp .env.template .env
    ```
 
 3. Start Supabase:
+
    ```bash
    supabase start
    ```
@@ -35,7 +37,11 @@ This demo can be started with local PowerSync and Supabase services.
    - `NUXT_PUBLIC_SUPABASE_ANON_KEY`: Use the **Publishable** key value
    - `PS_JWKS_URI`: Use `http://kong:8000/auth/v1/.well-known/jwks.json` when PowerSync runs in Docker on the Supabase network (default in step 5). This points PowerSync at local Supabase's JWKS so it can verify tokens. If Kong is not reachable from the container (e.g. custom network), try `http://host.docker.internal:54321/auth/v1/.well-known/jwks.json` on Docker Desktop for Mac/Windows.
 
+> [!NOTE]  
+> `NUXT_PUBLIC_SUPABASE_ANON_KEY`: Use the Publishable key value (requires Supabase CLI v2.45.5+)
+
 5. Start PowerSync:
+
    ```bash
    docker run \
      -p 6060:6060 \
@@ -66,7 +72,7 @@ This demo app uses Supabase as its Postgres database and backend:
 
 ### 3. Auth setup
 
-This app uses Supabase's email/password authentication. 
+This app uses Supabase's email/password authentication.
 
 1. Go to "Authentication" -> "Providers" in your Supabase dashboard
 2. Ensure "Email" provider is enabled
@@ -94,6 +100,7 @@ NUXT_PUBLIC_POWERSYNC_URL=your_powersync_instance_url
 ```
 
 Replace the values with your actual credentials:
+
 - Get `NUXT_PUBLIC_SUPABASE_URL` and `NUXT_PUBLIC_SUPABASE_ANON_KEY` from your Supabase project settings under "Project Settings" -> "API"
 - Get `NUXT_PUBLIC_POWERSYNC_URL` from your PowerSync instance (Cloud dashboard or your self-hosted instance URL)
 
@@ -133,4 +140,3 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to try out
 - [PowerSync Documentation](https://docs.powersync.com/)
 - [Supabase Documentation](https://supabase.com/docs)
 - [Nuxt Documentation](https://nuxt.com/)
-

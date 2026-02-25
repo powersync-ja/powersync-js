@@ -14,7 +14,7 @@
     "sync": "npx cap sync",
     "ios": "pnpm build && pnpm sync && npx cap run ios",
     "android": "pnpm build && pnpm sync && npx cap run android",
-    "test:build": "pnpm build && npx cap sync && npx cap build android",
+    "test:build": "pnpm build && npx cap sync android && npx cap build android",
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -25,10 +25,10 @@
     "@capacitor/core": "7.4.3",
     "@capacitor/ios": "^7.4.3",
     "@capacitor/splash-screen": "7.0.0",
-    "@powersync/capacitor": "^0.3.0",
-    "@journeyapps/wa-sqlite": "^1.4.1",
-    "@powersync/react": "^1.8.2",
-    "@powersync/web": "^1.32.0",
+    "@powersync/capacitor": "^0.4.1",
+    "@journeyapps/wa-sqlite": "^1.5.0",
+    "@powersync/react": "^1.8.3",
+    "@powersync/web": "^1.34.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"

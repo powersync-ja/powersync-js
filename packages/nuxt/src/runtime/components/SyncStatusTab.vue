@@ -95,68 +95,22 @@
 
       <span border="b" border-color="gray-100" />
 
-      <NSectionBlock icon="carbon:data-volume" text="Data Size">
-        <NTip v-if="!isDiagnosticSchemaSetup" n="red6 dark:red5" icon="carbon:warning-alt">
-          Make sure to extend your schema with the diagnostics schema using the `diagnosticsSchema` from the
-          `usePowerSyncInspector` composable.
-        </NTip>
-        <div v-else grid="~ cols-5 gap-4" mb="4">
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Buckets Synced</span>
-            <span text="sm"> {{ totals?.buckets }} </span>
+      <template v-for="(section, index) in metricSections" :key="section.text">
+        <NSectionBlock :icon="section.icon" :text="section.text">
+          <NTip v-if="!isDiagnosticSchemaSetup" n="red6 dark:red5" icon="carbon:warning-alt">
+            Make sure to extend your schema with the diagnostics schema using the `diagnosticsSchema` from the
+            `usePowerSyncInspector` composable.
+          </NTip>
+          <div v-else :grid="`~ cols-${section.cols} gap-4`" mb="4">
+            <div v-for="metric in section.metrics" :key="metric.label" flex="~ col gap-2">
+              <span text="sm gray-500">{{ metric.label }}</span>
+              <span text="sm">{{ metric.value }}</span>
+            </div>
           </div>
+        </NSectionBlock>
 
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Rows Synced</span>
-            <span text="sm"> {{ totals?.row_count }} </span>
-          </div>
-
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Data size</span>
-            <span text="sm">
-              {{ totals?.data_size }}
-            </span>
-          </div>
-
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Metadata size</span>
-            <span text="sm">
-              {{ totals?.metadata_size }}
-            </span>
-          </div>
-
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Download size</span>
-            <span text="sm">
-              {{ totals?.download_size }}
-            </span>
-          </div>
-        </div>
-      </NSectionBlock>
-
-      <span border="b" border-color="gray-100" />
-
-      <NSectionBlock icon="carbon:data-share" text="Operations">
-        <NTip v-if="!isDiagnosticSchemaSetup" n="red6 dark:red5" icon="carbon:warning-alt">
-          Make sure to extend your schema with the diagnostics schema using the `diagnosticsSchema` from the
-          `usePowerSyncInspector` composable.
-        </NTip>
-        <div v-else grid="~ cols-2 gap-4" mb="4">
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Total operations</span>
-            <span text="sm">
-              {{ totals?.total_operations }}
-            </span>
-          </div>
-
-          <div flex="~ col gap-2">
-            <span text="sm gray-500">Downloaded operations</span>
-            <span text="sm">
-              {{ totals?.downloaded_operations }}
-            </span>
-          </div>
-        </div>
-      </NSectionBlock>
+        <span v-if="index < metricSections.length - 1" border="b" border-color="gray-100" />
+      </template>
 
       <span border="b" border-color="gray-100" />
     </div>
@@ -165,7 +119,7 @@
 
 <script setup lang="ts">
 import { usePowerSyncInspectorDiagnostics } from '#imports';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 
 const {
   db,
@@ -180,7 +134,31 @@ const {
   totals
 } = usePowerSyncInspectorDiagnostics();
 
+const metricSections = computed(() => [
+  {
+    icon: 'carbon:data-volume',
+    text: 'Data Size',
+    cols: 5,
+    metrics: [
+      { label: 'Buckets Synced', value: totals.value?.buckets },
+      { label: 'Rows Synced', value: totals.value?.row_count },
+      { label: 'Data size', value: totals.value?.data_size },
+      { label: 'Metadata size', value: totals.value?.metadata_size },
+      { label: 'Download size', value: totals.value?.download_size }
+    ]
+  },
+  {
+    icon: 'carbon:data-share',
+    text: 'Operations',
+    cols: 2,
+    metrics: [
+      { label: 'Total operations', value: totals.value?.total_operations },
+      { label: 'Downloaded operations', value: totals.value?.downloaded_operations }
+    ]
+  }
+]);
+
 onMounted(async () => {
-  await db.value?.waitForFirstSync();
+  await db?.value?.waitForFirstSync();
 });
 </script>

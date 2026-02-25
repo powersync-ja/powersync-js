@@ -1,5 +1,28 @@
 # @powersync/react-native
 
+## 1.30.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+  - @powersync/react@1.8.3
+
+## 1.30.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [569cb41]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+  - @powersync/react@1.8.3
+
 ## 1.29.0
 
 ### Minor Changes

@@ -1,5 +1,28 @@
 # @powersync/capacitor
 
+## 0.4.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+- Updated dependencies [f0a36c9]
+  - @powersync/web@1.34.0
+
+## 0.4.0
+
+### Minor Changes
+
+- 8dee8d7: Removed `async-lock` dependency in favor of `async-mutex`.
+
+### Patch Changes
+
+- 8dee8d7: Fixed potential issue where extreme amounts of concurrent calls to `writeLock` could reject with the error "Too many pending tasks in queue"
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [ae3b188]
+- Updated dependencies [c506299]
+  - @powersync/web@1.33.0
+
 ## 0.3.0
 
 ### Minor Changes

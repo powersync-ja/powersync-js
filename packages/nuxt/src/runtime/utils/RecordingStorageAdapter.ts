@@ -10,11 +10,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
   public tables: Record<string, Record<string, ColumnType>> = {};
 
   constructor(db: Ref<PowerSyncDatabase>, schemaManager: Ref<DynamicSchemaManager>) {
-    super(
-      db.value.database,
-
-      (AbstractPowerSyncDatabase as any).transactionMutex
-    );
+    super(db.value.database, (AbstractPowerSyncDatabase as any).transactionMutex);
     this.rdb = db.value.database;
     this.schemaManager = schemaManager.value;
   }

@@ -1,5 +1,26 @@
 # @powersync/web
 
+## 1.34.0
+
+### Minor Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
+## 1.33.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- ae3b188: Fixed issue where reconnecting after a disconnect would delay reconnection by a period of retryDelayMs
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 1.32.0
 
 ### Minor Changes

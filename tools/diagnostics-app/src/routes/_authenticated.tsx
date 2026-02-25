@@ -1,7 +1,17 @@
 import { createFileRoute, redirect, Outlet, useNavigate, useLocation } from '@tanstack/react-router';
 import { connector, signOut, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import {
   LogOut,
@@ -12,7 +22,8 @@ import {
   Database,
   Table2,
   Terminal,
-  SlidersHorizontal
+  SlidersHorizontal,
+  FileSearch
 } from 'lucide-react';
 import {
   Sidebar,
@@ -31,84 +42,116 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
+import { InspectorProvider } from '@/library/inspector/InspectorContext';
 
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: () => {
-    if (!connector.hasCredentials()) {
-      throw redirect({ to: '/login' });
+  beforeLoad: async () => {
+    if (!(await connector.hasCredentials())) {
+      throw redirect({ to: '/' });
     }
   },
   component: AuthenticatedLayout
 });
 
+const NAVIGATION_ITEMS = [
+  { path: '/sync-diagnostics', title: 'Sync Overview', icon: Table2 },
+  { path: '/schema', title: 'Dynamic Schema', icon: Database },
+  { path: '/sql-console', title: 'SQL Console', icon: Terminal },
+  { path: '/client-parameters', title: 'Client Parameters', icon: SlidersHorizontal },
+  { path: '/file-inspector', title: 'File Inspector', icon: FileSearch }
+];
+
 function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { open } = useSidebar();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  const NAVIGATION_ITEMS = [
-    { path: '/sync-diagnostics', title: 'Sync Overview', icon: Table2 },
-    { path: '/schema', title: 'Dynamic Schema', icon: Database },
-    { path: '/sql-console', title: 'SQL Console', icon: Terminal },
-    { path: '/client-parameters', title: 'Client Parameters', icon: SlidersHorizontal },
-    {
-      path: '/login',
-      title: 'Sign Out',
-      beforeNavigate: async () => {
-        await signOut();
-      },
-      icon: LogOut
-    }
-  ];
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: '/' });
+  };
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
-      <SidebarHeader className={cn('p-4', !open && 'p-2')}>
-        {open ? (
-          <img
-            alt="PowerSync Logo"
-            className="w-full max-w-[180px] object-contain"
-            src="/powersync-logo.svg"
-          />
-        ) : (
-          <img
-            alt="PowerSync"
-            className="w-8 h-8 object-contain rounded-[20%]"
-            src="/icons/icon-192x192.png"
-          />
-        )}
-      </SidebarHeader>
-      <Separator className={cn('bg-sidebar-border', !open ? 'mx-1' : 'mx-2')} />
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {NAVIGATION_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      tooltip={!open ? item.title : undefined}
-                      onClick={async () => {
-                        await item.beforeNavigate?.();
-                        navigate({ to: item.path });
-                      }}>
-                      <Icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarTrigger />
-      </SidebarFooter>
-    </Sidebar>
+    <>
+      <Sidebar variant="inset" collapsible="icon">
+        <SidebarHeader className={cn('p-4', !open && 'p-2')}>
+          {open ? (
+            <img
+              alt="PowerSync Logo"
+              className="w-full max-w-[180px] object-contain"
+              src="/powersync-logo.svg"
+            />
+          ) : (
+            <img
+              alt="PowerSync"
+              className="w-8 h-8 object-contain rounded-[20%]"
+              src="/icons/icon-192x192.png"
+            />
+          )}
+        </SidebarHeader>
+        <Separator className={cn('bg-sidebar-border', !open ? 'mx-1' : 'mx-2')} />
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAVIGATION_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive =
+                    location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        tooltip={!open ? item.title : undefined}
+                        onClick={() => navigate({ to: item.path })}>
+                        <Icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <Separator className={cn('bg-sidebar-border', !open ? 'mx-1' : 'mx-2')} />
+
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip={!open ? 'Sign Out' : undefined}
+                    onClick={() => setShowLogoutDialog(true)}>
+                    <LogOut />
+                    <span>Sign Out</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarTrigger />
+        </SidebarFooter>
+      </Sidebar>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will disconnect from the PowerSync service and clear your session credentials.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -118,21 +161,17 @@ function AuthenticatedLayout() {
   const { title } = useNavigationPanel();
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    <InspectorProvider>
+      <SidebarProvider>
+        <AppSidebar />
 
-      <SidebarInset>
+        <SidebarInset>
         {/* Top Bar */}
         <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-semibold truncate">{title}</h1>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            {syncStatus?.clientImplementation && (
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                Client: {syncStatus?.clientImplementation}
-              </span>
-            )}
             <ArrowUp
               className={cn(
                 'h-5 w-5 -mr-2.5',
@@ -155,8 +194,8 @@ function AuthenticatedLayout() {
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+        {/* Main Content Area - min-w-0 so wide table content scrolls inside DataTable, not the whole page */}
+        <main className="flex-1 min-w-0 overflow-x-hidden p-4 md:p-6">
           {syncError ? (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>Sync error detected: {syncError.message}</AlertDescription>
@@ -165,6 +204,7 @@ function AuthenticatedLayout() {
           <Outlet />
         </main>
       </SidebarInset>
-    </SidebarProvider>
+      </SidebarProvider>
+    </InspectorProvider>
   );
 }
