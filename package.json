@@ -5,6 +5,7 @@
   "description": "monorepo for powersync javascript sdks",
   "main": "index.js",
   "scripts": {
+    "reset:repo": "tsc -b scripts && node scripts/dist/reset-repo.js",
     "build:packages": "pnpm run --filter {./packages/**} -r build",
     "build:packages:prod": "pnpm run --filter {./packages/**} -r build:prod",
     "clean:packages": "pnpm run --filter {./packages/**} -r clean",
@@ -50,6 +51,8 @@
     "prettier": "^3.2.5",
     "prettier-plugin-embed": "^0.4.15",
     "prettier-plugin-sql": "^0.18.1",
+    "rollup": "4.14.3",
+    "rollup-plugin-dts": "^6.2.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
