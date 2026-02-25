@@ -70,6 +70,14 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [autoLimited, setAutoLimited] = React.useState(false);
+  const [discoveredTables, setDiscoveredTables] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (!ready) return;
+    executeQuery(`SELECT name FROM sqlite_master WHERE type='view' AND name NOT LIKE 'ps_%' ORDER BY name`)
+      .then((rows) => setDiscoveredTables(rows.map((r) => r.name as string)))
+      .catch(() => {});
+  }, [ready, executeQuery]);
 
   const runQuery = React.useCallback(
     async (sql: string) => {
@@ -163,6 +171,21 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
                 </Tooltip>
               ))}
             </TooltipProvider>
+            {discoveredTables.map((name) => {
+              const query = `SELECT * FROM ${name}`;
+              return (
+                <Button
+                  key={name}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    historyHandleRef.current?.setQuery(query);
+                    runQuery(query);
+                  }}>
+                  {name}
+                </Button>
+              );
+            })}
           </div>
         </div>
       )}
