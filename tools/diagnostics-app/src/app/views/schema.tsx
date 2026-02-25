@@ -6,7 +6,6 @@ import { POWERSYNC_MONACO_THEME } from '@/components/providers/MonacoThemeProvid
 
 export default function SchemaPage() {
   const schema = schemaManager.schemaToString();
-  const lineCount = schema.split('\n').length;
 
   return (
     <NavigationPage title="Dynamic Schema">
@@ -23,7 +22,7 @@ export default function SchemaPage() {
           <CardContent>
             <div className="rounded-lg overflow-hidden border">
               <Editor
-                height={`${Math.min(Math.max(lineCount * 20, 200), 600)}px`}
+                height="calc(100vh - 300px)"
                 language="typescript"
                 theme={POWERSYNC_MONACO_THEME}
                 value={schema}
