@@ -1,0 +1,1 @@
+export { NuxtPowerSyncDatabase } from './NuxtPowerSyncDatabase';
