@@ -74,8 +74,8 @@ describe('stream hooks', () => {
           // Including the stream should subscribe.
           await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
           expect(result.current).toMatchObject({ isPending: true });
+
           // The query executor should not have been called while waiting for the stream.
-          // (getAll is also used internally for EXPLAIN/resolveTables, so check specifically for the user query)
           expect(getAllSpy).not.toHaveBeenCalledWith('SELECT 1', expect.anything());
 
           // Set last_synced_at for the subscription
