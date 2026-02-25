@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { QueryHistoryDropdown, QueryHistoryHandle } from './query-history';
 
@@ -11,6 +12,7 @@ import { QueryHistoryDropdown, QueryHistoryHandle } from './query-history';
 // ---------------------------------------------------------------------------
 
 const MAX_RESULT_ROWS = 10_000;
+const MAX_DISCOVERED_VIEWS = 30;
 
 export interface TemplateQuery {
   label: string;
@@ -139,54 +141,73 @@ export function SQLConsoleCore({ executeQuery, defaultQuery = '', historySource 
   return (
     <div className="min-w-0 max-w-full p-5">
       {templateQueries && templateQueries.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-4 space-y-3">
           <Label className="mb-1 block">Quick Queries</Label>
-          {templateDocsUrl && (
-            <a
-              href={templateDocsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground underline mb-2 inline-block">
-              Learn more about client architecture
-            </a>
+          <Card>
+            <CardContent className="p-3 space-y-2">
+              <p className="text-xs text-muted-foreground">
+                PowerSync internal tables.{' '}
+                {templateDocsUrl && (
+                  <a
+                    href={templateDocsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-foreground underline">
+                    Learn more about client architecture
+                  </a>
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <TooltipProvider delayDuration={200}>
+                  {templateQueries.map((tq) => (
+                    <Tooltip key={tq.label}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            historyHandleRef.current?.setQuery(tq.query);
+                            runQuery(tq.query);
+                          }}>
+                          {tq.label}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>{tq.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
+              </div>
+            </CardContent>
+          </Card>
+          {discoveredTables.length > 0 && (
+            <Card>
+              <CardContent className="p-3 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Views discovered from the database schema.
+                  {discoveredTables.length > MAX_DISCOVERED_VIEWS && ` Showing first ${MAX_DISCOVERED_VIEWS} of ${discoveredTables.length}.`}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {discoveredTables.slice(0, MAX_DISCOVERED_VIEWS).map((name) => {
+                    const query = `SELECT * FROM ${name}`;
+                    return (
+                      <Button
+                        key={name}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          historyHandleRef.current?.setQuery(query);
+                          runQuery(query);
+                        }}>
+                        {name}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           )}
-          <div className="flex flex-wrap gap-2">
-            <TooltipProvider delayDuration={200}>
-              {templateQueries.map((tq) => (
-                <Tooltip key={tq.label}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        historyHandleRef.current?.setQuery(tq.query);
-                        runQuery(tq.query);
-                      }}>
-                      {tq.label}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>{tq.tooltip}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </TooltipProvider>
-            {discoveredTables.map((name) => {
-              const query = `SELECT * FROM ${name}`;
-              return (
-                <Button
-                  key={name}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    historyHandleRef.current?.setQuery(query);
-                    runQuery(query);
-                  }}>
-                  {name}
-                </Button>
-              );
-            })}
-          </div>
         </div>
       )}
       <div className="flex flex-wrap items-end gap-2.5 mb-4">
