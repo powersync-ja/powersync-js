@@ -3,7 +3,7 @@ import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, ref } from 'v
 import { setupTopLevelWarningMessage } from './messages.js';
 
 // Create a unique symbol for the PowerSync context
-const PowerSyncKey = Symbol();
+const POWERSYNC_KEY = Symbol('POWERSYNC_KEY');
 
 /**
  * Create a Vue plugin to define the PowerSync client.
@@ -13,7 +13,7 @@ const PowerSyncKey = Symbol();
  */
 export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeRef<AbstractPowerSyncDatabase> }) {
   const install = (app: App) => {
-    app.provide(PowerSyncKey, ref(powerSyncPluginOptions.database));
+    app.provide(POWERSYNC_KEY, ref(powerSyncPluginOptions.database));
   };
   return { install };
 }
@@ -26,7 +26,7 @@ export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeR
  * If the key parameter is provided, the client will be provided under that key instead of the default PowerSync key.
  */
 export function providePowerSync(database: MaybeRef<AbstractPowerSyncDatabase>, key: string | undefined = undefined) {
-  provide(key || PowerSyncKey, ref(database));
+  provide(key || POWERSYNC_KEY, ref(database));
 }
 
 /**
@@ -42,7 +42,7 @@ export const usePowerSync = (key: string | undefined = undefined) => {
   if (!hasInjectionContext()) {
     throw setupTopLevelWarningMessage;
   }
-  const powerSync = inject<Ref<AbstractPowerSyncDatabase> | undefined>(key || PowerSyncKey);
+  const powerSync = inject<Ref<AbstractPowerSyncDatabase> | undefined>(key || POWERSYNC_KEY);
 
   if (!powerSync) {
     console.warn('[PowerSync warn]: No PowerSync client found.');

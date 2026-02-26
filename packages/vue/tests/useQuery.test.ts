@@ -1,7 +1,7 @@
 import * as commonSdk from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
 import flushPromises from 'flush-promises';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { computed, isProxy, isRef, ref, watchEffect } from 'vue';
 import { createPowerSyncPlugin } from '../src/composables/powerSync';
 import { useQuery } from '../src/composables/useQuery';
@@ -43,6 +43,11 @@ describe('useQuery', () => {
       install(app);
     });
   };
+
+  it('should set isLoading to true on initial load', () => {
+    const [{ isLoading }] = withPowerSyncSetup(() => useQuery('SELECT * from lists'));
+    expect(isLoading.value).toEqual(true);
+  });
 
   it('should error when PowerSync is not set', () => {
     powersync = null;
@@ -232,6 +237,293 @@ describe('useQuery', () => {
     expect(error.value?.message).toEqual(
       'PowerSync failed to fetch data: You cannot pass parameters to a compiled query.'
     );
+  });
+
+  it('should react to updated queries (simple update)', async () => {
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const parameters = ref<string[]>(['first']);
+    const [result] = withPowerSyncSetup(() => useQuery('SELECT * FROM lists WHERE name = ?', parameters));
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value[0]?.name).toEqual('first');
+        expect(result.isFetching.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    parameters.value = ['second'];
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value[0]?.name).toEqual('second');
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should react to updated queries (immediate param change)', async () => {
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second'),
+        (uuid (), 'third')
+    `);
+
+    const parameters = ref<number[]>([1]);
+    const [result] = withPowerSyncSetup(() => useQuery('SELECT * FROM lists LIMIT ?', parameters));
+
+    // Change params before first result (simulate immediate update)
+    parameters.value = [2];
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(2);
+        expect(result.isFetching.value).toEqual(false);
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should react to updated queries (error then recovery)', async () => {
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const sqlRef = ref('SELECT * FROM lists WHERE name = ?');
+    const parameters = ref<string[]>(['first']);
+    const [result] = withPowerSyncSetup(() => useQuery(sqlRef, parameters));
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value[0]?.name).toEqual('first');
+        expect(result.error.value).toBeUndefined();
+      },
+      { timeout: 1000 }
+    );
+
+    sqlRef.value = 'select this is a broken query';
+    parameters.value = ['error'];
+    await vi.waitFor(
+      () => {
+        expect(result.error.value).not.toBeNull();
+        expect(result.isFetching.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    sqlRef.value = 'SELECT * FROM lists WHERE name = ?';
+    parameters.value = ['second'];
+    await vi.waitFor(
+      () => {
+        expect(result.data.value[0]?.name).toEqual('second');
+        expect(result.error.value).toBeUndefined();
+        expect(result.isFetching.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should return data from compilable query with parameters', async () => {
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first'),
+        (uuid (), 'second')
+    `);
+
+    const [result] = withPowerSyncSetup(() =>
+      useQuery({
+        execute: () => powersync!.getAll<{ name: string }>('SELECT * FROM lists WHERE name = ?', ['first']),
+        compile: () => ({ sql: 'SELECT * FROM lists WHERE name = ?', parameters: ['first'] })
+      })
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value[0]?.name).toEqual('first');
+        expect(result.data.value).toHaveLength(1);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should allow changing parameter array size', async () => {
+    const queryRef = ref<{ sql: string; params: (string | number)[] }>({ sql: 'SELECT ? AS a', params: ['foo'] });
+    const [result] = withPowerSyncSetup(() =>
+      useQuery(
+        computed(() => queryRef.value.sql),
+        computed(() => queryRef.value.params)
+      )
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value).toStrictEqual([{ a: 'foo' }]);
+      },
+      { timeout: 1000 }
+    );
+
+    queryRef.value = { sql: 'SELECT ? AS a, ? AS b', params: ['foo', 'bar'] };
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value).toStrictEqual([{ a: 'foo', b: 'bar' }]);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should show an error if parsing the query results in an error', async () => {
+    const [result] = withPowerSyncSetup(() =>
+      useQuery({
+        execute: () => [] as any,
+        compile: () => {
+          throw new Error('error');
+        }
+      })
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(result.isLoading.value).toEqual(false);
+        expect(result.isFetching.value).toEqual(false);
+        expect(result.data.value).toEqual([]);
+        expect(result.error.value?.message).toContain('error');
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should be able to switch between single and watched query', async () => {
+    const runOnce = ref(true);
+    const [result] = withPowerSyncSetup(() =>
+      useQuery(
+        'SELECT * FROM lists WHERE name = ?',
+        ['aname'],
+        computed(() => ({ runQueryOnce: runOnce.value }))
+      )
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    runOnce.value = false;
+    await vi.waitFor(
+      () => {
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync!.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(1);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should emit result data when query changes with rowComparator', async () => {
+    const [result] = withPowerSyncSetup(() =>
+      useQuery('SELECT * FROM lists WHERE name = ?', ['aname'], {
+        rowComparator: {
+          keyBy: (item: any) => item.id,
+          compareBy: (item: any) => JSON.stringify(item)
+        }
+      })
+    );
+
+    await vi.waitFor(
+      () => {
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync!.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(1);
+      },
+      { timeout: 1000 }
+    );
+  });
+
+  it('should respect reportFetching option', async () => {
+    await powersync!.execute(/* sql */ `
+      INSERT INTO
+        lists (id, name)
+      VALUES
+        (uuid (), 'first');
+    `);
+
+    const [result] = withPowerSyncSetup(() => useQuery('SELECT * FROM lists', [], { reportFetching: false }));
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(1);
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync!.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['second']);
+
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(2);
+      },
+      { timeout: 1000 }
+    );
+
+    // With reportFetching: false, isFetching should not be set during re-query
+    expect(result.isFetching.value).toEqual(false);
+  });
+
+  it('should emit new data reference when data changes when not using rowComparator', async () => {
+    const [result] = withPowerSyncSetup(() => useQuery('SELECT * FROM lists WHERE name = ?', ['aname']));
+
+    await vi.waitFor(
+      () => {
+        expect(result.isLoading.value).toEqual(false);
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync!.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['aname']);
+    let previousData: readonly any[] = [];
+    await vi.waitFor(
+      () => {
+        expect(result.data.value.length).toEqual(1);
+        previousData = result.data.value;
+      },
+      { timeout: 1000 }
+    );
+
+    await powersync!.execute('INSERT INTO lists(id, name) VALUES (uuid(), ?)', ['noname']);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(result.data.value === previousData).toBe(false);
   });
 
   it('should handle dependent query parameter changes with correct state transitions', async () => {
