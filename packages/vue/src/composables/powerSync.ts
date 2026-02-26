@@ -3,7 +3,7 @@ import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, ref } from 'v
 import { setupTopLevelWarningMessage } from './messages.js';
 
 // Create a unique symbol for the PowerSync context
-export const POWERSYNC_KEY = Symbol('POWERSYNC_KEY');
+const POWERSYNC_KEY = Symbol('POWERSYNC_KEY');
 
 /**
  * Create a Vue plugin to define the PowerSync client.

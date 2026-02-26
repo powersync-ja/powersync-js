@@ -101,6 +101,5 @@ export const useWatchedQuery = <T = any>(
     isLoading,
     isFetching,
     error
-    // figure out how to return a refresh?
   };
 };
