@@ -1,5 +1,5 @@
 ---
-'@powersync/nuxt': minor
+'@powersync/nuxt': patch
 ---
 
 Expose Sync Streams comosable to use in Nuxt with auto-imports
