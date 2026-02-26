@@ -1,5 +1,16 @@
 # @powersync/tanstack-react-query
 
+## 0.2.0
+
+### Minor Changes
+
+- a5d6964: Added sync stream support to the `useQuery()` and `useQueries()` hooks.
+
+### Patch Changes
+
+- Updated dependencies [a5d6964]
+  - @powersync/react@1.9.0
+
 ## 0.1.15
 
 ### Patch Changes
