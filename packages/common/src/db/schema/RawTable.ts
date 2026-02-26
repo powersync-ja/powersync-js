@@ -33,7 +33,13 @@ interface RawTableTypeWithStatements {
   clear?: string;
 }
 
-interface InferredRawTableType extends Partial<RawTableTypeWithStatements>, TableOrRawTableOptions {
+/**
+ * The schema of a {@link RawTableType} in the local database.
+ *
+ * This information is optional when declaring raw tables. However, providing it allows the sync client to infer `put`
+ * and `delete` statements automatically.
+ */
+interface RawTableSchema extends TableOrRawTableOptions {
   /**
    * The actual name of the raw table in the local schema.
    *
@@ -41,8 +47,10 @@ interface InferredRawTableType extends Partial<RawTableTypeWithStatements>, Tabl
    * name. This is used to infer {@link RawTableType.put} and {@link RawTableType.delete} statements for the sync
    * client. It can also be used to auto-generate triggers forwarding writes on raw tables into the CRUD upload queue
    * (using the `powersync_create_raw_table_crud_trigger` SQL function).
+   *
+   * When absent, defaults to {@link RawTable.name}.
    */
-  tableName: string;
+  tableName?: string;
 
   /**
    * An optional filter of columns that should be synced.
@@ -51,6 +59,10 @@ interface InferredRawTableType extends Partial<RawTableTypeWithStatements>, Tabl
    * unmatched columns as local-only and will not attempt to sync them.
    */
   syncedColumns?: string[];
+}
+
+interface InferredRawTableType extends Partial<RawTableTypeWithStatements> {
+  schema: RawTableSchema;
 }
 
 /**

@@ -115,7 +115,7 @@ describe('raw table', () => {
   }
 
   databaseTest('inferred crud trigger', async ({ database }) => {
-    const table: RawTable = { name: 'sync_name', tableName: 'users' };
+    const table: RawTable = { name: 'users', schema: {} };
     await database.execute('CREATE TABLE users (id TEXT, name TEXT);');
     await createTrigger(database, table, 'INSERT');
 
@@ -124,7 +124,7 @@ describe('raw table', () => {
     expect(tx.crud).toHaveLength(1);
     const write = tx.crud[0];
     expect(write.op).toStrictEqual('PUT');
-    expect(write.table).toStrictEqual('sync_name');
+    expect(write.table).toStrictEqual('users');
     expect(write.id).toStrictEqual('id');
     expect(write.opData).toStrictEqual({
       name: 'user'
@@ -133,11 +133,13 @@ describe('raw table', () => {
 
   databaseTest('with options', async ({ database }) => {
     const table: RawTable = {
-      name: 'sync_name',
-      tableName: 'users',
-      syncedColumns: ['name'],
-      ignoreEmptyUpdates: true,
-      trackPrevious: true
+      name: 'custom_sync_name',
+      schema: {
+        tableName: 'users',
+        syncedColumns: ['name'],
+        ignoreEmptyUpdates: true,
+        trackPrevious: true
+      }
     };
     await database.execute('CREATE TABLE users (id TEXT, name TEXT, local TEXT);');
     await database.execute('INSERT INTO users (id, name, local) VALUES (?, ?, ?);', ['id', 'name', 'local']);
@@ -151,6 +153,7 @@ describe('raw table', () => {
     expect(tx.crud).toHaveLength(1);
     const write = tx.crud[0];
     expect(write.op).toStrictEqual('PATCH');
+    expect(write.table).toStrictEqual('custom_sync_name');
     expect(write.id).toStrictEqual('id');
     expect(write.opData).toStrictEqual({ name: 'updated_name' });
     expect(write.previousValues).toStrictEqual({

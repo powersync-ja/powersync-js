@@ -88,11 +88,12 @@ export class Schema<S extends SchemaType = SchemaType> {
       delete: table.delete,
       clear: table.clear
     };
-    if ('tableName' in table) {
-      // We have schema options
-      serialized.table_name = table.tableName;
-      serialized.synced_columns = table.syncedColumns;
-      Object.assign(serialized, encodeTableOptions(table));
+    if ('schema' in table) {
+      // We have schema options, those are flattened into the outer JSON object for the core extension.
+      const schema = table.schema;
+      serialized.table_name = schema.tableName ?? table.name;
+      serialized.synced_columns = schema.syncedColumns;
+      Object.assign(serialized, encodeTableOptions(table.schema));
     }
 
     return serialized;

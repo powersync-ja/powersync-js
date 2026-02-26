@@ -729,7 +729,7 @@ function defineSyncTests(impl: SyncClientImplementation) {
       const customSchema = new Schema({});
       customSchema.withRawTables({
         lists: {
-          tableName: 'lists'
+          schema: {}
         }
       });
 
