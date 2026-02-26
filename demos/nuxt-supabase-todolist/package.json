@@ -10,8 +10,8 @@
     "@nuxt/ui": "^4.0.0",
     "@nuxtjs/supabase": "2.0.1",
     "@powersync/kysely-driver": "^1.3.3",
-    "@powersync/nuxt": "^0.0.1",
-    "@powersync/vue": "^0.4.2",
+    "@powersync/nuxt": "^0.0.2",
+    "@powersync/vue": "^0.5.0",
     "@powersync/web": "^1.34.0",
     "@supabase/supabase-js": "2.75.0",
     "tailwindcss": "^4.1.18"
