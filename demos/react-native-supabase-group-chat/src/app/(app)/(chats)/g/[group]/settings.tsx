@@ -17,7 +17,12 @@ export default function GroupSettings() {
   const powerSync = usePowerSync();
 
   const { data: groups } = useQuery('SELECT name FROM groups WHERE id = ?', [groupId]);
-  const { data: groupMembers } = useQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId]);
+  const { data: groupMembers } = useQuery('SELECT profile_id FROM memberships WHERE group_id = ?', [groupId], {
+    streams: [
+      { name: 'group_memberships', parameters: { group_id: groupId } },
+      { name: 'group_member_profiles', parameters: { group_id: groupId } }
+    ]
+  });
 
   useEffect(() => {
     if (groups.length > 0) {

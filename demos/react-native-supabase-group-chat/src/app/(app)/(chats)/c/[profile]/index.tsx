@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { usePowerSync, useQuery } from '@powersync/react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Input, YStack } from 'tamagui';
 
 import { Message } from '@/components/messages/Message';
@@ -22,7 +22,14 @@ export default function ChatsChatIndex() {
     [user?.id, profile?.id]
   );
 
+  const listRef = useRef<FlashListRef<any>>(null);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     async function findOrCreateDraft(senderId: string, recipientId: string, content: string) {
@@ -108,7 +115,7 @@ export default function ChatsChatIndex() {
     <>
       <YStack fullscreen>
         <YStack flexGrow={1}>
-          <FlashList data={messages} extraData={messages.length} renderItem={({ item }) => <Message message={item} />} />
+          <FlashList ref={listRef} data={messages} extraData={messages.length} renderItem={({ item }) => <Message message={item} />} />
         </YStack>
         <YStack padding="$3" gap="$3">
           {profile.demo === 1 && <Button onPress={handleDemoMessage}>Receive demo message</Button>}
