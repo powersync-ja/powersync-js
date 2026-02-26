@@ -1,5 +1,11 @@
 # @powersync/react
 
+## 1.9.0
+
+### Minor Changes
+
+- a5d6964: Exporting `useAllSyncStreamsHaveSynced()` member.
+
 ## 1.8.3
 
 ### Patch Changes
