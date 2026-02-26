@@ -499,7 +499,12 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     }
     this._schema = schema;
 
-    await this.database.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    // powersync_replace_schema starts a transaction internally, but we can be more efficient by using BEGIN EXCLUSIVE
+    // on some DB adapters.
+    this.database.writeTransaction((tx) => {
+      return tx.execute('SELECT powersync_replace_schema(?)', [JSON.stringify(this.schema.toJSON())]);
+    });
+
     await this.database.refreshSchema();
     this.iterateListeners(async (cb) => cb.schemaChanged?.(schema));
   }

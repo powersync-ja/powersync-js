@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@journeyapps/wa-sqlite':
-      specifier: 0.0.0-dev-20260225162137
-      version: 0.0.0-dev-20260225162137
+      specifier: 0.0.0-dev-20260226145021
+      version: 0.0.0-dev-20260226145021
     '@op-engineering/op-sqlite':
       specifier: ^15.2.2
       version: 15.2.5
@@ -136,7 +136,7 @@ importers:
         version: 24.10.13
       '@vitest/browser':
         specifier: ^3.2.4
-        version: 3.2.4(playwright@1.58.2)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@3.2.4)
+        version: 3.2.4(playwright@1.58.2)(vite@5.4.21(@types/node@24.10.13)(lightningcss@1.31.1)(terser@5.46.0))(vitest@3.2.4)
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -451,7 +451,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 0.0.0-dev-20260225162137
+        version: 0.0.0-dev-20260226145021
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -491,7 +491,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 0.0.0-dev-20260225162137
+        version: 0.0.0-dev-20260226145021
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -872,7 +872,7 @@ importers:
     devDependencies:
       '@journeyapps/wa-sqlite':
         specifier: 'catalog:'
-        version: 0.0.0-dev-20260225162137
+        version: 0.0.0-dev-20260226145021
       '@types/uuid':
         specifier: 'catalog:'
         version: 9.0.8
@@ -3565,8 +3565,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  '@journeyapps/wa-sqlite@0.0.0-dev-20260225162137':
-    resolution: {integrity: sha512-wbPEaHemG7ZcK/Bt1UJNY1runSFzf/ucdYG3eznwvo83oQZv8QBNrKCpXRlcllwdTq5L5KUKkpGzZEYHhUM27g==}
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260226145021':
+    resolution: {integrity: sha512-/oYtZKIvucom1BiqwR2JHfITEkAuqVQg9sF5ldYbOQ1CjNLNk5FW9UzQPUsockIOjcXJSisjuF9DpYC5wdJsHg==}
 
   '@journeyapps/wa-sqlite@1.5.0':
     resolution: {integrity: sha512-oASXW/9Ktbhn6kJjxCJzRKxNnlOyj7GKBLF/59dkz1kbOLw7kAXBTwWTUvqfT97OEshtrK/J8bJUYbpggdCZ9Q==}
@@ -20354,7 +20354,7 @@ snapshots:
       react: 19.2.4
       react-native: 0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
 
-  '@journeyapps/wa-sqlite@0.0.0-dev-20260225162137': {}
+  '@journeyapps/wa-sqlite@0.0.0-dev-20260226145021': {}
 
   '@journeyapps/wa-sqlite@1.5.0': {}
 
@@ -25114,11 +25114,11 @@ snapshots:
       vite: 7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
       vue: 3.5.29(typescript@5.9.3)
 
-  '@vitest/browser@3.2.4(playwright@1.58.2)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@3.2.4)':
+  '@vitest/browser@3.2.4(playwright@1.58.2)(vite@5.4.21(@types/node@24.10.13)(lightningcss@1.31.1)(terser@5.46.0))(vitest@3.2.4)':
     dependencies:
       '@testing-library/dom': 10.4.1
       '@testing-library/user-event': 14.6.1(@testing-library/dom@10.4.1)
-      '@vitest/mocker': 3.2.4(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
+      '@vitest/mocker': 3.2.4(vite@5.4.21(@types/node@24.10.13)(lightningcss@1.31.1)(terser@5.46.0))
       '@vitest/utils': 3.2.4
       magic-string: 0.30.21
       sirv: 3.0.2
@@ -25148,14 +25148,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 5.4.21(@types/node@24.10.13)(lightningcss@1.31.1)(terser@5.46.0)
-
-  '@vitest/mocker@3.2.4(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))':
-    dependencies:
-      '@vitest/spy': 3.2.4
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -36580,7 +36572,7 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 24.10.13
-      '@vitest/browser': 3.2.4(playwright@1.58.2)(vite@7.3.1(@types/node@24.10.13)(jiti@2.6.1)(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vitest@3.2.4)
+      '@vitest/browser': 3.2.4(playwright@1.58.2)(vite@5.4.21(@types/node@24.10.13)(lightningcss@1.31.1)(terser@5.46.0))(vitest@3.2.4)
       jsdom: 24.1.3
     transitivePeerDependencies:
       - less
