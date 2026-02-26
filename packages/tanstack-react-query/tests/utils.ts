@@ -14,9 +14,6 @@ export const openPowerSync = () => {
   });
 
   onTestFinished(async () => {
-    // backport for https://github.com/powersync-ja/powersync-sqlite-core, disconnectAndClear is supposed to do this.
-    await db.execute('DELETE FROM ps_stream_subscriptions');
-
     await db.disconnectAndClear();
     await db.close();
   });

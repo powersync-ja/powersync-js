@@ -65,6 +65,9 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
   return status.forStream(stream) ?? null;
 }
 
+/**
+ * Returns `true` once all streams in the array have synced at least once.
+ */
 export function useAllSyncStreamsHaveSynced(
   db: AbstractPowerSyncDatabase,
   streams: QuerySyncStreamOptions[] | undefined

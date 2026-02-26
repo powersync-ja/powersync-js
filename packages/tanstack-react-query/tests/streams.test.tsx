@@ -140,7 +140,7 @@ describe('stream hooks', () => {
           // Adopt streams - this should reset back to loading
           streams = [{ name: 'a', waitForStream: true }];
           act(() => streamUpdateListeners.forEach((cb) => cb()));
-          console.log(1, result.current)
+
           expect(result.current).toMatchObject({ isFetching: true });
           expect(result.current).toMatchObject({ isPending: true });
 
