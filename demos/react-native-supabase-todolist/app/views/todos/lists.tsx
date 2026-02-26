@@ -7,7 +7,7 @@ import prompt from 'react-native-prompt-android';
 import { router, Stack } from 'expo-router';
 import { LIST_TABLE, TODO_TABLE, ListRecord } from '../../../library/powersync/AppSchema';
 import { useSystem } from '../../../library/powersync/system';
-import { useQuery } from '@powersync/react-native';
+import { useQuery, useStatus } from '@powersync/react-native';
 import { ListItemWidget } from '../../../library/widgets/ListItemWidget';
 import { GuardBySync } from '../../../library/widgets/GuardBySync';
 
@@ -17,6 +17,7 @@ const description = (total: number, completed: number = 0) => {
 
 const ListsViewWidget: React.FC = () => {
   const system = useSystem();
+  const status = useStatus();
   const { data: listRecords } = useQuery<ListRecord & { total_tasks: number; completed_tasks: number }>(`
       SELECT
         ${LIST_TABLE}.*, COUNT(${TODO_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODO_TABLE}.completed = true THEN 1 ELSE 0 END) as completed_tasks
@@ -81,20 +82,32 @@ const ListsViewWidget: React.FC = () => {
       <GuardBySync>
         <ScrollView key={'lists'} style={{ maxHeight: '90%' }}>
           {(
-            listRecords.map((r) => (
-              <ListItemWidget
-                key={r.id}
-                title={r.name!}
-                description={description(r.total_tasks, r.completed_tasks)}
-                onDelete={() => deleteList(r.id)}
-                onPress={() => {
-                  router.push({
-                    pathname: 'views/todos/edit/[id]',
-                    params: { id: r.id }
-                  });
-                }}
-              />
-            ))
+            listRecords.map((r) => {
+              const listStatus = status.forStream({ name: 'todos', parameters: { list_id: r.id } });
+              let listDescription = '';
+              if (listStatus == null || !listStatus.subscription.active) {
+                listDescription = 'Items in this list not loaded - open list for details.';
+              } else if (!listStatus.subscription.hasSynced) {
+                listDescription = 'Loading items in this list...';
+              } else {
+                listDescription = description(r.total_tasks, r.completed_tasks);
+              }
+
+              return (
+                <ListItemWidget
+                  key={r.id}
+                  title={r.name!}
+                  description={listDescription}
+                  onDelete={() => deleteList(r.id)}
+                  onPress={() => {
+                    router.push({
+                      pathname: 'views/todos/edit/[id]',
+                      params: { id: r.id }
+                    });
+                  }}
+                />
+              );
+            })
           )}
         </ScrollView>
       </GuardBySync>
