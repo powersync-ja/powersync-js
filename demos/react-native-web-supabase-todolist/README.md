@@ -4,6 +4,8 @@
 
 This demo app is an extension of the [Supabase Todo List App](../react-native-supabase-todolist/) and demonstrates the use of the PowerSync SDKs for [React Native](https://www.npmjs.com/package/@powersync/react-native) and [Web](https://www.npmjs.com/package/@powersync/web) in a [React Native Web](https://necolas.github.io/react-native-web/) project. This configuration allows developers to use one React Native codebase to target mobile and well as web platforms.
 
+This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams) (edition 3) instead of classic sync rules. Lists are auto-subscribed, while todos are subscribed on-demand when a user opens a specific list and unsubscribed when navigating away.
+
 To use PowerSync in your own React Native for Web project, additional config is required. This is detailed in our docs [here](https://docs.powersync.com/client-sdk-references/react-native-and-expo/react-native-web-support).
 
 ## Run Demo
@@ -44,16 +46,19 @@ It does the following:
 
 Create a new PowerSync instance, connecting to the database of the Supabase project. See instructions [here](https://docs.powersync.com/integration-guides/supabase-+-powersync#connect-powersync-to-your-supabase).
 
-Then deploy the following sync rules:
+Then deploy the following sync streams configuration:
 
 ```yaml
-bucket_definitions:
-  user_lists:
-    # Separate bucket per todo list
-    parameters: select id as list_id from lists where owner_id = request.user_id()
-    data:
-      - select * from lists where id = bucket.list_id
-      - select * from todos where list_id = bucket.list_id
+config:
+  edition: 3
+
+streams:
+  lists:
+    query: SELECT _id as id, * FROM lists
+    auto_subscribe: true
+
+  todos:
+    query: SELECT _id as id, * FROM todos WHERE list_id = subscription.parameter('list_id')
 ```
 
 ### Configure the app

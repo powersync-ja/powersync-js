@@ -1,36 +1,79 @@
-bucket_definitions:
+config:
+  edition: 3
+
+streams:
+  # User's own data - auto synced
   user:
-    parameters: select request.user_id() as user_id
-    data:
-      - select * from profiles where id = bucket.user_id
-      - select * from memberships where profile_id = bucket.user_id
-      - select * from contacts where owner_id = bucket.user_id
-      - select * from messages where sender_id = bucket.user_id
-      - select *, '...' as content from messages where recipient_id = bucket.user_id AND messages.sent_at IS NULL
-      - select * from messages where recipient_id = bucket.user_id AND messages.sent_at IS NOT NULL
-      - select * from groups where owner_id = bucket.user_id
-  contacts:
-    parameters: select profile_id from contacts where owner_id = request.user_id()
-    data:
-      - select * from profiles where id = bucket.profile_id
-  groups:
-    parameters:
-      - select id as group_id from groups where owner_id = request.user_id()
-      - select group_id from memberships where profile_id = request.user_id()
-    data:
-      - select * from groups where id = bucket.group_id
-      - select * from messages where group_id = bucket.group_id AND messages.sent_at IS NOT NULL
-      - select * from memberships where group_id = bucket.group_id
-  group_draft_messages:
-    parameters:
-      - select id as group_id, owner_id as user_id from groups where owner_id = request.user_id()
-      - select group_id, profile_id as user_id from memberships where profile_id = request.user_id()
-    data:
-      - select * from messages where group_id = bucket.group_id AND sender_id = bucket.user_id AND messages.sent_at IS NULL
+    auto_subscribe: true
+    queries:
+      # Own profile
+      - SELECT * FROM profiles WHERE id = auth.user_id()
+      # Own contacts
+      - SELECT * FROM contacts WHERE owner_id = auth.user_id()
+      # Own memberships (to discover which groups user belongs to)
+      - SELECT * FROM memberships WHERE profile_id = auth.user_id()
+      # Groups the user owns
+      - SELECT * FROM groups WHERE owner_id = auth.user_id()
+      # Own sent messages (all, including drafts)
+      - SELECT * FROM messages WHERE sender_id = auth.user_id()
+      # Received messages that have been sent
+      - SELECT * FROM messages WHERE recipient_id = auth.user_id() AND sent_at IS NOT NULL
+      # Received draft messages with content redacted for privacy
+      - SELECT *, '...' as content FROM messages WHERE recipient_id = auth.user_id() AND sent_at IS NULL
+
+  # Profiles of user's contacts
+  contact_profiles:
+    auto_subscribe: true
+    query: |
+      SELECT profiles.* FROM profiles
+        JOIN contacts ON contacts.profile_id = profiles.id
+      WHERE contacts.owner_id = auth.user_id()
+
+  # Groups the user is a member of (but doesn't own)
+  member_groups:
+    auto_subscribe: true
+    query: |
+      SELECT groups.* FROM groups
+        JOIN memberships ON memberships.group_id = groups.id
+      WHERE memberships.profile_id = auth.user_id()
+
+  # Chats synthetic table - DM partners derived from messages
   chats:
-    parameters:
-      - select recipient_id as partner_id from messages where sender_id = request.user_id()
-      - select sender_id as partner_id from messages where recipient_id = request.user_id()
-    data:
-      - select id, id as profile_id from profiles as chats where id = bucket.partner_id
-      - select * from profiles where id = bucket.partner_id
+    auto_subscribe: true
+    queries:
+      - SELECT profiles.id, profiles.id as profile_id FROM profiles
+          JOIN messages ON messages.recipient_id = profiles.id
+        WHERE messages.sender_id = auth.user_id()
+      - SELECT profiles.id, profiles.id as profile_id FROM profiles
+          JOIN messages ON messages.sender_id = profiles.id
+        WHERE messages.recipient_id = auth.user_id()
+
+  # Profiles of DM chat partners
+  chat_profiles:
+    auto_subscribe: true
+    queries:
+      - SELECT profiles.* FROM profiles
+          JOIN messages ON messages.recipient_id = profiles.id
+        WHERE messages.sender_id = auth.user_id()
+      - SELECT profiles.* FROM profiles
+          JOIN messages ON messages.sender_id = profiles.id
+        WHERE messages.recipient_id = auth.user_id()
+
+  # Group messages - on demand when viewing a group chat
+  group_messages:
+    queries:
+      # Sent messages from all group members
+      - SELECT * FROM messages WHERE group_id = subscription.parameter('group_id') AND sent_at IS NOT NULL
+      # Own draft messages in the group
+      - SELECT * FROM messages WHERE group_id = subscription.parameter('group_id') AND sender_id = auth.user_id() AND sent_at IS NULL
+
+  # Group memberships - on demand when viewing a group
+  group_memberships:
+    query: SELECT * FROM memberships WHERE group_id = subscription.parameter('group_id')
+
+  # Member profiles for a specific group - on demand
+  group_member_profiles:
+    query: |
+      SELECT profiles.* FROM profiles
+        JOIN memberships ON memberships.profile_id = profiles.id
+      WHERE memberships.group_id = subscription.parameter('group_id')

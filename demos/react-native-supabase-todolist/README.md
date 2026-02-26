@@ -4,6 +4,8 @@
 
 Demo app demonstrating use of the [PowerSync SDK for React Native](https://www.npmjs.com/package/@powersync/react-native) together with Supabase.
 
+This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams) (edition 3) instead of classic sync rules. Lists are auto-subscribed, while todos are subscribed on-demand when a user opens a specific list and unsubscribed when navigating away.
+
 ## Run Demo
 
 Prerequisites:
@@ -11,6 +13,20 @@ Prerequisites:
   * [Configure Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-supabase)
   * [Configure PowerSync](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-powersync)
 * Follow all the steps until, but not including, [Test Everything (Using Our Demo App)](https://docs.powersync.com/integration-guides/supabase-+-powersync#test-everything-using-our-demo-app).
+* Deploy the following sync streams configuration to your PowerSync instance:
+
+```yaml
+config:
+  edition: 3
+
+streams:
+  lists:
+    query: SELECT _id as id, * FROM lists
+    auto_subscribe: true
+
+  todos:
+    query: SELECT _id as id, * FROM todos WHERE list_id = subscription.parameter('list_id')
+```
 
 Switch into the demo's directory:
 

@@ -1,0 +1,23 @@
+# Supabase containers should be started before running this compose file.
+# Start them with: supabase start
+# Or use: pnpm local:up (which does both)
+
+services:
+  powersync:
+    container_name: powersync_powerchat
+    restart: unless-stopped
+    image: journeyapps/powersync-service:latest
+    env_file:
+      - .env.powersync
+    volumes:
+      - ./powersync.yaml:/app/powersync.yaml
+      - ./sync-rules.yml:/app/sync-rules.yml
+    networks:
+      - supabase_network_powerchat
+    ports:
+      - ${PS_PORT}:${PS_PORT}
+      - ${PS_TELEMETRY_PORT}:${PS_TELEMETRY_PORT}
+
+networks:
+  supabase_network_powerchat:
+    external: true
