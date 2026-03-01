@@ -59,9 +59,9 @@ export * from './client/watched/WatchedQuery.js';
 export * from './utils/AbortOperation.js';
 export * from './utils/BaseObserver.js';
 export * from './utils/ControlledExecutor.js';
-export * from './utils/DataStream.js';
 export * from './utils/Logger.js';
 export * from './utils/mutex.js';
 export * from './utils/parseQuery.js';
+export type { SimpleAsyncIterator } from './utils/stream_transform.js';
 
 export * from './types/types.js';

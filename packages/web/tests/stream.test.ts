@@ -1,11 +1,11 @@
 import {
   BucketChecksum,
   createBaseLogger,
-  DataStream,
   PowerSyncConnectionOptions,
   Schema,
   SyncClientImplementation,
   SyncStreamConnectionMethod,
+  SyncStreamOptions,
   WASQLiteOpenFactory,
   WASQLiteVFS,
   WebPowerSyncOpenFactoryOptions
@@ -291,15 +291,15 @@ function describeStreamingTests(
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
 
       // Keep track of all connection streams to check if they are correctly closed later
-      const generatedStreams: DataStream<any>[] = [];
+      const fetchStreamInvocations: AbortSignal[] = [];
 
       // This method is used for all mocked connections
-      const basePostStream = remote.postStreamRaw;
-      const postSpy = vi.spyOn(remote, 'postStreamRaw').mockImplementation(async (...args) => {
+      const baseFetchStream = remote.fetchStream;
+      const postSpy = vi.spyOn(remote, 'fetchStream').mockImplementation(async (options: SyncStreamOptions) => {
         // Simulate a connection delay
         await new Promise((r) => setTimeout(r, 100));
-        const stream = await basePostStream.call(remote, ...args);
-        generatedStreams.push(stream);
+        const stream = await baseFetchStream.call(remote, options);
+        fetchStreamInvocations.push(options.abortSignal);
         return stream;
       });
 
@@ -347,17 +347,17 @@ function describeStreamingTests(
           // The async postStream call's invocation is added to the count of calls
           // before the generated stream is added (there is a delay)
           // expect that the stream has been generated and tracked.
-          expect(postSpy.mock.calls.length).equals(generatedStreams.length);
+          expect(postSpy.mock.calls.length).equals(fetchStreamInvocations.length);
         },
         { timeout: 1000, interval: 100 }
       );
 
-      const lastConnectionStream = generatedStreams.pop();
+      const lastConnectionStream = fetchStreamInvocations.pop();
       expect(lastConnectionStream).toBeDefined();
-      expect(lastConnectionStream?.closed).false;
+      expect(lastConnectionStream?.aborted).false;
 
       // All streams except the last one (which has been popped off already) should be closed
-      expect(generatedStreams.every((i) => i.closed)).true;
+      expect(fetchStreamInvocations.every((i) => i.aborted)).true;
     });
 
     it('Should trigger upload connector when connected', async () => {
