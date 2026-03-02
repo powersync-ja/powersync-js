@@ -5,6 +5,11 @@
   <p>Effortless offline-first development with PowerSync integration for Nuxt applications.</p>
 </div>
 
+> [!NOTE]
+> The Nuxt package is currently in an **alpha** state, intended strictly for testing. Expect breaking changes and instability as development continues.
+>
+> Do not rely on this package for production use.
+
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
