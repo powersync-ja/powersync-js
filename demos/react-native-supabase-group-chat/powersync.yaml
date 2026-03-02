@@ -14,7 +14,7 @@ storage:
   sslmode: disable
 
 sync_rules:
-  path: sync-rules.yml
+  path: sync-streams.yaml
 
 client_auth:
   jwks:

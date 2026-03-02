@@ -2,7 +2,7 @@
 
 An offline-first group chat app built with Expo/React Native, using Supabase as the backend and PowerSync for offline sync.
 
-This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams) (edition 3) instead of classic sync rules. User data (profile, contacts, groups, memberships, DM messages) is auto-subscribed, while group messages are subscribed on-demand when a user opens a specific group chat and unsubscribed when navigating away.
+This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams) (edition 3). User data (profile, contacts, groups, memberships, DM messages) is auto-subscribed, while group messages are subscribed on-demand when a user opens a specific group chat and unsubscribed when navigating away.
 
 The following video gives an overview of the implemented functionality:
 
@@ -58,7 +58,7 @@ To run against cloud-hosted Supabase and PowerSync instances:
 
 1. Deploy a Supabase project using the config and migrations in the [supabase](./supabase) folder. Update `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in [.env.local](./.env.local).
 
-2. Create a PowerSync instance via the [PowerSync dashboard](https://powersync.journeyapps.com/) and connect it to your Supabase project. Deploy the following sync streams configuration (also available in [sync-rules.yml](./sync-rules.yml)):
+2. Create a PowerSync instance via the [PowerSync dashboard](https://powersync.journeyapps.com/) and connect it to your Supabase project. Deploy the following sync streams configuration (also available in [sync-streams.yaml](./sync-streams.yaml)):
 
    ```yaml
    config:
