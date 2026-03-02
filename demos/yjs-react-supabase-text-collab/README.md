@@ -51,7 +51,7 @@ docker run \
 -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-streams.yaml) \
 --env-file ./.env.local \
 --network supabase_network_yjs-react-supabase-text-collab \
---name my-powersync journeyapps/powersync-service:1.20.0
+--name my-powersync journeyapps/powersync-service:latest
 ```
 
 ### 2. Create project on Supabase and set up Postgres
