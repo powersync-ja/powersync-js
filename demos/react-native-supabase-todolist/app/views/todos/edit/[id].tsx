@@ -38,8 +38,7 @@ const TodoView: React.FC = () => {
             ${ATTACHMENT_TABLE} ON ${TODO_TABLE}.photo_id = ${ATTACHMENT_TABLE}.id
         WHERE
             ${TODO_TABLE}.list_id = ?`,
-    [listID],
-    { streams: [{ name: 'todos', parameters: { list_id: listID } }] }
+    [listID]
   );
 
   const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
