@@ -1,7 +1,6 @@
 <div align="center">
   <img src="https://github.com/powersync-ja/powersync-js/raw/main/packages/nuxt/src/runtime/assets/powersync-icon.svg" alt="PowerSync Logo" width="64" height="64" />
   <h1>PowerSync Nuxt</h1>
-  <p>Offline-first apps made simple</p>
   <p>PowerSync for Nuxt: offline-first sync with native Nuxt integration</p>
 </div>
 
