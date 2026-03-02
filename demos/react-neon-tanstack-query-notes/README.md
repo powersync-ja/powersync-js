@@ -100,7 +100,7 @@ PowerSync uses logical replication to sync data from your Neon project to your P
 
 In the PowerSync dashboard, create a project, an instance and then create a database connection to your Neon database using the credentials from the "Connect" button in the Neon Console.
 
-### 7. Configure PowerSync auth and Sync Rules
+### 7. Configure PowerSync auth and Sync Streams
 
 ### Auth
 
@@ -110,34 +110,38 @@ Navigate to "Client Auth" in the PowerSync dashboard and configure:
 - Populate the "JWKS URI" with the value from the "JWKS URL" field in the Neon Console → Auth page
 - Populate the "JWT Audience" with your project root URL (e.g., `https://ep-restless-resonance-adom1z4w.neonauth.c-2.us-east-1.aws.neon.tech/`)
 
-### Sync Rules
+### Sync Streams
 
-Navigate to "Sync Rules" in the PowerSync dashboard and configure these sync rules:
+Navigate to "Sync Rules" in the PowerSync dashboard and configure these sync streams:
 
 ```yaml
 config:
-  edition: 2
+  edition: 3
 
-bucket_definitions:
-  by_user:
-    # Only sync rows belonging to the user
-    parameters: SELECT id as note_id FROM notes WHERE owner_id = request.user_id()
-    data:
-      - SELECT * FROM notes WHERE id = bucket.note_id
-      - SELECT * FROM paragraphs WHERE note_id = bucket.note_id
-  # Sync all shared notes to all users (not recommended for production)
+streams:
+  user_notes:
+    auto_subscribe: true
+    # Sync notes and paragraphs belonging to the authenticated user
+    queries:
+      - SELECT * FROM notes WHERE owner_id = auth.user_id()
+      - SELECT paragraphs.* FROM paragraphs
+          INNER JOIN notes ON notes.id = paragraphs.note_id
+          WHERE notes.owner_id = auth.user_id()
   shared_notes:
-    parameters: SELECT id as note_id from notes where shared = TRUE
-    data:
-      - SELECT * FROM notes WHERE id = bucket.note_id
-      - SELECT * FROM paragraphs WHERE note_id = bucket.note_id
+    auto_subscribe: true
+    # Sync all shared notes to all users (not recommended for production)
+    queries:
+      - SELECT * FROM notes WHERE shared = TRUE
+      - SELECT paragraphs.* FROM paragraphs
+          INNER JOIN notes ON notes.id = paragraphs.note_id
+          WHERE notes.shared = TRUE
 ```
 
 ### 8. Test Sync
 
-You can use the Sync Test to validate your Sync Rules, but since your app won't have any data at this point yet, you can skip this step for now.
+You can use the Sync Test to validate your Sync Streams, but since your app won't have any data at this point yet, you can skip this step for now.
 
-Click on "Sync Test" test in the PowerSync dashboard, and enter the UUID of a user in your Neon Auth database to generate a test JWT. Then, click "Launch Sync Diagnostics Client" to test the sync rules.
+Click on "Sync Test" in the PowerSync dashboard, and enter the UUID of a user in your Neon Auth database to generate a test JWT. Then, click "Launch Sync Diagnostics Client" to test the sync streams.
 
 ### 9. Start the Development Server
 
