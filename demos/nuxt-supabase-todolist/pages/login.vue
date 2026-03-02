@@ -3,9 +3,9 @@
     <UPageCard class="max-w-sm w-full">
       <UAuthForm :title="sign === 'in' ? 'Login' : 'Sign up'" icon="i-lucide-user" :fields="fields" @submit="onSubmit">
         <template #description>
-          {{ sign === 'up' ? "Don't have an account?" : 'Already have an account?' }}
+          {{ sign === 'in' ? "Don't have an account?" : 'Already have an account?' }}
           <UButton variant="link" class="p-0" @click="sign = sign === 'up' ? 'in' : 'up'">
-            {{ sign === 'in' ? 'Sign In' : 'Sign Up' }} </UButton
+            {{ sign === 'in' ? 'Sign Up' : 'Sign In' }} </UButton
           >.
         </template>
       </UAuthForm>
