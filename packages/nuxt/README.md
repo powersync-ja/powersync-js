@@ -16,7 +16,7 @@
 
 PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nuxt/devtools).
 
-- [✨ &nbsp;Release Notes](https://github.com/powersync-ja/powersync-js/blob/main/packages/nuxt/CHANGELOG.md)
+- [Changelog](https://github.com/powersync-ja/powersync-js/blob/main/packages/nuxt/CHANGELOG.md)
 
 ## Features
 
