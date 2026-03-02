@@ -8,15 +8,22 @@ import {
 } from './Column.js';
 import { Index } from './Index.js';
 import { IndexedColumn } from './IndexedColumn.js';
+import { encodeTableOptions } from './internal.js';
 import { TableV2 } from './TableV2.js';
 
-interface SharedTableOptions {
+/**
+ * Options that apply both to JSON-based tables and raw tables.
+ */
+export interface TableOrRawTableOptions {
   localOnly?: boolean;
   insertOnly?: boolean;
-  viewName?: string;
   trackPrevious?: boolean | TrackPreviousOptions;
   trackMetadata?: boolean;
   ignoreEmptyUpdates?: boolean;
+}
+
+interface SharedTableOptions extends TableOrRawTableOptions {
+  viewName?: string;
 }
 
 /** Whether to include previous column values when PowerSync tracks local changes.
@@ -341,19 +348,12 @@ export class Table<Columns extends ColumnsType = ColumnsType> {
   }
 
   toJSON() {
-    const trackPrevious = this.trackPrevious;
-
     return {
       name: this.name,
       view_name: this.viewName,
-      local_only: this.localOnly,
-      insert_only: this.insertOnly,
-      include_old: trackPrevious && ((trackPrevious as any).columns ?? true),
-      include_old_only_when_changed: typeof trackPrevious == 'object' && trackPrevious.onlyWhenChanged == true,
-      include_metadata: this.trackMetadata,
-      ignore_empty_update: this.ignoreEmptyUpdates,
       columns: this.columns.map((c) => c.toJSON()),
-      indexes: this.indexes.map((e) => e.toJSON(this))
+      indexes: this.indexes.map((e) => e.toJSON(this)),
+      ...encodeTableOptions(this)
     };
   }
 }
