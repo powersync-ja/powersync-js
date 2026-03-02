@@ -1,8 +1,8 @@
 <div align="center">
-  <img src="./src/runtime/assets/powersync-icon.svg" alt="PowerSync Logo" width="64" height="64" />
+  <img src="https://github.com/powersync-ja/powersync-js/raw/main/packages/nuxt/src/runtime/assets/powersync-icon.svg" alt="PowerSync Logo" width="64" height="64" />
   <h1>PowerSync Nuxt</h1>
-  <p>Local-first apps made simple</p>
-  <p>Effortless offline-first development with PowerSync integration for Nuxt applications.</p>
+  <p>Offline-first apps made simple</p>
+  <p>PowerSync for Nuxt: offline-first sync with native Nuxt integration</p>
 </div>
 
 > [!NOTE]
@@ -17,7 +17,7 @@
 
 PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nuxt/devtools).
 
-- [✨ &nbsp;Release Notes](/CHANGELOG.md)
+- [✨ &nbsp;Release Notes](https://github.com/powersync-ja/powersync-js/blob/main/packages/nuxt/CHANGELOG.md)
 
 ## Features
 
