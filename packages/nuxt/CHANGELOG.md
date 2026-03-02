@@ -1,5 +1,11 @@
 # @powersync/nuxt
 
+## 0.0.3
+
+### Patch Changes
+
+- 0c476f8: Updated readme note to include alpha state.
+
 ## 0.0.2
 
 ### Patch Changes
