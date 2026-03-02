@@ -1,0 +1,11 @@
+config:
+  edition: 3
+
+streams:
+  documents:
+    # Allow remote changes to be synchronized even while there are local changes
+    priority: 0
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM documents WHERE id = connection.parameter('document_id')
+      - SELECT id, document_id, base64(update_data) as update_b64 FROM document_updates WHERE document_id = connection.parameter('document_id')
