@@ -20,11 +20,11 @@ PowerSync Nuxt module integrated with the [Nuxt Devtools](https://github.com/nux
 
 ## Features
 
-- 🔄 **Real-time offline-first sync** — PowerSync keeps a local SQLite database in sync with your backend (Postgres, MongoDB, MySQL, or SQL Server). Your app reads from local SQLite and works offline; changes sync automatically when the connection is restored.
-- ✨ **Auto-imported composables** — `usePowerSync()`, `useQuery()`, and `usePowerSyncKysely()` are available in every component without explicit imports.
-- 🔍 **Built-in diagnostics** — View connection and sync status, inspect sync buckets and config, and tail real-time logs via the PowerSync Inspector — accessible at `/__powersync-inspector` or through Nuxt Devtools.
-- 🗄️ **Data inspection** — Browse your local SQLite database in the browser without external tools — useful for verifying what data has synced and debugging data issues during development.
-- 📘 **Kysely support** — Opt-in type-safe queries via `@powersync/kysely-driver`, enabled with `kysely: true` in your PowerSync config.
+- **Real-time offline-first sync** — PowerSync keeps a local SQLite database in sync with your backend (Postgres, MongoDB, MySQL, or SQL Server). Your app reads from local SQLite and works offline; changes sync automatically when the connection is restored.
+- **Auto-imported composables** — `usePowerSync()`, `useQuery()`, and `usePowerSyncKysely()` are available in every component without explicit imports.
+- **Built-in diagnostics** — View connection and sync status, inspect sync buckets and config, and tail real-time logs via the PowerSync Inspector — accessible at `/__powersync-inspector` or through Nuxt Devtools.
+- **Data inspection** — Browse your local SQLite database in the browser without external tools — useful for verifying what data has synced and debugging data issues during development.
+- **Kysely support** — Opt-in type-safe queries via `@powersync/kysely-driver`, enabled with `kysely: true` in your PowerSync config.
 
 ## Installation
 
