@@ -14,7 +14,7 @@ storage:
   sslmode: disable
 
 sync_config:
-  path: sync.config.yaml
+  path: sync-config.yaml
 
 client_auth:
   jwks:
