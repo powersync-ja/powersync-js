@@ -47,7 +47,7 @@ export default function CreateGroup() {
 
   return (
     <>
-      <Stack.Screen name="../../" options={{ title: 'Create group' }} />
+      <Stack.Screen options={{ title: 'Create group' }} />
       <YStack paddingTop="$3" fullscreen>
         <XStack marginHorizontal="$3" gap="$3">
           <Input

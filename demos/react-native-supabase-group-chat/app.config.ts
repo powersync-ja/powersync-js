@@ -3,9 +3,9 @@ import { type ExpoConfig } from 'expo/config';
 import { config as dotenvConfig } from 'dotenv';
 import path from 'path';
 
-// EAS doesn't load values from `.env` by default when consider the `app.config`
+// EAS doesn't load values from `.env.local` by default when consider the `app.config`
 dotenvConfig({
-  path: path.resolve(__dirname, '.env')
+  path: path.resolve(__dirname, '.env.local')
 });
 
 const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;

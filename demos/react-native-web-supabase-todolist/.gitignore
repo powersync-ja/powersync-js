@@ -40,3 +40,5 @@ npm-debug.*
 public/@powersync
 android/
 ios/
+
+.env
