@@ -245,7 +245,7 @@ export default function SyncDiagnosticsPage() {
       flex: 1,
       type: 'number',
       hideOnMobile: true,
-      tooltip: 'Number of row operations synced via different buckets or different replication keys.'
+      tooltip: 'Total number of rows synced via different buckets or different replication keys.'
     },
     {
       field: 'size',
