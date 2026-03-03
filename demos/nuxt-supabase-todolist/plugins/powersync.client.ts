@@ -2,9 +2,6 @@ import {
   AppSchemaWithDiagnostics,
 } from '~/powersync/AppSchema'
 import { SupabaseConnector } from '~/powersync/SuperbaseConnector'
-import { SyncClientImplementation } from '@powersync/web'
-
-
 export default defineNuxtPlugin({
   async setup(nuxtApp) {
     const db = new NuxtPowerSyncDatabase({
@@ -18,9 +15,7 @@ export default defineNuxtPlugin({
 
     await db.init()
 
-    await db.connect(connector, {
-      clientImplementation: SyncClientImplementation.RUST,
-    })
+    await db.connect(connector)
 
     const plugin = createPowerSyncPlugin({ database: db })
 

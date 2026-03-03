@@ -1,0 +1,8 @@
+config:
+  edition: 3
+
+streams:
+  user_lists:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM pebbles WHERE user_id = auth.user_id()

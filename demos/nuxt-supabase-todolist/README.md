@@ -46,7 +46,7 @@ This demo can be started with local PowerSync and Supabase services.
    docker run \
      -p 6060:6060 \
      -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
-     -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-rules.yaml) \
+     -e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-config.yaml) \
      --env-file ./.env \
      --network supabase_network_nuxt-supabase-todolist \
      --name powersync-nuxt journeyapps/powersync-service:latest
@@ -87,7 +87,7 @@ You can use either PowerSync Cloud or self-host PowerSync:
 - **PowerSync Cloud**: [Create a new project on the PowerSync dashboard](https://dashboard.powersync.com) and connect it to your Supabase database using the `powersync_role` credentials created in step 2.
 - **Self-hosting**: Follow the [self-hosting guide](https://docs.powersync.com/self-hosting/getting-started) to deploy your own PowerSync instance.
 
-The sync rules for this demo are provided in [`sync-rules.yaml`](sync-rules.yaml) in this directory.
+The sync streams for this demo are provided in [`sync-config.yaml`](sync-config.yaml) in this directory.
 
 ### 5. Set up local environment variables
 
@@ -131,7 +131,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to try out
 ├── db/
 │   └── seed.sql              # Database setup SQL
 ├── powersync.yaml             # PowerSync server configuration
-├── sync-rules.yaml           # PowerSync sync rules
+├── sync-config.yaml          # PowerSync sync streams
 └── nuxt.config.ts            # Nuxt configuration
 ```
 

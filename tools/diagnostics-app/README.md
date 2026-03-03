@@ -99,7 +99,7 @@ Execute read-only SQL queries against the live PowerSync database:
 
 The schema is dynamically inferred from downloaded data and automatically updated as new data arrives. This page displays the current inferred schema for reference.
 
-Note: Tables with 0 synced rows won't appear in the schema. To refresh after sync rule changes, use "Clear & Redownload" on the Sync Overview page.
+Note: Tables with 0 synced rows won't appear in the schema. To refresh after sync rule/stream changes, use "Clear & Redownload" on the Sync Overview page.
 
 ### Client Parameters
 

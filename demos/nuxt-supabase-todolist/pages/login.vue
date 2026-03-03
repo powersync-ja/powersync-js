@@ -1,11 +1,11 @@
 <template>
   <UContainer class="h-[calc(100vh-var(--ui-header-height))] flex items-center justify-center px-4">
     <UPageCard class="max-w-sm w-full">
-      <UAuthForm :title="sign === 'in' ? 'Login' : 'Sign up'" icon="i-lucide-user" :fields="fields" @submit="onSubmit">
+      <UAuthForm :title="isSignIn ? 'Login' : 'Sign up'" icon="i-lucide-user" :fields="fields" @submit="onSubmit">
         <template #description>
-          {{ sign === 'up' ? "Don't have an account?" : 'Already have an account?' }}
-          <UButton variant="link" class="p-0" @click="sign = sign === 'up' ? 'in' : 'up'">
-            {{ sign === 'in' ? 'Sign In' : 'Sign Up' }} </UButton
+          {{ isSignIn ? "Don't have an account?" : 'Already have an account?' }}
+          <UButton variant="link" class="p-0" @click="toggleSign">
+            {{ isSignIn ? 'Sign Up' : 'Sign In' }} </UButton
           >.
         </template>
       </UAuthForm>
@@ -20,6 +20,8 @@ const user = useSupabaseUser();
 const toast = useToast();
 
 const sign = ref<'in' | 'up'>('in');
+const isSignIn = computed(() => sign.value === 'in');
+const toggleSign = () => (sign.value = sign.value === 'in' ? 'up' : 'in');
 
 watchEffect(() => {
   if (user.value) {

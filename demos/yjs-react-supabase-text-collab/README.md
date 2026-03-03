@@ -13,7 +13,7 @@ This demo is built using the [PowerSync JS web SDK](https://docs.powersync.com/c
 Switch into the demo's directory:
 
 ```bash
-cd demos/vue-supabase-todolist
+cd demos/yjs-react-supabase-text-collab
 ```
 
 Use [pnpm](https://pnpm.io/installation) to install dependencies:
@@ -31,7 +31,7 @@ Follow the [instructions](https://supabase.com/docs/guides/cli/getting-started) 
 Copy the environment variables template file
 
 ```bash
-cp .env.template .env.local
+cp .env.local.template .env.local
 ```
 
 Start the Supabase project
@@ -40,7 +40,7 @@ Start the Supabase project
 supabase start
 ```
 
-Copy the `anon key` and `JWT secret` into the `.env` file.
+Copy the `anon key` and `JWT secret` into the `.env.local` file.
 
 Run the PowerSync service with
 
@@ -48,7 +48,7 @@ Run the PowerSync service with
 docker run \
 -p 8080:8080 \
 -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
--e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-rules.yaml) \
+-e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-config.yaml) \
 --env-file ./.env.local \
 --network supabase_network_yjs-react-supabase-text-collab \
 --name my-powersync journeyapps/powersync-service:latest
@@ -78,11 +78,11 @@ Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a
 8. Tick the "Use Supabase Auth" checkbox and configure the JWT secret.
 9. Click "Save" to save all the changes to your PowerSync instance. The instance will now be deployed — this may take a minute or two.
 
-### 4. Create Sync Rules on PowerSync
+### 4. Create Sync Streams on PowerSync
 
-1. Open the [`sync-rules.yaml`](sync-rules.yaml) in this repo and copy the contents.
-2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the 'sync-rules.yaml' editor panel.
-3. Click the "Deploy sync rules" button and select your PowerSync instance from the drop-down list.
+1. Open the [`sync-config.yaml`](sync-config.yaml) in this repo and copy the contents.
+2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the sync streams editor panel.
+3. Click the "Deploy sync streams" button and select your PowerSync instance from the drop-down list.
 
 ### 5. Set up local environment variables
 
@@ -138,7 +138,7 @@ Note that this is not a production-grade implementation of merging updates – t
 To-do
 
 - [ ] Add user sessions. For ease of demoing, still allow anonymously signing in (perhaps using [this Supabase workaround](https://github.com/supabase/gotrue/issues/68)), but keep track of session data so that each user has a unique `user_id` which we can associate with edits to the document.
-- [ ] Improve sync rules: Use a many-to-many relationship between users and documents, so that all documents and their updates are not synced to all users. Dependent on user sessions.
+- [ ] Improve sync streams: Use a many-to-many relationship between users and documents, so that all documents and their updates are not synced to all users. Dependent on user sessions.
 - [ ] Add suggested RLS rules for Supabase. Dependent on user sessions.
 - [ ] Add live cursor support; allow user to set their name, prepopulate with auto-generated name if none set. Dependent on user sessions.
 - [ ] Show PowerSync connection status; allow user to toggle offline/online for testing purposes

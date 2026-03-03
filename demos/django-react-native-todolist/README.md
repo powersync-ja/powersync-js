@@ -58,13 +58,14 @@ Create a new PowerSync instance, connecting to the database of the Supabase proj
 Then deploy the following sync rules:
 
 ```yaml
-bucket_definitions:
+config:
+  edition: 3
+
+streams:
   user_lists:
-    # Separate bucket per todo list
-    parameters: select id as list_id from lists where owner_id = request.user_id()
-    data:
-      - select * from lists
-      - select * from todos
+    queries:
+      - SELECT * FROM lists WHERE owner_id = auth.user_id()
+      - SELECT todos.* FROM todos JOIN lists ON todos.list_id = lists.id WHERE lists.owner_id = auth.user_id()
 ```
 
 #### Configure The App

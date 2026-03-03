@@ -4,6 +4,8 @@
 
 Demo app demonstrating use of the [PowerSync SDK for Web](https://www.npmjs.com/package/@powersync/web) together with Supabase.
 
+This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams). Both lists and todos are auto-subscribed.
+
 ## Run Demo
 
 Prerequisites:

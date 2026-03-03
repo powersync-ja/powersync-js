@@ -23,7 +23,7 @@ streams:
     query: SELECT * FROM todos WHERE list_id = subscription.parameter('list') AND list_id IN (SELECT id FROM lists WHERE owner_id = auth.user_id())
 
 config:
-  edition: 2
+  edition: 3
 ```
 
 Switch into the demo's directory:
