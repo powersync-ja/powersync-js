@@ -11,7 +11,7 @@ services:
       - .env.powersync
     volumes:
       - ./powersync.yaml:/app/powersync.yaml
-      - ./sync-streams.yaml:/app/sync-streams.yaml
+      - ./sync.config.yaml:/app/sync.config.yaml
     networks:
       - supabase_network_powerchat
     ports:

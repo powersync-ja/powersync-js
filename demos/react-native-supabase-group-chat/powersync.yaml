@@ -13,8 +13,8 @@ storage:
   uri: !env PS_SYNC_BUCKET_URI
   sslmode: disable
 
-sync_rules:
-  path: sync-streams.yaml
+sync_config:
+  path: sync.config.yaml
 
 client_auth:
   jwks:
