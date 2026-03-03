@@ -237,7 +237,7 @@ export default function SyncDiagnosticsPage() {
       headerName: 'Row Count',
       flex: 1,
       type: 'number',
-      tooltip: 'Number of rows synced to this database.'
+      tooltip: 'Number of unique rows synced to this database.'
     },
     {
       field: 'synced_count',
