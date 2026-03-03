@@ -17,11 +17,7 @@ sync_config:
   path: sync-config.yaml
 
 client_auth:
-  jwks:
-    keys:
-      - kty: 'oct'
-        k: !env PS_HS256_KEY
-        alg: 'HS256'
+  jwks_uri: !env PS_JWKS_URI
   audience: ["powersync-dev", "powersync", "authenticated"]
 
 api:

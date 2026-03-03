@@ -37,7 +37,19 @@ Run the full backend locally with a single command using the Supabase CLI and Do
    pnpm dev
    ```
 
-4. To stop everything:
+4. Run ios
+   
+   ```bash
+   pnpm ios
+   ```
+
+5. Run Android
+   
+   ```bash
+   pnpm android
+   ```
+
+6. To stop everything:
 
    ```bash
    pnpm local:down
