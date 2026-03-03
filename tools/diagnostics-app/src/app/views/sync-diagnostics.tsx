@@ -54,51 +54,20 @@ LEFT JOIN oplog_stats stats ON stats.bucket_id = ps_buckets.id`;
 /**
  * Groups ps_oplog entries by row_type (table/view name) to get the list
  * of tables and their total data sizes.
- * If multiple bucket definitions reference the same source table, there may be multiple ps_oplog entries per table row.
- * For this reason we don't count ps_oplog entries to get row counts, and instead do a separate count(*) query for each table.
+ * - row_count: number of unique row_id values per row_type (actual row count, robust across multiple buckets/keys)
+ * - synced_count: This is not quite number of ops since they're de-duplicated per key already, but it counts the number of times the same row is synced via different buckets or different keys.
  */
 const TABLES_SIZE_QUERY = /* sql */ `
   SELECT
     row_type as name,
-    count() as op_count,
+    count(distinct row_id) as count,
+    count() as synced_count,
     sum(length (data)) as size
   FROM
     ps_oplog
   GROUP BY
     row_type
 `;
-
-/**
- * Fetches the rows for each table, including their name, row count, and size.
- * This function performs a separate count(*) query for each table.
- */
-async function fetchTableRows() {
-  const sizeRows = await db.getAll<{ name: string; op_count: number; size: number }>(TABLES_SIZE_QUERY);
-
-  const tableRows = await Promise.all(
-    sizeRows.map(async (row) => {
-      try {
-        // This might fail while the dynamic schema has not yet been intialized.
-        const countRow = await db.get<{ count: number }>(`SELECT count(*) as count FROM ${row.name}`);
-        return {
-          name: row.name,
-          count: countRow.count,
-          size: row.size
-        };
-      } catch (ex) {
-        console.warn(`Failed to get row count for table ${row.name}.`, ex);
-        return {
-          name: row.name,
-          // Fallback to count of ops
-          count: row.op_count,
-          size: row.size
-        };
-      }
-    })
-  );
-
-  return tableRows;
-}
 
 const BUCKETS_QUERY_FAST = `
 SELECT
@@ -133,12 +102,12 @@ async function fetchSyncStats(): Promise<SyncStats> {
 
   if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
     const bucketRows = await db.getAll(BUCKETS_QUERY);
-    const tableRows = await fetchTableRows();
+    const tableRows = await db.getAll(TABLES_SIZE_QUERY);
     return { bucketRows, tableRows, lastSyncedAt };
   }
   if (synced_at != null) {
     const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
-    const tableRows = await fetchTableRows();
+    const tableRows = await db.getAll(TABLES_SIZE_QUERY);
     return { bucketRows, tableRows, lastSyncedAt };
   }
   const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
@@ -263,7 +232,21 @@ export default function SyncDiagnosticsPage() {
 
   const tablesColumns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
-    { field: 'count', headerName: 'Row Count', flex: 1, type: 'number' },
+    {
+      field: 'count',
+      headerName: 'Row Count',
+      flex: 1,
+      type: 'number',
+      tooltip: 'Number of rows synced to this database.'
+    },
+    {
+      field: 'synced_count',
+      headerName: 'Synced Count',
+      flex: 1,
+      type: 'number',
+      hideOnMobile: true,
+      tooltip: 'Number of row operations synced via different buckets or different replication keys.'
+    },
     {
       field: 'size',
       headerName: 'Data Size',
