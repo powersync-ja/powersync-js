@@ -1,5 +1,16 @@
 # @powersync/web
 
+## 1.35.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+
 ## 1.34.0
 
 ### Minor Changes

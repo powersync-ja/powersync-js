@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.48.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
 ## 1.47.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @powersync/capacitor
 
+## 0.5.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+
 ## 0.4.1
 
 ### Patch Changes

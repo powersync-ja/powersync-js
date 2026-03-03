@@ -1,5 +1,15 @@
 # @powersync/nuxt
 
+## 0.0.4
+
+### Patch Changes
+
+- 2f6d9c8: Updated readme.
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+  - @powersync/vue@0.5.0
+  - @powersync/kysely-driver@1.3.3
+
 ## 0.0.3
 
 ### Patch Changes
