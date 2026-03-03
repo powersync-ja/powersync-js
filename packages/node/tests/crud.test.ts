@@ -1,6 +1,7 @@
-import { expect } from 'vitest';
-import { column, Schema, Table } from '@powersync/common';
+import { expect, describe } from 'vitest';
+import { column, Schema, Table, RawTable } from '@powersync/common';
 import { databaseTest } from './utils';
+import { PowerSyncDatabase } from '../src';
 
 databaseTest('include metadata', async ({ database }) => {
   await database.init();
@@ -102,4 +103,61 @@ databaseTest('ignore empty update', async ({ database }) => {
 
   const batch = await database.getNextCrudTransaction();
   expect(batch).toBeNull();
+});
+
+describe('raw table', () => {
+  async function createTrigger(db: PowerSyncDatabase, table: RawTable, write: string) {
+    await db.execute('SELECT powersync_create_raw_table_crud_trigger(?, ?, ?)', [
+      JSON.stringify(Schema.rawTableToJson(table)),
+      `users_${write}`,
+      write
+    ]);
+  }
+
+  databaseTest('inferred crud trigger', async ({ database }) => {
+    const table: RawTable = { name: 'users', schema: {} };
+    await database.execute('CREATE TABLE users (id TEXT, name TEXT);');
+    await createTrigger(database, table, 'INSERT');
+
+    await database.execute('INSERT INTO users (id, name) VALUES (?, ?);', ['id', 'user']);
+    const tx = await database.getNextCrudTransaction()!!;
+    expect(tx.crud).toHaveLength(1);
+    const write = tx.crud[0];
+    expect(write.op).toStrictEqual('PUT');
+    expect(write.table).toStrictEqual('users');
+    expect(write.id).toStrictEqual('id');
+    expect(write.opData).toStrictEqual({
+      name: 'user'
+    });
+  });
+
+  databaseTest('with options', async ({ database }) => {
+    const table: RawTable = {
+      name: 'custom_sync_name',
+      schema: {
+        tableName: 'users',
+        syncedColumns: ['name'],
+        ignoreEmptyUpdates: true,
+        trackPrevious: true
+      }
+    };
+    await database.execute('CREATE TABLE users (id TEXT, name TEXT, local TEXT);');
+    await database.execute('INSERT INTO users (id, name, local) VALUES (?, ?, ?);', ['id', 'name', 'local']);
+    await createTrigger(database, table, 'UPDATE');
+
+    await database.execute('UPDATE users SET name = ?, local = ?;', ['updated_name', 'updated_local']);
+    // This should not generate a CRUD entry because the only synced column is not affected.
+    await database.execute('UPDATE users SET name = ?, local = ?;', ['name', 'updated_local_2']);
+
+    const tx = await database.getNextCrudTransaction()!!;
+    expect(tx.crud).toHaveLength(1);
+    const write = tx.crud[0];
+    expect(write.op).toStrictEqual('PATCH');
+    expect(write.table).toStrictEqual('custom_sync_name');
+    expect(write.id).toStrictEqual('id');
+    expect(write.opData).toStrictEqual({ name: 'updated_name' });
+    expect(write.previousValues).toStrictEqual({
+      name: 'name'
+    });
+  });
 });
