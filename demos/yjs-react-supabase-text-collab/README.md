@@ -48,7 +48,7 @@ Run the PowerSync service with
 docker run \
 -p 8080:8080 \
 -e POWERSYNC_CONFIG_B64=$(base64 -i ./powersync.yaml) \
--e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-streams.yaml) \
+-e POWERSYNC_SYNC_RULES_B64=$(base64 -i ./sync-config.yaml) \
 --env-file ./.env.local \
 --network supabase_network_yjs-react-supabase-text-collab \
 --name my-powersync journeyapps/powersync-service:latest
@@ -80,7 +80,7 @@ Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a
 
 ### 4. Create Sync Streams on PowerSync
 
-1. Open the [`sync-streams.yaml`](sync-streams.yaml) in this repo and copy the contents.
+1. Open the [`sync-config.yaml`](sync-config.yaml) in this repo and copy the contents.
 2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the sync streams editor panel.
 3. Click the "Deploy sync streams" button and select your PowerSync instance from the drop-down list.
 

@@ -41,7 +41,7 @@ Follow the [Connect PowerSync to Your Supabase](https://docs.powersync.com/integ
 ### 5. Create Sync Streams on PowerSync
 
 Create sync streams by following the [Configure Sync Streams](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-sync-streams) section.
-The sync streams for this demo are defined in [`sync-streams.yaml`](sync-streams.yaml) in this directory. Copy its contents and paste it into the sync streams editor in the Dashboard.
+The sync streams for this demo are defined in [`sync-config.yaml`](sync-config.yaml) in this directory. Copy its contents and paste it into the sync streams editor in the Dashboard.
 
 ### 6. Set up local environment variables
 

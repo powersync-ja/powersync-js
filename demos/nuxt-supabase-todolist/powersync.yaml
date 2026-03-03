@@ -13,8 +13,8 @@ storage:
   sslmode: disable
   # sslmode: verify-full
 
-streams:
-  path: ./sync-streams.yaml
+sync_config:
+  path: ./sync-config.yaml
 
 port: !env PS_PORT
 
