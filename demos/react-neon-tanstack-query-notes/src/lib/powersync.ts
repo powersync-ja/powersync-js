@@ -8,7 +8,6 @@ import {
   createBaseLogger,
   CrudEntry,
   UpdateType,
-  SyncClientImplementation,
 } from "@powersync/web";
 import { client } from "@/lib/auth";
 import {
@@ -214,9 +213,7 @@ export async function connectPowerSync() {
   if (isInitialized) {
     return;
   }
-  await powersync.connect(neonConnector, {
-    clientImplementation: SyncClientImplementation.RUST,
-  });
+  await powersync.connect(neonConnector);
   isInitialized = true;
   console.log("powersync connected");
 }

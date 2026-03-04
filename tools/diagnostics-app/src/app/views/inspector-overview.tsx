@@ -215,7 +215,7 @@ export default function InspectorOverviewPage() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">PowerSync Stats</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              <StatCard label="Buckets" value={powerSyncStats.bucketCount.toLocaleString()} tooltip="Number of sync buckets defined by your sync rules" />
+              <StatCard label="Buckets" value={powerSyncStats.bucketCount.toLocaleString()} tooltip="Number of sync buckets defined by your sync streams" />
               <StatCard label="Total Rows" value={powerSyncStats.totalRows.toLocaleString()} tooltip="Total synced data rows across all ps_data__ tables" />
               <StatCard label="Total Ops" value={powerSyncStats.totalOps.toLocaleString()} tooltip="Total sync operations processed. When this significantly exceeds total rows, compacting may help." />
               <StatCard label="Data Size" value={formatBytes(powerSyncStats.dataSize)} tooltip="Sum of all column data sizes across synced rows" />

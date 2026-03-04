@@ -1,7 +1,7 @@
 import { usePowerSync, useQuery } from '@powersync/react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input, YStack } from 'tamagui';
 
 import { Message } from '@/components/messages/Message';
@@ -17,10 +17,18 @@ export default function ChatsChatIndex() {
 
   const { data: messages } = useQuery(
     'SELECT sender_id, content, created_at FROM messages WHERE group_id = ? ORDER BY created_at ASC',
-    [group?.id]
+    [group?.id],
+    { streams: [{ name: 'group_messages', parameters: { group_id: groupId } }] }
   );
 
+  const listRef = useRef<FlashListRef<any>>(null);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }, [messages.length]);
 
   async function handleInputSubmit() {
     const messageId = uuid();
@@ -37,14 +45,13 @@ export default function ChatsChatIndex() {
   return group ? (
     <>
       <Stack.Screen
-        name="../../../"
         options={{
           title: group.name
         }}
       />
       <YStack fullscreen>
         <YStack flexGrow={1}>
-          <FlashList data={messages} renderItem={({ item }) => <Message message={item} />} />
+          <FlashList ref={listRef} data={messages} renderItem={({ item }) => <Message message={item} />} />
         </YStack>
         <YStack padding="$3" gap="$3">
           <Input

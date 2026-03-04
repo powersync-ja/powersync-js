@@ -1,17 +1,41 @@
 import '@azure/core-asynciterator-polyfill';
-import React, { useEffect } from 'react';
-import type { PropsWithChildren } from 'react';
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, useColorScheme, View } from 'react-native';
-
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions
-} from 'react-native/Libraries/NewAppScreen';
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+  TouchableOpacity,
+  ActivityIndicator
+} from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 import { column, Table, Schema, type PowerSyncBackendConnector, PowerSyncDatabase } from '@powersync/react-native';
+
+const Colors = {
+  primary: '#0a7ea4',
+  white: '#ffffff',
+  black: '#000000',
+  light: '#f5f5f5',
+  dark: '#333333',
+  lighter: '#f3f4f6',
+  darker: '#1a1a1a'
+};
+
+const RANDOM_NAMES = [
+  'Alex',
+  'Jordan',
+  'Sam',
+  'Casey',
+  'Riley',
+  'Morgan',
+  'Quinn',
+  'Avery',
+  'Taylor',
+  'Jamie'
+];
 
 /**
  * A placeholder connector which doesn't do anything but used to confirm connect can run.
@@ -27,13 +51,12 @@ class DummyConnector implements PowerSyncBackendConnector {
   async uploadData() {}
 }
 
-const customers = new Table({ name: column.text });
-
-const schema = new Schema({ customers });
+const customersTable = new Table({ name: column.text });
+const schema = new Schema({ customers: customersTable });
 
 let powerSync: PowerSyncDatabase | null = null;
 
-const setupDatabase = async () => {
+const setupDatabase = async (): Promise<PowerSyncDatabase> => {
   if (powerSync) return powerSync;
 
   const factory = new OPSqliteOpenFactory({
@@ -49,112 +72,224 @@ const setupDatabase = async () => {
   return powerSync;
 };
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({ children, title }: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black
-          }
-        ]}
-      >
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark
-          }
-        ]}
-      >
-        {children}
-      </Text>
-    </View>
-  );
-}
+type Customer = { id: string; name: string };
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter
   };
+  const cardBg = isDarkMode ? Colors.darker : Colors.white;
+  const textColor = isDarkMode ? Colors.white : Colors.black;
+  const mutedColor = isDarkMode ? Colors.light : Colors.dark;
+
+  const loadCustomers = useCallback(async () => {
+    if (!powerSync) return;
+    try {
+      const result = await powerSync.getAll<Customer>('SELECT id, name FROM customers ORDER BY name');
+      setCustomers(Array.isArray(result) ? result : []);
+    } catch (e) {
+      console.error('Failed to load customers:', e);
+    }
+  }, []);
 
   useEffect(() => {
-    const initDB = async () => {
+    let mounted = true;
+
+    const init = async () => {
       try {
         const db = await setupDatabase();
-
-        // Test database operations
-        await db.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', ['Fred']);
-        const result = await db.getAll('SELECT * FROM customers');
-        console.log('Customers:', result);
-
-        // Connect with dummy connector
         await db.connect(new DummyConnector());
+        if (mounted) await loadCustomers();
       } catch (error) {
         console.error('Database initialization error:', error);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
 
-    initDB();
-  }, []);
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, [loadCustomers]);
+
+  const addRandomCustomer = async () => {
+    if (!powerSync || adding) return;
+    setAdding(true);
+    try {
+      const name = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+      await powerSync.execute('INSERT INTO customers(id, name) VALUES(uuid(), ?)', [name]);
+      await loadCustomers();
+    } catch (e) {
+      console.error('Failed to add customer:', e);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const deleteCustomer = async (id: string) => {
+    if (!powerSync || deletingId) return;
+    setDeletingId(id);
+    try {
+      await powerSync.execute('DELETE FROM customers WHERE id = ?', [id]);
+      await loadCustomers();
+    } catch (e) {
+      console.error('Failed to delete customer:', e);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView contentInsetAdjustmentBehavior="automatic" style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white
-          }}
-        >
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this screen and then come back to see your
-            edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">Read the docs to discover what to do next:</Section>
-          <LearnMoreLinks />
+    <SafeAreaProvider>
+      <SafeAreaView style={[backgroundStyle, styles.container]}>
+        <StatusBar
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={backgroundStyle.backgroundColor}
+        />
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Customers</Text>
+          <Text style={[styles.headerSubtitle, { color: mutedColor }]}>
+            PowerSync + OP-SQLite
+          </Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={[styles.mutedText, { color: mutedColor }]}>Loading…</Text>
+          </View>
+        ) : (
+          <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            style={backgroundStyle}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View style={[styles.card, { backgroundColor: cardBg }]}>
+              {customers.length === 0 ? (
+                <Text style={[styles.emptyText, { color: mutedColor }]}>No customers yet.</Text>
+              ) : (
+                customers.map((c) => (
+                  <View key={c.id} style={styles.row}>
+                    <Text style={[styles.customerName, { color: textColor }]}>{c.name}</Text>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => deleteCustomer(c.id)}
+                      disabled={deletingId !== null}
+                    >
+                      {deletingId === c.id ? (
+                        <ActivityIndicator size="small" color={Colors.primary} />
+                      ) : (
+                        <Text style={styles.deleteButtonText}>Delete</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, adding && styles.buttonDisabled]}
+              onPress={addRandomCustomer}
+              disabled={adding}
+            >
+              {adding ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Text style={styles.buttonText}>Add random customer</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
+  container: {
+    flex: 1
+  },
+  header: {
+    paddingVertical: 20,
     paddingHorizontal: 24
   },
-  sectionTitle: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700'
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    marginTop: 4
+  },
+  scrollContent: {
+    padding: 24,
+    paddingBottom: 48
+  },
+  card: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)'
+  },
+  customerName: {
+    fontSize: 18,
+    flex: 1
+  },
+  deleteButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minWidth: 72,
+    alignItems: 'center'
+  },
+  deleteButtonText: {
+    color: '#c53030',
+    fontSize: 15,
+    fontWeight: '500'
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
+    paddingVertical: 24
+  },
+  button: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    minHeight: 52,
+    justifyContent: 'center'
+  },
+  buttonDisabled: {
+    opacity: 0.7
+  },
+  buttonText: {
+    color: Colors.white,
+    fontSize: 17,
     fontWeight: '600'
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400'
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12
   },
-  highlight: {
-    fontWeight: '700'
+  mutedText: {
+    fontSize: 16
   }
 });
 
