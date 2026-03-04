@@ -1,5 +1,17 @@
 # @powersync/react-native
 
+## 1.31.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+  - @powersync/react@1.9.0
+
 ## 1.30.2
 
 ### Patch Changes
