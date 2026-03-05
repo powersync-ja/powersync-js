@@ -1,6 +1,9 @@
 import React from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, View, StyleSheet } from 'react-native';
 import { ListItem, Icon, Button } from '@rneui/themed';
+
+const SPACING = 12;
+const MIN_ROW_HEIGHT = 72;
 
 export interface ListItemWidgetProps {
   title: string;
@@ -11,7 +14,7 @@ export interface ListItemWidgetProps {
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, description, onPress, onDelete }) => {
   return (
-    <View style={{ padding: 10 }}>
+    <View style={styles.container}>
       <ListItem.Swipeable
         bottomDivider
         onPress={() => onPress?.()}
@@ -44,14 +47,38 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = ({ title, descripti
             }}
           />
         }>
-        <Icon name="format-list-checks" type="material-community" color="grey" />
-        <ListItem.Content style={{ minHeight: 80 }}>
-          <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
-          <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
-        </ListItem.Content>
-
-        <ListItem.Chevron />
+        <View style={styles.row}>
+          <Icon name="format-list-checks" type="material-community" color="grey" style={styles.leadingIcon} />
+          <ListItem.Content style={styles.content}>
+            <ListItem.Title style={{ color: 'black' }}>{title}</ListItem.Title>
+            <ListItem.Subtitle style={{ color: 'grey' }}>{description}</ListItem.Subtitle>
+          </ListItem.Content>
+          <ListItem.Chevron />
+        </View>
       </ListItem.Swipeable>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: SPACING,
+    paddingVertical: 6
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minHeight: MIN_ROW_HEIGHT,
+    gap: SPACING
+  },
+  leadingIcon: {
+    marginRight: 4
+  },
+  content: {
+    flex: 1,
+    minHeight: MIN_ROW_HEIGHT,
+    justifyContent: 'center',
+    paddingVertical: 8
+  }
+});

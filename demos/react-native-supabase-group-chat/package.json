@@ -16,6 +16,8 @@
     "build:production": "pnpx eas-cli build --profile production --platform ios --local",
     "update:production": "pnpx eas-cli update --non-interactive -p ios --branch=production --auto",
     "types": "supabase gen types typescript --local > src/library/database.types.ts",
+    "local:up": "supabase start && docker compose --env-file .env.powersync up -d",
+    "local:down": "docker compose --env-file .env.powersync down -v && supabase stop",
     "lint": "eslint src"
   },
   "dependencies": {
@@ -23,7 +25,7 @@
     "@expo/vector-icons": "^15.0.3",
     "@faker-js/faker": "^10.1.0",
     "@journeyapps/react-native-quick-sqlite": "^2.5.1",
-    "@powersync/react-native": "^1.30.2",
+    "@powersync/react-native": "^1.31.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

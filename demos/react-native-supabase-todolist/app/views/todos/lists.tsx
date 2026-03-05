@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ScrollView, View } from 'react-native';
-import { FAB, Text } from '@rneui/themed';
+import { FAB } from '@rneui/themed';
 import prompt from 'react-native-prompt-android';
 
 import { router, Stack } from 'expo-router';
@@ -80,8 +80,7 @@ const ListsViewWidget: React.FC = () => {
       />
       <GuardBySync>
         <ScrollView key={'lists'} style={{ maxHeight: '90%' }}>
-          {(
-            listRecords.map((r) => (
+          {listRecords.map((r) => (
               <ListItemWidget
                 key={r.id}
                 title={r.name!}
@@ -94,8 +93,7 @@ const ListsViewWidget: React.FC = () => {
                   });
                 }}
               />
-            ))
-          )}
+            ))}
         </ScrollView>
       </GuardBySync>
 

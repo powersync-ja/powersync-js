@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { Icon } from 'react-native-elements';
+import { Icon, Header } from '@rneui/themed';
 import { useNavigation } from 'expo-router';
-import { Header } from 'react-native-elements';
 import { useStatus } from '@powersync/react';
 import { DrawerActions } from '@react-navigation/native';
 import { useSystem } from '../powersync/system';
@@ -38,8 +37,8 @@ export const HeaderWidget: React.FC<{
           size={20}
           style={{ padding: 5 }}
           onPress={() => {
-            if (system.attachmentQueue) {
-              system.attachmentQueue.trigger();
+            if (system.photoAttachmentQueue) {
+              system.photoAttachmentQueue.startSync();
             }
 
             alert(
