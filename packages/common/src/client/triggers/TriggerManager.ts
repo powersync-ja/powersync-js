@@ -234,8 +234,9 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
 /**
  * @experimental
  * Callback to drop a trigger after it has been created.
+ * When invoked with force=true, it will also drop the destination table even if `persistDestination` was true.
  */
-export type TriggerRemoveCallback = () => Promise<void>;
+export type TriggerRemoveCallback = (force?: boolean) => Promise<void>;
 
 /**
  * @experimental

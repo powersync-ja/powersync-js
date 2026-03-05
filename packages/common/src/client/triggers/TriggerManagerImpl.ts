@@ -471,9 +471,9 @@ export class TriggerManagerImpl implements TriggerManager {
         hooks
       });
 
-      return async () => {
+      return async (force?: boolean) => {
         abortOnChange();
-        await removeTrigger();
+        await removeTrigger(force);
       };
     } catch (error) {
       try {
