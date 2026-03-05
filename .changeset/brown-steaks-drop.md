@@ -2,4 +2,4 @@
 '@powersync/common': minor
 ---
 
-Added `persistDestination` option to diff trigger creation. Allows the destination table to be persisted beyond cleanup of a trigger, also allows the creation to complete even if the destination table already exists.
+Added `manageDestinationExternally` option to diff trigger creation, escaping all internal management of the destination table. User is responsible for table creation and cleanup.
