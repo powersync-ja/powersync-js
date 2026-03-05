@@ -613,6 +613,71 @@ describe('Triggers', () => {
     expect(changes[4].__previous_value).toBeNull();
   });
 
+  databaseTest('persistDestination: should not drop destination table on dispose', async ({ database }) => {
+    const table = 'persist_dest_dispose_test';
+
+    const dispose = await database.triggers.createDiffTrigger({
+      source: 'todos',
+      destination: table,
+      when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
+      useStorage: true, // persistent table so we can verify via sqlite_master
+      persistDestination: true
+    });
+
+    // Table must exist before dispose
+    let rows = await database.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
+      [table]
+    );
+    expect(rows.length).toEqual(1);
+
+    await dispose();
+
+    // Table must STILL exist — currently FAILS (impl drops the table unconditionally)
+    rows = await database.getAll<{ name: string }>(
+      `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
+      [table]
+    );
+    expect(rows.length).toEqual(1);
+
+    // Manual cleanup so the test doesn't leak
+    await database.execute(`DROP TABLE IF EXISTS ${table}`);
+  });
+
+  databaseTest(
+    'persistDestination: should allow reusing an existing destination table',
+    async ({ database }) => {
+      const table = 'persist_dest_reuse_test';
+
+      // Manually create the destination table (simulates a table that persisted from a prior session)
+      await database.execute(`
+        CREATE TABLE ${table} (
+          operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          id TEXT,
+          operation TEXT,
+          timestamp TEXT,
+          value TEXT,
+          previous_value TEXT
+        )
+      `);
+
+      // Must NOT throw even though the table already exists.
+      // Currently FAILS — impl runs bare CREATE TABLE which SQLite rejects with "table already exists".
+      const dispose = await database.triggers.createDiffTrigger({
+        source: 'todos',
+        destination: table,
+        when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
+        useStorage: true,
+        persistDestination: true
+      });
+
+      await dispose();
+
+      // Manual cleanup
+      await database.execute(`DROP TABLE IF EXISTS ${table}`);
+    }
+  );
+
   databaseTest('Should cast operation_id as string with withDiff option', async ({ database }) => {
     const results: TriggerDiffRecord<string>[] = [];
 

@@ -223,6 +223,12 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
    * This table will be dropped once the trigger is removed.
    */
   destination: string;
+
+  /**
+   * The destination table persists beyond this trigger's lifetime and is not automatically dropped when the trigger is removed.
+   * Additionally, if the trigger already exists with the same destination, it will be reused instead of failing with a name conflict error.
+   */
+  persistDestination?: boolean;
 }
 
 /**
