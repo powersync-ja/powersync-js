@@ -201,7 +201,7 @@ export class TriggerManagerImpl implements TriggerManager {
       columns,
       when,
       hooks,
-      persistDestination = false,
+      manageDestinationExternally = false,
       // Fall back to the provided default if not given on this level
       useStorage = this.defaultConfig.useStorageByDefault
     } = options;
@@ -269,11 +269,11 @@ export class TriggerManagerImpl implements TriggerManager {
      * we need to ensure we can cleanup the created resources.
      * We unfortunately cannot rely on transaction rollback.
      */
-    const cleanup = async (force?: boolean) => {
+    const cleanup = async () => {
       disposeWarningListener();
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
-        if (!persistDestination || force) {
+        if (!manageDestinationExternally) {
           await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
         }
         await releaseStorageClaim?.();
@@ -283,16 +283,18 @@ export class TriggerManagerImpl implements TriggerManager {
     const setup = async (tx: LockContext) => {
       // Allow user code to execute in this lock context before the trigger is created.
       await hooks?.beforeCreate?.(tx);
-      await tx.execute(/* sql */ `
-        CREATE ${tableTriggerTypeClause} TABLE ${persistDestination ? 'IF NOT EXISTS ' : ''}${destination} (
-          operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          id TEXT,
-          operation TEXT,
-          timestamp TEXT,
-          value TEXT,
-          previous_value TEXT
-        )
-      `);
+      if (!manageDestinationExternally) {
+        await tx.execute(/* sql */ `
+          CREATE ${tableTriggerTypeClause} TABLE ${destination} (
+            operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT,
+            operation TEXT,
+            timestamp TEXT,
+            value TEXT,
+            previous_value TEXT
+          )
+        `);
+      }
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
         const insertTriggerId = this.generateTriggerName(DiffTriggerOperation.INSERT, destination, id);
@@ -471,9 +473,9 @@ export class TriggerManagerImpl implements TriggerManager {
         hooks
       });
 
-      return async (force?: boolean) => {
+      return async () => {
         abortOnChange();
-        await removeTrigger(force);
+        await removeTrigger();
       };
     } catch (error) {
       try {

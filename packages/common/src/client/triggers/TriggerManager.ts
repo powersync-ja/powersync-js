@@ -225,18 +225,18 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
   destination: string;
 
   /**
-   * The destination table persists beyond this trigger's lifetime and is not automatically dropped when the trigger is removed.
-   * Additionally, if the trigger already exists with the same destination, it will be reused instead of failing with a name conflict error.
+   * When true, the diff trigger will not create or drop the destination table.
+   * The caller is responsible for ensuring the table exists with the correct
+   * schema before creating the trigger and for dropping it when no longer needed.
    */
-  persistDestination?: boolean;
+  manageDestinationExternally?: boolean;
 }
 
 /**
  * @experimental
  * Callback to drop a trigger after it has been created.
- * When invoked with force=true, it will also drop the destination table even if `persistDestination` was true.
  */
-export type TriggerRemoveCallback = (force?: boolean) => Promise<void>;
+export type TriggerRemoveCallback = () => Promise<void>;
 
 /**
  * @experimental

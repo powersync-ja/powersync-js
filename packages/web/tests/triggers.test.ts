@@ -55,7 +55,7 @@ describe('Triggers', () => {
       }
     });
 
-    onTestFinished(() => disposeTrigger());
+    onTestFinished(disposeTrigger);
 
     await db.execute("INSERT INTO customers (id, name) VALUES (uuid(), 'test')");
 
@@ -103,7 +103,7 @@ describe('Triggers', () => {
       }
     });
 
-    onTestFinished(() => disposeTrigger());
+    onTestFinished(disposeTrigger);
 
     await db.execute("INSERT INTO customers (id, name) VALUES (uuid(), 'test')");
 
@@ -221,7 +221,7 @@ describe('Triggers', () => {
       }
     });
 
-    onTestFinished(() => disposeTrigger());
+    onTestFinished(disposeTrigger);
 
     // Perform an insert from client B
     await dbB.execute("INSERT INTO customers (id, name) VALUES (uuid(), 'from-client-b')");
