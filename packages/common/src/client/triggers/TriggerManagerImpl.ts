@@ -3,6 +3,7 @@ import { Schema } from '../../db/schema/Schema.js';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
+  CreateDiffDestinationTableOptions,
   CreateDiffTriggerOptions,
   DiffTriggerOperation,
   TrackDiffOptions,
@@ -129,8 +130,14 @@ export class TriggerManagerImpl implements TriggerManager {
     };
   }
 
-  protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string) {
-    return `__ps_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
+  protected generateTriggerName(
+    operation: DiffTriggerOperation,
+    destinationTable: string,
+    triggerId: string,
+    managedExternally = false
+  ) {
+    const managedTerm = managedExternally ? '_external' : '';
+    return `__ps${managedTerm}_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
   }
 
   /**
@@ -193,6 +200,22 @@ export class TriggerManagerImpl implements TriggerManager {
     });
   }
 
+  async createDiffDestinationTable(tableName: string, options?: CreateDiffDestinationTableOptions): Promise<void> {
+    const tableTriggerTypeClause = options?.temporary ? 'TEMP' : '';
+    const onlyIfNotExists = options?.onlyIfNotExists ? 'IF NOT EXISTS' : '';
+
+    await this.db.execute(/* sql */ `
+      CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
+        operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT,
+        operation TEXT,
+        timestamp TEXT,
+        value TEXT,
+        previous_value TEXT
+      )
+    `);
+  }
+
   async createDiffTrigger(options: CreateDiffTriggerOptions) {
     await this.db.waitForReady();
     const {
@@ -201,6 +224,7 @@ export class TriggerManagerImpl implements TriggerManager {
       columns,
       when,
       hooks,
+      manageDestinationExternally = false,
       // Fall back to the provided default if not given on this level
       useStorage = this.defaultConfig.useStorageByDefault
     } = options;
@@ -272,7 +296,9 @@ export class TriggerManagerImpl implements TriggerManager {
       disposeWarningListener();
       return this.db.writeLock(async (tx) => {
         await this.removeTriggers(tx, triggerIds);
-        await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
+        if (!manageDestinationExternally) {
+          await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
+        }
         await releaseStorageClaim?.();
       });
     };
@@ -280,19 +306,26 @@ export class TriggerManagerImpl implements TriggerManager {
     const setup = async (tx: LockContext) => {
       // Allow user code to execute in this lock context before the trigger is created.
       await hooks?.beforeCreate?.(tx);
-      await tx.execute(/* sql */ `
-        CREATE ${tableTriggerTypeClause} TABLE ${destination} (
-          operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-          id TEXT,
-          operation TEXT,
-          timestamp TEXT,
-          value TEXT,
-          previous_value TEXT
-        )
-      `);
+      if (!manageDestinationExternally) {
+        await tx.execute(/* sql */ `
+          CREATE ${tableTriggerTypeClause} TABLE ${destination} (
+            operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT,
+            operation TEXT,
+            timestamp TEXT,
+            value TEXT,
+            previous_value TEXT
+          )
+        `);
+      }
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
-        const insertTriggerId = this.generateTriggerName(DiffTriggerOperation.INSERT, destination, id);
+        const insertTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.INSERT,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
@@ -314,7 +347,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.UPDATE)) {
-        const updateTriggerId = this.generateTriggerName(DiffTriggerOperation.UPDATE, destination, id);
+        const updateTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.UPDATE,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(updateTriggerId);
 
         await tx.execute(/* sql */ `
@@ -336,7 +374,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.DELETE)) {
-        const deleteTriggerId = this.generateTriggerName(DiffTriggerOperation.DELETE, destination, id);
+        const deleteTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.DELETE,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(deleteTriggerId);
 
         // Create delete trigger for basic JSON

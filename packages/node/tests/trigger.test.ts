@@ -613,6 +613,55 @@ describe('Triggers', () => {
     expect(changes[4].__previous_value).toBeNull();
   });
 
+  databaseTest('manageDestinationExternally: should not drop destination table on dispose', async ({ database }) => {
+    const table = 'persist_dest_dispose_test';
+
+    await database.triggers.createDiffDestinationTable(table, { onlyIfNotExists: true, temporary: true });
+
+    const dispose = await database.triggers.createDiffTrigger({
+      source: 'todos',
+      destination: table,
+      when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
+      manageDestinationExternally: true
+    });
+
+    // Table must exist before dispose
+    let rows = await database.execute(`SELECT name FROM sqlite_temp_master WHERE type='table' AND name = ?`, [table]);
+    expect(rows.rows._array.length).toEqual(1);
+
+    await dispose();
+
+    // Table must STILL exist
+    rows = await database.execute(`SELECT name FROM sqlite_temp_master WHERE type='table' AND name = ?`, [table]);
+    expect(rows.rows._array.length).toEqual(1);
+
+    // Manual cleanup so the test doesn't leak
+    await database.execute(`DROP TABLE IF EXISTS ${table}`);
+  });
+
+  databaseTest(
+    'manageDestinationExternally: should allow reusing an existing destination table',
+    async ({ database }) => {
+      const table = 'persist_dest_reuse_test';
+
+      // Manually create the destination table (simulates a table that persisted from a prior session)
+      await database.triggers.createDiffDestinationTable(table, { onlyIfNotExists: true, temporary: true });
+
+      // Must NOT throw even though the table already exists.
+      const dispose = await database.triggers.createDiffTrigger({
+        source: 'todos',
+        destination: table,
+        when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
+        manageDestinationExternally: true
+      });
+
+      await dispose();
+
+      // Manual cleanup
+      await database.execute(`DROP TABLE IF EXISTS ${table}`);
+    }
+  );
+
   databaseTest('Should cast operation_id as string with withDiff option', async ({ database }) => {
     const results: TriggerDiffRecord<string>[] = [];
 
@@ -748,6 +797,7 @@ describe('Triggers', () => {
       `SELECT name FROM sqlite_master WHERE type='table' AND name = ?`,
       [table]
     );
+
     expect(initialTableRows.length).toEqual(1);
 
     await database.execute(`INSERT INTO todos (id, content) VALUES (uuid(), 'hello');`);
