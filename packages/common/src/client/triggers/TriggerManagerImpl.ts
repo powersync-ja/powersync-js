@@ -129,8 +129,14 @@ export class TriggerManagerImpl implements TriggerManager {
     };
   }
 
-  protected generateTriggerName(operation: DiffTriggerOperation, destinationTable: string, triggerId: string) {
-    return `__ps_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
+  protected generateTriggerName(
+    operation: DiffTriggerOperation,
+    destinationTable: string,
+    triggerId: string,
+    managedExternally = false
+  ) {
+    const managedTerm = managedExternally ? '_external' : '';
+    return `__ps${managedTerm}_temp_trigger_${operation.toLowerCase()}__${destinationTable}__${triggerId}`;
   }
 
   /**
@@ -324,7 +330,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
-        const insertTriggerId = this.generateTriggerName(DiffTriggerOperation.INSERT, destination, id);
+        const insertTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.INSERT,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(insertTriggerId);
 
         await tx.execute(/* sql */ `
@@ -346,7 +357,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.UPDATE)) {
-        const updateTriggerId = this.generateTriggerName(DiffTriggerOperation.UPDATE, destination, id);
+        const updateTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.UPDATE,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(updateTriggerId);
 
         await tx.execute(/* sql */ `
@@ -368,7 +384,12 @@ export class TriggerManagerImpl implements TriggerManager {
       }
 
       if (operations.includes(DiffTriggerOperation.DELETE)) {
-        const deleteTriggerId = this.generateTriggerName(DiffTriggerOperation.DELETE, destination, id);
+        const deleteTriggerId = this.generateTriggerName(
+          DiffTriggerOperation.DELETE,
+          destination,
+          id,
+          manageDestinationExternally
+        );
         triggerIds.push(deleteTriggerId);
 
         // Create delete trigger for basic JSON
