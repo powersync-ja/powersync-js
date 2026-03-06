@@ -79,10 +79,30 @@ export class LockedAsyncDatabaseAdapter
         const start = performance.now();
         try {
           const r = await originalExecute(sql, bindings);
+          const duration = performance.now() - start;
           performance.measure(`[SQL] ${sql}`, { start });
+          console.log(
+            '%c[SQL] %c%s %c%s',
+            'color: grey; font-weight: normal',
+            durationStyle(duration),
+            `[${duration.toFixed(1)}ms]`,
+            'color: grey; font-weight: normal',
+            sql
+          );
           return r;
         } catch (e: any) {
+          const duration = performance.now() - start;
           performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
+          console.error(
+            '%c[SQL] %c%s %c%s %c%s',
+            'color: grey; font-weight: normal',
+            'color: red;  font-weight: normal',
+            `[ERROR: ${e.message}]`,
+            durationStyle(duration),
+            `[${duration.toFixed(1)}ms]`,
+            'color: grey; font-weight: normal',
+            sql
+          );
           throw e;
         }
       };
@@ -487,4 +507,14 @@ export class LockedAsyncDatabaseAdapter
       rows: undefined
     };
   };
+}
+
+function durationStyle(duration: number) {
+  if (duration < 30) {
+    return 'color: grey; font-weight: normal';
+  } else if (duration < 300) {
+    return 'color: blue; font-weight: normal';
+  } else {
+    return 'color: red; font-weight: normal';
+  }
 }
