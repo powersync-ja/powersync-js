@@ -204,17 +204,6 @@ export class TriggerManagerImpl implements TriggerManager {
     const tableTriggerTypeClause = options?.temporary ? 'TEMP' : '';
     const onlyIfNotExists = options?.onlyIfNotExists ? 'IF NOT EXISTS' : '';
 
-    let x = `
-      CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
-        operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id TEXT,
-        operation TEXT,
-        timestamp TEXT,
-        value TEXT,
-        previous_value TEXT
-      )
-    `;
-    console.log(x);
     await this.db.execute(/* sql */ `
       CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
         operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
