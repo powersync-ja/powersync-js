@@ -195,6 +195,8 @@ export class TriggerManagerImpl implements TriggerManager {
 
   /**
    * Creates a diff trigger destination table on the database with the given configuration.
+   * By default this is invoked internally when creating a diff trigger, but can
+   * be used manually if `manageDestinationExternally` is set to true.
    */
   async createDiffDestinationTable(
     tableName: string,

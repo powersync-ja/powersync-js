@@ -632,7 +632,6 @@ describe('Triggers', () => {
       source: 'todos',
       destination: table,
       when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
-      useStorage: true, // persistent table so we can verify via sqlite_master
       manageDestinationExternally: true
     });
 
@@ -675,7 +674,6 @@ describe('Triggers', () => {
       source: 'todos',
       destination: table,
       when: { [DiffTriggerOperation.INSERT]: 'TRUE' },
-      useStorage: true,
       manageDestinationExternally: true
     });
 

@@ -228,6 +228,12 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
    * When true, the diff trigger will not create or drop the destination table.
    * The caller is responsible for ensuring the table exists with the correct
    * schema before creating the trigger and for dropping it when no longer needed.
+   *
+   * This is intended for advanced use cases, such as maintaining the destination table
+   * across trigger recreations.
+   * Note: While `useStorage` controls whether the destination table is persisted to disk
+   * across sessions, `manageDestinationExternally` controls who is responsible for the
+   * table's lifecycle - the SDK (default) or the caller.
    */
   manageDestinationExternally?: boolean;
 }
