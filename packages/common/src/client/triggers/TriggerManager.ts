@@ -369,6 +369,18 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
 
 /**
  * @experimental
+ * Options for creating a diff trigger destination table with {@link TriggerManager#createDiffDestinationTable}.
+ */
+export interface CreateDiffDestinationTableOptions {
+  /** If true, the table will be created as a temporary table. Defaults to false. */
+  temporary?: boolean;
+
+  /** If true, the table will only be created if it does not already exist. This can be useful when `manageDestinationExternally` is true. */
+  onlyIfNotExists?: boolean;
+}
+
+/**
+ * @experimental
  */
 export interface TriggerManager {
   /**
@@ -470,6 +482,14 @@ export interface TriggerManager {
    * ```
    */
   trackTableDiff(options: TrackDiffOptions): Promise<TriggerRemoveCallback>;
+
+  /**
+   * @experimental
+   * Creates a diff trigger destination table on the database with the given configuration.
+   * By default this is handled automatically when creating a diff trigger, but needs to
+   * be done manually if `manageDestinationExternally` is set to true.
+   */
+  createDiffDestinationTable(tableName: string, options?: CreateDiffDestinationTableOptions): Promise<void>;
 }
 
 /**

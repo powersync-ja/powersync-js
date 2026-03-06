@@ -3,6 +3,7 @@ import { Schema } from '../../db/schema/Schema.js';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
+  CreateDiffDestinationTableOptions,
   CreateDiffTriggerOptions,
   DiffTriggerOperation,
   TrackDiffOptions,
@@ -199,27 +200,22 @@ export class TriggerManagerImpl implements TriggerManager {
     });
   }
 
-  /**
-   * Creates a diff trigger destination table on the database with the given configuration.
-   * By default this is invoked internally when creating a diff trigger, but can
-   * be used manually if `manageDestinationExternally` is set to true.
-   */
-  async createDiffDestinationTable(
-    tableName: string,
-    options?: {
-      /** If true, the table will be created as a regular persisted table. If false or not provided, the table will be created as a TEMP table. */
-      useStorage?: boolean;
-      /** If true, the table will only be created if it does not already exist. This can be useful when `manageDestinationExternally` is true. */
-      onlyIfNotExists?: boolean;
-      /** An optional LockContext to use for the table creation. If not provided, a default context will be used. */
-      lockContext?: LockContext;
-    }
-  ): Promise<void> {
-    const tableTriggerTypeClause = !options?.useStorage ? 'TEMP' : '';
+  async createDiffDestinationTable(tableName: string, options?: CreateDiffDestinationTableOptions): Promise<void> {
+    const tableTriggerTypeClause = options?.temporary ? 'TEMP' : '';
     const onlyIfNotExists = options?.onlyIfNotExists ? 'IF NOT EXISTS' : '';
-    const ctx = options?.lockContext ?? this.db.database;
 
-    await ctx.execute(/* sql */ `
+    let x = `
+      CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
+        operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT,
+        operation TEXT,
+        timestamp TEXT,
+        value TEXT,
+        previous_value TEXT
+      )
+    `;
+    console.log(x);
+    await this.db.execute(/* sql */ `
       CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
         operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT,
@@ -322,11 +318,16 @@ export class TriggerManagerImpl implements TriggerManager {
       // Allow user code to execute in this lock context before the trigger is created.
       await hooks?.beforeCreate?.(tx);
       if (!manageDestinationExternally) {
-        await this.createDiffDestinationTable(destination, {
-          lockContext: tx,
-          useStorage,
-          onlyIfNotExists: false
-        });
+        await tx.execute(/* sql */ `
+          CREATE ${tableTriggerTypeClause} TABLE ${destination} (
+            operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT,
+            operation TEXT,
+            timestamp TEXT,
+            value TEXT,
+            previous_value TEXT
+          )
+        `);
       }
 
       if (operations.includes(DiffTriggerOperation.INSERT)) {
