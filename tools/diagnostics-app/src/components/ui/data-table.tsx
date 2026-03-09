@@ -17,17 +17,20 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Search
+  Search,
+  Info
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 export interface DataTableColumn<T> {
   field: keyof T | string;
   headerName: string;
+  tooltip?: string;
   flex?: number;
   type?: 'text' | 'number' | 'boolean' | 'dateTime';
   valueFormatter?: (params: { value: any; row: T }) => string;
@@ -72,6 +75,16 @@ function toColumnDefs<T extends { id: string | number }>(columns: DataTableColum
             )}
             onClick={column.getToggleSortingHandler()}>
             <span className="truncate">{col.headerName}</span>
+            {col.tooltip && (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">{col.tooltip}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {sorted === 'asc' ? (
               <ArrowUp className="h-4 w-4 shrink-0" />
             ) : sorted === 'desc' ? (
