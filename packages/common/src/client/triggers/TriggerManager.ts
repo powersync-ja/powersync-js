@@ -372,10 +372,10 @@ export interface TrackDiffOptions extends BaseCreateDiffTriggerOptions {
  * Options for creating a diff trigger destination table with {@link TriggerManager#createDiffDestinationTable}.
  */
 export interface CreateDiffDestinationTableOptions {
-  /** If true, the table will be created as a temporary table. Defaults to false. */
+  /** If true, the table will be created as a temporary table. Defaults to true. */
   temporary?: boolean;
 
-  /** If true, the table will only be created if it does not already exist. This can be useful when `manageDestinationExternally` is true. */
+  /** If true, the table will only be created if it does not already exist. Defaults to false. */
   onlyIfNotExists?: boolean;
 }
 

@@ -201,11 +201,12 @@ export class TriggerManagerImpl implements TriggerManager {
   }
 
   async createDiffDestinationTable(tableName: string, options?: CreateDiffDestinationTableOptions): Promise<void> {
-    const tableTriggerTypeClause = options?.temporary ? 'TEMP' : '';
-    const onlyIfNotExists = options?.onlyIfNotExists ? 'IF NOT EXISTS' : '';
+    const { temporary = true, onlyIfNotExists = false } = options ?? {};
+    const tableTriggerTypeClause = temporary ? 'TEMP' : '';
+    const onlyIfNotExistsClause = onlyIfNotExists ? 'IF NOT EXISTS' : '';
 
     await this.db.execute(/* sql */ `
-      CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExists} ${tableName} (
+      CREATE ${tableTriggerTypeClause} TABLE ${onlyIfNotExistsClause} ${tableName} (
         operation_id INTEGER PRIMARY KEY AUTOINCREMENT,
         id TEXT,
         operation TEXT,
@@ -261,7 +262,8 @@ export class TriggerManagerImpl implements TriggerManager {
 
     const id = await this.getUUID();
 
-    const releaseStorageClaim = useStorage ? await this.options.claimManager.obtainClaim(id) : null;
+    const releaseStorageClaim =
+      useStorage && !manageDestinationExternally ? await this.options.claimManager.obtainClaim(id) : null;
 
     /**
      * We default to replicating all columns if no columns array is provided.
