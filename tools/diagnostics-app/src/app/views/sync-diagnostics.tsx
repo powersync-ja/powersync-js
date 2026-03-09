@@ -1,19 +1,19 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { DataTable, DataTableColumn } from '@/components/ui/data-table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/spinner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { NewStreamSubscription } from '@/components/widgets/NewStreamSubscription';
 import { StreamsTable } from '@/components/widgets/StreamsTable';
-import { clearData, connector, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
-import { getTokenUserId, decodeTokenPayload } from '@/library/powersync/TokenConnector';
-import React, { useState } from 'react';
-import { useQuery as useTanstackQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DataTable, DataTableColumn } from '@/components/ui/data-table';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatBytes } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ChevronDown, ChevronUp, Info, Eye } from 'lucide-react';
+import { clearData, connector, db, sync, useSyncStatus } from '@/library/powersync/ConnectionManager';
+import { decodeTokenPayload, getTokenUserId } from '@/library/powersync/TokenConnector';
+import { useQueryClient, useQuery as useTanstackQuery } from '@tanstack/react-query';
+import { ChevronDown, ChevronUp, Eye, Info } from 'lucide-react';
+import React, { useState } from 'react';
 
 const BUCKETS_QUERY = `
 WITH
@@ -51,8 +51,22 @@ FROM local_bucket_data local
 LEFT JOIN ps_buckets ON ps_buckets.name = local.id
 LEFT JOIN oplog_stats stats ON stats.bucket_id = ps_buckets.id`;
 
-const TABLES_QUERY = `
-SELECT row_type as name, count() as count, sum(length(data)) as size FROM ps_oplog GROUP BY row_type
+/**
+ * Groups ps_oplog entries by row_type (table/view name) to get the list
+ * of tables and their total data sizes.
+ * - row_count: number of unique row_id values per row_type (actual row count, robust across multiple buckets/keys)
+ * - synced_count: This is not quite number of ops since they're de-duplicated per key already, but it counts the number of times the same row is synced via different buckets or different keys.
+ */
+const TABLES_SIZE_QUERY = /* sql */ `
+  SELECT
+    row_type as name,
+    count(distinct row_id) as count,
+    count() as synced_count,
+    sum(length (data)) as size
+  FROM
+    ps_oplog
+  GROUP BY
+    row_type
 `;
 
 const BUCKETS_QUERY_FAST = `
@@ -88,12 +102,12 @@ async function fetchSyncStats(): Promise<SyncStats> {
 
   if (synced_at != null && !sync?.syncStatus.dataFlowStatus.downloading) {
     const bucketRows = await db.getAll(BUCKETS_QUERY);
-    const tableRows = await db.getAll(TABLES_QUERY);
+    const tableRows = await db.getAll(TABLES_SIZE_QUERY);
     return { bucketRows, tableRows, lastSyncedAt };
   }
   if (synced_at != null) {
     const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
-    const tableRows = await db.getAll(TABLES_QUERY);
+    const tableRows = await db.getAll(TABLES_SIZE_QUERY);
     return { bucketRows, tableRows, lastSyncedAt };
   }
   const bucketRows = await db.getAll(BUCKETS_QUERY_FAST);
@@ -218,7 +232,21 @@ export default function SyncDiagnosticsPage() {
 
   const tablesColumns: DataTableColumn<any>[] = [
     { field: 'name', headerName: 'Name', flex: 2 },
-    { field: 'count', headerName: 'Row Count', flex: 1, type: 'number' },
+    {
+      field: 'count',
+      headerName: 'Row Count',
+      flex: 1,
+      type: 'number',
+      tooltip: 'Number of unique rows synced to this database.'
+    },
+    {
+      field: 'synced_count',
+      headerName: 'Synced Count',
+      flex: 1,
+      type: 'number',
+      hideOnMobile: true,
+      tooltip: 'Total number of rows synced via different buckets or different replication keys.'
+    },
     {
       field: 'size',
       headerName: 'Data Size',
@@ -385,9 +413,9 @@ export default function SyncDiagnosticsPage() {
               <Info className="h-4 w-4" />
               <AlertDescription>
                 Total operations ({totals.total_operations.toLocaleString()}) significantly exceeds total rows (
-                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated which negatively 
-                affects sync times for new clients. Performing a Compact or Defragment operation on your instance, 
-                could improve this.{' '}
+                {totals.row_count.toLocaleString()}). This indicates bucket history has accumulated which negatively
+                affects sync times for new clients. Performing a Compact or Defragment operation on your instance, could
+                improve this.{' '}
                 <a
                   href="https://docs.powersync.com/maintenance-ops/compacting-buckets"
                   target="_blank"
@@ -491,8 +519,7 @@ function TruncatedTablesList({ tables }: { tables: string }) {
           </>
         ) : (
           <>
-            <ChevronDown className="h-3 w-3" />
-            +{hiddenCount} more
+            <ChevronDown className="h-3 w-3" />+{hiddenCount} more
           </>
         )}
       </button>
