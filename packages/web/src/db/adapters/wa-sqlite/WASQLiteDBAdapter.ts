@@ -10,8 +10,8 @@ import {
 } from '../web-sql-flags.js';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection.js';
 import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
-import { WASQLiteVFS } from './WASQLiteConnection.js';
 import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
+import { WASQLiteVFS } from './vfs.js';
 
 /**
  * These flags are the same as {@link WebSQLFlags}.
