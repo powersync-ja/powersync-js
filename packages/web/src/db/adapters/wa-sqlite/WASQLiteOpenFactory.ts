@@ -1,17 +1,20 @@
-import { DBAdapter, type ILogLevel } from '@powersync/common';
+import { createLogger, DBAdapter, ILogger, SQLOpenFactory, type ILogLevel } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
-import { AbstractWebSQLOpenFactory } from '../AbstractWebSQLOpenFactory.js';
 import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection.js';
 import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection.js';
 import {
   DEFAULT_CACHE_SIZE_KB,
+  isServerSide,
+  ResolvedWebSQLFlags,
   ResolvedWebSQLOpenOptions,
+  resolveWebSQLFlags,
   TemporaryStorageOption,
   WebSQLOpenFactoryOptions
 } from '../web-sql-flags.js';
 import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
 import { WASQLiteVFS, WASqliteConnection } from './WASQLiteConnection.js';
+import { SSRDBAdapter } from '../SSRDBAdapter.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -28,11 +31,14 @@ export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOption
 /**
  * Opens a SQLite connection using WA-SQLite.
  */
-export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
-  constructor(options: WASQLiteOpenFactoryOptions) {
-    super(options);
+export class WASQLiteOpenFactory implements SQLOpenFactory {
+  private resolvedFlags: ResolvedWebSQLFlags;
+  private logger: ILogger;
 
+  constructor(private options: WASQLiteOpenFactoryOptions) {
     assertValidWASQLiteOpenFactoryOptions(options);
+    this.resolvedFlags = resolveWebSQLFlags(options.flags);
+    this.logger = options.logger ?? createLogger(`WASQLiteOpenFactory - ${this.options.dbFilename}`);
   }
 
   get waOptions(): WASQLiteOpenFactoryOptions {
@@ -47,6 +53,32 @@ export class WASQLiteOpenFactory extends AbstractWebSQLOpenFactory {
       debugMode: this.options.debugMode,
       logger: this.logger
     });
+  }
+
+  openDB(): DBAdapter {
+    const {
+      resolvedFlags: { disableSSRWarning, enableMultiTabs, ssrMode = isServerSide() }
+    } = this;
+    if (ssrMode && !disableSSRWarning) {
+      this.logger.warn(
+        `
+      Running PowerSync in SSR mode.
+      Only empty query results will be returned.
+      Disable this warning by setting 'disableSSRWarning: true' in options.`
+      );
+    }
+
+    if (!enableMultiTabs) {
+      this.logger.warn(
+        'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
+      );
+    }
+
+    if (ssrMode) {
+      return new SSRDBAdapter();
+    }
+
+    return this.openAdapter();
   }
 
   async openConnection(): Promise<AsyncDatabaseConnection> {

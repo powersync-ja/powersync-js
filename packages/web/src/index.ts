@@ -1,7 +1,6 @@
 export * from '@powersync/common';
 export * from './attachments/IndexDBFileSystemAdapter.js';
 export * from './db/adapters/AbstractWebPowerSyncDatabaseOpenFactory.js';
-export * from './db/adapters/AbstractWebSQLOpenFactory.js';
 export * from './db/adapters/AsyncDatabaseConnection.js';
 export * from './db/adapters/wa-sqlite/WASQLiteConnection.js';
 export * from './db/adapters/wa-sqlite/WASQLiteDBAdapter.js';
