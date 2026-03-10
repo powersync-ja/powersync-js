@@ -1,6 +1,6 @@
 import { LockedAsyncDatabaseAdapter } from '../LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapterConfiguration } from '../WebDBAdapter.js';
-import { WASQLiteVFS } from './WASQLiteConnection.js';
+import { WASQLiteVFS } from './vfs.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
 /**

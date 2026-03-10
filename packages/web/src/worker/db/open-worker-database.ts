@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
 import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
-import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/WASQLiteConnection.js';
+import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections

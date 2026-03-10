@@ -13,8 +13,9 @@ import {
   WebSQLOpenFactoryOptions
 } from '../web-sql-flags.js';
 import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
-import { WASQLiteVFS, WASqliteConnection } from './WASQLiteConnection.js';
+import { WASqliteConnection } from './WASQLiteConnection.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
+import { WASQLiteVFS } from './vfs.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -26,6 +27,11 @@ export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOp
 
 export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
   logLevel: ILogLevel;
+  /**
+   * A lock that is currently held by the client. When the lock is returned, we know the client is gone and that we need
+   * to clean up resources.
+   */
+  lockName: string;
 }
 
 /**

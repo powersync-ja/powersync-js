@@ -16,9 +16,9 @@ import { getNavigatorLocks } from '../../shared/navigator.js';
 import { AsyncDatabaseConnection } from './AsyncDatabaseConnection.js';
 import { SharedConnectionWorker, WebDBAdapter, WebDBAdapterConfiguration } from './WebDBAdapter.js';
 import { WorkerWrappedAsyncDatabaseConnection } from './WorkerWrappedAsyncDatabaseConnection.js';
-import { WASQLiteVFS } from './wa-sqlite/WASQLiteConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './wa-sqlite/WASQLiteOpenFactory.js';
 import { ResolvedWebSQLOpenOptions } from './web-sql-flags.js';
+import { WASQLiteVFS } from './wa-sqlite/vfs.js';
 
 /**
  * @internal
