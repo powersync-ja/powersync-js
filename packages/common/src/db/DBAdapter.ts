@@ -150,8 +150,6 @@ export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener>
 }
 
 export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
-  close: () => void | Promise<void>;
-
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
 }
