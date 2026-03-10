@@ -68,8 +68,10 @@ export interface LockContext extends SqlExecutor, DBGetUtils {}
 /**
  * Implements {@link DBGetUtils} on a {@link SqlRunner}.
  */
-export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => SqlExecutor>(Base: TBase) {
-  return class extends Base implements DBGetUtils {
+export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omit<SqlExecutor, 'executeBatch'>>(
+  Base: TBase
+) {
+  return class extends Base implements DBGetUtils, SqlExecutor {
     async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
       const res = await this.execute(sql, parameters);
       return res.rows?._array ?? [];
@@ -87,6 +89,26 @@ export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Sql
         throw new Error('Result set is empty');
       }
       return first;
+    }
+
+    async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+      // If this context can run batch statements natively, use that.
+      // @ts-ignore
+      if (super.executeBatch) {
+        // @ts-ignore
+        return super.executeBatch(query, params);
+      }
+
+      // Emulate executeBatch by running statements individually.
+      let result: QueryResult | null = null;
+      for (const set of params) {
+        result = await this.execute(query, set);
+      }
+
+      return {
+        rowsAffected: result?.rowsAffected ?? 0,
+        insertId: result?.insertId
+      };
     }
   };
 }
