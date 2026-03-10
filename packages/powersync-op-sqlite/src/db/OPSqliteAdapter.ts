@@ -1,7 +1,9 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import {
   BaseObserver,
+  ConnectionPool,
   DBAdapter,
+  DBAdapterDefaultMixin,
   DBAdapterListener,
   DBLockOptions,
   QueryResult,
@@ -24,7 +26,7 @@ export type OPSQLiteAdapterOptions = {
 
 const READ_CONNECTIONS = 5;
 
-export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   name: string;
   protected writeMutex: Mutex;
 
@@ -229,81 +231,6 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     });
   }
 
-  readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readLock((ctx) => this.internalTransaction(ctx, fn));
-  }
-
-  writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock((ctx) => this.internalTransaction(ctx, fn));
-  }
-
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return this.readLock((ctx) => ctx.getAll(sql, parameters));
-  }
-
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    return this.readLock((ctx) => ctx.getOptional(sql, parameters));
-  }
-
-  get<T>(sql: string, parameters?: any[]): Promise<T> {
-    return this.readLock((ctx) => ctx.get(sql, parameters));
-  }
-
-  execute(query: string, params?: any[]) {
-    return this.writeLock((ctx) => ctx.execute(query, params));
-  }
-
-  executeRaw(query: string, params?: any[]) {
-    return this.writeLock((ctx) => ctx.executeRaw(query, params));
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    return this.writeLock((ctx) => ctx.executeBatch(query, params));
-  }
-
-  protected async internalTransaction<T>(
-    connection: OPSQLiteConnection,
-    fn: (tx: Transaction) => Promise<T>
-  ): Promise<T> {
-    let finalized = false;
-    const commit = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return connection.execute('COMMIT');
-    };
-    const rollback = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return connection.execute('ROLLBACK');
-    };
-    try {
-      await connection.execute('BEGIN');
-      const result = await fn({
-        execute: (query, params) => connection.execute(query, params),
-        executeRaw: (query, params) => connection.executeRaw(query, params),
-        get: (query, params) => connection.get(query, params),
-        getAll: (query, params) => connection.getAll(query, params),
-        getOptional: (query, params) => connection.getOptional(query, params),
-        commit,
-        rollback
-      });
-      await commit();
-      return result;
-    } catch (ex) {
-      try {
-        await rollback();
-      } catch (ex2) {
-        // In rare cases, a rollback may fail.
-        // Safe to ignore.
-      }
-      throw ex;
-    }
-  }
-
   async refreshSchema(): Promise<void> {
     await this.initialized;
     await this.writeConnection!.refreshSchema();
@@ -315,3 +242,5 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
   }
 }
+
+export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {}

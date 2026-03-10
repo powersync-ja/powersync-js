@@ -375,7 +375,7 @@ export class LockedAsyncDatabaseAdapter
       execute: (sql: string, params?: any[]) => Promise<QueryResult>;
       executeRaw: (sql: string, params?: any[]) => Promise<any[][]>;
     }
-  >(tx: T): T & DBGetUtils {
+  >(tx: T): T & LockContext {
     return {
       ...tx,
       /**
@@ -404,6 +404,20 @@ export class LockedAsyncDatabaseAdapter
           throw new Error('Result set is empty');
         }
         return first;
+      },
+
+      async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+        let result: QueryResult | null = null;
+
+        for (const set of params) {
+          // TODO: Optimize by only preparing once.
+          result = await this.execute(query, set);
+        }
+
+        return {
+          rowsAffected: result?.rowsAffected ?? 0,
+          insertId: result?.insertId
+        };
       }
     };
   }
