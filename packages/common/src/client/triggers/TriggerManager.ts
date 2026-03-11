@@ -223,14 +223,15 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
    * This table will be dropped once the trigger is removed.
    */
   destination: string;
+
+  setupContext?: LockContext;
 }
 
 /**
  * @experimental
  * Callback to drop a trigger after it has been created.
  */
-export type TriggerRemoveCallback = () => Promise<void>;
-
+export type TriggerRemoveCallback = (context?: LockContext) => Promise<void>;
 /**
  * @experimental
  * Options for {@link TriggerDiffHandlerContext#withDiff}.

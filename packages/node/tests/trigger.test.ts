@@ -705,6 +705,51 @@ describe('Triggers', () => {
     );
   });
 
+  databaseTest('Recreating trigger with setupContext should not lose data', async ({ database }) => {
+    const destination = 'temp_recreate';
+    const columns: Array<keyof Database['todos']> = ['content'];
+    const when = { [DiffTriggerOperation.INSERT]: 'TRUE' };
+
+    let dispose = await database.triggers.createDiffTrigger({
+      source: 'todos',
+      destination,
+      columns,
+      when
+    });
+
+    let gapTodos: Database['todos'][] = [];
+
+    // Dispose the trigger (drops destination table + triggers)
+    await database.writeLock(async (tx) => {
+      await dispose(tx);
+
+      // Create new trigger in the same lock context — no nested lock needed
+      dispose = await database.triggers.createDiffTrigger({
+        source: 'todos',
+        destination,
+        columns,
+        when,
+        setupContext: tx
+      });
+    });
+
+    // Verify new trigger works after locked context recreation
+    await database.execute("INSERT INTO todos (id, content) VALUES (uuid(), 'after recreate');");
+
+    await vi.waitFor(
+      async () => {
+        const rows = await database.writeLock(async (tx) =>
+          tx.getAll<TriggerDiffRecord>(`SELECT * FROM ${destination}`)
+        );
+        expect(rows.length).toBe(1);
+        expect(JSON.parse(rows[0].value).content).toBe('after recreate');
+      },
+      { timeout: 1000 }
+    );
+
+    await dispose();
+  });
+
   databaseTest('Should use persisted tables and triggers', async ({ database }) => {
     const table = 'temp_remote_lists';
 
