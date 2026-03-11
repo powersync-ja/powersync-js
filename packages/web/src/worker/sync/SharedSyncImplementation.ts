@@ -23,9 +23,6 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation.js';
 
-import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
-import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter.js';
-import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
 import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
 import { BroadcastLogger } from './BroadcastLogger.js';

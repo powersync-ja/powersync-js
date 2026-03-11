@@ -1,8 +1,6 @@
 import { createLogger, DBAdapter, ILogger, SQLOpenFactory, type ILogLevel } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
-import { AsyncDatabaseConnection, OpenAsyncDatabaseConnection } from '../AsyncDatabaseConnection.js';
-import { WorkerWrappedAsyncDatabaseConnection } from '../WorkerWrappedAsyncDatabaseConnection.js';
 import {
   DEFAULT_CACHE_SIZE_KB,
   isServerSide,
@@ -12,10 +10,12 @@ import {
   TemporaryStorageOption,
   WebSQLOpenFactoryOptions
 } from '../web-sql-flags.js';
-import { InternalWASQLiteDBAdapter } from './InternalWASQLiteDBAdapter.js';
-import { WASqliteConnection } from './WASQLiteConnection.js';
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
-import { WASQLiteVFS } from './vfs.js';
+import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
+import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
+import { ClientOptions, DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
+import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
+import { AsyncDbAdapter } from '../AsyncWebAdapter.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -53,25 +53,24 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
   }
 
   protected openAdapter(): DBAdapter {
-    return new InternalWASQLiteDBAdapter({
-      name: this.options.dbFilename,
-      openConnection: () => this.openConnection(),
-      debugMode: this.options.debugMode,
-      logger: this.logger
-    });
+    return new AsyncDbAdapter(this.openConnection(), this.options.dbFilename);
   }
 
   openDB(): DBAdapter {
     const {
       resolvedFlags: { disableSSRWarning, enableMultiTabs, ssrMode = isServerSide() }
     } = this;
-    if (ssrMode && !disableSSRWarning) {
-      this.logger.warn(
-        `
+    if (ssrMode) {
+      if (!disableSSRWarning) {
+        this.logger.warn(
+          `
       Running PowerSync in SSR mode.
       Only empty query results will be returned.
       Disable this warning by setting 'disableSSRWarning: true' in options.`
-      );
+        );
+      }
+
+      return new SSRDBAdapter();
     }
 
     if (!enableMultiTabs) {
@@ -80,14 +79,10 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       );
     }
 
-    if (ssrMode) {
-      return new SSRDBAdapter();
-    }
-
     return this.openAdapter();
   }
 
-  async openConnection(): Promise<AsyncDatabaseConnection> {
+  async openConnection(): Promise<DatabaseClient> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
     const {
       vfs = WASQLiteVFS.IDBBatchAtomicVFS,
@@ -99,6 +94,20 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     if (!enableMultiTabs) {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
+
+    const resolvedOptions: ResolvedWASQLiteOpenFactoryOptions = {
+      dbFilename: this.options.dbFilename,
+      dbLocation: this.options.dbLocation,
+      debugMode: this.options.debugMode,
+      vfs,
+      temporaryStorage,
+      cacheSizeKb,
+      flags: this.resolvedFlags,
+      encryptionKey: encryptionKey
+    };
+
+    let clientOptions: ClientOptions;
+    let requiresPersistentTriggers = vfsRequiresDedicatedWorkers(vfs);
 
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
@@ -116,43 +125,40 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
             )
           : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const workerDBOpener = Comlink.wrap<OpenAsyncDatabaseConnection<WorkerDBOpenerOptions>>(workerPort);
-
-      return new WorkerWrappedAsyncDatabaseConnection({
-        remote: workerDBOpener,
+      const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
+      const closeSignal = new AbortController();
+      const connection = await source({
+        ...resolvedOptions,
+        logLevel: this.logger.getLevel(),
+        lockName: await generateTabCloseSignal(closeSignal.signal)
+      });
+      clientOptions = {
+        connection,
+        source,
         // This tab owns the worker, so we're guaranteed to outlive it.
         remoteCanCloseUnexpectedly: false,
-        baseConnection: await workerDBOpener({
-          dbFilename: this.options.dbFilename,
-          vfs,
-          temporaryStorage,
-          cacheSizeKb,
-          flags: this.resolvedFlags,
-          encryptionKey: encryptionKey,
-          logLevel: this.logger.getLevel()
-        }),
-        identifier: this.options.dbFilename,
         onClose: () => {
+          closeSignal.abort();
           if (workerPort instanceof Worker) {
             workerPort.terminate();
           } else {
             workerPort.close();
           }
         }
-      });
+      };
     } else {
-      // Don't use a web worker
-      return new WASqliteConnection({
-        dbFilename: this.options.dbFilename,
-        dbLocation: this.options.dbLocation,
-        debugMode: this.options.debugMode,
-        vfs,
-        temporaryStorage,
-        cacheSizeKb,
-        flags: this.resolvedFlags,
-        encryptionKey: encryptionKey
-      });
+      // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
+      const localServer = new MultiDatabaseServer(this.logger);
+      requiresPersistentTriggers = true;
+
+      const connection = await localServer.openConnectionLocally(resolvedOptions);
+      clientOptions = { connection, source: null, remoteCanCloseUnexpectedly: false };
     }
+
+    return new DatabaseClient(clientOptions, {
+      ...resolvedOptions,
+      requiresPersistentTriggers
+    });
   }
 }
 
@@ -163,7 +169,7 @@ function assertValidWASQLiteOpenFactoryOptions(options: WASQLiteOpenFactoryOptio
   // The OPFS VFS only works in dedicated web workers.
   if ('vfs' in options && 'flags' in options) {
     const { vfs, flags = {} } = options;
-    if (vfs !== WASQLiteVFS.IDBBatchAtomicVFS && 'useWebWorker' in flags && !flags.useWebWorker) {
+    if (vfs && vfsRequiresDedicatedWorkers(vfs) && 'useWebWorker' in flags && !flags.useWebWorker) {
       throw new Error(
         `Invalid configuration: The 'useWebWorker' flag must be true when using an OPFS-based VFS (${vfs}).`
       );

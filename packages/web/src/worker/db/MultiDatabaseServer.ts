@@ -1,6 +1,9 @@
 import { ILogger } from '@powersync/common';
 import { ClientConnectionView, DatabaseServer } from '../../db/adapters/wa-sqlite/DatabaseServer.js';
-import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
+import {
+  ResolvedWASQLiteOpenFactoryOptions,
+  WorkerDBOpenerOptions
+} from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import { RawSqliteConnection } from '../../db/adapters/wa-sqlite/RawSqliteConnection.js';
 import { ConcurrentSqliteConnection } from '../../db/adapters/wa-sqlite/ConcurrentConnection.js';
@@ -16,11 +19,14 @@ export class MultiDatabaseServer {
   constructor(readonly logger: ILogger) {}
 
   async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
+    this.logger.setLevel(options.logLevel);
+    return this.openConnectionLocally(options, options.lockName);
+  }
+
+  async openConnectionLocally(options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
     // Prevent multiple simultaneous opens from causing race conditions
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
-      const { dbFilename, logLevel, lockName } = options;
-
-      this.logger.setLevel(logLevel);
+      const { dbFilename } = options;
 
       let server: DatabaseServer | undefined = this.activeDatabases.get(dbFilename);
       if (server == null) {
@@ -28,7 +34,12 @@ export class MultiDatabaseServer {
         await connection.init();
 
         const onClose = () => this.activeDatabases.delete(dbFilename);
-        server = new DatabaseServer(new ConcurrentSqliteConnection(connection), this.logger, onClose);
+        const needsNavigatorLocks = !isSharedWorker;
+        server = new DatabaseServer({
+          inner: new ConcurrentSqliteConnection(connection, needsNavigatorLocks),
+          logger: this.logger,
+          onClose
+        });
         this.activeDatabases.set(dbFilename, server);
       }
 
@@ -45,3 +56,5 @@ export class MultiDatabaseServer {
     );
   }
 }
+
+export const isSharedWorker = SharedWorkerGlobalScope != null;
