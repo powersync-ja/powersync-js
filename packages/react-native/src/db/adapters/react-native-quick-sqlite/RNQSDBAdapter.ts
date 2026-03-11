@@ -37,32 +37,8 @@ class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements Conn
     return this.baseDB.writeLock((dbTx) => fn(this.generateContext(dbTx)), options);
   }
 
-  // We need to keep this since RNQS does not support executeBatch in lock contexts.
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    const commands: any[] = [];
-
-    for (let i = 0; i < params.length; i++) {
-      commands.push([query, params[i]]);
-    }
-
-    const result = await this.baseDB.executeBatch(commands);
-    return {
-      rowsAffected: result.rowsAffected ? result.rowsAffected : 0
-    };
-  }
-
   generateContext<T extends RNQSLockContext>(ctx: T) {
     return new QuickSqliteContext(ctx);
-  }
-
-  /**
-   * This provides a top-level read only execute method which is executed inside a read-lock.
-   * This is necessary since the high level `execute` method uses a write-lock under
-   * the hood. Helper methods such as `get`, `getAll` and `getOptional` are read only,
-   * and should use this method.
-   */
-  private readOnlyExecute(sql: string, params?: any[]) {
-    return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
   }
 
   async refreshSchema() {
@@ -70,7 +46,7 @@ class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements Conn
   }
 }
 
-class QuickSqliteExecutor implements SqlExecutor {
+class QuickSqliteExecutor implements Omit<SqlExecutor, 'executeBatch'> {
   constructor(readonly context: RNQSLockContext) {}
 
   execute(query: string, params?: any[]) {
@@ -83,20 +59,6 @@ class QuickSqliteExecutor implements SqlExecutor {
     const result = await this.context.execute(query, params);
     const rows = result.rows?._array ?? [];
     return rows.map((row) => Object.values(row));
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    // RNQS does not support executeBatch in lock contexts, so we have to run the query multiple times. So be it, this
-    // implementation is basically deprecated anyways.
-    let result: QueryResult | null = null;
-    for (const set of params) {
-      result = await this.execute(query, set);
-    }
-
-    return {
-      rowsAffected: result?.rowsAffected ?? 0,
-      insertId: result?.insertId
-    };
   }
 }
 

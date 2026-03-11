@@ -100,14 +100,17 @@ export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omi
       }
 
       // Emulate executeBatch by running statements individually.
-      let result: QueryResult | null = null;
+      let lastInsertId: number | undefined;
+      let rowsAffected = 0;
       for (const set of params) {
-        result = await this.execute(query, set);
+        const result = await this.execute(query, set);
+        lastInsertId = result.insertId;
+        rowsAffected += result.rowsAffected;
       }
 
       return {
-        rowsAffected: result?.rowsAffected ?? 0,
-        insertId: result?.insertId
+        rowsAffected,
+        insertId: lastInsertId
       };
     }
   };

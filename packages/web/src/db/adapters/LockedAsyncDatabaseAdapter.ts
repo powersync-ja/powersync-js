@@ -7,6 +7,7 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
+  SqlExecutor,
   Transaction,
   createLogger,
   type ILogger
@@ -90,7 +91,8 @@ export class LockedAsyncDatabaseAdapter
 
     this.dbGetHelpers = this.generateDBHelpers({
       execute: (query, params) => this.acquireLock(() => this._execute(query, params)),
-      executeRaw: (query, params) => this.acquireLock(() => this._executeRaw(query, params))
+      executeRaw: (query, params) => this.acquireLock(() => this._executeRaw(query, params)),
+      executeBatch: (query, params) => this.acquireLock(() => this._executeBatch(query, params))
     });
     this.initPromise = this._init();
   }
@@ -269,19 +271,21 @@ export class LockedAsyncDatabaseAdapter
   }
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
-    await this.waitForInitialized();
-    return this.acquireLock(
-      async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
-      {
-        timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
-      }
-    );
+    // Read and write locks are the same because we only have one underlying connection.
+    return this.writeLock(fn, options);
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
     await this.waitForInitialized();
     return this.acquireLock(
-      async () => fn(this.generateDBHelpers({ execute: this._execute, executeRaw: this._executeRaw })),
+      async () =>
+        fn(
+          this.generateDBHelpers({
+            execute: this._execute,
+            executeRaw: this._executeRaw,
+            executeBatch: this._executeBatch
+          })
+        ),
       {
         timeoutMs: options?.timeoutMs ?? this.options.defaultLockTimeoutMs
       }
@@ -370,12 +374,7 @@ export class LockedAsyncDatabaseAdapter
     return this.writeLock(this.wrapTransaction(fn, true));
   }
 
-  private generateDBHelpers<
-    T extends {
-      execute: (sql: string, params?: any[]) => Promise<QueryResult>;
-      executeRaw: (sql: string, params?: any[]) => Promise<any[][]>;
-    }
-  >(tx: T): T & LockContext {
+  private generateDBHelpers<T extends SqlExecutor>(tx: T): T & LockContext {
     return {
       ...tx,
       /**
@@ -404,20 +403,6 @@ export class LockedAsyncDatabaseAdapter
           throw new Error('Result set is empty');
         }
         return first;
-      },
-
-      async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-        let result: QueryResult | null = null;
-
-        for (const set of params) {
-          // TODO: Optimize by only preparing once.
-          result = await this.execute(query, set);
-        }
-
-        return {
-          rowsAffected: result?.rowsAffected ?? 0,
-          insertId: result?.insertId
-        };
       }
     };
   }
