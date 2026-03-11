@@ -6,7 +6,7 @@ import '@journeyapps/wa-sqlite';
 import { createBaseLogger, createLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
-import { MultiDatabaseServer } from './MultiDatabaseServer.js';
+import { isSharedWorker, MultiDatabaseServer } from './MultiDatabaseServer.js';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
@@ -19,7 +19,7 @@ async function serveDatabase(options: WorkerDBOpenerOptions) {
 }
 
 // Check if we're in a SharedWorker context
-if (typeof SharedWorkerGlobalScope !== 'undefined') {
+if (isSharedWorker) {
   const _self: SharedWorkerGlobalScope = self as any;
   _self.onconnect = function (event: MessageEvent<string>) {
     const port = event.ports[0];

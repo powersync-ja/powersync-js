@@ -9,6 +9,10 @@ export enum WASQLiteVFS {
   AccessHandlePoolVFS = 'AccessHandlePoolVFS'
 }
 
+export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS) {
+  return vfs != WASQLiteVFS.IDBBatchAtomicVFS;
+}
+
 /**
  * @internal
  */

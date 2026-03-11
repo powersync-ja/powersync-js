@@ -8,28 +8,59 @@ import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
  * To allow potentially concurrent accesses from different clients, this requires a local mutex implementation here.
  *
  * Note that instances of this class are not safe to proxy across context boundaries with comlink! We need to be able to
- * rely on mutexes being returned properly, so additional checks to detect say a client tab closing are required to
+ * rely on mutexes being returned reliably, so additional checks to detect say a client tab closing are required to
  * avoid deadlocks.
  */
 export class ConcurrentSqliteConnection {
-  /** An outer mutex ensuring at most one {@link ConnectionLeaseToken} can exist for this connection at a time.  */
-  private leaseMutex = new Mutex();
+  /**
+   * An outer mutex ensuring at most one {@link ConnectionLeaseToken} can exist for this connection at a time.
+   *
+   * If null, we'll use navigator locks instead.
+   */
+  private leaseMutex: Mutex | null;
 
-  constructor(private readonly inner: RawSqliteConnection) {
+  /**
+   * @param needsNavigatorLocks Whether access to the database needs an additional navigator lock guard.
+   *
+   * While {@link ConcurrentSqliteConnection} prevents concurrent access to a database _connection_, it's possible we
+   * might have multiple connections to the same physical database (e.g. if multiple tabs use dedicated workers).
+   * In those setups, we use navigator locks instead of an internal mutex to guard access..
+   */
+  constructor(
+    private readonly inner: RawSqliteConnection,
+    needsNavigatorLocks: boolean
+  ) {
     // The inner connection should already be initialized, fail early if it's not.
     inner.requireSqlite();
+    this.leaseMutex = needsNavigatorLocks ? null : new Mutex();
   }
 
   get options(): ResolvedWASQLiteOpenFactoryOptions {
     return this.inner.options;
   }
 
+  private acquireMutex(abort?: AbortSignal): Promise<MutexInterface.Releaser> {
+    if (this.leaseMutex) {
+      return this.leaseMutex.acquire();
+    }
+
+    return new Promise((resolve, reject) => {
+      const options: LockOptions = { signal: abort };
+
+      navigator.locks
+        .request(`db-access-lock-${this.options.dbFilename}`, options, (_) => {
+          return new Promise<void>((returnLock) => resolve(returnLock));
+        })
+        .catch(reject);
+    });
+  }
+
   /**
    * @returns A {@link ConnectionLeaseToken}. Until that token is returned, no other client can use the database.
    */
   async acquireConnection(): Promise<ConnectionLeaseToken> {
-    const returnMutex = await this.leaseMutex.acquire();
-    const token = new ConnectionLeaseToken(returnMutex);
+    const returnMutex = await this.acquireMutex();
+    const token = new ConnectionLeaseToken(returnMutex, this.inner);
 
     try {
       // If a previous client was interrupted in the middle of a transaction AND this is a shared worker, it's possible
@@ -47,28 +78,50 @@ export class ConcurrentSqliteConnection {
   }
 
   async close(): Promise<void> {
-    const returnMutex = await this.leaseMutex.acquire();
-    await this.inner.close();
-    returnMutex();
+    const returnMutex = await this.acquireMutex();
+    try {
+      await this.inner.close();
+    } finally {
+      returnMutex();
+    }
   }
 }
 
-class ConnectionLeaseToken {
+/**
+ * An instance representing temporary exclusive access to a {@link ConcurrentSqliteConnection}.
+ */
+export class ConnectionLeaseToken {
   /** Ensures that the client with access to this token can't run statements concurrently. */
   private useMutex: Mutex = new Mutex();
   private closed = false;
 
-  constructor(private returnMutex: MutexInterface.Releaser) {}
+  constructor(
+    private returnMutex: MutexInterface.Releaser,
+    private connection: RawSqliteConnection
+  ) {}
 
   /**
    * Returns this lease, allowing another client to use the database connection.
    */
   async returnLease() {
     await this.useMutex.runExclusive(async () => {
-      if (!closed) {
-        closed = true;
+      if (!this.closed) {
+        this.closed = true;
         this.returnMutex();
       }
+    });
+  }
+
+  /**
+   * This should only be used internally, since the callback must not use the raw connection after resolving.
+   */
+  async use<T>(callback: (conn: RawSqliteConnection) => Promise<T>): Promise<T> {
+    return await this.useMutex.runExclusive(async () => {
+      if (this.closed) {
+        throw new Error('lease token has already been closed');
+      }
+
+      return await callback(this.connection);
     });
   }
 }

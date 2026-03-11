@@ -1,6 +1,6 @@
 import * as Comlink from 'comlink';
-import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
 import { WASQLiteVFS } from '../../db/adapters/wa-sqlite/vfs.js';
+import { OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 
 /**
  * Opens a shared or dedicated worker which exposes opening of database connections
@@ -49,7 +49,7 @@ export function openWorkerDatabasePort(
  * a worker.
  */
 export function getWorkerDatabaseOpener(workerIdentifier: string, multipleTabs = true, worker: string | URL = '') {
-  return Comlink.wrap<OpenAsyncDatabaseConnection>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
+  return Comlink.wrap<OpenWorkerConnection>(openWorkerDatabasePort(workerIdentifier, multipleTabs, worker));
 }
 
 export function resolveWorkerDatabasePortFactory(worker: () => Worker | SharedWorker) {

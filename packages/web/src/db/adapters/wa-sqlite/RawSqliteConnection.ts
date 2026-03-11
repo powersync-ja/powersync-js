@@ -3,6 +3,18 @@ import { Factory as WaSqliteFactory, SQLITE_ROW } from '@journeyapps/wa-sqlite';
 import { DEFAULT_MODULE_FACTORIES, WASQLiteModuleFactory } from './vfs.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
+export interface RawResultSet {
+  columns: string[];
+  rows: SQLiteCompatibleType[][];
+}
+
+export interface RawQueryResult {
+  changes: number;
+  lastInsertRowId: number;
+  autocommit: boolean;
+  resultSet: RawResultSet | undefined;
+}
+
 /**
  * A small wrapper around WA-sqlite to help with opening databases and running statements by preparing them internally.
  *
@@ -34,6 +46,8 @@ export class RawSqliteConnection {
       await this.executeRaw(`PRAGMA key = '${escapedKey}'`);
     }
     await this.executeRaw(`PRAGMA cache_size = -${this.options.cacheSizeKb};`);
+
+    await this.executeRaw(`SELECT powersync_update_hooks('install');`);
   }
 
   private async openSQLiteAPI(): Promise<SQLiteAPI> {
@@ -76,47 +90,56 @@ export class RawSqliteConnection {
     return this.requireSqlite().get_autocommit(this.db) != 0;
   }
 
-  /**
-   * This executes a single statement using SQLite3 and returns the results as an array of arrays.
-   */
-  protected async executeSingleStatementRaw(sql: string | TemplateStringsArray, bindings?: any[]): Promise<any[][]> {
-    const results = await this.executeRaw(sql, bindings);
-
-    return results.flatMap((resultset) => resultset.rows.map((row) => resultset.columns.map((_, index) => row[index])));
+  async execute(sql: string, bindings?: any[]): Promise<RawQueryResult> {
+    const resultSet = await this.executeSingleStatementRaw(sql, bindings);
+    return this.wrapQueryResults(this.requireSqlite(), resultSet);
   }
 
-  async executeRaw(
-    sql: string | TemplateStringsArray,
-    bindings?: any[]
-  ): Promise<{ columns: string[]; rows: SQLiteCompatibleType[][] }[]> {
+  async executeBatch(sql: string, bindings: any[][]): Promise<RawQueryResult[]> {
     const results = [];
     const api = this.requireSqlite();
-    for await (const stmt of api.statements(this.db, sql as string)) {
+    for await (const stmt of api.statements(this.db, sql)) {
       let columns;
-      const wrappedBindings = bindings ? [bindings] : [[]];
-      for (const binding of wrappedBindings) {
-        // TODO not sure why this is needed currently, but booleans break
-        binding.forEach((b, index, arr) => {
-          if (typeof b == 'boolean') {
-            arr[index] = b ? 1 : 0;
-          }
-        });
 
-        api.reset(stmt);
-        if (bindings) {
-          api.bind_collection(stmt, binding);
-        }
+      for (const parameterSet of bindings) {
+        const rs = await this.stepThroughStatement(api, stmt, parameterSet, columns, false);
+        results.push(this.wrapQueryResults(api, rs));
+      }
 
-        const rows = [];
-        while ((await api.step(stmt)) === SQLITE_ROW) {
-          const row = api.row(stmt);
-          rows.push(row);
-        }
+      // executeBatch can only use a single statement
+      break;
+    }
 
-        columns = columns ?? api.column_names(stmt);
-        if (columns.length) {
-          results.push({ columns, rows });
-        }
+    return results;
+  }
+
+  private wrapQueryResults(api: SQLiteAPI, rs: RawResultSet | undefined): RawQueryResult {
+    return {
+      changes: api.changes(this.db),
+      lastInsertRowId: api.last_insert_id(this.db),
+      autocommit: api.get_autocommit(this.db) != 0,
+      resultSet: rs
+    };
+  }
+
+  /**
+   * This executes a single statement using SQLite3 and returns the results as a {@link RawResultSet}.
+   */
+  private async executeSingleStatementRaw(sql: string, bindings?: any[]): Promise<RawResultSet | undefined> {
+    const results = await this.executeRaw(sql, bindings);
+    return results.length ? results[0] : undefined;
+  }
+
+  async executeRaw(sql: string, bindings?: any[]): Promise<RawResultSet[]> {
+    const results = [];
+    const api = this.requireSqlite();
+    for await (const stmt of api.statements(this.db, sql)) {
+      let columns;
+
+      const rs = await this.stepThroughStatement(api, stmt, bindings ?? [], columns);
+      columns = rs.columns;
+      if (columns.length) {
+        results.push(rs);
       }
 
       // When binding parameters, only a single statement is executed.
@@ -126,6 +149,37 @@ export class RawSqliteConnection {
     }
 
     return results;
+  }
+
+  private async stepThroughStatement(
+    api: SQLiteAPI,
+    stmt: number,
+    bindings: any[],
+    knownColumns: string[] | undefined,
+    includeResults: boolean = true
+  ): Promise<RawResultSet> {
+    // TODO not sure why this is needed currently, but booleans break
+    bindings.forEach((b, index, arr) => {
+      if (typeof b == 'boolean') {
+        arr[index] = b ? 1 : 0;
+      }
+    });
+
+    api.reset(stmt);
+    if (bindings) {
+      api.bind_collection(stmt, bindings);
+    }
+
+    const rows = [];
+    while ((await api.step(stmt)) === SQLITE_ROW) {
+      if (includeResults) {
+        const row = api.row(stmt);
+        rows.push(row);
+      }
+    }
+
+    knownColumns ??= api.column_names(stmt);
+    return { columns: knownColumns, rows };
   }
 
   async close() {
