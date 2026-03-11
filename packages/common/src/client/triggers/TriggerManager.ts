@@ -224,14 +224,26 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
    */
   destination: string;
 
+  /**
+   * Context to use for the setup operation.
+   * This is useful for when the setup operation needs to be executed in a specific context.
+   */
   setupContext?: LockContext;
+}
+
+/**
+ * @experimental
+ * Options for {@link TriggerRemoveCallback}.
+ */
+export interface TriggerRemoveCallbackOptions {
+  context?: LockContext;
 }
 
 /**
  * @experimental
  * Callback to drop a trigger after it has been created.
  */
-export type TriggerRemoveCallback = (context?: LockContext) => Promise<void>;
+export type TriggerRemoveCallback = (options?: TriggerRemoveCallbackOptions) => Promise<void>;
 /**
  * @experimental
  * Options for {@link TriggerDiffHandlerContext#withDiff}.

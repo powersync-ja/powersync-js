@@ -9,6 +9,7 @@ import {
   TriggerManager,
   TriggerManagerConfig,
   TriggerRemoveCallback,
+  TriggerRemoveCallbackOptions,
   WithDiffOptions
 } from './TriggerManager.js';
 
@@ -269,7 +270,8 @@ export class TriggerManagerImpl implements TriggerManager {
      * we need to ensure we can cleanup the created resources.
      * We unfortunately cannot rely on transaction rollback.
      */
-    const cleanup = async (context?: LockContext) => {
+    const cleanup = async (options?: TriggerRemoveCallbackOptions) => {
+      const { context } = options ?? {};
       disposeWarningListener();
       const doCleanup = async (tx: LockContext) => {
         await this.removeTriggers(tx, triggerIds);
@@ -374,7 +376,7 @@ export class TriggerManagerImpl implements TriggerManager {
       return cleanup;
     } catch (error) {
       try {
-        await cleanup();
+        await cleanup(setupContext ? { context: setupContext } : undefined);
       } catch (cleanupError) {
         throw new AggregateError([error, cleanupError], 'Error during operation and cleanup');
       }
