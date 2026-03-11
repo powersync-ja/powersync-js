@@ -17,7 +17,7 @@ import {
 import { NodeCustomConnectionOptions, NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
-import { WorkerConnectionPool } from './WorkerConnectionPool.js';
+import { WorkerPoolDatabaseAdapter } from './WorkerConnectionPool.js';
 import { NodeSQLOpenOptions } from './options.js';
 
 export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
@@ -54,14 +54,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   async _initialize(): Promise<void> {
-    await (this.database as WorkerConnectionPool).initialize();
+    await (this.database as WorkerPoolDatabaseAdapter).initialize();
   }
 
   /**
    * Opens a DBAdapter using better-sqlite3 as the default SQLite open factory.
    */
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
-    return new WorkerConnectionPool(options.database);
+    return new WorkerPoolDatabaseAdapter(options.database);
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {

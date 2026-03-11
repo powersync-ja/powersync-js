@@ -4,7 +4,9 @@ import { Capacitor } from '@capacitor/core';
 import {
   BaseObserver,
   BatchedUpdateNotification,
+  ConnectionPool,
   DBAdapter,
+  DBAdapterDefaultMixin,
   DBAdapterListener,
   DBLockOptions,
   LockContext,
@@ -30,13 +32,8 @@ async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): 
     throw e;
   }
 }
-/**
- * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
- *
- * @experimental
- * @alpha This is currently experimental and may change without a major version bump.
- */
-export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+
+class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   protected _writeConnection: SQLiteDBConnection | null;
   protected _readConnection: SQLiteDBConnection | null;
   protected initializedPromise: Promise<void>;
@@ -206,26 +203,8 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
       return results.rows?._array.map((row) => Object.values(row)) ?? [];
     };
 
-    return {
-      getAll,
-      getOptional,
-      get,
-      executeRaw,
-      execute
-    };
-  }
-
-  execute(query: string, params?: any[]): Promise<QueryResult> {
-    return this.writeLock((tx) => tx.execute(query, params));
-  }
-
-  executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return this.writeLock((tx) => tx.executeRaw(query, params));
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    return this.writeLock(async (tx) => {
-      let result = await this.writeConnection.executeSet(
+    const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
+      let result = await db.executeSet(
         params.map((param) => ({
           statement: query,
           values: param
@@ -236,7 +215,16 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
         rowsAffected: result.changes?.changes ?? 0,
         insertId: result.changes?.lastId
       };
-    });
+    };
+
+    return {
+      getAll,
+      getOptional,
+      get,
+      executeRaw,
+      execute,
+      executeBatch
+    };
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -248,12 +236,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
       },
       options
     );
-  }
-
-  readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readLock(async (ctx) => {
-      return this.internalTransaction(ctx, fn);
-    });
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
@@ -281,12 +263,6 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
     );
   }
 
-  writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock(async (ctx) => {
-      return this.internalTransaction(ctx, fn);
-    });
-  }
-
   refreshSchema(): Promise<void> {
     return this.writeLock(async (writeTx) => {
       return this.readLock(async (readTx) => {
@@ -296,52 +272,12 @@ export class CapacitorSQLiteAdapter extends BaseObserver<DBAdapterListener> impl
       });
     });
   }
-
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return this.readLock((tx) => tx.getAll<T>(sql, parameters));
-  }
-
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    return this.readLock((tx) => tx.getOptional<T>(sql, parameters));
-  }
-
-  get<T>(sql: string, parameters?: any[]): Promise<T> {
-    return this.readLock((tx) => tx.get<T>(sql, parameters));
-  }
-
-  protected async internalTransaction<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    let finalized = false;
-    const commit = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return ctx.execute('COMMIT');
-    };
-    const rollback = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return ctx.execute('ROLLBACK');
-    };
-    try {
-      await ctx.execute('BEGIN');
-      const result = await fn({
-        ...ctx,
-        commit,
-        rollback
-      });
-      await commit();
-      return result;
-    } catch (ex) {
-      try {
-        await rollback();
-      } catch (ex2) {
-        // In rare cases, a rollback may fail.
-        // Safe to ignore.
-      }
-      throw ex;
-    }
-  }
 }
+
+/**
+ * An implementation of {@link DBAdapter} using the Capacitor Community SQLite [plugin](https://github.com/capacitor-community/sqlite).
+ *
+ * @experimental
+ * @alpha This is currently experimental and may change without a major version bump.
+ */
+export class CapacitorSQLiteAdapter extends DBAdapterDefaultMixin(CapacitorConnectionPool) {}
