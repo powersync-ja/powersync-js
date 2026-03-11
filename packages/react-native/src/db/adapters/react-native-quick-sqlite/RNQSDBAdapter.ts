@@ -3,25 +3,17 @@ import {
   DBAdapter,
   DBAdapterListener,
   LockContext as PowerSyncLockContext,
-  Transaction as PowerSyncTransaction,
   DBLockOptions,
-  DBGetUtils,
-  QueryResult
+  ConnectionPool,
+  DBGetUtilsDefaultMixin,
+  LockContext,
+  DBAdapterDefaultMixin,
+  Transaction
 } from '@powersync/common';
-import type {
-  QuickSQLiteConnection,
-  LockContext as RNQSLockContext,
-  TransactionContext as RNQSTransactionContext
-} from '@journeyapps/react-native-quick-sqlite';
+import type { QuickSQLiteConnection, LockContext as RNQSLockContext } from '@journeyapps/react-native-quick-sqlite';
+import { QueryResult, SqlExecutor } from '@powersync/common/dist/index.cjs';
 
-/**
- * Adapter for React Native Quick SQLite
- */
-export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
-  getAll: <T>(sql: string, parameters?: any[]) => Promise<T[]>;
-  getOptional: <T>(sql: string, parameters?: any[]) => Promise<T | null>;
-  get: <T>(sql: string, parameters?: any[]) => Promise<T>;
-
+class RNQSConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   constructor(
     protected baseDB: QuickSQLiteConnection,
     public name: string
@@ -31,15 +23,6 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     baseDB.registerTablesChangedHook((update) => {
       this.iterateListeners((cb) => cb.tablesUpdated?.(update));
     });
-
-    const topLevelUtils = this.generateDBHelpers({
-      // Arrow function binds `this` for use in readOnlyExecute
-      execute: (sql: string, params?: any[]) => this.readOnlyExecute(sql, params)
-    });
-    // Only assigning get helpers
-    this.getAll = topLevelUtils.getAll;
-    this.getOptional = topLevelUtils.getOptional;
-    this.get = topLevelUtils.get;
   }
 
   close() {
@@ -47,34 +30,46 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
   }
 
   readLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readLock((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
-  }
-
-  readTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.readTransaction((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
+    return this.baseDB.readLock((dbTx) => fn(this.generateContext(dbTx)), options);
   }
 
   writeLock<T>(fn: (tx: PowerSyncLockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeLock((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
+    return this.baseDB.writeLock((dbTx) => fn(this.generateContext(dbTx)), options);
   }
 
-  writeTransaction<T>(fn: (tx: PowerSyncTransaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.baseDB.writeTransaction((dbTx) => fn(this.generateDBHelpers(this.generateContext(dbTx))), options);
+  generateContext<T extends RNQSLockContext>(ctx: T) {
+    return new QuickSqliteContext(ctx);
   }
+
+  async refreshSchema() {
+    await this.baseDB.refreshSchema();
+  }
+}
+
+class QuickSqliteExecutor implements Omit<SqlExecutor, 'executeBatch'> {
+  constructor(readonly context: RNQSLockContext) {}
 
   execute(query: string, params?: any[]) {
-    return this.baseDB.execute(query, params);
+    return this.context.execute(query, params);
   }
-
   /**
    * 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
    */
   async executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    const result = await this.baseDB.execute(query, params);
+    const result = await this.context.execute(query, params);
     const rows = result.rows?._array ?? [];
     return rows.map((row) => Object.values(row));
   }
+}
 
+class QuickSqliteContext extends DBGetUtilsDefaultMixin(QuickSqliteExecutor) implements LockContext {}
+
+/**
+ * Adapter for React Native Quick SQLite
+ */
+export class RNQSDBAdapter extends DBAdapterDefaultMixin(RNQSConnectionPool) implements DBAdapter {
+  // We don't want the default implementation here, RNQS does not support executeBatch for lock contexts so that would
+  // be less efficient.
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const commands: any[] = [];
 
@@ -86,71 +81,5 @@ export class RNQSDBAdapter extends BaseObserver<DBAdapterListener> implements DB
     return {
       rowsAffected: result.rowsAffected ? result.rowsAffected : 0
     };
-  }
-
-  generateContext<T extends RNQSLockContext>(ctx: T) {
-    return {
-      ...ctx,
-      // 'executeRaw' is not implemented in RNQS, this falls back to 'execute'.
-      executeRaw: async (sql: string, params?: any[]) => {
-        const result = await ctx.execute(sql, params);
-        const rows = result.rows?._array ?? [];
-        return rows.map((row) => Object.values(row));
-      }
-    };
-  }
-
-  /**
-   * This provides a top-level read only execute method which is executed inside a read-lock.
-   * This is necessary since the high level `execute` method uses a write-lock under
-   * the hood. Helper methods such as `get`, `getAll` and `getOptional` are read only,
-   * and should use this method.
-   */
-  private readOnlyExecute(sql: string, params?: any[]) {
-    return this.baseDB.readLock((ctx) => ctx.execute(sql, params));
-  }
-
-  /**
-   * Adds DB get utils to lock contexts and transaction contexts
-   * @param tx
-   * @returns
-   */
-  private generateDBHelpers<T extends { execute: (sql: string, params?: any[]) => Promise<QueryResult> }>(
-    tx: T
-  ): T & DBGetUtils {
-    return {
-      ...tx,
-      /**
-       *  Execute a read-only query and return results
-       */
-      getAll: async <T>(sql: string, parameters?: any[]): Promise<T[]> => {
-        const res = await tx.execute(sql, parameters);
-        return res.rows?._array ?? [];
-      },
-
-      /**
-       * Execute a read-only query and return the first result, or null if the ResultSet is empty.
-       */
-      getOptional: async <T>(sql: string, parameters?: any[]): Promise<T | null> => {
-        const res = await tx.execute(sql, parameters);
-        return res.rows?.item(0) ?? null;
-      },
-
-      /**
-       * Execute a read-only query and return the first result, error if the ResultSet is empty.
-       */
-      get: async <T>(sql: string, parameters?: any[]): Promise<T> => {
-        const res = await tx.execute(sql, parameters);
-        const first = res.rows?.item(0);
-        if (!first) {
-          throw new Error('Result set is empty');
-        }
-        return first;
-      }
-    };
-  }
-
-  async refreshSchema() {
-    await this.baseDB.refreshSchema();
   }
 }
