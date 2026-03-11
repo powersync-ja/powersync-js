@@ -813,6 +813,10 @@ SELECT * FROM crud_entries;
    * Execute a SQL write (INSERT/UPDATE/DELETE) query
    * and optionally return results.
    *
+   * When using the default client-side [JSON-based view system](https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure),
+   * `result.rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
+   * Use a `RETURNING` clause and inspect `result.rows` when you need to confirm which rows changed.
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The query result as an object with structured key-value pairs
