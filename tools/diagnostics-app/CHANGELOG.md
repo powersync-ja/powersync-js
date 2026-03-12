@@ -1,5 +1,22 @@
 # diagnostics-app
 
+## 0.13.3
+
+### Patch Changes
+
+- 1f94d4b: Fixed incorrect table row count when a source table is present in multiple buckets.
+- Updated dependencies [42afb0e]
+  - @powersync/web@1.36.0
+  - @powersync/react@1.9.0
+
+## 0.13.2
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+  - @powersync/react@1.9.0
+
 ## 0.13.1
 
 ### Patch Changes

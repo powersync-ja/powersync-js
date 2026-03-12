@@ -3,8 +3,11 @@ import {
   BaseObserver,
   BatchedUpdateNotification,
   DBAdapterListener,
+  DBGetUtilsDefaultMixin,
+  LockContext,
   QueryResult,
   RowUpdateType,
+  SqlExecutor,
   UpdateNotification
 } from '@powersync/common';
 
@@ -19,7 +22,7 @@ export type OPSQLiteUpdateNotification = {
   rowId: number;
 };
 
-export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
+class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<SqlExecutor, 'executeBatch'> {
   protected DB: DB;
   private updateBuffer: UpdateNotification[];
 
@@ -101,7 +104,7 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
     return await this.DB.executeRaw(query, params);
   }
 
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+  async executeNativeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     const tuple: SQLBatchTuple[] = [[query, params[0]]];
     params.slice(1).forEach((p) => tuple.push([query, p]));
 
@@ -110,25 +113,9 @@ export class OPSQLiteConnection extends BaseObserver<DBAdapterListener> {
       rowsAffected: result.rowsAffected ?? 0
     };
   }
+}
 
-  async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    const result = await this.DB.execute(sql, parameters);
-    return (result.rows ?? []) as T[];
-  }
-
-  async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    const result = await this.DB.execute(sql, parameters);
-    return (result.rows?.[0] as T) ?? null;
-  }
-
-  async get<T>(sql: string, parameters?: any[]): Promise<T> {
-    const result = await this.getOptional(sql, parameters);
-    if (!result) {
-      throw new Error('Result set is empty');
-    }
-    return result as T;
-  }
-
+export class OPSQLiteConnection extends DBGetUtilsDefaultMixin(OPSQLiteExecutor) implements LockContext {
   async refreshSchema() {
     await this.get("PRAGMA table_info('sqlite_master')");
   }

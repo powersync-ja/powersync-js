@@ -1,5 +1,24 @@
 # @powersync/capacitor
 
+## 0.5.1
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [42afb0e]
+  - @powersync/web@1.36.0
+
+## 0.5.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,25 @@
 # @powersync/node
 
+## 0.18.1
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
+## 0.18.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+
 ## 0.17.1
 
 ### Patch Changes

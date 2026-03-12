@@ -1,5 +1,21 @@
 # @powersync/op-sqlite
 
+## 0.9.3
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+
 ## 0.9.1
 
 ### Patch Changes

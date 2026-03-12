@@ -245,3 +245,10 @@ databaseTest('clear raw tables', async ({ database }) => {
   await database.disconnectAndClear();
   expect(await database.getAll('SELECT * FROM lists')).toHaveLength(0);
 });
+
+databaseTest('execute batch', async ({ database }) => {
+  await database.execute('CREATE TABLE users (id TEXT NOT NULL PRIMARY KEY, name TEXT)');
+
+  await database.executeBatch('INSERT INTO users (id, name) VALUES (uuid(), ?)', [['a'], ['b'], ['c']]);
+  expect(await database.getAll('SELECT * FROM users')).toHaveLength(3);
+});

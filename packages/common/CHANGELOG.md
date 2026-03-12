@@ -1,5 +1,18 @@
 # @powersync/common
 
+## 1.49.0
+
+### Minor Changes
+
+- 8ff6b3e: Added `setupContext` option to `CreateDiffTriggerOptions` and a lock context option to the cleanup function returned by `createDiffTrigger`, this allows you to create and dispose of a trigger inside of a lock context.
+- 42afb0e: Share common db adapter implementation logic.
+
+## 1.48.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
 ## 1.47.0
 
 ### Minor Changes

@@ -6,7 +6,8 @@ import { Worker } from 'node:worker_threads';
 import {
   BaseObserver,
   BatchedUpdateNotification,
-  DBAdapter,
+  ConnectionPool,
+  DBAdapterDefaultMixin,
   DBAdapterListener,
   DBLockOptions,
   LockContext,
@@ -35,7 +36,7 @@ const defaultDatabaseImplementation: NodeDatabaseImplementation = {
 /**
  * Adapter for better-sqlite3
  */
-export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implements DBAdapter {
+export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
@@ -236,93 +237,11 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
     })();
   }
 
-  readTransaction<T>(
-    fn: (tx: BetterSQLite3Transaction) => Promise<T>,
-    _options?: DBLockOptions | undefined
-  ): Promise<T> {
-    return this.readLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
-  }
-
-  writeTransaction<T>(
-    fn: (tx: BetterSQLite3Transaction) => Promise<T>,
-    _options?: DBLockOptions | undefined
-  ): Promise<T> {
-    return this.writeLock((ctx) => this.internalTransaction(ctx as RemoteConnection, fn));
-  }
-
-  private async internalTransaction<T>(
-    connection: RemoteConnection,
-    fn: (tx: BetterSQLite3Transaction) => Promise<T>
-  ): Promise<T> {
-    let finalized = false;
-    const commit = async (): Promise<QueryResult> => {
-      if (!finalized) {
-        finalized = true;
-        await connection.execute('COMMIT');
-      }
-      return { rowsAffected: 0 };
-    };
-    const rollback = async (): Promise<QueryResult> => {
-      if (!finalized) {
-        finalized = true;
-        await connection.execute('ROLLBACK');
-      }
-      return { rowsAffected: 0 };
-    };
-    try {
-      await connection.execute('BEGIN');
-      const result = await fn({
-        execute: (query, params) => connection.execute(query, params),
-        executeRaw: (query, params) => connection.executeRaw(query, params),
-        executeBatch: (query, params) => connection.executeBatch(query, params),
-        get: (query, params) => connection.get(query, params),
-        getAll: (query, params) => connection.getAll(query, params),
-        getOptional: (query, params) => connection.getOptional(query, params),
-        commit,
-        rollback
-      });
-      await commit();
-      return result;
-    } catch (ex) {
-      try {
-        await rollback();
-      } catch (ex2) {
-        // In rare cases, a rollback may fail.
-        // Safe to ignore.
-      }
-      throw ex;
-    }
-  }
-
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return this.readLock((ctx) => ctx.getAll(sql, parameters));
-  }
-
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    return this.readLock((ctx) => ctx.getOptional(sql, parameters));
-  }
-
-  get<T>(sql: string, parameters?: any[]): Promise<T> {
-    return this.readLock((ctx) => ctx.get(sql, parameters));
-  }
-
-  execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    return this.writeLock((ctx) => ctx.execute(query, params));
-  }
-
-  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    return this.writeLock((ctx) => ctx.executeRaw(query, params));
-  }
-
-  executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
-    return this.writeTransaction((ctx) => ctx.executeBatch(query, params));
-  }
-
   async refreshSchema() {
     await this.writeConnection.refreshSchema();
 
-    for (const readConnection of this.readConnections) {
-      await readConnection.refreshSchema();
-    }
+    await Promise.all(this.readConnections.map((c) => c.refreshSchema()));
   }
 }
+
+export class WorkerPoolDatabaseAdapter extends DBAdapterDefaultMixin(WorkerConnectionPool) {}
