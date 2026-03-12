@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.36.0
+
+### Minor Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+
+### Patch Changes
+
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
 ## 1.35.0
 
 ### Minor Changes
