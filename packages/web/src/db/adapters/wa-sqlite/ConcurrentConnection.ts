@@ -44,12 +44,23 @@ export class ConcurrentSqliteConnection {
       return this.leaseMutex.acquire();
     }
 
+    const trace = new Error().stack!;
+
     return new Promise((resolve, reject) => {
       const options: LockOptions = { signal: abort };
 
       navigator.locks
         .request(`db-access-lock-${this.options.dbFilename}`, options, (_) => {
-          return new Promise<void>((returnLock) => resolve(returnLock));
+          let timeout = setTimeout(() => {
+            console.log('lock held for a long time', trace);
+          }, 5000);
+
+          return new Promise<void>((returnLock) => {
+            return resolve(() => {
+              clearTimeout(timeout);
+              returnLock();
+            });
+          });
         })
         .catch(reject);
     });

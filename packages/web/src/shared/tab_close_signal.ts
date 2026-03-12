@@ -16,6 +16,12 @@ export function generateTabCloseSignal(abort?: AbortSignal): Promise<string> {
     getNavigatorLocks()
       .request(`tab-close-signal-${crypto.randomUUID()}`, options, (lock) => {
         resolve(lock!.name);
+
+        return new Promise<void>((resolve) => {
+          if (abort) {
+            abort.addEventListener('abort', () => resolve());
+          }
+        });
       })
       .catch(reject);
   });
