@@ -1,5 +1,14 @@
 # @powersync/node
 
+## 0.18.1
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
 ## 0.18.0
 
 ### Minor Changes
