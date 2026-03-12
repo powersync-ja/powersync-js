@@ -1,0 +1,6 @@
+config:
+  edition: 3
+
+streams:
+  issues_by_date:
+    query: SELECT * FROM issues WHERE substring(updated_at, 1, 10) = subscription.parameter('date')

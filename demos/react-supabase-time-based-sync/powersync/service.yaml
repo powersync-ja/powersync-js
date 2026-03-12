@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-schema@latest/json-schema/powersync-config.json
+_type: self-hosted
+
+replication:
+  connections:
+    - type: postgresql
+      uri: postgresql://postgres:postgres@host.docker.internal:54322/postgres
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: postgresql://postgres:postgres@host.docker.internal:54322/postgres
+  sslmode: disable
+
+sync_config:
+  path: ./sync-config.yaml
+
+port: 8080
+
+client_auth:
+  jwks_uri: http://host.docker.internal:54321/auth/v1/.well-known/jwks.json
+  audience:
+    - authenticated
+
+telemetry:
+  prometheus_port: 9090
+  disable_telemetry_sharing: true
+
+api:
+  tokens:
+    - dev-token
