@@ -19,7 +19,7 @@ export class DatabaseServer {
 
   // TODO: Don't use a broadcast channel for connections managed by a shared worker.
   #updateBroadcastChannel: BroadcastChannel;
-  #clientTableListeners = new Set<(tables: string[]) => void>();
+  #clientTableListeners = new Set<MessagePort>();
 
   constructor(options: DatabaseServerOptions) {
     this.#options = options;
@@ -27,11 +27,14 @@ export class DatabaseServer {
     this.#updateBroadcastChannel = new BroadcastChannel(`${inner.options.dbFilename}-table-updates`);
 
     this.#updateBroadcastChannel.onmessage = ({ data }) => {
-      const changedTables = data as string[];
-      for (const listener of this.#clientTableListeners) {
-        listener(changedTables);
-      }
+      this.#pushTableUpdateToClients(data as string[]);
     };
+  }
+
+  #pushTableUpdateToClients(changedTables: string[]) {
+    for (const listener of this.#clientTableListeners) {
+      listener.postMessage(changedTables);
+    }
   }
 
   get #inner() {
@@ -51,9 +54,10 @@ export class DatabaseServer {
   async connect(lockName?: string): Promise<ClientConnectionView> {
     let isOpen = true;
     const clientId = this.#nextClientId++;
+    this.#activeClients.add(clientId);
 
     let connectionLeases = new Map<string, { lease: ConnectionLeaseToken; write: boolean }>();
-    let currentTableListener: ((tables: string[]) => void) | undefined;
+    let currentTableListener: MessagePort | undefined;
 
     function requireOpen() {
       if (!isOpen) {
@@ -75,7 +79,9 @@ export class DatabaseServer {
       if (isOpen) {
         isOpen = false;
 
-        this.#logger.debug(`Close requested from client ${clientId} of ${[...this.#activeClients]}`);
+        if (currentTableListener) {
+          this.#clientTableListeners.delete(currentTableListener);
+        }
 
         // If the client holds a connection lease it hasn't returned, return that now.
         for (const { lease } of connectionLeases.values()) {
@@ -108,13 +114,21 @@ export class DatabaseServer {
         requireOpen();
         // TODO: Support timeouts, they don't seem to be supported by the async-mutex package.
         const lease = await this.#inner.acquireConnection();
+        if (!isOpen) {
+          // Race between requestAccess and close(), the connection was closed while we tried to acquire a lease.
+          await lease.returnLease();
+          return requireOpen() as never;
+        }
+
         const token = crypto.randomUUID();
         connectionLeases.set(token, { lease, write });
         return token;
       },
       completeAccess: async (token) => {
+        requireOpen();
+
         const lease = connectionLeases.get(token);
-        if (lease && isOpen) {
+        if (lease) {
           connectionLeases.delete(token);
 
           if (lease.write) {
@@ -123,8 +137,8 @@ export class DatabaseServer {
             if (resultSet) {
               const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
               if (updatedTables.length) {
-                // We will receive this broadcast message as well, and update listeners in that handler.
                 this.#updateBroadcastChannel.postMessage(updatedTables);
+                this.#pushTableUpdateToClients(updatedTables);
               }
             }
           }
@@ -141,6 +155,7 @@ export class DatabaseServer {
         return await lease.use((db) => db.executeBatch(sql, params));
       },
       setUpdateListener: async (listener) => {
+        requireOpen();
         if (currentTableListener) {
           this.#clientTableListeners.delete(currentTableListener);
         }
@@ -180,10 +195,9 @@ export interface ClientConnectionView {
   completeAccess(token: string): Promise<void>;
 
   /**
-   * Invokes a callback for table changes.
+   * Sends update notifications to the given message port.
    *
-   * Only a single listener can be set per connection, clients should forward changes to multiple listeners on their
-   * end.
+   * Update notifications are posted as a `string[]` message.
    */
-  setUpdateListener(listener: ((tables: string[]) => void) | undefined): Promise<void>;
+  setUpdateListener(listener: MessagePort): Promise<void>;
 }

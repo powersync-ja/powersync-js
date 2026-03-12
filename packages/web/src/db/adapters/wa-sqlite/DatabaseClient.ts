@@ -50,6 +50,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
 {
   #connection: ConnectionState;
   #shareConnectionAbortController = new AbortController();
+  #receiveTableUpdates: MessagePort;
 
   constructor(
     private readonly options: ClientOptions,
@@ -62,7 +63,12 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
       traceQueries: config.debugMode === true
     };
 
-    options.connection.setUpdateListener((tables) => {
+    const { port1, port2 } = new MessageChannel();
+    options.connection.setUpdateListener(Comlink.transfer(port1, [port1]));
+
+    this.#receiveTableUpdates = port2;
+    port2.onmessage = (event) => {
+      const tables = event.data as string[];
       const notification: BatchedUpdateNotification = {
         tables,
         groupedUpdates: {},
@@ -71,7 +77,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
       this.iterateListeners((l) => {
         l.tablesUpdated && l.tablesUpdated(notification);
       });
-    });
+    };
   }
 
   get name(): string {
@@ -94,6 +100,7 @@ export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfigur
   async close(): Promise<void> {
     // This connection is no longer shared, so we can close locks held for shareConnection calls.
     this.#shareConnectionAbortController.abort();
+    this.#receiveTableUpdates.close();
 
     await useConnectionState(this.#connection, (c) => c.close(), true);
     this.options.onClose?.();

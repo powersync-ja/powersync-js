@@ -1,4 +1,5 @@
 import { ILogger } from '@powersync/common';
+import * as Comlink from 'comlink';
 import { ClientConnectionView, DatabaseServer } from '../../db/adapters/wa-sqlite/DatabaseServer.js';
 import {
   ResolvedWASQLiteOpenFactoryOptions,
@@ -20,7 +21,7 @@ export class MultiDatabaseServer {
 
   async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
     this.logger.setLevel(options.logLevel);
-    return this.openConnectionLocally(options, options.lockName);
+    return Comlink.proxy(await this.openConnectionLocally(options, options.lockName));
   }
 
   async connectToExisting(name: string, lockName: string): Promise<ClientConnectionView> {
@@ -30,7 +31,7 @@ export class MultiDatabaseServer {
         throw new Error(`connectToExisting(${name}) failed because the worker doesn't own a database with that name.`);
       }
 
-      return server.connect(lockName);
+      return Comlink.proxy(await server.connect(lockName));
     });
   }
 
@@ -68,4 +69,4 @@ export class MultiDatabaseServer {
   }
 }
 
-export const isSharedWorker = SharedWorkerGlobalScope != null;
+export const isSharedWorker = 'SharedWorkerGlobalScope' in globalThis;
