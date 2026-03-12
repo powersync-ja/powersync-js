@@ -23,6 +23,17 @@ export class MultiDatabaseServer {
     return this.openConnectionLocally(options, options.lockName);
   }
 
+  async connectToExisting(name: string, lockName: string): Promise<ClientConnectionView> {
+    return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
+      const server = this.activeDatabases.get(name);
+      if (server == null) {
+        throw new Error(`connectToExisting(${name}) failed because the worker doesn't own a database with that name.`);
+      }
+
+      return server.connect(lockName);
+    });
+  }
+
   async openConnectionLocally(options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
     // Prevent multiple simultaneous opens from causing race conditions
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {

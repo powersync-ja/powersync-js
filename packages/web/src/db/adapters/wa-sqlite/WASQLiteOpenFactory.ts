@@ -127,7 +127,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
       const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
       const closeSignal = new AbortController();
-      const connection = await source({
+      const connection = await source.connect({
         ...resolvedOptions,
         logLevel: this.logger.getLevel(),
         lockName: await generateTabCloseSignal(closeSignal.signal)
