@@ -54,7 +54,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   async _initialize(): Promise<void> {
-    await (this.database as WorkerPoolDatabaseAdapter).initialize();
+    if ('initialize' in this.database) {
+      await (this.database as WorkerPoolDatabaseAdapter).initialize();
+    }
   }
 
   /**
