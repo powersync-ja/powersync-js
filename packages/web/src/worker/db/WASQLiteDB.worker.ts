@@ -5,29 +5,29 @@
 import '@journeyapps/wa-sqlite';
 import { createBaseLogger, createLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { WorkerDBOpenerOptions } from '../../db/adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import { isSharedWorker, MultiDatabaseServer } from './MultiDatabaseServer.js';
+import { OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 
 const baseLogger = createBaseLogger();
 baseLogger.useDefaults();
 const logger = createLogger('db-worker');
 
 const server = new MultiDatabaseServer(logger);
-
-async function serveDatabase(options: WorkerDBOpenerOptions) {
-  return await server.handleConnection(options);
-}
+const exposedFunctions: OpenWorkerConnection = {
+  connect: (config) => server.handleConnection(config),
+  connectToExisting: ({ identifier, lockName }) => server.connectToExisting(identifier, lockName)
+};
 
 // Check if we're in a SharedWorker context
 if (isSharedWorker) {
   const _self: SharedWorkerGlobalScope = self as any;
   _self.onconnect = function (event: MessageEvent<string>) {
     const port = event.ports[0];
-    Comlink.expose(serveDatabase, port);
+    Comlink.expose(exposedFunctions, port);
   };
 } else {
   // A dedicated worker can be shared externally
-  Comlink.expose(serveDatabase);
+  Comlink.expose(exposedFunctions);
 }
 
 addEventListener('unload', () => {

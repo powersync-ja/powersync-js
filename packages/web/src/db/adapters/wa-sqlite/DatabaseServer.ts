@@ -52,7 +52,7 @@ export class DatabaseServer {
     let isOpen = true;
     const clientId = this.#nextClientId++;
 
-    let connectionLeases = new Map<string, ConnectionLeaseToken>();
+    let connectionLeases = new Map<string, { lease: ConnectionLeaseToken; write: boolean }>();
     let currentTableListener: ((tables: string[]) => void) | undefined;
 
     function requireOpen() {
@@ -61,7 +61,7 @@ export class DatabaseServer {
       }
     }
 
-    function requireOpenAndLease(lease: string): ConnectionLeaseToken {
+    function requireOpenAndLease(lease: string) {
       requireOpen();
       const token = connectionLeases.get(lease);
       if (!token) {
@@ -78,9 +78,9 @@ export class DatabaseServer {
         this.#logger.debug(`Close requested from client ${clientId} of ${[...this.#activeClients]}`);
 
         // If the client holds a connection lease it hasn't returned, return that now.
-        for (const value of connectionLeases.values()) {
+        for (const { lease } of connectionLeases.values()) {
           this.#logger.debug(`Closing connection lease that hasn't been returned.`);
-          await value.returnLease();
+          await lease.returnLease();
         }
 
         this.#activeClients.delete(clientId);
@@ -101,12 +101,15 @@ export class DatabaseServer {
 
     return {
       close,
-      requestAccess: async (timeoutMs) => {
+      debugIsAutoCommit: async () => {
+        return this.#inner.unsafeUseInner().isAutoCommit();
+      },
+      requestAccess: async (write, timeoutMs) => {
         requireOpen();
         // TODO: Support timeouts, they don't seem to be supported by the async-mutex package.
         const lease = await this.#inner.acquireConnection();
         const token = crypto.randomUUID();
-        connectionLeases.set(token, lease);
+        connectionLeases.set(token, { lease, write });
         return token;
       },
       completeAccess: async (token) => {
@@ -114,23 +117,27 @@ export class DatabaseServer {
         if (lease && isOpen) {
           connectionLeases.delete(token);
 
-          const { resultSet } = await lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
-          if (resultSet) {
-            const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
-            if (updatedTables.length) {
-              // We will receive this broadcast message as well, and update listeners in that handler.
-              this.#updateBroadcastChannel.postMessage(updatedTables);
+          if (lease.write) {
+            // Collect update hooks invoked while the client had the write connection.
+            const { resultSet } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
+            if (resultSet) {
+              const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
+              if (updatedTables.length) {
+                // We will receive this broadcast message as well, and update listeners in that handler.
+                this.#updateBroadcastChannel.postMessage(updatedTables);
+              }
             }
           }
-          await lease.returnLease();
+
+          await lease.lease.returnLease();
         }
       },
       execute: async (token, sql, params) => {
-        const lease = requireOpenAndLease(token);
+        const { lease } = requireOpenAndLease(token);
         return await lease.use((db) => db.execute(sql, params));
       },
       executeBatch: async (token, sql, params) => {
-        const lease = requireOpenAndLease(token);
+        const { lease } = requireOpenAndLease(token);
         return await lease.use((db) => db.executeBatch(sql, params));
       },
       setUpdateListener: async (listener) => {
@@ -158,12 +165,16 @@ export class DatabaseServer {
 export interface ClientConnectionView {
   close(): Promise<void>;
   /**
+   * Only used for testing purposes.
+   */
+  debugIsAutoCommit(): Promise<boolean>;
+  /**
    * Requests exclusive access to this database connection.
    *
    * Returns a token that can be used with the query methods. It must be returned with {@link completeAccess} to
    * give other clients access to the database afterwards.
    */
-  requestAccess(timeoutMs?: number): Promise<string>;
+  requestAccess(write: boolean, timeoutMs?: number): Promise<string>;
   execute(token: string, sql: string, params: any[] | undefined): Promise<RawQueryResult>;
   executeBatch(token: string, sql: string, params: any[][]): Promise<RawQueryResult[]>;
   completeAccess(token: string): Promise<void>;

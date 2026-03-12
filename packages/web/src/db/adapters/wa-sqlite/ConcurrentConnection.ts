@@ -55,6 +55,11 @@ export class ConcurrentSqliteConnection {
     });
   }
 
+  // Unsafe, unguarded access to the SQLite connection.
+  unsafeUseInner(): RawSqliteConnection {
+    return this.inner;
+  }
+
   /**
    * @returns A {@link ConnectionLeaseToken}. Until that token is returned, no other client can use the database.
    */

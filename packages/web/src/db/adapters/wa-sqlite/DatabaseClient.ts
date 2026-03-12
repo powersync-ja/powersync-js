@@ -8,7 +8,8 @@ import {
   DBGetUtilsDefaultMixin,
   BatchedUpdateNotification,
   BaseObserver,
-  ConnectionClosedError
+  ConnectionClosedError,
+  SQLOpenOptions
 } from '@powersync/common';
 import { SharedConnectionWorker, WebDBAdapterConfiguration } from '../WebDBAdapter.js';
 import { ClientConnectionView } from './DatabaseServer.js';
@@ -16,7 +17,10 @@ import { RawQueryResult } from './RawSqliteConnection.js';
 import * as Comlink from 'comlink';
 import { WorkerDBOpenerOptions } from './WASQLiteOpenFactory.js';
 
-export type OpenWorkerConnection = (config: WorkerDBOpenerOptions) => Promise<ClientConnectionView>;
+export interface OpenWorkerConnection {
+  connect(config: WorkerDBOpenerOptions): Promise<ClientConnectionView>;
+  connectToExisting(options: { identifier: string; lockName: string }): Promise<ClientConnectionView>;
+}
 
 export interface ClientOptions {
   connection: ClientConnectionView;
@@ -40,13 +44,16 @@ export interface ClientOptions {
 /**
  * A single-connection {@link ConnectionPool} implementation based on a worker connection.
  */
-export class DatabaseClient extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+export class DatabaseClient<Config extends SQLOpenOptions = WebDBAdapterConfiguration>
+  extends BaseObserver<DBAdapterListener>
+  implements ConnectionPool
+{
   #connection: ConnectionState;
   #shareConnectionAbortController = new AbortController();
 
   constructor(
     private readonly options: ClientOptions,
-    private readonly config: WebDBAdapterConfiguration
+    private readonly config: Config
   ) {
     super();
     this.#connection = {
@@ -94,12 +101,15 @@ export class DatabaseClient extends BaseObserver<DBAdapterListener> implements C
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    // At the moment, we only have a single connection. So read and write locks operate on the same context.
-    return this.writeLock(fn, options);
+    return this.#lock(false, fn, options);
   }
 
-  async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    const token = await useConnectionState(this.#connection, (c) => c.requestAccess(options?.timeoutMs));
+  writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    return this.#lock(true, fn, options);
+  }
+
+  async #lock<T>(write: boolean, fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    const token = await useConnectionState(this.#connection, (c) => c.requestAccess(write, options?.timeoutMs));
     try {
       return await fn(new ClientLockContext(this.#connection, token));
     } finally {
@@ -162,7 +172,7 @@ export class DatabaseClient extends BaseObserver<DBAdapterListener> implements C
     return { port: newPort, identifier: this.name };
   }
 
-  getConfiguration(): WebDBAdapterConfiguration {
+  getConfiguration(): Config {
     return this.config;
   }
 }
