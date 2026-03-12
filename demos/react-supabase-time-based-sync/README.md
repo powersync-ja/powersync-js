@@ -50,6 +50,8 @@ streams:
    cp .env.local.template .env.local
    ```
 
+   The template already contains the well-known local Supabase anon key, so no manual changes are needed.
+
 4. Start local Supabase + local PowerSync:
 
    ```bash
@@ -61,15 +63,7 @@ streams:
    - starts PowerSync using the checked-in `powersync/service.yaml`
    - loads sync streams from `powersync/sync-config.yaml`
 
-5. Copy the Supabase publishable key into `.env.local`:
-
-   ```bash
-   supabase status
-   ```
-
-   Set `VITE_SUPABASE_ANON_KEY` to the `Publishable` key value.
-
-6. Start the app:
+5. Start the app:
 
    ```bash
    pnpm dev

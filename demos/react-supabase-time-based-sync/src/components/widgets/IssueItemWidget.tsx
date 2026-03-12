@@ -1,15 +1,6 @@
 import { ISSUES_TABLE, IssueRecord } from '@/library/powersync/AppSchema';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import {
-  Box,
-  Chip,
-  IconButton,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Paper,
-  styled
-} from '@mui/material';
+import { Box, Chip, IconButton, ListItem, ListItemText, Paper, styled } from '@mui/material';
 import { usePowerSync } from '@powersync/react';
 import React from 'react';
 
@@ -50,47 +41,33 @@ export const IssueItemWidget: React.FC<IssueItemWidgetProps> = React.memo(({ iss
     await powerSync.execute(`DELETE FROM ${ISSUES_TABLE} WHERE id = ?`, [issue.id]);
   }, [issue.id]);
 
-  const toggleStatus = React.useCallback(async () => {
-    const newStatus = issue.status === 'open' ? 'closed' : 'open';
-    const now = new Date().toISOString().substring(0, 10);
-    await powerSync.execute(
-      `UPDATE ${ISSUES_TABLE} SET status = ?, updated_at = ? WHERE id = ?`,
-      [newStatus, now, issue.id]
-    );
-  }, [issue.id, issue.status]);
-
   return (
     <S.MainPaper elevation={1}>
       <ListItem
-        disablePadding
         secondaryAction={
-          <Box>
-            <IconButton edge="end" aria-label="delete" onClick={deleteIssue}>
-              <DeleteIcon />
-            </IconButton>
-          </Box>
+          <IconButton edge="end" aria-label="delete" onClick={deleteIssue}>
+            <DeleteIcon />
+          </IconButton>
         }>
-        <ListItemButton onClick={toggleStatus}>
-          <ListItemText
-            primary={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {issue.title}
-                <Chip size="small" label={issue.priority} color={priorityColor(issue.priority)} />
-                <Chip size="small" label={issue.status} color={statusColor(issue.status)} variant="outlined" />
-              </Box>
-            }
-            secondary={
-              <Box component="span">
-                {issue.description}
-                {issue.updated_at && (
-                  <Box component="span" sx={{ display: 'block', opacity: 0.7, fontSize: '0.75rem', mt: 0.5 }}>
-                    Updated: {issue.updated_at}
-                  </Box>
-                )}
-              </Box>
-            }
-          />
-        </ListItemButton>
+        <ListItemText
+          primary={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {issue.title}
+              <Chip size="small" label={issue.priority} color={priorityColor(issue.priority)} />
+              <Chip size="small" label={issue.status} color={statusColor(issue.status)} variant="outlined" />
+            </Box>
+          }
+          secondary={
+            <Box component="span">
+              {issue.description}
+              {issue.updated_at && (
+                <Box component="span" sx={{ display: 'block', opacity: 0.7, fontSize: '0.75rem', mt: 0.5 }}>
+                  Updated: {issue.updated_at}
+                </Box>
+              )}
+            </Box>
+          }
+        />
       </ListItem>
     </S.MainPaper>
   );
