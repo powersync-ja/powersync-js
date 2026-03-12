@@ -1,24 +1,28 @@
 # PowerSync + Supabase: Time-Based Sync (Local-First)
 
-This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues, each with an `updated_at` date. The client subscribes to one sync stream per date - toggling a date on adds a subscription for that date and syncs matching issues to the device; toggling it off removes the subscription and the data (TTL is set to 0 so removal is immediate).
+This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues, each with an `updated_at` date. The client passes the selected dates as a JSON array to a single sync stream subscription. Toggling dates on or off updates the array and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
 
 This lets you model patterns like "sync the last N days of data" or "sync only the time ranges the user cares about" without re-deploying sync rules.
 
-The stream definition lives in `powersync/sync-config.yaml`:
+The stream definition lives in `powersync/sync-config.yaml` and uses `json_each()` to expand the array parameter:
 
 ```yaml
 streams:
   issues_by_date:
-    query: SELECT * FROM issues WHERE substring(updated_at, 1, 10) = subscription.parameter('date')
+    query: |
+      SELECT * FROM issues
+      WHERE substring(updated_at, 1, 10) IN (SELECT value FROM json_each(subscription.parameter('dates')))
 ```
 
-The client creates one `useQuery` per selected date. Each call both subscribes to the stream and queries the matching issues:
+The client passes all selected dates as a single JSON-stringified parameter:
 
 ```ts
+const datesParam = JSON.stringify(selectedDates);
+
 useQuery(
-  `SELECT * FROM issues WHERE substring(updated_at, 1, 10) = ?`,
-  [date],
-  { streams: [{ name: 'issues_by_date', parameters: { date }, ttl: 0 }] }
+  'SELECT * FROM issues ORDER BY created_at DESC',
+  [],
+  { streams: [{ name: 'issues_by_date', parameters: { dates: datesParam }, ttl: 0 }] }
 );
 ```
 
