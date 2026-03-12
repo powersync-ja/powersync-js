@@ -1,0 +1,6 @@
+type: self-hosted
+api_url: http://localhost:8080
+api_key: dev-token
+plugins:
+  docker:
+    project_name: powersync_react-supabase-time-based-sync
