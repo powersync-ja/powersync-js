@@ -1,28 +1,28 @@
 # PowerSync + Supabase: Time-Based Sync (Local-First)
 
-This demo runs against:
+This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues, each with an `updated_at` date. The client subscribes to one sync stream per date - toggling a date on adds a subscription for that date and syncs matching issues to the device; toggling it off removes the subscription and the data (TTL is set to 0 so removal is immediate).
 
-- local Supabase (`supabase start`)
-- local PowerSync (self-hosted via the PowerSync CLI)
-
-It uses anonymous Supabase auth, so there is no login or registration flow in the app.
-
-## What this demo shows
-
-- PowerSync Sync Streams (edition 3)
-- time-based filtering with stream parameters
-- offline-first reads/writes with a local PowerSync database
+This lets you model patterns like "sync the last N days of data" or "sync only the time ranges the user cares about" without re-deploying sync rules.
 
 The stream definition lives in `powersync/sync-config.yaml`:
 
 ```yaml
-config:
-  edition: 3
-
 streams:
   issues_by_date:
     query: SELECT * FROM issues WHERE substring(updated_at, 1, 10) = subscription.parameter('date')
 ```
+
+The client creates one `useQuery` per selected date. Each call both subscribes to the stream and queries the matching issues:
+
+```ts
+useQuery(
+  `SELECT * FROM issues WHERE substring(updated_at, 1, 10) = ?`,
+  [date],
+  { streams: [{ name: 'issues_by_date', parameters: { date }, ttl: 0 }] }
+);
+```
+
+The demo runs against local Supabase (`supabase start`) and self-hosted PowerSync (via the PowerSync CLI). It uses anonymous Supabase auth — there is no login or registration flow.
 
 ## Prerequisites
 
