@@ -1,5 +1,11 @@
 # @powersync/node
 
+## 0.18.2
+
+### Patch Changes
+
+- 93703a0: Fix crash when initializing with an external database adapter.
+
 ## 0.18.1
 
 ### Patch Changes
