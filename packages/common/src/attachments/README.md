@@ -289,8 +289,8 @@ new AttachmentQueue(options: AttachmentQueueOptions)
 | `watchAttachments` | `(onUpdate: (attachments: WatchedAttachmentItem[]) => Promise<void>) => void` | Yes | - | Callback to determine which attachments to handle by the queue from your user defined query |
 | `tableName` | `string` | No | `'attachments'` | Name of the attachments table |
 | `logger` | `ILogger` | No | `db.logger` | Logger instance for diagnostic output |
-| `syncIntervalMs` | `number` | No | `30000` | Interval between automatic syncs in milliseconds |
-| `syncThrottleDuration` | `number` | No | `30` | Throttle duration for sync operations in milliseconds |
+| `syncIntervalMs` | `number` | No | `30000` | Periodic polling interval (in milliseconds) for retrying failed uploads/downloads. A `setInterval` timer that calls `syncStorage()` on this cadence, ensuring operations are retried even if no database changes occur (e.g., after coming back online). |
+| `syncThrottleDuration` | `number` | No | `30` | Throttle duration (in milliseconds) for the reactive watch query on the attachments table. When attachment records change (e.g., a new file is queued), a watch query detects the change and triggers a sync. This throttle prevents the sync from firing too rapidly when many changes happen in quick succession (e.g., bulk inserts). This is distinct from `syncIntervalMs` — it controls how quickly the queue *reacts* to changes, while `syncIntervalMs` controls how often it *polls* for retries. |
 | `downloadAttachments` | `boolean` | No | `true` | Whether to automatically download remote attachments |
 | `archivedCacheLimit` | `number` | No | `100` | Maximum number of archived attachments before cleanup |
 | `errorHandler` | `AttachmentErrorHandler` | No | `undefined` | Custom error handler for upload/download/delete operations |
@@ -676,11 +676,13 @@ Adjust sync frequency based on your needs:
 ```typescript
 const queue = new AttachmentQueue({
   // ... other options
-  syncIntervalMs: 60000, // Sync every 60 seconds instead of 30
+  syncIntervalMs: 60000, // Poll for retries every 60 seconds instead of 30
+  syncThrottleDuration: 100, // React to attachment changes within 100ms (default: 30ms)
 });
 ```
 
-Set to `0` to disable periodic syncing (manual `syncStorage()` calls only).
+- **`syncIntervalMs`** controls the periodic polling timer — how often the queue retries failed operations.
+- **`syncThrottleDuration`** controls how quickly the queue reacts to attachment table changes. The default (30ms) is fast enough for most use cases. Increase it if you see performance issues during bulk attachment operations.
 
 ### Archive and Cache Management
 
