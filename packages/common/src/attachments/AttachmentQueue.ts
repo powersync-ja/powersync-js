@@ -51,10 +51,16 @@ export class AttachmentQueue {
   /** Logger instance for diagnostic information */
   readonly logger: ILogger;
 
-  /** Interval in milliseconds between periodic sync operations. Default: 30000 (30 seconds) */
+  /** Interval in milliseconds between periodic sync operations. Acts as a polling timer to retry
+   *  failed uploads/downloads, especially after the app goes offline. Default: 30000 (30 seconds) */
   readonly syncIntervalMs: number = 30 * 1000;
 
-  /** Duration in milliseconds to throttle sync operations */
+  /** Throttle duration in milliseconds for the reactive watch query on the attachments table.
+   *  When attachment records change, a watch query detects the change and triggers a sync.
+   *  This throttle prevents the sync from firing too rapidly when many changes happen in
+   *  quick succession (e.g., bulk inserts). This is distinct from syncIntervalMs — it controls
+   *  how quickly the queue reacts to changes, while syncIntervalMs controls how often it polls
+   *  for retries. Default: 30 (from DEFAULT_WATCH_THROTTLE_MS) */
   readonly syncThrottleDuration: number;
 
   /** Whether to automatically download remote attachments. Default: true */
@@ -86,8 +92,8 @@ export class AttachmentQueue {
    * @param options.watchAttachments - Callback for monitoring attachment changes in your data model
    * @param options.tableName - Name of the table to store attachment records. Default: 'ps_attachment_queue'
    * @param options.logger - Logger instance. Defaults to db.logger
-   * @param options.syncIntervalMs - Interval between automatic syncs in milliseconds. Default: 30000
-   * @param options.syncThrottleDuration - Throttle duration for sync operations in milliseconds. Default: 1000
+   * @param options.syncIntervalMs - Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
+   * @param options.syncThrottleDuration - Throttle duration in milliseconds for the reactive watch query that detects attachment changes. Prevents rapid-fire syncs during bulk changes. Default: 30
    * @param options.downloadAttachments - Whether to automatically download remote attachments. Default: true
    * @param options.archivedCacheLimit - Maximum archived attachments before cleanup. Default: 100
    */
