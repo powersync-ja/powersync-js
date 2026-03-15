@@ -1,5 +1,5 @@
 import { AbstractPowerSyncDatabase } from '@powersync/common';
-import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, ref } from 'vue';
+import { App, MaybeRef, Ref, hasInjectionContext, inject, provide, shallowRef, toRaw, toValue } from 'vue';
 import { setupTopLevelWarningMessage } from './messages.js';
 
 // Create a unique symbol for the PowerSync context
@@ -13,7 +13,7 @@ const POWERSYNC_KEY = Symbol('POWERSYNC_KEY');
  */
 export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeRef<AbstractPowerSyncDatabase> }) {
   const install = (app: App) => {
-    app.provide(POWERSYNC_KEY, ref(powerSyncPluginOptions.database));
+    app.provide(POWERSYNC_KEY, shallowRef(toRaw(toValue(powerSyncPluginOptions.database))));
   };
   return { install };
 }
@@ -26,7 +26,7 @@ export function createPowerSyncPlugin(powerSyncPluginOptions: { database: MaybeR
  * If the key parameter is provided, the client will be provided under that key instead of the default PowerSync key.
  */
 export function providePowerSync(database: MaybeRef<AbstractPowerSyncDatabase>, key: string | undefined = undefined) {
-  provide(key || POWERSYNC_KEY, ref(database));
+  provide(key || POWERSYNC_KEY, shallowRef(toRaw(toValue(database))));
 }
 
 /**
