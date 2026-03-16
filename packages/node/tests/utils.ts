@@ -20,6 +20,7 @@ import {
   Table,
   column
 } from '../lib';
+import { BSON } from 'bson';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -93,92 +94,103 @@ export const customDatabaseTest = (options?: Partial<NodePowerSyncDatabaseOption
 export const databaseTest = customDatabaseTest();
 
 // TODO: Unify this with the test setup for the web SDK.
-export const mockSyncServiceTest = tempDirectoryTest.extend<{
-  syncService: MockSyncService;
-}>({
-  syncService: async ({ tmpdir }, use) => {
-    interface Listener {
-      request: any;
-      stream: ReadableStreamDefaultController<StreamingSyncLine>;
-    }
-
-    // Uses a unique database name per mockSyncServiceTest to avoid conflicts with other tests.
-    const databaseName = `test-${crypto.randomUUID()}.db`;
-
-    const listeners: Listener[] = [];
-
-    const inMemoryFetch: typeof fetch = async (info, init?) => {
-      const request = new Request(info, init);
-      if (request.url.endsWith('/sync/stream')) {
-        const body = await request.json();
-        let listener: Listener | null = null;
-
-        const syncLines = new ReadableStream<StreamingSyncLine>({
-          start(controller) {
-            listener = {
-              request: body,
-              stream: controller
-            };
-
-            listeners.push(listener);
-          },
-          cancel() {
-            listeners.splice(listeners.indexOf(listener!), 1);
-          }
-        });
-
-        const encoder = new TextEncoder();
-        const asLines = new TransformStream<StreamingSyncLine, Uint8Array>({
-          transform: (chunk, controller) => {
-            const line = `${JSON.stringify(chunk)}\n`;
-            controller.enqueue(encoder.encode(line));
-          }
-        });
-
-        return new Response(syncLines.pipeThrough(asLines) as any, { status: 200 });
-      } else if (request.url.indexOf('/write-checkpoint2.json') != -1) {
-        return new Response(
-          JSON.stringify({
-            data: { write_checkpoint: '1' }
-          }),
-          { status: 200 }
-        );
-      } else {
-        return new Response('Not found', { status: 404 });
+export function createMockSyncServiceTest(bson: boolean) {
+  return tempDirectoryTest.extend<{
+    syncService: MockSyncService;
+  }>({
+    syncService: async ({ tmpdir }, use) => {
+      interface Listener {
+        request: any;
+        stream: ReadableStreamDefaultController<StreamingSyncLine>;
       }
-    };
 
-    const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
-      const db = await createDatabase(tmpdir, {
-        // This might help with test stability/timeouts if a retry is needed
-        retryDelayMs: 100,
-        ...options,
-        database: {
-          dbFilename: databaseName,
-          ...options?.database
+      // Uses a unique database name per mockSyncServiceTest to avoid conflicts with other tests.
+      const databaseName = `test-${crypto.randomUUID()}.db`;
+
+      const listeners: Listener[] = [];
+
+      const inMemoryFetch: typeof fetch = async (info, init?) => {
+        const request = new Request(info, init);
+        if (request.url.endsWith('/sync/stream')) {
+          const body = await request.json();
+          let listener: Listener | null = null;
+
+          const syncLines = new ReadableStream<StreamingSyncLine>({
+            start(controller) {
+              listener = {
+                request: body,
+                stream: controller
+              };
+
+              listeners.push(listener);
+            },
+            cancel() {
+              listeners.splice(listeners.indexOf(listener!), 1);
+            }
+          });
+
+          const encoder = new TextEncoder();
+          const asLines = new TransformStream<StreamingSyncLine, Uint8Array>({
+            transform: (chunk, controller) => {
+              if (bson) {
+                controller.enqueue(BSON.serialize(chunk));
+              } else {
+                const line = `${JSON.stringify(chunk)}\n`;
+                controller.enqueue(encoder.encode(line));
+              }
+            }
+          });
+
+          return new Response(syncLines.pipeThrough(asLines) as any, {
+            status: 200,
+            headers: { 'content-type': bson ? 'application/vnd.powersync.bson-stream' : 'application/x-ndjson' }
+          });
+        } else if (request.url.indexOf('/write-checkpoint2.json') != -1) {
+          return new Response(
+            JSON.stringify({
+              data: { write_checkpoint: '1' }
+            }),
+            { status: 200 }
+          );
+        } else {
+          return new Response('Not found', { status: 404 });
+        }
+      };
+
+      const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
+        const db = await createDatabase(tmpdir, {
+          // This might help with test stability/timeouts if a retry is needed
+          retryDelayMs: 100,
+          ...options,
+          database: {
+            dbFilename: databaseName,
+            ...options?.database
+          },
+          remoteOptions: {
+            fetchImplementation: inMemoryFetch
+          }
+        });
+
+        onTestFinished(async () => await db.close());
+        return db;
+      };
+
+      await use({
+        get connectedListeners() {
+          return listeners.map((e) => e.request);
         },
-        remoteOptions: {
-          fetchImplementation: inMemoryFetch
-        }
+        pushLine(line) {
+          for (const listener of listeners) {
+            listener.stream.enqueue(line);
+          }
+        },
+        createDatabase: newConnection
       });
+    }
+  });
+}
 
-      onTestFinished(async () => await db.close());
-      return db;
-    };
-
-    await use({
-      get connectedListeners() {
-        return listeners.map((e) => e.request);
-      },
-      pushLine(line) {
-        for (const listener of listeners) {
-          listener.stream.enqueue(line);
-        }
-      },
-      createDatabase: newConnection
-    });
-  }
-});
+export const mockSyncServiceTest = createMockSyncServiceTest(false);
 
 export interface MockSyncService {
   pushLine: (line: StreamingSyncLine) => void;

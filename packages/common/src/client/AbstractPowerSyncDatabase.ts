@@ -14,7 +14,7 @@ import { UploadQueueStats } from '../db/crud/UploadQueueStatus.js';
 import { Schema } from '../db/schema/Schema.js';
 import { BaseObserver } from '../utils/BaseObserver.js';
 import { ControlledExecutor } from '../utils/ControlledExecutor.js';
-import { symbolAsyncIterator, throttleTrailing } from '../utils/async.js';
+import { throttleTrailing } from '../utils/async.js';
 import {
   ConnectionManager,
   CreateSyncImplementationOptions,
@@ -704,7 +704,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    * @returns A transaction of CRUD operations to upload, or null if there are none
    */
   async getNextCrudTransaction(): Promise<CrudTransaction | null> {
-    const iterator = this.getCrudTransactions()[symbolAsyncIterator]();
+    const iterator = this.getCrudTransactions()[Symbol.asyncIterator]();
     return (await iterator.next()).value;
   }
 
@@ -741,7 +741,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
    */
   getCrudTransactions(): AsyncIterable<CrudTransaction, null> {
     return {
-      [symbolAsyncIterator]: () => {
+      [Symbol.asyncIterator]: () => {
         let lastCrudItemId = -1;
         const sql = `
 WITH RECURSIVE crud_entries AS (
