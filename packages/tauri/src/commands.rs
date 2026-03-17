@@ -5,6 +5,7 @@ use crate::{PowerSync, Result};
 use http_client::http_types::convert::Serialize;
 use powersync::error::PowerSyncError;
 use powersync::schema::SchemaOrCustom;
+use powersync::{StreamPriority, StreamSubscriptionOptions};
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::{params_from_iter, Connection, ToSql};
 use serde::de::{Error, SeqAccess, Visitor};
@@ -29,6 +30,12 @@ pub enum Command {
     ExecuteSql(ExecuteSql),
     ExecuteBatch(ExecuteBatch),
     Disconnect(Handle),
+    SubscribeToStream(SubscribeToStream),
+    UnsubscribeAll {
+        database: Handle,
+        name: String,
+        parameters: Option<serde_json::Value>,
+    },
 }
 
 #[derive(Deserialize)]
@@ -230,6 +237,15 @@ pub struct ExecuteSqlResult {
     pub rows: Vec<Vec<SqliteValue>>,
 }
 
+#[derive(Deserialize)]
+pub struct SubscribeToStream {
+    database: Handle,
+    name: String,
+    parameters: Option<serde_json::Value>,
+    ttl: Option<f64>,
+    priority: Option<StreamPriority>,
+}
+
 #[derive(Serialize)]
 pub enum CommandResult {
     CreatedHandle(Handle),
@@ -308,6 +324,44 @@ pub(crate) async fn powersync<R: Runtime>(
             let handle = powersync.handles.lookup(handle)?;
             let database = handle.as_database()?;
             database.disconnect().await;
+
+            CommandResult::Void
+        }
+        Command::SubscribeToStream(subscribe) => {
+            let handle = powersync.handles.lookup(subscribe.database)?;
+            let database = handle.as_database()?;
+            let subscription = database
+                .sync_stream(&subscribe.name, subscribe.parameters.as_ref())
+                .subscribe_with({
+                    let mut options: StreamSubscriptionOptions = Default::default();
+                    if let Some(ttl) = subscribe.ttl {
+                        options.with_ttl(Duration::from_secs_f64(ttl));
+                    }
+                    if let Some(priority) = subscribe.priority {
+                        options.with_priority(priority);
+                    }
+
+                    options
+                })
+                .await?;
+
+            CommandResult::CreatedHandle(
+                powersync
+                    .handles
+                    .put(SharedWithJavaScript::Subscription(subscription)),
+            )
+        }
+        Command::UnsubscribeAll {
+            database,
+            name,
+            parameters,
+        } => {
+            let handle = powersync.handles.lookup(database)?;
+            let database = handle.as_database()?;
+            database
+                .sync_stream(&name, parameters.as_ref())
+                .unsubscribe_all()
+                .await?;
 
             CommandResult::Void
         }

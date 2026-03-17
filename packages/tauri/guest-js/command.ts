@@ -1,3 +1,4 @@
+import { SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface OpenDatabase {
@@ -28,13 +29,19 @@ export interface AcquireConnection {
   timeout?: number;
 }
 
+export interface SubscribeToStream extends SyncStreamDescription, SyncStreamSubscribeOptions {
+  database: number;
+}
+
 export type Command =
   | { OpenDatabase: OpenDatabase }
   | { CloseHandle: number }
   | { AcquireConnection: AcquireConnection }
   | { ExecuteSql: ExecuteSql }
   | { ExecuteBatch: ExecuteBatch }
-  | { Disconnect: number };
+  | { Disconnect: number }
+  | { SubscribeToStream: SubscribeToStream }
+  | { UnsubscribeAll: { database: number } & SyncStreamDescription };
 
 export interface ExecuteSqlResult {
   is_autocommit: boolean;

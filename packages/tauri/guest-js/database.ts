@@ -6,7 +6,10 @@ import {
   PowerSyncDatabaseOptionsWithSettings,
   SQLOpenOptions,
   StreamingSyncImplementation,
-  SyncStatusOptions
+  SyncStatusOptions,
+  SyncStream,
+  SyncStreamSubscribeOptions,
+  SyncStreamSubscription
 } from '@powersync/common';
 import { LateHandle, RustDatabaseAdapter } from './pool';
 import { powersyncCommand } from './command';
@@ -82,6 +85,42 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     // native database instance so that raw tables are passed to the sync client correctly. This is not just a matter of
     // calling powersync_replace_schema.
     throw new Error('updateSchema() is not yet supported on the PowerSync Tauri SDK.');
+  }
+
+  syncStream(name: string, params?: Record<string, any>): SyncStream {
+    const database = this;
+    const parameters = params ?? null;
+
+    return {
+      name,
+      parameters,
+      async subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription> {
+        const result = await powersyncCommand({
+          SubscribeToStream: {
+            database: database.rustHandle,
+            name,
+            parameters,
+            priority: options?.priority,
+            ttl: options?.ttl
+          }
+        });
+        const subscriptionHandle = (result as any).CreatedHandle as number;
+
+        return {
+          name,
+          parameters,
+          async waitForFirstSync(abort) {
+            await database.waitForStatus((status) => status.forStream(this)?.subscription.hasSynced, abort);
+          },
+          async unsubscribe() {
+            await powersyncCommand({ CloseHandle: subscriptionHandle });
+          }
+        } satisfies SyncStreamSubscription;
+      },
+      async unsubscribeAll(): Promise<void> {
+        await powersyncCommand({ UnsubscribeAll: { database: database.rustHandle, name, parameters } });
+      }
+    };
   }
 
   async _initialize(): Promise<void> {
