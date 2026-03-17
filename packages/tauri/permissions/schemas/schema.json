@@ -307,10 +307,10 @@
           "markdownDescription": "Denies the powersync_command command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `powersync_command`",
+          "description": "The PowerSync SDK does not use Tauri permissions.",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the plugin\n#### This default permission set includes:\n\n- `powersync_command`"
+          "markdownDescription": "The PowerSync SDK does not use Tauri permissions."
         }
       ]
     }

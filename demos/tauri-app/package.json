@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
-    "tauri-plugin-powersync-api": "file:../../"
+    "@powersync/tauri-plugin": "0.0.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.0.0",

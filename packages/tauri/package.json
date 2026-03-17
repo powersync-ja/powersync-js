@@ -1,5 +1,5 @@
 {
-  "name": "tauri-plugin-powersync-api",
+  "name": "@powersync/tauri-plugin",
   "version": "0.1.0",
   "author": "You",
   "description": "",

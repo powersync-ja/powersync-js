@@ -1,12 +1,9 @@
-use std::{
-    collections::HashMap,
-    sync::{ Mutex},
-};
-
-use powersync::{env::PowerSyncEnvironment, ConnectionPool, PowerSyncDatabase};
 use powersync::error::PowerSyncError;
-use powersync::schema::{Schema, SchemaOrCustom};
+use powersync::schema::SchemaOrCustom;
+use powersync::{env::PowerSyncEnvironment, ConnectionPool, PowerSyncDatabase};
 use rusqlite::Connection;
+use std::marker::PhantomData;
+use std::{collections::HashMap, sync::Mutex};
 use tauri::{
     plugin::{Builder, TauriPlugin},
     AppHandle, Manager, Runtime,
@@ -16,11 +13,11 @@ pub use models::*;
 
 mod commands;
 mod error;
-mod models;
 mod handle;
+mod models;
 
-pub use error::Result;
 use crate::handle::JavaScriptHandles;
+pub use error::Result;
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the PowerSync
 /// plugin.
@@ -35,7 +32,7 @@ impl<R: Runtime, T: Manager<R>> PowerSyncExt<R> for T {
 }
 
 pub struct PowerSync<R: Runtime> {
-    app: AppHandle<R>,
+    app: PhantomData<AppHandle<R>>,
     databases: Mutex<HashMap<String, PowerSyncDatabase>>,
     pub(crate) handles: JavaScriptHandles,
 }
@@ -50,7 +47,9 @@ impl<R: Runtime> PowerSync<R> {
         PowerSyncEnvironment::powersync_auto_extension()?;
         let env = PowerSyncEnvironment::custom(
             reqwest::Client::new(),
-            ConnectionPool::single_connection(Connection::open_in_memory().map_err(PowerSyncError::from)?),
+            ConnectionPool::single_connection(
+                Connection::open_in_memory().map_err(PowerSyncError::from)?,
+            ),
             PowerSyncEnvironment::tokio_timer(),
         );
 
@@ -64,9 +63,9 @@ impl<R: Runtime> PowerSync<R> {
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("powersync")
         .invoke_handler(tauri::generate_handler![commands::powersync])
-        .setup(|app, api| {
+        .setup(|app, _api| {
             let powersync = PowerSync {
-                app: app.clone(),
+                app: PhantomData::<AppHandle<R>>,
                 databases: Default::default(),
                 handles: Default::default(),
             };

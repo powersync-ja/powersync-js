@@ -19,5 +19,5 @@ tauri-build = { version = "2.5.6", default-features = false }
 
 [dependencies]
 tauri = { version = "2.10.3" }
-tauri-plugin-powersync = { path = "../../../" }
+tauri-plugin-powersync = { path = "../../../packages/tauri" }
 

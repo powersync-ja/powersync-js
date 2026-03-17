@@ -1,10 +1,6 @@
 ## Default Permission
 
-Default permissions for the plugin
-
-#### This default permission set includes the following:
-
-- `powersync_command`
+The PowerSync SDK does not use Tauri permissions.
 
 ## Permission Table
 

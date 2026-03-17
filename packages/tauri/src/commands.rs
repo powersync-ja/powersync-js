@@ -86,7 +86,7 @@ impl ExecuteBatch {
         let mut stmt = connection.prepare(&self.sql)?;
         for instantiation in &self.params {
             let mut cursor = stmt.query(params_from_iter(instantiation.iter()))?;
-            while let Some(row) = cursor.next()? {}
+            while let Some(_) = cursor.next()? {}
         }
 
         Ok(CommandResult::ExecuteBatchResult {
