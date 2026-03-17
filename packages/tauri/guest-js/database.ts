@@ -20,6 +20,16 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     return (this.options.database as SQLOpenOptions).dbFilename;
   }
 
+  /**
+   * The id of the wrapped Rust database instance.
+   *
+   * This can be used together with custom Rust code to share a PowerSync database between JavaScript and
+   * Rust.
+   */
+  get rustHandle(): number {
+    return this.handle.handle;
+  }
+
   protected openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter {
     this.handle = { handle: -1 };
     return new RustDatabaseAdapter(this.name, this.handle);

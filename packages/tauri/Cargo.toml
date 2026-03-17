@@ -16,8 +16,6 @@ thiserror = "2"
 powersync = { version = "0.0.4", features = ["tokio", "reqwest"] }
 reqwest = "0.13.2"
 http-client = { version = "6.5.3", default-features = false }
-async-trait = "0.1.89"
-futures-util = "0.3.32"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 tokio = { version = "1.50.0", features = ["time"] }
 

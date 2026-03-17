@@ -250,6 +250,7 @@ pub(crate) async fn powersync<R: Runtime>(
         Command::OpenDatabase(open) => {
             let db =
                 powersync.open_database(open.name, SchemaOrCustom::from(open.schema.as_ref()))?;
+
             CommandResult::CreatedHandle(powersync.handles.put(SharedWithJavaScript::Database(db)))
         }
         Command::CloseHandle(handle) => {

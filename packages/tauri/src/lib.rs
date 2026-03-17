@@ -54,8 +54,17 @@ impl<R: Runtime> PowerSync<R> {
         );
 
         let database = PowerSyncDatabase::new(env, schema);
+        database.async_tasks().spawn_with_tokio();
+
         map.insert(name, database.clone());
         Ok(database)
+    }
+
+    /// Resolves a [PowerSyncDatabase] from the handle obtained from
+    /// `PowerSyncTauriDatabase.rustHandle` in JavaScript.
+    pub fn database_from_javascript_handle(&self, handle: usize) -> Result<PowerSyncDatabase> {
+        let handle = self.handles.lookup(handle)?;
+        Ok(handle.as_database()?.clone())
     }
 }
 
