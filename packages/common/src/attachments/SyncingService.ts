@@ -54,7 +54,7 @@ export class SyncingService {
           updatedAttachments.push(downloaded);
           break;
         case AttachmentState.QUEUED_DELETE:
-          const deleted = await this.deleteAttachment(attachment);
+          const deleted = await this.deleteAttachment(attachment, context);
           updatedAttachments.push(deleted);
           break;
 
@@ -143,18 +143,17 @@ export class SyncingService {
    * On failure, defers to error handler or archives.
    *
    * @param attachment - The attachment record to delete
+   * @param context - Attachment context for database operations
    * @returns Updated attachment record
    */
-  async deleteAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
+  async deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord> {
     try {
       await this.remoteStorage.deleteFile(attachment);
       if (attachment.localUri) {
         await this.localStorage.deleteFile(attachment.localUri);
       }
 
-      await this.attachmentService.withContext(async (ctx) => {
-        await ctx.deleteAttachment(attachment.id);
-      });
+      await context.deleteAttachment(attachment.id);
 
       return {
         ...attachment,
