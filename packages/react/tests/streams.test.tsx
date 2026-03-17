@@ -93,6 +93,35 @@ describe('stream hooks', () => {
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
       });
 
+      it('useQuery returns complete result shape during stream sync transition', async () => {
+        const allResults: any[] = [];
+
+        const { result } = renderHook(
+          () => {
+            const queryResult = useQuery('SELECT 1', [], { streams: [{ name: 'a', waitForStream: true }] });
+            allResults.push({ ...queryResult });
+            return queryResult;
+          },
+          { wrapper: testWrapper }
+        );
+
+        // Initial state should be loading
+        expect(result.current).toMatchObject({ isLoading: true });
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
+
+        // Trigger sync — this causes streamsHaveSynced to transition to true
+        db.currentStatus = _testStatus;
+        db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+
+        // Wait for the query to eventually resolve
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+
+        // Every intermediate render result should have the complete shape
+        for (const r of allResults) {
+          expect(r).toMatchObject({ data: expect.any(Array), isLoading: expect.any(Boolean), isFetching: expect.any(Boolean) });
+        }
+      });
+
       it('useQuery not waiting on stream', async () => {
         // By default, it should still run the query immediately instead of waiting for the stream to resolve.
         const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [{ name: 'a' }] }), {
@@ -177,3 +206,4 @@ const _testStatus = new SyncStatus({
     ]
   }
 });
+
