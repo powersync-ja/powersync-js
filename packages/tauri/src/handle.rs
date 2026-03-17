@@ -1,3 +1,4 @@
+use crate::database::TauriDatabaseState;
 use crate::error::{PowerSyncTauriError, Result};
 use powersync::{LeasedConnection, PowerSyncDatabase, StreamSubscription};
 use std::collections::HashMap;
@@ -15,7 +16,7 @@ pub type Handle = usize;
 /// value.
 #[derive(Clone)]
 pub enum SharedWithJavaScript {
-    Database(PowerSyncDatabase),
+    Database(Arc<TauriDatabaseState>),
     Connection(Arc<AsyncMutex<LeasedConnection>>),
     Subscription(StreamSubscription),
 }
@@ -23,7 +24,7 @@ pub enum SharedWithJavaScript {
 impl SharedWithJavaScript {
     pub fn as_database(&self) -> Result<&PowerSyncDatabase> {
         match self {
-            Self::Database(database) => Ok(database),
+            Self::Database(database) => Ok(&database.database),
             _ => Err(PowerSyncTauriError::IllegalHandleType),
         }
     }

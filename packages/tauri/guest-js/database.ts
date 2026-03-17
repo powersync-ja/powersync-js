@@ -2,12 +2,15 @@ import {
   AbstractPowerSyncDatabase,
   BucketStorageAdapter,
   DBAdapter,
+  PowerSyncCloseOptions,
   PowerSyncDatabaseOptionsWithSettings,
   SQLOpenOptions,
-  StreamingSyncImplementation
+  StreamingSyncImplementation,
+  SyncStatusOptions
 } from '@powersync/common';
 import { LateHandle, RustDatabaseAdapter } from './pool';
 import { powersyncCommand } from './command';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 
 /**
  * A PowerSync database backed by a Rust-owned structure for Tauri apps.
@@ -15,6 +18,8 @@ import { powersyncCommand } from './command';
 export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
   declare private handle: LateHandle;
   private didInitializeSchema = false;
+  private tableUpdateListener?: UnlistenFn;
+  private syncStatusListener?: UnlistenFn;
 
   private get name(): string {
     return (this.options.database as SQLOpenOptions).dbFilename;
@@ -80,13 +85,31 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
   }
 
   async _initialize(): Promise<void> {
+    const name = this.name;
+    this.tableUpdateListener = await listen<string[]>(`table-updates:${name}`, (event) => {
+      const adapter = this.database;
+      if (adapter instanceof RustDatabaseAdapter) {
+        adapter.iterateListeners((l) =>
+          l.tablesUpdated?.({ tables: event.payload, rawUpdates: [], groupedUpdates: {} })
+        );
+      }
+    });
+    this.syncStatusListener = await listen<SyncStatusOptions[]>(`sync-status:${name}`, (event) => {});
+
     const result = await powersyncCommand({
       OpenDatabase: {
-        name: this.name,
+        name: name,
         schema: this.schema.toJSON()
       }
     });
 
     this.handle.handle = (result as any).CreatedHandle as number;
+  }
+
+  async close(options?: PowerSyncCloseOptions): Promise<void> {
+    this.tableUpdateListener?.();
+    this.syncStatusListener?.();
+
+    await super.close(options);
   }
 }

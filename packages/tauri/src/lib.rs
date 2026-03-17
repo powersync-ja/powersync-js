@@ -12,6 +12,7 @@ use tauri::{
 pub use models::*;
 
 mod commands;
+mod database;
 mod error;
 mod handle;
 mod models;
@@ -38,9 +39,9 @@ pub struct PowerSync<R: Runtime> {
 }
 
 impl<R: Runtime> PowerSync<R> {
-    pub fn open_database(&self, name: String, schema: SchemaOrCustom) -> Result<PowerSyncDatabase> {
+    pub fn open_database(&self, name: &str, schema: SchemaOrCustom) -> Result<PowerSyncDatabase> {
         let mut map = self.databases.lock().unwrap();
-        if let Some(database) = map.get(&name) {
+        if let Some(database) = map.get(name) {
             return Ok(database.clone());
         }
 
@@ -56,7 +57,7 @@ impl<R: Runtime> PowerSync<R> {
         let database = PowerSyncDatabase::new(env, schema);
         database.async_tasks().spawn_with_tokio();
 
-        map.insert(name, database.clone());
+        map.insert(name.to_owned(), database.clone());
         Ok(database)
     }
 

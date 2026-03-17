@@ -1,4 +1,5 @@
 import {
+  BaseObserver,
   ConnectionPool,
   DBAdapterDefaultMixin,
   DBAdapterListener,
@@ -17,11 +18,13 @@ export interface LateHandle {
   handle: number;
 }
 
-class RustDatabase implements ConnectionPool {
+class RustDatabase extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   constructor(
     readonly name: string,
     readonly handle: LateHandle
-  ) {}
+  ) {
+    super();
+  }
 
   async close() {
     await powersyncCommand({ CloseHandle: this.handle.handle });
@@ -55,10 +58,6 @@ class RustDatabase implements ConnectionPool {
 
   async refreshSchema() {
     // TODO: Support this method (requires Rust SDK changes)
-  }
-
-  registerListener(listener: Partial<DBAdapterListener>): () => void {
-    throw new Error('Listeners are registered through the main database instance.');
   }
 }
 
