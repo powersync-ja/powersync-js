@@ -27,6 +27,7 @@ pub enum Command {
     },
     ExecuteSql(ExecuteSql),
     ExecuteBatch(ExecuteBatch),
+    Disconnect(Handle),
 }
 
 #[derive(Deserialize)]
@@ -298,6 +299,13 @@ pub(crate) async fn powersync<R: Runtime>(
             let connection = connection.lock().await;
 
             batch.run(&*connection)?
+        }
+        Command::Disconnect(handle) => {
+            let handle = powersync.handles.lookup(handle)?;
+            let database = handle.as_database()?;
+            database.disconnect().await;
+
+            CommandResult::Void
         }
     };
 

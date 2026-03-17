@@ -1,3 +1,3 @@
 [default]
 description = "The PowerSync SDK does not use Tauri permissions."
-permissions = []
+permissions = ["allow-powersync"]

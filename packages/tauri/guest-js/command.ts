@@ -33,7 +33,8 @@ export type Command =
   | { CloseHandle: number }
   | { AcquireConnection: AcquireConnection }
   | { ExecuteSql: ExecuteSql }
-  | { ExecuteBatch: ExecuteBatch };
+  | { ExecuteBatch: ExecuteBatch }
+  | { Disconnect: number };
 
 export interface ExecuteSqlResult {
   is_autocommit: boolean;
@@ -56,8 +57,6 @@ export type CommandResult =
 
 export async function powersyncCommand(command: Command): Promise<CommandResult> {
   return await invoke<CommandResult>('plugin:powersync|powersync', {
-    payload: {
-      command
-    }
+    command
   });
 }

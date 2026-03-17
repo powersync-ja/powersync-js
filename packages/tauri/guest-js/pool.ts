@@ -28,14 +28,14 @@ class RustDatabase implements ConnectionPool {
   }
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.#lock(fn, false, options);
+    return this.lock(fn, false, options);
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.#lock(fn, true, options);
+    return this.lock(fn, true, options);
   }
 
-  async #lock<T>(fn: (tx: LockContext) => Promise<T>, write: boolean, options?: DBLockOptions): Promise<T> {
+  private async lock<T>(fn: (tx: LockContext) => Promise<T>, write: boolean, options?: DBLockOptions): Promise<T> {
     let timeout: number | undefined;
     if (options?.timeoutMs) {
       timeout = options.timeoutMs / 1000;
@@ -70,7 +70,7 @@ export class RustDatabaseAdapter extends DBAdapterDefaultMixin(RustDatabase) {}
 class RustSqlExecutor implements SqlExecutor {
   constructor(readonly handle: number) {}
 
-  async #execute(query: string, params: any[]) {
+  private async executeInner(query: string, params: any[]) {
     const result = await powersyncCommand({
       ExecuteSql: {
         connection: this.handle,
@@ -90,7 +90,7 @@ class RustSqlExecutor implements SqlExecutor {
   }
 
   async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
-    const { rows, columnNames, insertId, rowsAffected } = await this.#execute(query, params ?? []);
+    const { rows, columnNames, insertId, rowsAffected } = await this.executeInner(query, params ?? []);
 
     return {
       insertId,
@@ -113,7 +113,7 @@ class RustSqlExecutor implements SqlExecutor {
   }
 
   async executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
-    const { rows } = await this.#execute(query, params ?? []);
+    const { rows } = await this.executeInner(query, params ?? []);
     return rows ?? [];
   }
 

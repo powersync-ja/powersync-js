@@ -1,6 +1,5 @@
-const COMMANDS: &[&str] = &["powersync_command"];
+const COMMANDS: &[&str] = &["powersync"];
 
 fn main() {
-  tauri_plugin::Builder::new(COMMANDS)
-    .build();
+    tauri_plugin::Builder::new(COMMANDS).build();
 }
