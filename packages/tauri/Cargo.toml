@@ -10,17 +10,16 @@ links = "tauri-plugin-powersync"
 
 [dependencies]
 tauri = { version = "2.10.3" }
-tauri-plugin-http = "2.0.0"
-reqwest = { version = "0.13.0", default-features = false, features = ["stream"] }
-
-serde = "1.0"
+serde = "1"
+serde_json = { version = "1", features = ["raw_value"] }
 thiserror = "2"
-powersync = { version = "0.0.4", features = ["tokio"] }
+powersync = { version = "0.0.4", features = ["tokio", "reqwest"] }
+reqwest = "0.13.2"
 http-client = { version = "6.5.3", default-features = false }
 async-trait = "0.1.89"
-tokio-util = { version = "0.7.18", features = ["futures-io", "compat"] }
 futures-util = "0.3.32"
 rusqlite = "0.37.0"
+tokio = { version = "1.50.0", features = ["time"] }
 
 [build-dependencies]
 tauri-plugin = { version = "2.5.4", features = ["build"] }

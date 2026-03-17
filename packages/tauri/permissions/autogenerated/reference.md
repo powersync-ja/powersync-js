@@ -4,7 +4,7 @@ Default permissions for the plugin
 
 #### This default permission set includes the following:
 
-- `allow-ping`
+- `powersync_command`
 
 ## Permission Table
 
@@ -18,12 +18,12 @@ Default permissions for the plugin
 <tr>
 <td>
 
-`powersync:allow-ping`
+`powersync:allow-powersync-command`
 
 </td>
 <td>
 
-Enables the ping command without any pre-configured scope.
+Enables the powersync_command command without any pre-configured scope.
 
 </td>
 </tr>
@@ -31,12 +31,12 @@ Enables the ping command without any pre-configured scope.
 <tr>
 <td>
 
-`powersync:deny-ping`
+`powersync:deny-powersync-command`
 
 </td>
 <td>
 
-Denies the ping command without any pre-configured scope.
+Denies the powersync_command command without any pre-configured scope.
 
 </td>
 </tr>

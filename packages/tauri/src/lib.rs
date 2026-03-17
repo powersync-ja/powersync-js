@@ -1,9 +1,11 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{ Mutex},
 };
 
 use powersync::{env::PowerSyncEnvironment, ConnectionPool, PowerSyncDatabase};
+use powersync::error::PowerSyncError;
+use powersync::schema::{Schema, SchemaOrCustom};
 use rusqlite::Connection;
 use tauri::{
     plugin::{Builder, TauriPlugin},
@@ -14,12 +16,11 @@ pub use models::*;
 
 mod commands;
 mod error;
-mod http_client;
 mod models;
+mod handle;
 
 pub use error::Result;
-
-use crate::http_client::TauriHttpClient;
+use crate::handle::JavaScriptHandles;
 
 /// Extensions to [`tauri::App`], [`tauri::AppHandle`] and [`tauri::Window`] to access the PowerSync
 /// plugin.
@@ -36,36 +37,38 @@ impl<R: Runtime, T: Manager<R>> PowerSyncExt<R> for T {
 pub struct PowerSync<R: Runtime> {
     app: AppHandle<R>,
     databases: Mutex<HashMap<String, PowerSyncDatabase>>,
+    pub(crate) handles: JavaScriptHandles,
 }
 
 impl<R: Runtime> PowerSync<R> {
-    pub fn open_database(&self, name: String) -> Result<()> {
+    pub fn open_database(&self, name: String, schema: SchemaOrCustom) -> Result<PowerSyncDatabase> {
         let mut map = self.databases.lock().unwrap();
-        if map.contains_key(&name) {
-            return Ok(());
+        if let Some(database) = map.get(&name) {
+            return Ok(database.clone());
         }
 
         PowerSyncEnvironment::powersync_auto_extension()?;
         let env = PowerSyncEnvironment::custom(
-            Arc::new(TauriHttpClient::default()),
-            ConnectionPool::single_connection(Connection::open_in_memory()?),
-            Box::new(PowerSyncEnvironment::tokio_timer()),
+            reqwest::Client::new(),
+            ConnectionPool::single_connection(Connection::open_in_memory().map_err(PowerSyncError::from)?),
+            PowerSyncEnvironment::tokio_timer(),
         );
 
-        let database = PowerSyncDatabase::new(env, Default::default());
+        let database = PowerSyncDatabase::new(env, schema);
         map.insert(name, database.clone());
-        Ok(())
+        Ok(database)
     }
 }
 
 /// Initializes the plugin.
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("powersync")
-        .invoke_handler(commands::command_handler())
+        .invoke_handler(tauri::generate_handler![commands::powersync])
         .setup(|app, api| {
             let powersync = PowerSync {
                 app: app.clone(),
                 databases: Default::default(),
+                handles: Default::default(),
             };
             app.manage(powersync);
             Ok(())
