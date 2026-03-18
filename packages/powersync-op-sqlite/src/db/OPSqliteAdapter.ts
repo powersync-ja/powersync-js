@@ -201,9 +201,6 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-    // TODO: The "Should handle multiple closes" test implicitly relies on writeLock() yielding to the event loop before
-    // doing anything. We should revisit this in the future.
-    await new Promise((resolve) => setTimeout(resolve, 0));
 
     const outerSignal = this.abortController.signal;
     let signal: AbortSignal;
