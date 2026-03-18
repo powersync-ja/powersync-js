@@ -7,6 +7,9 @@ export type UnlockFn = () => void;
  */
 export class Mutex {
   private inCriticalSection = false;
+
+  // Linked list of waiters. We don't expect the wait list to become particularly large, and this allows removing
+  // aborted waiters from the middle of the list efficiently.
   private firstWaiter?: MutexWaitNode;
   private lastWaiter?: MutexWaitNode;
 
@@ -94,6 +97,9 @@ export class Mutex {
 }
 
 interface MutexWaitNode {
+  /**
+   * Whether the waiter is currently active (not aborted and not fullfilled).
+   */
   isActive: boolean;
   onAcquire: () => void;
   prev?: MutexWaitNode;
