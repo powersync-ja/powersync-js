@@ -86,6 +86,6 @@ export class AsyncDbAdapter extends DBAdapterDefaultMixin(AsyncConnectionPool) i
       return this.resolvedClient.getConfiguration();
     }
 
-    throw new Error('AsyncDbAdapter.getConfiguration() can only be called after initializin it.');
+    throw new Error('AsyncDbAdapter.getConfiguration() can only be called after initializing it.');
   }
 }

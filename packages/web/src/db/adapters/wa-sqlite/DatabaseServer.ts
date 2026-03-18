@@ -125,26 +125,22 @@ export class DatabaseServer {
         return token;
       },
       completeAccess: async (token) => {
-        requireOpen();
+        const lease = requireOpenAndLease(token);
+        connectionLeases.delete(token);
 
-        const lease = connectionLeases.get(token);
-        if (lease) {
-          connectionLeases.delete(token);
-
-          if (lease.write) {
-            // Collect update hooks invoked while the client had the write connection.
-            const { resultSet } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
-            if (resultSet) {
-              const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
-              if (updatedTables.length) {
-                this.#updateBroadcastChannel.postMessage(updatedTables);
-                this.#pushTableUpdateToClients(updatedTables);
-              }
+        if (lease.write) {
+          // Collect update hooks invoked while the client had the write connection.
+          const { resultSet } = await lease.lease.use((conn) => conn.execute(`SELECT powersync_update_hooks('get')`));
+          if (resultSet) {
+            const updatedTables: string[] = JSON.parse(resultSet.rows[0][0] as string);
+            if (updatedTables.length) {
+              this.#updateBroadcastChannel.postMessage(updatedTables);
+              this.#pushTableUpdateToClients(updatedTables);
             }
           }
-
-          await lease.lease.returnLease();
         }
+
+        await lease.lease.returnLease();
       },
       execute: async (token, sql, params) => {
         const { lease } = requireOpenAndLease(token);

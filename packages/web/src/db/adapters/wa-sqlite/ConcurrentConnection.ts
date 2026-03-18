@@ -41,23 +41,19 @@ export class ConcurrentSqliteConnection {
 
   private acquireMutex(abort?: AbortSignal): Promise<MutexInterface.Releaser> {
     if (this.leaseMutex) {
+      // TODO: It would be nice to be able to support abort signals here as well, but the async-mutex package doesn't
+      // really support that. Maybe we should roll our own promise-chaining implementation and remove that dependency
+      // eventually.
       return this.leaseMutex.acquire();
     }
-
-    const trace = new Error().stack!;
 
     return new Promise((resolve, reject) => {
       const options: LockOptions = { signal: abort };
 
       navigator.locks
         .request(`db-access-lock-${this.options.dbFilename}`, options, (_) => {
-          let timeout = setTimeout(() => {
-            console.log('lock held for a long time', trace);
-          }, 5000);
-
           return new Promise<void>((returnLock) => {
             return resolve(() => {
-              clearTimeout(timeout);
               returnLock();
             });
           });
