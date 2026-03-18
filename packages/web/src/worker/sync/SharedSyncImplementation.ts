@@ -582,16 +582,22 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       private async connect(): Promise<DatabaseClient<ResolvedWebSQLOpenOptions>> {
         if (this.connectionState == null) {
           const handleClosed = this.handleClientClosed.bind(this);
-          this.connectionState = sharedSync.openInternalDB(handleClosed).then((db) => {
-            db.registerListener({
-              tablesUpdated: (notification) => {
-                this.iterateListeners((l) => l.tablesUpdated?.(notification));
-              }
-            });
-
-            this.connectionState = db;
-            return db;
-          });
+          this.connectionState = (async () => {
+            try {
+              const db = await sharedSync.openInternalDB(handleClosed);
+              db.registerListener({
+                tablesUpdated: (notification) => {
+                  this.iterateListeners((l) => l.tablesUpdated?.(notification));
+                }
+              });
+              this.connectionState = db;
+              return db;
+            } catch (e) {
+              // Allow reconnecting when the database is used again.
+              this.connectionState = null;
+              throw e;
+            }
+          })();
         }
 
         return await this.connectionState;

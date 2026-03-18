@@ -1,4 +1,4 @@
-import { Mutex, type MutexInterface } from 'async-mutex';
+import { Mutex, UnlockFn } from '@powersync/common';
 import { RawSqliteConnection } from './RawSqliteConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 
@@ -39,19 +39,16 @@ export class ConcurrentSqliteConnection {
     return this.inner.options;
   }
 
-  private acquireMutex(abort?: AbortSignal): Promise<MutexInterface.Releaser> {
+  private acquireMutex(abort?: AbortSignal): Promise<UnlockFn> {
     if (this.leaseMutex) {
-      // TODO: It would be nice to be able to support abort signals here as well, but the async-mutex package doesn't
-      // really support that. Maybe we should roll our own promise-chaining implementation and remove that dependency
-      // eventually.
-      return this.leaseMutex.acquire();
+      return this.leaseMutex.acquire(abort);
     }
 
     return new Promise((resolve, reject) => {
       const options: LockOptions = { signal: abort };
 
       navigator.locks
-        .request(`db-access-lock-${this.options.dbFilename}`, options, (_) => {
+        .request(`db-lock-${this.options.dbFilename}`, options, (_) => {
           return new Promise<void>((returnLock) => {
             return resolve(() => {
               returnLock();
@@ -70,8 +67,8 @@ export class ConcurrentSqliteConnection {
   /**
    * @returns A {@link ConnectionLeaseToken}. Until that token is returned, no other client can use the database.
    */
-  async acquireConnection(): Promise<ConnectionLeaseToken> {
-    const returnMutex = await this.acquireMutex();
+  async acquireConnection(abort?: AbortSignal): Promise<ConnectionLeaseToken> {
+    const returnMutex = await this.acquireMutex(abort);
     const token = new ConnectionLeaseToken(returnMutex, this.inner);
 
     try {
@@ -108,7 +105,7 @@ export class ConnectionLeaseToken {
   private closed = false;
 
   constructor(
-    private returnMutex: MutexInterface.Releaser,
+    private returnMutex: UnlockFn,
     private connection: RawSqliteConnection
   ) {}
 
