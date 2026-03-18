@@ -228,10 +228,10 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readMutex.runExclusive(
-      () => fn(this.generateLockContext(this.readConnection)),
-      timeoutSignal(options?.timeoutMs)
-    );
+    return this.readMutex.runExclusive(async () => {
+      await this.initializedPromise;
+      return fn(this.generateLockContext(this.readConnection));
+    }, timeoutSignal(options?.timeoutMs));
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {

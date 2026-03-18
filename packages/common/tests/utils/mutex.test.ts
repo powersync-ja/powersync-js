@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { Mutex, UnlockFn } from '../../src/utils/mutex';
+import { describe, it, expect, test } from 'vitest';
+import { Mutex, timeoutSignal, UnlockFn } from '../../src/utils/mutex';
 
 describe('Mutex', () => {
   it('runs blocks in sequence', async () => {
@@ -34,7 +34,7 @@ describe('Mutex', () => {
     const abortController = new AbortController();
     const secondLease = mutex.acquire(abortController.signal);
     let hasThirdLease: UnlockFn | null = null;
-    const thirdLease = mutex.acquire().then((l) => (hasThirdLease = l));
+    mutex.acquire().then((l) => (hasThirdLease = l));
 
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(hasThirdLease).toBeNull();
@@ -45,4 +45,26 @@ describe('Mutex', () => {
     // We should have skipped the second lease and resolve the third one instead.
     expect(hasThirdLease).not.toBeNull();
   });
+
+  it('can abort waiter immediately', async () => {
+    const mutex = new Mutex();
+
+    const firstLease = await mutex.acquire();
+    await expect(mutex.acquire(AbortSignal.abort())).rejects.toThrow('This operation was aborted');
+    const thirdLease = mutex.acquire();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    firstLease();
+    await thirdLease;
+  });
+});
+
+test('timeoutSignal', async () => {
+  expect(timeoutSignal()).toBeUndefined();
+
+  const signal = timeoutSignal(250);
+  expect(signal.aborted).toBeFalsy();
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(signal.aborted).toBeTruthy();
 });

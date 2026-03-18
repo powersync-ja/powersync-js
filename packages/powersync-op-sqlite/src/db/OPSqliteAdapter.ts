@@ -206,7 +206,12 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     const timeout = timeoutSignal(options?.timeoutMs);
     const signal = timeout ? AbortSignal.any([this.abortController.signal, timeout]) : this.abortController.signal;
 
-    return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
+    try {
+      return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
+    } finally {
+      // flush updates once a write lock has been released
+      this.writeConnection!.flushUpdates();
+    }
   }
 
   async refreshSchema(): Promise<void> {

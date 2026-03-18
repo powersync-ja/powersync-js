@@ -42,6 +42,13 @@ export class Mutex {
 
   acquire(abort?: AbortSignal): Promise<UnlockFn> {
     return new Promise((resolve, reject) => {
+      function rejectAborted() {
+        reject(abort?.reason ?? new Error('Mutex acquire aborted'));
+      }
+      if (abort?.aborted) {
+        return rejectAborted();
+      }
+
       let holdsMutex = false;
 
       const markCompleted = () => {
@@ -70,7 +77,7 @@ export class Mutex {
 
           if (node.isActive) {
             this.deactivateWaiter(node);
-            reject(abort?.reason ?? new Error('Mutex acquire aborted'));
+            rejectAborted();
           }
         };
 
@@ -109,6 +116,9 @@ interface MutexWaitNode {
 /**
  * Creates a signal aborting after the set timeout.
  */
+export function timeoutSignal(timeout: number): AbortSignal;
+export function timeoutSignal(timeout?: number): AbortSignal | undefined;
+
 export function timeoutSignal(timeout?: number): AbortSignal | undefined {
   if (timeout == null) return;
   if ('timeout' in AbortSignal) return AbortSignal.timeout(timeout);
