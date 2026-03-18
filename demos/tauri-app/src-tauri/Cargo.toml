@@ -20,7 +20,7 @@ tauri-build = { version = "2.5.6", default-features = false }
 [dependencies]
 tauri = { version = "2.10.3" }
 tauri-plugin-powersync = { path = "../../../packages/tauri" }
-powersync = "0.0.4"
+powersync = "0.0.5"
 async-trait = "0.1.89"
 serde = "1"
 serde_json = "1"
