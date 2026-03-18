@@ -122,6 +122,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
       name,
       parameters,
       async subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription> {
+        await database.init();
         const result = await powersyncCommand({
           SubscribeToStream: {
             database: database.rustHandle,
@@ -165,7 +166,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
 
   async _initialize(): Promise<void> {
     const path = await this.resolvePath();
-    this.tableUpdateListener = await listen<string[]>(`table-updates:${name}`, (event) => {
+    this.tableUpdateListener = await listen<string[]>(`table-updates:${path}`, (event) => {
       const adapter = this.database;
       if (adapter instanceof RustDatabaseAdapter) {
         adapter.iterateListeners((l) =>
@@ -173,7 +174,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
         );
       }
     });
-    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${name}`, (event) => {
+    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${path}`, (event) => {
       this.updateSyncStatusFromRust(event.payload);
     });
 
