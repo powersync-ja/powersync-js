@@ -705,8 +705,8 @@ export function registerBaseTests() {
         const pExecute = await db.execute(`SELECT * FROM t1 `);
         expect(pExecute.rows?.length).to.equal(10000);
 
-        // Queue a bunch of write locks, these will fail due to the db being closed
-        // before they are accepted.
+        // Queue a bunch of write locks. Apart from the first one which makes it through before
+        // we call close(), the remaining will fail because closing the db aborts operations.
         const tests = [
           db.execute(`SELECT * FROM t1 `),
           db.execute(`SELECT * FROM t1 `),
@@ -717,7 +717,7 @@ export function registerBaseTests() {
         await db.close();
 
         const results = await Promise.allSettled(tests);
-        expect(results.map((r) => r.status)).deep.equal(Array(tests.length).fill('rejected'));
+        expect(results.map((r) => r.status)).deep.equal(['fulfilled', 'rejected', 'rejected', 'rejected']);
       }
     });
   });

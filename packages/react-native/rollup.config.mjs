@@ -60,8 +60,7 @@ export default () => {
       'node-fetch',
       'js-logger',
       'react-native',
-      'react',
-      'async-mutex'
+      'react'
     ]
   };
 };

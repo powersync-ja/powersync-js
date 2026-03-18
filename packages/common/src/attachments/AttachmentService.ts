@@ -1,8 +1,7 @@
-import { Mutex } from 'async-mutex';
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { ILogger } from '../utils/Logger.js';
-import { mutexRunExclusive } from '../utils/mutex.js';
+import { Mutex } from '../utils/mutex.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
 
@@ -55,7 +54,7 @@ export class AttachmentService {
    * Executes a callback with exclusive access to the attachment context.
    */
   async withContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T> {
-    return mutexRunExclusive(this.mutex, async () => {
+    return this.mutex.runExclusive(async () => {
       return callback(this.context);
     });
   }

@@ -32,8 +32,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@powersync/common": "workspace:^",
-    "async-mutex": "catalog:"
+    "@powersync/common": "workspace:^"
   },
   "devDependencies": {
     "@powersync/sql-js": "0.0.8",

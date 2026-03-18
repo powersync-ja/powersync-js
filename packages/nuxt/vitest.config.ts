@@ -4,7 +4,7 @@ import { resolve } from 'path';
 const config: UserConfigExport = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
-    format: 'es',
+    format: 'es'
   },
   resolve: {
     alias: {
@@ -14,7 +14,7 @@ const config: UserConfigExport = {
   },
   optimizeDeps: {
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web'],
-    include: ['bson', 'async-mutex', 'comlink']
+    include: ['bson', 'comlink']
   },
   test: {
     globals: true,
