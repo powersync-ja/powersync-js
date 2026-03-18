@@ -6,6 +6,7 @@ import {
   PowerSyncDatabaseOptionsWithSettings,
   SQLOpenOptions,
   StreamingSyncImplementation,
+  SyncStatus,
   SyncStatusOptions,
   SyncStream,
   SyncStreamSubscribeOptions,
@@ -123,6 +124,19 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     };
   }
 
+  private updateSyncStatusFromRust(status: SyncStatusOptions) {
+    const updatedStatus = new SyncStatus(status);
+    this.currentStatus = updatedStatus;
+    this.iterateListeners((l) => l.statusChanged?.(this.currentStatus));
+  }
+
+  protected async resolveOfflineSyncStatus(): Promise<void> {
+    const result = await powersyncCommand({ GetSyncStatus: this.rustHandle });
+    const status = (result as any).SyncStatus as SyncStatusOptions;
+
+    this.updateSyncStatusFromRust(status);
+  }
+
   async _initialize(): Promise<void> {
     const name = this.name;
     this.tableUpdateListener = await listen<string[]>(`table-updates:${name}`, (event) => {
@@ -133,7 +147,9 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
         );
       }
     });
-    this.syncStatusListener = await listen<SyncStatusOptions[]>(`sync-status:${name}`, (event) => {});
+    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${name}`, (event) => {
+      this.updateSyncStatusFromRust(event.payload);
+    });
 
     const result = await powersyncCommand({
       OpenDatabase: {

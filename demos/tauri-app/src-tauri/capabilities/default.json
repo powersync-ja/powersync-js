@@ -3,10 +3,12 @@
   "identifier": "default",
   "description": "enables the default permissions",
   "windows": [
-    "main"
+    "*"
   ],
   "permissions": [
     "core:default",
-    "powersync:default"
+    "powersync:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-title"
   ]
 }

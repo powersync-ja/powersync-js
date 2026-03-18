@@ -1,14 +1,21 @@
 {
+  "extends": "../../tsconfig.base",
   "compilerOptions": {
+    "baseUrl": "./",
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "rootDir": "guest-js",
+    "outDir": "./lib",
     "skipLibCheck": true,
     "strict": true,
+    "strictNullChecks": true,
     "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "noEmit": true
+    "noImplicitAny": true
   },
-  "include": ["guest-js/*.ts"],
-  "exclude": ["dist-js", "node_modules"]
+  "include": ["guest-js/"],
+  "references": [
+    {
+      "path": "../common"
+    }
+  ]
 }

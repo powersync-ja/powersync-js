@@ -1,5 +1,6 @@
 import { column, Schema, Table } from '@powersync/common';
 import { PowerSyncTauriDatabase } from '@powersync/tauri-plugin';
+import { invoke } from '@tauri-apps/api/core';
 
 const todos = new Table(
   {
@@ -21,11 +22,19 @@ const schema = new Schema({
   lists
 });
 
+async function connect(db: PowerSyncTauriDatabase) {
+  await db.init();
+  const handle = db.rustHandle;
+  await invoke<void>('connect', { handle });
+}
+
 export function createDatabase() {
-  return new PowerSyncTauriDatabase({
+  const db = new PowerSyncTauriDatabase({
     schema,
     database: {
       dbFilename: 'memory'
     }
   });
+  connect(db);
+  return db;
 }

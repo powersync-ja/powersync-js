@@ -60,7 +60,7 @@ impl Drop for TauriDatabaseState {
 }
 
 #[derive(Clone)]
-struct SerializableSyncStatus(Arc<SyncStatusData>);
+pub(crate) struct SerializableSyncStatus(pub Arc<SyncStatusData>);
 
 impl Serialize for SerializableSyncStatus {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

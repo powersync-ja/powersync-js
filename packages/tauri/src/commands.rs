@@ -1,4 +1,4 @@
-use crate::database::TauriDatabaseState;
+use crate::database::{SerializableSyncStatus, TauriDatabaseState};
 use crate::error::PowerSyncTauriError;
 use crate::handle::{Handle, SharedWithJavaScript};
 use crate::{PowerSync, Result};
@@ -36,6 +36,7 @@ pub enum Command {
         name: String,
         parameters: Option<serde_json::Value>,
     },
+    GetSyncStatus(Handle),
 }
 
 #[derive(Deserialize)]
@@ -254,6 +255,7 @@ pub enum CommandResult {
         last_insert_rowid: i64,
         changes: u64,
     },
+    SyncStatus(SerializableSyncStatus),
     Void,
 }
 
@@ -364,6 +366,12 @@ pub(crate) async fn powersync<R: Runtime>(
                 .await?;
 
             CommandResult::Void
+        }
+        Command::GetSyncStatus(handle) => {
+            let handle = powersync.handles.lookup(handle)?;
+            let database = handle.as_database()?;
+
+            CommandResult::SyncStatus(SerializableSyncStatus(database.status()))
         }
     };
 

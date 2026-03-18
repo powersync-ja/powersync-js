@@ -1,4 +1,4 @@
-import { SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
+import { SyncStatusOptions, SyncStreamDescription, SyncStreamSubscribeOptions } from '@powersync/common';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface OpenDatabase {
@@ -41,7 +41,8 @@ export type Command =
   | { ExecuteBatch: ExecuteBatch }
   | { Disconnect: number }
   | { SubscribeToStream: SubscribeToStream }
-  | { UnsubscribeAll: { database: number } & SyncStreamDescription };
+  | { UnsubscribeAll: { database: number } & SyncStreamDescription }
+  | { GetSyncStatus: number };
 
 export interface ExecuteSqlResult {
   is_autocommit: boolean;
@@ -60,6 +61,7 @@ export type CommandResult =
   | { CreatedHandle: number }
   | { ExecuteSqlResult: ExecuteSqlResult }
   | { ExecuteBatchResult: ExecuteBatchResult }
+  | { SyncStatus: SyncStatusOptions }
   | 'Void';
 
 export async function powersyncCommand(command: Command): Promise<CommandResult> {

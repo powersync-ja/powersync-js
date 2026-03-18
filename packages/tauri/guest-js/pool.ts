@@ -90,22 +90,24 @@ class RustSqlExecutor implements SqlExecutor {
 
   async execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
     const { rows, columnNames, insertId, rowsAffected } = await this.executeInner(query, params ?? []);
+    const mappedRows = rows.map((row) => {
+      const names = columnNames;
+      const record: Record<string, SqliteValue> = {};
+      for (let i = 0; i < names.length; i++) {
+        record[names[i]] = row[i];
+      }
+
+      return record;
+    });
 
     return {
       insertId,
       rowsAffected,
       rows: {
-        _array: rows,
-        length: rows.length,
+        _array: mappedRows,
+        length: mappedRows.length,
         item(idx) {
-          const row = this._array[idx];
-          const names = columnNames;
-          const record: Record<string, SqliteValue> = {};
-          for (let i = 0; i < names.length; i++) {
-            record[names[i]] = row[i];
-          }
-
-          return record;
+          return mappedRows[idx];
         }
       }
     };

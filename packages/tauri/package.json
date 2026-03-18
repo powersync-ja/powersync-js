@@ -9,16 +9,17 @@
   "description": "",
   "type": "module",
   "exports": {
-    "types": "./dist-js/index.d.ts",
-    "import": "./dist-js/index.js",
-    "require": "./dist-js/index.cjs"
+    "types": "./lib/index.d.ts",
+    "import": "./lib/index.js"
   },
   "files": [
-    "dist-js",
+    "lib",
+    "guest-js",
     "README.md"
   ],
   "scripts": {
-    "build": "rollup -c",
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
     "prepublishOnly": "pnpm build",
     "pretest": "pnpm build"
   },

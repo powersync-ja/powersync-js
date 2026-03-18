@@ -11,6 +11,8 @@ const router = createRouter({
   scrollRestoration: true
 });
 
+const db = createDatabase();
+
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
@@ -18,10 +20,8 @@ declare module '@tanstack/react-router' {
 }
 
 function App() {
-  const powerSync = useMemo(createDatabase, []);
-
   return (
-    <PowerSyncContext.Provider value={powerSync}>
+    <PowerSyncContext.Provider value={db}>
       <RouterProvider router={router} />
     </PowerSyncContext.Provider>
   );

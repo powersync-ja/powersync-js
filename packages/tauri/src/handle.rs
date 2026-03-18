@@ -18,7 +18,11 @@ pub type Handle = usize;
 pub enum SharedWithJavaScript {
     Database(Arc<TauriDatabaseState>),
     Connection(Arc<AsyncMutex<LeasedConnection>>),
-    Subscription(StreamSubscription),
+    Subscription(
+        // The only purpose of this field is to keep the struct alive until it's closed in
+        // JavaScript.
+        #[allow(dead_code)] StreamSubscription,
+    ),
 }
 
 impl SharedWithJavaScript {
