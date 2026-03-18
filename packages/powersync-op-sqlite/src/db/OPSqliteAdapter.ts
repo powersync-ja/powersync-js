@@ -201,16 +201,38 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-    this.abortController.signal.throwIfAborted();
+    // TODO: The "Should handle multiple closes" test implicitly relies on writeLock() yielding to the event loop before
+    // doing anything. We should revisit this in the future.
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const timeout = timeoutSignal(options?.timeoutMs);
-    const signal = timeout ? AbortSignal.any([this.abortController.signal, timeout]) : this.abortController.signal;
+    const outerSignal = this.abortController.signal;
+    let signal: AbortSignal;
+    let cleanUpInnerSignal: (() => void) | undefined;
+
+    if (options?.timeoutMs && !outerSignal.aborted) {
+      // This is essentially an AbortSignal.any() polyfill.
+      const innerController = new AbortController();
+      cleanUpInnerSignal = () => {
+        innerController.abort();
+        outerSignal.removeEventListener('abort', cleanUpInnerSignal!);
+        timeout.removeEventListener('abort', cleanUpInnerSignal!);
+      };
+
+      outerSignal.addEventListener('abort', cleanUpInnerSignal);
+      const timeout = timeoutSignal(options.timeoutMs);
+      timeout.addEventListener('abort', cleanUpInnerSignal);
+
+      signal = innerController.signal;
+    } else {
+      signal = outerSignal;
+    }
 
     try {
       return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
     } finally {
       // flush updates once a write lock has been released
       this.writeConnection!.flushUpdates();
+      cleanUpInnerSignal?.();
     }
   }
 

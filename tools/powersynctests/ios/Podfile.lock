@@ -36,7 +36,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - powersync-op-sqlite (0.9.0):
+  - powersync-op-sqlite (0.9.3):
     - boost
     - DoubleConversion
     - fast_float
@@ -2806,7 +2806,7 @@ SPEC CHECKSUMS:
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
   hermes-engine: 0cbedc3c89e41feeb34019d43d55be87704539fa
   op-sqlite: bafff369cecaee4fe65c89eec47deaba26f2db95
-  powersync-op-sqlite: 19b482fd02ceeeb7aa2490baf2c678cf6ab7f4c6
+  powersync-op-sqlite: d354ffd077a5034fb8f95f97cd60614b1e1f1c8e
   powersync-sqlite-core: aae0128de5f062c8e5a6bc450090ebba0b398222
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
@@ -2876,7 +2876,7 @@ SPEC CHECKSUMS:
   React-utils: 8ab26781c2f5c2f7fafb2022c8ab39d39f231b80
   React-webperformancenativemodule: 7953b7fe519f76fa595111fe18ff3d5de131bfe9
   ReactAppDependencyProvider: 0eb286cc274abb059ee601b862ebddac2e681d01
-  ReactCodegen: 920d28974f8f167fba3544a715de9f66d4a08d8a
+  ReactCodegen: f290ce8ffa1022aacc6533ac7cd48570768c95d0
   ReactCommon: ac934cb340aee91282ecd6f273a26d24d4c55cae
   RNVectorIcons: 791f13226ec4a3fd13062eda9e892159f0981fae
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
