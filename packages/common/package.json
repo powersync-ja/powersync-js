@@ -55,7 +55,6 @@
     "test:exports": "attw --pack ."
   },
   "dependencies": {
-    "async-mutex": "catalog:",
     "event-iterator": "^2.0.0"
   },
   "devDependencies": {

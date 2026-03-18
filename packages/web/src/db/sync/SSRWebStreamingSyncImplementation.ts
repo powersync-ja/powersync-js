@@ -3,13 +3,12 @@ import {
   BaseObserver,
   LockOptions,
   LockType,
+  Mutex,
   PowerSyncConnectionOptions,
   StreamingSyncImplementation,
-  SubscribedStream,
   SyncStatus,
   SyncStatusOptions
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 
 export class SSRStreamingSyncImplementation extends BaseObserver implements StreamingSyncImplementation {
   syncMutex: Mutex;
@@ -29,7 +28,7 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
 
   obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
     const mutex = lockOptions.type == LockType.CRUD ? this.crudMutex : this.syncMutex;
-    return mutex.runExclusive(lockOptions.callback);
+    return mutex.runExclusive(lockOptions.callback, lockOptions.signal);
   }
 
   /**

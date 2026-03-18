@@ -5,10 +5,10 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
-  Transaction
+  Transaction,
+  Mutex,
+  timeoutSignal
 } from '@powersync/common';
-
-import { Mutex } from 'async-mutex';
 
 const MOCK_QUERY_RESPONSE: QueryResult = {
   rowsAffected: 0
@@ -34,19 +34,19 @@ export class SSRDBAdapter extends BaseObserver<DBAdapterListener> implements DBA
   close() {}
 
   async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) {
-    return this.readMutex.runExclusive(() => fn(this));
+    return this.readMutex.runExclusive(() => fn(this), timeoutSignal(options?.timeoutMs));
   }
 
   async readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) {
-    return this.readLock(() => fn(this.generateMockTransactionContext()));
+    return this.readLock(() => fn(this.generateMockTransactionContext()), options);
   }
 
   async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) {
-    return this.writeMutex.runExclusive(() => fn(this));
+    return this.writeMutex.runExclusive(() => fn(this), timeoutSignal(options?.timeoutMs));
   }
 
   async writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) {
-    return this.writeLock(() => fn(this.generateMockTransactionContext()));
+    return this.writeLock(() => fn(this.generateMockTransactionContext()), options);
   }
 
   async execute(query: string, params?: any[]): Promise<QueryResult> {

@@ -31,7 +31,7 @@ function defineBuild(isNode) {
         })
       ]
     ],
-    external: ['async-mutex', 'bson', isNode ? 'event-iterator' : undefined]
+    external: ['bson', isNode ? 'event-iterator' : undefined]
   };
 }
 

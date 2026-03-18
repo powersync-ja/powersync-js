@@ -31,6 +31,6 @@ export default () => {
         ]
       })
     ],
-    external: ['@powersync/common', 'async-mutex']
+    external: ['@powersync/common']
   };
 };

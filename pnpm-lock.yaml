@@ -57,9 +57,6 @@ catalogs:
     '@types/uuid':
       specifier: ^9.0.6
       version: 9.0.8
-    async-mutex:
-      specifier: ^0.5.0
-      version: 0.5.0
     bson:
       specifier: ^6.10.4
       version: 6.10.4
@@ -246,9 +243,6 @@ importers:
       '@powersync/common':
         specifier: workspace:^
         version: link:../common
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
     devDependencies:
       '@powersync/sql-js':
         specifier: 0.0.8
@@ -347,9 +341,6 @@ importers:
       '@powersync/web':
         specifier: workspace:^1.36.0
         version: link:../web
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
     devDependencies:
       '@capacitor-community/sqlite':
         specifier: ^7.0.2
@@ -399,9 +390,6 @@ importers:
 
   packages/common:
     dependencies:
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
       event-iterator:
         specifier: ^2.0.0
         version: 2.0.0
@@ -531,9 +519,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
       bson:
         specifier: 'catalog:'
         version: 6.10.4
@@ -638,9 +623,6 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
       bson:
         specifier: 'catalog:'
         version: 6.10.4
@@ -665,9 +647,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
     devDependencies:
       '@op-engineering/op-sqlite':
         specifier: 'catalog:'
@@ -756,9 +735,6 @@ importers:
       '@powersync/react':
         specifier: workspace:*
         version: link:../react
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
     devDependencies:
       '@craftzdog/react-native-buffer':
         specifier: ^6.0.5
@@ -866,9 +842,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      async-mutex:
-        specifier: 'catalog:'
-        version: 0.5.0
       bson:
         specifier: 'catalog:'
         version: 6.10.4
@@ -7904,9 +7877,6 @@ packages:
 
   async-limiter@1.0.1:
     resolution: {integrity: sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==}
-
-  async-mutex@0.5.0:
-    resolution: {integrity: sha512-1A94B18jkJ3DYq284ohPxoXbfTA5HsQ7/Mf4DEhcyLx3Bz27Rh59iScbB6EPiP+B+joue6YCxcMXSbFC1tZKwA==}
 
   async-sema@3.1.1:
     resolution: {integrity: sha512-tLRNUXati5MFePdAk8dw7Qt7DpxPB60ofAgn8WRhW6a2rcimZnYBP9oxHiv0OHy+Wz7kPMG+t4LGdt31+4EmGg==}
@@ -26149,10 +26119,6 @@ snapshots:
   async-function@1.0.0: {}
 
   async-limiter@1.0.1: {}
-
-  async-mutex@0.5.0:
-    dependencies:
-      tslib: 2.8.1
 
   async-sema@3.1.1: {}
 

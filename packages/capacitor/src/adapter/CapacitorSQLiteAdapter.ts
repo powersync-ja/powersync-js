@@ -10,11 +10,11 @@ import {
   DBAdapterListener,
   DBLockOptions,
   LockContext,
-  mutexRunExclusive,
+  Mutex,
   QueryResult,
+  timeoutSignal,
   Transaction
 } from '@powersync/web';
-import { Mutex } from 'async-mutex';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';
@@ -228,39 +228,31 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
   }
 
   readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return mutexRunExclusive(
-      this.readMutex,
-      async () => {
-        await this.initializedPromise;
-        return await fn(this.generateLockContext(this.readConnection));
-      },
-      options
+    return this.readMutex.runExclusive(
+      () => fn(this.generateLockContext(this.readConnection)),
+      timeoutSignal(options?.timeoutMs)
     );
   }
 
   writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return mutexRunExclusive(
-      this.writeMutex,
-      async () => {
-        await this.initializedPromise;
-        const result = await fn(this.generateLockContext(this.writeConnection));
+    return this.writeMutex.runExclusive(async () => {
+      await this.initializedPromise;
+      const result = await fn(this.generateLockContext(this.writeConnection));
 
-        // Fetch table updates
-        const updates = await this.writeConnection.query("SELECT powersync_update_hooks('get') AS table_name");
-        const jsonUpdates = updates.values?.[0];
-        if (!jsonUpdates || !jsonUpdates.table_name) {
-          throw new Error('Could not fetch table updates');
-        }
-        const notification: BatchedUpdateNotification = {
-          rawUpdates: [],
-          tables: JSON.parse(jsonUpdates.table_name),
-          groupedUpdates: {}
-        };
-        this.iterateListeners((l) => l.tablesUpdated?.(notification));
-        return result;
-      },
-      options
-    );
+      // Fetch table updates
+      const updates = await this.writeConnection.query("SELECT powersync_update_hooks('get') AS table_name");
+      const jsonUpdates = updates.values?.[0];
+      if (!jsonUpdates || !jsonUpdates.table_name) {
+        throw new Error('Could not fetch table updates');
+      }
+      const notification: BatchedUpdateNotification = {
+        rawUpdates: [],
+        tables: JSON.parse(jsonUpdates.table_name),
+        groupedUpdates: {}
+      };
+      this.iterateListeners((l) => l.tablesUpdated?.(notification));
+      return result;
+    }, timeoutSignal(options?.timeoutMs));
   }
 
   refreshSchema(): Promise<void> {

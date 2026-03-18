@@ -1,4 +1,4 @@
-import { getDylibPath, open, SQLBatchTuple, type DB } from '@op-engineering/op-sqlite';
+import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import {
   BaseObserver,
   ConnectionPool,
@@ -8,9 +8,9 @@ import {
   DBLockOptions,
   QueryResult,
   Transaction,
-  mutexRunExclusive
+  Mutex,
+  timeoutSignal
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';
@@ -201,34 +201,12 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
+    this.abortController.signal.throwIfAborted();
 
-    return new Promise(async (resolve, reject) => {
-      // Set up abort signal listener
-      const abortListener = () => {
-        reject(new Error('Database connection was closed'));
-      };
-      this.abortController.signal.addEventListener('abort', abortListener);
+    const timeout = timeoutSignal(options?.timeoutMs);
+    const signal = timeout ? AbortSignal.any([this.abortController.signal, timeout]) : this.abortController.signal;
 
-      try {
-        await mutexRunExclusive(
-          this.writeMutex,
-          async () => {
-            // Check if operation was aborted before executing
-            if (this.abortController.signal.aborted) {
-              reject(new Error('Database connection was closed'));
-            }
-            resolve(await fn(this.writeConnection!));
-          },
-          options
-        );
-        // flush updates once a write lock has been released
-        this.writeConnection!.flushUpdates();
-      } catch (ex) {
-        reject(ex);
-      } finally {
-        this.abortController.signal.removeEventListener('abort', abortListener);
-      }
-    });
+    return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
   }
 
   async refreshSchema(): Promise<void> {

@@ -10,12 +10,12 @@ import {
   TriggerManagerConfig,
   isDBAdapter,
   isSQLOpenFactory,
+  Mutex,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter.js';
