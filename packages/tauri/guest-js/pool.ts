@@ -19,11 +19,14 @@ export interface LateHandle {
 }
 
 class RustDatabase extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+  name: string;
+
   constructor(
-    readonly name: string,
+    name: string,
     readonly handle: LateHandle
   ) {
     super();
+    this.name = name;
   }
 
   async close() {

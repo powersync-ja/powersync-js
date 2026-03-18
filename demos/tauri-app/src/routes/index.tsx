@@ -58,7 +58,7 @@ function ListsEntry({ id, name }: ListEntry): ReactNode {
   }
 
   function open() {
-    const window = new WebviewWindow(`list-content-${id}`, {
+    new WebviewWindow(`list-content-${id}`, {
       // TODO: There's no way this works outside of the development server.
       url: `/list/${id}`,
 

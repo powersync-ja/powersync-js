@@ -46,11 +46,17 @@ impl<R: Runtime> PowerSync<R> {
         }
 
         PowerSyncEnvironment::powersync_auto_extension()?;
-        let env = PowerSyncEnvironment::custom(
-            reqwest::Client::new(),
+        let pool = if name == ":memory:" {
             ConnectionPool::single_connection(
                 Connection::open_in_memory().map_err(PowerSyncError::from)?,
-            ),
+            )
+        } else {
+            ConnectionPool::open(name)?
+        };
+
+        let env = PowerSyncEnvironment::custom(
+            reqwest::Client::new(),
+            pool,
             PowerSyncEnvironment::tokio_timer(),
         );
 

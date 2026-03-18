@@ -32,7 +32,7 @@ export function createDatabase() {
   const db = new PowerSyncTauriDatabase({
     schema,
     database: {
-      dbFilename: 'memory'
+      dbFilename: ':memory:'
     }
   });
   connect(db);
