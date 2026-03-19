@@ -36,7 +36,26 @@ export class MultiDatabaseServer {
   }
 
   async openConnectionLocally(options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
-    // Prevent multiple simultaneous opens from causing race conditions
+    // Especially on Firefox, we're sometimes seeing "NoModificationAllowedError"s when opening OPFS databases we can
+    // work around by retrying.
+    const maxAttempts = 3;
+    let server: DatabaseServer | null;
+
+    for (let count = 0; count < maxAttempts - 1; count++) {
+      try {
+        server = await this.databaseOpenAttempt(options);
+      } catch (ex) {
+        this.logger.warn(`Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`, ex);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    // Final attempt if we haven't been able to open the server - rethrow errors if we still can't open.
+    server ??= await this.databaseOpenAttempt(options);
+    return server.connect(lockName);
+  }
+
+  private async databaseOpenAttempt(options: ResolvedWASQLiteOpenFactoryOptions): Promise<DatabaseServer> {
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
       const { dbFilename } = options;
 
@@ -68,7 +87,7 @@ export class MultiDatabaseServer {
         this.activeDatabases.set(dbFilename, server);
       }
 
-      return server.connect(lockName);
+      return server;
     });
   }
 
