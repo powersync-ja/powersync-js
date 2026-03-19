@@ -1,5 +1,4 @@
-import { AbstractStreamingSyncImplementation, LockOptions, LockType, mutexRunExclusive } from '@powersync/web';
-import { Mutex } from 'async-mutex';
+import { AbstractStreamingSyncImplementation, LockOptions, LockType, Mutex } from '@powersync/web';
 
 type MutexMap = {
   /**
@@ -56,11 +55,8 @@ export class CapacitorStreamingSyncImplementation extends AbstractStreamingSyncI
     mutexRecord.tracking.add(this.instanceId);
     const mutex = mutexRecord.locks[lockOptions.type];
 
-    return mutexRunExclusive(mutex, async () => {
-      if (lockOptions.signal?.aborted) {
-        throw new Error('Aborted');
-      }
+    return mutex.runExclusive(async () => {
       return await lockOptions.callback();
-    });
+    }, lockOptions.signal);
   }
 }

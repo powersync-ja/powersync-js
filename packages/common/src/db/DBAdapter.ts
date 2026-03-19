@@ -16,7 +16,13 @@ import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
 export type QueryResult = {
   /** Represents the auto-generated row id if applicable. */
   insertId?: number;
-  /** Number of affected rows if result of a update query. */
+  /**
+   * Number of affected rows reported by SQLite for a write query.
+   *
+   * When using the default client-side [JSON-based view system](https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure),
+   * `rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
+   * Use a `RETURNING` clause and inspect `rows` when you need to confirm which rows changed.
+   */
   rowsAffected: number;
   /** if status is undefined or 0 this object will contain the query results */
   rows?: {

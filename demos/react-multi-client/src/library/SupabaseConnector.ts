@@ -3,6 +3,7 @@ import {
   BaseListener,
   BaseObserver,
   CrudEntry,
+  Mutex,
   PowerSyncBackendConnector,
   UpdateType
 } from '@powersync/web';
@@ -13,8 +14,6 @@ import { isFatalPostgresResponseCode } from './Postgres';
 export interface SupabaseConnectorListener extends BaseListener {
   onCRUDEvent: (event: { crudType: UpdateType; elapsedTimeMs: number }) => void;
 }
-
-import { Mutex } from 'async-mutex';
 
 export class SupabaseConnector extends BaseObserver<SupabaseConnectorListener> implements PowerSyncBackendConnector {
   static SHARED_MUTEX = new Mutex();

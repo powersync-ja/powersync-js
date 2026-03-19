@@ -96,8 +96,5 @@
     "android": {
       "src": "android"
     }
-  },
-  "dependencies": {
-    "async-mutex": "catalog:"
   }
 }

@@ -12,13 +12,14 @@ import {
   DBLockOptions,
   ILogger,
   LockContext,
+  Mutex,
   QueryResult,
   SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
+  timeoutSignal,
   Transaction
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
 import SQLJs from '@powersync/sql-js/dist/sql-asm.js';
 
@@ -165,7 +166,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
       this.tableUpdateCache.clear();
       this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;
-    });
+    }, timeoutSignal(options?.timeoutMs));
   }
 
   async refreshSchema(): Promise<void> {

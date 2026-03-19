@@ -8,6 +8,7 @@ import {
   SubscribedStream,
   SyncStatus,
   createLogger,
+  Mutex,
   type ILogLevel,
   type ILogger,
   type PowerSyncConnectionOptions,
@@ -15,7 +16,6 @@ import {
   type StreamingSyncImplementationListener,
   type SyncStatusOptions
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
 import {

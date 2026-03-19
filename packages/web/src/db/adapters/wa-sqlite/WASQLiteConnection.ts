@@ -1,6 +1,5 @@
 import * as SQLite from '@journeyapps/wa-sqlite';
-import { BaseObserver, BatchedUpdateNotification } from '@powersync/common';
-import { Mutex } from 'async-mutex';
+import { BaseObserver, BatchedUpdateNotification, Mutex } from '@powersync/common';
 import { AsyncDatabaseConnection, OnTableChangeCallback, ProxiedQueryResult } from '../AsyncDatabaseConnection.js';
 import { ResolvedWASQLiteOpenFactoryOptions } from './WASQLiteOpenFactory.js';
 /**
