@@ -30,8 +30,6 @@ export class ConcurrentSqliteConnection {
     private readonly inner: RawSqliteConnection,
     needsNavigatorLocks: boolean
   ) {
-    // The inner connection should already be initialized, fail early if it's not.
-    inner.requireSqlite();
     this.leaseMutex = needsNavigatorLocks ? null : new Mutex();
   }
 
@@ -39,7 +37,7 @@ export class ConcurrentSqliteConnection {
     return this.inner.options;
   }
 
-  private acquireMutex(abort?: AbortSignal): Promise<UnlockFn> {
+  acquireMutex(abort?: AbortSignal): Promise<UnlockFn> {
     if (this.leaseMutex) {
       return this.leaseMutex.acquire(abort);
     }
@@ -72,6 +70,9 @@ export class ConcurrentSqliteConnection {
     const token = new ConnectionLeaseToken(returnMutex, this.inner);
 
     try {
+      // Assert that the inner connection is initialized at this point, fail early if it's not.
+      this.inner.requireSqlite();
+
       // If a previous client was interrupted in the middle of a transaction AND this is a shared worker, it's possible
       // for the connection to still be in a transaction. To avoid inconsistent state, we roll back connection leases
       // that haven't been comitted.

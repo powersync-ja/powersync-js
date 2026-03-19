@@ -42,13 +42,26 @@ export class MultiDatabaseServer {
 
       let server: DatabaseServer | undefined = this.activeDatabases.get(dbFilename);
       if (server == null) {
+        const needsNavigatorLocks = !isSharedWorker;
         const connection = new RawSqliteConnection(options);
-        await connection.init();
+        const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
+
+        // Initializing the RawSqliteConnection will run some pragmas that might write to the database file, so we want
+        // to do that in an exclusive lock. Note that OPEN_DB_LOCK is not enough for that, as another tab might have
+        // already created a connection (and is thus outside of OPEN_DB_LOCK) while currently writing to it.
+        const returnLease = await withSafeConcurrency.acquireMutex();
+        try {
+          await connection.init();
+        } catch (e) {
+          returnLease();
+          await connection.close();
+          throw e;
+        }
+        returnLease();
 
         const onClose = () => this.activeDatabases.delete(dbFilename);
-        const needsNavigatorLocks = !isSharedWorker;
         server = new DatabaseServer({
-          inner: new ConcurrentSqliteConnection(connection, needsNavigatorLocks),
+          inner: withSafeConcurrency,
           logger: this.logger,
           onClose
         });
