@@ -1,5 +1,17 @@
 # @powersync/web
 
+## 1.37.0
+
+### Minor Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
 ## 1.36.0
 
 ### Minor Changes
