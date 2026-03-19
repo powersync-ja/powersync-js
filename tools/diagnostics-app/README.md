@@ -16,6 +16,17 @@ docker run --pull always -p 8082:80 journeyapps/powersync-diagnostics-app
 
 The app will be available on http://localhost:8082.
 
+#### Serving on a subpath
+
+To serve the app on a subpath (e.g. `example.com/powersync-diagnostics/`), build the image with the `BASE_PATH` build arg:
+
+```sh
+docker build --build-arg BASE_PATH=/powersync-diagnostics/ -t powersync-diagnostics .
+docker run -p 8082:80 powersync-diagnostics
+```
+
+The app will be available on http://localhost:8082/powersync-diagnostics/.
+
 ### Local Development
 
 In the root of the repository, run:

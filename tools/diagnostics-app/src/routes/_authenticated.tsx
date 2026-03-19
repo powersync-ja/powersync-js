@@ -80,13 +80,13 @@ function AppSidebar() {
             <img
               alt="PowerSync Logo"
               className="w-full max-w-[180px] object-contain"
-              src="/powersync-logo.svg"
+              src={`${import.meta.env.BASE_URL}powersync-logo.svg`}
             />
           ) : (
             <img
               alt="PowerSync"
               className="w-8 h-8 object-contain rounded-[20%]"
-              src="/icons/icon-192x192.png"
+              src={`${import.meta.env.BASE_URL}icons/icon-192x192.png`}
             />
           )}
         </SidebarHeader>

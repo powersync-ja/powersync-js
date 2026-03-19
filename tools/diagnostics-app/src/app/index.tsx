@@ -2,9 +2,13 @@ import { createRoot } from 'react-dom/client';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from '../routeTree.gen';
 
+// Derive basepath from Vite's base URL config (strips trailing slash for TanStack Router)
+const basepath = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
 // Create the router instance
 const router = createRouter({
   routeTree,
+  basepath,
   defaultPreload: 'intent',
   defaultPendingComponent: () => (
     <div className="flex min-h-screen items-center justify-center">

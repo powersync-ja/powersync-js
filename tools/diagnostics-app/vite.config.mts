@@ -6,8 +6,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
+const base = process.env.BASE_PATH || '/';
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  base,
   root: 'src',
   build: {
     outDir: '../dist',
@@ -27,6 +30,14 @@ export default defineConfig({
     exclude: ['@journeyapps/wa-sqlite', '@powersync/web']
   },
   plugins: [
+    {
+      name: 'html-base-path',
+      transformIndexHtml(html) {
+        return html
+          .replace('href="favicon.ico"', `href="${base}favicon.ico"`)
+          .replace('href="icons/', `href="${base}icons/`);
+      }
+    },
     tanstackRouter({
       generatedRouteTree: './routeTree.gen.ts',
       routesDirectory: './routes',
@@ -42,28 +53,28 @@ export default defineConfig({
         theme_color: '#c44eff',
         background_color: '#c44eff',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: base,
+        start_url: base,
         name: 'PowerSync Diagnostics',
         short_name: 'Diagnostics',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: `${base}icons/icon-192x192.png`,
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-256x256.png',
+            src: `${base}icons/icon-256x256.png`,
             sizes: '256x256',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-384x384.png',
+            src: `${base}icons/icon-384x384.png`,
             sizes: '384x384',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: `${base}icons/icon-512x512.png`,
             sizes: '512x512',
             type: 'image/png'
           }
