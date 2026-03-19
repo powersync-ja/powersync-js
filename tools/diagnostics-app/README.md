@@ -18,10 +18,11 @@ The app will be available on http://localhost:8082.
 
 #### Serving on a subpath
 
-To serve the app on a subpath (e.g. `example.com/powersync-diagnostics/`), build the image with the `BASE_PATH` build arg:
+To serve the app on a subpath (e.g. `example.com/powersync-diagnostics/`), build the image with the `BASE_PATH` build arg. The build must be run from the root of the monorepo since the Dockerfile references shared packages:
 
 ```sh
-docker build --build-arg BASE_PATH=/powersync-diagnostics/ -t powersync-diagnostics .
+# From the root of the repository
+docker build --build-arg BASE_PATH=/powersync-diagnostics/ -t powersync-diagnostics -f tools/diagnostics-app/Dockerfile .
 docker run -p 8082:80 powersync-diagnostics
 ```
 
