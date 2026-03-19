@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"enables the default permissions","local":true,"windows":["*"],"permissions":["core:default","powersync:default","core:webview:allow-create-webview-window","core:window:allow-set-title"]}}

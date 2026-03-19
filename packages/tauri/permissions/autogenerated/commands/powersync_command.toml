@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-powersync-command"
+description = "Enables the powersync_command command without any pre-configured scope."
+commands.allow = ["powersync_command"]
+
+[[permission]]
+identifier = "deny-powersync-command"
+description = "Denies the powersync_command command without any pre-configured scope."
+commands.deny = ["powersync_command"]

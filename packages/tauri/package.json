@@ -1,0 +1,36 @@
+{
+  "name": "@powersync/tauri-plugin",
+  "version": "0.1.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "author": "You",
+  "description": "",
+  "type": "module",
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "import": "./lib/index.js"
+  },
+  "files": [
+    "lib",
+    "guest-js",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "prepublishOnly": "pnpm build",
+    "pretest": "pnpm build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@powersync/common": "workspace:"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "catalog:",
+    "rollup": "catalog:",
+    "typescript": "catalog:",
+    "tslib": "^2.6.2"
+  }
+}

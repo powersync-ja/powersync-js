@@ -26,3 +26,5 @@ demos/**/.pnpmfile.cjs
 demos/**/.branches
 demos/**/.temp
 
+Cargo.lock
+target/
