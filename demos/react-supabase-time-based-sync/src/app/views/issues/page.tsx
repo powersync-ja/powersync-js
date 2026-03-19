@@ -29,7 +29,7 @@ export default function IssuesPage() {
 
   const datesParam = React.useMemo(() => JSON.stringify(selectedDates), [selectedDates]);
 
-  // Same predicate as the stream in sync-config.yaml (`substring(updated_at, 1, 10)`).
+  // Same predicate as the stream in sync-config.yaml (`substring(updated_at, 1, 10)`); replicas store timestamps as text.
   const { issuesSql, issuesParams } = React.useMemo(() => {
     if (selectedDates.length === 0) {
       return {

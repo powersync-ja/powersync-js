@@ -1,6 +1,6 @@
 # PowerSync + Supabase: Time-Based Sync (Local-First)
 
-This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues, each with an `updated_at` date. The client passes the selected dates as a JSON array to a single sync stream subscription. Toggling dates on or off updates the array and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
+This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. The client passes the selected **UTC calendar dates** (`YYYY-MM-DD`) as a JSON array to a single sync stream subscription. Toggling dates on or off updates the array and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
 
 This lets you model patterns like "sync the last N days of data" or "sync only the time ranges the user cares about" without re-deploying sync rules.
 
@@ -14,9 +14,11 @@ streams:
       WHERE substring(updated_at, 1, 10) IN (SELECT value FROM json_each(subscription.parameter('dates')))
 ```
 
+Postgres `TIMESTAMPTZ` values are handled like text for the first 10 characters (the `YYYY-MM-DD` prefix) in both the sync stream query and on the client replica.
+
 The client implementation is in `src/app/views/issues/page.tsx`. It:
 
-1. **Filters the local query** with the same predicate as the stream (`substring(updated_at, 1, 10)` plus bound `?` placeholders, or `WHERE 1 = 0` when no dates are selected).
+1. **Filters the local query** with the same predicate as the stream (`substring(updated_at, 1, 10)` plus bound `?` placeholders), or `WHERE 1 = 0` when no dates are selected.
 2. **Subscribes via `useSyncStream` in a small child** that only mounts when at least one date is selected (`ttl: 0` matches immediate eviction when nothing is selected).
 3. **Does not pass `streams` into `useQuery`** — doing so resets internal “stream synced” state on every parameter change and briefly clears `data`, which flickers the list when toggling chips quickly.
 
@@ -114,12 +116,12 @@ The schema and seed data are in `supabase/migrations/20260312000000_init_issues.
 
 When Supabase starts for the first time, the migration creates:
 
-- the `issues` table
+- the `issues` table (`created_at` / `updated_at` are `TIMESTAMPTZ`)
 - RLS policies for authenticated users (including anonymous sessions)
 - realtime publication for `issues`
 - sample issues used by the time-based sync filters
 
-If you want to re-apply from scratch:
+Run `supabase db reset` to re-apply migrations from scratch (required if you previously applied this migration when `created_at` / `updated_at` were `TEXT`).
 
 ```bash
 supabase db reset

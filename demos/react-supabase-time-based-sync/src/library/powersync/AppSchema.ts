@@ -9,6 +9,7 @@ const issues = new Table(
     status: column.text,
     priority: column.text,
     created_by: column.text,
+    // Postgres TIMESTAMPTZ — replicated to SQLite as text by PowerSync
     created_at: column.text,
     updated_at: column.text
   },

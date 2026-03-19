@@ -23,6 +23,12 @@ const priorityColor = (priority: string | null): 'default' | 'info' | 'warning' 
   }
 };
 
+const formatUpdatedAt = (value: string | null): string | null => {
+  if (value == null || value === '') return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? value : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+};
+
 const statusColor = (status: string | null): 'default' | 'success' | 'primary' => {
   switch (status) {
     case 'open':
@@ -62,7 +68,7 @@ export const IssueItemWidget: React.FC<IssueItemWidgetProps> = React.memo(({ iss
               {issue.description}
               {issue.updated_at && (
                 <Box component="span" sx={{ display: 'block', opacity: 0.7, fontSize: '0.75rem', mt: 0.5 }}>
-                  Updated: {issue.updated_at}
+                  Updated: {formatUpdatedAt(issue.updated_at)}
                 </Box>
               )}
             </Box>
