@@ -14,17 +14,50 @@ streams:
       WHERE substring(updated_at, 1, 10) IN (SELECT value FROM json_each(subscription.parameter('dates')))
 ```
 
-The client passes all selected dates as a single JSON-stringified parameter:
+The client implementation is in `src/app/views/issues/page.tsx`. It:
 
-```ts
-const datesParam = JSON.stringify(selectedDates);
+1. **Filters the local query** with the same predicate as the stream (`substring(updated_at, 1, 10)` plus bound `?` placeholders, or `WHERE 1 = 0` when no dates are selected).
+2. **Subscribes via `useSyncStream` in a small child** that only mounts when at least one date is selected (`ttl: 0` matches immediate eviction when nothing is selected).
+3. **Does not pass `streams` into `useQuery`** — doing so resets internal “stream synced” state on every parameter change and briefly clears `data`, which flickers the list when toggling chips quickly.
 
-useQuery(
-  'SELECT * FROM issues ORDER BY created_at DESC',
-  [],
-  { streams: [{ name: 'issues_by_date', parameters: { dates: datesParam }, ttl: 0 }] }
+```tsx
+import { useQuery, useSyncStream } from '@powersync/react';
+
+function IssuesByDateStreamSubscription({ datesParam }: { datesParam: string }) {
+  useSyncStream({ name: 'issues_by_date', parameters: { dates: datesParam }, ttl: 0 });
+  return null;
+}
+
+// Inside your page component:
+const datesParam = React.useMemo(() => JSON.stringify(selectedDates), [selectedDates]);
+
+const { issuesSql, issuesParams } = React.useMemo(() => {
+  if (selectedDates.length === 0) {
+    return {
+      issuesSql: `SELECT * FROM issues WHERE 1 = 0 ORDER BY created_at DESC`,
+      issuesParams: [] as string[]
+    };
+  }
+  const placeholders = selectedDates.map(() => '?').join(', ');
+  return {
+    issuesSql: `SELECT * FROM issues WHERE substring(updated_at, 1, 10) IN (${placeholders}) ORDER BY created_at DESC`,
+    issuesParams: selectedDates
+  };
+}, [selectedDates]);
+
+const { data: issues } = useQuery(issuesSql, issuesParams);
+
+return (
+  <>
+    {selectedDates.length > 0 ? (
+      <IssuesByDateStreamSubscription datesParam={datesParam} />
+    ) : null}
+    {/* …render chips and list from `issues`… */}
+  </>
 );
 ```
+
+In the repo, those `SELECT * FROM issues` fragments use `` `${ISSUES_TABLE}` `` from `src/library/powersync/AppSchema.ts` (the table name is `'issues'`), and the hook is `useQuery<IssueRecord>(issuesSql, issuesParams)`.
 
 The demo runs against local Supabase (`supabase start`) and self-hosted PowerSync (via the PowerSync CLI). It uses anonymous Supabase auth — there is no login or registration flow.
 
