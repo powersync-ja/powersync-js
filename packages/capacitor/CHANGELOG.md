@@ -1,5 +1,13 @@
 # @powersync/capacitor
 
+## 0.5.2
+
+### Patch Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+- Updated dependencies [8f8ef1c]
+  - @powersync/web@1.37.0
+
 ## 0.5.1
 
 ### Patch Changes

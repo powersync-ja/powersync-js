@@ -1,5 +1,15 @@
 # @powersync/nuxt
 
+## 0.0.5
+
+### Patch Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+- Updated dependencies [8f8ef1c]
+  - @powersync/web@1.37.0
+  - @powersync/vue@0.5.0
+  - @powersync/kysely-driver@1.3.3
+
 ## 0.0.4
 
 ### Patch Changes
