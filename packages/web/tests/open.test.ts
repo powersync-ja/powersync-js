@@ -1,12 +1,16 @@
-import { AbstractPowerSyncDatabase, Schema } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
 import {
   PowerSyncDatabase,
-  WASQLiteDBAdapter,
+  ResolvedWASQLiteOpenFactoryOptions,
+  TemporaryStorageOption,
   WASQLiteOpenFactory,
-  WASQLitePowerSyncDatabaseOpenFactory
+  WASQLitePowerSyncDatabaseOpenFactory,
+  WASQLiteVFS
 } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
+import { MultiDatabaseServer } from '../src/worker/db/MultiDatabaseServer.js';
+import { DatabaseClient } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -74,9 +78,32 @@ describe('Open Methods', { sequential: true }, () => {
   });
 
   it('Should open with an existing DBAdapter', async () => {
-    const adapter = new WASQLiteDBAdapter({ dbFilename: 'adapter-test.db' });
-    const db = new PowerSyncDatabase({ database: adapter, schema: TEST_SCHEMA });
+    const server = new MultiDatabaseServer(createLogger('adapter-test'));
+    const options: ResolvedWASQLiteOpenFactoryOptions = {
+      vfs: WASQLiteVFS.IDBBatchAtomicVFS,
+      flags: {
+        broadcastLogs: false,
+        disableSSRWarning: false,
+        enableMultiTabs: false,
+        useWebWorker: false,
+        ssrMode: false
+      },
+      temporaryStorage: TemporaryStorageOption.MEMORY,
+      cacheSizeKb: 0,
+      dbFilename: ''
+    };
+    const connection = await server.openConnectionLocally(options);
+    const Adapter = DBAdapterDefaultMixin(DatabaseClient);
+    const client = new Adapter(
+      {
+        connection,
+        remoteCanCloseUnexpectedly: false,
+        source: null
+      },
+      options
+    );
 
+    const db = new PowerSyncDatabase({ database: client, schema: TEST_SCHEMA });
     await basicTest(db);
   });
 

@@ -15,6 +15,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './WebStreamingSyncImplementation.js';
+import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
 
 /**
  * The shared worker will trigger methods on this side of the message port
@@ -192,26 +193,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      *    - We resolve the top-level promise after the lock has been registered with the shared worker.
      * - The client sends the params to the shared worker after locks have been registered.
      */
-    await new Promise<void>((resolve) => {
-      // Request a random lock until this client is disposed. The name of the lock is sent to the shared worker, which
-      // will also attempt to acquire it. Since the lock is returned when the tab is closed, this allows the share worker
-      // to free resources associated with this tab.
-      // We take hold of this lock as soon-as-possible in order to cater for potentially closed tabs.
-      getNavigatorLocks().request(`tab-close-signal-${crypto.randomUUID()}`, async (lock) => {
-        if (this.abortOnClose.signal.aborted) {
-          return;
-        }
-        // Awaiting here ensures the worker is waiting for the lock
-        await this.syncManager.addLockBasedCloseSignal(lock!.name);
-
-        // The lock has been registered, we can continue with the initialization
-        resolve();
-
-        await new Promise<void>((r) => {
-          this.abortOnClose.signal.onabort = () => r();
-        });
-      });
-    });
+    const closeSignal = await generateTabCloseSignal(this.abortOnClose.signal);
+    // Awaiting here ensures the worker is waiting for the lock
+    await this.syncManager.addLockBasedCloseSignal(closeSignal);
 
     const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
