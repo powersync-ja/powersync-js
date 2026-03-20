@@ -18,6 +18,8 @@ describe('Mock Sync Service Example', { timeout: 100000 }, () => {
     'should allow mocking sync responses in shared worker',
     { timeout: 100000 },
     async ({ context: { database, connect, mockService } }) => {
+      expect(await database.getAll('SELECT * FROM lists WHERE id = ?', ['1'])).toHaveLength(0);
+
       // Call connect to start the sync worker and get the sync service
       const { syncRequestId } = await connect();
 
