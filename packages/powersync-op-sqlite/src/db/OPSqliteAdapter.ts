@@ -201,8 +201,8 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     try {
       return await fn(item);
     } finally {
-      cleanUpInnerSignal?.();
       release();
+      cleanUpInnerSignal?.();
     }
   }
 
@@ -214,8 +214,8 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     try {
       return await fn(item).finally(() => item.flushUpdates());
     } finally {
-      cleanUpInnerSignal?.();
       release();
+      cleanUpInnerSignal?.();
     }
   }
 

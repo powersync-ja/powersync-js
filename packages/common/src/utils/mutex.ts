@@ -53,7 +53,7 @@ export class Semaphore<T> {
 
   private requestPermits(amount: number, abort?: AbortSignal): Promise<{ items: T[]; release: UnlockFn }> {
     if (amount <= 0 || amount > this.size) {
-      throw new Error('Requested more items than exist in semaphore');
+      throw new Error(`Invalid amount of items requested (${amount}), must be between 1 and ${this.size}`);
     }
 
     return new Promise((resolve, reject) => {
@@ -64,15 +64,20 @@ export class Semaphore<T> {
         return rejectAborted();
       }
 
-      const markCompleted = (acquired: T[]) => {
-        for (const element of acquired) {
-          // Give to waiter, if possible.
-          const waiter = this.firstWaiter;
-          if (waiter) {
-            waiter.acquiredItems.push(element);
-            waiter.remainingItems--;
-            if (waiter.remainingItems == 0) {
-              waiter.onAcquire();
+      let waiter: SemaphoreWaitNode<T>;
+
+      const markCompleted = () => {
+        const items = waiter.acquiredItems;
+        waiter.acquiredItems = []; // Avoid releasing items twice.
+
+        for (const element of items) {
+          // Give to next waiter, if possible.
+          const nextWaiter = this.firstWaiter;
+          if (nextWaiter) {
+            nextWaiter.acquiredItems.push(element);
+            nextWaiter.remainingItems--;
+            if (nextWaiter.remainingItems == 0) {
+              nextWaiter.onAcquire();
             }
           } else {
             // No pending waiter, return lease into pool.
@@ -80,8 +85,6 @@ export class Semaphore<T> {
           }
         }
       };
-
-      let waiter: SemaphoreWaitNode<T>;
 
       const onAbort = () => {
         abort?.removeEventListener('abort', onAbort);
@@ -97,7 +100,7 @@ export class Semaphore<T> {
         abort?.removeEventListener('abort', onAbort);
 
         const items = waiter.acquiredItems;
-        resolve({ items, release: () => markCompleted(items) });
+        resolve({ items, release: markCompleted });
       };
 
       waiter = this.addWaiter(amount, resolvePromise);

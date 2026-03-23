@@ -119,14 +119,14 @@ describe('Semaphore', () => {
     release2();
     await allPromise;
     expect(allItems).toHaveLength(3);
-    expect(allItems!.sort()).toEqual(['a', 'b', 'c']);
+    expect(allItems).toStrictEqual(['c', 'a', 'b']);
   });
 
   it('requestAll blocks subsequent requestOne until released', async () => {
     const semaphore = new Semaphore(['a', 'b']);
 
     const { items, release: releaseAll } = await semaphore.requestAll();
-    expect(items.sort()).toEqual(['a', 'b']);
+    expect(items).toStrictEqual(['a', 'b']);
 
     let gotOne: string | null = null;
     const onePromise = semaphore.requestOne().then(({ item, release }) => {
@@ -139,7 +139,7 @@ describe('Semaphore', () => {
 
     releaseAll();
     await onePromise;
-    expect(gotOne).not.toBeNull();
+    expect(gotOne).toStrictEqual('a');
   });
 
   it('can abort a waiting requestOne', async () => {
@@ -174,6 +174,45 @@ describe('Semaphore', () => {
     release();
     const { item } = await third;
     expect(item).toBe('x');
+  });
+
+  it('double-release is a no-op', async () => {
+    const semaphore = new Semaphore(['x']);
+
+    const { item, release } = await semaphore.requestOne();
+    expect(item).toBe('x');
+
+    release();
+    release(); // Second call should be a no-op and not corrupt the pool.
+
+    const { item: item2, release: release2 } = await semaphore.requestOne();
+    expect(item2).toBe('x');
+    release2();
+  });
+
+  it('distributes released items to mixed requestOne and requestAll waiters in order', async () => {
+    const semaphore = new Semaphore(['a', 'b', 'c']);
+
+    // Hold all items so subsequent requests queue up.
+    const { release: releaseHeld } = await semaphore.requestAll();
+
+    // Queue a requestOne first, then a requestAll behind it.
+    const onePromise = semaphore.requestOne();
+    const allPromise = semaphore.requestAll();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    releaseHeld();
+
+    // requestOne was first in queue, so it resolves first. Releasing it satisfies the pending requestAll.
+    const { item, release: releaseOne } = await onePromise;
+    expect(item).toStrictEqual('a');
+    releaseOne();
+
+    const { items: allGot, release: releaseAll } = await allPromise;
+    expect(allGot).toHaveLength(3);
+    expect(allGot).toStrictEqual(['b', 'c', 'a']);
+    releaseAll();
   });
 });
 
