@@ -8,8 +8,8 @@ import {
   DBLockOptions,
   QueryResult,
   Transaction,
-  Mutex,
-  timeoutSignal
+  timeoutSignal,
+  Semaphore
 } from '@powersync/common';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
@@ -28,22 +28,18 @@ const READ_CONNECTIONS = 5;
 
 class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   name: string;
-  protected writeMutex: Mutex;
 
   protected initialized: Promise<void>;
 
-  protected readConnections: Array<{ busy: boolean; connection: OPSQLiteConnection }> | null;
+  protected readConnections: Semaphore<OPSQLiteConnection> | null;
+  protected writeConnection: Semaphore<OPSQLiteConnection> | null;
 
-  protected writeConnection: OPSQLiteConnection | null;
-
-  private readQueue: Array<() => void> = [];
   private abortController: AbortController;
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
     this.name = this.options.name;
 
-    this.writeMutex = new Mutex();
     this.readConnections = null;
     this.writeConnection = null;
     this.abortController = new AbortController();
@@ -55,7 +51,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
       this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
-    this.writeConnection = await this.openConnection(dbFilename);
+    const underlyingWriteConnection = await this.openConnection(dbFilename);
 
     const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -75,7 +71,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
-          await this.writeConnection!.execute(statement);
+          await underlyingWriteConnection.execute(statement);
           break;
         } catch (e: any) {
           if (e instanceof Error && e.message.includes('database is locked') && tries < 29) {
@@ -88,18 +84,21 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     }
 
     // Changes should only occur in the write connection
-    this.writeConnection!.registerListener({
+    underlyingWriteConnection.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
     });
 
-    this.readConnections = [];
+    const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = await this.openConnection(dbFilename);
       for (let statement of readConnectionStatements) {
         await conn.execute(statement);
       }
-      this.readConnections.push({ busy: false, connection: conn });
+      underlyingReadConnections.push(conn);
     }
+
+    this.writeConnection = new Semaphore([underlyingWriteConnection]);
+    this.readConnections = new Semaphore(underlyingReadConnections);
   }
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
@@ -155,53 +154,20 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     await this.initialized;
     // Abort any pending operations
     this.abortController.abort();
-    this.readQueue = [];
 
-    this.writeConnection!.close();
-    this.readConnections!.forEach((c) => c.connection.close());
-  }
+    const { item: writeConnection, release: returnWrite } = await this.writeConnection!.requestOne();
+    const { items: readers, release: returnReaders } = await this.readConnections!.requestAll();
 
-  async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    await this.initialized;
-    return new Promise(async (resolve, reject) => {
-      const execute = async () => {
-        // Find an available connection that is not busy
-        const availableConnection = this.readConnections!.find((conn) => !conn.busy);
-
-        // If we have an available connection, use it
-        if (availableConnection) {
-          availableConnection.busy = true;
-          try {
-            resolve(await fn(availableConnection.connection));
-          } catch (error) {
-            reject(error);
-          } finally {
-            availableConnection.busy = false;
-            // After query execution, process any queued tasks
-            this.processQueue();
-          }
-        } else {
-          // If no available connections, add to the queue
-          this.readQueue.push(execute);
-        }
-      };
-
-      execute();
-    });
-  }
-
-  private async processQueue(): Promise<void> {
-    if (this.readQueue.length > 0) {
-      const next = this.readQueue.shift();
-      if (next) {
-        next();
-      }
+    try {
+      writeConnection.close();
+      readers.forEach((c) => c.close());
+    } finally {
+      returnWrite();
+      returnReaders();
     }
   }
 
-  async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    await this.initialized;
-
+  private generateNestedAbortSignal(options?: DBLockOptions) {
     const outerSignal = this.abortController.signal;
     let signal: AbortSignal;
     let cleanUpInnerSignal: (() => void) | undefined;
@@ -224,23 +190,45 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
       signal = outerSignal;
     }
 
+    return { signal, cleanUpInnerSignal };
+  }
+
+  async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    await this.initialized;
+
+    const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
+    const { item, release } = await this.readConnections!.requestOne(signal);
     try {
-      return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
+      return await fn(item);
     } finally {
-      // flush updates once a write lock has been released
-      this.writeConnection!.flushUpdates();
       cleanUpInnerSignal?.();
+      release();
+    }
+  }
+
+  async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    await this.initialized;
+
+    const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
+    const { item, release } = await this.writeConnection!.requestOne(signal);
+    try {
+      return await fn(item).finally(() => item.flushUpdates());
+    } finally {
+      cleanUpInnerSignal?.();
+      release();
     }
   }
 
   async refreshSchema(): Promise<void> {
     await this.initialized;
-    await this.writeConnection!.refreshSchema();
-
-    if (this.readConnections) {
-      for (let readConnection of this.readConnections) {
-        await readConnection.connection.refreshSchema();
+    await this.writeLock((l) => l.refreshSchema());
+    const { items, release } = await this.readConnections!.requestAll();
+    try {
+      for (let readConnection of items) {
+        await readConnection.refreshSchema();
       }
+    } finally {
+      release();
     }
   }
 }
