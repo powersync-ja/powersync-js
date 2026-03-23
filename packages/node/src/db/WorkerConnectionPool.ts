@@ -12,10 +12,11 @@ import {
   DBLockOptions,
   LockContext,
   QueryResult,
+  Semaphore,
+  timeoutSignal,
   Transaction
 } from '@powersync/common';
 import { Remote } from 'comlink';
-import { AsyncResource } from 'node:async_hooks';
 import { isBundledToCommonJs } from '../utils/modules.js';
 import { AsyncDatabase, AsyncDatabaseOpener } from './AsyncDatabase.js';
 import { RemoteConnection } from './RemoteConnection.js';
@@ -40,11 +41,8 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
-  private readConnections: RemoteConnection[];
-  private writeConnection: RemoteConnection;
-
-  private readonly readQueue: Array<(connection: RemoteConnection) => void> = [];
-  private readonly writeQueue: Array<() => void> = [];
+  private writeConnection: Semaphore<RemoteConnection>;
+  private readConnections: Semaphore<RemoteConnection>;
 
   constructor(options: NodeSQLOpenOptions) {
     super();
@@ -148,99 +146,70 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
     };
 
     // Open the writer first to avoid multiple threads enabling WAL concurrently (causing "database is locked" errors).
-    this.writeConnection = await openWorker(true);
+    this.writeConnection = new Semaphore([await openWorker(true)]);
     const createWorkers: Promise<RemoteConnection>[] = [];
     const amountOfReaders = this.options.readWorkerCount ?? READ_CONNECTIONS;
     for (let i = 0; i < amountOfReaders; i++) {
       createWorkers.push(openWorker(false));
     }
-    this.readConnections = await Promise.all(createWorkers);
+    this.readConnections = new Semaphore(await Promise.all(createWorkers));
   }
 
   async close() {
-    await this.writeConnection.close();
-    for (const connection of this.readConnections) {
-      await connection.close();
+    const { item: writeConnection, release: returnWrite } = await this.writeConnection.requestOne();
+    const { items: readers, release: returnReaders } = await this.readConnections.requestAll();
+
+    try {
+      await writeConnection.close();
+      await Promise.all(readers.map((r) => r.close()));
+    } finally {
+      returnWrite();
+      returnReaders();
     }
   }
 
-  readLock<T>(fn: (tx: BetterSQLite3LockContext) => Promise<T>, _options?: DBLockOptions | undefined): Promise<T> {
-    let resolveConnectionPromise!: (connection: RemoteConnection) => void;
-    const connectionPromise = new Promise<RemoteConnection>((resolve, _reject) => {
-      resolveConnectionPromise = AsyncResource.bind(resolve);
-    });
-
-    const connection = this.readConnections.find((connection) => !connection.isBusy);
-    if (connection) {
-      connection.isBusy = true;
-      resolveConnectionPromise(connection);
-    } else {
-      this.readQueue.push(resolveConnectionPromise);
+  async readLock<T>(fn: (tx: RemoteConnection) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
+    const lease = await this.readConnections.requestOne(timeoutSignal(options?.timeoutMs));
+    try {
+      return await fn(lease.item);
+    } finally {
+      lease.release();
     }
-
-    return (async () => {
-      const connection = await connectionPromise;
-
-      try {
-        return await fn(connection);
-      } finally {
-        const next = this.readQueue.shift();
-        if (next) {
-          next(connection);
-        } else {
-          connection.isBusy = false;
-        }
-      }
-    })();
   }
 
-  writeLock<T>(fn: (tx: BetterSQLite3LockContext) => Promise<T>, _options?: DBLockOptions | undefined): Promise<T> {
-    let resolveLockPromise!: () => void;
-    const lockPromise = new Promise<void>((resolve, _reject) => {
-      resolveLockPromise = AsyncResource.bind(resolve);
-    });
+  async writeLock<T>(fn: (tx: RemoteConnection) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
+    const { item, release } = await this.writeConnection.requestOne(timeoutSignal(options?.timeoutMs));
 
-    if (!this.writeConnection.isBusy) {
-      this.writeConnection.isBusy = true;
-      resolveLockPromise();
-    } else {
-      this.writeQueue.push(resolveLockPromise);
-    }
-
-    return (async () => {
-      await lockPromise;
-
+    try {
       try {
-        try {
-          return await fn(this.writeConnection);
-        } finally {
-          const serializedUpdates = await this.writeConnection.executeRaw("SELECT powersync_update_hooks('get');", []);
-          const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
-
-          if (updates.length > 0) {
-            const event: BatchedUpdateNotification = {
-              tables: updates,
-              groupedUpdates: {},
-              rawUpdates: []
-            };
-            this.iterateListeners((cb) => cb.tablesUpdated?.(event));
-          }
-        }
+        return await fn(item);
       } finally {
-        const next = this.writeQueue.shift();
-        if (next) {
-          next();
-        } else {
-          this.writeConnection.isBusy = false;
+        const serializedUpdates = await item.executeRaw("SELECT powersync_update_hooks('get');", []);
+        const updates = JSON.parse(serializedUpdates[0][0] as string) as string[];
+
+        if (updates.length > 0) {
+          const event: BatchedUpdateNotification = {
+            tables: updates,
+            groupedUpdates: {},
+            rawUpdates: []
+          };
+          this.iterateListeners((cb) => cb.tablesUpdated?.(event));
         }
       }
-    })();
+    } finally {
+      release();
+    }
   }
 
   async refreshSchema() {
-    await this.writeConnection.refreshSchema();
+    await this.writeLock((l) => l.refreshSchema());
 
-    await Promise.all(this.readConnections.map((c) => c.refreshSchema()));
+    const { items, release } = await this.readConnections.requestAll();
+    try {
+      await Promise.all(items.map((c) => c.refreshSchema()));
+    } finally {
+      release();
+    }
   }
 }
 
