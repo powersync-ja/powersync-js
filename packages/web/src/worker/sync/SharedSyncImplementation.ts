@@ -2,7 +2,12 @@ import {
   AbortOperation,
   BaseObserver,
   ConnectionManager,
+  ConnectionPool,
   DBAdapter,
+  DBAdapterDefaultMixin,
+  DBAdapterListener,
+  DBLockOptions,
+  LockContext,
   PowerSyncBackendConnector,
   SqliteBucketStorage,
   SubscribedStream,
@@ -23,12 +28,11 @@ import {
   WebStreamingSyncImplementationOptions
 } from '../../db/sync/WebStreamingSyncImplementation.js';
 
-import { OpenAsyncDatabaseConnection } from '../../db/adapters/AsyncDatabaseConnection.js';
-import { LockedAsyncDatabaseAdapter } from '../../db/adapters/LockedAsyncDatabaseAdapter.js';
-import { WorkerWrappedAsyncDatabaseConnection } from '../../db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
 import { ResolvedWebSQLOpenOptions } from '../../db/adapters/web-sql-flags.js';
 import { AbstractSharedSyncClientProvider } from './AbstractSharedSyncClientProvider.js';
 import { BroadcastLogger } from './BroadcastLogger.js';
+import { DatabaseClient, OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
+import { generateTabCloseSignal } from '../../shared/tab_close_signal.js';
 
 /**
  * @internal
@@ -116,7 +120,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected connectionManager: ConnectionManager;
   syncStatus: SyncStatus;
   broadCastLogger: ILogger;
-  protected distributedDB: DBAdapter | null;
+  protected readonly database = this.generateReconnectableDatabase();
 
   constructor() {
     super();
@@ -134,9 +138,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
         }
       });
     });
-
-    // Should be configured once we get params
-    this.distributedDB = null;
 
     this.syncStatus = new SyncStatus({});
     this.broadCastLogger = new BroadcastLogger(this.ports);
@@ -254,40 +255,8 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       this.logger = this.broadCastLogger;
     }
 
-    const lockedAdapter = new LockedAsyncDatabaseAdapter({
-      name: params.dbParams.dbFilename,
-      openConnection: async () => {
-        // Gets a connection from the clients when a new connection is requested.
-        const db = await this.openInternalDB();
-        db.registerListener({
-          closing: () => {
-            lockedAdapter.reOpenInternalDB();
-          }
-        });
-        return db;
-      },
-      logger: this.logger,
-      reOpenOnConnectionClosed: true
-    });
-    this.distributedDB = lockedAdapter;
-    await lockedAdapter.init();
-
-    lockedAdapter.registerListener({
-      databaseReOpened: () => {
-        // We may have missed some table updates while the database was closed.
-        // We can poke the crud in case we missed any updates.
-        this.connectionManager.syncStreamImplementation?.triggerCrudUpload();
-
-        /**
-         * FIXME or IMPROVE ME
-         * The Rust client implementation stores sync state on the connection level.
-         * Reopening the database causes a state machine error which should cause the
-         * StreamingSyncImplementation to reconnect. It would be nicer if we could trigger
-         * this reconnect earlier.
-         * This reconnect is not required for IndexedDB.
-         */
-      }
-    });
+    // Ensure we have a usable database connection, the reconnectable database will connect lazily on first use.
+    await this.database.readLock(async () => {});
 
     self.onerror = (event) => {
       // Share any uncaught events on the broadcast logger
@@ -429,7 +398,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     const syncParams = this.syncParams!;
     // Create a new StreamingSyncImplementation for each connect call. This is usually done is all SDKs.
     return new WebStreamingSyncImplementation({
-      adapter: new SqliteBucketStorage(this.distributedDB!, this.logger),
+      adapter: new SqliteBucketStorage(this.database, this.logger),
       remote: new WebRemote(
         {
           invalidateCredentials: async () => {
@@ -502,9 +471,11 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   }
 
   /**
-   * Opens a worker wrapped database connection. Using the last connected client port.
+   * Requests a random client to share its database connection with us.
    */
-  protected async openInternalDB() {
+  private async openInternalDB(
+    handleClosed: (db: DatabaseClient<ResolvedWebSQLOpenOptions>) => void
+  ): Promise<DatabaseClient<ResolvedWebSQLOpenOptions>> {
     const client = await this.getRandomWrappedPort();
     if (!client) {
       // Should not really happen in practice
@@ -544,8 +515,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       throw ex;
     });
 
-    const remote = Comlink.wrap<OpenAsyncDatabaseConnection>(workerPort);
+    const remote = Comlink.wrap<OpenWorkerConnection>(workerPort);
     const identifier = this.syncParams!.dbParams.dbFilename;
+
+    const clientLockName = await generateTabCloseSignal();
 
     /**
      * The open could fail if the tab is closed while we're busy opening the database.
@@ -554,7 +527,19 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
      * We can't rely on the closeListeners to abort the operation if the tab is closed.
      */
     const db = await withAbort({
-      action: () => remote(this.syncParams!.dbParams),
+      action: async () => {
+        const clientView = await remote.connectToExisting({ identifier, lockName: clientLockName });
+        return new DatabaseClient<ResolvedWebSQLOpenOptions>(
+          {
+            connection: clientView,
+            source: remote,
+            // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
+            // that and ensure pending requests are aborted when the tab is closed.
+            remoteCanCloseUnexpectedly: true
+          },
+          this.syncParams!.dbParams
+        );
+      },
       signal: abortController.signal,
       cleanupOnAbort: (db) => {
         db.close();
@@ -566,26 +551,101 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     clearTimeout(timeout);
 
-    const wrapped = new WorkerWrappedAsyncDatabaseConnection({
-      remote,
-      baseConnection: db,
-      identifier,
-      // It's possible for this worker to outlive the client hosting the database for us. We need to be prepared for
-      // that and ensure pending requests are aborted when the tab is closed.
-      remoteCanCloseUnexpectedly: true
-    });
     client.closeListeners.push(async () => {
       this.logger.info('Aborting open connection because associated tab closed.');
+      handleClosed(db);
       /**
        * Don't await this close operation. It might never resolve if the tab is closed.
        * We mark the remote as closed first, this will reject any pending requests.
        * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
        */
-      wrapped.markRemoteClosed();
-      wrapped.close().catch((ex) => this.logger.warn('error closing database connection', ex));
+      db.markRemoteClosed();
+      db.close().catch((ex) => this.logger.warn('error closing database connection', ex));
     });
+    return db;
+  }
 
-    return wrapped;
+  private generateReconnectableDatabase(): DBAdapter {
+    const syncParams = this.syncParams;
+    const sharedSync = this;
+
+    class ReconnectPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
+      private connectionState:
+        | null
+        | DatabaseClient<ResolvedWebSQLOpenOptions>
+        | Promise<DatabaseClient<ResolvedWebSQLOpenOptions>> = null;
+
+      get name(): string {
+        return syncParams?.dbParams.dbFilename!;
+      }
+
+      private async connect(): Promise<DatabaseClient<ResolvedWebSQLOpenOptions>> {
+        if (this.connectionState == null) {
+          const handleClosed = this.handleClientClosed.bind(this);
+          this.connectionState = (async () => {
+            try {
+              const db = await sharedSync.openInternalDB(handleClosed);
+              db.registerListener({
+                tablesUpdated: (notification) => {
+                  this.iterateListeners((l) => l.tablesUpdated?.(notification));
+                }
+              });
+              this.connectionState = db;
+              return db;
+            } catch (e) {
+              // Allow reconnecting when the database is used again.
+              this.connectionState = null;
+              throw e;
+            }
+          })();
+        }
+
+        return await this.connectionState;
+      }
+
+      async close() {
+        if (this.connectionState != null) {
+          await (await this.connectionState).close();
+        }
+      }
+
+      handleClientClosed(client: DatabaseClient<ResolvedWebSQLOpenOptions>) {
+        if (client === this.connectionState) {
+          this.connectionState = null;
+
+          // We may have missed some table updates while the database was closed.
+          // We can poke the crud in case we missed any updates.
+          const impl = sharedSync.connectionManager.syncStreamImplementation! as WebStreamingSyncImplementation;
+          impl?.triggerCrudUpload();
+
+          /**
+           * FIXME or IMPROVE ME
+           * The Rust client implementation stores sync state on the connection level.
+           * Reopening the database causes a state machine error which should cause the
+           * StreamingSyncImplementation to reconnect. It would be nicer if we could trigger
+           * this reconnect earlier.
+           * This reconnect is not required for IndexedDB.
+           */
+        }
+      }
+
+      async readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+        const db = await this.connect();
+        return db.readLock(fn, options);
+      }
+
+      async writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+        const db = await this.connect();
+        return db.writeLock(fn, options);
+      }
+
+      async refreshSchema(): Promise<void> {
+        // Not used by sync client.
+      }
+    }
+
+    const Adapter = DBAdapterDefaultMixin(ReconnectPool);
+    return new Adapter();
   }
 
   /**
