@@ -2,7 +2,9 @@ use powersync::error::PowerSyncError;
 use powersync::schema::SchemaOrCustom;
 use powersync::{env::PowerSyncEnvironment, ConnectionPool, PowerSyncDatabase};
 use rusqlite::Connection;
+use std::collections::hash_map::Entry;
 use std::marker::PhantomData;
+use std::sync::{Arc, Weak};
 use std::{collections::HashMap, sync::Mutex};
 use tauri::{
     plugin::{Builder, TauriPlugin},
@@ -17,6 +19,7 @@ mod error;
 mod handle;
 mod models;
 
+use crate::database::TauriDatabaseState;
 use crate::handle::JavaScriptHandles;
 pub use error::Result;
 
@@ -34,16 +37,25 @@ impl<R: Runtime, T: Manager<R>> PowerSyncExt<R> for T {
 
 pub struct PowerSync<R: Runtime> {
     app: PhantomData<AppHandle<R>>,
-    databases: Mutex<HashMap<String, PowerSyncDatabase>>,
+    databases: Mutex<HashMap<String, Weak<TauriDatabaseState>>>,
     pub(crate) handles: JavaScriptHandles,
 }
 
 impl<R: Runtime> PowerSync<R> {
-    pub fn open_database(&self, name: &str, schema: SchemaOrCustom) -> Result<PowerSyncDatabase> {
+    pub(crate) fn open_database(
+        &self,
+        app: AppHandle<R>,
+        name: &str,
+        schema: SchemaOrCustom,
+    ) -> Result<Arc<TauriDatabaseState>> {
         let mut map = self.databases.lock().unwrap();
-        if let Some(database) = map.get(name) {
-            return Ok(database.clone());
-        }
+        let mut entry = map.entry(name.to_owned());
+
+        if let Entry::Occupied(entry) = &mut entry {
+            if let Some(existing) = entry.get().upgrade() {
+                return Ok(existing);
+            }
+        };
 
         PowerSyncEnvironment::powersync_auto_extension()?;
         let pool = if name == ":memory:" {
@@ -63,8 +75,10 @@ impl<R: Runtime> PowerSync<R> {
         let database = PowerSyncDatabase::new(env, schema);
         database.async_tasks().spawn_with_tokio();
 
-        map.insert(name.to_owned(), database.clone());
-        Ok(database)
+        let db = Arc::new(TauriDatabaseState::new(app, name, database));
+        entry.insert_entry(Arc::downgrade(&db));
+
+        Ok(db)
     }
 
     /// Resolves a [PowerSyncDatabase] from the handle obtained from

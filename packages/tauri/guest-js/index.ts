@@ -1,1 +1,1 @@
-export { PowerSyncTauriDatabase } from './database';
+export { PowerSyncTauriDatabase, TauriPowerSyncOpenOptions, TauriSQLOpenOptions } from './database';

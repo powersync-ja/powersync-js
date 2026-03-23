@@ -1,4 +1,4 @@
-use crate::database::{SerializableSyncStatus, TauriDatabaseState};
+use crate::database::SerializableSyncStatus;
 use crate::error::PowerSyncTauriError;
 use crate::handle::{Handle, SharedWithJavaScript};
 use crate::{PowerSync, Result};
@@ -267,12 +267,13 @@ pub(crate) async fn powersync<R: Runtime>(
 ) -> Result<CommandResult> {
     let response = match command {
         Command::OpenDatabase(open) => {
-            let db =
-                powersync.open_database(&open.name, SchemaOrCustom::from(open.schema.as_ref()))?;
+            let db = powersync.open_database(
+                app,
+                &open.name,
+                SchemaOrCustom::from(open.schema.as_ref()),
+            )?;
 
-            CommandResult::CreatedHandle(powersync.handles.put(SharedWithJavaScript::Database(
-                Arc::new(TauriDatabaseState::new(app, &open.name, db)),
-            )))
+            CommandResult::CreatedHandle(powersync.handles.put(SharedWithJavaScript::Database(db)))
         }
         Command::CloseHandle(handle) => {
             powersync.handles.delete(handle)?;

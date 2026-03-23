@@ -5,6 +5,7 @@
 resolver = "3"
 members = [
     "packages/tauri",
+    "packages/tauri/test-runner",
     "demos/tauri-app/src-tauri"
 ]
 

@@ -1,0 +1,11 @@
+[package]
+name = "test-runner"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tauri = { version = "2.10.3", features = ["dynamic-acl", "test"] }
+tauri-plugin-powersync = { path = "../" }
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", default-features = false }
