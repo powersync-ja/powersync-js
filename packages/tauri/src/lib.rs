@@ -11,13 +11,10 @@ use tauri::{
     AppHandle, Manager, Runtime,
 };
 
-pub use models::*;
-
 mod commands;
 mod database;
 mod error;
 mod handle;
-mod models;
 
 use crate::database::TauriDatabaseState;
 use crate::handle::JavaScriptHandles;
