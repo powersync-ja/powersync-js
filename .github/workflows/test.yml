@@ -31,7 +31,8 @@ jobs:
           pnpm exec playwright install
       
       - name: Install system libraries for Tauri integration tests
-        run: sudo apt install libglib2.0-dev libgtk-3-dev
+        # https://v2.tauri.app/start/prerequisites/#linux
+        run: sudo apt install libwebkit2gtk-4.1-dev build-essential curl  wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Build
         run: pnpm build:packages
