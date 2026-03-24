@@ -1,5 +1,14 @@
 # @powersync/adapter-sql-js
 
+## 0.0.17
+
+### Patch Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
 ## 0.0.16
 
 ### Patch Changes

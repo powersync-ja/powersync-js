@@ -1,5 +1,15 @@
 # @powersync/common
 
+## 1.50.0
+
+### Minor Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- eac163a: Fixed a deadlock in `deleteAttachment` by reusing the existing `AttachmentContext` instead of opening a nested `withContext` call.
+
 ## 1.49.0
 
 ### Minor Changes
