@@ -12,8 +12,8 @@
     "local:down": "powersync docker stop && supabase stop"
   },
   "dependencies": {
-    "@powersync/react": "^1.9.0",
-    "@powersync/web": "^1.36.0",
+    "@powersync/react": "^1.9.1",
+    "@powersync/web": "^1.37.0",
     "@emotion/react": "11.11.4",
     "@emotion/styled": "11.11.5",
     "@journeyapps/wa-sqlite": "^1.5.0",
