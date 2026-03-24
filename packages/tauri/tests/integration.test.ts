@@ -1,6 +1,6 @@
 import { vi, test as baseTest, expect, onTestFinished } from 'vitest';
 import { column, Schema, Table } from '@powersync/common';
-import { PowerSyncTauriDatabase, TauriPowerSyncOpenOptions } from '../lib';
+import { PowerSyncTauriDatabase, TauriPowerSyncOpenOptions } from '../guest-js/database';
 
 async function installTauriInTestFrameHack() {
   // Tauri injects these getters on the top-level window so that it can communicate with Rust.

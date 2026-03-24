@@ -1,65 +1,58 @@
-import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { ChildProcess, spawn, spawnSync } from 'node:child_process';
 
 import { defineConfig } from 'vitest/config';
-import { webdriverio, WebdriverBrowserProvider } from '@vitest/browser-webdriverio';
-import { TestProject } from 'vitest/node';
+import { preview } from '@vitest/browser-preview'
+import { BrowserProvider } from 'vitest/node';
 
-const serverFactory = webdriverio().serverFactory;
+// We can't define serverFactory ourselves because vitest doesn't export the building blocks,
+// but it boils down to [this](https://github.com/vitest-dev/vitest/blob/faace1fbe09133fa3641164c1d58538b316a38ee/packages/browser/src/node/index.ts#L25)
+// for all browser providers, so we can just take that from any existing provider.
+const serverFactory = preview().serverFactory;
+const testRunnerExecutable = path.resolve('../../target/debug/test-runner');
 
-class TauriAppBrowserProvider extends WebdriverBrowserProvider {
-  #tauriDriver: ChildProcess | undefined;
-  #isShuttingDown = false;
+class TauriBrowserProvider implements BrowserProvider {
+  #tauriApp?: ChildProcess;
+  #isClosing = false;
 
-  constructor(project: TestProject) {
-    super(project, {});
+  get name(): string {
+    return 'tauri';
   }
 
-  async #spawnTauriDriver() {
+  get supportsParallelism(): boolean {
+    return false;
+  }
+
+  getCommandsContext(_sessionId: string): Record<string, unknown> {
+    return {};
+  }
+
+  async openPage(_sessionId: string, url: string, _options: { parallel: boolean; }) {
+    if (this.#tauriApp != null) {
+      throw new Error('TODO: Calling openPage multiple times is not supported');
+    }
+
     // Ensure the target app spawning webviews is up-to-date.
     spawnSync('cargo', ['build', '-p', 'test-runner']);
+    const app = spawn(testRunnerExecutable, [url]);
+    this.#tauriApp = app;
 
-    const driver = spawn(path.resolve(homedir(), '.cargo', 'bin', 'tauri-driver'), [], {
-      stdio: [null, process.stdout, process.stderr]
-    });
-
-    driver.on('error', (error) => {
-      console.log('Tauri driver error', error);
-      process.exit(1);
-    });
-    driver.on('exit', (code) => {
-      if (!this.#isShuttingDown) {
-        console.log('Tauri driver exited with code', code);
+    app.on('exit', (code) => {
+      if (!this.#isClosing) {
+        console.log('Test runner exited with code', code);
         process.exit(1);
       }
     });
-    return driver;
-  }
 
-  async openBrowser(): Promise<WebdriverIO.Browser> {
-    if (this.#tauriDriver == null) {
-      this.#tauriDriver = await this.#spawnTauriDriver();
-    }
-
-    const { remote } = await import('webdriverio');
-    this.browser = await remote({
-      hostname: '127.0.0.1',
-      port: 4444,
-      capabilities: {
-        'tauri:options': {
-          application: path.resolve('../../target/debug/test-runner')
-        }
-      } as any
+    await new Promise<void>((resolve, reject) => {
+      app.once('spawn', () => resolve());
+      app.once('error', reject);
     });
-
-    return this.browser;
   }
 
-  async close(): Promise<void> {
-    this.#isShuttingDown = true;
-    await super.close();
-    this.#tauriDriver?.kill();
+  async close() {
+    this.#isClosing = true;
+    this.#tauriApp?.kill();
   }
 }
 
@@ -72,8 +65,8 @@ export default defineConfig({
       provider: {
         name: 'tauri-app',
         options: {},
-        providerFactory(project) {
-          return new TauriAppBrowserProvider(project);
+        providerFactory() {
+          return new TauriBrowserProvider();
         },
         serverFactory
       },
