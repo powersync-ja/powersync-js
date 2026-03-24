@@ -33,7 +33,10 @@ class TauriBrowserProvider implements BrowserProvider {
     }
 
     // Ensure the target app spawning webviews is up-to-date.
-    spawnSync('cargo', ['build', '-p', 'test-runner']);
+    const buildResult = spawnSync('cargo', ['build', '-p', 'test-runner'], { stdio: 'inherit' });
+    if (buildResult.status !== 0) {
+      throw new Error(`cargo build failed with exit code ${buildResult.status}`);
+    }
     const app = spawn(testRunnerExecutable, [url]);
     this.#tauriApp = app;
 
