@@ -21,7 +21,7 @@
     "build": "tsc -b",
     "watch": "tsc -b -w",
     "prepublishOnly": "pnpm build",
-    "pretest": "pnpm build",
+    "pretest": "pnpm build && cargo build -p test-runner",
     "test": "pnpm exec vitest run"
   },
   "dependencies": {
