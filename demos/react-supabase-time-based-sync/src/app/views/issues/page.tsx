@@ -2,21 +2,10 @@ import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { IssueItemWidget } from '@/components/widgets/IssueItemWidget';
 import { ISSUES_TABLE, IssueRecord } from '@/library/powersync/AppSchema';
 import { Box, Chip, List, Stack, Typography, styled } from '@mui/material';
-import { useQuery, useSyncStream } from '@powersync/react';
+import { useQuery } from '@powersync/react';
 import React from 'react';
 
 const AVAILABLE_DATES = ['2026-01-15', '2026-01-14', '2026-01-10', '2026-01-07', '2026-01-05'];
-
-/**
- * Subscribes to the stream outside of `useQuery`. If `streams` is passed into `useQuery`, changing
- * parameters resets internal "stream synced" state and the hook briefly returns empty data — that
- * caused flicker when toggling chips quickly. The local query uses a matching WHERE so the list
- * stays consistent with the selection while sync catches up.
- */
-function IssuesByDateStreamSubscription({ datesParam }: { datesParam: string }) {
-  useSyncStream({ name: 'issues_by_date', parameters: { dates: datesParam }, ttl: 0 });
-  return null;
-}
 
 export default function IssuesPage() {
   const [selectedDates, setSelectedDates] = React.useState<string[]>(AVAILABLE_DATES);
@@ -27,37 +16,21 @@ export default function IssuesPage() {
     );
   };
 
-  const datesParam = React.useMemo(() => JSON.stringify(selectedDates), [selectedDates]);
+  const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 0 }));
 
-  // Same predicate as the stream in sync-config.yaml (`substring(updated_at, 1, 10)`); replicas store timestamps as text.
-  const { issuesSql, issuesParams } = React.useMemo(() => {
-    if (selectedDates.length === 0) {
-      return {
-        issuesSql: `SELECT * FROM ${ISSUES_TABLE} WHERE 1 = 0 ORDER BY created_at DESC`,
-        issuesParams: [] as string[]
-      };
-    }
-    const placeholders = selectedDates.map(() => '?').join(', ');
-    return {
-      issuesSql: `SELECT * FROM ${ISSUES_TABLE} WHERE substring(updated_at, 1, 10) IN (${placeholders}) ORDER BY created_at DESC`,
-      issuesParams: selectedDates
-    };
-  }, [selectedDates]);
-
-  const { data: issues } = useQuery<IssueRecord>(issuesSql, issuesParams);
+  const { data: issues } = useQuery<IssueRecord>(
+    `SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`,
+    [],
+    { streams }
+  );
 
   return (
     <NavigationPage title="Issues (Time-Based Sync)">
       <Box>
-        {selectedDates.length > 0 ? (
-          <IssuesByDateStreamSubscription datesParam={datesParam} />
-        ) : null}
         <S.ControlsBox>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            The selected dates are passed as a JSON array to a single sync stream subscription.
-            The stream query uses <code>json_each()</code> to expand the array and sync matching
-            issues. Deselecting all dates removes the subscription and immediately deletes
-            local data (TTL&nbsp;=&nbsp;0).
+            Each selected date subscribes to its own sync stream. Deselecting a date unsubscribes
+            from that stream and local data is removed (TTL&nbsp;=&nbsp;0).
           </Typography>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Syncing dates:

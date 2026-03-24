@@ -11,7 +11,7 @@ services:
     image: journeyapps/powersync-service:latest
     command: [ 'start', '-r', 'unified' ]
     env_file:
-      - .env
+      - ../../.env.local
     volumes:
       - ../service.yaml:/config/service.yaml
       - ../sync-config.yaml:/config/sync-config.yaml
