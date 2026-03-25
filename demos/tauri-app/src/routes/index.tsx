@@ -59,7 +59,6 @@ function ListsEntry({ id, name }: ListEntry): ReactNode {
 
   function open() {
     new WebviewWindow(`list-content-${id}`, {
-      // TODO: There's no way this works outside of the development server.
       url: `/list/${id}`,
 
       // create a webview with specific logical position and size

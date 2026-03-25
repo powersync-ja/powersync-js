@@ -1,7 +1,7 @@
 {
   "productName": "tauri-app",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.powersync.demo.tauri.selfhosted",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
