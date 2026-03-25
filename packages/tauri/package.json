@@ -5,8 +5,17 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "author": "You",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "JOURNEYAPPS",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "description": "PowerSync plugin for Tauri applications.",
   "type": "module",
   "exports": {
     "types": "./lib/index.d.ts",

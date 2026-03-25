@@ -6,8 +6,7 @@ It is designed to run with a [self-hosted instance](https://github.com/powersync
 
 1. Clone the [self-host-demo](https://github.com/powersync-ja/self-host-demo/) repository.
 2. Change `config/sync-config.yaml` to the Sync Config from this readme.
-3. Run `pnpm install && pnpm dev` to start the UI server.
-4. Run `cargo run` to start the app!
+3. Run `pnpm tauri dev` to start the app.
 
 ```yaml
 # config/sync-config.yaml
