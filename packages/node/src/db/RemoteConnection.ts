@@ -13,8 +13,6 @@ import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncD
  * A PowerSync database connection implemented with RPC calls to a background worker.
  */
 class BaseRemoteConnection implements SqlExecutor {
-  isBusy = false;
-
   private readonly worker: Worker;
   private readonly comlink: Remote<AsyncDatabaseOpener>;
   private readonly database: Remote<AsyncDatabase>;
