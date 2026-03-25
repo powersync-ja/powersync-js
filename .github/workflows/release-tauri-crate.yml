@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - tauri-plugin-powersync-v[0-9]+.[0-9]+.[0-9]+
+      - tauri-plugin-powersync@[0-9]+.[0-9]+.[0-9]+
 
 jobs:
   publish_crates_io:
