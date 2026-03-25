@@ -52,7 +52,6 @@ export default () => {
         '@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js',
 
       '@powersync/common': '@powersync/common',
-      'async-mutex': 'async-mutex',
       comlink: 'comlink',
       lodash: 'lodash'
     },

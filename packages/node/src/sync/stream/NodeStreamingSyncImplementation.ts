@@ -2,17 +2,15 @@ import {
   AbstractStreamingSyncImplementation,
   AbstractStreamingSyncImplementationOptions,
   LockOptions,
-  LockType
+  LockType,
+  Mutex
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 
 /**
  * Global locks which prevent multiple instances from syncing
  * concurrently.
  */
 const LOCKS = new Map<string, Map<LockType, Mutex>>();
-
-const lockTypes = new Set(Object.values(LockType));
 
 export class NodeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
   locks: Map<LockType, Mutex>;
@@ -47,11 +45,7 @@ export class NodeStreamingSyncImplementation extends AbstractStreamingSyncImplem
       throw new Error(`Lock type ${lockOptions.type} not found`);
     }
     return lock.runExclusive(async () => {
-      if (lockOptions.signal?.aborted) {
-        throw new Error('Aborted');
-      }
-
       return lockOptions.callback();
-    });
+    }, lockOptions.signal);
   }
 }

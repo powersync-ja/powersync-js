@@ -82,8 +82,12 @@ export const useWatchedQuery = <RowType = unknown>(
 
   const shouldReportCurrentlyFetching = (hookOptions.reportFetching ?? true) && !!disposePendingUpdateListener.current;
   const result = useNullableWatchedQuerySubscription(watchedQuery);
+
+  // Result is only undefined when there is no data available yet, defaults are defined accordingly
   return {
-    ...result,
+    data: result?.data ?? [],
+    isLoading: result?.isLoading ?? true,
+    error: result?.error,
     isFetching: result?.isFetching || shouldReportCurrentlyFetching
   };
 };

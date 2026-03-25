@@ -1,4 +1,3 @@
-import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import {
@@ -46,6 +45,7 @@ import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
+import { Mutex } from '../utils/mutex.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -925,7 +925,7 @@ SELECT * FROM crud_entries;
     await this.waitForReady();
     return this.database.readTransaction(
       async (tx) => {
-        const res = await callback({ ...tx });
+        const res = await callback(tx);
         await tx.rollback();
         return res;
       },

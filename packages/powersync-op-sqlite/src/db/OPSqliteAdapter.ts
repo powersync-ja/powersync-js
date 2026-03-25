@@ -1,4 +1,4 @@
-import { getDylibPath, open, SQLBatchTuple, type DB } from '@op-engineering/op-sqlite';
+import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import {
   BaseObserver,
   ConnectionPool,
@@ -8,9 +8,9 @@ import {
   DBLockOptions,
   QueryResult,
   Transaction,
-  mutexRunExclusive
+  Mutex,
+  timeoutSignal
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';
@@ -202,33 +202,35 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
 
-    return new Promise(async (resolve, reject) => {
-      // Set up abort signal listener
-      const abortListener = () => {
-        reject(new Error('Database connection was closed'));
-      };
-      this.abortController.signal.addEventListener('abort', abortListener);
+    const outerSignal = this.abortController.signal;
+    let signal: AbortSignal;
+    let cleanUpInnerSignal: (() => void) | undefined;
 
-      try {
-        await mutexRunExclusive(
-          this.writeMutex,
-          async () => {
-            // Check if operation was aborted before executing
-            if (this.abortController.signal.aborted) {
-              reject(new Error('Database connection was closed'));
-            }
-            resolve(await fn(this.writeConnection!));
-          },
-          options
-        );
-        // flush updates once a write lock has been released
-        this.writeConnection!.flushUpdates();
-      } catch (ex) {
-        reject(ex);
-      } finally {
-        this.abortController.signal.removeEventListener('abort', abortListener);
-      }
-    });
+    if (options?.timeoutMs && !outerSignal.aborted) {
+      // This is essentially an AbortSignal.any() polyfill.
+      const innerController = new AbortController();
+      cleanUpInnerSignal = () => {
+        innerController.abort();
+        outerSignal.removeEventListener('abort', cleanUpInnerSignal!);
+        timeout.removeEventListener('abort', cleanUpInnerSignal!);
+      };
+
+      outerSignal.addEventListener('abort', cleanUpInnerSignal);
+      const timeout = timeoutSignal(options.timeoutMs);
+      timeout.addEventListener('abort', cleanUpInnerSignal);
+
+      signal = innerController.signal;
+    } else {
+      signal = outerSignal;
+    }
+
+    try {
+      return await this.writeMutex.runExclusive(() => fn(this.writeConnection!), signal);
+    } finally {
+      // flush updates once a write lock has been released
+      this.writeConnection!.flushUpdates();
+      cleanUpInnerSignal?.();
+    }
   }
 
   async refreshSchema(): Promise<void> {

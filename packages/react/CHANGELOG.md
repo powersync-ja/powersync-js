@@ -1,5 +1,14 @@
 # @powersync/react
 
+## 1.9.1
+
+### Patch Changes
+
+- 1bbba11: Fixed an issue where if a `useQuery` hook was waiting for a sync stream, the result sometimes omitted fields that should always be present according to the TypeScript typing.
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
 ## 1.9.0
 
 ### Minor Changes
