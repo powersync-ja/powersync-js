@@ -1,10 +1,12 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
 import { IssueItemWidget } from '@/components/widgets/IssueItemWidget';
 import { ISSUES_TABLE, IssueRecord } from '@/library/powersync/AppSchema';
+import { useSyncStreams } from '@/library/hooks/useSyncStreams';
 import { Box, Chip, List, Stack, Typography, styled } from '@mui/material';
 import { useQuery } from '@powersync/react';
 import React from 'react';
 
+// const AVAILABLE_DATES = ['2026-01-15'];
 const AVAILABLE_DATES = ['2026-01-15', '2026-01-14', '2026-01-10', '2026-01-07', '2026-01-05'];
 
 export default function IssuesPage() {
@@ -18,11 +20,21 @@ export default function IssuesPage() {
 
   const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 0 }));
 
+  // --- Option A: useQuery with built-in streams support ---
+  // useQuery manages subscriptions internally. Comment out Option B when using this.
   const { data: issues } = useQuery<IssueRecord>(
     `SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`,
     [],
     { streams }
   );
+
+  // --- Option B: useSyncStreams hook (custom) + plain useQuery ---
+  // useSyncStreams manages subscriptions separately from the query.
+  // Comment out Option A and uncomment both lines below when using this.
+  // useSyncStreams(streams);
+  // const { data: issues } = useQuery<IssueRecord>(`SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`);
+
+  console.log('streams', streams.length);
 
   return (
     <NavigationPage title="Issues (Time-Based Sync)">
