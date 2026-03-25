@@ -18,10 +18,10 @@ export default function IssuesPage() {
     );
   };
 
-  const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 0 }));
+  const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 5 }));
 
   // --- Option A: useQuery with built-in streams support ---
-  // useQuery manages subscriptions internally. Comment out Option B when using this.
+  // useQuery manages subscriptions internally.
   const { data: issues } = useQuery<IssueRecord>(
     `SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`,
     [],
@@ -30,7 +30,6 @@ export default function IssuesPage() {
 
   // --- Option B: useSyncStreams hook (custom) + plain useQuery ---
   // useSyncStreams manages subscriptions separately from the query.
-  // Comment out Option A and uncomment both lines below when using this.
   // useSyncStreams(streams);
   // const { data: issues } = useQuery<IssueRecord>(`SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`);
 
