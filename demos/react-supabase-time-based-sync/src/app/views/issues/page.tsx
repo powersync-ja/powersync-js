@@ -18,7 +18,7 @@ export default function IssuesPage() {
     );
   };
 
-  const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 5 }));
+  const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 0 }));
 
   // --- Option A: useQuery with built-in streams support ---
   // useQuery manages subscriptions internally.

@@ -10,39 +10,39 @@ export function useSyncStreams(streams: UseSyncStreamOptions[]) {
   const db = usePowerSync();
   const status = useStatus();
 
-  // Serialize streams so the effect only re-runs when content actually changes.
-  // We also parse it back so the effect closure uses the EXACT same streams that triggered it —
-  // avoiding the stale-ref problem where streamsRef.current may have advanced to a newer render
-  // by the time the effect flushes.
+  // Serialize to a string so the effect dep is a stable primitive.
+  // Parsed back inside the effect so the closure always uses the exact snapshot for this run.
   const serialized = useMemo(() => JSON.stringify(streams), [streams]);
-  const frozenStreams = useMemo<UseSyncStreamOptions[]>(() => JSON.parse(serialized), [serialized]);
 
   useEffect(() => {
-    const abort = new AbortController();
+    const currentStreams: UseSyncStreamOptions[] = JSON.parse(serialized);
 
-    const promises = frozenStreams.map((options) =>
-      db.syncStream(options.name, options.parameters ?? undefined).subscribe(options)
-    );
+    // `cleanedUp` is set synchronously when the cleanup function runs.
+    // The async loop checks it after each await so any handle that resolves
+    // after cleanup is unsubscribed immediately rather than being orphaned.
+    let cleanedUp = false;
+    const resolvedSubs: { unsubscribe(): void }[] = [];
 
-    Promise.all(promises).then((resolvedSubs) => {
-      if (abort.signal.aborted) {
-        // Cleanup already ran before all promises resolved — unsubscribe immediately.
-        for (const sub of resolvedSubs) {
+    (async () => {
+      for (const options of currentStreams) {
+        if (cleanedUp) break;
+        const sub = await db.syncStream(options.name, options.parameters ?? undefined).subscribe(options);
+        if (cleanedUp) {
+          // Cleanup already ran while this subscribe was in flight — drop it immediately.
           sub.unsubscribe();
+          break;
         }
-        return;
+        resolvedSubs.push(sub);
       }
+    })();
 
-      // Cleanup will run eventually — unsubscribe when it does.
-      abort.signal.addEventListener('abort', () => {
-        for (const sub of resolvedSubs) {
-          sub.unsubscribe();
-        }
-      });
-    });
-
-    return () => abort.abort();
-  }, [frozenStreams]);
+    return () => {
+      cleanedUp = true;
+      for (const sub of resolvedSubs) {
+        sub.unsubscribe();
+      }
+    };
+  }, [serialized]);
 
   return useMemo(
     () =>
