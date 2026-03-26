@@ -1,6 +1,6 @@
 # PowerSync + Supabase: Time-Based Sync (Local-First)
 
-This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. Each selected date creates its own sync stream subscription with a `date` parameter. Toggling dates on or off adds or removes stream subscriptions and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
+This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client based on a date. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. Each selected date creates its own sync stream subscription with a `date` parameter. Toggling dates on or off adds or removes stream subscriptions and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
 
 This lets you model patterns like “sync the last N days of data” or “sync only the time ranges the user cares about” without re-deploying sync rules.
 
@@ -67,6 +67,8 @@ The demo runs against local Supabase (`supabase start`) and self-hosted PowerSyn
    The template already contains the well-known local Supabase anon key, so no manual changes are needed.
 
 4. Start local Supabase + local PowerSync:
+
+   > Ensure the [PowerSync CLI](https://docs.powersync.com/tools/cli) is installed before running the following command.
 
    ```bash
    pnpm local:up
