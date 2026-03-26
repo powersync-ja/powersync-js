@@ -1,0 +1,46 @@
+{
+  "name": "@powersync/tauri-plugin",
+  "version": "0.0.1",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/powersync-ja/powersync-js.git"
+  },
+  "author": "POWERSYNC",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/powersync-ja/powersync-js/issues"
+  },
+  "homepage": "https://docs.powersync.com",
+  "description": "PowerSync plugin for Tauri applications.",
+  "type": "module",
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "import": "./lib/index.js"
+  },
+  "files": [
+    "lib",
+    "guest-js",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -b -w",
+    "prepublishOnly": "pnpm build",
+    "pretest": "pnpm build && cargo build -p test-runner",
+    "test": "pnpm exec vitest run"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@powersync/common": "workspace:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "tslib": "^2.6.2",
+    "vitest": "^4.1.1",
+    "@vitest/browser-preview": "^4.1.1"
+  }
+}

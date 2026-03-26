@@ -1,0 +1,13 @@
+# Having a top-level Cargo.toml makes it easier to use rust-analyzer in VS Code when opening
+# this project.
+
+[workspace]
+resolver = "3"
+members = [
+    "packages/tauri",
+    "packages/tauri/test-runner",
+    "demos/tauri-app/src-tauri"
+]
+
+[workspace.package]
+repository = "https://github.com/powersync-ja/powersync-js"
