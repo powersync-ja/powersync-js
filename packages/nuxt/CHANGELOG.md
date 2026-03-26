@@ -1,5 +1,15 @@
 # @powersync/nuxt
 
+## 0.0.6
+
+### Patch Changes
+
+- 4bb0ad4: Use shallowRef instead of ref for database instance to prevent DataCloneError in shared worker communication
+- Updated dependencies [554c177]
+  - @powersync/vue@0.5.1
+  - @powersync/web@1.37.1
+  - @powersync/kysely-driver@1.3.3
+
 ## 0.0.5
 
 ### Patch Changes
