@@ -66,6 +66,56 @@ export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus |
 }
 
 /**
+ * Creates multiple PowerSync stream subscriptions. Subscriptions are kept alive as long as the
+ * React component calling this function. When it unmounts, or when the streams array contents
+ * change, all previous subscriptions are unsubscribed before new ones are created.
+ */
+export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStreamStatus[] {
+  const db = usePowerSync();
+  const status = useStatus();
+
+  const stringifiedOptions = useMemo(() => JSON.stringify(streamOptions), [streamOptions]);
+  const syncStreams = useMemo(
+    () =>
+      streamOptions.map((options) => {
+        return {
+          stream: db.syncStream(options.name, options.parameters ?? undefined),
+          options
+        };
+      }),
+    [stringifiedOptions]
+  );
+
+  useEffect(() => {
+    let active = true;
+    const resolvedSubs: SyncStreamSubscription[] = [];
+
+    for (const entry of syncStreams) {
+      entry.stream.subscribe(entry.options).then((sub) => {
+        if (active) {
+          resolvedSubs.push(sub);
+        } else {
+          // The cleanup function already ran, unsubscribe immediately.
+          sub.unsubscribe();
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+      for (const sub of resolvedSubs) {
+        sub.unsubscribe();
+      }
+    };
+  }, [stringifiedOptions]);
+
+  return useMemo(
+    () => syncStreams.map((entry) => status.forStream(entry.stream) ?? null),
+    [status, stringifiedOptions]
+  );
+}
+
+/**
  * Returns `true` once all streams in the array have synced at least once.
  */
 export function useAllSyncStreamsHaveSynced(
