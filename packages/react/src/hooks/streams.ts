@@ -96,57 +96,12 @@ export function useAllSyncStreamsHaveSynced(
   db: AbstractPowerSyncDatabase,
   streams: QuerySyncStreamOptions[] | undefined
 ): boolean {
-  // Since streams are a user-supplied array, they will likely be different each time this function is called. We don't
-  // want to update underlying subscriptions each time, though.
-  const hash = useMemo(() => streams && JSON.stringify(streams), [streams]);
-  const [synced, setHasSynced] = useState(streams == null || streams.every((e) => e.waitForStream != true));
+  const statuses = useSyncStreams(streams ?? []);
 
-  useEffect(() => {
-    if (streams) {
-      setHasSynced(false);
+  if (!streams) return true;
 
-      const promises: Promise<SyncStreamSubscription>[] = [];
-      const abort = new AbortController();
-      for (const stream of streams) {
-        promises.push(db.syncStream(stream.name, stream.parameters).subscribe(stream));
-      }
-
-      // First, wait for all subscribe() calls to make all subscriptions active.
-      Promise.all(promises).then(async (resolvedStreams) => {
-        function allHaveSynced(status: SyncStatus) {
-          return resolvedStreams.every((s, i) => {
-            const request = streams[i];
-            return !request.waitForStream || status.forStream(s)?.subscription?.hasSynced;
-          });
-        }
-
-        // Wait for the effect to be cancelled or all streams having synced.
-        await db.waitForStatus(allHaveSynced, abort.signal);
-        if (abort.signal.aborted) {
-          // Was cancelled
-        } else {
-          // Has synced, update public state.
-          setHasSynced(true);
-
-          // Wait for cancellation before clearing subscriptions.
-          await new Promise<void>((resolve) => {
-            abort.signal.addEventListener('abort', () => resolve());
-          });
-        }
-
-        // Effect was definitely cancelled at this point, so drop the subscriptions.
-        for (const stream of resolvedStreams) {
-          stream.unsubscribe();
-        }
-      });
-
-      return () => abort.abort();
-    } else {
-      // There are no streams, so all of them have synced.
-      setHasSynced(true);
-      return undefined;
-    }
-  }, [hash]);
-
-  return synced;
+  return streams.every((stream, i) => {
+    if (!stream.waitForStream) return true;
+    return statuses[i]?.subscription?.hasSynced === true;
+  });
 }
