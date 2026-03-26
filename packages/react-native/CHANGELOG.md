@@ -1,5 +1,19 @@
 # @powersync/react-native
 
+## 1.33.0
+
+### Minor Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- Updated dependencies [1bbba11]
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/react@1.9.1
+  - @powersync/common@1.50.0
+
 ## 1.32.0
 
 ### Minor Changes

@@ -19,7 +19,7 @@ import { RecordingStorageAdapter } from './RecordingStorageAdapter';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
-import { ref, type Ref } from 'vue';
+import { shallowRef, type ShallowRef } from 'vue';
 import { useRuntimeConfig } from '#app';
 import { RustClientInterceptor } from './RustClientInterceptor';
 
@@ -111,13 +111,13 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const adapter =
         clientImplementation === SyncClientImplementation.RUST
           ? new RustClientInterceptor(
-              ref(this) as Ref<PowerSyncDatabase>,
+              shallowRef(this) as ShallowRef<PowerSyncDatabase>,
               new WebRemote(connector, logger),
-              ref(schemaManager) as Ref<DynamicSchemaManager>
+              shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
             )
           : new RecordingStorageAdapter(
-              ref(this) as Ref<PowerSyncDatabase>,
-              ref(schemaManager) as Ref<DynamicSchemaManager>
+              shallowRef(this) as ShallowRef<PowerSyncDatabase>,
+              shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
             );
 
       if (this.options.flags?.enableMultiTabs) {

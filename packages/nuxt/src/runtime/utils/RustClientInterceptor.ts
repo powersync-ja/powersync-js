@@ -19,7 +19,7 @@ import {
   SyncDataBucket
 } from '@powersync/web';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
-import type { Ref } from 'vue';
+import type { ShallowRef } from 'vue';
 /**
  * Tracks per-byte and per-operation progress for the Rust client.
  *
@@ -34,9 +34,9 @@ export class RustClientInterceptor extends SqliteBucketStorage {
   public tables: Record<string, Record<string, ColumnType>> = {};
 
   constructor(
-    db: Ref<PowerSyncDatabase>,
+    db: ShallowRef<PowerSyncDatabase>,
     private remote: AbstractRemote,
-    private schemaManager: Ref<DynamicSchemaManager>
+    private schemaManager: ShallowRef<DynamicSchemaManager>
   ) {
     super(db.value.database, (AbstractPowerSyncDatabase as any).transactionMutex);
     this.rdb = db.value.database;

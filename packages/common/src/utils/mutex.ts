@@ -1,21 +1,32 @@
+import { Queue } from './queue.js';
+
 export type UnlockFn = () => void;
 
 /**
- * An asynchronous mutex implementation.
+ * An asynchronous semaphore implementation with associated items per lease.
  *
  * @internal This class is meant to be used in PowerSync SDKs only, and is not part of the public API.
  */
-export class Mutex {
-  private inCriticalSection = false;
+export class Semaphore<T> {
+  // Available items that are not currently assigned to a waiter.
+  private readonly available: Queue<T>;
 
+  readonly size: number;
   // Linked list of waiters. We don't expect the wait list to become particularly large, and this allows removing
   // aborted waiters from the middle of the list efficiently.
-  private firstWaiter?: MutexWaitNode;
-  private lastWaiter?: MutexWaitNode;
+  private firstWaiter?: SemaphoreWaitNode<T>;
+  private lastWaiter?: SemaphoreWaitNode<T>;
 
-  private addWaiter(onAcquire: () => void): MutexWaitNode {
-    const node: MutexWaitNode = {
+  constructor(elements: Iterable<T>) {
+    this.available = new Queue(elements);
+    this.size = this.available.length;
+  }
+
+  private addWaiter(requestedItems: number, onAcquire: () => void): SemaphoreWaitNode<T> {
+    const node: SemaphoreWaitNode<T> = {
       isActive: true,
+      acquiredItems: [],
+      remainingItems: requestedItems,
       onAcquire,
       prev: this.lastWaiter
     };
@@ -30,7 +41,7 @@ export class Mutex {
     return node;
   }
 
-  private deactivateWaiter(waiter: MutexWaitNode) {
+  private deactivateWaiter(waiter: SemaphoreWaitNode<T>) {
     const { prev, next } = waiter;
     waiter.isActive = false;
 
@@ -40,56 +51,118 @@ export class Mutex {
     if (waiter == this.lastWaiter) this.lastWaiter = prev;
   }
 
-  acquire(abort?: AbortSignal): Promise<UnlockFn> {
+  private requestPermits(amount: number, abort?: AbortSignal): Promise<{ items: T[]; release: UnlockFn }> {
+    if (amount <= 0 || amount > this.size) {
+      throw new Error(`Invalid amount of items requested (${amount}), must be between 1 and ${this.size}`);
+    }
+
     return new Promise((resolve, reject) => {
       function rejectAborted() {
-        reject(abort?.reason ?? new Error('Mutex acquire aborted'));
+        reject(abort?.reason ?? new Error('Semaphore acquire aborted'));
       }
       if (abort?.aborted) {
         return rejectAborted();
       }
 
-      let holdsMutex = false;
+      let waiter: SemaphoreWaitNode<T>;
 
       const markCompleted = () => {
-        if (!holdsMutex) return;
-        holdsMutex = false;
+        const items = waiter.acquiredItems;
+        waiter.acquiredItems = []; // Avoid releasing items twice.
 
-        const waiter = this.firstWaiter;
-        if (waiter) {
-          this.deactivateWaiter(waiter);
-          // Still in critical section, but owned by next waiter now.
-          waiter.onAcquire();
-        } else {
-          this.inCriticalSection = false;
+        for (const element of items) {
+          // Give to next waiter, if possible.
+          const nextWaiter = this.firstWaiter;
+          if (nextWaiter) {
+            nextWaiter.acquiredItems.push(element);
+            nextWaiter.remainingItems--;
+            if (nextWaiter.remainingItems == 0) {
+              nextWaiter.onAcquire();
+            }
+          } else {
+            // No pending waiter, return lease into pool.
+            this.available.addLast(element);
+          }
         }
       };
 
-      if (!this.inCriticalSection) {
-        this.inCriticalSection = true;
-        holdsMutex = true;
-        return resolve(markCompleted);
-      } else {
-        let node: MutexWaitNode;
+      const onAbort = () => {
+        abort?.removeEventListener('abort', onAbort);
 
-        const onAbort = () => {
-          abort?.removeEventListener('abort', onAbort);
+        if (waiter.isActive) {
+          this.deactivateWaiter(waiter);
+          rejectAborted();
+        }
+      };
 
-          if (node.isActive) {
-            this.deactivateWaiter(node);
-            rejectAborted();
-          }
-        };
+      const resolvePromise = () => {
+        this.deactivateWaiter(waiter);
+        abort?.removeEventListener('abort', onAbort);
 
-        node = this.addWaiter(() => {
-          abort?.removeEventListener('abort', onAbort);
-          holdsMutex = true;
-          resolve(markCompleted);
-        });
+        const items = waiter.acquiredItems;
+        resolve({ items, release: markCompleted });
+      };
 
-        abort?.addEventListener('abort', onAbort);
+      waiter = this.addWaiter(amount, resolvePromise);
+
+      // If there are items in the pool that haven't been assigned, we can pull them into this waiter. Note that this is
+      // only the case if we're the first waiter (otherwise, items would have been assigned to an earlier waiter).
+      while (!this.available.isEmpty && waiter.remainingItems > 0) {
+        waiter.acquiredItems.push(this.available.removeFirst());
+        waiter.remainingItems--;
       }
+
+      if (waiter.remainingItems == 0) {
+        return resolvePromise();
+      }
+
+      abort?.addEventListener('abort', onAbort);
     });
+  }
+
+  /**
+   * Requests a single item from the pool.
+   *
+   * The returned `release` callback must be invoked to return the item into the pool.
+   */
+  async requestOne(abort?: AbortSignal): Promise<{ item: T; release: UnlockFn }> {
+    const { items, release } = await this.requestPermits(1, abort);
+    return { release, item: items[0] };
+  }
+
+  /**
+   * Requests access to all items from the pool.
+   *
+   * The returned `release` callback must be invoked to return items into the pool.
+   */
+  requestAll(abort?: AbortSignal): Promise<{ items: T[]; release: UnlockFn }> {
+    return this.requestPermits(this.size, abort);
+  }
+}
+
+interface SemaphoreWaitNode<T> {
+  /**
+   * Whether the waiter is currently active (not aborted and not fullfilled).
+   */
+  isActive: boolean;
+  acquiredItems: T[];
+  remainingItems: number;
+  onAcquire: () => void;
+  prev?: SemaphoreWaitNode<T>;
+  next?: SemaphoreWaitNode<T>;
+}
+
+/**
+ * An asynchronous mutex implementation.
+ *
+ * @internal This class is meant to be used in PowerSync SDKs only, and is not part of the public API.
+ */
+export class Mutex {
+  private inner = new Semaphore([null]);
+
+  async acquire(abort?: AbortSignal): Promise<UnlockFn> {
+    const { release } = await this.inner.requestOne(abort);
+    return release;
   }
 
   async runExclusive<T>(fn: () => PromiseLike<T> | T, abort?: AbortSignal): Promise<T> {
@@ -101,16 +174,6 @@ export class Mutex {
       returnMutex();
     }
   }
-}
-
-interface MutexWaitNode {
-  /**
-   * Whether the waiter is currently active (not aborted and not fullfilled).
-   */
-  isActive: boolean;
-  onAcquire: () => void;
-  prev?: MutexWaitNode;
-  next?: MutexWaitNode;
 }
 
 /**

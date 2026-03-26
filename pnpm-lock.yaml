@@ -339,7 +339,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.36.0
+        specifier: workspace:^1.37.0
         version: link:../web
     devDependencies:
       '@capacitor-community/sqlite':
@@ -440,7 +440,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.49.0
+        specifier: workspace:^1.50.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -480,7 +480,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.49.0
+        specifier: workspace:^1.50.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
