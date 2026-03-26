@@ -2,11 +2,16 @@
 name = "tauri-plugin-powersync"
 version = "0.0.1"
 authors = [ "POWERSYNC" ]
-description = ""
+description = "Rust parts of the PowerSync Tauri SDK"
 edition = "2021"
 rust-version = "1.77.2"
 exclude = ["/examples", "/dist-js", "/guest-js", "/node_modules"]
 links = "tauri-plugin-powersync"
+readme = "README.md"
+license = "Apache-2.0"
+documentation = "https://docs.powersync.com/client-sdks/reference/tauri"
+homepage = "https://powersync.com/"
+repository = "https://github.com/powersync-ja/powersync-js/tree/main/packages/tauri"
 
 [dependencies]
 tauri = { version = "2.10.3" }
