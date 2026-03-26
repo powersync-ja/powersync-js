@@ -10,9 +10,9 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@powersync/common": "1.49.0",
+    "@powersync/common": "1.50.0",
     "@powersync/tauri-plugin": "0.0.1",
-    "@powersync/react": "1.9.0",
+    "@powersync/react": "1.9.1",
     "@tauri-apps/api": "^2.0.0",
     "@tanstack/react-router": "^1.167.4",
     "react": "^19.2.4",
