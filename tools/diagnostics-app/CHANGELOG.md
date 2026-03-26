@@ -1,5 +1,16 @@
 # diagnostics-app
 
+## 0.13.4
+
+### Patch Changes
+
+- e9ec0f1: Added quick-select template query buttons for common PowerSync internal tables (ps_oplog, ps_crud, ps_buckets, ps_untyped) with tooltips and docs links to both SQL consoles
+- Updated dependencies [1bbba11]
+- Updated dependencies [45f427c]
+- Updated dependencies [8f8ef1c]
+  - @powersync/react@1.9.1
+  - @powersync/web@1.37.0
+
 ## 0.13.3
 
 ### Patch Changes

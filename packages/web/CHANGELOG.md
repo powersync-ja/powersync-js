@@ -1,5 +1,27 @@
 # @powersync/web
 
+## 1.37.0
+
+### Minor Changes
+
+- 45f427c: Refactor database worker communication and lock management.
+
+  **Note**: While this is mostly an internal change, it updates how tabs communicate with workers.
+  Upgrading should not be an issue when using bundlers like vite which add file hashes to worker paths.
+  If you manually load workers you've copied into your app sources, please make sure the workers
+  are upgraded along with the SDK. Workers from earlier `@powersync/web` versions will not work
+  with this release.
+
+  **Potentially breaking**: Internal but previously exported classes for low-level connection management have been removed.
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
 ## 1.36.0
 
 ### Minor Changes

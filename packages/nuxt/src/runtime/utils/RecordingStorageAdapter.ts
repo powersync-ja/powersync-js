@@ -1,7 +1,7 @@
 import type { Checkpoint, ColumnType, DBAdapter, PowerSyncDatabase, SyncDataBatch } from '@powersync/web';
 import { AbstractPowerSyncDatabase, SqliteBucketStorage } from '@powersync/web';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
-import type { Ref } from 'vue';
+import type { ShallowRef } from 'vue';
 
 export class RecordingStorageAdapter extends SqliteBucketStorage {
   private rdb: DBAdapter;
@@ -9,7 +9,7 @@ export class RecordingStorageAdapter extends SqliteBucketStorage {
 
   public tables: Record<string, Record<string, ColumnType>> = {};
 
-  constructor(db: Ref<PowerSyncDatabase>, schemaManager: Ref<DynamicSchemaManager>) {
+  constructor(db: ShallowRef<PowerSyncDatabase>, schemaManager: ShallowRef<DynamicSchemaManager>) {
     super(db.value.database, (AbstractPowerSyncDatabase as any).transactionMutex);
     this.rdb = db.value.database;
     this.schemaManager = schemaManager.value;
