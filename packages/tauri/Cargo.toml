@@ -1,7 +1,7 @@
 [package]
 name = "tauri-plugin-powersync"
 version = "0.1.0"
-authors = [ "JOURNEYAPPS" ]
+authors = [ "POWERSYNC" ]
 description = ""
 edition = "2021"
 rust-version = "1.77.2"
