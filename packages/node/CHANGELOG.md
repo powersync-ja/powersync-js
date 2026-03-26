@@ -1,5 +1,13 @@
 # @powersync/node
 
+## 0.18.3
+
+### Patch Changes
+
+- 4b957f0: Internal: Refactor connection pool to use `Semaphore` from `@powersync/common`.
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
 ## 0.18.2
 
 ### Patch Changes
