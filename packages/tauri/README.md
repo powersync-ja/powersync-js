@@ -2,11 +2,13 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
-# PowerSync Tauri plugin
+# PowerSync Tauri SDK
 
 _[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
 
-The PowerSync Tauri plugin (the `@powersync/tauri-plugin` package for JavaScript and the `tauri-plugin-powersync` crate) enable you to use PowerSync in Tauri (v2) apps.
+The PowerSync Tauri SDK (the `@powersync/tauri-plugin` package for JavaScript and the `tauri-plugin-powersync` crate) enable you to use PowerSync in Tauri (v2) apps.
+
+For detailed usage instructions, see the full SDK reference [here](https://docs.powersync.com/client-sdks/reference/tauri).
 
 ## Stability
 
