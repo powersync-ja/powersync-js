@@ -1,5 +1,4 @@
 import {
-  AbortOperation,
   BaseObserver,
   ConnectionManager,
   ConnectionPool,
@@ -337,11 +336,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
        * The port might currently be in use. Any active functions might
        * not resolve. Abort them here.
        */
+      const abortReason = 'Closing pending requests after client port is removed';
       [this.fetchCredentialsController, this.uploadDataController].forEach((abortController) => {
         if (abortController?.activePort == port) {
-          abortController!.controller.abort(
-            new AbortOperation('Closing pending requests after client port is removed')
-          );
+          abortController!.controller.abort(abortReason);
         }
       });
 
