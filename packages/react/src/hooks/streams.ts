@@ -36,33 +36,7 @@ export interface UseSyncStreamOptions extends SyncStreamSubscribeOptions {
  * @returns The status for that stream, or `null` if the stream is currently being resolved.
  */
 export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus | null {
-  const { name, parameters } = options;
-  const db = usePowerSync();
-  const status = useStatus();
-  const stream = useMemo(() => db.syncStream(name, parameters), [name, parameters]);
-
-  useEffect(() => {
-    let active = true;
-    let subscription: SyncStreamSubscription | null = null;
-
-    stream.subscribe(options).then((sub) => {
-      if (active) {
-        subscription = sub;
-      } else {
-        // The cleanup function already ran, unsubscribe immediately.
-        sub.unsubscribe();
-      }
-    });
-
-    return () => {
-      active = false;
-      // If we don't have a subscription yet, it'll still get cleaned up once the promise resolves because we've set
-      // active to false.
-      subscription?.unsubscribe();
-    };
-  }, [stream]);
-
-  return status.forStream(stream) ?? null;
+  return useSyncStreams([options])[0];
 }
 
 /**
