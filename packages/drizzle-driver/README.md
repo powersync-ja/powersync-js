@@ -6,6 +6,28 @@ This package (`@powersync/drizzle-driver`) brings the benefits of an ORM through
 
 The `drizzle-driver` package is currently in an Beta release.
 
+## Drizzle Version Support
+
+- `drizzle-orm@0.44.x`
+  - Pass `schema`.
+  - `db.query` keeps working as before.
+  - `db._query` is available as an alias to the same legacy relational query builder.
+- `drizzle-orm@1.0.0-beta`
+  - Pass `relations`.
+  - Use `db.query` for relational queries.
+  - If you only pass `schema`, the driver exposes a basic `db.query.<table>.findMany()` surface for simple table queries, but relational `with` queries should use `relations`.
+
+## Drizzle Version Support
+
+- `drizzle-orm@0.44.x`
+  - Use `schema`.
+  - `db.query` continues to use the legacy relational query builder.
+  - `db._query` is available as a compatibility alias to the same legacy query builder.
+- `drizzle-orm@1.0.0-beta`
+  - Use `relations` for the new relational query builder and query via `db.query`.
+  - Keep using `schema` if you want the legacy relational query builder on `db._query`.
+  - If you only pass `schema`, the driver synthesizes a basic `db.query.<table>.findMany()` surface for simple table queries.
+
 ## Getting Started
 
 Set up the PowerSync Database and wrap it with Drizzle.
@@ -64,6 +86,112 @@ export const powerSyncDb = new PowerSyncDatabase({
 // This is the DB you will use in queries
 export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
   schema: drizzleSchema
+});
+```
+
+### Drizzle v1 beta
+
+For Drizzle beta relational queries, pass `relations` and use `db.query`.
+
+```js
+import { defineRelations } from 'drizzle-orm';
+import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
+
+export const relations = defineRelations({ lists, todos }, (r) => ({
+  lists: {
+    todos: r.many.todos({
+      from: r.lists.id,
+      to: r.todos.list_id
+    })
+  },
+  todos: {
+    list: r.one.lists({
+      from: r.todos.list_id,
+      to: r.lists.id,
+      optional: false
+    })
+  }
+}));
+
+export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
+  relations
+});
+
+const listsWithTodos = await db.query.lists.findMany({
+  with: {
+    todos: true
+  }
+});
+```
+
+### Drizzle v1 beta
+
+For Drizzle beta relational queries, pass `relations` and use `db.query`.
+
+```js
+import { defineRelations } from 'drizzle-orm';
+import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
+
+export const relations = defineRelations({ lists, todos }, (r) => ({
+  lists: {
+    todos: r.many.todos({
+      from: r.lists.id,
+      to: r.todos.list_id
+    })
+  },
+  todos: {
+    list: r.one.lists({
+      from: r.todos.list_id,
+      to: r.lists.id,
+      optional: false
+    })
+  }
+}));
+
+export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
+  relations
+});
+
+const listsWithTodos = await db.query.lists.findMany({
+  with: {
+    todos: true
+  }
+});
+```
+
+### Partial upgrade on Drizzle beta
+
+If you are upgrading incrementally, keep legacy relation definitions in `drizzle-orm/_relations`, pass them via `schema`, and use `db._query`.
+
+```js
+import { relations } from 'drizzle-orm/_relations';
+
+const listsRelations = relations(lists, ({ many }) => ({
+  todos: many(todos)
+}));
+
+const todosRelations = relations(todos, ({ one }) => ({
+  list: one(lists, {
+    fields: [todos.list_id],
+    references: [lists.id]
+  })
+}));
+
+const legacySchema = {
+  lists,
+  todos,
+  listsRelations,
+  todosRelations
+};
+
+export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
+  schema: legacySchema
+});
+
+const listsWithTodos = await db._query.lists.findMany({
+  with: {
+    todos: true
+  }
 });
 ```
 

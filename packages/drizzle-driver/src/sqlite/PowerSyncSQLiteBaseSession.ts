@@ -16,6 +16,9 @@ import {
 } from 'drizzle-orm/sqlite-core/session';
 import { PowerSyncSQLitePreparedQuery, type ContextProvider } from './PowerSyncSQLitePreparedQuery.js';
 
+const SQLiteSessionBase = SQLiteSession as unknown as abstract new (...args: any[]) => any;
+const SQLiteTransactionBase = SQLiteTransaction as unknown as abstract new (...args: any[]) => any;
+
 export interface PowerSyncSQLiteSessionOptions {
   logger?: Logger;
 }
@@ -27,14 +30,14 @@ export type PowerSyncSQLiteTransactionConfig = SQLiteTransactionConfig & {
 export class PowerSyncSQLiteTransaction<
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig
-> extends SQLiteTransaction<'async', QueryResult, TFullSchema, TSchema> {
+> extends SQLiteTransactionBase {
   static readonly [entityKind]: string = 'PowerSyncSQLiteTransaction';
 }
 
 export class PowerSyncSQLiteBaseSession<
   TFullSchema extends Record<string, unknown>,
   TSchema extends TablesRelationalConfig
-> extends SQLiteSession<'async', QueryResult, TFullSchema, TSchema> {
+> extends SQLiteSessionBase {
   static readonly [entityKind]: string = 'PowerSyncSQLiteBaseSession';
 
   protected logger: Logger;
@@ -43,7 +46,8 @@ export class PowerSyncSQLiteBaseSession<
     protected contextProvider: ContextProvider,
     protected dialect: SQLiteAsyncDialect,
     protected schema: RelationalSchemaConfig<TSchema> | undefined,
-    protected options: PowerSyncSQLiteSessionOptions = {}
+    protected options: PowerSyncSQLiteSessionOptions = {},
+    protected relations: Record<string, unknown> = {}
   ) {
     super(dialect);
     this.logger = options.logger ?? new NoopLogger();
@@ -72,6 +76,27 @@ export class PowerSyncSQLiteBaseSession<
       undefined, // cache not supported yet
       queryMetadata,
       cacheConfig
+    );
+  }
+
+  prepareRelationalQuery<T extends PreparedQueryConfigBase & { type: 'async' }>(
+    query: Query,
+    fields: SelectedFieldsOrdered | undefined,
+    executeMethod: SQLiteExecuteMethod,
+    customResultMapper: (rows: Record<string, unknown>[], mapColumnValue?: (value: unknown) => unknown) => unknown
+  ): PowerSyncSQLitePreparedQuery<T> {
+    return new PowerSyncSQLitePreparedQuery(
+      this.contextProvider,
+      query,
+      this.logger,
+      fields,
+      executeMethod,
+      false,
+      customResultMapper,
+      undefined,
+      { type: 'select', tables: [] },
+      undefined,
+      true
     );
   }
 
