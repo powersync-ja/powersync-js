@@ -74,6 +74,14 @@ describe('Relationship tests', () => {
     ]);
   });
 
+  it('should retrieve a user with posts using _query alias', async () => {
+    const result = await db._query.users.findMany({ with: { posts: true } });
+
+    expect(result).toEqual([
+      { id: '1', name: 'Alice', posts: [{ id: '33', content: 'Post content', title: 'Post title', user_id: '1' }] }
+    ]);
+  });
+
   it('should retrieve a post with its user', async () => {
     const result = await db.query.posts.findMany({ with: { user: true } });
 

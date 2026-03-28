@@ -1,6 +1,7 @@
 import {
   wrapPowerSyncWithDrizzle,
   type DrizzleQuery,
+  type PowerSyncDrizzleConfig,
   type PowerSyncSQLiteDatabase
 } from './sqlite/PowerSyncSQLiteDatabase.js';
 import { toCompilableQuery } from './utils/compilableQuery.js';
@@ -24,6 +25,7 @@ export {
   DrizzleTableWithPowerSyncOptions,
   Expand,
   ExtractPowerSyncColumns,
+  PowerSyncDrizzleConfig,
   PowerSyncSQLiteDatabase,
   TableName,
   TablesFromSchemaEntries,

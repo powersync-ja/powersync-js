@@ -5,6 +5,23 @@ const config: UserConfigExport = {
     format: 'es'
   },
   optimizeDeps: {
+    include: [
+      'drizzle-orm',
+      'drizzle-orm/casing',
+      'drizzle-orm/column',
+      'drizzle-orm/entity',
+      'drizzle-orm/logger',
+      'drizzle-orm/pg-core/primary-keys',
+      'drizzle-orm/query-promise',
+      'drizzle-orm/relations',
+      'drizzle-orm/sql/sql',
+      'drizzle-orm/sqlite-core',
+      'drizzle-orm/sqlite-core/query-builders/query',
+      'drizzle-orm/sqlite-core/db',
+      'drizzle-orm/sqlite-core/dialect',
+      'drizzle-orm/sqlite-core/session',
+      'drizzle-orm/table'
+    ],
     exclude: ['@journeyapps/wa-sqlite']
   },
   test: {
