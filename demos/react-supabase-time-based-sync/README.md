@@ -1,8 +1,8 @@
 # PowerSync + Supabase: Time-Based Sync
 
-This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client based on a date. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. Each selected date creates its own sync stream subscription with a `date` parameter. Toggling dates on or off adds or removes stream subscriptions and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
+This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client based on a date. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. Each selected date creates its own Sync Stream subscription with a `date` parameter. Toggling dates on or off adds or removes stream subscriptions and PowerSync syncs the matching issues. TTL is set to 0 so data is removed when dates are deselected.
 
-This lets you model patterns like “sync the last N days of data” or “sync only the time ranges the user cares about” without re-deploying sync rules.
+This lets you model patterns like “sync the last N days of data” or “sync only the time ranges the user cares about” without re-deploying Sync Streams.
 
 The stream definition lives in `powersync/sync-config.yaml`:
 
@@ -14,7 +14,7 @@ streams:
       WHERE substring(updated_at, 1, 10) = subscription.parameter('date')
 ```
 
-Postgres `TIMESTAMPTZ` values are handled like text for the first 10 characters (the `YYYY-MM-DD` prefix) in both the sync stream query and on the client replica.
+Postgres `TIMESTAMPTZ` values are handled like text for the first 10 characters (the `YYYY-MM-DD` prefix) in both the stream query and on the client replica.
 
 The client implementation is in `src/app/views/issues/page.tsx`. It builds an array of stream options from the selected dates and passes them directly to `useQuery` via the `streams` option:
 
