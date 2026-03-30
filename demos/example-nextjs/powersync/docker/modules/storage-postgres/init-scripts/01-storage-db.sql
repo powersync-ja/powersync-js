@@ -1,0 +1,2 @@
+-- Storage database is created by the Postgres image from POSTGRES_DB (e.g. powersync_storage).
+-- Add any extra schema or grants here if needed.

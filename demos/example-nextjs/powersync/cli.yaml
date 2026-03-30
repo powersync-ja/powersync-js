@@ -1,0 +1,11 @@
+# Adds YAML Schema support for VSCode users with the YAML extension installed. This enables features like validation and autocompletion based on the provided schema.
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/cli-config.json
+
+# This file is managed by the PowerSync CLI.
+# Run \`powersync link --help\` for more information.
+type: self-hosted
+api_url: http://localhost:8080
+api_key: dev-token-do-not-use-in-production
+plugins:
+  docker:
+    project_name: powersync_example-nextjs
