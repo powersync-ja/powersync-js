@@ -425,6 +425,9 @@ importers:
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1
+      magic-string:
+        specifier: ^0.30.21
+        version: 0.30.21
       rollup:
         specifier: 'catalog:'
         version: 4.59.0
@@ -24110,9 +24113,7 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 

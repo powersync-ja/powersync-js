@@ -71,6 +71,7 @@
     "js-logger": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
     "rsocket-websocket-client": "1.0.0-alpha.3",
-    "bson": "catalog:"
+    "bson": "catalog:",
+    "magic-string": "^0.30.21"
   }
 }
