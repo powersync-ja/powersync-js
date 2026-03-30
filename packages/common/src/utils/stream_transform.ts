@@ -31,7 +31,7 @@ export function map<T1, T2>(source: SimpleAsyncIterator<T1>, map: (source: T1) =
 }
 
 export interface InjectableIterator<T> extends SimpleAsyncIterator<T> {
-  inject(event: T);
+  inject(event: T): void;
 }
 
 /**
@@ -84,7 +84,7 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
   return {
     next: () => {
       return new Promise((resolve, reject) => {
-        // First priority: Dispatch from upstream
+        // First priority: Dispatch ready upstream events.
         if (sourceIsDone) {
           return resolve(doneResult);
         }
@@ -155,8 +155,8 @@ export function extractJsonLines(
         buffer += data;
 
         const lines = buffer.split('\n');
-        for (var i = 0; i < lines.length - 1; i++) {
-          var l = lines[i].trim();
+        for (let i = 0; i < lines.length - 1; i++) {
+          const l = lines[i].trim();
           if (l.length > 0) {
             pendingLines.push(l);
           }

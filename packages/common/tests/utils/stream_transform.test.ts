@@ -40,7 +40,7 @@ describe('extractJsonLines', () => {
   });
 });
 
-describe('injectible', () => {
+describe('injectable', () => {
   test('forwards upstream events', async () => {
     async function* source() {
       yield 1;

@@ -689,7 +689,7 @@ The next upload iteration will be delayed.`);
     });
   }
 
-  async receiveSyncLines(data: {
+  private async receiveSyncLines(data: {
     options: SyncStreamOptions;
     connection: RequiredPowerSyncConnectionOptions;
     bson?: typeof BSON;

@@ -523,13 +523,13 @@ export abstract class AbstractRemote {
      *  Aborting the active fetch request while it is being consumed seems to throw
      *  an unhandled exception on the window level.
      */
-    if (abortSignal?.aborted) {
+    if (abortSignal.aborted) {
       throw new AbortOperation('Abort request received before making fetchStreamRaw request');
     }
 
     const controller = new AbortController();
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-    abortSignal?.addEventListener('abort', () => {
+    abortSignal.addEventListener('abort', () => {
       const reason =
         abortSignal.reason ??
         new AbortOperation('Cancelling network request before it resolves. Abort signal has been received.');
