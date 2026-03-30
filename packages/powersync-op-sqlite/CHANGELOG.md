@@ -1,5 +1,13 @@
 # @powersync/op-sqlite
 
+## 0.9.5
+
+### Patch Changes
+
+- 4b957f0: Internal: Refactor connection pool to use `Semaphore` from `@powersync/common`.
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
 ## 0.9.4
 
 ### Patch Changes

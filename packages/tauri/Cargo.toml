@@ -1,6 +1,6 @@
 [package]
 name = "tauri-plugin-powersync"
-version = "0.0.1"
+version = "0.0.2"
 authors = [ "POWERSYNC" ]
 description = "Rust parts of the PowerSync Tauri SDK"
 edition = "2021"
