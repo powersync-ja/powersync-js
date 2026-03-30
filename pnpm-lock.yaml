@@ -422,6 +422,9 @@ importers:
       cross-fetch:
         specifier: ^4.1.0
         version: 4.1.0(encoding@0.1.13)
+      estree-walker:
+        specifier: ^3.0.3
+        version: 3.0.3
       js-logger:
         specifier: 'catalog:'
         version: 1.6.1

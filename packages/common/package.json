@@ -64,14 +64,15 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",
+    "bson": "catalog:",
     "buffer": "^6.0.3",
+    "cross-fetch": "^4.1.0",
+    "estree-walker": "^3.0.3",
+    "js-logger": "catalog:",
+    "magic-string": "^0.30.21",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
-    "cross-fetch": "^4.1.0",
-    "js-logger": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3",
-    "bson": "catalog:",
-    "magic-string": "^0.30.21"
+    "rsocket-websocket-client": "1.0.0-alpha.3"
   }
 }
