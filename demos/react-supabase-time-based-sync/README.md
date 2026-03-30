@@ -1,4 +1,4 @@
-# PowerSync + Supabase: Time-Based Sync (Local-First)
+# PowerSync + Supabase: Time-Based Sync
 
 This demo shows how to use [PowerSync Sync Streams](https://docs.powersync.com/sync/sync-streams) to dynamically control which data is synced to the client based on a date. The backend contains a set of issues with `created_at` / `updated_at` as **`TIMESTAMPTZ`** in Postgres. Each selected date creates its own sync stream subscription with a `date` parameter. Toggling dates on or off adds or removes stream subscriptions and PowerSync syncs the matching issues. TTL is set to 0 so data is removed immediately when dates are deselected.
 
