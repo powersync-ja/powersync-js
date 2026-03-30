@@ -18,9 +18,11 @@ export default function IssuesPage() {
 
   const streams = selectedDates.map((date) => ({ name: 'issues_by_date', parameters: { date }, ttl: 0 }));
 
+  // Mirror the stream subscriptions in the local query, showing only issues for the selected dates.
+  const placeholders = selectedDates.map(() => '?').join(', ') || 'NULL';
   const { data: issues } = useQuery<IssueRecord>(
-    `SELECT * FROM ${ISSUES_TABLE} ORDER BY updated_at DESC`,
-    [],
+    `SELECT * FROM ${ISSUES_TABLE} WHERE date(updated_at) IN (${placeholders}) ORDER BY updated_at DESC`,
+    selectedDates,
     { streams }
   );
 
