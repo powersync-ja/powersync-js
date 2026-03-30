@@ -1,5 +1,5 @@
 import { type CompilableQuery, parseQuery } from '@powersync/common';
-import { usePowerSync } from '@powersync/react';
+import { QuerySyncStreamOptions, useAllSyncStreamsHaveSynced, usePowerSync } from '@powersync/react';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as Tanstack from '@tanstack/react-query';
 
@@ -7,15 +7,19 @@ export type UsePowerSyncQueriesInput = {
   query?: string | CompilableQuery<unknown>;
   parameters?: unknown[];
   queryKey: Tanstack.QueryKey;
+  streams?: QuerySyncStreamOptions[];
 }[];
 
 export type UsePowerSyncQueriesOutput = {
-  sqlStatement: string;
-  queryParameters: unknown[];
-  tables: string[];
-  error?: Error;
-  queryFn: () => Promise<unknown[]>;
-}[];
+  queries: {
+    sqlStatement: string;
+    queryParameters: unknown[];
+    tables: string[];
+    error?: Error;
+    queryFn: () => Promise<unknown[]>;
+  }[];
+  streamsHaveSynced: boolean;
+};
 
 export function usePowerSyncQueries(
   queries: UsePowerSyncQueriesInput,
@@ -34,6 +38,14 @@ export function usePowerSyncQueries(
       return next;
     });
   }, []);
+
+  // Collect all streams from all query entries into a single flat list for sync tracking.
+  const allStreams = useMemo(() => {
+    const streams = queries.flatMap(q => q.streams ?? []);
+    return streams.length > 0 ? streams : undefined;
+  }, [queries]);
+
+  const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync, allStreams);
 
   const updateErrorsArr = useCallback((error: Error | undefined, idx: number) => {
     setErrorsArr((prev) => {
@@ -164,29 +176,33 @@ export function usePowerSyncQueries(
   }, [powerSync, queryClient, tablesArr, updateErrorsArr, stringifiedQueryKeys]);
 
   return useMemo(() => {
-    return parsedQueries.map((pq, idx) => {
-      const error = errorsArr[idx] || pq.parseError;
 
-      const queryFn = async () => {
-        if (error) throw error;
-        if (!pq.query) throw new Error('No query provided');
-
-        try {
-          return typeof pq.query === 'string'
-            ? await powerSync.getAll(pq.sqlStatement, pq.queryParameters)
-            : await pq.query.execute();
-        } catch (e) {
-          throw e;
-        }
-      };
-
-      return {
-        sqlStatement: pq.sqlStatement,
-        queryParameters: pq.queryParameters,
-        tables: tablesArr[idx],
-        error,
-        queryFn
-      };
-    });
+    return {
+      queries: parsedQueries.map((pq, idx) => {
+        const error = errorsArr[idx] || pq.parseError;
+  
+        const queryFn = async () => {
+          if (error) throw error;
+          if (!pq.query) throw new Error('No query provided');
+  
+          try {
+            return typeof pq.query === 'string'
+              ? await powerSync.getAll(pq.sqlStatement, pq.queryParameters)
+              : await pq.query.execute();
+          } catch (e) {
+            throw e;
+          }
+        };
+  
+        return {
+          sqlStatement: pq.sqlStatement,
+          queryParameters: pq.queryParameters,
+          tables: tablesArr[idx],
+          error,
+          queryFn
+        };
+      }),
+      streamsHaveSynced
+    };
   }, [parsedQueries, errorsArr, tablesArr, powerSync]);
 }

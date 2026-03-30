@@ -1,5 +1,64 @@
 # @powersync/tanstack-react-query
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [ccf16f0]
+- Updated dependencies [4b957f0]
+  - @powersync/react@1.10.0
+  - @powersync/common@1.51.0
+
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [1bbba11]
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/react@1.9.1
+  - @powersync/common@1.50.0
+
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+  - @powersync/react@1.9.0
+
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+  - @powersync/react@1.9.0
+
+## 0.2.0
+
+### Minor Changes
+
+- a5d6964: Added sync stream support to the `useQuery()` and `useQueries()` hooks.
+
+### Patch Changes
+
+- Updated dependencies [a5d6964]
+  - @powersync/react@1.9.0
+
+## 0.1.15
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [569cb41]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+  - @powersync/react@1.8.3
+
 ## 0.1.14
 
 ### Patch Changes

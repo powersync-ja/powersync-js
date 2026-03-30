@@ -38,10 +38,10 @@ The RLS rules defined in the `database.sql` script are setup to only allow the a
 
 Follow the [Connect PowerSync to Your Supabase](https://docs.powersync.com/integration-guides/supabase-+-powersync#connect-powersync-to-your-supabase) section.
 
-### 5. Create Sync Rules on PowerSync
+### 5. Create Sync Streams on PowerSync
 
-Create sync rules by following the [Configure Sync Rules](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-sync-rules) section.
-The sync rules for this demo are defined in [`sync-rules.yaml`](sync-rules.yaml) in this directory. Copy its contents and paste it into the 'sync-rules.yaml' file in the Dashboard as described in the guide.
+Create sync streams by following the [Configure Sync Streams](https://docs.powersync.com/integration-guides/supabase-+-powersync#configure-sync-streams) section.
+The sync streams for this demo are defined in [`sync-config.yaml`](sync-config.yaml) in this directory. Copy its contents and paste it into the sync streams editor in the Dashboard.
 
 ### 6. Set up local environment variables
 

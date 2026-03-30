@@ -1,4 +1,10 @@
-import { ConnectionClosedError, LockContext, QueryResult } from '@powersync/common';
+import {
+  ConnectionClosedError,
+  DBGetUtilsDefaultMixin,
+  QueryResult,
+  SqlExecutor,
+  LockContext
+} from '@powersync/common';
 import { releaseProxy, Remote } from 'comlink';
 import { Worker } from 'node:worker_threads';
 import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncDatabase.js';
@@ -6,9 +12,7 @@ import { AsyncDatabase, AsyncDatabaseOpener, ProxiedQueryResult } from './AsyncD
 /**
  * A PowerSync database connection implemented with RPC calls to a background worker.
  */
-export class RemoteConnection implements LockContext {
-  isBusy = false;
-
+class BaseRemoteConnection implements SqlExecutor {
   private readonly worker: Worker;
   private readonly comlink: Remote<AsyncDatabaseOpener>;
   private readonly database: Remote<AsyncDatabase>;
@@ -65,14 +69,14 @@ export class RemoteConnection implements LockContext {
   executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     return this.withRemote(async () => {
       const result = await this.database.executeBatch(query, params ?? []);
-      return RemoteConnection.wrapQueryResult(result);
+      return BaseRemoteConnection.wrapQueryResult(result);
     });
   }
 
   execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
     return this.withRemote(async () => {
       const result = await this.database.execute(query, params ?? []);
-      return RemoteConnection.wrapQueryResult(result);
+      return BaseRemoteConnection.wrapQueryResult(result);
     });
   }
 
@@ -80,25 +84,6 @@ export class RemoteConnection implements LockContext {
     return this.withRemote(async () => {
       return await this.database.executeRaw(query, params ?? []);
     });
-  }
-
-  async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    const res = await this.execute(sql, parameters);
-    return res.rows?._array ?? [];
-  }
-
-  async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    const res = await this.execute(sql, parameters);
-    return res.rows?.item(0) ?? null;
-  }
-
-  async get<T>(sql: string, parameters?: any[]): Promise<T> {
-    const res = await this.execute(sql, parameters);
-    const first = res.rows?.item(0);
-    if (!first) {
-      throw new Error('Result set is empty');
-    }
-    return first;
   }
 
   async refreshSchema() {
@@ -127,3 +112,5 @@ export class RemoteConnection implements LockContext {
     };
   }
 }
+
+export class RemoteConnection extends DBGetUtilsDefaultMixin(BaseRemoteConnection) implements LockContext {}

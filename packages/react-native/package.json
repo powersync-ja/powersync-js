@@ -1,6 +1,6 @@
 {
   "name": "@powersync/react-native",
-  "version": "1.29.0",
+  "version": "1.33.1",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -32,8 +32,8 @@
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@journeyapps/react-native-quick-sqlite": "^2.5.0",
-    "@powersync/common": "workspace:^1.46.0",
+    "@journeyapps/react-native-quick-sqlite": "^2.5.1",
+    "@powersync/common": "workspace:^1.51.0",
     "react": "*",
     "react-native": "*"
   },
@@ -44,12 +44,11 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "@powersync/react": "workspace:*",
-    "async-mutex": "catalog:"
+    "@powersync/react": "workspace:*"
   },
   "devDependencies": {
     "@craftzdog/react-native-buffer": "^6.0.5",
-    "@journeyapps/react-native-quick-sqlite": "^2.5.0",
+    "@journeyapps/react-native-quick-sqlite": "^2.5.1",
     "@rollup/plugin-alias": "catalog:",
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-inject": "catalog:",

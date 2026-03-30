@@ -1,5 +1,15 @@
 # @powersync/drizzle-driver
 
+## 0.7.3
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 0.7.2
 
 ### Patch Changes

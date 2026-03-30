@@ -1,4 +1,3 @@
-import { Mutex } from 'async-mutex';
 import { EventIterator } from 'event-iterator';
 import Logger, { ILogger } from 'js-logger';
 import {
@@ -46,6 +45,7 @@ import { TriggerManagerImpl } from './triggers/TriggerManagerImpl.js';
 import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/WatchedQuery.js';
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
+import { Mutex } from '../utils/mutex.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -813,6 +813,10 @@ SELECT * FROM crud_entries;
    * Execute a SQL write (INSERT/UPDATE/DELETE) query
    * and optionally return results.
    *
+   * When using the default client-side [JSON-based view system](https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure),
+   * the returned result's `rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
+   * Use a `RETURNING` clause and inspect `result.rows` when you need to confirm which rows changed.
+   *
    * @param sql The SQL query to execute
    * @param parameters Optional array of parameters to bind to the query
    * @returns The query result as an object with structured key-value pairs
@@ -921,7 +925,7 @@ SELECT * FROM crud_entries;
     await this.waitForReady();
     return this.database.readTransaction(
       async (tx) => {
-        const res = await callback({ ...tx });
+        const res = await callback(tx);
         await tx.rollback();
         return res;
       },

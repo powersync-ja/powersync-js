@@ -9,6 +9,7 @@ import {
   TriggerManager,
   TriggerManagerConfig,
   TriggerRemoveCallback,
+  TriggerRemoveCallbackOptions,
   WithDiffOptions
 } from './TriggerManager.js';
 
@@ -201,6 +202,7 @@ export class TriggerManagerImpl implements TriggerManager {
       columns,
       when,
       hooks,
+      setupContext,
       // Fall back to the provided default if not given on this level
       useStorage = this.defaultConfig.useStorageByDefault
     } = options;
@@ -268,13 +270,19 @@ export class TriggerManagerImpl implements TriggerManager {
      * we need to ensure we can cleanup the created resources.
      * We unfortunately cannot rely on transaction rollback.
      */
-    const cleanup = async () => {
+    const cleanup = async (options?: TriggerRemoveCallbackOptions) => {
+      const { context } = options ?? {};
       disposeWarningListener();
-      return this.db.writeLock(async (tx) => {
+      const doCleanup = async (tx: LockContext) => {
         await this.removeTriggers(tx, triggerIds);
-        await tx.execute(/* sql */ `DROP TABLE IF EXISTS ${destination};`);
+        await tx.execute(`DROP TABLE IF EXISTS ${destination};`);
         await releaseStorageClaim?.();
-      });
+      };
+      if (context) {
+        await doCleanup(context);
+      } else {
+        await this.db.writeLock(doCleanup);
+      }
     };
 
     const setup = async (tx: LockContext) => {
@@ -360,11 +368,15 @@ export class TriggerManagerImpl implements TriggerManager {
     };
 
     try {
-      await this.db.writeLock(setup);
+      if (setupContext) {
+        await setup(setupContext);
+      } else {
+        await this.db.writeLock(setup);
+      }
       return cleanup;
     } catch (error) {
       try {
-        await cleanup();
+        await cleanup(setupContext ? { context: setupContext } : undefined);
       } catch (cleanupError) {
         throw new AggregateError([error, cleanupError], 'Error during operation and cleanup');
       }

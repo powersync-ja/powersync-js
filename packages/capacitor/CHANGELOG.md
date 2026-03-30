@@ -1,5 +1,56 @@
 # @powersync/capacitor
 
+## 0.5.2
+
+### Patch Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+- Updated dependencies [45f427c]
+- Updated dependencies [8f8ef1c]
+  - @powersync/web@1.37.0
+
+## 0.5.1
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [42afb0e]
+  - @powersync/web@1.36.0
+
+## 0.5.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+
+## 0.4.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+- Updated dependencies [f0a36c9]
+  - @powersync/web@1.34.0
+
+## 0.4.0
+
+### Minor Changes
+
+- 8dee8d7: Removed `async-lock` dependency in favor of `async-mutex`.
+
+### Patch Changes
+
+- 8dee8d7: Fixed potential issue where extreme amounts of concurrent calls to `writeLock` could reject with the error "Too many pending tasks in queue"
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [ae3b188]
+- Updated dependencies [c506299]
+  - @powersync/web@1.33.0
+
 ## 0.3.0
 
 ### Minor Changes

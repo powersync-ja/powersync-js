@@ -10,15 +10,14 @@ import {
   TriggerManagerConfig,
   isDBAdapter,
   isSQLOpenFactory,
+  Mutex,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   type RequiredAdditionalConnectionOptions
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
-import { LockedAsyncDatabaseAdapter } from './adapters/LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
@@ -35,6 +34,7 @@ import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation.js';
+import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
@@ -148,7 +148,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   async _initialize(): Promise<void> {
-    if (this.database instanceof LockedAsyncDatabaseAdapter) {
+    if (this.database instanceof AsyncDbAdapter) {
       /**
        * While init is done automatically,
        * LockedAsyncDatabaseAdapter only exposes config after init.

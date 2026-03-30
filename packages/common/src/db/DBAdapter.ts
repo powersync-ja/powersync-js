@@ -16,7 +16,13 @@ import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
 export type QueryResult = {
   /** Represents the auto-generated row id if applicable. */
   insertId?: number;
-  /** Number of affected rows if result of a update query. */
+  /**
+   * Number of affected rows reported by SQLite for a write query.
+   *
+   * When using the default client-side [JSON-based view system](https://docs.powersync.com/architecture/client-architecture#client-side-schema-and-sqlite-database-structure),
+   * `rowsAffected` may be `0` for successful `UPDATE` and `DELETE` statements.
+   * Use a `RETURNING` clause and inspect `rows` when you need to confirm which rows changed.
+   */
   rowsAffected: number;
   /** if status is undefined or 0 this object will contain the query results */
   rows?: {
@@ -41,7 +47,7 @@ export interface DBGetUtils {
   get<T>(sql: string, parameters?: any[]): Promise<T>;
 }
 
-export interface LockContext extends DBGetUtils {
+export interface SqlExecutor {
   /** Execute a single write statement. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
   /**
@@ -59,6 +65,61 @@ export interface LockContext extends DBGetUtils {
    * ```[ { id: '33', name: 'list 1', content: 'Post content', list_id: '1' } ]```
    */
   executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
+
+  executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
+}
+
+export interface LockContext extends SqlExecutor, DBGetUtils {}
+
+/**
+ * Implements {@link DBGetUtils} on a {@link SqlRunner}.
+ */
+export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omit<SqlExecutor, 'executeBatch'>>(
+  Base: TBase
+) {
+  return class extends Base implements DBGetUtils, SqlExecutor {
+    async getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
+      const res = await this.execute(sql, parameters);
+      return res.rows?._array ?? [];
+    }
+
+    async getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+      const res = await this.execute(sql, parameters);
+      return res.rows?.item(0) ?? null;
+    }
+
+    async get<T>(sql: string, parameters?: any[]): Promise<T> {
+      const res = await this.execute(sql, parameters);
+      const first = res.rows?.item(0);
+      if (!first) {
+        throw new Error('Result set is empty');
+      }
+      return first;
+    }
+
+    async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+      // If this context can run batch statements natively, use that.
+      // @ts-ignore
+      if (super.executeBatch) {
+        // @ts-ignore
+        return super.executeBatch(query, params);
+      }
+
+      // Emulate executeBatch by running statements individually.
+      let lastInsertId: number | undefined;
+      let rowsAffected = 0;
+      for (const set of params) {
+        const result = await this.execute(query, set);
+        lastInsertId = result.insertId;
+        rowsAffected += result.rowsAffected;
+      }
+
+      return {
+        rowsAffected,
+        insertId: lastInsertId
+      };
+    }
+  };
 }
 
 export interface Transaction extends LockContext {
@@ -107,20 +168,117 @@ export interface DBLockOptions {
   timeoutMs?: number;
 }
 
-export interface DBAdapter extends BaseObserverInterface<DBAdapterListener>, DBGetUtils {
-  close: () => void | Promise<void>;
-  execute: (query: string, params?: any[]) => Promise<QueryResult>;
-  executeRaw: (query: string, params?: any[]) => Promise<any[][]>;
-  executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
+export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener> {
   name: string;
+  close: () => void | Promise<void>;
   readLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-  readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeLock: <T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions) => Promise<T>;
-  writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+
   /**
    * This method refreshes the schema information across all connections. This is for advanced use cases, and should generally not be needed.
    */
   refreshSchema: () => Promise<void>;
+}
+
+export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
+  readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+  writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
+}
+
+/**
+ * A mixin to implement {@link DBAdapter} by delegating to {@link ConnectionPool.readLock} and
+ * {@link ConnectionPool.writeLock}.
+ */
+export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase) {
+  return class extends Base implements DBAdapter {
+    readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
+      return this.readLock((ctx) => TransactionImplementation.runWith(ctx, fn), options);
+    }
+
+    writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
+      return this.writeLock((ctx) => TransactionImplementation.runWith(ctx, fn), options);
+    }
+
+    getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
+      return this.readLock((ctx) => ctx.getAll(sql, parameters));
+    }
+
+    getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
+      return this.readLock((ctx) => ctx.getOptional(sql, parameters));
+    }
+
+    get<T>(sql: string, parameters?: any[]): Promise<T> {
+      return this.readLock((ctx) => ctx.get(sql, parameters));
+    }
+
+    execute(query: string, params?: any[]): Promise<QueryResult> {
+      return this.writeLock((ctx) => ctx.execute(query, params));
+    }
+
+    executeRaw(query: string, params?: any[]): Promise<any[][]> {
+      return this.writeLock((ctx) => ctx.executeRaw(query, params));
+    }
+
+    executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+      return this.writeTransaction((tx) => tx.executeBatch(query, params));
+    }
+  };
+}
+
+class BaseTransaction implements SqlExecutor {
+  private finalized = false;
+
+  constructor(private inner: SqlExecutor) {}
+
+  async commit(): Promise<QueryResult> {
+    if (this.finalized) {
+      return { rowsAffected: 0 };
+    }
+    this.finalized = true;
+    return this.inner.execute('COMMIT');
+  }
+
+  async rollback(): Promise<QueryResult> {
+    if (this.finalized) {
+      return { rowsAffected: 0 };
+    }
+    this.finalized = true;
+    return this.inner.execute('ROLLBACK');
+  }
+
+  execute(query: string, params?: any[] | undefined): Promise<QueryResult> {
+    return this.inner.execute(query, params);
+  }
+
+  executeRaw(query: string, params?: any[] | undefined): Promise<any[][]> {
+    return this.inner.executeRaw(query, params);
+  }
+
+  executeBatch(query: string, params?: any[][]): Promise<QueryResult> {
+    return this.inner.executeBatch(query, params);
+  }
+}
+
+class TransactionImplementation extends DBGetUtilsDefaultMixin(BaseTransaction) {
+  static async runWith<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
+    let tx = new TransactionImplementation(ctx);
+
+    try {
+      await ctx.execute('BEGIN IMMEDIATE');
+
+      const result = await fn(tx);
+      await tx.commit();
+      return result;
+    } catch (ex) {
+      try {
+        await tx.rollback();
+      } catch (ex2) {
+        // In rare cases, a rollback may fail.
+        // Safe to ignore.
+      }
+      throw ex;
+    }
+  }
 }
 
 export function isBatchedUpdateNotification(

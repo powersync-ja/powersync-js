@@ -1,6 +1,6 @@
 {
   "name": "@powersync/common",
-  "version": "1.46.0",
+  "version": "1.51.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -55,7 +55,6 @@
     "test:exports": "attw --pack ."
   },
   "dependencies": {
-    "async-mutex": "catalog:",
     "event-iterator": "^2.0.0"
   },
   "devDependencies": {

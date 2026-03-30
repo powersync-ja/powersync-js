@@ -1,5 +1,5 @@
 import { type CompilableQuery } from '@powersync/common';
-import { usePowerSync } from '@powersync/react';
+import { QuerySyncStreamOptions, usePowerSync } from '@powersync/react';
 import * as Tanstack from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { usePowerSyncQueries } from './usePowerSyncQueries.js';
@@ -7,6 +7,18 @@ import { usePowerSyncQueries } from './usePowerSyncQueries.js';
 export type PowerSyncQueryOptions<T> = {
   query?: string | CompilableQuery<T>;
   parameters?: any[];
+  /**
+   * An optional array of sync streams (with names and parameters) backing the query.
+   *
+   * When set, `useQuery` will subscribe to those streams (and automatically handle unsubscribing from them, too).
+   *
+   * If {@link QuerySyncStreamOptions} is set on a stream, `useQuery` will remain in a loading state until that stream
+   * is marked as {@link SyncSubscriptionDescription.hasSynced}. This ensures the query is not missing rows that haven't
+   * been downloaded.
+   * Note however that after an initial sync, the query will not block itself while new rows are downloading. Instead,
+   * consistent sync snapshots will be made available as they've been processed by PowerSync.
+   **/
+  streams?: QuerySyncStreamOptions[];
 };
 
 export type PowerSyncQueryOption<T = unknown[]> = Tanstack.UseQueryOptions<T[]> & PowerSyncQueryOptions<T>;
@@ -126,12 +138,13 @@ export function useQueries(
       queriesInput.map((queryOptions) => ({
         query: queryOptions.query,
         parameters: queryOptions.parameters,
-        queryKey: queryOptions.queryKey
+        queryKey: queryOptions.queryKey,
+        streams: queryOptions.streams
       })),
     [queriesInput]
   );
 
-  const states = usePowerSyncQueries(powerSyncQueriesInput, queryClient);
+  const {queries: states, streamsHaveSynced} = usePowerSyncQueries(powerSyncQueriesInput, queryClient);
 
   const queries = useMemo(() => {
     return queriesInput.map((queryOptions, idx) => {
@@ -141,7 +154,8 @@ export function useQueries(
       return {
         ...rest,
         queryFn: query ? state.queryFn : rest.queryFn,
-        queryKey: rest.queryKey
+        queryKey: rest.queryKey,
+        enabled: streamsHaveSynced
       };
     });
   }, [queriesInput, states]);

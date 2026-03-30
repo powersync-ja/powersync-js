@@ -2,19 +2,24 @@ import {
   BaseListener,
   BaseObserver,
   BatchedUpdateNotification,
+  ConnectionPool,
   ControlledExecutor,
   createLogger,
   DBAdapter,
+  DBAdapterDefaultMixin,
   DBAdapterListener,
+  DBGetUtilsDefaultMixin,
   DBLockOptions,
   ILogger,
   LockContext,
+  Mutex,
   QueryResult,
+  SqlExecutor,
   SQLOpenFactory,
   SQLOpenOptions,
+  timeoutSignal,
   Transaction
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 // This uses a pure JS version which avoids the need for WebAssembly, which is not supported in React Native.
 import SQLJs from '@powersync/sql-js/dist/sql-asm.js';
 
@@ -56,7 +61,7 @@ interface TableObserverListener extends BaseListener {
 }
 class TableObserver extends BaseObserver<TableObserverListener> {}
 
-export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   protected initPromise: Promise<SQLJs.Database>;
   protected _db: SQLJs.Database | null;
   protected tableUpdateCache: Set<string>;
@@ -136,96 +141,96 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
     db.close();
   }
 
-  protected generateLockContext(): LockContext {
-    const execute = async (query: string, params?: any[]): Promise<QueryResult> => {
+  /**
+   * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
+   */
+  readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    return this.writeLock(fn, options);
+  }
+
+  writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
+    return this.mutex.runExclusive(async () => {
       const db = await this.getDB();
-      const statement = db.prepare(query);
-      const rawResults: any[][] = [];
-      let columnNames: string[] | null = null;
-      try {
-        if (params) {
-          statement.bind(params);
-        }
-        while (statement.step()) {
-          if (!columnNames) {
-            columnNames = statement.getColumnNames();
-          }
-          rawResults.push(statement.get());
-        }
+      const result = await fn(new SqlJsLockContext(db));
 
-        const rows = rawResults.map((row) => {
-          return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
-        });
-        return {
-          // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
-          insertId: (db as any).lastInsertId(),
-          rowsAffected: db.getRowsModified(),
-          rows: {
-            _array: rows,
-            length: rows.length,
-            item: (idx: number) => rows[idx]
-          }
-        };
-      } finally {
-        statement.free();
+      // No point to schedule a write if there's no persister.
+      if (this.options.persister) {
+        this.writeScheduler.schedule(db);
       }
-    };
 
-    const getAll = async <T>(query: string, params?: any[]): Promise<T[]> => {
-      const result = await execute(query, params);
-      return result.rows?._array ?? ([] as T[]);
-    };
-
-    const getOptional = async <T>(query: string, params?: any[]): Promise<T | null> => {
-      const results = await getAll<T>(query, params);
-      return results.length > 0 ? results[0] : null;
-    };
-
-    const get = async <T>(query: string, params?: any[]): Promise<T> => {
-      const result = await getOptional<T>(query, params);
-      if (!result) {
-        throw new Error(`No results for query: ${query}`);
-      }
+      const notification: BatchedUpdateNotification = {
+        rawUpdates: [],
+        tables: Array.from(this.tableUpdateCache),
+        groupedUpdates: {}
+      };
+      this.tableUpdateCache.clear();
+      this.iterateListeners((l) => l.tablesUpdated?.(notification));
       return result;
-    };
+    }, timeoutSignal(options?.timeoutMs));
+  }
 
-    const executeRaw = async (query: string, params?: any[]): Promise<any[][]> => {
-      const db = await this.getDB();
-      const statement = db.prepare(query);
-      const rawResults: any[][] = [];
-      try {
-        if (params) {
-          statement.bind(params);
-        }
-        while (statement.step()) {
-          rawResults.push(statement.get());
-        }
-        return rawResults;
-      } finally {
-        statement.free();
+  async refreshSchema(): Promise<void> {
+    await this.writeLock((ctx) => ctx.get("PRAGMA table_info('sqlite_master')"));
+  }
+}
+
+class SqlJsExecutor implements SqlExecutor {
+  constructor(readonly db: SQLJs.Database) {}
+
+  async execute(query: string, params?: any[]): Promise<QueryResult> {
+    const db = this.db;
+    const statement = db.prepare(query);
+    const rawResults: any[][] = [];
+    let columnNames: string[] | null = null;
+    try {
+      if (params) {
+        statement.bind(params);
       }
-    };
+      while (statement.step()) {
+        if (!columnNames) {
+          columnNames = statement.getColumnNames();
+        }
+        rawResults.push(statement.get());
+      }
 
-    return {
-      getAll,
-      getOptional,
-      get,
-      executeRaw,
-      execute
-    };
+      const rows = rawResults.map((row) => {
+        return Object.fromEntries(row.map((value, index) => [columnNames![index], value]));
+      });
+      return {
+        // `lastInsertId` is not available in the original version of SQL.js or its types, but it's available in the fork we use.
+        insertId: (db as any).lastInsertId(),
+        rowsAffected: db.getRowsModified(),
+        rows: {
+          _array: rows,
+          length: rows.length,
+          item: (idx: number) => rows[idx]
+        }
+      };
+    } finally {
+      statement.free();
+    }
   }
 
-  execute(query: string, params?: any[]): Promise<QueryResult> {
-    return this.writeLock((tx) => tx.execute(query, params));
-  }
-
-  executeRaw(query: string, params?: any[]): Promise<any[][]> {
-    return this.writeLock((tx) => tx.executeRaw(query, params));
+  async executeRaw(query: string, params?: any[]): Promise<any[][]> {
+    const db = this.db;
+    const statement = db.prepare(query);
+    const rawResults: any[][] = [];
+    try {
+      if (params) {
+        statement.bind(params);
+      }
+      while (statement.step()) {
+        rawResults.push(statement.get());
+      }
+      return rawResults;
+    } finally {
+      statement.free();
+    }
   }
 
   async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
     let totalRowsAffected = 0;
-    const db = await this.getDB();
+    const db = this.db;
 
     const stmt = db.prepare(query);
     try {
@@ -241,96 +246,8 @@ export class SQLJSDBAdapter extends BaseObserver<DBAdapterListener> implements D
       stmt.free();
     }
   }
-
-  /**
-   * We're not using separate read/write locks here because we can't implement connection pools on top of SQL.js.
-   */
-  readLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock(fn, options);
-  }
-
-  readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readLock(async (ctx) => {
-      return this.internalTransaction(ctx, fn);
-    });
-  }
-
-  writeLock<T>(fn: (tx: LockContext) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.mutex.runExclusive(async () => {
-      const db = await this.getDB();
-      const result = await fn(this.generateLockContext());
-
-      // No point to schedule a write if there's no persister.
-      if (this.options.persister) {
-        this.writeScheduler.schedule(db);
-      }
-
-      const notification: BatchedUpdateNotification = {
-        rawUpdates: [],
-        tables: Array.from(this.tableUpdateCache),
-        groupedUpdates: {}
-      };
-      this.tableUpdateCache.clear();
-      this.iterateListeners((l) => l.tablesUpdated?.(notification));
-      return result;
-    });
-  }
-
-  writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock(async (ctx) => {
-      return this.internalTransaction(ctx, fn);
-    });
-  }
-
-  refreshSchema(): Promise<void> {
-    return this.get("PRAGMA table_info('sqlite_master')");
-  }
-
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return this.readLock((tx) => tx.getAll<T>(sql, parameters));
-  }
-
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    return this.readLock((tx) => tx.getOptional<T>(sql, parameters));
-  }
-
-  get<T>(sql: string, parameters?: any[]): Promise<T> {
-    return this.readLock((tx) => tx.get<T>(sql, parameters));
-  }
-
-  protected async internalTransaction<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
-    let finalized = false;
-    const commit = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return ctx.execute('COMMIT');
-    };
-    const rollback = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return ctx.execute('ROLLBACK');
-    };
-    try {
-      await ctx.execute('BEGIN');
-      const result = await fn({
-        ...ctx,
-        commit,
-        rollback
-      });
-      await commit();
-      return result;
-    } catch (ex) {
-      try {
-        await rollback();
-      } catch (ex2) {
-        // In rare cases, a rollback may fail.
-        // Safe to ignore.
-      }
-      throw ex;
-    }
-  }
 }
+
+class SqlJsLockContext extends DBGetUtilsDefaultMixin(SqlJsExecutor) implements LockContext {}
+
+export class SQLJSDBAdapter extends DBAdapterDefaultMixin(SqlJsConnectionPool) implements DBAdapter {}

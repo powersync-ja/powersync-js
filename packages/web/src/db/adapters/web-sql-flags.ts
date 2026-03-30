@@ -76,6 +76,12 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => Worker | SharedWorker);
 
+  /**
+   * Use an existing port to an initialized worker.
+   * A worker will be initialized if none is provided
+   */
+  workerPort?: MessagePort;
+
   logger?: ILogger;
 
   /**

@@ -86,7 +86,11 @@ export class Connector implements PowerSyncBackendConnector {
       await transaction.complete();
     } catch (ex: any) {
       console.debug(ex);
-      if (typeof ex.code == 'string' && FATAL_RESPONSE_CODES.some((regex) => regex.test(ex.code))) {
+      const isFatalPostgresError =
+        typeof ex.code == 'string' && FATAL_RESPONSE_CODES.some((regex) => regex.test(ex.code));
+      const isFatalHttpError = typeof ex.status === 'number' && ex.status >= 400 && ex.status < 500;
+
+      if (isFatalPostgresError || isFatalHttpError) {
         /**
          * Instead of blocking the queue with these errors,
          * discard the (rest of the) transaction.

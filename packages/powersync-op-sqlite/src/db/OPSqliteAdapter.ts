@@ -1,14 +1,16 @@
 import { getDylibPath, open, type DB } from '@op-engineering/op-sqlite';
 import {
   BaseObserver,
+  ConnectionPool,
   DBAdapter,
+  DBAdapterDefaultMixin,
   DBAdapterListener,
   DBLockOptions,
   QueryResult,
   Transaction,
-  mutexRunExclusive
+  timeoutSignal,
+  Semaphore
 } from '@powersync/common';
-import { Mutex } from 'async-mutex';
 import { Platform } from 'react-native';
 import { OPSQLiteConnection } from './OPSQLiteConnection';
 import { SqliteOptions } from './SqliteOptions';
@@ -24,24 +26,20 @@ export type OPSQLiteAdapterOptions = {
 
 const READ_CONNECTIONS = 5;
 
-export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implements DBAdapter {
+class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
   name: string;
-  protected writeMutex: Mutex;
 
   protected initialized: Promise<void>;
 
-  protected readConnections: Array<{ busy: boolean; connection: OPSQLiteConnection }> | null;
+  protected readConnections: Semaphore<OPSQLiteConnection> | null;
+  protected writeConnection: Semaphore<OPSQLiteConnection> | null;
 
-  protected writeConnection: OPSQLiteConnection | null;
-
-  private readQueue: Array<() => void> = [];
   private abortController: AbortController;
 
   constructor(protected options: OPSQLiteAdapterOptions) {
     super();
     this.name = this.options.name;
 
-    this.writeMutex = new Mutex();
     this.readConnections = null;
     this.writeConnection = null;
     this.abortController = new AbortController();
@@ -53,7 +51,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
       this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
-    this.writeConnection = await this.openConnection(dbFilename);
+    const underlyingWriteConnection = await this.openConnection(dbFilename);
 
     const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -73,7 +71,7 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     for (const statement of writeConnectionStatements) {
       for (let tries = 0; tries < 30; tries++) {
         try {
-          await this.writeConnection!.execute(statement);
+          await underlyingWriteConnection.execute(statement);
           break;
         } catch (e: any) {
           if (e instanceof Error && e.message.includes('database is locked') && tries < 29) {
@@ -86,18 +84,21 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     }
 
     // Changes should only occur in the write connection
-    this.writeConnection!.registerListener({
+    underlyingWriteConnection.registerListener({
       tablesUpdated: (notification) => this.iterateListeners((cb) => cb.tablesUpdated?.(notification))
     });
 
-    this.readConnections = [];
+    const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
       const conn = await this.openConnection(dbFilename);
       for (let statement of readConnectionStatements) {
         await conn.execute(statement);
       }
-      this.readConnections.push({ busy: false, connection: conn });
+      underlyingReadConnections.push(conn);
     }
+
+    this.writeConnection = new Semaphore([underlyingWriteConnection]);
+    this.readConnections = new Semaphore(underlyingReadConnections);
   }
 
   protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
@@ -153,165 +154,89 @@ export class OPSQLiteDBAdapter extends BaseObserver<DBAdapterListener> implement
     await this.initialized;
     // Abort any pending operations
     this.abortController.abort();
-    this.readQueue = [];
 
-    this.writeConnection!.close();
-    this.readConnections!.forEach((c) => c.connection.close());
+    const { item: writeConnection, release: returnWrite } = await this.writeConnection!.requestOne();
+    const { items: readers, release: returnReaders } = await this.readConnections!.requestAll();
+
+    try {
+      writeConnection.close();
+      readers.forEach((c) => c.close());
+    } finally {
+      returnWrite();
+      returnReaders();
+    }
+  }
+
+  private generateNestedAbortSignal(options?: DBLockOptions) {
+    const outerSignal = this.abortController.signal;
+    let signal: AbortSignal;
+    let cleanUpInnerSignal: (() => void) | undefined;
+
+    if (options?.timeoutMs && !outerSignal.aborted) {
+      // This is essentially an AbortSignal.any() polyfill.
+      const innerController = new AbortController();
+      cleanUpInnerSignal = () => {
+        innerController.abort();
+        outerSignal.removeEventListener('abort', cleanUpInnerSignal!);
+        timeout.removeEventListener('abort', cleanUpInnerSignal!);
+      };
+
+      outerSignal.addEventListener('abort', cleanUpInnerSignal);
+      const timeout = timeoutSignal(options.timeoutMs);
+      timeout.addEventListener('abort', cleanUpInnerSignal);
+
+      signal = innerController.signal;
+    } else {
+      signal = outerSignal;
+    }
+
+    return { signal, cleanUpInnerSignal };
   }
 
   async readLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
-    return new Promise(async (resolve, reject) => {
-      const execute = async () => {
-        // Find an available connection that is not busy
-        const availableConnection = this.readConnections!.find((conn) => !conn.busy);
 
-        // If we have an available connection, use it
-        if (availableConnection) {
-          availableConnection.busy = true;
-          try {
-            resolve(await fn(availableConnection.connection));
-          } catch (error) {
-            reject(error);
-          } finally {
-            availableConnection.busy = false;
-            // After query execution, process any queued tasks
-            this.processQueue();
-          }
-        } else {
-          // If no available connections, add to the queue
-          this.readQueue.push(execute);
-        }
-      };
-
-      execute();
-    });
-  }
-
-  private async processQueue(): Promise<void> {
-    if (this.readQueue.length > 0) {
-      const next = this.readQueue.shift();
-      if (next) {
-        next();
-      }
+    const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
+    const { item, release } = await this.readConnections!.requestOne(signal);
+    try {
+      return await fn(item);
+    } finally {
+      release();
+      cleanUpInnerSignal?.();
     }
   }
 
   async writeLock<T>(fn: (tx: OPSQLiteConnection) => Promise<T>, options?: DBLockOptions): Promise<T> {
     await this.initialized;
 
-    return new Promise(async (resolve, reject) => {
-      // Set up abort signal listener
-      const abortListener = () => {
-        reject(new Error('Database connection was closed'));
-      };
-      this.abortController.signal.addEventListener('abort', abortListener);
-
-      try {
-        await mutexRunExclusive(
-          this.writeMutex,
-          async () => {
-            // Check if operation was aborted before executing
-            if (this.abortController.signal.aborted) {
-              reject(new Error('Database connection was closed'));
-            }
-            resolve(await fn(this.writeConnection!));
-          },
-          options
-        );
-        // flush updates once a write lock has been released
-        this.writeConnection!.flushUpdates();
-      } catch (ex) {
-        reject(ex);
-      } finally {
-        this.abortController.signal.removeEventListener('abort', abortListener);
-      }
-    });
-  }
-
-  readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.readLock((ctx) => this.internalTransaction(ctx, fn));
-  }
-
-  writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-    return this.writeLock((ctx) => this.internalTransaction(ctx, fn));
-  }
-
-  getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    return this.readLock((ctx) => ctx.getAll(sql, parameters));
-  }
-
-  getOptional<T>(sql: string, parameters?: any[]): Promise<T | null> {
-    return this.readLock((ctx) => ctx.getOptional(sql, parameters));
-  }
-
-  get<T>(sql: string, parameters?: any[]): Promise<T> {
-    return this.readLock((ctx) => ctx.get(sql, parameters));
-  }
-
-  execute(query: string, params?: any[]) {
-    return this.writeLock((ctx) => ctx.execute(query, params));
-  }
-
-  executeRaw(query: string, params?: any[]) {
-    return this.writeLock((ctx) => ctx.executeRaw(query, params));
-  }
-
-  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
-    return this.writeLock((ctx) => ctx.executeBatch(query, params));
-  }
-
-  protected async internalTransaction<T>(
-    connection: OPSQLiteConnection,
-    fn: (tx: Transaction) => Promise<T>
-  ): Promise<T> {
-    let finalized = false;
-    const commit = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return connection.execute('COMMIT');
-    };
-    const rollback = async (): Promise<QueryResult> => {
-      if (finalized) {
-        return { rowsAffected: 0 };
-      }
-      finalized = true;
-      return connection.execute('ROLLBACK');
-    };
+    const { signal, cleanUpInnerSignal } = this.generateNestedAbortSignal(options);
+    const { item, release } = await this.writeConnection!.requestOne(signal);
     try {
-      await connection.execute('BEGIN');
-      const result = await fn({
-        execute: (query, params) => connection.execute(query, params),
-        executeRaw: (query, params) => connection.executeRaw(query, params),
-        get: (query, params) => connection.get(query, params),
-        getAll: (query, params) => connection.getAll(query, params),
-        getOptional: (query, params) => connection.getOptional(query, params),
-        commit,
-        rollback
-      });
-      await commit();
-      return result;
-    } catch (ex) {
-      try {
-        await rollback();
-      } catch (ex2) {
-        // In rare cases, a rollback may fail.
-        // Safe to ignore.
-      }
-      throw ex;
+      return await fn(item).finally(() => item.flushUpdates());
+    } finally {
+      release();
+      cleanUpInnerSignal?.();
     }
   }
 
   async refreshSchema(): Promise<void> {
     await this.initialized;
-    await this.writeConnection!.refreshSchema();
-
-    if (this.readConnections) {
-      for (let readConnection of this.readConnections) {
-        await readConnection.connection.refreshSchema();
+    await this.writeLock((l) => l.refreshSchema());
+    const { items, release } = await this.readConnections!.requestAll();
+    try {
+      for (let readConnection of items) {
+        await readConnection.refreshSchema();
       }
+    } finally {
+      release();
     }
+  }
+}
+
+export class OPSQLiteDBAdapter extends DBAdapterDefaultMixin(OPSQLiteConnectionPool) implements DBAdapter {
+  async executeBatch(query: string, params: any[][] = []): Promise<QueryResult> {
+    return await this.writeLock(async (tx) => {
+      return await (tx as OPSQLiteConnection).executeNativeBatch(query, params);
+    });
   }
 }

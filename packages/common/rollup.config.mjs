@@ -9,12 +9,14 @@ import { walk } from 'estree-walker';
 function defineBuild(isNode) {
   const suffix = isNode ? '.node' : '';
   const plugins = [
-    json(),
-    nodeResolve({ preferBuiltins: false, browser: true }),
-    commonjs({}),
-    inject({
-      Buffer: isNode ? ['node:buffer', 'Buffer'] : ['buffer/', 'Buffer']
-    })
+    [
+      json(),
+      nodeResolve({ preferBuiltins: false, browser: true }),
+      commonjs({}),
+      inject({
+        Buffer: isNode ? ['node:buffer', 'Buffer'] : ['buffer/', 'Buffer']
+      })
+    ]
   ];
   if (!isNode) {
     plugins.push(applyAsyncIteratorPolyfill());
@@ -34,10 +36,25 @@ function defineBuild(isNode) {
         sourcemap: true
       }
     ],
-    plugins: [plugins],
-    external: ['async-mutex', 'bson']
+    plugins,
+    external: ['bson', isNode ? 'event-iterator' : undefined]
   };
 }
+
+/**
+ * @returns {import('rollup').RollupOptions}
+ */
+export default () => {
+  return [
+    defineBuild(false),
+    defineBuild(true),
+    {
+      input: './lib/index.d.ts',
+      output: [{ file: 'dist/index.d.cts', format: 'cjs' }],
+      plugins: [dts()]
+    }
+  ];
+};
 
 /**
  * Replaces `Symbol.asyncIterator` with a polyfill in bundled dependencies (specifically `EventIterator`).
@@ -45,7 +62,7 @@ function defineBuild(isNode) {
  * This is derived from an example in Rollup docs: https://rollupjs.org/plugin-development/#resolveid
  */
 function applyAsyncIteratorPolyfill() {
-  // A fake file we import into every file using SymbolasyncIterator
+  // A fake file we import into every file using Symbol.asyncIterator
   const POLYFILL_ID = '\0symbol-async-iterator';
 
   return {
@@ -106,18 +123,3 @@ export const symbolAsyncIterator = Symbol.asyncIterator ?? Symbol.for('Symbol.as
     }
   };
 }
-
-/**
- * @returns {import('rollup').RollupOptions}
- */
-export default () => {
-  return [
-    defineBuild(false),
-    defineBuild(true),
-    {
-      input: './lib/index.d.ts',
-      output: [{ file: 'dist/index.d.cts', format: 'cjs' }],
-      plugins: [dts()]
-    }
-  ];
-};

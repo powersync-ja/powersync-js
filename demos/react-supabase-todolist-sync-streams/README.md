@@ -1,10 +1,8 @@
-# Sync streams demo
+# Sync Streams demo
 
 ## Overview
 
-This app is a fork of our [React Supabase Todolist Demo](../react-supabase-todolist/) to add support for sync streams.
-
-Sync streams are not a stable PowerSync feature yet, and most users should probably use the stable demo instead.
+This app is a fork of our [React Supabase Todolist Demo](../react-supabase-todolist/) to add support for Sync Streams.
 
 ## Run Demo
 
@@ -23,7 +21,7 @@ streams:
     query: SELECT * FROM todos WHERE list_id = subscription.parameter('list') AND list_id IN (SELECT id FROM lists WHERE owner_id = auth.user_id())
 
 config:
-  edition: 2
+  edition: 3
 ```
 
 Switch into the demo's directory:

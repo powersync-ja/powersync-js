@@ -1,5 +1,43 @@
 # @powersync/react
 
+## 1.10.0
+
+### Minor Changes
+
+- ccf16f0: Added `useSyncStreams` hook that allows you to manage a variable number of sync streams, compared to the existing `useSyncStream` hook intended for the one and only one use case.
+  Updated `useSyncStream` and `useAllSyncStreamsHaveSynced` to use this hook internally to simplify their implementations.
+
+### Patch Changes
+
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
+## 1.9.1
+
+### Patch Changes
+
+- 1bbba11: Fixed an issue where if a `useQuery` hook was waiting for a sync stream, the result sometimes omitted fields that should always be present according to the TypeScript typing.
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
+## 1.9.0
+
+### Minor Changes
+
+- a5d6964: Exporting `useAllSyncStreamsHaveSynced()` member.
+
+## 1.8.3
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- 569cb41: Return cached information from `useSyncStream` if available, potentially reducing flicker.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 1.8.2
 
 ### Patch Changes

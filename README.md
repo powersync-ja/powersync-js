@@ -73,6 +73,7 @@ Demo applications are located in the [`demos/`](./demos/) directory. Also see ou
 
 - [demos/react-supabase-todolist](./demos/react-supabase-todolist/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend.
 - [demos/react-supabase-todolist-tanstackdb](./demos/react-supabase-todolist-tanstackdb/README.md): A React to-do list example app using the PowerSync Web SDK and a Supabase backend + [TanStackDB](https://tanstack.com/db/latest) collections.
+- [demos/react-supabase-time-based-sync](./demos/react-supabase-time-based-sync/README.md): A React demo using Sync Streams to subscribe to date-filtered data dynamically, with a Supabase backend.
 - [demos/react-multi-client](./demos/react-multi-client/README.md): A React widget that illustrates how data flows from one PowerSync client to another.
 - [demos/yjs-react-supabase-text-collab](./demos/yjs-react-supabase-text-collab/README.md): A React real-time text editing collaboration example app powered by [Yjs](https://github.com/yjs/yjs) CRDTs and [Tiptap](https://tiptap.dev/), using the PowerSync Web SDK and a Supabase backend.
 - [demos/vue-supabase-todolist](./demos/vue-supabase-todolist/README.md): A Vue to-do list example app using the PowerSync Web SDK and a Supabase backend.
@@ -129,7 +130,10 @@ pnpm exec playwright install
 
 ### Development Packages
 
-Development packages can be published by manually triggering the `dev-packages` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
+Development packages can be published by manually triggering the `release` workflow. Development packages are versioned as `0.0.0-{tag}-DATETIMESTAMP`.
+
+For technical npm reasons, publishing dev and release packages needs to happen from within a single workflow. `release.yml` contains checks to only release
+dev packages when triggered by `workflow_dispatch`.
 
 ### Production Packages
 

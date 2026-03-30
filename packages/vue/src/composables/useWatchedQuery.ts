@@ -6,7 +6,7 @@ import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery.js';
 export const useWatchedQuery = <T = any>(
   query: MaybeRef<string | CompilableQuery<T>>,
   sqlParameters: MaybeRef<any[]> = [],
-  options: AdditionalOptions<T> = {}
+  options: AdditionalOptions<T> & { active?: MaybeRef<boolean> } = {}
 ): WatchedQueryResult<T> => {
   const data = ref<ReadonlyArray<Readonly<T>>>([]) as Ref<ReadonlyArray<Readonly<T>>>;
   const error = ref<Error | undefined>(undefined);
@@ -37,6 +37,11 @@ export const useWatchedQuery = <T = any>(
   };
 
   watchEffect(async (onCleanup) => {
+    const isActive = toValue(options.active ?? true);
+    if (!isActive) {
+      return; // Don't run if not active
+    }
+
     let parsedQuery: ParsedQuery;
     const queryValue = toValue(query);
     try {
@@ -62,10 +67,12 @@ export const useWatchedQuery = <T = any>(
     const watch = options.rowComparator
       ? powerSync.value.customQuery(compatibleQuery).differentialWatch({
           rowComparator: options.rowComparator,
-          throttleMs: options.throttleMs
+          throttleMs: options.throttleMs,
+          reportFetching: options.reportFetching
         })
       : powerSync.value.customQuery(compatibleQuery).watch({
-          throttleMs: options.throttleMs
+          throttleMs: options.throttleMs,
+          reportFetching: options.reportFetching
         });
 
     const disposer = watch.registerListener({

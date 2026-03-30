@@ -1,5 +1,78 @@
 # @powersync/web
 
+## 1.37.1
+
+### Patch Changes
+
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
+## 1.37.0
+
+### Minor Changes
+
+- 45f427c: Refactor database worker communication and lock management.
+
+  **Note**: While this is mostly an internal change, it updates how tabs communicate with workers.
+  Upgrading should not be an issue when using bundlers like vite which add file hashes to worker paths.
+  If you manually load workers you've copied into your app sources, please make sure the workers
+  are upgraded along with the SDK. Workers from earlier `@powersync/web` versions will not work
+  with this release.
+
+  **Potentially breaking**: Internal but previously exported classes for low-level connection management have been removed.
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
+## 1.36.0
+
+### Minor Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+
+### Patch Changes
+
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
+## 1.35.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+
+## 1.34.0
+
+### Minor Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
+## 1.33.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- ae3b188: Fixed issue where reconnecting after a disconnect would delay reconnection by a period of retryDelayMs
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 1.32.0
 
 ### Minor Changes

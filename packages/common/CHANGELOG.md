@@ -1,5 +1,45 @@
 # @powersync/common
 
+## 1.51.0
+
+### Minor Changes
+
+- 4b957f0: Internal: Add `Semaphore` utility to manage leases in a connection pool.
+
+## 1.50.0
+
+### Minor Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- eac163a: Fixed a deadlock in `deleteAttachment` by reusing the existing `AttachmentContext` instead of opening a nested `withContext` call.
+
+## 1.49.0
+
+### Minor Changes
+
+- 8ff6b3e: Added `setupContext` option to `CreateDiffTriggerOptions` and a lock context option to the cleanup function returned by `createDiffTrigger`, this allows you to create and dispose of a trigger inside of a lock context.
+- 42afb0e: Share common db adapter implementation logic.
+
+## 1.48.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+## 1.47.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+- 8dee8d7: Exported common Mutex helper functions
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+
 ## 1.46.0
 
 ### Minor Changes

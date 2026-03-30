@@ -1,5 +1,59 @@
 # @powersync/op-sqlite
 
+## 0.9.5
+
+### Patch Changes
+
+- 4b957f0: Internal: Refactor connection pool to use `Semaphore` from `@powersync/common`.
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
+## 0.9.4
+
+### Patch Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/common@1.50.0
+
+## 0.9.3
+
+### Patch Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+
+## 0.9.2
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+
+## 0.9.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+
+## 0.9.0
+
+### Minor Changes
+
+- 8dee8d7: Removed `async-lock` dependency in favor of `async-mutex`.
+
+### Patch Changes
+
+- 8dee8d7: Fixed potential issue where extreme amounts of concurrent calls to `writeLock` could reject with the error "Too many pending tasks in queue"
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+
 ## 0.8.0
 
 ### Minor Changes

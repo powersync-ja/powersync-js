@@ -1,13 +1,19 @@
-import { AbstractPowerSyncDatabase, createBaseLogger, createLogger, LogLevel } from '@powersync/common';
-import { OpenAsyncDatabaseConnection, WASqliteConnection } from '@powersync/web';
+import {
+  AbstractPowerSyncDatabase,
+  createBaseLogger,
+  createLogger,
+  DBAdapterDefaultMixin,
+  LogLevel
+} from '@powersync/common';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { LockedAsyncDatabaseAdapter } from '../src/db/adapters/LockedAsyncDatabaseAdapter.js';
 import { WebDBAdapter } from '../src/db/adapters/WebDBAdapter.js';
-import { WorkerWrappedAsyncDatabaseConnection } from '../src/db/adapters/WorkerWrappedAsyncDatabaseConnection.js';
 import { createTestConnector, sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
+import { DatabaseClient, OpenWorkerConnection } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
+import { ClientConnectionView } from '../src/db/adapters/wa-sqlite/DatabaseServer.js';
+import { generateTabCloseSignal } from '../src/shared/tab_close_signal.js';
 
 const DB_FILENAME = 'test-multiple-instances.db';
 
@@ -90,6 +96,35 @@ describe('Multiple Instances', { sequential: true }, () => {
     }
   );
 
+  sharedMockSyncServiceTest('should re-open database immediately on reconnect', async ({ context }) => {
+    // Connect the database
+    const { database, mockService } = context;
+    await context.connect();
+    expect(database.currentStatus.connected).true;
+
+    // Disconnect after connecting
+    await database.disconnect();
+
+    const pendingRequests = await mockService.getPendingRequests();
+    expect(pendingRequests.length).eq(0);
+
+    // Reconnect
+    database.connect(context.connector);
+
+    // A pending request should be made quickly. There should not be any retry delay
+    await vi.waitFor(
+      async () => {
+        const pendingRequests = await mockService.getPendingRequests();
+        expect(pendingRequests.length).eq(1);
+        // Once we get the request, we can reject it
+        await mockService.createResponse(pendingRequests[0].id, 401, {});
+        await mockService.completeResponse(pendingRequests[0].id);
+      },
+      // The timeout here is shorter than the retry delay, we must get a request before the retry delay
+      { timeout: 500 }
+    );
+  });
+
   it('should maintain DB connections if instances call close', async () => {
     /**
      * The shared webworker should use the same DB connection for both instances.
@@ -115,44 +150,51 @@ describe('Multiple Instances', { sequential: true }, () => {
     // Allow us to share the connection. This is what shared sync workers will use.
     const shared = await webAdapter.shareConnection();
     const config = webAdapter.getConfiguration();
-    const opener = Comlink.wrap<OpenAsyncDatabaseConnection>(shared.port);
+    const opener = Comlink.wrap<OpenWorkerConnection>(shared.port);
+    const identifier = webAdapter.name;
 
     // Open up a shared connection
-    const initialSharedConnection = (await opener(config)) as Comlink.Remote<WASqliteConnection>;
+    const initialCloseSignal = await generateTabCloseSignal();
+    const initialSharedConnection = (await opener.connectToExisting({
+      identifier,
+      lockName: initialCloseSignal
+    })) as Comlink.Remote<ClientConnectionView>;
     onTestFinished(async () => {
       await initialSharedConnection.close();
     });
 
     // This will simulate another subsequent shared connection
-    const subsequentSharedConnection = (await opener(config)) as Comlink.Remote<WASqliteConnection>;
+    const subsequentCloseSignal = await generateTabCloseSignal();
+    const subsequentSharedConnection = (await opener.connectToExisting({
+      identifier,
+      lockName: subsequentCloseSignal
+    })) as Comlink.Remote<ClientConnectionView>;
     onTestFinished(async () => {
       await subsequentSharedConnection.close();
     });
 
     // In the beginning, we should not be in a transaction
-    const isAutoCommit = await initialSharedConnection.isAutoCommit();
+    const isAutoCommit = await initialSharedConnection.debugIsAutoCommit();
     // Should be true initially
     expect(isAutoCommit).true;
 
-    // Now we'll simulate the locked connections which are used by the shared sync worker
-    const wrappedInitialSharedConnection = new WorkerWrappedAsyncDatabaseConnection({
-      baseConnection: initialSharedConnection,
-      identifier: DB_FILENAME,
-      remoteCanCloseUnexpectedly: true,
-      remote: opener
-    });
+    const DatabaseClientAsAdapter = DBAdapterDefaultMixin(DatabaseClient);
 
-    // Wrap the second connection in a locked adapter, this simulates the actual use case
-    const lockedInitialConnection = new LockedAsyncDatabaseAdapter({
-      name: DB_FILENAME,
-      openConnection: async () => wrappedInitialSharedConnection
-    });
+    // Now we'll simulate the locked connections which are used by the shared sync worker
+    const initialClient = new DatabaseClientAsAdapter(
+      {
+        connection: initialSharedConnection,
+        remoteCanCloseUnexpectedly: true,
+        source: opener
+      },
+      { dbFilename: DB_FILENAME }
+    );
 
     // Allows us to unblock a transaction which is awaiting a promise
     let unblockTransaction: (() => void) | undefined;
 
     // Start a transaction that will be interrupted
-    const transactionPromise = lockedInitialConnection.writeTransaction(async (tx) => {
+    const transactionPromise = initialClient.writeTransaction(async (tx) => {
       // Transaction should be started now
 
       // Wait till we are unblocked. Keep this transaction open.
@@ -168,12 +210,12 @@ describe('Multiple Instances', { sequential: true }, () => {
     await vi.waitFor(() => expect(unblockTransaction).toBeDefined(), { timeout: 2000 });
 
     // Since we're in a transaction from above
-    expect(await initialSharedConnection.isAutoCommit()).false;
+    expect(await initialSharedConnection.debugIsAutoCommit()).false;
 
     // The in-use connection should be closed now
     // This simulates a tab being closed.
-    await wrappedInitialSharedConnection.close();
-    wrappedInitialSharedConnection.markRemoteClosed();
+    await initialClient.close();
+    initialClient.markRemoteClosed();
 
     // The transaction should be unblocked now
     unblockTransaction?.();
@@ -183,25 +225,25 @@ describe('Multiple Instances', { sequential: true }, () => {
 
     // It will still be false until we request a new hold
     // Requesting a new hold will cleanup the previous transaction.
-    expect(await subsequentSharedConnection.isAutoCommit()).false;
+    expect(await subsequentSharedConnection.debugIsAutoCommit()).false;
 
     // Allows us to simulate a new locked shared connection.
-    const lockedSubsequentConnection = new LockedAsyncDatabaseAdapter({
-      name: DB_FILENAME,
-      openConnection: async () =>
-        new WorkerWrappedAsyncDatabaseConnection({
-          baseConnection: subsequentSharedConnection,
-          identifier: DB_FILENAME,
-          remoteCanCloseUnexpectedly: true,
-          remote: opener
-        })
-    });
+    const subsequentClient = new DatabaseClientAsAdapter(
+      {
+        connection: subsequentSharedConnection,
+        remoteCanCloseUnexpectedly: true,
+        source: opener
+      },
+      { dbFilename: DB_FILENAME }
+    );
 
     // Starting a new transaction should work cleanup the old and work as expected
-    await lockedSubsequentConnection.writeTransaction(async (tx) => {
+    await subsequentClient.writeTransaction(async (tx) => {
       await tx.get('SELECT 1');
-      expect(await subsequentSharedConnection.isAutoCommit()).false;
+      expect(await subsequentSharedConnection.debugIsAutoCommit()).false;
     });
+
+    expect(await subsequentSharedConnection.debugIsAutoCommit()).true;
   });
 
   it('should watch table changes between instances', async () => {

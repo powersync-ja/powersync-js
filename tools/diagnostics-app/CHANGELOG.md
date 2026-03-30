@@ -1,5 +1,89 @@
 # diagnostics-app
 
+## 0.13.5
+
+### Patch Changes
+
+- Updated dependencies [ccf16f0]
+  - @powersync/react@1.10.0
+  - @powersync/web@1.37.1
+
+## 0.13.4
+
+### Patch Changes
+
+- e9ec0f1: Added quick-select template query buttons for common PowerSync internal tables (ps_oplog, ps_crud, ps_buckets, ps_untyped) with tooltips and docs links to both SQL consoles
+- Updated dependencies [1bbba11]
+- Updated dependencies [45f427c]
+- Updated dependencies [8f8ef1c]
+  - @powersync/react@1.9.1
+  - @powersync/web@1.37.0
+
+## 0.13.3
+
+### Patch Changes
+
+- 1f94d4b: Fixed incorrect table row count when a source table is present in multiple buckets.
+- Updated dependencies [42afb0e]
+  - @powersync/web@1.36.0
+  - @powersync/react@1.9.0
+
+## 0.13.2
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/web@1.35.0
+  - @powersync/react@1.9.0
+
+## 0.13.1
+
+### Patch Changes
+
+- Updated dependencies [a5d6964]
+  - @powersync/react@1.9.0
+
+## 0.13.0
+
+### Minor Changes
+
+- b614307: Fixed the height of the schema editor on the Dynamic Schema page to fill the available viewport height
+
+## 0.12.0
+
+### Minor Changes
+
+- feb5ed0: Fixed redirect for removed /login route to go to home page. Fixed token query parameter deep-link and stale credential display after re-login.
+
+## 0.11.0
+
+### Minor Changes
+
+- 062af45: Added a SQLite File Inspector page with drag-and-drop support. Added search and sorting to the DataTable. Added the ability to unsubscribe from sync streams.
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+- Updated dependencies [f0a36c9]
+  - @powersync/web@1.34.0
+  - @powersync/react@1.8.3
+
+## 0.11.0
+
+### Minor Changes
+
+- 2a7e8d3: Added state tracking and improved UX around client parameters
+- a7af6c1: Migrate routing to @tanstack/react-router and simplify client parameters UI
+
+### Patch Changes
+
+- Updated dependencies [d86799a]
+- Updated dependencies [ae3b188]
+- Updated dependencies [c506299]
+- Updated dependencies [569cb41]
+  - @powersync/web@1.33.0
+  - @powersync/react@1.8.3
+
 ## 0.10.0
 
 ### Minor Changes

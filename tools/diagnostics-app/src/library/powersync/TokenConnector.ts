@@ -1,6 +1,8 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector } from '@powersync/web';
 import { connect } from './ConnectionManager';
-import { LoginDetailsFormValues } from '@/components/widgets/LoginDetailsWidget';
+import { localStateDb } from './LocalStateManager';
+
+const APP_SETTINGS_KEY_CREDENTIALS = 'powersync_credential';
 
 export interface Credentials {
   token: string;
@@ -8,40 +10,52 @@ export interface Credentials {
 }
 
 export class TokenConnector implements PowerSyncBackendConnector {
-  async fetchCredentials() {
-    const value = localStorage.getItem('powersync_credentials');
-    if (value == null) {
-      return null;
-    }
-    return JSON.parse(value);
+  async fetchCredentials(): Promise<Credentials | null> {
+    const rows = await localStateDb.getAll<{ value: string }>(
+      'SELECT value FROM app_settings WHERE key = ?',
+      [APP_SETTINGS_KEY_CREDENTIALS]
+    );
+    const row = rows[0];
+    if (!row?.value) return null;
+    const parsed = JSON.parse(row.value) as Credentials;
+    return parsed.token && parsed.endpoint ? parsed : null;
   }
 
   async uploadData(database: AbstractPowerSyncDatabase) {
-    // Discard any data
     const tx = await database.getNextCrudTransaction();
     await tx?.complete();
   }
 
-  async signIn(credentials: LoginDetailsFormValues) {
+  async signIn(credentials: Credentials) {
     validateSecureContext(credentials.endpoint);
     checkJWT(credentials.token);
     try {
-      localStorage.setItem('powersync_credentials', JSON.stringify(credentials));
-      localStorage.setItem('preferred_client_implementation', credentials.clientImplementation);
+      await this.saveCredentials(credentials);
       await connect();
     } catch (e) {
-      this.clearCredentials();
+      await this.clearCredentials();
       throw e;
     }
   }
 
-  hasCredentials() {
-    return localStorage.getItem('powersync_credentials') != null;
+  async hasCredentials(): Promise<boolean> {
+    const rows = await localStateDb.getAll<{ value: string }>(
+      'SELECT value FROM app_settings WHERE key = ?',
+      [APP_SETTINGS_KEY_CREDENTIALS]
+    );
+    return rows.length > 0;
   }
 
-  clearCredentials() {
-    localStorage.removeItem('powersync_credentials');
-    localStorage.removeItem('preferred_client_implementation');
+  async saveCredentials(credentials: Credentials): Promise<void> {
+    const value = JSON.stringify({ token: credentials.token, endpoint: credentials.endpoint });
+    await localStateDb.execute(
+      'INSERT OR REPLACE INTO app_settings (id, key, value) VALUES (?, ?, ?)',
+      [APP_SETTINGS_KEY_CREDENTIALS, APP_SETTINGS_KEY_CREDENTIALS, value]
+    );
+  }
+
+  async clearCredentials(): Promise<void> {
+    await localStateDb.execute('DELETE FROM app_settings WHERE key = ?', [APP_SETTINGS_KEY_CREDENTIALS]);
   }
 }
 
@@ -79,10 +93,25 @@ function checkJWT(token: string) {
   }
 }
 
+export function decodeTokenPayload(token: string): Record<string, unknown> | null {
+  try {
+    const [, body] = token.split('.');
+    return JSON.parse(atob(body));
+  } catch {
+    return null;
+  }
+}
+
+export function getTokenUserId(token: string): string | null {
+  const payload = decodeTokenPayload(token);
+  if (!payload) return null;
+  return (payload.sub ?? payload.user_id ?? null) as string | null;
+}
+
 export function getTokenEndpoint(token: string): string | null {
   try {
-    const [head, body, signature] = token.split('.');
-    const payload = JSON.parse(atob(body));
+    const payload = decodeTokenPayload(token);
+    if (!payload) return null;
     const aud = payload.aud as string | string[] | undefined;
     const audiences = Array.isArray(aud) ? aud : [aud];
 

@@ -4,7 +4,7 @@ import React, { act, useSyncExternalStore } from 'react';
 import { AbstractPowerSyncDatabase, ConnectionManager, SyncStatus } from '@powersync/common';
 import { openPowerSync } from './utils';
 import { PowerSyncContext } from '../src/hooks/PowerSyncContext';
-import { useSyncStream, UseSyncStreamOptions } from '../src/hooks/streams';
+import { useSyncStream, useSyncStreams, UseSyncStreamOptions } from '../src/hooks/streams';
 import { useQuery } from '../src/hooks/watched/useQuery';
 import { QuerySyncStreamOptions } from '../src/hooks/watched/watch-types';
 
@@ -52,6 +52,18 @@ describe('stream hooks', () => {
         expect(currentStreams()).toStrictEqual([]);
       });
 
+      it('useSyncStream with cached instance', async () => {
+        const existingSubscription = await db.syncStream('a').subscribe();
+        await existingSubscription.unsubscribe();
+        // The stream is still active at this point due to the TTL.
+
+        // This means that useSyncStream should have a result available on the first render.
+        const { result } = renderHook(() => useSyncStream({ name: 'a' }), {
+          wrapper: testWrapper
+        });
+        expect(result.current).not.toBeNull();
+      });
+
       it('useQuery can take syncStream instance', async () => {
         const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [db.syncStream('a')] }), {
           wrapper: testWrapper
@@ -81,6 +93,35 @@ describe('stream hooks', () => {
         await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
       });
 
+      it('useQuery returns complete result shape during stream sync transition', async () => {
+        const allResults: any[] = [];
+
+        const { result } = renderHook(
+          () => {
+            const queryResult = useQuery('SELECT 1', [], { streams: [{ name: 'a', waitForStream: true }] });
+            allResults.push({ ...queryResult });
+            return queryResult;
+          },
+          { wrapper: testWrapper }
+        );
+
+        // Initial state should be loading
+        expect(result.current).toMatchObject({ isLoading: true });
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
+
+        // Trigger sync — this causes streamsHaveSynced to transition to true
+        db.currentStatus = _testStatus;
+        db.iterateListeners((l) => l.statusChanged?.(_testStatus));
+
+        // Wait for the query to eventually resolve
+        await waitFor(() => expect(result.current.data).toHaveLength(1), { timeout: 1000, interval: 100 });
+
+        // Every intermediate render result should have the complete shape
+        for (const r of allResults) {
+          expect(r).toMatchObject({ data: expect.any(Array), isLoading: expect.any(Boolean), isFetching: expect.any(Boolean) });
+        }
+      });
+
       it('useQuery not waiting on stream', async () => {
         // By default, it should still run the query immediately instead of waiting for the stream to resolve.
         const { result } = renderHook(() => useQuery('SELECT 1', [], { streams: [{ name: 'a' }] }), {
@@ -99,6 +140,102 @@ describe('stream hooks', () => {
 
         unmount();
         await waitFor(() => expect(currentStreams()).toHaveLength(0), { timeout: 1000, interval: 100 });
+      });
+
+      it('useSyncStreams subscribes and unsubscribes', async () => {
+        expect(currentStreams()).toStrictEqual([]);
+
+        const { result, unmount } = renderHook(() => useSyncStreams([{ name: 'a' }, { name: 'b' }]), {
+          wrapper: testWrapper
+        });
+        expect(result.current).toStrictEqual([null, null]);
+        await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 1000, interval: 100 });
+        await waitFor(() => expect(result.current.every((s) => s !== null)).toBe(true), {
+          timeout: 1000,
+          interval: 100
+        });
+
+        unmount();
+        expect(currentStreams()).toStrictEqual([]);
+      });
+
+      it('useSyncStreams with cached instance', async () => {
+        const existingSubscription = await db.syncStream('a').subscribe();
+        await existingSubscription.unsubscribe();
+
+        const { result } = renderHook(() => useSyncStreams([{ name: 'a' }]), {
+          wrapper: testWrapper
+        });
+        expect(result.current[0]).not.toBeNull();
+      });
+
+      it('useSyncStreams handles array growing from 1 to 2 entries', async () => {
+        let streamOptions: UseSyncStreamOptions[] = [{ name: 'a' }];
+        let streamUpdateListeners: (() => void)[] = [];
+
+        const { result } = renderHook(
+          () => {
+            const options = useSyncExternalStore(
+              (cb) => {
+                streamUpdateListeners.push(cb);
+                return () => {
+                  const index = streamUpdateListeners.indexOf(cb);
+                  if (index != -1) {
+                    streamUpdateListeners.splice(index, 1);
+                  }
+                };
+              },
+              () => streamOptions
+            );
+            return useSyncStreams(options);
+          },
+          { wrapper: testWrapper }
+        );
+
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
+
+        // Grow to 2 entries
+        streamOptions = [{ name: 'a' }, { name: 'b' }];
+        act(() => streamUpdateListeners.forEach((cb) => cb()));
+
+        await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 1000, interval: 100 });
+        expect(result.current).toHaveLength(2);
+      });
+
+      it('useSyncStreams handles array shrinking from 2 to 1 entries', async () => {
+        let streamOptions: UseSyncStreamOptions[] = [{ name: 'a' }, { name: 'b' }];
+        let streamUpdateListeners: (() => void)[] = [];
+
+        const { result, unmount } = renderHook(
+          () => {
+            const options = useSyncExternalStore(
+              (cb) => {
+                streamUpdateListeners.push(cb);
+                return () => {
+                  const index = streamUpdateListeners.indexOf(cb);
+                  if (index != -1) {
+                    streamUpdateListeners.splice(index, 1);
+                  }
+                };
+              },
+              () => streamOptions
+            );
+            return useSyncStreams(options);
+          },
+          { wrapper: testWrapper }
+        );
+
+        await waitFor(() => expect(currentStreams()).toHaveLength(2), { timeout: 1000, interval: 100 });
+
+        // Shrink to 1 entry
+        streamOptions = [{ name: 'a' }];
+        act(() => streamUpdateListeners.forEach((cb) => cb()));
+
+        await waitFor(() => expect(currentStreams()).toHaveLength(1), { timeout: 1000, interval: 100 });
+        expect(result.current).toHaveLength(1);
+
+        unmount();
+        expect(currentStreams()).toStrictEqual([]);
       });
 
       it('handles stream parameter changes', async () => {
@@ -165,3 +302,4 @@ const _testStatus = new SyncStatus({
     ]
   }
 });
+

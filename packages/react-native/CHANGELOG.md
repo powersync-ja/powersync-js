@@ -1,5 +1,83 @@
 # @powersync/react-native
 
+## 1.33.1
+
+### Patch Changes
+
+- Updated dependencies [ccf16f0]
+- Updated dependencies [4b957f0]
+  - @powersync/react@1.10.0
+  - @powersync/common@1.51.0
+
+## 1.33.0
+
+### Minor Changes
+
+- 8f8ef1c: Remove `async-mutex` dependency in favor of internal implementation.
+
+### Patch Changes
+
+- Updated dependencies [1bbba11]
+- Updated dependencies [eac163a]
+- Updated dependencies [8f8ef1c]
+  - @powersync/react@1.9.1
+  - @powersync/common@1.50.0
+
+## 1.32.0
+
+### Minor Changes
+
+- 42afb0e: Share common db adapter implementation logic.
+
+### Patch Changes
+
+- Updated dependencies [8ff6b3e]
+- Updated dependencies [42afb0e]
+  - @powersync/common@1.49.0
+  - @powersync/react@1.9.0
+
+## 1.31.0
+
+### Minor Changes
+
+- 6c855cd: Improve raw tables by making `put` and `delete` statements optional if a local name is given.
+
+### Patch Changes
+
+- Updated dependencies [6c855cd]
+  - @powersync/common@1.48.0
+  - @powersync/react@1.9.0
+
+## 1.30.2
+
+### Patch Changes
+
+- Updated dependencies [a5d6964]
+  - @powersync/react@1.9.0
+
+## 1.30.1
+
+### Patch Changes
+
+- f0a36c9: Update PowerSync SQLite core extension to version 0.4.11.
+  - @powersync/react@1.8.3
+
+## 1.30.0
+
+### Minor Changes
+
+- d86799a: Deprecated @powersync/attachments in favor of enhanced and consistent attachment functionality built into @powersync/common and platform-specific SDKs
+
+### Patch Changes
+
+- c506299: Enable trusted publishing for the PowerSync SDK.
+- Updated dependencies [d86799a]
+- Updated dependencies [c506299]
+- Updated dependencies [569cb41]
+- Updated dependencies [8dee8d7]
+  - @powersync/common@1.47.0
+  - @powersync/react@1.8.3
+
 ## 1.29.0
 
 ### Minor Changes
