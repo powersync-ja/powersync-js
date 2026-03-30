@@ -36,33 +36,57 @@ export interface UseSyncStreamOptions extends SyncStreamSubscribeOptions {
  * @returns The status for that stream, or `null` if the stream is currently being resolved.
  */
 export function useSyncStream(options: UseSyncStreamOptions): SyncStreamStatus | null {
-  const { name, parameters } = options;
+  return useSyncStreams([options])[0];
+}
+
+/**
+ * Creates multiple PowerSync stream subscriptions. Subscriptions are kept alive as long as the
+ * React component calling this function. When it unmounts, or when the streams array contents
+ * change, all previous subscriptions are unsubscribed before new ones are created.
+ */
+export function useSyncStreams(streamOptions: UseSyncStreamOptions[]): SyncStreamStatus[] {
   const db = usePowerSync();
   const status = useStatus();
-  const stream = useMemo(() => db.syncStream(name, parameters), [name, parameters]);
+
+  const stringifiedOptions = useMemo(() => JSON.stringify(streamOptions), [streamOptions]);
+  const syncStreams = useMemo(
+    () =>
+      streamOptions.map((options) => {
+        return {
+          stream: db.syncStream(options.name, options.parameters ?? undefined),
+          options
+        };
+      }),
+    [stringifiedOptions]
+  );
 
   useEffect(() => {
     let active = true;
-    let subscription: SyncStreamSubscription | null = null;
+    const resolvedSubs: SyncStreamSubscription[] = [];
 
-    stream.subscribe(options).then((sub) => {
-      if (active) {
-        subscription = sub;
-      } else {
-        // The cleanup function already ran, unsubscribe immediately.
-        sub.unsubscribe();
-      }
-    });
+    for (const entry of syncStreams) {
+      entry.stream.subscribe(entry.options).then((sub) => {
+        if (active) {
+          resolvedSubs.push(sub);
+        } else {
+          // The cleanup function already ran, unsubscribe immediately.
+          sub.unsubscribe();
+        }
+      });
+    }
 
     return () => {
       active = false;
-      // If we don't have a subscription yet, it'll still get cleaned up once the promise resolves because we've set
-      // active to false.
-      subscription?.unsubscribe();
+      for (const sub of resolvedSubs) {
+        sub.unsubscribe();
+      }
     };
-  }, [stream]);
+  }, [stringifiedOptions]);
 
-  return status.forStream(stream) ?? null;
+  return useMemo(
+    () => syncStreams.map((entry) => status.forStream(entry.stream) ?? null),
+    [status, stringifiedOptions]
+  );
 }
 
 /**
@@ -72,57 +96,12 @@ export function useAllSyncStreamsHaveSynced(
   db: AbstractPowerSyncDatabase,
   streams: QuerySyncStreamOptions[] | undefined
 ): boolean {
-  // Since streams are a user-supplied array, they will likely be different each time this function is called. We don't
-  // want to update underlying subscriptions each time, though.
-  const hash = useMemo(() => streams && JSON.stringify(streams), [streams]);
-  const [synced, setHasSynced] = useState(streams == null || streams.every((e) => e.waitForStream != true));
+  const statuses = useSyncStreams(streams ?? []);
 
-  useEffect(() => {
-    if (streams) {
-      setHasSynced(false);
+  if (!streams) return true;
 
-      const promises: Promise<SyncStreamSubscription>[] = [];
-      const abort = new AbortController();
-      for (const stream of streams) {
-        promises.push(db.syncStream(stream.name, stream.parameters).subscribe(stream));
-      }
-
-      // First, wait for all subscribe() calls to make all subscriptions active.
-      Promise.all(promises).then(async (resolvedStreams) => {
-        function allHaveSynced(status: SyncStatus) {
-          return resolvedStreams.every((s, i) => {
-            const request = streams[i];
-            return !request.waitForStream || status.forStream(s)?.subscription?.hasSynced;
-          });
-        }
-
-        // Wait for the effect to be cancelled or all streams having synced.
-        await db.waitForStatus(allHaveSynced, abort.signal);
-        if (abort.signal.aborted) {
-          // Was cancelled
-        } else {
-          // Has synced, update public state.
-          setHasSynced(true);
-
-          // Wait for cancellation before clearing subscriptions.
-          await new Promise<void>((resolve) => {
-            abort.signal.addEventListener('abort', () => resolve());
-          });
-        }
-
-        // Effect was definitely cancelled at this point, so drop the subscriptions.
-        for (const stream of resolvedStreams) {
-          stream.unsubscribe();
-        }
-      });
-
-      return () => abort.abort();
-    } else {
-      // There are no streams, so all of them have synced.
-      setHasSynced(true);
-      return undefined;
-    }
-  }, [hash]);
-
-  return synced;
+  return streams.every((stream, i) => {
+    if (!stream.waitForStream) return true;
+    return statuses[i]?.subscription?.hasSynced === true;
+  });
 }

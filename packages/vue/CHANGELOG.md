@@ -1,5 +1,13 @@
 # @powersync/vue
 
+## 0.5.1
+
+### Patch Changes
+
+- 554c177: Use shallowRef instead of ref for database instance to prevent DataCloneError in shared worker communication
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
 ## 0.5.0
 
 ### Minor Changes

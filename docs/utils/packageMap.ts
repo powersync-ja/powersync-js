@@ -9,7 +9,8 @@ enum Packages {
   WebSdk = 'web-sdk',
   TanstackReactQuerySdk = 'tanstack-react-query-sdk',
   NodeSdk = 'node-sdk',
-  NuxtSdk = 'nuxt-sdk'
+  NuxtSdk = 'nuxt-sdk',
+  TauriPlugin = 'tauri-plugin'
 }
 
 interface Package {
@@ -87,5 +88,12 @@ export const packageMap: PackageMap = {
     entryPoints: ['../packages/nuxt/src/index.ts'],
     tsconfig: '../packages/nuxt/tsconfig.json',
     id: Packages.NuxtSdk
+  },
+  [Packages.TauriPlugin]: {
+    name: 'Tauri Plugin',
+    dirName: Packages.TauriPlugin,
+    entryPoints: ['../packages/tauri/guest-js/index.ts'],
+    tsconfig: '../packages/tauri/tsconfig.json',
+    id: Packages.TauriPlugin
   }
 };

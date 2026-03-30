@@ -28,5 +28,6 @@ docs/web-sdk/
 docs/tanstack-react-query-sdk
 docs/node-sdk
 docs/nuxt-sdk
+docs/tauri-plugin
 
 .env
