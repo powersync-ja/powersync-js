@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.51.0
+
+### Minor Changes
+
+- 4b957f0: Internal: Add `Semaphore` utility to manage leases in a connection pool.
+
 ## 1.50.0
 
 ### Minor Changes

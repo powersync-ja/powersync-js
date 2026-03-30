@@ -1,5 +1,17 @@
 # @powersync/react
 
+## 1.10.0
+
+### Minor Changes
+
+- ccf16f0: Added `useSyncStreams` hook that allows you to manage a variable number of sync streams, compared to the existing `useSyncStream` hook intended for the one and only one use case.
+  Updated `useSyncStream` and `useAllSyncStreamsHaveSynced` to use this hook internally to simplify their implementations.
+
+### Patch Changes
+
+- Updated dependencies [4b957f0]
+  - @powersync/common@1.51.0
+
 ## 1.9.1
 
 ### Patch Changes
