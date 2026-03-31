@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "Vue components for JourneyApps PowerSync",
+  "description": "Vue components for PowerSync",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -25,7 +25,7 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"

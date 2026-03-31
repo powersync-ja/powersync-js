@@ -5,7 +5,7 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "API definitions for JourneyApps PowerSync",
+  "description": "API definitions for PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
   "module": "dist/bundle.mjs",
@@ -32,7 +32,7 @@
       }
     }
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",

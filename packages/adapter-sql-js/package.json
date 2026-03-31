@@ -5,12 +5,12 @@
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "A development db adapter based on SQL.js for JourneyApps PowerSync",
+  "description": "A development DB adapter based on SQL.js for PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
   "module": "dist/bundle.mjs",
   "types": "lib/index.d.ts",
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",

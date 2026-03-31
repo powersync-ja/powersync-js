@@ -87,7 +87,7 @@ const db = new PowerSyncDatabase({
 
 ## Examples
 
-See the [`demos/example-capacitor/`](https://github.com/journeyapps/powersync-react-native-sdk/blob/main/demos/example-capacitor/README.md#L1) directory for a working example.
+See the [`demos/example-capacitor/`](https://github.com/powersync-ja/powersync-js/tree/main/demos/example-capacitor) directory for a working example.
 
 ## Found a bug or need help?
 

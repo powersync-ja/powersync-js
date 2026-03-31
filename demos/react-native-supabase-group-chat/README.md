@@ -70,7 +70,7 @@ To run against cloud-hosted Supabase and PowerSync instances:
 
 1. Deploy a Supabase project using the config and migrations in the [supabase](./supabase) folder. Update `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in [.env.local](./.env.local).
 
-2. Create a PowerSync instance via the [PowerSync dashboard](https://powersync.journeyapps.com/) and connect it to your Supabase project. Deploy the following sync streams configuration (also available in [sync-config.yaml](./sync-config.yaml)):
+2. Create a PowerSync instance via the [PowerSync Dashboard](https://dashboard.powersync.com/) and connect it to your Supabase project. Deploy the following sync streams configuration (also available in [sync-config.yaml](./sync-config.yaml)):
 
    ```yaml
    config:

@@ -64,9 +64,9 @@ This demo app uses Supabase as its Postgres database and backend:
 
 ### 3. Create new project on PowerSync and connect to Supabase/Postgres
 
-If you don't have a PowerSync account yet, [sign up here](https://accounts.journeyapps.com/portal/free-trial?powersync=true).
+If you don't have a PowerSync account yet, [sign up here](https://accounts.powersync.com/portal/powersync-signup).
 
-Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a new PowerSync instance:
+Then, in the [PowerSync Dashboard](https://dashboard.powersync.com/), create a new PowerSync instance:
 
 1. Right-click on 'PowerSync Project' in the project tree on the left and click "Create new instance"
 2. Pick a name for the instance e.g. "Yjs Demo Test" and proceed.
@@ -81,7 +81,7 @@ Then, in the [PowerSync dashboard](https://powersync.journeyapps.com/), create a
 ### 4. Create Sync Streams on PowerSync
 
 1. Open the [`sync-config.yaml`](sync-config.yaml) in this repo and copy the contents.
-2. In the [PowerSync dashboard](https://powersync.journeyapps.com/), paste that into the sync streams editor panel.
+2. In the [PowerSync Dashboard](https://dashboard.powersync.com/), paste that into the sync streams editor panel.
 3. Click the "Deploy sync streams" button and select your PowerSync instance from the drop-down list.
 
 ### 5. Set up local environment variables

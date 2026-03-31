@@ -63,7 +63,7 @@
     "real-time data stream",
     "live data"
   ],
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "peerDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
