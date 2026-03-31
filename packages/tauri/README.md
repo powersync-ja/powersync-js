@@ -2,18 +2,17 @@
   <a href="https://www.powersync.com" target="_blank"><img src="https://github.com/powersync-ja/.github/assets/7372448/d2538c43-c1a0-4c47-9a76-41462dba484f"/></a>
 </p>
 
+_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
+
 # PowerSync Tauri SDK
 
-_[PowerSync](https://www.powersync.com) is a sync engine for building local-first apps with instantly-responsive UI/UX and simplified state transfer. Syncs between SQLite on the client-side and Postgres, MongoDB, MySQL or SQL Server on the server-side._
+> [!NOTE]
+> This SDK is currently in an [alpha state](https://docs.powersync.com/resources/feature-status), intended for external testing and public feedback. While this SDK exposes the same stable JavaScript APIs as our other JavaScript SDKs, it is based on our Rust SDK which is also in an alpha state. The Rust layer and the IPC protocol between the JS and Rust packages are subject to change.
+> Expect breaking changes and instability as development continues.
 
 The PowerSync Tauri SDK (the `@powersync/tauri-plugin` package for JavaScript and the `tauri-plugin-powersync` crate) enable you to use PowerSync in Tauri (v2) apps.
 
 For detailed usage instructions, see the full SDK reference [here](https://docs.powersync.com/client-sdks/reference/tauri).
-
-## Stability
-
-This SDK is based on our [Rust SDK](github.com/powersync-ja/powersync-native), which is currently in an experimental state.
-So while this package exposes the same stable JavaScript interfaces as our other JavaScript SDKs, the Tauri SDK is also in an experimental state at this point.
 
 ## Installation
 
