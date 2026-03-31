@@ -4,7 +4,7 @@ on:
 
 jobs:
   publish_crates_io:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       id-token: write # Required for OIDC token exchange
     steps:
