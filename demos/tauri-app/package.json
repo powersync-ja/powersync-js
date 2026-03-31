@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@powersync/common": "^1.51.0",
-    "@powersync/tauri-plugin": "^0.0.2",
+    "@powersync/tauri-plugin": "^0.0.3",
     "@powersync/react": "^1.10.0",
     "@tauri-apps/api": "^2.0.0",
     "@tanstack/react-router": "^1.167.4",
