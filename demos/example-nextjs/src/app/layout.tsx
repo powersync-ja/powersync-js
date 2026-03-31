@@ -4,6 +4,7 @@ import { SystemProvider } from '@/components/providers/SystemProvider';
 import { CssBaseline } from '@mui/material';
 import React from 'react';
 
+// @ts-ignore
 import 'lato-font';
 import './globals.scss';
 
