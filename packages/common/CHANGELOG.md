@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.52.0
+
+### Minor Changes
+
+- 9cfca81: Simplify internal handling of HTTP streams.
+
 ## 1.51.0
 
 ### Minor Changes
