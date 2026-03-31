@@ -25,7 +25,7 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"

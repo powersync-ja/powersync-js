@@ -2,7 +2,7 @@
   "name": "powersync-js",
   "version": "1.0.0",
   "private": true,
-  "description": "monorepo for powersync javascript sdks",
+  "description": "monorepo for PowerSync JavaScript SDKs",
   "main": "index.js",
   "scripts": {
     "reset:repo": "tsc -b scripts && node scripts/dist/reset-repo.js",
@@ -28,7 +28,7 @@
   },
   "keywords": [],
   "type": "module",
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=20.9.0"

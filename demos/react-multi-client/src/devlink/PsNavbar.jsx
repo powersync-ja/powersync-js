@@ -154,7 +154,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
               className="ps-nav-link ps-nav-button ps-nav-sign-in-button plausible-event-name--button-click-sign-in"
               id="button-click-sign-in"
               options={{
-                href: "https://powersync.journeyapps.com/",
+                href: "https://dashboard.powersync.com/",
               }}
             >
               {"Sign in"}
@@ -163,7 +163,7 @@ export function PsNavbar({ as: _Component = _Builtin.NavbarWrapper }) {
               className="ps-nav-link ps-nav-button plausible-event-name--button-click-get-started"
               id="button-click-get-started"
               options={{
-                href: "https://accounts.journeyapps.com/portal/free-trial?powersync=true",
+                href: "https://accounts.powersync.com/portal/powersync-signup",
               }}
             >
               {"Get started"}

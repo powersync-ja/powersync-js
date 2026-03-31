@@ -74,7 +74,7 @@ export function PsNavbarMobile({ as: _Component = _Builtin.NavbarWrapper }) {
             className="ps-nav-link plausible-event-name--get-started"
             id="button-click-get-started"
             options={{
-              href: "https://accounts.journeyapps.com/portal/free-trial?powersync=true",
+              href: "https://accounts.powersync.com/portal/powersync-signup",
               target: "_blank",
             }}
           >
