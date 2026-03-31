@@ -2,11 +2,11 @@ import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { eq, sql } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
-import { DrizzleSchema, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
+import { DrizzleRelations, drizzleUsers, getDrizzleDb, getPowerSyncDb } from '../setup/db.js';
 
 describe('Database operations', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
-  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleSchema>;
+  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleRelations>;
 
   beforeEach(() => {
     powerSyncDb = getPowerSyncDb();

@@ -41,7 +41,7 @@
     "@powersync/drizzle-driver": "workspace:*",
     "@powersync/web": "workspace:*",
     "@testing-library/react": "^16.0.0",
-    "drizzle-orm": "catalog:",
+    "drizzle-orm": "1.0.0-beta.19",
     "p-defer": "catalog:",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
