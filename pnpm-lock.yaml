@@ -447,7 +447,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -487,7 +487,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
@@ -24116,7 +24116,9 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
