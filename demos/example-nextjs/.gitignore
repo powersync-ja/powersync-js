@@ -33,7 +33,7 @@ yarn-debug.log*
 next-env.d.ts
 
 # override root gitignore's "lib" rule (which targets build output)
-!src/lib/
+!src/library/
 
 # ide 
 .idea

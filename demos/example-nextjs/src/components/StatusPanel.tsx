@@ -89,8 +89,8 @@ export function StatusPanel() {
 
       {(uploadError || downloadError) && (
         <div className="mt-3 space-y-1">
-          {uploadError && <p className="text-xs text-danger">Upload: {String(uploadError)}</p>}
-          {downloadError && <p className="text-xs text-danger">Download: {String(downloadError)}</p>}
+          {uploadError && <p className="text-xs text-danger">Upload: {uploadError.message}</p>}
+          {downloadError && <p className="text-xs text-danger">Download: {downloadError.message}</p>}
         </div>
       )}
     </div>

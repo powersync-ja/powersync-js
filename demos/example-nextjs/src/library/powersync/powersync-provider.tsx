@@ -1,31 +1,32 @@
 'use client';
 
-import { AppSchema } from '@/lib/powersync/schema';
-import { BackendConnector } from '@/lib/powersync/connector';
+import { AppSchema } from '@/library/powersync/schema';
+import { BackendConnector } from '@/library/powersync/connector';
 import { PowerSyncContext } from '@powersync/react';
 import { PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
 import React, { Suspense, useRef } from 'react';
 
-let dbInstance: PowerSyncDatabase | null = null;
+const kDB = Symbol.for('powersync-demo-db');
+const g = globalThis as typeof globalThis & { [kDB]?: PowerSyncDatabase };
 
 function getDB(): PowerSyncDatabase {
-  if (!dbInstance) {
+  if (!g[kDB]) {
     const factory = new WASQLiteOpenFactory({
       dbFilename: 'powersync-nextjs.db',
       worker: '/@powersync/worker/WASQLiteDB.umd.js'
     });
 
-    dbInstance = new PowerSyncDatabase({
+    g[kDB] = new PowerSyncDatabase({
       database: factory,
       schema: AppSchema,
       flags: { disableSSRWarning: true },
       sync: { worker: '/@powersync/worker/SharedSyncImplementation.umd.js' }
     });
 
-    dbInstance.connect(new BackendConnector());
+    g[kDB].connect(new BackendConnector());
   }
 
-  return dbInstance;
+  return g[kDB];
 }
 
 export function PowerSyncProvider({ children }: { children: React.ReactNode }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Customer } from '@/lib/powersync/schema';
+import type { Customer } from '@/library/powersync/schema';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { useState } from 'react';
 

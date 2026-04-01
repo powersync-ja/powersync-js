@@ -1,4 +1,4 @@
-import { getPool } from '@/lib/db';
+import { getPool } from '@/library/db';
 import { NextRequest, NextResponse } from 'next/server';
 
 type Op = 'PUT' | 'PATCH' | 'DELETE';

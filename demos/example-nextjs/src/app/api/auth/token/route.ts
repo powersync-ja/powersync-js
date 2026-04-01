@@ -1,4 +1,4 @@
-import { getKeyPair } from '@/lib/auth-keys';
+import { getKeyPair } from '@/library/auth-keys';
 import { SignJWT } from 'jose';
 import { NextResponse } from 'next/server';
 

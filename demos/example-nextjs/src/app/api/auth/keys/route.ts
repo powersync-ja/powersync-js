@@ -1,4 +1,4 @@
-import { getKeyPair } from '@/lib/auth-keys';
+import { getKeyPair } from '@/library/auth-keys';
 import { NextResponse } from 'next/server';
 
 // JWKS endpoint. PowerSync hits this to verify client tokens.
