@@ -32,6 +32,9 @@ yarn-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# override root gitignore's "lib" rule (which targets build output)
+!src/lib/
+
 # ide 
 .idea
 .fleet
