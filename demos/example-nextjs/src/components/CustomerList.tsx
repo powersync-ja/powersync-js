@@ -1,22 +1,6 @@
 'use client';
 
 import type { Customer } from '@/lib/powersync/schema';
-import {
-  Box,
-  Divider,
-  IconButton,
-  InputAdornment,
-  List,
-  ListItem,
-  ListItemText,
-  OutlinedInput,
-  Paper,
-  Tooltip,
-  Typography,
-  styled
-} from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { useState } from 'react';
 
@@ -37,88 +21,55 @@ export function CustomerList() {
   };
 
   return (
-    <Card elevation={0}>
-      <Typography variant="h6" fontWeight={600} mb={2}>
+    <div className="mt-4 rounded-xl border border-border bg-surface p-5">
+      <h2 className="mb-4 text-lg font-semibold text-text">
         Customers
-        <Count>{customers.length}</Count>
-      </Typography>
+        <span className="ml-2 inline-flex h-5.5 min-w-5.5 items-center justify-center rounded-full bg-border px-1.5 align-middle text-xs font-medium text-text-muted">
+          {customers.length}
+        </span>
+      </h2>
 
-      <OutlinedInput
-        fullWidth
-        size="small"
-        placeholder="Add customer…"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && addCustomer()}
-        endAdornment={
-          <InputAdornment position="end">
-            <Tooltip title="Add">
-              <span>
-                <IconButton edge="end" onClick={addCustomer} disabled={!input.trim()} size="small">
-                  <AddCircleOutlineIcon />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </InputAdornment>
-        }
-        sx={{ mb: 2 }}
-      />
+      <div className="relative mb-4">
+        <input
+          type="text"
+          placeholder="Add customer…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addCustomer()}
+          className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+        />
+        <button
+          onClick={addCustomer}
+          disabled={!input.trim()}
+          title="Add"
+          className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md p-1 text-text-muted transition-colors hover:text-primary disabled:opacity-30 disabled:hover:text-text-muted"
+        >
+          <svg className="size-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13 7h-2v4H7v2h4v4h2v-4h4v-2h-4V7zm-1-5C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
+          </svg>
+        </button>
+      </div>
 
       {customers.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-          No customers yet. Add one above.
-        </Typography>
+        <p className="py-6 text-center text-sm text-text-muted">No customers yet. Add one above.</p>
       ) : (
-        <List disablePadding>
-          {customers.map((c, i) => (
-            <Box key={c.id}>
-              {i > 0 && <Divider />}
-              <ListItem
-                disablePadding
-                sx={{ py: 0.5 }}
-                secondaryAction={
-                  <Tooltip title="Delete">
-                    <IconButton
-                      edge="end"
-                      size="small"
-                      onClick={() => deleteCustomer(c.id!)}
-                      sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' } }}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                }
+        <ul className="divide-y divide-border">
+          {customers.map((c) => (
+            <li key={c.id} className="group flex items-center justify-between py-2">
+              <span className="text-sm text-text">{c.name}</span>
+              <button
+                onClick={() => deleteCustomer(c.id!)}
+                title="Delete"
+                className="rounded-md p-1 text-text-muted opacity-0 transition-all hover:text-danger group-hover:opacity-100"
               >
-                <ListItemText primary={c.name} primaryTypographyProps={{ variant: 'body2' }} />
-              </ListItem>
-            </Box>
+                <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z" />
+                </svg>
+              </button>
+            </li>
           ))}
-        </List>
+        </ul>
       )}
-    </Card>
+    </div>
   );
 }
-
-const Card = styled(Paper)`
-  background: #161616;
-  border: 1px solid #282828;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 16px;
-`;
-
-const Count = styled('span')`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #282828;
-  color: #aaa;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 20px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  margin-left: 8px;
-  vertical-align: middle;
-`;

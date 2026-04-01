@@ -2,7 +2,6 @@
 
 import { CustomerList } from '@/components/CustomerList';
 import { StatusPanel } from '@/components/StatusPanel';
-import { Box, CircularProgress, Typography, styled } from '@mui/material';
 import { useStatus } from '@powersync/react';
 import Image from 'next/image';
 
@@ -11,50 +10,23 @@ export default function HomePage() {
 
   if (!status.hasSynced) {
     return (
-      <Fullscreen>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-2">
         <Image src="/powersync-logo.svg" alt="PowerSync" width={220} height={34} priority />
-        <CircularProgress size={32} sx={{ mt: 4, color: '#00d5ff' }} />
-        <Typography variant="body2" color="text.secondary" mt={2}>
-          Connecting…
-        </Typography>
-      </Fullscreen>
+        <div className="mt-4 size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="mt-2 text-sm text-text-muted">Connecting…</p>
+      </div>
     );
   }
 
   return (
-    <Root>
-      <Container>
-        <Box mb={4}>
+    <div className="flex min-h-screen justify-center px-4 py-12">
+      <div className="flex w-full max-w-md flex-col">
+        <div className="mb-8 flex justify-center">
           <Image src="/powersync-logo.svg" alt="PowerSync" width={200} height={31} priority />
-        </Box>
+        </div>
         <StatusPanel />
         <CustomerList />
-      </Container>
-    </Root>
+      </div>
+    </div>
   );
 }
-
-const Root = styled('div')`
-  min-height: 100vh;
-  background: #0a0a0a;
-  display: flex;
-  justify-content: center;
-  padding: 48px 16px;
-`;
-
-const Container = styled('div')`
-  width: 100%;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-`;
-
-const Fullscreen = styled('div')`
-  min-height: 100vh;
-  background: #0a0a0a;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-`;

@@ -5,7 +5,9 @@ const config: NextConfig = {
     disableStaticImages: true
   },
   serverExternalPackages: ['pg', 'jose'],
-  turbopack: {}
+  turbopack: {
+    root: __dirname
+  }
 };
 
 export default config;

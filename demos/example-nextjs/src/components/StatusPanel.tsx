@@ -1,44 +1,39 @@
 'use client';
 
-import {
-  Box,
-  Chip,
-  Divider,
-  Paper,
-  Typography,
-  styled
-} from '@mui/material';
-import CloudDoneIcon from '@mui/icons-material/CloudDone';
-import CloudOffIcon from '@mui/icons-material/CloudOff';
-import CloudSyncIcon from '@mui/icons-material/CloudSync';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useStatus } from '@powersync/react';
 
-function StatusItem({
-  label,
-  value,
-  ok,
-  icon
-}: {
-  label: string;
-  value: string;
-  ok: boolean;
-  icon?: React.ReactNode;
-}) {
+const chipStyles = {
+  default: 'bg-border text-text-muted',
+  success: 'bg-success/20 text-success',
+  warning: 'bg-warning/20 text-warning',
+  error: 'bg-danger/20 text-danger'
+} as const;
+
+function StatusItem({ label, value, ok, icon }: { label: string; value: string; ok: boolean; icon?: React.ReactNode }) {
   return (
-    <Box>
-      <Typography variant="caption" color="text.secondary" display="block">
-        {label}
-      </Typography>
-      <Box display="flex" alignItems="center" gap={0.5}>
+    <div>
+      <span className="text-xs text-text-muted">{label}</span>
+      <div className="flex items-center gap-1">
         {icon}
-        <Typography variant="body2" fontWeight={500} color={ok ? 'text.primary' : 'text.secondary'}>
-          {value}
-        </Typography>
-      </Box>
-    </Box>
+        <span className={`text-sm font-medium ${ok ? 'text-text' : 'text-text-muted'}`}>{value}</span>
+      </div>
+    </div>
+  );
+}
+
+function ArrowUp() {
+  return (
+    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" />
+    </svg>
+  );
+}
+
+function ArrowDown() {
+  return (
+    <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8 8-8z" />
+    </svg>
   );
 }
 
@@ -47,86 +42,57 @@ export function StatusPanel() {
   const { connected, hasSynced, dataFlowStatus } = status;
   const { uploading, downloading, uploadError, downloadError } = dataFlowStatus;
 
-  let icon = <CloudOffIcon />;
-  let label = 'Disconnected';
-  let chipColor: 'default' | 'success' | 'warning' | 'error' = 'default';
+  let label = 'Connecting…';
+  let chipColor: keyof typeof chipStyles = 'warning';
 
-  if (uploadError || downloadError) {
-    icon = <ErrorOutlineIcon />;
-    label = 'Error';
-    chipColor = 'error';
-  } else if (connected && hasSynced) {
-    icon = <CloudDoneIcon />;
-    label = 'Synced';
-    chipColor = 'success';
+  if (connected && hasSynced) {
+    if (uploadError || downloadError) {
+      label = 'Error';
+      chipColor = 'error';
+    } else {
+      label = 'Synced';
+      chipColor = 'success';
+    }
   } else if (connected) {
-    icon = <CloudSyncIcon />;
     label = 'Syncing';
     chipColor = 'warning';
+  } else if (hasSynced) {
+    label = 'Disconnected';
+    chipColor = 'default';
   }
 
   return (
-    <StatusCard elevation={0}>
-      <StatusRow>
-        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.5 }}>
-          Sync Status
-        </Typography>
-        <Chip icon={icon} label={label} color={chipColor} size="small" variant="filled" />
-      </StatusRow>
+    <div className="rounded-xl border border-border bg-surface px-5 py-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs tracking-widest text-text-muted uppercase">Sync Status</span>
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${chipStyles[chipColor]}`}>{label}</span>
+      </div>
 
-      <Divider sx={{ my: 1 }} />
+      <hr className="my-3 border-border" />
 
-      <StatusGrid>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-3 pt-2">
         <StatusItem label="Connected" value={connected ? 'Yes' : 'No'} ok={!!connected} />
         <StatusItem label="Initial sync" value={hasSynced ? 'Done' : 'Pending'} ok={!!hasSynced} />
         <StatusItem
           label="Upload"
           value={uploadError ? 'Error' : uploading ? 'Active' : 'Idle'}
           ok={!uploadError}
-          icon={uploading ? <ArrowUpwardIcon sx={{ fontSize: 13 }} /> : undefined}
+          icon={uploading ? <ArrowUp /> : undefined}
         />
         <StatusItem
           label="Download"
           value={downloadError ? 'Error' : downloading ? 'Active' : 'Idle'}
           ok={!downloadError}
-          icon={downloading ? <ArrowDownwardIcon sx={{ fontSize: 13 }} /> : undefined}
+          icon={downloading ? <ArrowDown /> : undefined}
         />
-      </StatusGrid>
+      </div>
 
       {(uploadError || downloadError) && (
-        <Box mt={1}>
-          {uploadError && (
-            <Typography variant="caption" color="error" display="block">
-              Upload: {String(uploadError)}
-            </Typography>
-          )}
-          {downloadError && (
-            <Typography variant="caption" color="error" display="block">
-              Download: {String(downloadError)}
-            </Typography>
-          )}
-        </Box>
+        <div className="mt-3 space-y-1">
+          {uploadError && <p className="text-xs text-danger">Upload: {String(uploadError)}</p>}
+          {downloadError && <p className="text-xs text-danger">Download: {String(downloadError)}</p>}
+        </div>
       )}
-    </StatusCard>
+    </div>
   );
 }
-
-const StatusCard = styled(Paper)`
-  background: #161616;
-  border: 1px solid #282828;
-  border-radius: 12px;
-  padding: 16px 20px;
-`;
-
-const StatusRow = styled('div')`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const StatusGrid = styled('div')`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 8px;
-  padding-top: 8px;
-`;
