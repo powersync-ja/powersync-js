@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { routeTree } from '../routeTree.gen';
 
-// Derive basepath from Vite's base URL config (strips trailing slash for TanStack Router)
-const basepath = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+// Read the base path injected by the Docker entrypoint (or empty string for root).
+const basepath = (window as any).__DIAG_BASE__ || '/';
 
 // Create the router instance
 const router = createRouter({

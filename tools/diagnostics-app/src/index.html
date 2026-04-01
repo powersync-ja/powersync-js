@@ -3,6 +3,9 @@
     <meta name="theme-color" content="#c44eff" />
     <link rel="icon" href="favicon.ico" />
     <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
+    <!-- __DIAG_BASE__ is replaced at container start by the Docker entrypoint script.
+         For local dev (no replacement), the empty string means root '/'. -->
+    <script>window.__DIAG_BASE__="";</script>
     <link rel="stylesheet" href="./app/globals.css" />
     <script type="module" src="./app/index.tsx"></script>
   </head>

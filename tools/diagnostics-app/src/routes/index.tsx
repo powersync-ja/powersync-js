@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Wifi, FileSearch, ArrowRight } from 'lucide-react';
 import React from 'react';
 import { useInitError } from '@/components/providers/SystemProvider';
+import { assetPath } from '@/lib/utils';
 
 const searchSchema = z.object({
   token: z.string().optional()
@@ -55,7 +56,7 @@ function LandingPage() {
       <div className="w-full max-w-[900px] space-y-8">
         {/* Logo & title */}
         <div className="flex flex-col items-center gap-4">
-          <img alt="PowerSync Logo" className="w-auto max-w-[300px] max-h-[80px]" src={`${import.meta.env.BASE_URL}powersync-logo.svg`} />
+          <img alt="PowerSync Logo" className="w-auto max-w-[300px] max-h-[80px]" src={assetPath('powersync-logo.svg')} />
           <h1 className="text-2xl font-semibold text-center">Sync Diagnostics Client</h1>
         </div>
 

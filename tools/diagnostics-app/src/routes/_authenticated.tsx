@@ -43,6 +43,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
 import { InspectorProvider } from '@/library/inspector/InspectorContext';
+import { assetPath } from '@/lib/utils';
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async () => {
@@ -80,13 +81,13 @@ function AppSidebar() {
             <img
               alt="PowerSync Logo"
               className="w-full max-w-[180px] object-contain"
-              src={`${import.meta.env.BASE_URL}powersync-logo.svg`}
+              src={assetPath('powersync-logo.svg')}
             />
           ) : (
             <img
               alt="PowerSync"
               className="w-8 h-8 object-contain rounded-[20%]"
-              src={`${import.meta.env.BASE_URL}icons/icon-192x192.png`}
+              src={assetPath('icons/icon-192x192.png')}
             />
           )}
         </SidebarHeader>

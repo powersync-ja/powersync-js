@@ -16,17 +16,23 @@ docker run --pull always -p 8082:80 journeyapps/powersync-diagnostics-app
 
 The app will be available on http://localhost:8082.
 
-#### Serving on a subpath
+#### Hosting on a subpath
 
-To serve the app on a subpath (e.g. `example.com/powersync-diagnostics/`), build the image with the `BASE_PATH` build arg. The build must be run from the root of the monorepo since the Dockerfile references shared packages:
+To serve the app on a subpath (e.g. behind a reverse proxy at `/diagnostics/`), set the `BASE_PATH` environment variable:
 
 ```sh
-# From the root of the repository
-docker build --build-arg BASE_PATH=/powersync-diagnostics/ -t powersync-diagnostics -f tools/diagnostics-app/Dockerfile .
-docker run -p 8082:80 powersync-diagnostics
+docker run --pull always -p 8082:80 -e BASE_PATH=/diagnostics journeyapps/powersync-diagnostics-app
 ```
 
-The app will be available on http://localhost:8082/powersync-diagnostics/.
+The app will be available on http://localhost:8082/diagnostics/.
+
+Then configure your reverse proxy to forward `/diagnostics/` to the container. For example, with nginx:
+
+```nginx
+location /diagnostics/ {
+    proxy_pass http://diagnostics-container:80/diagnostics/;
+}
+```
 
 ### Local Development
 
