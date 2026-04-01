@@ -15,22 +15,18 @@ import {
 
 type PreparedQueryConfig = Omit<PreparedQueryConfigBase, 'statement' | 'run'>;
 
-/**
- * Callback which uses a LockContext for database operations.
- */
 export type LockCallback<T> = (ctx: LockContext) => Promise<T>;
 
-/**
- * Provider for specific database contexts.
- * Handlers are provided a context to the provided callback.
- * This does not necessarily need to acquire a database lock for each call.
- * Calls might use the same lock context for multiple operations.
- * The read/write context may relate to a single read OR write context.
- */
 export type ContextProvider = {
   useReadContext: <T>(fn: LockCallback<T>) => Promise<T>;
   useWriteContext: <T>(fn: LockCallback<T>) => Promise<T>;
 };
+
+type ResultMapper = (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown;
+type RelationalResultMapper = (
+  rows: Record<string, unknown>[],
+  mapColumnValue?: (value: unknown) => unknown
+) => unknown;
 
 export class PowerSyncSQLitePreparedQuery<
   T extends PreparedQueryConfig = PreparedQueryConfig
@@ -47,13 +43,13 @@ export class PowerSyncSQLitePreparedQuery<
   private readOnly = false;
 
   constructor(
-    private contextProvider: ContextProvider,
+    contextProvider: ContextProvider,
     query: Query,
-    private logger: Logger,
-    private fields: SelectedFieldsOrdered | undefined,
+    logger: Logger,
+    fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
-    private _isResponseInArrayMode: boolean,
-    private customResultMapper?: (rows: unknown[][]) => unknown,
+    isResponseInArrayMode: boolean,
+    customResultMapper?: ResultMapper,
     cache?: Cache | undefined,
     queryMetadata?:
       | {
@@ -61,10 +57,47 @@ export class PowerSyncSQLitePreparedQuery<
           tables: string[];
         }
       | undefined,
-    cacheConfig?: WithCacheConfig | undefined
+    cacheConfig?: WithCacheConfig | undefined,
+    relationalQueryMode?: false
+  );
+  constructor(
+    contextProvider: ContextProvider,
+    query: Query,
+    logger: Logger,
+    fields: SelectedFieldsOrdered | undefined,
+    executeMethod: SQLiteExecuteMethod,
+    isResponseInArrayMode: boolean,
+    customResultMapper: RelationalResultMapper,
+    cache: Cache | undefined,
+    queryMetadata:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig: WithCacheConfig | undefined,
+    relationalQueryMode: true
+  );
+  constructor(
+    private contextProvider: ContextProvider,
+    query: Query,
+    private logger: Logger,
+    private fields: SelectedFieldsOrdered | undefined,
+    executeMethod: SQLiteExecuteMethod,
+    private _isResponseInArrayMode: boolean,
+    private customResultMapper?: ResultMapper | RelationalResultMapper,
+    cache?: Cache | undefined,
+    queryMetadata?:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig?: WithCacheConfig | undefined,
+    private relationalQueryMode = false
   ) {
     super('async', executeMethod, query, cache, queryMetadata, cacheConfig);
-    this.readOnly = queryMetadata?.type == 'select';
+    this.readOnly = queryMetadata?.type == 'select' || relationalQueryMode;
   }
 
   async run(placeholderValues?: Record<string, unknown>): Promise<QueryResult> {
@@ -85,10 +118,20 @@ export class PowerSyncSQLitePreparedQuery<
       });
     }
 
+    if (customResultMapper && this.relationalQueryMode) {
+      const params = fillPlaceholders(query.params, placeholderValues ?? {});
+      logger.logQuery(query.sql, params);
+      const relationalResultMapper = customResultMapper as RelationalResultMapper;
+      return await this.useContext(async (ctx) => {
+        const rows = (await ctx.getAll(this.query.sql, params)) as Record<string, unknown>[];
+        return relationalResultMapper(rows) as T['all'];
+      });
+    }
+
     const rows = (await this.values(placeholderValues)) as unknown[][];
     if (customResultMapper) {
-      const mapped = customResultMapper(rows) as T['all'];
-      return mapped;
+      const resultMapper = customResultMapper as ResultMapper;
+      return resultMapper(rows) as T['all'];
     }
     return rows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
   }
@@ -105,6 +148,17 @@ export class PowerSyncSQLitePreparedQuery<
       });
     }
 
+    if (customResultMapper && this.relationalQueryMode) {
+      const relationalResultMapper = customResultMapper as RelationalResultMapper;
+      return this.useContext(async (ctx) => {
+        const row = (await ctx.get(this.query.sql, params)) as Record<string, unknown> | undefined;
+        if (!row) {
+          return undefined as T['get'];
+        }
+        return relationalResultMapper([row]) as T['get'];
+      });
+    }
+
     const rows = (await this.values(placeholderValues)) as unknown[][];
     const row = rows[0];
 
@@ -113,7 +167,8 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     if (customResultMapper) {
-      return customResultMapper(rows) as T['get'];
+      const resultMapper = customResultMapper as ResultMapper;
+      return resultMapper(rows) as T['get'];
     }
 
     return mapResultRow(fields!, row, joinsNotNullableMap);
@@ -141,17 +196,11 @@ export class PowerSyncSQLitePreparedQuery<
   }
 }
 
-/**
- * Maps a flat array of database row values to a result object based on the provided column definitions.
- * It reconstructs the hierarchical structure of the result by following the specified paths for each field.
- * It also handles nullification of nested objects when joined tables are nullable.
- */
 export function mapResultRow<TResult>(
   columns: SelectedFieldsOrdered,
   row: unknown[],
   joinsNotNullableMap: Record<string, boolean> | undefined
 ): TResult {
-  // Key -> nested object key, value -> table name if all fields in the nested object are from the same table, false otherwise
   const nullifyMap: Record<string, string | false> = {};
 
   const result = columns.reduce<Record<string, any>>((result, { path, field }, columnIndex) => {
@@ -178,10 +227,7 @@ export function mapResultRow<TResult>(
   return result as TResult;
 }
 
-/**
- * Determines the appropriate decoder for a given field.
- */
-function getDecoder(field: SQLiteColumn | SQL<unknown> | SQL.Aliased): DriverValueDecoder<unknown, unknown> {
+function getDecoder(field: any): DriverValueDecoder<unknown, unknown> {
   if (is(field, Column)) {
     return field;
   } else if (is(field, SQL)) {
@@ -204,15 +250,15 @@ function updateNullifyMap(
 
   const objectName = path[0]!;
   if (!(objectName in nullifyMap)) {
-    nullifyMap[objectName] = value === null ? getTableName(field.table) : false;
-  } else if (typeof nullifyMap[objectName] === 'string' && nullifyMap[objectName] !== getTableName(field.table)) {
+    nullifyMap[objectName] = value === null ? getTableName((field as any).table) : false;
+  } else if (
+    typeof nullifyMap[objectName] === 'string' &&
+    nullifyMap[objectName] !== getTableName((field as any).table)
+  ) {
     nullifyMap[objectName] = false;
   }
 }
 
-/**
- * Nullify all nested objects from nullifyMap that are nullable
- */
 function applyNullifyMap(
   result: Record<string, any>,
   nullifyMap: Record<string, string | false>,

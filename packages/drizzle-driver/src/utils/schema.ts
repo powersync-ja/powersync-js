@@ -23,13 +23,14 @@ import {
   type TableConfig
 } from 'drizzle-orm/sqlite-core';
 
-type PowerSyncColumnValue<T> = null extends T ? PowerSyncNonNullColumnValue<Exclude<T, null>> | null : PowerSyncNonNullColumnValue<T>;
+type PowerSyncColumnValue<T> = null extends T
+  ? PowerSyncNonNullColumnValue<Exclude<T, null>> | null
+  : PowerSyncNonNullColumnValue<T>;
 
 type PowerSyncNonNullColumnValue<T> = T extends number | string ? T : T extends boolean | Date ? number : string;
 
-type DrizzleTableColumns<T extends SQLiteTableWithColumns<any>> = T extends SQLiteTableWithColumns<infer TConfig>
-  ? TConfig['columns']
-  : never;
+type DrizzleTableColumns<T extends SQLiteTableWithColumns<any>> =
+  T extends SQLiteTableWithColumns<infer TConfig> ? TConfig['columns'] : never;
 
 type DrizzleColumnData<T> = T extends { _: { data: infer TData } } ? TData : never;
 
@@ -115,7 +116,6 @@ export type DrizzleTableWithPowerSyncOptions = {
   options?: DrizzleTablePowerSyncOptions;
 };
 
-<<<<<<< HEAD
 type DrizzleSchemaEntry = SQLiteTableWithColumns<any> | DrizzleTableWithPowerSyncOptions | Record<string, unknown>;
 
 export type TableName<T> = T extends { _: { name: infer TName extends string } }
@@ -125,25 +125,24 @@ export type TableName<T> = T extends { _: { name: infer TName extends string } }
     : never;
 
 export type TablesFromSchemaEntries<T> = {
-  [K in keyof T as T[K] extends Relations
-    ? never
-    : T[K] extends SQLiteTableWithColumns<any> | DrizzleTableWithPowerSyncOptions
-      ? TableName<T[K]>
-      : never]: T[K] extends SQLiteTableWithColumns<any>
+  [K in keyof T as T[K] extends SQLiteTableWithColumns<any> | DrizzleTableWithPowerSyncOptions
+    ? TableName<T[K]>
+    : never]: T[K] extends SQLiteTableWithColumns<any>
     ? Table<Expand<ExtractPowerSyncColumns<T[K]>>>
     : T[K] extends DrizzleTableWithPowerSyncOptions
       ? Table<Expand<ExtractPowerSyncColumns<T[K]['tableDefinition']>>>
       : never;
 };
 
-function toPowerSyncTables<
-  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
->(schemaEntries: T, options?: DrizzleAppSchemaOptions) {
+function toPowerSyncTables<T extends Record<string, DrizzleSchemaEntry>>(
+  schemaEntries: T,
+  options?: DrizzleAppSchemaOptions
+) {
   const casingCache = options?.casing ? new CasingCache(options?.casing) : undefined;
 
   const tables: Record<string, Table> = {};
   for (const schemaEntry of Object.values(schemaEntries)) {
-    let maybeTable: SQLiteTableWithColumns<any> | Relations | undefined = undefined;
+    let maybeTable: SQLiteTableWithColumns<any> | undefined = undefined;
     let maybeOptions: DrizzleTablePowerSyncOptions | undefined = undefined;
 
     if (typeof schemaEntry === 'object' && 'tableDefinition' in schemaEntry) {
@@ -151,7 +150,7 @@ function toPowerSyncTables<
       maybeTable = tableWithOptions.tableDefinition;
       maybeOptions = tableWithOptions.options;
     } else {
-      maybeTable = schemaEntry;
+      maybeTable = schemaEntry as SQLiteTableWithColumns<any> | undefined;
     }
 
     if (isTable(maybeTable)) {
@@ -169,9 +168,7 @@ function toPowerSyncTables<
 export type DrizzleAppSchemaOptions = {
   casing?: Casing;
 };
-export class DrizzleAppSchema<
-  T extends Record<string, SQLiteTableWithColumns<any> | Relations | DrizzleTableWithPowerSyncOptions>
-> extends Schema {
+export class DrizzleAppSchema<T extends Record<string, DrizzleSchemaEntry>> extends Schema {
   constructor(drizzleSchema: T, options?: DrizzleAppSchemaOptions) {
     super(toPowerSyncTables(drizzleSchema, options));
     // This is just used for typing
