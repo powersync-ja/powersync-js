@@ -1,72 +1,98 @@
 # PowerSync Next.js Example
 
-A local-first demo using [Next.js](https://nextjs.org/) and the [PowerSync JS web SDK](https://docs.powersync.com/client-sdk-references/js-web).
+PowerSync demo using [Next.js](https://nextjs.org/) and the [PowerSync JS web SDK](https://docs.powersync.com/client-sdk-references/js-web).
 
-Data is synced from a local Postgres database through a self-hosted PowerSync service. Authentication is anonymous — the Next.js server issues signed JWTs without any login flow.
+Syncs data from a local Postgres through a self-hosted PowerSync service. No login required; the Next.js server hands out anonymous JWTs.
 
 ## Architecture
 
 ```
 Browser (WASQLite)
    ↕ sync (WebSocket)
-PowerSync service  ←→  Postgres (source DB)
+PowerSync service  <->  Postgres (source DB)
    ↕ bucket storage
 Postgres (storage DB)
 
-Browser → POST /api/data → Next.js API route → Postgres (mutations)
-Browser → GET  /api/auth/token → Next.js API route → anonymous JWT
-PowerSync → GET /api/auth/keys → Next.js API route → JWKS (public key)
+Browser -> POST /api/data       -> Next.js API route -> Postgres (writes)
+Browser -> GET  /api/auth/token -> Next.js API route -> signed JWT
+PowerSync -> GET /api/auth/keys -> Next.js API route -> JWKS (public key)
 ```
 
 ## Prerequisites
 
 - [Docker](https://www.docker.com/) (running)
 - [PowerSync CLI](https://docs.powersync.com/self-hosting/installation) (`npm i -g @powersync/cli`)
-- Node.js ≥ 18 and [pnpm](https://pnpm.io/)
+- Node.js >= 18 and [pnpm](https://pnpm.io/)
 
 ## Setup
 
 ```bash
-# 1. Install dependencies
+# Install deps
 pnpm install
 
-# 2. Create your env file (single source of truth for all config)
+# Create env file (defaults work out of the box)
 cp .env.local.template .env.local
 
-# 3. Start the local PowerSync stack (Postgres + PowerSync service)
+# Start local Postgres + PowerSync
 pnpm local:up
 
-# 4. Start the Next.js dev server
+# Start Next.js
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Project structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── keys/route.ts      JWKS endpoint for PowerSync
+│   │   │   └── token/route.ts     Anonymous JWT endpoint
+│   │   └── data/route.ts          CRUD writes to Postgres
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── providers.tsx               Theme + PowerSync providers
+├── components/
+│   ├── CustomerList.tsx
+│   └── StatusPanel.tsx
+└── lib/
+    ├── auth-keys.ts                RSA key pair (server only)
+    ├── db.ts                       Postgres pool (server only)
+    └── powersync/
+        ├── connector.ts            Fetch token + upload mutations
+        ├── powersync-provider.tsx   PowerSync context provider
+        └── schema.ts               Client-side table schema
+```
+
 ## Environment variables
 
-All configuration lives in `.env.local` — both the Next.js server and Docker Compose read from this single file. The template (`.env.local.template`) contains defaults that work out of the box.
+All config lives in `.env.local`. Docker Compose also reads from this file (via a symlink at `powersync/docker/.env`). The template has working defaults.
 
-| Variable | Description |
+| Variable | What it does |
 |---|---|
-| `POWERSYNC_URL` | PowerSync service URL (used by the browser and as JWT audience) |
-| `DATABASE_URL` | Postgres connection string for Next.js API routes (uses `localhost`) |
-| `PS_DATABASE_*` | Postgres credentials shared with Docker containers |
-| `PS_STORAGE_*` | Separate Postgres instance for PowerSync internal storage |
-| `PS_DATA_SOURCE_URI` | Postgres URI for PowerSync replication (uses Docker service hostname) |
-| `PS_STORAGE_SOURCE_URI` | Storage Postgres URI for PowerSync (uses Docker service hostname) |
+| `POWERSYNC_URL` | PowerSync service URL, also used as the JWT audience |
+| `DATABASE_URL` | Postgres connection for Next.js API routes (uses `localhost`) |
+| `PS_DATABASE_*` | Postgres credentials used by Docker |
+| `PS_STORAGE_*` | Separate Postgres for PowerSync internal storage |
+| `PS_DATA_SOURCE_URI` | Postgres URI inside Docker (uses `pg-db` hostname) |
+| `PS_STORAGE_SOURCE_URI` | Storage Postgres URI inside Docker (uses `pg-storage` hostname) |
 
 ## Scripts
 
-| Command | Description |
+| Command | What it does |
 |---|---|
 | `pnpm dev` | Start Next.js dev server |
 | `pnpm build` | Production build |
-| `pnpm local:up` | Start PowerSync + Postgres Docker stack |
+| `pnpm local:up` | Start PowerSync + Postgres via Docker |
 | `pnpm local:down` | Stop Docker stack |
 
 ## Resetting the database
 
-If you change the database schema, remove the Docker volumes so the init SQL reruns:
+If you change the schema, wipe the Docker volumes so the init SQL runs again:
 
 ```bash
 powersync docker stop --directory powersync --remove --remove-volumes

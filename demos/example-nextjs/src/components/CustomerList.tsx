@@ -66,7 +66,7 @@ export function CustomerList() {
 
       {customers.length === 0 ? (
         <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-          No customers yet — add one above.
+          No customers yet. Add one above.
         </Typography>
       ) : (
         <List disablePadding>

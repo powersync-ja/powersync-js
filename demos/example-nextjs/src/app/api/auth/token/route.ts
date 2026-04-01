@@ -4,10 +4,7 @@ import { NextResponse } from 'next/server';
 
 const POWERSYNC_URL = process.env.POWERSYNC_URL ?? 'http://localhost:8080';
 
-/**
- * Issues an anonymous JWT that PowerSync will accept.
- * No authentication required – any client can call this to get a token.
- */
+/** Returns a signed JWT for PowerSync. No login required. */
 export async function GET() {
   const { privateKey, publicJwk } = await getKeyPair();
 
