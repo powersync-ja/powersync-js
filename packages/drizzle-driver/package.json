@@ -47,7 +47,7 @@
   },
   "peerDependencies": {
     "@powersync/common": "workspace:^1.51.0",
-    "drizzle-orm": "<1.0.0"
+    "drizzle-orm": ">=1.0.0-beta.19 <1.0.0"
   },
   "devDependencies": {
     "@journeyapps/wa-sqlite": "catalog:",
@@ -56,7 +56,7 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@rollup/plugin-typescript": "catalog:",
     "@types/node": "catalog:",
-    "drizzle-orm": "catalog:",
+    "drizzle-orm": "1.0.0-beta.19",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "vite": "catalog:"
