@@ -55,11 +55,12 @@ src/
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── page.tsx
-│   └── providers.tsx               Theme + PowerSync providers
+│   └── providers.tsx               PowerSync provider
 ├── components/
 │   ├── CustomerList.tsx
-│   └── StatusPanel.tsx
-└── lib/
+│   ├── StatusPanel.tsx
+│   └── SyncedContent.tsx           Client component for sync state
+└── library/
     ├── auth-keys.ts                RSA key pair (server only)
     ├── db.ts                       Postgres pool (server only)
     └── powersync/
@@ -80,6 +81,8 @@ All config lives in `.env.local`. Docker Compose also reads from this file (via 
 | `PS_STORAGE_*` | Separate Postgres for PowerSync internal storage |
 | `PS_DATA_SOURCE_URI` | Postgres URI inside Docker (uses `pg-db` hostname) |
 | `PS_STORAGE_SOURCE_URI` | Storage Postgres URI inside Docker (uses `pg-storage` hostname) |
+| `POWERSYNC_PRIVATE_KEY` | (Optional) Base64-encoded JWK private key. Auto-generated if not set |
+| `POWERSYNC_PUBLIC_KEY` | (Optional) Base64-encoded JWK public key. Auto-generated if not set |
 
 ## Scripts
 
