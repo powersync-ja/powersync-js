@@ -71,13 +71,13 @@ export interface WebEncryptionOptions {
 
 type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
 
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions
   WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
 >;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions
   WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
 >;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions
   WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
@@ -143,7 +143,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
 
     if (this.resolvedFlags.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
       this.unloadListener = () => this.close({ disconnect: false });
-      window.addEventListener('unload', this.unloadListener);
+      window.addEventListener('pagehide', this.unloadListener);
     }
   }
 
@@ -191,7 +191,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    */
   close(options?: PowerSyncCloseOptions): Promise<void> {
     if (this.unloadListener) {
-      window.removeEventListener('unload', this.unloadListener);
+      window.removeEventListener('pagehide', this.unloadListener);
     }
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
