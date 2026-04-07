@@ -1,7 +1,10 @@
-sync_streams:
-  - name: user_lists
-    # Separate stream per todo list, scoped to the authenticated user
-    parameters: select id as list_id from lists where owner_id = request.user_id()
-    data:
-      - select * from lists where id = bucket.list_id
-      - select * from todos where list_id = bucket.list_id
+config:
+  edition: 3
+
+streams:
+  user_data:
+    auto_subscribe: true
+    queries:
+      # Scoped to the authenticated user
+      - SELECT * FROM lists WHERE owner_id = auth.user_id()
+      - SELECT todos.* FROM todos INNER JOIN lists ON todos.list_id = lists.id WHERE lists.owner_id = auth.user_id()

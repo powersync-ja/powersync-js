@@ -57,6 +57,8 @@ CREATE POLICY "Users can delete todos in their lists" ON public.todos
   );
 
 -- Create PowerSync role for replication access
+-- Note: After creating this role, set a secure password in the Supabase dashboard
+-- or run: ALTER ROLE powersync_role WITH PASSWORD 'your-secure-password';
 CREATE ROLE powersync_role REPLICATION LOGIN;
 GRANT SELECT ON public.lists TO powersync_role;
 GRANT SELECT ON public.todos TO powersync_role;
