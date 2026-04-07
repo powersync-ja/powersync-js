@@ -56,6 +56,11 @@ CREATE POLICY "Users can delete todos in their lists" ON public.todos
     list_id IN (SELECT id FROM public.lists WHERE owner_id = auth.uid())
   );
 
+-- Create PowerSync role for replication access
+CREATE ROLE powersync_role REPLICATION LOGIN;
+GRANT SELECT ON public.lists TO powersync_role;
+GRANT SELECT ON public.todos TO powersync_role;
+
 -- Create PowerSync publication
 -- Note: FOR ALL TABLES is simplest for dev. In production, specify tables explicitly.
 CREATE PUBLICATION powersync FOR TABLE public.lists, public.todos;

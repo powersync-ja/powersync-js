@@ -11,6 +11,7 @@ This demo uses [Sync Streams](https://docs.powersync.com/usage/sync-streams). Bo
 ### 1. Supabase Setup
 
 Create a new Supabase project, then run the contents of [`database.sql`](./database.sql) in the [Supabase SQL editor](https://supabase.com/dashboard/project/_/sql). This will:
+
 - Create the `lists` and `todos` tables
 - Enable Row Level Security (RLS) so users can only access their own data
 - Create a `powersync` publication for replication
@@ -19,7 +20,7 @@ Create a new Supabase project, then run the contents of [`database.sql`](./datab
 
 Create a new PowerSync instance connected to your Supabase project ([instructions here](https://docs.powersync.com/integration-guides/supabase-+-powersync#connect-powersync-to-your-supabase)).
 
-In the PowerSync dashboard, go to **Sync Rules** and paste the contents of [`sync-rules.yaml`](./sync-rules.yaml).
+In the PowerSync dashboard, go to **Sync Streams** (shown as **Sync Rules** if using legacy Sync Rules) and paste the contents of [`sync-streams.yaml`](./sync-streams.yaml).
 
 ### 3. Install Dependencies
 
