@@ -25,6 +25,9 @@ yarn-debug.log*
 # local env files
 .env*.local
 
+# unignore docker env (overrides root .gitignore)
+!powersync/docker/.env
+
 # vercel
 .vercel
 
