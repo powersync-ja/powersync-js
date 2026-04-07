@@ -38,6 +38,7 @@ import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
+   * @deprecated This flag is no longer used. Navigator locks now handle tab detection automatically.
    * Externally unload open PowerSync database instances when the window closes.
    * Setting this to `true` requires calling `close` on all open PowerSyncDatabase
    * instances before the window unloads
