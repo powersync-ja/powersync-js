@@ -483,7 +483,7 @@ export default function SyncDiagnosticsPage() {
                 prevent sync (error PSYNC_S2305). Review your sync rules to reduce the number of parameter query results
                 for this user.{' '}
                 <a
-                  href="https://docs.powersync.com/usage/sync-rules/advanced-topics/parameter-queries"
+                  href="https://docs.powersync.com/sync/rules/parameter-queries"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-foreground"
