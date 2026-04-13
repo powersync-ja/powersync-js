@@ -1,42 +1,47 @@
-import { exportJWK, generateKeyPair as joseGenerateKeyPair, importJWK, KeyLike } from 'jose';
+import { importJWK, type JWK, type KeyLike } from 'jose';
 
-interface KeyPair {
+// For production, consider caching the imported key to avoid re-parsing on every request.
+export async function getKeyPair(): Promise<{
   privateKey: KeyLike;
-  publicJwk: JsonWebKey & { kid: string; alg: string };
-}
-
-/**
- * Generates a key pair if none is available on the env.
- * Uses globalThis to survive Next.js HMR — without this, dev-mode module
- * reloads regenerate the keys while the PowerSync service still holds the
- * old public key, causing "signature verification failed" errors.
- */
-async function ensureKeyPair(): Promise<KeyPair> {
-  const g = globalThis as Record<string, unknown>;
-  if (g.__powersync_keypair) return g.__powersync_keypair as KeyPair;
-
+  publicJwk: JWK & { kid: string; alg: string };
+  alg: string;
+  kid: string;
+}> {
   const envPrivate = process.env.POWERSYNC_PRIVATE_KEY;
   const envPublic = process.env.POWERSYNC_PUBLIC_KEY;
 
-  let privateKey: KeyLike;
-  let publicJwk: JsonWebKey & { kid: string; alg: string };
-
-  if (envPrivate && envPublic) {
-    const privateJwk = JSON.parse(Buffer.from(envPrivate, 'base64').toString());
-    privateKey = (await importJWK(privateJwk)) as KeyLike;
-    publicJwk = JSON.parse(Buffer.from(envPublic, 'base64').toString());
-  } else {
-    console.warn('POWERSYNC_PRIVATE_KEY not set. Generating a temporary key pair (will not survive restarts).');
-    const generated = await joseGenerateKeyPair('RS256', { extractable: true });
-    privateKey = generated.privateKey;
-    publicJwk = (await exportJWK(generated.publicKey)) as JsonWebKey & { kid: string; alg: string };
-    publicJwk.alg = 'RS256';
-    publicJwk.kid = 'powersync-anon-key';
+  if (!envPrivate || !envPublic) {
+    throw new Error(
+      'POWERSYNC_PRIVATE_KEY and POWERSYNC_PUBLIC_KEY are not set in .env.local. Run `pnpm generate-keys` and paste the output into .env.local, then restart the dev server.'
+    );
   }
 
-  const pair: KeyPair = { privateKey, publicJwk };
-  g.__powersync_keypair = pair;
-  return pair;
+  const privateJwk = parseJwk('POWERSYNC_PRIVATE_KEY', envPrivate);
+  const publicJwk = parseJwk('POWERSYNC_PUBLIC_KEY', envPublic);
+
+  if (privateJwk.kid !== publicJwk.kid) {
+    throw new Error(
+      `POWERSYNC_PRIVATE_KEY and POWERSYNC_PUBLIC_KEY have mismatched kids (${privateJwk.kid} vs ${publicJwk.kid}). Run \`pnpm generate-keys\` to create a matching pair.`
+    );
+  }
+
+  const privateKey = (await importJWK(privateJwk)) as KeyLike;
+  return { privateKey, publicJwk, alg: privateJwk.alg, kid: privateJwk.kid };
 }
 
-export { ensureKeyPair as getKeyPair };
+function parseJwk(name: string, base64: string): JWK & { kid: string; alg: string } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(base64, 'base64').toString());
+  } catch {
+    throw new Error(`${name} could not be decoded. Run \`pnpm generate-keys\` and paste the output into .env.local.`);
+  }
+
+  const jwk = parsed as Partial<JWK> & { kid?: string; alg?: string };
+  if (!jwk || typeof jwk !== 'object' || !jwk.kty || !jwk.alg || !jwk.kid) {
+    throw new Error(
+      `${name} is missing required JWK fields (kty, alg, kid). Run \`pnpm generate-keys\` to create a fresh pair.`
+    );
+  }
+  return jwk as JWK & { kid: string; alg: string };
+}

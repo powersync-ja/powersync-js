@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "clean": "rm -rf .next",
+    "generate-keys": "node --experimental-strip-types scripts/generate-keys.mts",
     "copy-assets": "powersync-web copy-assets -o public",
     "postinstall": "pnpm copy-assets",
     "local:up": "powersync docker start --directory powersync",

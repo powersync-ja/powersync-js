@@ -3,9 +3,11 @@ import { AbstractPowerSyncDatabase, CrudEntry, PowerSyncBackendConnector } from 
 export class BackendConnector implements PowerSyncBackendConnector {
   async fetchCredentials() {
     const res = await fetch('/api/auth/token');
-    if (!res.ok) throw new Error(`Failed to fetch credentials: ${res.statusText}`);
-    const { token, powersync_url } = await res.json();
-    return { endpoint: powersync_url, token };
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error ?? `Failed to fetch credentials (${res.status} ${res.statusText})`);
+    }
+    return { endpoint: body.powersync_url, token: body.token };
   }
 
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
