@@ -295,12 +295,11 @@ export default function SyncDiagnosticsPage() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-92">
-                        Two separate limits apply <strong>bucket count</strong> and{' '}
-                        <strong>parameter query results</strong> (both PSYNC_S2305, default{' '}
-                        {DEFAULT_SYNC_LIMIT.toLocaleString()} each):
+                        Two separate limits apply (both PSYNC_S2305, default {DEFAULT_SYNC_LIMIT.toLocaleString()}{' '}
+                        each): <strong>bucket count</strong> and <strong>parameter query results</strong>.
                         <div className="mt-2">
-                          Global buckets count only toward bucket count. Parameterized buckets count toward both, but
-                          are de-duplicated client-side (server's parameter result count may be higher).
+                          Global buckets count only toward bucket count; parameterized buckets count toward both, but
+                          are de-duplicated client-side, so the server's parameter result count may be higher.
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -500,9 +499,9 @@ export default function SyncDiagnosticsPage() {
                   {totals.buckets >= 900 ? 'Critical: ' : 'Warning: '}
                 </span>
                 {totals.buckets.toLocaleString()} of {DEFAULT_SYNC_LIMIT.toLocaleString()} buckets used (PSYNC_S2305,
-                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
-                parameter query results on the server. Review your sync rules to reduce buckets and parameter query
-                results for this user.{' '}
+                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized — at least that many
+                parameter query results on the server, which has a separate limit of the same default. Review your Sync
+                Config to reduce buckets and parameter query results for this user.{' '}
                 <a
                   href="https://docs.powersync.com/sync/rules/parameter-queries"
                   target="_blank"
