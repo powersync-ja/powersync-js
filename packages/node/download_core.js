@@ -5,18 +5,18 @@ import { Readable } from 'node:stream';
 import { finished } from 'node:stream/promises';
 
 // When changing this version, run node download_core.js update_hashes
-const version = '0.4.11';
+const version = '0.4.12';
 const versionHashes = {
-  'powersync_x64.dll': '5cadf7ad9a676dc7950a40704cbf3c85ccc3eae47a21b9521c72c3044274de4c',
-  'powersync_x86.dll': '8dfd2402bee9be02b230e7df523f601f375beb177dff8eef1bd2c3a215e790ba',
-  'powersync_aarch64.dll': '0ff1b16ba50a03f82a715d548c61e732058822f7c592b1c87341158240c7a1f7',
-  'libpowersync_x86.linux.so': '4944e3c4adf48f929a3629d56000348cf4a0eb62aa4768577b329d040ab0d0b5',
-  'libpowersync_x64.linux.so': 'f07c22893888162bc6d193a0771859f7b44a78f41d6763905f8fe2007b3f5429',
-  'libpowersync_aarch64.linux.so': 'd7789fc27f9b34b9247d9610ee9687b3807ec7339c7edb54f365271e980385fe',
-  'libpowersync_armv7.linux.so': '5331610f9bd661209fa6e3be1bcc16d7a64319f8007d003ed59f7037a855fbfd',
-  'libpowersync_riscv64gc.linux.so': '75c1fb866e99d691fff99a6911c493a2a32865155b572795ac48734b829cf99b',
-  'libpowersync_x64.macos.dylib': 'd8a3a2be684db05c56d441f9e2225892a00a7f99812ca55f67d776407e9f4a15',
-  'libpowersync_aarch64.macos.dylib': '43d6cc2d7df407e1936b95610e54f2a59aaf0663184eec8691c074b16f53d895'
+  'powersync_x64.dll': 'efc095c2dff5194c1dbf4943012ae8bb5349e8aaac481d18cb0d3a49fa6a1255',
+  'powersync_x86.dll': '147ef50acdab8dc27075f29ae6f86dd26fb574f373e3a186492ca7d55d0b867c',
+  'powersync_aarch64.dll': '90fbce6a22bc7fcde0ee62ed52eec821afa86b1bacff4597ddc9cea2f7203cb1',
+  'libpowersync_x86.linux.so': '89b8b7451a01e533a5736a7025d13f0bd0640c1df40025cf8a90d6d2e7e8b1ee',
+  'libpowersync_x64.linux.so': 'c15d5a069200c823c95435bbad38a9dc12743deca42b30b0c40557b2bc32ac5d',
+  'libpowersync_aarch64.linux.so': 'acbf2a1b27f413d8a83e5efc91f0531c6989519203eaf2814c52942f1a445649',
+  'libpowersync_armv7.linux.so': 'e262fcf4c1509d96a692f159af572a09fad781d4cc3ba885d3de276926526432',
+  'libpowersync_riscv64gc.linux.so': '46101c885b4ff23e4a7059a5eb9f3fc697762455e6d296815a8ccece8eeacd41',
+  'libpowersync_x64.macos.dylib': 'e0b2402702bd744d65a2c8aba4d7242f5cefd67c33926d92567ee4e02b13e20d',
+  'libpowersync_aarch64.macos.dylib': 'cfbfa86a0b8203619059be4bf4cf3078f122866dcc4896b07f7b412a41628abe'
 };
 
 const assets = Object.keys(versionHashes);
