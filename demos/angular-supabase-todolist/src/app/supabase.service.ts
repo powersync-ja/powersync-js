@@ -8,7 +8,13 @@ import {
   type User
 } from '@supabase/supabase-js';
 import { environment } from '../environment';
-import { type AbstractPowerSyncDatabase, type CrudEntry, UpdateType, PowerSyncBackendConnector, type PowerSyncCredentials } from '@powersync/web';
+import {
+  type AbstractPowerSyncDatabase,
+  type CrudEntry,
+  UpdateType,
+  PowerSyncBackendConnector,
+  type PowerSyncCredentials
+} from '@powersync/web';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -121,7 +127,7 @@ export class SupabaseService implements PowerSyncBackendConnector {
             result = await table.upsert(record);
             break;
           case UpdateType.PATCH:
-            result = await table.update(op.opData).eq('id', op.id);
+            result = await table.update(op.opData ?? {}).eq('id', op.id);
             break;
           case UpdateType.DELETE:
             result = await table.delete().eq('id', op.id);
