@@ -5,7 +5,7 @@ export function getSyncEnabled(dbName: string) {
   const value = localStorage.getItem(key);
 
   if (!value) {
-    setSyncEnabled(key, false);
+    setSyncEnabled(dbName, false);
     return false;
   }
 

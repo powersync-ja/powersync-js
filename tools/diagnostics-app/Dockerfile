@@ -1,9 +1,8 @@
-FROM node:22.5 AS builder
+FROM node:24 AS builder
 WORKDIR /app
 
-RUN npm i -g pnpm@9
-
 COPY . /app
+RUN corepack enable
 
 RUN pnpm i --frozen-lockfile --filter ./packages/react --filter ./packages/common --filter ./packages/web --filter ./tools/diagnostics-app
 RUN pnpm run --filter ./packages/react --filter ./packages/common --filter ./packages/web build

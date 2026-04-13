@@ -1,11 +1,11 @@
 {
   "name": "@powersync/react",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "React components for JourneyApps PowerSync",
+  "description": "React components for PowerSync",
   "type": "module",
   "main": "./lib/index.js",
   "module": "./lib/index.js",
@@ -26,14 +26,14 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.com",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.50.0",
+    "@powersync/common": "workspace:^1.51.0",
     "react": "*"
   },
   "devDependencies": {

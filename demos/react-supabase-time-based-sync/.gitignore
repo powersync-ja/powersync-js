@@ -1,0 +1,25 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Metrom
+.metro-health-check*
+
+# debug
+npm-debug.*
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+
+# IDE
+.vscode
+.fleet
+.idea
+
+ios/
+android/

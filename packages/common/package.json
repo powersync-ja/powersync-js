@@ -1,11 +1,11 @@
 {
   "name": "@powersync/common",
-  "version": "1.50.0",
+  "version": "1.51.0",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
-  "description": "API definitions for JourneyApps PowerSync",
+  "description": "API definitions for PowerSync",
   "type": "module",
   "main": "dist/bundle.mjs",
   "module": "dist/bundle.mjs",
@@ -32,7 +32,7 @@
       }
     }
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",
@@ -64,13 +64,15 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",
+    "bson": "catalog:",
     "buffer": "^6.0.3",
+    "cross-fetch": "^4.1.0",
+    "estree-walker": "^3.0.3",
+    "js-logger": "catalog:",
+    "magic-string": "^0.30.21",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
-    "cross-fetch": "^4.1.0",
-    "js-logger": "catalog:",
     "rsocket-core": "1.0.0-alpha.3",
-    "rsocket-websocket-client": "1.0.0-alpha.3",
-    "bson": "catalog:"
+    "rsocket-websocket-client": "1.0.0-alpha.3"
   }
 }

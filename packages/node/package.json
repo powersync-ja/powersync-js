@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
@@ -50,14 +50,14 @@
     "type": "git",
     "url": "git+https://github.com/powersync-ja/powersync-js.git"
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/powersync-ja/powersync-js/issues"
   },
   "homepage": "https://docs.powersync.com/",
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.50.0",
+    "@powersync/common": "workspace:^1.51.0",
     "better-sqlite3": "12.x"
   },
   "peerDependenciesMeta": {

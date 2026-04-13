@@ -18,7 +18,7 @@
       }
     }
   },
-  "author": "JOURNEYAPPS",
+  "author": "PowerSync",
   "license": "Apache-2.0",
   "files": [
     "lib",
@@ -46,7 +46,7 @@
     "tslib": "^2.8.1"
   },
   "peerDependencies": {
-    "@powersync/common": "workspace:^1.50.0",
+    "@powersync/common": "workspace:^1.51.0",
     "drizzle-orm": "<1.0.0"
   },
   "devDependencies": {

@@ -1,0 +1,10 @@
+{
+  "name": "tauri-plugin-powersync",
+  "private": true,
+  "type": "module",
+  "version": "0.0.3",
+  "description": "The only purpose of this package is to prepare a tag that will trigger a release of the Rust plugin.",
+  "scripts": {
+    "postversion": "node update_crate_version.js"
+  }
+}

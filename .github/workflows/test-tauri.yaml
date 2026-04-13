@@ -1,0 +1,50 @@
+name: Tauri Integration tests
+on:
+  pull_request: # triggered for any PR updates (including new pushes to PR branch)
+
+jobs:
+  check-changes:
+    name: Check for relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check for changes
+        id: check
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git diff --quiet origin/${{ github.base_ref }} -- packages/common packages/tauri; then
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
+  test-tauri:
+    name: Tauri integration tests macOS
+    runs-on: macos-latest
+    needs: check-changes
+    if: needs.check-changes.outputs.should_run == 'true'
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build
+        run: pnpm run -r --filter "@powersync/tauri-plugin..." build
+      - name: Compile test runner
+        run: cargo build -p test-runner
+      - name: Test
+        working-directory: packages/tauri
+        run: pnpm test

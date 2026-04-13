@@ -21,7 +21,7 @@ describe(
 function describeSyncStatusStreamingTests(createConnectedDatabase: () => Promise<ConnectedDatabaseUtils>) {
   return () => {
     it('Should have downloadError on stream failure', async () => {
-      const { powersync, waitForStream, remote, connector } = await createConnectedDatabase();
+      const { powersync, waitForStream, remote } = await createConnectedDatabase();
       remote.errorOnStreamStart = true;
 
       // Making sure the field change takes effect
