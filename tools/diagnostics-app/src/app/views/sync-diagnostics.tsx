@@ -92,12 +92,15 @@ const syncDiagnosticsKeys = {
 const BUCKET_HISTORY_THRESHOLD = 3;
 
 /**
- * Server-side limit on the number of parameter query results per client.
- * Each bucket in local_bucket_data corresponds to one parameter query result,
- * so the bucket count is a reliable client-side proxy for this limit.
- * Exceeding this limit causes error [PSYNC_S2305].
+ * Default server-side limit for both the "too many buckets" and "too many parameter query results"
+ * limits (both reported as error PSYNC_S2305). These are two distinct limits that often coincide
+ * but can differ:
+ * - Duplicate parameter query results count individually toward the parameter result limit,
+ *   but are de-duplicated in the bucket count.
+ * - Non-partitioning queries count 1 toward the bucket limit but not toward the parameter result limit.
+ * The default is 1000 but can be configured on the server.
  */
-const PARAM_RESULT_LIMIT = 1000;
+const DEFAULT_SYNC_LIMIT = 1000;
 
 interface SyncStats {
   bucketRows: any[] | null;
@@ -231,6 +234,7 @@ export default function SyncDiagnosticsPage() {
 
   const totals = {
     buckets: rows.length,
+    parameterized_buckets: rows.filter((row) => !row.name.endsWith('[]')).length,
     row_count: rows.reduce((total, row) => total + row.row_count, 0),
     downloaded_operations: rows.reduce((total, row) => total + row.downloaded_operations, 0),
     total_operations: rows.reduce((total, row) => total + row.total_operations, 0),
@@ -290,9 +294,14 @@ export default function SyncDiagnosticsPage() {
                           <Info className="h-3 w-3 text-muted-foreground" />
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-64">
-                        Each bucket corresponds to one parameter query result. The server enforces a limit of{' '}
-                        {PARAM_RESULT_LIMIT.toLocaleString()} parameter query results per client (error PSYNC_S2305).
+                      <TooltipContent className="max-w-92">
+                        Two separate limits apply <strong>bucket count</strong> and{' '}
+                        <strong>parameter query results</strong> (both PSYNC_S2305, default{' '}
+                        {DEFAULT_SYNC_LIMIT.toLocaleString()} each):
+                        <div className="mt-2">
+                          Global buckets count only toward bucket count. Parameterized buckets count toward both, but
+                          are de-duplicated client-side (server's parameter result count may be higher).
+                        </div>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -316,7 +325,13 @@ export default function SyncDiagnosticsPage() {
                   >
                     {totals.buckets.toLocaleString()}
                   </span>
-                  <span className="text-muted-foreground text-xs ml-1">/ {PARAM_RESULT_LIMIT.toLocaleString()}</span>
+                  <span className="text-muted-foreground text-xs ml-1">
+                    / {DEFAULT_SYNC_LIMIT.toLocaleString()} (default)
+                  </span>
+                  <div className="text-muted-foreground text-xs font-normal mt-0.5">
+                    {totals.parameterized_buckets.toLocaleString()} parameterized,{' '}
+                    {(totals.buckets - totals.parameterized_buckets).toLocaleString()} global
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">{totals.row_count.toLocaleString()}</TableCell>
                 <TableCell className="text-right">{totals.downloaded_operations.toLocaleString()}</TableCell>
@@ -341,7 +356,13 @@ export default function SyncDiagnosticsPage() {
               >
                 {totals.buckets.toLocaleString()}
               </span>
-              <span className="text-muted-foreground text-xs ml-1">/ {PARAM_RESULT_LIMIT.toLocaleString()}</span>
+              <span className="text-muted-foreground text-xs ml-1">
+                / {DEFAULT_SYNC_LIMIT.toLocaleString()} (default)
+              </span>
+              <div className="text-muted-foreground text-xs font-normal mt-0.5">
+                {totals.parameterized_buckets.toLocaleString()} parameterized,{' '}
+                {(totals.buckets - totals.parameterized_buckets).toLocaleString()} global
+              </div>
             </div>
           </div>
           <div>
@@ -478,10 +499,10 @@ export default function SyncDiagnosticsPage() {
                 <span className={cn('font-medium', totals.buckets >= 900 ? 'text-destructive' : 'text-amber-600')}>
                   {totals.buckets >= 900 ? 'Critical: ' : 'Warning: '}
                 </span>
-                Bucket count ({totals.buckets.toLocaleString()}) is approaching the server limit of{' '}
-                {PARAM_RESULT_LIMIT.toLocaleString()} parameter query results per client. Exceeding this limit will
-                prevent sync (error PSYNC_S2305). Review your sync rules to reduce the number of parameter query results
-                for this user.{' '}
+                {totals.buckets.toLocaleString()} of {DEFAULT_SYNC_LIMIT.toLocaleString()} buckets used (PSYNC_S2305,
+                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
+                parameter query results on the server. Review your sync rules to reduce buckets and parameter query
+                results for this user.{' '}
                 <a
                   href="https://docs.powersync.com/sync/rules/parameter-queries"
                   target="_blank"
