@@ -298,8 +298,26 @@ export default function SyncDiagnosticsPage() {
                         Two separate limits apply (both PSYNC_S2305, default {DEFAULT_SYNC_LIMIT.toLocaleString()}{' '}
                         each): <strong>bucket count</strong> and <strong>parameter query results</strong>.
                         <div className="mt-2">
-                          Global buckets count only toward bucket count; parameterized buckets count toward both, but
-                          are de-duplicated client-side, so the server's parameter result count may be higher.
+                          Global buckets count only toward bucket count. Parameter query buckets (in either{' '}
+                          <a
+                            href="https://docs.powersync.com/sync/rules/parameter-queries"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:text-foreground"
+                          >
+                            Sync Rules
+                          </a>{' '}
+                          or{' '}
+                          <a
+                            href="https://docs.powersync.com/sync/streams/parameters"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:text-foreground"
+                          >
+                            Sync Streams
+                          </a>
+                          ) count toward both, but are de-duplicated client-side, so the server's parameter result count
+                          may be higher.
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -491,7 +509,7 @@ export default function SyncDiagnosticsPage() {
               </AlertDescription>
             </Alert>
           )}
-          {totals.buckets >= 800 && (
+          {totals.buckets >= 2 && (
             <Alert className={cn('mt-4', totals.buckets >= 900 ? 'border-destructive/50' : 'border-amber-500/50')}>
               <Info className={cn('h-4 w-4', totals.buckets >= 900 ? 'text-destructive' : 'text-amber-600')} />
               <AlertDescription>
@@ -499,16 +517,16 @@ export default function SyncDiagnosticsPage() {
                   {totals.buckets >= 900 ? 'Critical: ' : 'Warning: '}
                 </span>
                 {totals.buckets.toLocaleString()} of {DEFAULT_SYNC_LIMIT.toLocaleString()} buckets used (PSYNC_S2305,
-                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized — at least that many
-                parameter query results on the server, which has a separate limit of the same default. Review your Sync
-                Config to reduce buckets and parameter query results for this user.{' '}
+                default limit). {totals.parameterized_buckets.toLocaleString()} are parameterized - at least that many
+                parameter query results on the server. Review your Sync Config to reduce buckets and parameter query
+                results for this user.{' '}
                 <a
-                  href="https://docs.powersync.com/sync/rules/parameter-queries"
+                  href="https://docs.powersync.com/debugging/troubleshooting#too-many-buckets-psync_s2305"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-foreground"
                 >
-                  Learn about parameter queries
+                  For troubleshooting steps, see the docs
                 </a>
               </AlertDescription>
             </Alert>
