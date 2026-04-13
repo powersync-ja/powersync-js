@@ -447,7 +447,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -487,7 +487,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
@@ -8270,6 +8270,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   batch@0.6.1:
     resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
@@ -24116,7 +24117,9 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 

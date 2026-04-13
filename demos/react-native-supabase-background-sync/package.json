@@ -11,8 +11,8 @@
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
     "@op-engineering/op-sqlite": "^15.2.5",
-    "@powersync/op-sqlite": "^0.9.5",
-    "@powersync/react-native": "^1.33.1",
+    "@powersync/op-sqlite": "^0.9.6",
+    "@powersync/react-native": "^1.34.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
