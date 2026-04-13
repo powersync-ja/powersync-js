@@ -509,7 +509,7 @@ export default function SyncDiagnosticsPage() {
               </AlertDescription>
             </Alert>
           )}
-          {totals.buckets >= 2 && (
+          {totals.buckets >= 800 && (
             <Alert className={cn('mt-4', totals.buckets >= 900 ? 'border-destructive/50' : 'border-amber-500/50')}>
               <Info className={cn('h-4 w-4', totals.buckets >= 900 ? 'text-destructive' : 'text-amber-600')} />
               <AlertDescription>
