@@ -16,7 +16,7 @@ type PendingListener = { listener: Partial<DBAdapterListener>; closeAfterRegiste
 class AsyncConnectionPool implements ConnectionPool {
   protected readonly inner: Promise<PoolConnection>;
 
-  protected resolvedClient?: DatabaseClient;
+  protected resolvedWriter?: DatabaseClient;
   private activeOnWriter = 0;
   private activeOnReader = 0;
 
@@ -32,7 +32,7 @@ class AsyncConnectionPool implements ConnectionPool {
       }
       this.pendingListeners.clear();
 
-      this.resolvedClient = client.writer;
+      this.resolvedWriter = client.writer;
       return client;
     });
   }
@@ -88,8 +88,8 @@ class AsyncConnectionPool implements ConnectionPool {
   }
 
   registerListener(listener: Partial<DBAdapterListener>): () => void {
-    if (this.resolvedClient) {
-      return this.resolvedClient.registerListener(listener);
+    if (this.resolvedWriter) {
+      return this.resolvedWriter.registerListener(listener);
     } else {
       const pending: PendingListener = { listener };
       this.pendingListeners.add(pending);
@@ -117,8 +117,8 @@ export class AsyncDbAdapter extends DBAdapterDefaultMixin(AsyncConnectionPool) i
   }
 
   getConfiguration(): WebDBAdapterConfiguration {
-    if (this.resolvedClient) {
-      return this.resolvedClient.getConfiguration();
+    if (this.resolvedWriter) {
+      return this.resolvedWriter.getConfiguration();
     }
 
     throw new Error('AsyncDbAdapter.getConfiguration() can only be called after initializing it.');
