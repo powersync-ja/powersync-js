@@ -246,8 +246,8 @@ importers:
         version: link:../common
     devDependencies:
       '@powersync/sql-js':
-        specifier: 0.0.8
-        version: 0.0.8
+        specifier: 0.0.9
+        version: 0.0.9
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
@@ -447,7 +447,7 @@ importers:
   packages/drizzle-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       tslib:
         specifier: ^2.8.1
@@ -487,7 +487,7 @@ importers:
   packages/kysely-driver:
     dependencies:
       '@powersync/common':
-        specifier: workspace:^1.51.0
+        specifier: workspace:^1.52.0
         version: link:../common
       kysely:
         specifier: 'catalog:'
@@ -610,8 +610,8 @@ importers:
         version: 1.17.4(db0@0.3.4(better-sqlite3@12.6.2)(drizzle-orm@0.44.7(@op-engineering/op-sqlite@15.2.7(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(@types/sql.js@1.4.9)(better-sqlite3@12.6.2)(kysely@0.28.11)(sql.js@1.14.0)))(ioredis@5.10.0)
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.6.0
+        version: 1.6.0
       '@nuxt/module-builder':
         specifier: ^1.0.2
         version: 1.0.2(@nuxt/cli@3.34.0(@nuxt/schema@4.3.1)(cac@6.7.14)(commander@13.1.0)(magicast@0.5.2))(@vue/compiler-core@3.5.30)(esbuild@0.27.3)(typescript@5.9.3)(vue-tsc@3.2.5(typescript@5.9.3))(vue@3.5.30(typescript@5.9.3))
@@ -747,8 +747,8 @@ importers:
         specifier: ^6.0.5
         version: 6.1.1(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       '@journeyapps/react-native-quick-sqlite':
-        specifier: ^2.5.1
-        version: 2.5.1(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
+        specifier: ^2.5.2
+        version: 2.5.2(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)
       '@rollup/plugin-alias':
         specifier: 'catalog:'
         version: 5.1.1(rollup@4.59.0)
@@ -884,8 +884,8 @@ importers:
         version: 12.1.0
     devDependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.6.0
+        version: 1.6.0
       '@types/uuid':
         specifier: 'catalog:'
         version: 9.0.8
@@ -929,8 +929,8 @@ importers:
   tools/diagnostics-app:
     dependencies:
       '@journeyapps/wa-sqlite':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.6.0
+        version: 1.6.0
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -3563,14 +3563,17 @@ packages:
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@journeyapps/react-native-quick-sqlite@2.5.1':
-    resolution: {integrity: sha512-LDSR8j86bzvoogg1HMprnS4g6Tx0ySNBeKvrCwvhWSyY3H9L4FpU5zMV2S4NEjn3RYk2/klcCc0KB/eyITgwPQ==}
+  '@journeyapps/react-native-quick-sqlite@2.5.2':
+    resolution: {integrity: sha512-fMv+Lq+tK9HHbrgBc2pP1JcGtRSOyY6oHCcgmWhengw/ryCry5p+RUjbpsFrCxU1lw8T4B+VrQ6U9Hhysgkseg==}
     peerDependencies:
       react: '*'
       react-native: '*'
 
   '@journeyapps/wa-sqlite@1.5.0':
     resolution: {integrity: sha512-oASXW/9Ktbhn6kJjxCJzRKxNnlOyj7GKBLF/59dkz1kbOLw7kAXBTwWTUvqfT97OEshtrK/J8bJUYbpggdCZ9Q==}
+
+  '@journeyapps/wa-sqlite@1.6.0':
+    resolution: {integrity: sha512-ZhHCTQiGGGoJz6LJPTH880BMO0kR0uVepoNTGCUpl65ZQ82r1RUHXGUpGWY3yndsjWKNveOxsqCCAgvI+TTu2w==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -5043,8 +5046,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@powersync/sql-js@0.0.8':
-    resolution: {integrity: sha512-K9HOj/BxPa5opANqU6SKXIWnhZRRxuLUtdq5yiDjhvc9I1x8WmxLt3t2MbdBdrbTtFnnSs3SoA2EWAntvutYFQ==}
+  '@powersync/sql-js@0.0.9':
+    resolution: {integrity: sha512-HX78DscTAD5TRsjT+xEYky3sg0JSKw+B697qyJRK/iZ0Pni/VwbKCQuo9Hk4Tc0PjIQIDMajrvqrpfZz2sbhdQ==}
 
   '@promptbook/utils@0.69.5':
     resolution: {integrity: sha512-xm5Ti/Hp3o4xHrsK9Yy3MS6KbDxYbq485hDsFvxqaNA7equHLPdo8H8faTitTeb14QCDfLW4iwCxdVYu5sn6YQ==}
@@ -8270,6 +8273,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   batch@0.6.1:
     resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
@@ -21068,12 +21072,14 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@journeyapps/react-native-quick-sqlite@2.5.1(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
+  '@journeyapps/react-native-quick-sqlite@2.5.2(react-native@0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
       react-native: 0.83.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4)
 
   '@journeyapps/wa-sqlite@1.5.0': {}
+
+  '@journeyapps/wa-sqlite@1.6.0': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -23201,7 +23207,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@powersync/sql-js@0.0.8': {}
+  '@powersync/sql-js@0.0.9': {}
 
   '@promptbook/utils@0.69.5':
     dependencies:
@@ -24116,7 +24122,9 @@ snapshots:
       metro-runtime: 0.83.5
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.81.5': {}
 
