@@ -23,7 +23,7 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: new WASQLiteOpenFactory({
     dbFilename: 'example.db',
-    vfs: WASQLiteVFS.OPFSWriteAheadVFS,
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
     flags: {
       enableMultiTabs: typeof SharedWorker !== 'undefined'
     }
