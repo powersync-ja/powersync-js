@@ -340,7 +340,7 @@ importers:
   packages/capacitor:
     dependencies:
       '@powersync/web':
-        specifier: workspace:^1.37.0
+        specifier: workspace:^1.38.0
         version: link:../web
     devDependencies:
       '@capacitor-community/sqlite':

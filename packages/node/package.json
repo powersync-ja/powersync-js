@@ -1,6 +1,6 @@
 {
   "name": "@powersync/node",
-  "version": "0.18.4",
+  "version": "0.18.5",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
