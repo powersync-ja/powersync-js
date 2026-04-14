@@ -38,6 +38,7 @@ import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 
 export interface WebPowerSyncFlags extends WebSQLFlags {
   /**
+   * @deprecated This flag is no longer used. Navigator locks now handle tab detection automatically.
    * Externally unload open PowerSync database instances when the window closes.
    * Setting this to `true` requires calling `close` on all open PowerSyncDatabase
    * instances before the window unloads
@@ -71,13 +72,13 @@ export interface WebEncryptionOptions {
 
 type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
 
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions
   WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
 >;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions
   WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
 >;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions
   WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
@@ -127,7 +128,6 @@ function assertValidDatabaseOptions(options: WebPowerSyncDatabaseOptions): void 
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   static SHARED_MUTEX = new Mutex();
 
-  protected unloadListener?: () => Promise<void>;
   protected resolvedFlags: WebPowerSyncFlags;
 
   constructor(options: WebPowerSyncDatabaseOptionsWithAdapter);
@@ -140,11 +140,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     assertValidDatabaseOptions(options);
 
     this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
-
-    if (this.resolvedFlags.enableMultiTabs && !this.resolvedFlags.externallyUnload) {
-      this.unloadListener = () => this.close({ disconnect: false });
-      window.addEventListener('unload', this.unloadListener);
-    }
   }
 
   async _initialize(): Promise<void> {
@@ -190,9 +185,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
    * multiple tabs are not enabled.
    */
   close(options?: PowerSyncCloseOptions): Promise<void> {
-    if (this.unloadListener) {
-      window.removeEventListener('unload', this.unloadListener);
-    }
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
       disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
