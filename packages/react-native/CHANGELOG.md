@@ -1,5 +1,17 @@
 # @powersync/react-native
 
+## 1.34.0
+
+### Minor Changes
+
+- 9cfca81: Simplify internal handling of HTTP streams.
+
+### Patch Changes
+
+- Updated dependencies [9cfca81]
+  - @powersync/common@1.52.0
+  - @powersync/react@1.10.0
+
 ## 1.33.1
 
 ### Patch Changes
