@@ -1,5 +1,11 @@
 # @powersync/adapter-sql-js
 
+## 0.0.18
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+
 ## 0.0.17
 
 ### Patch Changes

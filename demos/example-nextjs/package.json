@@ -18,7 +18,7 @@
   "dependencies": {
     "@journeyapps/wa-sqlite": "^1.6.0",
     "@powersync/react": "^1.10.0",
-    "@powersync/web": "^1.37.2",
+    "@powersync/web": "^1.38.0",
     "@tailwindcss/postcss": "^4.2.2",
     "jose": "^5.9.6",
     "next": "^16.1.1",

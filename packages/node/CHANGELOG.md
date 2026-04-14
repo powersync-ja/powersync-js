@@ -1,5 +1,11 @@
 # @powersync/node
 
+## 0.18.5
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+
 ## 0.18.4
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @powersync/capacitor
 
+## 0.5.3
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- Updated dependencies [c2d0f9e]
+  - @powersync/web@1.38.0
+
 ## 0.5.2
 
 ### Patch Changes

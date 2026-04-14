@@ -1,5 +1,11 @@
 # @powersync/web
 
+## 1.38.0
+
+### Minor Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+
 ## 1.37.2
 
 ### Patch Changes
