@@ -1,0 +1,26 @@
+# Storage module: PostgreSQL for PowerSync bucket metadata.
+# Paths are relative to this file's directory when using include (Compose resolves from the included file).
+# Include from main: path: modules/storage-postgres/postgres.storage.compose.yaml
+
+services:
+  pg-storage:
+    image: postgres:18
+    restart: always
+    environment:
+      - POSTGRES_USER=${PS_STORAGE_USER}
+      - POSTGRES_DB=${PS_STORAGE_DATABASE}
+      - POSTGRES_PASSWORD=${PS_STORAGE_PASSWORD}
+      - PGPORT=${PS_STORAGE_PORT}
+    volumes:
+      - pg_storage_data:/var/lib/postgresql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - '${PS_STORAGE_PORT}:${PS_STORAGE_PORT}'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${PS_STORAGE_USER} -d ${PS_STORAGE_DATABASE}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_storage_data:

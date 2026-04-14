@@ -1,22 +1,16 @@
-'use client';
+import type { Metadata } from 'next';
+import { PowerSyncProvider } from '@/library/powersync/powersync-provider';
+import './globals.css';
 
-import { SystemProvider } from '@/components/providers/SystemProvider';
-import { CssBaseline } from '@mui/material';
-import React from 'react';
-
-// @ts-ignore
-import 'lato-font';
-import './globals.scss';
+export const metadata: Metadata = {
+  title: 'PowerSync Next.js Example'
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <title>PowerSync Next.js Example</title>
-      </head>
+    <html lang="en" className="dark">
       <body>
-        <CssBaseline />
-        <SystemProvider>{children}</SystemProvider>
+        <PowerSyncProvider>{children}</PowerSyncProvider>
       </body>
     </html>
   );

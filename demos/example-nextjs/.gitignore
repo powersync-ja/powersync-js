@@ -25,12 +25,18 @@ yarn-debug.log*
 # local env files
 .env*.local
 
+# unignore docker env (overrides root .gitignore)
+!powersync/docker/.env
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# override root gitignore's "lib" rule (which targets build output)
+!src/library/
 
 # ide 
 .idea

@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/service-config.json
+
+_type: self-hosted
+
+telemetry:
+  disable_telemetry_sharing: true
+
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATA_SOURCE_URI
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_SOURCE_URI
+  sslmode: disable
+
+sync_config:
+  path: sync-config.yaml
+
+# Anonymous JWT auth: the Next.js app serves a JWKS endpoint that PowerSync
+# uses to validate tokens it issued itself. No user sign-in required.
+client_auth:
+  jwks_uri: http://host.docker.internal:3000/api/auth/keys
+  audience:
+    - http://localhost:8080
+
+api:
+  tokens:
+    - dev-token-do-not-use-in-production
