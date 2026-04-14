@@ -90,7 +90,8 @@ describe('Open Methods', { sequential: true }, () => {
       },
       temporaryStorage: TemporaryStorageOption.MEMORY,
       cacheSizeKb: 0,
-      dbFilename: ''
+      dbFilename: '',
+      isReadOnly: false
     };
     const connection = await server.openConnectionLocally(options);
     const Adapter = DBAdapterDefaultMixin(DatabaseClient);

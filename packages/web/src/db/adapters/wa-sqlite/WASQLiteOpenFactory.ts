@@ -13,9 +13,9 @@ import {
 import { SSRDBAdapter } from '../SSRDBAdapter.js';
 import { vfsRequiresDedicatedWorkers, WASQLiteVFS } from './vfs.js';
 import { MultiDatabaseServer } from '../../../worker/db/MultiDatabaseServer.js';
-import { ClientOptions, DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
+import { DatabaseClient, OpenWorkerConnection } from './DatabaseClient.js';
 import { generateTabCloseSignal } from '../../../shared/tab_close_signal.js';
-import { AsyncDbAdapter } from '../AsyncWebAdapter.js';
+import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
@@ -23,6 +23,11 @@ export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
 
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
   vfs: WASQLiteVFS;
+
+  /**
+   * Whether this is a read-only connection opened for the `OPFSWriteAheadVFS` file system.
+   */
+  isReadOnly: boolean;
 }
 
 export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
@@ -82,7 +87,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     return this.openAdapter();
   }
 
-  async openConnection(): Promise<DatabaseClient> {
+  async openConnection(): Promise<PoolConnection> {
     const { enableMultiTabs, useWebWorker } = this.resolvedFlags;
     const {
       vfs = WASQLiteVFS.IDBBatchAtomicVFS,
@@ -95,7 +100,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       this.logger.warn('Multiple tabs are not enabled in this browser');
     }
 
-    const resolvedOptions: ResolvedWASQLiteOpenFactoryOptions = {
+    const resolveOptions = (isReadOnly: boolean): ResolvedWASQLiteOpenFactoryOptions => ({
       dbFilename: this.options.dbFilename,
       dbLocation: this.options.dbLocation,
       debugMode: this.options.debugMode,
@@ -103,62 +108,89 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       temporaryStorage,
       cacheSizeKb,
       flags: this.resolvedFlags,
-      encryptionKey: encryptionKey
-    };
+      encryptionKey: encryptionKey,
+      isReadOnly
+    });
 
-    let clientOptions: ClientOptions;
+    let client: DatabaseClient;
+    let additionalReader: DatabaseClient | undefined;
     let requiresPersistentTriggers = vfsRequiresDedicatedWorkers(vfs);
 
     if (useWebWorker) {
       const optionsDbWorker = this.options.worker;
 
-      const workerPort =
-        typeof optionsDbWorker == 'function'
-          ? resolveWorkerDatabasePortFactory(() =>
-              optionsDbWorker({
-                ...this.options,
-                temporaryStorage,
-                cacheSizeKb,
-                flags: this.resolvedFlags,
-                encryptionKey
-              })
-            )
-          : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
+      const openDatabaseWorker = async (
+        resolvedOptions: ResolvedWASQLiteOpenFactoryOptions
+      ): Promise<DatabaseClient> => {
+        const workerPort =
+          typeof optionsDbWorker == 'function'
+            ? resolveWorkerDatabasePortFactory(() =>
+                optionsDbWorker({
+                  ...this.options,
+                  temporaryStorage,
+                  cacheSizeKb,
+                  flags: this.resolvedFlags,
+                  encryptionKey
+                })
+              )
+            : openWorkerDatabasePort(this.options.dbFilename, enableMultiTabs, optionsDbWorker, this.waOptions.vfs);
 
-      const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
-      const closeSignal = new AbortController();
-      const connection = await source.connect({
-        ...resolvedOptions,
-        logLevel: this.logger.getLevel(),
-        lockName: await generateTabCloseSignal(closeSignal.signal)
-      });
-      clientOptions = {
-        connection,
-        source,
-        // This tab owns the worker, so we're guaranteed to outlive it.
-        remoteCanCloseUnexpectedly: false,
-        onClose: () => {
-          closeSignal.abort();
-          if (workerPort instanceof Worker) {
-            workerPort.terminate();
-          } else {
-            workerPort.close();
+        const source = Comlink.wrap<OpenWorkerConnection>(workerPort);
+        const closeSignal = new AbortController();
+        const connection = await source.connect({
+          ...resolvedOptions,
+          logLevel: this.logger.getLevel(),
+          lockName: await generateTabCloseSignal(closeSignal.signal)
+        });
+        const clientOptions = {
+          connection,
+          source,
+          // This tab owns the worker, so we're guaranteed to outlive it.
+          remoteCanCloseUnexpectedly: false,
+          onClose: () => {
+            closeSignal.abort();
+            if (workerPort instanceof Worker) {
+              workerPort.terminate();
+            } else {
+              workerPort.close();
+            }
           }
-        }
+        };
+
+        return new DatabaseClient(clientOptions, {
+          ...resolvedOptions,
+          requiresPersistentTriggers
+        });
       };
+
+      client = await openDatabaseWorker(resolveOptions(false));
+
+      if (vfs == WASQLiteVFS.OPFSWriteAheadVFS) {
+        // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
+        // concurrent reads / writes. To avoid excessive resource usage, we currently add one additional reader per
+        // tab. In the future, we might revisit this to use a growable pool of readers.
+        additionalReader = await openDatabaseWorker(resolveOptions(true));
+      }
     } else {
       // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
       const localServer = new MultiDatabaseServer(this.logger);
       requiresPersistentTriggers = true;
 
+      const resolvedOptions = resolveOptions(false);
       const connection = await localServer.openConnectionLocally(resolvedOptions);
-      clientOptions = { connection, source: null, remoteCanCloseUnexpectedly: false };
+      client = new DatabaseClient(
+        { connection, source: null, remoteCanCloseUnexpectedly: false },
+        {
+          ...resolvedOptions,
+          requiresPersistentTriggers
+        }
+      );
     }
 
-    return new DatabaseClient(clientOptions, {
-      ...resolvedOptions,
-      requiresPersistentTriggers
-    });
+    return {
+      writer: client,
+      additionalReader
+    };
   }
 }
 
