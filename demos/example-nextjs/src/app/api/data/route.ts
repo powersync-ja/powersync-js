@@ -1,4 +1,5 @@
 import { getPool } from '@/library/db';
+import { verifyRequest } from '@/library/auth-verify';
 import { NextRequest, NextResponse } from 'next/server';
 
 type Op = 'PUT' | 'PATCH' | 'DELETE';
@@ -62,6 +63,13 @@ async function applyBatch(batch: CrudEntry[]) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    await verifyRequest(req);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unauthorized';
+    return NextResponse.json({ error: message }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     // PowerSync sends: { batch: CrudEntry[] }

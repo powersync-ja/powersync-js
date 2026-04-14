@@ -1,9 +1,7 @@
 import { getKeyPair } from '@/library/auth-keys';
+import { JWT_ISSUER, POWERSYNC_URL } from '@/library/auth-config';
 import { SignJWT } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
-
-const POWERSYNC_URL = process.env.POWERSYNC_URL ?? 'http://localhost:8080';
-const JWT_ISSUER = 'powersync-nextjs-demo';
 
 export async function GET(req: NextRequest) {
   try {

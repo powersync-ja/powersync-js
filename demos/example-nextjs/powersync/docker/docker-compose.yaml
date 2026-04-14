@@ -35,6 +35,11 @@ services:
       retries: 15
     ports:
       - '${PS_PORT:-8080}:${PS_PORT:-8080}'
+    # host.docker.internal resolves automatically on macOS/Windows; on Linux
+    # it needs this mapping so the container can reach the Next.js app running
+    # on the host (see client_auth.jwks_uri in ../service.yaml).
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     depends_on:
       {
         pg-db: { condition: service_healthy },
