@@ -112,8 +112,10 @@ export class DatabaseServer {
       },
       requestAccess: async (write, timeoutMs) => {
         requireOpen();
-        // TODO: Support timeouts, they don't seem to be supported by the async-mutex package.
-        const lease = await this.#inner.acquireConnection();
+
+        const lease = await this.#inner.acquireConnection(
+          timeoutMs != null ? AbortSignal.timeout(timeoutMs) : undefined
+        );
         if (!isOpen) {
           // Race between requestAccess and close(), the connection was closed while we tried to acquire a lease.
           await lease.returnLease();

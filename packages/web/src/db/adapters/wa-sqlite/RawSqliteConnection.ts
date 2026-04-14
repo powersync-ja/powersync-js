@@ -39,7 +39,10 @@ export class RawSqliteConnection {
 
   async init() {
     const api = (this._sqliteAPI = await this.openSQLiteAPI());
-    this.db = await api.open_v2(this.options.dbFilename);
+    this.db = await api.open_v2(
+      this.options.dbFilename,
+      this.options.isReadOnly ? 1 /* SQLITE_OPEN_READONLY */ : 6 /* SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE */
+    );
     await this.executeRaw(`PRAGMA temp_store = ${this.options.temporaryStorage};`);
     if (this.options.encryptionKey) {
       const escapedKey = this.options.encryptionKey.replace("'", "''");
