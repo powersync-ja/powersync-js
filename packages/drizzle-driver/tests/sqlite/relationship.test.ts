@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase, column, Schema, Table } from '@powersync/common';
 import { PowerSyncDatabase } from '@powersync/web';
-import { eq, relations } from 'drizzle-orm';
+import { defineRelations, eq } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as SUT from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
@@ -29,23 +29,26 @@ const drizzlePosts = sqliteTable('posts', {
     .references(() => drizzleUsers.id)
 });
 
-const usersRelations = relations(drizzleUsers, ({ one, many }) => ({
-  posts: many(drizzlePosts)
-}));
-
-const postsRelations = relations(drizzlePosts, ({ one }) => ({
-  user: one(drizzleUsers, {
-    fields: [drizzlePosts.user_id],
-    references: [drizzleUsers.id]
-  })
-}));
-
 const PsSchema = new Schema({ users, posts });
-const DrizzleSchema = { users: drizzleUsers, posts: drizzlePosts, usersRelations, postsRelations };
+const DrizzleRelations = defineRelations({ users: drizzleUsers, posts: drizzlePosts }, (r) => ({
+  users: {
+    posts: r.many.posts({
+      from: r.users.id,
+      to: r.posts.user_id
+    })
+  },
+  posts: {
+    user: r.one.users({
+      from: r.posts.user_id,
+      to: r.users.id,
+      optional: false
+    })
+  }
+}));
 
 describe('Relationship tests', () => {
   let powerSyncDb: AbstractPowerSyncDatabase;
-  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleSchema>;
+  let db: SUT.PowerSyncSQLiteDatabase<typeof DrizzleRelations>;
 
   beforeEach(async () => {
     powerSyncDb = new PowerSyncDatabase({
@@ -54,7 +57,7 @@ describe('Relationship tests', () => {
       },
       schema: PsSchema
     });
-    db = SUT.wrapPowerSyncWithDrizzle(powerSyncDb, { schema: DrizzleSchema, logger: { logQuery: () => {} } });
+    db = SUT.wrapPowerSyncWithDrizzle(powerSyncDb, { relations: DrizzleRelations, logger: { logQuery: () => {} } });
 
     await powerSyncDb.init();
 

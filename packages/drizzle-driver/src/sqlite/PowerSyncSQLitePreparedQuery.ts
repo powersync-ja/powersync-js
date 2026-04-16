@@ -32,6 +32,12 @@ export type ContextProvider = {
   useWriteContext: <T>(fn: LockCallback<T>) => Promise<T>;
 };
 
+type ResultMapper = (rows: unknown[][], mapColumnValue?: (value: unknown) => unknown) => unknown;
+type RelationalResultMapper = (
+  rows: Record<string, unknown>[],
+  mapColumnValue?: (value: unknown) => unknown
+) => unknown;
+
 export class PowerSyncSQLitePreparedQuery<
   T extends PreparedQueryConfig = PreparedQueryConfig
 > extends SQLitePreparedQuery<{
@@ -47,13 +53,13 @@ export class PowerSyncSQLitePreparedQuery<
   private readOnly = false;
 
   constructor(
-    private contextProvider: ContextProvider,
+    contextProvider: ContextProvider,
     query: Query,
-    private logger: Logger,
-    private fields: SelectedFieldsOrdered | undefined,
+    logger: Logger,
+    fields: SelectedFieldsOrdered | undefined,
     executeMethod: SQLiteExecuteMethod,
-    private _isResponseInArrayMode: boolean,
-    private customResultMapper?: (rows: unknown[][]) => unknown,
+    isResponseInArrayMode: boolean,
+    customResultMapper?: ResultMapper,
     cache?: Cache | undefined,
     queryMetadata?:
       | {
@@ -61,10 +67,47 @@ export class PowerSyncSQLitePreparedQuery<
           tables: string[];
         }
       | undefined,
-    cacheConfig?: WithCacheConfig | undefined
+    cacheConfig?: WithCacheConfig | undefined,
+    relationalQueryMode?: false
+  );
+  constructor(
+    contextProvider: ContextProvider,
+    query: Query,
+    logger: Logger,
+    fields: SelectedFieldsOrdered | undefined,
+    executeMethod: SQLiteExecuteMethod,
+    isResponseInArrayMode: boolean,
+    customResultMapper: RelationalResultMapper,
+    cache: Cache | undefined,
+    queryMetadata:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig: WithCacheConfig | undefined,
+    relationalQueryMode: true
+  );
+  constructor(
+    private contextProvider: ContextProvider,
+    query: Query,
+    private logger: Logger,
+    private fields: SelectedFieldsOrdered | undefined,
+    executeMethod: SQLiteExecuteMethod,
+    private _isResponseInArrayMode: boolean,
+    private customResultMapper?: ResultMapper | RelationalResultMapper,
+    cache?: Cache | undefined,
+    queryMetadata?:
+      | {
+          type: 'select' | 'update' | 'delete' | 'insert';
+          tables: string[];
+        }
+      | undefined,
+    cacheConfig?: WithCacheConfig | undefined,
+    private relationalQueryMode = false
   ) {
     super('async', executeMethod, query, cache, queryMetadata, cacheConfig);
-    this.readOnly = queryMetadata?.type == 'select';
+    this.readOnly = queryMetadata?.type == 'select' || relationalQueryMode;
   }
 
   async run(placeholderValues?: Record<string, unknown>): Promise<QueryResult> {
@@ -85,10 +128,20 @@ export class PowerSyncSQLitePreparedQuery<
       });
     }
 
+    if (customResultMapper && this.relationalQueryMode) {
+      const params = fillPlaceholders(query.params, placeholderValues ?? {});
+      logger.logQuery(query.sql, params);
+      const relationalResultMapper = customResultMapper as RelationalResultMapper;
+      return await this.useContext(async (ctx) => {
+        const rows = (await ctx.getAll(this.query.sql, params)) as Record<string, unknown>[];
+        return relationalResultMapper(rows) as T['all'];
+      });
+    }
+
     const rows = (await this.values(placeholderValues)) as unknown[][];
     if (customResultMapper) {
-      const mapped = customResultMapper(rows) as T['all'];
-      return mapped;
+      const resultMapper = customResultMapper as ResultMapper;
+      return resultMapper(rows) as T['all'];
     }
     return rows.map((row) => mapResultRow(fields!, row, (this as any).joinsNotNullableMap));
   }
@@ -105,6 +158,17 @@ export class PowerSyncSQLitePreparedQuery<
       });
     }
 
+    if (customResultMapper && this.relationalQueryMode) {
+      const relationalResultMapper = customResultMapper as RelationalResultMapper;
+      return this.useContext(async (ctx) => {
+        const row = (await ctx.get(this.query.sql, params)) as Record<string, unknown> | undefined;
+        if (!row) {
+          return undefined as T['get'];
+        }
+        return relationalResultMapper([row]) as T['get'];
+      });
+    }
+
     const rows = (await this.values(placeholderValues)) as unknown[][];
     const row = rows[0];
 
@@ -113,7 +177,8 @@ export class PowerSyncSQLitePreparedQuery<
     }
 
     if (customResultMapper) {
-      return customResultMapper(rows) as T['get'];
+      const resultMapper = customResultMapper as ResultMapper;
+      return resultMapper(rows) as T['get'];
     }
 
     return mapResultRow(fields!, row, joinsNotNullableMap);
@@ -181,7 +246,7 @@ export function mapResultRow<TResult>(
 /**
  * Determines the appropriate decoder for a given field.
  */
-function getDecoder(field: SQLiteColumn | SQL<unknown> | SQL.Aliased): DriverValueDecoder<unknown, unknown> {
+function getDecoder(field: any): DriverValueDecoder<unknown, unknown> {
   if (is(field, Column)) {
     return field;
   } else if (is(field, SQL)) {
@@ -204,8 +269,11 @@ function updateNullifyMap(
 
   const objectName = path[0]!;
   if (!(objectName in nullifyMap)) {
-    nullifyMap[objectName] = value === null ? getTableName(field.table) : false;
-  } else if (typeof nullifyMap[objectName] === 'string' && nullifyMap[objectName] !== getTableName(field.table)) {
+    nullifyMap[objectName] = value === null ? getTableName((field as any).table) : false;
+  } else if (
+    typeof nullifyMap[objectName] === 'string' &&
+    nullifyMap[objectName] !== getTableName((field as any).table)
+  ) {
     nullifyMap[objectName] = false;
   }
 }
