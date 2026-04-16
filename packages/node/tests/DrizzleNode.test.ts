@@ -1,5 +1,5 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { eq, relations } from 'drizzle-orm';
+import { defineRelations, eq } from 'drizzle-orm';
 
 import { customDatabaseTest, databaseTest } from './utils';
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
@@ -17,27 +17,30 @@ export const drizzleTodos = sqliteTable('todos', {
   list_id: text('list_id')
 });
 
-export const listsRelations = relations(drizzleLists, ({ one, many }) => ({
-  todos: many(drizzleTodos)
-}));
-
-export const todosRelations = relations(drizzleTodos, ({ one, many }) => ({
-  list: one(drizzleLists, {
-    fields: [drizzleTodos.list_id],
-    references: [drizzleLists.id]
-  })
-}));
-
 export const drizzleSchema = {
   lists: drizzleLists,
-  todos: drizzleTodos,
-  listsRelations,
-  todosRelations
+  todos: drizzleTodos
 };
+
+export const drizzleRelations = defineRelations(drizzleSchema, (r) => ({
+  lists: {
+    todos: r.many.todos({
+      from: r.lists.id,
+      to: r.todos.list_id
+    })
+  },
+  todos: {
+    list: r.one.lists({
+      from: r.todos.list_id,
+      to: r.lists.id,
+      optional: false
+    })
+  }
+}));
 
 const setupDrizzle = async (database: PowerSyncDatabase) => {
   const db = wrapPowerSyncWithDrizzle(database, {
-    schema: drizzleSchema
+    relations: drizzleRelations
   });
 
   await db.insert(drizzleLists).values({ id: '1', name: 'list 1' });

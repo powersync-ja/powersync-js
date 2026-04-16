@@ -1,6 +1,6 @@
-import { AbstractPowerSyncDatabase, LockContext } from '@powersync/common';
+import { LockContext } from '@powersync/common';
 import { entityKind } from 'drizzle-orm/entity';
-import type { RelationalSchemaConfig, TablesRelationalConfig } from 'drizzle-orm/relations';
+import type { AnyRelations, EmptyRelations } from 'drizzle-orm/relations';
 import type { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
 import {
   PowerSyncSQLiteBaseSession,
@@ -9,63 +9,58 @@ import {
   PowerSyncSQLiteTransactionConfig
 } from './PowerSyncSQLiteBaseSession.js';
 
-export class PowerSyncSQLiteSession<
-  TFullSchema extends Record<string, unknown>,
-  TSchema extends TablesRelationalConfig
-> extends PowerSyncSQLiteBaseSession<TFullSchema, TSchema> {
+export class PowerSyncSQLiteSession<TRelations extends AnyRelations = EmptyRelations> extends PowerSyncSQLiteBaseSession<TRelations> {
   static readonly [entityKind]: string = 'PowerSyncSQLiteSession';
-  protected client: AbstractPowerSyncDatabase;
-  constructor(
-    db: AbstractPowerSyncDatabase,
-    dialect: SQLiteAsyncDialect,
-    schema: RelationalSchemaConfig<TSchema> | undefined,
-    options: PowerSyncSQLiteSessionOptions = {}
-  ) {
+
+  constructor(dialect: SQLiteAsyncDialect, relations: TRelations, options: PowerSyncSQLiteSessionOptions) {
     super(
-      // Top level operations use the respective locks.
       {
-        useReadContext: (callback) => db.readLock(callback),
-        useWriteContext: (callback) => db.writeLock(callback)
+        useReadContext: (callback) => options.db.readLock(callback),
+        useWriteContext: (callback) => options.db.writeLock(callback)
       },
       dialect,
-      schema,
+      relations,
       options
     );
-    this.client = db;
   }
 
   transaction<T>(
-    transaction: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
+    transaction: (tx: PowerSyncSQLiteTransaction<TRelations>) => T,
     config: PowerSyncSQLiteTransactionConfig = {}
   ): T {
     const { accessMode = 'read write' } = config;
 
     if (accessMode === 'read only') {
-      return this.client.readLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
+      return this.options.db.readLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
     }
 
-    return this.client.writeLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
+    return this.options.db.writeLock(async (ctx) => this.internalTransaction(ctx, transaction, config)) as T;
   }
 
   protected async internalTransaction<T>(
     connection: LockContext,
-    fn: (tx: PowerSyncSQLiteTransaction<TFullSchema, TSchema>) => T,
+    fn: (tx: PowerSyncSQLiteTransaction<TRelations>) => T,
     config: PowerSyncSQLiteTransactionConfig = {}
   ): Promise<T> {
-    const tx = new PowerSyncSQLiteTransaction<TFullSchema, TSchema>(
+    const transactionSession = new PowerSyncSQLiteBaseSession(
+      {
+        useReadContext: (callback) => callback(connection),
+        useWriteContext: (callback) => callback(connection)
+      },
+      this.dialect,
+      this.relations,
+      this.options
+    );
+
+    const tx = new PowerSyncSQLiteTransaction<TRelations>(
       'async',
-      (this as any).dialect,
-      new PowerSyncSQLiteBaseSession(
-        {
-          // We already have a fixed context here. We need to use it for both "read" and "write" operations.
-          useReadContext: (callback) => callback(connection),
-          useWriteContext: (callback) => callback(connection)
-        },
-        this.dialect,
-        this.schema,
-        this.options
-      ),
-      this.schema
+      this.dialect,
+      transactionSession,
+      this.relations,
+      undefined,
+      undefined,
+      undefined,
+      true
     );
 
     await connection.execute(`begin${config?.behavior ? ' ' + config.behavior : ''}`);
