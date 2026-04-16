@@ -9,11 +9,6 @@ import { TableOrRawTableOptions } from './Table.js';
  * To collect local writes to raw tables with PowerSync, custom triggers are required. See
  * {@link https://docs.powersync.com/usage/use-case-examples/raw-tables the documentation} for details and an example on
  * using raw tables.
- *
- * Note that raw tables are only supported when using the new `SyncClientImplementation.rust` sync client.
- *
- * @experimental Please note that this feature is experimental at the moment, and not covered by PowerSync semver or
- * stability guarantees.
  */
 export type RawTableType = RawTableTypeWithStatements | InferredRawTableType;
 
