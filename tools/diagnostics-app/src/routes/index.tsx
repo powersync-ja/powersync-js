@@ -13,7 +13,8 @@ import React from 'react';
 import { useInitError } from '@/components/providers/SystemProvider';
 
 const searchSchema = z.object({
-  token: z.string().optional()
+  token: z.string().optional(),
+  endpoint: z.string().optional()
 });
 
 type LoginFormValues = {
@@ -26,7 +27,7 @@ export const Route = createFileRoute('/')({
   beforeLoad: async ({ search }) => {
     // Handle deep-link auto-sign-in with ?token= query param
     if (search.token) {
-      const endpoint = getTokenEndpoint(search.token);
+      const endpoint = search.endpoint ?? getTokenEndpoint(search.token);
       if (!endpoint) {
         throw new Error('endpoint is required');
       }
