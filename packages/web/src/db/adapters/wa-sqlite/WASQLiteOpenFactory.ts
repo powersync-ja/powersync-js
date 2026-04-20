@@ -19,6 +19,16 @@ import { AsyncDbAdapter, PoolConnection } from '../AsyncWebAdapter.js';
 
 export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
   vfs?: WASQLiteVFS;
+  /**
+   * If the {@link vfs} supports it, an additional amount of read-only connections to open. Using additional read
+   * connections can speed up queries by dispatching them to multiple workers running them concurrently.
+   *
+   * {@link WASQLiteVFS.OPFSWriteAheadVFS} is the only VFS with support for multiple connections, so this option is
+   * ignored for other VFS implementations.
+   *
+   * Defaults to 1.
+   */
+  additionalReaders?: number;
 }
 
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
@@ -113,7 +123,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     });
 
     let client: DatabaseClient;
-    let additionalReader: DatabaseClient | undefined;
+    let additionalReaders: DatabaseClient[] = [];
     let requiresPersistentTriggers = vfsRequiresDedicatedWorkers(vfs);
 
     if (useWebWorker) {
@@ -167,9 +177,12 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
       if (vfs == WASQLiteVFS.OPFSWriteAheadVFS) {
         // This VFS supports concurrent reads, so we can open additional workers to host read-only connections for
-        // concurrent reads / writes. To avoid excessive resource usage, we currently add one additional reader per
-        // tab. In the future, we might revisit this to use a growable pool of readers.
-        additionalReader = await openDatabaseWorker(resolveOptions(true));
+        // concurrent reads / writes.
+        const additionalReadersCount = this.options.additionalReaders ?? 1;
+        for (let i = 0; i < additionalReadersCount; i++) {
+          const reader = await openDatabaseWorker(resolveOptions(true));
+          additionalReaders.push(reader);
+        }
       }
     } else {
       // Don't use a web worker. Instead, open the MultiDatabaseServer a worker would use locally.
@@ -189,7 +202,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
 
     return {
       writer: client,
-      additionalReader
+      additionalReaders
     };
   }
 }
