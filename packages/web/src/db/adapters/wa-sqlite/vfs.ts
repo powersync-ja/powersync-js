@@ -6,7 +6,8 @@ import type * as SQLite from '@journeyapps/wa-sqlite';
 export enum WASQLiteVFS {
   IDBBatchAtomicVFS = 'IDBBatchAtomicVFS',
   OPFSCoopSyncVFS = 'OPFSCoopSyncVFS',
-  AccessHandlePoolVFS = 'AccessHandlePoolVFS'
+  AccessHandlePoolVFS = 'AccessHandlePoolVFS',
+  OPFSWriteAheadVFS = 'OPFSWriteAheadVFS'
 }
 
 export function vfsRequiresDedicatedWorkers(vfs: WASQLiteVFS) {
@@ -30,49 +31,32 @@ export type WASQLiteModuleFactory = (
   options: WASQLiteModuleFactoryOptions
 ) => Promise<{ module: SQLiteModule; vfs: SQLiteVFS }>;
 
-/**
- * @internal
- */
-export const AsyncWASQLiteModuleFactory = async () => {
-  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
-  return factory();
-};
+async function asyncModuleFactory(encryptionKey: unknown) {
+  if (encryptionKey) {
+    const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs');
+    return factory();
+  } else {
+    const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite-async.mjs');
+    return factory();
+  }
+}
 
-/**
- * @internal
- */
-export const MultiCipherAsyncWASQLiteModuleFactory = async () => {
-  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite-async.mjs');
-  return factory();
-};
-
-/**
- * @internal
- */
-export const SyncWASQLiteModuleFactory = async () => {
-  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite.mjs');
-  return factory();
-};
-
-/**
- * @internal
- */
-export const MultiCipherSyncWASQLiteModuleFactory = async () => {
-  const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite.mjs');
-  return factory();
-};
+async function syncModuleFactory(encryptionKey: unknown) {
+  if (encryptionKey) {
+    const { default: factory } = await import('@journeyapps/wa-sqlite/dist/mc-wa-sqlite.mjs');
+    return factory();
+  } else {
+    const { default: factory } = await import('@journeyapps/wa-sqlite/dist/wa-sqlite.mjs');
+    return factory();
+  }
+}
 
 /**
  * @internal
  */
 export const DEFAULT_MODULE_FACTORIES = {
   [WASQLiteVFS.IDBBatchAtomicVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherAsyncWASQLiteModuleFactory();
-    } else {
-      module = await AsyncWASQLiteModuleFactory();
-    }
+    const module = await asyncModuleFactory(options.encryptionKey);
     const { IDBBatchAtomicVFS } = await import('@journeyapps/wa-sqlite/src/examples/IDBBatchAtomicVFS.js');
     return {
       module,
@@ -81,12 +65,7 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.AccessHandlePoolVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherSyncWASQLiteModuleFactory();
-    } else {
-      module = await SyncWASQLiteModuleFactory();
-    }
+    const module = await syncModuleFactory(options.encryptionKey);
     // @ts-expect-error The types for this static method are missing upstream
     const { AccessHandlePoolVFS } = await import('@journeyapps/wa-sqlite/src/examples/AccessHandlePoolVFS.js');
     return {
@@ -95,15 +74,20 @@ export const DEFAULT_MODULE_FACTORIES = {
     };
   },
   [WASQLiteVFS.OPFSCoopSyncVFS]: async (options: WASQLiteModuleFactoryOptions) => {
-    let module;
-    if (options.encryptionKey) {
-      module = await MultiCipherSyncWASQLiteModuleFactory();
-    } else {
-      module = await SyncWASQLiteModuleFactory();
-    }
+    const module = await syncModuleFactory(options.encryptionKey);
     // @ts-expect-error The types for this static method are missing upstream
     const { OPFSCoopSyncVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSCoopSyncVFS.js');
     const vfs = await OPFSCoopSyncVFS.create(options.dbFileName, module);
+    return {
+      module,
+      vfs
+    };
+  },
+  [WASQLiteVFS.OPFSWriteAheadVFS]: async (options: WASQLiteModuleFactoryOptions) => {
+    const module = await syncModuleFactory(options.encryptionKey);
+    // @ts-expect-error The types for this static method are missing upstream
+    const { OPFSWriteAheadVFS } = await import('@journeyapps/wa-sqlite/src/examples/OPFSWriteAheadVFS.js');
+    const vfs = await OPFSWriteAheadVFS.create(options.dbFileName, module, {});
     return {
       module,
       vfs

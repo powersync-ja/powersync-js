@@ -61,7 +61,10 @@ export class MultiDatabaseServer {
 
       let server: DatabaseServer | undefined = this.activeDatabases.get(dbFilename);
       if (server == null) {
-        const needsNavigatorLocks = !isSharedWorker;
+        // We don't need navigator locks for shared workers because all queries run in this shared worker exclusively.
+        // For read-only connections, we use a VFS that supports concurrent reads (so a single lock on the connection is
+        // fine).
+        const needsNavigatorLocks = !(isSharedWorker || options.isReadOnly);
         const connection = new RawSqliteConnection(options);
         const withSafeConcurrency = new ConcurrentSqliteConnection(connection, needsNavigatorLocks);
 
