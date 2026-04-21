@@ -72,13 +72,13 @@ export interface WebEncryptionOptions {
 
 type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
 
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions
+export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
   WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
 >;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions
+export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
   WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
 >;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions
+export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
   WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
 >;
 
