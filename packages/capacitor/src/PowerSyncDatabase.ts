@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import {
+  BucketStorageAdapter,
   DBAdapter,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   PowerSyncBackendConnector,
@@ -11,8 +12,8 @@ import {
   WebRemote
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
+import { CapacitorBucketStorageAdapter } from './sync/CapacitorBucketStorageAdapter.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
-
 /**
  * PowerSyncDatabase class for managing database connections and sync implementations.
  * This extends the WebPowerSyncDatabase to provide platform-specific implementations
@@ -66,6 +67,14 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     } else {
       // Use navigator.locks for web platform
       return super.runExclusive(cb);
+    }
+  }
+
+  protected generateBucketStorageAdapter(): BucketStorageAdapter {
+    if (this.isNativeCapacitorPlatform) {
+      return new CapacitorBucketStorageAdapter(this.database, this.logger);
+    } else {
+      return super.generateBucketStorageAdapter();
     }
   }
 
