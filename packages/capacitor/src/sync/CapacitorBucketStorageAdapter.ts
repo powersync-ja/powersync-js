@@ -5,7 +5,7 @@ export class CapacitorBucketStorageAdapter extends SqliteBucketStorage {
     if (payload instanceof Uint8Array && (payload as any)['_isBuffer'] == true) {
       /**
        * The Buffer polyfill, used in @powersync/common, is a Uint8Array subclass which defines additional fields like
-       * `_isBuffer` on its `prototype`. The additional fields are serialized when passed through the native bridge.
+       * `_isBuffer` and `parent` on its `prototype`. The additional fields are serialized when passed through the native bridge.
        * The Capacitor Community SQLite lib expects a dictionarty of indexes to numerical bytes.
        * The additiona fields (which are not an index to numerical byte mapping) cause the parsing logic in the SQLite lib to throw an error:
        *  "Error in reading buffer".
