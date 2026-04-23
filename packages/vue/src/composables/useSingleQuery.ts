@@ -42,8 +42,6 @@ export interface AdditionalOptions<RowType = unknown> extends Omit<SQLOnChangeOp
    * been downloaded.
    * Note however that after an initial sync, the query will not block itself while new rows are downloading. Instead,
    * consistent sync snapshots will be made available as they've been processed by PowerSync.
-   *
-   * @experimental Sync streams are currently in alpha.
    */
   streams?: QuerySyncStreamOptions[];
 
