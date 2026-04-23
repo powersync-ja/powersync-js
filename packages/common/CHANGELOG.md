@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.52.1
+
+### Patch Changes
+
+- 5513fad: Remove experimental label from raw tables.
+
 ## 1.52.0
 
 ### Minor Changes
