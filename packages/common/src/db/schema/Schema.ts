@@ -51,10 +51,8 @@ export class Schema<S extends SchemaType = SchemaType> {
    * developer instead of automatically by PowerSync.
    * Since raw tables are not backed by JSON, running complex queries on them may be more efficient. Further, they allow
    * using client-side table and column constraints.
-   * Note that raw tables are only supported when using the new `SyncClientImplementation.rust` sync client.
    *
    * @param tables An object of (table name, raw table definition) entries.
-   * @experimental Note that the raw tables API is still experimental and may change in the future.
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {
