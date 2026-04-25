@@ -15,7 +15,7 @@ import {
   DrizzleAppSchema,
 } from "@powersync/drizzle-driver";
 
-import { drizzleSchema } from "./powersync-schema";
+import { drizzleRelations, drizzleSchema } from "./powersync-schema";
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
@@ -205,7 +205,9 @@ export const powersync = new PowerSyncDatabase({
   },
 });
 
-export const powersyncDrizzle = wrapPowerSyncWithDrizzle(powersync);
+export const powersyncDrizzle = wrapPowerSyncWithDrizzle(powersync, {
+  relations: drizzleRelations,
+});
 
 let isInitialized = false;
 
