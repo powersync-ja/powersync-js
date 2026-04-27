@@ -15,7 +15,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.1.1",
     "@journeyapps/react-native-quick-sqlite": "^2.5.2",
-    "@journeyapps/wa-sqlite": "^1.6.0",
+    "@journeyapps/wa-sqlite": "^1.7.0",
     "@powersync/attachments-storage-react-native": "^0.0.2",
     "@powersync/common": "^1.52.0",
     "@powersync/react": "^1.10.0",
