@@ -85,4 +85,9 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
    * No-op in SSR mode.
    */
   updateSubscriptions(): void {}
+
+  /**
+   * No-op in SSR mode.
+   */
+  markConnectionMayHaveChanged(): void {}
 }

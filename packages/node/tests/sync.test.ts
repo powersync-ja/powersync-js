@@ -117,6 +117,24 @@ describe('Sync', () => {
       expect.objectContaining({ key: 'lists/3/subkey_3' })
     ]);
   });
+
+  mockSyncServiceTest('reconnects immediately after changed connection', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    database.connect(new TestConnector(), {
+      clientImplementation: SyncClientImplementation.RUST,
+      connectionMethod: SyncStreamConnectionMethod.HTTP,
+      // This large retry delay is to provoke test timeouts if the don't immediately reconnect.
+      retryDelayMs: 60_000
+    });
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+
+    // Replicate what we'd see on the web when switching connections in the shared sync worker: The sync client would
+    // suddenly see a database without an active sync iteration.
+    await database.execute('SELECT powersync_control(?, null)', ['stop']);
+    database.syncStreamImplementation!.markConnectionMayHaveChanged();
+    await database.waitForStatus((s) => !s.connected);
+    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+  });
 });
 
 function defineSyncTests(impl: SyncClientImplementation, bson: boolean) {
