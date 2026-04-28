@@ -614,8 +614,8 @@ The next upload iteration will be delayed.`);
   }
 
   markConnectionMayHaveChanged() {
-    // By setting this field, we'll immediately retry if the next sync connection causes an error triggered by us not
-    // having an active sync iteration on the connection in use.
+    // By setting this field, we'll immediately retry if the next sync event causes an error triggered by us not having
+    // an active sync iteration on the connection in use.
     this.connectionMayHaveChanged = true;
 
     // This triggers a `powersync_control` invocation if a sync iteration is currently active. This is a cheap call to
