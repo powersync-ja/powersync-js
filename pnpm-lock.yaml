@@ -584,6 +584,9 @@ importers:
       '@vueuse/nuxt':
         specifier: ^14.2.1
         version: 14.2.1(magicast@0.5.2)(nuxt@4.3.1(f18fc977ac0a9ba52c22934e423a6488))(vue@3.5.30(typescript@5.9.3))
+      bson:
+        specifier: 'catalog:'
+        version: 6.10.4
       defu:
         specifier: ^6.1.4
         version: 6.1.4
@@ -630,9 +633,6 @@ importers:
       '@powersync/web':
         specifier: workspace:*
         version: link:../web
-      bson:
-        specifier: 'catalog:'
-        version: 6.10.4
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
