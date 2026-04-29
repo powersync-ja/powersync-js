@@ -1,5 +1,18 @@
 # @powersync/capacitor
 
+## 0.5.3
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 26c2c24: Fixed "Error in reading buffer" error on iOS when connecting via WebSocket.
+- Updated dependencies [1506543]
+- Updated dependencies [c2d0f9e]
+- Updated dependencies [c730604]
+- Updated dependencies [838479e]
+- Updated dependencies [756a0cf]
+  - @powersync/web@1.38.0
+
 ## 0.5.2
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @powersync/react-native
 
+## 1.34.1
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+  - @powersync/common@1.52.1
+  - @powersync/react@1.10.0
+
 ## 1.34.0
 
 ### Minor Changes

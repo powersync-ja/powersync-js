@@ -1,5 +1,12 @@
 # @powersync/common
 
+## 1.52.1
+
+### Patch Changes
+
+- 838479e: Using the Rust sync client on the web, immediately reconnect when the underlying SQLite connection is changed.
+- 5513fad: Remove experimental label from raw tables.
+
 ## 1.52.0
 
 ### Minor Changes
