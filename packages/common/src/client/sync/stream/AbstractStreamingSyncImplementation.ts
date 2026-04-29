@@ -28,14 +28,7 @@ import {
   isStreamingSyncCheckpointPartiallyComplete,
   isStreamingSyncData
 } from './streaming-sync-types.js';
-import {
-  extractBsonObjects,
-  extractJsonLines,
-  injectable,
-  InjectableIterator,
-  map,
-  SimpleAsyncIterator
-} from '../../../utils/stream_transform.js';
+import { injectable, InjectableIterator, map, SimpleAsyncIterator } from '../../../utils/stream_transform.js';
 import type { BSON } from 'bson';
 
 export enum LockType {
@@ -216,6 +209,7 @@ export interface StreamingSyncImplementation
   waitForStatus(status: SyncStatusOptions): Promise<void>;
   waitUntilStatusMatches(predicate: (status: SyncStatus) => boolean): Promise<void>;
   updateSubscriptions(subscriptions: SubscribedStream[]): void;
+  markConnectionMayHaveChanged(): void;
 }
 
 export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
@@ -263,6 +257,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected streamingSyncPromise?: Promise<void>;
   protected logger: ILogger;
   private activeStreams: SubscribedStream[];
+  private connectionMayHaveChanged = false;
 
   private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
@@ -579,6 +574,10 @@ The next upload iteration will be delayed.`);
           this.logger.warn(ex);
           shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
+        } else if (this.connectionMayHaveChanged && (ex as Error).message?.indexOf('No iteration is active') >= 0) {
+          this.connectionMayHaveChanged = false;
+          this.logger.info('Sync error after changed connection, retrying immediately');
+          shouldDelayRetry = false;
         } else {
           this.logger.error(ex);
         }
@@ -612,6 +611,17 @@ The next upload iteration will be delayed.`);
 
     // Mark as disconnected if here
     this.updateSyncStatus({ connected: false, connecting: false });
+  }
+
+  markConnectionMayHaveChanged() {
+    // By setting this field, we'll immediately retry if the next sync event causes an error triggered by us not having
+    // an active sync iteration on the connection in use.
+    this.connectionMayHaveChanged = true;
+
+    // This triggers a `powersync_control` invocation if a sync iteration is currently active. This is a cheap call to
+    // make when no subscriptions have actually changed, we're mainly interested in this immediately throwing if no
+    // iteration is active. That allows us to reconnect ASAP, instead of having to wait for the next sync line.
+    this.handleActiveStreamsChange?.();
   }
 
   private async collectLocalBucketState(): Promise<[BucketRequest[], Map<string, BucketDescription | null>]> {
@@ -1041,6 +1051,10 @@ The next upload iteration will be delayed.`);
         rawResponse
       );
 
+      if (op != PowerSyncControlCommand.STOP) {
+        // Evidently we have a working connection here, otherwise powersync_control would have failed.
+        syncImplementation.connectionMayHaveChanged = false;
+      }
       await handleInstructions(JSON.parse(rawResponse));
     }
 
