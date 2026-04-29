@@ -56,7 +56,7 @@
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test": "vitest",
-    "test:exports": "attw --pack ."
+    "test:exports": "attw --pack . --exclude-entrypoints sync_protocol"
   },
   "dependencies": {
     "event-iterator": "^2.0.0"

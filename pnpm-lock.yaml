@@ -961,6 +961,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      bson:
+        specifier: 'catalog:'
+        version: 6.10.4
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
