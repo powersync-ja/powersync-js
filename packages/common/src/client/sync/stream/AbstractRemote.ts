@@ -6,7 +6,6 @@ import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import {
   doneResult,
   extractBsonObjects,
@@ -44,7 +43,7 @@ export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
 export type SyncStreamOptions = {
   path: string;
-  data: StreamingSyncRequest;
+  data: unknown;
   headers?: Record<string, string>;
   abortSignal: AbortSignal;
   fetchOptions?: Request;
@@ -575,7 +574,7 @@ export abstract class AbstractRemote {
 
       const contentType = res.headers.get('content-type');
       responseIsBson = contentType == bson;
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.name == 'AbortError') {
         throw new AbortOperation(`Pending fetch request to ${request.url} has been aborted.`);
       }

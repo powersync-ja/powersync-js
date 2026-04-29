@@ -8,19 +8,17 @@ import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
-  BucketChecksum,
   NodePowerSyncDatabaseOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabase,
   Schema,
-  StreamingSyncCheckpoint,
-  StreamingSyncLine,
   SyncStatus,
   Table,
   column
 } from '../lib';
 import { BSON } from 'bson';
+import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from './sync_protocol';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -60,7 +58,7 @@ export async function createDatabase(
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
   const defaultLogger = createLogger('PowerSyncTest', { logLevel: Logger.TRACE });
-  (defaultLogger as any).invoke = (_, args) => {
+  (defaultLogger as any).invoke = (_: any, args: any) => {
     console.log(...args);
   };
 
@@ -241,7 +239,6 @@ export function checkpoint(options: { last_op_id: number; buckets?: any[]; strea
     checkpoint: {
       last_op_id: `${options.last_op_id}`,
       buckets: options.buckets ?? [],
-      write_checkpoint: null,
       streams: options.streams ?? []
     }
   };
@@ -267,7 +264,7 @@ export function stream(name: string, isDefault: boolean, errors = []) {
 
 export function nextStatus(db: PowerSyncDatabase): Promise<SyncStatus> {
   return new Promise((resolve) => {
-    let l;
+    let l: () => void;
 
     l = db.registerListener({
       statusChanged(status) {
