@@ -1,5 +1,21 @@
 # @powersync/web
 
+## 1.38.0
+
+### Minor Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 756a0cf: Add `WASQLiteVFS.OPFSWriteAheadVFS`, which also supports concurrent reads.
+
+### Patch Changes
+
+- 1506543: Update `@journeyapps/wa-sqlite` dependency.
+- c730604: Remove deprecated `unload` listener.
+- 838479e: Using the Rust sync client on the web, immediately reconnect when the underlying SQLite connection is changed.
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+  - @powersync/common@1.52.1
+
 ## 1.37.2
 
 ### Patch Changes

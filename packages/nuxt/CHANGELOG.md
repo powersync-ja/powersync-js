@@ -1,5 +1,20 @@
 # @powersync/nuxt
 
+## 0.0.7
+
+### Patch Changes
+
+- 1506543: Update `@journeyapps/wa-sqlite` dependency.
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- Updated dependencies [1506543]
+- Updated dependencies [c2d0f9e]
+- Updated dependencies [c730604]
+- Updated dependencies [838479e]
+- Updated dependencies [756a0cf]
+  - @powersync/web@1.38.0
+  - @powersync/kysely-driver@1.3.3
+  - @powersync/vue@0.5.1
+
 ## 0.0.6
 
 ### Patch Changes
