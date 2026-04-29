@@ -97,7 +97,7 @@ export class RustClientInterceptor extends SqliteBucketStorage {
       if (schemaUpdated) {
         await this.schemaManager.refreshSchema(this.rdb);
       }
-    } else if ('partial_checkpoint_complete' in line || 'ceckpoint_complete' in line) {
+    } else if ('partial_checkpoint_complete' in line || 'checkpoint_complete' in line) {
       setTimeout(() => {
         this.schemaManager.refreshSchema(this.rdb);
       }, 60);

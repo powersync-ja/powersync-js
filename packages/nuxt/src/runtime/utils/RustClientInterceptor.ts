@@ -92,7 +92,7 @@ export class RustClientInterceptor extends SqliteBucketStorage {
       });
 
       await this.schemaManager.value.updateFromOperations(bucket);
-    } else if ('partial_checkpoint_complete' in line || 'ceckpoint_complete' in line) {
+    } else if ('partial_checkpoint_complete' in line || 'checkpoint_complete' in line) {
       // Refresh schema asynchronously, to allow us to better measure
       // performance of initial sync.
       setTimeout(() => {

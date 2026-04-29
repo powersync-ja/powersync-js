@@ -104,7 +104,6 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
       const currentSchemaManager = getCurrentSchemaManager();
       const schemaManager = currentSchemaManager || this.schemaManager;
 
-      const clientImplementation = this.connectionOptions?.clientImplementation ?? DEFAULT_SYNC_CLIENT_IMPLEMENTATION;
       const adapter = new RustClientInterceptor(
         shallowRef(this) as ShallowRef<PowerSyncDatabase>,
         shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
