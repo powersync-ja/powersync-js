@@ -1,4 +1,4 @@
-import { StreamingSyncLine } from '@powersync/common';
+import { StreamingSyncLine } from '@powersync/common/sync_protocol';
 import type {
   AutomaticResponseConfig,
   MockSyncServiceMessage,

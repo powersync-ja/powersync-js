@@ -1,5 +1,4 @@
 import {
-  BucketChecksum,
   createBaseLogger,
   PowerSyncConnectionOptions,
   Schema,
@@ -13,6 +12,7 @@ import {
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
+import { BucketChecksum } from '@powersync/common/sync_protocol';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -343,7 +343,7 @@ function describeStreamingTests(
       // The last request should make a network request with the client params
       await vi.waitFor(
         () => {
-          expect(postSpy.mock.lastCall?.[0].data.parameters!['count']).equals(0);
+          expect((postSpy.mock.lastCall?.[0].data as any).parameters['count']).equals(0);
           // The async postStream call's invocation is added to the count of calls
           // before the generated stream is added (there is a delay)
           // expect that the stream has been generated and tracked.

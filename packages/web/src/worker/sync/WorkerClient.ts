@@ -82,10 +82,6 @@ export class WorkerClient {
     return this.sync.getWriteCheckpoint();
   }
 
-  hasCompletedSync() {
-    return this.sync.hasCompletedSync();
-  }
-
   connect(options?: PowerSyncConnectionOptions) {
     return this.sync.connect(options);
   }

@@ -1,7 +1,8 @@
-import type { DBAdapter, SyncDataBatch } from '@powersync/web';
-import { Column, ColumnType, OpTypeEnum, Schema, Table } from '@powersync/web';
+import type { DBAdapter } from '@powersync/web';
+import { Column, ColumnType, Schema, Table } from '@powersync/web';
 import { DiagnosticsAppSchema as AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
+import type { SyncDataBucketJSON } from '@powersync/common/sync_protocol';
 
 /**
  * Record fields from downloaded data, then build a schema from it.
@@ -21,42 +22,40 @@ export class DynamicSchemaManager {
     localStorage.removeItem('powersync_dynamic_schema');
   }
 
-  async updateFromOperations(batch: SyncDataBatch) {
+  async updateFromOperations(batch: SyncDataBucketJSON) {
     let schemaDirty = false;
-    for (const bucket of batch.buckets) {
-      // Build schema
-      for (const op of bucket.data) {
-        if (op.op.value == OpTypeEnum.PUT && op.data != null) {
-          this.tables[op.object_type!] ??= {};
-          const table = this.tables[op.object_type!];
-          const data = JSON.parse(op.data);
-          for (const [key, value] of Object.entries(data)) {
-            if (key == 'id') {
-              continue;
-            }
-            if (table) {
-              const existing = table[key];
-              if (
-                typeof value == 'number' &&
-                Number.isInteger(value) &&
-                existing != ColumnType.REAL &&
-                existing != ColumnType.TEXT
-              ) {
-                if (table[key] != ColumnType.INTEGER) {
-                  schemaDirty = true;
-                }
-                table[key] = ColumnType.INTEGER;
-              } else if (typeof value == 'number' && existing != ColumnType.TEXT) {
-                if (table[key] != ColumnType.REAL) {
-                  schemaDirty = true;
-                }
-                table[key] = ColumnType.REAL;
-              } else if (typeof value == 'string') {
-                if (table[key] != ColumnType.TEXT) {
-                  schemaDirty = true;
-                }
-                table[key] = ColumnType.TEXT;
+    // Build schema
+    for (const op of batch.data) {
+      if (op.op == 'PUT' && op.data != null) {
+        this.tables[op.object_type!] ??= {};
+        const table = this.tables[op.object_type!];
+        const data = JSON.parse(op.data);
+        for (const [key, value] of Object.entries(data)) {
+          if (key == 'id') {
+            continue;
+          }
+          if (table) {
+            const existing = table[key];
+            if (
+              typeof value == 'number' &&
+              Number.isInteger(value) &&
+              existing != ColumnType.REAL &&
+              existing != ColumnType.TEXT
+            ) {
+              if (table[key] != ColumnType.INTEGER) {
+                schemaDirty = true;
               }
+              table[key] = ColumnType.INTEGER;
+            } else if (typeof value == 'number' && existing != ColumnType.TEXT) {
+              if (table[key] != ColumnType.REAL) {
+                schemaDirty = true;
+              }
+              table[key] = ColumnType.REAL;
+            } else if (typeof value == 'string') {
+              if (table[key] != ColumnType.TEXT) {
+                schemaDirty = true;
+              }
+              table[key] = ColumnType.TEXT;
             }
           }
         }

@@ -9,9 +9,9 @@
  * Note: This is an example file - rename to .test.ts to use it in actual tests.
  */
 
-import { StreamingSyncCheckpoint } from '@powersync/common';
 import { describe, expect, vi } from 'vitest';
 import { sharedMockSyncServiceTest } from './utils/mockSyncServiceTest.js';
+import { StreamingSyncCheckpoint } from '@powersync/common/sync_protocol';
 
 describe('Mock Sync Service Example', { timeout: 100000 }, () => {
   sharedMockSyncServiceTest(

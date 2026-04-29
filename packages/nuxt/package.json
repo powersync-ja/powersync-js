@@ -81,6 +81,7 @@
     "@powersync/kysely-driver": "workspace:*",
     "@powersync/vue": "workspace:*",
     "@powersync/web": "workspace:*",
+    "@powersync/common": "workspace:*",
     "bson": "catalog:",
     "comlink": "catalog:",
     "nuxt": "^4.3.1",

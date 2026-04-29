@@ -4,21 +4,12 @@ import {
   type ILogger,
   AbstractRemote,
   AbstractRemoteOptions,
-  BSONImplementation,
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
   RemoteConnector
 } from '@powersync/common';
-import { BSON } from 'bson';
-import {
-  Dispatcher,
-  EnvHttpProxyAgent,
-  ErrorEvent,
-  getGlobalDispatcher,
-  ProxyAgent,
-  WebSocket as UndiciWebSocket
-} from 'undici';
+import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
@@ -97,10 +88,6 @@ export class NodeRemote extends AbstractRemote {
       `node/${process.versions.node}`,
       `${os.platform()}/${os.release()}`
     ].join(' ');
-  }
-
-  async getBSON(): Promise<BSONImplementation> {
-    return BSON;
   }
 }
 

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
 import { createLogger } from '@powersync/common';
+import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/sync_protocol';
 import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {
@@ -18,7 +19,6 @@ import {
   column
 } from '../lib';
 import { BSON } from 'bson';
-import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from './sync_protocol';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();

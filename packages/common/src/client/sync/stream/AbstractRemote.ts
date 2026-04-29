@@ -1,4 +1,3 @@
-import type { BSON } from 'bson';
 import { type fetch } from 'cross-fetch';
 import Logger, { ILogger } from 'js-logger';
 import { Requestable, RSocket, RSocketConnector } from 'rsocket-core';
@@ -14,8 +13,6 @@ import {
 } from '../../../utils/stream_transform.js';
 import { EventIterator } from 'event-iterator';
 import type { Queue } from 'event-iterator/lib/event-iterator.js';
-
-export type BSONImplementation = typeof BSON;
 
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
@@ -265,11 +262,6 @@ export abstract class AbstractRemote {
   }
 
   /**
-   * Provides a BSON implementation. The import nature of this varies depending on the platform
-   */
-  abstract getBSON(): Promise<BSONImplementation>;
-
-  /**
    * @returns A text decoder decoding UTF-8. This is a method to allow patching it for Hermes which doesn't support the
    * builtin, without forcing us to bundle a polyfill with `@powersync/common`.
    */
@@ -285,26 +277,13 @@ export abstract class AbstractRemote {
    * Returns a data stream of sync line data, fetched via RSocket-over-WebSocket.
    *
    * The only mechanism to abort the returned stream is to use the abort signal in {@link SocketSyncStreamOptions}.
-   *
-   * @param bson A BSON encoder and decoder. When set, the data stream will be requested with a BSON payload
-   * (required for compatibility with older sync services).
    */
-  async socketStreamRaw(
-    options: SocketSyncStreamOptions,
-    bson?: typeof BSON
-  ): Promise<SimpleAsyncIterator<Uint8Array>> {
+  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
     const { path, fetchStrategy = FetchStrategy.Buffered } = options;
-    const mimeType = bson == null ? 'application/json' : 'application/bson';
+    const mimeType = 'application/json';
 
     function toBuffer(js: any): Buffer {
-      let contents: any;
-      if (bson != null) {
-        contents = bson.serialize(js);
-      } else {
-        contents = JSON.stringify(js);
-      }
-
-      return Buffer.from(contents);
+      return Buffer.from(JSON.stringify(js));
     }
 
     const syncQueueRequestSize = fetchStrategy == FetchStrategy.Buffered ? 10 : 1;

@@ -19,7 +19,7 @@ import {
   TestConnector,
   waitForSyncStatus
 } from './utils';
-import { BucketChecksum, OplogEntryJSON } from './sync_protocol';
+import { BucketChecksum, OplogEntryJSON } from '@powersync/common/sync_protocol';
 
 describe('Sync', () => {
   describe('json', () => defineSyncTests(false));

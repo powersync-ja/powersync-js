@@ -233,10 +233,6 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     return this.syncManager.getWriteCheckpoint();
   }
 
-  async hasCompletedSync(): Promise<boolean> {
-    return this.syncManager.hasCompletedSync();
-  }
-
   async dispose(): Promise<void> {
     await this.waitForReady();
 

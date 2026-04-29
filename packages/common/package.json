@@ -30,6 +30,9 @@
         "types": "./dist/index.d.cts",
         "require": "./dist/bundle.cjs"
       }
+    },
+    "./sync_protocol": {
+      "types": "./legacy/sync_protocol.d.ts"
     }
   },
   "author": "PowerSync",
@@ -37,7 +40,8 @@
   "files": [
     "lib",
     "dist",
-    "src"
+    "src",
+    "legacy"
   ],
   "repository": {
     "type": "git",
@@ -64,7 +68,6 @@
     "@rollup/plugin-node-resolve": "catalog:",
     "@types/node": "catalog:",
     "@types/uuid": "catalog:",
-    "bson": "catalog:",
     "buffer": "^6.0.3",
     "cross-fetch": "^4.1.0",
     "estree-walker": "^3.0.3",

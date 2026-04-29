@@ -1,7 +1,6 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  BSONImplementation,
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
@@ -84,7 +83,7 @@ if (isSharedWorkerContext()) {
 }
 
 export class WebRemote extends AbstractRemote {
-  private _bson: BSONImplementation | undefined;
+  private _bson: typeof BSON | undefined;
 
   constructor(
     protected connector: RemoteConnector,
@@ -104,7 +103,7 @@ export class WebRemote extends AbstractRemote {
     return 'powersync-web-mock';
   }
 
-  async getBSON(): Promise<BSONImplementation> {
+  private async getBSON(): Promise<typeof BSON> {
     if (this._bson) {
       return this._bson;
     }
@@ -117,12 +116,9 @@ export class WebRemote extends AbstractRemote {
    * Override socketStreamRaw to use HTTP method (postStreamRaw) instead.
    * This allows us to use the same mocks for both socket and HTTP streaming.
    */
-  async socketStreamRaw(
-    options: SocketSyncStreamOptions,
-    bson?: typeof BSON
-  ): Promise<SimpleAsyncIterator<Uint8Array>> {
+  async socketStreamRaw(options: SocketSyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array>> {
     const lines = await this.fetchStream(options);
-    bson ??= await this.getBSON();
+    const bson = await this.getBSON();
 
     // This method is supposed to return a stream of BSON documents, so we may have to map JSON to BSON.
     async function* transform() {

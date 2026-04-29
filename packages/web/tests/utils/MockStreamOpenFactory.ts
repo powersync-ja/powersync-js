@@ -2,16 +2,15 @@ import {
   AbstractPowerSyncDatabase,
   AbstractRemote,
   AbstractStreamingSyncImplementation,
-  BSONImplementation,
   DEFAULT_CRUD_UPLOAD_THROTTLE_MS,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
   RemoteConnector,
   SimpleAsyncIterator,
-  StreamingSyncLine,
   SyncStreamOptions
 } from '@powersync/common';
+import { StreamingSyncLine } from '@powersync/common/sync_protocol';
 import {
   PowerSyncDatabase,
   WASQLitePowerSyncDatabaseOpenFactory,
@@ -19,7 +18,6 @@ import {
   WebPowerSyncOpenFactoryOptions,
   WebStreamingSyncImplementation
 } from '@powersync/web';
-import { BSON } from 'bson';
 import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -53,10 +51,6 @@ export class MockRemote extends AbstractRemote {
         }
       };
     });
-  }
-
-  async getBSON(): Promise<BSONImplementation> {
-    return import('bson');
   }
 
   post(path: string, data: any, headers?: Record<string, string> | undefined): Promise<any> {

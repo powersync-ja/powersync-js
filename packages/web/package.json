@@ -71,7 +71,6 @@
   },
   "dependencies": {
     "@powersync/common": "workspace:*",
-    "bson": "catalog:",
     "comlink": "catalog:",
     "commander": "^12.1.0"
   },

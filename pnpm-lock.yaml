@@ -413,9 +413,6 @@ importers:
       '@types/uuid':
         specifier: 'catalog:'
         version: 9.0.8
-      bson:
-        specifier: 'catalog:'
-        version: 6.10.4
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -526,9 +523,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      bson:
-        specifier: 'catalog:'
-        version: 6.10.4
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
@@ -545,6 +539,9 @@ importers:
       better-sqlite3:
         specifier: ^12.2.0
         version: 12.6.2
+      bson:
+        specifier: 'catalog:'
+        version: 6.10.4
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.44.7(@op-engineering/op-sqlite@15.2.7(react-native@0.84.1(@babel/core@7.29.0)(@react-native-community/cli@20.0.0(typescript@5.9.3))(@react-native/metro-config@0.83.1(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))(react@19.2.4))(@types/sql.js@1.4.9)(better-sqlite3@12.6.2)(kysely@0.28.11)(sql.js@1.14.0)
@@ -621,6 +618,9 @@ importers:
       '@nuxt/test-utils':
         specifier: 'catalog:'
         version: 4.0.0(jsdom@24.1.3)(magicast@0.5.2)(playwright-core@1.58.2)(typescript@5.9.3)(vite@7.3.1(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.2))(vitest@3.2.4)
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../common
       '@powersync/kysely-driver':
         specifier: workspace:*
         version: link:../kysely-driver
@@ -773,9 +773,6 @@ importers:
       '@types/react':
         specifier: ^19.1.1
         version: 19.2.14
-      bson:
-        specifier: 'catalog:'
-        version: 6.10.4
       react:
         specifier: ^19.2.0
         version: 19.2.4
@@ -873,9 +870,6 @@ importers:
       '@powersync/common':
         specifier: workspace:*
         version: link:../common
-      bson:
-        specifier: 'catalog:'
-        version: 6.10.4
       comlink:
         specifier: 'catalog:'
         version: 4.4.2
@@ -1004,6 +998,9 @@ importers:
         specifier: ^4.3.5
         version: 4.3.6
     devDependencies:
+      '@powersync/common':
+        specifier: workspace:*
+        version: link:../../packages/common
       '@swc/core':
         specifier: ~1.6.0
         version: 1.6.13(@swc/helpers@0.5.19)

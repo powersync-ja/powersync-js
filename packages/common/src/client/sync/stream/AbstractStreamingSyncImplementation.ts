@@ -9,7 +9,6 @@ import { CrudEntry } from '../bucket/CrudEntry.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
 import { EstablishSyncStream, Instruction, coreStatusToJs } from './core-instruction.js';
 import { injectable, InjectableIterator, map, SimpleAsyncIterator } from '../../../utils/stream_transform.js';
-import type { BSON } from 'bson';
 import { StreamingSyncRequestParameterType } from './JsonValue.js';
 
 export enum LockType {
@@ -639,21 +638,17 @@ The next upload iteration will be delayed.`);
   private async receiveSyncLines(data: {
     options: SyncStreamOptions;
     connection: RequiredPowerSyncConnectionOptions;
-    bson?: typeof BSON;
   }): Promise<SimpleAsyncIterator<Uint8Array | string>> {
-    const { options, connection, bson } = data;
+    const { options, connection } = data;
     const remote = this.options.remote;
 
     if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
       return await remote.fetchStream(options);
     } else {
-      return await this.options.remote.socketStreamRaw(
-        {
-          ...options,
-          ...{ fetchStrategy: connection.fetchStrategy }
-        },
-        bson
-      );
+      return await this.options.remote.socketStreamRaw({
+        ...options,
+        ...{ fetchStrategy: connection.fetchStrategy }
+      });
     }
   }
 
