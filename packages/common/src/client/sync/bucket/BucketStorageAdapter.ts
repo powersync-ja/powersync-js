@@ -2,23 +2,6 @@ import { BaseListener, BaseObserverInterface, Disposable } from '../../../utils/
 import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry } from './CrudEntry.js';
 
-export interface BucketDescription {
-  name: string;
-  priority: number;
-}
-
-export interface BucketState {
-  bucket: string;
-  op_id: string;
-}
-
-export type SavedProgress = {
-  atLast: number;
-  sinceLast: number;
-};
-
-export type BucketOperationProgress = Record<string, SavedProgress>;
-
 export enum PSInternalTable {
   DATA = 'ps_data',
   CRUD = 'ps_crud',

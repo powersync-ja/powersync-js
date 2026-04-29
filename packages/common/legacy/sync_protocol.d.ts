@@ -1,3 +1,12 @@
+// TypeScript definitions for sync lines sent by the PowerSync service. These aren't used in the implementation of
+// PowerSync SDKs, but we keep them around for:
+//
+//  1. Tests mocking the PowerSync service.
+//  2. The diagnostic app tracking schema updates and bucket sizes by decoding protocol messages.
+//  3. The nuxt SDK offering DevTools doing the same.
+//
+// Uses 2 and 3 should be replaced with the builtin diagnostic collection of the core extension eventually.
+
 export type SyncDataBucketJSON = {
   bucket: string;
   has_more?: boolean;
