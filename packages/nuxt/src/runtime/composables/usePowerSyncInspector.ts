@@ -1,5 +1,4 @@
 import { DiagnosticsAppSchema } from '../utils/AppSchema';
-import { RecordingStorageAdapter } from '../utils/RecordingStorageAdapter';
 import { DynamicSchemaManager } from '../utils/DynamicSchemaManager';
 
 // Global variable to store schema manager during construction
@@ -21,7 +20,6 @@ function getCurrentSchemaManager() {
  *
  * @returns An object containing:
  * - `diagnosticsSchema` - The schema for diagnostics data collection. Use this to extend your app schema with diagnostic tables.
- * - `RecordingStorageAdapter` - Used internally. Storage adapter class that records operations for diagnostic purposes.
  * - `getCurrentSchemaManager()` - Used internally. Gets the current schema manager instance for dynamic schema operations.
  *
  * @example
@@ -40,7 +38,6 @@ export function usePowerSyncInspector() {
 
   return {
     diagnosticsSchema,
-    RecordingStorageAdapter,
     getCurrentSchemaManager
   };
 }

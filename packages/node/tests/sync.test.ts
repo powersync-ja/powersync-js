@@ -25,7 +25,26 @@ describe('Sync', () => {
   describe('json', () => defineSyncTests(false));
   describe('bson', () => defineSyncTests(true));
 
-  mockSyncServiceTest.skip('can migrate between sync implementations', async ({ syncService }) => {
+  mockSyncServiceTest('can migrate between sync implementations', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    // Create a bucket with a broken oplog key format.
+    const { id: bucketId } = await database.writeLock(async (adapter) => {
+      return await adapter.get<{ id: number }>('INSERT INTO ps_buckets(name) VALUES (?) RETURNING id', ['a']);
+    });
+    await database.execute(
+      'INSERT INTO ps_oplog(bucket, op_id, key, row_type, row_id, data, hash) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        bucketId,
+        '1',
+        // The JavaScript client used to subkeys to JSON when it shouldn't...
+        'lists/1/"subkey_1"',
+        'lists',
+        '1',
+        '{}',
+        0
+      ]
+    );
+
     function addData(id: string) {
       syncService.pushLine({
         data: {
@@ -51,27 +70,8 @@ describe('Sync', () => {
       }
     };
 
-    let database = await syncService.createDatabase();
+    // Connecting with the new client should fix the format.
     database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.JAVASCRIPT,
-      connectionMethod: SyncStreamConnectionMethod.HTTP
-    });
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-    syncService.pushLine(checkpoint);
-    addData('1');
-
-    await vi.waitFor(async () => {
-      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(1);
-    });
-    await database.disconnect();
-    // The JavaScript client encodes subkeys to JSON when it shouldn't...
-    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
-      expect.objectContaining({ key: 'lists/1/"subkey_1"' })
-    ]);
-
-    // Connecting again with the new client should fix the format
-    database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.RUST,
       connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
@@ -85,25 +85,6 @@ describe('Sync', () => {
       // Existing entry should be fixed too!
       expect.objectContaining({ key: 'lists/1/subkey_1' }),
       expect.objectContaining({ key: 'lists/2/subkey_2' })
-    ]);
-
-    // Finally, connecting with JS again should keep the fixed subkey format.
-    database.connect(new TestConnector(), {
-      clientImplementation: SyncClientImplementation.RUST,
-      connectionMethod: SyncStreamConnectionMethod.HTTP
-    });
-    await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
-    syncService.pushLine(checkpoint);
-    addData('3');
-    await vi.waitFor(async () => {
-      expect(await database.getAll('SELECT * FROM ps_oplog')).toHaveLength(3);
-    });
-    await database.disconnect();
-    expect(await database.getAll('SELECT * FROM ps_oplog')).toEqual([
-      // Existing entry should be fixed too!
-      expect.objectContaining({ key: 'lists/1/subkey_1' }),
-      expect.objectContaining({ key: 'lists/2/subkey_2' }),
-      expect.objectContaining({ key: 'lists/3/subkey_3' })
     ]);
   });
 
