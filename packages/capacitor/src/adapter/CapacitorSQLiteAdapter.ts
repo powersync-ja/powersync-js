@@ -18,6 +18,7 @@ import {
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
 import { CapacitorSQLiteOpenFactoryOptions, DEFAULT_SQLITE_OPTIONS } from './CapacitorSQLiteOpenFactory.js';
+import { normalizeIOSSqliteParams } from './sqliteParams.js';
 /**
  * Monitors the execution time of a query and logs it to the performance timeline.
  */
@@ -39,6 +40,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
   protected initializedPromise: Promise<void>;
   protected writeMutex: Mutex;
   protected readMutex: Mutex;
+  protected readonly platform: string;
 
   constructor(protected options: CapacitorSQLiteOpenFactoryOptions) {
     super();
@@ -46,6 +48,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     this._readConnection = null;
     this.writeMutex = new Mutex();
     this.readMutex = new Mutex();
+    this.platform = Capacitor.getPlatform();
     this.initializedPromise = this.init();
   }
 
@@ -98,8 +101,7 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
 
     await this._readConnection.open();
 
-    const platform = Capacitor.getPlatform();
-    if (platform == 'android') {
+    if (this.platform == 'android') {
       /**
        * SQLCipher for Android enables dynamic loading of extensions.
        * On iOS we use a static auto extension registration.
@@ -132,13 +134,11 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     };
 
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
-      const platform = Capacitor.getPlatform();
-
       if (db.getConnectionReadOnly()) {
         return _query(query, params);
       }
 
-      if (platform == 'android') {
+      if (this.platform == 'android') {
         // Android: use query for SELECT and executeSet for mutations
         // We cannot use `run` here for both cases.
         if (query.toLowerCase().trim().startsWith('select')) {
@@ -158,7 +158,8 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
       }
 
       // iOS (and other platforms): use run("all")
-      const result = await db.run(query, params, false, 'all');
+      const sqliteParams = this.platform == 'ios' ? normalizeIOSSqliteParams(params) : params;
+      const result = await db.run(query, sqliteParams, false, 'all');
       const resultSet = result.changes?.values ?? [];
       return {
         insertId: result.changes?.lastId,
