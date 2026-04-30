@@ -7,31 +7,33 @@ import {
 } from '@powersync/common';
 import { Query } from 'drizzle-orm';
 import { DefaultLogger } from 'drizzle-orm/logger';
-import {
-  createTableRelationsHelpers,
-  extractTablesRelationalConfig,
-  ExtractTablesWithRelations,
-  TableRelationalConfig,
-  type RelationalSchemaConfig,
-  type TablesRelationalConfig
-} from 'drizzle-orm/relations';
-import { SQLiteSession, SQLiteTable, SQLiteTransaction } from 'drizzle-orm/sqlite-core';
+import type { AnyRelations, EmptyRelations } from 'drizzle-orm/relations';
+import { SQLiteTransaction } from 'drizzle-orm/sqlite-core';
 import { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core/db';
 import { SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core/dialect';
-import { RelationalQueryBuilder } from 'drizzle-orm/sqlite-core/query-builders/query';
 import type { DrizzleConfig } from 'drizzle-orm/utils';
 import { toCompilableQuery } from './../utils/compilableQuery.js';
-import { PowerSyncSQLiteBaseSession, PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
+import { PowerSyncSQLiteTransactionConfig } from './PowerSyncSQLiteBaseSession.js';
 import { PowerSyncSQLiteSession } from './PowerSyncSQLiteSession.js';
 
 export type DrizzleQuery<T> = { toSQL(): Query; execute(): Promise<T | T[]> };
 
-export class PowerSyncSQLiteDatabase<
-  TSchema extends Record<string, unknown> = Record<string, never>
-> extends BaseSQLiteDatabase<'async', QueryResult, TSchema> {
+export type PowerSyncDrizzleConfig<TRelations extends AnyRelations = EmptyRelations> = Omit<
+  DrizzleConfig<Record<string, never>, TRelations>,
+  'schema' | 'relations'
+> & {
+  relations: TRelations;
+};
+
+export class PowerSyncSQLiteDatabase<TRelations extends AnyRelations = EmptyRelations> extends BaseSQLiteDatabase<
+  'async',
+  QueryResult,
+  Record<string, never>,
+  TRelations
+> {
   private db: AbstractPowerSyncDatabase;
 
-  constructor(db: AbstractPowerSyncDatabase, config: DrizzleConfig<TSchema> = {}) {
+  constructor(db: AbstractPowerSyncDatabase, config: PowerSyncDrizzleConfig<TRelations>) {
     const dialect = new SQLiteAsyncDialect({ casing: config.casing });
     let logger;
     if (config.logger === true) {
@@ -40,63 +42,17 @@ export class PowerSyncSQLiteDatabase<
       logger = config.logger;
     }
 
-    let schema: RelationalSchemaConfig<TablesRelationalConfig> | undefined;
-    if (config.schema) {
-      const tablesConfig = extractTablesRelationalConfig(config.schema, createTableRelationsHelpers);
-      schema = {
-        fullSchema: config.schema,
-        schema: tablesConfig.tables,
-        tableNamesMap: tablesConfig.tableNamesMap
-      };
-    }
-
-    const session = new PowerSyncSQLiteSession(db, dialect, schema, {
-      logger
+    const session = new PowerSyncSQLiteSession(dialect, config.relations, {
+      logger,
+      db
     });
 
-    super('async', dialect, session as any, schema as any);
+    super('async', dialect, session, config.relations, undefined, undefined, true);
     this.db = db;
-
-    /**
-     * A hack in order to use read locks for `db.query.users.findMany()` etc queries.
-     * We don't currently get queryMetadata for these queries, so we can't use the regular session.
-     * This session always uses read locks.
-     */
-    const querySession = new PowerSyncSQLiteBaseSession(
-      {
-        useReadContext: (callback) => db.readLock(callback),
-        useWriteContext: (callback) => db.readLock(callback)
-      },
-      dialect,
-      schema,
-      {
-        logger
-      }
-    );
-    if (this._.schema) {
-      // https://github.com/drizzle-team/drizzle-orm/blob/ad4ddd444d066b339ffd5765cb6ec3bf49380189/drizzle-orm/src/sqlite-core/db.ts#L72
-      const query = this.query as {
-        [K in keyof TSchema]: RelationalQueryBuilder<'async', any, any, any>;
-      };
-      for (const [tableName, columns] of Object.entries(this._.schema)) {
-        query[tableName as keyof TSchema] = new RelationalQueryBuilder(
-          'async',
-          schema!.fullSchema,
-          this._.schema,
-          this._.tableNamesMap,
-          schema!.fullSchema[tableName] as SQLiteTable,
-          columns as TableRelationalConfig,
-          dialect,
-          querySession as SQLiteSession<'async', any, any, any>
-        );
-      }
-    }
   }
 
   transaction<T>(
-    transaction: (
-      tx: SQLiteTransaction<'async', QueryResult, TSchema, ExtractTablesWithRelations<TSchema>>
-    ) => Promise<T>,
+    transaction: (tx: SQLiteTransaction<'async', QueryResult, Record<string, never>, TRelations>) => Promise<T>,
     config?: PowerSyncSQLiteTransactionConfig
   ): Promise<T> {
     return super.transaction(transaction, config);
@@ -107,9 +63,9 @@ export class PowerSyncSQLiteDatabase<
   }
 }
 
-export function wrapPowerSyncWithDrizzle<TSchema extends Record<string, unknown> = Record<string, never>>(
+export function wrapPowerSyncWithDrizzle<TRelations extends AnyRelations = EmptyRelations>(
   db: AbstractPowerSyncDatabase,
-  config: DrizzleConfig<TSchema> = {}
-): PowerSyncSQLiteDatabase<TSchema> {
-  return new PowerSyncSQLiteDatabase<TSchema>(db, config);
+  config: PowerSyncDrizzleConfig<TRelations>
+): PowerSyncSQLiteDatabase<TRelations> {
+  return new PowerSyncSQLiteDatabase(db, config);
 }

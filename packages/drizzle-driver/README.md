@@ -4,7 +4,7 @@ This package (`@powersync/drizzle-driver`) brings the benefits of an ORM through
 
 ## Beta Release
 
-The `drizzle-driver` package is currently in an Beta release.
+This release line targets `drizzle-orm@1.0.0-beta` and the beta `relations` + `db.query` API.
 
 ## Getting Started
 
@@ -13,7 +13,7 @@ Set up the PowerSync Database and wrap it with Drizzle.
 ```js
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
 import { PowerSyncDatabase } from '@powersync/web';
-import { relations } from 'drizzle-orm';
+import { defineRelations } from 'drizzle-orm';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { AppSchema } from './schema';
 
@@ -29,27 +29,25 @@ export const todos = sqliteTable('todos', {
   created_at: text('created_at')
 });
 
-export const listsRelations = relations(lists, ({ one, many }) => ({
-  todos: many(todos)
+export const relations = defineRelations({ lists, todos }, (r) => ({
+  lists: {
+    todos: r.many.todos({
+      from: r.lists.id,
+      to: r.todos.list_id
+    })
+  },
+  todos: {
+    list: r.one.lists({
+      from: r.todos.list_id,
+      to: r.lists.id,
+      optional: false
+    })
+  }
 }));
-
-export const todosRelations = relations(todos, ({ one, many }) => ({
-  list: one(lists, {
-    fields: [todos.list_id],
-    references: [lists.id]
-  })
-}));
-
-export const drizzleSchema = {
-  lists,
-  todos,
-  listsRelations,
-  todosRelations
-};
 
 // As an alternative to manually defining a PowerSync schema, generate the local PowerSync schema from the Drizzle schema with the `DrizzleAppSchema` constructor:
 // import { DrizzleAppSchema } from '@powersync/drizzle-driver';
-// export const AppSchema = new DrizzleAppSchema(drizzleSchema);
+// export const AppSchema = new DrizzleAppSchema({ lists, todos });
 //
 // This is optional, but recommended, since you will only need to maintain one schema on the client-side
 // Read on to learn more.
@@ -63,7 +61,17 @@ export const powerSyncDb = new PowerSyncDatabase({
 
 // This is the DB you will use in queries
 export const db = wrapPowerSyncWithDrizzle(powerSyncDb, {
-  schema: drizzleSchema
+  relations
+});
+```
+
+To make relational queries, use `db.query`:
+
+```js
+const listsWithTodos = await db.query.lists.findMany({
+  with: {
+    todos: true
+  }
 });
 ```
 

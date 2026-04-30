@@ -1,4 +1,5 @@
 import { AbstractPowerSyncDatabase, column, PowerSyncDatabase, Schema, Table } from '@powersync/web';
+import { defineRelations } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { wrapPowerSyncWithDrizzle } from '../../src/sqlite/PowerSyncSQLiteDatabase.js';
 
@@ -12,7 +13,7 @@ export const drizzleUsers = sqliteTable('users', {
 });
 
 export const TestSchema = new Schema({ users });
-export const DrizzleSchema = { users: drizzleUsers };
+export const DrizzleRelations = defineRelations({ users: drizzleUsers });
 
 export const getPowerSyncDb = () => {
   const database = new PowerSyncDatabase({
@@ -26,7 +27,7 @@ export const getPowerSyncDb = () => {
 };
 
 export const getDrizzleDb = (db: AbstractPowerSyncDatabase) => {
-  const database = wrapPowerSyncWithDrizzle(db, { schema: DrizzleSchema, logger: { logQuery: () => {} } });
+  const database = wrapPowerSyncWithDrizzle(db, { relations: DrizzleRelations, logger: { logQuery: () => {} } });
 
   return database;
 };
