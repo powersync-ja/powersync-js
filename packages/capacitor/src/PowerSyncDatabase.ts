@@ -8,12 +8,13 @@ import {
   StreamingSyncImplementation,
   TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
-  WebPowerSyncDatabaseOptionsWithSettings,
-  WebRemote
+  WebPowerSyncDatabaseOptionsWithSettings
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
 import { CapacitorBucketStorageAdapter } from './sync/CapacitorBucketStorageAdapter.js';
+import { CapacitorRemote } from './sync/CapacitorRemote.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
+
 /**
  * PowerSyncDatabase class for managing database connections and sync implementations.
  * This extends the WebPowerSyncDatabase to provide platform-specific implementations
@@ -89,7 +90,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       if (this.options.flags?.enableMultiTabs) {
         this.logger.warn(`enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`);
       }
-      const remote = new WebRemote(connector, this.logger);
+      const remote = new CapacitorRemote(connector, this.logger);
 
       return new CapacitorStreamingSyncImplementation({
         ...(this.options as {}),
