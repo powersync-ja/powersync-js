@@ -12,7 +12,7 @@ import {
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
-import { BucketChecksum } from '@powersync/common/sync_protocol';
+import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 

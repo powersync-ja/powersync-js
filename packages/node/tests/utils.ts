@@ -4,7 +4,7 @@ import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
 import { createLogger } from '@powersync/common';
-import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/sync_protocol';
+import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {

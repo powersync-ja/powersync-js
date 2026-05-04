@@ -10,7 +10,7 @@ import {
   SimpleAsyncIterator,
   SyncStreamOptions
 } from '@powersync/common';
-import { StreamingSyncLine } from '@powersync/common/sync_protocol';
+import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import {
   PowerSyncDatabase,
   WASQLitePowerSyncDatabaseOpenFactory,

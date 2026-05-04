@@ -1,5 +1,5 @@
 import { AbstractPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@powersync/web';
-import type { SyncDataBucketJSON } from '@powersync/common/sync_protocol';
+import type { SyncDataBucketJSON } from '@powersync/common/internal/sync_protocol';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 import { localStateDb } from './LocalStateManager';

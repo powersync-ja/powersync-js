@@ -2,7 +2,7 @@ import type { DBAdapter } from '@powersync/web';
 import { Column, ColumnType, Schema, Table } from '@powersync/web';
 import { DiagnosticsAppSchema as AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
-import type { SyncDataBucketJSON } from '@powersync/common/sync_protocol';
+import type { SyncDataBucketJSON } from '@powersync/common/internal/sync_protocol';
 
 /**
  * Record fields from downloaded data, then build a schema from it.

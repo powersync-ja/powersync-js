@@ -6,7 +6,7 @@ import {
   SqliteBucketStorage
 } from '@powersync/web';
 import { type BSON } from 'bson';
-import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/sync_protocol';
+import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 
 /**

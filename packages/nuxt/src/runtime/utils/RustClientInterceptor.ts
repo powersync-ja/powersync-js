@@ -3,7 +3,7 @@ import { type BSON } from 'bson';
 import { AbstractPowerSyncDatabase, PowerSyncControlCommand, SqliteBucketStorage } from '@powersync/web';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import type { ShallowRef } from 'vue';
-import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/sync_protocol';
+import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 
 /**
  * Tracks per-byte and per-operation progress for the Rust client.
