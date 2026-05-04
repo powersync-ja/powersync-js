@@ -202,11 +202,11 @@ export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
 export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase) {
   return class extends Base implements DBAdapter {
     readTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-      return this.readLock((ctx) => TransactionImplementation.runWith(ctx, false, fn), options);
+      return this.readLock((ctx) => TransactionImplementation.runWith(ctx, fn), options);
     }
 
     writeTransaction<T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions): Promise<T> {
-      return this.writeLock((ctx) => TransactionImplementation.runWith(ctx, true, fn), options);
+      return this.writeLock((ctx) => TransactionImplementation.runWith(ctx, fn), options);
     }
 
     getAll<T>(sql: string, parameters?: any[]): Promise<T[]> {
@@ -270,7 +270,7 @@ class BaseTransaction implements SqlExecutor {
 }
 
 class TransactionImplementation extends DBGetUtilsDefaultMixin(BaseTransaction) {
-  static async runWith<T>(ctx: LockContext, isWrite: boolean, fn: (tx: Transaction) => Promise<T>): Promise<T> {
+  static async runWith<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
     let tx = new TransactionImplementation(ctx);
 
     // For write transactions, use BEGIN IMMEDIATE to immediately obtain a write lock on the database (instead of doing
@@ -279,7 +279,7 @@ class TransactionImplementation extends DBGetUtilsDefaultMixin(BaseTransaction) 
     // the transaction). But if we have a "fake" read-only connection implemented through `pragma query_only = true`, we
     // can't use this trick because it would attempt to lock the connection. So there, we use a regular `BEGIN`
     // statement.
-    const useBeginImmediate = isWrite || ctx.connectionType != 'queryOnly';
+    const useBeginImmediate = ctx.connectionType != 'queryOnly';
 
     try {
       await ctx.execute(useBeginImmediate ? 'BEGIN IMMEDIATE' : 'BEGIN');
