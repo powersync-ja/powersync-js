@@ -685,6 +685,14 @@ export function registerBaseTests() {
       await Promise.all(promises);
     });
 
+    it('readTransaction', async () => {
+      await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
+      const names = await db.readTransaction(async (tx) => {
+        return await tx.getAll<{name: string}>('SELECT name FROM users');
+      });
+      expect(names).deep.equal([{name: 'name'}]);
+    });
+
     it('Should handle multiple closes', async () => {
       // Bulk insert 10000 rows without using a transaction
       const bulkInsertCommands = [];
@@ -721,12 +729,6 @@ export function registerBaseTests() {
       }
     });
 
-    it('readTransaction', async () => {
-      await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
-      const names = await db.readTransaction(async (tx) => {
-        return await tx.getAll<{name: string}>('SELECT name FROM users');
-      });
-      expect(names).deep.equal([{name: 'name'}]);
-    });
+    
   });
 }
