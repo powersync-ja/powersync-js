@@ -728,7 +728,5 @@ export function registerBaseTests() {
         expect(results.map((r) => r.status)).deep.equal(['fulfilled', 'rejected', 'rejected', 'rejected']);
       }
     });
-
-    
   });
 }
