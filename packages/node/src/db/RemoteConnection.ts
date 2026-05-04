@@ -19,7 +19,12 @@ class BaseRemoteConnection implements SqlExecutor {
 
   private readonly notifyWorkerClosed = new AbortController();
 
-  constructor(worker: Worker, comlink: Remote<AsyncDatabaseOpener>, database: Remote<AsyncDatabase>) {
+  constructor(
+    worker: Worker,
+    comlink: Remote<AsyncDatabaseOpener>,
+    database: Remote<AsyncDatabase>,
+    private readonly readonly: boolean
+  ) {
     this.worker = worker;
     this.comlink = comlink;
     this.database = database;
@@ -27,6 +32,10 @@ class BaseRemoteConnection implements SqlExecutor {
     this.worker.once('exit', (_) => {
       this.notifyWorkerClosed.abort();
     });
+  }
+
+  public get connectionType() {
+    return this.readonly ? 'readOnly' : 'writer';
   }
 
   /**

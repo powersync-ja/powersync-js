@@ -720,5 +720,13 @@ export function registerBaseTests() {
         expect(results.map((r) => r.status)).deep.equal(['fulfilled', 'rejected', 'rejected', 'rejected']);
       }
     });
+
+    it('readTransaction', async () => {
+      await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['name']);
+      const names = await db.readTransaction(async (tx) => {
+        return await tx.getAll<{name: string}>('SELECT name FROM users');
+      });
+      expect(names).deep.equal([{name: 'name'}]);
+    });
   });
 }

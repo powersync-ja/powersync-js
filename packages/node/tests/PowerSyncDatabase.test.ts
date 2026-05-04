@@ -252,3 +252,25 @@ databaseTest('execute batch', async ({ database }) => {
   await database.executeBatch('INSERT INTO users (id, name) VALUES (uuid(), ?)', [['a'], ['b'], ['c']]);
   expect(await database.getAll('SELECT * FROM users')).toHaveLength(3);
 });
+
+databaseTest('read transaction', async ({ database }) => {
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['before tx']);
+
+  let completeHasRead: () => void, completeDidWrite: () => void;
+  const hasReadTx = new Promise<void>((resolve) => (completeHasRead = resolve));
+  const didWrite = new Promise<void>((resolve) => (completeDidWrite = resolve));
+
+  const listsInReadTx = database.readTransaction(async (tx) => {
+    completeHasRead();
+    await didWrite;
+
+    // Because this transaction was started before the write, we shouldn't see it in here.
+    return await tx.getAll<{ name: string }>('SELECT name FROM lists');
+  });
+
+  await hasReadTx;
+  await database.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['after tx']);
+  completeDidWrite!();
+
+  expect(await listsInReadTx).toEqual([{ name: 'before tx' }]);
+});
