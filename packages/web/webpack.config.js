@@ -1,5 +1,4 @@
 const production = process.env.NODE_ENV === 'production';
-import { createRequire } from 'module';
 import path from 'path';
 import TerserPlugin from 'terser-webpack-plugin';
 import { fileURLToPath } from 'url';
@@ -9,7 +8,6 @@ import LimitChunkCountPlugin from 'webpack/lib/optimize/LimitChunkCountPlugin.js
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
 
 export default () => {
   return {
@@ -34,11 +32,6 @@ export default () => {
 
     resolve: {
       extensions: ['.tsx', '.ts', '.js'],
-      fallback: {
-        crypto: require.resolve('crypto-browserify'),
-        stream: require.resolve('stream-browserify'),
-        vm: require.resolve('vm-browserify')
-      },
       alias: {}
     },
 

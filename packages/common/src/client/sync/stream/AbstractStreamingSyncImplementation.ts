@@ -1,35 +1,15 @@
 import Logger, { ILogger } from 'js-logger';
 
-import { InternalProgressInformation } from '../../../db/crud/SyncProgress.js';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
 import { throttleLeadingTrailing } from '../../../utils/async.js';
-import {
-  BucketChecksum,
-  BucketDescription,
-  BucketStorageAdapter,
-  Checkpoint,
-  PowerSyncControlCommand
-} from '../bucket/BucketStorageAdapter.js';
+import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
-import { SyncDataBucket } from '../bucket/SyncDataBucket.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
 import { EstablishSyncStream, Instruction, coreStatusToJs } from './core-instruction.js';
-import {
-  BucketRequest,
-  StreamingSyncLine,
-  StreamingSyncLineOrCrudUploadComplete,
-  StreamingSyncRequestParameterType,
-  isStreamingKeepalive,
-  isStreamingSyncCheckpoint,
-  isStreamingSyncCheckpointComplete,
-  isStreamingSyncCheckpointDiff,
-  isStreamingSyncCheckpointPartiallyComplete,
-  isStreamingSyncData
-} from './streaming-sync-types.js';
 import { injectable, InjectableIterator, map, SimpleAsyncIterator } from '../../../utils/stream_transform.js';
-import type { BSON } from 'bson';
+import { StreamingSyncRequestParameterType } from './JsonValue.js';
 
 export enum LockType {
   CRUD = 'crud',
@@ -43,34 +23,20 @@ export enum SyncStreamConnectionMethod {
 
 export enum SyncClientImplementation {
   /**
-   * Decodes and handles sync lines received from the sync service in JavaScript.
-   *
-   * This is the default option.
-   *
-   * @deprecated We recommend the {@link RUST} client implementation for all apps. If you have issues with
-   * the Rust client, please file an issue or reach out to us. The JavaScript client will be removed in a future
-   * version of the PowerSync SDK.
-   */
-  JAVASCRIPT = 'js',
-  /**
    * This implementation offloads the sync line decoding and handling into the PowerSync
    * core extension.
    *
-   * This option is more performant than the {@link JAVASCRIPT} client, enabled by default and the
-   * recommended client implementation for all apps.
+   * This is the only option, as an older JavaScript client implementation has been removed from the SDK.
    *
    * ## Compatibility warning
    *
    * The Rust sync client stores sync data in a format that is slightly different than the one used
-   * by the old {@link JAVASCRIPT} implementation. When adopting the {@link RUST} client on existing
-   * databases, the PowerSync SDK will migrate the format automatically.
-   * Further, the {@link JAVASCRIPT} client in recent versions of the PowerSync JS SDK (starting from
-   * the version introducing {@link RUST} as an option) also supports the new format, so you can switch
-   * back to {@link JAVASCRIPT} later.
+   * by the old JavaScript client. When adopting the {@link RUST} client on existing databases, the PowerSync SDK will
+   * migrate the format automatically.
    *
-   * __However__: Upgrading the SDK version, then adopting {@link RUST} as a sync client and later
-   * downgrading the SDK to an older version (necessarily using the JavaScript-based implementation then)
-   * can lead to sync issues.
+   * SDK versions supporting both the JavaScript and the Rust client support both formats with the JavaScript client
+   * implementaiton. However, downgrading to an SDK version that only supports the JavaScript client would not be
+   * possible anymore. Problematic SDK versions have been released before 2025-06-09.
    */
   RUST = 'rust'
 }
@@ -130,11 +96,7 @@ export interface BaseConnectionOptions {
   appMetadata?: Record<string, string>;
 
   /**
-   * Whether to use a JavaScript implementation to handle received sync lines from the sync
-   * service, or whether this work should be offloaded to the PowerSync core extension.
-   *
-   * This defaults to the JavaScript implementation ({@link SyncClientImplementation.JAVASCRIPT})
-   * since the ({@link SyncClientImplementation.RUST}) implementation is experimental at the moment.
+   * @deprecated The Rust sync client is used unconditionally, so this option can't be configured.
    */
   clientImplementation?: SyncClientImplementation;
 
@@ -200,9 +162,7 @@ export interface StreamingSyncImplementation
    */
   disconnect(): Promise<void>;
   getWriteCheckpoint: () => Promise<string>;
-  hasCompletedSync: () => Promise<boolean>;
   isConnected: boolean;
-  lastSyncedAt?: Date;
   syncStatus: SyncStatus;
   triggerCrudUpload: () => void;
   waitForReady(): Promise<void>;
@@ -247,12 +207,11 @@ export abstract class AbstractStreamingSyncImplementation
   extends BaseObserver<StreamingSyncImplementationListener>
   implements StreamingSyncImplementation
 {
-  protected _lastSyncedAt: Date | null;
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
   // In rare cases, mostly for tests, uploads can be triggered without being properly connected.
   // This allows ensuring that all upload processes can be aborted.
-  protected uploadAbortController: AbortController | null;
+  protected uploadAbortController: AbortController | undefined;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
   protected logger: ILogger;
@@ -304,7 +263,7 @@ export abstract class AbstractStreamingSyncImplementation
        * Match only the partial status options provided in the
        * matching status
        */
-      const matchPartialObject = (compA: object, compB: object) => {
+      const matchPartialObject = (compA: object, compB: any): any => {
         return Object.entries(compA).every(([key, value]) => {
           const comparisonBValue = compB[key];
           if (typeof value == 'object' && typeof comparisonBValue == 'object') {
@@ -353,10 +312,6 @@ export abstract class AbstractStreamingSyncImplementation
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
-
-  async hasCompletedSync() {
-    return this.options.adapter.hasCompletedSync();
-  }
 
   async getWriteCheckpoint(): Promise<string> {
     const clientId = await this.options.adapter.getClientId();
@@ -428,7 +383,7 @@ The next upload iteration will be delayed.`);
             this.updateSyncStatus({
               dataFlow: {
                 uploading: false,
-                uploadError: ex
+                uploadError: ex as Error
               }
             });
             await this.delayRetry(controller.signal);
@@ -437,7 +392,7 @@ The next upload iteration will be delayed.`);
               break;
             }
             this.logger.debug(
-              `Caught exception when uploading. Upload will retry after a delay. Exception: ${ex.message}`
+              `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
             );
           } finally {
             this.updateSyncStatus({
@@ -447,7 +402,7 @@ The next upload iteration will be delayed.`);
             });
           }
         }
-        this.uploadAbortController = null;
+        this.uploadAbortController = undefined;
       }
     });
   }
@@ -584,7 +539,7 @@ The next upload iteration will be delayed.`);
 
         this.updateSyncStatus({
           dataFlow: {
-            downloadError: ex
+            downloadError: ex as Error
           }
         });
       } finally {
@@ -622,20 +577,6 @@ The next upload iteration will be delayed.`);
     // make when no subscriptions have actually changed, we're mainly interested in this immediately throwing if no
     // iteration is active. That allows us to reconnect ASAP, instead of having to wait for the next sync line.
     this.handleActiveStreamsChange?.();
-  }
-
-  private async collectLocalBucketState(): Promise<[BucketRequest[], Map<string, BucketDescription | null>]> {
-    const bucketEntries = await this.options.adapter.getBucketStates();
-    const req: BucketRequest[] = bucketEntries.map((entry) => ({
-      name: entry.bucket,
-      after: entry.op_id
-    }));
-    const localDescriptions = new Map<string, BucketDescription | null>();
-    for (const entry of bucketEntries) {
-      localDescriptions.set(entry.bucket, null);
-    }
-
-    return [req, localDescriptions];
   }
 
   /**
@@ -688,13 +629,8 @@ The next upload iteration will be delayed.`);
         const clientImplementation = resolvedOptions.clientImplementation;
         this.updateSyncStatus({ clientImplementation });
 
-        if (clientImplementation == SyncClientImplementation.JAVASCRIPT) {
-          await this.legacyStreamingSyncIteration(signal, resolvedOptions);
-          return null;
-        } else {
-          await this.requireKeyFormat(true);
-          return await this.rustSyncIteration(signal, resolvedOptions);
-        }
+        await this.requireKeyFormat(true);
+        return await this.rustSyncIteration(signal, resolvedOptions);
       }
     });
   }
@@ -702,260 +638,18 @@ The next upload iteration will be delayed.`);
   private async receiveSyncLines(data: {
     options: SyncStreamOptions;
     connection: RequiredPowerSyncConnectionOptions;
-    bson?: typeof BSON;
   }): Promise<SimpleAsyncIterator<Uint8Array | string>> {
-    const { options, connection, bson } = data;
+    const { options, connection } = data;
     const remote = this.options.remote;
 
     if (connection.connectionMethod == SyncStreamConnectionMethod.HTTP) {
       return await remote.fetchStream(options);
     } else {
-      return await this.options.remote.socketStreamRaw(
-        {
-          ...options,
-          ...{ fetchStrategy: connection.fetchStrategy }
-        },
-        bson
-      );
+      return await this.options.remote.socketStreamRaw({
+        ...options,
+        ...{ fetchStrategy: connection.fetchStrategy }
+      });
     }
-  }
-
-  private async legacyStreamingSyncIteration(signal: AbortSignal, resolvedOptions: RequiredPowerSyncConnectionOptions) {
-    const rawTables = resolvedOptions.serializedSchema?.raw_tables;
-    if (rawTables != null && rawTables.length) {
-      this.logger.warn('Raw tables require the Rust-based sync client. The JS client will ignore them.');
-    }
-    if (this.activeStreams.length) {
-      this.logger.error('Sync streams require `clientImplementation: SyncClientImplementation.RUST` when connecting.');
-    }
-
-    this.logger.debug('Streaming sync iteration started');
-    this.options.adapter.startSession();
-    let [req, bucketMap] = await this.collectLocalBucketState();
-
-    let targetCheckpoint: Checkpoint | null = null;
-    // A checkpoint that has been validated but not applied (e.g. due to pending local writes)
-    let pendingValidatedCheckpoint: Checkpoint | null = null;
-
-    const clientId = await this.options.adapter.getClientId();
-    const usingFixedKeyFormat = await this.requireKeyFormat(false);
-
-    this.logger.debug('Requesting stream from server');
-
-    const syncOptions: SyncStreamOptions = {
-      path: '/sync/stream',
-      abortSignal: signal,
-      data: {
-        buckets: req,
-        include_checksum: true,
-        raw_data: true,
-        parameters: resolvedOptions.params,
-        app_metadata: resolvedOptions.appMetadata,
-        client_id: clientId
-      }
-    };
-
-    const bson = await this.options.remote.getBSON();
-    const source = await this.receiveSyncLines({
-      options: syncOptions,
-      connection: resolvedOptions,
-      bson
-    });
-    const stream: InjectableIterator<StreamingSyncLineOrCrudUploadComplete> = injectable(
-      map(source, (line) => {
-        if (typeof line == 'string') {
-          return JSON.parse(line) as StreamingSyncLine;
-        } else {
-          return bson.deserialize(line) as StreamingSyncLine;
-        }
-      })
-    );
-
-    this.logger.debug('Stream established. Processing events');
-
-    this.notifyCompletedUploads = () => {
-      stream.inject({ crud_upload_completed: null });
-    };
-
-    while (true) {
-      const { value: line, done } = await stream.next();
-      if (done) {
-        // The stream has closed while waiting
-        return;
-      }
-
-      if ('crud_upload_completed' in line) {
-        if (pendingValidatedCheckpoint != null) {
-          const { applied, endIteration } = await this.applyCheckpoint(pendingValidatedCheckpoint);
-          if (applied) {
-            pendingValidatedCheckpoint = null;
-          } else if (endIteration) {
-            break;
-          }
-        }
-
-        continue;
-      }
-
-      // A connection is active and messages are being received
-      if (!this.syncStatus.connected) {
-        // There is a connection now
-        Promise.resolve().then(() => this.triggerCrudUpload());
-        this.updateSyncStatus({
-          connected: true
-        });
-      }
-
-      if (isStreamingSyncCheckpoint(line)) {
-        targetCheckpoint = line.checkpoint;
-        // New checkpoint - existing validated checkpoint is no longer valid
-        pendingValidatedCheckpoint = null;
-        const bucketsToDelete = new Set<string>(bucketMap.keys());
-        const newBuckets = new Map<string, BucketDescription>();
-        for (const checksum of line.checkpoint.buckets) {
-          newBuckets.set(checksum.bucket, {
-            name: checksum.bucket,
-            priority: checksum.priority ?? FALLBACK_PRIORITY
-          });
-          bucketsToDelete.delete(checksum.bucket);
-        }
-        if (bucketsToDelete.size > 0) {
-          this.logger.debug('Removing buckets', [...bucketsToDelete]);
-        }
-        bucketMap = newBuckets;
-        await this.options.adapter.removeBuckets([...bucketsToDelete]);
-        await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
-        await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
-      } else if (isStreamingSyncCheckpointComplete(line)) {
-        const result = await this.applyCheckpoint(targetCheckpoint!);
-        if (result.endIteration) {
-          return;
-        } else if (!result.applied) {
-          // "Could not apply checkpoint due to local data". We need to retry after
-          // finishing uploads.
-          pendingValidatedCheckpoint = targetCheckpoint;
-        } else {
-          // Nothing to retry later. This would likely already be null from the last
-          // checksum or checksum_diff operation, but we make sure.
-          pendingValidatedCheckpoint = null;
-        }
-      } else if (isStreamingSyncCheckpointPartiallyComplete(line)) {
-        const priority = line.partial_checkpoint_complete.priority;
-        this.logger.debug('Partial checkpoint complete', priority);
-        const result = await this.options.adapter.syncLocalDatabase(targetCheckpoint!, priority);
-        if (!result.checkpointValid) {
-          // This means checksums failed. Start again with a new checkpoint.
-          // TODO: better back-off
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          return;
-        } else if (!result.ready) {
-          // If we have pending uploads, we can't complete new checkpoints outside of priority 0.
-          // We'll resolve this for a complete checkpoint.
-        } else {
-          // We'll keep on downloading, but can report that this priority is synced now.
-          this.logger.debug('partial checkpoint validation succeeded');
-
-          // All states with a higher priority can be deleted since this partial sync includes them.
-          const priorityStates = this.syncStatus.priorityStatusEntries.filter((s) => s.priority <= priority);
-          priorityStates.push({
-            priority,
-            lastSyncedAt: new Date(),
-            hasSynced: true
-          });
-
-          this.updateSyncStatus({
-            connected: true,
-            priorityStatusEntries: priorityStates
-          });
-        }
-      } else if (isStreamingSyncCheckpointDiff(line)) {
-        // TODO: It may be faster to just keep track of the diff, instead of the entire checkpoint
-        if (targetCheckpoint == null) {
-          throw new Error('Checkpoint diff without previous checkpoint');
-        }
-        // New checkpoint - existing validated checkpoint is no longer valid
-        pendingValidatedCheckpoint = null;
-        const diff = line.checkpoint_diff;
-        const newBuckets = new Map<string, BucketChecksum>();
-        for (const checksum of targetCheckpoint.buckets) {
-          newBuckets.set(checksum.bucket, checksum);
-        }
-        for (const checksum of diff.updated_buckets) {
-          newBuckets.set(checksum.bucket, checksum);
-        }
-        for (const bucket of diff.removed_buckets) {
-          newBuckets.delete(bucket);
-        }
-
-        const newCheckpoint: Checkpoint = {
-          last_op_id: diff.last_op_id,
-          buckets: [...newBuckets.values()],
-          write_checkpoint: diff.write_checkpoint
-        };
-        targetCheckpoint = newCheckpoint;
-        await this.updateSyncStatusForStartingCheckpoint(targetCheckpoint);
-
-        bucketMap = new Map();
-        newBuckets.forEach((checksum, name) =>
-          bucketMap.set(name, {
-            name: checksum.bucket,
-            priority: checksum.priority ?? FALLBACK_PRIORITY
-          })
-        );
-
-        const bucketsToDelete = diff.removed_buckets;
-        if (bucketsToDelete.length > 0) {
-          this.logger.debug('Remove buckets', bucketsToDelete);
-        }
-        await this.options.adapter.removeBuckets(bucketsToDelete);
-        await this.options.adapter.setTargetCheckpoint(targetCheckpoint);
-      } else if (isStreamingSyncData(line)) {
-        const { data } = line;
-        const previousProgress = this.syncStatus.dataFlowStatus.downloadProgress;
-        let updatedProgress: InternalProgressInformation | null = null;
-        if (previousProgress) {
-          updatedProgress = { ...previousProgress };
-          const progressForBucket = updatedProgress[data.bucket];
-          if (progressForBucket) {
-            updatedProgress[data.bucket] = {
-              ...progressForBucket,
-              since_last: progressForBucket.since_last + data.data.length
-            };
-          }
-        }
-
-        this.updateSyncStatus({
-          dataFlow: {
-            downloading: true,
-            downloadProgress: updatedProgress
-          }
-        });
-        await this.options.adapter.saveSyncData({ buckets: [SyncDataBucket.fromRow(data)] }, usingFixedKeyFormat);
-      } else if (isStreamingKeepalive(line)) {
-        const remaining_seconds = line.token_expires_in;
-        if (remaining_seconds == 0) {
-          // Connection would be closed automatically right after this
-          this.logger.debug('Token expiring; reconnect');
-          /**
-           * For a rare case where the backend connector does not update the token
-           * (uses the same one), this should have some delay.
-           */
-          await this.delayRetry();
-          return;
-        } else if (remaining_seconds < 30) {
-          this.logger.debug('Token will expire soon; reconnect');
-          // Pre-emptively refresh the token
-          this.options.remote.invalidateCredentials();
-          return;
-        }
-        this.triggerCrudUpload();
-      } else {
-        this.logger.debug('Received unknown sync line', line);
-      }
-    }
-    this.logger.debug('Stream input empty');
-    // Connection closed. Likely due to auth issue.
-    return;
   }
 
   private async rustSyncIteration(
@@ -1145,80 +839,6 @@ The next upload iteration will be delayed.`);
     }
 
     return { immediateRestart: hideDisconnectOnRestart };
-  }
-
-  private async updateSyncStatusForStartingCheckpoint(checkpoint: Checkpoint) {
-    const localProgress = await this.options.adapter.getBucketOperationProgress();
-    const progress: InternalProgressInformation = {};
-    let invalidated = false;
-
-    for (const bucket of checkpoint.buckets) {
-      const savedProgress = localProgress[bucket.bucket];
-      const atLast = savedProgress?.atLast ?? 0;
-      const sinceLast = savedProgress?.sinceLast ?? 0;
-
-      progress[bucket.bucket] = {
-        // The fallback priority doesn't matter here, but 3 is the one newer versions of the sync service
-        // will use by default.
-        priority: bucket.priority ?? 3,
-        at_last: atLast,
-        since_last: sinceLast,
-        target_count: bucket.count ?? 0
-      };
-
-      if (bucket.count != null && bucket.count < atLast + sinceLast) {
-        // Either due to a defrag / sync rule deploy or a compaction operation, the size
-        // of the bucket shrank so much that the local ops exceed the ops in the updated
-        // bucket. We can't prossibly report progress in this case (it would overshoot 100%).
-        invalidated = true;
-      }
-    }
-
-    if (invalidated) {
-      for (const bucket in progress) {
-        const bucketProgress = progress[bucket];
-        bucketProgress.at_last = 0;
-        bucketProgress.since_last = 0;
-      }
-    }
-
-    this.updateSyncStatus({
-      dataFlow: {
-        downloading: true,
-        downloadProgress: progress
-      }
-    });
-  }
-
-  private async applyCheckpoint(checkpoint: Checkpoint) {
-    let result = await this.options.adapter.syncLocalDatabase(checkpoint);
-
-    if (!result.checkpointValid) {
-      this.logger.debug(`Checksum mismatch in checkpoint ${checkpoint.last_op_id}, will reconnect`);
-      // This means checksums failed. Start again with a new checkpoint.
-      // TODO: better back-off
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      return { applied: false, endIteration: true };
-    } else if (!result.ready) {
-      this.logger.debug(
-        `Could not apply checkpoint ${checkpoint.last_op_id} due to local data. We will retry applying the checkpoint after that upload is completed.`
-      );
-
-      return { applied: false, endIteration: false };
-    }
-
-    this.logger.debug(`Applied checkpoint ${checkpoint.last_op_id}`, checkpoint);
-    this.updateSyncStatus({
-      connected: true,
-      lastSyncedAt: new Date(),
-      dataFlow: {
-        downloading: false,
-        downloadProgress: null,
-        downloadError: undefined
-      }
-    });
-
-    return { applied: true, endIteration: false };
   }
 
   protected updateSyncStatus(options: SyncStatusOptions) {

@@ -3,23 +3,16 @@ import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapt
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
 import {
-  BucketChecksum,
-  BucketOperationProgress,
-  BucketState,
   BucketStorageAdapter,
   BucketStorageListener,
-  Checkpoint,
   PowerSyncControlCommand,
-  PSInternalTable,
-  SyncLocalDatabaseResult
+  PSInternalTable
 } from './BucketStorageAdapter.js';
 import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry, CrudEntryJSON } from './CrudEntry.js';
-import { SyncDataBatch } from './SyncDataBatch.js';
 
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
   public tableNames: Set<string>;
-  private _hasCompletedSync: boolean;
   private updateListener: () => void;
   private _clientId?: Promise<string>;
 
@@ -28,7 +21,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     private logger: ILogger = Logger.get('SqliteBucketStorage')
   ) {
     super();
-    this._hasCompletedSync = false;
     this.tableNames = new Set();
     this.updateListener = db.registerListener({
       tablesUpdated: (update) => {
@@ -41,7 +33,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   async init() {
-    this._hasCompletedSync = false;
     const existingTableRows = await this.db.getAll<{ name: string }>(
       `SELECT name FROM sqlite_master WHERE type='table' AND name GLOB 'ps_data_*'`
     );
@@ -68,182 +59,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   getMaxOpId() {
     return MAX_OP_ID;
-  }
-
-  /**
-   * Reset any caches.
-   */
-  startSession(): void {}
-
-  async getBucketStates(): Promise<BucketState[]> {
-    const result = await this.db.getAll<BucketState>(
-      "SELECT name as bucket, cast(last_op as TEXT) as op_id FROM ps_buckets WHERE pending_delete = 0 AND name != '$local'"
-    );
-    return result;
-  }
-
-  async getBucketOperationProgress(): Promise<BucketOperationProgress> {
-    const rows = await this.db.getAll<{ name: string; count_at_last: number; count_since_last: number }>(
-      'SELECT name, count_at_last, count_since_last FROM ps_buckets'
-    );
-    return Object.fromEntries(rows.map((r) => [r.name, { atLast: r.count_at_last, sinceLast: r.count_since_last }]));
-  }
-
-  async saveSyncData(batch: SyncDataBatch, fixedKeyFormat: boolean = false) {
-    await this.writeTransaction(async (tx) => {
-      for (const b of batch.buckets) {
-        await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
-          'save',
-          JSON.stringify({ buckets: [b.toJSON(fixedKeyFormat)] })
-        ]);
-        this.logger.debug(`Saved batch of data for  bucket: ${b.bucket}, operations: ${b.data.length}`);
-      }
-    });
-  }
-
-  async removeBuckets(buckets: string[]): Promise<void> {
-    for (const bucket of buckets) {
-      await this.deleteBucket(bucket);
-    }
-  }
-
-  /**
-   * Mark a bucket for deletion.
-   */
-  private async deleteBucket(bucket: string) {
-    await this.writeTransaction(async (tx) => {
-      await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', ['delete_bucket', bucket]);
-    });
-
-    this.logger.debug(`Done deleting bucket ${bucket}`);
-  }
-
-  async hasCompletedSync() {
-    if (this._hasCompletedSync) {
-      return true;
-    }
-    const r = await this.db.get<{ synced_at: string | null }>(`SELECT powersync_last_synced_at() as synced_at`);
-    const completed = r.synced_at != null;
-    if (completed) {
-      this._hasCompletedSync = true;
-    }
-    return completed;
-  }
-
-  async syncLocalDatabase(checkpoint: Checkpoint, priority?: number): Promise<SyncLocalDatabaseResult> {
-    const r = await this.validateChecksums(checkpoint, priority);
-    if (!r.checkpointValid) {
-      this.logger.error('Checksums failed for', r.checkpointFailures);
-      for (const b of r.checkpointFailures ?? []) {
-        await this.deleteBucket(b);
-      }
-      return { ready: false, checkpointValid: false, checkpointFailures: r.checkpointFailures };
-    }
-    if (priority == null) {
-      this.logger.debug(`Validated checksums checkpoint ${checkpoint.last_op_id}`);
-    } else {
-      this.logger.debug(`Validated checksums for partial checkpoint ${checkpoint.last_op_id}, priority ${priority}`);
-    }
-
-    let buckets = checkpoint.buckets;
-    if (priority !== undefined) {
-      buckets = buckets.filter((b) => hasMatchingPriority(priority, b));
-    }
-    const bucketNames = buckets.map((b) => b.bucket);
-    await this.writeTransaction(async (tx) => {
-      await tx.execute(`UPDATE ps_buckets SET last_op = ? WHERE name IN (SELECT json_each.value FROM json_each(?))`, [
-        checkpoint.last_op_id,
-        JSON.stringify(bucketNames)
-      ]);
-
-      if (priority == null && checkpoint.write_checkpoint) {
-        await tx.execute("UPDATE ps_buckets SET last_op = ? WHERE name = '$local'", [checkpoint.write_checkpoint]);
-      }
-    });
-
-    const valid = await this.updateObjectsFromBuckets(checkpoint, priority);
-    if (!valid) {
-      return { ready: false, checkpointValid: true };
-    }
-
-    return {
-      ready: true,
-      checkpointValid: true
-    };
-  }
-
-  /**
-   * Atomically update the local state to the current checkpoint.
-   *
-   * This includes creating new tables, dropping old tables, and copying data over from the oplog.
-   */
-  private async updateObjectsFromBuckets(checkpoint: Checkpoint, priority: number | undefined) {
-    let arg = '';
-    if (priority !== undefined) {
-      const affectedBuckets: string[] = [];
-      for (const desc of checkpoint.buckets) {
-        if (hasMatchingPriority(priority, desc)) {
-          affectedBuckets.push(desc.bucket);
-        }
-      }
-
-      arg = JSON.stringify({ priority, buckets: affectedBuckets });
-    }
-
-    return this.writeTransaction(async (tx) => {
-      const { insertId: result } = await tx.execute('INSERT INTO powersync_operations(op, data) VALUES(?, ?)', [
-        'sync_local',
-        arg
-      ]);
-      if (result == 1) {
-        if (priority == null) {
-          const bucketToCount = Object.fromEntries(checkpoint.buckets.map((b) => [b.bucket, b.count]));
-          // The two parameters could be replaced with one, but: https://github.com/powersync-ja/better-sqlite3/pull/6
-          const jsonBucketCount = JSON.stringify(bucketToCount);
-          await tx.execute(
-            "UPDATE ps_buckets SET count_since_last = 0, count_at_last = ?->name WHERE name != '$local' AND ?->name IS NOT NULL",
-            [jsonBucketCount, jsonBucketCount]
-          );
-        }
-
-        return true;
-      } else {
-        return false;
-      }
-    });
-  }
-
-  async validateChecksums(checkpoint: Checkpoint, priority: number | undefined): Promise<SyncLocalDatabaseResult> {
-    if (priority !== undefined) {
-      // Only validate the buckets within the priority we care about
-      const newBuckets = checkpoint.buckets.filter((cs) => hasMatchingPriority(priority, cs));
-      checkpoint = { ...checkpoint, buckets: newBuckets };
-    }
-
-    const rs = await this.db.execute('SELECT powersync_validate_checkpoint(?) as result', [
-      JSON.stringify({ ...checkpoint })
-    ]);
-
-    const resultItem = rs.rows?.item(0);
-    if (!resultItem) {
-      return {
-        checkpointValid: false,
-        ready: false,
-        checkpointFailures: []
-      };
-    }
-
-    const result = JSON.parse(resultItem['result']);
-
-    if (result['valid']) {
-      return { ready: true, checkpointValid: true };
-    } else {
-      return {
-        checkpointValid: false,
-        ready: false,
-        checkpointFailures: result['failed_buckets']
-      };
-    }
   }
 
   async updateLocalTarget(cb: () => Promise<string>): Promise<boolean> {
@@ -356,13 +171,6 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
     return this.db.writeTransaction(callback, options);
   }
 
-  /**
-   * Set a target checkpoint.
-   */
-  async setTargetCheckpoint(checkpoint: Checkpoint) {
-    // No-op for now
-  }
-
   async control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string> {
     return await this.writeTransaction(async (tx) => {
       const [[raw]] = await tx.executeRaw('SELECT powersync_control(?, ?)', [op, payload]);
@@ -388,8 +196,4 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
   }
 
   static _subkeyMigrationKey = 'powersync_js_migrated_subkeys';
-}
-
-function hasMatchingPriority(priority: number, bucket: BucketChecksum) {
-  return bucket.priority != null && bucket.priority <= priority;
 }
