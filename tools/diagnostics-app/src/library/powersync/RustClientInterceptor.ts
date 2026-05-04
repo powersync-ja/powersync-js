@@ -1,19 +1,12 @@
 import {
   AbstractPowerSyncDatabase,
   AbstractRemote,
-  BucketChecksum,
-  Checkpoint,
   ColumnType,
-  isStreamingSyncCheckpoint,
-  isStreamingSyncCheckpointComplete,
-  isStreamingSyncCheckpointDiff,
-  isStreamingSyncCheckpointPartiallyComplete,
-  isStreamingSyncData,
   PowerSyncControlCommand,
-  SqliteBucketStorage,
-  StreamingSyncLine,
-  SyncDataBucket
+  SqliteBucketStorage
 } from '@powersync/web';
+import { type BSON } from 'bson';
+import type { BucketChecksum, Checkpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
 import { DynamicSchemaManager } from './DynamicSchemaManager';
 
 /**
@@ -24,6 +17,7 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
  * `powersync_control` calls to decode sync lines and derive progress information.
  */
 export class RustClientInterceptor extends SqliteBucketStorage {
+  private bson?: typeof BSON;
   private rdb: AbstractPowerSyncDatabase;
   private lastStartedCheckpoint: Checkpoint | null = null;
 
@@ -55,15 +49,15 @@ export class RustClientInterceptor extends SqliteBucketStorage {
   }
 
   private async processBinaryLine(line: Uint8Array) {
-    const bson = await this.remote.getBSON();
+    const bson = (this.bson ??= await import('bson'));
     await this.processParsedLine(bson.deserialize(line) as StreamingSyncLine);
   }
 
   private async processParsedLine(line: StreamingSyncLine) {
-    if (isStreamingSyncCheckpoint(line)) {
+    if ('checkpoint' in line) {
       this.lastStartedCheckpoint = line.checkpoint;
       await this.trackCheckpoint(line.checkpoint);
-    } else if (isStreamingSyncCheckpointDiff(line) && this.lastStartedCheckpoint) {
+    } else if ('checkpoint_diff' in line && this.lastStartedCheckpoint) {
       const diff = line.checkpoint_diff;
       const newBuckets = new Map<string, BucketChecksum>();
       for (const checksum of this.lastStartedCheckpoint.buckets) {
@@ -83,30 +77,27 @@ export class RustClientInterceptor extends SqliteBucketStorage {
       };
       this.lastStartedCheckpoint = newCheckpoint;
       await this.trackCheckpoint(newCheckpoint);
-    } else if (isStreamingSyncData(line)) {
-      const batch = { buckets: [SyncDataBucket.fromRow(line.data)] };
-
+    } else if ('data' in line) {
+      const bucket = line.data;
       await this.rdb.writeTransaction(async (tx) => {
-        for (const bucket of batch.buckets) {
-          // Record metrics
-          const size = JSON.stringify(bucket.data).length;
-          await tx.execute(
-            `UPDATE local_bucket_data SET
+        // Record metrics
+        const size = JSON.stringify(bucket.data).length;
+        await tx.execute(
+          `UPDATE local_bucket_data SET
               download_size = IFNULL(download_size, 0) + ?,
               last_op = ?,
               downloading = ?,
               downloaded_operations = IFNULL(downloaded_operations, 0) + ?
             WHERE id = ?`,
-            [size, bucket.next_after, bucket.has_more, bucket.data.length, bucket.bucket]
-          );
-        }
+          [size, bucket.next_after, bucket.has_more, bucket.data.length, bucket.bucket]
+        );
       });
 
-      const schemaUpdated = await this.schemaManager.updateFromOperations(batch);
+      const schemaUpdated = await this.schemaManager.updateFromOperations(bucket);
       if (schemaUpdated) {
         await this.schemaManager.refreshSchema(this.rdb);
       }
-    } else if (isStreamingSyncCheckpointPartiallyComplete(line) || isStreamingSyncCheckpointComplete(line)) {
+    } else if ('partial_checkpoint_complete' in line || 'checkpoint_complete' in line) {
       setTimeout(() => {
         this.schemaManager.refreshSchema(this.rdb);
       }, 60);

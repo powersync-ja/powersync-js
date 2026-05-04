@@ -162,10 +162,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     });
   }
 
-  get lastSyncedAt(): Date | undefined {
-    return this.connectionManager.syncStreamImplementation?.lastSyncedAt;
-  }
-
   get isConnected(): boolean {
     return this.connectionManager.syncStreamImplementation?.isConnected ?? false;
   }
@@ -359,12 +355,6 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   triggerCrudUpload() {
     this.withSyncImplementation(async (sync) => {
       sync.triggerCrudUpload();
-    });
-  }
-
-  async hasCompletedSync(): Promise<boolean> {
-    return this.withSyncImplementation(async (sync) => {
-      return sync.hasCompletedSync();
     });
   }
 

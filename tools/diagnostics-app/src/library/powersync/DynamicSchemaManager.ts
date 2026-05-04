@@ -1,12 +1,5 @@
-import {
-  AbstractPowerSyncDatabase,
-  Column,
-  ColumnType,
-  OpTypeEnum,
-  Schema,
-  SyncDataBatch,
-  Table
-} from '@powersync/web';
+import { AbstractPowerSyncDatabase, Column, ColumnType, Schema, Table } from '@powersync/web';
+import type { SyncDataBucketJSON } from '@powersync/common/internal/sync_protocol';
 import { AppSchema } from './AppSchema';
 import { JsSchemaGenerator } from './JsSchemaGenerator';
 import { localStateDb } from './LocalStateManager';
@@ -27,10 +20,9 @@ export class DynamicSchemaManager {
    * Load dynamic schema from local DB. Call after localStateDb is initialized (e.g. before connect).
    */
   async loadFromDb(): Promise<void> {
-    const rows = await localStateDb.getAll<{ value: string }>(
-      'SELECT value FROM app_settings WHERE key = ?',
-      [APP_SETTINGS_KEY_DYNAMIC_SCHEMA]
-    );
+    const rows = await localStateDb.getAll<{ value: string }>('SELECT value FROM app_settings WHERE key = ?', [
+      APP_SETTINGS_KEY_DYNAMIC_SCHEMA
+    ]);
     const row = rows[0];
     if (row?.value) {
       this.tables = JSON.parse(row.value);
@@ -45,45 +37,46 @@ export class DynamicSchemaManager {
   }
 
   private async persistSchema(): Promise<void> {
-    await localStateDb.execute(
-      'INSERT OR REPLACE INTO app_settings (id, key, value) VALUES (?, ?, ?)',
-      [APP_SETTINGS_KEY_DYNAMIC_SCHEMA, APP_SETTINGS_KEY_DYNAMIC_SCHEMA, JSON.stringify(this.tables)]
-    );
+    await localStateDb.execute('INSERT OR REPLACE INTO app_settings (id, key, value) VALUES (?, ?, ?)', [
+      APP_SETTINGS_KEY_DYNAMIC_SCHEMA,
+      APP_SETTINGS_KEY_DYNAMIC_SCHEMA,
+      JSON.stringify(this.tables)
+    ]);
   }
 
   /**
    * @returns true if schema was updated (caller should call refreshSchema)
    */
-  async updateFromOperations(batch: SyncDataBatch): Promise<boolean> {
+  async updateFromOperations(bucket: SyncDataBucketJSON): Promise<boolean> {
     let schemaDirty = false;
-    for (const bucket of batch.buckets) {
-      for (const op of bucket.data) {
-        if (op.op.value == OpTypeEnum.PUT && op.data != null) {
-          this.tables[op.object_type!] ??= {};
-          const table = this.tables[op.object_type!];
-          const data = JSON.parse(op.data);
-          for (const [key, value] of Object.entries(data)) {
-            if (key == 'id') continue;
-            const existing = table[key];
-            if (
-              typeof value == 'number' &&
-              Number.isInteger(value) &&
-              existing != ColumnType.REAL &&
-              existing != ColumnType.TEXT
-            ) {
-              if (table[key] != ColumnType.INTEGER) schemaDirty = true;
-              table[key] = ColumnType.INTEGER;
-            } else if (typeof value == 'number' && existing != ColumnType.TEXT) {
-              if (table[key] != ColumnType.REAL) schemaDirty = true;
-              table[key] = ColumnType.REAL;
-            } else if (typeof value == 'string') {
-              if (table[key] != ColumnType.TEXT) schemaDirty = true;
-              table[key] = ColumnType.TEXT;
-            }
+
+    for (const op of bucket.data) {
+      if (op.op == 'PUT' && op.data != null) {
+        this.tables[op.object_type!] ??= {};
+        const table = this.tables[op.object_type!];
+        const data = JSON.parse(op.data);
+        for (const [key, value] of Object.entries(data)) {
+          if (key == 'id') continue;
+          const existing = table[key];
+          if (
+            typeof value == 'number' &&
+            Number.isInteger(value) &&
+            existing != ColumnType.REAL &&
+            existing != ColumnType.TEXT
+          ) {
+            if (table[key] != ColumnType.INTEGER) schemaDirty = true;
+            table[key] = ColumnType.INTEGER;
+          } else if (typeof value == 'number' && existing != ColumnType.TEXT) {
+            if (table[key] != ColumnType.REAL) schemaDirty = true;
+            table[key] = ColumnType.REAL;
+          } else if (typeof value == 'string') {
+            if (table[key] != ColumnType.TEXT) schemaDirty = true;
+            table[key] = ColumnType.TEXT;
           }
         }
       }
     }
+
     if (schemaDirty) {
       this.dirty = true;
       await this.persistSchema();
