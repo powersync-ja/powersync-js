@@ -1,7 +1,6 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  BSONImplementation,
   DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
@@ -21,8 +20,6 @@ class WebFetchProvider extends FetchImplementationProvider {
 }
 
 export class WebRemote extends AbstractRemote {
-  private _bson: BSONImplementation | undefined;
-
   constructor(
     protected connector: RemoteConnector,
     protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
@@ -42,18 +39,5 @@ export class WebRemote extends AbstractRemote {
       this.logger.warn('Failed to get user agent info', e);
     }
     return ua.join(' ');
-  }
-
-  async getBSON(): Promise<BSONImplementation> {
-    if (this._bson) {
-      return this._bson;
-    }
-
-    /**
-     * Dynamic import to be used only when needed.
-     */
-    const { BSON } = await import('bson');
-    this._bson = BSON;
-    return this._bson;
   }
 }

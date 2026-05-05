@@ -37,7 +37,7 @@ function defineBuild(isNode) {
       }
     ],
     plugins,
-    external: ['bson', isNode ? 'event-iterator' : undefined]
+    external: [isNode ? 'event-iterator' : undefined]
   };
 }
 

@@ -20,14 +20,10 @@ export * from './client/sync/bucket/BucketStorageAdapter.js';
 export * from './client/sync/bucket/CrudBatch.js';
 export { CrudEntry, OpId, UpdateType } from './client/sync/bucket/CrudEntry.js';
 export * from './client/sync/bucket/CrudTransaction.js';
-export * from './client/sync/bucket/OplogEntry.js';
-export * from './client/sync/bucket/OpType.js';
 export * from './client/sync/bucket/SqliteBucketStorage.js';
-export * from './client/sync/bucket/SyncDataBatch.js';
-export * from './client/sync/bucket/SyncDataBucket.js';
 export * from './client/sync/stream/AbstractRemote.js';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation.js';
-export * from './client/sync/stream/streaming-sync-types.js';
+export * from './client/sync/stream/JsonValue.js';
 export * from './client/sync/sync-streams.js';
 
 export * from './client/ConnectionManager.js';

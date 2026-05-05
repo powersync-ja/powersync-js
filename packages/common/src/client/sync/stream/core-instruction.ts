@@ -1,4 +1,3 @@
-import { StreamingSyncRequest } from './streaming-sync-types.js';
 import * as sync_status from '../../../db/crud/SyncStatus.js';
 import { FULL_SYNC_PRIORITY } from '../../../db/crud/SyncProgress.js';
 
@@ -21,7 +20,7 @@ export interface LogLine {
 }
 
 export interface EstablishSyncStream {
-  request: StreamingSyncRequest;
+  request: unknown;
 }
 
 export interface UpdateSyncStatus {
