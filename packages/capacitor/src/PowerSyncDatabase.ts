@@ -1,19 +1,21 @@
 import { Capacitor } from '@capacitor/core';
 import {
-  BucketStorageAdapter,
   DBAdapter,
+  DEFAULT_STREAM_CONNECTION_OPTIONS,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   PowerSyncBackendConnector,
+  PowerSyncConnectionOptions,
   RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation,
+  SyncStreamConnectionMethod,
   TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
-  WebPowerSyncDatabaseOptionsWithSettings,
-  WebRemote
+  WebPowerSyncDatabaseOptionsWithSettings
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
-import { CapacitorBucketStorageAdapter } from './sync/CapacitorBucketStorageAdapter.js';
+import { CapacitorRemote } from './sync/CapacitorRemote.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
+
 /**
  * PowerSyncDatabase class for managing database connections and sync implementations.
  * This extends the WebPowerSyncDatabase to provide platform-specific implementations
@@ -23,6 +25,29 @@ import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplem
  * @alpha
  */
 export class PowerSyncDatabase extends WebPowerSyncDatabase {
+  /**
+   * Connects to stream of events from the PowerSync instance.
+   * {@link PowerSyncConnectionOptions#connectionMethod} defaults to WebSocket connection on Web platforms
+   * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
+   * the Capacitor Community SQLite library and binary payloads.
+   */
+  connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
+    const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;
+    const defaultConnectionMethod = isUsingCapacitorDriver
+      ? SyncStreamConnectionMethod.HTTP
+      : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
+    if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
+      this.logger.warn(
+        `Connecting via 'SyncStreamConnectionMethod.WEB_SOCKET' when using the 'CapacitorSQLiteAdapter' will result in poor sync performance. Use 'SyncStreamConnectionMethod.HTTP' (the default for native) instead.`
+      );
+    }
+
+    return super.connect(connector, {
+      ...(options ?? {}),
+      connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
+    });
+  }
+
   protected get isNativeCapacitorPlatform(): boolean {
     const platform = Capacitor.getPlatform();
     return platform == 'ios' || platform == 'android';
@@ -70,14 +95,6 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     }
   }
 
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    if (this.isNativeCapacitorPlatform) {
-      return new CapacitorBucketStorageAdapter(this.database, this.logger);
-    } else {
-      return super.generateBucketStorageAdapter();
-    }
-  }
-
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: RequiredAdditionalConnectionOptions
@@ -89,7 +106,8 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       if (this.options.flags?.enableMultiTabs) {
         this.logger.warn(`enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`);
       }
-      const remote = new WebRemote(connector, this.logger);
+
+      const remote = new CapacitorRemote(connector, this.logger);
 
       return new CapacitorStreamingSyncImplementation({
         ...(this.options as {}),

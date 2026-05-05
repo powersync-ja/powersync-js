@@ -61,6 +61,8 @@ const db = new PowerSyncDatabase({
 - On Android and iOS, this SDK uses [Capacitor Community SQLite](https://github.com/capacitor-community/sqlite) for native database access.
 - On web, it falls back to the [PowerSync Web SDK](https://www.npmjs.com/package/@powersync/web).
 
+When using the native Capacitor Community SQLite driver, `PowerSyncDatabase.connect()` defaults to HTTP with NDJSON streaming. This avoids slow binary payload processing in the native SQLite bridge. Web targets keep the default Web SDK connection behavior.
+
 When using custom database factories, be sure to specify the `CapacitorSQLiteOpenFactory` for Capacitor platforms.
 
 ```javascript

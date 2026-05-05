@@ -12,8 +12,7 @@ import {
   LockContext,
   Mutex,
   QueryResult,
-  timeoutSignal,
-  Transaction
+  timeoutSignal
 } from '@powersync/web';
 import { PowerSyncCore } from '../plugin/PowerSyncCore.js';
 import { messageForErrorCode } from '../plugin/PowerSyncPlugin.js';
@@ -31,6 +30,46 @@ async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): 
     performance.measure(`[SQL] [ERROR: ${e.message}] ${sql}`, { start });
     throw e;
   }
+}
+
+/**
+ * Maps SQLite query parameter values to Capacitor Community supported formats.
+ * This handles binary payloads for both iOS and Android.
+ */
+function mapSQLiteParameterValues({ platform, values }: { platform: string; values: any[] }) {
+  return values.map((value) => {
+    if (value instanceof Uint8Array) {
+      switch (platform) {
+        case 'ios': {
+          /**
+           * The Buffer polyfill, used in @powersync/common, is a Uint8Array subclass which defines additional fields like
+           * `_isBuffer` and `parent` on its `prototype`. The additional fields are serialized when passed through the native bridge.
+           * The Capacitor Community SQLite library expects a dictionary of indexes to numerical bytes.
+           * The additional fields (which are not an index to numerical byte mapping) cause the parsing logic in the SQLite library to throw an error:
+           *  "Error in reading buffer".
+           *
+           * Re-wrapping the same backing buffer as a plain Uint8Array removes the Buffer subclass wrapper
+           * while keeping the same underlying bytes. This creates a new view, not a byte copy, so the
+           * overhead should be minimal.
+           */
+          return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+        }
+        case 'android': {
+          /**
+           * Android expects an object of the form:
+           * { type: 'Buffer', data: [...]}
+           */
+          return {
+            type: 'Buffer',
+            data: Array.from(value)
+          };
+        }
+      }
+    }
+
+    // return value as-is
+    return value;
+  });
 }
 
 class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements ConnectionPool {
@@ -119,7 +158,11 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const _query = async (query: string, params: any[] = []) => {
-      const result = await db.query(query, params);
+      const mappedParams = mapSQLiteParameterValues({
+        platform: Capacitor.getPlatform(),
+        values: params
+      });
+      const result = await db.query(query, mappedParams);
       const arrayResult = result.values ?? [];
       return {
         rowsAffected: 0,
@@ -134,31 +177,35 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
       const platform = Capacitor.getPlatform();
 
-      if (db.getConnectionReadOnly()) {
+      if (
+        db.getConnectionReadOnly() ||
+        // Android: use query for SELECT and executeSet for mutations
+        // We cannot use `run` here for both cases.
+        (platform == 'android' && query.toLowerCase().trim().startsWith('select'))
+      ) {
         return _query(query, params);
       }
 
+      const mappedParams = mapSQLiteParameterValues({
+        platform,
+        values: params
+      });
+
       if (platform == 'android') {
-        // Android: use query for SELECT and executeSet for mutations
-        // We cannot use `run` here for both cases.
-        if (query.toLowerCase().trim().startsWith('select')) {
-          return _query(query, params);
-        } else {
-          const result = await db.executeSet([{ statement: query, values: params }], false);
-          return {
-            insertId: result.changes?.lastId,
-            rowsAffected: result.changes?.changes ?? 0,
-            rows: {
-              _array: [],
-              length: 0,
-              item: () => null
-            }
-          };
-        }
+        const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
+        return {
+          insertId: result.changes?.lastId,
+          rowsAffected: result.changes?.changes ?? 0,
+          rows: {
+            _array: [],
+            length: 0,
+            item: () => null
+          }
+        };
       }
 
       // iOS (and other platforms): use run("all")
-      const result = await db.run(query, params, false, 'all');
+      const result = await db.run(query, mappedParams, false, 'all');
       const resultSet = result.changes?.values ?? [];
       return {
         insertId: result.changes?.lastId,
@@ -204,10 +251,14 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     };
 
     const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
+      const platform = Capacitor.getPlatform();
       let result = await db.executeSet(
         params.map((param) => ({
           statement: query,
-          values: param
+          values: mapSQLiteParameterValues({
+            platform,
+            values: param
+          })
         }))
       );
 
