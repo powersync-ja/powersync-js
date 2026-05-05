@@ -368,7 +368,7 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
 
   constructor(readonly subscription: ActiveSubscription) {
     subscription.refcount++;
-    _finalizer?.register(this, subscription);
+    _finalizer?.register(this, subscription, this);
   }
 
   get name() {
