@@ -32,10 +32,15 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
    * the Capacitor Community SQlite library and binary payloads.
    */
   connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
-    const defaultConnectionMethod =
-      this.database instanceof CapacitorSQLiteAdapter
-        ? SyncStreamConnectionMethod.HTTP
-        : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
+    const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;
+    const defaultConnectionMethod = isUsingCapacitorDriver
+      ? SyncStreamConnectionMethod.HTTP
+      : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
+    if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
+      this.logger.warn(
+        `Connecting via 'SyncStreamConnectionMethod.WEB_SOCKET' when using the 'CapacitorSQLiteAdapter' will result in poor sync performance. Use 'SyncStreamConnectionMethod.HTTP' (the default for native) instead.`
+      );
+    }
 
     return super.connect(connector, {
       ...(options ?? {}),
