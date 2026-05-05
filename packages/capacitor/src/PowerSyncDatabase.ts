@@ -29,7 +29,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
    * Connects to stream of events from the PowerSync instance.
    * {@link PowerSyncConnectionOptions#connectionMethod} defaults to WebSocket connection on Web platforms
    * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
-   * the Capacitor Community SQlite library and binary payloads.
+   * the Capacitor Community SQLite library and binary payloads.
    */
   connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
     const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;

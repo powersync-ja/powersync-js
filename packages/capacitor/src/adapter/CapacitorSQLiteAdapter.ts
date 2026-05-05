@@ -34,7 +34,7 @@ async function monitorQuery(sql: string, executor: () => Promise<QueryResult>): 
 
 /**
  * Maps SQLite query parameter values to Capacitor Community supported formats.
- * This handles Binary payloads for both iOS and Android.
+ * This handles binary payloads for both iOS and Android.
  */
 function mapSQLiteParameterValues({ platform, values }: { platform: string; values: any[] }) {
   return values.map((value) => {
@@ -44,8 +44,8 @@ function mapSQLiteParameterValues({ platform, values }: { platform: string; valu
           /**
            * The Buffer polyfill, used in @powersync/common, is a Uint8Array subclass which defines additional fields like
            * `_isBuffer` and `parent` on its `prototype`. The additional fields are serialized when passed through the native bridge.
-           * The Capacitor Community SQLite lib expects a dictionarty of indexes to numerical bytes.
-           * The additiona fields (which are not an index to numerical byte mapping) cause the parsing logic in the SQLite lib to throw an error:
+           * The Capacitor Community SQLite library expects a dictionary of indexes to numerical bytes.
+           * The additional fields (which are not an index to numerical byte mapping) cause the parsing logic in the SQLite library to throw an error:
            *  "Error in reading buffer".
            *
            * Re-wrapping the same backing buffer as a plain Uint8Array removes the Buffer subclass wrapper
@@ -158,7 +158,11 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
 
   protected generateLockContext(db: SQLiteDBConnection): LockContext {
     const _query = async (query: string, params: any[] = []) => {
-      const result = await db.query(query, params);
+      const mappedParams = mapSQLiteParameterValues({
+        platform: Capacitor.getPlatform(),
+        values: params
+      });
+      const result = await db.query(query, mappedParams);
       const arrayResult = result.values ?? [];
       return {
         rowsAffected: 0,
@@ -173,32 +177,31 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     const _execute = async (query: string, params: any[] = []): Promise<QueryResult> => {
       const platform = Capacitor.getPlatform();
 
+      if (
+        db.getConnectionReadOnly() ||
+        // Android: use query for SELECT and executeSet for mutations
+        // We cannot use `run` here for both cases.
+        (platform == 'android' && query.toLowerCase().trim().startsWith('select'))
+      ) {
+        return _query(query, params);
+      }
+
       const mappedParams = mapSQLiteParameterValues({
         platform,
         values: params
       });
 
-      if (db.getConnectionReadOnly()) {
-        return _query(query, mappedParams);
-      }
-
       if (platform == 'android') {
-        // Android: use query for SELECT and executeSet for mutations
-        // We cannot use `run` here for both cases.
-        if (query.toLowerCase().trim().startsWith('select')) {
-          return _query(query, mappedParams);
-        } else {
-          const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
-          return {
-            insertId: result.changes?.lastId,
-            rowsAffected: result.changes?.changes ?? 0,
-            rows: {
-              _array: [],
-              length: 0,
-              item: () => null
-            }
-          };
-        }
+        const result = await db.executeSet([{ statement: query, values: mappedParams }], false);
+        return {
+          insertId: result.changes?.lastId,
+          rowsAffected: result.changes?.changes ?? 0,
+          rows: {
+            _array: [],
+            length: 0,
+            item: () => null
+          }
+        };
       }
 
       // iOS (and other platforms): use run("all")
@@ -248,10 +251,14 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
     };
 
     const executeBatch = async (query: string, params: any[][] = []): Promise<QueryResult> => {
+      const platform = Capacitor.getPlatform();
       let result = await db.executeSet(
         params.map((param) => ({
           statement: query,
-          values: param
+          values: mapSQLiteParameterValues({
+            platform,
+            values: param
+          })
         }))
       );
 
