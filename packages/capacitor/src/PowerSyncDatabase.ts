@@ -1,17 +1,18 @@
 import { Capacitor } from '@capacitor/core';
 import {
-  BucketStorageAdapter,
   DBAdapter,
+  DEFAULT_STREAM_CONNECTION_OPTIONS,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   PowerSyncBackendConnector,
+  PowerSyncConnectionOptions,
   RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation,
+  SyncStreamConnectionMethod,
   TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
   WebPowerSyncDatabaseOptionsWithSettings
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
-import { CapacitorBucketStorageAdapter } from './sync/CapacitorBucketStorageAdapter.js';
 import { CapacitorRemote } from './sync/CapacitorRemote.js';
 import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplementation.js';
 
@@ -24,6 +25,24 @@ import { CapacitorStreamingSyncImplementation } from './sync/CapacitorSyncImplem
  * @alpha
  */
 export class PowerSyncDatabase extends WebPowerSyncDatabase {
+  /**
+   * Connects to stream of events from the PowerSync instance.
+   * {@link PowerSyncConnectionOptions#connectionMethod} defaults to WebSocket connection on Web platforms
+   * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
+   * the Capacitor Community SQlite library and binary payloads.
+   */
+  connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
+    const defaultConnectionMethod =
+      this.database instanceof CapacitorSQLiteAdapter
+        ? SyncStreamConnectionMethod.HTTP
+        : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
+
+    return super.connect(connector, {
+      ...(options ?? {}),
+      connectionMethod: options?.connectionMethod ?? defaultConnectionMethod
+    });
+  }
+
   protected get isNativeCapacitorPlatform(): boolean {
     const platform = Capacitor.getPlatform();
     return platform == 'ios' || platform == 'android';
@@ -71,14 +90,6 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     }
   }
 
-  protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    if (this.isNativeCapacitorPlatform) {
-      return new CapacitorBucketStorageAdapter(this.database, this.logger);
-    } else {
-      return super.generateBucketStorageAdapter();
-    }
-  }
-
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
     options: RequiredAdditionalConnectionOptions
@@ -90,7 +101,26 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       if (this.options.flags?.enableMultiTabs) {
         this.logger.warn(`enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`);
       }
-      const remote = new CapacitorRemote(connector, this.logger);
+
+      const remote = new CapacitorRemote(connector, this.logger, {
+        /**
+         * We'd like to avoid passing Binary buffers to SQLite when using
+         * iOS and Android for now. This is due to inefficient binary processing.
+         * Syncing using Buffers and Capacitor Community SQLite has been observed to be notably
+         * slower than the NDJSON option.
+         * Capacitor Community SQLite serializes Buffer objects, which causes slowdown
+         * ios: https://github.com/capacitor-community/sqlite/blob/f507a1e779688ea72b9d7e8744c647f7b688c568/ios/Plugin/CapacitorSQLite.swift#L888-L912
+         * android: https://github.com/capacitor-community/sqlite/blob/master/android/src/main/java/com/getcapacitor/community/database/sqlite/SQLite/UtilsSQLite.java#L141-L147
+         * As a rough guidline, the time to localy sync 10_000 small records was observed as:
+         * iOS:
+         *   - NDJSON: 449ms
+         *   - Binary: 68_982ms
+         * Android:
+         *   - NDJSON: 452ms
+         *   - Binary: 1_847ms
+         */
+        supportsStreamingBinaryResponses: false == this.database instanceof CapacitorSQLiteAdapter
+      });
 
       return new CapacitorStreamingSyncImplementation({
         ...(this.options as {}),

@@ -1,12 +1,25 @@
-import { Capacitor } from '@capacitor/core';
-import { WebRemote } from '@powersync/web';
+import { AbstractRemoteOptions, DEFAULT_REMOTE_LOGGER, ILogger, RemoteConnector, WebRemote } from '@powersync/web';
+
+export interface CapacitorRemoteOptions extends AbstractRemoteOptions {
+  /**
+   * An optional override to specify if binary streaming should be used.
+   */
+  supportsStreamingBinaryResponses: boolean;
+}
 
 export class CapacitorRemote extends WebRemote {
+  protected _supportsStreamingBinaryResponses: boolean | null;
+
+  constructor(
+    connector: RemoteConnector,
+    logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    options?: Partial<CapacitorRemoteOptions>
+  ) {
+    super(connector, logger, options);
+    this._supportsStreamingBinaryResponses = options?.supportsStreamingBinaryResponses ?? null;
+  }
+
   protected get supportsStreamingBinaryResponses(): boolean {
-    /**
-     * We'd like to avoid passing Binary buffers to SQLite when using
-     * iOS for now. This is due to inefficient binary processing.
-     */
-    return Capacitor.getPlatform() !== 'ios';
+    return this._supportsStreamingBinaryResponses ?? super.supportsStreamingBinaryResponses;
   }
 }
