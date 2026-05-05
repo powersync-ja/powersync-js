@@ -22,19 +22,29 @@ TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
 
     console.log("[Background Task] Initializing PowerSync");
 
+    // Capture the previous lastSyncedAt BEFORE init so we can detect a sync that
+    // completes during this background task run. `lastSyncedAt` is process-scoped
+    // (not listener-scoped) and persists across `system.init()` calls within the
+    // same JS runtime, so on a warm start it will already be set from a prior
+    // foreground session - gating on `Boolean(status.lastSyncedAt)` alone would
+    // resolve immediately without waiting for this run's sync.
+    const previousSyncAt = system.powersync.currentStatus.lastSyncedAt;
+
     await system.init();
 
-    // Wait for first sync to complete to download any new data
+    // Wait for a sync to complete during THIS background task run
     await new Promise<void>((resolve) => {
-      console.log("[Background Task] Waiting for first sync to complete");
+      console.log("[Background Task] Waiting for sync to complete");
       const unregister = system.powersync.registerListener({
         statusChanged: (status) => {
-          const hasSynced = Boolean(status.lastSyncedAt);
+          const syncedThisRun =
+            Boolean(status.lastSyncedAt) &&
+            previousSyncAt?.getTime() !== status.lastSyncedAt?.getTime();
           const downloading = status.dataFlowStatus?.downloading || false;
           const uploading = status.dataFlowStatus?.uploading || false;
 
-          // Resolve when all operations have been downloaded and pending transactions have been uploaded
-          if (hasSynced && !downloading && !uploading) {
+          // Resolve when a fresh sync has completed and no transfers are in flight
+          if (syncedThisRun && !downloading && !uploading) {
             console.log(
               "[Background Task] Download complete"
             );
