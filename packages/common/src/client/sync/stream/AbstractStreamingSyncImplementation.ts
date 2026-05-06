@@ -704,6 +704,7 @@ The next upload iteration will be delayed.`);
     const adapter = this.options.adapter;
     const remote = this.options.remote;
     let hideDisconnectOnRestart = false;
+    let notifyTokenRefreshed: (() => void) | undefined;
 
     if (signal.aborted) {
       throw new AbortOperation('Connection request has been aborted');
@@ -778,7 +779,7 @@ The next upload iteration will be delayed.`);
           // Restart iteration after the credentials have been refreshed.
           remote.fetchCredentials().then(
             (_) => {
-              syncImplementation.notifyCompletedUploads?.();
+              notifyTokenRefreshed?.();
             },
             (err) => {
               syncImplementation.logger.warn('Could not prefetch credentials', err);
@@ -834,6 +835,11 @@ The next upload iteration will be delayed.`);
           payload: JSON.stringify(this.activeStreams)
         });
       };
+      notifyTokenRefreshed = () => {
+        controlInvocations.inject({
+          command: PowerSyncControlCommand.NOTIFY_TOKEN_REFRESHED
+        });
+      };
 
       let hadSyncLine = false;
       loop: while (true) {
@@ -855,7 +861,7 @@ The next upload iteration will be delayed.`);
         const instructions = await invokePowerSyncControl(value.command, value.payload);
         for (const instruction of instructions) {
           if ('EstablishSyncStream' in instruction) {
-            this.logger.warn('Received EstablishSyncStream while already connected.');
+            throw new Error('Received EstablishSyncStream while already connected.');
           } else if ('CloseSyncStream' in instruction) {
             hideDisconnectOnRestart = instruction.CloseSyncStream.hide_disconnect;
             break loop;
@@ -866,6 +872,7 @@ The next upload iteration will be delayed.`);
       }
     } finally {
       this.notifyCompletedUploads = this.handleActiveStreamsChange = undefined;
+      notifyTokenRefreshed = undefined;
       await stop();
     }
 
