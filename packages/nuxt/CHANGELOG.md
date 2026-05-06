@@ -1,5 +1,22 @@
 # @powersync/nuxt
 
+## 0.0.7
+
+### Patch Changes
+
+- 1506543: Update `@journeyapps/wa-sqlite` dependency.
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+- Updated dependencies [1506543]
+- Updated dependencies [c2d0f9e]
+- Updated dependencies [c730604]
+- Updated dependencies [838479e]
+- Updated dependencies [739e21a]
+- Updated dependencies [756a0cf]
+  - @powersync/web@1.38.0
+  - @powersync/vue@0.5.1
+  - @powersync/kysely-driver@1.3.3
+
 ## 0.0.6
 
 ### Patch Changes

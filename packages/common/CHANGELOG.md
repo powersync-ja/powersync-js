@@ -1,5 +1,20 @@
 # @powersync/common
 
+## 1.53.0
+
+### Minor Changes
+
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+
+### Patch Changes
+
+- a0f527c: Fix `No iteration is active` errors due to race conditions when a sync iteration ends (closes https://github.com/powersync-ja/powersync-js/issues/943).
+- 94c7c9f: Fix warnings about leaked subscriptions even though `unsubscribe()` was called.
+- f39badb: Make `js-logger` a regular dependency to avoid type issues.
+- 947ca21: Fix `attempt to write a readonly database` error in `readTransaction`.
+- 838479e: Using the Rust sync client on the web, immediately reconnect when the underlying SQLite connection is changed.
+- 5513fad: Remove experimental label from raw tables.
+
 ## 1.52.0
 
 ### Minor Changes

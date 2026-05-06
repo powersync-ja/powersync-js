@@ -1,5 +1,21 @@
 # @powersync/node
 
+## 0.18.5
+
+### Patch Changes
+
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 947ca21: Fix `attempt to write a readonly database` error in `readTransaction`.
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+- Updated dependencies [a0f527c]
+- Updated dependencies [94c7c9f]
+- Updated dependencies [f39badb]
+- Updated dependencies [947ca21]
+- Updated dependencies [838479e]
+- Updated dependencies [5513fad]
+- Updated dependencies [739e21a]
+  - @powersync/common@1.53.0
+
 ## 0.18.4
 
 ### Patch Changes
