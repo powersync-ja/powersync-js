@@ -17,7 +17,11 @@ export enum PowerSyncControlCommand {
   START = 'start',
   NOTIFY_TOKEN_REFRESHED = 'refreshed_token',
   NOTIFY_CRUD_UPLOAD_COMPLETED = 'completed_upload',
-  UPDATE_SUBSCRIPTIONS = 'update_subscriptions'
+  UPDATE_SUBSCRIPTIONS = 'update_subscriptions',
+  /**
+   * An `established` or `end` event for response streams.
+   */
+  CONNECTION_STATE = 'connection'
 }
 
 export interface BucketStorageListener extends BaseListener {
