@@ -39,6 +39,9 @@ export type SyncStatusOptions = {
   lastSyncedAt?: Date;
   hasSynced?: boolean;
   priorityStatusEntries?: SyncPriorityStatus[];
+  /**
+   * @deprecated This field is no longer set, since {@link SyncClientImplementation.RUST} is the only option.
+   */
   clientImplementation?: SyncClientImplementation;
 };
 
@@ -258,7 +261,7 @@ export class SyncStatus {
   }
 
   /**
-   * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers. 
+   * Not all errors are serializable over a MessagePort. E.g. some `DomExceptions` fail to be passed across workers.
    * This explicitly serializes errors in the SyncStatus.
    */
   protected serializeError(error?: Error) {
