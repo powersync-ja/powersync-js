@@ -64,7 +64,7 @@ class BlockingAsyncDatabase implements AsyncDatabase {
 
 export async function openDatabase(worker: PowerSyncWorkerOptions, options: AsyncDatabaseOpenOptions) {
   const BetterSQLite3Database = await worker.loadBetterSqlite3();
-  const baseDB = new BetterSQLite3Database(options.path);
+  const baseDB = new BetterSQLite3Database(options.path, { readonly: !options.isWriter });
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
 
   const asyncDb = new BlockingAsyncDatabase(baseDB);

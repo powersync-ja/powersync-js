@@ -13,6 +13,7 @@ import {
 
 export type OPSQLiteConnectionOptions = {
   baseDB: DB;
+  readonly: boolean;
 };
 
 export type OPSQLiteUpdateNotification = {
@@ -116,6 +117,10 @@ class OPSQLiteExecutor extends BaseObserver<DBAdapterListener> implements Omit<S
 }
 
 export class OPSQLiteConnection extends DBGetUtilsDefaultMixin(OPSQLiteExecutor) implements LockContext {
+  get connectionType() {
+    return this.options.readonly ? 'queryOnly' : 'writer';
+  }
+
   async refreshSchema() {
     await this.get("PRAGMA table_info('sqlite_master')");
   }

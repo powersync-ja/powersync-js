@@ -130,13 +130,11 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
         await database.execute("SELECT powersync_update_hooks('install');", []);
       }
 
-      const connection = new RemoteConnection(worker, comlink, database);
+      const connection = new RemoteConnection(worker, comlink, database, !isWriter);
       if (this.options.initializeConnection) {
         await this.options.initializeConnection(connection, isWriter);
       }
-      if (!isWriter) {
-        await connection.execute('pragma query_only = true');
-      } else {
+      if (isWriter) {
         // We only need to enable this on the writer connection.
         // We can get `database is locked` errors if we enable this on concurrently opening read connections.
         await connection.execute('pragma journal_mode = WAL');

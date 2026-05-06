@@ -51,7 +51,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
       this.options.sqliteOptions!;
     const dbFilename = this.options.name;
 
-    const underlyingWriteConnection = await this.openConnection(dbFilename);
+    const underlyingWriteConnection = await this.openConnection(false, dbFilename);
 
     const baseStatements = [
       `PRAGMA busy_timeout = ${lockTimeoutMs}`,
@@ -90,7 +90,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
 
     const underlyingReadConnections = [];
     for (let i = 0; i < READ_CONNECTIONS; i++) {
-      const conn = await this.openConnection(dbFilename);
+      const conn = await this.openConnection(true, dbFilename);
       for (let statement of readConnectionStatements) {
         await conn.execute(statement);
       }
@@ -101,7 +101,7 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     this.readConnections = new Semaphore(underlyingReadConnections);
   }
 
-  protected async openConnection(filenameOverride?: string): Promise<OPSQLiteConnection> {
+  protected async openConnection(readonly: boolean, filenameOverride?: string): Promise<OPSQLiteConnection> {
     const dbFilename = filenameOverride ?? this.options.name;
     const DB: DB = this.openDatabase(dbFilename, this.options.sqliteOptions?.encryptionKey ?? undefined);
 
@@ -112,7 +112,8 @@ class OPSQLiteConnectionPool extends BaseObserver<DBAdapterListener> implements 
     await DB.execute('SELECT powersync_init()');
 
     return new OPSQLiteConnection({
-      baseDB: DB
+      baseDB: DB,
+      readonly
     });
   }
 

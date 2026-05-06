@@ -69,7 +69,17 @@ export interface SqlExecutor {
   executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
 }
 
-export interface LockContext extends SqlExecutor, DBGetUtils {}
+export interface LockContext extends SqlExecutor, DBGetUtils {
+  /**
+   * How the connection has been opened.
+   *
+   * `writer` indicates that the lock context is capable of writing to the database.
+   * `queryOnly` indicates that the lock context has been opened in a readwrite mode, but a `PRAGMA query_only = TRUE`
+   * disabled writes.
+   * `readOnly` indicates that the lock context has been opened by passing `SQLITE_OPEN_READONLY` to `sqlite3_open_v2`.
+   */
+  connectionType?: 'writer' | 'queryOnly' | 'readOnly';
+}
 
 /**
  * Implements {@link DBGetUtils} on a {@link SqlRunner}.
@@ -263,8 +273,16 @@ class TransactionImplementation extends DBGetUtilsDefaultMixin(BaseTransaction) 
   static async runWith<T>(ctx: LockContext, fn: (tx: Transaction) => Promise<T>): Promise<T> {
     let tx = new TransactionImplementation(ctx);
 
+    // For write transactions, use BEGIN IMMEDIATE to immediately obtain a write lock on the database (instead of doing
+    // that on the first statement). If we have a genuine read-only connection, we also use BEGIN IMMEDIATE there: In
+    // WAL mode, that ensures we pin the current state of the database (instead of the state at the first statement in
+    // the transaction). But if we have a "fake" read-only connection implemented through `pragma query_only = true`, we
+    // can't use this trick because it would attempt to lock the connection. So there, we use a regular `BEGIN`
+    // statement.
+    const useBeginImmediate = ctx.connectionType != 'queryOnly';
+
     try {
-      await ctx.execute('BEGIN IMMEDIATE');
+      await ctx.execute(useBeginImmediate ? 'BEGIN IMMEDIATE' : 'BEGIN');
 
       const result = await fn(tx);
       await tx.commit();

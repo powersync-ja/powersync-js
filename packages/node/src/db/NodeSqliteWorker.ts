@@ -56,7 +56,7 @@ export async function openDatabase(worker: PowerSyncWorkerOptions, options: Asyn
   // end, since that would make us incompatible with older Node.JS versions.
   const { DatabaseSync } = await dynamicImport('node:sqlite');
 
-  const baseDB = new DatabaseSync(options.path, { allowExtension: true });
+  const baseDB = new DatabaseSync(options.path, { allowExtension: true, readOnly: !options.isWriter });
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
 
   return new BlockingNodeDatabase(baseDB, options.isWriter);
