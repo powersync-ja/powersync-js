@@ -1,8 +1,8 @@
 import { Outlet, createBrowserRouter } from 'react-router-dom';
 import EntryPage from './page';
 import { LoginPage } from './views/auth/page';
-import TodoEditPage from './views/todo-lists/edit/page';
-import TodoListsPage from './views/todo-lists/page';
+import TodoEditModalRoute from './views/todo-lists/TodoEditModalRoute';
+import TodoListsShell from './views/todo-lists/TodoListsShell';
 import ViewsLayout from './views/layout';
 import SQLConsolePage from './views/sql-console/page';
 
@@ -34,11 +34,8 @@ export const router = createBrowserRouter([
     children: [
       {
         path: TODO_LISTS_ROUTE,
-        element: <TodoListsPage />
-      },
-      {
-        path: TODO_EDIT_ROUTE,
-        element: <TodoEditPage />
+        element: <TodoListsShell />,
+        children: [{ path: ':id', element: <TodoEditModalRoute /> }]
       },
       {
         path: SQL_CONSOLE_ROUTE,

@@ -14,11 +14,11 @@ import {
 
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import RightIcon from '@mui/icons-material/ArrowRightAlt';
-import ListIcon from '@mui/icons-material/ListAltOutlined';
 
 export type ListItemWidgetProps = {
   title: string;
   description: string;
+  avatarSrc: string;
   selected?: boolean;
   onDelete: () => void;
   onPress: () => void;
@@ -59,9 +59,26 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
           selected={props.selected}
         >
           <ListItemAvatar>
-            <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark' }}>
-              <ListIcon />
-            </Avatar>
+            <Avatar
+              variant="rounded"
+              src={props.avatarSrc}
+              alt=""
+              imgProps={{ loading: 'lazy' }}
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'rgba(148, 163, 184, 0.12)',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxSizing: 'border-box',
+                '& img': {
+                  objectFit: 'contain',
+                  objectPosition: 'center',
+                  width: '100%',
+                  height: '100%'
+                }
+              }}
+            />
           </ListItemAvatar>
           <ListItemText primary={props.title} secondary={props.description} />
         </ListItemButton>

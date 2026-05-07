@@ -11,7 +11,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   Divider,
   Drawer,
   IconButton,
@@ -88,20 +87,43 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6">{title}</Typography>
           </Box>
-          <Chip
-            size="small"
-            variant="outlined"
-            color={syncStatus?.connected ? 'success' : 'default'}
-            icon={syncStatus?.connected ? <WifiIcon /> : <SignalWifiOffIcon />}
-            label={syncStatus?.connected ? 'Online' : 'Offline'}
-            sx={{ mr: 1.5, fontWeight: 700 }}
-          />
-          <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', color: 'text.secondary' }}>
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
+              alignItems: 'center',
+              flexShrink: 0,
+              mr: 1.25
+            }}
+          >
             <NorthIcon
-              sx={{ marginRight: '-8px' }}
-              color={syncStatus?.dataFlowStatus.uploading ? 'primary' : 'inherit'}
+              fontSize="small"
+              color={syncStatus?.dataFlowStatus.uploading ? 'success' : 'disabled'}
+              sx={{
+                mr: -1.5,
+                opacity: syncStatus?.dataFlowStatus.uploading ? 1 : 0.45
+              }}
             />
-            <SouthIcon color={syncStatus?.dataFlowStatus.downloading ? 'primary' : 'inherit'} />
+            <SouthIcon
+              fontSize="small"
+              color={syncStatus?.dataFlowStatus.downloading ? 'success' : 'disabled'}
+              sx={{ opacity: syncStatus?.dataFlowStatus.downloading ? 1 : 0.45 }}
+            />
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              mr: 1.5,
+              color: syncStatus?.connected ? 'success.main' : 'error.main'
+            }}
+            aria-label={syncStatus?.connected ? 'Connected' : 'Disconnected'}
+          >
+            {syncStatus?.connected ? (
+              <WifiIcon sx={{ fontSize: '1.35rem' }} />
+            ) : (
+              <SignalWifiOffIcon sx={{ fontSize: '1.35rem' }} />
+            )}
           </Box>
           <Button color="primary" variant="outlined" onClick={handleSignOut} startIcon={<LogoutIcon />} sx={{ ml: 2 }}>
             Logout

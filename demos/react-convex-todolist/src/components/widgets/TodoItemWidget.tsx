@@ -62,6 +62,7 @@ namespace S {
   export const MainPaper = styled(Paper)`
     margin-bottom: 10px;
     overflow: hidden;
+    background-color: ${({ theme }) => theme.palette.background.paper};
     border: 1px solid ${({ theme }) => theme.palette.divider};
     transition: border-color 160ms ease, box-shadow 160ms ease;
 
