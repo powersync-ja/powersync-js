@@ -3,9 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { ReadableStream, TransformStream } from 'node:stream/web';
 
-import { createLogger } from '@powersync/common';
 import { BucketChecksum, StreamingSyncCheckpoint, StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
-import Logger from 'js-logger';
 import { onTestFinished, test } from 'vitest';
 import {
   AbstractPowerSyncDatabase,
@@ -19,6 +17,7 @@ import {
   column
 } from '../lib/index.js';
 import { BSON } from 'bson';
+import { createPowerSyncLogger, LogLevels } from '@powersync/common';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -57,10 +56,7 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
-  const defaultLogger = createLogger('PowerSyncTest', { logLevel: (Logger as any).TRACE });
-  (defaultLogger as any).invoke = (_: any, args: any) => {
-    console.log(...args);
-  };
+  const defaultLogger = createPowerSyncLogger({ prefix: 'PowerSyncTest', minLevel: LogLevels.trace });
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,
@@ -200,6 +196,7 @@ export interface MockSyncService {
   installRequestInterceptor(interceptor: (request: Request) => Promise<void>): void;
   pushLine: (line: StreamingSyncLine) => void;
   connectedListeners: any[];
+
   createDatabase: (options?: Partial<NodePowerSyncDatabaseOptions>) => Promise<PowerSyncDatabase>;
 }
 

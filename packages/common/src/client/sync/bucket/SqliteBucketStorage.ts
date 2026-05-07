@@ -1,4 +1,4 @@
-import Logger, { ILogger } from 'js-logger';
+import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
 import { DBAdapter, extractTableUpdates, Transaction } from '../../../db/DBAdapter.js';
 import { BaseObserver } from '../../../utils/BaseObserver.js';
 import { MAX_OP_ID } from '../../constants.js';
@@ -18,7 +18,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
   constructor(
     private db: DBAdapter,
-    private logger: ILogger = Logger.get('SqliteBucketStorage')
+    private logger: PowerSyncLogger
   ) {
     super();
     this.tableNames = new Set();
@@ -84,7 +84,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
       if (anyData.rows?.length) {
         // if isNotEmpty
-        this.logger.debug(`New data uploaded since write checkpoint ${opId} - need new write checkpoint`);
+        this.logger.log(
+          LogLevels.debug,
+          `New data uploaded since write checkpoint ${opId} - need new write checkpoint`
+        );
         return false;
       }
 
@@ -96,7 +99,8 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
       const seqAfter: number = rs.rows?.item(0)['seq'];
       if (seqAfter != seqBefore) {
-        this.logger.debug(
+        this.logger.log(
+          LogLevels.debug,
           `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
         );
 
@@ -104,7 +108,7 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
         return false;
       }
 
-      this.logger.debug(`Updating target write checkpoint to ${opId}`);
+      this.logger.log(LogLevels.debug, `Updating target write checkpoint to ${opId}`);
       await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [opId]);
       return true;
     });

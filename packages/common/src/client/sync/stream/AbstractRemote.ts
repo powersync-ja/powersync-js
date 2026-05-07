@@ -1,8 +1,8 @@
 import { type fetch } from 'cross-fetch';
-import Logger, { ILogger } from 'js-logger';
 import { Requestable, RSocket, RSocketConnector } from 'rsocket-core';
 import PACKAGE from '../../../../package.json' with { type: 'json' };
 import { AbortOperation } from '../../../utils/AbortOperation.js';
+import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
 import { PowerSyncCredentials } from '../../connection/PowerSyncCredentials.js';
 import { WebsocketClientTransport } from './WebsocketClientTransport.js';
 import {
@@ -35,8 +35,6 @@ const SOCKET_TIMEOUT_MS = 30_000;
 // If there is a backlog of messages (for example on slow connections), keepalive messages could be delayed
 // significantly. Therefore this is longer than the socket timeout.
 const KEEP_ALIVE_LIFETIME_MS = 90_000;
-
-export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
 export type SyncStreamOptions = {
   path: string;
@@ -117,7 +115,7 @@ export abstract class AbstractRemote {
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    protected logger: PowerSyncLogger,
     options?: Partial<AbstractRemoteOptions>
   ) {
     this.options = {
@@ -334,7 +332,10 @@ export abstract class AbstractRemote {
     const resetTimeout = () => {
       clearTimeout(keepAliveTimeout);
       keepAliveTimeout = setTimeout(() => {
-        this.logger.error(`No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`);
+        this.logger.log(
+          LogLevels.error,
+          `No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`
+        );
         abortRequest();
       }, SOCKET_TIMEOUT_MS);
     };
@@ -372,7 +373,7 @@ export abstract class AbstractRemote {
       // The connection is established, we no longer need to monitor the initial timeout
       pendingSocket = null;
     } catch (ex) {
-      this.logger.error(`Failed to connect WebSocket`, ex);
+      this.logger.log(LogLevels.error, `Failed to connect WebSocket`, ex);
       abortRequest();
 
       throw ex;
@@ -433,7 +434,7 @@ export abstract class AbstractRemote {
 
             // Don't log closed as an error
             if (e.message !== 'Closed. ') {
-              this.logger.error(e);
+              this.logger.log(LogLevels.error, e);
             }
             // RSocket will close the RSocket stream automatically
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
@@ -545,7 +546,10 @@ export abstract class AbstractRemote {
 
       if (!res.ok || !res.body) {
         const text = await res.text();
-        this.logger.error(`Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`);
+        this.logger.log(
+          LogLevels.error,
+          `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`
+        );
         const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
         error.status = res.status;
         throw error;

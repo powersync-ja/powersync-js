@@ -1,3 +1,4 @@
+import { LogLevels } from '../../../utils/Logger.js';
 import { AbstractPowerSyncDatabase } from '../../../client/AbstractPowerSyncDatabase.js';
 import { MetaBaseObserver } from '../../../utils/MetaBaseObserver.js';
 import {
@@ -219,7 +220,7 @@ export abstract class AbstractQueryProcessor<
       } catch (error) {
         // Errors here are ignored
         // since we are already in an error state
-        this.options.db.logger.error('Watched query error handler threw an Error', error);
+        this.options.db.logger.log(LogLevels.error, 'Watched query error handler threw an Error', error);
       }
     }
   }
