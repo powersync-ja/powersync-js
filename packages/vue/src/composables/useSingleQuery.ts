@@ -1,6 +1,7 @@
 import {
   type CompilableQuery,
   DifferentialWatchedQueryComparator,
+  LogLevels,
   ParsedQuery,
   parseQuery,
   SQLOnChangeOptions
@@ -85,7 +86,7 @@ export const useSingleQuery = <T = any>(
   let fetchData: () => Promise<void> | undefined;
 
   const powerSync = usePowerSync();
-  const logger = powerSync?.value?.logger ?? console;
+  const logger = powerSync?.value?.logger;
 
   const finishLoading = () => {
     isLoading.value = false;
@@ -130,7 +131,7 @@ export const useSingleQuery = <T = any>(
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (e) {
-      logger.error('Failed to parse query:', e);
+      logger?.log(LogLevels.error, 'Failed to parse query:', e);
       handleError(e);
       return;
     }
@@ -146,7 +147,7 @@ export const useSingleQuery = <T = any>(
         const result = await executor();
         handleResult(result);
       } catch (e) {
-        logger.error('Failed to fetch data:', e);
+        logger?.log(LogLevels.error, 'Failed to fetch data:', e);
         handleError(e);
       }
     };

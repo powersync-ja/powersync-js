@@ -2,6 +2,7 @@ import {
   AbstractPowerSyncDatabase,
   AbstractPowerSyncDatabaseOpenFactory,
   DBAdapter,
+  LogLevels,
   PowerSyncDatabaseOptions,
   PowerSyncOpenFactoryOptions,
   SQLOpenFactory
@@ -36,7 +37,10 @@ export class RNQSPowerSyncDatabaseOpenFactory extends AbstractPowerSyncDatabaseO
 
   generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
     if (this.instanceGenerated) {
-      this.options.logger?.warn('Generating multiple PowerSync instances can sometimes cause unexpected results.');
+      this.options.logger?.log(
+        LogLevels.warn,
+        'Generating multiple PowerSync instances can sometimes cause unexpected results.'
+      );
     }
     this.instanceGenerated = true;
     return new PowerSyncDatabase(options);
