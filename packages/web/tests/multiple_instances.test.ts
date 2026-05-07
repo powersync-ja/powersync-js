@@ -1,9 +1,9 @@
 import {
   AbstractPowerSyncDatabase,
-  createBaseLogger,
-  createLogger,
+  createPowerSyncLogger,
   DBAdapterDefaultMixin,
-  LogLevel
+  LogLevels,
+  PowerSyncLogger
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -26,8 +26,6 @@ describe('Multiple Instances', { sequential: true }, () => {
       schema: TEST_SCHEMA
     });
 
-  beforeAll(() => createBaseLogger().useDefaults());
-
   function createAsset(powersync: AbstractPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
   }
@@ -48,10 +46,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
-      const logger = createLogger('test-logger');
-      logger.setLevel(LogLevel.TRACE);
-      const spiedErrorLogger = vi.spyOn(logger, 'error');
-      const spiedTraceLogger = vi.spyOn(logger, 'trace');
+      const logFn = vi.fn();
+      const logger: PowerSyncLogger = { log: logFn };
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
@@ -84,7 +80,7 @@ describe('Multiple Instances', { sequential: true }, () => {
       await vi.waitFor(
         () =>
           expect(
-            spiedTraceLogger.mock.calls
+            logFn.mock.calls
               .flat(1)
               .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
           ).exist,
@@ -92,7 +88,12 @@ describe('Multiple Instances', { sequential: true }, () => {
       );
 
       // The connection should fail with an error
-      await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+      await vi.waitFor(
+        () =>
+          expect(logFn.mock.calls.flat(1).find((argument) => typeof argument == 'string' && argument.includes('error')))
+            .exist,
+        { timeout: 2000 }
+      );
     }
   );
 

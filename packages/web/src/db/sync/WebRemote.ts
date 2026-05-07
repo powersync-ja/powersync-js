@@ -1,10 +1,10 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
-  ILogger,
+  LogLevels,
+  PowerSyncLogger,
   RemoteConnector
 } from '@powersync/common';
 
@@ -22,7 +22,7 @@ class WebFetchProvider extends FetchImplementationProvider {
 export class WebRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    protected logger: PowerSyncLogger,
     options?: Partial<AbstractRemoteOptions>
   ) {
     super(connector, logger, {
@@ -36,7 +36,7 @@ export class WebRemote extends AbstractRemote {
     try {
       ua.push(...getUserAgentInfo());
     } catch (e) {
-      this.logger.warn('Failed to get user agent info', e);
+      this.logger.log(LogLevels.warn, 'Failed to get user agent info', e);
     }
     return ua.join(' ');
   }
