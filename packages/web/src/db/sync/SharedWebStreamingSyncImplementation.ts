@@ -68,7 +68,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
   }
 
   log(level: number, ...message: any[]): void {
-    this.logger?.log(level, message);
+    this.logger?.log(level, ...message);
   }
 }
 
