@@ -5,7 +5,6 @@ import {
   SyncStatusOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
-import { getNavigatorLocks } from '../../shared/navigator.js';
 import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractSharedSyncClientProvider.js';
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
 import { WorkerClient } from '../../worker/sync/WorkerClient.js';
@@ -68,33 +67,13 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return this.options.logger;
   }
 
-  trace(...x: any[]): void {
-    this.logger?.trace(...x);
-  }
-  debug(...x: any[]): void {
-    this.logger?.debug(...x);
-  }
-  info(...x: any[]): void {
-    this.logger?.info(...x);
-  }
-  log(...x: any[]): void {
-    this.logger?.log(...x);
-  }
-  warn(...x: any[]): void {
-    this.logger?.warn(...x);
-  }
-  error(...x: any[]): void {
-    this.logger?.error(...x);
-  }
-  time(label: string): void {
-    this.logger?.time(label);
-  }
-  timeEnd(label: string): void {
-    this.logger?.timeEnd(label);
+  log(level: number, ...message: any[]): void {
+    this.logger?.log(level, message);
   }
 }
 
 export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
+  logLevel: number;
   db: WebDBAdapter;
 }
 
@@ -109,10 +88,12 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected isInitialized: Promise<void>;
   protected dbAdapter: WebDBAdapter;
   private abortOnClose = new AbortController();
+  private logLevel: number;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
     this.dbAdapter = options.db;
+    this.logLevel = options.logLevel;
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
@@ -165,7 +146,7 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
      */
     Comlink.expose(this.clientProvider, this.messagePort);
 
-    this.syncManager.setLogLevel(this.logger.getLevel());
+    this.syncManager.setLogLevel(this.logLevel);
 
     this.triggerCrudUpload = this.syncManager.triggerCrudUpload;
 

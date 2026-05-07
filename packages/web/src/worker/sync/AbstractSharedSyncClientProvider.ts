@@ -10,12 +10,5 @@ export abstract class AbstractSharedSyncClientProvider {
   abstract statusChanged(status: SyncStatusOptions): void;
   abstract getDBWorkerPort(): Promise<MessagePort>;
 
-  abstract trace(...x: any[]): void;
-  abstract debug(...x: any[]): void;
-  abstract info(...x: any[]): void;
-  abstract log(...x: any[]): void;
-  abstract warn(...x: any[]): void;
-  abstract error(...x: any[]): void;
-  abstract time(label: string): void;
-  abstract timeEnd(label: string): void;
+  abstract log(level: number, ...message: any[]): void;
 }

@@ -2,7 +2,7 @@ import { DiffTriggerOperation } from '@powersync/common';
 import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
-import { generateTestDb } from './utils/testDb.js';
+import { defaultLoggerConfig, generateTestDb } from './utils/testDb.js';
 
 // Shared helper to spin up an iframe that creates a persisted trigger table
 const createTriggerInIframe = () => {
@@ -37,6 +37,7 @@ describe('Triggers', () => {
   it('should use temporary triggers by default with IndexedDB VFS', async () => {
     const db = generateTestDb({
       database: new WASQLiteOpenFactory({
+        ...defaultLoggerConfig,
         dbFilename: 'temp-triggers.sqlite'
         // default VFS (IndexedDB) - no vfs specified
       }),
@@ -85,6 +86,7 @@ describe('Triggers', () => {
   it('should automatically configure persistence for OPFS triggers', async () => {
     const db = generateTestDb({
       database: new WASQLiteOpenFactory({
+        ...defaultLoggerConfig,
         dbFilename: 'triggers.sqlite',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS
       }),
@@ -126,6 +128,7 @@ describe('Triggers', () => {
     const openDB = () =>
       generateTestDb({
         database: new WASQLiteOpenFactory({
+          ...defaultLoggerConfig,
           dbFilename: 'triggers.sqlite',
           vfs: WASQLiteVFS.OPFSCoopSyncVFS
         }),
@@ -194,6 +197,7 @@ describe('Triggers', () => {
     const openDB = (filename: string) =>
       generateTestDb({
         database: new WASQLiteOpenFactory({
+          ...defaultLoggerConfig,
           dbFilename: filename,
           vfs: WASQLiteVFS.OPFSCoopSyncVFS
         }),

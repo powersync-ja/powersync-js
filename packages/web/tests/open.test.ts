@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, createLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createPowerSyncLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
 import {
   PowerSyncDatabase,
   ResolvedWASQLiteOpenFactoryOptions,
@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { MultiDatabaseServer } from '../src/worker/db/MultiDatabaseServer.js';
 import { DatabaseClient } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
+import { defaultLoggerConfig } from './utils/testDb.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 
@@ -78,7 +79,8 @@ describe('Open Methods', { sequential: true }, () => {
   });
 
   it('Should open with an existing DBAdapter', async () => {
-    const server = new MultiDatabaseServer(createLogger('adapter-test'));
+    const logger = createPowerSyncLogger({ prefix: 'adapter-test' });
+    const server = new MultiDatabaseServer(logger);
     const options: ResolvedWASQLiteOpenFactoryOptions = {
       vfs: WASQLiteVFS.IDBBatchAtomicVFS,
       flags: {
@@ -93,7 +95,7 @@ describe('Open Methods', { sequential: true }, () => {
       dbFilename: '',
       isReadOnly: false
     };
-    const connection = await server.openConnectionLocally(options);
+    const connection = await server.openConnectionLocally(logger, options);
     const Adapter = DBAdapterDefaultMixin(DatabaseClient);
     const client = new Adapter(
       {
@@ -109,7 +111,7 @@ describe('Open Methods', { sequential: true }, () => {
   });
 
   it('Should open with provided factory', async () => {
-    const factory = new WASQLiteOpenFactory({ dbFilename: 'factory-test.db' });
+    const factory = new WASQLiteOpenFactory({ ...defaultLoggerConfig, dbFilename: 'factory-test.db' });
     const db = new PowerSyncDatabase({ database: factory, schema: TEST_SCHEMA });
 
     await basicTest(db);

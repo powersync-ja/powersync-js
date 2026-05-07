@@ -1,4 +1,4 @@
-import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
+import { createPowerSyncLogger, LogLevels, PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { v4 as uuid } from 'uuid';
 import { onTestFinished } from 'vitest';
 import { TEST_SCHEMA } from './test-schema.js';
@@ -25,4 +25,9 @@ export const generateTestDb = (options?: WebPowerSyncDatabaseOptions) => {
   });
 
   return db;
+};
+
+export const defaultLoggerConfig = {
+  logLevel: LogLevels.trace,
+  logger: createPowerSyncLogger({ prefix: 'test', minLevel: LogLevels.trace })
 };

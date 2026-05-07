@@ -3,6 +3,7 @@ import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory.js';
+import { defaultLoggerConfig } from './testDb.js';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
@@ -42,7 +43,7 @@ export async function generateConnectedDatabase(options: GenerateConnectedDataba
   const callbacks: Map<string, () => void> = new Map();
   const connector = new TestConnector();
   const uploadSpy = vi.spyOn(connector, 'uploadData');
-  const remote = new MockRemote(connector, () => callbacks.forEach((c) => c()));
+  const remote = new MockRemote(connector, defaultLoggerConfig.logger, () => callbacks.forEach((c) => c()));
 
   const factory = new MockStreamOpenFactory(
     {

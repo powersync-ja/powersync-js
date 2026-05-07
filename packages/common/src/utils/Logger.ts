@@ -45,12 +45,14 @@ export interface CreateLoggerOptions {
  *
  * @param options Options to configure a minimum severity of the logger or a prefix to make messages more recognizable.
  */
-export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger {
+export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions {
   const { prefix = 'PowerSync', minLevel = LogLevels.info } = options ?? {};
 
   return {
+    prefix,
+    minLevel,
     log(level, ...message) {
-      if (level < minLevel) return;
+      if (level < this.minLevel) return;
 
       let emitter = console.log;
       if (level >= LogLevels.error) {
@@ -59,7 +61,7 @@ export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): P
         emitter = console.warn;
       }
 
-      emitter(prefix, ...message);
+      emitter(this.prefix, ...message);
     }
   };
 }
