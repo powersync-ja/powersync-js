@@ -1,0 +1,59 @@
+# Adds YAML Schema support for VSCode users with the YAML extension installed. This enables features like validation and autocompletion based on the provided schema.
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/service-config.json
+
+# PowerSync self-hosted config – source-of-truth template with all schema options as valid YAML.
+# Docs: https://docs.powersync.com/self-hosting
+
+# [required] Service type identifier.
+_type: self-hosted
+
+# [optional] Telemetry configuration for service monitoring.
+# See https://docs.powersync.com/self-hosting/telemetry
+telemetry:
+  # When true, disables sharing of anonymized telemetry data. Default: false.
+  disable_telemetry_sharing: false
+
+# -----------------------------------------------------------------------------
+# [required] REPLICATION – configuration for data replication; array of data source connections
+# Connection: `uri` and `password` are required for a complete connection. Alternatively omit `uri`
+# and provide individual fields (hostname, port, database, username, password, etc.); they are used
+# to construct the connection URI. For MongoDB, `uri` is required.
+# -----------------------------------------------------------------------------
+replication:
+  connections:
+    - type: convex
+      deploy_key: !env PS_CONVEX_DEPLOY_KEY
+      deployment_url: !env PS_CONVEX_DEPLOYMENT_URL
+# -----------------------------------------------------------------------------
+# Sync Storage – configuration for the storage backend. MongoDB and Postgres are supported.
+# A MongoDB example is provided below.
+# -----------------------------------------------------------------------------
+storage:
+  # MongoDB storage backend
+  type: mongodb
+  uri: mongodb://mongo:27017/powersync_demo
+
+# -----------------------------------------------------------------------------
+# SYNC CONFIG – configuration for Sync Streams/Sync Rules that define which data is synced to each user.
+# -----------------------------------------------------------------------------
+# One of path or content is supported. path is the most common (file reference).
+sync_config:
+  # Path to the sync config YAML file (sync rules).
+  path: sync-config.yaml
+
+# -----------------------------------------------------------------------------
+# [optional] API – API service configuration and parameters
+# -----------------------------------------------------------------------------
+api:
+  # API access tokens for administrative operations (e.g. CLI link). Use a strong token in production.
+  tokens:
+    - dev-token-do-not-use-in-production
+
+# -----------------------------------------------------------------------------
+# CLIENT AUTH (optional) – configuration for client authentication mechanisms
+# -----------------------------------------------------------------------------
+client_auth:
+  audience:
+    - convex
+  # The Convex backend running on the host machine's JWKS endpoint
+  jwks_uri: http://host.docker.internal:3211/.well-known/jwks.json

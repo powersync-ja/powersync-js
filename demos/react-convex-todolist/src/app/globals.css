@@ -1,0 +1,26 @@
+:root {
+  --foreground-rgb: 237, 244, 255;
+  --background-rgb: 9, 13, 20;
+}
+
+html {
+  min-height: 100%;
+  background: rgb(var(--background-rgb));
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  min-height: 100vh;
+  margin: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(9, 13, 20, 0.98) 48%), rgb(var(--background-rgb));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}

@@ -1,0 +1,22 @@
+# Adds YAML Schema support for VSCode users with the YAML extension installed. This enables features like validation and autocompletion based on the provided schema.
+# yaml-language-server: $schema=https://unpkg.com/@powersync/service-sync-rules@latest/schema/sync_rules.json
+
+# See https://docs.powersync.com/sync/advanced/compatibility
+config:
+  edition: 3
+
+streams:
+  user_lists:
+    # AUTO-SUBSCRIBE: always synced for the logged-in user
+    auto_subscribe: true
+    # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
+    # We want to base the synced data only on the user ID
+    query: SELECT uuid as id, * FROM lists WHERE owner_id = substring(auth.user_id(), 1, 32)
+
+  user_todos:
+    # AUTO-SUBSCRIBE: always synced for the logged-in user
+    auto_subscribe: true
+
+    # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
+    # We want to base the synced data only on the user ID
+    query: SELECT uuid as id, * FROM todos WHERE list_uuid IN (SELECT uuid FROM lists WHERE owner_id = substring(auth.user_id(),1, 32))
