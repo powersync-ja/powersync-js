@@ -1,10 +1,10 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
-  ILogger,
+  LogLevels,
+  PowerSyncLogger,
   RemoteConnector,
   SyncStreamOptions
 } from '@powersync/common';
@@ -29,7 +29,7 @@ class ReactNativeFetchProvider extends FetchImplementationProvider {
 export class ReactNativeRemote extends AbstractRemote {
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    protected logger: PowerSyncLogger,
     options?: Partial<AbstractRemoteOptions>
   ) {
     super(connector, logger, {
@@ -60,7 +60,8 @@ export class ReactNativeRemote extends AbstractRemote {
     const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {
-            this.logger.warn(
+            this.logger.log(
+              LogLevels.warn,
               `HTTP Streaming POST is taking longer than ${Math.ceil(
                 STREAMING_POST_TIMEOUT_MS / 1000
               )} seconds to resolve. If using a debug build, please ensure Flipper Network plugin is disabled.`

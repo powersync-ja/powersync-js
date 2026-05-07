@@ -1,4 +1,4 @@
-import { type CompilableQuery, ParsedQuery, parseQuery, WatchCompatibleQuery } from '@powersync/common';
+import { type CompilableQuery, LogLevels, ParsedQuery, parseQuery, WatchCompatibleQuery } from '@powersync/common';
 import { type MaybeRef, type Ref, ref, toValue, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync.js';
 import { AdditionalOptions, WatchedQueryResult } from './useSingleQuery.js';
@@ -47,7 +47,7 @@ export const useWatchedQuery = <T = any>(
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (e) {
-      logger.error('Failed to parse query:', e);
+      logger.log(LogLevels.error, 'Failed to parse query:', e);
       handleError(e);
       return;
     }
