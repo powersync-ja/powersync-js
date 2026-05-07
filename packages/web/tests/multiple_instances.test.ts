@@ -46,12 +46,19 @@ describe('Multiple Instances', { sequential: true }, () => {
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
-      const logFn = vi.fn();
-      const logger: PowerSyncLogger = { log: logFn };
+      const logLines: string[] = [];
+      const logger: PowerSyncLogger = {
+        log(_level, ...message) {
+          logLines.push(message[0]);
+        }
+      };
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
-        logger
+        logger,
+        sync: {
+          logLevel: LogLevels.trace
+        }
       });
 
       powersync.connect({
@@ -78,22 +85,16 @@ describe('Multiple Instances', { sequential: true }, () => {
 
       // Asserting that powersync_control logs exists verifies that some connection attempt was made.
       await vi.waitFor(
-        () =>
-          expect(
-            logFn.mock.calls
-              .flat(1)
-              .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
-          ).exist,
-        { timeout: 2000 }
+        () => expect(logLines).toEqual(expect.arrayContaining([expect.stringContaining('powersync_control')])),
+        {
+          timeout: 2000
+        }
       );
 
       // The connection should fail with an error
-      await vi.waitFor(
-        () =>
-          expect(logFn.mock.calls.flat(1).find((argument) => typeof argument == 'string' && argument.includes('error')))
-            .exist,
-        { timeout: 2000 }
-      );
+      await vi.waitFor(() => expect(logLines).toEqual(expect.arrayContaining([expect.any(Error)])), {
+        timeout: 2000
+      });
     }
   );
 
