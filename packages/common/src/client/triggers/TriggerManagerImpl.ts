@@ -1,5 +1,6 @@
 import { LockContext } from '../../db/DBAdapter.js';
 import { Schema } from '../../db/schema/Schema.js';
+import { LogLevels } from '../../utils/Logger.js';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../watched/WatchedQuery.js';
 import {
@@ -81,7 +82,7 @@ export class TriggerManagerImpl implements TriggerManager {
       try {
         await this.cleanupResources();
       } catch (ex) {
-        this.db.logger.error(`Caught error while attempting to cleanup triggers`, ex);
+        this.db.logger.log(LogLevels.error, `Caught error while attempting to cleanup triggers`, ex);
       } finally {
         // if not closed, set another timeout
         if (this.isDisposed) {
@@ -183,7 +184,10 @@ export class TriggerManagerImpl implements TriggerManager {
           continue;
         }
 
-        this.db.logger.debug(`Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`);
+        this.db.logger.log(
+          LogLevels.debug,
+          `Clearing resources for trigger ${trackedItem.id} with table ${trackedItem.table}`
+        );
 
         // We need to delete the triggers and table
         for (const triggerName of trackedItem.triggerNames) {
@@ -259,7 +263,8 @@ export class TriggerManagerImpl implements TriggerManager {
 
     const disposeWarningListener = this.db.registerListener({
       schemaChanged: () => {
-        this.db.logger.warn(
+        this.db.logger.log(
+          LogLevels.warn,
           `The PowerSync schema has changed while previously configured triggers are still operational. This might cause unexpected results.`
         );
       }

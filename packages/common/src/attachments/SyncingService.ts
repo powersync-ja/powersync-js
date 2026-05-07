@@ -1,4 +1,4 @@
-import { ILogger } from '../utils/Logger.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { AttachmentService } from './AttachmentService.js';
 import { LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -16,14 +16,14 @@ export class SyncingService {
   private attachmentService: AttachmentService;
   private localStorage: LocalStorageAdapter;
   private remoteStorage: RemoteStorageAdapter;
-  private logger: ILogger;
+  private logger: PowerSyncLogger;
   private errorHandler?: AttachmentErrorHandler;
 
   constructor(
     attachmentService: AttachmentService,
     localStorage: LocalStorageAdapter,
     remoteStorage: RemoteStorageAdapter,
-    logger: ILogger,
+    logger: PowerSyncLogger,
     errorHandler?: AttachmentErrorHandler
   ) {
     this.attachmentService = attachmentService;
@@ -75,7 +75,7 @@ export class SyncingService {
    * @throws Error if the attachment has no localUri
    */
   async uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.info(`Uploading attachment ${attachment.filename}`);
+    this.logger.log(LogLevels.info, `Uploading attachment ${attachment.filename}`);
     try {
       if (attachment.localUri == null) {
         throw new Error(`No localUri for attachment ${attachment.id}`);
@@ -111,7 +111,7 @@ export class SyncingService {
    * @returns Updated attachment record with local URI and new state
    */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.info(`Downloading attachment ${attachment.filename}`);
+    this.logger.log(LogLevels.info, `Downloading attachment ${attachment.filename}`);
     try {
       const fileData = await this.remoteStorage.downloadFile(attachment);
 
@@ -183,7 +183,7 @@ export class SyncingService {
           try {
             await this.localStorage.deleteFile(attachment.localUri);
           } catch (error) {
-            this.logger.error('Error deleting local file for archived attachment', error);
+            this.logger.log(LogLevels.error, 'Error deleting local file for archived attachment', error);
           }
         }
       }

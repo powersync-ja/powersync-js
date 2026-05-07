@@ -58,7 +58,6 @@ export default () => {
       '@powersync/common',
       '@powersync/react',
       'node-fetch',
-      'js-logger',
       'react-native',
       'react'
     ]

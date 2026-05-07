@@ -1,47 +1,65 @@
-import Logger, { type ILogger, type ILogLevel } from 'js-logger';
+export const LogLevels = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50
+} as const;
 
-export { GlobalLogger, ILogger, ILoggerOpts, ILogHandler, ILogLevel } from 'js-logger';
-
-const TypedLogger: ILogger = Logger as any;
-
-export const LogLevel = {
-  TRACE: TypedLogger.TRACE,
-  DEBUG: TypedLogger.DEBUG,
-  INFO: TypedLogger.INFO,
-  TIME: TypedLogger.TIME,
-  WARN: TypedLogger.WARN,
-  ERROR: TypedLogger.ERROR,
-  OFF: TypedLogger.OFF
-};
+/**
+ * A logger used by the PowerSync SDK.
+ *
+ * This is deliberately a very simple interface, and it's not a designed to be a general-purpose logger you would use in
+ * your application. Instead, you can provide an implementation of this to PowerSync to make it use your preferred
+ * logging libraries.
+ *
+ * By default, the SDK uses a {@link createPowerSyncLogger} instance forwarding messages to `console.log`.
+ */
+export interface PowerSyncLogger {
+  /**
+   * Log a message.
+   *
+   * @param level The log level (see {@link LogLevels} for preconfigured values) for the message. Depending on how the
+   * logger has been confired, messages below a configured minimum level may be ignored.
+   * @param message Components of the message to log. Components aren't necessarily strings.
+   */
+  log(level: number, ...message: any[]): void;
+}
 
 export interface CreateLoggerOptions {
-  logLevel?: ILogLevel;
+  /**
+   * A prefix for messages emitted by {@link createPowerSyncLogger} to make them more recognizable.
+   *
+   * Defaults to `'PowerSync'`.
+   */
+  prefix: string;
+
+  /**
+   * The minimum log level to consider for messages. Defaults to {@link LogLevels.info}.
+   */
+  minLevel: number;
 }
 
 /**
- * Retrieves the base (default) logger instance.
+ * A very simple {@link PowerSyncLogger} implementation forwarding messages to `console.log`.
  *
- * This base logger controls the default logging configuration and is shared
- * across all loggers created with `createLogger`. Adjusting settings on this
- * base logger affects all loggers derived from it unless explicitly overridden.
- *
+ * @param options Options to configure a minimum severity of the logger or a prefix to make messages more recognizable.
  */
-export function createBaseLogger() {
-  return Logger;
-}
+export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger {
+  const { prefix = 'PowerSync', minLevel = LogLevels.info } = options ?? {};
 
-/**
- * Creates and configures a new named logger based on the base logger.
- *
- * Named loggers allow specific modules or areas of your application to have
- * their own logging levels and behaviors. These loggers inherit configuration
- * from the base logger by default but can override settings independently.
- */
-export function createLogger(name: string, options: CreateLoggerOptions = {}): ILogger {
-  const logger = Logger.get(name);
-  if (options.logLevel) {
-    logger.setLevel(options.logLevel);
-  }
+  return {
+    log(level, ...message) {
+      if (level < minLevel) return;
 
-  return logger;
+      let emitter = console.log;
+      if (level >= LogLevels.error) {
+        emitter = console.error;
+      } else if (level >= LogLevels.warn) {
+        emitter = console.warn;
+      }
+
+      emitter(prefix, ...message);
+    }
+  };
 }
