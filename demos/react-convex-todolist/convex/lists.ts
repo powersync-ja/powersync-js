@@ -30,7 +30,8 @@ export const create = mutation({
  * Update a list given a partial list record data.
  */
 export const update = mutation({
-  args: schema.tables.todos.validator,
+  // The uuid is required, every other field is an optional patch
+  args: v.object({ uuid: v.string() }).extend(schema.tables.lists.validator.partial().fields),
   handler: async ({ db }, { uuid, ...fields }) => {
     const matching = await findListByUuid({ db, uuid });
     if (!matching) {

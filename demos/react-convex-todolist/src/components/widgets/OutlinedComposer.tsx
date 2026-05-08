@@ -4,10 +4,12 @@ import { alpha } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import React from 'react';
 
+export type OutlinedComposerSubmitSource = 'enter' | 'button' | 'submit';
+
 export type OutlinedComposerProps = {
   value: string;
   onChange: (value: string) => void;
-  onSubmit: () => void | Promise<void>;
+  onSubmit: (source?: OutlinedComposerSubmitSource) => void | Promise<void>;
   placeholder: string;
   inputAriaLabel: string;
   submitAriaLabel: string;
@@ -35,7 +37,7 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
 
   const handleSubmit = (event?: React.FormEvent) => {
     event?.preventDefault();
-    void onSubmit();
+    void onSubmit('submit');
   };
 
   return (
@@ -58,11 +60,11 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
           onKeyDown: (e) => {
             if (multiline && e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              void onSubmit();
+              void onSubmit('enter');
             }
             if (!multiline && e.key === 'Enter') {
               e.preventDefault();
-              void onSubmit();
+              void onSubmit('enter');
             }
           }
         }}
@@ -103,9 +105,10 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
         })}
       />
       <IconButton
-        type="submit"
+        type="button"
         color="secondary"
         aria-label={submitAriaLabel}
+        onClick={() => void onSubmit('button')}
         sx={(theme) => ({
           alignSelf: 'stretch',
           flexShrink: 0,

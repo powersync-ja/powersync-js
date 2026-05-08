@@ -43,7 +43,8 @@ export const create = mutation({
  * Update a todo record given a partial update.
  */
 export const update = mutation({
-  args: schema.tables.todos.validator,
+  // The uuid is required, every other field is an optional patch
+  args: v.object({ uuid: v.string() }).extend(schema.tables.todos.validator.partial().fields),
   handler: async ({ db }, { uuid, ...fields }) => {
     let matching = await findTodoByUuid({ db, uuid });
     if (!matching) {

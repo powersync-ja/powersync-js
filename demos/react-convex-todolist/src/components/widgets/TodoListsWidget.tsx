@@ -6,7 +6,7 @@ import { usePowerSync, useQuery } from '@powersync/react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ListItemWidget } from './ListItemWidget';
-import { OutlinedComposer } from './OutlinedComposer';
+import { OutlinedComposer, OutlinedComposerSubmitSource } from './OutlinedComposer';
 
 export type TodoListsWidgetProps = {
   selectedId?: string;
@@ -98,7 +98,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
     });
   };
 
-  const createNewList = async () => {
+  const createNewList = async (source?: OutlinedComposerSubmitSource) => {
     const name = newListName.trim();
     if (!name) {
       setNewListName('');
@@ -118,7 +118,9 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
       throw new Error('Could not create list');
     }
     setNewListName('');
-    navigate(`${TODO_LISTS_ROUTE}/${created.id}`);
+    if (source === 'button' || source === 'submit') {
+      navigate(`${TODO_LISTS_ROUTE}/${created.id}`);
+    }
   };
 
   return (
