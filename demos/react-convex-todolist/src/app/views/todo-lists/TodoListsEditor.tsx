@@ -86,20 +86,53 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: { xs: '50vh', md: 'min(70vh, 560px)' }
+        flex: 1,
+        minHeight: 0,
+        width: '100%'
       }}
     >
-      <List dense={false} sx={{ flex: '1 1 auto', pb: 0 }}>
-        {todos.map((r) => (
-          <TodoItemWidget
-            key={r.id}
-            description={r.description}
-            onDelete={() => deleteTodo(r.id)}
-            isComplete={r.completed === 1}
-            toggleCompletion={() => toggleCompletion(r, r.completed !== 1)}
-          />
-        ))}
-      </List>
+      <Box
+        sx={{
+          flex: '1 1 auto',
+          minHeight: 0,
+          overflow: 'auto'
+        }}
+      >
+        {todos.length === 0 ? (
+          <Box
+            sx={{
+              minHeight: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              px: 2,
+              py: 6,
+              boxSizing: 'border-box'
+            }}
+          >
+            <Typography variant="subtitle1" color="text.secondary" textAlign="center" sx={{ fontWeight: 700 }}>
+              No todos yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ maxWidth: 360 }}>
+              Add your first task with the field below. It syncs through PowerSync when you are online.
+            </Typography>
+          </Box>
+        ) : (
+          <List dense={false} sx={{ pb: 0 }}>
+            {todos.map((r) => (
+              <TodoItemWidget
+                key={r.id}
+                description={r.description}
+                onDelete={() => deleteTodo(r.id)}
+                isComplete={r.completed === 1}
+                toggleCompletion={() => toggleCompletion(r, r.completed !== 1)}
+              />
+            ))}
+          </List>
+        )}
+      </Box>
       <OutlinedComposer
         value={newTodoText}
         onChange={setNewTodoText}
@@ -109,12 +142,10 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
         submitAriaLabel="Add todo"
         autoFocus
         formSx={{
-          position: 'sticky',
-          bottom: 0,
           flexShrink: 0,
-          pt: 0.5,
+          pt: 1.5,
           pb: 0,
-          mt: 'auto'
+          width: '100%'
         }}
       />
     </Box>

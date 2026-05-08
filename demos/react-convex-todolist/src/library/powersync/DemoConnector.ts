@@ -41,23 +41,29 @@ function coerceOpData(table: string, data: Record<string, any>): Record<string, 
   return result;
 }
 
+export type ConnectorOptions = {
+  convexClient: ConvexReactClient;
+};
+
 export class DemoConnector implements PowerSyncBackendConnector {
   readonly powersyncUrl: string;
-  private convexClient: ConvexReactClient | null = null;
-  authToken: string | null = null;
+  private convexClient: ConvexReactClient;
+  private authToken: string | null;
 
-  constructor() {
+  constructor(options: ConnectorOptions) {
+    this.authToken = null;
+    this.convexClient = options.convexClient;
     this.powersyncUrl = import.meta.env.VITE_POWERSYNC_URL;
   }
 
-  setConvexClient(client: ConvexReactClient) {
-    this.convexClient = client;
-  }
-
+  /**
+   * Updates the cached token.
+   * This is called from the React component when the Convex auth token
+   * is reactively updated.
+   */
   setAuthToken(token: string | null) {
     this.authToken = token;
   }
-
   /**
    * Fetches a JWT from Convex Auth for PowerSync authentication.
    * Uses the Convex Auth session token.
@@ -83,10 +89,6 @@ export class DemoConnector implements PowerSyncBackendConnector {
 
     if (!transaction) {
       return;
-    }
-
-    if (!this.convexClient) {
-      throw new Error('Convex client not set on DemoConnector');
     }
 
     try {

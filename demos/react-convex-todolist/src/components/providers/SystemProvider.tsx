@@ -1,15 +1,19 @@
 import { NavigationPanelContextProvider } from '@/components/navigation/NavigationPanelContext';
 import { AppSchema } from '@/library/powersync/AppSchema';
 import { DemoConnector } from '@/library/powersync/DemoConnector';
+import { useAuthToken } from '@convex-dev/auth/react';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import { PowerSyncDatabase } from '@powersync/web';
+import { useConvex } from 'convex/react';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
-import { useAuthToken } from '@convex-dev/auth/react';
-import { useConvex } from 'convex/react';
 
-export const db = new PowerSyncDatabase({
+// Linting thinks this is a hook due to it's name
+Logger.useDefaults(); // eslint-disable-line
+Logger.setLevel(Logger.DEBUG);
+
+export const powerSync = new PowerSyncDatabase({
   database: {
     dbFilename: 'example-v2.db'
   },
@@ -17,8 +21,8 @@ export const db = new PowerSyncDatabase({
   logger: Logger
 });
 
-// Make db accessible on the console for debugging
-(window as any).db = db;
+// For console testing purposes
+(window as any)._powersync = powerSync;
 
 const ConnectorContext = React.createContext<DemoConnector | null>(null);
 export const useConnector = () => React.useContext(ConnectorContext);
@@ -26,13 +30,7 @@ export const useConnector = () => React.useContext(ConnectorContext);
 const AuthAwareSystemProvider = ({ children }: { children: React.ReactNode }) => {
   const authToken = useAuthToken();
   const convexClient = useConvex();
-  const [connector] = React.useState(new DemoConnector());
-  const [powerSync] = React.useState(db);
-
-  // Provide the Convex client to the connector for direct mutation calls
-  React.useEffect(() => {
-    connector.setConvexClient(convexClient);
-  }, [convexClient, connector]);
+  const [connector] = React.useState(() => new DemoConnector({ convexClient }));
 
   // Update connector with current auth token
   React.useEffect(() => {
@@ -43,17 +41,6 @@ const AuthAwareSystemProvider = ({ children }: { children: React.ReactNode }) =>
   }, [authToken, connector]);
 
   React.useEffect(() => {
-    // Linting thinks this is a hook due to it's name
-    Logger.useDefaults(); // eslint-disable-line
-    Logger.setLevel(Logger.DEBUG);
-
-    // For console testing purposes
-    (window as any)._powersync = powerSync;
-
-    powerSync.init();
-  }, [powerSync]);
-
-  React.useEffect(() => {
     if (authToken) {
       // Connect PowerSync when authenticated
       powerSync.connect(connector);
@@ -61,7 +48,7 @@ const AuthAwareSystemProvider = ({ children }: { children: React.ReactNode }) =>
       // Disconnect PowerSync when not authenticated
       powerSync.disconnect();
     }
-  }, [authToken, powerSync, connector]);
+  }, [authToken, connector]);
 
   return (
     <Suspense fallback={<CircularProgress />}>

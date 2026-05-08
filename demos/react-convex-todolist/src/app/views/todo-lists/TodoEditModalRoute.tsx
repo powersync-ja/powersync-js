@@ -2,6 +2,7 @@ import { TODO_LISTS_ROUTE } from '@/app/router';
 import { LISTS_TABLE } from '@/library/powersync/AppSchema';
 import CloseIcon from '@mui/icons-material/Close';
 import {
+  Box,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import { TodoListsEditor } from './TodoListsEditor';
 
 export default function TodoEditModalRoute() {
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -51,9 +52,26 @@ export default function TodoEditModalRoute() {
           display: 'flex',
           flexDirection: 'column',
           ...(fullScreen
-            ? { borderRadius: 0, height: '100%', maxHeight: '100%' }
+            ? {
+                borderRadius: 0,
+                height: '100%',
+                maxHeight: '100%',
+                minHeight: '100dvh',
+                maxWidth: '100%'
+              }
             : {
-                maxHeight: 'min(88vh, 840px)',
+                minHeight: {
+                  sm: 'min(50vh, 440px)',
+                  md: 'min(56vh, 520px)',
+                  lg: 'min(60vh, 600px)',
+                  xl: 'min(62vh, 680px)'
+                },
+                maxHeight: {
+                  sm: 'min(91vh, 880px)',
+                  md: 'min(93vh, 1000px)',
+                  lg: 'min(95vh, 1160px)',
+                  xl: 'min(96vh, 1280px)'
+                },
                 borderRadius: 2,
                 border: '1px solid',
                 borderColor: 'divider'
@@ -89,7 +107,8 @@ export default function TodoEditModalRoute() {
           display: 'flex',
           flexDirection: 'column',
           flex: '1 1 auto',
-          overflow: 'auto',
+          minHeight: 0,
+          overflow: 'hidden',
           bgcolor: 'background.default',
           borderBottomLeftRadius: (t) => (fullScreen ? 0 : Number(t.shape.borderRadius)),
           borderBottomRightRadius: (t) => (fullScreen ? 0 : Number(t.shape.borderRadius)),
@@ -99,8 +118,16 @@ export default function TodoEditModalRoute() {
           }
         }}
       >
-        <Suspense fallback={<CircularProgress sx={{ alignSelf: 'center', my: 4 }} />}>
-          <TodoListsEditor listId={id} />
+        <Suspense
+          fallback={
+            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
+              <CircularProgress />
+            </Box>
+          }
+        >
+          <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <TodoListsEditor listId={id} />
+          </Box>
         </Suspense>
       </DialogContent>
     </Dialog>

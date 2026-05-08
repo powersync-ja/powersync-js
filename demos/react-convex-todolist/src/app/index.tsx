@@ -1,8 +1,8 @@
-import { createRoot } from 'react-dom/client';
-import CssBaseline from '@mui/material/CssBaseline';
-import { RouterProvider } from 'react-router-dom';
 import { ConvexAuthProvider } from '@convex-dev/auth/react';
+import CssBaseline from '@mui/material/CssBaseline';
 import { ConvexReactClient } from 'convex/react';
+import { createRoot } from 'react-dom/client';
+import { RouterProvider } from 'react-router-dom';
 import { SystemProvider } from '../components/providers/SystemProvider';
 import { ThemeProviderContainer } from '../components/providers/ThemeProviderContainer';
 import { router } from './router';

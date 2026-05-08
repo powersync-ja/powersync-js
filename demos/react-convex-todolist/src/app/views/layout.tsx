@@ -1,9 +1,9 @@
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 import LogoutIcon from '@mui/icons-material/Logout';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MenuIcon from '@mui/icons-material/Menu';
-import NorthIcon from '@mui/icons-material/North';
 import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
-import SouthIcon from '@mui/icons-material/South';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import WifiIcon from '@mui/icons-material/Wifi';
 import {
@@ -88,42 +88,78 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
             <Typography variant="h6">{title}</Typography>
           </Box>
           <Box
-            sx={{
-              display: { xs: 'none', sm: 'inline-flex' },
-              alignItems: 'center',
-              flexShrink: 0,
-              mr: 1.25
-            }}
-          >
-            <NorthIcon
-              fontSize="small"
-              color={syncStatus?.dataFlowStatus.uploading ? 'success' : 'disabled'}
-              sx={{
-                mr: -1.5,
-                opacity: syncStatus?.dataFlowStatus.uploading ? 1 : 0.45
-              }}
-            />
-            <SouthIcon
-              fontSize="small"
-              color={syncStatus?.dataFlowStatus.downloading ? 'success' : 'disabled'}
-              sx={{ opacity: syncStatus?.dataFlowStatus.downloading ? 1 : 0.45 }}
-            />
-          </Box>
-          <Box
             component="span"
             sx={{
               display: 'inline-flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              mr: 1.5,
-              color: syncStatus?.connected ? 'success.main' : 'error.main'
+              flexShrink: 0,
+              mr: 1.5
             }}
-            aria-label={syncStatus?.connected ? 'Connected' : 'Disconnected'}
+            aria-label={[
+              syncStatus?.connected ? 'Connected' : 'Disconnected',
+              syncStatus?.dataFlowStatus.uploading ? 'Uploading' : null,
+              syncStatus?.dataFlowStatus.downloading ? 'Downloading' : null
+            ]
+              .filter(Boolean)
+              .join('. ')}
           >
-            {syncStatus?.connected ? (
-              <WifiIcon sx={{ fontSize: '1.35rem' }} />
-            ) : (
-              <SignalWifiOffIcon sx={{ fontSize: '1.35rem' }} />
-            )}
+            <Box
+              sx={{
+                height: { xs: 0, sm: 14 },
+                minHeight: { xs: 0, sm: 14 },
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                mb: -0.75,
+                lineHeight: 0
+              }}
+            >
+              <KeyboardArrowUpIcon
+                sx={{
+                  fontSize: '1rem',
+                  color: 'success.main',
+                  display: 'block',
+                  opacity: syncStatus?.dataFlowStatus.uploading ? 1 : 0,
+                  visibility: syncStatus?.dataFlowStatus.uploading ? 'visible' : 'hidden'
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                lineHeight: 0,
+                color: syncStatus?.connected ? 'success.main' : 'error.main'
+              }}
+            >
+              {syncStatus?.connected ? (
+                <WifiIcon sx={{ fontSize: '1.35rem' }} />
+              ) : (
+                <SignalWifiOffIcon sx={{ fontSize: '1.35rem' }} />
+              )}
+            </Box>
+            <Box
+              sx={{
+                height: { xs: 0, sm: 14 },
+                minHeight: { xs: 0, sm: 14 },
+                display: { xs: 'none', sm: 'flex' },
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                mt: -0.75,
+                lineHeight: 0
+              }}
+            >
+              <KeyboardArrowDownIcon
+                sx={{
+                  fontSize: '1rem',
+                  color: 'success.main',
+                  display: 'block',
+                  opacity: syncStatus?.dataFlowStatus.downloading ? 1 : 0,
+                  visibility: syncStatus?.dataFlowStatus.downloading ? 'visible' : 'hidden'
+                }}
+              />
+            </Box>
           </Box>
           <Button color="primary" variant="outlined" onClick={handleSignOut} startIcon={<LogoutIcon />} sx={{ ml: 2 }}>
             Logout
