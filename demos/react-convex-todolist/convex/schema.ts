@@ -31,7 +31,7 @@ export default defineSchema({
     created_at: v.string(),
     completed_at: v.optional(v.string()),
     description: v.string(),
-    completed: v.optional(v.number()),
+    completed: v.optional(v.boolean()),
     list_id: v.id('lists'),
     /**
      * Local-first version of list_id

@@ -3,7 +3,7 @@ import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from '@/app/views/todo-l
 import { OutlinedComposer } from '@/components/widgets/OutlinedComposer';
 import { SmartTagEditor } from '@/components/widgets/SmartTagEditor';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
-import { TodoRecord } from '@/library/powersync/AppSchema';
+import { Database } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, FormControl, List, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
@@ -148,13 +148,13 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
   const userID = useUserId();
   const { listId } = props;
 
-  const { data: todos } = useQuery<TodoRecord>(`SELECT * FROM todos WHERE list_uuid=? ORDER BY created_at, id`, [
+  const { data: todos } = useQuery<Database['todos']>(`SELECT * FROM todos WHERE list_uuid=? ORDER BY created_at, id`, [
     listId
   ]);
 
   const [newTodoText, setNewTodoText] = React.useState('');
 
-  const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
+  const toggleCompletion = async (record: Database['todos'], completed: boolean) => {
     if (!userID) {
       throw new Error(`Could not get user ID.`);
     }
