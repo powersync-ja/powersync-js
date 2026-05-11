@@ -1,0 +1,59 @@
+services:
+  # ── Admin Key Generator ─────────────────────────────────────────────────────
+  # Runs generate_admin_key.sh from the backend image using the shared data
+  # volume, then writes the key to a shared setup volume for convex-setup.
+  convex-keygen:
+    image: ghcr.io/get-convex/convex-backend:latest
+    volumes:
+      - convex_data:/convex/data
+      # Mounted locally in order to extract the secret
+      - ../setup_data:/setup
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        echo "Generating admin key..."
+        ./generate_admin_key.sh > /setup/admin_key 2>&1
+        cat /setup/admin_key
+        grep -v '^[[:space:]]*$' /setup/admin_key | tail -1 | tr -d '\r\n' > /setup/deploy_key
+        chmod 600 /setup/admin_key /setup/deploy_key
+        echo "Admin key written to /setup/admin_key"
+        echo "Deploy key written to /setup/deploy_key"
+
+  # ── Convex Backend ──────────────────────────────────────────────────────────
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    stop_grace_period: 10s
+    depends_on:
+      convex-keygen:
+        # Wait for the key to have been generated
+        condition: service_completed_successfully
+    stop_signal: SIGINT
+    ports:
+      - '${PS_CONVEX_PORT:-3210}:3210'
+      - '${PS_CONVEX_SITE_PORT:-3211}:3211'
+    volumes:
+      - convex_data:/convex/data
+    environment:
+      - CONVEX_CLOUD_ORIGIN=http://127.0.0.1:${PS_CONVEX_PORT:-3210}
+      - CONVEX_SITE_ORIGIN=http://127.0.0.1:${PS_CONVEX_SITE_PORT:-3211}
+      - RUST_LOG=${RUST_LOG:-info}
+    healthcheck:
+      test: curl -f http://localhost:3210/version
+      interval: 5s
+      start_period: 10s
+
+  # ── Convex Dashboard ────────────────────────────────────────────────────────
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      - '${CONVEX_DASHBOARD_PORT:-6791}:6791'
+    environment:
+      - NEXT_PUBLIC_DEPLOYMENT_URL=http://127.0.0.1:${PS_CONVEX_PORT:-3210}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  convex_data:

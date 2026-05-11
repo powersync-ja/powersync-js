@@ -22,6 +22,7 @@ telemetry:
 replication:
   connections:
     - type: convex
+      # These are provided by the Docker compose script.
       deploy_key: !env PS_CONVEX_DEPLOY_KEY
       deployment_url: !env PS_CONVEX_DEPLOYMENT_URL
 # -----------------------------------------------------------------------------
@@ -55,5 +56,5 @@ api:
 client_auth:
   audience:
     - convex
-  # The Convex backend running on the host machine's JWKS endpoint
-  jwks_uri: http://host.docker.internal:3211/.well-known/jwks.json
+  # The Convex backend running as the backend service
+  jwks_uri: http://backend:3211/.well-known/jwks.json

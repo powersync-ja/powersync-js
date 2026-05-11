@@ -52,7 +52,7 @@ export class DemoConnector implements PowerSyncBackendConnector {
   constructor(options: ConnectorOptions) {
     this.authToken = null;
     this.convexClient = options.convexClient;
-    this.powersyncUrl = import.meta.env.VITE_POWERSYNC_URL;
+    this.powersyncUrl = import.meta.env.VITE_POWERSYNC_URL ?? 'http://localhost:8080';
   }
 
   /**

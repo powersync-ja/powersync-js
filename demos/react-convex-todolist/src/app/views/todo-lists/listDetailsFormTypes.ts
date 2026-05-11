@@ -1,4 +1,4 @@
-/** Draft + submit payload for list metadata edited in the todo list modal (Formik). */
+/** List metadata edited in the todo list modal (Formik); persisted automatically. */
 export type ListDetailsFormValues = {
   name: string;
   notes: string;

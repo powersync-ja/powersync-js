@@ -40,6 +40,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
     "babel-loader": "^9.1.3",
+    "chokidar": "^5.0.0",
     "concurrently": "^9.2.1",
     "powersync": "^0.9.4",
     "typescript": "^5.4.2",

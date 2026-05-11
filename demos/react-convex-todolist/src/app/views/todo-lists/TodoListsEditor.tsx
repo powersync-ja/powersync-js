@@ -33,9 +33,13 @@ function ListDetailsFields() {
       <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700 }}>
         List details
       </Typography>
-      <Form id="list-details-form">
+      <Form
+        id="list-details-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-          Tags — click a pill to rename, Enter to add a new tag. Changes apply when you press Save in the header.
+          Tags — click a pill to rename, Enter to add a new tag. List details save automatically after you stop typing.
         </Typography>
         <Box
           sx={{

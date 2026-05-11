@@ -1,171 +1,58 @@
 /**
- * A small script which runs the Convex and PowerSync backends locally.
+ * Runs the local self-hosted PowerSync + Convex development stack.
  */
 import { concurrently } from 'concurrently';
-import { ChildProcess, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import process from 'node:process';
-import {
-  type ConvexConfig,
-  ensureConvexAuthEnv,
-  obtainLocalConvexConfig,
-  tryObtainLocalConvexConfig,
-  waitForConvexReadyOutput
-} from './utils/convex.ts';
-import {
-  color,
-  confirm,
-  getPidsForPorts,
-  isSafeKillPid,
-  logError,
-  logStep,
-  replayBufferedOutput,
-  stopChildProcess,
-  waitForPortsToClose
-} from './utils/process.ts';
+import { ensureConvexAuthEnv } from './utils/convex.ts';
+import { color, logError, logStep } from './utils/process.ts';
 
-// We need to run the Convex backend first, in order to get the Convex deploy secret.
+const DEMO_ROOT = path.resolve(import.meta.dirname, '..');
+const CONVEX_DEPLOY_KEY_FILE = path.join(DEMO_ROOT, 'powersync/docker/setup_data/deploy_key');
+const CONVEX_SELF_HOSTED_URL = `http://localhost:${process.env.PS_CONVEX_PORT ?? '3210'}`;
 
 async function run() {
-  await checkForRunningConvexBackend();
+  logStep(`Starting ${color.cyan('PowerSync')} and ${color.magenta('Convex')} Docker services...`);
+  await runCommand('pnpm', ['powersync', 'docker', 'reset']);
 
-  // Start An initial Convex process, this will do initial config if not done yet
-  logStep(`${color.yellow('Checking Convex config')} with a temporary startup.`);
-  const { convexConfig, convexProcess } = await startConvex();
+  const convexDeployKey = await readDeployKey();
+  const convexEnv = {
+    ...process.env,
+    CONVEX_SELF_HOSTED_URL,
+    CONVEX_SELF_HOSTED_ADMIN_KEY: convexDeployKey
+  };
 
-  try {
-    await ensureConvexAuthEnv();
-  } finally {
-    await stopChildProcess(convexProcess);
-    await waitForPortsToClose([convexConfig.cloudPort, convexConfig.sitePort]);
-  }
+  Object.assign(process.env, {
+    CONVEX_SELF_HOSTED_URL,
+    CONVEX_SELF_HOSTED_ADMIN_KEY: convexDeployKey
+  });
+
+  await ensureConvexAuthEnv(convexEnv);
 
   logStep(
-    `Starting ${color.magenta('Convex')}, ${color.cyan('PowerSync')} and ${color.green('Vite')} development servers...`
+    `Starting ${color.magenta('Convex')}, ${color.green('Vite')} and ${color.cyan('PowerSync config watcher')}...`
   );
-  await runConcurrentServices({ convexConfig });
+  await runConcurrentServices(convexEnv);
 }
 
-async function startConvex(): Promise<{ convexConfig: ConvexConfig; convexProcess: ChildProcess }> {
-  return new Promise(async (resolve, reject) => {
-    // Start Convex backend
-    const convexProcess = spawn('pnpm', ['convex', 'dev'], {
-      detached: process.platform !== 'win32',
-      stdio: ['inherit', 'pipe', 'pipe'],
-      shell: process.platform === 'win32',
-      env: {
-        ...process.env
-      }
-    });
-    const convexOutput: Buffer[] = [];
-    convexProcess.stdout?.on('data', (chunk: Buffer) => {
-      convexOutput.push(chunk);
-      process.stdout.write(chunk);
-    });
-    convexProcess.stderr?.on('data', (chunk: Buffer) => {
-      convexOutput.push(chunk);
-      process.stderr.write(chunk);
-    });
-
-    const abortHealthCheck = new AbortController();
-    let convexExit: Error | undefined;
-
-    const onExit = (code: number) => {
-      abortHealthCheck.abort();
-      convexExit = new Error(`Convex development ended with code ${code}`);
-      replayBufferedOutput('convex-bootstrap', convexOutput);
-      reject(convexExit);
-    };
-    convexProcess.once('exit', onExit);
-
-    const onError = (error: Error) => {
-      abortHealthCheck.abort();
-      convexExit = new Error(`Convex dev had an error`, { cause: error });
-      replayBufferedOutput('convex-bootstrap', convexOutput);
-      reject(convexExit);
-    };
-    convexProcess.once('error', onError);
-
-    try {
-      await waitForConvexReadyOutput(convexProcess);
-      if (convexExit) {
-        throw convexExit;
-      }
-
-      const convexConfig = obtainLocalConvexConfig();
-
-      // Once we have the process, we can stop the listeners above
-      convexProcess.removeListener('error', onError);
-      convexProcess.removeListener('exit', onExit);
-      resolve({ convexConfig, convexProcess });
-    } catch (ex) {
-      abortHealthCheck.abort();
-      replayBufferedOutput('convex-bootstrap', convexOutput);
-      reject(ex);
-    }
-  });
-}
-
-async function checkForRunningConvexBackend() {
-  const convexConfig = tryObtainLocalConvexConfig();
-  if (!convexConfig) {
-    return;
-  }
-
-  const ports = [convexConfig.cloudPort, convexConfig.sitePort];
-  const runningPids = await getPidsForPorts(ports);
-  if (runningPids.length === 0) {
-    return;
-  }
-
-  const formattedPorts = ports.map((port) => color.yellow(String(port))).join(', ');
-  const formattedPids = runningPids.map((pid) => color.yellow(String(pid))).join(', ');
-  const shouldKill = await confirm(
-    `Existing Convex backend detected on ports ${formattedPorts} (PID ${formattedPids}). Kill it and continue?`
-  );
-
-  if (!shouldKill) {
-    throw new Error(`Convex backend already running on ports ${ports.join(', ')}.`);
-  }
-
-  logStep(`Killing existing Convex backend process${runningPids.length === 1 ? '' : 'es'} ${formattedPids}.`);
-  for (const pid of runningPids) {
-    if (!isSafeKillPid(pid)) {
-      throw new Error(`Refusing to kill unsafe PID ${pid}. Stop the process manually and run this command again.`);
-    }
-
-    try {
-      process.kill(pid, 'SIGTERM');
-    } catch (ex) {
-      throw new Error(`Failed to kill process ${pid}. Stop it manually and run this command again.`, { cause: ex });
-    }
-  }
-
-  await waitForPortsToClose(ports);
-}
-
-async function runConcurrentServices({ convexConfig }: { convexConfig: ConvexConfig }) {
+async function runConcurrentServices(convexEnv: NodeJS.ProcessEnv) {
   const { result } = concurrently(
     [
       {
         command: 'pnpm convex dev',
         name: color.magenta('convex'),
-        env: {
-          ...process.env,
-          CONVEX_AGENT_MODE: 'anonymous'
-        }
-      },
-      {
-        command: 'pnpm powersync docker reset',
-        name: color.cyan('powersync'),
-        env: {
-          ...process.env,
-          PS_CONVEX_DEPLOY_KEY: convexConfig.adminKey,
-          PS_CONVEX_DEPLOYMENT_URL: `http://host.docker.internal:${convexConfig.cloudPort}`
-        }
+        env: convexEnv
       },
       {
         command: 'pnpm dev',
         name: color.green('vite'),
+        env: process.env
+      },
+      {
+        command: 'node scripts/watch-powersync-config.ts',
+        name: color.cyan('powersync-watch'),
         env: process.env
       }
     ],
@@ -179,6 +66,41 @@ async function runConcurrentServices({ convexConfig }: { convexConfig: ConvexCon
   );
 
   await result;
+}
+
+async function readDeployKey() {
+  try {
+    const deployKey = (await fs.readFile(CONVEX_DEPLOY_KEY_FILE, 'utf8'))
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .at(-1);
+    if (!deployKey) {
+      throw new Error('Deploy key file was empty.');
+    }
+    return deployKey;
+  } catch (ex) {
+    throw new Error(`Could not read Convex deploy key at ${CONVEX_DEPLOY_KEY_FILE}.`, { cause: ex });
+  }
+}
+
+async function runCommand(command: string, args: string[]) {
+  await new Promise<void>((resolve, reject) => {
+    const childProcess = spawn(command, args, {
+      cwd: DEMO_ROOT,
+      stdio: 'inherit',
+      shell: process.platform === 'win32'
+    });
+
+    childProcess.once('error', (error) => reject(error));
+    childProcess.once('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${command} ${args.join(' ')} ended with code ${code}`));
+      }
+    });
+  });
 }
 
 run().catch((error) => {

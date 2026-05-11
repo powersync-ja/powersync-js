@@ -29,7 +29,7 @@ import {
   useTheme
 } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
-import { Field, type FieldProps, Formik, type FormikHelpers, useFormikContext } from 'formik';
+import { Field, type FieldProps, Formik, useFormikContext } from 'formik';
 import React, { Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TodoListsEditor } from './TodoListsEditor';
@@ -59,6 +59,17 @@ function validateListDetails(values: ListDetailsFormValues) {
   return errors;
 }
 
+const LIST_DETAILS_PERSIST_DEBOUNCE_MS = 400;
+
+function persistPayloadKey(values: ListDetailsFormValues) {
+  return JSON.stringify({
+    name: values.name.trim(),
+    notes: values.notes,
+    tags: stringArrayToTagsJson(values.tags),
+    priority: values.priority
+  });
+}
+
 type TodoEditModalShellProps = {
   listId: string;
   listRecord: ListDetailRow;
@@ -69,13 +80,82 @@ type TodoEditModalShellProps = {
 function TodoEditModalShell(props: TodoEditModalShellProps) {
   const { listId, listRecord, fullScreen, onClose } = props;
   const theme = useTheme();
-  const { dirty, isSubmitting, submitForm, resetForm, values } = useFormikContext<ListDetailsFormValues>();
+  const { values, errors, resetForm } = useFormikContext<ListDetailsFormValues>();
   const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const menuOpen = Boolean(menuAnchor);
   const powerSync = usePowerSync();
   const navigate = useNavigate();
   const archived = Number(listRecord.archived) === 1;
+  const lastPersistedKey = React.useRef<string | null>(null);
+  const seededPersistBaseline = React.useRef(false);
+  const persistDebounceRef = React.useRef<number | null>(null);
+
+  const tryCommitValues = React.useCallback(
+    async (currentValues: ListDetailsFormValues, nameError?: string) => {
+      if (nameError) {
+        return;
+      }
+      const key = persistPayloadKey(currentValues);
+      if (key === lastPersistedKey.current) {
+        return;
+      }
+      const trimmedName = currentValues.name.trim();
+      await powerSync.writeTransaction(async (tx) => {
+        await tx.execute(`UPDATE ${LISTS_TABLE} SET name = ?, notes = ?, tags = ?, priority = ? WHERE id = ?`, [
+          trimmedName,
+          currentValues.notes,
+          stringArrayToTagsJson(currentValues.tags),
+          currentValues.priority,
+          listId
+        ]);
+      });
+      lastPersistedKey.current = key;
+      resetForm({
+        values: {
+          ...currentValues,
+          name: trimmedName
+        }
+      });
+    },
+    [listId, powerSync, resetForm]
+  );
+
+  const handleRequestClose = React.useCallback(() => {
+    if (persistDebounceRef.current != null) {
+      window.clearTimeout(persistDebounceRef.current);
+      persistDebounceRef.current = null;
+    }
+    void (async () => {
+      await tryCommitValues(values, errors.name);
+      onClose();
+    })();
+  }, [errors.name, onClose, tryCommitValues, values]);
+
+  React.useEffect(() => {
+    if (!seededPersistBaseline.current) {
+      seededPersistBaseline.current = true;
+      lastPersistedKey.current = persistPayloadKey(values);
+      return;
+    }
+
+    if (errors.name) {
+      return;
+    }
+
+    const handle = window.setTimeout(() => {
+      persistDebounceRef.current = null;
+      void tryCommitValues(values, errors.name);
+    }, LIST_DETAILS_PERSIST_DEBOUNCE_MS) as unknown as number;
+    persistDebounceRef.current = handle;
+
+    return () => {
+      window.clearTimeout(handle);
+      if (persistDebounceRef.current === handle) {
+        persistDebounceRef.current = null;
+      }
+    };
+  }, [errors.name, tryCommitValues, values]);
 
   const setArchived = async (next: boolean) => {
     await powerSync.execute(`UPDATE ${LISTS_TABLE} SET archived = ? WHERE id = ?`, [next ? 1 : 0, listId]);
@@ -94,7 +174,9 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
     <>
       <Dialog
         open
-        onClose={onClose}
+        onClose={() => {
+          handleRequestClose();
+        }}
         fullScreen={fullScreen}
         fullWidth
         maxWidth="md"
@@ -184,30 +266,6 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
               </Box>
             )}
           </Field>
-          {dirty ? (
-            <>
-              <Button
-                type="submit"
-                form="list-details-form"
-                variant="contained"
-                size="small"
-                disabled={isSubmitting}
-                sx={{ flexShrink: 0 }}
-              >
-                Save
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                disabled={isSubmitting}
-                sx={{ flexShrink: 0 }}
-                onClick={() => resetForm()}
-              >
-                Clear draft
-              </Button>
-            </>
-          ) : null}
           <IconButton
             size="small"
             aria-label="List actions"
@@ -219,7 +277,7 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
           >
             <MoreVertIcon fontSize="small" />
           </IconButton>
-          <IconButton aria-label="Close list" edge="end" onClick={onClose} size="small" sx={{ flexShrink: 0 }}>
+          <IconButton aria-label="Close list" edge="end" onClick={handleRequestClose} size="small" sx={{ flexShrink: 0 }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -307,7 +365,6 @@ export default function TodoEditModalRoute() {
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { id: listId } = useParams<{ id: string }>();
-  const powerSync = usePowerSync();
 
   const handleClose = () => {
     navigate(TODO_LISTS_ROUTE);
@@ -318,23 +375,6 @@ export default function TodoEditModalRoute() {
   } = useQuery<ListDetailRow>(
     `SELECT name, notes, priority, tags, archived FROM ${LISTS_TABLE} WHERE id = ? LIMIT 1`,
     [listId ?? '']
-  );
-
-  const handleSubmit = React.useCallback(
-    async (values: ListDetailsFormValues, { resetForm }: FormikHelpers<ListDetailsFormValues>) => {
-      if (!listId) return;
-      await powerSync.writeTransaction(async (tx) => {
-        await tx.execute(`UPDATE ${LISTS_TABLE} SET name = ?, notes = ?, tags = ?, priority = ? WHERE id = ?`, [
-          values.name.trim(),
-          values.notes,
-          stringArrayToTagsJson(values.tags),
-          values.priority,
-          listId
-        ]);
-      });
-      resetForm({ values });
-    },
-    [listId, powerSync]
   );
 
   if (!listId) {
@@ -355,9 +395,8 @@ export default function TodoEditModalRoute() {
     <Formik<ListDetailsFormValues>
       key={listId}
       initialValues={listDetailInitialValues(listRecord)}
-      enableReinitialize
       validate={validateListDetails}
-      onSubmit={handleSubmit}
+      onSubmit={() => {}}
     >
       <TodoEditModalShell listId={listId} listRecord={listRecord} fullScreen={fullScreen} onClose={handleClose} />
     </Formik>

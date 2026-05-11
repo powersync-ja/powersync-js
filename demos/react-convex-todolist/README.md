@@ -21,8 +21,6 @@ Browser (React + PowerSync SDK)
 
 ```bash
 pnpm install
-
-cp .env.template .env.local
 ```
 
 Start the local development stack:
@@ -31,21 +29,23 @@ Start the local development stack:
 pnpm dev:local
 ```
 
-This starts Convex, configures Convex Auth JWKS if needed, starts the PowerSync Docker services, and starts the Vite dev server.
+This starts the self-hosted PowerSync and Convex Docker services, configures Convex Auth JWT/JWKS if needed, and starts the Convex and Vite dev servers.
 
-> Note: The local development setup assumes Convex is running locally. Linking this demo to a cloud development Convex deployment requires additional configuration.
+The app defaults to local services, so `.env.local` is optional. Copy `.env.template` to `.env.local` only when using custom service URLs.
 
 Open the URL printed by Vite, usually `http://localhost:5173`.
 
 ### Environment Variables
 
-| Variable               | Default                 | Description             |
-| ---------------------- | ----------------------- | ----------------------- |
-| `VITE_CONVEX_URL`      | `http://127.0.0.1:3210` | Convex backend URL      |
-| `VITE_CONVEX_SITE_URL` | `http://127.0.0.1:3211` | Convex HTTP actions URL |
-| `VITE_POWERSYNC_URL`   | `http://localhost:8080` | PowerSync service URL   |
+| Variable               | Default                 | Description                                                  |
+| ---------------------- | ----------------------- | ------------------------------------------------------------ |
+| `PS_CONVEX_PORT`       | `3210`                  | Host port for the local self-hosted Convex backend           |
+| `PS_CONVEX_SITE_PORT`  | `3211`                  | Host port for local self-hosted Convex HTTP actions and JWKS |
+| `VITE_CONVEX_URL`      | `http://127.0.0.1:3210` | Convex backend URL                                           |
+| `VITE_CONVEX_SITE_URL` | `http://127.0.0.1:3211` | Convex HTTP actions URL                                      |
+| `VITE_POWERSYNC_URL`   | `http://localhost:8080` | PowerSync service URL                                        |
 
-`pnpm dev:local` obtains the local Convex deploy key automatically and passes it to PowerSync as `PS_CONVEX_DEPLOY_KEY`.
+`pnpm dev:local` obtains the self-hosted Convex deploy key from `powersync/docker/setup_data/deploy_key` after `powersync docker reset` starts the Docker services.
 
 ## Authentication
 
