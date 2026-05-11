@@ -1,41 +1,43 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
 import { NavigationPage } from '@/components/navigation/NavigationPage';
+import { SyncStreams } from '@/components/providers/SystemProvider';
 import { ArchivedTodoListsPanel } from '@/components/widgets/ArchivedTodoListsPanel';
-import { LISTS_TABLE, TodoListWithCountsRow, TODOS_TABLE } from '@/library/powersync/AppSchema';
+import { Database } from '@/library/powersync/AppSchema';
 import { Box, Button, Typography } from '@mui/material';
 import { useQuery } from '@powersync/react';
 import { Link } from 'react-router-dom';
+
+export type TodoListWithCountsRow = Database['lists'] & {
+  total_tasks: number;
+  completed_tasks: number;
+};
 
 export default function TodoArchivedListsPage() {
   const { data: listRows } = useQuery<TodoListWithCountsRow>(
     /* sql */ `
       SELECT
-        ${LISTS_TABLE}.*,
-        COUNT(${TODOS_TABLE}.id) AS total_tasks,
+        lists.*,
+        COUNT(todos.id) AS total_tasks,
         SUM(
           CASE
-            WHEN COALESCE(${TODOS_TABLE}.completed, 0) != 0 THEN 1
+            WHEN COALESCE(todos.completed, 0) != 0 THEN 1
             ELSE 0
           END
         ) AS completed_tasks
       FROM
-        ${LISTS_TABLE}
-        LEFT JOIN ${TODOS_TABLE} ON ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_uuid
+        lists
+        LEFT JOIN todos ON lists.id = todos.list_uuid
       WHERE
-        ${LISTS_TABLE}.archived = true
+        lists.archived = true
       GROUP BY
-        ${LISTS_TABLE}.id
+        lists.id
       ORDER BY
-        COALESCE(${LISTS_TABLE}.priority, 0) DESC,
-        ${LISTS_TABLE}.created_at DESC
+        COALESCE(lists.priority, 0) DESC,
+        lists.created_at DESC
     `,
     [],
     {
-      streams: [
-        {
-          name: 'archived_user_data'
-        }
-      ]
+      streams: [SyncStreams.archivedUserData]
     }
   );
 

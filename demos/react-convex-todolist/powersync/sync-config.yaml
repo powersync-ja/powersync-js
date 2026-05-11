@@ -19,7 +19,7 @@ streams:
         FROM lists
         WHERE uuid in user_lists
       - |
-        SELECT uuid as id, list_uuid as list_id, *
+        SELECT uuid as id, *
         FROM todos
         WHERE list_uuid IN user_lists
   archived_user_data:
@@ -35,6 +35,6 @@ streams:
         FROM lists
         WHERE uuid in archived_user_lists
       - |
-        SELECT uuid as id, list_uuid as list_id, *
+        SELECT uuid as id, *
         FROM todos
         WHERE list_uuid IN archived_user_lists

@@ -1,5 +1,7 @@
 import { v } from 'convex/values';
 import { DatabaseReader, mutation } from './_generated/server';
+import { assertListOwner, assertOwnerIdMatches, mutationError, requireOwnerId } from './authorization';
+import { MUTATION_ERROR_CODES } from './mutationErrors';
 import schema from './schema';
 
 /**
@@ -22,6 +24,8 @@ export const findListByUuid = async (params: { db: DatabaseReader; uuid: string 
 export const create = mutation({
   args: schema.tables.lists.validator,
   handler: async (ctx, args) => {
+    const ownerId = await requireOwnerId(ctx);
+    assertOwnerIdMatches(args.owner_id, ownerId);
     await ctx.db.insert('lists', args);
   }
 });
@@ -32,10 +36,16 @@ export const create = mutation({
 export const update = mutation({
   // The uuid is required, every other field is an optional patch
   args: v.object({ uuid: v.string() }).extend(schema.tables.lists.validator.partial().fields),
-  handler: async ({ db }, { uuid, ...fields }) => {
+  handler: async (ctx, { uuid, ...fields }) => {
+    const { db } = ctx;
+    const ownerId = await requireOwnerId(ctx);
     const matching = await findListByUuid({ db, uuid });
     if (!matching) {
-      return;
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for uuid=${uuid}`);
+    }
+    assertListOwner(matching, ownerId);
+    if (fields.owner_id !== undefined) {
+      assertOwnerIdMatches(fields.owner_id, ownerId);
     }
     await db.patch(matching._id, fields);
   }
@@ -48,11 +58,14 @@ export const remove = mutation({
   args: {
     uuid: v.string()
   },
-  handler: async ({ db }, { uuid }) => {
+  handler: async (ctx, { uuid }) => {
+    const { db } = ctx;
+    const ownerId = await requireOwnerId(ctx);
     const matching = await findListByUuid({ db, uuid });
     if (!matching) {
-      return;
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for uuid=${uuid}`);
     }
+    assertListOwner(matching, ownerId);
     await db.delete(matching._id);
   }
 });

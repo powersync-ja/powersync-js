@@ -8,7 +8,8 @@
     "dev:convex": "convex dev",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "start": "pnpm build && pnpm preview"
+    "start": "pnpm build && pnpm preview",
+    "update:schema": "powersync generate schema --output-path=./src/library/powersync/AppSchema.ts --output=ts"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.91",

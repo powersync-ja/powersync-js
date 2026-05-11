@@ -56,3 +56,7 @@ Convex Auth handles user authentication (email/password). The Convex Auth sessio
 ## Mutations
 
 Client writes go into the PowerSync upload queue, which calls `uploadData()` in the connector. This calls Convex mutations directly via the `ConvexReactClient` (e.g. `lists:create`, `todos:update`, `todos:remove`).
+
+## ID Mapping
+
+Convex requires server-side generated row IDs, while PowerSync needs stable local IDs for queued writes before the backend mutation has completed. This demo uses PowerSync's [sequential ID mapping](https://docs.powersync.com/client-sdks/advanced/sequential-id-mapping#sequential-id-mapping) pattern: client-side rows use a local `uuid`, and Convex mutations resolve that `uuid` to the corresponding Convex `_id` on the server.

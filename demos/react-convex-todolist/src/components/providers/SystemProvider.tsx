@@ -1,5 +1,5 @@
 import { NavigationPanelContextProvider } from '@/components/navigation/NavigationPanelContext';
-import { AppSchema } from '@/library/powersync/AppSchema';
+import { AppSchema, typedStreams } from '@/library/powersync/AppSchema';
 import { DemoConnector } from '@/library/powersync/DemoConnector';
 import { useAuthToken } from '@convex-dev/auth/react';
 import { CircularProgress } from '@mui/material';
@@ -20,6 +20,8 @@ export const powerSync = new PowerSyncDatabase({
   schema: AppSchema,
   logger: Logger
 });
+
+export const SyncStreams = typedStreams(powerSync);
 
 // For console testing purposes
 (window as any)._powersync = powerSync;

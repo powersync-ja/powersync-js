@@ -1,48 +1,49 @@
-import { column, Schema, Table } from '@powersync/web';
+import { column, Schema, Table, PowerSyncDatabase, SyncStream } from '@powersync/web';
+// OR: import { column, Schema, Table, PowerSyncDatabase, SyncStream } from '@powersync/react-native';
 
-export const LISTS_TABLE = 'lists';
-export const TODOS_TABLE = 'todos';
+const lists = new Table(
+  {
+    // id column (text) is automatically included
+    _creationTime: column.real,
+    _id: column.text,
+    archived: column.integer,
+    created_at: column.text,
+    name: column.text,
+    notes: column.text,
+    owner_id: column.text,
+    priority: column.real,
+    tags: column.text,
+    uuid: column.text
+  },
+  { indexes: {} }
+);
 
 const todos = new Table(
   {
-    /**
-     * This always corresponds to the local-first uuid of a list
-     */
-    list_uuid: column.text,
+    // id column (text) is automatically included
+    _creationTime: column.real,
+    _id: column.text,
+    completed: column.real,
     created_at: column.text,
-    completed_at: column.text,
     description: column.text,
-    completed: column.integer,
-    completed_by: column.text
+    list_id: column.text,
+    list_uuid: column.text,
+    uuid: column.text
   },
-  { indexes: { list: ['list_uuid'] } }
+  { indexes: {} }
 );
 
-const lists = new Table({
-  created_at: column.text,
-  name: column.text,
-  owner_id: column.text,
-  archived: column.integer,
-  /** Free-form list notes (synced; list-level metadata) */
-  notes: column.text,
-  priority: column.integer,
-  /** JSON-encoded string array, e.g. `["a","b"]` */
-  tags: column.text
-});
-
 export const AppSchema = new Schema({
-  todos,
-  lists
+  lists,
+  todos
 });
 
 export type Database = (typeof AppSchema)['types'];
-export type TodoRecord = Database['todos'];
-// OR:
-// export type Todo = RowType<typeof todos>;
 
-export type ListRecord = Database['lists'];
-
-export type TodoListWithCountsRow = ListRecord & {
-  total_tasks: number;
-  completed_tasks: number;
-};
+export function typedStreams(db: PowerSyncDatabase) {
+  return {
+    archivedUserData(): SyncStream {
+      return db.syncStream('archived_user_data', {});
+    }
+  };
+}

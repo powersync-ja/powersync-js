@@ -1,21 +1,14 @@
+import type { ListDetailsFormValues } from '@/app/views/todo-lists/listDetailsFormTypes';
+import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from '@/app/views/todo-lists/listFormUtils';
 import { OutlinedComposer } from '@/components/widgets/OutlinedComposer';
 import { SmartTagEditor } from '@/components/widgets/SmartTagEditor';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
-import { Database } from '@/library/powersync/AppSchema';
+import { TodoRecord } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, FormControl, List, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
 import { Field, type FieldProps, Form, useFormikContext } from 'formik';
 import React from 'react';
-import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from './listFormUtils';
-
-/** List metadata edited in the todo list modal (Formik); persisted automatically from the route shell. */
-export type ListDetailsFormValues = {
-  name: string;
-  notes: string;
-  tags: string[];
-  priority: number;
-};
 
 export type TodoListsEditorProps = {
   listId: string;
@@ -155,13 +148,13 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
   const userID = useUserId();
   const { listId } = props;
 
-  const { data: todos } = useQuery<Database['todos']>(`SELECT * FROM todos WHERE list_uuid=? ORDER BY created_at, id`, [
+  const { data: todos } = useQuery<TodoRecord>(`SELECT * FROM todos WHERE list_uuid=? ORDER BY created_at, id`, [
     listId
   ]);
 
   const [newTodoText, setNewTodoText] = React.useState('');
 
-  const toggleCompletion = async (record: Database['todos'], completed: boolean) => {
+  const toggleCompletion = async (record: TodoRecord, completed: boolean) => {
     if (!userID) {
       throw new Error(`Could not get user ID.`);
     }

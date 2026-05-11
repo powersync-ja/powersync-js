@@ -1,6 +1,8 @@
 import { v } from 'convex/values';
 import { DatabaseReader, mutation } from './_generated/server';
+import { assertListOwner, mutationError, requireOwnerId } from './authorization';
 import { findListByUuid } from './lists';
+import { MUTATION_ERROR_CODES } from './mutationErrors';
 import schema from './schema';
 
 /**
@@ -26,12 +28,14 @@ export const create = mutation({
   args: schema.tables.todos.validator.omit('list_id'),
   handler: async (ctx, args) => {
     const { db } = ctx;
+    const ownerId = await requireOwnerId(ctx);
     const { list_uuid } = args;
     //need to set the corresponding list_id for the provided list_uuid
     const matchingList = await findListByUuid({ db, uuid: list_uuid });
     if (!matchingList) {
-      throw new Error(`No matching list found for uuid=${list_uuid}`);
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for uuid=${list_uuid}`);
     }
+    assertListOwner(matchingList, ownerId);
     return await db.insert('todos', {
       ...args,
       list_id: matchingList._id
@@ -45,11 +49,28 @@ export const create = mutation({
 export const update = mutation({
   // The uuid is required, every other field is an optional patch
   args: v.object({ uuid: v.string() }).extend(schema.tables.todos.validator.partial().fields),
-  handler: async ({ db }, { uuid, ...fields }) => {
+  handler: async (ctx, { uuid, ...fields }) => {
+    const { db } = ctx;
+    const ownerId = await requireOwnerId(ctx);
     let matching = await findTodoByUuid({ db, uuid });
     if (!matching) {
-      return;
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching todo found for uuid=${uuid}`);
     }
+    const currentList = await db.get(matching.list_id);
+    if (!currentList) {
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for todo uuid=${uuid}`);
+    }
+    assertListOwner(currentList, ownerId);
+
+    if (fields.list_uuid !== undefined) {
+      const nextList = await findListByUuid({ db, uuid: fields.list_uuid });
+      if (!nextList) {
+        throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for uuid=${fields.list_uuid}`);
+      }
+      assertListOwner(nextList, ownerId);
+      fields.list_id = nextList._id;
+    }
+
     await db.patch(matching._id, fields);
   }
 });
@@ -61,11 +82,18 @@ export const remove = mutation({
   args: {
     uuid: v.string()
   },
-  handler: async ({ db }, { uuid }) => {
+  handler: async (ctx, { uuid }) => {
+    const { db } = ctx;
+    const ownerId = await requireOwnerId(ctx);
     let matching = await findTodoByUuid({ db, uuid });
     if (!matching) {
-      return;
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching todo found for uuid=${uuid}`);
     }
+    const list = await db.get(matching.list_id);
+    if (!list) {
+      throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for todo uuid=${uuid}`);
+    }
+    assertListOwner(list, ownerId);
     await db.delete(matching._id);
   }
 });
@@ -75,8 +103,14 @@ export const createBatch = mutation({
     todos: v.array(schema.tables.todos.validator)
   },
   handler: async (ctx, args) => {
+    const ownerId = await requireOwnerId(ctx);
     const ids = [];
     for (const todo of args.todos) {
+      const list = await ctx.db.get(todo.list_id);
+      if (!list) {
+        throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for id=${todo.list_id}`);
+      }
+      assertListOwner(list, ownerId);
       const id = await ctx.db.insert('todos', todo);
       ids.push(id);
     }

@@ -1,9 +1,4 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
-import {
-  stringArrayToTagsJson,
-  tagsJsonToStringArray
-} from './listFormUtils';
-import { LISTS_TABLE, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -28,9 +23,10 @@ import {
   useTheme
 } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
-import { Field, type FieldProps, Formik, useFormikContext } from 'formik';
+import { Field, Formik, useFormikContext, type FieldProps } from 'formik';
 import React, { Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { stringArrayToTagsJson, tagsJsonToStringArray } from './listFormUtils';
 import { TodoListsEditor, type ListDetailsFormValues } from './TodoListsEditor';
 
 type ListDetailRow = {
@@ -101,7 +97,7 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
       }
       const trimmedName = currentValues.name.trim();
       await powerSync.writeTransaction(async (tx) => {
-        await tx.execute(`UPDATE ${LISTS_TABLE} SET name = ?, notes = ?, tags = ?, priority = ? WHERE id = ?`, [
+        await tx.execute(`UPDATE lists SET name = ?, notes = ?, tags = ?, priority = ? WHERE id = ?`, [
           trimmedName,
           currentValues.notes,
           stringArrayToTagsJson(currentValues.tags),
@@ -157,13 +153,13 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
   }, [errors.name, tryCommitValues, values]);
 
   const setArchived = async (next: boolean) => {
-    await powerSync.execute(`UPDATE ${LISTS_TABLE} SET archived = ? WHERE id = ?`, [next ? 1 : 0, listId]);
+    await powerSync.execute(`UPDATE lists SET archived = ? WHERE id = ?`, [next ? 1 : 0, listId]);
   };
 
   const deleteList = async () => {
     await powerSync.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${TODOS_TABLE} WHERE list_uuid = ?`, [listId]);
-      await tx.execute(`DELETE FROM ${LISTS_TABLE} WHERE id = ?`, [listId]);
+      await tx.execute(`DELETE FROM todos WHERE list_uuid = ?`, [listId]);
+      await tx.execute(`DELETE FROM lists WHERE id = ?`, [listId]);
     });
     setDeleteOpen(false);
     navigate(TODO_LISTS_ROUTE);
@@ -218,8 +214,7 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
                   borderColor: 'divider'
                 })
           }
-        }}
-      >
+        }}>
         <DialogTitle
           sx={{
             display: 'flex',
@@ -233,11 +228,11 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
             bgcolor: 'background.paper',
             borderBottom: '1px solid',
             borderColor: 'divider'
-          }}
-        >
+          }}>
           <Field name="name">
             {({ field, meta }: FieldProps<string>) => (
-              <Box sx={{ flex: 1, minWidth: 0, mr: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+              <Box
+                sx={{ flex: 1, minWidth: 0, mr: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
                 <InputBase
                   {...field}
                   id="todo-list-dialog-title"
@@ -272,11 +267,15 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
             aria-haspopup="true"
             aria-expanded={menuOpen ? 'true' : undefined}
             onClick={(e) => setMenuAnchor(e.currentTarget)}
-            sx={{ flexShrink: 0 }}
-          >
+            sx={{ flexShrink: 0 }}>
             <MoreVertIcon fontSize="small" />
           </IconButton>
-          <IconButton aria-label="Close list" edge="end" onClick={handleRequestClose} size="small" sx={{ flexShrink: 0 }}>
+          <IconButton
+            aria-label="Close list"
+            edge="end"
+            onClick={handleRequestClose}
+            size="small"
+            sx={{ flexShrink: 0 }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -285,8 +284,7 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
             onClick={() => {
               setMenuAnchor(null);
               void setArchived(!archived);
-            }}
-          >
+            }}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               {archived ? <UnarchiveOutlinedIcon fontSize="small" /> : <ArchiveOutlinedIcon fontSize="small" />}
             </ListItemIcon>
@@ -299,8 +297,7 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
             onClick={() => {
               setMenuAnchor(null);
               setDeleteOpen(true);
-            }}
-          >
+            }}>
             <ListItemIcon sx={{ minWidth: 36 }}>
               <DeleteOutlineIcon fontSize="small" />
             </ListItemIcon>
@@ -325,15 +322,14 @@ function TodoEditModalShell(props: TodoEditModalShellProps) {
             '.MuiDialogTitle-root + &': {
               pt: { xs: 2, sm: 3 }
             }
-          }}
-        >
+          }}>
           <Suspense
             fallback={
-              <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
+              <Box
+                sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
                 <CircularProgress />
               </Box>
-            }
-          >
+            }>
             <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <TodoListsEditor listId={listId} />
             </Box>
@@ -371,10 +367,9 @@ export default function TodoEditModalRoute() {
 
   const {
     data: [listRecord]
-  } = useQuery<ListDetailRow>(
-    `SELECT name, notes, priority, tags, archived FROM ${LISTS_TABLE} WHERE id = ? LIMIT 1`,
-    [listId ?? '']
-  );
+  } = useQuery<ListDetailRow>(`SELECT name, notes, priority, tags, archived FROM lists WHERE id = ? LIMIT 1`, [
+    listId ?? ''
+  ]);
 
   if (!listId) {
     return null;
@@ -395,8 +390,7 @@ export default function TodoEditModalRoute() {
       key={listId}
       initialValues={listDetailInitialValues(listRecord)}
       validate={validateListDetails}
-      onSubmit={() => {}}
-    >
+      onSubmit={() => {}}>
       <TodoEditModalShell listId={listId} listRecord={listRecord} fullScreen={fullScreen} onClose={handleClose} />
     </Formik>
   );

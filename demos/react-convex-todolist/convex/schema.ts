@@ -29,7 +29,7 @@ export default defineSchema({
      */
     uuid: v.string(),
     created_at: v.string(),
-    completed_at: v.optional(v.union(v.null(), v.string())),
+    completed_at: v.optional(v.string()),
     description: v.string(),
     completed: v.optional(v.number()),
     list_id: v.id('lists'),

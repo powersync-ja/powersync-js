@@ -1,49 +1,63 @@
 import { AbstractPowerSyncDatabase, PowerSyncBackendConnector, UpdateType } from '@powersync/web';
 import { ConvexReactClient } from 'convex/react';
 import { makeFunctionReference } from 'convex/server';
+import { ConvexError } from 'convex/values';
+import type { ConvexMutationErrorData } from '../../../convex/mutationErrors';
+import { UPLOAD_REJECTION_MUTATION_ERROR_CODES } from '../../../convex/mutationErrors';
+import ConvexSchema from '../../../convex/schema';
+import { createConvexDecoder } from './ConvexDecoder';
 
-/**
- * Fields stored as integer in SQLite that should be boolean in Convex, keyed by table name.
- */
-const BOOLEAN_FIELDS: Record<string, string[]> = {
-  lists: ['archived']
-};
-
-/**
- * Fields stored as JSON text in SQLite that should be parsed before sending to Convex.
- */
-const JSON_FIELDS: Record<string, string[]> = {
-  lists: ['tags']
-};
-
-/**
- * Coerce SQLite values to the types Convex expects.
- * - integer 0/1 → boolean for boolean fields
- * - JSON strings → parsed arrays/objects for JSON fields
- */
-function coerceOpData(table: string, data: Record<string, any>): Record<string, any> {
-  const result = { ...data };
-  for (const field of BOOLEAN_FIELDS[table] ?? []) {
-    if (field in result && typeof result[field] === 'number') {
-      result[field] = !!result[field];
-    }
+const convexDecoders = {
+  lists: {
+    create: createConvexDecoder(ConvexSchema.tables.lists.validator),
+    patch: createConvexDecoder(ConvexSchema.tables.lists.validator.partial())
+  },
+  todos: {
+    create: createConvexDecoder(ConvexSchema.tables.todos.validator.omit('list_id'), {}),
+    patch: createConvexDecoder(ConvexSchema.tables.todos.validator.partial(), {})
   }
-  for (const field of JSON_FIELDS[table] ?? []) {
-    if (field in result && typeof result[field] === 'string') {
-      try {
-        result[field] = JSON.parse(result[field]);
-      } catch {
-        // leave as-is if not valid JSON
-      }
-    }
+} as const;
+
+function decodeCrudData(table: string, mode: 'create' | 'patch', data: Record<string, unknown>) {
+  if (table !== 'lists' && table !== 'todos') {
+    throw new Error(`No Convex decoder configured for table "${table}".`);
   }
-  return result;
+
+  return convexDecoders[table][mode](data as never);
 }
 
+function getConvexErrorData(error: unknown): ConvexMutationErrorData | undefined {
+  if (error instanceof ConvexError) {
+    return error.data as ConvexMutationErrorData;
+  }
+
+  const data = (error as { data?: unknown } | undefined)?.data;
+  if (data && typeof data === 'object') {
+    return data as ConvexMutationErrorData;
+  }
+}
+
+function isPermanentConvexRejection(error: unknown) {
+  const code = getConvexErrorData(error)?.code;
+  return typeof code === 'string' && UPLOAD_REJECTION_MUTATION_ERROR_CODES.has(code);
+}
+
+/**
+ * Runtime dependencies injected by the React app when constructing the
+ * PowerSync connector.
+ */
 export type ConnectorOptions = {
   convexClient: ConvexReactClient;
 };
 
+/**
+ * Bridges PowerSync to Convex.
+ *
+ * The connector supplies PowerSync credentials from the active Convex Auth
+ * session, uploads queued local writes by calling Convex mutations, and drops
+ * transactions only when Convex returns one of the configured upload rejection
+ * error codes.
+ */
 export class DemoConnector implements PowerSyncBackendConnector {
   readonly powersyncUrl: string;
   private convexClient: ConvexReactClient;
@@ -97,13 +111,13 @@ export class DemoConnector implements PowerSyncBackendConnector {
         switch (op.op) {
           case UpdateType.PUT: {
             const createRef = makeFunctionReference<'mutation'>(`${table}:create`);
-            const putData = coerceOpData(table, op.opData ?? {});
+            const putData = decodeCrudData(table, 'create', op.opData ?? {});
             await this.convexClient.mutation(createRef, { ...putData, uuid: op.id });
             break;
           }
           case UpdateType.PATCH: {
             const updateRef = makeFunctionReference<'mutation'>(`${table}:update`);
-            const patchData = coerceOpData(table, op.opData ?? {});
+            const patchData = decodeCrudData(table, 'patch', op.opData ?? {});
             await this.convexClient.mutation(updateRef, { ...patchData, uuid: op.id });
             break;
           }
@@ -116,9 +130,15 @@ export class DemoConnector implements PowerSyncBackendConnector {
       }
 
       await transaction.complete();
-    } catch (ex: any) {
-      // TODO, handle errors properly
-      console.debug(ex);
+    } catch (ex: unknown) {
+      if (isPermanentConvexRejection(ex)) {
+        console.warn('[PowerSync] Rejecting upload transaction after permanent Convex mutation error', {
+          error: getConvexErrorData(ex)
+        });
+        await transaction.complete();
+        return;
+      }
+
       throw ex;
     }
   }

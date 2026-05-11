@@ -9,8 +9,10 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as authorization from "../authorization.js";
 import type * as http from "../http.js";
 import type * as lists from "../lists.js";
+import type * as mutationErrors from "../mutationErrors.js";
 import type * as powersync_checkpoints from "../powersync_checkpoints.js";
 import type * as todos from "../todos.js";
 
@@ -22,8 +24,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  authorization: typeof authorization;
   http: typeof http;
   lists: typeof lists;
+  mutationErrors: typeof mutationErrors;
   powersync_checkpoints: typeof powersync_checkpoints;
   todos: typeof todos;
 }>;

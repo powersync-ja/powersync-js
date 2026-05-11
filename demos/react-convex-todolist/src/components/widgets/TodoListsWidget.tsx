@@ -1,10 +1,10 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
+import { TodoListWithCountsRow } from '@/app/views/todo-lists/TodoArchivedListsPage';
 import {
   DEFAULT_NEW_LIST_PRIORITY,
   formatListTaskSummary,
   listPriorityCaption
 } from '@/components/todo-lists/listFormUtils';
-import { LISTS_TABLE, TodoListWithCountsRow, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, Grid, List, Paper, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
@@ -75,24 +75,24 @@ export function TodoListsWidget() {
 
   const { data: listRecords } = useQuery<TodoListWithCountsRow>(/* sql */ `
     SELECT
-      ${LISTS_TABLE}.*,
-      COUNT(${TODOS_TABLE}.id) AS total_tasks,
+      lists.*,
+      COUNT(todos.id) AS total_tasks,
       SUM(
         CASE
-          WHEN COALESCE(${TODOS_TABLE}.completed, 0) != 0 THEN 1
+          WHEN COALESCE(todos.completed, 0) != 0 THEN 1
           ELSE 0
         END
       ) AS completed_tasks
     FROM
-      ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} ON ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_uuid
+      lists
+      LEFT JOIN todos ON lists.id = todos.list_uuid
     WHERE
-      ${LISTS_TABLE}.archived = false
+      lists.archived = false
     GROUP BY
-      ${LISTS_TABLE}.id
+      lists.id
     ORDER BY
-      COALESCE(${LISTS_TABLE}.priority, 0) DESC,
-      ${LISTS_TABLE}.created_at DESC
+      COALESCE(lists.priority, 0) DESC,
+      lists.created_at DESC
   `);
 
   const partitioned = useMemo(() => partitionLists(listRecords), [listRecords]);
@@ -108,7 +108,7 @@ export function TodoListsWidget() {
     }
 
     const res = await powerSync.execute(
-      `INSERT INTO ${LISTS_TABLE} (id, created_at, name, owner_id, notes, priority, tags, archived) VALUES (uuid(), datetime(), ?, ?, '', ?, '[]', 0) RETURNING *`,
+      `INSERT INTO lists (id, created_at, name, owner_id, notes, priority, tags, archived) VALUES (uuid(), datetime(), ?, ?, '', ?, '[]', 0) RETURNING *`,
       [name, userID, DEFAULT_NEW_LIST_PRIORITY]
     );
 

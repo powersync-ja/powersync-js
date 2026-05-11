@@ -12,6 +12,7 @@ import { color, logError, logStep } from './utils/process.ts';
 const DEMO_ROOT = path.resolve(import.meta.dirname, '..');
 const CONVEX_DEPLOY_KEY_FILE = path.join(DEMO_ROOT, 'powersync/docker/setup_data/deploy_key');
 const CONVEX_SELF_HOSTED_URL = `http://localhost:${process.env.PS_CONVEX_PORT ?? '3210'}`;
+const CONVEX_SITE_URL = `http://localhost:${process.env.PS_CONVEX_SITE_PORT ?? '3211'}`;
 
 async function run() {
   logStep(`Starting ${color.cyan('PowerSync')} and ${color.magenta('Convex')} Docker services...`);
@@ -21,11 +22,13 @@ async function run() {
   const convexEnv = {
     ...process.env,
     CONVEX_SELF_HOSTED_URL,
+    CONVEX_SITE_URL,
     CONVEX_SELF_HOSTED_ADMIN_KEY: convexDeployKey
   };
 
   Object.assign(process.env, {
     CONVEX_SELF_HOSTED_URL,
+    CONVEX_SITE_URL,
     CONVEX_SELF_HOSTED_ADMIN_KEY: convexDeployKey
   });
 

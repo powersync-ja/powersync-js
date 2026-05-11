@@ -1,6 +1,6 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
+import { TodoListWithCountsRow } from '@/app/views/todo-lists/TodoArchivedListsPage';
 import { formatListTaskSummary, listPriorityCaption } from '@/components/todo-lists/listFormUtils';
-import type { TodoListWithCountsRow } from '@/library/powersync/AppSchema';
 import { List, Paper, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ListItemWidget } from './ListItemWidget';
