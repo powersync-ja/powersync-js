@@ -41,3 +41,8 @@ export type TodoRecord = Database['todos'];
 // export type Todo = RowType<typeof todos>;
 
 export type ListRecord = Database['lists'];
+
+export type TodoListWithCountsRow = ListRecord & {
+  total_tasks: number;
+  completed_tasks: number;
+};

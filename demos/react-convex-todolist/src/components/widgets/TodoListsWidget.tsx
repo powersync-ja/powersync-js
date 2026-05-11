@@ -4,8 +4,7 @@ import {
   formatListTaskSummary,
   listPriorityCaption
 } from '@/app/views/todo-lists/listFormUtils';
-import { ALL_LIST_ROWS_WITH_COUNTS_SQL, type TodoListWithCountsRow } from '@/app/views/todo-lists/listQueries';
-import { LISTS_TABLE } from '@/library/powersync/AppSchema';
+import { LISTS_TABLE, TodoListWithCountsRow, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, Grid, List, Paper, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
@@ -14,27 +13,25 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ListItemWidget } from './ListItemWidget';
 import { OutlinedComposer, OutlinedComposerSubmitSource } from './OutlinedComposer';
 
-type ListRow = TodoListWithCountsRow;
-
 type ListBucket = 'empty' | 'active' | 'allDone';
 
-function normalizeCounts(row: ListRow): { total: number; completed: number } {
+function normalizeCounts(row: TodoListWithCountsRow): { total: number; completed: number } {
   const total = Number(row.total_tasks) || 0;
   const completed = Number(row.completed_tasks ?? 0) || 0;
   return { total, completed };
 }
 
-function bucketFor(row: ListRow): ListBucket {
+function bucketFor(row: TodoListWithCountsRow): ListBucket {
   const { total, completed } = normalizeCounts(row);
   if (total === 0) return 'empty';
   if (completed === total) return 'allDone';
   return 'active';
 }
 
-function partitionLists(rows: ListRow[]): Record<ListBucket, ListRow[]> {
-  const empty: ListRow[] = [];
-  const active: ListRow[] = [];
-  const allDone: ListRow[] = [];
+function partitionLists(rows: TodoListWithCountsRow[]): Record<ListBucket, TodoListWithCountsRow[]> {
+  const empty: TodoListWithCountsRow[] = [];
+  const active: TodoListWithCountsRow[] = [];
+  const allDone: TodoListWithCountsRow[] = [];
   for (const row of rows) {
     switch (bucketFor(row)) {
       case 'empty':
@@ -69,10 +66,6 @@ const BUCKET_AVATAR: Record<ListBucket, string> = {
   allDone: '/thug-dino.svg'
 };
 
-function listIsArchived(row: ListRow): boolean {
-  return Number(row.archived) === 1;
-}
-
 export function TodoListsWidget() {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
@@ -80,19 +73,26 @@ export function TodoListsWidget() {
   const userID = useUserId();
   const [newListName, setNewListName] = useState('');
 
-  const { data: listRecords } = useQuery<ListRow>(ALL_LIST_ROWS_WITH_COUNTS_SQL);
+  const { data: listRecords } = useQuery<TodoListWithCountsRow>(/* sql */ `
+    SELECT
+      ${LISTS_TABLE}.*,
+      COUNT(${TODOS_TABLE}.id) AS total_tasks,
+      SUM(
+        CASE
+          WHEN COALESCE(${TODOS_TABLE}.completed, 0) != 0 THEN 1
+          ELSE 0
+        END
+      ) AS completed_tasks
+    FROM
+      ${LISTS_TABLE}
+      LEFT JOIN ${TODOS_TABLE} ON ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_uuid
+    WHERE
+      ${LISTS_TABLE}.archived = false
+    GROUP BY
+      ${LISTS_TABLE}.id
+  `);
 
-  const { activeLists, archivedLists } = useMemo(() => {
-    const active: ListRow[] = [];
-    const archived: ListRow[] = [];
-    for (const row of listRecords) {
-      if (listIsArchived(row)) archived.push(row);
-      else active.push(row);
-    }
-    return { activeLists: active, archivedLists: archived };
-  }, [listRecords]);
-
-  const buckets = useMemo(() => partitionLists(activeLists), [activeLists]);
+  const partitioned = useMemo(() => partitionLists(listRecords), [listRecords]);
 
   const createNewList = async (source?: OutlinedComposerSubmitSource) => {
     const name = newListName.trim();
@@ -122,8 +122,8 @@ export function TodoListsWidget() {
   return (
     <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
       {SECTIONS.map((section) => {
-        const rows = buckets[section.key];
         const isEmptySection = section.key === 'empty';
+        const sectionRows = partitioned[section.key];
 
         return (
           <Grid item xs={12} lg={4} key={section.key}>
@@ -135,8 +135,7 @@ export function TodoListsWidget() {
                 display: 'flex',
                 flexDirection: 'column',
                 bgcolor: 'background.paper'
-              }}
-            >
+              }}>
               <Box
                 sx={{
                   mb: 2,
@@ -145,8 +144,7 @@ export function TodoListsWidget() {
                   justifyContent: 'space-between',
                   gap: 1.5,
                   flexWrap: 'wrap'
-                }}
-              >
+                }}>
                 <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                     {section.title}
@@ -167,9 +165,9 @@ export function TodoListsWidget() {
                     inputAriaLabel="New list name"
                     submitAriaLabel="Create list"
                     autoFocus={!openListRouteId}
-                    formSx={{ mb: activeLists.length === 0 ? 1.5 : 2 }}
+                    formSx={{ mb: listRecords.length === 0 ? 1.5 : 2 }}
                   />
-                  {activeLists.length === 0 && archivedLists.length === 0 ? (
+                  {listRecords.length === 0 ? (
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       No lists yet — name one above and tap plus to sync your first list.
                     </Typography>
@@ -177,15 +175,15 @@ export function TodoListsWidget() {
                 </>
               ) : null}
 
-              {rows.length === 0 ? (
-                !(isEmptySection && activeLists.length === 0 && archivedLists.length === 0) ? (
+              {sectionRows.length === 0 ? (
+                !isEmptySection ? (
                   <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                     Nothing here yet.
                   </Typography>
                 ) : null
               ) : (
                 <List dense={false} disablePadding sx={{ flex: 1 }}>
-                  {rows.map((r) => {
+                  {sectionRows.map((r) => {
                     const { total, completed } = normalizeCounts(r);
                     return (
                       <ListItemWidget

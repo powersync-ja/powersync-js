@@ -35,6 +35,8 @@ The app defaults to local services, so `.env.local` is optional. Copy `.env.temp
 
 Open the URL printed by Vite, usually `http://localhost:5173`.
 
+The Convex dashboard is available at `http://localhost:6791` after `pnpm dev:local` starts the Docker services. Use the deploy key from [`powersync/docker/setup_data/deploy_key`](./powersync/docker/setup_data/deploy_key) when prompted for the admin secret.
+
 ### Environment Variables
 
 | Variable               | Default                 | Description                                                  |

@@ -29,8 +29,8 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
     inputAriaLabel,
     submitAriaLabel,
     multiline = true,
-    minRows = 2,
-    maxRows = 6,
+    minRows = 1,
+    maxRows = 8,
     formSx,
     autoFocus = false
   } = props;
@@ -44,10 +44,11 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={[{ display: 'flex', alignItems: 'stretch', gap: 0.75 }, ...(formSx ? [formSx] : [])] as SxProps<Theme>}
+      sx={[{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }, ...(formSx ? [formSx] : [])] as SxProps<Theme>}
     >
       <TextField
         fullWidth
+        size="small"
         variant="outlined"
         autoFocus={autoFocus}
         multiline={multiline}
@@ -75,13 +76,12 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
           '& .MuiOutlinedInput-root': {
             ...(multiline
               ? {
-                  height: '100%',
                   alignItems: 'flex-start'
                 }
               : {}),
             fontSize: '1.0625rem',
             lineHeight: 1.45,
-            py: multiline ? 1.25 : 1,
+            py: multiline ? 0.5 : 0.75,
             backgroundColor: alpha(theme.palette.secondary.main, 0.08),
             '& fieldset': {
               borderWidth: 2,
@@ -96,7 +96,8 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
             }
           },
           '& .MuiInputBase-input': {
-            py: multiline ? 0.5 : 1.125
+            py: multiline ? 0.25 : 0.875,
+            resize: multiline ? 'none' : undefined
           },
           '& .MuiInputBase-input::placeholder': {
             color: alpha(theme.palette.secondary.main, 0.75),
@@ -109,17 +110,23 @@ export function OutlinedComposer(props: OutlinedComposerProps) {
         color="secondary"
         aria-label={submitAriaLabel}
         onClick={() => void onSubmit('button')}
-        sx={(theme) => ({
-          alignSelf: 'stretch',
-          flexShrink: 0,
-          width: theme.spacing(7),
-          minHeight: 0,
-          border: '2px solid',
-          borderColor: 'secondary.main',
-          borderRadius: theme.shape.borderRadius
-        })}
+        sx={(theme) => {
+          const h = theme.spacing(5.5);
+          return {
+            alignSelf: 'flex-start',
+            flexShrink: 0,
+            width: theme.spacing(7),
+            height: h,
+            minHeight: h,
+            maxHeight: h,
+            padding: theme.spacing(0.75),
+            border: '2px solid',
+            borderColor: 'secondary.main',
+            borderRadius: theme.shape.borderRadius
+          };
+        }}
       >
-        <AddIcon fontSize="medium" />
+        <AddIcon fontSize="small" />
       </IconButton>
     </Box>
   );

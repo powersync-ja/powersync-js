@@ -2,8 +2,8 @@
  * Watches PowerSync config files and resets the local Docker stack on changes.
  */
 import chokidar from 'chokidar';
-import path from 'node:path';
 import { spawn } from 'node:child_process';
+import path from 'node:path';
 import process from 'node:process';
 import { color, logError, logStep } from './utils/process.ts';
 
@@ -50,6 +50,8 @@ async function resetPowerSync() {
 
   resetRunning = true;
   try {
+    // First validate
+    await runCommand('pnpm', ['powersync', 'validate']);
     await runCommand('pnpm', ['powersync', 'docker', 'reset']);
   } catch (error) {
     logError(error);

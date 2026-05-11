@@ -6,17 +6,35 @@ config:
   edition: 3
 
 streams:
-  user_lists:
+  user_data:
+    with:
+      # Extract the Convex user ID from the JWT subject
+      # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
+      user_lists: SELECT uuid from lists where archived != true AND owner_id = substring(auth.user_id(), 1, 32)
     # AUTO-SUBSCRIBE: always synced for the logged-in user
     auto_subscribe: true
-    # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
-    # We want to base the synced data only on the user ID
-    query: SELECT uuid as id, * FROM lists WHERE owner_id = substring(auth.user_id(), 1, 32)
-
-  user_todos:
-    # AUTO-SUBSCRIBE: always synced for the logged-in user
-    auto_subscribe: true
-
-    # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
-    # We want to base the synced data only on the user ID
-    query: SELECT uuid as id, * FROM todos WHERE list_uuid IN (SELECT uuid FROM lists WHERE owner_id = substring(auth.user_id(),1, 32))
+    queries:
+      - |
+        SELECT uuid as id, *
+        FROM lists
+        WHERE uuid in user_lists
+      - |
+        SELECT uuid as id, list_uuid as list_id, *
+        FROM todos
+        WHERE list_uuid IN user_lists
+  archived_user_data:
+    # We don't sync archvied data, but we allow users to condiftionally subsribe to it for a period of time.
+    # IMPROVE ME:: This should be filtered further in furtue.
+    with:
+      # Extract the Convex user ID from the JWT subject
+      # The Convex JWT Subject used for the user_id contains `[32 character user ID]|[user session ID]`
+      archived_user_lists: SELECT uuid from lists where archived = true AND owner_id = substring(auth.user_id(), 1, 32)
+    queries:
+      - |
+        SELECT uuid as id, *
+        FROM lists
+        WHERE uuid in archived_user_lists
+      - |
+        SELECT uuid as id, list_uuid as list_id, *
+        FROM todos
+        WHERE list_uuid IN archived_user_lists
