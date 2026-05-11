@@ -65,34 +65,91 @@ export function tryObtainLocalConvexConfig() {
 }
 
 export async function waitForConvexHealth(convexConfig: ConvexConfig) {
-  const response = await fetch(`http://127.0.0.1:${convexConfig.cloudPort}/instance_name`);
-  if (!response.ok) {
-    throw new Error(`Convex health check failed with status ${response.status}`);
+  const healthUrl = `http://127.0.0.1:${convexConfig.cloudPort}/instance_name`;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      const response = await fetch(healthUrl);
+      if (response.ok) {
+        return;
+      }
+
+      lastError = new Error(`Convex health check failed with status ${response.status}`);
+    } catch (ex) {
+      lastError = ex;
+    }
+
+    if (attempt < 5) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
   }
+
+  throw new Error(`Convex health check failed after 5 attempts.`, { cause: lastError });
 }
 
 export function waitForConvexReadyOutput(convexProcess: ChildProcess) {
-  return new Promise<void>((resolve) => {
+  return new Promise<void>((resolve, reject) => {
     let output = '';
+    let settled = false;
 
     const cleanup = () => {
       convexProcess.stdout?.removeListener('data', checkOutput);
       convexProcess.stderr?.removeListener('data', checkOutput);
+      convexProcess.removeListener('error', handleProcessError);
+      convexProcess.removeListener('exit', handleProcessExit);
+    };
+
+    const settle = (callback: () => void) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      callback();
+    };
+
+    const handleProcessError = (error: Error) => {
+      settle(() => reject(new Error('Convex dev had an error before it became ready.', { cause: error })));
+    };
+
+    const handleProcessExit = (code: number | null) => {
+      settle(() => reject(new Error(`Convex dev exited before it became ready with code ${code}.`)));
     };
 
     const checkOutput = (chunk: Buffer) => {
       output += chunk.toString();
       if (output.includes('Convex functions ready!')) {
-        cleanup();
-        resolve();
+        settle(resolve);
         return;
       }
-      output = output.slice(-1_000);
+
+      const startupError = getConvexStartupError(output);
+      if (startupError) {
+        settle(() => reject(startupError));
+        return;
+      }
+
+      output = output.slice(-4_000);
     };
 
     convexProcess.stdout?.on('data', checkOutput);
     convexProcess.stderr?.on('data', checkOutput);
+    convexProcess.once('error', handleProcessError);
+    convexProcess.once('exit', handleProcessExit);
   });
+}
+
+function getConvexStartupError(output: string) {
+  const errorPatterns = [
+    /Unexpected Error:[\s\S]*$/i,
+    /Uncaught Error:[\s\S]*$/i,
+    /^✖\s+.+$/m,
+    /\bError:\s+.+$/im
+  ];
+
+  const match = errorPatterns.map((pattern) => output.match(pattern)?.[0]).find(Boolean);
+  return match ? new Error(`Convex dev reported an error before it became ready:\n${match.trim()}`) : undefined;
 }
 
 export async function ensureConvexAuthEnv() {

@@ -6,7 +6,6 @@ import { makeFunctionReference } from 'convex/server';
  * Fields stored as integer in SQLite that should be boolean in Convex, keyed by table name.
  */
 const BOOLEAN_FIELDS: Record<string, string[]> = {
-  todos: ['is_urgent', 'is_private', 'has_attachments'],
   lists: ['archived']
 };
 
@@ -14,7 +13,7 @@ const BOOLEAN_FIELDS: Record<string, string[]> = {
  * Fields stored as JSON text in SQLite that should be parsed before sending to Convex.
  */
 const JSON_FIELDS: Record<string, string[]> = {
-  todos: ['tags', 'dependencies', 'assigned_users', 'metadata', 'custom_fields']
+  lists: ['tags']
 };
 
 /**

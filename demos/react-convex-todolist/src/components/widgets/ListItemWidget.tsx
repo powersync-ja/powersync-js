@@ -1,59 +1,35 @@
 import React from 'react';
 import {
   ListItem,
-  IconButton,
   ListItemAvatar,
   Avatar,
   ListItemText,
-  Box,
   Paper,
   styled,
   ListItemButton,
-  alpha
+  alpha,
+  Chip,
+  Stack,
+  Typography
 } from '@mui/material';
-
-import DeleteIcon from '@mui/icons-material/DeleteOutline';
-import RightIcon from '@mui/icons-material/ArrowRightAlt';
 
 export type ListItemWidgetProps = {
   title: string;
   description: string;
   avatarSrc: string;
   selected?: boolean;
-  onDelete: () => void;
+  archived?: boolean;
+  /** Short label shown under the task summary, e.g. "Priority: high" */
+  priorityLabel?: string;
   onPress: () => void;
 };
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
   return (
     <S.MainPaper elevation={0}>
-      <ListItem
-        disablePadding
-        secondaryAction={
-          <Box>
-            <IconButton
-              edge="end"
-              aria-label="delete"
-              onClick={(event) => {
-                props.onDelete();
-              }}
-            >
-              <DeleteIcon />
-            </IconButton>
-            <IconButton
-              edge="end"
-              aria-label="proceed"
-              onClick={(event) => {
-                props.onPress();
-              }}
-            >
-              <RightIcon />
-            </IconButton>
-          </Box>
-        }
-      >
+      <ListItem disablePadding>
         <ListItemButton
-          onClick={(event) => {
+          onClick={() => {
             props.onPress();
           }}
           selected={props.selected}
@@ -80,7 +56,28 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = (props) => {
               }}
             />
           </ListItemAvatar>
-          <ListItemText primary={props.title} secondary={props.description} />
+          <ListItemText
+            primary={
+              <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" component="span">
+                <Typography component="span" variant="body1" sx={{ fontWeight: 600 }}>
+                  {props.title}
+                </Typography>
+                {props.archived ? <Chip size="small" label="Archived" variant="outlined" /> : null}
+              </Stack>
+            }
+            secondary={
+              <Stack component="span" spacing={0.25} sx={{ mt: 0.25 }}>
+                <Typography component="span" variant="body2" color="text.secondary">
+                  {props.description}
+                </Typography>
+                {props.priorityLabel ? (
+                  <Typography component="span" variant="caption" color="text.secondary">
+                    {props.priorityLabel}
+                  </Typography>
+                ) : null}
+              </Stack>
+            }
+          />
         </ListItemButton>
       </ListItem>
     </S.MainPaper>

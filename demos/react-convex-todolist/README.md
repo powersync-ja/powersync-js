@@ -33,6 +33,8 @@ pnpm dev:local
 
 This starts Convex, configures Convex Auth JWKS if needed, starts the PowerSync Docker services, and starts the Vite dev server.
 
+> Note: The local development setup assumes Convex is running locally. Linking this demo to a cloud development Convex deployment requires additional configuration.
+
 Open the URL printed by Vite, usually `http://localhost:5173`.
 
 ### Environment Variables

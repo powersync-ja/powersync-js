@@ -1,5 +1,11 @@
 import { TODO_LISTS_ROUTE } from '@/app/router';
-import { LISTS_TABLE, ListRecord, TODOS_TABLE } from '@/library/powersync/AppSchema';
+import {
+  DEFAULT_NEW_LIST_PRIORITY,
+  formatListTaskSummary,
+  listPriorityCaption
+} from '@/app/views/todo-lists/listFormUtils';
+import { ALL_LIST_ROWS_WITH_COUNTS_SQL, type TodoListWithCountsRow } from '@/app/views/todo-lists/listQueries';
+import { LISTS_TABLE } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, Grid, List, Paper, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
@@ -8,17 +14,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ListItemWidget } from './ListItemWidget';
 import { OutlinedComposer, OutlinedComposerSubmitSource } from './OutlinedComposer';
 
-export type TodoListsWidgetProps = {
-  selectedId?: string;
-};
-
-type ListRow = ListRecord & { total_tasks: number; completed_tasks: number };
+type ListRow = TodoListWithCountsRow;
 
 type ListBucket = 'empty' | 'active' | 'allDone';
-
-const description = (total: number, completed: number = 0) => {
-  return `${total - completed} pending, ${completed} completed`;
-};
 
 function normalizeCounts(row: ListRow): { total: number; completed: number } {
   const total = Number(row.total_tasks) || 0;
@@ -71,32 +69,30 @@ const BUCKET_AVATAR: Record<ListBucket, string> = {
   allDone: '/thug-dino.svg'
 };
 
-export function TodoListsWidget(props: TodoListsWidgetProps) {
+function listIsArchived(row: ListRow): boolean {
+  return Number(row.archived) === 1;
+}
+
+export function TodoListsWidget() {
   const powerSync = usePowerSync();
   const navigate = useNavigate();
   const { id: openListRouteId } = useParams();
   const userID = useUserId();
   const [newListName, setNewListName] = useState('');
 
-  const { data: listRecords } = useQuery<ListRow>(`
-      SELECT 
-        ${LISTS_TABLE}.*, COUNT(${TODOS_TABLE}.id) AS total_tasks, SUM(CASE WHEN ${TODOS_TABLE}.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
-      FROM 
-        ${LISTS_TABLE}
-      LEFT JOIN ${TODOS_TABLE} 
-        ON  ${LISTS_TABLE}.id = ${TODOS_TABLE}.list_uuid
-      GROUP BY 
-        ${LISTS_TABLE}.id;
-      `);
+  const { data: listRecords } = useQuery<ListRow>(ALL_LIST_ROWS_WITH_COUNTS_SQL);
 
-  const buckets = useMemo(() => partitionLists(listRecords), [listRecords]);
+  const { activeLists, archivedLists } = useMemo(() => {
+    const active: ListRow[] = [];
+    const archived: ListRow[] = [];
+    for (const row of listRecords) {
+      if (listIsArchived(row)) archived.push(row);
+      else active.push(row);
+    }
+    return { activeLists: active, archivedLists: archived };
+  }, [listRecords]);
 
-  const deleteList = async (id: string) => {
-    await powerSync.writeTransaction(async (tx) => {
-      await tx.execute(`DELETE FROM ${TODOS_TABLE} WHERE list_uuid = ?`, [id]);
-      await tx.execute(`DELETE FROM ${LISTS_TABLE} WHERE id = ?`, [id]);
-    });
-  };
+  const buckets = useMemo(() => partitionLists(activeLists), [activeLists]);
 
   const createNewList = async (source?: OutlinedComposerSubmitSource) => {
     const name = newListName.trim();
@@ -109,8 +105,8 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
     }
 
     const res = await powerSync.execute(
-      `INSERT INTO ${LISTS_TABLE} (id, created_at, name, owner_id) VALUES (uuid(), datetime(), ?, ?) RETURNING *`,
-      [name, userID]
+      `INSERT INTO ${LISTS_TABLE} (id, created_at, name, owner_id, notes, priority, tags, archived) VALUES (uuid(), datetime(), ?, ?, '', ?, '[]', 0) RETURNING *`,
+      [name, userID, DEFAULT_NEW_LIST_PRIORITY]
     );
 
     const created = res.rows?.item(0) as { id?: string } | undefined;
@@ -171,9 +167,9 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
                     inputAriaLabel="New list name"
                     submitAriaLabel="Create list"
                     autoFocus={!openListRouteId}
-                    formSx={{ mb: listRecords.length === 0 ? 1.5 : 2 }}
+                    formSx={{ mb: activeLists.length === 0 ? 1.5 : 2 }}
                   />
-                  {listRecords.length === 0 ? (
+                  {activeLists.length === 0 && archivedLists.length === 0 ? (
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       No lists yet — name one above and tap plus to sync your first list.
                     </Typography>
@@ -182,7 +178,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
               ) : null}
 
               {rows.length === 0 ? (
-                !(isEmptySection && listRecords.length === 0) ? (
+                !(isEmptySection && activeLists.length === 0 && archivedLists.length === 0) ? (
                   <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
                     Nothing here yet.
                   </Typography>
@@ -196,9 +192,9 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
                         key={r.id}
                         avatarSrc={BUCKET_AVATAR[section.key]}
                         title={r.name ?? ''}
-                        description={description(total, completed)}
-                        selected={r.id === props.selectedId}
-                        onDelete={() => deleteList(r.id)}
+                        description={formatListTaskSummary(total, completed)}
+                        priorityLabel={listPriorityCaption(r.priority ?? undefined)}
+                        selected={r.id === openListRouteId}
                         onPress={() => navigate(`${TODO_LISTS_ROUTE}/${r.id}`)}
                       />
                     );

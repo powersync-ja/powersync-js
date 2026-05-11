@@ -1,7 +1,8 @@
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
-import LogoutIcon from '@mui/icons-material/Logout';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import SignalWifiOffIcon from '@mui/icons-material/SignalWifiOff';
 import TerminalIcon from '@mui/icons-material/Terminal';
@@ -25,11 +26,11 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { AUTH_ROUTE, SQL_CONSOLE_ROUTE, TODO_LISTS_ARCHIVED_ROUTE, TODO_LISTS_ROUTE } from '@/app/router';
 import { useNavigationPanel } from '@/components/navigation/NavigationPanelContext';
+import { useAuthActions } from '@convex-dev/auth/react';
 import { usePowerSync } from '@powersync/react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthActions } from '@convex-dev/auth/react';
-import { SQL_CONSOLE_ROUTE, TODO_LISTS_ROUTE, AUTH_ROUTE } from '@/app/router';
 
 export default function ViewsLayout({ children }: { children: React.ReactNode }) {
   const powerSync = usePowerSync();
@@ -41,6 +42,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
   const { title } = useNavigationPanel();
 
   const handleSignOut = async () => {
+    await powerSync.disconnectAndClear();
     await signOut();
     navigate(AUTH_ROUTE);
   };
@@ -56,9 +58,14 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
         path: TODO_LISTS_ROUTE,
         title: 'TODO Lists',
         icon: () => <ChecklistRtlIcon />
+      },
+      {
+        path: TODO_LISTS_ARCHIVED_ROUTE,
+        title: 'Archived lists',
+        icon: () => <ArchiveOutlinedIcon />
       }
     ],
-    [powerSync]
+    []
   );
 
   React.useEffect(() => {
@@ -80,8 +87,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
             color="primary"
             aria-label="menu"
             sx={{ mr: 2, bgcolor: 'rgba(37, 99, 235, 0.08)' }}
-            onClick={() => setOpenDrawer(!openDrawer)}
-          >
+            onClick={() => setOpenDrawer(!openDrawer)}>
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1 }}>
@@ -102,8 +108,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
               syncStatus?.dataFlowStatus.downloading ? 'Downloading' : null
             ]
               .filter(Boolean)
-              .join('. ')}
-          >
+              .join('. ')}>
             <Box
               sx={{
                 height: { xs: 0, sm: 14 },
@@ -113,8 +118,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
                 justifyContent: 'center',
                 mb: -0.75,
                 lineHeight: 0
-              }}
-            >
+              }}>
               <KeyboardArrowUpIcon
                 sx={{
                   fontSize: '1rem',
@@ -131,8 +135,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
                 alignItems: 'center',
                 lineHeight: 0,
                 color: syncStatus?.connected ? 'success.main' : 'error.main'
-              }}
-            >
+              }}>
               {syncStatus?.connected ? (
                 <WifiIcon sx={{ fontSize: '1.35rem' }} />
               ) : (
@@ -148,8 +151,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
                 justifyContent: 'center',
                 mt: -0.75,
                 lineHeight: 0
-              }}
-            >
+              }}>
               <KeyboardArrowDownIcon
                 sx={{
                   fontSize: '1rem',
@@ -176,8 +178,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
             borderRight: '1px solid',
             borderColor: 'divider'
           }
-        }}
-      >
+        }}>
         <Box sx={{ p: 3 }}>
           <S.PowerSyncLogo alt="PowerSync Logo" width={190} height={54} src="/powersync-logo.svg" />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2 }}>
@@ -206,8 +207,7 @@ export default function ViewsLayout({ children }: { children: React.ReactNode })
                 onClick={async () => {
                   navigate(item.path);
                   setOpenDrawer(false);
-                }}
-              >
+                }}>
                 <ListItemIcon>{item.icon()}</ListItemIcon>
                 <ListItemText primary={item.title} />
               </ListItemButton>

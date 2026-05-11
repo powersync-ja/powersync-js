@@ -9,7 +9,6 @@ import {
   ensureConvexAuthEnv,
   obtainLocalConvexConfig,
   tryObtainLocalConvexConfig,
-  waitForConvexHealth,
   waitForConvexReadyOutput
 } from './utils/convex.ts';
 import {
@@ -51,16 +50,21 @@ async function startConvex(): Promise<{ convexConfig: ConvexConfig; convexProces
     // Start Convex backend
     const convexProcess = spawn('pnpm', ['convex', 'dev'], {
       detached: process.platform !== 'win32',
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ['inherit', 'pipe', 'pipe'],
       shell: process.platform === 'win32',
       env: {
-        ...process.env,
-        CONVEX_AGENT_MODE: 'anonymous' // Skips prompts
+        ...process.env
       }
     });
     const convexOutput: Buffer[] = [];
-    convexProcess.stdout?.on('data', (chunk: Buffer) => convexOutput.push(chunk));
-    convexProcess.stderr?.on('data', (chunk: Buffer) => convexOutput.push(chunk));
+    convexProcess.stdout?.on('data', (chunk: Buffer) => {
+      convexOutput.push(chunk);
+      process.stdout.write(chunk);
+    });
+    convexProcess.stderr?.on('data', (chunk: Buffer) => {
+      convexOutput.push(chunk);
+      process.stderr.write(chunk);
+    });
 
     const abortHealthCheck = new AbortController();
     let convexExit: Error | undefined;
@@ -88,7 +92,6 @@ async function startConvex(): Promise<{ convexConfig: ConvexConfig; convexProces
       }
 
       const convexConfig = obtainLocalConvexConfig();
-      await waitForConvexHealth(convexConfig);
 
       // Once we have the process, we can stop the listeners above
       convexProcess.removeListener('error', onError);

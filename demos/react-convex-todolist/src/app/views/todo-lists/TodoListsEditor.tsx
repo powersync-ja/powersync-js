@@ -1,23 +1,148 @@
+import type { ListDetailsFormValues } from '@/app/views/todo-lists/listDetailsFormTypes';
+import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from '@/app/views/todo-lists/listFormUtils';
 import { OutlinedComposer } from '@/components/widgets/OutlinedComposer';
+import { SmartTagEditor } from '@/components/widgets/SmartTagEditor';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
-import { LISTS_TABLE, TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
+import { TODOS_TABLE, TodoRecord } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
-import { Box, List, Typography } from '@mui/material';
+import { Box, FormControl, List, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import { usePowerSync, useQuery } from '@powersync/react';
+import { Field, type FieldProps, Form, useFormikContext } from 'formik';
 import React from 'react';
 
 export type TodoListsEditorProps = {
   listId: string;
 };
 
+function ListDetailsFields() {
+  const { values, setFieldValue } = useFormikContext<ListDetailsFormValues>();
+  const prioritySelectId = React.useId();
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        flexShrink: 0,
+        p: 2,
+        mb: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        bgcolor: 'background.paper'
+      }}>
+      <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700 }}>
+        List details
+      </Typography>
+      <Form id="list-details-form">
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          Tags — click a pill to rename, Enter to add a new tag. Changes apply when you press Save in the header.
+        </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'flex-start',
+            gap: 0.75,
+            width: '100%',
+            mt: 0.5
+          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 0.75,
+              flex: '1 1 0',
+              minWidth: 120
+            }}>
+            <SmartTagEditor
+              tags={values.tags}
+              onTagsChange={(next) => {
+                void setFieldValue('tags', next);
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.75,
+              flexShrink: 0,
+              ml: 'auto'
+            }}>
+            <Typography
+              component="label"
+              variant="caption"
+              htmlFor={prioritySelectId}
+              sx={{ fontWeight: 700, color: 'text.secondary', flexShrink: 0 }}>
+              Priority
+            </Typography>
+            <FormControl
+              size="small"
+              variant="outlined"
+              sx={{
+                minWidth: 88,
+                maxWidth: 120,
+                '& .MuiOutlinedInput-root': {
+                  height: 28,
+                  fontSize: '0.75rem',
+                  borderRadius: 1
+                },
+                '& .MuiSelect-select': {
+                  py: 0,
+                  pl: 0.75,
+                  pr: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  minHeight: 0
+                }
+              }}>
+              <Select<number>
+                id={prioritySelectId}
+                value={values.priority}
+                onChange={(e) => {
+                  void setFieldValue('priority', Number(e.target.value));
+                }}
+                renderValue={(v) => LIST_PRIORITY_COMPACT[Number(v)] ?? String(v)}
+                displayEmpty
+                inputProps={{ 'aria-label': 'List priority' }}
+                MenuProps={{ PaperProps: { sx: { minWidth: 120 } } }}>
+                {LIST_PRIORITY_OPTIONS.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value} dense sx={{ fontSize: '0.8125rem', py: 0.5 }}>
+                    <Box component="span" sx={{ mr: 1, fontFamily: 'monospace', color: 'text.secondary' }}>
+                      {LIST_PRIORITY_COMPACT[opt.value]}
+                    </Box>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+        <Field name="notes">
+          {({ field }: FieldProps<string>) => (
+            <TextField
+              {...field}
+              label="Notes"
+              placeholder="Context, links, or reminders for this list…"
+              multiline
+              minRows={2}
+              fullWidth
+              size="small"
+              sx={{ mt: 2 }}
+              inputProps={{ 'aria-label': 'List notes' }}
+            />
+          )}
+        </Field>
+      </Form>
+    </Paper>
+  );
+}
+
 export function TodoListsEditor(props: TodoListsEditorProps) {
   const powerSync = usePowerSync();
   const userID = useUserId();
   const { listId } = props;
-
-  const {
-    data: [listRecord]
-  } = useQuery<{ name: string }>(`SELECT name FROM ${LISTS_TABLE} WHERE id = ? ORDER BY created_at`, [listId]);
 
   const { data: todos } = useQuery<TodoRecord>(
     `SELECT * FROM ${TODOS_TABLE} WHERE list_uuid=? ORDER BY created_at, id`,
@@ -30,17 +155,14 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
     if (!userID) {
       throw new Error(`Could not get user ID.`);
     }
-    const status = completed ? 'completed' : 'pending';
     const completedAt = completed ? new Date().toISOString() : null;
-    const completedBy = completed ? userID : null;
     await powerSync.execute(
       `UPDATE ${TODOS_TABLE}
-              SET status = ?,
+              SET
                   completed = ?,
-                  completed_at = ?,
-                  completed_by = ?
+                  completed_at = ?
               WHERE id = ?`,
-      [status, completed ? 1 : 0, completedAt, completedBy, record.id]
+      [completed ? 1 : 0, completedAt, record.id]
     );
   };
 
@@ -52,10 +174,10 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
     await powerSync.execute(
       `INSERT INTO
                 ${TODOS_TABLE}
-                    (id, created_at, created_by, description, title, list_uuid, completed, status, priority, is_urgent, is_private, tags)
+                    (id, created_at, description, list_uuid, completed)
                 VALUES
-                    (uuid(), datetime(), ?, ?, ?, ?, 0, 'pending', 3, 0, 0, '[]')`,
-      [userID, description, description, listId]
+                    (uuid(), datetime(), ?, ?, 0)`,
+      [description, listId]
     );
   };
 
@@ -64,14 +186,6 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
       await tx.execute(`DELETE FROM ${TODOS_TABLE} WHERE id = ?`, [id]);
     });
   };
-
-  if (!listRecord) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography>No matching list found.</Typography>
-      </Box>
-    );
-  }
 
   const submitNewTodo = async () => {
     const trimmed = newTodoText.trim();
@@ -89,15 +203,18 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
         flex: 1,
         minHeight: 0,
         width: '100%'
-      }}
-    >
+      }}>
+      <ListDetailsFields />
+
+      <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 700, mb: 1, flexShrink: 0 }}>
+        Todos
+      </Typography>
       <Box
         sx={{
           flex: '1 1 auto',
           minHeight: 0,
           overflow: 'auto'
-        }}
-      >
+        }}>
         {todos.length === 0 ? (
           <Box
             sx={{
@@ -110,8 +227,7 @@ export function TodoListsEditor(props: TodoListsEditorProps) {
               px: 2,
               py: 6,
               boxSizing: 'border-box'
-            }}
-          >
+            }}>
             <Typography variant="subtitle1" color="text.secondary" textAlign="center" sx={{ fontWeight: 700 }}>
               No todos yet
             </Typography>
