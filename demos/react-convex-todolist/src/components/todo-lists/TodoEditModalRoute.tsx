@@ -2,8 +2,7 @@ import { TODO_LISTS_ROUTE } from '@/app/router';
 import {
   stringArrayToTagsJson,
   tagsJsonToStringArray
-} from '@/app/views/todo-lists/listFormUtils';
-import type { ListDetailsFormValues } from '@/app/views/todo-lists/listDetailsFormTypes';
+} from './listFormUtils';
 import { LISTS_TABLE, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import CloseIcon from '@mui/icons-material/Close';
@@ -32,7 +31,7 @@ import { usePowerSync, useQuery } from '@powersync/react';
 import { Field, type FieldProps, Formik, useFormikContext } from 'formik';
 import React, { Suspense } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { TodoListsEditor } from './TodoListsEditor';
+import { TodoListsEditor, type ListDetailsFormValues } from './TodoListsEditor';
 
 type ListDetailRow = {
   name: string;

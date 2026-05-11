@@ -1,5 +1,4 @@
-import type { ListDetailsFormValues } from '@/app/views/todo-lists/listDetailsFormTypes';
-import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from '@/app/views/todo-lists/listFormUtils';
+import { LIST_PRIORITY_COMPACT, LIST_PRIORITY_OPTIONS } from './listFormUtils';
 import { OutlinedComposer } from '@/components/widgets/OutlinedComposer';
 import { SmartTagEditor } from '@/components/widgets/SmartTagEditor';
 import { TodoItemWidget } from '@/components/widgets/TodoItemWidget';
@@ -9,6 +8,14 @@ import { Box, FormControl, List, MenuItem, Paper, Select, TextField, Typography 
 import { usePowerSync, useQuery } from '@powersync/react';
 import { Field, type FieldProps, Form, useFormikContext } from 'formik';
 import React from 'react';
+
+/** List metadata edited in the todo list modal (Formik); persisted automatically from the route shell. */
+export type ListDetailsFormValues = {
+  name: string;
+  notes: string;
+  tags: string[];
+  priority: number;
+};
 
 export type TodoListsEditorProps = {
   listId: string;

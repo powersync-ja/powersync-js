@@ -3,7 +3,7 @@ import {
   DEFAULT_NEW_LIST_PRIORITY,
   formatListTaskSummary,
   listPriorityCaption
-} from '@/app/views/todo-lists/listFormUtils';
+} from '@/components/todo-lists/listFormUtils';
 import { LISTS_TABLE, TodoListWithCountsRow, TODOS_TABLE } from '@/library/powersync/AppSchema';
 import { useUserId } from '@/library/powersync/useUserId';
 import { Box, Grid, List, Paper, Typography } from '@mui/material';
@@ -90,6 +90,9 @@ export function TodoListsWidget() {
       ${LISTS_TABLE}.archived = false
     GROUP BY
       ${LISTS_TABLE}.id
+    ORDER BY
+      COALESCE(${LISTS_TABLE}.priority, 0) DESC,
+      ${LISTS_TABLE}.created_at DESC
   `);
 
   const partitioned = useMemo(() => partitionLists(listRecords), [listRecords]);

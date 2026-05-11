@@ -1,4 +1,4 @@
-import TodoEditModalRoute from './TodoEditModalRoute';
+import TodoEditModalRoute from '@/components/todo-lists/TodoEditModalRoute';
 import TodoListsPage from './page';
 
 /**

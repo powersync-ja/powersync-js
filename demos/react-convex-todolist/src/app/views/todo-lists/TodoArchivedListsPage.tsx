@@ -25,6 +25,9 @@ export default function TodoArchivedListsPage() {
         ${LISTS_TABLE}.archived = true
       GROUP BY
         ${LISTS_TABLE}.id
+      ORDER BY
+        COALESCE(${LISTS_TABLE}.priority, 0) DESC,
+        ${LISTS_TABLE}.created_at DESC
     `,
     [],
     {
