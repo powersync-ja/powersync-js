@@ -5,7 +5,7 @@ import { useAuthToken } from '@convex-dev/auth/react';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import { PowerSyncDatabase } from '@powersync/web';
-import { useConvex } from 'convex/react';
+import { useConvex, useConvexAuth } from 'convex/react';
 import Logger from 'js-logger';
 import React, { Suspense } from 'react';
 
@@ -31,26 +31,24 @@ export const useConnector = () => React.useContext(ConnectorContext);
 
 const AuthAwareSystemProvider = ({ children }: { children: React.ReactNode }) => {
   const authToken = useAuthToken();
+  const { isAuthenticated } = useConvexAuth();
   const convexClient = useConvex();
   const [connector] = React.useState(() => new DemoConnector({ convexClient }));
 
   // Update connector with current auth token
   React.useEffect(() => {
-    if (authToken) {
-      console.log('[Convex] JWT token:', authToken);
-    }
     connector.setAuthToken(authToken);
   }, [authToken, connector]);
 
   React.useEffect(() => {
-    if (authToken) {
+    if (authToken && isAuthenticated) {
       // Connect PowerSync when authenticated
       powerSync.connect(connector);
     } else {
       // Disconnect PowerSync when not authenticated
       powerSync.disconnect();
     }
-  }, [authToken, connector]);
+  }, [authToken, connector, isAuthenticated]);
 
   return (
     <Suspense fallback={<CircularProgress />}>

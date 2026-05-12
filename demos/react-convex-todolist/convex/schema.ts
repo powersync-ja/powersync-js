@@ -7,7 +7,7 @@ export default defineSchema({
   lists: defineTable({
     created_at: v.string(),
     name: v.string(),
-    owner_id: v.string(),
+    owner_id: v.id('users'),
     notes: v.optional(v.string()),
     priority: v.optional(v.number()),
     tags: v.optional(v.array(v.string())),

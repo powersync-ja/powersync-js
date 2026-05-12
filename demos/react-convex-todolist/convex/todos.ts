@@ -20,12 +20,19 @@ const findTodoByUuid = async (params: { db: DatabaseReader; uuid: string }) => {
 };
 
 /**
+ * Public todo mutations use `list_uuid` from the local-first client and resolve
+ * the Convex `list_id` server-side after checking list ownership. This keeps
+ * callers from directly assigning a todo to an arbitrary Convex list document.
+ */
+const publicTodoValidator = schema.tables.todos.validator.omit('list_id');
+
+/**
  * Create a todo record given its record data.
  * The `list_id` is resolved here on the backend.
  */
 export const create = mutation({
   // This does not include an `id` field. The local uuid is presented in the `uuid` field
-  args: schema.tables.todos.validator.omit('list_id'),
+  args: publicTodoValidator,
   handler: async (ctx, args) => {
     const { db } = ctx;
     const ownerId = await requireOwnerId(ctx);
@@ -48,7 +55,7 @@ export const create = mutation({
  */
 export const update = mutation({
   // The uuid is required, every other field is an optional patch
-  args: v.object({ uuid: v.string() }).extend(schema.tables.todos.validator.partial().fields),
+  args: v.object({ uuid: v.string() }).extend(publicTodoValidator.partial().fields),
   handler: async (ctx, { uuid, ...fields }) => {
     const { db } = ctx;
     const ownerId = await requireOwnerId(ctx);
@@ -62,16 +69,17 @@ export const update = mutation({
     }
     assertListOwner(currentList, ownerId);
 
+    const patch: Partial<typeof matching> = fields;
     if (fields.list_uuid !== undefined) {
       const nextList = await findListByUuid({ db, uuid: fields.list_uuid });
       if (!nextList) {
         throw mutationError(MUTATION_ERROR_CODES.NOT_FOUND, `No matching list found for uuid=${fields.list_uuid}`);
       }
       assertListOwner(nextList, ownerId);
-      fields.list_id = nextList._id;
+      patch.list_id = nextList._id;
     }
 
-    await db.patch(matching._id, fields);
+    await db.patch(matching._id, patch);
   }
 });
 
