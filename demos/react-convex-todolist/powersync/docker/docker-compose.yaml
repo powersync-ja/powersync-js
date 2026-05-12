@@ -12,10 +12,10 @@ include:
 services:
   powersync:
     restart: unless-stopped
-    # TODO update
-    image: ps
+    # TODO update before merge
+    image: journeyapps/powersync-service:0.0.0-dev-20260512083249
     # We change this in order to load the Convex secret, which is output after running the convex-keygen
-    # Docker Compsose service
+    # Docker Compose service
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
