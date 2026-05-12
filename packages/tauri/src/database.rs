@@ -7,6 +7,21 @@ use tauri::{AppHandle, Emitter, Runtime};
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
 
+/// Replaces characters that Tauri's event system disallows (anything outside
+/// `[a-zA-Z0-9\-/:_]`) with `_`. Must mirror the JS `sanitizeEventKey` helper
+/// so both sides produce identical event names.
+fn sanitize_event_name(name: &str) -> String {
+    name.chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '-' | '/' | ':' | '_') {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect()
+}
+
 pub struct TauriDatabaseState {
     pub database: PowerSyncDatabase,
     forward_updates: JoinHandle<()>,
@@ -15,10 +30,11 @@ pub struct TauriDatabaseState {
 
 impl TauriDatabaseState {
     pub fn new<R: Runtime>(handle: AppHandle<R>, name: &str, source: PowerSyncDatabase) -> Self {
+        let sanitized = sanitize_event_name(name);
         let forward_updates = {
             let handle = handle.clone();
             let db = source.clone();
-            let event_key = format!("table-updates:{}", name);
+            let event_key = format!("table-updates:{}", sanitized);
 
             tokio::spawn(async move {
                 let mut stream = db.watch_all_updates();
@@ -32,7 +48,7 @@ impl TauriDatabaseState {
         };
         let forward_sync_status = {
             let db = source.clone();
-            let event_key = format!("sync-status:{}", name);
+            let event_key = format!("sync-status:{}", sanitized);
 
             tokio::spawn(async move {
                 let mut stream = db.watch_status();

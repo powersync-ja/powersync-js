@@ -164,9 +164,18 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
     this.updateSyncStatusFromRust(status);
   }
 
+  /**
+   * Replaces chars outside `[a-zA-Z0-9\-/:_]` with `_` to satisfy Tauri's
+   * event-name restrictions. Must mirror `sanitize_event_name` in database.rs.
+   */
+  private sanitizeEventKey(key: string): string {
+    return key.replace(/[^a-zA-Z0-9\-/:_]/g, '_');
+  }
+
   async _initialize(): Promise<void> {
     const path = await this.resolvePath();
-    this.tableUpdateListener = await listen<string[]>(`table-updates:${path}`, (event) => {
+    const eventKey = this.sanitizeEventKey(path);
+    this.tableUpdateListener = await listen<string[]>(`table-updates:${eventKey}`, (event) => {
       const adapter = this.database;
       if (adapter instanceof RustDatabaseAdapter) {
         adapter.iterateListeners((l) =>
@@ -174,7 +183,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
         );
       }
     });
-    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${path}`, (event) => {
+    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${eventKey}`, (event) => {
       this.updateSyncStatusFromRust(event.payload);
     });
 
