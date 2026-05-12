@@ -13,7 +13,7 @@ import {
 const LOCKS = new Map<string, Map<LockType, Mutex>>();
 
 export class NodeStreamingSyncImplementation extends AbstractStreamingSyncImplementation {
-  locks: Map<LockType, Mutex>;
+  locks!: Map<LockType, Mutex>; // initialized by initLocks()
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super(options);

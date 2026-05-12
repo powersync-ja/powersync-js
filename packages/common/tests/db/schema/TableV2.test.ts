@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TableV2 } from '../../../src/db/schema/TableV2';
-import { column, Column, ColumnType } from '../../../src/db/schema/Column';
+import { TableV2 } from '../../../src/db/schema/TableV2.js';
+import { column, Column, ColumnType } from '../../../src/db/schema/Column.js';
 
 describe('TableV2', () => {
   it('should create a table', () => {
