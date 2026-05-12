@@ -18,7 +18,7 @@ import {
   mockSyncServiceTest,
   TestConnector,
   waitForSyncStatus
-} from './utils';
+} from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
 
 describe('Sync', () => {
@@ -606,7 +606,7 @@ function defineSyncTests(bson: boolean) {
   });
 
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);
@@ -937,7 +937,7 @@ function defineSyncTests(bson: boolean) {
 
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);

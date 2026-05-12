@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Table, TableV2Options } from '../../../src/db/schema/Table';
-import { column, Column, ColumnType } from '../../../src/db/schema/Column';
-import { Index } from '../../../src/db/schema/Index';
-import { IndexedColumn } from '../../../src/db/schema/IndexedColumn';
+import { Table, TableV2Options } from '../../../src/db/schema/Table.js';
+import { column, Column, ColumnType } from '../../../src/db/schema/Column.js';
+import { Index } from '../../../src/db/schema/Index.js';
+import { IndexedColumn } from '../../../src/db/schema/IndexedColumn.js';
 
 describe('Table', () => {
   it('should create a table with V1 syntax', () => {
@@ -141,10 +141,12 @@ describe('Table', () => {
     expect(createTable({ trackPrevious: true }).toJSON().include_old).toBe(true);
     expect(createTable({ trackPrevious: true }).toJSON().include_old_only_when_changed).toBe(false);
 
-    const complexIncldueOld = createTable({ trackPrevious: {
-      columns: ['foo', 'bar'],
-      onlyWhenChanged: true,
-    } });
+    const complexIncldueOld = createTable({
+      trackPrevious: {
+        columns: ['foo', 'bar'],
+        onlyWhenChanged: true
+      }
+    });
     expect(complexIncldueOld.toJSON().include_old).toStrictEqual(['foo', 'bar']);
     expect(complexIncldueOld.toJSON().include_old_only_when_changed).toBe(true);
 

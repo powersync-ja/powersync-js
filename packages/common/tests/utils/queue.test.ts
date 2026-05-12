@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Queue } from '../../src/utils/queue';
+import { Queue } from '../../src/utils/queue.js';
 
 describe('Queue', () => {
   it('can remove elements', () => {

@@ -6,7 +6,7 @@ import {
   injectable,
   SimpleAsyncIterator,
   valueResult
-} from '../../src/utils/stream_transform';
+} from '../../src/utils/stream_transform.js';
 
 describe('extractJsonLines', () => {
   function testWith(...chunks: string[]): SimpleAsyncIterator<string> {
