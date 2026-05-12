@@ -4,9 +4,9 @@ import { Worker } from 'node:worker_threads';
 import { LockContext, Schema } from '@powersync/common';
 import { randomUUID } from 'node:crypto';
 import { expect, test, vi } from 'vitest';
-import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib';
-import { WorkerOpener } from '../lib/db/options';
-import { AppSchema, databaseTest, tempDirectoryTest } from './utils';
+import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../src/index.js';
+import { WorkerOpener } from '../src/db/options.js';
+import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
 
 test('validates options', async () => {
   await expect(async () => {
@@ -233,7 +233,9 @@ databaseTest('clear raw tables', async ({ database }) => {
   const schema = new Schema({});
   schema.withRawTables({
     users: {
-      table_name: 'lists',
+      schema: {
+        tableName: 'lists'
+      },
       clear: 'DELETE FROM lists'
     }
   });

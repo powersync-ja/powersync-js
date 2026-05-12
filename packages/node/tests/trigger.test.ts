@@ -9,7 +9,7 @@ import {
   TriggerDiffRecord
 } from '@powersync/common';
 import { describe, expect, vi } from 'vitest';
-import { Database, databaseTest } from './utils';
+import { Database, databaseTest } from './utils.js';
 
 describe('Triggers', () => {
   /**

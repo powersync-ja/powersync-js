@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base",
   "compilerOptions": {
-    "baseUrl": "./",
     "jsx": "preserve",
     "outDir": "./lib",
     "module": "node16",

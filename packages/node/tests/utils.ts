@@ -17,7 +17,7 @@ import {
   SyncStatus,
   Table,
   column
-} from '../lib';
+} from '../src/index.js';
 import { BSON } from 'bson';
 
 export async function createTempDir() {
@@ -57,7 +57,7 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
-  const defaultLogger = createLogger('PowerSyncTest', { logLevel: Logger.TRACE });
+  const defaultLogger = createLogger('PowerSyncTest', { logLevel: (Logger as any).TRACE });
   (defaultLogger as any).invoke = (_: any, args: any) => {
     console.log(...args);
   };

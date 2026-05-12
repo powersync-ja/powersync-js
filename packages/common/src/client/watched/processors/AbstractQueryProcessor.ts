@@ -45,9 +45,9 @@ type WatchedQueryProcessorListener<Data> = WatchedQueryListener<Data>;
  * @internal
  */
 export abstract class AbstractQueryProcessor<
-    Data = unknown[],
-    Settings extends WatchedQueryOptions = WatchedQueryOptions
-  >
+  Data = unknown[],
+  Settings extends WatchedQueryOptions = WatchedQueryOptions
+>
   extends MetaBaseObserver<WatchedQueryProcessorListener<Data>>
   implements WatchedQuery<Data, Settings>
 {
@@ -199,7 +199,7 @@ export abstract class AbstractQueryProcessor<
   protected async runWithReporting<T>(callback: () => Promise<T>): Promise<void> {
     try {
       await callback();
-    } catch (error) {
+    } catch (error: any) {
       // This will update the error on the state and iterate error listeners
       await this.updateState({ error });
     }
@@ -213,7 +213,7 @@ export abstract class AbstractQueryProcessor<
   ) {
     try {
       await this.iterateAsyncListeners(async (l) => callback(l));
-    } catch (error) {
+    } catch (error: any) {
       try {
         await this.iterateAsyncListeners(async (l) => l.onError?.(error));
       } catch (error) {

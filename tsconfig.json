@@ -1,0 +1,17 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "./packages/common"
+        },
+        {
+            "path": "./packages/node"
+        },
+        {
+            "path": "./packages/common/tests"
+        },
+        {
+            "path": "./packages/node/tests"
+        }
+    ]
+}

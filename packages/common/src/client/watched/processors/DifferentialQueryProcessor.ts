@@ -83,8 +83,9 @@ export interface DifferentialWatchedQuerySettings<RowType> extends DifferentialW
   query: WatchCompatibleQuery<RowType[]>;
 }
 
-export interface DifferentialWatchedQueryListener<RowType>
-  extends WatchedQueryListener<ReadonlyArray<Readonly<RowType>>> {
+export interface DifferentialWatchedQueryListener<RowType> extends WatchedQueryListener<
+  ReadonlyArray<Readonly<RowType>>
+> {
   onDiff?: (diff: WatchedQueryDifferential<RowType>) => void | Promise<void>;
 }
 
@@ -97,8 +98,10 @@ export type DifferentialWatchedQuery<RowType> = WatchedQuery<
 /**
  * @internal
  */
-export interface DifferentialQueryProcessorOptions<RowType>
-  extends AbstractQueryProcessorOptions<RowType[], DifferentialWatchedQuerySettings<RowType>> {
+export interface DifferentialQueryProcessorOptions<RowType> extends AbstractQueryProcessorOptions<
+  RowType[],
+  DifferentialWatchedQuerySettings<RowType>
+> {
   rowComparator?: DifferentialWatchedQueryComparator<RowType>;
 }
 
@@ -286,7 +289,7 @@ export class DifferentialQueryProcessor<RowType>
             if (Object.keys(partialStateUpdate).length > 0) {
               await this.updateState(partialStateUpdate);
             }
-          } catch (error) {
+          } catch (error: any) {
             await this.updateState({ error });
           }
         },
