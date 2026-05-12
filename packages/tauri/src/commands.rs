@@ -138,11 +138,32 @@ impl<'de> Deserialize<'de> for SqliteValue {
                 Ok(SqliteValue::Integer(v))
             }
 
+            fn visit_u64<E>(self, v: u64) -> std::result::Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                // Wrapping cast (v as i64) would silently corrupt values > i64::MAX.
+                i64::try_from(v)
+                    .map(SqliteValue::Integer)
+                    .map_err(E::custom)
+            }
+
             fn visit_f64<E>(self, v: f64) -> std::result::Result<Self::Value, E>
             where
                 E: Error,
             {
-                Ok(SqliteValue::Real(v))
+                // WKWebView (macOS Tauri) serializes all JS numbers as f64 over IPC.
+                // Whole-number floats (LIMIT 1 → 1.0, is_default = 1 → 1.0, etc.)
+                // must be bound as INTEGER so SQLite accepts them in LIMIT/OFFSET
+                // and other integer-typed positions. Real floats are passed through.
+                //
+                // Use < (not <=) on the upper bound: i64::MAX as f64 rounds up to
+                // i64::MAX + 1, so <= would allow an overflow on the v as i64 cast.
+                if v.fract() == 0.0 && v >= i64::MIN as f64 && v < i64::MAX as f64 {
+                    Ok(SqliteValue::Integer(v as i64))
+                } else {
+                    Ok(SqliteValue::Real(v))
+                }
             }
 
             fn visit_str<E>(self, v: &str) -> std::result::Result<Self::Value, E>
