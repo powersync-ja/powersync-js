@@ -1,5 +1,12 @@
 # diagnostics-app
 
+## 0.13.8
+
+### Patch Changes
+
+- @powersync/react@1.10.0
+- @powersync/web@1.38.1
+
 ## 0.13.7
 
 ### Patch Changes
