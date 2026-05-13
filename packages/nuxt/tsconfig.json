@@ -1,5 +1,22 @@
 {
     "extends": "./.nuxt/tsconfig.json",
     "exclude": ["dist", "node_modules"],
-    "include": ["src"]
+    "include": ["src"],
+    "compilerOptions": {
+        "strict": false
+    },
+    "references": [
+        {
+            "path": "../common"
+        },
+        {
+            "path": "../kysely-driver"
+        },
+        {
+            "path": "../vue"
+        },
+        {
+            "path": "../web"
+        }
+    ]
 }

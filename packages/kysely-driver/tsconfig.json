@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base",
   "compilerOptions": {
-    "baseUrl": "./",
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "lib": ["DOM", "ES2020", "WebWorker"],

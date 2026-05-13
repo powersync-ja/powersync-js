@@ -1,13 +1,13 @@
 import { SyncStatus } from '@powersync/common';
-import { ref, watchEffect } from 'vue';
+import { ref, watchEffect, Ref } from 'vue';
 import { usePowerSync } from './powerSync.js';
 
 /**
  * @deprecated Use {@link useStatus} instead.
  */
-export const usePowerSyncStatus = () => {
+export const usePowerSyncStatus = (): Ref<SyncStatus> => {
   const powerSync = usePowerSync();
-  const status = ref(new SyncStatus({}));
+  const status = ref(new SyncStatus({})) as Ref<SyncStatus>;
 
   if (!powerSync) {
     return status;

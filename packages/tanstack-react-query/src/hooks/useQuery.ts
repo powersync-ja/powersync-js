@@ -69,7 +69,7 @@ export function useQuery<TData = unknown, TError = Tanstack.DefaultError>(
   options: UseBaseQueryOptions<Tanstack.UseQueryOptions<TData, TError>>,
   queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
 ) {
-  return useQueryCore(options, queryClient, Tanstack.useQuery);
+  return useQueryCore(options as any, queryClient, Tanstack.useQuery);
 }
 
 /**
@@ -113,7 +113,7 @@ export function useSuspenseQuery<TData = unknown, TError = Tanstack.DefaultError
   options: UseBaseQueryOptions<Tanstack.UseSuspenseQueryOptions<TData, TError>>,
   queryClient: Tanstack.QueryClient = Tanstack.useQueryClient()
 ) {
-  return useQueryCore(options, queryClient, Tanstack.useSuspenseQuery);
+  return useQueryCore(options as any, queryClient, Tanstack.useSuspenseQuery);
 }
 
 function useQueryCore<
@@ -134,7 +134,10 @@ function useQueryCore<
 
   const { query, parameters, queryKey, streams, ...resolvedOptions } = options;
 
-  const { queries: [{ queryFn }], streamsHaveSynced } = usePowerSyncQueries(
+  const {
+    queries: [{ queryFn }],
+    streamsHaveSynced
+  } = usePowerSyncQueries(
     [
       {
         query,

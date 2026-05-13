@@ -41,8 +41,8 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   private readonly options: NodeSQLOpenOptions;
   public readonly name: string;
 
-  private writeConnection: Semaphore<RemoteConnection>;
-  private readConnections: Semaphore<RemoteConnection>;
+  private writeConnection?: Semaphore<RemoteConnection>;
+  private readConnections?: Semaphore<RemoteConnection>;
 
   constructor(options: NodeSQLOpenOptions) {
     super();
@@ -91,7 +91,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
       const listeners = new WeakMap<EventListenerOrEventListenerObject, (e: any) => void>();
 
       const comlink = Comlink.wrap<AsyncDatabaseOpener>({
-        postMessage: worker.postMessage.bind(worker),
+        postMessage: worker.postMessage.bind(worker) as any,
         addEventListener: (type, listener) => {
           let resolved: (event: any) => void =
             'handleEvent' in listener ? listener.handleEvent.bind(listener) : listener;
@@ -154,8 +154,8 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   }
 
   async close() {
-    const { item: writeConnection, release: returnWrite } = await this.writeConnection.requestOne();
-    const { items: readers, release: returnReaders } = await this.readConnections.requestAll();
+    const { item: writeConnection, release: returnWrite } = await this.writeConnection!.requestOne();
+    const { items: readers, release: returnReaders } = await this.readConnections!.requestAll();
 
     try {
       await writeConnection.close();
@@ -167,7 +167,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   }
 
   async readLock<T>(fn: (tx: RemoteConnection) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
-    const lease = await this.readConnections.requestOne(timeoutSignal(options?.timeoutMs));
+    const lease = await this.readConnections!.requestOne(timeoutSignal(options?.timeoutMs));
     try {
       return await fn(lease.item);
     } finally {
@@ -176,7 +176,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   }
 
   async writeLock<T>(fn: (tx: RemoteConnection) => Promise<T>, options?: DBLockOptions | undefined): Promise<T> {
-    const { item, release } = await this.writeConnection.requestOne(timeoutSignal(options?.timeoutMs));
+    const { item, release } = await this.writeConnection!.requestOne(timeoutSignal(options?.timeoutMs));
 
     try {
       try {
@@ -202,7 +202,7 @@ export class WorkerConnectionPool extends BaseObserver<DBAdapterListener> implem
   async refreshSchema() {
     await this.writeLock((l) => l.refreshSchema());
 
-    const { items, release } = await this.readConnections.requestAll();
+    const { items, release } = await this.readConnections!.requestAll();
     try {
       await Promise.all(items.map((c) => c.refreshSchema()));
     } finally {

@@ -1,9 +1,9 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { eq, relations } from 'drizzle-orm';
 
-import { customDatabaseTest, databaseTest } from './utils';
+import { customDatabaseTest, databaseTest } from './utils.js';
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
-import { PowerSyncDatabase } from '../lib';
+import { PowerSyncDatabase } from '../lib/index.js';
 import { expect } from 'vitest';
 
 export const drizzleLists = sqliteTable('lists', {

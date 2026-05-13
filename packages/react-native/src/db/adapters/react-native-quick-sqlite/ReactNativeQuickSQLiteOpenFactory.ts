@@ -29,7 +29,7 @@ To open databases with React Native Quick SQLite please install @journeyapps/rea
     try {
       // Hot reloads can sometimes clear global JS state, but not close DB on native side
       DB = rnqs.open(dbFilename, openOptions);
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.message.includes('already open')) {
         rnqs.QuickSQLite.close(dbFilename);
         DB = rnqs.open(dbFilename, openOptions);
