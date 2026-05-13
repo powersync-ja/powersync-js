@@ -136,14 +136,12 @@ export function extractJsonLines(
     next: async () => {
       while (true) {
         if (isFinalEvent) {
-          console.log('sending line done');
           return doneResult;
         }
 
         {
           const first = pendingLines.shift();
           if (first) {
-            console.log('sending line', first);
             return { done: false, value: first };
           }
         }
@@ -153,7 +151,6 @@ export function extractJsonLines(
           const remaining = buffer.trim();
           if (remaining.length != 0) {
             isFinalEvent = true;
-            console.log('sending line', remaining);
             return { done: false, value: remaining };
           }
 
