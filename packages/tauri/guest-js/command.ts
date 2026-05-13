@@ -57,7 +57,13 @@ export interface ExecuteBatchResult {
   changes: number;
 }
 
+export interface CreatedDatabase {
+  handle: number;
+  event_key: number;
+}
+
 export type CommandResult =
+  | { CreatedDatabase: CreatedDatabase }
   | { CreatedHandle: number }
   | { ExecuteSqlResult: ExecuteSqlResult }
   | { ExecuteBatchResult: ExecuteBatchResult }
