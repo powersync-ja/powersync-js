@@ -5,7 +5,7 @@ import type {
   PowerSyncConnectionOptions,
   SyncStatus,
   UploadQueueStats
-} from '@powersync/web';
+} from '@powersync/common';
 import type { ComputedRef, Ref } from 'vue';
 import { ref, computed, readonly, onMounted, onUnmounted } from 'vue';
 import { computedAsync } from '@vueuse/core';
@@ -271,7 +271,6 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
 
   const userID = computedAsync(async () => {
     try {
-      // @ts-expect-error - connector to be double ref or something
       const token = (await connector.value.fetchCredentials())?.token;
 
       if (!token) return null;
@@ -297,7 +296,7 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
   // functions
   const clearData = async () => {
     await db.value?.syncStreamImplementation?.disconnect();
-    const connector = db.value.connector as PowerSyncBackendConnector;
+    const connector = db.value.connector;
     const connectionOptions = db.value.connectionOptions as PowerSyncConnectionOptions;
     await db.value?.disconnectAndClear();
     const schemaManager = getCurrentSchemaManager();
@@ -394,11 +393,11 @@ export function usePowerSyncInspectorDiagnostics(): UsePowerSyncInspectorDiagnos
 
   // exposed state
   return {
-    db,
-    connector,
+    db: db as any,
+    connector: connector as any,
     connectionOptions,
     isDiagnosticSchemaSetup: readonly(isDiagnosticSchemaSetup),
-    syncStatus: readonly(syncStatus) as ReadonlyRef<SyncStatus>,
+    syncStatus: readonly(syncStatus) as any,
     hasSynced: readonly(hasSynced),
     isConnected: readonly(isConnected),
     isSyncing: readonly(isSyncing),

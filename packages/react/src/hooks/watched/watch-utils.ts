@@ -48,7 +48,7 @@ export const constructCompatibleQuery = <RowType>(
   parameters: any[] = [],
   options: AdditionalOptions
 ) => {
-  const powerSync = usePowerSync();
+  const powerSync = usePowerSync()!;
   const stringifiedParameters = React.useMemo(() => JSON.stringify(parameters), [parameters]);
 
   const parsedQuery = React.useMemo<WatchCompatibleQueryWithParams<RowType[]>>(() => {

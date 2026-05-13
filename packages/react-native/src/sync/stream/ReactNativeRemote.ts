@@ -9,8 +9,10 @@ import {
   SyncStreamOptions
 } from '@powersync/common';
 import { Platform } from 'react-native';
+// @ts-expect-error
 import { TextDecoder } from 'text-encoding';
 
+// @ts-expect-error
 import { fetch } from 'react-native-fetch-api';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
