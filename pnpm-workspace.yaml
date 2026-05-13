@@ -46,14 +46,16 @@ catalog:
   vite: ^7.3.1
   vitest: ^3.2.4
 
-onlyBuiltDependencies:
-  - '@journeyapps/wa-sqlite'
-  - '@swc/core'
-  - better-sqlite3
-  - better-sqlite3-multiple-ciphers
-  - core-js
-  - core-js-pure
-  - detox
-  - dtrace-provider
-  - esbuild
-  - swiftlint
+allowBuilds:
+  '@journeyapps/wa-sqlite': true
+  '@parcel/watcher': false
+  '@swc/core': true
+  better-sqlite3: true
+  better-sqlite3-multiple-ciphers: true
+  core-js: true
+  core-js-pure: true
+  detox: true
+  dtrace-provider: true
+  esbuild: true
+  swiftlint: true
+  vue-demi: false
