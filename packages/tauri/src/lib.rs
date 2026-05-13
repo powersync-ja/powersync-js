@@ -4,6 +4,7 @@ use powersync::{env::PowerSyncEnvironment, ConnectionPool, PowerSyncDatabase};
 use rusqlite::Connection;
 use std::collections::hash_map::Entry;
 use std::marker::PhantomData;
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{Arc, Weak};
 use std::{collections::HashMap, sync::Mutex};
 use tauri::{
@@ -35,6 +36,7 @@ impl<R: Runtime, T: Manager<R>> PowerSyncExt<R> for T {
 pub struct PowerSync<R: Runtime> {
     app: PhantomData<AppHandle<R>>,
     databases: Mutex<HashMap<String, Weak<TauriDatabaseState>>>,
+    event_id_counter: AtomicI32,
     pub(crate) handles: JavaScriptHandles,
 }
 
@@ -72,7 +74,8 @@ impl<R: Runtime> PowerSync<R> {
         let database = PowerSyncDatabase::new(env, schema);
         database.async_tasks().spawn_with_tokio();
 
-        let db = Arc::new(TauriDatabaseState::new(app, name, database));
+        let event_id = self.event_id_counter.fetch_add(1, Ordering::SeqCst);
+        let db = Arc::new(TauriDatabaseState::new(app, event_id, database));
         entry.insert_entry(Arc::downgrade(&db));
 
         Ok(db)
@@ -95,6 +98,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
                 app: PhantomData::<AppHandle<R>>,
                 databases: Default::default(),
                 handles: Default::default(),
+                event_id_counter: Default::default(),
             };
             app.manage(powersync);
             Ok(())

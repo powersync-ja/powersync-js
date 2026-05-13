@@ -249,6 +249,10 @@ pub struct SubscribeToStream {
 
 #[derive(Serialize)]
 pub enum CommandResult {
+    CreatedDatabase {
+        handle: Handle,
+        event_key: i32,
+    },
     CreatedHandle(Handle),
     ExecuteSqlResult(ExecuteSqlResult),
     ExecuteBatchResult {
@@ -273,7 +277,11 @@ pub(crate) async fn powersync<R: Runtime>(
                 SchemaOrCustom::from(open.schema.as_ref()),
             )?;
 
-            CommandResult::CreatedHandle(powersync.handles.put(SharedWithJavaScript::Database(db)))
+            let event_key = db.event_key;
+            CommandResult::CreatedDatabase {
+                handle: powersync.handles.put(SharedWithJavaScript::Database(db)),
+                event_key,
+            }
         }
         Command::CloseHandle(handle) => {
             powersync.handles.delete(handle)?;
