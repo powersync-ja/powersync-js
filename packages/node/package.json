@@ -73,7 +73,7 @@
   "devDependencies": {
     "@powersync/drizzle-driver": "workspace:*",
     "@types/node": "catalog:",
-    "better-sqlite3": "^12.2.0",
+    "better-sqlite3": "^12.10.0",
     "@types/better-sqlite3": "^7.6.13",
     "bson": "catalog:",
     "drizzle-orm": "catalog:",

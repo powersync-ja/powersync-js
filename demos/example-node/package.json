@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@powersync/node": "^0.18.5",
-    "better-sqlite3": "^12.2.0",
-    "better-sqlite3-multiple-ciphers": "^12.2.0",
+    "better-sqlite3": "^12.10.0",
+    "better-sqlite3-multiple-ciphers": "^12.9.0",
     "dotenv": "^16.4.7",
     "undici": "^7.11.0"
   },
