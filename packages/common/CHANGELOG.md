@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.53.1
+
+### Patch Changes
+
+- 8704578: Fix internal client skipping sync lines, causing checksum mismatch errors.
+
 ## 1.53.0
 
 ### Minor Changes

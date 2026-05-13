@@ -1,5 +1,12 @@
 # @powersync/op-sqlite
 
+## 0.9.8
+
+### Patch Changes
+
+- Updated dependencies [8704578]
+  - @powersync/common@1.53.1
+
 ## 0.9.7
 
 ### Patch Changes
