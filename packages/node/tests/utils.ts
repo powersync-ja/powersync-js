@@ -17,7 +17,7 @@ import {
   SyncStatus,
   Table,
   column
-} from '../src/index.js';
+} from '../lib/index.js';
 import { BSON } from 'bson';
 
 export async function createTempDir() {
