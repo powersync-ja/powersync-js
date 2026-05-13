@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-ignore
 import { defineNuxtPlugin, useRoute, useRuntimeConfig } from '#app';
 
 export default defineNuxtPlugin((nuxtApp: any) => {

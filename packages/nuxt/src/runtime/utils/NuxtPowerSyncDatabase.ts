@@ -17,7 +17,7 @@ import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
 import { useDiagnosticsLogger } from '../composables/useDiagnosticsLogger';
 import { shallowRef, type ShallowRef } from 'vue';
-// @ts-expect-error
+// @ts-ignore
 import { useRuntimeConfig } from '#app';
 import { RustClientInterceptor } from './RustClientInterceptor';
 
