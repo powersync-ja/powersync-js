@@ -7,8 +7,9 @@ overrides:
   "@electron/rebuild": ^4.0.4
 
 allowBuilds:
-  better-sqlite3: true
+  '@journeyapps/wa-sqlite': false
+  '@swc/core': false
+  # Electron has a postinstall script which populates the path to the electron bin.
   electron: true
   electron-winstaller: false
   esbuild: false
-  lzma-native: false
