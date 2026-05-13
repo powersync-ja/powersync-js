@@ -62,7 +62,7 @@
     "prettier": "2.8.8",
     "react-test-renderer": "19.0.0",
     "ts-jest": "^29.4.6",
-    "typescript": "5.0.4",
+    "typescript": "catalog:",
     "util": "^0.12.5"
   },
   "engines": {
