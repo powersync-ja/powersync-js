@@ -23,15 +23,22 @@ impl TauriDatabaseState {
         let forward_updates = {
             let handle = handle.clone();
             let db = source.clone();
-            let event_key = format!("table-updates:{}", event_key);
+            let event_key = Arc::new(format!("table-updates:{}", event_key));
 
             tokio::spawn(async move {
                 let mut stream = db.watch_all_updates();
 
                 while let Some(update) = stream.next().await {
+                    let cloned_handle = handle.clone();
+                    let event_key = event_key.clone();
+
                     handle
-                        .emit(&event_key, &update)
-                        .expect("should emit table update");
+                        .run_on_main_thread(move || {
+                            cloned_handle
+                                .emit(&event_key, &update)
+                                .expect("should emit table update")
+                        })
+                        .expect("should run on main thread");
                 }
             })
         };
@@ -42,9 +49,16 @@ impl TauriDatabaseState {
             tokio::spawn(async move {
                 let mut stream = db.watch_status();
                 while let Some(status) = stream.next().await {
+                    let cloned_handle = handle.clone();
+                    let event_key = event_key.clone();
+
                     handle
-                        .emit(&event_key, SerializableSyncStatus(status))
-                        .expect("should emit sync status change");
+                        .run_on_main_thread(move || {
+                            cloned_handle
+                                .emit(&event_key, SerializableSyncStatus(status))
+                                .expect("should emit sync status change")
+                        })
+                        .expect("should run on main thread");
                 }
             })
         };
