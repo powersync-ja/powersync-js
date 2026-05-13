@@ -130,7 +130,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
     });
     const existing = await this.options.persister?.readFile();
     const db = new SQL.Database(existing);
-    this.dbP = db['db'];
+    this.dbP = (db as any)['db'] as number;
     this._db = db;
     return db;
   }

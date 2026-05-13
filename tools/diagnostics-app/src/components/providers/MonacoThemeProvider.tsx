@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMonaco } from '@monaco-editor/react';
+// @ts-expect-error
 import '@/styles/monaco.css';
 
 export const POWERSYNC_MONACO_THEME = 'powersync';

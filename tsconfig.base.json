@@ -4,7 +4,6 @@
     "esModuleInterop": true,
     "lib": ["esnext", "DOM"],
     "module": "esnext",
-    "moduleResolution": "node",
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noImplicitUseStrict": false,
