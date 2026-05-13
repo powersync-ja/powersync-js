@@ -9,3 +9,6 @@ overrides:
 allowBuilds:
   better-sqlite3: true
   electron: true
+  electron-winstaller: false
+  esbuild: false
+  lzma-native: false
