@@ -1,7 +1,7 @@
 import { expect, describe } from 'vitest';
 import { column, Schema, Table } from '@powersync/common';
 import { databaseTest } from './utils.js';
-import { PowerSyncDatabase } from '../src/index.js';
+import { PowerSyncDatabase } from '../lib/index.js';
 import type { RawTable } from '../../common/src/db/schema/RawTable.js';
 
 databaseTest('include metadata', async ({ database }) => {
