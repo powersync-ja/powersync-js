@@ -3,7 +3,7 @@ import { eq, relations } from 'drizzle-orm';
 
 import { customDatabaseTest, databaseTest } from './utils.js';
 import { wrapPowerSyncWithDrizzle } from '@powersync/drizzle-driver';
-import { PowerSyncDatabase } from '../src/index.js';
+import { PowerSyncDatabase } from '../lib/index.js';
 import { expect } from 'vitest';
 
 export const drizzleLists = sqliteTable('lists', {

@@ -4,7 +4,7 @@ import { Worker } from 'node:worker_threads';
 import { LockContext, Schema } from '@powersync/common';
 import { randomUUID } from 'node:crypto';
 import { expect, test, vi } from 'vitest';
-import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../src/index.js';
+import { CrudEntry, CrudTransaction, PowerSyncDatabase } from '../lib/index.js';
 import { WorkerOpener } from '../src/db/options.js';
 import { AppSchema, databaseTest, tempDirectoryTest } from './utils.js';
 
