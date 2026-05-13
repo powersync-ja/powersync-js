@@ -25,7 +25,7 @@ export function usePowerSyncQueries(
   queries: UsePowerSyncQueriesInput,
   queryClient: Tanstack.QueryClient
 ): UsePowerSyncQueriesOutput {
-  const powerSync = usePowerSync();
+  const powerSync = usePowerSync()!;
 
   const [tablesArr, setTablesArr] = useState<string[][]>(() => queries.map(() => []));
   const [errorsArr, setErrorsArr] = useState<(Error | undefined)[]>(() => queries.map(() => undefined));
@@ -41,7 +41,7 @@ export function usePowerSyncQueries(
 
   // Collect all streams from all query entries into a single flat list for sync tracking.
   const allStreams = useMemo(() => {
-    const streams = queries.flatMap(q => q.streams ?? []);
+    const streams = queries.flatMap((q) => q.streams ?? []);
     return streams.length > 0 ? streams : undefined;
   }, [queries]);
 
@@ -176,15 +176,14 @@ export function usePowerSyncQueries(
   }, [powerSync, queryClient, tablesArr, updateErrorsArr, stringifiedQueryKeys]);
 
   return useMemo(() => {
-
     return {
       queries: parsedQueries.map((pq, idx) => {
         const error = errorsArr[idx] || pq.parseError;
-  
+
         const queryFn = async () => {
           if (error) throw error;
           if (!pq.query) throw new Error('No query provided');
-  
+
           try {
             return typeof pq.query === 'string'
               ? await powerSync.getAll(pq.sqlStatement, pq.queryParameters)
@@ -193,7 +192,7 @@ export function usePowerSyncQueries(
             throw e;
           }
         };
-  
+
         return {
           sqlStatement: pq.sqlStatement,
           queryParameters: pq.queryParameters,

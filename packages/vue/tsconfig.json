@@ -5,11 +5,15 @@
     "outDir": "./lib",
     "module": "node16",
     "moduleResolution": "node16",
-    "rootDir": "src"
+    "rootDir": "src",
+    "strict": false
   },
   "references": [
     {
       "path": "../common"
+    },
+    {
+      "path": "../web"
     }
   ],
   "include": ["src/**/*"]

@@ -10,7 +10,6 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "preserveConstEnums": true,
-    "esModuleInterop": false,
     "skipLibCheck": false,
     "strictNullChecks": true
   },

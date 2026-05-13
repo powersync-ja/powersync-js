@@ -1,5 +1,5 @@
 import { SyncStatus } from '@powersync/common';
-import { ref, watchEffect } from 'vue';
+import { Ref, ref, watchEffect } from 'vue';
 import { usePowerSync } from './powerSync.js';
 
 /**
@@ -14,12 +14,12 @@ import { usePowerSync } from './powerSync.js';
  * <script>
  * ```
  */
-export const useStatus = () => {
+export const useStatus = (): Ref<SyncStatus> => {
   const powerSync = usePowerSync();
   const status = ref(new SyncStatus({}));
 
   if (!powerSync) {
-    return status;
+    return status as any;
   }
 
   status.value = powerSync.value.currentStatus || status.value;
@@ -37,5 +37,5 @@ export const useStatus = () => {
     });
   });
 
-  return status;
+  return status as any;
 };
