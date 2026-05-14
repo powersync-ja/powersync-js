@@ -13,7 +13,7 @@ import {
   SyncStreamSubscription
 } from '@powersync/common';
 import { LateHandle, RustDatabaseAdapter } from './pool';
-import { powersyncCommand } from './command';
+import { CreatedDatabase, powersyncCommand } from './command';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { join } from '@tauri-apps/api/path';
 
@@ -166,18 +166,6 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
 
   async _initialize(): Promise<void> {
     const path = await this.resolvePath();
-    this.tableUpdateListener = await listen<string[]>(`table-updates:${path}`, (event) => {
-      const adapter = this.database;
-      if (adapter instanceof RustDatabaseAdapter) {
-        adapter.iterateListeners((l) =>
-          l.tablesUpdated?.({ tables: event.payload, rawUpdates: [], groupedUpdates: {} })
-        );
-      }
-    });
-    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${path}`, (event) => {
-      this.updateSyncStatusFromRust(event.payload);
-    });
-
     const result = await powersyncCommand({
       OpenDatabase: {
         name: path,
@@ -185,7 +173,20 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
       }
     });
 
-    this.handle.handle = (result as any).CreatedHandle as number;
+    const { handle, event_key } = (result as any).CreatedDatabase as CreatedDatabase;
+    this.tableUpdateListener = await listen<string[]>(`table-updates:${event_key}`, (event) => {
+      const adapter = this.database;
+      if (adapter instanceof RustDatabaseAdapter) {
+        adapter.iterateListeners((l) =>
+          l.tablesUpdated?.({ tables: event.payload, rawUpdates: [], groupedUpdates: {} })
+        );
+      }
+    });
+    this.syncStatusListener = await listen<SyncStatusOptions>(`sync-status:${event_key}`, (event) => {
+      this.updateSyncStatusFromRust(event.payload);
+    });
+
+    this.handle.handle = handle;
     if (this.database instanceof RustDatabaseAdapter) {
       this.database.name = path;
     }

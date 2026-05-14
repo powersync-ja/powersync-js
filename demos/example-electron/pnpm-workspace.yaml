@@ -1,6 +1,15 @@
 packages:
   - .
 
-onlyBuiltDependencies:
+overrides:
+  # @electron-forge depends on an older version of this using git dependency, which pnpm blocks.
+  # The only breaking change is that this requires node 22 or later.
+  "@electron/rebuild": ^4.0.4
+
+allowBuilds:
+  '@journeyapps/wa-sqlite': false
+  '@swc/core': false
   # Electron has a postinstall script which populates the path to the electron bin.
-  - electron
+  electron: true
+  electron-winstaller: false
+  esbuild: false

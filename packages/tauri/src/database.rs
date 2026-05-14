@@ -9,16 +9,21 @@ use tokio_stream::StreamExt;
 
 pub struct TauriDatabaseState {
     pub database: PowerSyncDatabase,
+    pub event_key: i32,
     forward_updates: JoinHandle<()>,
     forward_sync_status: JoinHandle<()>,
 }
 
 impl TauriDatabaseState {
-    pub fn new<R: Runtime>(handle: AppHandle<R>, name: &str, source: PowerSyncDatabase) -> Self {
+    pub fn new<R: Runtime>(
+        handle: AppHandle<R>,
+        event_key: i32,
+        source: PowerSyncDatabase,
+    ) -> Self {
         let forward_updates = {
             let handle = handle.clone();
             let db = source.clone();
-            let event_key = format!("table-updates:{}", name);
+            let event_key = format!("table-updates:{}", event_key);
 
             tokio::spawn(async move {
                 let mut stream = db.watch_all_updates();
@@ -32,7 +37,7 @@ impl TauriDatabaseState {
         };
         let forward_sync_status = {
             let db = source.clone();
-            let event_key = format!("sync-status:{}", name);
+            let event_key = format!("sync-status:{}", event_key);
 
             tokio::spawn(async move {
                 let mut stream = db.watch_status();
@@ -46,6 +51,7 @@ impl TauriDatabaseState {
 
         Self {
             database: source,
+            event_key,
             forward_updates,
             forward_sync_status,
         }
