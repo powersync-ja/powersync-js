@@ -57,4 +57,4 @@ client_auth:
   audience:
     - convex
   # The Convex backend running as the backend service
-  jwks_uri: http://backend:3211/.well-known/jwks.json
+  jwks_uri: !env PS_JWKS_URL

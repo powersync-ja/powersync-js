@@ -13,7 +13,8 @@ services:
   powersync:
     restart: unless-stopped
     # TODO update before merge
-    image: journeyapps/powersync-service:0.0.0-dev-20260512083249
+    image: ps
+    # image: journeyapps/powersync-service:0.0.0-dev-20260512083249
     # We change this in order to load the Convex secret, which is output after running the convex-keygen
     # Docker Compose service
     entrypoint: ["/bin/sh", "-c"]
@@ -31,6 +32,7 @@ services:
       POWERSYNC_CONFIG_PATH: /config/service.yaml
       NODE_OPTIONS: --max-old-space-size=1000
       PS_CONVEX_DEPLOYMENT_URL: http://backend:${PS_CONVEX_PORT:-3210}
+      PS_JWKS_URL: http://backend:3211/.well-known/jwks.json
     healthcheck:
       test:
         - "CMD"

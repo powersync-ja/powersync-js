@@ -1,4 +1,4 @@
-import { column, PowerSyncDatabase, Schema, SyncStream, Table } from '@powersync/web';
+import { column, Schema, Table, PowerSyncDatabase, SyncStream } from '@powersync/web';
 // OR: import { column, Schema, Table, PowerSyncDatabase, SyncStream } from '@powersync/react-native';
 
 const lists = new Table(
@@ -23,7 +23,7 @@ const todos = new Table(
     // id column (text) is automatically included
     _creationTime: column.real,
     _id: column.text,
-    completed: column.real,
+    completed: column.integer,
     completed_at: column.text,
     created_at: column.text,
     description: column.text,
