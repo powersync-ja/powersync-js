@@ -1,5 +1,29 @@
 # diagnostics-app
 
+## 0.13.8
+
+### Patch Changes
+
+- @powersync/react@1.10.0
+- @powersync/web@1.38.1
+
+## 0.13.7
+
+### Patch Changes
+
+- 1506543: Update `@journeyapps/wa-sqlite` dependency.
+- 3504cfc: Support endpoint query parameter for deeplinks.
+- c2d0f9e: Update PowerSync SQLite core extension to 0.4.12
+- 739e21a: Remove support for the JavaScript sync client. The default Rust client is the only option starting from this version.
+- Updated dependencies [1506543]
+- Updated dependencies [c2d0f9e]
+- Updated dependencies [c730604]
+- Updated dependencies [838479e]
+- Updated dependencies [739e21a]
+- Updated dependencies [756a0cf]
+  - @powersync/web@1.38.0
+  - @powersync/react@1.10.0
+
 ## 0.13.6
 
 ### Patch Changes
