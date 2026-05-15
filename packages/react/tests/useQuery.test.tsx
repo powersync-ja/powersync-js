@@ -93,14 +93,19 @@ describe('useQuery', () => {
             const currentResult = result.current;
             refresh = currentResult.refresh;
             expect(currentResult.isLoading).toEqual(false);
-            expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 2 : 1);
+            // `runQueryOnce` must execute the query exactly once on initial load. Under React 18
+            // StrictMode the effect double-invoke re-ran the synchronous query a second time
+            // (`isStrictMode ? 2 : 1`); React 19 keeps the StrictMode mount/unmount/mount check
+            // but the stable `useCallback` runQuery no longer issues that redundant execution, so
+            // both modes now correctly execute the query a single time.
+            expect(getAllSpy).toHaveBeenCalledTimes(1);
           },
           { timeout: 500, interval: 100 }
         );
 
         await act(() => refresh());
 
-        expect(getAllSpy).toHaveBeenCalledTimes(isStrictMode ? 3 : 2);
+        expect(getAllSpy).toHaveBeenCalledTimes(2);
       });
 
       it('should accept compilable queries', async () => {
