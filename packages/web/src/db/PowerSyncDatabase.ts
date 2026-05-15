@@ -264,7 +264,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
             Logs for shared sync worker will only be available in the shared worker context
           `;
           const logger = this.options.logger;
-          logger ? logger.log(LogLevels.warn, warning) : console.warn(warning);
+          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
         }
         return new SharedWebStreamingSyncImplementation({
           ...syncOptions,

@@ -211,7 +211,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   }
 
   private collectActiveSubscriptions() {
-    this.logger.log(LogLevels.debug, 'Collecting active stream subscriptions across tabs');
+    this.logger.log({ level: LogLevels.debug, message: 'Collecting active stream subscriptions across tabs' });
     const active = new Map<string, SubscribedStream>();
     for (const port of this.ports) {
       for (const stream of port.currentSubscriptions) {
@@ -220,7 +220,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
       }
     }
     this.subscriptions = [...active.values()];
-    this.logger.log(LogLevels.debug, 'Collected stream subscriptions', this.subscriptions);
+    this.logger.log({
+      level: LogLevels.debug,
+      message: `Collected stream subscriptions, ${JSON.stringify(this.subscriptions)}`
+    });
     this.connectionManager.syncStreamImplementation?.updateSubscriptions(this.subscriptions);
   }
 
@@ -255,7 +258,11 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     self.onerror = (event) => {
       // Share any uncaught events on the broadcast logger
-      this.logger.log(LogLevels.error, 'Uncaught exception in PowerSync shared sync worker', event);
+      this.logger.log({
+        level: LogLevels.error,
+        message: 'Uncaught exception in PowerSync shared sync worker',
+        error: event
+      });
     };
 
     this.iterateListeners((l) => l.initialized?.());
@@ -320,7 +327,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     return await this.portMutex.runExclusive(async () => {
       const index = this.ports.findIndex((p) => p == port);
       if (index < 0) {
-        this.logger.log(LogLevels.warn, `Could not remove port ${port} since it is not present in active ports.`);
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Could not remove port ${port} since it is not present in active ports.`
+        });
         return () => {};
       }
 
@@ -396,10 +406,13 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
               throw new Error('No client port found to invalidate credentials');
             }
             try {
-              this.logger.log(LogLevels.info, 'calling the last port client provider to invalidate credentials');
+              this.logger.log({
+                level: LogLevels.info,
+                message: 'calling the last port client provider to invalidate credentials'
+              });
               lastPort.clientProvider.invalidateCredentials();
-            } catch (ex) {
-              this.logger.log(LogLevels.error, 'error invalidating credentials', ex);
+            } catch (error) {
+              this.logger.log({ level: LogLevels.error, message: 'error invalidating credentials', error });
             }
           },
           fetchCredentials: async () => {
@@ -416,7 +429,10 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
               abortController.signal.onabort = reject;
               try {
-                this.logger.log(LogLevels.info, 'calling the last port client provider for credentials');
+                this.logger.log({
+                  level: LogLevels.info,
+                  message: 'calling the last port client provider for credentials'
+                });
                 resolve(await lastPort.clientProvider.fetchCredentials());
               } catch (ex) {
                 reject(ex);
@@ -541,7 +557,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
     clearTimeout(timeout);
 
     client.closeListeners.push(async () => {
-      this.logger.log(LogLevels.info, 'Aborting open connection because associated tab closed.');
+      this.logger.log({ level: LogLevels.info, message: 'Aborting open connection because associated tab closed.' });
       handleClosed(db);
       /**
        * Don't await this close operation. It might never resolve if the tab is closed.
@@ -549,7 +565,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
        * We then call close. The close operation is configured to fire-and-forget, the main promise will reject immediately.
        */
       db.markRemoteClosed();
-      db.close().catch((ex) => this.logger.log(LogLevels.warn, 'error closing database connection', ex));
+      db.close().catch((error) =>
+        this.logger.log({ level: LogLevels.warn, message: 'error closing database connection', error })
+      );
     });
     return db;
   }

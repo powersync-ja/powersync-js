@@ -214,13 +214,17 @@ export abstract class AbstractQueryProcessor<
   ) {
     try {
       await this.iterateAsyncListeners(async (l) => callback(l));
-    } catch (error) {
+    } catch (error: any) {
       try {
         await this.iterateAsyncListeners(async (l) => l.onError?.(error));
       } catch (error) {
         // Errors here are ignored
         // since we are already in an error state
-        this.options.db.logger.log(LogLevels.error, 'Watched query error handler threw an Error', error);
+        this.options.db.logger.log({
+          level: LogLevels.error,
+          message: 'Watched query error handler threw an Error',
+          error
+        });
       }
     }
   }

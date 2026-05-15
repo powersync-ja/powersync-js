@@ -35,8 +35,8 @@ export class WebRemote extends AbstractRemote {
     let ua = [super.getUserAgent(), `powersync-web`];
     try {
       ua.push(...getUserAgentInfo());
-    } catch (e) {
-      this.logger.log(LogLevels.warn, 'Failed to get user agent info', e);
+    } catch (error) {
+      this.logger.log({ level: LogLevels.warn, message: 'Failed to get user agent info', error });
     }
     return ua.join(' ');
   }

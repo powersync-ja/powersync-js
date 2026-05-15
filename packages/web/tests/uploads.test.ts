@@ -46,8 +46,8 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
       const lines: string[] = [];
       logLines = lines;
       logger = {
-        log(_level, ...message) {
-          lines.push(message[0] as string);
+        log({ message }) {
+          lines.push(message);
         }
       };
     });

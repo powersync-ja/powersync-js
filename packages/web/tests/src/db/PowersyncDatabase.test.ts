@@ -1,11 +1,11 @@
-import { LogLevels, PowerSyncDatabase } from '@powersync/web';
+import { LogLevels, LogRecord, PowerSyncDatabase } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import { TEST_SCHEMA } from '../../utils/test-schema.js';
 
 describe('PowerSyncDatabase', () => {
   let db: PowerSyncDatabase;
   let mockConnector: any;
-  let mockLogger: Mock<(level: number, ...mesage: any[]) => void>;
+  let mockLogger: Mock<(record: LogRecord) => void>;
 
   beforeEach(() => {
     mockLogger = vi.fn();
@@ -27,7 +27,10 @@ describe('PowerSyncDatabase', () => {
   describe('connect', () => {
     it('should log debug message when attempting to connect', async () => {
       await db.connect(mockConnector);
-      expect(mockLogger).toHaveBeenCalledWith(LogLevels.debug, 'Attempting to connect to PowerSync instance');
+      expect(mockLogger).toHaveBeenCalledWith({
+        level: LogLevels.debug,
+        message: 'Attempting to connect to PowerSync instance'
+      });
     });
   });
 });

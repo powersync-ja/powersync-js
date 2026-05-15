@@ -28,7 +28,7 @@ export class AttachmentService {
    * @returns Watch query that emits changes for queued uploads, downloads, and deletes
    */
   watchActiveAttachments({ throttleMs }: { throttleMs?: number } = {}): DifferentialWatchedQuery<AttachmentRecord> {
-    this.logger.log(LogLevels.info, 'Watching active attachments...');
+    this.logger.log({ level: LogLevels.info, message: 'Watching active attachments...' });
     const watch = this.db
       .query<AttachmentRecord>({
         sql: /* sql */ `

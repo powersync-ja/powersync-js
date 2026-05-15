@@ -1,5 +1,4 @@
 import {
-  DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
   PowerSyncDatabase,
   Schema,
   SharedWebStreamingSyncImplementation,
@@ -11,7 +10,8 @@ import {
   type RequiredAdditionalConnectionOptions,
   type StreamingSyncImplementation,
   type WebPowerSyncDatabaseOptions,
-  type WebDBAdapter
+  type WebDBAdapter,
+  LogLevels
 } from '@powersync/web';
 import type { DynamicSchemaManager } from './DynamicSchemaManager';
 import { usePowerSyncInspector } from '../composables/usePowerSyncInspector';
@@ -115,7 +115,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context
           `;
-          logger ? logger.warn(warning) : console.warn(warning);
+          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
         }
         return new SharedWebStreamingSyncImplementation({
           ...options,
@@ -126,7 +126,8 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
             await connector.uploadData(this);
           },
           logger,
-          db: this.database as WebDBAdapter
+          db: this.database as WebDBAdapter,
+          logLevel: this.options.flags.databaseWorkerLogLevel ?? LogLevels.info
         });
       } else {
         return new WebStreamingSyncImplementation({
