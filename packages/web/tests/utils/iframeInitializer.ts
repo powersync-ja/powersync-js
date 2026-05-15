@@ -8,7 +8,7 @@ import {
 } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
-import { defaultLoggerConfig } from './testDb.js';
+import { defaultLoggerConfig } from './logger.js';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.

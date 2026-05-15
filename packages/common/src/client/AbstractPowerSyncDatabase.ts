@@ -234,6 +234,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
+    this.logger = options.logger ?? createPowerSyncLogger();
 
     const { database, schema } = options;
 
@@ -250,8 +251,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     } else {
       throw new Error('The provided `database` option is invalid.');
     }
-
-    this.logger = options.logger ?? createPowerSyncLogger({ prefix: `PowerSyncDatabase[${this._database.name}]` });
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;

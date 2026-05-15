@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest';
-import { defaultLoggerConfig, generateTestDb } from '../../utils/testDb.js';
+import { generateTestDb } from '../../utils/testDb.js';
 import { WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { TEST_SCHEMA } from '../../utils/test-schema.js';
+import { defaultLoggerConfig } from '../../utils/logger.js';
 
 test('supports concurrent reads', async () => {
   const db = generateTestDb({
