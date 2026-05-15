@@ -58,25 +58,25 @@ export function useQuery<RowType = any>(
   options: AdditionalOptions & DifferentialHookOptions<RowType> = {}
 ) {
   const powerSync = usePowerSync();
-  if (!powerSync) {
-    return {
-      ..._loadingState,
-      isLoading: false,
-      error: new Error('PowerSync not configured.')
-    };
-  }
+
   const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
-  const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync, options?.streams);
+
+  // `streams` is undefined when there is no db so `useSyncStreams` does not touch a null db.
+  // `useAllSyncStreamsHaveSynced` does not dereference its `db` argument; the `useStatus`
+  // hook it uses internally is null-safe.
+  const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync!, powerSync ? options?.streams : undefined);
+
   const runOnce = options?.runQueryOnce == true;
+
   const single = useSingleQuery<RowType>({
     query: parsedQuery,
-    powerSync,
+    powerSync: powerSync!,
     queryChanged,
-    active: runOnce && streamsHaveSynced
+    active: !!powerSync && runOnce && streamsHaveSynced
   });
   const watched = useWatchedQuery<RowType>({
     query: parsedQuery,
-    powerSync,
+    powerSync: powerSync!,
     queryChanged,
     options: {
       reportFetching: options.reportFetching,
@@ -85,8 +85,16 @@ export function useQuery<RowType = any>(
       // We emit new data for each table change by default.
       rowComparator: options.rowComparator
     },
-    active: !runOnce && streamsHaveSynced
+    active: !!powerSync && !runOnce && streamsHaveSynced
   });
+
+  if (!powerSync) {
+    return {
+      ..._loadingState,
+      isLoading: false,
+      error: new Error('PowerSync not configured.')
+    };
+  }
 
   if (!streamsHaveSynced) {
     return { ..._loadingState };

@@ -944,3 +944,64 @@ describe('useQuery', () => {
     expect(currentResult.data).toEqual([]);
   });
 });
+
+describe('useQuery Rules of Hooks (Bug 0)', () => {
+  beforeEach(() => {
+    cleanup();
+  });
+
+  it('returns the not-configured error and does not throw a hooks error when rendered with no provider', () => {
+    const { result } = renderHook(() => useQuery('SELECT * from lists'));
+    expect(result.current.error).toEqual(Error('PowerSync not configured.'));
+    expect(result.current.isLoading).toEqual(false);
+    expect(result.current.data).toEqual([]);
+  });
+
+  it('does not violate the Rules of Hooks when the context value goes from null to a database', async () => {
+    const db = openPowerSync();
+    await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['hooks-rule']);
+
+    const hooksViolationLogs: string[] = [];
+    const originalConsoleError = console.error;
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      const message = args.map((a) => (a instanceof Error ? a.message : String(a))).join(' ');
+      if (/Rendered more hooks|Rendered fewer hooks|change in the order of Hooks|Rules of Hooks/.test(message)) {
+        hooksViolationLogs.push(message);
+      }
+      originalConsoleError(...(args as []));
+    });
+
+    try {
+      // The Provider node is ALWAYS present so the hook fiber identity is stable across
+      // re-renders. Only the context VALUE toggles null -> db. With the early-return-before-hooks
+      // implementation, render 1 (value=null) calls fewer hooks than render 2 (value=db), so
+      // React reports a "change in the order of Hooks" / "Rendered more hooks" violation.
+      let database: typeof db | null = null;
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <PowerSyncContext.Provider value={database}>{children}</PowerSyncContext.Provider>
+      );
+
+      const { result, rerender } = renderHook(() => useQuery('SELECT * from lists'), { wrapper });
+
+      expect(result.current?.error).toEqual(Error('PowerSync not configured.'));
+
+      database = db;
+      rerender();
+
+      // Allow React to flush the re-render.
+      await new Promise((r) => setTimeout(r, 100));
+
+      expect(hooksViolationLogs).toEqual([]);
+
+      await waitFor(
+        () => {
+          expect(result.current?.error).toBeFalsy();
+          expect(result.current?.data.length).toEqual(1);
+        },
+        { timeout: 1000, interval: 100 }
+      );
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+});
