@@ -1,6 +1,6 @@
 import { type CompilableQuery, parseQuery } from '@powersync/common';
 import { QuerySyncStreamOptions, useAllSyncStreamsHaveSynced, usePowerSync } from '@powersync/react';
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import * as Tanstack from '@tanstack/react-query';
 
 export type UsePowerSyncQueriesInput = {
@@ -96,6 +96,17 @@ export function usePowerSyncQueries(
     [queries]
   );
 
+  // Tracks, per query, whether its watched tables have transitioned from the
+  // initial empty placeholder ([]) to a resolved set at least once. Used to
+  // issue a one-time rescue invalidation for data that synced/changed while
+  // resolveTables was still pending (the change listener was watching no
+  // tables and silently dropped those changes).
+  const tablesInitialized = useRef<boolean[]>([]);
+
+  if (tablesInitialized.current.length !== parsedQueries.length) {
+    tablesInitialized.current = parsedQueries.map(() => false);
+  }
+
   useEffect(() => {
     parsedQueries.forEach((pq, idx) => {
       if (pq.parseError) {
@@ -112,6 +123,10 @@ export function usePowerSyncQueries(
   );
 
   useEffect(() => {
+    // Queries changed: tables must be resolved again from scratch, so the
+    // rescue-invalidation tracking is re-armed for every query.
+    tablesInitialized.current = parsedQueries.map(() => false);
+
     const listeners = parsedQueries.map((pq, idx) => {
       if (pq.parseError || !pq.query) {
         return null;
@@ -153,6 +168,15 @@ export function usePowerSyncQueries(
       }
 
       const abort = new AbortController();
+
+      // First time this query's tables resolve from the empty placeholder to a
+      // real set: any change that occurred while resolveTables was pending was
+      // dropped by the previous []-watching listener. Invalidate once to rescue
+      // that lost first-sync data before attaching the real-tables listener.
+      if (tablesArr[idx]?.length > 0 && !tablesInitialized.current[idx]) {
+        tablesInitialized.current[idx] = true;
+        queryClient.invalidateQueries({ queryKey: pq.queryKey });
+      }
 
       powerSync.onChangeWithCallback(
         {
@@ -204,5 +228,5 @@ export function usePowerSyncQueries(
       }),
       streamsHaveSynced
     };
-  }, [parsedQueries, errorsArr, tablesArr, powerSync]);
+  }, [parsedQueries, errorsArr, tablesArr, powerSync, streamsHaveSynced]);
 }
