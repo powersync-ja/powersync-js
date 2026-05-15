@@ -1,5 +1,4 @@
 import React from 'react';
-import { useEffectEvent } from 'react';
 import { useNullableWatchedQuerySubscription } from './useWatchedQuerySubscription.js';
 import { DifferentialHookOptions, QueryResult, ReadonlyQueryResult } from './watch-types.js';
 import { InternalHookOptions } from './watch-utils.js';
@@ -38,32 +37,9 @@ export const useWatchedQuery = <RowType = unknown>(
   const [watchedQuery, setWatchedQuery] = React.useState(createWatchedQuery);
   const disposePendingUpdateListener = React.useRef<() => void | null>(null);
 
-  /**
-   * Recreates the {@link WatchedQuery} from the effect. Wrapped in `useEffectEvent` so it always
-   * observes the latest `query`/`hookOptions`/`powerSync` from render, even though the effect
-   * itself only re-synchronizes on `[powerSync, active]`. This keeps the recreation logic out of
-   * the effect dependency array while remaining stale-closure safe (React 19.2).
-   */
-  const createWatchedQueryEvent = useEffectEvent(() => {
-    if (!active) {
-      return null;
-    }
-
-    return hookOptions.rowComparator
-      ? powerSync.customQuery(query).differentialWatch({
-          rowComparator: hookOptions.rowComparator,
-          reportFetching: hookOptions.reportFetching,
-          throttleMs: hookOptions.throttleMs
-        })
-      : powerSync.customQuery(query).watch({
-          reportFetching: hookOptions.reportFetching,
-          throttleMs: hookOptions.throttleMs
-        });
-  });
-
   React.useEffect(() => {
     watchedQuery?.close();
-    const newQuery = createWatchedQueryEvent();
+    const newQuery = createWatchedQuery();
     setWatchedQuery(newQuery);
 
     return () => {
