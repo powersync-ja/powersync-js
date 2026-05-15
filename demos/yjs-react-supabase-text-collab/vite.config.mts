@@ -19,11 +19,7 @@ export default defineConfig({
   },
   esbuild: {},
   resolve: {
-    alias: [
-      { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
-      // https://jira.mongodb.org/browse/NODE-5773
-      { find: 'bson', replacement: require.resolve('bson') }
-    ]
+    alias: [{ find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) }]
   },
   publicDir: '../public',
   envDir: '..', // Use this dir for env vars, not 'src'.
