@@ -22,12 +22,19 @@ describe('useSuspenseQuery', () => {
     </PowerSyncContext.Provider>
   );
 
+  // React 19 settles Suspense boundaries on its concurrent scheduler, so the gap between the
+  // suspending promise resolving and the boundary re-rendering its children is materially longer
+  // than under React 18 (observed ~300-400ms vs <100ms). The underlying WatchedQuery still loads
+  // promptly; only the boundary re-render is deferred. Use the same 1000ms budget already used by
+  // the other waitFor calls in this file rather than the previously React-18-tuned 100ms.
+  const suspenseSettleTimeout = 1000;
+
   const waitForSuspend = async () => {
     await waitFor(
       async () => {
         expect(screen.queryByText(loadingFallback)).toBeTruthy();
       },
-      { timeout: 100 }
+      { timeout: suspenseSettleTimeout }
     );
   };
 
@@ -36,7 +43,7 @@ describe('useSuspenseQuery', () => {
       async () => {
         expect(screen.queryByText(loadingFallback)).toBeFalsy();
       },
-      { timeout: 100 }
+      { timeout: suspenseSettleTimeout }
     );
   };
 
@@ -45,7 +52,7 @@ describe('useSuspenseQuery', () => {
       async () => {
         expect(screen.queryByText(errorFallback)).toBeTruthy();
       },
-      { timeout: 100 }
+      { timeout: suspenseSettleTimeout }
     );
   };
 
