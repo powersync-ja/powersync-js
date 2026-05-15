@@ -43,12 +43,12 @@
     "@testing-library/react": "^16.0.0",
     "drizzle-orm": "catalog:",
     "p-defer": "catalog:",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "chart.js": "^4.5.0",
     "jsdom": "catalog:",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "react-error-boundary": "^4.1.0"
   }
 }
