@@ -233,10 +233,10 @@ export class AttachmentContext {
     if (archivedAttachments.length === 0) return false;
 
     await callback?.(archivedAttachments);
-    this.logger.log(
-      LogLevels.info,
-      `Deleting ${archivedAttachments.length} archived attachments. Archived attachment exceeds cache archiveCacheLimit of ${this.archivedCacheLimit}.`
-    );
+    this.logger.log({
+      level: LogLevels.info,
+      message: `Deleting ${archivedAttachments.length} archived attachments. Archived attachment exceeds cache archiveCacheLimit of ${this.archivedCacheLimit}.`
+    });
 
     const ids = archivedAttachments.map((attachment) => attachment.id);
 
@@ -255,7 +255,7 @@ export class AttachmentContext {
       [JSON.stringify(ids)]
     );
 
-    this.logger.log(LogLevels.info, `Deleted ${archivedAttachments.length} archived attachments`);
+    this.logger.log({ level: LogLevels.info, message: `Deleted ${archivedAttachments.length} archived attachments` });
     return archivedAttachments.length < limit;
   }
 

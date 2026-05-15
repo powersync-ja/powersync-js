@@ -28,7 +28,7 @@ export class WebStreamingSyncImplementation extends AbstractStreamingSyncImpleme
   async obtainLock<T>(lockOptions: LockOptions<T>): Promise<T> {
     const identifier = `streaming-sync-${lockOptions.type}-${this.webOptions.identifier}`;
     if (lockOptions.type == LockType.SYNC) {
-      this.logger.log(LogLevels.debug, 'requesting lock for ', identifier);
+      this.logger.log({ level: LogLevels.debug, message: `requesting lock for ${identifier}` });
     }
     return getNavigatorLocks().request(identifier, { signal: lockOptions.signal }, lockOptions.callback);
   }

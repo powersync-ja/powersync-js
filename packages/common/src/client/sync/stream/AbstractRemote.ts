@@ -332,10 +332,10 @@ export abstract class AbstractRemote {
     const resetTimeout = () => {
       clearTimeout(keepAliveTimeout);
       keepAliveTimeout = setTimeout(() => {
-        this.logger.log(
-          LogLevels.error,
-          `No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`
-        );
+        this.logger.log({
+          level: LogLevels.error,
+          message: `No data received on WebSocket in ${SOCKET_TIMEOUT_MS}ms, closing connection.`
+        });
         abortRequest();
       }, SOCKET_TIMEOUT_MS);
     };
@@ -373,7 +373,7 @@ export abstract class AbstractRemote {
       // The connection is established, we no longer need to monitor the initial timeout
       pendingSocket = null;
     } catch (ex) {
-      this.logger.log(LogLevels.error, `Failed to connect WebSocket`, ex);
+      this.logger.log({ level: LogLevels.error, message: `Failed to connect WebSocket`, error: ex });
       abortRequest();
 
       throw ex;
@@ -434,7 +434,7 @@ export abstract class AbstractRemote {
 
             // Don't log closed as an error
             if (e.message !== 'Closed. ') {
-              this.logger.log(LogLevels.error, e);
+              this.logger.log({ level: LogLevels.error, message: 'RSocket error', error: e });
             }
             // RSocket will close the RSocket stream automatically
             // Close the downstream stream as well - this will close the RSocket connection and WebSocket
@@ -546,10 +546,10 @@ export abstract class AbstractRemote {
 
       if (!res.ok || !res.body) {
         const text = await res.text();
-        this.logger.log(
-          LogLevels.error,
-          `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`
-        );
+        this.logger.log({
+          level: LogLevels.error,
+          message: `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`
+        });
         const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
         error.status = res.status;
         throw error;

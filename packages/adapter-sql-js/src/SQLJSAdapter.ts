@@ -123,10 +123,10 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
       print: (text) => {
-        this.options.logger.log(LogLevels.info, text);
+        this.options.logger.log({ level: LogLevels.info, message: text });
       },
       printErr: (text) => {
-        this.options.logger.log(LogLevels.error, '[stderr]', text);
+        this.options.logger.log({ level: LogLevels.error, message: `[stderr]: ${text}` });
       }
     });
     const existing = await this.options.persister?.readFile();

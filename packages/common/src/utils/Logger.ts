@@ -7,6 +7,34 @@ export const LogLevels = {
 } as const;
 
 /**
+ * A log record passed to a {@link PowerSyncLogger}.
+ */
+export interface LogRecord {
+  /**
+   * The log level (see {@link LogLevels} for preconfigured values) for the message. Depending on how a receiving logger
+   * has been confired, messages below a configured minimum level may be ignored.
+   */
+  level: number;
+  /**
+   * The main message to log.
+   */
+  message: string;
+
+  /**
+   * The (optional) component within the PowerSync SDK logging the message.
+   */
+  tag?: string;
+
+  /**
+   * When the log message contains an error, the error causing the log.
+   *
+   * This is not guaranteed to be an `Error` instance. On the web, we might have to serialize objects across message
+   * channels and represent them as a string.
+   */
+  error?: unknown;
+}
+
+/**
  * A logger used by the PowerSync SDK.
  *
  * This is deliberately a very simple interface, and it's not a designed to be a general-purpose logger you would use in
@@ -16,14 +44,7 @@ export const LogLevels = {
  * By default, the SDK uses a {@link createPowerSyncLogger} instance forwarding messages to `console.log`.
  */
 export interface PowerSyncLogger {
-  /**
-   * Log a message.
-   *
-   * @param level The log level (see {@link LogLevels} for preconfigured values) for the message. Depending on how the
-   * logger has been confired, messages below a configured minimum level may be ignored.
-   * @param message Components of the message to log. Components aren't necessarily strings.
-   */
-  log(level: number, ...message: any[]): void;
+  log(record: LogRecord): void;
 }
 
 export interface CreateLoggerOptions {
@@ -51,7 +72,7 @@ export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): P
   return {
     prefix,
     minLevel,
-    log(level, ...message) {
+    log({ level, message, tag, error }) {
       if (level < this.minLevel) return;
 
       let emitter = console.log;
@@ -61,7 +82,14 @@ export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): P
         emitter = console.warn;
       }
 
-      emitter(this.prefix, ...message);
+      let resolvedPrefix = tag != null ? `${prefix}.${tag}` : prefix;
+      const messageWithPrefix = `[${resolvedPrefix}]: ${message}`;
+
+      if (error) {
+        emitter(messageWithPrefix, error);
+      } else {
+        emitter(messageWithPrefix);
+      }
     }
   };
 }

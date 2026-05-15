@@ -84,23 +84,23 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     } = this;
     if (ssrMode) {
       if (!disableSSRWarning) {
-        this.logger.log(
-          LogLevels.warn,
-          `
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `
       Running PowerSync in SSR mode.
       Only empty query results will be returned.
       Disable this warning by setting 'disableSSRWarning: true' in options.`
-        );
+        });
       }
 
       return new SSRDBAdapter();
     }
 
     if (!enableMultiTabs) {
-      this.logger.log(
-        LogLevels.warn,
-        'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
-      );
+      this.logger.log({
+        level: LogLevels.warn,
+        message: 'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
+      });
     }
 
     return this.openAdapter();
@@ -116,7 +116,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     } = this.waOptions;
 
     if (!enableMultiTabs) {
-      this.logger.log(LogLevels.warn, 'Multiple tabs are not enabled in this browser');
+      this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
     }
 
     const resolveOptions = (isReadOnly: boolean): ResolvedWASQLiteOpenFactoryOptions => ({

@@ -1,4 +1,4 @@
-import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createPowerSyncLogger } from '@powersync/common';
+import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createPowerSyncLogger, LogRecord } from '@powersync/common';
 import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 
 /**
@@ -17,12 +17,12 @@ export class BroadcastLogger implements PowerSyncLogger {
     this.inner = createPowerSyncLogger({ prefix: prefix });
   }
 
-  log(level: number, ...message: any[]) {
-    this.inner.log(level, ...message);
+  log(record: LogRecord) {
+    this.inner.log(record);
 
-    if (this.sendBroadcasts && level >= this.currentLevel) {
-      const sanitized = this.sanitizeArgs(message);
-      this.iterateClients((client) => client.clientProvider.log(level, ...sanitized));
+    if (this.sendBroadcasts && record.level >= this.currentLevel) {
+      const sanitized = this.sanitizeRecord(record);
+      this.iterateClients((client) => client.clientProvider.log(sanitized));
     }
   }
 
@@ -52,17 +52,23 @@ export class BroadcastLogger implements PowerSyncLogger {
    * Guards against any logging errors.
    * We don't want a logging exception to cause further issues upstream
    */
-  protected sanitizeArgs(x: any[]): any[] {
-    const sanitizedParams = x.map((param) => {
-      try {
-        // Try and clone here first. If it fails it won't be passable over a MessagePort
-        return structuredClone(param);
-      } catch (ex) {
-        console.error(ex);
-        return 'Could not serialize log params. Check shared worker logs for more details.';
-      }
-    });
+  protected sanitizeRecord(record: LogRecord): LogRecord {
+    if (!record.error) {
+      return record;
+    }
 
-    return sanitizedParams;
+    let error;
+    try {
+      // Try and clone here first. If it fails it won't be passable over a MessagePort
+      error = structuredClone(record.error);
+    } catch (ex) {
+      console.error(ex);
+      error = 'Could not serialize log params. Check shared worker logs for more details.';
+    }
+
+    return {
+      ...record,
+      error
+    };
   }
 }

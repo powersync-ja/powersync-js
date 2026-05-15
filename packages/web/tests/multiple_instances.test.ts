@@ -48,8 +48,8 @@ describe('Multiple Instances', { sequential: true }, () => {
     async ({ context: { openDatabase, mockService } }) => {
       const logLines: string[] = [];
       const logger: PowerSyncLogger = {
-        log(_level, ...message) {
-          logLines.push(message[0]);
+        log({ message }) {
+          logLines.push(message);
         }
       };
 

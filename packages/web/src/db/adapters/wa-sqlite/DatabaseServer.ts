@@ -85,7 +85,7 @@ export class DatabaseServer {
 
         // If the client holds a connection lease it hasn't returned, return that now.
         for (const { lease } of connectionLeases.values()) {
-          this.#logger.log(LogLevels.debug, `Closing connection lease that hasn't been returned.`);
+          this.#logger.log({ level: LogLevels.debug, message: `Closing connection lease that hasn't been returned.` });
           await lease.returnLease();
         }
 
@@ -94,7 +94,10 @@ export class DatabaseServer {
         if (this.#activeClients.size == 0) {
           await this.forceClose();
         } else {
-          this.#logger.log(LogLevels.debug, 'Keeping underlying connection active since its used by other clients.');
+          this.#logger.log({
+            level: LogLevels.debug,
+            message: 'Keeping underlying connection active since its used by other clients.'
+          });
         }
       }
     };
@@ -169,7 +172,7 @@ export class DatabaseServer {
   }
 
   async forceClose() {
-    this.#logger.log(LogLevels.debug, `Closing connection to ${this.#inner.options}.`);
+    this.#logger.log({ level: LogLevels.debug, message: `Closing connection to ${this.#inner.options}.` });
     const connection = this.#inner;
     this.#options.onClose();
     this.#updateBroadcastChannel.close();

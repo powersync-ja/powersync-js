@@ -38,10 +38,10 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       ? SyncStreamConnectionMethod.HTTP
       : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
     if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
-      this.logger.log(
-        LogLevels.warn,
-        `Connecting via 'SyncStreamConnectionMethod.WEB_SOCKET' when using the 'CapacitorSQLiteAdapter' will result in poor sync performance. Use 'SyncStreamConnectionMethod.HTTP' (the default for native) instead.`
-      );
+      this.logger.log({
+        level: LogLevels.warn,
+        message: `Connecting via 'SyncStreamConnectionMethod.WEB_SOCKET' when using the 'CapacitorSQLiteAdapter' will result in poor sync performance. Use 'SyncStreamConnectionMethod.HTTP' (the default for native) instead.`
+      });
     }
 
     return super.connect(connector, {
@@ -59,20 +59,23 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     const platform = Capacitor.getPlatform();
     if (platform == 'ios' || platform == 'android') {
       if (options.database.dbLocation) {
-        options.logger?.log(
-          LogLevels.warn,
-          `
+        options.logger?.log({
+          level: LogLevels.warn,
+          message: `
           dbLocation is ignored on iOS and Android platforms. 
           The database directory can be configured in the Capacitor project.
           See https://github.com/capacitor-community/sqlite?tab=readme-ov-file#installation`
-        );
+        });
       }
-      options.logger?.log(LogLevels.debug, `Using CapacitorSQLiteAdapter for platform: ${platform}`);
+      options.logger?.log({
+        level: LogLevels.debug,
+        message: `Using CapacitorSQLiteAdapter for platform: ${platform}`
+      });
       return new CapacitorSQLiteAdapter({
         ...options.database
       });
     } else {
-      options.logger?.log(LogLevels.debug, `Using default web adapter for web platform`);
+      options.logger?.log({ level: LogLevels.debug, message: `Using default web adapter for web platform` });
       return super.openDBAdapter(options);
     }
   }
@@ -107,12 +110,12 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     if (this.isNativeCapacitorPlatform) {
       // We don't want to support multi-tab on mobile platforms.
       // We technically can, but it's not a common use case and requires additional work/testing.
-      this.logger.log(LogLevels.debug, `Using Capacitor sync implementation`);
+      this.logger.log({ level: LogLevels.debug, message: `Using Capacitor sync implementation` });
       if (this.options.flags?.enableMultiTabs) {
-        this.logger.log(
-          LogLevels.warn,
-          `enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`
-        );
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`
+        });
       }
 
       const remote = new CapacitorRemote(connector, this.logger);
@@ -132,7 +135,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
         subscriptions: options.subscriptions
       });
     } else {
-      this.logger.log(LogLevels.debug, `Using default web sync implementation for web platform`);
+      this.logger.log({ level: LogLevels.debug, message: `Using default web sync implementation for web platform` });
       return super.generateSyncStreamImplementation(connector, options);
     }
   }

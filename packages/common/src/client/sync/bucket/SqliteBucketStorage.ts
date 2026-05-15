@@ -84,10 +84,10 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
       const anyData = await tx.execute('SELECT 1 FROM ps_crud LIMIT 1');
       if (anyData.rows?.length) {
         // if isNotEmpty
-        this.logger.log(
-          LogLevels.debug,
-          `New data uploaded since write checkpoint ${opId} - need new write checkpoint`
-        );
+        this.logger.log({
+          level: LogLevels.debug,
+          message: `New data uploaded since write checkpoint ${opId} - need new write checkpoint`
+        });
         return false;
       }
 
@@ -99,16 +99,19 @@ export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> imp
 
       const seqAfter: number = rs.rows?.item(0)['seq'];
       if (seqAfter != seqBefore) {
-        this.logger.log(
-          LogLevels.debug,
-          `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
-        );
+        this.logger.log({
+          level: LogLevels.debug,
+          message: `New data uploaded since write checpoint ${opId} - need new write checkpoint (sequence updated)`
+        });
 
         // New crud data may have been uploaded since we got the checkpoint. Abort.
         return false;
       }
 
-      this.logger.log(LogLevels.debug, `Updating target write checkpoint to ${opId}`);
+      this.logger.log({
+        level: LogLevels.debug,
+        message: `Updating target write checkpoint to ${opId}`
+      });
       await tx.execute("UPDATE ps_buckets SET target_op = CAST(? as INTEGER) WHERE name='$local'", [opId]);
       return true;
     });

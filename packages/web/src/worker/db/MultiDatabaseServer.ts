@@ -21,8 +21,8 @@ export class MultiDatabaseServer {
 
   async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
     const logger: PowerSyncLogger = {
-      log: (level, ...message) => {
-        if (level >= options.logLevel) logger.log(level, message);
+      log: (record) => {
+        if (record.level >= options.logLevel) logger.log(record);
       }
     };
 
@@ -49,12 +49,12 @@ export class MultiDatabaseServer {
     for (let count = 0; count < maxAttempts - 1; count++) {
       try {
         server = await this.databaseOpenAttempt(logger, options);
-      } catch (ex) {
-        this.logger.log(
-          LogLevels.warn,
-          `Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`,
-          ex
-        );
+      } catch (error) {
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`,
+          error
+        });
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }

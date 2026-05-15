@@ -1,4 +1,5 @@
 import {
+  LogRecord,
   PowerSyncConnectionOptions,
   PowerSyncCredentials,
   SubscribedStream,
@@ -67,8 +68,8 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
     return this.options.logger;
   }
 
-  log(level: number, ...message: any[]): void {
-    this.logger?.log(level, ...message);
+  log(record: LogRecord): void {
+    this.logger.log(record);
   }
 }
 

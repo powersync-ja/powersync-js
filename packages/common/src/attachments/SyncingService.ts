@@ -75,7 +75,7 @@ export class SyncingService {
    * @throws Error if the attachment has no localUri
    */
   async uploadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.log(LogLevels.info, `Uploading attachment ${attachment.filename}`);
+    this.logger.log({ level: LogLevels.info, message: `Uploading attachment ${attachment.filename}` });
     try {
       if (attachment.localUri == null) {
         throw new Error(`No localUri for attachment ${attachment.id}`);
@@ -111,7 +111,7 @@ export class SyncingService {
    * @returns Updated attachment record with local URI and new state
    */
   async downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord> {
-    this.logger.log(LogLevels.info, `Downloading attachment ${attachment.filename}`);
+    this.logger.log({ level: LogLevels.info, message: `Downloading attachment ${attachment.filename}` });
     try {
       const fileData = await this.remoteStorage.downloadFile(attachment);
 
@@ -183,7 +183,11 @@ export class SyncingService {
           try {
             await this.localStorage.deleteFile(attachment.localUri);
           } catch (error) {
-            this.logger.log(LogLevels.error, 'Error deleting local file for archived attachment', error);
+            this.logger.log({
+              level: LogLevels.error,
+              message: 'Error deleting local file for archived attachment',
+              error
+            });
           }
         }
       }

@@ -34,25 +34,22 @@ export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
   const consoleLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
 
   const logger: PowerSyncLogger = {
-    async log(level, ...messages) {
-      consoleLogger.log(level, ...messages);
+    async log(record) {
+      consoleLogger.log(record);
 
-      // Storage + emitter
-      const messageArray = Array.from(messages);
-      const mainMessage = String(messageArray[0] ?? 'Empty log message');
       // Store extra args as-is so objects are shown as JSON in LogsTab
-      const extra =
-        messageArray.length > 1 ? (messageArray.length === 2 ? messageArray[1] : messageArray.slice(1)) : undefined;
       const logObject = {
         date: new Date(),
-        args: [mainMessage, extra]
+        tag: record.tag,
+        message: record.message,
+        error: record.error
       };
       const key = `log:${logObject.date.toISOString()}`;
       await logsStorage.set(key, logObject);
       emitter.emit('log', { key, value: logObject });
 
       // User callback
-      additional?.log(level, ...messages);
+      additional?.log(record);
     }
   };
 

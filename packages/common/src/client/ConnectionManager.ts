@@ -194,10 +194,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.syncStreamInitPromise = new Promise(async (resolve, reject) => {
       try {
         if (!this.pendingConnectionOptions) {
-          this.logger.log(
-            LogLevels.debug,
-            'No pending connection options found, not creating sync stream implementation'
-          );
+          this.logger.log({
+            level: LogLevels.debug,
+            message: 'No pending connection options found, not creating sync stream implementation'
+          });
           // A disconnect could have cleared this.
           resolve();
           return;
@@ -239,7 +239,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // and this point. Awaiting here allows the sync stream to be cleared if disconnected.
     await this.disconnectingPromise;
 
-    this.logger.log(LogLevels.debug, 'Attempting to connect to PowerSync instance');
+    this.logger.log({ level: LogLevels.debug, message: 'Attempting to connect to PowerSync instance' });
     await this.syncStreamImplementation?.connect(appliedOptions!);
   }
 
@@ -398,9 +398,9 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
 const _finalizer =
   'FinalizationRegistry' in globalThis
     ? new FinalizationRegistry<ActiveSubscription>((sub) => {
-        sub.logger.log(
-          LogLevels.warn,
-          `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
-        );
+        sub.logger.log({
+          level: LogLevels.warn,
+          message: `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
+        });
       })
     : null;
