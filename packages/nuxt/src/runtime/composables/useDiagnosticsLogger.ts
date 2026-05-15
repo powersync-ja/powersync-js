@@ -42,7 +42,8 @@ export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
         date: new Date(),
         tag: record.tag,
         message: record.message,
-        error: record.error
+        error: record.error,
+        level: nameOfLogLevel(record.level)
       };
       const key = `log:${logObject.date.toISOString()}`;
       await logsStorage.set(key, logObject);
@@ -55,3 +56,19 @@ export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
 
   return { logger, logsStorage, emitter };
 };
+
+const levelNames: [string, number][] = [
+  ['ERROR', LogLevels.error],
+  ['WARNING', LogLevels.warn],
+  ['INFO', LogLevels.info],
+  ['DEBUG', LogLevels.debug],
+  ['TRACE', LogLevels.trace]
+];
+
+function nameOfLogLevel(level: number): string | undefined {
+  for (const [name, minLevel] of levelNames) {
+    if (level >= minLevel) return name;
+  }
+
+  return undefined;
+}
