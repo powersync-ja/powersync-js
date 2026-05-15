@@ -1,5 +1,6 @@
 import {
-  createBaseLogger,
+  createPowerSyncLogger,
+  LogLevels,
   PowerSyncConnectionOptions,
   Schema,
   SyncClientImplementation,
@@ -13,14 +14,13 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
 import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
+import { defaultLoggerConfig } from './utils/logger.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
-const baseLogger = createBaseLogger();
-baseLogger.useDefaults();
-const logger = baseLogger.get('stream test');
-
 describe('Streaming', { sequential: true }, () => {
+  const logger = createPowerSyncLogger({ prefix: 'stream test', minLevel: LogLevels.trace });
+
   describe(
     'Streaming - With Web Workers',
     {
@@ -62,6 +62,7 @@ describe('Streaming', { sequential: true }, () => {
       generateConnectedDatabase({
         powerSyncOptions: {
           database: new WASQLiteOpenFactory({
+            ...defaultLoggerConfig,
             dbFilename: 'streaming-opfs.sqlite',
             vfs: WASQLiteVFS.OPFSCoopSyncVFS
           }),

@@ -1,4 +1,4 @@
-import { createBaseLogger, LogLevel, type ILogHandler } from '@powersync/web';
+import { createPowerSyncLogger, LogLevels, type PowerSyncLogger } from '@powersync/web';
 import { createStorage } from 'unstorage';
 import localStorageDriver from 'unstorage/drivers/session-storage';
 import mitt from 'mitt';
@@ -15,7 +15,7 @@ const logsStorage = createStorage({
  * This composable creates a logger instance that is automatically configured for diagnostics
  * recording. The logger stores logs in session storage and emits events for real-time log monitoring.
  *
- * @param customHandler - Optional custom log handler to process log messages
+ * @param additional - Optional logger that messages will also be forwarded to.
  *
  * @returns An object containing:
  * - `logger` - The configured ILogHandler instance
@@ -30,38 +30,45 @@ const logsStorage = createStorage({
  * // Use it in your PowerSync setup if needed
  * ```
  */
-export const useDiagnosticsLogger = (customHandler?: ILogHandler) => {
-  const logger = createBaseLogger();
+export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
+  const consoleLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
 
-  // Console output: use js-logger's default handler (optional formatter for [PowerSync] prefix)
-  const consoleHandler = logger.createDefaultHandler({
-    formatter: (messages, context) => {
-      messages.unshift(`[PowerSync]${context.name ? ` [${context.name}]` : ''}`);
+  const logger: PowerSyncLogger = {
+    async log(record) {
+      consoleLogger.log(record);
+
+      // Store extra args as-is so objects are shown as JSON in LogsTab
+      const logObject = {
+        date: new Date(),
+        tag: record.tag,
+        message: record.message,
+        error: record.error,
+        level: nameOfLogLevel(record.level)
+      };
+      const key = `log:${logObject.date.toISOString()}`;
+      await logsStorage.set(key, logObject);
+      emitter.emit('log', { key, value: logObject });
+
+      // User callback
+      additional?.log(record);
     }
-  });
-
-  logger.setLevel(LogLevel.DEBUG);
-  logger.setHandler(async (messages, context) => {
-    consoleHandler(messages, context);
-
-    // Storage + emitter
-    const messageArray = Array.from(messages);
-    const mainMessage = String(messageArray[0] ?? 'Empty log message');
-    // Store extra args as-is so objects are shown as JSON in LogsTab
-    const extra =
-      messageArray.length > 1 ? (messageArray.length === 2 ? messageArray[1] : messageArray.slice(1)) : undefined;
-    const logObject = {
-      date: new Date(),
-      type: context.level.name.toLowerCase(),
-      args: [mainMessage, extra, context]
-    };
-    const key = `log:${logObject.date.toISOString()}`;
-    await logsStorage.set(key, logObject);
-    emitter.emit('log', { key, value: logObject });
-
-    // User callback
-    await customHandler?.(messages, context);
-  });
+  };
 
   return { logger, logsStorage, emitter };
 };
+
+const levelNames: [string, number][] = [
+  ['ERROR', LogLevels.error],
+  ['WARNING', LogLevels.warn],
+  ['INFO', LogLevels.info],
+  ['DEBUG', LogLevels.debug],
+  ['TRACE', LogLevels.trace]
+];
+
+function nameOfLogLevel(level: number): string | undefined {
+  for (const [name, minLevel] of levelNames) {
+    if (level >= minLevel) return name;
+  }
+
+  return undefined;
+}

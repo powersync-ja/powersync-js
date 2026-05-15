@@ -3,8 +3,10 @@ import {
   AbstractPowerSyncDatabase,
   Column,
   ColumnType,
+  createPowerSyncLogger,
   Index,
   IndexedColumn,
+  LogLevels,
   PowerSyncBackendConnector,
   PowerSyncDatabase,
   Schema,
@@ -69,7 +71,9 @@ export class PowerSyncService {
       dbFilename: 'test.db',
       vfs: WASQLiteVFS.OPFSCoopSyncVFS,
       // Specify the path to the worker script
-      worker: 'assets/@powersync/worker/WASQLiteDB.umd.js'
+      worker: 'assets/@powersync/worker/WASQLiteDB.umd.js',
+      logLevel: LogLevels.debug,
+      logger: createPowerSyncLogger({ prefix: 'powersync' })
     });
 
     this.db = new PowerSyncDatabase({

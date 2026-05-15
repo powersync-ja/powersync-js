@@ -4,9 +4,9 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import {
-  createBaseLogger,
+  createPowerSyncLogger,
+  LogLevels,
   DifferentialWatchedQuery,
-  LogLevel,
   PowerSyncDatabase,
   SyncClientImplementation
 } from '@powersync/web';
@@ -16,11 +16,13 @@ import { NavigationPanelContextProvider } from '../navigation/NavigationPanelCon
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
 
+const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'example.db'
-  }
+  },
+  logger
 });
 
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
@@ -64,9 +66,6 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   React.useEffect(() => {
-    const logger = createBaseLogger();
-    logger.useDefaults(); // eslint-disable-line
-    logger.setLevel(LogLevel.DEBUG);
     // For console testing purposes
     (window as any)._powersync = powerSync;
 

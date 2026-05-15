@@ -118,6 +118,11 @@ const main = async () => {
 
     const demoNames = await fs.readdir(demosDir);
     for (const demoName of demoNames) {
+      if (demoName === 'react-supabase-todolist-tanstackdb') {
+        // This demo imports the tanstack db integration, which does not support v2 of PowerSync yet.
+        continue;
+      }
+
       try {
         results.push(await processDemo(demoName));
       } catch (ex) {

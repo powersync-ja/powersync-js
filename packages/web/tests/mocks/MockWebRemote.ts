@@ -1,10 +1,9 @@
 import {
   AbstractRemote,
   AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
-  ILogger,
+  PowerSyncLogger,
   RemoteConnector,
   SimpleAsyncIterator,
   SocketSyncStreamOptions
@@ -87,7 +86,7 @@ export class WebRemote extends AbstractRemote {
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    protected logger: PowerSyncLogger,
     options?: Partial<AbstractRemoteOptions>
   ) {
     // Use mock service fetch provider if we're in a shared worker context

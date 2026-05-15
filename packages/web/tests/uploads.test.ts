@@ -1,7 +1,7 @@
-import { createBaseLogger, createLogger, WebPowerSyncDatabaseOptions } from '@powersync/web';
+import { PowerSyncLogger, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import p from 'p-defer';
 import { v4 } from 'uuid';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_CONNECTED_POWERSYNC_OPTIONS, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 
 // Don't want to actually export the warning string from the package
@@ -39,11 +39,20 @@ describe(
 
 function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseOptions) {
   return () => {
-    beforeAll(() => createBaseLogger().useDefaults());
+    let logLines: string[] = [];
+    let logger: PowerSyncLogger;
+
+    beforeEach(() => {
+      const lines: string[] = [];
+      logLines = lines;
+      logger = {
+        log({ message }) {
+          lines.push(message);
+        }
+      };
+    });
 
     it('should warn for missing upload operations in uploadData', async () => {
-      const logger = createLogger('crud-logger');
-
       const options = getDatabaseOptions();
 
       const { powersync, uploadSpy } = await generateConnectedDatabase({
@@ -52,8 +61,6 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
           logger
         }
       });
-
-      const loggerSpy = vi.spyOn(logger, 'warn');
 
       const deferred = p();
 
@@ -72,7 +79,7 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
 
       await vi.waitFor(
         () => {
-          expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).exist;
+          expect(logLines).toEqual(expect.arrayContaining([expect.stringContaining(PARTIAL_WARNING)]));
         },
         {
           timeout: 500,
@@ -82,8 +89,6 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
     });
 
     it('should immediately upload sequential transactions', async () => {
-      const logger = createLogger('crud-logger');
-
       const options = getDatabaseOptions();
 
       const { powersync, uploadSpy } = await generateConnectedDatabase({
@@ -92,8 +97,6 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
           logger
         }
       });
-
-      const loggerSpy = vi.spyOn(logger, 'warn');
 
       const deferred = p();
 
@@ -140,7 +143,7 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
         }
       );
 
-      expect(loggerSpy.mock.calls.find((logArgs) => logArgs[0].includes(PARTIAL_WARNING))).toBeUndefined;
+      expect(logLines).not.toEqual(expect.arrayContaining([expect.stringContaining(PARTIAL_WARNING)]));
     });
   };
 }

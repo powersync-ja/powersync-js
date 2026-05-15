@@ -77,7 +77,6 @@
     "@types/better-sqlite3": "^7.6.13",
     "bson": "catalog:",
     "drizzle-orm": "catalog:",
-    "js-logger": "catalog:",
     "rollup": "catalog:",
     "rollup-plugin-dts": "catalog:",
     "typescript": "catalog:",

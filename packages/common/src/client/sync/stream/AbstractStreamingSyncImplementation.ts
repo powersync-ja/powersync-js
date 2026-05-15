@@ -1,9 +1,8 @@
-import Logger, { ILogger } from 'js-logger';
-
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
 import { throttleLeadingTrailing } from '../../../utils/async.js';
+import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
@@ -76,7 +75,7 @@ export interface AbstractStreamingSyncImplementationOptions extends RequiredAddi
    * linked to. Most commonly DB name, but not restricted to DB name.
    */
   identifier?: string;
-  logger?: ILogger;
+  logger: PowerSyncLogger;
   remote: AbstractRemote;
 }
 
@@ -226,7 +225,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected uploadAbortController: AbortController | undefined;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
-  protected logger: ILogger;
+  protected logger: PowerSyncLogger;
   private activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
 
@@ -241,7 +240,7 @@ export abstract class AbstractStreamingSyncImplementation
     super();
     this.options = options;
     this.activeStreams = options.subscriptions;
-    this.logger = options.logger ?? Logger.get('PowerSyncStream');
+    this.logger = options.logger;
 
     this.syncStatus = new SyncStatus({
       connected: false,
@@ -330,7 +329,7 @@ export abstract class AbstractStreamingSyncImplementation
     let path = `/write-checkpoint2.json?client_id=${clientId}`;
     const response = await this.options.remote.get(path);
     const checkpoint = response['data']['write_checkpoint'] as string;
-    this.logger.debug(`Created write checkpoint: ${checkpoint}`);
+    this.logger.log({ level: LogLevels.debug, message: `Created write checkpoint: ${checkpoint}` });
     return checkpoint;
   }
 
@@ -368,9 +367,13 @@ export abstract class AbstractStreamingSyncImplementation
 
               if (nextCrudItem.clientId == checkedCrudItem?.clientId) {
                 // This will force a higher log level than exceptions which are caught here.
-                this.logger.warn(`Potentially previously uploaded CRUD entries are still present in the upload queue.
+                this.logger.log({
+                  level: LogLevels.warn,
+                  message: `Potentially previously uploaded CRUD entries are still present in the upload queue.
 Make sure to handle uploads and complete CRUD transactions or batches by calling and awaiting their [.complete()] method.
-The next upload iteration will be delayed.`);
+The next upload iteration will be delayed.`
+                });
+
                 throw new Error('Delaying due to previously encountered CRUD item.');
               }
 
@@ -386,7 +389,7 @@ The next upload iteration will be delayed.`);
               const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
               if (neededUpdate == false && checkedCrudItem != null) {
                 // Only log this if there was something to upload
-                this.logger.debug('Upload complete, no write checkpoint needed.');
+                this.logger.log({ level: LogLevels.debug, message: 'Upload complete, no write checkpoint needed.' });
               }
               break;
             }
@@ -403,9 +406,10 @@ The next upload iteration will be delayed.`);
               // Exit the upload loop if the sync stream is no longer connected
               break;
             }
-            this.logger.debug(
-              `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
-            );
+            this.logger.log({
+              level: LogLevels.debug,
+              message: `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
+            });
           } finally {
             this.updateSyncStatus({
               dataFlow: {
@@ -433,7 +437,10 @@ The next upload iteration will be delayed.`);
       const disposer = this.registerListener({
         statusChanged: (status) => {
           if (status.dataFlowStatus.downloadError != null) {
-            this.logger.warn('Initial connect attempt did not successfully connect to server');
+            this.logger.log({
+              level: LogLevels.warn,
+              message: 'Initial connect attempt did not successfully connect to server'
+            });
           } else if (status.connecting) {
             // Still connecting.
             return;
@@ -461,7 +468,7 @@ The next upload iteration will be delayed.`);
       await this.streamingSyncPromise;
     } catch (ex) {
       // The operation might have failed, all we care about is if it has completed
-      this.logger.warn(ex);
+      this.logger.log({ level: LogLevels.warn, message: 'Error in sync while disconnecting', error: ex });
     }
     this.streamingSyncPromise = undefined;
 
@@ -538,15 +545,18 @@ The next upload iteration will be delayed.`);
          */
 
         if (ex instanceof AbortOperation) {
-          this.logger.warn(ex);
+          this.logger.log({ level: LogLevels.warn, message: 'Sync aborted', error: ex });
           shouldDelayRetry = false;
           // A disconnect was requested, we should not delay since there is no explicit retry
         } else if (this.connectionMayHaveChanged && (ex as Error).message?.indexOf('No iteration is active') >= 0) {
           this.connectionMayHaveChanged = false;
-          this.logger.info('Sync error after changed connection, retrying immediately');
+          this.logger.log({
+            level: LogLevels.info,
+            message: 'Sync error after changed connection, retrying immediately'
+          });
           shouldDelayRetry = false;
         } else {
-          this.logger.error(ex);
+          this.logger.log({ level: LogLevels.error, message: 'Sync error', error: ex });
         }
 
         this.updateSyncStatus({
@@ -739,13 +749,12 @@ The next upload iteration will be delayed.`);
       payload?: Uint8Array | string
     ): Promise<Instruction[]> {
       const rawResponse = await adapter.control(op, payload ?? null);
-      const logger = syncImplementation.logger;
-      logger.trace(
-        'powersync_control',
-        op,
-        payload == null || typeof payload == 'string' ? payload : '<bytes>',
-        rawResponse
-      );
+      const payloadDesc = payload == null || typeof payload == 'string' ? payload : '<bytes>';
+
+      syncImplementation.logger.log({
+        level: LogLevels.trace,
+        message: `powersync_control(${op}, ${payloadDesc}) -> ${rawResponse}`
+      });
 
       if (op != PowerSyncControlCommand.STOP) {
         // Evidently we have a working connection here, otherwise powersync_control would have failed.
@@ -757,15 +766,26 @@ The next upload iteration will be delayed.`);
 
     async function handleInstruction(instruction: NonInterruptingInstruction) {
       if ('LogLine' in instruction) {
-        switch (instruction.LogLine.severity) {
+        const { severity, line } = instruction.LogLine;
+
+        switch (severity) {
           case 'DEBUG':
-            syncImplementation.logger.debug(instruction.LogLine.line);
+            syncImplementation.logger.log({
+              level: LogLevels.debug,
+              message: line
+            });
             break;
           case 'INFO':
-            syncImplementation.logger.info(instruction.LogLine.line);
+            syncImplementation.logger.log({
+              level: LogLevels.info,
+              message: line
+            });
             break;
           case 'WARNING':
-            syncImplementation.logger.warn(instruction.LogLine.line);
+            syncImplementation.logger.log({
+              level: LogLevels.warn,
+              message: line
+            });
             break;
         }
       } else if ('UpdateSyncStatus' in instruction) {
@@ -782,7 +802,11 @@ The next upload iteration will be delayed.`);
               notifyTokenRefreshed?.();
             },
             (err) => {
-              syncImplementation.logger.warn('Could not prefetch credentials', err);
+              syncImplementation.logger.log({
+                level: LogLevels.warn,
+                message: 'Could not prefetch credentials',
+                error: err
+              });
             }
           );
         }

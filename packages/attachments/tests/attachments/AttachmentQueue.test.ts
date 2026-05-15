@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AbstractAttachmentQueue } from '../../src/AbstractAttachmentQueue.js';
 import { AttachmentRecord, AttachmentState } from '../../src/Schema.js';
 import { StorageAdapter } from '../../src/StorageAdapter.js';
+import { PowerSyncLogger } from '@powersync/common';
 
 const record = {
   id: 'test-1',
@@ -24,7 +25,10 @@ const mockPowerSync = {
     await callback({
       execute: vi.fn(() => Promise.resolve())
     });
-  })
+  }),
+  logger: {
+    log: vi.fn((record) => {})
+  } satisfies PowerSyncLogger
 };
 
 const mockStorage: StorageAdapter = {

@@ -1,5 +1,4 @@
 import { EventIterator } from 'event-iterator';
-import Logger, { ILogger } from 'js-logger';
 import {
   BatchedUpdateNotification,
   DBAdapter,
@@ -46,6 +45,7 @@ import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/Watch
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
+import { createPowerSyncLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -59,7 +59,7 @@ export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOption
    * @deprecated Use {@link retryDelayMs} instead as this will be removed in future releases.
    */
   retryDelay?: number;
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
 }
 
 export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
@@ -225,7 +225,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   readonly triggers: TriggerManager;
   protected triggersImpl: TriggerManagerImpl;
 
-  logger: ILogger;
+  logger: PowerSyncLogger;
 
   constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
   constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
@@ -233,6 +233,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
+    this.logger = options.logger ?? createPowerSyncLogger();
 
     const { database, schema } = options;
 
@@ -249,8 +250,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     } else {
       throw new Error('The provided `database` option is invalid.');
     }
-
-    this.logger = options.logger ?? Logger.get(`PowerSyncDatabase[${this._database.name}]`);
 
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
@@ -495,7 +494,11 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       schema.validate();
     } catch (ex) {
-      this.logger.warn('Schema validation failed. Unexpected behaviour could occur', ex);
+      this.logger.log({
+        level: LogLevels.warn,
+        message: 'Schema validation failed. Unexpected behaviour could occur',
+        error: ex
+      });
     }
     this._schema = schema;
 
@@ -1079,7 +1082,10 @@ SELECT * FROM crud_entries;
    * @param options Options for configuring watch behavior
    */
   watchWithCallback(sql: string, parameters?: any[], handler?: WatchHandler, options?: SQLWatchOptions): void {
-    const { onResult, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
+    const {
+      onResult,
+      onError = (e: Error) => this.logger.log({ level: LogLevels.error, message: 'Error in watch', error: e })
+    } = handler ?? {};
     if (!onResult) {
       throw new Error('onResult is required');
     }
@@ -1240,7 +1246,10 @@ SELECT * FROM crud_entries;
    * @returns A dispose function to stop watching for changes
    */
   onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void {
-    const { onChange, onError = (e: Error) => this.logger.error(e) } = handler ?? {};
+    const {
+      onChange,
+      onError = (e: Error) => this.logger.log({ level: LogLevels.error, message: 'error in onChange', error: e })
+    } = handler ?? {};
     if (!onChange) {
       throw new Error('onChange is required');
     }

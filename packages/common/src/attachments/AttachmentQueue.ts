@@ -1,7 +1,7 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
-import { ILogger } from '../utils/Logger.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
@@ -49,7 +49,7 @@ export class AttachmentQueue {
   readonly tableName: string;
 
   /** Logger instance for diagnostic information */
-  readonly logger: ILogger;
+  readonly logger: PowerSyncLogger;
 
   /** Interval in milliseconds between periodic sync operations. Acts as a polling timer to retry
    *  failed uploads/downloads, especially after the app goes offline. Default: 30000 (30 seconds) */
@@ -78,9 +78,9 @@ export class AttachmentQueue {
   /** Cleanup function for status change listener */
   private statusListenerDispose?: () => void;
 
-  private watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
+  private watchActiveAttachments!: DifferentialWatchedQuery<AttachmentRecord>;
 
-  private watchAttachmentsAbortController: AbortController;
+  private watchAttachmentsAbortController!: AbortController;
 
   /**
    * Creates a new AttachmentQueue instance.
@@ -115,7 +115,7 @@ export class AttachmentQueue {
     localStorage: LocalStorageAdapter;
     watchAttachments: (onUpdate: (attachment: WatchedAttachmentItem[]) => Promise<void>, signal: AbortSignal) => void;
     tableName?: string;
-    logger?: ILogger;
+    logger?: PowerSyncLogger;
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
     downloadAttachments?: boolean;
@@ -190,7 +190,7 @@ export class AttachmentQueue {
         if (status.connected) {
           // Device came online, process attachments immediately
           this.syncStorage().catch((error) => {
-            this.logger.error('Error syncing storage on connection:', error);
+            this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection:', error });
           });
         }
       }
