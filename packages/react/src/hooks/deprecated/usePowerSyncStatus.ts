@@ -1,3 +1,4 @@
+import type { SyncStatus } from '@powersync/common';
 import { useContext, useEffect, useState } from 'react';
 import { PowerSyncContext } from '../PowerSyncContext.js';
 
@@ -17,9 +18,12 @@ import { PowerSyncContext } from '../PowerSyncContext.js';
  */
 export const usePowerSyncStatus = () => {
   const powerSync = useContext(PowerSyncContext);
-  const [syncStatus, setSyncStatus] = useState(powerSync.currentStatus);
+  const [syncStatus, setSyncStatus] = useState(powerSync?.currentStatus as SyncStatus);
 
   useEffect(() => {
+    if (!powerSync) {
+      return;
+    }
     const listener = powerSync.registerListener({
       statusChanged: (status) => {
         setSyncStatus(status);
