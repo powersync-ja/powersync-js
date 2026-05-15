@@ -81,12 +81,12 @@ export class ReactNativeRemote extends AbstractRemote {
     const timeout =
       Platform.OS == 'android'
         ? setTimeout(() => {
-            this.logger.log(
-              LogLevels.warn,
-              `HTTP Streaming POST is taking longer than ${Math.ceil(
+            this.logger.log({
+              level: LogLevels.warn,
+              message: `HTTP Streaming POST is taking longer than ${Math.ceil(
                 STREAMING_POST_TIMEOUT_MS / 1000
               )} seconds to resolve. If using a debug build, please ensure Flipper Network plugin is disabled.`
-            );
+            });
           }, STREAMING_POST_TIMEOUT_MS)
         : null;
 
