@@ -64,7 +64,7 @@ export const useSingleSuspenseQuery = <T = any>(
             parameters: [...compiledQuery.parameters],
             db: powerSync
           });
-          if (signal.aborted) {
+          if (signal?.aborted) {
             return; // Abort if the signal is already aborted
           }
           setData(result);

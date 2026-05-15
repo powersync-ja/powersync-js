@@ -25,7 +25,7 @@ export const useSingleQuery = <RowType = any>(options: InternalHookOptions<RowTy
           parameters: [...compiledQuery.parameters],
           db: powerSync
         });
-        if (signal.aborted) {
+        if (signal?.aborted) {
           return;
         }
         setOutputState((prev) => ({
