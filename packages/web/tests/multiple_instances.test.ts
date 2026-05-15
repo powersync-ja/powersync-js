@@ -3,6 +3,7 @@ import {
   createPowerSyncLogger,
   DBAdapterDefaultMixin,
   LogLevels,
+  LogRecord,
   PowerSyncLogger
 } from '@powersync/common';
 import * as Comlink from 'comlink';
@@ -46,10 +47,10 @@ describe('Multiple Instances', { sequential: true }, () => {
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
-      const logLines: string[] = [];
+      const logLines: LogRecord[] = [];
       const logger: PowerSyncLogger = {
-        log({ message }) {
-          logLines.push(message);
+        log(msg) {
+          logLines.push(msg);
         }
       };
 
@@ -85,16 +86,22 @@ describe('Multiple Instances', { sequential: true }, () => {
 
       // Asserting that powersync_control logs exists verifies that some connection attempt was made.
       await vi.waitFor(
-        () => expect(logLines).toEqual(expect.arrayContaining([expect.stringContaining('powersync_control')])),
+        () =>
+          expect(logLines.map((l) => l.message)).toEqual(
+            expect.arrayContaining([expect.stringContaining('powersync_control')])
+          ),
         {
           timeout: 2000
         }
       );
 
       // The connection should fail with an error
-      await vi.waitFor(() => expect(logLines).toEqual(expect.arrayContaining([expect.any(Error)])), {
-        timeout: 2000
-      });
+      await vi.waitFor(
+        () => expect(logLines.map((l) => l.error)).toEqual(expect.arrayContaining([expect.any(Error)])),
+        {
+          timeout: 2000
+        }
+      );
     }
   );
 

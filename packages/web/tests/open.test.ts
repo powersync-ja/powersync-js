@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
 import { MultiDatabaseServer } from '../src/worker/db/MultiDatabaseServer.js';
 import { DatabaseClient } from '../src/db/adapters/wa-sqlite/DatabaseClient.js';
-import { defaultLoggerConfig } from './utils/testDb.js';
+import { defaultLoggerConfig } from './utils/logger.js';
 
 const testId = '2290de4f-0488-4e50-abed-f8e8eb1d0b42';
 

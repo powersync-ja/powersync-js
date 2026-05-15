@@ -3,7 +3,7 @@ import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
 import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory.js';
-import { defaultLoggerConfig } from './testDb.js';
+import { defaultLoggerConfig } from './logger.js';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 

@@ -43,7 +43,7 @@ const config: UserConfigExport = {
        */
       isolate: true,
       provider: 'playwright',
-      headless: true,
+      headless: false,
       instances: [
         {
           browser: 'chromium'

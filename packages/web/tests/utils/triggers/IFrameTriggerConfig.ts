@@ -7,7 +7,7 @@
 
 import { DiffTriggerOperation, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { TEST_SCHEMA } from '../test-schema.js';
-import { defaultLoggerConfig } from '../testDb.js';
+import { defaultLoggerConfig } from '../logger.js';
 
 const db = new PowerSyncDatabase({
   database: new WASQLiteOpenFactory({

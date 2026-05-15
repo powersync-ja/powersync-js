@@ -79,7 +79,7 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
 
       await vi.waitFor(
         () => {
-          expect(logLines).contains(expect.stringContaining(PARTIAL_WARNING));
+          expect(logLines).toEqual(expect.arrayContaining([expect.stringContaining(PARTIAL_WARNING)]));
         },
         {
           timeout: 500,
@@ -143,7 +143,7 @@ function describeCrudUploadTests(getDatabaseOptions: () => WebPowerSyncDatabaseO
         }
       );
 
-      expect(logLines).not.contains(expect.stringContaining(PARTIAL_WARNING));
+      expect(logLines).not.toEqual(expect.arrayContaining([expect.stringContaining(PARTIAL_WARNING)]));
     });
   };
 }

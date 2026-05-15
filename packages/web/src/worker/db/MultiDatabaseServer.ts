@@ -22,7 +22,7 @@ export class MultiDatabaseServer {
   async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
     const logger: PowerSyncLogger = {
       log: (record) => {
-        if (record.level >= options.logLevel) logger.log(record);
+        if (record.level >= options.logLevel) this.logger.log(record);
       }
     };
 
