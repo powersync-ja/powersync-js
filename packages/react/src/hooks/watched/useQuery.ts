@@ -61,9 +61,9 @@ export function useQuery<RowType = any>(
 
   const { parsedQuery, queryChanged } = constructCompatibleQuery(query, parameters, options);
 
-  // `streams` is undefined when there is no db so `useSyncStreams` does not touch a null db.
-  // `useAllSyncStreamsHaveSynced` does not dereference its `db` argument; the `useStatus`
-  // hook it uses internally is null-safe.
+  // Hooks must run unconditionally (Rules of Hooks), so this is called even when powerSync
+  // is null. Passing `streams: undefined` makes useSyncStreams receive an empty array, so it
+  // never dereferences the null db; removing this guard would make that null deref reachable.
   const streamsHaveSynced = useAllSyncStreamsHaveSynced(powerSync!, powerSync ? options?.streams : undefined);
 
   const runOnce = options?.runQueryOnce == true;
