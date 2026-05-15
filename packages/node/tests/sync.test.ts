@@ -546,9 +546,9 @@ function defineSyncTests(bson: boolean) {
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
     const logMessages: string[] = [];
     const logger: PowerSyncLogger = {
-      log(_level, ...message) {
-        console.log(...message);
-        logMessages.push(util.format(...message));
+      log({ message }) {
+        console.log(message);
+        logMessages.push(message);
       }
     };
 
