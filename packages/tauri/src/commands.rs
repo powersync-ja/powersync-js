@@ -138,6 +138,16 @@ impl<'de> Deserialize<'de> for SqliteValue {
                 Ok(SqliteValue::Integer(v))
             }
 
+            fn visit_u64<E>(self, v: u64) -> std::result::Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                // Wrapping cast (v as i64) would silently corrupt values > i64::MAX.
+                i64::try_from(v)
+                    .map(SqliteValue::Integer)
+                    .map_err(E::custom)
+            }
+
             fn visit_f64<E>(self, v: f64) -> std::result::Result<Self::Value, E>
             where
                 E: Error,
