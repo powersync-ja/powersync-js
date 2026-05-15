@@ -5,6 +5,7 @@ import { AbstractPowerSyncDatabase, SyncStatus } from '@powersync/common';
 import { PowerSyncContext } from '@powersync/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { openPowerSync } from './utils';
+import * as Tanstack from '@tanstack/react-query';
 import { usePowerSyncQueries } from '../src/hooks/usePowerSyncQueries';
 
 describe('usePowerSyncQueries bug fixes', () => {
@@ -85,6 +86,108 @@ describe('usePowerSyncQueries bug fixes', () => {
         interval: 50
       });
 
+      unmount();
+    });
+  });
+
+  describe('Bug 2: first table-resolution race loses first-sync data', () => {
+    it('reflects rows written while table resolution is still on the slow path', async () => {
+      // The race: powerSync.resolveTables is async. usePowerSyncQueries seeds
+      // tablesArr to [] and only fills it once resolveTables resolves. The
+      // onChangeWithCallback effect registers a change listener with
+      // { tables: tablesArr[idx] } === { tables: [] } on first render -> that
+      // listener watches NO tables. Any write that lands BEFORE resolveTables
+      // resolves is consumed by that []-listener and dropped; the listener that
+      // later attaches with the real tables attaches AFTER the write, so it
+      // never sees it. Without the rescue invalidation the query stays empty.
+      //
+      // Determinism:
+      //  - We gate powerSync.resolveTables on a promise to widen the (already
+      //    real, just very fast) async window so the write reliably lands in it.
+      //  - The query observer uses staleTime: Infinity + refetchOnMount/Focus/
+      //    Reconnect: false so the ONLY thing that can refresh the cached empty
+      //    result is an explicit queryClient.invalidateQueries() from the change
+      //    path under test (not a TanStack refetch heuristic).
+      //  - We strip ONLY the `schemaChanged` listener from registerListener.
+      //    PowerSync's own first-write bookkeeping fires `schemaChanged` in this
+      //    wa-sqlite browser harness, and usePowerSyncQueries' separate
+      //    schemaChanged listener would invalidate and accidentally rescue the
+      //    query -- masking the bug with a harness artifact unrelated to the
+      //    race. Removing it does NOT remove the bug (the bug is the missing
+      //    [] -> [tables] rescue invalidation); it removes the artifact so the
+      //    missing code is what determines pass/fail. Everything else (the real
+      //    resolveTables, the real change listeners, the real DB, the real
+      //    QueryClient) is untouched.
+      //
+      // We assert ONLY on the user-visible query data, never on a spy.
+      let releaseResolve!: () => void;
+      const resolveGate = new Promise<void>((resolve) => {
+        releaseResolve = resolve;
+      });
+
+      const realResolveTables = db.resolveTables.bind(db);
+      const resolveSpy = vi.spyOn(db, 'resolveTables').mockImplementation(async (sql, params) => {
+        await resolveGate;
+        return realResolveTables(sql, params);
+      });
+
+      const realRegisterListener = db.registerListener.bind(db);
+      const registerListenerSpy = vi
+        .spyOn(db, 'registerListener')
+        .mockImplementation((listener: Parameters<typeof realRegisterListener>[0]) => {
+          if (listener && (listener as { schemaChanged?: unknown }).schemaChanged) {
+            const { schemaChanged: _omit, ...rest } = listener as Record<string, unknown>;
+            return realRegisterListener(rest as Parameters<typeof realRegisterListener>[0]);
+          }
+          return realRegisterListener(listener);
+        });
+
+      // Referentially stable input so parsedQueries / effects do not re-run
+      // spuriously across renders.
+      const stableQueries = [{ query: 'SELECT name FROM lists ORDER BY name', queryKey: ['bug2'] }];
+
+      const { result, unmount } = renderHook(
+        () => {
+          const { queries } = usePowerSyncQueries(stableQueries, queryClient);
+          return Tanstack.useQuery(
+            {
+              queryKey: ['bug2'],
+              queryFn: queries[0].queryFn as () => Promise<{ name: string }[]>,
+              staleTime: Infinity,
+              refetchOnMount: false,
+              refetchOnWindowFocus: false,
+              refetchOnReconnect: false
+            },
+            queryClient
+          );
+        },
+        { wrapper }
+      );
+
+      // The query runs once and resolves to empty data (no rows yet).
+      // resolveTables is gated, so the change listener is currently attached
+      // watching NO tables.
+      await waitFor(() => expect(result.current.data).toEqual([]), { timeout: 2000, interval: 50 });
+
+      // Write a row WHILE table resolution is still pending (the race window).
+      await db.execute('INSERT INTO lists (id, name) VALUES (uuid(), ?)', ['from-first-sync']);
+
+      // Let the []-listener's throttled flush consume and drop the change
+      // notification before the real-tables listener can attach.
+      await new Promise((r) => setTimeout(r, 150));
+
+      // Now let resolveTables resolve. The []-listener missed the write; the
+      // new listener attaches AFTER it. Only the rescue invalidation on the
+      // first [] -> [lists] transition can surface the row.
+      releaseResolve();
+
+      await waitFor(() => expect(result.current.data).toEqual([{ name: 'from-first-sync' }]), {
+        timeout: 2000,
+        interval: 50
+      });
+
+      resolveSpy.mockRestore();
+      registerListenerSpy.mockRestore();
       unmount();
     });
   });
