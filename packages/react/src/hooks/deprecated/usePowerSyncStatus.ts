@@ -22,7 +22,7 @@ export const usePowerSyncStatus = () => {
 
   useEffect(() => {
     if (!powerSync) {
-      return;
+      return undefined;
     }
     const listener = powerSync.registerListener({
       statusChanged: (status) => {
