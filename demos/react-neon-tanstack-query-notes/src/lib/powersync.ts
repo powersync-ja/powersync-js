@@ -1,37 +1,32 @@
 import {
   AbstractPowerSyncDatabase,
   BaseObserver,
-  LogLevel,
   PowerSyncBackendConnector,
   type PowerSyncCredentials,
   PowerSyncDatabase,
-  createBaseLogger,
+  createPowerSyncLogger,
+  LogLevels,
   CrudEntry,
-  UpdateType,
-} from "@powersync/web";
-import { client } from "@/lib/auth";
-import {
-  wrapPowerSyncWithDrizzle,
-  DrizzleAppSchema,
-} from "@powersync/drizzle-driver";
+  UpdateType
+} from '@powersync/web';
+import { client } from '@/lib/auth';
+import { wrapPowerSyncWithDrizzle, DrizzleAppSchema } from '@powersync/drizzle-driver';
 
-import { drizzleSchema } from "./powersync-schema";
+import { drizzleSchema } from './powersync-schema';
 
 /// Postgres Response codes that we cannot recover from by retrying.
 const FATAL_RESPONSE_CODES = [
   // Class 22 — Data Exception
   // Examples include data type mismatch.
-  new RegExp("^22...$"),
+  new RegExp('^22...$'),
   // Class 23 — Integrity Constraint Violation.
   // Examples include NOT NULL, FOREIGN KEY and UNIQUE violations.
-  new RegExp("^23...$"),
+  new RegExp('^23...$'),
   // INSUFFICIENT PRIVILEGE - typically a row-level security violation
-  new RegExp("^42501$"),
+  new RegExp('^42501$')
 ];
 
-export const powersyncLogger = createBaseLogger();
-powersyncLogger.useDefaults();
-powersyncLogger.setLevel(LogLevel.DEBUG);
+export const powersyncLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
 
 // Type for the session returned by client.auth.getSession()
 export type NeonSession = {
@@ -44,12 +39,9 @@ export type NeonConnectorListener = {
   sessionStarted: (session: NeonSession) => void;
 };
 
-const SESSION_STORAGE_KEY = "neon_session";
+const SESSION_STORAGE_KEY = 'neon_session';
 
-export class NeonConnector
-  extends BaseObserver<NeonConnectorListener>
-  implements PowerSyncBackendConnector
-{
+export class NeonConnector extends BaseObserver<NeonConnectorListener> implements PowerSyncBackendConnector {
   ready: boolean = false;
   currentSession: NeonSession | null = null;
 
@@ -66,7 +58,7 @@ export class NeonConnector
         this.currentSession = JSON.parse(cached);
       }
     } catch (error) {
-      console.debug("Could not load cached session:", error);
+      console.debug('Could not load cached session:', error);
     }
   }
 
@@ -78,7 +70,7 @@ export class NeonConnector
         localStorage.removeItem(SESSION_STORAGE_KEY);
       }
     } catch (error) {
-      console.debug("Could not persist session:", error);
+      console.debug('Could not persist session:', error);
     }
   }
 
@@ -89,10 +81,7 @@ export class NeonConnector
       const sessionResponse = await client.auth.getSession();
       this.updateSession(sessionResponse.data ?? null);
     } catch (error) {
-      console.debug(
-        "Could not fetch session during init (most likely offline), using cached session:",
-        error,
-      );
+      console.debug('Could not fetch session during init (most likely offline), using cached session:', error);
     }
 
     this.ready = true;
@@ -117,19 +106,16 @@ export class NeonConnector
       }
     } catch (error) {
       // Network error - use cached session if available (offline mode)
-      console.debug(
-        "Could not refresh session (most likely offline), using cached:",
-        error,
-      );
+      console.debug('Could not refresh session (most likely offline), using cached:', error);
     }
 
     if (!this.currentSession) {
-      throw new Error("Could not fetch Neon credentials.");
+      throw new Error('Could not fetch Neon credentials.');
     }
 
     return {
       endpoint: import.meta.env.VITE_POWERSYNC_URL,
-      token: this.currentSession.session.token ?? "",
+      token: this.currentSession.session.token ?? ''
     } satisfies PowerSyncCredentials;
   }
 
@@ -154,10 +140,10 @@ export class NeonConnector
             result = await table.upsert(record as any);
             break;
           case UpdateType.PATCH:
-            result = await table.update(op.opData as any).eq("id", op.id);
+            result = await table.update(op.opData as any).eq('id', op.id);
             break;
           case UpdateType.DELETE:
-            result = await table.delete().eq("id", op.id);
+            result = await table.delete().eq('id', op.id);
             break;
         }
 
@@ -171,10 +157,7 @@ export class NeonConnector
       await transaction.complete();
     } catch (ex: any) {
       console.debug(ex);
-      if (
-        typeof ex.code == "string" &&
-        FATAL_RESPONSE_CODES.some((regex) => regex.test(ex.code))
-      ) {
+      if (typeof ex.code == 'string' && FATAL_RESPONSE_CODES.some((regex) => regex.test(ex.code))) {
         /**
          * Instead of blocking the queue with these errors,
          * discard the (rest of the) transaction.
@@ -183,7 +166,7 @@ export class NeonConnector
          * If protecting against data loss is important, save the failing records
          * elsewhere instead of discarding, and/or notify the user.
          */
-        console.error("Data upload error - discarding:", lastOp, ex);
+        console.error('Data upload error - discarding:', lastOp, ex);
         await transaction.complete();
       } else {
         // Error may be retryable - e.g. network error or temporary server error.
@@ -201,8 +184,8 @@ export const AppSchema = new DrizzleAppSchema(drizzleSchema);
 export const powersync = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
-    dbFilename: "powersync.db",
-  },
+    dbFilename: 'powersync.db'
+  }
 });
 
 export const powersyncDrizzle = wrapPowerSyncWithDrizzle(powersync);
@@ -215,7 +198,7 @@ export async function connectPowerSync() {
   }
   await powersync.connect(neonConnector);
   isInitialized = true;
-  console.log("powersync connected");
+  console.log('powersync connected');
 }
 
 export async function disconnectPowerSync() {

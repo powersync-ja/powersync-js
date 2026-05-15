@@ -2,7 +2,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, LogLevel, PowerSyncDatabase, SyncClientImplementation } from '@powersync/web';
+import { createPowerSyncLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 
@@ -13,7 +13,8 @@ export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {
     dbFilename: 'time.db'
-  }
+  },
+  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
 });
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
@@ -21,9 +22,6 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
   const [powerSync] = React.useState(db);
 
   React.useEffect(() => {
-    const logger = createBaseLogger();
-    logger.useDefaults();
-    logger.setLevel(LogLevel.DEBUG);
     // For console testing purposes
     (window as any)._powersync = powerSync;
 
@@ -31,7 +29,7 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     const l = connector.registerListener({
       initialized: () => {},
       sessionStarted: () => {
-        powerSync.connect(connector, { clientImplementation: SyncClientImplementation.RUST });
+        powerSync.connect(connector);
       }
     });
 
