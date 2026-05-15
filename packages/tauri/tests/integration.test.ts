@@ -92,3 +92,17 @@ test('can close instances', async () => {
   const second = openDatabase({ schema });
   expect(await second.getAll('SELECT * FROM users')).toHaveLength(0);
 });
+
+test('can bind integers', async () => {
+  const db = openDatabase({ schema });
+  await db.init();
+
+  await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['first']);
+  await db.execute('INSERT INTO users (id, name) VALUES (uuid(), ?)', ['second']);
+
+  const { name } = await db.get<{ name: string }>('SELECT name FROM users ORDER BY name LIMIT ?', [1]);
+  expect(name).toStrictEqual('first');
+
+  const row = await db.get<{ a: string; b: string }>('SELECT typeof(?) as a, typeof(?) as b', [123, 1.23]);
+  expect(row).toStrictEqual({ a: 'integer', b: 'real' });
+});
