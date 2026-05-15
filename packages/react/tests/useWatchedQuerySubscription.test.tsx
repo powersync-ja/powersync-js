@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, WatchedQuery } from '@powersync/common';
+import { AbstractPowerSyncDatabase } from '@powersync/common';
 import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -40,9 +40,7 @@ describe('useNullableWatchedQuerySubscription reactivity (Bug 3)', () => {
   it('rendered output reflects an in-place state mutation that lands before the consumer mount effect', async () => {
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-    const wq: WatchedQuery<{ id: string; name: string }[]> = powersync
-      .query<{ id: string; name: string }>({ sql: 'SELECT * FROM lists', parameters: [] })
-      .watch();
+    const wq = powersync.query<{ id: string; name: string }>({ sql: 'SELECT * FROM lists', parameters: [] }).watch();
 
     // Fully load BEFORE mount so the captured snapshot has exactly 1 row.
     await waitFor(
@@ -92,9 +90,7 @@ describe('useNullableWatchedQuerySubscription reactivity (Bug 3)', () => {
   it('re-renders when the underlying WatchedQuery state changes via a DB write', async () => {
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-    const wq: WatchedQuery<{ id: string; name: string }[]> = powersync
-      .query<{ id: string; name: string }>({ sql: 'SELECT * FROM lists', parameters: [] })
-      .watch();
+    const wq = powersync.query<{ id: string; name: string }>({ sql: 'SELECT * FROM lists', parameters: [] }).watch();
 
     await waitFor(
       () => {
@@ -104,7 +100,7 @@ describe('useNullableWatchedQuerySubscription reactivity (Bug 3)', () => {
       { timeout: 1000 }
     );
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={powersync}>{children}</PowerSyncContext.Provider>
     );
 

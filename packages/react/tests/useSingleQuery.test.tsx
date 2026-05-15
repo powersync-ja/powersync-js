@@ -20,7 +20,7 @@ describe('single query refresh without an AbortSignal (Bug 4)', () => {
   it('useQuery({ runQueryOnce: true }).refresh() called with no signal re-runs the query without erroring', async () => {
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={powersync}>{children}</PowerSyncContext.Provider>
     );
 
@@ -55,7 +55,7 @@ describe('single query refresh without an AbortSignal (Bug 4)', () => {
     const errorFallback = 'Error';
     await powersync.execute("INSERT INTO lists (id, name) VALUES (uuid(), 'list1')");
 
-    const wrapper = ({ children }) => (
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
       <PowerSyncContext.Provider value={powersync}>
         <ErrorBoundary fallback={errorFallback}>
           <React.Suspense fallback={loadingFallback}>{children}</React.Suspense>
@@ -80,7 +80,7 @@ describe('single query refresh without an AbortSignal (Bug 4)', () => {
     // On the unfixed code `signal.aborted` throws a TypeError caught by refresh's
     // try/catch and surfaced via setError -> thrown to the ErrorBoundary.
     await act(async () => {
-      await result.current!.refresh();
+      await result.current!.refresh!();
     });
 
     expect(screen.queryByText(errorFallback)).toBeFalsy();
