@@ -8,6 +8,9 @@ overrides:
   "fast-xml-parser": ">=5.3.5"
   # To avoid https://github.com/advisories/GHSA-2w6w-674q-4c4q
   "handlebars": ^4.7.9
+  # react and react-dom must resolve to the exact same version for @testing-library/react
+  "react": 19.2.6
+  "react-dom": 19.2.6
 
 catalog:
   '@journeyapps/wa-sqlite': ^1.5.0

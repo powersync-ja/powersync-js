@@ -204,5 +204,5 @@ export function usePowerSyncQueries(
       }),
       streamsHaveSynced
     };
-  }, [parsedQueries, errorsArr, tablesArr, powerSync]);
+  }, [parsedQueries, errorsArr, tablesArr, powerSync, streamsHaveSynced]);
 }
