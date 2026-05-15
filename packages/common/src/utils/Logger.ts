@@ -76,7 +76,9 @@ export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): P
       if (level < this.minLevel) return;
 
       let emitter = console.log;
-      if (level >= LogLevels.error) {
+      if (level >= LogLevels.info) {
+        emitter = console.info;
+      } else if (level >= LogLevels.error) {
         emitter = console.error;
       } else if (level >= LogLevels.warn) {
         emitter = console.warn;
