@@ -18,6 +18,7 @@
     "build": "tsc -b && rollup -c rollup.config.mjs",
     "build:prod": "tsc -b && rollup -c rollup.config.mjs",
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
+    "test": "vitest --config vitest.config.ts",
     "watch": "tsc -b -w",
     "test:exports": "attw --pack ."
   },
