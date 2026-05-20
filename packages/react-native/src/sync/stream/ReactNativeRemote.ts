@@ -15,6 +15,10 @@ import { fetch } from 'react-native-fetch-api';
 
 export const STREAMING_POST_TIMEOUT_MS = 30_000;
 
+type ReactNativeFetchOptions = RequestInit & {
+  reactNative?: Record<string, unknown>;
+};
+
 /**
  * Directly imports fetch implementation from react-native-fetch-api.
  * This removes the requirement for the global `fetch` to be overridden by
@@ -36,6 +40,21 @@ export class ReactNativeRemote extends AbstractRemote {
       ...(options ?? {}),
       fetchImplementation: options?.fetchImplementation ?? new ReactNativeFetchProvider()
     });
+  }
+
+  get fetch(): FetchImplementation {
+    const fetchImplementation = super.fetch;
+    return ((input, init) => {
+      const options = (init ?? {}) as ReactNativeFetchOptions;
+
+      return fetchImplementation(input, {
+        ...options,
+        reactNative: {
+          ...(options.reactNative ?? {}),
+          textStreaming: true
+        }
+      } as RequestInit);
+    }) as FetchImplementation;
   }
 
   getUserAgent(): string {
