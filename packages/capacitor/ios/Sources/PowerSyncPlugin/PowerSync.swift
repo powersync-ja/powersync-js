@@ -1,4 +1,5 @@
 import Foundation
+import CPowerSyncCore
 
 @objc public class PowerSync: NSObject {
     @objc public func registerCore() -> Int32 {
