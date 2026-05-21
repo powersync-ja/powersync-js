@@ -83,6 +83,7 @@
     "swiftlint": "^2.0.0"
   },
   "peerDependencies": {
+    "@capacitor/core": ">=8.0.0",
     "@capacitor-community/sqlite": "^8.1.0",
     "@powersync/web": "workspace:^1.38.0"
   },
