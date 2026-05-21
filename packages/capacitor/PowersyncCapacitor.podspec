@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
   s.source = { :git => package['repository']['url'], :tag => s.version.to_s }
   s.source_files = 'ios/Sources/**/*.{swift,h,m,c,cc,mm,cpp}'
   s.dependency "SQLCipher", "~> 4.0"
-  s.public_header_files = 'ios/Sources/CPowerSyncPlugin/include/*.h'
+  s.public_header_files = 'ios/Sources/CPowerSyncCore/include/*.h'
   s.ios.deployment_target = '15.0'
   s.dependency 'Capacitor'
   s.swift_version = '5.1'
