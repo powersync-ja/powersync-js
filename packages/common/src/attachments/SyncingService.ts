@@ -35,35 +35,62 @@ export class SyncingService {
 
   /**
    * Processes attachments based on their state (upload, download, or delete).
-   * All updates are saved in a single batch after processing.
+   *
+   * Each attachment's I/O runs outside the attachment-service mutex, and the row's
+   * state transition is persisted immediately after it completes. This keeps the
+   * mutex available to concurrent `saveFile` / `deleteFile` / watched-attachment
+   * processing while a batch is in flight, and means consumer queries against the
+   * attachments queue see incremental progress instead of one atomic commit at the
+   * end of the batch.
    *
    * @param attachments - Array of attachment records to process
-   * @param context - Attachment context for database operations
-   * @returns Promise that resolves when all attachments have been processed and saved
+   * @param options.withContext - Briefly acquires the attachment-service mutex.
+   *                              Used to persist each row after its I/O completes
+   *                              and to run the delete-row transaction.
+   * @param options.isActive - Polled between attachments; when it returns `false`
+   *                           the loop exits early. Used by `stopSync` to interrupt
+   *                           a running batch within one attachment's processing
+   *                           time.
    */
-  async processAttachments(attachments: AttachmentRecord[], context: AttachmentContext): Promise<void> {
-    const updatedAttachments: AttachmentRecord[] = [];
-    for (const attachment of attachments) {
-      switch (attachment.state) {
-        case AttachmentState.QUEUED_UPLOAD:
-          const uploaded = await this.uploadAttachment(attachment);
-          updatedAttachments.push(uploaded);
-          break;
-        case AttachmentState.QUEUED_DOWNLOAD:
-          const downloaded = await this.downloadAttachment(attachment);
-          updatedAttachments.push(downloaded);
-          break;
-        case AttachmentState.QUEUED_DELETE:
-          const deleted = await this.deleteAttachment(attachment, context);
-          updatedAttachments.push(deleted);
-          break;
+  async processAttachments(
+    attachments: AttachmentRecord[],
+    options: {
+      withContext: <T>(callback: (context: AttachmentContext) => Promise<T>) => Promise<T>;
+      isActive?: () => boolean;
+    }
+  ): Promise<void> {
+    const { withContext, isActive } = options;
+    this.logger.info(`Starting processAttachments with ${attachments.length} attachments`);
 
-        default:
-          break;
+    for (const attachment of attachments) {
+      if (isActive && !isActive()) {
+        this.logger.info('Sync cancelled; stopping iteration early');
+        return;
+      }
+
+      try {
+        let updated: AttachmentRecord;
+        switch (attachment.state) {
+          case AttachmentState.QUEUED_UPLOAD:
+            updated = await this.uploadAttachment(attachment);
+            break;
+          case AttachmentState.QUEUED_DOWNLOAD:
+            updated = await this.downloadAttachment(attachment);
+            break;
+          case AttachmentState.QUEUED_DELETE:
+            // `deleteAttachment` needs a context (it removes the row in a
+            // transaction); briefly re-acquire the mutex for just this row.
+            updated = await withContext((ctx) => this.deleteAttachment(attachment, ctx));
+            break;
+          default:
+            continue;
+        }
+
+        await withContext((ctx) => ctx.saveAttachments([updated]));
+      } catch (error) {
+        this.logger.warn(`Error during sync for ${attachment.id}`, error);
       }
     }
-
-    await context.saveAttachments(updatedAttachments);
   }
 
   /**

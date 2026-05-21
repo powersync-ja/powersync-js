@@ -1,6 +1,7 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
+import { Mutex } from '../utils/mutex.js';
 import { Transaction } from '../db/DBAdapter.js';
 import { ILogger } from '../utils/Logger.js';
 import { AttachmentContext } from './AttachmentContext.js';
@@ -136,6 +137,21 @@ export class AttachmentQueue {
   private watchAttachmentsAbortController!: AbortController;
 
   /**
+   * Serializes concurrent `syncStorage()` triggers (periodic timer, watch-onDiff,
+   * status-changed). Held across the whole batch, but only contended by other
+   * sync triggers — foreground `saveFile` / `deleteFile` / watched-attachment
+   * processing don't take this lock and proceed in parallel via the
+   * `AttachmentService` mutex, which is acquired only briefly per row.
+   */
+  private syncLoopMutex = new Mutex();
+
+  /**
+   * Aborted by `stopSync()` to interrupt an in-flight batch within one
+   * attachment's processing time. Polled between rows by `SyncingService`.
+   */
+  private syncAbortController?: AbortController;
+
+  /**
    * Creates a new AttachmentQueue instance.
    *
    * @param options - Configuration options
@@ -194,6 +210,8 @@ export class AttachmentQueue {
    */
   async startSync(): Promise<void> {
     await this.stopSync();
+
+    this.syncAbortController = new AbortController();
 
     this.watchActiveAttachments = this.attachmentService.watchActiveAttachments({
       throttleMs: this.syncThrottleDuration
@@ -325,24 +343,42 @@ export class AttachmentQueue {
    *
    * This is called automatically at regular intervals when sync is started,
    * but can also be called manually to trigger an immediate sync.
+   *
+   * Concurrent invocations are serialized via `syncLoopMutex`.
    */
   async syncStorage(): Promise<void> {
-    await this.attachmentService.withContext(async (ctx) => {
-      const activeAttachments = await ctx.getActiveAttachments();
+    await this.syncLoopMutex.runExclusive(async () => {
+      const signal = this.syncAbortController?.signal;
+      if (signal?.aborted) return;
+
+      const activeAttachments = await this.attachmentService.withContext((ctx) => ctx.getActiveAttachments());
       await this.localStorage.initialize();
-      await this.syncingService.processAttachments(activeAttachments, ctx);
-      await this.syncingService.deleteArchivedAttachments(ctx);
+
+      await this.syncingService.processAttachments(activeAttachments, {
+        withContext: (cb) => this.attachmentService.withContext(cb),
+        isActive: () => !signal?.aborted
+      });
+
+      if (signal?.aborted) return;
+
+      await this.attachmentService.withContext((ctx) => this.syncingService.deleteArchivedAttachments(ctx));
     });
   }
 
   /**
    * Stops the attachment synchronization process.
    *
-   * Clears the periodic sync timer and closes all active attachment watchers.
+   * Clears the periodic sync timer, closes all active attachment watchers, and
+   * aborts any in-flight `syncStorage()` call so it exits within one
+   * attachment's processing time instead of running the batch to completion.
    */
   async stopSync(): Promise<void> {
     clearInterval(this.periodicSyncTimer);
     this.periodicSyncTimer = undefined;
+    if (this.syncAbortController) {
+      this.syncAbortController.abort();
+      this.syncAbortController = undefined;
+    }
     if (this.watchActiveAttachments) await this.watchActiveAttachments.close();
     if (this.watchAttachmentsAbortController) {
       this.watchAttachmentsAbortController.abort();
