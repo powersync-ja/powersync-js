@@ -10,10 +10,12 @@ export type WatchedAttachmentItem =
       filename: string;
       fileExtension?: never;
       metaData?: string;
+      mediaType?: string;
     }
   | {
       id: string;
       fileExtension: string;
       filename?: never;
       metaData?: string;
+      mediaType?: string;
     };
