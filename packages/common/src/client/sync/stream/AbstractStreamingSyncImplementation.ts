@@ -3,7 +3,6 @@ import Logger, { ILogger } from 'js-logger';
 import { SyncStatus, SyncStatusOptions } from '../../../db/crud/SyncStatus.js';
 import { AbortOperation } from '../../../utils/AbortOperation.js';
 import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '../../../utils/BaseObserver.js';
-import { throttleLeadingTrailing } from '../../../utils/async.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
 import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
@@ -17,7 +16,7 @@ import {
   doneResult,
   injectable,
   InjectableIterator,
-  map,
+  notifyIterator,
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
@@ -221,16 +220,13 @@ export abstract class AbstractStreamingSyncImplementation
 {
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
-  // In rare cases, mostly for tests, uploads can be triggered without being properly connected.
-  // This allows ensuring that all upload processes can be aborted.
-  protected uploadAbortController: AbortController | undefined;
   protected crudUpdateListener?: () => void;
   protected streamingSyncPromise?: Promise<void>;
   protected logger: ILogger;
   private activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
+  private crudUploadNotifier = notifyIterator();
 
-  private isUploadingCrud: boolean = false;
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
 
@@ -254,17 +250,7 @@ export abstract class AbstractStreamingSyncImplementation
     });
     this.abortController = null;
 
-    this.triggerCrudUpload = throttleLeadingTrailing(() => {
-      if (!this.syncStatus.connected || this.isUploadingCrud) {
-        return;
-      }
-
-      this.isUploadingCrud = true;
-      this._uploadAllCrud().finally(() => {
-        this.notifyCompletedUploads?.();
-        this.isUploadingCrud = false;
-      });
-    }, this.options.crudUploadThrottleMs!);
+    this.triggerCrudUpload = () => this.crudUploadNotifier.notify();
   }
 
   async waitForReady() {}
@@ -320,7 +306,6 @@ export abstract class AbstractStreamingSyncImplementation
     super.dispose();
     this.crudUpdateListener?.();
     this.crudUpdateListener = undefined;
-    this.uploadAbortController?.abort();
   }
 
   abstract obtainLock<T>(lockOptions: LockOptions<T>): Promise<T>;
@@ -334,7 +319,19 @@ export abstract class AbstractStreamingSyncImplementation
     return checkpoint;
   }
 
-  protected async _uploadAllCrud(): Promise<void> {
+  private async crudUploadLoop(signal: AbortSignal): Promise<void> {
+    while (!signal.aborted) {
+      await Promise.all([
+        // Start the initial CRUD upload on connect. Then, keep polling until we're done.
+        this._uploadAllCrud(signal),
+        this.delayRetry(signal, this.options.crudUploadThrottleMs!)
+      ]);
+
+      await this.crudUploadNotifier.next();
+    }
+  }
+
+  private async _uploadAllCrud(signal: AbortSignal): Promise<void> {
     return this.obtainLock({
       type: LockType.CRUD,
       callback: async () => {
@@ -343,17 +340,7 @@ export abstract class AbstractStreamingSyncImplementation
          */
         let checkedCrudItem: CrudEntry | undefined;
 
-        const controller = new AbortController();
-        this.uploadAbortController = controller;
-        this.abortController?.signal.addEventListener(
-          'abort',
-          () => {
-            controller.abort();
-          },
-          { once: true }
-        );
-
-        while (!controller.signal.aborted) {
+        while (!signal.aborted) {
           try {
             /**
              * This is the first item in the FIFO CRUD queue.
@@ -398,7 +385,7 @@ The next upload iteration will be delayed.`);
                 uploadError: ex as Error
               }
             });
-            await this.delayRetry(controller.signal);
+            await this.delayRetry(signal);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
               break;
@@ -407,6 +394,8 @@ The next upload iteration will be delayed.`);
               `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
             );
           } finally {
+            this.notifyCompletedUploads?.();
+
             this.updateSyncStatus({
               dataFlow: {
                 uploading: false
@@ -414,7 +403,6 @@ The next upload iteration will be delayed.`);
             });
           }
         }
-        this.uploadAbortController = undefined;
       }
     });
   }
@@ -469,15 +457,7 @@ The next upload iteration will be delayed.`);
     this.updateSyncStatus({ connected: false, connecting: false });
   }
 
-  /**
-   * @deprecated use [connect instead]
-   */
-  async streamingSync(signal?: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
-    if (!signal) {
-      this.abortController = new AbortController();
-      signal = this.abortController.signal;
-    }
-
+  private async streamingSync(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
     /**
      * Listen for CRUD updates and trigger upstream uploads
      */
@@ -508,6 +488,8 @@ The next upload iteration will be delayed.`);
         }
       });
     });
+
+    this.crudUploadLoop(signal);
 
     /**
      * This loops runs until [retry] is false or the abort signal is set to aborted.
@@ -902,14 +884,13 @@ The next upload iteration will be delayed.`);
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry(signal?: AbortSignal): Promise<void> {
+  private async delayRetry(signal?: AbortSignal, delay = this.options.retryDelayMs): Promise<void> {
     return new Promise((resolve) => {
       if (signal?.aborted) {
         // If the signal is already aborted, resolve immediately
         resolve();
         return;
       }
-      const { retryDelayMs } = this.options;
 
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
@@ -923,7 +904,7 @@ The next upload iteration will be delayed.`);
       };
 
       signal?.addEventListener('abort', endDelay, { once: true });
-      timeoutId = setTimeout(endDelay, retryDelayMs);
+      timeoutId = setTimeout(endDelay, delay);
     });
   }
 
