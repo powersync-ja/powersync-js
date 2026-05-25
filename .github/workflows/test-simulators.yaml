@@ -126,11 +126,14 @@ jobs:
         working-directory: ./packages/capacitor/example-app
         run: pnpm install
 
-      - name: Build Capacitor Android app
+      - name: Sync and build Capacitor Android app
         working-directory: ./packages/capacitor/example-app
         env:
           CAPACITOR_VITEST_SERVER_URL: http://${{ env.TEST_SERVER_HOST }}
-        run: pnpm exec cap build android
+        run: |
+          pnpm exec cap sync android
+          cd android
+          ./gradlew assembleDebug
 
       - name: Run Capacitor Android browser tests
         uses: reactivecircus/android-emulator-runner@v2.28.0
