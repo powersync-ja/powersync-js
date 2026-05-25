@@ -20,7 +20,7 @@ let userCounter = 0;
 function generateUserInfo() {
   userCounter += 1;
   return {
-    id: crypto.randomUUID(),
+    id: `test-user-${userCounter}`,
     name: `Test User ${userCounter}`,
     age: 20 + userCounter,
     networth: 1000.5 + userCounter
