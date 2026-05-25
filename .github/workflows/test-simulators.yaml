@@ -132,9 +132,7 @@ jobs:
           target: google_apis
           arch: x86_64
           avd-name: ${{ env.AVD_NAME }}
-          script: |
-            cd packages/capacitor
-            pnpm exec vitest run --config vitest.config.ts
+          script: pnpm --dir packages/capacitor exec vitest run --config vitest.config.ts
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true

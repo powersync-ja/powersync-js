@@ -15,26 +15,36 @@ const serverFactory = preview().serverFactory;
  */
 const EXAMPLE_APP_DIR = path.resolve(import.meta.dirname, 'example-app');
 
+function requireTestEnvironmentVariable(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing ${name}. See packages/capacitor/DEVELOP.md for native integration test setup.`);
+  }
+  return value;
+}
+
 /**
- * We use environment variables to trigger tests
+ * We use environment variables to trigger tests. See DEVELOP.md for setup instructions.
  */
-const platform = process.env.TEST_PLATFORM ?? 'ios';
 const environment = {
   /**
    * ios | android.
    */
-  platform,
+  platform: requireTestEnvironmentVariable('TEST_PLATFORM'),
   /**
    * The device target id to run on.
    */
-  target:
-    process.env.TEST_TARGET ?? (platform == 'android' ? 'emulator-5554' : 'B8960454-43B4-42A4-AEF4-BE74F42B47AC'),
+  target: requireTestEnvironmentVariable('TEST_TARGET'),
   /**
    * Hostname the app should use to reach the Vitest server. Android emulators use
    * 10.0.2.2 to connect to the host machine instead of the emulator loopback.
    */
-  serverHost: process.env.TEST_SERVER_HOST ?? (platform == 'android' ? '10.0.2.2' : undefined)
+  serverHost: process.env.TEST_SERVER_HOST
 };
+
+if (environment.platform == 'android' && !environment.serverHost) {
+  throw new Error('Missing TEST_SERVER_HOST. See packages/capacitor/DEVELOP.md for Android integration test setup.');
+}
 
 function serverUrlForPlatform(url: string): string {
   if (environment.platform != 'android') {
