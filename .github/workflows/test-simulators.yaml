@@ -97,7 +97,6 @@ jobs:
       AVD_NAME: capacitor-avd-x86_64-35
       TEST_PLATFORM: android
       TEST_TARGET: emulator-5554
-      TEST_SERVER_HOST: 10.0.2.2
     steps:
       - uses: actions/checkout@v6
         with:
@@ -136,7 +135,7 @@ jobs:
         # This dummy Vitest server URL is only used for the prebuild; the test run
         # updates Capacitor with the actual Vitest URL before launching the app.
         env:
-          CAPACITOR_VITEST_SERVER_URL: http://${{ env.TEST_SERVER_HOST }}
+          CAPACITOR_VITEST_SERVER_URL: http://10.0.2.2
         run: |
           pnpm exec cap sync android
           cd android

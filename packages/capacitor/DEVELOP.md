@@ -16,7 +16,7 @@ cd ..
 
 The test provider reads these environment variables:
 
-- `TEST_PLATFORM`: Native platform to run. Use `ios` or `android`. Defaults to `ios`.
+- `TEST_PLATFORM`: Native platform to run. Use `ios` or `android`.
 - `TEST_TARGET`: Simulator/emulator target id passed to `cap run --target`.
 - `TEST_SERVER_HOST`: Hostname the native app should use to reach the Vitest server. Android defaults to `10.0.2.2`; iOS uses the Vitest URL host as-is.
 
@@ -61,8 +61,7 @@ Run the integration tests on Android:
 cd packages/capacitor
 TEST_PLATFORM=android \
 TEST_TARGET=emulator-5554 \
-TEST_SERVER_HOST=10.0.2.2 \
 pnpm exec vitest run --config vitest.config.ts
 ```
 
-`TEST_SERVER_HOST=10.0.2.2` lets the Android emulator reach the host machine without `adb reverse`. The Vitest config also binds the test server to `0.0.0.0` for this reason.
+Android defaults `TEST_SERVER_HOST` to `10.0.2.2`, which lets the emulator reach the host machine without `adb reverse`. The Vitest config also binds the test server to `0.0.0.0` for this reason.

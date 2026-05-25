@@ -39,12 +39,8 @@ const environment = {
    * Hostname the app should use to reach the Vitest server. Android emulators use
    * 10.0.2.2 to connect to the host machine instead of the emulator loopback.
    */
-  serverHost: process.env.TEST_SERVER_HOST
+  serverHost: process.env.TEST_SERVER_HOST ?? (process.env.TEST_PLATFORM == 'android' ? '10.0.2.2' : undefined)
 };
-
-if (environment.platform == 'android' && !environment.serverHost) {
-  throw new Error('Missing TEST_SERVER_HOST. See packages/capacitor/DEVELOP.md for Android integration test setup.');
-}
 
 function serverUrlForPlatform(url: string): string {
   if (environment.platform != 'android') {
@@ -79,7 +75,7 @@ class CapacitorBrowserProvider implements BrowserProvider {
     console.log(`Opening Capacitor app with Vitest URL: ${serverUrl}`);
 
     // Ensure the target app spawning webviews is up-to-date with the current Vitest server URL.
-    const buildResult = spawnSync('npx', ['cap', 'sync'], {
+    const buildResult = spawnSync('npx', ['cap', 'sync', environment.platform], {
       stdio: 'inherit',
       cwd: EXAMPLE_APP_DIR,
       env: {
@@ -88,7 +84,9 @@ class CapacitorBrowserProvider implements BrowserProvider {
       }
     });
     if (buildResult.status !== 0) {
-      throw new Error(`cap sync failed with exit code ${buildResult.status}`);
+      throw new Error(
+        `cap sync failed with ${buildResult.signal ? `signal ${buildResult.signal}` : `exit code ${buildResult.status}`}`
+      );
     }
     console.log(`Launching ${environment.platform} Capacitor app on ${environment.target}`);
 
@@ -105,7 +103,13 @@ class CapacitorBrowserProvider implements BrowserProvider {
     // The process to run the Capacitor app will end once the app starts,
     // we don't keep track of it, but we do fail if the command failed.
     await new Promise<void>((resolve, reject) => {
-      app.once('exit', () => resolve());
+      app.once('exit', (code, signal) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`cap run failed with ${signal ? `signal ${signal}` : `exit code ${code}`}`));
+        }
+      });
       app.once('error', reject);
     });
 
