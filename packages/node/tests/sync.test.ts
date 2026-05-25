@@ -544,6 +544,28 @@ function defineSyncTests(bson: boolean) {
     expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
 
+  mockSyncServiceTest('should upload on start of iteration', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.indexOf('/sync/stream') != -1) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    const connector = new TestConnector();
+    database.connect(connector, { ...options, retryDelayMs: 10_000, crudUploadThrottleMs: 100 });
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // We'll never connect due to the error, but we should still try to upload once.
+    expect(connector.uploadDataInvocations).toStrictEqual(1);
+
+    // And even though we're still not connected, we should attempt uploads on crud changes.
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(connector.uploadDataInvocations).toStrictEqual(2));
+  });
+
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
     const logger = createLogger('test', { logLevel: Logger.TRACE });
     const logMessages: string[] = [];

@@ -4,6 +4,7 @@ import {
   extractBsonObjects,
   extractJsonLines,
   injectable,
+  notifyIterator,
   SimpleAsyncIterator,
   valueResult
 } from '../../src/utils/stream_transform';
@@ -117,6 +118,48 @@ describe('injectable', () => {
     // Clean up
     outstandingEvents[0](valueResult(10));
     expect(await p2).toStrictEqual(valueResult(10));
+  });
+});
+
+describe('notifyIterator', () => {
+  test('waits for event', async () => {
+    const iterator = notifyIterator();
+    let didReceiveEvent = false;
+    iterator.next().then((e) => {
+      expect(e.done).toStrictEqual(false);
+      didReceiveEvent = true;
+    });
+
+    await Promise.resolve();
+    expect(didReceiveEvent).toBeFalsy();
+    iterator.notify();
+
+    await Promise.resolve();
+    expect(didReceiveEvent).toBeTruthy();
+  });
+
+  test('merges events', async () => {
+    const iterator = notifyIterator();
+    for (let i = 0; i < 1000; i++) {
+      iterator.notify();
+    }
+
+    let didReceiveEvent = false;
+    iterator.next().then((e) => {
+      expect(e.done).toStrictEqual(false);
+      didReceiveEvent = true;
+    });
+    await Promise.resolve();
+    expect(didReceiveEvent).toBeTruthy();
+
+    // The first iterator.next() should have consumed everything.
+    didReceiveEvent = false;
+    iterator.next().then((e) => {
+      expect(e.done).toStrictEqual(false);
+      didReceiveEvent = true;
+    });
+    await Promise.resolve();
+    expect(didReceiveEvent).toBeFalsy();
   });
 });
 
