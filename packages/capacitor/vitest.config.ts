@@ -76,6 +76,7 @@ class CapacitorBrowserProvider implements BrowserProvider {
 
   async openPage(_sessionId: string, url: string, _options?: { parallel: boolean }) {
     const serverUrl = serverUrlForPlatform(url);
+    console.log(`Opening Capacitor app with Vitest URL: ${serverUrl}`);
 
     // Ensure the target app spawning webviews is up-to-date with the current Vitest server URL.
     const buildResult = spawnSync('npx', ['cap', 'sync'], {
@@ -89,6 +90,8 @@ class CapacitorBrowserProvider implements BrowserProvider {
     if (buildResult.status !== 0) {
       throw new Error(`cap sync failed with exit code ${buildResult.status}`);
     }
+    console.log(`Launching ${environment.platform} Capacitor app on ${environment.target}`);
+
     const app = spawn('npx', ['cap', 'run', environment.platform, '--target', environment.target, '--no-sync'], {
       cwd: EXAMPLE_APP_DIR,
       env: {
