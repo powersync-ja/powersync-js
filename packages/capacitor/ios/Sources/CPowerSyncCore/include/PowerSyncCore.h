@@ -1,6 +1,6 @@
-#ifndef CMyPackage_h
-#define CMyPackage_h
+#ifndef POWERSYNC_PACKAGE
+#define POWERSYNC_PACKAGE
 
-int register_powersync();
+int register_powersync(void);
 
-#endif /* CMyPackage_h */
+#endif /* POWERSYNC_PACKAGE */

@@ -344,20 +344,20 @@ importers:
         version: link:../web
     devDependencies:
       '@capacitor-community/sqlite':
-        specifier: ^7.0.2
-        version: 7.0.3(@capacitor/core@7.5.0)
+        specifier: ^8.1.0
+        version: 8.1.0(@capacitor/core@8.3.4)
       '@capacitor/android':
-        specifier: ^7.0.0
-        version: 7.5.0(@capacitor/core@7.5.0)
+        specifier: ^8.0.0
+        version: 8.3.4(@capacitor/core@8.3.4)
       '@capacitor/core':
-        specifier: ^7.0.0
-        version: 7.5.0
+        specifier: ^8.0.0
+        version: 8.3.4
       '@capacitor/docgen':
-        specifier: ^0.3.0
+        specifier: ^0.3.1
         version: 0.3.1
       '@capacitor/ios':
-        specifier: ^7.0.0
-        version: 7.5.0(@capacitor/core@7.5.0)
+        specifier: ^8.0.0
+        version: 8.3.4(@capacitor/core@8.3.4)
       '@ionic/eslint-config':
         specifier: ^0.4.0
         version: 0.4.0(eslint@8.57.1)(typescript@5.9.3)
@@ -368,19 +368,19 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       eslint:
-        specifier: ^8.57.0
+        specifier: ^8.57.1
         version: 8.57.1
       prettier:
-        specifier: 'catalog:'
+        specifier: ^3.6.2
         version: 3.8.1
       prettier-plugin-java:
-        specifier: ^2.6.6
+        specifier: ^2.7.7
         version: 2.8.1(prettier@3.8.1)
       rimraf:
-        specifier: ^6.0.1
+        specifier: ^6.1.0
         version: 6.1.3
       rollup:
-        specifier: 'catalog:'
+        specifier: ^4.53.2
         version: 4.59.0
       rollup-plugin-dts:
         specifier: 'catalog:'
@@ -2100,29 +2100,29 @@ packages:
     peerDependencies:
       react: '>=16.3.0'
 
-  '@capacitor-community/sqlite@7.0.3':
-    resolution: {integrity: sha512-aKOCM3RglhF9Q2XA7NMyT923tc+dY9ANLzB+FgKy6Q6jxJIHuJ6YRZbFHJKicBjheCOP1k7HpPIdnZ05GpsGVg==}
+  '@capacitor-community/sqlite@8.1.0':
+    resolution: {integrity: sha512-yhKZDAVPDPcM3QE6UGB3LXyV25a6Rve1SjZ1aUpTE0E2isnYTVM0PG9+JOI241f+NdsHzPTE7ESJiYSqKsKnuA==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
-      '@capacitor/core': '>=7.0.0'
+      '@capacitor/core': '>=8.0.0'
 
-  '@capacitor/android@7.5.0':
-    resolution: {integrity: sha512-VjESuJYzQQH4vxvrOQV0yXuDv3Gx1bfb6YpAkoGfUHe0kiw0LY5nh5Kn7I5bI9hlht9SJ8YmSsCgFeMNyzKoWQ==}
+  '@capacitor/android@8.3.4':
+    resolution: {integrity: sha512-7gJjrG3X32Am1QMLqgMztWTYMLMVNE+VZwhekNxhvYizH4mOV05vH+rC9B+f17bCkYZfyu/qXQX6hoY7kLeVZw==}
     peerDependencies:
-      '@capacitor/core': ^7.5.0
+      '@capacitor/core': ^8.3.0
 
-  '@capacitor/core@7.5.0':
-    resolution: {integrity: sha512-4Y4trISe2Bp3lwsoGFoQIvgX4hiZO8S1Slmbz6oFaMxAuEc4noipQGCQx974PF4glwVVe/8+H3P9iEmCXtrUgA==}
+  '@capacitor/core@8.3.4':
+    resolution: {integrity: sha512-CqRQCkb6HXxcx/N7s+hHTN6ef2CmamFiRMITwm4qB840ph56mS42bzUgn6tKCP+RZjdDweiRHj9ytDDeN6jFag==}
 
   '@capacitor/docgen@0.3.1':
     resolution: {integrity: sha512-WBdAUquQC4hiZOVk1YbY5Rs3vlDrNdCGt3KGnMa2dc2UBa91Q7PQ/jLW/oZyfVIfiXWu7t1KUhhM3MyiZepUrQ==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  '@capacitor/ios@7.5.0':
-    resolution: {integrity: sha512-HlEWLjmPMSyjD8pM2FSTYF7a7aoYDdrlUoA3Ybm8OnmOaby3R7L8jpzJr96igh/i2SpsHvDI7v3sO2FhSNKCKA==}
+  '@capacitor/ios@8.3.4':
+    resolution: {integrity: sha512-XvvnPFWWP/gwwO811ue7nEBKSZqDCIB8hxGgWV6iXA7DSVLqMOEmQdfHj94kkVxof2wL9XWHypu3ayDULo7U5w==}
     peerDependencies:
-      '@capacitor/core': ^7.5.0
+      '@capacitor/core': ^8.3.0
 
   '@changesets/apply-release-plan@7.0.14':
     resolution: {integrity: sha512-ddBvf9PHdy2YY0OUiEl3TV78mH9sckndJR14QAt87KLEbIov81XO0q0QAmvooBxXlqRRP8I9B7XOzZwQG7JkWA==}
@@ -18510,16 +18510,16 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.2.4
 
-  '@capacitor-community/sqlite@7.0.3(@capacitor/core@7.5.0)':
+  '@capacitor-community/sqlite@8.1.0(@capacitor/core@8.3.4)':
     dependencies:
-      '@capacitor/core': 7.5.0
+      '@capacitor/core': 8.3.4
       jeep-sqlite: 2.8.0
 
-  '@capacitor/android@7.5.0(@capacitor/core@7.5.0)':
+  '@capacitor/android@8.3.4(@capacitor/core@8.3.4)':
     dependencies:
-      '@capacitor/core': 7.5.0
+      '@capacitor/core': 8.3.4
 
-  '@capacitor/core@7.5.0':
+  '@capacitor/core@8.3.4':
     dependencies:
       tslib: 2.8.1
 
@@ -18530,9 +18530,9 @@ snapshots:
       minimist: 1.2.8
       typescript: 4.2.4
 
-  '@capacitor/ios@7.5.0(@capacitor/core@7.5.0)':
+  '@capacitor/ios@8.3.4(@capacitor/core@8.3.4)':
     dependencies:
-      '@capacitor/core': 7.5.0
+      '@capacitor/core': 8.3.4
 
   '@changesets/apply-release-plan@7.0.14':
     dependencies:
