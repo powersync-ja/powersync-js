@@ -13,7 +13,7 @@
     "@op-engineering/op-sqlite": "^15.2.0",
     "@powersync/op-sqlite": "^0.9.8",
     "@powersync/react": "^1.10.0",
-    "@powersync/react-native": "^1.35.1",
+    "@powersync/react-native": "^1.35.2",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "5.6.2"
