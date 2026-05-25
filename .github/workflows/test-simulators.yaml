@@ -3,6 +3,9 @@ name: Test Simulators/Emulators
 on:
   pull_request: # triggered for any PR updates (including new pushes to PR branch)
 
+permissions:
+  contents: read
+
 jobs:
   check-changes:
     name: Check for relevant changes
@@ -129,6 +132,9 @@ jobs:
 
       - name: Sync and build Capacitor Android app
         working-directory: ./packages/capacitor/example-app
+        # Prebuild the native app so the later browser-test action can start quickly.
+        # This dummy Vitest server URL is only used for the prebuild; the test run
+        # updates Capacitor with the actual Vitest URL before launching the app.
         env:
           CAPACITOR_VITEST_SERVER_URL: http://${{ env.TEST_SERVER_HOST }}
         run: |
