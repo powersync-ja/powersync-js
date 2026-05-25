@@ -549,7 +549,7 @@ function defineSyncTests(bson: boolean) {
     await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
 
     syncService.installRequestInterceptor(async (request) => {
-      if (request.url.indexOf('/sync/stream') != -1) {
+      if (request.url.includes('/sync/stream')) {
         throw new Error('Pretend that the service is unavailable');
       }
     });
