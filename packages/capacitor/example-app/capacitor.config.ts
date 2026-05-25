@@ -3,7 +3,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.powersync.capacitor',
   appName: 'PowerSync Capacitor SDK example',
-  webDir: 'dist',
+  // Native Vitest runs load the test server URL directly, so use an existing placeholder directory instead of requiring a web build.
+  webDir: process.env.CAPACITOR_VITEST_SERVER_URL ? 'src' : 'dist',
   server: {
     cleartext: true,
     /**

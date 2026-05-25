@@ -75,10 +75,16 @@ class CapacitorBrowserProvider implements BrowserProvider {
   }
 
   async openPage(_sessionId: string, url: string, _options?: { parallel: boolean }) {
+    const serverUrl = serverUrlForPlatform(url);
+
     // Ensure the target app spawning webviews is up-to-date.
     const buildResult = spawnSync('npx', ['cap', 'sync'], {
       stdio: 'inherit',
-      cwd: EXAMPLE_APP_DIR
+      cwd: EXAMPLE_APP_DIR,
+      env: {
+        ...process.env,
+        CAPACITOR_VITEST_SERVER_URL: serverUrl
+      }
     });
     if (buildResult.status !== 0) {
       throw new Error(`cap sync failed with exit code ${buildResult.status}`);
@@ -89,7 +95,7 @@ class CapacitorBrowserProvider implements BrowserProvider {
       env: {
         ...process.env,
         // The Capacitor App will load this URL on boot. Android emulators use 10.0.2.2 to reach the host.
-        CAPACITOR_VITEST_SERVER_URL: serverUrlForPlatform(url)
+        CAPACITOR_VITEST_SERVER_URL: serverUrl
       },
       stdio: 'inherit'
     });
