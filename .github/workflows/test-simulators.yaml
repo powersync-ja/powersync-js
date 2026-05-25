@@ -105,6 +105,7 @@ jobs:
         with:
           avd-name: ${{ env.AVD_NAME }}
           cache-key: capacitor-avd-31
+          java-version: '21'
 
       - name: Enable Corepack
         run: corepack enable

@@ -19,6 +19,10 @@ inputs:
     description: Android system image architecture.
     required: false
     default: x86_64
+  java-version:
+    description: JDK version to install for Android builds.
+    required: false
+    default: '17'
 runs:
   using: composite
   steps:
@@ -41,10 +45,10 @@ runs:
           ~/.android/adb*
         key: ${{ inputs.cache-key }}
 
-    - name: Set up JDK 17
+    - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: 17
+        java-version: ${{ inputs.java-version }}
         distribution: adopt
         cache: gradle
 
