@@ -47,7 +47,9 @@ export function asyncNotifier(): AsyncNotifier {
     },
     waitForNotification(signal: AbortSignal) {
       return new Promise((resolve) => {
-        if (hasPendingNotification) {
+        if (signal.aborted) {
+          resolve();
+        } else if (hasPendingNotification) {
           resolve();
           hasPendingNotification = false;
         } else {
@@ -65,11 +67,7 @@ export function asyncNotifier(): AsyncNotifier {
           }
 
           waitingConsumers.push(complete);
-          if (signal.aborted) {
-            onAbort();
-          } else {
-            signal.addEventListener('abort', onAbort);
-          }
+          signal.addEventListener('abort', onAbort);
         }
       });
     }

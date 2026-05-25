@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { asyncNotifier } from '../../src/utils/async';
 
-describe('notifyIterator', () => {
+describe('asyncNotifier', () => {
   const neverAbort = new AbortController().signal;
 
   test('waits for event', async () => {
