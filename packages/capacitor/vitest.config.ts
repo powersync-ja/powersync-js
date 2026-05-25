@@ -102,9 +102,11 @@ class CapacitorBrowserProvider implements BrowserProvider {
     // The process to run the Capacitor app will end once the app starts,
     // we don't keep track of it, but we do fail if the command failed.
     await new Promise<void>((resolve, reject) => {
-      app.once('spawn', () => resolve());
+      app.once('exit', () => resolve());
       app.once('error', reject);
     });
+
+    console.log('Remote browser should be open');
   }
 
   async close() {}
