@@ -127,6 +127,9 @@ export interface NotifyIterator extends SimpleAsyncIterator<undefined> {
 
 /**
  * An iterator dispatching notifications without associated data.
+ *
+ * Backpressure is handled by folding calls to `notify()`: The iterator emits an item once there's been at least one
+ * `notify()` call since the last completed call to `next()`.
  */
 export function notifyIterator(): NotifyIterator {
   // Possible states:

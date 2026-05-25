@@ -208,12 +208,6 @@ export type SubscribedStream = {
   params: Record<string, any> | null;
 };
 
-// The priority we assume when we receive checkpoint lines where no priority is set.
-// This is the default priority used by the sync service, but can be set to an arbitrary
-// value since sync services without priorities also won't send partial sync completion
-// messages.
-const FALLBACK_PRIORITY = 3;
-
 export abstract class AbstractStreamingSyncImplementation
   extends BaseObserver<StreamingSyncImplementationListener>
   implements StreamingSyncImplementation
@@ -371,7 +365,9 @@ The next upload iteration will be delayed.`);
             } else {
               // Uploading is completed
               const neededUpdate = await this.options.adapter.updateLocalTarget(() => this.getWriteCheckpoint());
-              if (neededUpdate == false && checkedCrudItem != null) {
+              if (neededUpdate) {
+                this.notifyCompletedUploads?.();
+              } else if (checkedCrudItem != null) {
                 // Only log this if there was something to upload
                 this.logger.debug('Upload complete, no write checkpoint needed.');
               }
@@ -394,8 +390,6 @@ The next upload iteration will be delayed.`);
               `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
             );
           } finally {
-            this.notifyCompletedUploads?.();
-
             this.updateSyncStatus({
               dataFlow: {
                 uploading: false
