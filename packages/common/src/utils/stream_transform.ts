@@ -121,53 +121,6 @@ export function injectable<T>(source: SimpleAsyncIterator<T>): InjectableIterato
   };
 }
 
-export interface NotifyIterator extends SimpleAsyncIterator<undefined> {
-  notify(): void;
-}
-
-/**
- * An iterator dispatching notifications without associated data.
- *
- * Backpressure is handled by folding calls to `notify()`: The iterator emits an item once there's been at least one
- * `notify()` call since the last completed call to `next()`.
- */
-export function notifyIterator(): NotifyIterator {
-  // Possible states:
-  //   - Idle (null), no outstanding listener and no outstanding notification.
-  //   - Waiting (function), has an outstanding listener and no notification.
-  //   - Pending (true), no outstanding listener but an undelivered notification.
-  let state: null | ((complete: IteratorResult<undefined, any>) => void) | true = null;
-  const item = valueResult(undefined);
-
-  return {
-    notify() {
-      if (typeof state == 'function') {
-        // waiting -> idle
-        state(item);
-        state = null;
-      } else {
-        state = true; // idle -> pending or pending -> pending.
-      }
-    },
-    next() {
-      return new Promise((resolve) => {
-        if (typeof state == 'function') {
-          throw new Error('concurrent call to next');
-        }
-
-        if (state != null) {
-          // pending -> idle
-          resolve(item);
-          state = null;
-        } else {
-          // idle -> waiting
-          state = resolve;
-        }
-      });
-    }
-  };
-}
-
 /**
  * Splits a byte stream at line endings, emitting each line as a string.
  */

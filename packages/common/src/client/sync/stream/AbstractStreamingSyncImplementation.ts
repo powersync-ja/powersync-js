@@ -16,10 +16,10 @@ import {
   doneResult,
   injectable,
   InjectableIterator,
-  notifyIterator,
   SimpleAsyncIterator,
   valueResult
 } from '../../../utils/stream_transform.js';
+import { asyncNotifier } from '../../../utils/async.js';
 import { StreamingSyncRequestParameterType } from './JsonValue.js';
 
 export enum LockType {
@@ -219,13 +219,12 @@ export abstract class AbstractStreamingSyncImplementation
   protected logger: ILogger;
   private activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
-  private crudUploadNotifier = notifyIterator();
+  private crudUploadNotifier = asyncNotifier();
 
   private notifyCompletedUploads?: () => void;
   private handleActiveStreamsChange?: () => void;
 
   syncStatus: SyncStatus;
-  triggerCrudUpload: () => void;
 
   constructor(options: AbstractStreamingSyncImplementationOptions) {
     super();
@@ -243,8 +242,10 @@ export abstract class AbstractStreamingSyncImplementation
       }
     });
     this.abortController = null;
+  }
 
-    this.triggerCrudUpload = () => this.crudUploadNotifier.notify();
+  triggerCrudUpload() {
+    this.crudUploadNotifier.notify();
   }
 
   async waitForReady() {}
@@ -321,7 +322,7 @@ export abstract class AbstractStreamingSyncImplementation
         this.delayRetry(signal, this.options.crudUploadThrottleMs!)
       ]);
 
-      await this.crudUploadNotifier.next();
+      await this.crudUploadNotifier.waitForNotification(signal);
     }
   }
 
@@ -483,7 +484,7 @@ The next upload iteration will be delayed.`);
       });
     });
 
-    this.crudUploadLoop(signal);
+    this.crudUploadLoop(signal).catch((ex) => this.logger.error('Error in crud upload loop', ex));
 
     /**
      * This loops runs until [retry] is false or the abort signal is set to aborted.
