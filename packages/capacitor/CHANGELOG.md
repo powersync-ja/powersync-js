@@ -1,5 +1,13 @@
 # @powersync/capacitor
 
+## 0.6.0
+
+### Minor Changes
+
+- 4fc12f9: Add Swift Package Manager support for iOS projects.
+
+  This raises the minimum supported Capacitor version to Capacitor 8.
+
 ## 0.5.3
 
 ### Patch Changes

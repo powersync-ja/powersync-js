@@ -19,7 +19,7 @@
     "@powersync/attachments-storage-react-native": "^0.0.2",
     "@powersync/common": "^1.53.1",
     "@powersync/react": "^1.10.0",
-    "@powersync/react-native": "^1.35.1",
+    "@powersync/react-native": "^1.35.2",
     "@powersync/web": "^1.38.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
