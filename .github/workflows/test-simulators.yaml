@@ -43,30 +43,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: AVD Cache
-        uses: actions/cache@v3
-        id: avd-cache
+      - name: Setup Android emulator
+        uses: ./.github/actions/setup-android-emulator
         with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-31
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: 'adopt'
-          cache: 'gradle'
+          avd-name: ${{ env.AVD_NAME }}
+          cache-key: avd-31
 
       - name: Enable Corepack
         run: corepack enable
@@ -87,22 +68,6 @@ jobs:
         run: |
           pnpx detox clean-framework-cache && pnpx detox build-framework-cache
 
-      - name: Initialize Android Folder
-        run: mkdir -p ~/.android/avd
-
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2.28.0
-        with:
-          api-level: 31
-          force-avd-creation: false
-          target: google_apis
-          arch: x86_64
-          disable-animations: false
-          avd-name: $AVD_NAME
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: echo "Generated AVD snapshot for caching."
-
       - name: Android Emulator Build
         working-directory: ./tools/powersynctests
         run: pnpx detox build --configuration android.emu.release
@@ -113,7 +78,7 @@ jobs:
           api-level: 31
           target: google_apis
           arch: x86_64
-          avd-name: $AVD_NAME
+          avd-name: ${{ env.AVD_NAME }}
           script: cd tools/powersynctests && pnpx detox test --configuration android.emu.release --headless
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
@@ -135,30 +100,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: AVD Cache
-        uses: actions/cache@v3
-        id: capacitor-avd-cache
+      - name: Setup Android emulator
+        uses: ./.github/actions/setup-android-emulator
         with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: capacitor-avd-31
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: 17
-          distribution: 'adopt'
-          cache: 'gradle'
+          avd-name: ${{ env.AVD_NAME }}
+          cache-key: capacitor-avd-31
 
       - name: Enable Corepack
         run: corepack enable
@@ -179,30 +125,15 @@ jobs:
       - name: Build
         run: pnpm build:packages
 
-      - name: Initialize Android Folder
-        run: mkdir -p ~/.android/avd
-
-      - name: Create AVD and generate snapshot for caching
-        if: steps.capacitor-avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2.28.0
-        with:
-          api-level: 31
-          force-avd-creation: false
-          target: google_apis
-          arch: x86_64
-          disable-animations: false
-          avd-name: $AVD_NAME
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: echo "Generated AVD snapshot for caching."
-
       - name: Run Capacitor Android browser tests
         uses: reactivecircus/android-emulator-runner@v2.28.0
         with:
           api-level: 31
           target: google_apis
           arch: x86_64
-          avd-name: $AVD_NAME
+          avd-name: ${{ env.AVD_NAME }}
           script: |
+            cd packages/capacitor
             pnpm exec vitest run --config vitest.config.ts
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
