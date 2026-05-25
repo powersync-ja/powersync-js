@@ -176,8 +176,8 @@ jobs:
         working-directory: ./packages/capacitor/example-app
         run: pnpm install
 
-      - name: Build Capacitor package
-        run: pnpm --filter @powersync/capacitor build
+      - name: Build
+        run: pnpm build:packages
 
       - name: Initialize Android Folder
         run: mkdir -p ~/.android/avd
