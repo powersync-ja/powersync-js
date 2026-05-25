@@ -40,13 +40,6 @@ pnpm exec vitest run --config vitest.config.ts
 
 ### Android
 
-Create the Android example app platform if it is not present yet:
-
-```sh
-cd packages/capacitor/example-app
-pnpm exec cap add android
-```
-
 List available Android emulator/device targets:
 
 ```sh
