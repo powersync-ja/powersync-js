@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-xl
     timeout-minutes: 30
     env:
-      AVD_NAME: capacitor-avd-x86_64-31
+      AVD_NAME: capacitor-avd-x86_64-35
       TEST_PLATFORM: android
       TEST_TARGET: emulator-5554
       TEST_SERVER_HOST: 10.0.2.2
@@ -104,7 +104,8 @@ jobs:
         uses: ./.github/actions/setup-android-emulator
         with:
           avd-name: ${{ env.AVD_NAME }}
-          cache-key: capacitor-avd-31
+          cache-key: capacitor-avd-35
+          api-level: '35'
           java-version: '21'
 
       - name: Enable Corepack
@@ -138,7 +139,7 @@ jobs:
       - name: Run Capacitor Android browser tests
         uses: reactivecircus/android-emulator-runner@v2.28.0
         with:
-          api-level: 31
+          api-level: 35
           target: google_apis
           arch: x86_64
           avd-name: ${{ env.AVD_NAME }}
