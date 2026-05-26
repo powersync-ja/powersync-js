@@ -215,7 +215,7 @@ export abstract class AbstractStreamingSyncImplementation
   protected options: AbstractStreamingSyncImplementationOptions;
   protected abortController: AbortController | null;
   protected crudUpdateListener?: () => void;
-  protected streamingSyncPromise?: Promise<void>;
+  protected streamingSyncPromise?: Promise<[void, void]>;
   protected logger: ILogger;
   private activeStreams: SubscribedStream[];
   private connectionMayHaveChanged = false;
@@ -409,7 +409,10 @@ The next upload iteration will be delayed.`);
 
     const controller = new AbortController();
     this.abortController = controller;
-    this.streamingSyncPromise = this.streamingSync(this.abortController.signal, options);
+    this.streamingSyncPromise = Promise.all([
+      this.crudUploadLoop(controller.signal).catch((ex) => this.logger.error('Error in crud upload loop', ex)),
+      this.streamingSync(controller.signal, options)
+    ]);
 
     // Return a promise that resolves when the connection status is updated to indicate that we're connected.
     return new Promise<void>((resolve) => {
@@ -483,8 +486,6 @@ The next upload iteration will be delayed.`);
         }
       });
     });
-
-    this.crudUploadLoop(signal).catch((ex) => this.logger.error('Error in crud upload loop', ex));
 
     /**
      * This loops runs until [retry] is false or the abort signal is set to aborted.
