@@ -16,10 +16,13 @@ jobs:
         with:
           node-version: 20.18.1
 
-      - name: Install and build packages
+      - name: Install packages
+        run: pnpm ci
+
+      - name: Build packages
         run: |
-          pnpm ci
-          pnpm build:packages
+          pnpm run --filter ./packages/common build 
+          pnpm run --filter ./packages/node build
 
       - name: Run Node tests
         run: pnpm run --filter ./packages/node test
