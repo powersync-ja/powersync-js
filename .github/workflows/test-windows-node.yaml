@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - tmp/windows-node-min-version
+
+jobs:
+  test-windows-node:
+    runs-on: windows-2022 # Oldest windows version Github will run
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.18.1
+
+      - name: Install and build packages
+        run: |
+          pnpm ci
+          pnpm build:packages
+
+      - name: Run Node tests
+        run: pnpm run --filter ./packages/node test
