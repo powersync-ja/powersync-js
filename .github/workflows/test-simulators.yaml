@@ -123,7 +123,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build:packages
+        run: pnpm run -r --filter "@powersync/capacitor..." build
 
       - name: Install Capacitor example dependencies
         working-directory: ./packages/capacitor/example-app
