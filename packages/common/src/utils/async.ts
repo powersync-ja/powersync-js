@@ -27,26 +27,31 @@ export interface AsyncNotifier {
   waitForNotification(signal: AbortSignal): Promise<void>;
 
   /**
-   * Notifies any pending listener, or makes the next {@link waitForNotification} complete immediately if no listener
+   * Notifies a pending listener, or makes the next {@link waitForNotification} complete immediately if no listener
    * is currently active.
    */
   notify(): void;
 }
 
 export function asyncNotifier(): AsyncNotifier {
-  let waitingConsumers: (() => void)[] = [];
+  let waitingConsumer: (() => void) | null = null;
   let hasPendingNotification = false;
 
   return {
     notify() {
-      if (waitingConsumers.length > 0) {
-        waitingConsumers.splice(0, 1)[0]();
+      if (waitingConsumer != null) {
+        waitingConsumer();
+        waitingConsumer = null;
       } else {
         hasPendingNotification = true;
       }
     },
     waitForNotification(signal: AbortSignal) {
       return new Promise((resolve) => {
+        if (waitingConsumer != null) {
+          throw new Error('Illegal call to waitForNotification, already has a waiter.');
+        }
+
         if (signal.aborted) {
           resolve();
         } else if (hasPendingNotification) {
@@ -59,14 +64,11 @@ export function asyncNotifier(): AsyncNotifier {
           }
 
           function onAbort() {
-            const i = waitingConsumers.indexOf(complete);
-            if (i > -1) {
-              waitingConsumers.splice(i, 1);
-            }
+            waitingConsumer = null;
             resolve();
           }
 
-          waitingConsumers.push(complete);
+          waitingConsumer = complete;
           signal.addEventListener('abort', onAbort);
         }
       });
