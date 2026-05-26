@@ -566,6 +566,45 @@ function defineSyncTests(bson: boolean) {
     await vi.waitFor(() => expect(connector.uploadDataInvocations).toStrictEqual(2));
   });
 
+  mockSyncServiceTest('should restart uploads on write even if not connected', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    let attemptedUploads = 0;
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.includes('/sync/stream')) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    database.connect(
+      {
+        fetchCredentials: async () => {
+          return {
+            endpoint: 'https://powersync.example.org',
+            token: 'test'
+          };
+        },
+        uploadData: async () => {
+          attemptedUploads++;
+          throw new Error('deliberate failure');
+        }
+      },
+      { ...options, retryDelayMs: 100, crudUploadThrottleMs: 100 }
+    );
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // Because we start a crud upload on connect, there should have been a call.
+    expect(attemptedUploads).toStrictEqual(1);
+    expect(database.currentStatus.dataFlowStatus.uploadError).toMatchObject({ name: 'Error' });
+
+    // Currently, we don't retry crud uploads if we're not connected. We might revisit that in the future, but either
+    // way we definitely want to retry if there's a new CRUD entry.
+    console.log('second write');
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(attemptedUploads).toStrictEqual(2));
+  });
+
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
     const logger = createLogger('test', { logLevel: Logger.TRACE });
     const logMessages: string[] = [];
