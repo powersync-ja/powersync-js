@@ -19,32 +19,59 @@ export function throttleTrailing(func: () => void, wait: number) {
   };
 }
 
-/**
- * Throttle a function to be called at most once every "wait" milliseconds,
- * on the leading and trailing edge.
- *
- * Roughly equivalent to lodash/throttle with {leading: true, trailing: true}
- */
-export function throttleLeadingTrailing(func: () => void, wait: number) {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  let lastCallTime: number = 0;
+export interface AsyncNotifier {
+  /**
+   * @param signal Also resolve the promise once this signal completes.
+   * @returns A promise that resolves once {@link notify} is called after this promise was last resolved.
+   */
+  waitForNotification(signal: AbortSignal): Promise<void>;
 
-  const invokeFunction = () => {
-    func();
-    lastCallTime = Date.now();
-    timeoutId = null;
-  };
+  /**
+   * Notifies a pending listener, or makes the next {@link waitForNotification} complete immediately if no listener
+   * is currently active.
+   */
+  notify(): void;
+}
 
-  return function () {
-    const now = Date.now();
-    const timeToWait = wait - (now - lastCallTime);
+export function asyncNotifier(): AsyncNotifier {
+  let waitingConsumer: (() => void) | null = null;
+  let hasPendingNotification = false;
 
-    if (timeToWait <= 0) {
-      // Leading edge: Call the function immediately if enough time has passed
-      invokeFunction();
-    } else if (!timeoutId) {
-      // Set a timeout for the trailing edge if not already set
-      timeoutId = setTimeout(invokeFunction, timeToWait);
+  return {
+    notify() {
+      if (waitingConsumer != null) {
+        waitingConsumer();
+        waitingConsumer = null;
+      } else {
+        hasPendingNotification = true;
+      }
+    },
+    waitForNotification(signal: AbortSignal) {
+      return new Promise((resolve) => {
+        if (waitingConsumer != null) {
+          throw new Error('Illegal call to waitForNotification, already has a waiter.');
+        }
+
+        if (signal.aborted) {
+          resolve();
+        } else if (hasPendingNotification) {
+          resolve();
+          hasPendingNotification = false;
+        } else {
+          function complete() {
+            signal.removeEventListener('abort', onAbort);
+            resolve();
+          }
+
+          function onAbort() {
+            waitingConsumer = null;
+            resolve();
+          }
+
+          waitingConsumer = complete;
+          signal.addEventListener('abort', onAbort);
+        }
+      });
     }
   };
 }
