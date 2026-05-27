@@ -26,9 +26,9 @@
     "@capacitor/ios": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@journeyapps/wa-sqlite": "^1.7.0",
-    "@powersync/capacitor": "^0.6.0",
+    "@powersync/capacitor": "^0.6.1",
     "@powersync/react": "^1.10.0",
-    "@powersync/web": "^1.38.1",
+    "@powersync/web": "^1.38.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.0"
