@@ -80,7 +80,9 @@
     "rimraf": "^6.1.0",
     "rollup": "^4.53.2",
     "rollup-plugin-dts": "catalog:",
-    "swiftlint": "^2.0.0"
+    "swiftlint": "^2.0.0",
+    "vitest": "^4.1.1",
+    "@vitest/browser-preview": "^4.1.1"
   },
   "peerDependencies": {
     "@capacitor/core": ">=8.0.0",

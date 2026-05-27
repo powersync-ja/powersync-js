@@ -1,0 +1,41 @@
+{
+  "pins" : [
+    {
+      "identity" : "capacitor-swift-pm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
+      "state" : {
+        "branch" : "8.0.0",
+        "revision" : "596259033e94829dffc552a40e7129262122995e"
+      }
+    },
+    {
+      "identity" : "powersync-sqlite-core-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/powersync-ja/powersync-sqlite-core-swift.git",
+      "state" : {
+        "revision" : "8571d46d169a24ee1f3733cb554b23b9408cbe09",
+        "version" : "0.4.14"
+      }
+    },
+    {
+      "identity" : "sqlcipher.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sqlcipher/SQLCipher.swift.git",
+      "state" : {
+        "revision" : "07bf6bc2191a063d6f1e7c3b5f276a3fadfe36b7",
+        "version" : "4.16.0"
+      }
+    },
+    {
+      "identity" : "zipfoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/weichsel/ZIPFoundation.git",
+      "state" : {
+        "revision" : "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
+        "version" : "0.9.20"
+      }
+    }
+  ],
+  "version" : 2
+}

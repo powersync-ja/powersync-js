@@ -1,12 +1,16 @@
-## Created with Capacitor Create App
+# PowerSync Capacitor Example App
 
-This app was created using [`@capacitor/create-app`](https://github.com/ionic-team/create-capacitor-app),
-and comes with a very minimal shell for building an app.
+This app is a minimal Capacitor host for the `@powersync/capacitor` package. It is used as the native app shell for the package's Vitest browser integration tests: Vitest starts a browser test server, then the custom provider launches this app and points the WebView at that server.
 
-### Running this example
+The `ios/` and `android/` folders are committed intentionally. Capacitor treats them as app source folders, and they contain native configuration such as `Info.plist`, `AndroidManifest.xml`, plugin setup, and platform-specific project files.
 
-To run the provided example, you can use `npm start` command.
+## Refresh Native Projects
+
+After changing Capacitor config, native dependencies, or plugin setup, refresh the native projects:
 
 ```bash
-npm start
+pnpm exec cap sync ios
+pnpm exec cap sync android
 ```
+
+See `../DEVELOP.md` for the full native integration test workflow.
