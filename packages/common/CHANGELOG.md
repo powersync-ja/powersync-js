@@ -1,5 +1,11 @@
 # @powersync/common
 
+## 1.53.2
+
+### Patch Changes
+
+- ac183c2: Attempt a CRUD upload everytime `connect()` is called, even if we're unable to connect.
+
 ## 1.53.1
 
 ### Patch Changes
