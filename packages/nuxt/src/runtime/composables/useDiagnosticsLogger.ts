@@ -40,7 +40,6 @@ export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
       // Store extra args as-is so objects are shown as JSON in LogsTab
       const logObject = {
         date: new Date(),
-        tag: record.tag,
         message: record.message,
         error: record.error,
         level: nameOfLogLevel(record.level)

@@ -17,7 +17,7 @@ describe('useDiagnosticsLogger', () => {
     const [{ logger, logsStorage }] = withSetup(() => useDiagnosticsLogger());
 
     const testMessage = 'Test log message for storage';
-    await logger.log({ level: LogLevels.info, message: testMessage, tag: 'TestContext' });
+    await logger.log({ level: LogLevels.info, message: testMessage });
 
     // Wait for async storage operations
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -39,7 +39,6 @@ describe('useDiagnosticsLogger', () => {
     }
 
     expect(storedLog).toMatchObject({
-      tag: 'TestContext',
       level: 'INFO',
       message: testMessage
     });
@@ -57,7 +56,6 @@ describe('useDiagnosticsLogger', () => {
     const testMessage = 'Test event message';
     await logger.log({
       message: testMessage,
-      tag: 'TestContext',
       level: LogLevels.warn
     } as any);
 
@@ -78,7 +76,7 @@ describe('useDiagnosticsLogger', () => {
     const log = vi.fn((_record: LogRecord) => {});
     const [{ logger }] = withSetup(() => useDiagnosticsLogger({ log }));
 
-    await logger.log({ level: LogLevels.warn, message: 'Message 1', tag: 'TestContext' });
+    await logger.log({ level: LogLevels.warn, message: 'Message 1' });
 
     // Wait for async handler
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -86,7 +84,7 @@ describe('useDiagnosticsLogger', () => {
     expect(log).toHaveBeenCalledTimes(1);
     const [record] = log.mock.calls[0];
 
-    expect(record).toStrictEqual({ level: LogLevels.warn, message: 'Message 1', tag: 'TestContext' });
+    expect(record).toStrictEqual({ level: LogLevels.warn, message: 'Message 1' });
   });
 
   it('should format messages with PowerSync prefix to console', async () => {
@@ -96,7 +94,7 @@ describe('useDiagnosticsLogger', () => {
     const [{ logger }] = withSetup(() => useDiagnosticsLogger());
 
     const testMessage = 'Test formatted message';
-    await logger.log({ message: testMessage, level: LogLevels.info, tag: 'tag' });
+    await logger.log({ message: testMessage, level: LogLevels.info });
 
     await new Promise((resolve) => setTimeout(resolve, 150));
 
