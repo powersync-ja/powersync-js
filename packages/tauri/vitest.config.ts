@@ -1,8 +1,9 @@
 import * as path from 'node:path';
 import { ChildProcess, spawn, spawnSync } from 'node:child_process';
+import { createInterface } from 'node:readline';
 
 import { defineConfig } from 'vitest/config';
-import { preview } from '@vitest/browser-preview'
+import { preview } from '@vitest/browser-preview';
 import { BrowserProvider } from 'vitest/node';
 
 // We can't define serverFactory ourselves because vitest doesn't export the building blocks,
@@ -27,7 +28,7 @@ class TauriBrowserProvider implements BrowserProvider {
     return {};
   }
 
-  async openPage(_sessionId: string, url: string, _options: { parallel: boolean; }) {
+  async openPage(_sessionId: string, url: string, _options: { parallel: boolean }) {
     if (this.#tauriApp != null) {
       throw new Error('TODO: Calling openPage multiple times is not supported');
     }
@@ -47,9 +48,18 @@ class TauriBrowserProvider implements BrowserProvider {
       }
     });
 
+    createInterface(app.stdout).on('line', (line) => console.log(`[Test process]: ${line}`));
+    createInterface(app.stderr).on('line', (line) => console.error(`[Test process]: ${line}`));
+
     await new Promise<void>((resolve, reject) => {
-      app.once('spawn', () => resolve());
-      app.once('error', reject);
+      app.once('spawn', () => {
+        console.info(`Child process spawned, pid ${app.pid}`);
+        resolve();
+      });
+      app.once('error', (e) => {
+        console.error('Failed to spawn child process', e);
+        reject(e);
+      });
     });
   }
 
@@ -78,6 +88,6 @@ export default defineConfig({
           browser: 'chrome'
         }
       ]
-    },
+    }
   }
 });
