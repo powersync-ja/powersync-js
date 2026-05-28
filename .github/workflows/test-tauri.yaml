@@ -1,6 +1,7 @@
 name: Tauri Integration tests
 on:
-  pull_request: # triggered for any PR updates (including new pushes to PR branch)
+#  pull_request: # triggered for any PR updates (including new pushes to PR branch)
+  push:
 
 jobs:
   check-changes:
