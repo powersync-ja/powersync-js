@@ -13,6 +13,7 @@ fn main() {
         config.build.dev_url = Some(Url::parse(&url).expect("Could not parse URL"));
     }
 
+    println!("Running test tauri application");
     tauri::Builder::default()
         .plugin(tauri_plugin_powersync::init())
         .run(context)
