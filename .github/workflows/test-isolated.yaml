@@ -2,7 +2,7 @@
 name: Test Isolated Demos
 
 on:
-  #push:
+  push:
 
 jobs:
   test:
