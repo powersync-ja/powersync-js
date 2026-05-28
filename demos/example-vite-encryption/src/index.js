@@ -13,7 +13,7 @@ const openDatabase = async (encryptionKey) => {
     schema: AppSchema,
     database: { dbFilename: 'example-encryption.db' },
     encryptionKey: encryptionKey,
-    logge
+    logger
   });
 
   await PowerSync.init();

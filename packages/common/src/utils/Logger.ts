@@ -12,18 +12,14 @@ export const LogLevels = {
 export interface LogRecord {
   /**
    * The log level (see {@link LogLevels} for preconfigured values) for the message. Depending on how a receiving logger
-   * has been confired, messages below a configured minimum level may be ignored.
+   * has been configured, messages below a configured minimum level may be ignored.
    */
   level: number;
+
   /**
    * The main message to log.
    */
   message: string;
-
-  /**
-   * The (optional) component within the PowerSync SDK logging the message.
-   */
-  tag?: string;
 
   /**
    * When the log message contains an error, the error causing the log.
@@ -72,21 +68,19 @@ export function createConsoleLogger(options?: Partial<CreateLoggerOptions>): Pow
   return {
     prefix,
     minLevel,
-    log({ level, message, tag, error }) {
+    log({ level, message, error }) {
       if (level < this.minLevel) return;
 
       let emitter = console.log;
-      if (level >= LogLevels.info) {
-        emitter = console.info;
-      } else if (level >= LogLevels.error) {
+      if (level >= LogLevels.error) {
         emitter = console.error;
       } else if (level >= LogLevels.warn) {
         emitter = console.warn;
+      } else if (level >= LogLevels.info) {
+        emitter = console.info;
       }
 
-      let resolvedPrefix = tag != null ? `${prefix}.${tag}` : prefix;
-      const messageWithPrefix = `[${resolvedPrefix}]: ${message}`;
-
+      const messageWithPrefix = `[${prefix}]: ${message}`;
       if (error) {
         emitter(messageWithPrefix, error);
       } else {
