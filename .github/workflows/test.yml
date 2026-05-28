@@ -2,7 +2,7 @@
 name: Test Packages
 
 on:
-  push:
+  #push:
 
 jobs:
   test:

@@ -28,17 +28,18 @@ class TauriBrowserProvider implements BrowserProvider {
     return {};
   }
 
-  async openPage(_sessionId: string, url: string, _options: { parallel: boolean }) {
+  async openPage(_sessionId: string, url: string, options: { parallel: boolean }) {
     if (this.#tauriApp != null) {
       throw new Error('TODO: Calling openPage multiple times is not supported');
     }
 
+    console.log('openPage', url, options);
     // Ensure the target app spawning webviews is up-to-date.
     const buildResult = spawnSync('cargo', ['build', '-p', 'test-runner'], { stdio: 'inherit' });
     if (buildResult.status !== 0) {
       throw new Error(`cargo build failed with exit code ${buildResult.status}`);
     }
-    const app = spawn(testRunnerExecutable, [url]);
+    const app = spawn(testRunnerExecutable, [url], { env: { RUST_LOG: 'info', ...process.env } });
     this.#tauriApp = app;
 
     app.on('exit', (code) => {
