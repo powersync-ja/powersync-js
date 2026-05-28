@@ -11,7 +11,7 @@ import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-stor
 import {
   type AttachmentRecord,
   AttachmentQueue,
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   WatchedAttachmentItem
 } from '@powersync/common';
@@ -22,7 +22,7 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
 import { Platform } from 'react-native';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   kvStorage: ExpoKVStorage | WebKVStorage;

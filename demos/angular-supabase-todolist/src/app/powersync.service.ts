@@ -3,7 +3,7 @@ import {
   AbstractPowerSyncDatabase,
   Column,
   ColumnType,
-  createPowerSyncLogger,
+  createConsoleLogger,
   Index,
   IndexedColumn,
   LogLevels,
@@ -73,7 +73,7 @@ export class PowerSyncService {
       // Specify the path to the worker script
       worker: 'assets/@powersync/worker/WASQLiteDB.umd.js',
       logLevel: LogLevels.debug,
-      logger: createPowerSyncLogger({ prefix: 'powersync' })
+      logger: createConsoleLogger({ prefix: 'powersync' })
     });
 
     this.db = new PowerSyncDatabase({

@@ -6,9 +6,9 @@ import { PowerSyncContext, usePowerSync as _usePowerSync } from '@powersync/reac
 import { AppSchema } from '@/definitions/Schema';
 import { SupabaseConnector } from '@/library/SupabaseConnector';
 import { useSupabase } from './SupabaseProvider';
-import { createPowerSyncLogger, LogLevels } from '@powersync/web';
+import { createConsoleLogger, LogLevels } from '@powersync/web';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export interface SystemProviderProps {
   dbFilename: string;

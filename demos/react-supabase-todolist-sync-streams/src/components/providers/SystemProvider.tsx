@@ -4,7 +4,7 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
 import {
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   DifferentialWatchedQuery,
   PowerSyncDatabase,
@@ -16,7 +16,7 @@ import { NavigationPanelContextProvider } from '../navigation/NavigationPanelCon
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: {

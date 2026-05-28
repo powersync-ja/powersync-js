@@ -1,6 +1,6 @@
-import { PowerSyncDatabase, Schema, Table, column, createPowerSyncLogger, LogLevels } from '@powersync/web';
+import { PowerSyncDatabase, Schema, Table, column, createConsoleLogger, LogLevels } from '@powersync/web';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 /**
  * A placeholder connector which doesn't do anything.

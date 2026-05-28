@@ -6,7 +6,7 @@ import {
   SyncStreamConnectionMethod,
   Table,
   column,
-  createPowerSyncLogger
+  createConsoleLogger
 } from '@powersync/common';
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
@@ -67,7 +67,7 @@ export const sharedMockSyncServiceTest = test.extend<{
 }>({
   context: async ({}, use) => {
     const dbFilename = `test-${crypto.randomUUID()}.db`;
-    const logger = createPowerSyncLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
+    const logger = createConsoleLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
 
     const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
       const db = new PowerSyncDatabase({

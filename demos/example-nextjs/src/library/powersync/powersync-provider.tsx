@@ -3,12 +3,12 @@
 import { AppSchema } from '@/library/powersync/schema';
 import { BackendConnector } from '@/library/powersync/connector';
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase, WASQLiteOpenFactory } from '@powersync/web';
 import React, { Suspense } from 'react';
 
 let dbInstance: PowerSyncDatabase | null = null;
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 function getDB(): PowerSyncDatabase {
   if (dbInstance) return dbInstance;

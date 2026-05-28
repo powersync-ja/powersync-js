@@ -3,7 +3,7 @@ import repl_factory from 'node:repl';
 import { Worker } from 'node:worker_threads';
 
 import {
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   PowerSyncDatabase,
   SyncClientImplementation,
@@ -16,7 +16,7 @@ import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
 
 const main = async () => {
   const debug = process.env.POWERSYNC_DEBUG == '1';
-  const logger = createPowerSyncLogger({ prefix: 'PowerSyncDemo', minLevel: debug ? LogLevels.trace : LogLevels.warn });
+  const logger = createConsoleLogger({ prefix: 'PowerSyncDemo', minLevel: debug ? LogLevels.trace : LogLevels.warn });
 
   const encryptionKey = process.env.ENCRYPTION_KEY ?? '';
 

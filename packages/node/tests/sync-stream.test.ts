@@ -1,6 +1,6 @@
 import { describe, vi, expect, onTestFinished } from 'vitest';
 import {
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   PowerSyncConnectionOptions,
   SyncStreamConnectionMethod
@@ -11,7 +11,7 @@ describe('Sync streams', () => {
   const defaultOptions = {
     connectionMethod: SyncStreamConnectionMethod.HTTP
   } satisfies PowerSyncConnectionOptions;
-  const logger = createPowerSyncLogger({ minLevel: LogLevels.warn });
+  const logger = createConsoleLogger({ minLevel: LogLevels.warn });
 
   mockSyncServiceTest('can disable default streams', async ({ syncService }) => {
     const database = await syncService.createDatabase({ logger });

@@ -1,6 +1,6 @@
 import {
   BaseListener,
-  createPowerSyncLogger,
+  createConsoleLogger,
   DEFAULT_STREAMING_SYNC_OPTIONS,
   LogLevels,
   PowerSyncDatabase,
@@ -19,7 +19,7 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RustClientInterceptor } from './RustClientInterceptor';
 import { TokenConnector } from './TokenConnector';
 
-const baseLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const baseLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[];
 

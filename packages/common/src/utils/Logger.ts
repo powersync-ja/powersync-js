@@ -41,7 +41,7 @@ export interface LogRecord {
  * your application. Instead, you can provide an implementation of this to PowerSync to make it use your preferred
  * logging libraries.
  *
- * By default, the SDK uses a {@link createPowerSyncLogger} instance forwarding messages to `console.log`.
+ * By default, the SDK uses a {@link createConsoleLogger} instance forwarding messages to `console.log`.
  */
 export interface PowerSyncLogger {
   log(record: LogRecord): void;
@@ -49,7 +49,7 @@ export interface PowerSyncLogger {
 
 export interface CreateLoggerOptions {
   /**
-   * A prefix for messages emitted by {@link createPowerSyncLogger} to make them more recognizable.
+   * A prefix for messages emitted by {@link createConsoleLogger} to make them more recognizable.
    *
    * Defaults to `'PowerSync'`.
    */
@@ -66,7 +66,7 @@ export interface CreateLoggerOptions {
  *
  * @param options Options to configure a minimum severity of the logger or a prefix to make messages more recognizable.
  */
-export function createPowerSyncLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions {
+export function createConsoleLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions {
   const { prefix = 'PowerSync', minLevel = LogLevels.info } = options ?? {};
 
   return {

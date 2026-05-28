@@ -46,7 +46,7 @@ import { DEFAULT_WATCH_THROTTLE_MS, WatchCompatibleQuery } from './watched/Watch
 import { OnChangeQueryProcessor } from './watched/processors/OnChangeQueryProcessor.js';
 import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
-import { createPowerSyncLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
+import { createConsoleLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 
 export interface DisconnectAndClearOptions {
   /** When set to false, data in local-only tables is preserved. */
@@ -234,7 +234,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
   constructor(protected options: PowerSyncDatabaseOptions) {
     super();
-    this.logger = options.logger ?? createPowerSyncLogger();
+    this.logger = options.logger ?? createConsoleLogger();
 
     const { database, schema } = options;
 

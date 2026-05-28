@@ -1,6 +1,6 @@
-import { column, Schema, Table, PowerSyncDatabase, createPowerSyncLogger, LogLevels } from '@powersync/web';
+import { column, Schema, Table, PowerSyncDatabase, createConsoleLogger, LogLevels } from '@powersync/web';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 const customers = new Table({ name: column.text });
 

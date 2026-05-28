@@ -1,4 +1,4 @@
-import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createPowerSyncLogger, LogRecord } from '@powersync/common';
+import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createConsoleLogger, LogRecord } from '@powersync/common';
 import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 
 /**
@@ -14,7 +14,7 @@ export class BroadcastLogger implements PowerSyncLogger {
     prefix: string,
     private clients: WrappedSyncPort[]
   ) {
-    this.inner = createPowerSyncLogger({ prefix: prefix });
+    this.inner = createConsoleLogger({ prefix: prefix });
   }
 
   log(record: LogRecord) {

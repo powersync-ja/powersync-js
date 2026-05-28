@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { Worker } from 'node:worker_threads';
 
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase, SyncStreamConnectionMethod } from '@powersync/node';
 import { app, BrowserWindow, ipcMain, MessagePortMain } from 'electron';
 import { AppSchema, BackendConnector } from './powersync';
 
@@ -36,7 +36,7 @@ const database = new PowerSyncDatabase({
       return new Worker(new URL('./worker.ts', import.meta.url), options);
     }
   },
-  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 
 const createWindow = (): void => {

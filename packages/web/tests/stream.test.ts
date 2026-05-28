@@ -1,5 +1,5 @@
 import {
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   PowerSyncConnectionOptions,
   Schema,
@@ -19,7 +19,7 @@ import { defaultLoggerConfig } from './utils/logger.js';
 const UPLOAD_TIMEOUT_MS = 3000;
 
 describe('Streaming', { sequential: true }, () => {
-  const logger = createPowerSyncLogger({ prefix: 'stream test', minLevel: LogLevels.trace });
+  const logger = createConsoleLogger({ prefix: 'stream test', minLevel: LogLevels.trace });
 
   describe(
     'Streaming - With Web Workers',

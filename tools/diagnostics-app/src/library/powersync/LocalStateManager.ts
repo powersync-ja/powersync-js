@@ -1,6 +1,6 @@
 import {
   column,
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   PowerSyncDatabase,
   Schema,
@@ -50,7 +50,7 @@ const openFactory = new WASQLiteOpenFactory({
   cacheSizeKb: 100 * 1024,
   temporaryStorage: TemporaryStorageOption.MEMORY,
   vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-  logger: createPowerSyncLogger({ prefix: 'database' }),
+  logger: createConsoleLogger({ prefix: 'database' }),
   logLevel: LogLevels.info
 });
 

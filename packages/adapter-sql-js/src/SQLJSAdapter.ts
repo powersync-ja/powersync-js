@@ -4,7 +4,7 @@ import {
   BatchedUpdateNotification,
   ConnectionPool,
   ControlledExecutor,
-  createPowerSyncLogger,
+  createConsoleLogger,
   DBAdapter,
   DBAdapterDefaultMixin,
   DBAdapterListener,
@@ -111,7 +111,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 
   protected resolveOptions(options: SQLJSOpenOptions): ResolvedSQLJSOpenOptions {
-    const logger = options.logger ?? createPowerSyncLogger({ prefix: 'SQLJSDBAdapter' });
+    const logger = options.logger ?? createConsoleLogger({ prefix: 'SQLJSDBAdapter' });
 
     return {
       ...options,

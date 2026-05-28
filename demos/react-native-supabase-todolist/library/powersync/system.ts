@@ -1,7 +1,7 @@
 import '@azure/core-asynciterator-polyfill';
 
 import {
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   PowerSyncDatabase,
   SyncClientImplementation,
@@ -18,7 +18,7 @@ import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   kvStorage: KVStorage;

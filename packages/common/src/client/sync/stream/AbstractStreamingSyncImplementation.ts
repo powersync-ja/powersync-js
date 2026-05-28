@@ -414,8 +414,8 @@ The next upload iteration will be delayed.`
     const controller = new AbortController();
     this.abortController = controller;
     this.streamingSyncPromise = Promise.all([
-      this.crudUploadLoop(controller.signal).catch((ex) =>
-        this.logger.log(LogLevels.error, 'Error in crud upload loop', ex)
+      this.crudUploadLoop(controller.signal).catch((error) =>
+        this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error })
       ),
       this.streamingSync(controller.signal, options)
     ]);

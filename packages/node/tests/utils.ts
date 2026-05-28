@@ -17,7 +17,7 @@ import {
   column
 } from '../lib/index.js';
 import { BSON } from 'bson';
-import { createPowerSyncLogger, LogLevels } from '@powersync/common';
+import { createConsoleLogger, LogLevels } from '@powersync/common';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -56,7 +56,7 @@ export async function createDatabase(
   tmpdir: string,
   options: Partial<NodePowerSyncDatabaseOptions> = {}
 ): Promise<PowerSyncDatabase> {
-  const defaultLogger = createPowerSyncLogger({ prefix: 'PowerSyncTest', minLevel: LogLevels.trace });
+  const defaultLogger = createConsoleLogger({ prefix: 'PowerSyncTest', minLevel: LogLevels.trace });
 
   const database = new PowerSyncDatabase({
     schema: AppSchema,

@@ -12,7 +12,7 @@ import {
   SqliteBucketStorage,
   SubscribedStream,
   SyncStatus,
-  createPowerSyncLogger,
+  createConsoleLogger,
   Mutex,
   type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,

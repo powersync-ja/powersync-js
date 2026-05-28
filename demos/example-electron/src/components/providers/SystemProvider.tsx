@@ -1,5 +1,5 @@
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import { CircularProgress } from '@mui/material';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
@@ -11,7 +11,7 @@ const powerSync = new PowerSyncDatabase({
   flags: {
     disableSSRWarning: true
   },
-  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 const connector = new BackendConnector();
 

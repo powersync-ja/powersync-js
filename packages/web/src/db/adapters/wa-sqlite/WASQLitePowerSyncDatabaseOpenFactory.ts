@@ -1,6 +1,6 @@
 import {
   AbstractPowerSyncDatabase,
-  createPowerSyncLogger,
+  createConsoleLogger,
   DBAdapter,
   LogLevels,
   PowerSyncDatabaseOptions
@@ -21,7 +21,7 @@ import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
 export class WASQLitePowerSyncDatabaseOpenFactory extends AbstractWebPowerSyncDatabaseOpenFactory {
   protected openDB(): DBAdapter {
     const factory = new WASQLiteOpenFactory({
-      logger: createPowerSyncLogger(),
+      logger: createConsoleLogger(),
       logLevel: LogLevels.info,
       ...this.options
     });

@@ -1,4 +1,4 @@
-import { AbstractPowerSyncDatabase, createPowerSyncLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import { AbstractPowerSyncDatabase, createConsoleLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
 import {
   PowerSyncDatabase,
   ResolvedWASQLiteOpenFactoryOptions,
@@ -79,7 +79,7 @@ describe('Open Methods', { sequential: true }, () => {
   });
 
   it('Should open with an existing DBAdapter', async () => {
-    const logger = createPowerSyncLogger({ prefix: 'adapter-test' });
+    const logger = createConsoleLogger({ prefix: 'adapter-test' });
     const server = new MultiDatabaseServer(logger);
     const options: ResolvedWASQLiteOpenFactoryOptions = {
       vfs: WASQLiteVFS.IDBBatchAtomicVFS,

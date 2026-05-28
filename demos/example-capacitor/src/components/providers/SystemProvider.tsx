@@ -1,7 +1,7 @@
 import { CircularProgress } from '@mui/material';
 import { PowerSyncDatabase } from '@powersync/capacitor';
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels } from '@powersync/web';
+import { createConsoleLogger, LogLevels } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
@@ -15,7 +15,7 @@ const powerSync = new PowerSyncDatabase({
   flags: {
     enableMultiTabs: typeof SharedWorker !== 'undefined'
   },
-  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 const connector = new BackendConnector();
 

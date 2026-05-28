@@ -1,11 +1,4 @@
-import {
-  LogLevels,
-  Schema,
-  SyncStreamConnectionMethod,
-  TableV2,
-  column,
-  createPowerSyncLogger
-} from '@powersync/common';
+import { LogLevels, Schema, SyncStreamConnectionMethod, TableV2, column, createConsoleLogger } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
 import { defaultLoggerConfig } from './logger.js';
@@ -54,7 +47,7 @@ export async function setupPowerSyncInIframe(
       : { dbFilename };
 
     // Configure verbose logging
-    const logger = createPowerSyncLogger({
+    const logger = createConsoleLogger({
       prefix: 'iFrame test',
       minLevel: LogLevels.debug
     });

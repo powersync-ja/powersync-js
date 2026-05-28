@@ -4,7 +4,7 @@ import {
   PowerSyncBackendConnector,
   type PowerSyncCredentials,
   PowerSyncDatabase,
-  createPowerSyncLogger,
+  createConsoleLogger,
   LogLevels,
   CrudEntry,
   UpdateType
@@ -26,7 +26,7 @@ const FATAL_RESPONSE_CODES = [
   new RegExp('^42501$')
 ];
 
-export const powersyncLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+export const powersyncLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 // Type for the session returned by client.auth.getSession()
 export type NeonSession = {

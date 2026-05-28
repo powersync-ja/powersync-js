@@ -1,6 +1,6 @@
 import {
   AbstractPowerSyncDatabase,
-  createPowerSyncLogger,
+  createConsoleLogger,
   DBAdapterDefaultMixin,
   LogLevels,
   LogRecord,

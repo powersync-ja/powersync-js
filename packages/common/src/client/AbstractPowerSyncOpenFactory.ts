@@ -1,4 +1,4 @@
-import { createPowerSyncLogger } from '../utils/Logger.js';
+import { createConsoleLogger } from '../utils/Logger.js';
 import { DBAdapter } from '../db/DBAdapter.js';
 import { Schema } from '../db/schema/Schema.js';
 import { AbstractPowerSyncDatabase, PowerSyncDatabaseOptions } from './AbstractPowerSyncDatabase.js';
@@ -11,7 +11,7 @@ export interface PowerSyncOpenFactoryOptions extends Partial<PowerSyncDatabaseOp
 
 export abstract class AbstractPowerSyncDatabaseOpenFactory {
   constructor(protected options: PowerSyncOpenFactoryOptions) {
-    options.logger = options.logger ?? createPowerSyncLogger({ prefix: `PowerSync ${this.options.dbFilename}` });
+    options.logger = options.logger ?? createConsoleLogger({ prefix: `PowerSync ${this.options.dbFilename}` });
   }
 
   /**

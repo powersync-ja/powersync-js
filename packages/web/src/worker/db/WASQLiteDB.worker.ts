@@ -3,12 +3,12 @@
  */
 
 import '@journeyapps/wa-sqlite';
-import { createPowerSyncLogger, LogLevels } from '@powersync/common';
+import { createConsoleLogger, LogLevels } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { isSharedWorker, MultiDatabaseServer } from './MultiDatabaseServer.js';
 import { OpenWorkerConnection } from '../../db/adapters/wa-sqlite/DatabaseClient.js';
 
-const logger = createPowerSyncLogger({ prefix: 'db-worker', minLevel: LogLevels.trace });
+const logger = createConsoleLogger({ prefix: 'db-worker', minLevel: LogLevels.trace });
 
 const server = new MultiDatabaseServer(logger);
 const exposedFunctions: OpenWorkerConnection = {

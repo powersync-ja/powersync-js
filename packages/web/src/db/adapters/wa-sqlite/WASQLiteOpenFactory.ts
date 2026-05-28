@@ -1,4 +1,4 @@
-import { createPowerSyncLogger, DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
+import { createConsoleLogger, DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
 import {

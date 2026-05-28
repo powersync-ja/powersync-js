@@ -2,7 +2,7 @@ import { AppSchema } from '@/library/powersync/AppSchema';
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
@@ -11,7 +11,7 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 export const powerSync = new PowerSyncDatabase({
   database: { dbFilename: 'powersync2.db' },
   schema: AppSchema,
-  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 export const connector = new SupabaseConnector();
 

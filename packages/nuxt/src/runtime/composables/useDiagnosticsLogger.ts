@@ -1,4 +1,4 @@
-import { createPowerSyncLogger, LogLevels, type PowerSyncLogger } from '@powersync/common';
+import { createConsoleLogger, LogLevels, type PowerSyncLogger } from '@powersync/common';
 import { createStorage } from 'unstorage';
 import localStorageDriver from 'unstorage/drivers/session-storage';
 import mitt from 'mitt';
@@ -31,7 +31,7 @@ const logsStorage = createStorage({
  * ```
  */
 export const useDiagnosticsLogger = (additional?: PowerSyncLogger) => {
-  const consoleLogger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+  const consoleLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
   const logger: PowerSyncLogger = {
     async log(record) {

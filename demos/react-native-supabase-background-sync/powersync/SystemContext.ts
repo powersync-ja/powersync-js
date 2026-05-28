@@ -1,10 +1,10 @@
 import React from 'react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase, SyncClientImplementation } from '@powersync/react-native';
 import { SupabaseConnector } from '@/supabase/SupabaseConnector';
 import { AppSchema } from '@/powersync/AppSchema';
 import { OPSqliteOpenFactory } from '@powersync/op-sqlite';
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   connector: SupabaseConnector;

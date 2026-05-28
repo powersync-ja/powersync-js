@@ -2,7 +2,7 @@ import { makeSchema, switchToSyncedSchema } from '@/library/powersync/AppSchema'
 import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
 import { getSyncEnabled } from '@/library/powersync/SyncMode';
@@ -18,7 +18,7 @@ const db = new PowerSyncDatabase({
   database: {
     dbFilename: dbName
   },
-  logger: createPowerSyncLogger({ minLevel: LogLevels.debug })
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 
 export const SystemProvider = ({ children }: { children: React.ReactNode }) => {

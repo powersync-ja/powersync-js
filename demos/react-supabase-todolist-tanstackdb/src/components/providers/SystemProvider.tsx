@@ -4,7 +4,7 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { TodosDeserializationSchema, TodosSchema } from '@/library/powersync/TodosSchema';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createPowerSyncLogger, LogLevels, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
+import { createConsoleLogger, LogLevels, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { createCollection } from '@tanstack/db';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import React, { Suspense } from 'react';
@@ -13,7 +13,7 @@ import { NavigationPanelContextProvider } from '../navigation/NavigationPanelCon
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
 
-const logger = createPowerSyncLogger({ minLevel: LogLevels.debug });
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
