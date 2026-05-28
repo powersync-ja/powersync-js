@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { asyncNotifier } from '../../src/utils/async';
+import { asyncNotifier } from '../../src/utils/async.js';
 
 describe('asyncNotifier', () => {
   const neverAbort = new AbortController().signal;
