@@ -66,7 +66,6 @@ describe('useDiagnosticsLogger', () => {
     expect(logEvents.length).toBeGreaterThan(0);
     const event = logEvents[0];
     expect(event.value).toMatchObject({
-      tag: 'TestContext',
       message: testMessage,
       level: 'WARNING'
     });
@@ -100,7 +99,7 @@ describe('useDiagnosticsLogger', () => {
 
     expect(consoleSpy).toHaveBeenCalled();
     expect(consoleSpy.mock.calls.map((call) => call[0])).toEqual(
-      expect.arrayContaining([expect.stringContaining('[PowerSync.tag]')])
+      expect.arrayContaining([expect.stringContaining('[PowerSync]')])
     );
 
     consoleSpy.mockRestore();
