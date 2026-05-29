@@ -55,7 +55,7 @@ const injectPackages = async (demo: string, options: OptionValues) => {
   try {
     const pnpmfileContent = await fs.readFile(PNPMFILE_DIST_PATH, 'utf-8');
     await fs.writeFile(pnpmFilePath, pnpmfileContent);
-  } catch (e) {
+  } catch (e: any) {
     throw new Error(`Failed to copy pnpmfile to ${pnpmFilePath}: ${e.message}`);
   }
 };
@@ -74,7 +74,7 @@ const installDemos = async (demo: string, options: OptionValues) => {
       cwd: demoSrc,
       stdio: 'inherit'
     });
-  } catch (e) {
+  } catch (e: any) {
     console.warn(`Warning: 'pnpm install' failed for ${demo}: ${e.message}`);
   }
 };

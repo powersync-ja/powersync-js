@@ -78,7 +78,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
   try {
     execSync('pnpm install', { cwd: demoDest, stdio: 'inherit' });
     result.installResult.state = TestState.PASSED;
-  } catch (ex) {
+  } catch (ex: any) {
     console.error(ex);
     result.installResult.state = TestState.FAILED;
     result.installResult.error = ex.message;
@@ -100,7 +100,7 @@ const processDemo = async (demoName: string): Promise<DemoResult> => {
 
     execSync('pnpm run test:build', { cwd: demoDest, stdio: 'inherit' });
     result.buildResult.state = TestState.PASSED;
-  } catch (ex) {
+  } catch (ex: any) {
     console.error(ex);
     result.buildResult.state = TestState.FAILED;
     result.buildResult.error = ex.message;
@@ -120,7 +120,7 @@ const main = async () => {
     for (const demoName of demoNames) {
       try {
         results.push(await processDemo(demoName));
-      } catch (ex) {
+      } catch (ex: any) {
         results.push({
           name: demoName,
           installResult: {
