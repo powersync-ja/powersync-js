@@ -1,6 +1,6 @@
 import { List } from '@mui/material';
 import { count, eq, sum, useLiveQuery } from '@tanstack/react-db';
-import { listsCollection, todosCollection } from '../providers/SystemProvider';
+import { attachmentsCollection, listsCollection, todosCollection } from '../providers/SystemProvider';
 import { ListItemWidget } from './ListItemWidget';
 
 export type TodoListsWidgetProps = {
@@ -16,10 +16,12 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
     q
       .from({ lists: listsCollection })
       .leftJoin({ todos: todosCollection }, ({ lists, todos }) => eq(lists.id, todos.list_id))
-      .groupBy(({ lists }) => [lists.id, lists.name])
-      .select(({ lists, todos }) => ({
+      .leftJoin({ attachment: attachmentsCollection }, ({ lists, attachment }) => eq(lists.photo_id, attachment.id))
+      .groupBy(({ lists, attachment }) => [lists.id, lists.name, attachment.local_uri])
+      .select(({ lists, todos, attachment }) => ({
         id: lists.id,
         name: lists.name,
+        attachment_local_uri: attachment?.local_uri,
         total_tasks: count(todos?.id),
         completed_tasks: sum(todos?.completed as number)
       }))
@@ -41,6 +43,7 @@ export function TodoListsWidget(props: TodoListsWidgetProps) {
           id={r.id}
           title={r.name ?? ''}
           description={description(r.total_tasks, r.completed_tasks)}
+          localUri={r.attachment_local_uri}
           selected={r.id == props.selectedId}
         />
       ))}

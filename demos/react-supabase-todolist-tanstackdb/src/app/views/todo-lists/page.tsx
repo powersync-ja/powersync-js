@@ -1,5 +1,5 @@
 import { NavigationPage } from '@/components/navigation/NavigationPage';
-import { listsCollection, useSupabase } from '@/components/providers/SystemProvider';
+import { attachmentQueue, listsCollection, useSupabase } from '@/components/providers/SystemProvider';
 import { GuardBySync } from '@/components/widgets/GuardBySync';
 import { SearchBarWidget } from '@/components/widgets/SearchBarWidget';
 import { TodoListsWidget } from '@/components/widgets/TodoListsWidget';
@@ -31,13 +31,21 @@ export default function TodoListsPage() {
       throw new Error(`Could not create new lists, no userID found`);
     }
 
-    // This could alternatively be synchronous and use optimistic updates
-    await listsCollection.insert({
-      id: crypto.randomUUID(),
-      name,
-      created_at: new Date(),
-      owner_id: userID
-    }).isPersisted.promise;
+    await attachmentQueue.saveFileTanStack({
+      // This is just random file data for this poc, this could be an image from a camera etc
+      data: btoa(crypto.randomUUID()),
+      fileExtension: 'jpg',
+      updateHook: async (attachmentRecord) => {
+        // This should happen in the same transaction as creating the attachment
+        listsCollection.insert({
+          id: crypto.randomUUID(),
+          name,
+          created_at: new Date(),
+          owner_id: userID,
+          photo_id: attachmentRecord.id // make the association for related data
+        });
+      }
+    });
   };
 
   return (

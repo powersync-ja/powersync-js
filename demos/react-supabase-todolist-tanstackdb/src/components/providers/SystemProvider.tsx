@@ -4,11 +4,19 @@ import { SupabaseConnector } from '@/library/powersync/SupabaseConnector';
 import { TodosDeserializationSchema, TodosSchema } from '@/library/powersync/TodosSchema';
 import { CircularProgress } from '@mui/material';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, LogLevel, PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
-import { createCollection } from '@tanstack/db';
+import {
+  createBaseLogger,
+  LogLevel,
+  PowerSyncDatabase,
+  WASQLiteOpenFactory,
+  WASQLiteVFS,
+  WatchedAttachmentItem
+} from '@powersync/web';
+import { createCollection, isNull, liveQueryCollectionOptions, not } from '@tanstack/db';
 import { powerSyncCollectionOptions } from '@tanstack/powersync-db-collection';
 import React, { Suspense } from 'react';
 import { NavigationPanelContextProvider } from '../navigation/NavigationPanelContext';
+import { LocalAttachmentStoage, RemoteAttachmentStorage, TanStackDBAttachmentQueue } from './Attachments';
 
 const SupabaseContext = React.createContext<SupabaseConnector | null>(null);
 export const useSupabase = () => React.useContext(SupabaseContext);
@@ -16,7 +24,7 @@ export const useSupabase = () => React.useContext(SupabaseContext);
 export const db = new PowerSyncDatabase({
   schema: AppSchema,
   database: new WASQLiteOpenFactory({
-    dbFilename: 'example.db',
+    dbFilename: 'example-v2.db',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS
   })
 });
@@ -46,6 +54,68 @@ export const todosCollection = createCollection(
     }
   })
 );
+
+// Keep the local only attachment records in sync with TanStackDB
+export const attachmentsCollection = createCollection(
+  powerSyncCollectionOptions({
+    database: db,
+    table: AppSchema.props.attachments
+  })
+);
+
+export const attachmentQueue = new TanStackDBAttachmentQueue({
+  db: db, // PowerSync database instance
+  attachmentsCollection: attachmentsCollection as any, //TODO better typing,
+  localStorage: LocalAttachmentStoage,
+  remoteStorage: RemoteAttachmentStorage,
+
+  // Define which attachments exist in your data model
+  watchAttachments: async (onUpdate, abortSignal) => {
+    const livePhotoIds = createCollection(
+      liveQueryCollectionOptions({
+        query: (q) =>
+          q
+            .from({ document: listsCollection })
+            .where(({ document }) => not(isNull(document.photo_id)))
+            .select(({ document }) => ({
+              photo_id: document.photo_id
+            }))
+      })
+    );
+
+    const initialState = await livePhotoIds.stateWhenReady();
+
+    type LivePhotoId = { photo_id: string | null };
+    const mapper = (item: Partial<LivePhotoId>) =>
+      ({ id: item.photo_id!, fileExtension: 'jpg' }) satisfies WatchedAttachmentItem;
+
+    // report the initial state of all active attachment IDs
+    onUpdate(Array.from(initialState.values()).map(mapper));
+
+    // Subscribe for future changes
+    livePhotoIds.subscribeChanges((changes) => {
+      // we need the wholistic state for at every change
+      const allPhotoIds = livePhotoIds.map(mapper);
+      onUpdate(allPhotoIds);
+    });
+
+    abortSignal.addEventListener(
+      'abort',
+      () => {
+        // Stop the watched operations
+        livePhotoIds.cleanup();
+      },
+      { once: true }
+    );
+  },
+
+  // Optional configuration
+  syncIntervalMs: 30000, // Sync every 30 seconds
+  downloadAttachments: true, // Auto-download referenced files
+  archivedCacheLimit: 100 // Keep 100 archived files before cleanup
+});
+
+attachmentQueue.startSync();
 
 export type EnhancedListRecord = ListRecord & { total_tasks: number; completed_tasks: number };
 

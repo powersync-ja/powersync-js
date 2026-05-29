@@ -25,7 +25,7 @@ export const SearchBarWidget: React.FC<any> = () => {
       q
         .from({ todos: todosCollection })
         .where(({ todos }) => like(todos.description, `%${searchInput}%`))
-        .join({ lists: listsCollection }, ({ todos, lists }) => eq(todos.list_id, lists.id))
+        .innerJoin({ lists: listsCollection }, ({ todos, lists }) => eq(todos.list_id, lists.id))
         .select(({ todos, lists }) => ({
           id: todos.id,
           list_id: todos.list_id,

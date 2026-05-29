@@ -25,11 +25,12 @@ export type ListItemWidgetProps = {
   id: string;
   title: string;
   description: string;
+  localUri?: string | null;
   selected?: boolean;
 };
 
 export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) => {
-  const { id, title, description, selected } = props;
+  const { id, title, description, localUri, selected } = props;
 
   const navigate = useNavigate();
 
@@ -79,14 +80,24 @@ export const ListItemWidget: React.FC<ListItemWidgetProps> = React.memo((props) 
               <RightIcon />
             </IconButton>
           </Box>
-        }>
+        }
+      >
         <ListItemButton onClick={openList} selected={selected}>
           <ListItemAvatar>
             <Avatar>
               <ListIcon />
             </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={title} secondary={description} />
+          <ListItemText
+            primary={title}
+            secondary={
+              <>
+                {description}
+                <br />
+                local_uri: {localUri ?? 'none'}
+              </>
+            }
+          />
         </ListItemButton>
       </ListItem>
     </S.MainPaper>
