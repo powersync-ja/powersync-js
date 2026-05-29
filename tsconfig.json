@@ -53,6 +53,9 @@
             "path": "./tools/diagnostics-app"
         },
         {
+            "path": "./tools/local-linking"
+        },
+        {
             "path": "./tools/powersynctests"
         },
         {
