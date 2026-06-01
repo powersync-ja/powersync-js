@@ -1,4 +1,3 @@
-import util from 'node:util';
 import { beforeEach, describe, expect, vi } from 'vitest';
 
 import {
