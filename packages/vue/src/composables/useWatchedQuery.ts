@@ -47,7 +47,7 @@ export const useWatchedQuery = <T = any>(
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (error) {
-      logger.log({ level: LogLevels.error, message: 'Failed to parse query:', error });
+      logger.log({ level: LogLevels.error, message: 'Failed to parse query', error });
       handleError(error);
       return;
     }

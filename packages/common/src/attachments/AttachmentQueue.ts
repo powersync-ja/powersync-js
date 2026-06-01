@@ -190,7 +190,7 @@ export class AttachmentQueue {
         if (status.connected) {
           // Device came online, process attachments immediately
           this.syncStorage().catch((error) => {
-            this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection:', error });
+            this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection', error });
           });
         }
       }

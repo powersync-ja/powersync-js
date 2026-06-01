@@ -392,7 +392,8 @@ The next upload iteration will be delayed.`
             }
             this.logger.log({
               level: LogLevels.debug,
-              message: `Caught exception when uploading. Upload will retry after a delay. Exception: ${(ex as Error).message}`
+              message: `Caught exception when uploading. Upload will retry after a delay.`,
+              error: ex
             });
           } finally {
             this.updateSyncStatus({

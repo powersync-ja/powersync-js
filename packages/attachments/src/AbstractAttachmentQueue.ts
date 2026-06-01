@@ -312,7 +312,8 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       }
       this.logger.log({
         level: LogLevels.error,
-        message: `UploadAttachment error for record ${JSON.stringify(record, null, 2)}`
+        message: `UploadAttachment error for record ${JSON.stringify(record, null, 2)}`,
+        error: e
       });
       return false;
     }
@@ -496,7 +497,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
       }
       this.logger.log({ level: LogLevels.debug, message: 'Finished downloading attachments' });
     } catch (error) {
-      this.logger.log({ level: LogLevels.error, message: 'Downloads failed:', error });
+      this.logger.log({ level: LogLevels.error, message: 'Downloads failed', error });
     } finally {
       this.downloading = false;
     }

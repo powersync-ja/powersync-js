@@ -131,7 +131,7 @@ export const useSingleQuery = <T = any>(
     try {
       parsedQuery = parseQuery(queryValue, toValue(sqlParameters).map(toValue));
     } catch (error) {
-      logger?.log({ level: LogLevels.error, message: 'Failed to parse query:', error });
+      logger?.log({ level: LogLevels.error, message: 'Failed to parse query', error });
       handleError(error);
       return;
     }
@@ -147,7 +147,7 @@ export const useSingleQuery = <T = any>(
         const result = await executor();
         handleResult(result);
       } catch (error) {
-        logger?.log({ level: LogLevels.error, message: 'Failed to fetch data:', error });
+        logger?.log({ level: LogLevels.error, message: 'Failed to fetch data', error });
         handleError(error);
       }
     };

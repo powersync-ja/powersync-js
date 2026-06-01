@@ -935,9 +935,9 @@ function defineSyncTests(bson: boolean) {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
     const logMessages: string[] = [];
     const logger: PowerSyncLogger = {
-      log(_level, ...message) {
-        console.log(...message);
-        logMessages.push(util.format(...message));
+      log({ message }) {
+        console.log(message);
+        logMessages.push(message);
       }
     };
 

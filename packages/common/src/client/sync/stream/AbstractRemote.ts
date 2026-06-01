@@ -546,12 +546,14 @@ export abstract class AbstractRemote {
 
       if (!res.ok || !res.body) {
         const text = await res.text();
-        this.logger.log({
-          level: LogLevels.error,
-          message: `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`
-        });
         const error: any = new Error(`HTTP ${res.statusText}: ${text}`);
         error.status = res.status;
+
+        this.logger.log({
+          level: LogLevels.error,
+          message: `Could not POST streaming to ${path} - ${res.status} - ${res.statusText}: ${text}`,
+          error
+        });
         throw error;
       }
 
