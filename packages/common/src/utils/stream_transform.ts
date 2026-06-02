@@ -2,9 +2,11 @@
  * An async iterator that can't be cancelled.
  *
  * To keep data flow simple, we always pass an explicit cancellation token when subscribing to async streams. Once the
- * {@link AbortSignal} aborts, iterators are supposed to clean up and then emit a final `{done: true}` event. This means
+ * `AbortSignal` aborts, iterators are supposed to clean up and then emit a final `{done: true}` event. This means
  * that there's no way to distinguish between streams that have completed normally and streams that have been cancelled,
  * but that is acceptable for our uses of this.
+ *
+ * @internal
  */
 export type SimpleAsyncIterator<T> = Pick<AsyncIterator<T>, 'next'>;
 

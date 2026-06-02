@@ -14,6 +14,9 @@ import {
 import { EventIterator } from 'event-iterator';
 import type { Queue } from 'event-iterator/lib/event-iterator.js';
 
+/**
+ * @internal
+ */
 export type RemoteConnector = {
   fetchCredentials: () => Promise<PowerSyncCredentials | null>;
   invalidateCredentials?: () => void;
@@ -36,8 +39,14 @@ const SOCKET_TIMEOUT_MS = 30_000;
 // significantly. Therefore this is longer than the socket timeout.
 const KEEP_ALIVE_LIFETIME_MS = 90_000;
 
+/**
+ * @internal
+ */
 export const DEFAULT_REMOTE_LOGGER = Logger.get('PowerSyncRemote');
 
+/**
+ * @internal
+ */
 export type SyncStreamOptions = {
   path: string;
   data: unknown;
@@ -46,6 +55,9 @@ export type SyncStreamOptions = {
   fetchOptions?: Request;
 };
 
+/**
+ * @public
+ */
 export enum FetchStrategy {
   /**
    * Queues multiple sync events before processing, reducing round-trips.
@@ -60,10 +72,16 @@ export enum FetchStrategy {
   Sequential = 'sequential'
 }
 
+/**
+ * @internal
+ */
 export type SocketSyncStreamOptions = SyncStreamOptions & {
   fetchStrategy: FetchStrategy;
 };
 
+/**
+ * @internal
+ */
 export type FetchImplementation = typeof fetch;
 
 /**
@@ -71,6 +89,8 @@ export type FetchImplementation = typeof fetch;
  * The class wrapper is used to distinguish the fetchImplementation
  * option in [AbstractRemoteOptions] from the general fetch method
  * which is typeof "function"
+ *
+ * @internal
  */
 export class FetchImplementationProvider {
   getFetch(): FetchImplementation {
@@ -78,6 +98,9 @@ export class FetchImplementationProvider {
   }
 }
 
+/**
+ * @internal
+ */
 export type AbstractRemoteOptions = {
   /**
    * Transforms the PowerSync base URL which might contain
@@ -102,6 +125,9 @@ export type AbstractRemoteOptions = {
   fetchOptions?: {};
 };
 
+/**
+ * @internal
+ */
 export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   socketUrlTransformer: (url) =>
     url.replace(/^https?:\/\//, function (match) {
@@ -111,6 +137,9 @@ export const DEFAULT_REMOTE_OPTIONS: AbstractRemoteOptions = {
   fetchOptions: {}
 };
 
+/**
+ * @internal
+ */
 export abstract class AbstractRemote {
   protected credentials: PowerSyncCredentials | null = null;
   protected options: AbstractRemoteOptions;
@@ -589,7 +618,7 @@ export abstract class AbstractRemote {
    * Posts a `/sync/stream` request.
    *
    * Depending on the `Content-Type` of the response, this returns strings for sync lines or encoded BSON documents as
-   * {@link Uint8Array}s.
+   * `Uint8Array`s.
    */
   async fetchStream(options: SyncStreamOptions): Promise<SimpleAsyncIterator<Uint8Array | string>> {
     const { isBson, stream } = await this.fetchStreamRaw(options);

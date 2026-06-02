@@ -5,4 +5,7 @@ interface JSONObject {
 }
 type JSONArray = JSONValue[];
 
+/**
+ * @public
+ */
 export type StreamingSyncRequestParameterType = JSONValue;

@@ -5,6 +5,8 @@ import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 
 /**
  * State for {@link WatchedQuery} instances.
+ *
+ * @public
  */
 export interface WatchedQueryState<Data> {
   /**
@@ -33,6 +35,8 @@ export interface WatchedQueryState<Data> {
 
 /**
  * Options provided to the `execute` method of a {@link WatchCompatibleQuery}.
+ *
+ * @public
  */
 export interface WatchExecuteOptions {
   sql: string;
@@ -41,14 +45,17 @@ export interface WatchExecuteOptions {
 }
 
 /**
- * Similar to {@link CompatibleQuery}, except the `execute` method
- * does not enforce an Array result type.
+ *
+ * @public
  */
 export interface WatchCompatibleQuery<ResultType> {
   execute(options: WatchExecuteOptions): Promise<ResultType>;
   compile(): CompiledQuery;
 }
 
+/**
+ * @public
+ */
 export interface WatchedQueryOptions {
   /** The minimum interval between queries. */
   throttleMs?: number;
@@ -67,6 +74,9 @@ export interface WatchedQueryOptions {
   triggerOnTables?: string[];
 }
 
+/**
+ * @public
+ */
 export enum WatchedQueryListenerEvent {
   ON_DATA = 'onData',
   ON_ERROR = 'onError',
@@ -75,6 +85,9 @@ export enum WatchedQueryListenerEvent {
   CLOSED = 'closed'
 }
 
+/**
+ * @public
+ */
 export interface WatchedQueryListener<Data> extends BaseListener {
   [WatchedQueryListenerEvent.ON_DATA]?: (data: Data) => void | Promise<void>;
   [WatchedQueryListenerEvent.ON_ERROR]?: (error: Error) => void | Promise<void>;
@@ -83,13 +96,22 @@ export interface WatchedQueryListener<Data> extends BaseListener {
   [WatchedQueryListenerEvent.CLOSED]?: () => void | Promise<void>;
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_WATCH_THROTTLE_MS = 30;
 
+/**
+ * @internal
+ */
 export const DEFAULT_WATCH_QUERY_OPTIONS: WatchedQueryOptions = {
   throttleMs: DEFAULT_WATCH_THROTTLE_MS,
   reportFetching: true
 };
 
+/**
+ * @public
+ */
 export interface WatchedQuery<
   Data = unknown,
   Settings extends WatchedQueryOptions = WatchedQueryOptions,

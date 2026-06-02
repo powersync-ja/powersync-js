@@ -36,6 +36,9 @@ export interface CreateSyncImplementationOptions extends AdditionalConnectionOpt
   subscriptions: SubscribedStream[];
 }
 
+/**
+ * @internal
+ */
 export interface InternalSubscriptionAdapter {
   firstStatusMatching(predicate: (status: SyncStatus) => any, abort?: AbortSignal): Promise<void>;
   resolveOfflineSyncStatus(): Promise<void>;
@@ -243,7 +246,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   /**
    * Close the sync connection.
    *
-   * Use {@link connect} to connect again.
+   * Use {@link ConnectionManager.connect} to connect again.
    */
   async disconnect() {
     // This will help abort pending connects

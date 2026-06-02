@@ -1,9 +1,12 @@
 function sanitizeString(input: string): string {
   return `'${input.replace(/'/g, "''")}'`;
 }
+
 /**
  * Helper function for sanitizing UUID input strings.
  * Typically used with {@link sanitizeSQL}.
+ *
+ * @alpha
  */
 export function sanitizeUUID(uuid: string): string {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,6 +44,8 @@ export function sanitizeUUID(uuid: string): string {
  * // Incorrect:
  * sanitizeSQL`New.id = '${myID}'` // Produces double quotes: New.id = ''O''Reilly''
  * ```
+ *
+ * @alpha
  */
 export function sanitizeSQL(strings: TemplateStringsArray, ...values: any[]): string {
   let result = '';

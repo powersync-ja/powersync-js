@@ -1,4 +1,4 @@
-export * from './attachments/AttachmentContext.js';
+export * from './attachments/AttachmentContext.js'; // TODO: Remove (internal)
 export * from './attachments/AttachmentErrorHandler.js';
 export * from './attachments/AttachmentQueue.js';
 export * from './attachments/AttachmentService.js';

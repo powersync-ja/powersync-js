@@ -1,6 +1,9 @@
 import { PowerSyncCredentials } from './PowerSyncCredentials.js';
 import type { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
 
+/**
+ * @public
+ */
 export interface PowerSyncBackendConnector {
   /** Allows the PowerSync client to retrieve an authentication token from your backend
    * which is used to authenticate against the PowerSync service.

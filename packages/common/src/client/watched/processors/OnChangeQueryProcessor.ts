@@ -9,6 +9,8 @@ import { WatchedQueryComparator } from './comparators.js';
 
 /**
  * Settings for {@link WatchedQuery} instances created via {@link Query#watch}.
+ *
+ * @public
  */
 export interface WatchedQuerySettings<DataType> extends WatchedQueryOptions {
   query: WatchCompatibleQuery<DataType>;
@@ -16,6 +18,8 @@ export interface WatchedQuerySettings<DataType> extends WatchedQueryOptions {
 
 /**
  * {@link WatchedQuery} returned from {@link Query#watch}.
+ *
+ * @public
  */
 export type StandardWatchedQuery<DataType> = WatchedQuery<DataType, WatchedQuerySettings<DataType>>;
 

@@ -2,6 +2,8 @@
  * Thrown when an underlying database connection is closed.
  * This is particularly relevant when worker connections are marked as closed while
  * operations are still in progress.
+ *
+ * @internal
  */
 export class ConnectionClosedError extends Error {
   static NAME = 'ConnectionClosedError';

@@ -127,7 +127,7 @@ export abstract class AbstractQueryProcessor<
 
   /**
    * This method is used to link a query to the subscribers of this listener class.
-   * This method should perform actual query watching and report results via {@link updateState} method.
+   * This method should perform actual query watching and report results via {@link AbstractQueryProcessor.updateState} method.
    */
   protected abstract linkQuery(options: LinkQueryOptions<Data>): Promise<void>;
 

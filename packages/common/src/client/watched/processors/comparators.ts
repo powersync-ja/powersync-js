@@ -2,6 +2,8 @@
  * A basic comparator for incrementally watched queries. This performs a single comparison which
  * determines if the result set has changed. The {@link WatchedQuery} will only emit the new result
  * if a change has been detected.
+ *
+ * @public
  */
 export interface WatchedQueryComparator<Data> {
   checkEquality: (current: Data, previous: Data) => boolean;
@@ -9,6 +11,8 @@ export interface WatchedQueryComparator<Data> {
 
 /**
  * Options for {@link ArrayComparator}
+ *
+ * @public
  */
 export type ArrayComparatorOptions<ItemType> = {
   /**
@@ -20,6 +24,8 @@ export type ArrayComparatorOptions<ItemType> = {
 /**
  * An efficient comparator for {@link WatchedQuery} created with {@link Query#watch}. This has the ability to determine if a query
  * result has changes without necessarily processing all items in the result.
+ *
+ * @public
  */
 export class ArrayComparator<ItemType> implements WatchedQueryComparator<ItemType[]> {
   constructor(protected options: ArrayComparatorOptions<ItemType>) {}
@@ -51,6 +57,8 @@ export class ArrayComparator<ItemType> implements WatchedQueryComparator<ItemTyp
 
 /**
  * Watched query comparator that always reports changed result sets.
+ *
+ * @public
  */
 export const FalsyComparator: WatchedQueryComparator<unknown> = {
   checkEquality: () => false // Default comparator that always returns false

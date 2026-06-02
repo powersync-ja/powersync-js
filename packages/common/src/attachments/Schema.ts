@@ -2,12 +2,17 @@ import { column } from '../db/schema/Column.js';
 import { Table } from '../db/schema/Table.js';
 import { TableV2Options } from '../db/schema/Table.js';
 
+/**
+ * The default name of the local table storing attachment data.
+ *
+ * @alpha
+ */
 export const ATTACHMENT_TABLE = 'attachments';
 
 /**
  * AttachmentRecord represents an attachment in the local database.
  *
- * @experimental
+ * @alpha
  */
 export interface AttachmentRecord {
   id: string;
@@ -27,7 +32,7 @@ export interface AttachmentRecord {
  * @param row - The database row object
  * @returns The corresponding AttachmentRecord
  *
- * @experimental
+ * @alpha
  */
 export function attachmentFromSql(row: any): AttachmentRecord {
   return {
@@ -46,7 +51,7 @@ export function attachmentFromSql(row: any): AttachmentRecord {
 /**
  * AttachmentState represents the current synchronization state of an attachment.
  *
- * @experimental
+ * @alpha
  */
 export enum AttachmentState {
   QUEUED_UPLOAD = 0, // Attachment to be uploaded
@@ -56,12 +61,15 @@ export enum AttachmentState {
   ARCHIVED = 4 // Attachment has been orphaned, i.e. the associated record has been deleted
 }
 
+/**
+ * @alpha
+ */
 export interface AttachmentTableOptions extends Omit<TableV2Options, 'name' | 'columns'> {}
 
 /**
  * AttachmentTable defines the schema for the attachment queue table.
  *
- * @internal
+ * @alpha
  */
 export class AttachmentTable extends Table {
   constructor(options?: AttachmentTableOptions) {
