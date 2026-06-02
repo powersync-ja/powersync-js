@@ -44,7 +44,7 @@ const config: ViteUserConfigExport = {
     browser: {
       enabled: true,
       provider: playwright(),
-      headless: false,
+      headless: true,
       instances: [
         {
           browser: 'chromium'
