@@ -23,9 +23,12 @@ export type SyncDataFlowStatus = Partial<{
   /**
    * Internal information about how far we are downloading operations in buckets.
    *
-   * Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
+   * @internal Please use the {@link SyncStatus#downloadProgress} property to track sync progress.
    */
   downloadProgress: InternalProgressInformation | null;
+  /**
+   * @internal
+   */
   internalStreamSubscriptions: CoreStreamSubscription[] | null;
 }>;
 

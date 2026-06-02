@@ -2433,7 +2433,7 @@ export interface WithDiffOptions {
 // Warnings were encountered during analysis:
 //
 // src/db/crud/SyncStatus.ts:28:3 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
-// src/db/crud/SyncStatus.ts:29:3 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
+// src/db/crud/SyncStatus.ts:32:1 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
