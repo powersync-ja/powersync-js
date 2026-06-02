@@ -1,7 +1,8 @@
 import path from 'path';
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { defineConfig, ViteUserConfigExport } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
-const config: UserConfigExport = {
+const config: ViteUserConfigExport = {
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
@@ -36,14 +37,14 @@ const config: UserConfigExport = {
       shuffle: false, // Disable shuffling of test files
       concurrent: false // Run test files sequentially
     },
+    /**
+     * Starts each test in a new iFrame
+     */
+    isolate: true,
     browser: {
       enabled: true,
-      /**
-       * Starts each test in a new iFrame
-       */
-      isolate: true,
-      provider: 'playwright',
-      headless: true,
+      provider: playwright(),
+      headless: false,
       instances: [
         {
           browser: 'chromium'

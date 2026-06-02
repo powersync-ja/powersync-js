@@ -1,9 +1,10 @@
-import { defineConfig, UserConfigExport } from 'vitest/config';
+import { defineConfig, ViteUserConfig } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 
-const config: UserConfigExport = {
+const config: ViteUserConfig = {
   // This is only needed for local tests to resolve the package name correctly
   worker: {
-    format: 'es',
+    format: 'es'
   },
   optimizeDeps: {
     exclude: ['@journeyapps/wa-sqlite']
@@ -18,13 +19,13 @@ const config: UserConfigExport = {
       shuffle: false, // Disable shuffling of test files
       concurrent: false // Run test files sequentially
     },
+    /**
+     * Starts each test in a new iFrame
+     */
+    isolate: true,
     browser: {
       enabled: true,
-      /**
-       * Starts each test in a new iFrame
-       */
-      isolate: true,
-      provider: 'playwright',
+      provider: playwright(),
       headless: true,
       instances: [
         {
