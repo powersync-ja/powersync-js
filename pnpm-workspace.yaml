@@ -13,7 +13,7 @@ catalog:
   '@journeyapps/wa-sqlite': ^1.5.0
   '@nuxt/devtools-kit': ^3.2.3
   '@nuxt/devtools-ui-kit': ^3.2.3
-  '@nuxt/test-utils': ^4.0.0
+  '@nuxt/test-utils': ^4.0.3
   '@op-engineering/op-sqlite': ^15.2.2
   '@pnpm/workspace.find-packages': ^1000.0.55
   '@pnpm/workspace.read-manifest': ^1000.2.9
@@ -44,7 +44,10 @@ catalog:
   typescript: ^6.0.3
   uuid: ^11.1.0
   vite: ^7.3.1
-  vitest: ^3.2.4
+  vitest: ^4.1.8
+  '@vitest/browser-preview': ^4.1.8
+  '@vitest/browser': ^4.1.8
+  '@vitest/browser-playwright': ^4.1.8
 
 allowBuilds:
   '@journeyapps/wa-sqlite': true

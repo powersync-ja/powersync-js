@@ -12,6 +12,6 @@
   },
   "devDependencies": {
     "typescript": "catalog:",
-    "@types/node": "^25.9.1"
+    "@types/node": "catalog:"
   }
 }

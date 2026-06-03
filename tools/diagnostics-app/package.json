@@ -41,7 +41,7 @@
     "@swc/core": "~1.6.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/router-plugin": "^1.153.2",
-    "@types/node": "^22.18.1",
+    "@types/node": "catalog:",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.2.1",
