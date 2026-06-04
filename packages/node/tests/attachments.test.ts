@@ -215,6 +215,67 @@ describe('attachment queue', () => {
   );
 
   it(
+    'should pass watched media type to downloaded attachments',
+    {
+      timeout: 10000
+    },
+    async () => {
+      queue = new AttachmentQueue({
+        db,
+        watchAttachments: (onUpdate) => {
+          db.watch(
+            /* sql */
+            `
+              SELECT
+                photo_id
+              FROM
+                users
+              WHERE
+                photo_id IS NOT NULL
+            `,
+            [],
+            {
+              onResult: async (result: any) =>
+                await onUpdate(
+                  result.rows?._array.map((r: any) => ({
+                    id: r.photo_id,
+                    fileExtension: 'jpg',
+                    mediaType: 'image/jpeg'
+                  })) ?? []
+                )
+            }
+          );
+        },
+        remoteStorage: mockRemoteStorage,
+        localStorage: mockLocalStorage,
+        syncIntervalMs: INTERVAL_MILLISECONDS,
+        archivedCacheLimit: 0
+      });
+
+      await queue.startSync();
+
+      const id = await queue.generateAttachmentId();
+      await db.execute('INSERT INTO users (id, name, email, photo_id) VALUES (uuid(), ?, ?, ?)', [
+        'testuser',
+        'testuser@journeyapps.com',
+        id
+      ]);
+
+      const attachments = await waitForMatchCondition(
+        () => watchAttachmentsTable(),
+        (results) => results.some((r) => r.id === id && r.state === AttachmentState.SYNCED),
+        5
+      );
+
+      const attachmentRecord = attachments.find((r) => r.id === id);
+      expect(attachmentRecord?.mediaType).toBe('image/jpeg');
+      expect(mockDownloadFile).toHaveBeenCalledWith(expect.objectContaining({ mediaType: 'image/jpeg' }));
+
+      await queue.stopSync();
+    }
+  );
+
+  it(
     'should upload attachments when a new file is saved',
     {
       timeout: 10000
