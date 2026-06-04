@@ -1,8 +1,9 @@
 import * as path from 'node:path';
 import { ChildProcess, spawn, spawnSync } from 'node:child_process';
+import { createInterface } from 'node:readline';
 
 import { defineConfig } from 'vitest/config';
-import { preview } from '@vitest/browser-preview'
+import { preview } from '@vitest/browser-preview';
 import { BrowserProvider } from 'vitest/node';
 
 // We can't define serverFactory ourselves because vitest doesn't export the building blocks,
@@ -27,17 +28,18 @@ class TauriBrowserProvider implements BrowserProvider {
     return {};
   }
 
-  async openPage(_sessionId: string, url: string, _options: { parallel: boolean; }) {
+  async openPage(_sessionId: string, url: string, options: { parallel: boolean }) {
     if (this.#tauriApp != null) {
       throw new Error('TODO: Calling openPage multiple times is not supported');
     }
 
+    console.log('openPage', url, options);
     // Ensure the target app spawning webviews is up-to-date.
     const buildResult = spawnSync('cargo', ['build', '-p', 'test-runner'], { stdio: 'inherit' });
     if (buildResult.status !== 0) {
       throw new Error(`cargo build failed with exit code ${buildResult.status}`);
     }
-    const app = spawn(testRunnerExecutable, [url]);
+    const app = spawn(testRunnerExecutable, [url], { env: { RUST_LOG: 'info', ...process.env } });
     this.#tauriApp = app;
 
     app.on('exit', (code) => {
@@ -47,9 +49,18 @@ class TauriBrowserProvider implements BrowserProvider {
       }
     });
 
+    createInterface(app.stdout).on('line', (line) => console.log(`[Test process]: ${line}`));
+    createInterface(app.stderr).on('line', (line) => console.error(`[Test process]: ${line}`));
+
     await new Promise<void>((resolve, reject) => {
-      app.once('spawn', () => resolve());
-      app.once('error', reject);
+      app.once('spawn', () => {
+        console.info(`Child process spawned, pid ${app.pid}`);
+        resolve();
+      });
+      app.once('error', (e) => {
+        console.error('Failed to spawn child process', e);
+        reject(e);
+      });
     });
   }
 
@@ -75,9 +86,9 @@ export default defineConfig({
       },
       instances: [
         {
-          browser: 'chrome'
+          browser: 'chromium'
         }
       ]
-    },
+    }
   }
 });

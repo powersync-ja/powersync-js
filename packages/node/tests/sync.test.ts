@@ -18,7 +18,7 @@ import {
   mockSyncServiceTest,
   TestConnector,
   waitForSyncStatus
-} from './utils';
+} from './utils.js';
 import { BucketChecksum, OplogEntryJSON } from '@powersync/common/internal/sync_protocol';
 
 describe('Sync', () => {
@@ -225,45 +225,41 @@ function defineSyncTests(bson: boolean) {
       }
     }
 
-    mockSyncServiceTest(
-      'without priorities',
-      async ({ syncService }) => {
-        const database = await syncService.createDatabase();
-        database.connect(new TestConnector(), options);
-        await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
+    mockSyncServiceTest('without priorities', async ({ syncService }) => {
+      const database = await syncService.createDatabase();
+      database.connect(new TestConnector(), options);
+      await vi.waitFor(() => expect(syncService.connectedListeners).toHaveLength(1));
 
-        syncService.pushLine({
-          checkpoint: {
-            last_op_id: '10',
-            buckets: [bucket('a', 10)]
-          }
-        });
+      syncService.pushLine({
+        checkpoint: {
+          last_op_id: '10',
+          buckets: [bucket('a', 10)]
+        }
+      });
 
-        await waitForProgress(database, [0, 10]);
+      await waitForProgress(database, [0, 10]);
 
-        pushDataLine(syncService, 'a', 10);
-        await waitForProgress(database, [10, 10]);
+      pushDataLine(syncService, 'a', 10);
+      await waitForProgress(database, [10, 10]);
 
-        pushCheckpointComplete(syncService);
-        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
 
-        // Emit new data, progress should be 0/2 instead of 10/12
-        syncService.pushLine({
-          checkpoint_diff: {
-            last_op_id: '12',
-            updated_buckets: [bucket('a', 12)],
-            removed_buckets: []
-          }
-        });
-        await waitForProgress(database, [0, 2]);
-        pushDataLine(syncService, 'a', 2);
-        await waitForProgress(database, [2, 2]);
+      // Emit new data, progress should be 0/2 instead of 10/12
+      syncService.pushLine({
+        checkpoint_diff: {
+          last_op_id: '12',
+          updated_buckets: [bucket('a', 12)],
+          removed_buckets: []
+        }
+      });
+      await waitForProgress(database, [0, 2]);
+      pushDataLine(syncService, 'a', 2);
+      await waitForProgress(database, [2, 2]);
 
-        pushCheckpointComplete(syncService);
-        await waitForSyncStatus(database, (s) => s.downloadProgress == null);
-      },
-      { timeout: 10000 }
-    );
+      pushCheckpointComplete(syncService);
+      await waitForSyncStatus(database, (s) => s.downloadProgress == null);
+    });
 
     mockSyncServiceTest('interrupted sync', async ({ syncService }) => {
       let database = await syncService.createDatabase();
@@ -544,8 +540,69 @@ function defineSyncTests(bson: boolean) {
     expect(rows).toStrictEqual([{ name: 'from server' }]);
   });
 
+  mockSyncServiceTest('should upload on start of iteration', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.includes('/sync/stream')) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    const connector = new TestConnector();
+    database.connect(connector, { ...options, retryDelayMs: 10_000, crudUploadThrottleMs: 100 });
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // We'll never connect due to the error, but we should still try to upload once.
+    expect(connector.uploadDataInvocations).toStrictEqual(1);
+
+    // And even though we're still not connected, we should attempt uploads on crud changes.
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(connector.uploadDataInvocations).toStrictEqual(2));
+  });
+
+  mockSyncServiceTest('should restart uploads on write even if not connected', async ({ syncService }) => {
+    let database = await syncService.createDatabase();
+    let attemptedUploads = 0;
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['local write']);
+
+    syncService.installRequestInterceptor(async (request) => {
+      if (request.url.includes('/sync/stream')) {
+        throw new Error('Pretend that the service is unavailable');
+      }
+    });
+
+    database.connect(
+      {
+        fetchCredentials: async () => {
+          return {
+            endpoint: 'https://powersync.example.org',
+            token: 'test'
+          };
+        },
+        uploadData: async () => {
+          attemptedUploads++;
+          throw new Error('deliberate failure');
+        }
+      },
+      { ...options, retryDelayMs: 100, crudUploadThrottleMs: 100 }
+    );
+    await database.waitForStatus((s) => s.dataFlowStatus.downloadError != null);
+
+    // Because we start a crud upload on connect, there should have been a call.
+    expect(attemptedUploads).toStrictEqual(1);
+    expect(database.currentStatus.dataFlowStatus.uploadError).toMatchObject({ name: 'Error' });
+
+    // Currently, we don't retry crud uploads if we're not connected. We might revisit that in the future, but either
+    // way we definitely want to retry if there's a new CRUD entry.
+    console.log('second write');
+    await database.execute('INSERT INTO lists (id, name) values (uuid(), ?)', ['second local write']);
+    await vi.waitFor(() => expect(attemptedUploads).toStrictEqual(2));
+  });
+
   mockSyncServiceTest('handles uploads across checkpoints', async ({ syncService }) => {
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);
@@ -876,7 +933,7 @@ function defineSyncTests(bson: boolean) {
 
   mockSyncServiceTest('can reconnect based on query changes', async ({ syncService }) => {
     // Test for https://discord.com/channels/1138230179878154300/1399340612435710034/1399340612435710034
-    const logger = createLogger('test', { logLevel: Logger.TRACE });
+    const logger = createLogger('test', { logLevel: (Logger as any).TRACE });
     const logMessages: string[] = [];
     (logger as any).invoke = (level, args) => {
       console.log(...args);

@@ -69,6 +69,7 @@ export type UseQueriesBaseOptions = {
 };
 
 // Explicit generic typing with combine
+// @ts-ignore
 export function useQueries<T extends readonly unknown[], TCombined>(
   options: UseQueriesExplicitWithCombineOptions<T, TCombined>,
   queryClient?: Tanstack.QueryClient
@@ -144,7 +145,7 @@ export function useQueries(
     [queriesInput]
   );
 
-  const {queries: states, streamsHaveSynced} = usePowerSyncQueries(powerSyncQueriesInput, queryClient);
+  const { queries: states, streamsHaveSynced } = usePowerSyncQueries(powerSyncQueriesInput, queryClient);
 
   const queries = useMemo(() => {
     return queriesInput.map((queryOptions, idx) => {

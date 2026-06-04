@@ -10,6 +10,7 @@
     "build:packages:prod": "pnpm run --filter {./packages/**} -r build:prod",
     "clean:packages": "pnpm run --filter {./packages/**} -r clean",
     "watch:packages": "pnpm run --parallel --filter {./packages/**} -r build -w",
+    "watch:ts": "tsc -b -w --preserveWatchOutput",
     "changeset:version": "pnpm changeset version && pnpm demos:update --all && pnpm install --lockfile-only --frozen-lockfile=false && pnpm -r postversion",
     "build": "pnpm run -r build",
     "ci:publish": "changeset publish && git push --follow-tags",
@@ -42,7 +43,6 @@
     "@pnpm/workspace.read-manifest": "catalog:",
     "@types/inquirer": "^8.2.12",
     "@types/node": "catalog:",
-    "@vitest/browser": "^3.2.4",
     "commander": "^12.1.0",
     "husky": "^9.0.11",
     "inquirer": "^8.2.7",
@@ -54,7 +54,8 @@
     "rollup": "4.14.3",
     "rollup-plugin-dts": "^6.2.1",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@vitest/browser-playwright": "catalog:"
   },
   "packageManager": "pnpm@11.1.1"
 }

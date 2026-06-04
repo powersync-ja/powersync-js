@@ -1,6 +1,7 @@
+// @ts-ignore
 import { defineNuxtPlugin, useRoute, useRuntimeConfig } from '#app';
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin((nuxtApp: any) => {
   // Expose PowerSync module options globally
   const runtimeConfig = useRuntimeConfig();
 

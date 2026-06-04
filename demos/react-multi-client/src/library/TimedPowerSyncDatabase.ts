@@ -1,10 +1,10 @@
 import {
-  DBAdapter,
   PowerSyncDatabase,
   PowerSyncDBListener,
   Transaction,
   WebPowerSyncDatabaseOptions,
-  PowerSyncBackendConnector
+  PowerSyncBackendConnector,
+  LockContext
 } from '@powersync/web';
 
 export enum OperationType {
@@ -68,11 +68,11 @@ export class TimedPowerSyncDatabase extends PowerSyncDatabase {
     return this.timedOperation(OperationType.WRITE_TX, () => super.writeTransaction<T>(callback, lockTimeout));
   }
 
-  async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async readLock<T>(callback: (db: LockContext) => Promise<T>) {
     return this.timedOperation(OperationType.READ, () => super.readLock<T>(callback));
   }
 
-  async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async writeLock<T>(callback: (db: LockContext) => Promise<T>) {
     return this.timedOperation(OperationType.WRITE, () => super.writeLock<T>(callback));
   }
 

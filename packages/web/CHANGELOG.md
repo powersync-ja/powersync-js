@@ -1,5 +1,12 @@
 # @powersync/web
 
+## 1.38.2
+
+### Patch Changes
+
+- Updated dependencies [ac183c2]
+  - @powersync/common@1.53.2
+
 ## 1.38.1
 
 ### Patch Changes

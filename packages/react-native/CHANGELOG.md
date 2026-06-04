@@ -1,5 +1,19 @@
 # @powersync/react-native
 
+## 1.35.3
+
+### Patch Changes
+
+- Updated dependencies [ac183c2]
+  - @powersync/common@1.53.2
+  - @powersync/react@1.10.0
+
+## 1.35.2
+
+### Patch Changes
+
+- 6830f4a: Force React Native remote HTTP requests onto the text response path so RN 0.85 does not drop non-streaming response bodies.
+
 ## 1.35.1
 
 ### Patch Changes

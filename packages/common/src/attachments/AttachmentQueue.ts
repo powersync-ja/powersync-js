@@ -78,9 +78,9 @@ export class AttachmentQueue {
   /** Cleanup function for status change listener */
   private statusListenerDispose?: () => void;
 
-  private watchActiveAttachments: DifferentialWatchedQuery<AttachmentRecord>;
+  private watchActiveAttachments!: DifferentialWatchedQuery<AttachmentRecord>;
 
-  private watchAttachmentsAbortController: AbortController;
+  private watchAttachmentsAbortController!: AbortController;
 
   /**
    * Creates a new AttachmentQueue instance.

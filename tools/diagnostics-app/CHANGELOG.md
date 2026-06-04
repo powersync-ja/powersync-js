@@ -1,5 +1,15 @@
 # diagnostics-app
 
+## 0.13.9
+
+### Patch Changes
+
+- 16007e2: Include arm64 builds in Docker image.
+
+  Closes https://github.com/powersync-ja/powersync-js/issues/780.
+  - @powersync/react@1.10.0
+  - @powersync/web@1.38.2
+
 ## 0.13.8
 
 ### Patch Changes

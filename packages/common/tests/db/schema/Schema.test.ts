@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { Schema } from '../../../src/db/schema/Schema';
-import { Table } from '../../../src/db/schema/Table';
-import { column, ColumnType, Column } from '../../../src/db/schema/Column';
+import { Schema } from '../../../src/db/schema/Schema.js';
+import { Table } from '../../../src/db/schema/Table.js';
+import { column, ColumnType, Column } from '../../../src/db/schema/Column.js';
 
 describe('Schema', () => {
   it('should fail if an array of tables using the new syntax is passed to schema', () => {

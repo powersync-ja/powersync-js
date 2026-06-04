@@ -37,7 +37,7 @@ export class GetAllQuery<RowType = unknown> implements WatchCompatibleQuery<RowT
   async execute(options: { db: AbstractPowerSyncDatabase }): Promise<RowType[]> {
     const { db } = options;
     const { sql, parameters = [] } = this.compile();
-    const rawResult = await db.getAll<unknown>(sql, [...parameters]);
+    const rawResult = await db.getAll<Record<string, unknown>>(sql, [...parameters]);
     if (this.options.mapper) {
       return rawResult.map(this.options.mapper);
     }

@@ -42,7 +42,9 @@ export class WebsocketClientTransport implements ClientTransport {
         resolve(new WebsocketDuplexConnection(websocket, new Deserializer(), multiplexerDemultiplexerFactory));
       };
 
-      const errorListener = (ev: ErrorEvent) => {
+      const errorListener = (event: Event) => {
+        const ev = event as ErrorEvent;
+
         removeListeners();
         // We add a default error in that case.
         if (ev.error != null) {

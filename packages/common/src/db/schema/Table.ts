@@ -71,9 +71,9 @@ export const DEFAULT_TABLE_OPTIONS = {
 export const InvalidSQLCharacters = /["'%,.#\s[\]]/;
 
 export class Table<Columns extends ColumnsType = ColumnsType> {
-  protected options: TableOptions;
+  protected options!: TableOptions;
 
-  protected _mappedColumns: Columns;
+  protected _mappedColumns!: Columns;
 
   static createLocalOnly(options: TableOptions) {
     return new Table({ ...options, localOnly: true, insertOnly: false });

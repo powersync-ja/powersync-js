@@ -259,7 +259,8 @@ class CapacitorConnectionPool extends BaseObserver<DBAdapterListener> implements
             platform,
             values: param
           })
-        }))
+        })),
+        false
       );
 
       return {

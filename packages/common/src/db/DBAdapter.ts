@@ -196,8 +196,8 @@ export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
 }
 
 /**
- * A mixin to implement {@link DBAdapter} by delegating to {@link ConnectionPool.readLock} and
- * {@link ConnectionPool.writeLock}.
+ * A mixin to implement {@link DBAdapter} by delegating to {@link ConnectionPool#readLock} and
+ * {@link ConnectionPool#writeLock}.
  */
 export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase) {
   return class extends Base implements DBAdapter {

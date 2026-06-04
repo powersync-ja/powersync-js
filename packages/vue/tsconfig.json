@@ -1,16 +1,19 @@
 {
   "extends": "../../tsconfig.base",
   "compilerOptions": {
-    "baseUrl": "./",
     "jsx": "preserve",
     "outDir": "./lib",
     "module": "node16",
     "moduleResolution": "node16",
-    "rootDir": "src"
+    "rootDir": "src",
+    "strict": false
   },
   "references": [
     {
       "path": "../common"
+    },
+    {
+      "path": "../web"
     }
   ],
   "include": ["src/**/*"]

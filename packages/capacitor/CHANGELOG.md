@@ -1,5 +1,20 @@
 # @powersync/capacitor
 
+## 0.6.1
+
+### Patch Changes
+
+- 7b38faa: Fix Capacitor batch operations so they do not start a nested native transaction when executed inside PowerSync's write transaction wrapper.
+  - @powersync/web@1.38.2
+
+## 0.6.0
+
+### Minor Changes
+
+- 4fc12f9: Add Swift Package Manager support for iOS projects.
+
+  This raises the minimum supported Capacitor version to Capacitor 8.
+
 ## 0.5.3
 
 ### Patch Changes

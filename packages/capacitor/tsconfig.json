@@ -9,6 +9,7 @@
     "moduleResolution": "nodenext",
     "skipLibCheck": true,
     "outDir": "dist/esm",
+    "rootDir": "src/",
     "sourceMap": true,
     "strict": true,
     "target": "es2017"

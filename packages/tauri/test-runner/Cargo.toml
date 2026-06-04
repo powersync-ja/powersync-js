@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+env_logger = "0.11.10"
+log = "0.4.30"
 tauri = { version = "2.10.3", features = ["dynamic-acl", "test"] }
 tauri-plugin-powersync = { path = "../" }
 url = "2.5"

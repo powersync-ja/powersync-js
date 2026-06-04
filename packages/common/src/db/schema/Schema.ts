@@ -15,8 +15,8 @@ export class Schema<S extends SchemaType = SchemaType> {
   /*
     Only available when constructing with mapped typed definition columns
   */
-  readonly types: SchemaTableType<S>;
-  readonly props: S;
+  readonly types!: SchemaTableType<S>;
+  readonly props!: S;
   readonly tables: Table[];
   readonly rawTables: RawTable[];
 

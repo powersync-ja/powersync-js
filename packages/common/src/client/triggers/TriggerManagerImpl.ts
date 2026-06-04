@@ -421,7 +421,7 @@ export class TriggerManagerImpl implements TriggerManager {
             const callbackResult = await options.onChange({
               ...tx,
               destinationTable: destination,
-              withDiff: async <T>(query, params, options?: WithDiffOptions) => {
+              withDiff: async <T>(query: string, params: any, options?: WithDiffOptions) => {
                 // Wrap the query to expose the destination table
                 const operationIdSelect = options?.castOperationIdAsText
                   ? 'id, operation, CAST(operation_id AS TEXT) as operation_id, timestamp, value, previous_value'
@@ -439,7 +439,7 @@ export class TriggerManagerImpl implements TriggerManager {
                 `;
                 return tx.getAll<T>(wrappedQuery, params);
               },
-              withExtractedDiff: async <T>(query, params) => {
+              withExtractedDiff: async <T>(query: string, params: any) => {
                 // Wrap the query to expose the destination table
                 const wrappedQuery = /* sql */ `
                   WITH

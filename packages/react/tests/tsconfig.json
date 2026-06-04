@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
     "esModuleInterop": true,
     "jsx": "react",
     "rootDir": "../",

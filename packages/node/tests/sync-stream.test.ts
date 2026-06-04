@@ -1,9 +1,9 @@
 import { describe, vi, expect, onTestFinished } from 'vitest';
 import { PowerSyncConnectionOptions, SyncStreamConnectionMethod } from '@powersync/common';
 import Logger from 'js-logger';
-import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils';
+import { bucket, checkpoint, mockSyncServiceTest, nextStatus, stream, TestConnector } from './utils.js';
 
-Logger.useDefaults({ defaultLevel: Logger.WARN });
+Logger.useDefaults({ defaultLevel: (Logger as any).WARN });
 
 describe('Sync streams', () => {
   const defaultOptions = {

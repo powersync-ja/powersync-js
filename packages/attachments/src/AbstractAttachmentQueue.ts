@@ -40,20 +40,20 @@ export interface AttachmentQueueOptions {
   onUploadError?: (attachment: AttachmentRecord, exception: any) => Promise<{ retry?: boolean }>;
 }
 
-export const DEFAULT_ATTACHMENT_QUEUE_OPTIONS: Partial<AttachmentQueueOptions> = {
+export const DEFAULT_ATTACHMENT_QUEUE_OPTIONS = {
   attachmentDirectoryName: ATTACHMENT_TABLE,
   attachmentTableName: ATTACHMENT_TABLE,
   syncInterval: 30_000,
   cacheLimit: 100,
   performInitialSync: true,
   downloadAttachments: true
-};
+} satisfies Partial<AttachmentQueueOptions>;
 
 export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions = AttachmentQueueOptions> {
   uploading: boolean;
   downloading: boolean;
   initialSync: boolean;
-  options: T;
+  options: T & typeof DEFAULT_ATTACHMENT_QUEUE_OPTIONS;
   downloadQueue: Set<string>;
 
   constructor(options: T) {
@@ -470,7 +470,7 @@ export abstract class AbstractAttachmentQueue<T extends AttachmentQueueOptions =
     try {
       this.logger.debug(`Downloading ${this.downloadQueue.size} attachments...`);
       while (this.downloadQueue.size > 0) {
-        const id = this.downloadQueue.values().next().value;
+        const id = this.downloadQueue.values().next().value!;
         this.downloadQueue.delete(id);
         const record = await this.record(id);
         if (!record) {

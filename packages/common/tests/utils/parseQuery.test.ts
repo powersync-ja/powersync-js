@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import * as SUT from '../../src/utils/parseQuery';
+import * as SUT from '../../src/utils/parseQuery.js';
 
 describe('parseQuery', () => {
   it('should do nothing if the query is a string', () => {

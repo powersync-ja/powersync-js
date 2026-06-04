@@ -3,6 +3,7 @@ import Logger, { ILogger } from 'js-logger';
 import {
   BatchedUpdateNotification,
   DBAdapter,
+  LockContext,
   QueryResult,
   Transaction,
   UpdateNotification,
@@ -442,7 +443,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     try {
       const { version } = await this.database.get<{ version: string }>('SELECT powersync_rs_version() as version');
       this.sdkVersion = version;
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(`The powersync extension is not loaded correctly. Details: ${e.message}`);
     }
     let versionInts: number[];
@@ -450,7 +451,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
       versionInts = this.sdkVersion!.split(/[.\/]/)
         .slice(0, 3)
         .map((n) => parseInt(n));
-    } catch (e) {
+    } catch (e: any) {
       throw new Error(
         `Unsupported powersync extension version. Need >=0.4.10 <1.0.0, got: ${this.sdkVersion}. Details: ${e.message}`
       );
@@ -894,7 +895,7 @@ SELECT * FROM crud_entries;
    * Takes a read lock, without starting a transaction.
    * In most cases, {@link readTransaction} should be used instead.
    */
-  async readLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async readLock<T>(callback: (db: LockContext) => Promise<T>) {
     await this.waitForReady();
     return this.database.readLock(callback);
   }
@@ -903,7 +904,7 @@ SELECT * FROM crud_entries;
    * Takes a global lock, without starting a transaction.
    * In most cases, {@link writeTransaction} should be used instead.
    */
-  async writeLock<T>(callback: (db: DBAdapter) => Promise<T>) {
+  async writeLock<T>(callback: (db: LockContext) => Promise<T>) {
     await this.waitForReady();
     return this.database.writeLock(callback);
   }
@@ -1037,7 +1038,7 @@ SELECT * FROM crud_entries;
         parameters
       }),
       execute: async ({ sql, parameters }) => {
-        const result = await this.getAll(sql, parameters);
+        const result = await this.getAll<Record<string, any>>(sql, parameters);
         return mapper ? result.map(mapper) : (result as RowType[]);
       }
     };
@@ -1090,7 +1091,7 @@ SELECT * FROM crud_entries;
     const watchedQuery = new OnChangeQueryProcessor({
       db: this,
       comparator,
-      placeholderData: null,
+      placeholderData: null as unknown as QueryResult, // FIXME
       watchOptions: {
         query: {
           compile: () => ({
@@ -1275,7 +1276,7 @@ SELECT * FROM crud_entries;
         try {
           this.processTableUpdates(update, changedTables);
           flushTableUpdates();
-        } catch (error) {
+        } catch (error: any) {
           onError?.(error);
         }
       }

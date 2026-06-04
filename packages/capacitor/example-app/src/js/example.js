@@ -1,6 +1,6 @@
-import { PowerSync } from 'powersync';
+import { PowerSyncDatabase } from '@powersync/capacitor';
 
 window.testEcho = () => {
     const inputValue = document.getElementById("echoInput").value;
-    PowerSync.echo({ value: inputValue })
+    console.log(PowerSyncDatabase, inputValue)
 }
