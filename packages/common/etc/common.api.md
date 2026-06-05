@@ -2297,11 +2297,13 @@ export type WatchedAttachmentItem = {
     filename: string;
     fileExtension?: never;
     metaData?: string;
+    mediaType?: string;
 } | {
     id: string;
     fileExtension: string;
     filename?: never;
     metaData?: string;
+    mediaType?: string;
 };
 
 // Warning: (ae-forgotten-export) The symbol "MetaBaseObserverInterface" needs to be exported by the entry point index.d.ts
@@ -2432,8 +2434,8 @@ export interface WithDiffOptions {
 
 // Warnings were encountered during analysis:
 //
-// src/db/crud/SyncStatus.ts:28:3 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
-// src/db/crud/SyncStatus.ts:32:1 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
+// lib/db/crud/SyncStatus.d.ts:27:5 - (ae-forgotten-export) The symbol "InternalProgressInformation" needs to be exported by the entry point index.d.ts
+// lib/db/crud/SyncStatus.d.ts:31:5 - (ae-forgotten-export) The symbol "CoreStreamSubscription" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
