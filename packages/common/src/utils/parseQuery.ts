@@ -1,10 +1,16 @@
 import type { CompilableQuery } from '../types/types.js';
 
+/**
+ * @internal
+ */
 export interface ParsedQuery {
   sqlStatement: string;
   parameters: any[];
 }
 
+/**
+ * @internal
+ */
 export const parseQuery = <T>(query: string | CompilableQuery<T>, parameters: any[]): ParsedQuery => {
   let sqlStatement: string;
 

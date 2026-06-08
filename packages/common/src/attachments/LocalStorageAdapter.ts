@@ -1,5 +1,11 @@
+/**
+ * @alpha
+ */
 export type AttachmentData = ArrayBuffer | string;
 
+/**
+ * @alpha
+ */
 export enum EncodingType {
   UTF8 = 'utf8',
   Base64 = 'base64'
@@ -15,41 +21,41 @@ export enum EncodingType {
 export interface LocalStorageAdapter {
   /**
    * Saves data to a local file.
-   * @param filePath Path where the file will be stored
-   * @param data Data to store (ArrayBuffer, Blob, or string)
+   * @param filePath - Path where the file will be stored
+   * @param data - Data to store (ArrayBuffer, Blob, or string)
    * @returns Number of bytes written
    */
   saveFile(filePath: string, data: AttachmentData): Promise<number>;
 
   /**
    * Retrieves file data as an ArrayBuffer.
-   * @param filePath Path where the file is stored
+   * @param filePath - Path where the file is stored
    * @returns ArrayBuffer containing the file data
    */
   readFile(filePath: string): Promise<ArrayBuffer>;
 
   /**
    * Deletes the file at the given path.
-   * @param filePath Path where the file is stored
+   * @param filePath - Path where the file is stored
    */
   deleteFile(filePath: string): Promise<void>;
 
   /**
    * Checks if a file exists at the given path.
-   * @param filePath Path where the file is stored
+   * @param filePath - Path where the file is stored
    * @returns True if the file exists, false otherwise
    */
   fileExists(filePath: string): Promise<boolean>;
 
   /**
    * Creates a directory at the specified path.
-   * @param path The full path to the directory
+   * @param path - The full path to the directory
    */
   makeDir(path: string): Promise<void>;
 
   /**
    * Removes a directory at the specified path.
-   * @param path The full path to the directory
+   * @param path - The full path to the directory
    */
   rmDir(path: string): Promise<void>;
 
@@ -65,7 +71,7 @@ export interface LocalStorageAdapter {
 
   /**
    * Returns the file path for the provided filename in the storage directory.
-   * @param filename The filename to get the path for
+   * @param filename - The filename to get the path for
    * @returns The full file path
    */
   getLocalUri(filename: string): string;

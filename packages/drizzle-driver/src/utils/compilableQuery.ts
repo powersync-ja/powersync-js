@@ -19,6 +19,8 @@ import { Query } from 'drizzle-orm';
  *     ))}
  *   </View>
  * );
+ *
+ * @public
  */
 export function toCompilableQuery<T>(query: {
   execute: () => Promise<T | T[]>;

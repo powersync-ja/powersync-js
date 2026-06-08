@@ -1,3 +1,6 @@
+/**
+ * @public
+ */
 export class UploadQueueStats {
   constructor(
     /**

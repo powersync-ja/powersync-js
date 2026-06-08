@@ -1,7 +1,8 @@
-import { AbstractPowerSyncDatabase } from '../AbstractPowerSyncDatabase.js';
-
 /**
- * A description of a sync stream, consisting of its {@link name} and the {@link parameters} used when subscribing.
+ * A description of a sync stream, consisting of its {@link SyncStreamDescription.name} and the
+ * {@link SyncStreamDescription.parameters} used when subscribing.
+ *
+ * @public
  */
 export interface SyncStreamDescription {
   /**
@@ -21,6 +22,8 @@ export interface SyncStreamDescription {
  * Information about a subscribed sync stream.
  *
  * This includes the {@link SyncStreamDescription}, along with information about the current sync status.
+ *
+ * @public
  */
 export interface SyncSubscriptionDescription extends SyncStreamDescription {
   active: boolean;
@@ -28,15 +31,17 @@ export interface SyncSubscriptionDescription extends SyncStreamDescription {
    * Whether this stream subscription is included by default, regardless of whether the stream has explicitly been
    * subscribed to or not.
    *
-   * It's possible for both {@link isDefault} and {@link hasExplicitSubscription} to be true at the same time - this
-   * happens when a default stream was subscribed explicitly.
+   * It's possible for both {@link SyncSubscriptionDescription.isDefault} and
+   * {@link SyncSubscriptionDescription.hasExplicitSubscription} to be true at the same time - this happens when a
+   * default stream was subscribed explicitly.
    */
   isDefault: boolean;
   /**
    * Whether this stream has been subscribed to explicitly.
    *
-   * It's possible for both {@link isDefault} and {@link hasExplicitSubscription} to be true at the same time - this
-   * happens when a default stream was subscribed explicitly.
+   * It's possible for both {@link SyncSubscriptionDescription.isDefault} and
+   * {@link SyncSubscriptionDescription.hasExplicitSubscription} to be true at the same time - this happens when a
+   * default stream was subscribed explicitly.
    */
   hasExplicitSubscription: boolean;
   /**
@@ -49,11 +54,14 @@ export interface SyncSubscriptionDescription extends SyncStreamDescription {
    */
   hasSynced: boolean;
   /**
-   * If {@link hasSynced} is true, the last time data from this stream has been synced.
+   * If {@link SyncSubscriptionDescription.hasSynced} is true, the last time data from this stream has been synced.
    */
   lastSyncedAt: Date | null;
 }
 
+/**
+ * @public
+ */
 export interface SyncStreamSubscribeOptions {
   /**
    * A "time to live" for this stream subscription, in seconds.
@@ -74,6 +82,8 @@ export interface SyncStreamSubscribeOptions {
  * A handle to a {@link SyncStreamDescription} that allows subscribing to the stream.
  *
  * To obtain an instance of {@link SyncStream}, call {@link AbstractPowerSyncDatabase.syncStream}.
+ *
+ * @public
  */
 export interface SyncStream extends SyncStreamDescription {
   /**
@@ -82,7 +92,7 @@ export interface SyncStream extends SyncStreamDescription {
    * You should keep a reference to the returned {@link SyncStreamSubscription} object along as you need data for that
    * stream. As soon as {@link SyncStreamSubscription.unsubscribe} is called for all subscriptions on this stream
    * (including subscriptions created on other tabs), the {@link SyncStreamSubscribeOptions.ttl} starts ticking and will
-   * eventually evict the stream (unless {@link subscribe} is called again).
+   * eventually evict the stream (unless {@link SyncStream.subscribe} is called again).
    */
   subscribe(options?: SyncStreamSubscribeOptions): Promise<SyncStreamSubscription>;
 
@@ -94,6 +104,9 @@ export interface SyncStream extends SyncStreamDescription {
   unsubscribeAll(): Promise<void>;
 }
 
+/**
+ * @public
+ */
 export interface SyncStreamSubscription extends SyncStreamDescription {
   /**
    * A promise that resolves once data from in this sync stream has been synced and applied.

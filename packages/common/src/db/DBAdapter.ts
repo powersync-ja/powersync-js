@@ -12,6 +12,8 @@ import { BaseListener, BaseObserverInterface } from '../utils/BaseObserver.js';
 
 /**
  * Object returned by SQL Query executions.
+ *
+ * @public
  */
 export type QueryResult = {
   /** Represents the auto-generated row id if applicable. */
@@ -31,13 +33,16 @@ export type QueryResult = {
     /** The length of the dataset */
     length: number;
     /** A convenience function to acess the index based the row object
-     * @param idx the row index
+     * @param idx - the row index
      * @returns the row structure identified by column names
      */
     item: (idx: number) => any;
   };
 };
 
+/**
+ * @public
+ */
 export interface DBGetUtils {
   /** Execute a read-only query and return results. */
   getAll<T>(sql: string, parameters?: any[]): Promise<T[]>;
@@ -47,6 +52,9 @@ export interface DBGetUtils {
   get<T>(sql: string, parameters?: any[]): Promise<T>;
 }
 
+/**
+ * @public
+ */
 export interface SqlExecutor {
   /** Execute a single write statement. */
   execute: (query: string, params?: any[] | undefined) => Promise<QueryResult>;
@@ -58,17 +66,24 @@ export interface SqlExecutor {
    *
    * Example result:
    *
-   * ```[ [ '1', 'list 1', '33', 'Post content', '1' ] ]```
+   * ```JavaScript
+   * [ [ '1', 'list 1', '33', 'Post content', '1' ] ]
+   * ```
    *
    * Where as `execute`'s `rows._array` would have been:
    *
-   * ```[ { id: '33', name: 'list 1', content: 'Post content', list_id: '1' } ]```
+   * ```JavaScript
+   * [ { id: '33', name: 'list 1', content: 'Post content', list_id: '1' } ]
+   * ```
    */
   executeRaw: (query: string, params?: any[] | undefined) => Promise<any[][]>;
 
   executeBatch: (query: string, params?: any[][]) => Promise<QueryResult>;
 }
 
+/**
+ * @public
+ */
 export interface LockContext extends SqlExecutor, DBGetUtils {
   /**
    * How the connection has been opened.
@@ -82,7 +97,9 @@ export interface LockContext extends SqlExecutor, DBGetUtils {
 }
 
 /**
- * Implements {@link DBGetUtils} on a {@link SqlRunner}.
+ * Implements {@link DBGetUtils} on a {@link SqlExecutor}.
+ *
+ * @internal
  */
 export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omit<SqlExecutor, 'executeBatch'>>(
   Base: TBase
@@ -132,6 +149,9 @@ export function DBGetUtilsDefaultMixin<TBase extends new (...args: any[]) => Omi
   };
 }
 
+/**
+ * @public
+ */
 export interface Transaction extends LockContext {
   /** Commit multiple changes to the local DB using the Transaction context. */
   commit: () => Promise<QueryResult>;
@@ -141,29 +161,44 @@ export interface Transaction extends LockContext {
 
 /**
  * Update table operation numbers from SQLite
+ *
+ * @public
  */
 export enum RowUpdateType {
   SQLITE_INSERT = 18,
   SQLITE_DELETE = 9,
   SQLITE_UPDATE = 23
 }
+
+/**
+ * @public
+ */
 export interface TableUpdateOperation {
   opType: RowUpdateType;
   rowId: number;
 }
 /**
  * Notification of an update to one or more tables, for the purpose of realtime change notifications.
+ *
+ * @public
  */
 export interface UpdateNotification extends TableUpdateOperation {
   table: string;
 }
 
+/**
+ * @public
+ */
 export interface BatchedUpdateNotification {
+  // TODO (breaking change): Normalize to only including tables
   rawUpdates: UpdateNotification[];
   tables: string[];
   groupedUpdates: Record<string, TableUpdateOperation[]>;
 }
 
+/**
+ * @public
+ */
 export interface DBAdapterListener extends BaseListener {
   /**
    * Listener for table updates.
@@ -174,10 +209,16 @@ export interface DBAdapterListener extends BaseListener {
   tablesUpdated: (updateNotification: BatchedUpdateNotification | UpdateNotification) => void;
 }
 
+/**
+ * @public
+ */
 export interface DBLockOptions {
   timeoutMs?: number;
 }
 
+/**
+ * @public
+ */
 export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener> {
   name: string;
   close: () => void | Promise<void>;
@@ -190,6 +231,9 @@ export interface ConnectionPool extends BaseObserverInterface<DBAdapterListener>
   refreshSchema: () => Promise<void>;
 }
 
+/**
+ * @public
+ */
 export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
   readTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
   writeTransaction: <T>(fn: (tx: Transaction) => Promise<T>, options?: DBLockOptions) => Promise<T>;
@@ -198,6 +242,8 @@ export interface DBAdapter extends ConnectionPool, SqlExecutor, DBGetUtils {
 /**
  * A mixin to implement {@link DBAdapter} by delegating to {@link ConnectionPool#readLock} and
  * {@link ConnectionPool#writeLock}.
+ *
+ * @internal
  */
 export function DBAdapterDefaultMixin<TBase extends new (...args: any[]) => ConnectionPool>(Base: TBase) {
   return class extends Base implements DBAdapter {
@@ -299,12 +345,18 @@ class TransactionImplementation extends DBGetUtilsDefaultMixin(BaseTransaction) 
   }
 }
 
+/**
+ * @internal
+ */
 export function isBatchedUpdateNotification(
   update: BatchedUpdateNotification | UpdateNotification
 ): update is BatchedUpdateNotification {
   return 'tables' in update;
 }
 
+/**
+ * @internal
+ */
 export function extractTableUpdates(update: BatchedUpdateNotification | UpdateNotification) {
   return isBatchedUpdateNotification(update) ? update.tables : [update.table];
 }

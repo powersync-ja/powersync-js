@@ -1,15 +1,24 @@
 import { IndexedColumn } from './IndexedColumn.js';
 import { Table } from './Table.js';
 
+/**
+ * @public
+ */
 export interface IndexOptions {
   name: string;
   columns?: IndexedColumn[];
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_INDEX_OPTIONS: Partial<IndexOptions> = {
   columns: []
 };
 
+/**
+ * @public
+ */
 export class Index {
   static createAscending(options: IndexOptions, columnNames: string[]) {
     return new Index({

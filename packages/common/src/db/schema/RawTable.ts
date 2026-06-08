@@ -7,8 +7,10 @@ import { TableOrRawTableOptions } from './Table.js';
  * using client-side table and column constraints.
  *
  * To collect local writes to raw tables with PowerSync, custom triggers are required. See
- * {@link https://docs.powersync.com/usage/use-case-examples/raw-tables the documentation} for details and an example on
+ * {@link https://docs.powersync.com/usage/use-case-examples/raw-tables} for details and an example on
  * using raw tables.
+ *
+ * @public
  */
 export type RawTableType = RawTableTypeWithStatements | InferredRawTableType;
 
@@ -70,11 +72,15 @@ interface InferredRawTableType extends Partial<RawTableTypeWithStatements> {
  * `{Column: 'name'}`.
  * The `"Rest"` parameter gets resolved to a JSON object covering all values from the synced row that haven't been
  * covered by a `Column` parameter.
+ *
+ * @public
  */
 export type PendingStatementParameter = 'Id' | { Column: string } | 'Rest';
 
 /**
  * A statement that the PowerSync client should use to insert or delete data into a table managed by the user.
+ *
+ * @public
  */
 export type PendingStatement = {
   sql: string;

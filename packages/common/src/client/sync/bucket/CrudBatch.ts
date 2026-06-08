@@ -2,6 +2,8 @@ import { CrudEntry } from './CrudEntry.js';
 
 /**
  * A batch of client-side changes.
+ *
+ * @public
  */
 export class CrudBatch {
   constructor(

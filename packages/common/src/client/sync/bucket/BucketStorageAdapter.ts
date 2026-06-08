@@ -2,6 +2,9 @@ import { BaseListener, BaseObserverInterface, Disposable } from '../../../utils/
 import { CrudBatch } from './CrudBatch.js';
 import { CrudEntry } from './CrudEntry.js';
 
+/**
+ * @internal
+ */
 export enum PSInternalTable {
   DATA = 'ps_data',
   CRUD = 'ps_crud',
@@ -10,6 +13,9 @@ export enum PSInternalTable {
   UNTYPED = 'ps_untyped'
 }
 
+/**
+ * @internal
+ */
 export enum PowerSyncControlCommand {
   PROCESS_TEXT_LINE = 'line_text',
   PROCESS_BSON_LINE = 'line_binary',
@@ -24,10 +30,16 @@ export enum PowerSyncControlCommand {
   CONNECTION_STATE = 'connection'
 }
 
+/**
+ * @internal
+ */
 export interface BucketStorageListener extends BaseListener {
   crudUpdate: () => void;
 }
 
+/**
+ * @internal
+ */
 export interface BucketStorageAdapter extends BaseObserverInterface<BucketStorageListener>, Disposable {
   init(): Promise<void>;
 

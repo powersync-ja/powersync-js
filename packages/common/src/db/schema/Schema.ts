@@ -4,12 +4,17 @@ import { RowType, Table } from './Table.js';
 
 type SchemaType = Record<string, Table<any>>;
 
+/**
+ * @public
+ */
 export type SchemaTableType<S extends SchemaType> = {
   [K in keyof S]: RowType<S[K]>;
 };
 
 /**
  * A schema is a collection of tables. It is used to define the structure of a database.
+ *
+ * @public
  */
 export class Schema<S extends SchemaType = SchemaType> {
   /*
@@ -52,7 +57,7 @@ export class Schema<S extends SchemaType = SchemaType> {
    * Since raw tables are not backed by JSON, running complex queries on them may be more efficient. Further, they allow
    * using client-side table and column constraints.
    *
-   * @param tables An object of (table name, raw table definition) entries.
+   * @param tables - An object of (table name, raw table definition) entries.
    */
   withRawTables(tables: Record<string, RawTableType>) {
     for (const [name, rawTableDefinition] of Object.entries(tables)) {
