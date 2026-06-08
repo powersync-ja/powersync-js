@@ -1,4 +1,4 @@
-import { createLogger, DBAdapter, ILogger, SQLOpenFactory, type ILogLevel } from '@powersync/common';
+import { createConsoleLogger, DBAdapter, LogLevels, PowerSyncLogger, SQLOpenFactory } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { openWorkerDatabasePort, resolveWorkerDatabasePortFactory } from '../../../worker/db/open-worker-database.js';
 import {
@@ -29,6 +29,13 @@ export interface WASQLiteOpenFactoryOptions extends WebSQLOpenFactoryOptions {
    * Defaults to 1.
    */
   additionalReaders?: number;
+
+  /**
+   * The {@link LogLevels} value to use for logs in the worker.
+   */
+  logLevel: number;
+
+  logger: PowerSyncLogger;
 }
 
 export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOptions {
@@ -41,7 +48,7 @@ export interface ResolvedWASQLiteOpenFactoryOptions extends ResolvedWebSQLOpenOp
 }
 
 export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOptions {
-  logLevel: ILogLevel;
+  logLevel: number;
   /**
    * A lock that is currently held by the client. When the lock is returned, we know the client is gone and that we need
    * to clean up resources.
@@ -54,12 +61,12 @@ export interface WorkerDBOpenerOptions extends ResolvedWASQLiteOpenFactoryOption
  */
 export class WASQLiteOpenFactory implements SQLOpenFactory {
   private resolvedFlags: ResolvedWebSQLFlags;
-  private logger: ILogger;
+  private logger: PowerSyncLogger;
 
   constructor(private options: WASQLiteOpenFactoryOptions) {
     assertValidWASQLiteOpenFactoryOptions(options);
     this.resolvedFlags = resolveWebSQLFlags(options.flags);
-    this.logger = options.logger ?? createLogger(`WASQLiteOpenFactory - ${this.options.dbFilename}`);
+    this.logger = options.logger;
   }
 
   get waOptions(): WASQLiteOpenFactoryOptions {
@@ -77,21 +84,23 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     } = this;
     if (ssrMode) {
       if (!disableSSRWarning) {
-        this.logger.warn(
-          `
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `
       Running PowerSync in SSR mode.
       Only empty query results will be returned.
       Disable this warning by setting 'disableSSRWarning: true' in options.`
-        );
+        });
       }
 
       return new SSRDBAdapter();
     }
 
     if (!enableMultiTabs) {
-      this.logger.warn(
-        'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
-      );
+      this.logger.log({
+        level: LogLevels.warn,
+        message: 'Multiple tab support is not enabled. Using this site across multiple tabs may not function correctly.'
+      });
     }
 
     return this.openAdapter();
@@ -107,7 +116,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
     } = this.waOptions;
 
     if (!enableMultiTabs) {
-      this.logger.warn('Multiple tabs are not enabled in this browser');
+      this.logger.log({ level: LogLevels.warn, message: 'Multiple tabs are not enabled in this browser' });
     }
 
     const resolveOptions = (isReadOnly: boolean): ResolvedWASQLiteOpenFactoryOptions => ({
@@ -149,7 +158,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
         const closeSignal = new AbortController();
         const connection = await source.connect({
           ...resolvedOptions,
-          logLevel: this.logger.getLevel(),
+          logLevel: this.options.logLevel,
           lockName: await generateTabCloseSignal(closeSignal.signal)
         });
         const clientOptions = {
@@ -190,7 +199,7 @@ export class WASQLiteOpenFactory implements SQLOpenFactory {
       requiresPersistentTriggers = true;
 
       const resolvedOptions = resolveOptions(false);
-      const connection = await localServer.openConnectionLocally(resolvedOptions);
+      const connection = await localServer.openConnectionLocally(this.logger, resolvedOptions);
       client = new DatabaseClient(
         { connection, source: null, remoteCanCloseUnexpectedly: false },
         {

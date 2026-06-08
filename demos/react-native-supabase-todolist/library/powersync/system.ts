@@ -1,13 +1,13 @@
 import '@azure/core-asynciterator-polyfill';
 
 import {
-  createBaseLogger,
-  LogLevel,
+  createConsoleLogger,
+  LogLevels,
   PowerSyncDatabase,
   SyncClientImplementation,
   AttachmentQueue,
   type AttachmentRecord,
-  type WatchedAttachmentItem,
+  type WatchedAttachmentItem
 } from '@powersync/react-native';
 import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-storage-react-native';
 import React from 'react';
@@ -18,9 +18,7 @@ import { AppConfig } from '../supabase/AppConfig';
 import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
 
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   kvStorage: KVStorage;

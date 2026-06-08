@@ -1,111 +1,37 @@
-import { type ILogger, type ILogLevel, LogLevel } from '@powersync/common';
+import { PowerSyncLogger, LogLevels, CreateLoggerOptions, createConsoleLogger, LogRecord } from '@powersync/common';
 import { type WrappedSyncPort } from './SharedSyncImplementation.js';
 
 /**
  * Broadcasts logs to all clients
  */
-export class BroadcastLogger implements ILogger {
-  TRACE: ILogLevel;
-  DEBUG: ILogLevel;
-  INFO: ILogLevel;
-  TIME: ILogLevel;
-  WARN: ILogLevel;
-  ERROR: ILogLevel;
-  OFF: ILogLevel;
+export class BroadcastLogger implements PowerSyncLogger {
+  private readonly inner: PowerSyncLogger & CreateLoggerOptions;
+  private currentLevel: number = LogLevels.info;
 
-  private currentLevel: ILogLevel = LogLevel.INFO;
+  sendBroadcasts = true;
 
-  constructor(protected clients: WrappedSyncPort[]) {
-    this.TRACE = LogLevel.TRACE;
-    this.DEBUG = LogLevel.DEBUG;
-    this.INFO = LogLevel.INFO;
-    this.TIME = LogLevel.TIME;
-    this.WARN = LogLevel.WARN;
-    this.ERROR = LogLevel.ERROR;
-    this.OFF = LogLevel.OFF;
+  constructor(
+    prefix: string,
+    private clients: WrappedSyncPort[]
+  ) {
+    this.inner = createConsoleLogger({ prefix: prefix });
   }
 
-  trace(...x: any[]): void {
-    if (!this.enabledFor(this.TRACE)) return;
+  log(record: LogRecord) {
+    this.inner.log(record);
 
-    console.trace(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.trace(...sanitized));
-  }
-
-  debug(...x: any[]): void {
-    if (!this.enabledFor(this.DEBUG)) return;
-
-    console.debug(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.debug(...sanitized));
-  }
-
-  info(...x: any[]): void {
-    if (!this.enabledFor(this.INFO)) return;
-
-    console.info(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.info(...sanitized));
-  }
-
-  log(...x: any[]): void {
-    if (!this.enabledFor(this.INFO)) return;
-
-    console.log(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.log(...sanitized));
-  }
-
-  warn(...x: any[]): void {
-    if (!this.enabledFor(this.WARN)) return;
-
-    console.warn(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.warn(...sanitized));
-  }
-
-  error(...x: any[]): void {
-    if (!this.enabledFor(this.ERROR)) return;
-
-    console.error(...x);
-    const sanitized = this.sanitizeArgs(x);
-    this.iterateClients((client) => client.clientProvider.error(...sanitized));
-  }
-
-  time(label: string): void {
-    if (!this.enabledFor(this.TIME)) return;
-
-    console.time(label);
-    this.iterateClients((client) => client.clientProvider.time(label));
-  }
-
-  timeEnd(label: string): void {
-    if (!this.enabledFor(this.TIME)) return;
-
-    console.timeEnd(label);
-    this.iterateClients((client) => client.clientProvider.timeEnd(label));
+    if (this.sendBroadcasts && record.level >= this.currentLevel) {
+      const sanitized = this.sanitizeRecord(record);
+      this.iterateClients((client) => client.clientProvider.log(sanitized));
+    }
   }
 
   /**
    * Set the global log level.
    */
-  setLevel(level: ILogLevel): void {
+  setLevel(level: number): void {
+    this.inner.minLevel = level;
     this.currentLevel = level;
-  }
-
-  /**
-   * Get the current log level.
-   */
-  getLevel(): ILogLevel {
-    return this.currentLevel;
-  }
-
-  /**
-   * Returns true if the given level is enabled.
-   */
-  enabledFor(level: ILogLevel): boolean {
-    return level.value >= this.currentLevel.value;
   }
 
   /**
@@ -126,17 +52,23 @@ export class BroadcastLogger implements ILogger {
    * Guards against any logging errors.
    * We don't want a logging exception to cause further issues upstream
    */
-  protected sanitizeArgs(x: any[]): any[] {
-    const sanitizedParams = x.map((param) => {
-      try {
-        // Try and clone here first. If it fails it won't be passable over a MessagePort
-        return structuredClone(param);
-      } catch (ex) {
-        console.error(ex);
-        return 'Could not serialize log params. Check shared worker logs for more details.';
-      }
-    });
+  protected sanitizeRecord(record: LogRecord): LogRecord {
+    if (!record.error) {
+      return record;
+    }
 
-    return sanitizedParams;
+    let error;
+    try {
+      // Try and clone here first. If it fails it won't be passable over a MessagePort
+      error = structuredClone(record.error);
+    } catch (ex) {
+      console.error(ex);
+      error = 'Could not serialize log params. Check shared worker logs for more details.';
+    }
+
+    return {
+      ...record,
+      error
+    };
   }
 }

@@ -1,14 +1,10 @@
 import { CircularProgress } from '@mui/material';
 import { PowerSyncDatabase } from '@powersync/capacitor';
 import { PowerSyncContext } from '@powersync/react';
-import { createBaseLogger, LogLevel } from '@powersync/web';
+import { createConsoleLogger, LogLevels } from '@powersync/web';
 import React, { Suspense } from 'react';
 import { AppSchema } from '../../library/powersync/AppSchema.js';
 import { BackendConnector } from '../../library/powersync/BackendConnector.js';
-
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
 
 // Uses the Web SDK for web, and Capacitor adapters for iOS/Android.
 const powerSync = new PowerSyncDatabase({
@@ -18,7 +14,8 @@ const powerSync = new PowerSyncDatabase({
   schema: AppSchema,
   flags: {
     enableMultiTabs: typeof SharedWorker !== 'undefined'
-  }
+  },
+  logger: createConsoleLogger({ minLevel: LogLevels.debug })
 });
 const connector = new BackendConnector();
 

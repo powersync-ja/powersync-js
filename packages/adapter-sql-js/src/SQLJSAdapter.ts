@@ -4,15 +4,16 @@ import {
   BatchedUpdateNotification,
   ConnectionPool,
   ControlledExecutor,
-  createLogger,
+  createConsoleLogger,
   DBAdapter,
   DBAdapterDefaultMixin,
   DBAdapterListener,
   DBGetUtilsDefaultMixin,
   DBLockOptions,
-  ILogger,
   LockContext,
+  LogLevels,
   Mutex,
+  PowerSyncLogger,
   QueryResult,
   SqlExecutor,
   SQLOpenFactory,
@@ -30,12 +31,12 @@ export interface SQLJSPersister {
 
 export interface SQLJSOpenOptions extends SQLOpenOptions {
   persister?: SQLJSPersister;
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
 }
 
 export interface ResolvedSQLJSOpenOptions extends SQLJSOpenOptions {
   persister?: SQLJSPersister;
-  logger: ILogger;
+  logger: PowerSyncLogger;
 }
 
 export class SQLJSOpenFactory implements SQLOpenFactory {
@@ -110,7 +111,7 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
   }
 
   protected resolveOptions(options: SQLJSOpenOptions): ResolvedSQLJSOpenOptions {
-    const logger = options.logger ?? createLogger('SQLJSDBAdapter');
+    const logger = options.logger ?? createConsoleLogger({ prefix: 'SQLJSDBAdapter' });
 
     return {
       ...options,
@@ -122,10 +123,10 @@ class SqlJsConnectionPool extends BaseObserver<DBAdapterListener> implements Con
     const SQL = await SQLJs({
       locateFile: (filename: any) => `../dist/${filename}`,
       print: (text) => {
-        this.options.logger.info(text);
+        this.options.logger.log({ level: LogLevels.info, message: text });
       },
       printErr: (text) => {
-        this.options.logger.error('[stderr]', text);
+        this.options.logger.log({ level: LogLevels.error, message: `[stderr]: ${text}` });
       }
     });
     const existing = await this.options.persister?.readFile();
