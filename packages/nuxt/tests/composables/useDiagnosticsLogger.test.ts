@@ -87,7 +87,7 @@ describe('useDiagnosticsLogger', () => {
   });
 
   it('should format messages with PowerSync prefix to console', async () => {
-    // js-logger default handler uses console.info for INFO level (logger.log = logger.info)
+    // createConsoleLogger uses console.info for INFO level (logger.log = logger.info)
     const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
     const [{ logger }] = withSetup(() => useDiagnosticsLogger());
