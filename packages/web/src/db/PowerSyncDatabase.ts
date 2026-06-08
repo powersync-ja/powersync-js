@@ -14,7 +14,8 @@ import {
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
-  type RequiredAdditionalConnectionOptions
+  type RequiredAdditionalConnectionOptions,
+  LogLevels
 } from '@powersync/common';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
@@ -44,6 +45,13 @@ export interface WebPowerSyncFlags extends WebSQLFlags {
    * instances before the window unloads
    */
   externallyUnload?: boolean;
+
+  /**
+   * The log level for database workers.
+   *
+   * Defaults to {@link LogLevels.info}.
+   */
+  databaseWorkerLogLevel?: number;
 }
 
 type WithWebFlags<Base> = Base & { flags?: WebPowerSyncFlags };
@@ -56,6 +64,13 @@ export interface WebSyncOptions {
    * or a factory method that returns a worker.
    */
   worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
+
+  /**
+   * The log level for logs from the sync worker.
+   *
+   * Defaults to {@link LogLevels.info}.
+   */
+  logLevel?: number;
 }
 
 type WithWebSyncOptions<Base> = Base & {
@@ -86,7 +101,8 @@ export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerS
 
 export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
   ...DEFAULT_WEB_SQL_FLAGS,
-  externallyUnload: false
+  externallyUnload: false,
+  databaseWorkerLogLevel: LogLevels.info
 };
 
 export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<WebPowerSyncFlags> => {
@@ -171,10 +187,13 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
+    const resolvedFlags = resolveWebPowerSyncFlags(options.flags);
     const defaultFactory = new WASQLiteOpenFactory({
       ...options.database,
-      flags: resolveWebPowerSyncFlags(options.flags),
-      encryptionKey: options.encryptionKey
+      flags: resolvedFlags,
+      encryptionKey: options.encryptionKey,
+      logger: this.logger,
+      logLevel: resolvedFlags.databaseWorkerLogLevel
     });
     return defaultFactory.openDB();
   }
@@ -206,7 +225,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
-    return new SqliteBucketStorage(this.database);
+    return new SqliteBucketStorage(this.database, this.logger);
   }
 
   protected async runExclusive<T>(cb: () => Promise<T>) {
@@ -245,11 +264,12 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
             Logs for shared sync worker will only be available in the shared worker context
           `;
           const logger = this.options.logger;
-          logger ? logger.warn(warning) : console.warn(warning);
+          logger ? logger.log({ level: LogLevels.warn, message: warning }) : console.warn(warning);
         }
         return new SharedWebStreamingSyncImplementation({
           ...syncOptions,
-          db: this.database as WebDBAdapter // This should always be the case
+          db: this.database as WebDBAdapter, // This should always be the case
+          logLevel: this.options.sync?.logLevel ?? LogLevels.info
         });
       default:
         return new WebStreamingSyncImplementation(syncOptions);

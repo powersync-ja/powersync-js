@@ -1,12 +1,12 @@
 import {
-  LogLevel,
+  LogLevels,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   Schema,
   SyncStreamConnectionMethod,
   Table,
   column,
-  createBaseLogger
+  createConsoleLogger
 } from '@powersync/common';
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
@@ -67,12 +67,7 @@ export const sharedMockSyncServiceTest = test.extend<{
 }>({
   context: async ({}, use) => {
     const dbFilename = `test-${crypto.randomUUID()}.db`;
-    const globalLogger = createBaseLogger();
-    globalLogger.useDefaults({
-      defaultLevel: LogLevel.DEBUG
-    });
-
-    const logger = globalLogger.get('mocked sync');
+    const logger = createConsoleLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
 
     const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
       const db = new PowerSyncDatabase({

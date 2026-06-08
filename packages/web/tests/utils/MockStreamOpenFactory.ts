@@ -6,6 +6,7 @@ import {
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
+  PowerSyncLogger,
   RemoteConnector,
   SimpleAsyncIterator,
   SyncStreamOptions
@@ -40,9 +41,10 @@ export class MockRemote extends AbstractRemote {
 
   constructor(
     connector: RemoteConnector,
+    logger: PowerSyncLogger,
     protected onStreamRequested: () => void
   ) {
-    super(connector);
+    super(connector, logger);
     this.streamController = null;
     this.generateCheckpoint = vi.fn(() => {
       return {
@@ -136,7 +138,7 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
     connector: PowerSyncBackendConnector
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
-      logger: this.options.logger,
+      logger: this.logger,
       adapter: this.bucketStorageAdapter,
       remote: this.remote,
       uploadCrud: async () => {

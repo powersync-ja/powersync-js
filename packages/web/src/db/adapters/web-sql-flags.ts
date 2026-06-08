@@ -1,4 +1,4 @@
-import { type ILogger, SQLOpenOptions } from '@powersync/common';
+import { type PowerSyncLogger, SQLOpenOptions } from '@powersync/common';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -82,7 +82,7 @@ export interface WebSQLOpenFactoryOptions extends SQLOpenOptions {
    */
   workerPort?: MessagePort;
 
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
 
   /**
    * Where to store SQLite temporary files. Defaults to 'MEMORY'.

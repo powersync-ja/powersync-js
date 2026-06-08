@@ -1,6 +1,7 @@
-import { LogLevel, Schema, SyncStreamConnectionMethod, TableV2, column, createLogger } from '@powersync/common';
+import { LogLevels, Schema, SyncStreamConnectionMethod, TableV2, column, createConsoleLogger } from '@powersync/common';
 import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS } from '@powersync/web';
 import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
+import { defaultLoggerConfig } from './logger.js';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.
@@ -39,14 +40,16 @@ export async function setupPowerSyncInIframe(
     // The vfs string value is the enum value itself (string enums)
     const databaseOptions = vfs
       ? new WASQLiteOpenFactory({
+          ...defaultLoggerConfig,
           dbFilename,
           vfs: vfs as WASQLiteVFS
         })
       : { dbFilename };
 
     // Configure verbose logging
-    const logger = createLogger('iFrame test', {
-      logLevel: LogLevel.DEBUG
+    const logger = createConsoleLogger({
+      prefix: 'iFrame test',
+      minLevel: LogLevels.debug
     });
 
     const db = new PowerSyncDatabase({

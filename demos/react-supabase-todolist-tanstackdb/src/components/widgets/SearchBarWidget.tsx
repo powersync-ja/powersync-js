@@ -41,7 +41,7 @@ export const SearchBarWidget: React.FC<any> = () => {
   );
 
   const searchResults = [
-    ...todoMatches.map((todo) => new SearchResult(todo.id, todo.list_name, todo.description)),
+    ...todoMatches.map((todo) => new SearchResult(todo.id, todo.list_name!, todo.description)),
     ...listMatches.map((list) => new SearchResult(list.id, list.name))
   ];
 

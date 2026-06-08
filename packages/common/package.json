@@ -58,9 +58,6 @@
     "test": "vitest",
     "test:exports": "attw --pack . --exclude-entrypoints internal/sync_protocol"
   },
-  "dependencies": {
-    "js-logger": "catalog:"
-  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "catalog:",
     "@rollup/plugin-inject": "catalog:",

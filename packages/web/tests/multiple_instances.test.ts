@@ -1,9 +1,10 @@
 import {
   AbstractPowerSyncDatabase,
-  createBaseLogger,
-  createLogger,
+  createConsoleLogger,
   DBAdapterDefaultMixin,
-  LogLevel
+  LogLevels,
+  LogRecord,
+  PowerSyncLogger
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -26,8 +27,6 @@ describe('Multiple Instances', { sequential: true }, () => {
       schema: TEST_SCHEMA
     });
 
-  beforeAll(() => createBaseLogger().useDefaults());
-
   function createAsset(powersync: AbstractPowerSyncDatabase) {
     return powersync.execute('INSERT INTO assets(id, description) VALUES(uuid(), ?)', ['test']);
   }
@@ -48,14 +47,19 @@ describe('Multiple Instances', { sequential: true }, () => {
     'should broadcast logs from shared sync worker',
     { timeout: 10_000 },
     async ({ context: { openDatabase, mockService } }) => {
-      const logger = createLogger('test-logger');
-      logger.setLevel(LogLevel.TRACE);
-      const spiedErrorLogger = vi.spyOn(logger, 'error');
-      const spiedTraceLogger = vi.spyOn(logger, 'trace');
+      const logLines: LogRecord[] = [];
+      const logger: PowerSyncLogger = {
+        log(msg) {
+          logLines.push(msg);
+        }
+      };
 
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
-        logger
+        logger,
+        sync: {
+          logLevel: LogLevels.trace
+        }
       });
 
       powersync.connect({
@@ -83,16 +87,21 @@ describe('Multiple Instances', { sequential: true }, () => {
       // Asserting that powersync_control logs exists verifies that some connection attempt was made.
       await vi.waitFor(
         () =>
-          expect(
-            spiedTraceLogger.mock.calls
-              .flat(1)
-              .find((argument) => typeof argument == 'string' && argument.includes('powersync_control'))
-          ).exist,
-        { timeout: 2000 }
+          expect(logLines.map((l) => l.message)).toEqual(
+            expect.arrayContaining([expect.stringContaining('powersync_control')])
+          ),
+        {
+          timeout: 2000
+        }
       );
 
       // The connection should fail with an error
-      await vi.waitFor(() => expect(spiedErrorLogger.mock.calls.length).gt(0), { timeout: 2000 });
+      await vi.waitFor(
+        () => expect(logLines.map((l) => l.error)).toEqual(expect.arrayContaining([expect.any(Error)])),
+        {
+          timeout: 2000
+        }
+      );
     }
   );
 

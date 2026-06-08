@@ -11,7 +11,7 @@ const assets = new Table(
     customer_id: column.text,
     description: column.text
   },
-  { indexes: { makemodel: ['make, model'] } }
+  { indexes: { makemodel: ['make', 'model'] } }
 );
 
 const customers = new Table({

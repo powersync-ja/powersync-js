@@ -1,56 +1,102 @@
-import Logger, { type ILogger, type ILogLevel } from 'js-logger';
-
-export { GlobalLogger, ILogger, ILoggerOpts, ILogHandler, ILogLevel } from 'js-logger';
-
-const TypedLogger: ILogger = Logger as any;
-
 /**
  * @public
  */
-export const LogLevel = {
-  TRACE: TypedLogger.TRACE,
-  DEBUG: TypedLogger.DEBUG,
-  INFO: TypedLogger.INFO,
-  TIME: TypedLogger.TIME,
-  WARN: TypedLogger.WARN,
-  ERROR: TypedLogger.ERROR,
-  OFF: TypedLogger.OFF
-};
+export const LogLevels = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50
+} as const;
+
+/**
+ * A log record passed to a {@link PowerSyncLogger}.
+ *
+ * @public
+ */
+export interface LogRecord {
+  /**
+   * The log level (see {@link LogLevels} for preconfigured values) for the message. Depending on how a receiving logger
+   * has been configured, messages below a configured minimum level may be ignored.
+   */
+  level: number;
+
+  /**
+   * The main message to log.
+   */
+  message: string;
+
+  /**
+   * When the log message contains an error, the error causing the log.
+   *
+   * This is not guaranteed to be an `Error` instance. On the web, we might have to serialize objects across message
+   * channels and represent them as a string.
+   */
+  error?: unknown;
+}
+
+/**
+ * A logger used by the PowerSync SDK.
+ *
+ * This is deliberately a very simple interface, and it's not a designed to be a general-purpose logger you would use in
+ * your application. Instead, you can provide an implementation of this to PowerSync to make it use your preferred
+ * logging libraries.
+ *
+ * By default, the SDK uses a {@link createConsoleLogger} instance forwarding messages to `console.log`.
+ *
+ * @public
+ */
+export interface PowerSyncLogger {
+  log(record: LogRecord): void;
+}
 
 /**
  * @public
  */
 export interface CreateLoggerOptions {
-  logLevel?: ILogLevel;
+  /**
+   * A prefix for messages emitted by {@link createConsoleLogger} to make them more recognizable.
+   *
+   * Defaults to `'PowerSync'`.
+   */
+  prefix: string;
+
+  /**
+   * The minimum log level to consider for messages. Defaults to {@link LogLevels.info}.
+   */
+  minLevel: number;
 }
 
 /**
- * Retrieves the base (default) logger instance.
+ * A very simple {@link PowerSyncLogger} implementation forwarding messages to `console.log`.
  *
- * This base logger controls the default logging configuration and is shared
- * across all loggers created with `createLogger`. Adjusting settings on this
- * base logger affects all loggers derived from it unless explicitly overridden.
- *
+ * @param options - Options to configure a minimum severity of the logger or a prefix to make messages more recognizable.
  * @public
  */
-export function createBaseLogger() {
-  return Logger;
-}
+export function createConsoleLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions {
+  const { prefix = 'PowerSync', minLevel = LogLevels.info } = options ?? {};
 
-/**
- * Creates and configures a new named logger based on the base logger.
- *
- * Named loggers allow specific modules or areas of your application to have
- * their own logging levels and behaviors. These loggers inherit configuration
- * from the base logger by default but can override settings independently.
- *
- * @public
- */
-export function createLogger(name: string, options: CreateLoggerOptions = {}): ILogger {
-  const logger = Logger.get(name);
-  if (options.logLevel) {
-    logger.setLevel(options.logLevel);
-  }
+  return {
+    prefix,
+    minLevel,
+    log({ level, message, error }) {
+      if (level < this.minLevel) return;
 
-  return logger;
+      let emitter = console.log;
+      if (level >= LogLevels.error) {
+        emitter = console.error;
+      } else if (level >= LogLevels.warn) {
+        emitter = console.warn;
+      } else if (level >= LogLevels.info) {
+        emitter = console.info;
+      }
+
+      const messageWithPrefix = `[${prefix}]: ${message}`;
+      if (error) {
+        emitter(messageWithPrefix, error);
+      } else {
+        emitter(messageWithPrefix);
+      }
+    }
+  };
 }
