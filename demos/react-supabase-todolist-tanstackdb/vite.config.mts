@@ -82,7 +82,7 @@ export default defineConfig({
       enabled: true,
       isolate: true,
       provider: 'playwright',
-      headless: false,
+      headless: true,
       instances: [
         {
           browser: 'chromium'
