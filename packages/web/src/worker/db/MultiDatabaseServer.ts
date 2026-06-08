@@ -1,4 +1,4 @@
-import { ILogger } from '@powersync/common';
+import { LogLevels, PowerSyncLogger } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { ClientConnectionView, DatabaseServer } from '../../db/adapters/wa-sqlite/DatabaseServer.js';
 import {
@@ -17,11 +17,16 @@ const OPEN_DB_LOCK = 'open-wasqlite-db';
 export class MultiDatabaseServer {
   private activeDatabases = new Map<string, DatabaseServer>();
 
-  constructor(readonly logger: ILogger) {}
+  constructor(readonly logger: PowerSyncLogger) {}
 
   async handleConnection(options: WorkerDBOpenerOptions): Promise<ClientConnectionView> {
-    this.logger.setLevel(options.logLevel);
-    return Comlink.proxy(await this.openConnectionLocally(options, options.lockName));
+    const logger: PowerSyncLogger = {
+      log: (record) => {
+        if (record.level >= options.logLevel) this.logger.log(record);
+      }
+    };
+
+    return Comlink.proxy(await this.openConnectionLocally(logger, options, options.lockName));
   }
 
   async connectToExisting(name: string, lockName: string): Promise<ClientConnectionView> {
@@ -35,7 +40,7 @@ export class MultiDatabaseServer {
     });
   }
 
-  async openConnectionLocally(options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
+  async openConnectionLocally(logger: PowerSyncLogger, options: ResolvedWASQLiteOpenFactoryOptions, lockName?: string) {
     // Especially on Firefox, we're sometimes seeing "NoModificationAllowedError"s when opening OPFS databases we can
     // work around by retrying.
     const maxAttempts = 3;
@@ -43,19 +48,26 @@ export class MultiDatabaseServer {
 
     for (let count = 0; count < maxAttempts - 1; count++) {
       try {
-        server = await this.databaseOpenAttempt(options);
-      } catch (ex) {
-        this.logger.warn(`Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`, ex);
+        server = await this.databaseOpenAttempt(logger, options);
+      } catch (error) {
+        this.logger.log({
+          level: LogLevels.warn,
+          message: `Attempt ${count + 1} of ${maxAttempts} to open database failed, retrying in 1 second...`,
+          error
+        });
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
     // Final attempt if we haven't been able to open the server - rethrow errors if we still can't open.
-    server ??= await this.databaseOpenAttempt(options);
+    server ??= await this.databaseOpenAttempt(logger, options);
     return server.connect(lockName);
   }
 
-  private async databaseOpenAttempt(options: ResolvedWASQLiteOpenFactoryOptions): Promise<DatabaseServer> {
+  private async databaseOpenAttempt(
+    logger: PowerSyncLogger,
+    options: ResolvedWASQLiteOpenFactoryOptions
+  ): Promise<DatabaseServer> {
     return getNavigatorLocks().request(OPEN_DB_LOCK, async () => {
       const { dbFilename } = options;
 
@@ -84,7 +96,7 @@ export class MultiDatabaseServer {
         const onClose = () => this.activeDatabases.delete(dbFilename);
         server = new DatabaseServer({
           inner: withSafeConcurrency,
-          logger: this.logger,
+          logger,
           onClose
         });
         this.activeDatabases.set(dbFilename, server);

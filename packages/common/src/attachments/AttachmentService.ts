@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
-import { ILogger } from '../utils/Logger.js';
+import { PowerSyncLogger, LogLevels } from '../utils/Logger.js';
 import { Mutex } from '../utils/mutex.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentRecord, AttachmentState } from './Schema.js';
@@ -16,7 +16,7 @@ export class AttachmentService {
 
   constructor(
     private db: AbstractPowerSyncDatabase,
-    private logger: ILogger,
+    private logger: PowerSyncLogger,
     private tableName: string = 'attachments',
     archivedCacheLimit: number = 100
   ) {
@@ -28,7 +28,7 @@ export class AttachmentService {
    * @returns Watch query that emits changes for queued uploads, downloads, and deletes
    */
   watchActiveAttachments({ throttleMs }: { throttleMs?: number } = {}): DifferentialWatchedQuery<AttachmentRecord> {
-    this.logger.info('Watching active attachments...');
+    this.logger.log({ level: LogLevels.info, message: 'Watching active attachments...' });
     const watch = this.db
       .query<AttachmentRecord>({
         sql: /* sql */ `

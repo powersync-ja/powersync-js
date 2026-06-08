@@ -3,8 +3,8 @@ import repl_factory from 'node:repl';
 import { Worker } from 'node:worker_threads';
 
 import {
-  createBaseLogger,
-  createLogger,
+  createConsoleLogger,
+  LogLevels,
   PowerSyncDatabase,
   SyncStreamConnectionMethod,
   WorkerOpener
@@ -14,11 +14,10 @@ import { AppSchema, DemoConnector } from './powersync.js';
 import { enableUncidiDiagnostics } from './UndiciDiagnostics.js';
 
 const main = async () => {
-  const baseLogger = createBaseLogger();
-  const logger = createLogger('PowerSyncDemo');
   const debug = process.env.POWERSYNC_DEBUG == '1';
+  const logger = createConsoleLogger({ prefix: 'PowerSyncDemo', minLevel: debug ? LogLevels.trace : LogLevels.warn });
+
   const encryptionKey = process.env.ENCRYPTION_KEY ?? '';
-  baseLogger.useDefaults({ defaultLevel: debug ? logger.TRACE : logger.WARN });
 
   // Enable detailed request/response logging for debugging purposes.
   if (debug) {

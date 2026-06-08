@@ -1,4 +1,4 @@
-import { ILogger } from 'js-logger';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { SyncStatus } from '../db/crud/SyncStatus.js';
 import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
@@ -54,7 +54,7 @@ export interface ConnectionManagerOptions {
     options: CreateSyncImplementationOptions
   ): Promise<ConnectionManagerSyncImplementationResult>;
 
-  logger: ILogger;
+  logger: PowerSyncLogger;
 }
 
 type StoredConnectionOptions = {
@@ -197,7 +197,10 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     this.syncStreamInitPromise = new Promise(async (resolve, reject) => {
       try {
         if (!this.pendingConnectionOptions) {
-          this.logger.debug('No pending connection options found, not creating sync stream implementation');
+          this.logger.log({
+            level: LogLevels.debug,
+            message: 'No pending connection options found, not creating sync stream implementation'
+          });
           // A disconnect could have cleared this.
           resolve();
           return;
@@ -239,7 +242,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // and this point. Awaiting here allows the sync stream to be cleared if disconnected.
     await this.disconnectingPromise;
 
-    this.logger.debug('Attempting to connect to PowerSync instance');
+    this.logger.log({ level: LogLevels.debug, message: 'Attempting to connect to PowerSync instance' });
     await this.syncStreamImplementation?.connect(appliedOptions!);
   }
 
@@ -353,7 +356,7 @@ class ActiveSubscription {
   constructor(
     readonly name: string,
     readonly parameters: Record<string, any> | null,
-    readonly logger: ILogger,
+    readonly logger: PowerSyncLogger,
     readonly waitForFirstSync: (abort?: AbortSignal) => Promise<void>,
     private clearSubscription: () => void
   ) {}
@@ -398,8 +401,9 @@ class SyncStreamSubscriptionHandle implements SyncStreamSubscription {
 const _finalizer =
   'FinalizationRegistry' in globalThis
     ? new FinalizationRegistry<ActiveSubscription>((sub) => {
-        sub.logger.warn(
-          `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
-        );
+        sub.logger.log({
+          level: LogLevels.warn,
+          message: `A subscription to ${sub.name} with params ${JSON.stringify(sub.parameters)} leaked! Please ensure calling unsubscribe() when you don't need a subscription anymore. For global subscriptions, consider storing them in global fields to avoid this warning.`
+        });
       })
     : null;

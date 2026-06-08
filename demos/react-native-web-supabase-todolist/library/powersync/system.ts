@@ -1,10 +1,7 @@
 import '@azure/core-asynciterator-polyfill';
 
 import React from 'react';
-import {
-  PowerSyncDatabase as PowerSyncDatabaseNative,
-  AbstractPowerSyncDatabase
-} from '@powersync/react-native';
+import { PowerSyncDatabase as PowerSyncDatabaseNative, AbstractPowerSyncDatabase } from '@powersync/react-native';
 import {
   PowerSyncDatabase as PowerSyncDatabaseWeb,
   WASQLiteOpenFactory,
@@ -14,8 +11,8 @@ import { ReactNativeFileSystemStorageAdapter } from '@powersync/attachments-stor
 import {
   type AttachmentRecord,
   AttachmentQueue,
-  LogLevel,
-  createBaseLogger,
+  createConsoleLogger,
+  LogLevels,
   WatchedAttachmentItem
 } from '@powersync/common';
 import { SupabaseRemoteStorageAdapter } from '../storage/SupabaseRemoteStorageAdapter';
@@ -25,9 +22,7 @@ import { SupabaseConnector } from '../supabase/SupabaseConnector';
 import { AppSchema, TODO_TABLE } from './AppSchema';
 import { Platform } from 'react-native';
 
-const logger = createBaseLogger();
-logger.useDefaults();
-logger.setLevel(LogLevel.DEBUG);
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export class System {
   kvStorage: ExpoKVStorage | WebKVStorage;

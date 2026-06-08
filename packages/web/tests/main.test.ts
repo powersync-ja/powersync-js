@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA, TestDatabase } from './utils/test-schema.js';
 import { generateTestDb } from './utils/testDb.js';
+import { defaultLoggerConfig } from './utils/logger.js';
 // TODO import tests from a common package
 
 describe(
@@ -33,6 +34,7 @@ describe(
   describeBasicTests(() =>
     generateTestDb({
       database: new WASQLiteOpenFactory({
+        ...defaultLoggerConfig,
         dbFilename: 'basic-opfs.sqlite',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS
       }),
