@@ -1,8 +1,8 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
+import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
-import { ILogger } from '../utils/Logger.js';
 import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
@@ -42,7 +42,7 @@ export interface AttachmentQueueOptions {
   /**
    * Logger instance. Defaults to db.logger
    */
-  logger?: ILogger;
+  logger?: PowerSyncLogger;
   /**
    * Periodic polling interval in milliseconds for retrying failed uploads/downloads. Default: 30000
    */
@@ -102,7 +102,7 @@ export class AttachmentQueue {
   readonly tableName: string;
 
   /** Logger instance for diagnostic information */
-  readonly logger: ILogger;
+  readonly logger: PowerSyncLogger;
 
   /** Interval in milliseconds between periodic sync operations. Acts as a polling timer to retry
    *  failed uploads/downloads, especially after the app goes offline. Default: 30000 (30 seconds) */
@@ -221,7 +221,7 @@ export class AttachmentQueue {
         if (status.connected) {
           // Device came online, process attachments immediately
           this.syncStorage().catch((error) => {
-            this.logger.error('Error syncing storage on connection:', error);
+            this.logger.log({ level: LogLevels.error, message: 'Error syncing storage on connection', error });
           });
         }
       }

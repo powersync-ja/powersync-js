@@ -1,4 +1,4 @@
-import { ILogLevel, PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
+import { PowerSyncConnectionOptions, SubscribedStream } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { getNavigatorLocks } from '../../shared/navigator.js';
 import {
@@ -65,7 +65,7 @@ export class WorkerClient {
     });
   }
 
-  setLogLevel(level: ILogLevel) {
+  setLogLevel(level: number) {
     this.sync.setLogLevel(level);
   }
 

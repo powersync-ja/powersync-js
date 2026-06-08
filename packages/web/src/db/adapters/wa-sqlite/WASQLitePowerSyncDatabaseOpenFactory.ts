@@ -1,4 +1,10 @@
-import { AbstractPowerSyncDatabase, DBAdapter, PowerSyncDatabaseOptions } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  createConsoleLogger,
+  DBAdapter,
+  LogLevels,
+  PowerSyncDatabaseOptions
+} from '@powersync/common';
 import { PowerSyncDatabase } from '../../../db/PowerSyncDatabase.js';
 import { AbstractWebPowerSyncDatabaseOpenFactory } from '../AbstractWebPowerSyncDatabaseOpenFactory.js';
 import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
@@ -14,7 +20,11 @@ import { WASQLiteOpenFactory } from './WASQLiteOpenFactory.js';
  */
 export class WASQLitePowerSyncDatabaseOpenFactory extends AbstractWebPowerSyncDatabaseOpenFactory {
   protected openDB(): DBAdapter {
-    const factory = new WASQLiteOpenFactory(this.options);
+    const factory = new WASQLiteOpenFactory({
+      logger: createConsoleLogger(),
+      logLevel: LogLevels.info,
+      ...this.options
+    });
     return factory.openDB();
   }
 

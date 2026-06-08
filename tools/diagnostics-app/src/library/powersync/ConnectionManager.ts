@@ -1,8 +1,8 @@
 import {
   BaseListener,
-  createBaseLogger,
+  createConsoleLogger,
   DEFAULT_STREAMING_SYNC_OPTIONS,
-  LogLevel,
+  LogLevels,
   PowerSyncDatabase,
   SyncClientImplementation,
   SyncStreamSubscription,
@@ -19,9 +19,7 @@ import { DynamicSchemaManager } from './DynamicSchemaManager';
 import { RustClientInterceptor } from './RustClientInterceptor';
 import { TokenConnector } from './TokenConnector';
 
-const baseLogger = createBaseLogger();
-baseLogger.useDefaults();
-baseLogger.setLevel(LogLevel.DEBUG);
+const baseLogger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 export type JSONValue = string | number | boolean | null | { [key: string]: JSONValue } | JSONValue[];
 
@@ -60,7 +58,9 @@ const openFactory = new WASQLiteOpenFactory({
   debugMode: true,
   cacheSizeKb: 500 * 1024,
   temporaryStorage: TemporaryStorageOption.MEMORY,
-  vfs: WASQLiteVFS.OPFSCoopSyncVFS
+  vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+  logger: baseLogger,
+  logLevel: LogLevels.info
 });
 
 export const db = new PowerSyncDatabase({
@@ -128,7 +128,7 @@ export async function connect() {
   await schemaManager.loadFromDb();
   const params = await getParams();
   await sync?.disconnect();
-  const remote = new WebRemote(connector);
+  const remote = new WebRemote(connector, baseLogger);
   const adapter = new RustClientInterceptor(db, remote, schemaManager);
 
   const syncOptions: WebStreamingSyncImplementationOptions = {
@@ -139,7 +139,8 @@ export async function connect() {
     },
     identifier: 'diagnostics',
     ...DEFAULT_STREAMING_SYNC_OPTIONS,
-    subscriptions: []
+    subscriptions: [],
+    logger: baseLogger
   };
   sync = new WebStreamingSyncImplementation(syncOptions);
   notifySyncChange();

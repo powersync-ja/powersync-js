@@ -1,6 +1,6 @@
-import { Schema, Table, PowerSyncDatabase, column, createBaseLogger } from '@powersync/web';
+import { Schema, Table, PowerSyncDatabase, column, createConsoleLogger, LogLevels } from '@powersync/web';
 
-createBaseLogger().useDefaults();
+const logger = createConsoleLogger({ minLevel: LogLevels.debug });
 
 /**
  * A placeholder connector which doesn't do anything.
@@ -27,7 +27,8 @@ let PowerSync;
 const openDatabase = async () => {
   PowerSync = new PowerSyncDatabase({
     schema: AppSchema,
-    database: { dbFilename: 'test.sqlite' }
+    database: { dbFilename: 'test.sqlite' },
+    logger
   });
 
   await PowerSync.init();

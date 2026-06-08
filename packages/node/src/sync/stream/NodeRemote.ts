@@ -1,12 +1,11 @@
 import * as os from 'node:os';
 
 import {
-  type ILogger,
   AbstractRemote,
   AbstractRemoteOptions,
-  DEFAULT_REMOTE_LOGGER,
   FetchImplementation,
   FetchImplementationProvider,
+  PowerSyncLogger,
   RemoteConnector
 } from '@powersync/common';
 import { Dispatcher, EnvHttpProxyAgent, getGlobalDispatcher, ProxyAgent, WebSocket as UndiciWebSocket } from 'undici';
@@ -36,7 +35,7 @@ export class NodeRemote extends AbstractRemote {
 
   constructor(
     protected connector: RemoteConnector,
-    protected logger: ILogger = DEFAULT_REMOTE_LOGGER,
+    protected logger: PowerSyncLogger,
     options?: Partial<NodeRemoteOptions>
   ) {
     const fetchDispatcher = options?.dispatcher ?? defaultFetchDispatcher();

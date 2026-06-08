@@ -8,6 +8,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
+import { defaultLoggerConfig } from './utils/logger.js';
 
 describe('Encryption Tests', { sequential: true }, () => {
   it('IDBBatchAtomicVFS encryption', async () => {
@@ -22,6 +23,7 @@ describe('Encryption Tests', { sequential: true }, () => {
     await testEncryption({
       schema: TEST_SCHEMA,
       database: new WASQLiteOpenFactory({
+        ...defaultLoggerConfig,
         dbFilename: 'opfs-file.db',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS,
         encryptionKey: 'opfs-key'
@@ -33,6 +35,7 @@ describe('Encryption Tests', { sequential: true }, () => {
     await testEncryption({
       schema: TEST_SCHEMA,
       database: new WASQLiteOpenFactory({
+        ...defaultLoggerConfig,
         dbFilename: 'ahp-file.db',
         vfs: WASQLiteVFS.AccessHandlePoolVFS,
         encryptionKey: 'ahp-key'

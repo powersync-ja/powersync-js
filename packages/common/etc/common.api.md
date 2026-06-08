@@ -5,12 +5,6 @@
 ```ts
 
 import { fetch as fetch_2 } from 'cross-fetch';
-import { GlobalLogger } from 'js-logger';
-import { ILogger } from 'js-logger';
-import { ILoggerOpts } from 'js-logger';
-import { ILogHandler } from 'js-logger';
-import { ILogLevel } from 'js-logger';
-import Logger from 'js-logger';
 
 // Warning: (ae-internal-missing-underscore) The name "AbortOperation" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -84,7 +78,7 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
     // (undocumented)
     protected loadVersion(): Promise<void>;
     // (undocumented)
-    logger: ILogger;
+    logger: PowerSyncLogger;
     onChange(options?: SQLOnChangeOptions): AsyncIterable<WatchOnChangeEvent>;
     onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
     onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
@@ -218,7 +212,7 @@ export interface AbstractQueryProcessorOptions<Data, Settings extends WatchedQue
 //
 // @internal (undocumented)
 export abstract class AbstractRemote {
-    constructor(connector: RemoteConnector, logger?: ILogger, options?: Partial<AbstractRemoteOptions>);
+    constructor(connector: RemoteConnector, logger: PowerSyncLogger, options?: Partial<AbstractRemoteOptions>);
     // (undocumented)
     protected buildRequest(path: string): Promise<{
         url: string;
@@ -251,7 +245,7 @@ export abstract class AbstractRemote {
     getUserAgent(): string;
     invalidateCredentials(): void;
     // (undocumented)
-    protected logger: ILogger;
+    protected logger: PowerSyncLogger;
     // (undocumented)
     protected options: AbstractRemoteOptions;
     // (undocumented)
@@ -293,7 +287,7 @@ export abstract class AbstractStreamingSyncImplementation extends BaseObserver<S
     // (undocumented)
     get lastSyncedAt(): Date | undefined;
     // (undocumented)
-    protected logger: ILogger;
+    protected logger: PowerSyncLogger;
     // (undocumented)
     markConnectionMayHaveChanged(): void;
     // (undocumented)
@@ -330,7 +324,7 @@ export interface AbstractStreamingSyncImplementationOptions extends RequiredAddi
     adapter: BucketStorageAdapter;
     identifier?: string;
     // (undocumented)
-    logger?: ILogger;
+    logger: PowerSyncLogger;
     // (undocumented)
     remote: AbstractRemote;
     // (undocumented)
@@ -375,7 +369,7 @@ export const ATTACHMENT_TABLE = "attachments";
 
 // @alpha
 export class AttachmentContext {
-    constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: ILogger, archivedCacheLimit: number);
+    constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: PowerSyncLogger, archivedCacheLimit: number);
     readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
@@ -388,7 +382,7 @@ export class AttachmentContext {
     // (undocumented)
     getAttachment(id: string): Promise<AttachmentRecord | undefined>;
     getAttachments(): Promise<AttachmentRecord[]>;
-    readonly logger: ILogger;
+    readonly logger: PowerSyncLogger;
     saveAttachments(attachments: AttachmentRecord[]): Promise<void>;
     readonly tableName: string;
     upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void>;
@@ -423,7 +417,7 @@ export class AttachmentQueue {
     expireCache(): Promise<void>;
     generateAttachmentId(): Promise<string>;
     readonly localStorage: LocalStorageAdapter;
-    readonly logger: ILogger;
+    readonly logger: PowerSyncLogger;
     readonly remoteStorage: RemoteStorageAdapter;
     saveFile(input: {
         data: AttachmentData;
@@ -450,7 +444,7 @@ export interface AttachmentQueueOptions {
     downloadAttachments?: boolean;
     errorHandler?: AttachmentErrorHandler;
     localStorage: LocalStorageAdapter;
-    logger?: ILogger;
+    logger?: PowerSyncLogger;
     remoteStorage: RemoteStorageAdapter;
     syncIntervalMs?: number;
     syncThrottleDuration?: number;
@@ -484,7 +478,7 @@ export interface AttachmentRecord {
 //
 // @internal
 export class AttachmentService {
-    constructor(db: AbstractPowerSyncDatabase, logger: ILogger, tableName?: string, archivedCacheLimit?: number);
+    constructor(db: AbstractPowerSyncDatabase, logger: PowerSyncLogger, tableName?: string, archivedCacheLimit?: number);
     watchActiveAttachments(input?: {
         throttleMs?: number;
     }): DifferentialWatchedQuery<AttachmentRecord>;
@@ -561,7 +555,7 @@ export interface BaseObserverInterface<T extends BaseListener> {
 // @public (undocumented)
 export interface BasePowerSyncDatabaseOptions extends AdditionalConnectionOptions {
     // (undocumented)
-    logger?: ILogger;
+    logger?: PowerSyncLogger;
     // @deprecated (undocumented)
     retryDelay?: number;
     schema: Schema;
@@ -724,7 +718,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     // (undocumented)
     protected disconnectInternal(): Promise<void>;
     // (undocumented)
-    get logger(): ILogger;
+    get logger(): PowerSyncLogger;
     // (undocumented)
     protected options: ConnectionManagerOptions;
     // Warning: (ae-forgotten-export) The symbol "StoredConnectionOptions" needs to be exported by the entry point index.d.ts
@@ -754,7 +748,7 @@ export interface ConnectionManagerOptions {
     // (undocumented)
     createSyncImplementation(connector: PowerSyncBackendConnector, options: CreateSyncImplementationOptions): Promise<ConnectionManagerSyncImplementationResult>;
     // (undocumented)
-    logger: ILogger;
+    logger: PowerSyncLogger;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "ConnectionManagerSyncImplementationResult" should be prefixed with an underscore because the declaration is marked as @internal
@@ -798,7 +792,7 @@ export interface ControlledExecutorOptions {
 }
 
 // @public
-export function createBaseLogger(): typeof Logger;
+export function createConsoleLogger(options?: Partial<CreateLoggerOptions>): PowerSyncLogger & CreateLoggerOptions;
 
 // Warning: (ae-forgotten-export) The symbol "BaseCreateDiffTriggerOptions" needs to be exported by the entry point index.d.ts
 //
@@ -808,13 +802,10 @@ export interface CreateDiffTriggerOptions extends BaseCreateDiffTriggerOptions {
     setupContext?: LockContext;
 }
 
-// @public
-export function createLogger(name: string, options?: CreateLoggerOptions): ILogger;
-
 // @public (undocumented)
 export interface CreateLoggerOptions {
-    // (undocumented)
-    logLevel?: ILogLevel;
+    minLevel: number;
+    prefix: string;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "CreateSyncImplementationOptions" should be prefixed with an underscore because the declaration is marked as @internal
@@ -970,11 +961,6 @@ export const DEFAULT_POWERSYNC_DB_OPTIONS: {
     retryDelayMs: number;
     crudUploadThrottleMs: number;
 };
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_LOGGER" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_REMOTE_LOGGER: Logger.ILogger;
 
 // Warning: (ae-internal-missing-underscore) The name "DEFAULT_REMOTE_OPTIONS" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -1182,16 +1168,6 @@ export type GetAllQueryOptions<RowType = unknown> = {
     mapper?: (rawRow: Record<string, unknown>) => RowType;
 };
 
-export { GlobalLogger }
-
-export { ILogger }
-
-export { ILoggerOpts }
-
-export { ILogHandler }
-
-export { ILogLevel }
-
 // @public (undocumented)
 export class Index {
     constructor(options: IndexOptions);
@@ -1352,15 +1328,20 @@ export enum LockType {
 }
 
 // @public (undocumented)
-export const LogLevel: {
-    TRACE: Logger.ILogLevel;
-    DEBUG: Logger.ILogLevel;
-    INFO: Logger.ILogLevel;
-    TIME: Logger.ILogLevel;
-    WARN: Logger.ILogLevel;
-    ERROR: Logger.ILogLevel;
-    OFF: Logger.ILogLevel;
+export const LogLevels: {
+    readonly trace: 10;
+    readonly debug: 20;
+    readonly info: 30;
+    readonly warn: 40;
+    readonly error: 50;
 };
+
+// @public
+export interface LogRecord {
+    error?: unknown;
+    level: number;
+    message: string;
+}
 
 // Warning: (ae-internal-missing-underscore) The name "MAX_AMOUNT_OF_COLUMNS" should be prefixed with an underscore because the declaration is marked as @internal
 //
@@ -1527,6 +1508,12 @@ export interface PowerSyncDBListener extends StreamingSyncImplementationListener
     initialized: () => void;
     // (undocumented)
     schemaChanged: (schema: Schema) => void;
+}
+
+// @public
+export interface PowerSyncLogger {
+    // (undocumented)
+    log(record: LogRecord): void;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "PowerSyncOpenFactoryOptions" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1734,7 +1721,7 @@ export interface SqlExecutor {
 //
 // @internal (undocumented)
 export class SqliteBucketStorage extends BaseObserver<BucketStorageListener> implements BucketStorageAdapter {
-    constructor(db: DBAdapter, logger?: ILogger);
+    constructor(db: DBAdapter, logger: PowerSyncLogger);
     // (undocumented)
     control(op: PowerSyncControlCommand, payload: string | Uint8Array | ArrayBuffer | null): Promise<string>;
     // (undocumented)
@@ -1872,7 +1859,7 @@ export type SyncDataFlowStatus = Partial<{
 //
 // @internal
 export class SyncingService {
-    constructor(attachmentService: AttachmentService, localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter, logger: ILogger, errorHandler?: AttachmentErrorHandler);
+    constructor(attachmentService: AttachmentService, localStorage: LocalStorageAdapter, remoteStorage: RemoteStorageAdapter, logger: PowerSyncLogger, errorHandler?: AttachmentErrorHandler);
     deleteArchivedAttachments(context: AttachmentContext): Promise<boolean>;
     deleteAttachment(attachment: AttachmentRecord, context: AttachmentContext): Promise<AttachmentRecord>;
     downloadAttachment(attachment: AttachmentRecord): Promise<AttachmentRecord>;
