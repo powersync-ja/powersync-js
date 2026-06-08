@@ -1,9 +1,8 @@
 import {
   AbstractPowerSyncDatabase,
+  BasePowerSyncDatabaseOptions,
   BucketStorageAdapter,
-  DBAdapter,
   PowerSyncCloseOptions,
-  PowerSyncDatabaseOptions,
   SQLOpenOptions,
   StreamingSyncImplementation,
   SyncStatus,
@@ -17,9 +16,9 @@ import { CreatedDatabase, powersyncCommand } from './command';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { join } from '@tauri-apps/api/path';
 
-export type TauriPowerSyncOpenOptions = PowerSyncDatabaseOptions & {
+export interface TauriPowerSyncOpenOptions extends BasePowerSyncDatabaseOptions {
   database: TauriSQLOpenOptions;
-};
+}
 
 export interface TauriSQLOpenOptions extends SQLOpenOptions {
   /**
@@ -36,14 +35,16 @@ export interface TauriSQLOpenOptions extends SQLOpenOptions {
 /**
  * A PowerSync database backed by a Rust-owned structure for Tauri apps.
  */
-export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
+export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase<TauriPowerSyncOpenOptions> {
   declare private handle: LateHandle;
   private didInitializeSchema = false;
   private tableUpdateListener?: UnlistenFn;
   private syncStatusListener?: UnlistenFn;
 
   constructor(options: TauriPowerSyncOpenOptions) {
-    super(options);
+    const handle = { handle: -1 };
+    super(options, () => new RustDatabaseAdapter('uninitialized', handle));
+    this.handle = handle;
   }
 
   private async resolvePath(): Promise<string> {
@@ -63,11 +64,6 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase {
    */
   get rustHandle(): number {
     return this.handle.handle;
-  }
-
-  protected openDBAdapter(): DBAdapter {
-    this.handle = { handle: -1 };
-    return new RustDatabaseAdapter('uninitialized', this.handle);
   }
 
   protected generateSyncStreamImplementation(): StreamingSyncImplementation {

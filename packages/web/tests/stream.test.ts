@@ -6,12 +6,15 @@ import {
   SyncStreamConnectionMethod,
   SyncStreamOptions,
   WASQLiteOpenFactory,
-  WASQLiteVFS,
-  WebPowerSyncOpenFactoryOptions
+  WASQLiteVFS
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
-import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
+import {
+  ConnectedDatabaseUtils,
+  generateConnectedDatabase,
+  GenerateConnectedDatabaseOptions
+} from './utils/generateConnectedDatabase.js';
 import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
 import { defaultLoggerConfig } from './utils/logger.js';
 
@@ -27,10 +30,8 @@ describe('Streaming', { sequential: true }, () => {
     },
     describeStreamingTests((options) =>
       generateConnectedDatabase({
-        powerSyncOptions: {
-          logger,
-          ...options
-        }
+        ...options,
+        logger
       })
     )
   );
@@ -42,12 +43,8 @@ describe('Streaming', { sequential: true }, () => {
     },
     describeStreamingTests(() =>
       generateConnectedDatabase({
-        powerSyncOptions: {
-          flags: {
-            useWebWorker: false
-          },
-          logger
-        }
+        logger,
+        flags: { useWebWorker: false }
       })
     )
   );
@@ -59,14 +56,12 @@ describe('Streaming', { sequential: true }, () => {
     },
     describeStreamingTests(() =>
       generateConnectedDatabase({
-        powerSyncOptions: {
-          database: new WASQLiteOpenFactory({
-            ...defaultLoggerConfig,
-            dbFilename: 'streaming-opfs.sqlite',
-            vfs: WASQLiteVFS.OPFSCoopSyncVFS
-          }),
-          logger
-        }
+        logger,
+        factory: new WASQLiteOpenFactory({
+          ...defaultLoggerConfig,
+          dbFilename: 'streaming-opfs.sqlite',
+          vfs: WASQLiteVFS.OPFSCoopSyncVFS
+        })
       })
     )
   );
@@ -193,7 +188,8 @@ describe('Streaming', { sequential: true }, () => {
     }
 
     const { powersync, waitForStream, remote } = await generateConnectedDatabase({
-      powerSyncOptions: { schema: customSchema, flags: { enableMultiTabs: true } }
+      schema: customSchema,
+      flags: { enableMultiTabs: true }
     });
     await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
     onTestFinished(async () => {
@@ -265,7 +261,7 @@ describe('Streaming', { sequential: true }, () => {
 });
 
 function describeStreamingTests(
-  createConnectedDatabase: (options?: Partial<WebPowerSyncOpenFactoryOptions>) => Promise<ConnectedDatabaseUtils>
+  createConnectedDatabase: (options?: GenerateConnectedDatabaseOptions) => Promise<ConnectedDatabaseUtils>
 ) {
   return () => {
     it('PowerSync reconnect on closed stream', async () => {

@@ -1,4 +1,4 @@
-import { type PowerSyncLogger, SQLOpenOptions } from '@powersync/common';
+import { LogLevels, type PowerSyncLogger, SQLOpenOptions } from '@powersync/common';
 
 /**
  * Common settings used when creating SQL connections on web.
@@ -34,6 +34,13 @@ export interface WebSQLFlags {
    * Open in SSR placeholder mode. DB operations and Sync operations will be a No-op
    */
   ssrMode?: boolean;
+
+  /**
+   * The log level for database workers.
+   *
+   * Defaults to {@link LogLevels.info}.
+   */
+  databaseWorkerLogLevel?: number;
 }
 
 export type ResolvedWebSQLFlags = Required<WebSQLFlags>;
@@ -123,7 +130,8 @@ export const DEFAULT_WEB_SQL_FLAGS: ResolvedWebSQLFlags = {
     typeof SharedWorker !== 'undefined' &&
     !navigator.userAgent.match(/(Android|iPhone|iPod|iPad)/i) &&
     !(window as any).safari,
-  useWebWorker: true
+  useWebWorker: true,
+  databaseWorkerLogLevel: LogLevels.info
 };
 
 export function resolveWebSQLFlags(flags?: WebSQLFlags): ResolvedWebSQLFlags {

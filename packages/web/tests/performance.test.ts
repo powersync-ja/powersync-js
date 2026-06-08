@@ -12,9 +12,11 @@ describe('Basic', { sequential: true }, () => {
 
   beforeEach(() => {
     db = new PowerSyncDatabase({
-      database: { dbFilename: 'test-user.db' },
-      flags: {
-        enableMultiTabs: false
+      database: {
+        dbFilename: 'test-user.db',
+        flags: {
+          enableMultiTabs: false
+        }
       },
       schema: new Schema({ users })
     });

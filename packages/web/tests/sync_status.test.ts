@@ -8,11 +8,9 @@ describe(
   { sequential: true },
   describeSyncStatusStreamingTests(() =>
     generateConnectedDatabase({
-      powerSyncOptions: {
-        flags: {
-          useWebWorker: false,
-          enableMultiTabs: false
-        }
+      flags: {
+        useWebWorker: false,
+        enableMultiTabs: false
       }
     })
   )

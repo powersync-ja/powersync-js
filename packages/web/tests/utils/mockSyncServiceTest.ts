@@ -11,6 +11,7 @@ import {
 import { PowerSyncDatabase, WebPowerSyncDatabaseOptions } from '@powersync/web';
 import { MockedFunction, expect, onTestFinished, test, vi } from 'vitest';
 import { MockSyncService, getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
+import { GenerateConnectedDatabaseOptions, generateDefaultOptions } from './generateConnectedDatabase.js';
 
 // Define schema similar to node tests
 const lists = new Table({
@@ -69,20 +70,14 @@ export const sharedMockSyncServiceTest = test.extend<{
     const dbFilename = `test-${crypto.randomUUID()}.db`;
     const logger = createConsoleLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
 
-    const openDatabase = (customConfig: Partial<WebPowerSyncDatabaseOptions> = {}) => {
-      const db = new PowerSyncDatabase({
-        database: {
-          dbFilename,
-          ...(customConfig.database ?? {})
-        },
-        flags: {
-          enableMultiTabs: true,
-          ...(customConfig.flags ?? {})
-        },
-        schema: AppSchema,
-        logger,
-        ...customConfig
-      });
+    const openDatabase = (customConfig?: GenerateConnectedDatabaseOptions) => {
+      const db = new PowerSyncDatabase(
+        generateDefaultOptions({
+          schema: AppSchema,
+          logger,
+          ...customConfig
+        })
+      );
       onTestFinished(async () => {
         if (!db.closed) {
           await db.disconnect();

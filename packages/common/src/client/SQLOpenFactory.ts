@@ -39,29 +39,34 @@ export interface SQLOpenFactory {
 }
 
 /**
- * Tests if the input is a {@link SQLOpenOptions}
+ * A source describing how to open databases.
  *
- * @internal
+ * - A {@link DBAdapter} providing access to an opened SQLite connection pool.
+ * - A {@link SQLOpenFactory} which will be used to open a SQLite connection pool lazily.
+ * - A {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory} for the current
+ *   platform.
+ *
+ * @public
  */
-export const isSQLOpenOptions = (test: any): test is SQLOpenOptions => {
-  // typeof null is `object`, but you cannot use the `in` operator on `null.
-  return test && typeof test == 'object' && 'dbFilename' in test;
-};
+export type DatabaseSource<OpenOptions extends SQLOpenOptions = SQLOpenOptions> =
+  | { opened: DBAdapter }
+  | { factory: SQLOpenFactory }
+  | { database: OpenOptions };
 
 /**
- * Tests if input is a {@link SQLOpenFactory}
+ * Internal helper to turn a {@link DatabaseSource} into an opened {@link DBAdapter}.
  *
  * @internal
  */
-export const isSQLOpenFactory = (test: any): test is SQLOpenFactory => {
-  return typeof test?.openDB == 'function';
-};
-
-/**
- * Tests if input is a {@link DBAdapter}
- *
- * @internal
- */
-export const isDBAdapter = (test: any): test is DBAdapter => {
-  return typeof test?.writeTransaction == 'function';
-};
+export function openDatabase<T extends SQLOpenOptions>(
+  source: DatabaseSource<T>,
+  defaultFactory: (options: T) => DBAdapter
+): DBAdapter {
+  if ('opened' in source) {
+    return source.opened;
+  } else if ('factory' in source) {
+    return source.factory.openDB();
+  } else {
+    return defaultFactory(source.database);
+  }
+}

@@ -37,7 +37,7 @@ const createTriggerInIframe = () => {
 describe('Triggers', () => {
   it('should use temporary triggers by default with IndexedDB VFS', async () => {
     const db = generateTestDb({
-      database: new WASQLiteOpenFactory({
+      factory: new WASQLiteOpenFactory({
         ...defaultLoggerConfig,
         dbFilename: 'temp-triggers.sqlite'
         // default VFS (IndexedDB) - no vfs specified
@@ -86,7 +86,7 @@ describe('Triggers', () => {
 
   it('should automatically configure persistence for OPFS triggers', async () => {
     const db = generateTestDb({
-      database: new WASQLiteOpenFactory({
+      factory: new WASQLiteOpenFactory({
         ...defaultLoggerConfig,
         dbFilename: 'triggers.sqlite',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS
@@ -128,7 +128,7 @@ describe('Triggers', () => {
   it('should cleanup persisted trigger tables when opening a new client', async () => {
     const openDB = () =>
       generateTestDb({
-        database: new WASQLiteOpenFactory({
+        factory: new WASQLiteOpenFactory({
           ...defaultLoggerConfig,
           dbFilename: 'triggers.sqlite',
           vfs: WASQLiteVFS.OPFSCoopSyncVFS
@@ -241,7 +241,7 @@ describe('Triggers', () => {
   it('should report diff operations across clients (insert from client B observed by client A)', async () => {
     const openDB = (filename: string) =>
       generateTestDb({
-        database: new WASQLiteOpenFactory({
+        factory: new WASQLiteOpenFactory({
           ...defaultLoggerConfig,
           dbFilename: filename,
           vfs: WASQLiteVFS.OPFSCoopSyncVFS

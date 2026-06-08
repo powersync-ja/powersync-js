@@ -21,7 +21,6 @@ import {
 } from './ConnectionManager.js';
 import { CustomQuery } from './CustomQuery.js';
 import { ArrayQueryDefinition, Query } from './Query.js';
-import { SQLOpenFactory, SQLOpenOptions, isDBAdapter, isSQLOpenFactory, isSQLOpenOptions } from './SQLOpenFactory.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
 import { BucketStorageAdapter, PSInternalTable } from './sync/bucket/BucketStorageAdapter.js';
 import { CrudBatch } from './sync/bucket/CrudBatch.js';
@@ -42,6 +41,7 @@ import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
 import { createConsoleLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { SyncOptions } from './sync/options.js';
+import { DatabaseSource } from './SQLOpenFactory.js';
 
 /**
  * @public
@@ -52,6 +52,8 @@ export interface DisconnectAndClearOptions {
 }
 
 /**
+ * Options required regardless of how a PowerSync database is opened.
+ *
  * @public
  */
 export interface BasePowerSyncDatabaseOptions {
@@ -63,37 +65,7 @@ export interface BasePowerSyncDatabaseOptions {
 /**
  * @public
  */
-export interface PowerSyncDatabaseOptions extends BasePowerSyncDatabaseOptions {
-  /**
-   * Source for a SQLite database connection.
-   * This can be either:
-   *  - A {@link DBAdapter} if providing an instantiated SQLite connection
-   *  - A {@link SQLOpenFactory} which will be used to open a SQLite connection
-   *  - {@link SQLOpenOptions} for opening a SQLite connection with a default {@link SQLOpenFactory}
-   */
-  database: DBAdapter | SQLOpenFactory | SQLOpenOptions;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithDBAdapter extends BasePowerSyncDatabaseOptions {
-  database: DBAdapter;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithOpenFactory extends BasePowerSyncDatabaseOptions {
-  database: SQLOpenFactory;
-}
-
-/**
- * @public
- */
-export interface PowerSyncDatabaseOptionsWithSettings extends BasePowerSyncDatabaseOptions {
-  database: SQLOpenOptions;
-}
+export type PowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions & DatabaseSource;
 
 /**
  * @public
@@ -198,17 +170,11 @@ export const DEFAULT_CRUD_BATCH_LIMIT = 100;
 export const DEFAULT_LOCK_TIMEOUT_MS = 120_000; // 2 mins
 
 /**
- * Tests if the input is a {@link PowerSyncDatabaseOptionsWithSettings}
- * @internal
- */
-export const isPowerSyncDatabaseOptionsWithSettings = (test: any): test is PowerSyncDatabaseOptionsWithSettings => {
-  return typeof test == 'object' && isSQLOpenOptions(test.database);
-};
-
-/**
  * @public
  */
-export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDBListener> {
+export abstract class AbstractPowerSyncDatabase<
+  Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions
+> extends BaseObserver<PowerSyncDBListener> {
   /**
    * Returns true if the connection is closed.
    */
@@ -250,7 +216,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   }
 
   protected _schema: Schema;
-
   private _database: DBAdapter;
 
   protected runExclusiveMutex: Mutex;
@@ -264,30 +229,20 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
 
   logger: PowerSyncLogger;
 
-  constructor(options: PowerSyncDatabaseOptionsWithDBAdapter);
-  constructor(options: PowerSyncDatabaseOptionsWithOpenFactory);
-  constructor(options: PowerSyncDatabaseOptionsWithSettings);
-  constructor(options: PowerSyncDatabaseOptions); // Note this is important for extending this class and maintaining API compatibility
-  constructor(protected options: PowerSyncDatabaseOptions) {
+  constructor(
+    protected options: Options,
+    openDatabase: () => DBAdapter
+  ) {
     super();
     this.logger = options.logger ?? createConsoleLogger();
 
-    const { database, schema } = options;
+    const { schema } = options;
 
     if (typeof schema?.toJSON != 'function') {
       throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
     }
 
-    if (isDBAdapter(database)) {
-      this._database = database;
-    } else if (isSQLOpenFactory(database)) {
-      this._database = database.openDB();
-    } else if (isPowerSyncDatabaseOptionsWithSettings(options)) {
-      this._database = this.openDBAdapter(options);
-    } else {
-      throw new Error('The provided `database` option is invalid.');
-    }
-
+    this._database = openDatabase();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
@@ -367,11 +322,6 @@ export abstract class AbstractPowerSyncDatabase extends BaseObserver<PowerSyncDB
   get connecting() {
     return this.currentStatus?.connecting || false;
   }
-
-  /**
-   * Opens the DBAdapter given open options using a default open factory
-   */
-  protected abstract openDBAdapter(options: PowerSyncDatabaseOptionsWithSettings): DBAdapter;
 
   /**
    * Generates a base configuration for {@link TriggerManagerImpl}.

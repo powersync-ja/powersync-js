@@ -18,6 +18,7 @@ import {
 } from '../lib/index.js';
 import { BSON } from 'bson';
 import { createConsoleLogger, LogLevels } from '@powersync/common';
+import { NodeSQLOpenOptions } from '../src/db/options.js';
 
 export async function createTempDir() {
   const ostmpdir = os.tmpdir();
@@ -58,18 +59,22 @@ export async function createDatabase(
 ): Promise<PowerSyncDatabase> {
   const defaultLogger = createConsoleLogger({ prefix: 'PowerSyncTest', minLevel: LogLevels.trace });
 
+  let databaseOptions: NodeSQLOpenOptions = {
+    dbFilename: 'test.db',
+    dbLocation: tmpdir,
+    // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
+    // actions. So far, we've not been able to reproduce these failures locally.
+    readWorkerCount: 1
+  };
+  if ('database' in options) {
+    databaseOptions = { ...databaseOptions, ...options.database };
+  }
+
   const database = new PowerSyncDatabase({
     schema: AppSchema,
     ...options,
     logger: options.logger ?? defaultLogger,
-    database: {
-      dbFilename: 'test.db',
-      dbLocation: tmpdir,
-      // Using a single read worker (instead of multiple, the default) seems to improve the reliability of tests in GH
-      // actions. So far, we've not been able to reproduce these failures locally.
-      readWorkerCount: 1,
-      ...options.database
-    }
+    database: databaseOptions
   });
   await database.init();
   return database;
@@ -155,12 +160,14 @@ export function createMockSyncServiceTest(bson: boolean) {
       };
 
       const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
+        let dbOptions: NodeSQLOpenOptions = { dbFilename: databaseName };
+        if (options && 'database' in options) {
+          dbOptions = { ...dbOptions, ...options.database };
+        }
+
         const db = await createDatabase(tmpdir, {
           ...options,
-          database: {
-            dbFilename: databaseName,
-            ...options?.database
-          },
+          database: dbOptions,
           remoteOptions: {
             fetchImplementation: inMemoryFetch
           }

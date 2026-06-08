@@ -9,7 +9,6 @@ export * from './attachments/SyncingService.js';
 export * from './attachments/WatchedAttachmentItem.js';
 
 export * from './client/AbstractPowerSyncDatabase.js';
-export * from './client/AbstractPowerSyncOpenFactory.js';
 export { compilableQueryWatch, CompilableQueryWatchHandler } from './client/compilableQueryWatch.js';
 export * from './client/connection/PowerSyncBackendConnector.js';
 export * from './client/connection/PowerSyncCredentials.js';

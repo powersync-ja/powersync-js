@@ -173,7 +173,10 @@ describe('CRUD Tests', { sequential: true }, () => {
        * consistent
        */
       database: {
-        dbFilename: 'test.db' + uuid()
+        dbFilename: 'test.db' + uuid(),
+        flags: {
+          enableMultiTabs: false
+        }
       },
       schema: new Schema([
         new Table({
@@ -184,10 +187,7 @@ describe('CRUD Tests', { sequential: true }, () => {
             new Column({ name: 'content', type: ColumnType.TEXT })
           ]
         })
-      ]),
-      flags: {
-        enableMultiTabs: false
-      }
+      ])
     });
 
     expect(await powersync.getAll('SELECT * FROM ps_crud')).empty;

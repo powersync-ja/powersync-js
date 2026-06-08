@@ -1,10 +1,15 @@
-import { AbstractPowerSyncDatabase, createConsoleLogger, DBAdapterDefaultMixin, Schema } from '@powersync/common';
+import {
+  AbstractPowerSyncDatabase,
+  createConsoleLogger,
+  DBAdapterDefaultMixin,
+  LogLevels,
+  Schema
+} from '@powersync/common';
 import {
   PowerSyncDatabase,
   ResolvedWASQLiteOpenFactoryOptions,
   TemporaryStorageOption,
   WASQLiteOpenFactory,
-  WASQLitePowerSyncDatabaseOpenFactory,
   WASQLiteVFS
 } from '@powersync/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,15 +74,6 @@ describe('Open Methods', { sequential: true }, () => {
 
   afterEach(() => mocks?.dispose());
 
-  it('Should open PowerSync clients from old factory methods', async () => {
-    const db = new WASQLitePowerSyncDatabaseOpenFactory({
-      dbFilename: `test-legacy.db`,
-      schema: TEST_SCHEMA
-    }).getInstance();
-
-    await basicTest(db);
-  });
-
   it('Should open with an existing DBAdapter', async () => {
     const logger = createConsoleLogger({ prefix: 'adapter-test' });
     const server = new MultiDatabaseServer(logger);
@@ -88,7 +84,8 @@ describe('Open Methods', { sequential: true }, () => {
         disableSSRWarning: false,
         enableMultiTabs: false,
         useWebWorker: false,
-        ssrMode: false
+        ssrMode: false,
+        databaseWorkerLogLevel: LogLevels.debug
       },
       temporaryStorage: TemporaryStorageOption.MEMORY,
       cacheSizeKb: 0,
@@ -106,13 +103,13 @@ describe('Open Methods', { sequential: true }, () => {
       options
     );
 
-    const db = new PowerSyncDatabase({ database: client, schema: TEST_SCHEMA });
+    const db = new PowerSyncDatabase({ opened: client, schema: TEST_SCHEMA });
     await basicTest(db);
   });
 
   it('Should open with provided factory', async () => {
     const factory = new WASQLiteOpenFactory({ ...defaultLoggerConfig, dbFilename: 'factory-test.db' });
-    const db = new PowerSyncDatabase({ database: factory, schema: TEST_SCHEMA });
+    const db = new PowerSyncDatabase({ factory, schema: TEST_SCHEMA });
 
     await basicTest(db);
   });
@@ -138,9 +135,8 @@ describe('Open Methods', { sequential: true }, () => {
     const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
-      database: { dbFilename: 'options-test.db' },
-      schema: TEST_SCHEMA,
-      flags: { enableMultiTabs: false }
+      database: { dbFilename: 'options-test.db', flags: { enableMultiTabs: false } },
+      schema: TEST_SCHEMA
     });
 
     await basicTest(db);
@@ -154,9 +150,8 @@ describe('Open Methods', { sequential: true }, () => {
     const dedicatedSpy = vi.spyOn(mocks.proxies.workerProxyHandler, 'construct');
 
     const db = new PowerSyncDatabase({
-      database: { dbFilename: 'options-test.db' },
-      schema: TEST_SCHEMA,
-      flags: { useWebWorker: false }
+      database: { dbFilename: 'options-test.db', flags: { useWebWorker: false } },
+      schema: TEST_SCHEMA
     });
 
     await basicTest(db);

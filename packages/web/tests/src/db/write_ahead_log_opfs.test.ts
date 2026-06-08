@@ -6,7 +6,7 @@ import { defaultLoggerConfig } from '../../utils/logger.js';
 
 test('supports concurrent reads', async () => {
   const db = generateTestDb({
-    database: new WASQLiteOpenFactory({
+    factory: new WASQLiteOpenFactory({
       dbFilename: 'basic-opfs.sqlite',
       vfs: WASQLiteVFS.OPFSWriteAheadVFS,
       additionalReaders: 1,

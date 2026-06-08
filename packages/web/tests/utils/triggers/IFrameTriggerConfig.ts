@@ -10,7 +10,7 @@ import { TEST_SCHEMA } from '../test-schema.js';
 import { defaultLoggerConfig } from '../logger.js';
 
 const db = new PowerSyncDatabase({
-  database: new WASQLiteOpenFactory({
+  factory: new WASQLiteOpenFactory({
     ...defaultLoggerConfig,
     dbFilename: 'triggers.sqlite',
     vfs: WASQLiteVFS.OPFSCoopSyncVFS

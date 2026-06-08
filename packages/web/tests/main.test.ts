@@ -18,11 +18,12 @@ describe(
   describeBasicTests(() =>
     generateTestDb({
       database: {
-        dbFilename: 'basic-no-worker.sqlite'
+        dbFilename: 'basic-no-worker.sqlite',
+        flags: {
+          useWebWorker: false
+        }
       },
-      flags: {
-        useWebWorker: false
-      },
+
       schema: TEST_SCHEMA
     })
   )
@@ -33,7 +34,7 @@ describe(
   { sequential: true },
   describeBasicTests(() =>
     generateTestDb({
-      database: new WASQLiteOpenFactory({
+      factory: new WASQLiteOpenFactory({
         ...defaultLoggerConfig,
         dbFilename: 'basic-opfs.sqlite',
         vfs: WASQLiteVFS.OPFSCoopSyncVFS

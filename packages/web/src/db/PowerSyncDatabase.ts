@@ -1,30 +1,27 @@
 import {
   AbstractPowerSyncDatabase,
-  DBAdapter,
-  PowerSyncDatabaseOptions,
-  PowerSyncDatabaseOptionsWithDBAdapter,
-  PowerSyncDatabaseOptionsWithOpenFactory,
-  PowerSyncDatabaseOptionsWithSettings,
   SqliteBucketStorage,
   StreamingSyncImplementation,
   TriggerManagerConfig,
-  isDBAdapter,
-  isSQLOpenFactory,
   Mutex,
   type BucketStorageAdapter,
   type PowerSyncBackendConnector,
   type PowerSyncCloseOptions,
   LogLevels,
-  CreateSyncImplementationOptions
+  CreateSyncImplementationOptions,
+  BasePowerSyncDatabaseOptions,
+  DatabaseSource,
+  openDatabase,
+  DBAdapter
 } from '@powersync/common';
 import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
 import {
-  DEFAULT_WEB_SQL_FLAGS,
+  ResolvedWebSQLFlags,
   ResolvedWebSQLOpenOptions,
-  WebSQLFlags,
+  WebSQLOpenFactoryOptions,
   isServerSide,
   resolveWebSQLFlags
 } from './adapters/web-sql-flags.js';
@@ -37,24 +34,10 @@ import {
 } from './sync/WebStreamingSyncImplementation.js';
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 
-export interface WebPowerSyncFlags extends WebSQLFlags {
-  /**
-   * @deprecated This flag is no longer used. Navigator locks now handle tab detection automatically.
-   * Externally unload open PowerSync database instances when the window closes.
-   * Setting this to `true` requires calling `close` on all open PowerSyncDatabase
-   * instances before the window unloads
-   */
-  externallyUnload?: boolean;
-
-  /**
-   * The log level for database workers.
-   *
-   * Defaults to {@link LogLevels.info}.
-   */
-  databaseWorkerLogLevel?: number;
-}
-
-type WithWebFlags<Base> = Base & { flags?: WebPowerSyncFlags };
+export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
+  DatabaseSource<WebSQLOpenFactoryOptions> & {
+    sync?: WebSyncOptions;
+  };
 
 export interface WebSyncOptions {
   /**
@@ -73,60 +56,6 @@ export interface WebSyncOptions {
   logLevel?: number;
 }
 
-type WithWebSyncOptions<Base> = Base & {
-  sync?: WebSyncOptions;
-};
-
-export interface WebEncryptionOptions {
-  /**
-   * Encryption key for the database.
-   * If set, the database will be encrypted using Multiple Ciphers.
-   */
-  encryptionKey?: string;
-}
-
-type WithWebEncryptionOptions<Base> = Base & WebEncryptionOptions;
-
-export type WebPowerSyncDatabaseOptionsWithAdapter = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithDBAdapter>
->;
-export type WebPowerSyncDatabaseOptionsWithOpenFactory = WithWebSyncOptions<
-  WithWebFlags<PowerSyncDatabaseOptionsWithOpenFactory>
->;
-export type WebPowerSyncDatabaseOptionsWithSettings = WithWebSyncOptions<
-  WithWebFlags<WithWebEncryptionOptions<PowerSyncDatabaseOptionsWithSettings>>
->;
-
-export type WebPowerSyncDatabaseOptions = WithWebSyncOptions<WithWebFlags<PowerSyncDatabaseOptions>>;
-
-export const DEFAULT_POWERSYNC_FLAGS: Required<WebPowerSyncFlags> = {
-  ...DEFAULT_WEB_SQL_FLAGS,
-  externallyUnload: false,
-  databaseWorkerLogLevel: LogLevels.info
-};
-
-export const resolveWebPowerSyncFlags = (flags?: WebPowerSyncFlags): Required<WebPowerSyncFlags> => {
-  return {
-    ...DEFAULT_POWERSYNC_FLAGS,
-    ...flags,
-    ...resolveWebSQLFlags(flags)
-  };
-};
-
-/**
- * Asserts that the database options are valid for custom database constructors.
- */
-function assertValidDatabaseOptions(options: WebPowerSyncDatabaseOptions): void {
-  if ('database' in options && 'encryptionKey' in options) {
-    const { database } = options;
-    if (isSQLOpenFactory(database) || isDBAdapter(database)) {
-      throw new Error(
-        `Invalid configuration: 'encryptionKey' should only be included inside the database object when using a custom ${isSQLOpenFactory(database) ? 'WASQLiteOpenFactory' : 'WASQLiteDBAdapter'} constructor.`
-      );
-    }
-  }
-}
-
 /**
  * A PowerSync database which provides SQLite functionality
  * which is automatically synced.
@@ -141,21 +70,16 @@ function assertValidDatabaseOptions(options: WebPowerSyncDatabaseOptions): void 
  * });
  * ```
  */
-export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
+export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDatabaseOptions> {
   static SHARED_MUTEX = new Mutex();
 
-  protected resolvedFlags: WebPowerSyncFlags;
+  protected resolvedFlags: ResolvedWebSQLFlags;
 
-  constructor(options: WebPowerSyncDatabaseOptionsWithAdapter);
-  constructor(options: WebPowerSyncDatabaseOptionsWithOpenFactory);
-  constructor(options: WebPowerSyncDatabaseOptionsWithSettings);
-  constructor(options: WebPowerSyncDatabaseOptions);
-  constructor(protected options: WebPowerSyncDatabaseOptions) {
-    super(options);
+  constructor(options: WebPowerSyncDatabaseOptions, database?: () => DBAdapter) {
+    const resolvedFlags = resolveWebSQLFlags('database' in options ? options.database.flags : undefined);
 
-    assertValidDatabaseOptions(options);
-
-    this.resolvedFlags = resolveWebPowerSyncFlags(options.flags);
+    super(options, database ?? (() => openDatabase(options, (options) => this.openDBAdapter(resolvedFlags, options))));
+    this.resolvedFlags = resolvedFlags;
   }
 
   async _initialize(): Promise<void> {
@@ -186,10 +110,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     };
   }
 
-  protected openDBAdapter(options: WebPowerSyncDatabaseOptionsWithSettings): DBAdapter {
-    const resolvedFlags = resolveWebPowerSyncFlags(options.flags);
+  protected openDBAdapter(resolvedFlags: ResolvedWebSQLFlags, options: WebSQLOpenFactoryOptions): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
-      ...options.database,
+      ...options,
       flags: resolvedFlags,
       encryptionKey: options.encryptionKey,
       logger: this.logger,

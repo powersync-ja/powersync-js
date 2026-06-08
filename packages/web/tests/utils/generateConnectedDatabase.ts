@@ -1,41 +1,58 @@
-import { Schema, SyncStreamConnectionMethod, Table, column } from '@powersync/common';
-import { WebPowerSyncOpenFactoryOptions } from '@powersync/web';
+import {
+  DatabaseSource,
+  PowerSyncLogger,
+  SQLOpenFactory,
+  Schema,
+  SyncStreamConnectionMethod,
+  Table,
+  column
+} from '@powersync/common';
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
-import { MockRemote, MockStreamOpenFactory, TestConnector } from './MockStreamOpenFactory.js';
+import { MockedStreamPowerSync, MockRemote, TestConnector } from './MockStreamOpenFactory.js';
 import { defaultLoggerConfig } from './logger.js';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebSQLFlags, WebSQLOpenFactoryOptions } from '@powersync/web';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 export type ConnectedDatabaseUtils = UnwrapPromise<ReturnType<typeof generateConnectedDatabase>>;
 export type GenerateConnectedDatabaseOptions = {
-  powerSyncOptions: Partial<WebPowerSyncOpenFactoryOptions>;
+  flags?: WebSQLFlags;
+  schema?: Schema;
+  logger?: PowerSyncLogger;
+  factory?: SQLOpenFactory;
 };
 
 export type ConnectedDBGenerator = typeof generateConnectedDatabase;
 
-export const DEFAULT_CONNECTED_POWERSYNC_OPTIONS = generateDefaultOptions();
+export function generateDefaultOptions(options: GenerateConnectedDatabaseOptions): WebPowerSyncDatabaseOptions {
+  const source: DatabaseSource<WebSQLOpenFactoryOptions> = options.factory
+    ? { factory: options.factory }
+    : {
+        database: {
+          dbFilename: `${v4()}.db`,
+          flags: {
+            enableMultiTabs: false,
+            useWebWorker: true,
+            ...options.flags
+          }
+        }
+      };
 
-function generateDefaultOptions() {
   return {
-    powerSyncOptions: {
-      dbFilename: `${v4()}.db`,
-      flags: {
-        enableMultiTabs: false,
-        useWebWorker: true
-      },
-      // Makes tests faster
-      crudUploadThrottleMs: 0,
-      schema: new Schema({
+    ...source,
+    logger: options.logger,
+    schema:
+      options.schema ??
+      new Schema({
         users: new Table({ name: column.text })
       })
-    }
   };
 }
 
-export async function generateConnectedDatabase(options: GenerateConnectedDatabaseOptions = generateDefaultOptions()) {
-  const { powerSyncOptions } = options;
-  const { powerSyncOptions: defaultPowerSyncOptions } = DEFAULT_CONNECTED_POWERSYNC_OPTIONS;
+export async function generateConnectedDatabase(options?: GenerateConnectedDatabaseOptions) {
+  const resolvedOptions = generateDefaultOptions(options ?? {});
+
   /**
    * Very basic implementation of a listener pattern.
    * Required since we cannot extend multiple classes.
@@ -45,19 +62,11 @@ export async function generateConnectedDatabase(options: GenerateConnectedDataba
   const uploadSpy = vi.spyOn(connector, 'uploadData');
   const remote = new MockRemote(connector, defaultLoggerConfig.logger, () => callbacks.forEach((c) => c()));
 
-  const factory = new MockStreamOpenFactory(
-    {
-      ...defaultPowerSyncOptions,
-      ...powerSyncOptions,
-      flags: {
-        ...(defaultPowerSyncOptions.flags ?? {}),
-        ...(powerSyncOptions.flags ?? {})
-      }
-    },
-    remote
-  );
+  function openPowerSyncDatabase(): PowerSyncDatabase {
+    return new MockedStreamPowerSync(resolvedOptions, remote);
+  }
 
-  const openAnother = factory.getInstance.bind(factory);
+  const openAnother = openPowerSyncDatabase;
   const powersync = openAnother();
 
   const waitForStream = () =>
@@ -95,7 +104,6 @@ export async function generateConnectedDatabase(options: GenerateConnectedDataba
   return {
     connector,
     connect,
-    factory,
     powersync,
     remote,
     uploadSpy,

@@ -11,13 +11,7 @@ import {
   SyncStreamOptions
 } from '@powersync/common';
 import { StreamingSyncLine } from '@powersync/common/internal/sync_protocol';
-import {
-  PowerSyncDatabase,
-  WASQLitePowerSyncDatabaseOpenFactory,
-  WebPowerSyncDatabaseOptions,
-  WebPowerSyncOpenFactoryOptions,
-  WebStreamingSyncImplementation
-} from '@powersync/web';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebStreamingSyncImplementation } from '@powersync/web';
 import { MockedFunction, vi } from 'vitest';
 
 export class TestConnector implements PowerSyncBackendConnector {
@@ -147,22 +141,5 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
       identifier: this.database.name,
       subscriptions: []
     });
-  }
-}
-
-export class MockStreamOpenFactory extends WASQLitePowerSyncDatabaseOpenFactory {
-  constructor(
-    options: WebPowerSyncOpenFactoryOptions,
-    protected remote: AbstractRemote
-  ) {
-    super(options);
-  }
-  generateInstance(options: PowerSyncDatabaseOptions): AbstractPowerSyncDatabase {
-    return new MockedStreamPowerSync(
-      {
-        ...options
-      },
-      this.remote
-    );
   }
 }
