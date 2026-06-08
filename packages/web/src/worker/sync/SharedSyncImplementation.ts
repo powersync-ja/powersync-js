@@ -12,15 +12,12 @@ import {
   SqliteBucketStorage,
   SubscribedStream,
   SyncStatus,
-  createConsoleLogger,
   Mutex,
-  type PowerSyncConnectionOptions,
   type StreamingSyncImplementation,
   type StreamingSyncImplementationListener,
   type SyncStatusOptions,
-  CreateLoggerOptions,
-  PowerSyncLogger,
-  LogLevels
+  LogLevels,
+  ResolvedSyncOptions
 } from '@powersync/common';
 import * as Comlink from 'comlink';
 import { WebRemote } from '../../db/sync/WebRemote.js';
@@ -116,7 +113,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
   protected uploadDataController?: RemoteOperationAbortController;
 
   protected syncParams: SharedSyncInitOptions | null;
-  protected lastConnectOptions: PowerSyncConnectionOptions | undefined;
+  protected lastConnectOptions: ResolvedSyncOptions | undefined;
   protected portMutex: Mutex;
   private subscriptions: SubscribedStream[] = [];
 
@@ -280,9 +277,9 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
    * The connection will simply be reconnected whenever a new tab
    * connects.
    */
-  async connect(options?: PowerSyncConnectionOptions) {
+  async connect(options: ResolvedSyncOptions, serializedSchema: any) {
     this.lastConnectOptions = options;
-    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {});
+    return this.connectionManager.connect(CONNECTOR_PLACEHOLDER, options ?? {}, serializedSchema);
   }
 
   async disconnect() {

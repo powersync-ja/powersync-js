@@ -4,7 +4,7 @@ import { BaseListener, BaseObserver, BaseObserverInterface, Disposable } from '.
 import { LogLevels, PowerSyncLogger } from '../../../utils/Logger.js';
 import { BucketStorageAdapter, PowerSyncControlCommand } from '../bucket/BucketStorageAdapter.js';
 import { CrudEntry } from '../bucket/CrudEntry.js';
-import { AbstractRemote, FetchStrategy, SyncStreamOptions } from './AbstractRemote.js';
+import { AbstractRemote, SyncStreamOptions } from './AbstractRemote.js';
 import {
   Instruction,
   NonInterruptingInstruction,
@@ -19,7 +19,7 @@ import {
   valueResult
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier } from '../../../utils/async.js';
-import { StreamingSyncRequestParameterType } from './JsonValue.js';
+import { ResolvedSyncOptions, SyncOptions, SyncStreamConnectionMethod } from '../options.js';
 
 /**
  * @internal
@@ -28,46 +28,6 @@ export enum LockType {
   CRUD = 'crud',
   SYNC = 'sync'
 }
-
-/**
- * @public
- */
-export enum SyncStreamConnectionMethod {
-  HTTP = 'http',
-  WEB_SOCKET = 'web-socket'
-}
-
-/**
- * @deprecated Deprecated since {@link SyncClientImplementation.RUST} is the only option.
- * @public
- */
-export enum SyncClientImplementation {
-  /**
-   * This implementation offloads the sync line decoding and handling into the PowerSync
-   * core extension.
-   *
-   * This is the only option, as an older JavaScript client implementation has been removed from the SDK.
-   *
-   * ## Compatibility warning
-   *
-   * The Rust sync client stores sync data in a format that is slightly different than the one used
-   * by the old JavaScript client. When adopting the {@link SyncClientImplementation.RUST} client on existing databases,
-   * the PowerSync SDK will migrate the format automatically.
-   *
-   * SDK versions supporting both the JavaScript and the Rust client support both formats with the JavaScript client
-   * implementaiton. However, downgrading to an SDK version that only supports the JavaScript client would not be
-   * possible anymore. Problematic SDK versions have been released before 2025-06-09.
-   */
-  RUST = 'rust'
-}
-
-/**
- * The default {@link SyncClientImplementation} to use, {@link SyncClientImplementation.RUST}.
- *
- * @deprecated Deprecated since {@link SyncClientImplementation.RUST} is the only option.
- * @public
- */
-export const DEFAULT_SYNC_CLIENT_IMPLEMENTATION = SyncClientImplementation.RUST;
 
 /**
  * Abstract Lock to be implemented by various JS environments
@@ -83,7 +43,7 @@ export interface LockOptions<T> {
 /**
  * @internal
  */
-export interface AbstractStreamingSyncImplementationOptions extends RequiredAdditionalConnectionOptions {
+export interface AbstractStreamingSyncImplementationOptions {
   adapter: BucketStorageAdapter;
   subscriptions: SubscribedStream[];
   uploadCrud: () => Promise<void>;
@@ -94,6 +54,10 @@ export interface AbstractStreamingSyncImplementationOptions extends RequiredAddi
   identifier?: string;
   logger: PowerSyncLogger;
   remote: AbstractRemote;
+  /**
+   * The serialized schema - mainly used to forward information about raw tables to the sync client.
+   */
+  serializedSchema?: any;
 }
 
 /**
@@ -111,90 +75,12 @@ export interface StreamingSyncImplementationListener extends BaseListener {
   statusChanged?: ((status: SyncStatus) => void) | undefined;
 }
 
-/**
- * Configurable options to be used when connecting to the PowerSync
- * backend instance.
- *
- * @public
- */
-export type PowerSyncConnectionOptions = Omit<InternalConnectionOptions, 'serializedSchema'>;
-
-/**
- * @internal
- */
-export interface InternalConnectionOptions extends BaseConnectionOptions, AdditionalConnectionOptions {}
-
-/** @public */
-export interface BaseConnectionOptions {
-  /**
-   * A set of metadata to be included in service logs.
-   */
-  appMetadata?: Record<string, string>;
-
-  /**
-   * @deprecated The Rust sync client is used unconditionally, so this option can't be configured.
-   */
-  clientImplementation?: SyncClientImplementation;
-
-  /**
-   * The connection method to use when streaming updates from
-   * the PowerSync backend instance.
-   * Defaults to a HTTP streaming connection.
-   */
-  connectionMethod?: SyncStreamConnectionMethod;
-
-  /**
-   * The fetch strategy to use when streaming updates from the PowerSync backend instance.
-   */
-  fetchStrategy?: FetchStrategy;
-
-  /**
-   * These parameters are passed to the sync rules, and will be available under the`user_parameters` object.
-   */
-  params?: Record<string, StreamingSyncRequestParameterType>;
-
-  /**
-   * Whether to include streams that have `auto_subscribe: true` in their definition.
-   *
-   * This defaults to `true`.
-   */
-  includeDefaultStreams?: boolean;
-
-  /**
-   * The serialized schema - mainly used to forward information about raw tables to the sync client.
-   */
-  serializedSchema?: any;
-}
-
-/** @internal */
-export interface AdditionalConnectionOptions {
-  /**
-   * Delay for retrying sync streaming operations
-   * from the PowerSync backend after an error occurs.
-   */
-  retryDelayMs?: number;
-  /**
-   * Backend Connector CRUD operations are throttled
-   * to occur at most every `crudUploadThrottleMs`
-   * milliseconds.
-   */
-  crudUploadThrottleMs?: number;
-}
-
-/** @internal */
-export interface RequiredAdditionalConnectionOptions extends Required<AdditionalConnectionOptions> {
-  subscriptions: SubscribedStream[];
-}
-
-/**
- * @internal
- */
 export interface StreamingSyncImplementation
   extends BaseObserverInterface<StreamingSyncImplementationListener>, Disposable {
   /**
    * Connects to the sync service
    */
-  connect(options?: InternalConnectionOptions): Promise<void>;
+  connect(options: ResolvedSyncOptions): Promise<void>;
   /**
    * Disconnects from the sync services.
    * @throws if not connected or if abort is not controlled internally
@@ -211,44 +97,6 @@ export interface StreamingSyncImplementation
   markConnectionMayHaveChanged(): void;
 }
 
-/**
- * @internal
- */
-export const DEFAULT_CRUD_UPLOAD_THROTTLE_MS = 1000;
-/**
- * @internal
- */
-export const DEFAULT_RETRY_DELAY_MS = 5000;
-
-/**
- * @internal
- */
-export const DEFAULT_STREAMING_SYNC_OPTIONS = {
-  retryDelayMs: DEFAULT_RETRY_DELAY_MS,
-  crudUploadThrottleMs: DEFAULT_CRUD_UPLOAD_THROTTLE_MS
-};
-
-/**
- * @internal
- */
-export type RequiredPowerSyncConnectionOptions = Required<BaseConnectionOptions>;
-
-/**
- * @internal
- */
-export const DEFAULT_STREAM_CONNECTION_OPTIONS: RequiredPowerSyncConnectionOptions = {
-  appMetadata: {},
-  connectionMethod: SyncStreamConnectionMethod.WEB_SOCKET,
-  clientImplementation: DEFAULT_SYNC_CLIENT_IMPLEMENTATION,
-  fetchStrategy: FetchStrategy.Buffered,
-  params: {},
-  serializedSchema: undefined,
-  includeDefaultStreams: true
-};
-
-/**
- * @internal
- */
 export type SubscribedStream = {
   name: string;
   params: Record<string, any> | null;
@@ -363,19 +211,19 @@ export abstract class AbstractStreamingSyncImplementation
     return checkpoint;
   }
 
-  private async crudUploadLoop(signal: AbortSignal): Promise<void> {
+  private async crudUploadLoop(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
     while (!signal.aborted) {
       await Promise.all([
         // Start the initial CRUD upload on connect. Then, keep polling until we're done.
-        this._uploadAllCrud(signal),
-        this.delayRetry(signal, this.options.crudUploadThrottleMs!)
+        this._uploadAllCrud(signal, options),
+        this.delayRetry(signal, options.crudUploadThrottleMs)
       ]);
 
       await this.crudUploadNotifier.waitForNotification(signal);
     }
   }
 
-  private async _uploadAllCrud(signal: AbortSignal): Promise<void> {
+  private async _uploadAllCrud(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
     return this.obtainLock({
       type: LockType.CRUD,
       callback: async () => {
@@ -435,7 +283,7 @@ The next upload iteration will be delayed.`
                 uploadError: ex as Error
               }
             });
-            await this.delayRetry(signal);
+            await this.delayRetry(signal, options.retryDelayMs);
             if (!this.isConnected) {
               // Exit the upload loop if the sync stream is no longer connected
               break;
@@ -457,7 +305,7 @@ The next upload iteration will be delayed.`
     });
   }
 
-  async connect(options?: PowerSyncConnectionOptions) {
+  async connect(options: ResolvedSyncOptions) {
     if (this.abortController) {
       await this.disconnect();
     }
@@ -465,7 +313,7 @@ The next upload iteration will be delayed.`
     const controller = new AbortController();
     this.abortController = controller;
     this.streamingSyncPromise = Promise.all([
-      this.crudUploadLoop(controller.signal).catch((error) =>
+      this.crudUploadLoop(controller.signal, options).catch((error) =>
         this.logger.log({ level: LogLevels.error, message: 'Error in crud upload loop', error })
       ),
       this.streamingSync(controller.signal, options)
@@ -515,7 +363,7 @@ The next upload iteration will be delayed.`
     this.updateSyncStatus({ connected: false, connecting: false });
   }
 
-  private async streamingSync(signal: AbortSignal, options?: PowerSyncConnectionOptions): Promise<void> {
+  private async streamingSync(signal: AbortSignal, options: ResolvedSyncOptions): Promise<void> {
     /**
      * Listen for CRUD updates and trigger upstream uploads
      */
@@ -611,7 +459,7 @@ The next upload iteration will be delayed.`
 
           // On error, wait a little before retrying
           if (shouldDelayRetry) {
-            await this.delayRetry(nestedAbortController.signal);
+            await this.delayRetry(nestedAbortController.signal, options.retryDelayMs);
           }
         }
       }
@@ -659,21 +507,14 @@ The next upload iteration will be delayed.`
 
   protected streamingSyncIteration(
     signal: AbortSignal,
-    options?: PowerSyncConnectionOptions
+    options: ResolvedSyncOptions
   ): Promise<RustIterationResult | null> {
     return this.obtainLock({
       type: LockType.SYNC,
       signal,
       callback: async () => {
-        const resolvedOptions: RequiredPowerSyncConnectionOptions = {
-          ...DEFAULT_STREAM_CONNECTION_OPTIONS,
-          ...(options ?? {})
-        };
-
         // Validate app metadata
-        const invalidMetadata = Object.entries(resolvedOptions.appMetadata).filter(
-          ([_, value]) => typeof value != 'string'
-        );
+        const invalidMetadata = Object.entries(options.appMetadata).filter(([_, value]) => typeof value != 'string');
         if (invalidMetadata.length > 0) {
           throw new Error(
             `Invalid appMetadata provided. Only string values are allowed. Invalid values: ${invalidMetadata.map(([key, value]) => `${key}: ${value}`).join(', ')}`
@@ -681,14 +522,14 @@ The next upload iteration will be delayed.`
         }
 
         await this.requireKeyFormat(true);
-        return await this.rustSyncIteration(signal, resolvedOptions);
+        return await this.rustSyncIteration(signal, options);
       }
     });
   }
 
   private receiveSyncLines(data: {
     options: SyncStreamOptions;
-    connection: RequiredPowerSyncConnectionOptions;
+    connection: ResolvedSyncOptions;
   }): SimpleAsyncIterator<EnqueuedCommand> {
     const { options, connection } = data;
     const remote = this.options.remote;
@@ -739,7 +580,7 @@ The next upload iteration will be delayed.`
 
   private async rustSyncIteration(
     signal: AbortSignal,
-    resolvedOptions: RequiredPowerSyncConnectionOptions
+    resolvedOptions: ResolvedSyncOptions
   ): Promise<RustIterationResult> {
     const syncImplementation = this;
     const adapter = this.options.adapter;
@@ -751,6 +592,7 @@ The next upload iteration will be delayed.`
       throw new AbortOperation('Connection request has been aborted');
     }
 
+    const serializedSchema = this.options.serializedSchema;
     function startCommand() {
       const options: any = {
         parameters: resolvedOptions.params,
@@ -758,8 +600,8 @@ The next upload iteration will be delayed.`
         active_streams: syncImplementation.activeStreams,
         include_defaults: resolvedOptions.includeDefaultStreams
       };
-      if (resolvedOptions.serializedSchema) {
-        options.schema = resolvedOptions.serializedSchema;
+      if (serializedSchema) {
+        options.schema = serializedSchema;
       }
 
       return invokePowerSyncControl(PowerSyncControlCommand.START, JSON.stringify(options));
@@ -943,8 +785,7 @@ The next upload iteration will be delayed.`
         ...this.syncStatus.dataFlowStatus,
         ...options.dataFlow
       },
-      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries,
-      clientImplementation: options.clientImplementation ?? this.syncStatus.clientImplementation
+      priorityStatusEntries: options.priorityStatusEntries ?? this.syncStatus.priorityStatusEntries
     });
 
     if (!this.syncStatus.isEqual(updatedStatus)) {
@@ -957,7 +798,7 @@ The next upload iteration will be delayed.`
     this.iterateListeners((cb) => cb.statusUpdated?.(options));
   }
 
-  private async delayRetry(signal?: AbortSignal, delay = this.options.retryDelayMs): Promise<void> {
+  private async delayRetry(signal: AbortSignal, delay: number): Promise<void> {
     return new Promise((resolve) => {
       if (signal?.aborted) {
         // If the signal is already aborted, resolve immediately

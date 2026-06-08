@@ -2,19 +2,17 @@ import {
   AbstractPowerSyncDatabase,
   AbstractRemoteOptions,
   AbstractStreamingSyncImplementation,
-  AdditionalConnectionOptions,
   BucketStorageAdapter,
+  CreateSyncImplementationOptions,
   DBAdapter,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
   PowerSyncDatabaseOptions,
   PowerSyncDatabaseOptionsWithSettings,
-  RequiredAdditionalConnectionOptions,
   SqliteBucketStorage,
   SQLOpenFactory
 } from '@powersync/common';
 
-import { NodeCustomConnectionOptions, NodeRemote } from '../sync/stream/NodeRemote.js';
+import { NodeRemote } from '../sync/stream/NodeRemote.js';
 import { NodeStreamingSyncImplementation } from '../sync/stream/NodeStreamingSyncImplementation.js';
 
 import { WorkerPoolDatabaseAdapter } from './WorkerConnectionPool.js';
@@ -29,10 +27,6 @@ export type NodePowerSyncDatabaseOptions = PowerSyncDatabaseOptions & {
    */
   remoteOptions?: Partial<AbstractRemoteOptions>;
 };
-
-export type NodeAdditionalConnectionOptions = AdditionalConnectionOptions & NodeCustomConnectionOptions;
-
-export type NodePowerSyncConnectionOptions = PowerSyncConnectionOptions & NodeAdditionalConnectionOptions;
 
 /**
  * A PowerSync database which provides SQLite functionality
@@ -70,20 +64,13 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase {
     return new SqliteBucketStorage(this.database, this.logger);
   }
 
-  connect(
-    connector: PowerSyncBackendConnector,
-    options?: PowerSyncConnectionOptions & NodeCustomConnectionOptions
-  ): Promise<void> {
-    return super.connect(connector, options);
-  }
-
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: RequiredAdditionalConnectionOptions & NodeAdditionalConnectionOptions
+    options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     const logger = this.logger;
     const remote = new NodeRemote(connector, logger, {
-      dispatcher: options.dispatcher,
+      //dispatcher: options.dispatcher,
       ...(this.options as NodePowerSyncDatabaseOptions).remoteOptions
     });
 

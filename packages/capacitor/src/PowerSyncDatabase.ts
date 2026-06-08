@@ -1,13 +1,12 @@
 import { Capacitor } from '@capacitor/core';
 import {
+  CreateSyncImplementationOptions,
   DBAdapter,
-  DEFAULT_STREAM_CONNECTION_OPTIONS,
   LogLevels,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   PowerSyncBackendConnector,
-  PowerSyncConnectionOptions,
-  RequiredAdditionalConnectionOptions,
   StreamingSyncImplementation,
+  SyncOptions,
   SyncStreamConnectionMethod,
   TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
@@ -32,11 +31,9 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
    * or HTTP connections if using {@link CapacitorSQLiteAdapter} - this is due to poor performance with
    * the Capacitor Community SQLite library and binary payloads.
    */
-  connect(connector: PowerSyncBackendConnector, options?: PowerSyncConnectionOptions): Promise<void> {
+  connect(connector: PowerSyncBackendConnector, options?: SyncOptions): Promise<void> {
     const isUsingCapacitorDriver = this.database instanceof CapacitorSQLiteAdapter;
-    const defaultConnectionMethod = isUsingCapacitorDriver
-      ? SyncStreamConnectionMethod.HTTP
-      : DEFAULT_STREAM_CONNECTION_OPTIONS.connectionMethod;
+    const defaultConnectionMethod = isUsingCapacitorDriver ? SyncStreamConnectionMethod.HTTP : undefined;
     if (options?.connectionMethod == SyncStreamConnectionMethod.WEB_SOCKET && isUsingCapacitorDriver) {
       this.logger.log({
         level: LogLevels.warn,
@@ -105,7 +102,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
 
   protected generateSyncStreamImplementation(
     connector: PowerSyncBackendConnector,
-    options: RequiredAdditionalConnectionOptions
+    options: CreateSyncImplementationOptions
   ): StreamingSyncImplementation {
     if (this.isNativeCapacitorPlatform) {
       // We don't want to support multi-tab on mobile platforms.
@@ -122,8 +119,6 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
 
       return new CapacitorStreamingSyncImplementation({
         ...(this.options as {}),
-        retryDelayMs: options.retryDelayMs,
-        crudUploadThrottleMs: options.crudUploadThrottleMs,
         adapter: this.bucketStorageAdapter,
         remote,
         uploadCrud: async () => {

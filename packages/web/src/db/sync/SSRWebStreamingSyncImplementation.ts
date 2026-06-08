@@ -4,7 +4,6 @@ import {
   LockOptions,
   LockType,
   Mutex,
-  PowerSyncConnectionOptions,
   StreamingSyncImplementation,
   SyncStatus,
   SyncStatusOptions
@@ -34,7 +33,7 @@ export class SSRStreamingSyncImplementation extends BaseObserver implements Stre
   /**
    * This is a no-op in SSR mode
    */
-  async connect(options?: PowerSyncConnectionOptions): Promise<void> {}
+  async connect(): Promise<void> {}
 
   async dispose() {}
 

@@ -2,18 +2,14 @@ import { LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { SyncStatus } from '../db/crud/SyncStatus.js';
 import { BaseListener, BaseObserver } from '../utils/BaseObserver.js';
 import { PowerSyncBackendConnector } from './connection/PowerSyncBackendConnector.js';
-import {
-  AdditionalConnectionOptions,
-  InternalConnectionOptions,
-  StreamingSyncImplementation,
-  SubscribedStream
-} from './sync/stream/AbstractStreamingSyncImplementation.js';
+import { StreamingSyncImplementation, SubscribedStream } from './sync/stream/AbstractStreamingSyncImplementation.js';
 import {
   SyncStream,
   SyncStreamDescription,
   SyncStreamSubscribeOptions,
   SyncStreamSubscription
 } from './sync/sync-streams.js';
+import { ResolvedSyncOptions, resolveSyncOptions, SyncOptions } from './sync/options.js';
 
 /**
  * @internal
@@ -32,7 +28,7 @@ export interface ConnectionManagerSyncImplementationResult {
  *
  * @internal
  */
-export interface CreateSyncImplementationOptions extends AdditionalConnectionOptions {
+export interface CreateSyncImplementationOptions {
   subscriptions: SubscribedStream[];
 }
 
@@ -59,7 +55,8 @@ export interface ConnectionManagerOptions {
 
 type StoredConnectionOptions = {
   connector: PowerSyncBackendConnector;
-  options: InternalConnectionOptions;
+  options: ResolvedSyncOptions;
+  schema: any;
 };
 
 /**
@@ -138,14 +135,15 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
     await this.syncDisposer?.();
   }
 
-  async connect(connector: PowerSyncBackendConnector, options: InternalConnectionOptions) {
+  async connect(connector: PowerSyncBackendConnector, options: SyncOptions, serializedSchema: any) {
     // Keep track if there were pending operations before this call
     const hadPendingOptions = !!this.pendingConnectionOptions;
 
     // Update pending options to the latest values
     this.pendingConnectionOptions = {
       connector,
-      options
+      options: resolveSyncOptions(options),
+      schema: serializedSchema
     };
 
     // Disconnecting here provides aborting in progress connection attempts.
@@ -183,7 +181,7 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
   }
 
   protected async connectInternal() {
-    let appliedOptions: InternalConnectionOptions | null = null;
+    let appliedOptions: ResolvedSyncOptions | null = null;
 
     // This method ensures a disconnect before any connection attempt
     await this.disconnectInternal();

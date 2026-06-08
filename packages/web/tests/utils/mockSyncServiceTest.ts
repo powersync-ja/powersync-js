@@ -79,8 +79,6 @@ export const sharedMockSyncServiceTest = test.extend<{
           enableMultiTabs: true,
           ...(customConfig.flags ?? {})
         },
-        retryDelayMs: 1000,
-        crudUploadThrottleMs: 1000,
         schema: AppSchema,
         logger,
         ...customConfig
@@ -112,6 +110,8 @@ export const sharedMockSyncServiceTest = test.extend<{
 
       // Call powersync.connect() to start the sync worker
       const connectionPromise = database.connect(connectorToUse, {
+        retryDelayMs: 1000,
+        crudUploadThrottleMs: 1000,
         connectionMethod: SyncStreamConnectionMethod.HTTP
       });
 

@@ -18,7 +18,7 @@ class NodeFetchProvider extends FetchImplementationProvider {
   }
 }
 
-export type NodeCustomConnectionOptions = {
+export interface NodeRemoteOptions extends AbstractRemoteOptions {
   /**
    * Optional custom dispatcher for HTTP or WEB_SOCKET connections.
    *
@@ -26,9 +26,7 @@ export type NodeCustomConnectionOptions = {
    * or other connection options.
    */
   dispatcher?: Dispatcher;
-};
-
-export type NodeRemoteOptions = AbstractRemoteOptions & NodeCustomConnectionOptions;
+}
 
 export class NodeRemote extends AbstractRemote {
   private wsDispatcher: Dispatcher | undefined;

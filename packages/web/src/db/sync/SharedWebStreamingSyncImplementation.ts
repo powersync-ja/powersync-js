@@ -1,7 +1,7 @@
 import {
   LogRecord,
-  PowerSyncConnectionOptions,
   PowerSyncCredentials,
+  ResolvedSyncOptions,
   SubscribedStream,
   SyncStatusOptions
 } from '@powersync/common';
@@ -179,16 +179,14 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     // Awaiting here ensures the worker is waiting for the lock
     await this.syncManager.addLockBasedCloseSignal(closeSignal);
 
-    const { crudUploadThrottleMs, identifier, retryDelayMs } = this.options;
+    const { identifier } = this.options;
     const flags = { ...this.webOptions.flags, workers: undefined };
 
     await this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
-          crudUploadThrottleMs,
           identifier,
-          retryDelayMs,
           flags: flags
         }
       },
@@ -200,9 +198,9 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
    * Starts the sync process, this effectively acts as a call to
    * `connect` if not yet connected.
    */
-  async connect(options?: PowerSyncConnectionOptions): Promise<void> {
+  async connect(options: ResolvedSyncOptions): Promise<void> {
     await this.waitForReady();
-    return this.syncManager.connect(options);
+    return this.syncManager.connect(options, this.options.serializedSchema);
   }
 
   async disconnect(): Promise<void> {

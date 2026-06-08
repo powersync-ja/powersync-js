@@ -25,6 +25,13 @@ export * from './client/sync/stream/AbstractRemote.js';
 export * from './client/sync/stream/AbstractStreamingSyncImplementation.js';
 export * from './client/sync/stream/JsonValue.js';
 export * from './client/sync/sync-streams.js';
+export {
+  SyncOptions,
+  SyncStreamConnectionMethod,
+  FetchStrategy,
+  // TODO: Stop exporting this, move to separate package instead
+  ResolvedSyncOptions
+} from './client/sync/options.js';
 
 export * from './client/ConnectionManager.js';
 export * from './db/ConnectionClosedError.js';

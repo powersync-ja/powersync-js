@@ -1,9 +1,8 @@
 import {
   createConsoleLogger,
   LogLevels,
-  PowerSyncConnectionOptions,
   Schema,
-  SyncClientImplementation,
+  SyncOptions,
   SyncStreamConnectionMethod,
   SyncStreamOptions,
   WASQLiteOpenFactory,
@@ -205,8 +204,7 @@ describe('Streaming', { sequential: true }, () => {
     expect((await query.next()).value.rows._array).toStrictEqual([]);
 
     powersync.connect(new TestConnector(), {
-      connectionMethod: SyncStreamConnectionMethod.HTTP,
-      clientImplementation: SyncClientImplementation.RUST
+      connectionMethod: SyncStreamConnectionMethod.HTTP
     });
     await waitForStream();
 
@@ -286,7 +284,7 @@ function describeStreamingTests(
     it('PowerSync reconnect multiple connect calls', async () => {
       // This initially performs a connect call
       const { powersync, remote } = await createConnectedDatabase();
-      const connectionOptions: PowerSyncConnectionOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
+      const connectionOptions: SyncOptions = { connectionMethod: SyncStreamConnectionMethod.HTTP };
       expect(powersync.connected).toBe(true);
 
       const spy = vi.spyOn(powersync as any, 'generateSyncStreamImplementation');
@@ -312,7 +310,7 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
+          const call = spy.mock.lastCall![1] as SyncOptions;
           expect(call.params!['count']).eq(connectionAttempts);
         },
         { timeout: 2000, interval: 100 }
@@ -330,7 +328,7 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as PowerSyncConnectionOptions;
+          const call = spy.mock.lastCall![1] as SyncOptions;
           expect(call.params!['count']).eq(0);
         },
         { timeout: 8000, interval: 100 }

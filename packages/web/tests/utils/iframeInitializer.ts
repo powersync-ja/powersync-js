@@ -55,13 +55,15 @@ export async function setupPowerSyncInIframe(
     const db = new PowerSyncDatabase({
       database: databaseOptions,
       schema: schema,
-      retryDelayMs: 100,
       flags: { enableMultiTabs: true, useWebWorker: true },
       logger
     });
 
     // Connect to PowerSync (don't await this since we want to create multiple tabs)
-    const connectionPromise = db.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    const connectionPromise = db.connect(connector, {
+      retryDelayMs: 100,
+      connectionMethod: SyncStreamConnectionMethod.HTTP
+    });
 
     if (waitForConnection) {
       await connectionPromise;

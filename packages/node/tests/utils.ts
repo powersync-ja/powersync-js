@@ -156,8 +156,6 @@ export function createMockSyncServiceTest(bson: boolean) {
 
       const newConnection = async (options?: Partial<NodePowerSyncDatabaseOptions>) => {
         const db = await createDatabase(tmpdir, {
-          // This might help with test stability/timeouts if a retry is needed
-          retryDelayMs: 100,
           ...options,
           database: {
             dbFilename: databaseName,
