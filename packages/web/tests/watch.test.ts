@@ -29,9 +29,7 @@ describe('Watch Tests', { sequential: true }, () => {
     powersync = new PowerSyncDatabase({
       database: {
         dbFilename: 'test-watch.db',
-        flags: {
-          enableMultiTabs: false
-        }
+        enableMultiTabs: false
       },
       schema: TEST_SCHEMA
     });

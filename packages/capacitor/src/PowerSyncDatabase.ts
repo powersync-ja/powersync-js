@@ -5,13 +5,12 @@ import {
   LogLevels,
   MEMORY_TRIGGER_CLAIM_MANAGER,
   PowerSyncBackendConnector,
-  ResolvedWebSQLFlags,
   StreamingSyncImplementation,
   SyncOptions,
   SyncStreamConnectionMethod,
   TriggerManagerConfig,
   PowerSyncDatabase as WebPowerSyncDatabase,
-  WebSQLOpenFactoryOptions
+  WebSQLOpenOptions
 } from '@powersync/web';
 import { CapacitorSQLiteAdapter } from './adapter/CapacitorSQLiteAdapter.js';
 import { CapacitorRemote } from './sync/CapacitorRemote.js';
@@ -53,11 +52,11 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     return platform == 'ios' || platform == 'android';
   }
 
-  protected openDBAdapter(resolvedFlags: ResolvedWebSQLFlags, options: WebSQLOpenFactoryOptions): DBAdapter {
+  protected openDBAdapter(options: WebSQLOpenOptions): DBAdapter {
     const platform = Capacitor.getPlatform();
     if (platform == 'ios' || platform == 'android') {
       if (options.dbLocation) {
-        options.logger?.log({
+        this.logger.log({
           level: LogLevels.warn,
           message: `
           dbLocation is ignored on iOS and Android platforms. 
@@ -65,14 +64,14 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
           See https://github.com/capacitor-community/sqlite?tab=readme-ov-file#installation`
         });
       }
-      options.logger?.log({
+      this.logger.log({
         level: LogLevels.debug,
         message: `Using CapacitorSQLiteAdapter for platform: ${platform}`
       });
       return new CapacitorSQLiteAdapter(options);
     } else {
-      options.logger?.log({ level: LogLevels.debug, message: `Using default web adapter for web platform` });
-      return super.openDBAdapter(resolvedFlags, options);
+      this.logger.log({ level: LogLevels.debug, message: `Using default web adapter for web platform` });
+      return super.openDBAdapter(options);
     }
   }
 
@@ -107,7 +106,7 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
       // We don't want to support multi-tab on mobile platforms.
       // We technically can, but it's not a common use case and requires additional work/testing.
       this.logger.log({ level: LogLevels.debug, message: `Using Capacitor sync implementation` });
-      if (this.resolvedFlags.enableMultiTabs) {
+      if (this.resolvedOpenOptions.enableMultiTabs) {
         this.logger.log({
           level: LogLevels.warn,
           message: `enableMultiTabs is not supported on Capacitor mobile platforms. Ignoring the flag.`

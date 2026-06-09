@@ -6,12 +6,10 @@ import {
   LogLevels
 } from '@powersync/common';
 import { getNavigatorLocks } from '../../shared/navigator.js';
-import { ResolvedWebSQLOpenOptions, WebSQLFlags } from '../adapters/web-sql-flags.js';
 
 export interface WebStreamingSyncImplementationOptions extends AbstractStreamingSyncImplementationOptions {
-  flags?: WebSQLFlags;
   sync?: {
-    worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
+    worker?: string | URL | (() => SharedWorker);
   };
 }
 

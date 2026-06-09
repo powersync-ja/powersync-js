@@ -174,9 +174,7 @@ describe('CRUD Tests', { sequential: true }, () => {
        */
       database: {
         dbFilename: 'test.db' + uuid(),
-        flags: {
-          enableMultiTabs: false
-        }
+        enableMultiTabs: false
       },
       schema: new Schema([
         new Table({

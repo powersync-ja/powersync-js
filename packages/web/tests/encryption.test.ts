@@ -2,7 +2,7 @@ import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebPowerSyncDataba
 import { v4 as uuid } from 'uuid';
 import { describe, expect, it } from 'vitest';
 import { TEST_SCHEMA } from './utils/test-schema.js';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 describe('Encryption Tests', { sequential: true }, () => {
   it('IDBBatchAtomicVFS encryption', async () => {
@@ -16,10 +16,13 @@ describe('Encryption Tests', { sequential: true }, () => {
     await testEncryption({
       schema: TEST_SCHEMA,
       factory: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'opfs-file.db',
-        vfs: WASQLiteVFS.OPFSCoopSyncVFS,
-        encryptionKey: 'opfs-key'
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'opfs-file.db',
+          vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+          encryptionKey: 'opfs-key',
+          databaseWorkerLogLevel: defaultLogLevel
+        }
       })
     });
   });
@@ -28,10 +31,13 @@ describe('Encryption Tests', { sequential: true }, () => {
     await testEncryption({
       schema: TEST_SCHEMA,
       factory: new WASQLiteOpenFactory({
-        ...defaultLoggerConfig,
-        dbFilename: 'ahp-file.db',
-        vfs: WASQLiteVFS.AccessHandlePoolVFS,
-        encryptionKey: 'ahp-key'
+        logger: defaultTestLogger,
+        open: {
+          dbFilename: 'ahp-file.db',
+          vfs: WASQLiteVFS.AccessHandlePoolVFS,
+          encryptionKey: 'ahp-key',
+          databaseWorkerLogLevel: defaultLogLevel
+        }
       })
     });
   });

@@ -10,32 +10,30 @@ import {
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
 import { MockedStreamPowerSync, MockRemote, TestConnector } from './MockStreamOpenFactory.js';
-import { defaultLoggerConfig } from './logger.js';
-import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebSQLFlags, WebSQLOpenFactoryOptions } from '@powersync/web';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebSQLOpenOptions } from '@powersync/web';
+import { defaultTestLogger } from './logger.js';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 
 export type ConnectedDatabaseUtils = UnwrapPromise<ReturnType<typeof generateConnectedDatabase>>;
 export type GenerateConnectedDatabaseOptions = {
-  flags?: WebSQLFlags;
   schema?: Schema;
   logger?: PowerSyncLogger;
   factory?: SQLOpenFactory;
+  database?: Partial<WebSQLOpenOptions>;
 };
 
 export type ConnectedDBGenerator = typeof generateConnectedDatabase;
 
 export function generateDefaultOptions(options: GenerateConnectedDatabaseOptions): WebPowerSyncDatabaseOptions {
-  const source: DatabaseSource<WebSQLOpenFactoryOptions> = options.factory
+  const source: DatabaseSource<WebSQLOpenOptions> = options.factory
     ? { factory: options.factory }
     : {
         database: {
           dbFilename: `${v4()}.db`,
-          flags: {
-            enableMultiTabs: false,
-            useWebWorker: true,
-            ...options.flags
-          }
+          enableMultiTabs: false,
+          useWebWorker: true,
+          ...options.database
         }
       };
 
@@ -60,7 +58,7 @@ export async function generateConnectedDatabase(options?: GenerateConnectedDatab
   const callbacks: Map<string, () => void> = new Map();
   const connector = new TestConnector();
   const uploadSpy = vi.spyOn(connector, 'uploadData');
-  const remote = new MockRemote(connector, defaultLoggerConfig.logger, () => callbacks.forEach((c) => c()));
+  const remote = new MockRemote(connector, defaultTestLogger, () => callbacks.forEach((c) => c()));
 
   function openPowerSyncDatabase(): PowerSyncDatabase {
     return new MockedStreamPowerSync(resolvedOptions, remote);

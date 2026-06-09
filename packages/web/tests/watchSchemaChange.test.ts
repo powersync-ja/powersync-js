@@ -20,7 +20,7 @@ describe('Watch With Schema Change Tests', { sequential: true }, () => {
 
   beforeEach(async () => {
     powersync = new PowerSyncDatabase({
-      database: { dbFilename: 'test-watch-optional-sync.db', flags: { enableMultiTabs: false } },
+      database: { dbFilename: 'test-watch-optional-sync.db', enableMultiTabs: false },
       schema: makeOptionalSyncSchema(false)
     });
     await powersync.init();

@@ -19,9 +19,7 @@ describe('Schema Tests', { sequential: true }, () => {
        */
       database: {
         dbFilename: 'test.db',
-        flags: {
-          enableMultiTabs: false
-        }
+        enableMultiTabs: false
       },
       schema: makeOptionalSyncSchema(false)
     });

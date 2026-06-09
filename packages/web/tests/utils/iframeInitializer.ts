@@ -7,9 +7,9 @@ import {
   column,
   createConsoleLogger
 } from '@powersync/common';
-import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebSQLOpenFactoryOptions } from '@powersync/web';
+import { PowerSyncDatabase, WASQLiteOpenFactory, WASQLiteVFS, WebSQLOpenOptions } from '@powersync/web';
 import { getMockSyncServiceFromWorker } from './MockSyncServiceClient.js';
-import { defaultLoggerConfig } from './logger.js';
+import { defaultLogLevel, defaultTestLogger } from './logger.js';
 
 /**
  * Initializes a PowerSync client in the current iframe context and notifies the parent.
@@ -46,15 +46,18 @@ export async function setupPowerSyncInIframe(
 
     // Configure database with optional VFS
     // The vfs string value is the enum value itself (string enums)
-    const databaseOptions: DatabaseSource<WebSQLOpenFactoryOptions> = vfs
+    const databaseOptions: DatabaseSource<WebSQLOpenOptions> = vfs
       ? {
           factory: new WASQLiteOpenFactory({
-            ...defaultLoggerConfig,
-            dbFilename,
-            vfs: vfs as WASQLiteVFS
+            logger: defaultTestLogger,
+            open: {
+              databaseWorkerLogLevel: defaultLogLevel,
+              dbFilename,
+              vfs: vfs as WASQLiteVFS
+            }
           })
         }
-      : { database: { dbFilename, flags: { enableMultiTabs: true, useWebWorker: true } } };
+      : { database: { dbFilename, enableMultiTabs: true, useWebWorker: true } };
 
     // Configure verbose logging
     const logger = createConsoleLogger({

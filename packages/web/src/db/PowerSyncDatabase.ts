@@ -18,13 +18,7 @@ import { getNavigatorLocks } from '../shared/navigator.js';
 import { NAVIGATOR_TRIGGER_CLAIM_MANAGER } from './NavigatorTriggerClaimManager.js';
 import { WebDBAdapter } from './adapters/WebDBAdapter.js';
 import { WASQLiteOpenFactory } from './adapters/wa-sqlite/WASQLiteOpenFactory.js';
-import {
-  ResolvedWebSQLFlags,
-  ResolvedWebSQLOpenOptions,
-  WebSQLOpenFactoryOptions,
-  isServerSide,
-  resolveWebSQLFlags
-} from './adapters/web-sql-flags.js';
+import { WebSpecificOpenOptions, WebSQLOpenOptions } from './adapters/options.js';
 import { SSRStreamingSyncImplementation } from './sync/SSRWebStreamingSyncImplementation.js';
 import { SharedWebStreamingSyncImplementation } from './sync/SharedWebStreamingSyncImplementation.js';
 import { WebRemote } from './sync/WebRemote.js';
@@ -33,9 +27,10 @@ import {
   WebStreamingSyncImplementationOptions
 } from './sync/WebStreamingSyncImplementation.js';
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
+import { resolveAndValidateOptions } from './adapters/resolveAndValidateOptions.js';
 
 export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
-  DatabaseSource<WebSQLOpenFactoryOptions> &
+  DatabaseSource<WebSQLOpenOptions> &
   WebSpecificOptions;
 
 export interface WebSpecificOptions {
@@ -55,7 +50,7 @@ export interface WebSyncOptions {
    * You can either provide a path to the worker script
    * or a factory method that returns a worker.
    */
-  worker?: string | URL | ((options: ResolvedWebSQLOpenOptions) => SharedWorker);
+  worker?: string | URL | (() => SharedWorker);
 
   /**
    * The log level for logs from the sync worker.
@@ -82,14 +77,14 @@ export interface WebSyncOptions {
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDatabaseOptions> {
   static SHARED_MUTEX = new Mutex();
 
-  protected resolvedFlags: ResolvedWebSQLFlags;
+  protected resolvedOpenOptions: WebSpecificOpenOptions;
   protected enableBroadcastLogs: boolean;
 
   constructor(options: WebPowerSyncDatabaseOptions, database?: () => DBAdapter) {
-    const resolvedFlags = resolveWebSQLFlags('database' in options ? options.database.flags : undefined);
+    const resolvedOpenOptions = resolveAndValidateOptions('database' in options ? options.database : {});
 
-    super(options, database ?? (() => openDatabase(options, (options) => this.openDBAdapter(resolvedFlags, options))));
-    this.resolvedFlags = resolvedFlags;
+    super(options, database ?? (() => openDatabase(options, (options) => this.openDBAdapter(options))));
+    this.resolvedOpenOptions = resolvedOpenOptions;
     this.enableBroadcastLogs = options.broadcastLogs ?? true;
   }
 
@@ -121,13 +116,10 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
     };
   }
 
-  protected openDBAdapter(resolvedFlags: ResolvedWebSQLFlags, options: WebSQLOpenFactoryOptions): DBAdapter {
+  protected openDBAdapter(options: WebSQLOpenOptions): DBAdapter {
     const defaultFactory = new WASQLiteOpenFactory({
-      ...options,
-      flags: resolvedFlags,
-      encryptionKey: options.encryptionKey,
       logger: this.logger,
-      logLevel: resolvedFlags.databaseWorkerLogLevel
+      open: options
     });
     return defaultFactory.openDB();
   }
@@ -140,19 +132,19 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
   close(options?: PowerSyncCloseOptions): Promise<void> {
     return super.close({
       // Don't disconnect by default if multiple tabs are enabled
-      disconnect: options?.disconnect ?? !this.resolvedFlags.enableMultiTabs
+      disconnect: options?.disconnect ?? !this.resolvedOpenOptions.enableMultiTabs
     });
   }
 
   protected async loadVersion(): Promise<void> {
-    if (isServerSide()) {
+    if (this.resolvedOpenOptions.ssrMode) {
       return;
     }
     return super.loadVersion();
   }
 
   protected async resolveOfflineSyncStatus() {
-    if (isServerSide()) {
+    if (this.resolvedOpenOptions.ssrMode) {
       return;
     }
     return super.resolveOfflineSyncStatus();
@@ -163,7 +155,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
   }
 
   protected async runExclusive<T>(cb: () => Promise<T>) {
-    if (this.resolvedFlags.ssrMode) {
+    if (this.resolvedOpenOptions.ssrMode) {
       return PowerSyncDatabase.SHARED_MUTEX.runExclusive(cb);
     }
     return getNavigatorLocks().request(`lock-${this.database.name}`, cb);
@@ -177,7 +169,6 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
     const syncOptions: WebStreamingSyncImplementationOptions = {
       ...(this.options as {}),
       ...options,
-      flags: this.resolvedFlags,
       adapter: this.bucketStorageAdapter,
       remote,
       uploadCrud: async () => {
@@ -189,9 +180,9 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
     };
 
     switch (true) {
-      case this.resolvedFlags.ssrMode:
+      case this.resolvedOpenOptions.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
-      case this.resolvedFlags.enableMultiTabs:
+      case this.resolvedOpenOptions.enableMultiTabs:
         if (!this.enableBroadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.

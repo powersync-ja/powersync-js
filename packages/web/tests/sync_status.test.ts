@@ -8,7 +8,7 @@ describe(
   { sequential: true },
   describeSyncStatusStreamingTests(() =>
     generateConnectedDatabase({
-      flags: {
+      database: {
         useWebWorker: false,
         enableMultiTabs: false
       }

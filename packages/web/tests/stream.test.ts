@@ -16,7 +16,7 @@ import {
   GenerateConnectedDatabaseOptions
 } from './utils/generateConnectedDatabase.js';
 import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
-import { defaultLoggerConfig } from './utils/logger.js';
+import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
 const UPLOAD_TIMEOUT_MS = 3000;
 
@@ -44,7 +44,7 @@ describe('Streaming', { sequential: true }, () => {
     describeStreamingTests(() =>
       generateConnectedDatabase({
         logger,
-        flags: { useWebWorker: false }
+        database: { useWebWorker: false }
       })
     )
   );
@@ -58,9 +58,12 @@ describe('Streaming', { sequential: true }, () => {
       generateConnectedDatabase({
         logger,
         factory: new WASQLiteOpenFactory({
-          ...defaultLoggerConfig,
-          dbFilename: 'streaming-opfs.sqlite',
-          vfs: WASQLiteVFS.OPFSCoopSyncVFS
+          logger: defaultTestLogger,
+          open: {
+            databaseWorkerLogLevel: defaultLogLevel,
+            dbFilename: 'streaming-opfs.sqlite',
+            vfs: WASQLiteVFS.OPFSCoopSyncVFS
+          }
         })
       })
     )
@@ -189,7 +192,7 @@ describe('Streaming', { sequential: true }, () => {
 
     const { powersync, waitForStream, remote } = await generateConnectedDatabase({
       schema: customSchema,
-      flags: { enableMultiTabs: true }
+      database: { enableMultiTabs: true }
     });
     await powersync.execute('CREATE TABLE lists (id TEXT NOT NULL PRIMARY KEY, name TEXT);');
     onTestFinished(async () => {

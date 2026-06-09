@@ -10,7 +10,6 @@ import { AbstractSharedSyncClientProvider } from '../../worker/sync/AbstractShar
 import { ManualSharedSyncPayload, SharedSyncClientEvent } from '../../worker/sync/SharedSyncImplementation.js';
 import { WorkerClient } from '../../worker/sync/WorkerClient.js';
 import { WebDBAdapter } from '../adapters/WebDBAdapter.js';
-import { DEFAULT_CACHE_SIZE_KB, TemporaryStorageOption, resolveWebSQLFlags } from '../adapters/web-sql-flags.js';
 import {
   WebStreamingSyncImplementation,
   WebStreamingSyncImplementationOptions
@@ -98,22 +97,11 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     this.dbAdapter = options.db;
     this.logLevel = options.logLevel;
     this.enableBroadcastLogs = options.enableBroadcastLogs;
-    /**
-     * Configure or connect to the shared sync worker.
-     * This worker will manage all syncing operations remotely.
-     */
-    const resolvedWorkerOptions = {
-      dbFilename: this.options.identifier!,
-      temporaryStorage: TemporaryStorageOption.MEMORY,
-      cacheSizeKb: DEFAULT_CACHE_SIZE_KB,
-      ...options,
-      flags: resolveWebSQLFlags(options.flags)
-    };
 
     const syncWorker = options.sync?.worker;
     if (syncWorker) {
       if (typeof syncWorker === 'function') {
-        this.messagePort = syncWorker(resolvedWorkerOptions).port;
+        this.messagePort = syncWorker().port;
       } else {
         this.messagePort = new SharedWorker(`${syncWorker}`, {
           /* @vite-ignore */
@@ -183,14 +171,12 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
     await this.syncManager.addLockBasedCloseSignal(closeSignal);
 
     const { identifier } = this.options;
-    const flags = { ...this.webOptions.flags, workers: undefined };
 
     await this.syncManager.setParams(
       {
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
           identifier,
-          flags: flags,
           serializedSchema: this.options.serializedSchema
         },
         enableBroadcastLogs: this.enableBroadcastLogs

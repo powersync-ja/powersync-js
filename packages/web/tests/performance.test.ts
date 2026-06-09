@@ -14,9 +14,7 @@ describe('Basic', { sequential: true }, () => {
     db = new PowerSyncDatabase({
       database: {
         dbFilename: 'test-user.db',
-        flags: {
-          enableMultiTabs: false
-        }
+        enableMultiTabs: false
       },
       schema: new Schema({ users })
     });

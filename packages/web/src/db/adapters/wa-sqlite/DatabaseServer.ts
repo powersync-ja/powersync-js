@@ -24,7 +24,7 @@ export class DatabaseServer {
   constructor(options: DatabaseServerOptions) {
     this.#options = options;
     const inner = options.inner;
-    this.#updateBroadcastChannel = new BroadcastChannel(`${inner.options.dbFilename}-table-updates`);
+    this.#updateBroadcastChannel = new BroadcastChannel(`${inner.options.filename}-table-updates`);
 
     this.#updateBroadcastChannel.onmessage = ({ data }) => {
       this.#pushTableUpdateToClients(data as string[]);

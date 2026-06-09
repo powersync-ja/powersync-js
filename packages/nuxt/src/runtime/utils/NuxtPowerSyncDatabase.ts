@@ -69,10 +69,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
 
       // we need to force multitabe as the devtools is basically another tab running in the same browser context
       if ('database' in options) {
-        options.database.flags = {
-          ...options.database.flags,
-          enableMultiTabs: true
-        };
+        options.database.enableMultiTabs = true;
         options.broadcastLogs = true;
       }
 
@@ -107,7 +104,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
         shallowRef(schemaManager) as ShallowRef<DynamicSchemaManager>
       );
 
-      if (this.resolvedFlags.enableMultiTabs) {
+      if (this.resolvedOpenOptions.enableMultiTabs) {
         if (!this.enableBroadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
@@ -125,7 +122,7 @@ export class NuxtPowerSyncDatabase extends PowerSyncDatabase {
           },
           logger,
           db: this.database as WebDBAdapter,
-          logLevel: this.resolvedFlags.databaseWorkerLogLevel ?? LogLevels.info,
+          logLevel: this.resolvedOpenOptions.databaseWorkerLogLevel ?? LogLevels.info,
           enableBroadcastLogs: this.enableBroadcastLogs
         });
       } else {
