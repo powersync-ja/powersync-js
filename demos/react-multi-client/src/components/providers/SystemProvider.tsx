@@ -1,5 +1,4 @@
 'use client';
-import { TimedPowerSyncDBFactory } from '@/library/PowerSyncDBFactory';
 import { TimedPowerSyncDatabase } from '@/library/TimedPowerSyncDatabase';
 import React, { PropsWithChildren } from 'react';
 import { PowerSyncContext, usePowerSync as _usePowerSync } from '@powersync/react';
@@ -20,14 +19,14 @@ const SystemProvider: React.FC<PropsWithChildren<SystemProviderProps>> = (props)
   const [connector] = React.useState(new SupabaseConnector(client));
 
   const [powersync] = React.useState(
-    new TimedPowerSyncDBFactory({
-      dbFilename: props.dbFilename,
-      schema: AppSchema,
-      flags: {
+    new TimedPowerSyncDatabase({
+      database: {
+        dbFilename: props.dbFilename,
         disableSSRWarning: false
       },
+      schema: AppSchema,
       logger: logger
-    }).getInstance()
+    })
   );
 
   React.useEffect(() => {
