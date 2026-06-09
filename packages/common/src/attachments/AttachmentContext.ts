@@ -14,16 +14,16 @@ import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.j
  */
 export class AttachmentContext {
   /** PowerSync database instance for executing queries */
-  db: AbstractPowerSyncDatabase;
+  readonly db: AbstractPowerSyncDatabase;
 
   /** Name of the database table storing attachment records */
-  tableName: string;
+  readonly tableName: string;
 
   /** Logger instance for diagnostic information */
-  logger: ILogger;
+  readonly logger: ILogger;
 
   /** Maximum number of archived attachments to keep before cleanup */
-  archivedCacheLimit: number = 100;
+  readonly archivedCacheLimit: number = 100;
 
   /**
    * Creates a new AttachmentContext instance.
