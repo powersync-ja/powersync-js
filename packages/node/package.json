@@ -26,10 +26,12 @@
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
+      "module": "./lib/index.js",
       "module-sync": "./lib/index.js"
     },
     "./worker.js": {
       "types": "./lib/worker.d.ts",
+      "module": "./lib/index.js",
       "module-sync": "./lib/worker.js"
     },
     "./package.json": "./package.json"
