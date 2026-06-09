@@ -7,6 +7,7 @@ dist
 .output
 *.tsbuildinfo
 .vscode
+.devcontainer
 .DS_STORE
 .idea
 .fleet

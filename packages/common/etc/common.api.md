@@ -373,15 +373,13 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 // @alpha
 export const ATTACHMENT_TABLE = "attachments";
 
-// Warning: (ae-internal-missing-underscore) The name "AttachmentContext" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
+// @alpha
 export class AttachmentContext {
     constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: ILogger, archivedCacheLimit: number);
-    archivedCacheLimit: number;
+    readonly archivedCacheLimit: number;
     // (undocumented)
     clearQueue(): Promise<void>;
-    db: AbstractPowerSyncDatabase;
+    readonly db: AbstractPowerSyncDatabase;
     // (undocumented)
     deleteArchivedAttachments(callback?: (attachments: AttachmentRecord[]) => Promise<void>): Promise<boolean>;
     deleteAttachment(attachmentId: string): Promise<void>;
@@ -390,9 +388,9 @@ export class AttachmentContext {
     // (undocumented)
     getAttachment(id: string): Promise<AttachmentRecord | undefined>;
     getAttachments(): Promise<AttachmentRecord[]>;
-    logger: ILogger;
+    readonly logger: ILogger;
     saveAttachments(attachments: AttachmentRecord[]): Promise<void>;
-    tableName: string;
+    readonly tableName: string;
     upsertAttachment(attachment: AttachmentRecord, context: Transaction): Promise<void>;
 }
 
@@ -454,6 +452,7 @@ export class AttachmentQueue implements AttachmentQueue {
     readonly syncThrottleDuration: number;
     readonly tableName: string;
     verifyAttachments(): Promise<void>;
+    withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
 }
 
 // @alpha

@@ -1,15 +1,16 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
-import { ILogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
+import { ILogger } from '../utils/Logger.js';
+import { AttachmentContext } from './AttachmentContext.js';
+import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
+import { AttachmentService } from './AttachmentService.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
-import { AttachmentService } from './AttachmentService.js';
-import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
@@ -342,6 +343,20 @@ export class AttachmentQueue implements AttachmentQueue {
     }
   }
 
+  /**
+   * Provides an {@link AttachmentContext} to a callback.
+   *
+   * The callback runs while the attachment queue mutex is held. Do not call
+   * other {@link AttachmentQueue} methods from within the callback, as they may
+   * attempt to acquire the same mutex and block indefinitely.
+   */
+  withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T> {
+    /**
+     * AttachmentService is internal and private in this class.
+     * We only need to expose its locking and context functionality for extending classes.
+     */
+    return this.attachmentService.withContext(callback);
+  }
   /**
    * Saves a file to local storage and queues it for upload to remote storage.
    *
