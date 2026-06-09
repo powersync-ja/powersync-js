@@ -41,7 +41,7 @@ import { WatchedQueryComparator } from './watched/processors/comparators.js';
 import { Mutex } from '../utils/mutex.js';
 import { createConsoleLogger, LogLevels, PowerSyncLogger } from '../utils/Logger.js';
 import { SyncOptions } from './sync/options.js';
-import { DatabaseSource } from './SQLOpenFactory.js';
+import { DatabaseSource, openDatabase, SQLOpenOptions } from './SQLOpenFactory.js';
 
 /**
  * @public
@@ -229,10 +229,7 @@ export abstract class AbstractPowerSyncDatabase<
 
   logger: PowerSyncLogger;
 
-  constructor(
-    protected options: Options,
-    openDatabase: () => DBAdapter
-  ) {
+  constructor(protected options: Options) {
     super();
     this.logger = options.logger ?? createConsoleLogger();
 
@@ -242,7 +239,7 @@ export abstract class AbstractPowerSyncDatabase<
       throw new Error('The `schema` option should be provided and should be an instance of `Schema`.');
     }
 
-    this._database = openDatabase();
+    this._database = this.openDBAdapter();
     this.bucketStorageAdapter = this.generateBucketStorageAdapter();
     this.closed = false;
     this.currentStatus = new SyncStatus({});
@@ -322,6 +319,11 @@ export abstract class AbstractPowerSyncDatabase<
   get connecting() {
     return this.currentStatus?.connecting || false;
   }
+
+  /**
+   * Opens the DBAdapter given open options using a default open factory
+   */
+  protected abstract openDBAdapter(): DBAdapter;
 
   /**
    * Generates a base configuration for {@link TriggerManagerImpl}.

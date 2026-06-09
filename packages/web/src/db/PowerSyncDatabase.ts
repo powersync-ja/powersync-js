@@ -83,7 +83,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
   constructor(options: WebPowerSyncDatabaseOptions, database?: () => DBAdapter) {
     const resolvedOpenOptions = resolveAndValidateOptions('database' in options ? options.database : {});
 
-    super(options, database ?? (() => openDatabase(options, (options) => this.openDBAdapter(options))));
+    super(options);
     this.resolvedOpenOptions = resolvedOpenOptions;
     this.enableBroadcastLogs = options.broadcastLogs ?? true;
   }
@@ -116,12 +116,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
     };
   }
 
-  protected openDBAdapter(options: WebSQLOpenOptions): DBAdapter {
-    const defaultFactory = new WASQLiteOpenFactory({
-      logger: this.logger,
-      open: options
+  protected override openDBAdapter(): DBAdapter {
+    return openDatabase(this.options, (options) => {
+      const defaultFactory = new WASQLiteOpenFactory({
+        logger: this.logger,
+        open: options
+      });
+      return defaultFactory.openDB();
     });
-    return defaultFactory.openDB();
   }
 
   /**

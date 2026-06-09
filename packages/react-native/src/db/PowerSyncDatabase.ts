@@ -29,15 +29,17 @@ import { ReactNativeQuickSqliteOpenFactory } from './adapters/react-native-quick
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase<PowerSyncDatabaseOptions> {
   constructor(options: PowerSyncDatabaseOptions) {
-    super(options, () =>
-      openDatabase(options, (database) => {
-        const defaultFactory = new ReactNativeQuickSqliteOpenFactory(database);
-        return defaultFactory.openDB();
-      })
-    );
+    super(options);
   }
 
   async _initialize(): Promise<void> {}
+
+  protected override openDBAdapter(): DBAdapter {
+    return openDatabase(this.options, (database) => {
+      const defaultFactory = new ReactNativeQuickSqliteOpenFactory(database);
+      return defaultFactory.openDB();
+    });
+  }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {
     return new ReactNativeBucketStorageAdapter(this.database, this.logger);

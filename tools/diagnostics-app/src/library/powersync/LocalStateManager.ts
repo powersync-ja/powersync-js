@@ -45,13 +45,15 @@ const LocalStateSchema = new Schema({
 });
 
 const openFactory = new WASQLiteOpenFactory({
-  dbFilename: 'diagnostics-local-state.db',
-  debugMode: true,
-  cacheSizeKb: 100 * 1024,
-  temporaryStorage: TemporaryStorageOption.MEMORY,
-  vfs: WASQLiteVFS.OPFSCoopSyncVFS,
   logger: createConsoleLogger({ prefix: 'database' }),
-  logLevel: LogLevels.info
+  open: {
+    dbFilename: 'diagnostics-local-state.db',
+    debugMode: true,
+    cacheSizeKb: 100 * 1024,
+    temporaryStorage: TemporaryStorageOption.MEMORY,
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    databaseWorkerLogLevel: LogLevels.info
+  }
 });
 
 /**

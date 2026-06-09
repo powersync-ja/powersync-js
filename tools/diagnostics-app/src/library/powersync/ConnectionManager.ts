@@ -54,13 +54,15 @@ export const getParams = async (): Promise<Record<string, JSONValue>> => {
 export const schemaManager = new DynamicSchemaManager();
 
 const openFactory = new WASQLiteOpenFactory({
-  dbFilename: 'diagnostics.db',
-  debugMode: true,
-  cacheSizeKb: 500 * 1024,
-  temporaryStorage: TemporaryStorageOption.MEMORY,
-  vfs: WASQLiteVFS.OPFSCoopSyncVFS,
   logger: baseLogger,
-  logLevel: LogLevels.info
+  open: {
+    dbFilename: 'diagnostics.db',
+    debugMode: true,
+    cacheSizeKb: 500 * 1024,
+    temporaryStorage: TemporaryStorageOption.MEMORY,
+    vfs: WASQLiteVFS.OPFSCoopSyncVFS,
+    databaseWorkerLogLevel: LogLevels.info
+  }
 });
 
 export const db = new PowerSyncDatabase({

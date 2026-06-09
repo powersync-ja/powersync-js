@@ -4,6 +4,7 @@ import {
   DBAdapter,
   LogLevels,
   MEMORY_TRIGGER_CLAIM_MANAGER,
+  openDatabase,
   PowerSyncBackendConnector,
   StreamingSyncImplementation,
   SyncOptions,
@@ -52,27 +53,29 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
     return platform == 'ios' || platform == 'android';
   }
 
-  protected openDBAdapter(options: WebSQLOpenOptions): DBAdapter {
-    const platform = Capacitor.getPlatform();
-    if (platform == 'ios' || platform == 'android') {
-      if (options.dbLocation) {
-        this.logger.log({
-          level: LogLevels.warn,
-          message: `
+  protected openDBAdapter(): DBAdapter {
+    return openDatabase(this.options, (options) => {
+      const platform = Capacitor.getPlatform();
+      if (platform == 'ios' || platform == 'android') {
+        if (options.dbLocation) {
+          this.logger.log({
+            level: LogLevels.warn,
+            message: `
           dbLocation is ignored on iOS and Android platforms. 
           The database directory can be configured in the Capacitor project.
           See https://github.com/capacitor-community/sqlite?tab=readme-ov-file#installation`
+          });
+        }
+        this.logger.log({
+          level: LogLevels.debug,
+          message: `Using CapacitorSQLiteAdapter for platform: ${platform}`
         });
+        return new CapacitorSQLiteAdapter(options);
+      } else {
+        this.logger.log({ level: LogLevels.debug, message: `Using default web adapter for web platform` });
+        return super.openDBAdapter();
       }
-      this.logger.log({
-        level: LogLevels.debug,
-        message: `Using CapacitorSQLiteAdapter for platform: ${platform}`
-      });
-      return new CapacitorSQLiteAdapter(options);
-    } else {
-      this.logger.log({ level: LogLevels.debug, message: `Using default web adapter for web platform` });
-      return super.openDBAdapter(options);
-    }
+    });
   }
 
   protected generateTriggerManagerConfig(): TriggerManagerConfig {

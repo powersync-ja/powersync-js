@@ -6,6 +6,7 @@ import {
   BucketStorageAdapter,
   CreateSyncImplementationOptions,
   DatabaseSource,
+  DBAdapter,
   openDatabase,
   PowerSyncBackendConnector,
   SqliteBucketStorage
@@ -41,13 +42,17 @@ export type NodePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
  */
 export class PowerSyncDatabase extends AbstractPowerSyncDatabase<NodePowerSyncDatabaseOptions> {
   constructor(options: NodePowerSyncDatabaseOptions) {
-    super(options, () => openDatabase(options, (open) => new WorkerPoolDatabaseAdapter(open)));
+    super(options);
   }
 
   async _initialize(): Promise<void> {
     if ('initialize' in this.database) {
       await (this.database as WorkerPoolDatabaseAdapter).initialize();
     }
+  }
+
+  protected openDBAdapter(): DBAdapter {
+    return openDatabase(this.options, (open) => new WorkerPoolDatabaseAdapter(open));
   }
 
   protected generateBucketStorageAdapter(): BucketStorageAdapter {

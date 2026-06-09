@@ -2,6 +2,7 @@ import {
   AbstractPowerSyncDatabase,
   BasePowerSyncDatabaseOptions,
   BucketStorageAdapter,
+  DBAdapter,
   PowerSyncCloseOptions,
   SQLOpenOptions,
   StreamingSyncImplementation,
@@ -42,9 +43,7 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase<TauriPower
   private syncStatusListener?: UnlistenFn;
 
   constructor(options: TauriPowerSyncOpenOptions) {
-    const handle = { handle: -1 };
-    super(options, () => new RustDatabaseAdapter('uninitialized', handle));
-    this.handle = handle;
+    super(options);
   }
 
   private async resolvePath(): Promise<string> {
@@ -64,6 +63,11 @@ export class PowerSyncTauriDatabase extends AbstractPowerSyncDatabase<TauriPower
    */
   get rustHandle(): number {
     return this.handle.handle;
+  }
+
+  protected override openDBAdapter(): DBAdapter {
+    this.handle = { handle: -1 };
+    return new RustDatabaseAdapter('uninitialized', this.handle);
   }
 
   protected generateSyncStreamImplementation(): StreamingSyncImplementation {
