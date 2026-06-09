@@ -1,6 +1,6 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
-import { ILogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
+import { ILogger } from '../utils/Logger.js';
 import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.js';
 
 /**
@@ -9,7 +9,8 @@ import { AttachmentRecord, AttachmentState, attachmentFromSql } from './Schema.j
  * Provides methods to query, insert, update, and delete attachment records with
  * proper transaction management through PowerSync.
  *
- * @internal
+ * @experimental
+ * @alpha
  */
 export class AttachmentContext {
   /** PowerSync database instance for executing queries */

@@ -1,5 +1,5 @@
 ---
-'@powersync/common': patch
+'@powersync/common': minor
 ---
 
-[Attachments] Make `AttachmentQueue.attachmentService` available for classes extending the base class. This allows for custom saveFile implementations.
+[Attachments] Added `withAttachmentContext` helper method which exposes an `AttachmentContext` for custom attachment logic.

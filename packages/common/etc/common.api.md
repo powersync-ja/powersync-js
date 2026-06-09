@@ -373,9 +373,7 @@ export interface ArrayQueryDefinition<RowType = unknown> {
 // @alpha
 export const ATTACHMENT_TABLE = "attachments";
 
-// Warning: (ae-internal-missing-underscore) The name "AttachmentContext" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
+// @alpha
 export class AttachmentContext {
     constructor(db: AbstractPowerSyncDatabase, tableName: string | undefined, logger: ILogger, archivedCacheLimit: number);
     archivedCacheLimit: number;
@@ -454,6 +452,7 @@ export class AttachmentQueue implements AttachmentQueue {
     readonly syncThrottleDuration: number;
     readonly tableName: string;
     verifyAttachments(): Promise<void>;
+    withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T>;
 }
 
 // @alpha

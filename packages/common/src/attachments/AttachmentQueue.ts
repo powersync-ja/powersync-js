@@ -3,6 +3,7 @@ import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
 import { Transaction } from '../db/DBAdapter.js';
 import { ILogger } from '../utils/Logger.js';
+import { AttachmentContext } from './AttachmentContext.js';
 import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 import { AttachmentService } from './AttachmentService.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
@@ -70,7 +71,7 @@ export class AttachmentQueue implements AttachmentQueue {
   readonly archivedCacheLimit: number;
 
   /** Service for managing attachment-related database operations */
-  protected readonly attachmentService: AttachmentService;
+  private readonly attachmentService: AttachmentService;
 
   /** PowerSync database instance */
   private readonly db: AbstractPowerSyncDatabase;
@@ -342,6 +343,16 @@ export class AttachmentQueue implements AttachmentQueue {
     }
   }
 
+  /**
+   * Provides an {@link AttachmentContext} to a callback.
+   */
+  withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T> {
+    /**
+     * AttachmentService is internal and private in this class.
+     * We only need to expose its locking and context functionality for extending classes.
+     */
+    return this.attachmentService.withContext(callback);
+  }
   /**
    * Saves a file to local storage and queues it for upload to remote storage.
    *
