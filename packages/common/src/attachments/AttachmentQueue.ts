@@ -1,15 +1,15 @@
 import { AbstractPowerSyncDatabase } from '../client/AbstractPowerSyncDatabase.js';
 import { DEFAULT_WATCH_THROTTLE_MS } from '../client/watched/WatchedQuery.js';
 import { DifferentialWatchedQuery } from '../client/watched/processors/DifferentialQueryProcessor.js';
-import { ILogger } from '../utils/Logger.js';
 import { Transaction } from '../db/DBAdapter.js';
+import { ILogger } from '../utils/Logger.js';
+import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
+import { AttachmentService } from './AttachmentService.js';
 import { AttachmentData, LocalStorageAdapter } from './LocalStorageAdapter.js';
 import { RemoteStorageAdapter } from './RemoteStorageAdapter.js';
 import { ATTACHMENT_TABLE, AttachmentRecord, AttachmentState } from './Schema.js';
 import { SyncingService } from './SyncingService.js';
 import { WatchedAttachmentItem } from './WatchedAttachmentItem.js';
-import { AttachmentService } from './AttachmentService.js';
-import { AttachmentErrorHandler } from './AttachmentErrorHandler.js';
 
 /**
  * AttachmentQueue manages the lifecycle and synchronization of attachments
@@ -70,7 +70,7 @@ export class AttachmentQueue implements AttachmentQueue {
   readonly archivedCacheLimit: number;
 
   /** Service for managing attachment-related database operations */
-  private readonly attachmentService: AttachmentService;
+  protected readonly attachmentService: AttachmentService;
 
   /** PowerSync database instance */
   private readonly db: AbstractPowerSyncDatabase;
