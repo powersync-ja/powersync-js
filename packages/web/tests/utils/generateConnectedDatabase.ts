@@ -87,6 +87,8 @@ export async function generateConnectedDatabase(
 
     const connectedPromise = powersync.connect(connector, {
       connectionMethod: SyncStreamConnectionMethod.HTTP,
+      // Makes tests faster
+      crudUploadThrottleMs: 0,
       ...syncOptions
     });
 

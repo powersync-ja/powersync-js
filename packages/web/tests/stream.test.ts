@@ -10,11 +10,7 @@ import {
 } from '@powersync/web';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { TestConnector } from './utils/MockStreamOpenFactory.js';
-import {
-  ConnectedDatabaseUtils,
-  generateConnectedDatabase,
-  GenerateConnectedDatabaseOptions
-} from './utils/generateConnectedDatabase.js';
+import { ConnectedDatabaseUtils, generateConnectedDatabase } from './utils/generateConnectedDatabase.js';
 import { BucketChecksum } from '@powersync/common/internal/sync_protocol';
 import { defaultLogLevel, defaultTestLogger } from './utils/logger.js';
 
@@ -28,11 +24,13 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests((options) =>
-      generateConnectedDatabase({
-        ...options,
-        logger
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger
+        },
+        syncOptions
+      )
     )
   );
 
@@ -41,11 +39,14 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests(() =>
-      generateConnectedDatabase({
-        logger,
-        database: { useWebWorker: false }
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger,
+          database: { useWebWorker: false }
+        },
+        syncOptions
+      )
     )
   );
 
@@ -54,18 +55,21 @@ describe('Streaming', { sequential: true }, () => {
     {
       sequential: true
     },
-    describeStreamingTests(() =>
-      generateConnectedDatabase({
-        logger,
-        factory: new WASQLiteOpenFactory({
-          logger: defaultTestLogger,
-          open: {
-            databaseWorkerLogLevel: defaultLogLevel,
-            dbFilename: 'streaming-opfs.sqlite',
-            vfs: WASQLiteVFS.OPFSCoopSyncVFS
-          }
-        })
-      })
+    describeStreamingTests((syncOptions) =>
+      generateConnectedDatabase(
+        {
+          logger,
+          factory: new WASQLiteOpenFactory({
+            logger: defaultTestLogger,
+            open: {
+              databaseWorkerLogLevel: defaultLogLevel,
+              dbFilename: 'streaming-opfs.sqlite',
+              vfs: WASQLiteVFS.OPFSCoopSyncVFS
+            }
+          })
+        },
+        syncOptions
+      )
     )
   );
 
@@ -264,7 +268,7 @@ describe('Streaming', { sequential: true }, () => {
 });
 
 function describeStreamingTests(
-  createConnectedDatabase: (options?: GenerateConnectedDatabaseOptions) => Promise<ConnectedDatabaseUtils>
+  createConnectedDatabase: (syncOptions?: SyncOptions) => Promise<ConnectedDatabaseUtils>
 ) {
   return () => {
     it('PowerSync reconnect on closed stream', async () => {
@@ -309,8 +313,8 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as SyncOptions;
-          expect(call.params!['count']).eq(connectionAttempts);
+          const call = postSpy.mock.lastCall![0];
+          expect((call.data as any).parameters).toStrictEqual({ count: connectionAttempts });
         },
         { timeout: 2000, interval: 100 }
       );
@@ -327,8 +331,8 @@ function describeStreamingTests(
 
       await vi.waitFor(
         () => {
-          const call = spy.mock.lastCall![1] as SyncOptions;
-          expect(call.params!['count']).eq(0);
+          const call = postSpy.mock.lastCall![0];
+          expect((call.data as any).parameters).toStrictEqual({ count: 0 });
         },
         { timeout: 8000, interval: 100 }
       );
@@ -378,7 +382,7 @@ function describeStreamingTests(
     });
 
     it('Should retry failed uploads when connected', async () => {
-      const { powersync, uploadSpy } = await createConnectedDatabase();
+      const { powersync, uploadSpy } = await createConnectedDatabase({ retryDelayMs: 100 });
       expect(powersync.connected).toBe(true);
 
       let uploadCounter = 0;

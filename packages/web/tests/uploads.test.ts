@@ -30,7 +30,6 @@ describe(
       ({
         logger,
         database: {
-          dbFilename: `crud-uploads-test-${v4()}.db`,
           useWebWorker: false
         }
       }) satisfies GenerateConnectedDatabaseOptions
