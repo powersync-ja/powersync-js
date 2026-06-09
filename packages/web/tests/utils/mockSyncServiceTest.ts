@@ -62,7 +62,7 @@ export const sharedMockSyncServiceTest = test.extend<{
     connect: (customConnector?: PowerSyncBackendConnector) => Promise<ConnectResult>;
     database: PowerSyncDatabase;
     databaseName: string;
-    openDatabase: (customConfig?: Partial<WebPowerSyncDatabaseOptions>) => PowerSyncDatabase;
+    openDatabase: (options?: Omit<GenerateConnectedDatabaseOptions, 'database'>) => PowerSyncDatabase;
     mockService: MockSyncService;
   };
 }>({
@@ -70,12 +70,15 @@ export const sharedMockSyncServiceTest = test.extend<{
     const dbFilename = `test-${crypto.randomUUID()}.db`;
     const logger = createConsoleLogger({ prefix: 'mocked sync', minLevel: LogLevels.debug });
 
-    const openDatabase = (customConfig?: GenerateConnectedDatabaseOptions) => {
+    const openDatabase = (options?: Omit<GenerateConnectedDatabaseOptions, 'database'>) => {
       const db = new PowerSyncDatabase(
         generateDefaultOptions({
           schema: AppSchema,
           logger,
-          ...customConfig
+          database: {
+            enableMultiTabs: true
+          },
+          ...options
         })
       );
       onTestFinished(async () => {

@@ -1,4 +1,4 @@
-import { column, PowerSyncLogger, Schema, Table } from '@powersync/web';
+import { PowerSyncLogger } from '@powersync/web';
 import p from 'p-defer';
 import { v4 } from 'uuid';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,29 +10,31 @@ const PARTIAL_WARNING = 'Potentially previously uploaded CRUD entries are still 
 describe(
   'CRUD Uploads - With Web Workers',
   { sequential: true },
-  describeCrudUploadTests(() => ({
-    database: {
-      dbFilename: `${v4()}.db`
-    },
-    crudUploadThrottleMs: 1_000,
-    flags: {
-      enableMultiTabs: false
-    }
-  }))
+  describeCrudUploadTests(
+    (logger) =>
+      ({
+        logger,
+        database: {
+          dbFilename: `${v4()}.db`,
+          enableMultiTabs: false
+        }
+      }) satisfies GenerateConnectedDatabaseOptions
+  )
 );
 
 describe(
   'CRUD Uploads - Without Web Workers',
   { sequential: true },
-  describeCrudUploadTests(() => ({
-    database: {
-      dbFilename: `crud-uploads-test-${v4()}.db`
-    },
-    crudUploadThrottleMs: 1_000,
-    flags: {
-      useWebWorker: false
-    }
-  }))
+  describeCrudUploadTests(
+    (logger) =>
+      ({
+        logger,
+        database: {
+          dbFilename: `crud-uploads-test-${v4()}.db`,
+          useWebWorker: false
+        }
+      }) satisfies GenerateConnectedDatabaseOptions
+  )
 );
 
 function describeCrudUploadTests(getDatabaseOptions: (logger: PowerSyncLogger) => GenerateConnectedDatabaseOptions) {
@@ -53,7 +55,7 @@ function describeCrudUploadTests(getDatabaseOptions: (logger: PowerSyncLogger) =
     it('should warn for missing upload operations in uploadData', async () => {
       const options = getDatabaseOptions(logger);
 
-      const { powersync, uploadSpy } = await generateConnectedDatabase(options);
+      const { powersync, uploadSpy } = await generateConnectedDatabase(options, { crudUploadThrottleMs: 1_000 });
 
       const deferred = p();
 
@@ -84,7 +86,7 @@ function describeCrudUploadTests(getDatabaseOptions: (logger: PowerSyncLogger) =
     it('should immediately upload sequential transactions', async () => {
       const options = getDatabaseOptions(logger);
 
-      const { powersync, uploadSpy } = await generateConnectedDatabase(options);
+      const { powersync, uploadSpy } = await generateConnectedDatabase(options, { crudUploadThrottleMs: 1_000 });
 
       const deferred = p();
 

@@ -19,7 +19,7 @@ export class AbortOperation extends Error {
 //
 // @public (undocumented)
 export abstract class AbstractPowerSyncDatabase<Options extends BasePowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions> extends BaseObserver<PowerSyncDBListener> {
-    constructor(options: Options, openDatabase: () => DBAdapter);
+    constructor(options: Options);
     // Warning: (ae-incompatible-release-tags) The symbol "bucketStorageAdapter" is marked as @public, but its signature references "BucketStorageAdapter" which is marked as @internal
     //
     // (undocumented)
@@ -78,6 +78,7 @@ export abstract class AbstractPowerSyncDatabase<Options extends BasePowerSyncDat
     onChange(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
     onChangeWithAsyncGenerator(options?: SQLWatchOptions): AsyncIterable<WatchOnChangeEvent>;
     onChangeWithCallback(handler?: WatchOnChangeHandler, options?: SQLOnChangeOptions): () => void;
+    protected abstract openDBAdapter(): DBAdapter;
     // (undocumented)
     protected options: Options;
     query<RowType>(query: ArrayQueryDefinition<RowType>): Query<RowType>;

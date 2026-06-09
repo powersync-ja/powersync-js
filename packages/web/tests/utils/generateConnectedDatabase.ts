@@ -3,6 +3,7 @@ import {
   PowerSyncLogger,
   SQLOpenFactory,
   Schema,
+  SyncOptions,
   SyncStreamConnectionMethod,
   Table,
   column
@@ -10,7 +11,7 @@ import {
 import { v4 as uuid, v4 } from 'uuid';
 import { onTestFinished, vi } from 'vitest';
 import { MockedStreamPowerSync, MockRemote, TestConnector } from './MockStreamOpenFactory.js';
-import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebSQLOpenOptions } from '@powersync/web';
+import { PowerSyncDatabase, WebPowerSyncDatabaseOptions, WebSpecificOptions, WebSQLOpenOptions } from '@powersync/web';
 import { defaultTestLogger } from './logger.js';
 
 type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
@@ -21,6 +22,7 @@ export type GenerateConnectedDatabaseOptions = {
   logger?: PowerSyncLogger;
   factory?: SQLOpenFactory;
   database?: Partial<WebSQLOpenOptions>;
+  web?: WebSpecificOptions;
 };
 
 export type ConnectedDBGenerator = typeof generateConnectedDatabase;
@@ -39,6 +41,7 @@ export function generateDefaultOptions(options: GenerateConnectedDatabaseOptions
 
   return {
     ...source,
+    ...options.web,
     logger: options.logger,
     schema:
       options.schema ??
@@ -48,8 +51,11 @@ export function generateDefaultOptions(options: GenerateConnectedDatabaseOptions
   };
 }
 
-export async function generateConnectedDatabase(options?: GenerateConnectedDatabaseOptions) {
-  const resolvedOptions = generateDefaultOptions(options ?? {});
+export async function generateConnectedDatabase(
+  databaseOptions?: GenerateConnectedDatabaseOptions,
+  syncOptions?: SyncOptions
+) {
+  const resolvedOptions = generateDefaultOptions(databaseOptions ?? {});
 
   /**
    * Very basic implementation of a listener pattern.
@@ -79,7 +85,10 @@ export async function generateConnectedDatabase(options?: GenerateConnectedDatab
   const connect = async () => {
     const streamOpened = waitForStream();
 
-    const connectedPromise = powersync.connect(connector, { connectionMethod: SyncStreamConnectionMethod.HTTP });
+    const connectedPromise = powersync.connect(connector, {
+      connectionMethod: SyncStreamConnectionMethod.HTTP,
+      ...syncOptions
+    });
 
     await streamOpened;
 

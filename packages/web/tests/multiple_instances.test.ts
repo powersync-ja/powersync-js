@@ -57,8 +57,10 @@ describe('Multiple Instances', { sequential: true }, () => {
       // Open an additional database which we can spy on the logs.
       const powersync = openDatabase({
         logger,
-        sync: {
-          logLevel: LogLevels.trace
+        web: {
+          sync: {
+            logLevel: LogLevels.trace
+          }
         }
       });
 
