@@ -76,6 +76,7 @@ class SharedSyncClientProvider extends AbstractSharedSyncClientProvider {
 export interface SharedWebStreamingSyncImplementationOptions extends WebStreamingSyncImplementationOptions {
   logLevel: number;
   db: WebDBAdapter;
+  enableBroadcastLogs: boolean;
 }
 
 /**
@@ -90,11 +91,13 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
   protected dbAdapter: WebDBAdapter;
   private abortOnClose = new AbortController();
   private logLevel: number;
+  private enableBroadcastLogs: boolean;
 
   constructor(options: SharedWebStreamingSyncImplementationOptions) {
     super(options);
     this.dbAdapter = options.db;
     this.logLevel = options.logLevel;
+    this.enableBroadcastLogs = options.enableBroadcastLogs;
     /**
      * Configure or connect to the shared sync worker.
      * This worker will manage all syncing operations remotely.
@@ -189,7 +192,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
           identifier,
           flags: flags,
           serializedSchema: this.options.serializedSchema
-        }
+        },
+        enableBroadcastLogs: this.enableBroadcastLogs
       },
       this.options.subscriptions
     );

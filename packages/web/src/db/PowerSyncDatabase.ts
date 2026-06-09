@@ -35,9 +35,18 @@ import {
 import { AsyncDbAdapter } from './adapters/AsyncWebAdapter.js';
 
 export type WebPowerSyncDatabaseOptions = BasePowerSyncDatabaseOptions &
-  DatabaseSource<WebSQLOpenFactoryOptions> & {
-    sync?: WebSyncOptions;
-  };
+  DatabaseSource<WebSQLOpenFactoryOptions> &
+  WebSpecificOptions;
+
+export interface WebSpecificOptions {
+  sync?: WebSyncOptions;
+
+  /**
+   * Broadcast logs from shared workers, such as the shared sync worker,
+   * to individual tabs. This defaults to true.
+   */
+  broadcastLogs?: boolean;
+}
 
 export interface WebSyncOptions {
   /**
@@ -74,12 +83,14 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
   static SHARED_MUTEX = new Mutex();
 
   protected resolvedFlags: ResolvedWebSQLFlags;
+  protected enableBroadcastLogs: boolean;
 
   constructor(options: WebPowerSyncDatabaseOptions, database?: () => DBAdapter) {
     const resolvedFlags = resolveWebSQLFlags('database' in options ? options.database.flags : undefined);
 
     super(options, database ?? (() => openDatabase(options, (options) => this.openDBAdapter(resolvedFlags, options))));
     this.resolvedFlags = resolvedFlags;
+    this.enableBroadcastLogs = options.broadcastLogs ?? true;
   }
 
   async _initialize(): Promise<void> {
@@ -181,7 +192,7 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
       case this.resolvedFlags.ssrMode:
         return new SSRStreamingSyncImplementation(syncOptions);
       case this.resolvedFlags.enableMultiTabs:
-        if (!this.resolvedFlags.broadcastLogs) {
+        if (!this.enableBroadcastLogs) {
           const warning = `
             Multiple tabs are enabled, but broadcasting of logs is disabled.
             Logs for shared sync worker will only be available in the shared worker context
@@ -192,7 +203,8 @@ export class PowerSyncDatabase extends AbstractPowerSyncDatabase<WebPowerSyncDat
         return new SharedWebStreamingSyncImplementation({
           ...syncOptions,
           db: this.database as WebDBAdapter, // This should always be the case
-          logLevel: this.options.sync?.logLevel ?? LogLevels.info
+          logLevel: this.options.sync?.logLevel ?? LogLevels.info,
+          enableBroadcastLogs: this.enableBroadcastLogs
         });
       default:
         return new WebStreamingSyncImplementation(syncOptions);

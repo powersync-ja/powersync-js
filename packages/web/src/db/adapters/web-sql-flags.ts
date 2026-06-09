@@ -5,12 +5,6 @@ import { LogLevels, type PowerSyncLogger, SQLOpenOptions } from '@powersync/comm
  */
 export interface WebSQLFlags {
   /**
-   * Broadcast logs from shared workers, such as the shared sync worker,
-   * to individual tabs. This defaults to true.
-   */
-  broadcastLogs?: boolean;
-
-  /**
    * SQLite operations are currently not supported in SSR mode.
    * A warning will be logged if attempting to use SQLite in SSR.
    * Setting this to `true` will disabled the warning above.
@@ -118,7 +112,6 @@ export function isServerSide() {
 }
 
 export const DEFAULT_WEB_SQL_FLAGS: ResolvedWebSQLFlags = {
-  broadcastLogs: true,
   disableSSRWarning: false,
   ssrMode: isServerSide(),
   /**

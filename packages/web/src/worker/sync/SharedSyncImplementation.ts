@@ -63,6 +63,7 @@ export type SharedSyncInitOptions = {
     'adapter' | 'uploadCrud' | 'remote' | 'subscriptions' | 'logger'
   >;
   dbParams: ResolvedWebSQLOpenOptions;
+  enableBroadcastLogs: boolean;
 };
 
 /**
@@ -248,7 +249,7 @@ export class SharedSyncImplementation extends BaseObserver<SharedSyncImplementat
 
     // First time setting params
     this.syncParams = params;
-    this.logger.sendBroadcasts = params.streamOptions?.flags?.broadcastLogs ?? true;
+    this.logger.sendBroadcasts = params.enableBroadcastLogs;
 
     // Ensure we have a usable database connection, the reconnectable database will connect lazily on first use.
     await this.database.readLock(async () => {});

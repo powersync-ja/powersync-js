@@ -80,7 +80,6 @@ describe('Open Methods', { sequential: true }, () => {
     const options: ResolvedWASQLiteOpenFactoryOptions = {
       vfs: WASQLiteVFS.IDBBatchAtomicVFS,
       flags: {
-        broadcastLogs: false,
         disableSSRWarning: false,
         enableMultiTabs: false,
         useWebWorker: false,
@@ -103,7 +102,7 @@ describe('Open Methods', { sequential: true }, () => {
       options
     );
 
-    const db = new PowerSyncDatabase({ opened: client, schema: TEST_SCHEMA });
+    const db = new PowerSyncDatabase({ opened: client, schema: TEST_SCHEMA, broadcastLogs: false });
     await basicTest(db);
   });
 
