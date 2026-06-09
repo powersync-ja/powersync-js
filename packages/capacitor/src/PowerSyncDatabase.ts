@@ -126,7 +126,8 @@ export class PowerSyncDatabase extends WebPowerSyncDatabase {
         },
         identifier: this.database.name,
         logger: this.logger,
-        subscriptions: options.subscriptions
+        subscriptions: options.subscriptions,
+        serializedSchema: options.serializedSchema
       });
     } else {
       this.logger.log({ level: LogLevels.debug, message: `Using default web sync implementation for web platform` });

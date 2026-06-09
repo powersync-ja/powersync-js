@@ -187,7 +187,8 @@ export class SharedWebStreamingSyncImplementation extends WebStreamingSyncImplem
         dbParams: this.dbAdapter.getConfiguration(),
         streamOptions: {
           identifier,
-          flags: flags
+          flags: flags,
+          serializedSchema: this.options.serializedSchema
         }
       },
       this.options.subscriptions

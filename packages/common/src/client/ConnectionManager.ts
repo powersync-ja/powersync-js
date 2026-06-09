@@ -30,6 +30,7 @@ export interface ConnectionManagerSyncImplementationResult {
  */
 export interface CreateSyncImplementationOptions {
   subscriptions: SubscribedStream[];
+  serializedSchema: any;
 }
 
 /**
@@ -209,14 +210,14 @@ export class ConnectionManager extends BaseObserver<ConnectionManagerListener> {
           return;
         }
 
-        const { connector, options } = this.pendingConnectionOptions;
+        const { connector, options, schema } = this.pendingConnectionOptions;
         appliedOptions = options;
 
         this.pendingConnectionOptions = null;
 
         const { sync, onDispose } = await this.options.createSyncImplementation(connector, {
           subscriptions: this.activeStreams,
-          ...options
+          serializedSchema: schema
         });
         this.iterateListeners((l) => l.syncStreamCreated?.(sync));
         this.syncStreamImplementation = sync;

@@ -19,7 +19,7 @@ import {
   valueResult
 } from '../../../utils/stream_transform.js';
 import { asyncNotifier } from '../../../utils/async.js';
-import { ResolvedSyncOptions, SyncOptions, SyncStreamConnectionMethod } from '../options.js';
+import { ResolvedSyncOptions, SyncStreamConnectionMethod } from '../options.js';
 
 /**
  * @internal
@@ -57,7 +57,7 @@ export interface AbstractStreamingSyncImplementationOptions {
   /**
    * The serialized schema - mainly used to forward information about raw tables to the sync client.
    */
-  serializedSchema?: any;
+  serializedSchema: any;
 }
 
 /**

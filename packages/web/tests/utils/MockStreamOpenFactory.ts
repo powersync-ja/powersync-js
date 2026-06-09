@@ -2,6 +2,7 @@ import {
   AbstractPowerSyncDatabase,
   AbstractRemote,
   AbstractStreamingSyncImplementation,
+  CreateSyncImplementationOptions,
   PowerSyncBackendConnector,
   PowerSyncCredentials,
   PowerSyncDatabaseOptions,
@@ -128,7 +129,8 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
   }
 
   protected generateSyncStreamImplementation(
-    connector: PowerSyncBackendConnector
+    connector: PowerSyncBackendConnector,
+    options: CreateSyncImplementationOptions
   ): AbstractStreamingSyncImplementation {
     return new WebStreamingSyncImplementation({
       logger: this.logger,
@@ -139,7 +141,8 @@ export class MockedStreamPowerSync extends PowerSyncDatabase {
         await connector.uploadData(this);
       },
       identifier: this.database.name,
-      subscriptions: []
+      subscriptions: [],
+      serializedSchema: options.serializedSchema
     });
   }
 }
