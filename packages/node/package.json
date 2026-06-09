@@ -20,7 +20,7 @@
     "clean": "rm -rf lib dist tsconfig.tsbuildinfo",
     "watch": "tsc -b -w",
     "test": " pnpm prepare:core && vitest",
-    "test:exports": "attw --pack . --ignore-rules no-resolution"
+    "test:exports": "attw --pack . --ignore-rules no-resolution cjs-resolves-to-esm"
   },
   "type": "module",
   "exports": {
