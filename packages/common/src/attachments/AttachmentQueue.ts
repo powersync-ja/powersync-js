@@ -345,6 +345,10 @@ export class AttachmentQueue implements AttachmentQueue {
 
   /**
    * Provides an {@link AttachmentContext} to a callback.
+   *
+   * The callback runs while the attachment queue mutex is held. Do not call
+   * other {@link AttachmentQueue} methods from within the callback, as they may
+   * attempt to acquire the same mutex and block indefinitely.
    */
   withAttachmentContext<T>(callback: (context: AttachmentContext) => Promise<T>): Promise<T> {
     /**
