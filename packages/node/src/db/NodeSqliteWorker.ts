@@ -56,7 +56,7 @@ export async function openDatabase(worker: PowerSyncWorkerOptions, options: Asyn
   const { DatabaseSync } = await import('node:sqlite');
 
   const baseDB = new DatabaseSync(options.path, { allowExtension: true, readOnly: !options.isWriter });
-  // @ts-ignore (type definition is wrong)
+  // @ts-expect-error (type definition is wrong)
   baseDB.loadExtension(worker.extensionPath(), 'sqlite3_powersync_init');
 
   return new BlockingNodeDatabase(baseDB, options.isWriter);
